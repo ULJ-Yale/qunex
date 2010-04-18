@@ -1,0 +1,67 @@
+function [out] = g_ReadEventFile(file)
+
+%	
+%	Reads fidl event file and returns a structure that includes:
+%	
+%	frame   - frame number of the event start
+%	elength - event length in frames
+%	event_s - start of the event in s
+%	event_l - length of the event in s
+%	event   - event code
+%	events  - list of event names
+%	TR      - tr in s
+%	
+
+[fin message] = fopen(file);
+if fin == -1
+    error('\n\nERROR: Could not open %s for reading. Please check your paths!\n\nMatlab message: %s', file, message);
+end
+
+s = fgetl(fin);
+events = strread(s, '%s');
+TR = str2num(char(events(1)));
+events = events(2:length(events));
+
+frame 	= [];
+elength = [];
+event 	= [];
+beh 	= [];
+event_l = [];
+event_s = [];
+
+
+first = 1;
+while feof(fin) == 0
+	s = fgetl(fin);
+	s = strrep(s, 'NA', 'NaN');
+	
+	data = strread(s, '%f');
+	
+	if length(data) >= 3
+	
+		frame 	= [frame floor(data(1)/TR)];
+		event_s = [event_s data(1)];
+		elength = [elength floor(data(3)/TR)];
+		event_l = [event_l data(3)];
+		event 	= [event data(2)];
+	
+		if first
+			nbeh = length(data)-3;
+			first = 0;
+		end
+		if nbeh
+			beh = [beh; data(4:end)'];
+		end
+	end
+end
+
+fclose(fin);
+
+out.frame = frame';
+out.elength = elength';
+out.event_s = event_s';
+out.event_l = event_l';
+out.event = event';
+out.events = events;
+out.beh = beh;
+out.TR = TR;
