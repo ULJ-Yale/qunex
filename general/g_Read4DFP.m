@@ -14,7 +14,7 @@ function [img] = g_Read4DFP(file, dtype)
 %   Grega Repovš - a long, long time ago
 %
 
-if ~g_CheckFile(file, '', false);
+if ~g_CheckFile(file, '', 'nothing');
 	fprintf('\nERROR: Could not open %s, file does not exist. Please check your paths!\n\n', file);
 	img = false;
 	return
