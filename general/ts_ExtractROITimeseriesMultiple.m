@@ -91,7 +91,7 @@ fprintf('\n ... reading ROI image');
 if strcmp('none',roif1)
     roi1 = ones(48*48*64,1);
 else
-    roi1 = g_Read4DFP(roif1, 'int8');
+    roi1 = g_Read4DFP(roif1, 'single');
 end
 fprintf('... done.');
 
@@ -131,7 +131,7 @@ for n = 1:nsub
 	fprintf(' ... %d frames read, done.', sumframes);
 	
 	if (isempty(inmask))
-		mask = ones(1, nframes);
+		mask = ones(1, sumframes);
 	else
 		mask = inmask;
 		if (size(mask,2) ~= nframes)
@@ -153,7 +153,7 @@ for n = 1:nsub
 	if strcmp('none',subject(n).roi)
         roi2 = ones(48*48*64,1);
     else
-        roi2 = g_Read4DFP(subject(n).roi, 'int8');
+        roi2 = g_Read4DFP(subject(n).roi, 'single');
     end
 	
 	for m = 1:nroi
