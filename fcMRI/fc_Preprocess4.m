@@ -54,9 +54,9 @@ tfile = ofile;
 boldmask = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask.4dfp.img']);
 bold1    = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1.4dfp.img']);
 segmask  = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_333.4dfp.img']);
-wmmask   = '/data/iac12/space13/ccp/Matlab/Masks/WM.4dfp.img';
-ventricleseed = '/data/iac12/space13/ccp/Matlab/Masks/V.4dfp.img';
-eyeseed  = '/data/iac12/space13/ccp/Matlab/Masks/E.4dfp.img';
+wmmask   = 'WM.4dfp.img';
+ventricleseed = 'V.4dfp.img';
+eyeseed  = 'E.4dfp.img';
 
 nfile_1b     = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) '_nuisance_1b.4dfp.img']);
 nfilepng_1b  = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) '_nuisance_1b.png']);
