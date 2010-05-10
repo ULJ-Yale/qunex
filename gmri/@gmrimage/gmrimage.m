@@ -57,29 +57,41 @@ classdef gmrimage
     end
     
     methods
-        function obj = gmrimage(filename)
+        function obj = gmrimage(filename, dtype, frames)
         % 
         %  Class constructor, calls readimage function if a parameter is passed
         %
-        
+            if nargin < 3
+                dtype = 'single';
+                if nargin < 4
+                    frames = [];
+                end
+            end
+            
+            % obj = gmrimage();
             if nargin > 0
                if isa(filename, 'char')
-                    obj = gmrimage();
-                    obj = obj.mri_readimage(filename);
+                    obj = obj.mri_readimage(filename, dtype, frames);
                 end
             end        
         end
     
-        function obj = mri_readimage(obj, filename)
+        function obj = mri_readimage(obj, filename, dtype, frames)
         %
         %  Checks what type the image is and calls the appropriate function
         %
+            if nargin < 3
+                dtype = 'single';
+                if nargin < 4
+                    frames = [];
+                end
+            end
         
             if strcmp(filename(length(filename)-8:end), '.4dfp.img') | strcmp(filename(length(filename)-4:end), '.conc')
-                obj = obj.mri_Read4DFP(filename);
+                obj = obj.mri_Read4DFP(filename, dtype, frames);
                 obj.empty = false;
             elseif strcmp(filename(length(filename)-3:end), '.nii') | strcmp(filename(length(filename)-6:end), '.nii.gz') | strcmp(filename(length(filename)-3:end), '.hdr')
-                obj = obj.mri_ReadNIfTI(filename);
+                obj = obj.mri_ReadNIfTI(filename, frames);
                 obj.empty = false;
             else
                 error('ERROR: Unknown file format!');

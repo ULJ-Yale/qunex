@@ -1,4 +1,4 @@
-function [img] = mri_Read4DFP(img, file, dtype)
+function [img] = mri_Read4DFP(img, file, dtype, frames)
 
 %       function [img] = mri_Read4DFP(img, file, dtype)
 %
@@ -10,12 +10,16 @@ function [img] = mri_Read4DFP(img, file, dtype)
 %
 %		optional:
 %           dtype - number format to use ['single']
+%           frames - number of frames to read [all]
 %
 %       Grega Repovs - 2009-11-19
 %
 
 if nargin < 3
 	dtype = 'single';
+	if nargin < 4 
+	    frames = []
+    end
 end
 
 
@@ -37,18 +41,6 @@ else
     
     img.hdr4dfp = img.mri_ReadIFH([root '.4dfp.ifh']);
     
-    mformat = 'b';
-    if ismember('littleendian', img.hdr4dfp.value)
-        mformat = 'l';
-    end
-
-	[fim message] = fopen([root '.4dfp.img'], 'r', mformat);
-	if fim == -1
-        error('\n\nERROR: Could not open %s for reading. Please check your paths!\n\nMatlab message: %s', file, message);
-    end
-	img.data = fread(fim, ['float32=>' dtype]);
-	fclose(fim);
-
     img.imageformat = '4dfp';
     img.filename = [root '.4dfp.img'];
     img.TR = [];
@@ -58,6 +50,23 @@ else
     z = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [3]'}))));
     img.dim = [x y z];
     img.voxels = x*y*z;
+    
+    mformat = 'b';
+    if ismember('littleendian', img.hdr4dfp.value)
+        mformat = 'l';
+    end
+
+	[fim message] = fopen([root '.4dfp.img'], 'r', mformat);
+	if fim == -1
+        error('\n\nERROR: Could not open %s for reading. Please check your paths!\n\nMatlab message: %s', file, message);
+    end
+    if isempty(frames)
+	    img.data = fread(fim, ['float32=>' dtype]);
+	else
+	    img.data = fread(fim, img.voxels*frames, ['float32=>' dtype]);
+    end
+	fclose(fim);
+
     img.frames = length(img.data)/sum(img.voxels);
     img.hdr4dfp.value{ismember(img.hdr4dfp.key, {'matrix size [4]'})} = num2str(img.frames);
 
@@ -66,8 +75,6 @@ else
     zmm = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'scaling factor (mm/pixel) [3]'}))));
     img.vsizes = [xmm ymm zmm];
 end
-
-
 
 
 function [ftype] = FileType(filename)
@@ -79,5 +86,4 @@ elseif strcmp(filename(length(filename)-3:end), '.img')
 else
 	error('\n%s is neither a conc nor an image file! Aborting', filename);
 end
-
 
