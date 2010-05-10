@@ -18,7 +18,7 @@ file = [root '.4dfp.ifh'];
 
 [fin message]= fopen(file);
 if fin == -1
-    disp('\n\nERROR: Could not open %s for reading. Will assume it is a 333 file.', file);
+    fprintf('\n\nERROR: Could not open %s for reading. Will assume it is a 333 file.\n', file);
     ifh.key{1} = 'INTERFILE';
     ifh.value{1} = '';
     ifh.key{2} = 'version of keys';

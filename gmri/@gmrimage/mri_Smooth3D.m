@@ -17,12 +17,12 @@ ksd = fwhm/(2*sqrt(2*log(2)));
 img.data = img.image4D;
 data = single(img.data);
 
-if verbose, fprintf('Smoothing frame    ');, end
+if verbose, fprintf('Smoothing frame     ');, end
 for n = 1:img.frames
 	if verbose, fprintf('\b\b\b\b%4d',n);, end
 	data(:,:,:,n) = smoothvolume(data(:,:,:,n), ksd);
 end
-if verbose, fprintf('\b\b\b\b ... finished\n');, end
+if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b');, end
 img.data = single(data);
 
 function smoothed = smoothvolume(data, ksd)
