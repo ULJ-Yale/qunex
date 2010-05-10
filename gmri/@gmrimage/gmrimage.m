@@ -45,11 +45,13 @@ classdef gmrimage
         standardized    = false;
         correlized      = false;
         info            = [];
+        roi             = [];
     end
     
     methods(Static = true)
         %ifh = mri_ReadIFH(file)
         files = mri_ReadConcFile(file)
+        roi   = mri_ReadROI(roiinfo, roif2)
     end
     
     methods
