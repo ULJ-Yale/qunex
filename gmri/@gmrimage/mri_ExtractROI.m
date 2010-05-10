@@ -1,5 +1,6 @@
 function ts = mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 
+%function ts = mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 %	
 %	Extracts roi data for all specified ROI in the ROI image
 %   Uses specified method of averaging data
@@ -73,7 +74,7 @@ end
 
 if isempty (rcodes)
     rcodes = unique(roi);
-    rcodes = rcodes(urois ~= 0);
+    rcodes = rcodes(rcodes ~= 0);
 end
 
 % ---- check weights data
@@ -129,7 +130,7 @@ for r = 1:nrois
             
         case 'pca'
             [coeff, score] = princomp(tmp');
-            ts(r, :) = score';
+            ts(r, :) = score(:,1)';
     end
 end
         
