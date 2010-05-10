@@ -1,19 +1,23 @@
-function [img] = mri_Filter(img, hp_sigma, lp_sigma, verbose)
+function [img] = mri_Filter(img, hp_sigma, lp_sigma, omit, verbose)
 
 
 
 %------- Check input
 
-if nargin < 4
+if nargin < 5
     verbose = false;
-    if nargin < 3
-        lp_sigma = 0;
+    if nargin < 4
+        omit = 0;
+        if nargin < 3
+            lp_sigma = 0;
+        end
     end
 end
 
 img.data = img.image2D;
 nvox     = img.voxels;
-len      = img.frames;
+len      = img.frames - omit;
+data     = img.data(:,omit+1:img.frames);
 
 %------- Create mask, window, and tmp
 
@@ -55,7 +59,7 @@ if hp_sigma
     first = true;
     c0 = zeros(nvox,1);
     for t = 1:len
-        if verbose, fprintf('\b\b\b%3d',t), end
+        if verbose, fprintf('\b\b\b\b%4d',t), end
         
         bot = max([t-hp_mask, 1]);
         top = min([t+hp_mask, len]);
@@ -74,24 +78,24 @@ if hp_sigma
         end
         
         if tmpdenom
-            tc = (sum(img.data(:,bot:top).*repmat(hp_exp(wbot:wtop),nvox,1),2).*sC - sum(img.data(:,bot:top).*repmat(A(wbot:wtop),nvox,1),2) .* sA) ./ tmpdenom;
+            tc = (sum(data(:,bot:top).*repmat(hp_exp(wbot:wtop),nvox,1),2).*sC - sum(data(:,bot:top).*repmat(A(wbot:wtop),nvox,1),2) .* sA) ./ tmpdenom;
             if first
                 c0 = tc;
                 first = false;
             end
-            tmp(:,t+lp_mask) =  c0 + img.data(:,t) - tc;
+            tmp(:,t+lp_mask) =  c0 + data(:,t) - tc;
         else
-            tmp(:,t+lp_mask) = img.data(:,t);
+            tmp(:,t+lp_mask) = data(:,t);
         end
     end
-    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
+    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
 else
-    tmp(:,lp_mask+1:len+lp_mask) = img.data;
+    tmp(:,lp_mask+1:len+lp_mask) = data;
 end
 
 %------- Do low-pass
 
-out = zeros(size(img.data));
+out = zeros(size(data));
 
 if lp_sigma
     % --- pad
@@ -101,14 +105,14 @@ if lp_sigma
     end
     
     w = repmat(lp_exp, nvox,1);
-    if verbose, fprintf('lopass frame    '), end
+    if verbose, fprintf('lopass frame     '), end
     for t = 1:len
-        fprintf('\b\b\b%3d',t);
+        fprintf('\b\b\b\b%4d',t);
         out(:,t) = sum(tmp(:,t:t+2*lp_mask).*w,2);
     end
-    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
+    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
 else
     out = tmp;
 end
 
-img.data = out;
+img.data(:,omit+1:img.frames) = out;
