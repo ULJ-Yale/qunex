@@ -16,6 +16,9 @@ function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, opt
 %   Adjusted for a different file list format and an additional ROI mask - 2008-01-23
 % 	Copyright (c) 2008. All rights reserved.
 
+if nargin < 5
+    options = 'm';
+end
 
 fprintf('\n\nStarting ...');
 

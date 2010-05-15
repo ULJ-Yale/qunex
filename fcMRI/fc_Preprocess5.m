@@ -143,13 +143,13 @@ for current = do
         
         switch current
             case 's'
-                img.mri_Smooth3D(2, true);
+                img = img.mri_Smooth3D(2, true);
             case 'h'
                 hpsigma = ((1/TR)/0.009)/2;
-                img.mri_Filter(hpsigma, 0, omit, true);
+                img = img.mri_Filter(hpsigma, 0, omit, true);
             case 'l'
                 lpsigma = ((1/TR)/0.08)/2;
-                img.mri_Filter(0, lpsigma, omit, true);
+                img = img.mri_Filter(0, lpsigma, omit, true);
             case 'r'
                 [img coeff] = regressNuisance(img, omit, file, glm);
                 if docoeff
