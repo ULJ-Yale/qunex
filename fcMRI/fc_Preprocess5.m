@@ -109,7 +109,7 @@ end
 % 	----> run processing loop
 
 task = ['shrl'];
-exts = {'_g7','_hpss','_res','_lpss'};
+exts = {'_g7','_hpss',['_res-' rgss],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
 tail = '.4dfp.img';
 ext  = '';
