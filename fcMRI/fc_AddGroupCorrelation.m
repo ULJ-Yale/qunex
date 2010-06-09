@@ -9,6 +9,7 @@ function [] = fc_AddGroupCorrelation(fname)
 %
 % 	Created by Joshua J Kim on 2008-07-29.
 %   Small changes and additions Grega Repovs 2008-07-31
+% No changes since
 %
 
 
