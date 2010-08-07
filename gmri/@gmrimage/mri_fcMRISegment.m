@@ -87,6 +87,9 @@ end
 
 obj.data = results;
 obj.frames = ntargets+1;
+obj.roi = tmask.roi;
+obj.sroi = smask.roi;
+obj.troi = tmask.roi;
 
 if verbose, fprintf('\n... done!'), end
 
