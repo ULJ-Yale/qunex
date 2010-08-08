@@ -178,6 +178,7 @@ classdef gmrimage
                 unmasked = zeros([prod(obj.dim) obj.frames]);
                 unmasked(obj.mask,:) = obj.data;
                 obj.data = unmasked;
+                obj.masked = false;
             else
                 obj = obj;
             end

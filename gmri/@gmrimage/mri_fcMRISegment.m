@@ -44,7 +44,7 @@ obj.data = obj.image2D;
 tmask.data = tmask.image2D;
 
 ntargets = length(tmask.roi.roinames);
-tdata = zeros(ntargets, obj.voxels);
+tdata = zeros(ntargets, obj.frames);
 
 for n = 1:ntargets
     tdata(n,:) = mean(obj.data(ismember(tmask.data, n),:),1);
@@ -77,19 +77,18 @@ data = obj.data;
 
 if verbose, fprintf('\n... %d source voxels, %d target ROI over %d frames to process ', obj.voxels, ntargets, obj.frames), end
 
-results(2:ntargets+1) = obj.data * tdata;
+results(:,2:ntargets+1) = obj.data * tdata;
 
 if strcmp(options, 'absolute')
     results = abs(results);
 end
 
-[C, results(:,1)] = max(results(2:ntargets+1,:),[],2);
+[C, results(:,1)] = max(results(:,2:ntargets+1),[],2);
 
 obj.data = results;
 obj.frames = ntargets+1;
 obj.roi = tmask.roi;
-obj.sroi = smask.roi;
-obj.troi = tmask.roi;
+
 
 if verbose, fprintf('\n... done!'), end
 
