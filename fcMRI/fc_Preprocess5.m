@@ -339,11 +339,14 @@ function x = ReadMovFile(file, nf)
     x = zeros(nf,6);
 
     fin = fopen(file, 'r');
-    s = fgetl(fin);
-    for n = 1:nf
+    c = 0;
+    while c < nf
     	s = fgetl(fin);
-    	line = strread(s);
-    	x(n,:) = line(2:7);
+    	if s(1) ~= '#'
+    		line = strread(s);
+    		c = c+1;
+    		x(c,:) = line(2:7);
+    	end
     end
     fclose(fin);
 
