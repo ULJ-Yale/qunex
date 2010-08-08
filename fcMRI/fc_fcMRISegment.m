@@ -44,12 +44,14 @@ end
 if strcmp(verbose, 'full')
     script = true;
     method = true;
-else if strcmp(verbose, 'script')
-    script = true;
-    method = false;
 else
-    script = false;
-    method = false;
+    if strcmp(verbose, 'script')
+        script = true;
+        method = false;
+    else
+        script = false;
+        method = false;
+    end
 end
 
 
@@ -92,20 +94,19 @@ if script, fprintf(' ... done.'), end
 %   --- Get variables ready first
 
 tROI = gmrimage.mri_ReadROI(tmask, subject(1).roi);
-nroi = length(tROI.roi.roinames);
-nvoxels   = template.voxels;
-nsubjects = length(subject);
 
-segs  = zeros(voxels, nsubjects);
-gcorr = zeros(voxels, nroi+1);
-gseg  = zeros(voxels, nroi+1);
+nroi = length(tROI.roi.roinames);
+nsubjects = length(subject);
 
 template = tROI.zeroframes(nsubjects);
 template.data = template.image2D();
+
 for n = 1:nroi
     corrs(n) = template;
 end
-segs = template.zeroframes(nsubjects+1);
+segs = template.zeroframes(nsubjects);
+gseg = template.zeroframes(nroi+1);
+gcorr = template.zeroframes(nroi+1);
 
 clear('template');
 clear('tROI');
@@ -114,8 +115,8 @@ for s = 1:nsubjects
     
     %   --- reading in image files
     if script, tic, end
-	if script, fprintf('\n ... processing %s', subject(n).id), end
-	if script, fprintf('\n     ... reading file(s) '), end
+	if script, fprintf('\n------\nProcessing %s', subject(s).id), end
+	if script, fprintf('\n... reading file(s) '), end
 
     roif = gmrimage(subject(s).roi);
 	tROI = gmrimage.mri_ReadROI(tmask, roif);
@@ -124,48 +125,55 @@ for s = 1:nsubjects
 	nfiles = length(subject(s).files);
 	
 	img = gmrimage(subject(s).files{1});
-	if mask, img = img.sliceframes(mask);, end
+	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
 	if nfiles > 1
     	for n = 2:nfiles
     	    new = gmrimage(subject(s).files{n});
-    	    if mask, new = new.sliceframes(mask);, end
+    	    if mask, new = new.sliceframes(mask); end
     	    img = [img new];
     	    if script, fprintf(', %d', n), end
         end
     end
     
     seg = img.mri_fcMRISegment(sROI, tROI, options, method);
+    seg = seg.unmaskimg();
     for r = 1:nroi
-        corrs(c).data(:,c) = seg.data(:,r+1);
+        corrs(r).data(:,s) = seg.data(:,r+1);
     end
-    segs.data(:,s+1) = seg.data(:,1);
+    segs.data(:,s) = seg.data(:,1);
     
-    if script, fprintf(' [%.1fs]\n', toc);, end
+    if script, fprintf(' [%.1fs]\n', toc); end
 end
 
-if script, fprintf('\n ... saving results'), end
+if script, fprintf('\n------\nSaving results'), end
 
 for r = 1:nroi
     fname = [root '_corr_' segs.roi.roinames{r}];
-    if script, fprintf('\n     ... %s', fname), end
-    corr(r).mri_saveimage(fname);
-    gcorr.data(:,r+1) = fc_FisherInv(mean(fc_Fisher(corr(r).data),2));
-    gseg.data(:,t+1) = sum(ismember(segs.data,r),2)./nsubjects;
+    if script, fprintf('\n... %s', fname), end
+    corrs(r).mri_saveimage(fname);
+    gcorr.data(:,r+1) = fc_FisherInv(mean(fc_Fisher(corrs(r).data),2));
+    gseg.data(:,r+1) = sum(ismember(segs.data,r),2)./nsubjects;
 end
 
-gcorr.data(:,1) = max(gcorr.data(:,2:nroi+1),[],2);
-gseg.data(:,1) = max(gseg.data(:,2:nroi+1),[],2);
+[G gcorr.data(:,1)] = max(gcorr.data(:,2:nroi+1),[],2);
+gcorr.data(G==0) = 0;
 
-if script, fprintf('\n     ... %s', [root '_gcorr']), end
+[G gseg.data(:,1)] = max(gseg.data(:,2:nroi+1),[],2);
+gseg.data(G==0) = 0;
+
+if script, fprintf('\n... %s', [root '_gcorr']), end
 gcorr.mri_saveimage([root '_gcorr']);
 
-if script, fprintf('\n     ... %s', [root '_gseg']), end
+if script, fprintf('\n... %s', [root '_gseg']), end
 gseg.mri_saveimage([root '_gseg']);
 
-if script, fprintf('\n     ... %s', [root '_segs']), end
-gseg.mri_saveimage([root '_segs']);
+if script, fprintf('\n... %s', [root '_segs']), end
+segs.mri_saveimage([root '_segs']);
 
+if script, fprintf('\nDONE!\n\n'), end
+
+end
 
 %
 %   ---- Auxilary functions
@@ -175,9 +183,9 @@ function [ok] = checkFile(filename)
 
 ok = exist(filename, 'file');
 if ~ok
-    fprintf('ERROR: File %s does not exists! Aborting processing!', filename);
-    error;
+    error('ERROR: File %s does not exists! Aborting processing!', filename);
 end
 
+end
     
     

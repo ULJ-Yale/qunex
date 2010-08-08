@@ -44,11 +44,19 @@ end
 
 if ~isa(roi2, 'gmrimage') & ~isempty(roi2)
     roi2 = gmrimage(roi2);
+    roif2 = roi2;
+else
+    if isa(roi2, 'gmrimage')
+        roif2 = roi2.filename;
+    else
+        roif2 = roi2;
+    end
 end
+
 
 % ----> Set up final ROI image
 
-if isempty(roif2)
+if isempty(roi2)
     img = roi1.zeroframes(1);
 else
     img = roi2.zeroframes(1);
