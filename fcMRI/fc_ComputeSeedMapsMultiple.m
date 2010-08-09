@@ -38,6 +38,20 @@ if ~go
 	return
 end
 
+
+% ---- list name
+
+[fpathstr, fname, fext, fversn] = fileparts(flist);
+
+lname = strrep(fname, '.list', '');
+lname = strrep(lname, '.conc', '');
+lname = strrep(lname, '.4dfp', '');
+lname = strrep(lname, '.img', '');
+
+
+% ---- starts
+
+
 fprintf('\n\nStarting ...');
 
 startframe = 1;
@@ -235,13 +249,13 @@ for n = 1:nsub
 			ifhextra.value = int2str(N);
 			
 			if strfind(options, 'r')
-				g_Save4DFP([targetf '/' bname '_' roiname{m} '_r.4dfp.img'], r, ifhextra); 		fprintf(' r');
+				g_Save4DFP([targetf '/' bname '_' lname '_' roiname{m} '_r.4dfp.img'], r, ifhextra); 		fprintf(' r');
 			end
 			if strfind(options, 'f')
-				g_Save4DFP([targetf '/' bname '_' roiname{m} '_Fz.4dfp.img'], Fz, ifhextra); 	fprintf(' Fz');
+				g_Save4DFP([targetf '/' bname '_' lname '_' roiname{m} '_Fz.4dfp.img'], Fz, ifhextra); 	fprintf(' Fz');
 			end
 			if strfind(options, 'z')
-				g_Save4DFP([targetf '/' bname '_' roiname{m} '_Z.4dfp.img'], Z, ifhextra); 		fprintf(' Z');
+				g_Save4DFP([targetf '/' bname '_' lname '_' roiname{m} '_Z.4dfp.img'], Z, ifhextra); 		fprintf(' Z');
 			end
 			
 			fprintf(' ... done.');
@@ -266,13 +280,6 @@ fprintf('\n\n... computing group results');
 
 %   --- setting up file details
 
-[fpathstr, fname, fext, fversn] = fileparts(flist);
-
-bname = strrep(fname, '.list', '');
-bname = strrep(fname, '.conc', '');
-bname = strrep(bname, '.4dfp', '');
-bname = strrep(bname, '.img', '');
-
 ifhextra.key = 'number of subjects';
 ifhextra.value = int2str(nsub);
 
@@ -296,10 +303,10 @@ for m = 1:nroi
 	
 	fprintf('... saving ...');
 
-	g_Save4DFP([targetf '/' bname '_' roiname{m} '_group_r.4dfp.img'], r, ifhextra); 		fprintf(' r');
-	g_Save4DFP([targetf '/' bname '_' roiname{m} '_group_Fz.4dfp.img'], Fz, ifhextra); 	    fprintf(' Fz');
-	g_Save4DFP([targetf '/' bname '_' roiname{m} '_group_Z.4dfp.img'], Z, ifhextra); 		fprintf(' Z');
-	g_Save4DFP([targetf '/' bname '_' roiname{m} '_all_Fz.4dfp.img'], g_fz_img(:,:,m), ifhextra_all); 	fprintf(' all Fz');
+	g_Save4DFP([targetf '/' lname '_' roiname{m} '_group_r.4dfp.img'], r, ifhextra); 		fprintf(' r');
+	g_Save4DFP([targetf '/' lname '_' roiname{m} '_group_Fz.4dfp.img'], Fz, ifhextra); 	    fprintf(' Fz');
+	g_Save4DFP([targetf '/' lname '_' roiname{m} '_group_Z.4dfp.img'], Z, ifhextra); 		fprintf(' Z');
+	g_Save4DFP([targetf '/' lname '_' roiname{m} '_all_Fz.4dfp.img'], g_fz_img(:,:,m), ifhextra_all); 	fprintf(' all Fz');
 	
 	fprintf(' ... done.');
 
