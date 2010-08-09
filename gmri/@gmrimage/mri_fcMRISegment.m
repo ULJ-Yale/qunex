@@ -1,6 +1,6 @@
-function [obj, commands] = mri_fcMRISegment(obj, smask, tmask, options, verbose)
+function [obj] = mri_fcMRISegment(obj, smask, tmask, options, verbose)
 
-%function [obj, commands] = mri_fcMRISegment(obj, ssmask, tmask, options, verbose)
+%function [obj] = mri_fcMRISegment(obj, ssmask, tmask, options, verbose)
 %	
 %	Computes WTA segmentation of source mask voxels based on target mask ROI
 %	
