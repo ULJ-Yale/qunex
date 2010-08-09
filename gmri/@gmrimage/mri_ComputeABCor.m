@@ -22,6 +22,7 @@ end
 
 % ---- prepare data
 
+if verbose, fprintf('\nComputing A*B correlation'), end
 if verbose, fprintf('\n... setting up data'), end
 
 jmask = smask + tmask;
@@ -33,14 +34,16 @@ if ~obj.correlized
     obj = obj.correlize;
 end
 
-obj = obj.demaskimg(jmask);
+obj = obj.unmaskimg();
 src = obj.maskimg(smask);
 obj = obj.maskimg(tmask);
 
 % ---- do the deed
 
-if verbose, fprintf('\n... setting up data'), end
+if verbose, fprintf('\n... computing'), end
 
 obj.data = obj.image2D*src.image2D';
 obj.frames = src.voxels;
+
+if verbose, fprintf('\n... done!\n'), end
 
