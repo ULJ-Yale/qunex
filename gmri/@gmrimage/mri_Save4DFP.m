@@ -31,7 +31,7 @@ root = strrep(root, '.4dfp', '');
 
 [fim message] = fopen([root '.4dfp.img'],'w', mformat);
 if fim == -1
-    error('\n\nERROR: Could not open %s for saving. Please check your paths!\n\nMatlab message: %s', file, message);
+    error('\n\nERROR: Could not open %s for saving. Please check your paths!\n\nMatlab message: %s', [root '.4dfp.img'], message);
 end
 
 res = fwrite(fim, obj.data, 'float32');
@@ -49,7 +49,7 @@ end
 
 [fifh message] = fopen(ifhf,'w');
 if fifh == -1
-    error('\n\nERROR: Could not open %s for saving. Please check your paths!\n\nMatlab message: %s', file, message);
+    error('\n\nERROR: Could not open %s for saving. Please check your paths!\n\nMatlab message: %s', ifhf, message);
 end
 
 hdr = obj.hdr4dfp;
