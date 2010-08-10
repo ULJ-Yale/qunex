@@ -55,9 +55,13 @@ end
 
 if strfind(options, 'g')
     group = true;
+else
+    group = false;
 end
 if strfind(options, 'i')
     indiv = true;
+else
+    indiv = false;
 end
 
 
@@ -90,6 +94,7 @@ while feof(files) == 0
         checkFile(s(2:end));
     end
 end
+nsubjects = length(subject);
 
 
 if script, fprintf(' ... done.'), end
@@ -104,15 +109,15 @@ sROI = gmrimage.mri_ReadROI(smask, subject(1).roi);
 tROI = gmrimage.mri_ReadROI(tmask, subject(1).roi);
 
 if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
-    sROIload = false
+    sROIload = false;
 else
-    sROIload = true
+    sROIload = true;
 end
 
 if length(tROI.roi.roicodes2) == 1 & length(tROI.roi.roicodes2{1}) == 0
-    tROIload = false
+    tROIload = false;
 else
-    tROIload = true
+    tROIload = true;
 end
 
 if group     
@@ -161,8 +166,10 @@ for s = 1:nsubjects
     	    if script, fprintf(', %d', n), end
         end
     end
+    if script, fprintf('\n'), end
     
     ABCor = img.mri_ComputeABCor(sROI,tROI, method);
+    ABCor = ABCor.unmaskimg; 
     
     if indiv
         ifile = [root '_' subject(s).id '_ABCor'];
