@@ -196,7 +196,7 @@ if group
         gcnt.data = (tROI.image2D > 0) .* nsubjects;
     end
     
-    gres.data = gres.data ./ repmat(gcnt.data,0,nframes);
+    gres.data = gres.data ./ repmat(gcnt.data,1,nframes);
     gres.mri_saveimage([root '_group_ABCor_Fz']);
     gres.data = fc_FisherInv(gres.data);
     gres.mri_saveimage([root '_group_ABCor_r']);
