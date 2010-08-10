@@ -178,7 +178,7 @@ for s = 1:nsubjects
     end
     
     if group
-        if script, fprintf('\n... computing group results %s\n', ifile); end
+        if script, fprintf('\n... computing group results\n'); end
         gres.data = gres.data + fc_Fisher(ABCor.data);
         if tROIload
             gcnt.data = gcnt.data + tROI.image2D > 0;
