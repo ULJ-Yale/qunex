@@ -1,4 +1,4 @@
-function [img] = mri_ReadROI(roiinfo, roif2)
+function [img] = mri_ReadROI(roiinfo, roi2)
 
 %function [img] = mri_ReadROI(roiinfo, roifile)
 %
@@ -11,7 +11,7 @@ function [img] = mri_ReadROI(roiinfo, roif2)
 %    (c) Grega Repovs, 2010-05-10
 
 if nargin < 2
-    roif2 = [];
+    roi2 = [];
 end
 
 % ----> Read the ROI info
@@ -40,17 +40,23 @@ else
     roi1 = gmrimage(roif1);
 end
 
-% ----> Read the second ROI file
+% ----> Read the second ROI file if needed
 
-if isempty(roif2)
-    roi2 = [];
+if ~isa(roi2, 'gmrimage') & ~isempty(roi2)
+    roi2 = gmrimage(roi2);
+    roif2 = roi2;
 else
-    roi2 = gmrimage(roif2);
+    if isa(roi2, 'gmrimage')
+        roif2 = roi2.filename;
+    else
+        roif2 = roi2;
+    end
 end
+
 
 % ----> Set up final ROI image
 
-if isempty(roif2)
+if isempty(roi2)
     img = roi1.zeroframes(1);
 else
     img = roi2.zeroframes(1);
