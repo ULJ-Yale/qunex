@@ -29,8 +29,8 @@ function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, target
 go = true;
 
 fprintf('\n\nChecking ...\n');
-go = go & g_CheckFile(flist, 'image file list');
-go = go & g_CheckFile(roiinfo, 'ROI definition file');
+go = go & g_CheckFile(flist, 'image file list','error');
+go = go & g_CheckFile(roiinfo, 'ROI definition file','error');
 g_CheckFolder(targetf, 'results folder');
 
 if ~go
