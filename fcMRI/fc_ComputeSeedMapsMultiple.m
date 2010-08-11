@@ -164,9 +164,7 @@ for n = 1:nsub
 		in = [];
 	else
 	    fprintf('\n     ... %s', subject(n).files{1});
-		fim = fopen(subject(n).files{1}, 'r', 'b');
-		y = fread(fim, 'float32=>single');
-		fclose(fim);
+	    y = g_Read4DFP(subject(n).files{1}, 'single');
 		nframes = size(y,1)/(48*48*64);
 		y = reshape(y, 48*48*64, nframes);
 		y = y(:,startframe:end);
