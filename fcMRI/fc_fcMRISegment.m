@@ -10,7 +10,7 @@ function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)
 %   tmask   - .names file for target mask roi definition
 %   mask    - either number of frames to omit or a mask of frames to use [0]
 %   root    - the root of the filename where results are to be saved [flist]
-%   options - whether to use raw or absolute correlations [raw]
+%   options - whether to use raw, absolute or partial correlations [raw]
 %   verbose - whether to report the progress full, script, none [none]
 %
 %	output

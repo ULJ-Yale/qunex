@@ -7,7 +7,7 @@ function [obj] = mri_fcMRISegment(obj, smask, tmask, options, verbose)
 %	obj     - bold image to use for segmentation
 %   smask   - source mask defining voxels to be segmented
 %   tmask   - target mask defining ROI to correlate source voxels with
-%   options - should we use absolute or raw correlations for WTA [raw]
+%   options - should we use absolute, raw or partial correlations for WTA [raw]
 %   verbose - should it talk a lot [no]
 %
 %   Returns WTA results and correlations with each target ROI.
@@ -50,8 +50,10 @@ for n = 1:ntargets
     tdata(n,:) = mean(obj.data(ismember(tmask.data, n),:),1);
 end
 
-tdata = zscore(tdata, 0, 2);
-tdata = tdata ./ sqrt(obj.frames -1);
+if ~strfind(options, 'partial')
+    tdata = zscore(tdata, 0, 2);
+    tdata = tdata ./ sqrt(obj.frames -1);
+end
 tdata = tdata';
 
 % ---- prepare source and results data
@@ -64,7 +66,7 @@ if ~obj.masked
     end
 end
 
-if ~obj.correlized    
+if (~obj.correlized) & (~strfind(options, 'partial'))
     obj = obj.correlize;
 end
 
@@ -77,9 +79,13 @@ data = obj.data;
 
 if verbose, fprintf('\n... %d source voxels, %d target ROI over %d frames to process ', obj.voxels, ntargets, obj.frames), end
 
-results(:,2:ntargets+1) = obj.data * tdata;
+if strfind(options, 'partial')
+    results(:,2:ntargets+1) = s_PartialCorrMat(obj.data', tdata, verbose);
+else 
+    results(:,2:ntargets+1) = obj.data * tdata;
+end
 
-if strcmp(options, 'absolute')
+if strfind(options, 'absolute')
     results = abs(results);
 end
 
