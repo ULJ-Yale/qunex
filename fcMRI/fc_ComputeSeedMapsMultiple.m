@@ -221,6 +221,11 @@ for n = 1:nsub
 		    rmask = ismember(roi1,roicode1{m}) & ismember(roi2,roicode2{m});
 		end
 		
+		if sum(sum(sum(rmask))) == 0
+			fprintf(' ERROR: seed region has 0 voxels! Skipping computation.');
+			continue
+		end
+		
 		x = mean(y(rmask,:),1)';
 
 		% ------------------------> compute correlation
