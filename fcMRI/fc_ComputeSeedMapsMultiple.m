@@ -127,8 +127,9 @@ g_fz_img = zeros(48*48*64,nsub,nroi);
 if strcmp('none',roif1)
     roi1 = ones(48*48*64,1);
 else
-    roi1 = g_Read4DFP(roif1, 'int8');
+    roi1 = g_Read4DFP(roif1, 'single');
     if ~roi1
+    	fprintf('\nERROR: Something wrong with %s. Aborting!', roif1);
     	return
     end
 end
