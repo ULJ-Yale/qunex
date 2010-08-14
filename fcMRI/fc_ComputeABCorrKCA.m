@@ -175,7 +175,7 @@ for s = 1:nsubjects
     if indiv
         data = fc_Fisher(ABCor.image2D');
         CA = sROI.maskimg(sROI);
-        Cent = tROI.maskimg(sROI);
+        Cent = tROI.maskimg(tROI);
         
         for c = 1:length(nc)
             k = nc(c);
