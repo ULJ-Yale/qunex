@@ -107,6 +107,7 @@ end
 segs = template.zeroframes(nsubjects);
 gseg = template.zeroframes(nroi+1);
 gcorr = template.zeroframes(nroi+1);
+gZ = template.zeroframes(nroi+1);
 
 clear('template');
 clear('tROI');
@@ -152,18 +153,31 @@ for r = 1:nroi
     fname = [root '_corr_' segs.roi.roinames{r}];
     if script, fprintf('\n... %s', fname), end
     corrs(r).mri_saveimage(fname);
-    gcorr.data(:,r+1) = fc_FisherInv(mean(fc_Fisher(corrs(r).data),2));
+    
+    f = fc_Fisher(corrs(r).data);
+    gcorr.data(:,r+1) = fc_FisherInv(mean(f,2));
+    
+    [h, p] = ttest(f, 0, 0.05, 'both', 2);
+    Z = icdf('Normal', (1-(p/2)), 0, 1);
+    gZ.data(:,r+1) = Z .* sign(mean(f, 2));
+    
     gseg.data(:,r+1) = sum(ismember(segs.data,r),2)./nsubjects;
 end
 
 [G gcorr.data(:,1)] = max(gcorr.data(:,2:nroi+1),[],2);
 gcorr.data(G==0) = 0;
 
+[G gZ.data(:,1)] = max(gZ.data(:,2:nroi+1),[],2);
+gZ.data(G==0) = 0;
+
 [G gseg.data(:,1)] = max(gseg.data(:,2:nroi+1),[],2);
 gseg.data(G==0) = 0;
 
 if script, fprintf('\n... %s', [root '_gcorr']), end
 gcorr.mri_saveimage([root '_gcorr']);
+
+if script, fprintf('\n... %s', [root '_gZ']), end
+gZ.mri_saveimage([root '_gZ']);
 
 if script, fprintf('\n... %s', [root '_gseg']), end
 gseg.mri_saveimage([root '_gseg']);
