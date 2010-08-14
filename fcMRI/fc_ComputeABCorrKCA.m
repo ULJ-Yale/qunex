@@ -1,4 +1,4 @@
-function [] = fc_ComputeABCorrKCA(flist, smask, tmask, mask, root, options, nc, verbose)
+function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, verbose)
 
 %function [] = fc_ComputeABCorrKCA(flist, smask, tmask, verbose)
 %	
@@ -24,23 +24,23 @@ function [] = fc_ComputeABCorrKCA(flist, smask, tmask, mask, root, options, nc, 
 %
 % 	Copyright (c) 2010. All rights reserved.
 
-
-if nargin < 7
+if nargin < 8
     verbose = none;
-    if nargin < 6
+    if nargin < 7
         options = 'raw';
-        if nargin < 5
+        if nargin < 6
             [ps, root, ext, v] = fileparts(root);
             root = fullfile(ps, root);
-            if nargin < 4
+            if nargin < 5
                 mask = [];
-                if nargin < 3
-                    error('ERROR: At least file list, source and target masks must be specified to run fc_ComputeABCorr!');
+                if nargin < 4
+                    error('ERROR: At least file list, source and target masks and number of clusters must be specified to run fc_ComputeABCorrKCA!');
                 end
             end
         end
     end
 end
+
 
 if strcmp(verbose, 'full')
     script = true;
@@ -173,19 +173,24 @@ for s = 1:nsubjects
     ABCor = img.mri_ComputeABCor(sROI,tROI, method);
     
     if indiv
-        if script, fprintf('\n... computing iCA solution'), end
-        ifile = [root '_' subject(s).id '_k' num2str(nc)];
         data = fc_Fisher(ABCor.image2D');
-        
         CA = sROI.maskimg(sROI);
         Cent = tROI.maskimg(sROI);
-        Cent = Cent.zeroframes(nc);
-        [CA.data Cent.data] = kmeans(data, nc, 'distance', 'correlation', 'replicates', 10);
-        Cent.data = Cent.data';
         
-        if script, fprintf('\n... saving %s\n', ifile); end
-        CA.mri_saveimage(ifile);
-        Cent.mri_saveimage([ifile '_cent']);
+        for c = 1:length(nc)
+            k = nc(c);
+
+            if script, fprintf('\n... computing %d iCA solution', k), end
+            ifile = [root '_' subject(s).id '_k' num2str(k)];
+            
+            Cent = Cent.zeroframes(k);
+            [CA.data Cent.data] = kmeans(data, k, 'distance', 'correlation', 'replicates', 10);
+            Cent.data = Cent.data';
+        
+            if script, fprintf('\n... saving %s\n', ifile); end
+            CA.mri_saveimage(ifile);
+            Cent.mri_saveimage([ifile '_cent']);
+        end
     end
     
     if group
@@ -208,16 +213,21 @@ if group
     end
     
     gres.data = gres.data ./ repmat(gcnt.data,1,nframes);
-    
     CA = sROI.maskimg(sROI);
     Cent = tROI.maskimg(sROI);
-    Cent = Cent.zeroframes(nc);
-    [CA.data Cent.data] = kmeans(gres.data', nc, 'distance', 'correlation', 'replicates', 10);
-    Cent.data = Cent.data';
     
-    if script, fprintf('\n... saving %s\n', ifile); end
-    CA.mri_saveimage([root '_group_k' num2str(nc)]);
-    Cent.mri_saveimage([root '_group_k' num2str(nc) '_cent']);
+    for c = 1:length(nc)
+        k = nc(c);
+        if script, fprintf(' k: %d', k), end
+        
+        Cent = Cent.zeroframes(k);
+        [CA.data Cent.data] = kmeans(gres.data', k, 'distance', 'correlation', 'replicates', 10);
+        Cent.data = Cent.data';
+    
+        if script, fprintf('\n... saving %s\n', ifile); end
+        CA.mri_saveimage([root '_group_k' num2str(k)]);
+        Cent.mri_saveimage([root '_group_k' num2str(k) '_cent']);
+    end
 end
 
 
