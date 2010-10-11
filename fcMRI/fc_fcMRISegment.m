@@ -167,7 +167,7 @@ end
 [G gcorr.data(:,1)] = max(gcorr.data(:,2:nroi+1),[],2);
 gcorr.data(G==0) = 0;
 
-[G gZ.data(:,1)] = max(gZ.data(:,2:nroi+1),[],2);
+[X gZ.data(:,1)] = max(gZ.data(:,2:nroi+1),[],2);
 gZ.data(G==0) = 0;
 
 [G gseg.data(:,1)] = max(gseg.data(:,2:nroi+1),[],2);
