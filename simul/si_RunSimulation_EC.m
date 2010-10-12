@@ -1,6 +1,6 @@
-function [cors] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
+function [cors, sim] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
 
-%	function [ts, r] = si_GenerateCorrelatedTimeseries(r, len)
+%	function [cors, runs] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
 %	
 %   Function that generates multi normal timeseries with specified correlations
 %
@@ -13,6 +13,7 @@ function [cors] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
 %
 %   Outputs
 %       - cors      matrix with actual and estimated correlations for each model
+%       - sim       array with actual simulation data
 %	
 % 	Created by Grega Repovš on 2010-10-09.
 %	
@@ -26,6 +27,16 @@ if nargin < 5
         end
     end
 end
+
+savesim = false;
+if nargout > 1
+    savesim = true;
+    sim.timepoints = timepoints;
+    sim.nruns      = nruns;
+    sim.k          = k;
+    sim.r          = r;
+end
+
 
 % ---- key variables
 
@@ -52,7 +63,9 @@ for n = 1:nmodels
     models(n).X    = X;
     models(n).mlen = mlen;
 end
-
+if savesim
+    sim.models = models;
+end
 
 % ---- run the main loop
 
@@ -105,6 +118,15 @@ for s = 1:nruns
             ts = si_ExtractEventTimepoints(models(m).trials(c).TR, res, models(m).trials(c).eventlist, timepoints);
             er = corr(ts);
             cors(s, c, m+1) = er(1, 2);
+            sim.runs(s).models(m).c(c).ts = ts;
+        end
+        
+        % --- save simulation data if asked
+        
+        if savesim
+            sim.runs(s).models(m).bold = y;
+            sim.runs(s).models(m).B    = B;
+            sim.runs(s).models(m).res  = res;
         end
     end
 end

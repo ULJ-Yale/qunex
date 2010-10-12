@@ -1,4 +1,4 @@
-function [ts, hrf, tso] = si_GenerateTimeseries(TR, eventlist, model, modeldata)
+function [ts, hrf, tso, te] = si_GenerateTimeseries(TR, eventlist, model, modeldata)
 
 %	function [ts] = si_GenerateTimeseries(TR, eventlist, model)
 %	
@@ -77,18 +77,18 @@ end
 
 eventlist(:,1:2) = round(eventlist(:,1:2)*10);
 
-nevents = size(eventlist,1);
+nevents  = size(eventlist,1);
 tslength = sum(eventlist(nevents, 1:2))+length(hrf);
-ts = zeros(tslength, 1);
+te       = zeros(tslength, 1);
 
 for n = 1:nevents
-    ts(eventlist(n,1):eventlist(n,1)+eventlist(n,2)-1,1) = eventlist(n,3);
+    te(eventlist(n,1):eventlist(n,1)+eventlist(n,2)-1,1) = eventlist(n,3);
 end
 
 % ---- convolve with hrf and downsample to TR size
 
 
-tso = conv(ts, hrf);
+tso = conv(te, hrf);
 ts = resample(tso, 1, round(TR*10),0);
 
 
