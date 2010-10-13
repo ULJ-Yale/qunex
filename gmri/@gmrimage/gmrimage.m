@@ -30,6 +30,7 @@ classdef gmrimage
     properties
         data
         imageformat
+        mformat
         hdrnifti        = [];
         hdr4dfp         = [];
         dim
@@ -93,7 +94,7 @@ classdef gmrimage
                 obj = obj.mri_Read4DFP(filename, dtype, frames);
                 obj.empty = false;
             elseif strcmp(filename(length(filename)-3:end), '.nii') | strcmp(filename(length(filename)-6:end), '.nii.gz') | strcmp(filename(length(filename)-3:end), '.hdr')
-                obj = obj.mri_ReadNIfTI(filename, frames);
+                obj = obj.mri_ReadNIfTI(filename, dtype, frames);
                 obj.empty = false;
             else
                 error('ERROR: Unknown file format!');
@@ -111,7 +112,9 @@ classdef gmrimage
         
             switch obj.imageformat
                 case '4dfp'
-                    mri_Save4DFP(obj, filename);
+                    obj.mri_Save4DFP(filename);
+                case 'NIfTI'
+                    obj.mri_SaveNIfTI(filename);
             end
         end
         
@@ -128,10 +131,7 @@ classdef gmrimage
             obj.data   = obj.data(:,frame);
             obj.frames = size(obj.data,2);
             
-            switch obj.imageformat
-                case '4dfp'
-                    mri_Save4DFP(obj, filename);
-            end
+            mri_saveimage(obj, filename);
         end
         
         
