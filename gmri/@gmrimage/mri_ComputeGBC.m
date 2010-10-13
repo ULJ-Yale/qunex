@@ -1,4 +1,4 @@
-function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose)
+function [obj, commands] = mri_ComputeGBCp(obj, command, fmask, mask, verbose)
 
 %	
 %	Computes whole brain GBC based on specified mask and command string
@@ -8,7 +8,8 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose)
 %   command - string describing GBC to compute
 %   verbose - should it talk a lot [no]
 %
-%   Grega Repovš, 2009-11-08
+%   Grega Repovš, 2009-11-08 - Original version
+%   Grega Repovš, 2010-10-13 - Version with multiple voxels at a time
 %
 
 if nargin < 5
@@ -55,18 +56,35 @@ obj.data = obj.image2D;
 % ---- do the loop
 
 voxels = obj.voxels;
-data = obj.data;
+data   = obj.data;
+%vstep  = floor(56250/obj.frames);    % optimal matrix size : 5625000
+vstep  = 22500;
+cstep  = vstep;
+nsteps = floor(voxels/vstep);
+lstep  = mod(voxels,vstep);
 
-if verbose, fprintf('\n... %d voxels & %d frames to process\n... computing GBC for voxel:        1', voxels, obj.frames), end
+if verbose
+    crange = ['1:' num2str(vstep)];
+    fprintf('\n... %d voxels & %d frames to process in %d steps\n... computing GBC for voxels: %s', voxels, obj.frames, nsteps+1, crange);
+    slen = length(crange);
+end
 
-for n = 1:voxels
+x = data';
 
-    if mod(n,20) == 0
-	    fprintf('\b\b\b\b\b\b\b\b%8d', n);
+for n = 1:nsteps+1
+
+    if n > nsteps, cstep=lstep, end
+    fstart = vstep*(n-1) + 1;
+    fend   = vstep*(n-1) + cstep;
+
+    if verbose
+        crange = [num2str(fstart) ':' num2str(fend)];
+        for c = 1:slen, fprintf('\b'), end
+	    fprintf('%s', crange);
+	    slen = length(crange);
     end
     
-    x = data(n,:)';
-    r = data * x;
+    r = data * x(:,fstart:fend);
     Fz = fc_Fisher(r);
 
     for c = 1:ncommands
@@ -76,25 +94,25 @@ for n = 1:voxels
         switch tcommand
         
             case 'mFz'
-                results(n,c) = mean(Fz);
+                results(fstart:fend,c) = mean(Fz, 1)';
             
             case 'aFz'
-                results(n,c) = mean(abs(Fz));
+                results(fstart:fend,c) = mean(abs(Fz), 1)';
             
             case 'pFz'
-                results(n,c) = mean(Fz(Fz>0));
+                results(fstart:fend,c) = mean(Fz(Fz>0), 1)';
                 
             case 'nFz'
-                results(n,c) = mean(Fz(Fz<0));
+                results(fstart:fend,c) = mean(Fz(Fz<0), 1)';
                 
             case 'pD'
-                results(n,c) = sum(r >= tparameter)/voxels;
+                results(fstart:fend,c) = sum(r >= tparameter, 1)'./voxels;
 
             case 'nD'
-                results(n,c) = sum(r <= -tparameter)/voxels;
+                results(fstart:fend,c) = sum(r <= -tparameter, 1)'./voxels;
                 
             case 'aD'
-                results(n,c) = sum(abs(r) > tparameter)/voxels;
+                results(fstart:fend,c) = sum(abs(r) > tparameter, 1)'./voxels;
         end
     
     end
