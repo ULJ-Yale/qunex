@@ -32,7 +32,7 @@ end
 % ---- parse command
 
 if verbose, fprintf('\n\nStarting GBC on %s', obj.filename), end
-commands = parseCommand(command);
+commands  = parseCommand(command);
 ncommands = length(commands);
 
 % ---- prepare data
@@ -58,7 +58,7 @@ obj.data = obj.image2D;
 voxels = obj.voxels;
 data   = obj.data;
 %vstep  = floor(56250/obj.frames);    % optimal matrix size : 5625000
-vstep  = 22500;
+vstep  = 25500;
 cstep  = vstep;
 nsteps = floor(voxels/vstep);
 lstep  = mod(voxels,vstep);
@@ -73,7 +73,7 @@ x = data';
 
 for n = 1:nsteps+1
 
-    if n > nsteps, cstep=lstep, end
+    if n > nsteps, cstep=lstep; end
     fstart = vstep*(n-1) + 1;
     fend   = vstep*(n-1) + cstep;
 
@@ -85,7 +85,7 @@ for n = 1:nsteps+1
     end
     
     r = data * x(:,fstart:fend);
-    Fz = fc_Fisher(r);
+    doFz = true;
 
     for c = 1:ncommands
         tcommand   = commands(c).command;
@@ -94,15 +94,19 @@ for n = 1:nsteps+1
         switch tcommand
         
             case 'mFz'
+            	if doFz, Fz = fc_Fisher(r); doFz = false; end
                 results(fstart:fend,c) = mean(Fz, 1)';
             
             case 'aFz'
+            	if doFz, Fz = fc_Fisher(r); doFz = false; end
                 results(fstart:fend,c) = mean(abs(Fz), 1)';
             
             case 'pFz'
+            	if doFz, Fz = fc_Fisher(r); doFz = false; end
                 results(fstart:fend,c) = mean(Fz(Fz>0), 1)';
                 
             case 'nFz'
+            	if doFz, Fz = fc_Fisher(r); doFz = false; end
                 results(fstart:fend,c) = mean(Fz(Fz<0), 1)';
                 
             case 'pD'

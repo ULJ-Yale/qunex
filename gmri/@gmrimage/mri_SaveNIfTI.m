@@ -22,6 +22,7 @@ end
 % unpack and set up
 
 img = img.unmaskimg;
+img.hdrnifti.dim(5) = img.frames;
 
 root = strrep(filename, '.hdr', '');
 root = strrep(root, '.nii', '');
