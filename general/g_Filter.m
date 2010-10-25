@@ -50,7 +50,7 @@ if hp_sigma
     sCf = sum(C);
     denom = sCf*sum(hp_exp) - sAf^2;
     
-    if verbose, fprintf('hipass frame    ') end
+    if verbose, fprintf('hipass frame    '), end
     first = true;
     c0 = zeros(nvox,1);
     for t = 1:len
@@ -83,7 +83,7 @@ if hp_sigma
             tmp(:,t+lp_mask) = in(:,t);
         end
     end
-    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
+    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\n'), end
 else
     tmp(:,lp_mask+1:len+lp_mask) = in;
 end
@@ -105,7 +105,7 @@ if lp_sigma
         if verbose, fprintf('\b\b\b\b\b\b\b%3d',t), end
         out(:,t) = sum(tmp(:,t:t+2*lp_mask).*w,2);
     end
-    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
+    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\n'), end
 else
     out = tmp;
 end
