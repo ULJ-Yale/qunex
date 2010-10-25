@@ -1,11 +1,14 @@
-function [out] = g_Filter(in, hp_sigma, lp_sigma)
+function [out] = g_Filter(in, hp_sigma, lp_sigma, verbose)
 
 
 
 %------- Check input
 
-if nargin < 3
-    lp_sigma = 0;
+if nargin < 4
+    verbose = false;
+    if nargin < 3
+        lp_sigma = 0;
+    end
 end
 
 [nvox, len] = size(in);
@@ -47,11 +50,11 @@ if hp_sigma
     sCf = sum(C);
     denom = sCf*sum(hp_exp) - sAf^2;
     
-    fprintf('hipass frame    ');
+    if verbose, fprintf('hipass frame    ') end
     first = true;
     c0 = zeros(nvox,1);
     for t = 1:len
-        fprintf('\b\b\b%3d',t);
+        if verbose, fprintf('\b\b\b\b\b\b\b%7d',t), end
         
         bot = max([t-hp_mask, 1]);
         top = min([t+hp_mask, len]);
@@ -80,7 +83,7 @@ if hp_sigma
             tmp(:,t+lp_mask) = in(:,t);
         end
     end
-    fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b')
+    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
 else
     tmp(:,lp_mask+1:len+lp_mask) = in;
 end
@@ -97,12 +100,12 @@ if lp_sigma
     end
     
     w = repmat(lp_exp, nvox,1);
-    fprintf('lopass frame    ');
+    if verbose, fprintf('lopass frame    '), end
     for t = 1:len
-        fprintf('\b\b\b%3d',t);
+        if verbose, fprintf('\b\b\b\b\b\b\b%3d',t), end
         out(:,t) = sum(tmp(:,t:t+2*lp_mask).*w,2);
     end
-    fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b')
+    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
 else
     out = tmp;
 end
