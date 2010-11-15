@@ -1,31 +1,35 @@
-function [] = fc_ComputeGBC3(flist, command, mask, verbose)
+function [] = fc_ComputeGBC3(flist, command, mask, verbose, target)
 
 %	
 %	fc_ComputeGBC
 %	
 %	Computes GBC maps for individuals as well as group maps.
 %	
-%	flist   	- conc style list of subject image files or conc files, header row, one subject per line
+%	flist   	- conc-like style list of subject image files or conc files: 
+%                  subject id:<subject_id>
+%                  roi:<path to the individual's ROI file>
+%                  file:<path to bold files - one per line>
+%   commant     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD
+%                  <type of gbc>:<threshold>|<type of gbc>:<threshold> ...
 %	mask		- an array mask defining which frames to use (1) and which not (0)
-%	options		- a string defining which subject files to save
-%       - undefined
-%	tagetf		- the folder to save images in
-%
-%	It saves group files:
-%		-unspecified
+%	verbose		- report what is going on
+%   target      - array of ROI codes that define target ROI [default: FreeSurfer cortex codes]
 %	
 % 	Created by Grega Repovš on 2009-11-04.
+% 	Modified by Grega Repovš on 2010-11-16.
 %
 % 	Copyright (c) 2009. All rights reserved.
 
-target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97];
-thr = 0.17;
+
 fprintf('\n\nStarting ...');
 
-if nargin < 4
-    verbose = false;
-    if nargin < 3
-        mask = [];
+if nargin < 5
+    target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97];
+    if nargin < 4
+        verbose = false;
+        if nargin < 3
+            mask = [];
+        end
     end
 end
 
