@@ -9,7 +9,7 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target)
 %                  subject id:<subject_id>
 %                  roi:<path to the individual's ROI file>
 %                  file:<path to bold files - one per line>
-%   commant     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD
+%   command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD
 %                  <type of gbc>:<threshold>|<type of gbc>:<threshold> ...
 %	mask		- an array mask defining which frames to use (1) and which not (0)
 %	verbose		- report what is going on
@@ -84,7 +84,7 @@ for s = 1:nsubjects
     
     %   --- reading in image files
     tic; 
-	fprintf('\n ... processing %s', subject(n).id);
+	fprintf('\n ... processing %s', subject(s).id);
 	fprintf('\n     ... reading image file(s) ');
 
 	y = [];
@@ -92,12 +92,12 @@ for s = 1:nsubjects
 	nfiles = length(subject(s).files);
 	
 	img = gmrimage(subject(s).files{1});
-	img = img.sliceframes(mask);
+	if mask, img = img.sliceframes(mask); end
 	fprintf('1');
 	if nfiles > 1
     	for n = 2:nfiles
     	    new = gmrimage(subject(s).files{n});
-    	    new = new.sliceframes(mask);
+    	    if mask, new = new.sliceframes(mask); end
     	    img = [img new];
     	    fprintf(', %d', n);
         end
