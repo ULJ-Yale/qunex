@@ -1,4 +1,4 @@
-function [obj, commands] = mri_ComputeGBCp(obj, command, fmask, mask, verbose)
+function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose)
 
 %	
 %	Computes whole brain GBC based on specified mask and command string
@@ -31,7 +31,7 @@ end
 
 % ---- parse command
 
-if verbose, fprintf('\n\nStarting GBC on %s', obj.filename), end
+if verbose, fprintf('\n\nStarting GBC on %s', obj.filename), tic, end
 commands  = parseCommand(command);
 ncommands = length(commands);
 
@@ -58,7 +58,7 @@ obj.data = obj.image2D;
 voxels = obj.voxels;
 data   = obj.data;
 %vstep  = floor(56250/obj.frames);    % optimal matrix size : 5625000
-vstep  = 25500;
+vstep  = 25000;
 cstep  = vstep;
 nsteps = floor(voxels/vstep);
 lstep  = mod(voxels,vstep);
@@ -122,7 +122,7 @@ for n = 1:nsteps+1
     end
 end
 
-if verbose, fprintf('\n... done!'), end
+if verbose, fprintf('\n... done! [%.3f s]', toc), end
 
 obj.data = results;
 obj.info = command;
