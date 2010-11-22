@@ -1,7 +1,7 @@
-function [snr, sd] = g_ComputeSNRGroup(flist, target, fmask)
+function [snr, sd] = g_ComputeSNRGroup(flist, target, fmask, verbose)
 
 %	
-%	function [snr, sd] = g_ComputeSNRGroup(flist, fmask target)
+%	function [snr, sd] = g_ComputeSNRGroup(flist, fmask, target, verbose)
 %	
 %	Computes SNR and SD for the whole group.
 %	
@@ -11,65 +11,32 @@ function [snr, sd] = g_ComputeSNRGroup(flist, target, fmask)
 %                  file:<path to bold files - one per line>
 %	mask		- an array mask defining which frames to use (1) and which not (0)
 %   target      - file to save results into
+%	verbose		- to report on progress or not [not]
 %	
 % 	Created by Grega Repovš on 2010-11-22.
 % 	Modified by Grega Repovš on 2010-11-23.
 %
-% 	Copyright (c) 2010. All rights reserved.
+% 	Copyright (c) 2010 Grega Repovs. All rights reserved.
 
-
-fprintf('\n\nStarting ...');
-
-if nargin < 3
-    target = [];
-    if nargin < 2
-    	mask = [];
-    end
+if nargin < 4
+	verbose = false;
+	if nargin < 3
+	    target = [];
+	    if nargin < 2
+	    	mask = [];
+	    end
+	end
 end
 
+% ======= Run main
 
-%   ------------------------------------------------------------------------------------------
-%   -------------------------------------------------- make a list of all the files to process
+if verbose, fprintf('\n\nStarting ...'); end
 
-fprintf('\n ... listing files to process');
+[subject nsubjects nallfiles] = g_ReadFileList(flist, verbose);
 
-files = fopen(flist);
-c = 0;
-af = 0;
-while feof(files) == 0
-    s = fgetl(files);
-    if ~isempty(strfind(s, 'subject id:'))
-        c = c + 1;
-        [t, s] = strtok(s, ':');        
-        subject(c).id = strtrim(s(2:end));
-        nf = 0;
-    elseif ~isempty(strfind(s, 'roi:'))
-        [t, s] = strtok(s, ':');        
-        subject(c).roi = strtrim(s(2:end));
-        g_CheckFile(subject(c).roi);
-    elseif ~isempty(strfind(s, 'file:'))
-        nf = nf + 1;
-        af = af + 1;
-        [t, s] = strtok(s, ':');        
-        subject(c).files{nf} = strtrim(s(2:end));
-        g_CheckFile(s(2:end));        
-    end
-end
-
-
-fprintf(' ... done.');
-
-
-%   ------------------------------------------------------------------------------------------
-%   -------------------------------------------- The main loop ... go through all the subjects
-
-%   --- Get variables ready first
-
-
-nsubjects = length(subject);
-snr = zeros(af,1);
-sd  = zeros(af,1);
-[path, fname] = fileparts(flist);
+snr = zeros(nallfiles,1);
+sd  = zeros(nallfiles,1);
+[~, fname] = fileparts(flist);
 fout = fopen(fullfile(target, [fname '_SNR_report.txt']), 'w');
 fprintf(fout, 'image\tSNR\tSD\n');
 
@@ -78,7 +45,7 @@ for s = 1:nsubjects
     
     %   --- reading in image files
     tic; 
-	fprintf('\n ... processing %s', subject(s).id);
+	if verbose, fprintf('\n ... processing %s', subject(s).id); end
 	
 	nfiles = length(subject(s).files);
 	for n = 1:nfiles
@@ -90,3 +57,5 @@ for s = 1:nsubjects
 end
 
 fclose(fout);
+
+if verbose, fprintf('\n ... Finished.'); end

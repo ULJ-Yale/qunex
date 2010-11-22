@@ -1,4 +1,4 @@
-function [subjects, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
+function [subject, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
 
 %	
 %	function [subjects, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
@@ -21,7 +21,7 @@ if nargin < 2
     verbose = false;
 end
 
-if verbose, fprintf('\n ... reading file list '); end
+if verbose, fprintf('\n ... reading file list: '); end
 
 files     = fopen(flist);
 nsubjects = 0;
@@ -33,18 +33,18 @@ while feof(files) == 0
         nsubjects = nsubjects + 1;
         nf = 0;
         [t, s] = strtok(s, ':');        
-        subject(c).id = strtrim(s(2:end));
+        subject(nsubjects).id = strtrim(s(2:end));
         if verbose, fprintf('S'); end
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');        
-        subject(c).roi = strtrim(s(2:end));
-        g_CheckFile(subject(c).roi);
+        subject(nsubjects).roi = strtrim(s(2:end));
+        g_CheckFile(subject(nsubjects).roi);
         if verbose, fprintf('r'); end
     elseif ~isempty(strfind(s, 'file:'))
         nf = nf + 1;
         nfiles = nfiles + 1;
         [t, s] = strtok(s, ':');        
-        subject(c).files{nf} = strtrim(s(2:end));
+        subject(nsubjects).files{nf} = strtrim(s(2:end));
         g_CheckFile(s(2:end));      
         if verbose, fprintf('f'); end  
     end

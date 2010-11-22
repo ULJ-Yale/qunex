@@ -11,23 +11,37 @@ function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slic
 %		- target	: target folder for the figure
 %       - slice		: vector of the two dimensions that define a slice
 %		- fname		: the name to use when saving file
-%		
+%
+%	Output
+%		- snr		: mean slice snr
+%		- sd		: std of mean whole brain volume signal over the run
+%		- slicesnr	: array of snr values for each slice
+%
+%	Created by Grega Repovs 2010-11-21
+%	Modified by Grega Repovs 2010-11-22
+%
+% 	Copyright (c) 2010 Grega Repovs. All rights reserved.
+%
 
-if nargin < 6
-	fname = filename;
-	if nargin < 5
-		slice = [];
-		if nargin < 4
-			target = '';
-			if nargin < 3
-				fmask = false;
-				if nargin < 2
-					imask = false;
+	if nargin < 6
+		fname = [];
+		if nargin < 5
+			slice = [];
+			if nargin < 4
+				target = '';
+				if nargin < 3
+					fmask = false;
+					if nargin < 2
+						imask = false;
+					end
 				end
 			end
 		end
-	end
-end	
+	end		
+
+if isempty(fname)
+	fname = filename;
+end
 
 %  ---- loading data
 
