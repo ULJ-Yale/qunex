@@ -1,6 +1,6 @@
-function [snr, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
+function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
 
-%function [snr, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
+%function [snr, sd, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
 %	
 %   Computes SNR for the given image.
 %
@@ -95,6 +95,11 @@ mask.mri_saveimage(fullfile(target, [fname '_mask']));
 
 slicesnr = snr;
 snr = mean(snr(~isnan(snr)));
+
+m = mean(img.image2D,1);
+sd = std(m, 0, 2);
+
+
 
 
 

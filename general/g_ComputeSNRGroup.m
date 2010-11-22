@@ -1,9 +1,9 @@
-function [snr] = g_ComputeSNRGroup(flist, target, fmask)
+function [snr, sd] = g_ComputeSNRGroup(flist, target, fmask)
 
 %	
-%	function [snr] = g_ComputeSNRGroup(flist, fmask target)
+%	function [snr, sd] = g_ComputeSNRGroup(flist, fmask target)
 %	
-%	Computes SNR for the whole group.
+%	Computes SNR and SD for the whole group.
 %	
 %	flist   	- conc-like style list of subject image files or conc files: 
 %                  subject id:<subject_id>
@@ -12,7 +12,8 @@ function [snr] = g_ComputeSNRGroup(flist, target, fmask)
 %	mask		- an array mask defining which frames to use (1) and which not (0)
 %   target      - file to save results into
 %	
-% 	Modified by Grega Repovš on 2010-11-22.
+% 	Created by Grega Repovš on 2010-11-22.
+% 	Modified by Grega Repovš on 2010-11-23.
 %
 % 	Copyright (c) 2010. All rights reserved.
 
@@ -40,17 +41,17 @@ while feof(files) == 0
     if ~isempty(strfind(s, 'subject id:'))
         c = c + 1;
         [t, s] = strtok(s, ':');        
-        subject(c).id = s(2:end);
+        subject(c).id = strtrim(s(2:end));
         nf = 0;
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');        
-        subject(c).roi = s(2:end);
+        subject(c).roi = strtrim(s(2:end));
         g_CheckFile(subject(c).roi);
     elseif ~isempty(strfind(s, 'file:'))
         nf = nf + 1;
         af = af + 1;
         [t, s] = strtok(s, ':');        
-        subject(c).files{nf} = s(2:end);
+        subject(c).files{nf} = strtrim(s(2:end));
         g_CheckFile(s(2:end));        
     end
 end
@@ -67,9 +68,10 @@ fprintf(' ... done.');
 
 nsubjects = length(subject);
 snr = zeros(af,1);
+sd  = zeros(af,1);
 [path, fname] = fileparts(flist);
 fout = fopen(fullfile(target, [fname '_SNR_report.txt']), 'w');
-fprintf(fout, 'image\tSNR\n');
+fprintf(fout, 'image\tSNR\tSD\n');
 
 c = 1;
 for s = 1:nsubjects
@@ -80,8 +82,8 @@ for s = 1:nsubjects
 	
 	nfiles = length(subject(s).files);
 	for n = 1:nfiles
-		snr(c) = g_ComputeSNR(subject(s).files{n}, [], fmask, target, [], [subject(s).id '_file_' num2str(n)]);
-		fprintf(fout, '%s\t%.3f\n', subject(s).files{n}, snr(c));
+		[snr(c) sd(c)] = g_ComputeSNR(subject(s).files{n}, [], fmask, target, [], [subject(s).id '_file_' num2str(n)]);
+		fprintf(fout, '%s\t%.3f\t%.3f\n', subject(s).files{n}, snr(c), sd(c));
 		c = c +1;
 	end
 
