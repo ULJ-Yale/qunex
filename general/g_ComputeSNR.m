@@ -1,27 +1,101 @@
-function [] = g_ComputeSNR(filename, slice)
+function [snr, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
 
-%function [] = g_ComputeSNR(filename, slice)
+%function [snr, slicesnr] = g_ComputeSNR(filename, imask, fmask, target, slice, fname)
 %	
 %   Computes SNR for the given image.
 %
 %   Input
-%       - filename: the filename of the image
-%       - slice:    the slice to compute over
+%       - filename	: the filename of the image
+%		- imask		: mask that defines voxels to compute snr over 
+%		- fmask		: which frames to use / skip
+%		- target	: target folder for the figure
+%       - slice		: vector of the two dimensions that define a slice
+%		- fname		: the name to use when saving file
 %		
 
-%  ---- initializing
+if nargin < 6
+	fname = filename;
+	if nargin < 5
+		slice = [];
+		if nargin < 4
+			target = '';
+			if nargin < 3
+				fmask = false;
+				if nargin < 2
+					imask = false;
+				end
+			end
+		end
+	end
+end	
+
+%  ---- loading data
 
 img = gmrimage(filename);
-img.data = img.image4D;
+img.data = img.image2D;
+[path, fname] = fileparts(fname);
 
-m = squeeze(mean(mean(img.data,1),2));
+%  ---- masking
+
+if fmask
+	img = img.sliceframes(fmask);
+end
+
+if imask
+	mask = gmrimage(imask);
+	mask.data = mask.image4D > 0;
+else
+	tm = zeros(img.frames,1);
+	tm(1) = 1;
+	mask = img.sliceframes(tm);
+	mask.data = mask.image4D > 500;
+end
+
+nslices = img.dim(3);
+m = zeros(nslices, img.frames);
+smask = mask;
+smask.data(:,:,:) = 0;
+
+for n = 1:nslices
+	tmask = smask;
+	tmask.data(:,:,n) = 1;
+	tmask.data = tmask.data & mask.data;
+	tmask = tmask.image2D;
+	m(n,:) = mean(img.data(tmask,:),1);
+end
+	
 sd = std(m,0,2);
 m = mean(m,2);
 snr = m./sd;
 
-f = subplot(1,2,1);
+f = figure('visible','off');
+subplot(1,2,1);
 plot(snr);
-f = subplot(1,2,2);
+subplot(1,2,2);
 boxplot(snr);
-print(f, '-noui', '-dpng', [img.rootfilename '_SNR.png']);
+print(f, '-noui', '-dpng', fullfile(target, [fname '_SNR.png']));
+close(f);
+
+img = img.maskimg(mask);
+mask = mask.maskimg(mask);
+
+m = mask;
+m.data = mean(img.image2D,2);
+
+sd = mask;
+sd.data = std(img.image2D,0,2);
+
+msd = mask;
+msd.data = m.data./sd.data;
+
+m.mri_saveimage(fullfile(target, [fname '_mean']));
+sd.mri_saveimage(fullfile(target, [fname '_sd']));
+msd.mri_saveimage(fullfile(target, [fname '_msd']));
+mask.mri_saveimage(fullfile(target, [fname '_mask']));
+
+slicesnr = snr;
+snr = mean(snr(~isnan(snr)));
+
+
+
 

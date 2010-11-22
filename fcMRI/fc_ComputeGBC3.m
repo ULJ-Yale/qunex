@@ -1,4 +1,4 @@
-function [] = fc_ComputeGBC3(flist, command, mask, verbose, target)
+function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf)
 
 %	
 %	fc_ComputeGBC
@@ -14,23 +14,32 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target)
 %	mask		- an array mask defining which frames to use (1) and which not (0)
 %	verbose		- report what is going on
 %   target      - array of ROI codes that define target ROI [default: FreeSurfer cortex codes]
+%	targetf		- target folder for results
 %	
 % 	Created by Grega Repovš on 2009-11-04.
 % 	Modified by Grega Repovš on 2010-11-16.
+% 	Modified by Grega Repovs on 2010-11-22.
 %
 % 	Copyright (c) 2009. All rights reserved.
 
 
 fprintf('\n\nStarting ...');
 
-if nargin < 5
-    target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97];
-    if nargin < 4
-        verbose = false;
-        if nargin < 3
-            mask = [];
-        end
+if nargin < 6
+	targetf = '';
+	if nargin < 5
+   		target = [];
+   	 	if nargin < 4
+        	verbose = false;
+        	if nargin < 3
+        	    mask = [];
+        	end
+    	end
     end
+end
+
+if isempty(target)
+	target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97];
 end
 
 
@@ -119,7 +128,7 @@ end
 
 for c = 1:ncommands
     fname = [root '_gbc_' commands(c).command '_' num2str(commands(c).parameter)];
-    gbc(c).mri_saveimage(fname);
+    gbc(c).mri_saveimage(fullfile(targetf,fname));
 end
 
 %
