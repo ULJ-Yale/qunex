@@ -1,4 +1,4 @@
-function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf)
+function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate)
 
 %	
 %	fc_ComputeGBC
@@ -15,26 +15,36 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf)
 %	verbose		- report what is going on
 %   target      - array of ROI codes that define target ROI [default: FreeSurfer cortex codes]
 %	targetf		- target folder for results
+%   rmsooth     - radius for smoothing (no smoothing if empty)
+%   rdilate     - radius for dilating mask (no dilation if empty)
 %	
 % 	Created by Grega Repovš on 2009-11-04.
 % 	Modified by Grega Repovš on 2010-11-16.
 % 	Modified by Grega Repovs on 2010-11-22.
+% 	Modified by Grega Repovs on 2010-12-01.
+%   - added in script smoothing and dilation
 %
 % 	Copyright (c) 2009. All rights reserved.
 
 
 fprintf('\n\nStarting ...');
 
-if nargin < 6
-	targetf = '';
-	if nargin < 5
-   		target = [];
-   	 	if nargin < 4
-        	verbose = false;
-        	if nargin < 3
-        	    mask = [];
-        	end
-    	end
+if nargin < 8
+    rdilate = []
+    if nargin < 7
+        rsmooth = []
+        if nargin < 6
+        	targetf = '';
+        	if nargin < 5
+           		target = [];
+           	 	if nargin < 4
+                	verbose = false;
+                	if nargin < 3
+                	    mask = [];
+                	end
+            	end
+            end
+        end
     end
 end
 
@@ -114,6 +124,15 @@ for s = 1:nsubjects
     
     imask = gmrimage(subject(s).roi);
     imask = imask.ismember(target);
+    
+    if rsmooth
+        img = img.mri_Smooth3DMasked(imask, rsmooth, rdilate, verbose);
+    end    
+
+    if rdilate
+        imask = imask.mri_GrowROI(rdilate);
+    end
+    
     img = img.maskimg(imask);
     [img commands] = img.mri_ComputeGBC(command, [], [], verbose);
     img = img.unmaskimg();
