@@ -57,7 +57,7 @@ classdef gmrimage
     
     methods
         output = mri_Smooth3D(obj, fwhm, verbose)
-        output = mri_Smooth3DMasked(obj, mask, fwhm, verbose)
+        output = mri_Smooth3DMasked(obj, mask, fwhm, limit, verbose)
     end
     
     methods

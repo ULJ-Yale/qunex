@@ -126,7 +126,8 @@ for s = 1:nsubjects
     imask = imask.ismember(target);
     
     if rsmooth
-        img = img.mri_Smooth3DMasked(imask, rsmooth, rdilate, verbose);
+        limit = ~isempty(rdilate);
+        img = img.mri_Smooth3DMasked(imask, rsmooth, limit, verbose);
     end    
 
     if rdilate

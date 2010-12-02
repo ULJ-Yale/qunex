@@ -1,6 +1,6 @@
 function img = mri_Smooth3DMasked(img, mask, fwhm, limit, verbose)
 
-%	function img = mri_Smooth3DMasked(img, mask, fwhm, verbose)
+%	function img = mri_Smooth3DMasked(img, mask, fwhm, limit, verbose)
 %	
 %	Function for smoothing that takes into account only the voxels
 %	within a specified mask.
