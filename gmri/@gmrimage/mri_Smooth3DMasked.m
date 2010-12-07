@@ -61,7 +61,8 @@ if limit
     smask = repmat(smask.data(mask.data,1), 1, img.frames);
     img.data(mask.data,:) = img.data(mask.data,:) ./ smask;
 else
-    smask = repmat(smask.data, 1, img.frames);
+    img.data = img.image2D;
+    smask = repmat(smask.image2D, 1, img.frames);
     img.data = img.data ./ smask;
 end
 
