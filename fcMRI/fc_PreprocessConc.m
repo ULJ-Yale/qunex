@@ -112,10 +112,13 @@ for b = 1:nbolds
     file(b).fidlfile      = strcat(subjectf, ['/images/functional/events/' efile]);
 
 
-    bnum = int2str(bolds(f));
+    bnum = int2str(bolds(b));
     file(b).froot       = strcat(subjectf, ['/images/functional/bold' bnum]);
     file(b).boldmask    = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask.4dfp.img']);
     file(b).bold1       = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1.4dfp.img']);
+    
+    eroot               = strrep(efile, '.fidl', '');
+    file(b).croot       = strcat(subjectf, ['/images/functional/conc_' eroot]);
     
     file(b).nfile       = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.4dfp.img']);
     file(b).nfilepng    = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.png']);
@@ -169,25 +172,28 @@ for current = do
     
     for b = 1:nbolds
         file(b).sfile = [file(b).froot ext tail];
-        if isempty(ext)
-            ext = variant;
-        end
-        ext   = [ext exts{c}];
+    end
+    if isempty(ext)
+        ext = variant;
+    end
+    ext   = [ext exts{c}];
+    for b = 1:nbolds    
         file(b).tfile = [file(b).froot ext tail];
     end
     
     % --- print info
     
-    fprintf('%s', info{c});
+    fprintf('\n%s\n', info{c});
     
     % --- run tasks that are run on individual bolds
     
-    if ismember(current, ['shl'])
+    if ismember(current, 'shl')
         for b = 1:nbolds
-            fprintf('---> %s', file(b).sfile)
+            fprintf('---> %s ', file(b).sfile)
             
-            if exist(file(b).tfile, 'file') & ~overwrite
-                fprintf(' ... already completed!\n');
+            if exist(file(b).tfile, 'file') && ~overwrite
+                fprintf('... already completed!\n');
+                img(b).empty = true;
             else
                 if img(b).empty
                     img(b) = img(b).mri_readimage(file(b).sfile);
@@ -205,7 +211,7 @@ for current = do
                 end
         
                 img(b).mri_saveimage(file(b).tfile);
-                fprintf(' ... saved!\n');
+                fprintf('... saved!\n');
             end
         end
     end
@@ -213,11 +219,31 @@ for current = do
     % --- run tasks that are run on the joint bolds
     
     if current == 'r'
-        [img coeff] = regressNuisance(img, omit, file, glm);
-        for b = 1:nbolds
-            img(b).mri_saveimage(file(b).tfile);
+        if exist(file(b).tfile, 'file') && ~overwrite
+            fprintf('... already completed!\n');
+            img(b).empty = true;
+        else
+            for b = 1:nbolds
+                if img(b).empty
+                    fprintf('---> reading %s ', file(b).sfile);
+                    img(b) = img(b).mri_readimage(file(b).sfile);
+                    fprintf('... done!\n');
+                end
+            end
+            fprintf('---> running regression ');
+            [img coeff] = regressNuisance(img, omit, file, eventstring, glm);
+            fprintf('... done!\n');
+            for b = 1:nbolds
+                fprintf('---> saving %s ', file(b).tfile);
+                img(b).mri_saveimage(file(b).tfile);
+                fprintf('... done!\n');
+            end
+                
             if docoeff
-                coeff(b).mri_saveimage([file(b).froot ext '_coeff' tail]);
+                cname = [file(b).croot ext '_coeff' tail];
+                fprintf('---> saving %s ', cname);
+                coeff.mri_saveimage(cname);
+                fprintf('... done!\n');
             end
         end
     end
@@ -232,7 +258,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, file, glm)
+function [img coeff] = regressNuisance(img, omit, file, eventstring, glm)
 
     nbolds = length(img);
     frames = zeros(1, nbolds);
@@ -245,6 +271,7 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
         frames(b) = img(b).frames - omit;
     
         %   ----> Create nuisance ROI
+        fprintf(' .');
     
         if strfind(glm.rgss, '1b')
             [V, WB, WM] = firstBoldNuisanceROI(file(b), glm);
@@ -253,7 +280,8 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
         end
     
         %   ----> mask if necessary
-    
+        fprintf('.');
+        
         if ~isempty(file(b).wbmask)
             wbmask = gmrimage.mri_ReadROI(file(b).wbmask, file(b).sbjroi);
             wbmask = wbmask.mri_GrowROI(2);
@@ -262,10 +290,12 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
         end
     
         %   ----> save nuisance masks
-    
+        fprintf('.');
+        
         SaveNuisanceMasks(file(b), WB, V, WM);
     
         %   ----> combine nuisances
+        fprintf('.');
     
         bold(b).nuisance = [];
         
@@ -292,7 +322,8 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
         end
 
         %   ----> if requested, get first derivatives
-
+        fprintf('.');
+        
         if strfind(trgss, 'd')
             d = [zeros(1,size(bold(b).nuisance,2));diff(bold(b).nuisance)];
             bold(b).nuisance = [bold(b).nuisance d];
@@ -301,7 +332,8 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
         bold(b).nuisance = [bold(b).nuisance(omit+1:img(b).frames,:)];
         
         %   ----> prepare baseline and trend parameters
-
+        fprintf('.');
+        
         na = img(b).frames-omit;
         pl = zeros(na,1);
         for n = 1:na
@@ -314,12 +346,14 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
     end
     
     %   ----> create overall task regressors
+    fprintf(' .');
     
     if strfind(glm.rgss, 'e')
         runs = g_CreateTaskRegressors(file(b).fidlfile, frames, eventstring);
     end
 
     %   ----> join base, task and nuisance regressors
+    fprintf('.');
     
     bregs   = size(bold(1).base, 2);
     nregs   = size(bold(1).nuisance, 2);
@@ -327,6 +361,7 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
     nframes = sum(frames);
     
     %   --> case of separate nuisance and task regressors
+    fprintf('.');
     
     if strfind(glm.rgss, 'r1')
         sregs = bregs + nregs + tregs;
@@ -337,7 +372,7 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
             fend   = sum(frames(1:b));
             rstart = sregs * (b-1) + 1;
             rend   = sregs * b;
-            X(fstart:fend,rstart:rend) = [bold(b).base bold(b).nuisance run(b).matrix];
+            X(fstart:fend,rstart:rend) = [bold(b).base bold(b).nuisance runs(b).matrix];
         end
         
     %   --> case of joint nuisance and task regressors
@@ -352,7 +387,7 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
             fend   = sum(frames(1:b));
             rstart = jregs + sregs * (b-1) + 1;
             rend   = jregs + sregs * b;
-            X(fstart:fend,1:jregs) = [bold(b).nuisance run(b).matrix];
+            X(fstart:fend,1:jregs) = [bold(b).nuisance runs(b).matrix];
             X(fstart:fend,rstart:rend) = bold(b).base;
         end
             
@@ -368,32 +403,36 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
             fend   = sum(frames(1:b));
             rstart = jregs + sregs * (b-1) + 1;
             rend   = jregs + sregs * b;
-            X(fstart:fend,1:jregs) = run(b).matrix;
+            X(fstart:fend,1:jregs) = runs(b).matrix;
             X(fstart:fend,rstart:rend) = [bold(b).base bold(b).nuisance];
         end
     end
     
     %   ----> add the additional regressor matrix if present
-
+    fprintf('.');
+       
     if strfind(glm.rgss, 't')
         X = [X task];
     end
 
     %   ----> combine data in a single image
+    fprintf('.');
     
     Y = img(1).zeroframes(nframes);
     
     for b = 1:nbolds
         fstart = sum(frames(1:b-1)) + 1;
         fend   = sum(frames(1:b)); 
-        Y.data(:, fstart:fend) = img(b).data;
+        Y.data(:, fstart:fend) = img(b).data(:,omit+1:end);
     end
 
     %   ----> do GLM
+    fprintf('.');
     
     [coeff res] = Y.mri_GLMFit(X);
     
     %   ----> put data back into images
+    fprintf('.');
     
     for b = 1:nbolds
         fstart = sum(frames(1:b-1)) + 1;
