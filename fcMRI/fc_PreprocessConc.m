@@ -1,0 +1,538 @@
+function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite)
+
+%   (c) Copyright Grega Repovš, 2011-01-24
+%
+%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%   
+%   Inputs
+%       subjectf    - the folder with subjects images and data
+%       bolds       - vector of bold runs in the order of the conc file
+%       do          - which steps to perform and what order
+%           s - 3D spatial smoothing
+%           h - highpass temporal filter
+%           r - regresses out nuisance, optional parameter:
+%               0 - separate nuisance, joint task regressors across runs [default]
+%               1 - separate nuisance, separate task regressors for each run
+%               2 - joint nuisance, joint task regressors across all runs
+%           c - save coefficients in _coeff file
+%           p - saves png image files of nusance ROI mask
+%           l - lowpass temporal filter
+%
+%       TR          - TR of the data [2.5]
+%       omit        - the number of frames to omit at the start of each bold [5]
+%       rgss        - what to regress in the regression step
+%           m  - motion
+%           v  - ventricles
+%           wm - white matter
+%           wb - whole brain
+%           d  - first derivative
+%           t  - task 
+%           e  - events
+%
+%       task        - matrix of custom regressors to be entered in GLM
+%       efile       - event (fild) file to be used for removing task structure [none]
+%       eventstring - a string specifying the events to regress and the regressors to use [none]
+%       variant     - a string to be prepended to files [none]
+%       wbmask      - a mask used to exclude ROI from the whole-brain nuisance regressor [none]
+%       sbjroi      - a mask used to create subject specific wbmask [none]
+%       overwrite   - whether old files should be overwritten [false]          
+
+%   Does the preprocesing for the files from subjectf folder.
+%   Saves images in ftarget folder
+%   Saves new conc files in the ctarget folder
+%   Omits "omit" number of start frames from bandpassing and GLM
+%   Does the steps specified in "do":
+%
+%   In regression it uses the regressors specified in "regress":
+%
+%   It prepends task matrix to GLM regression 
+%   It reads event data from efile fidl event file 
+%   - these should be placed in the /images/functional/events/ and named boldX_efile
+%
+%   It takes eventstring to describe which events to model and for how many frames
+%   
+%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+if nargin < 13
+    overwrite = false;
+    if nargin < 12
+        sbjroi = '';
+        if nargin < 11
+            wbmask = '';
+            if nargin < 10
+                variant = '';
+                if nargin < 9
+                    eventstring = '';
+                    if nargin < 8
+                        efile = '';
+                        if nargin < 7
+                            task = [];
+                            if nargin < 6
+                                rgss = '';
+                                if nargin < 5
+                                    omit = [];
+                                    if nargin < 4
+                                        TR = [];
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+if isempty(TR)
+    TR = 2.5;
+end
+if isempty(omit)
+    omit = 5;
+end
+
+nbolds = length(bolds);
+
+fprintf('\nRunning preproces conc script v0.9.0\n');
+
+% ======================================================
+%   ----> prepare paths and glm variables
+
+%   ----> paths
+
+for b = 1:nbolds
+
+    % ---> general paths
+    
+    file(b).segmask       = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_333.4dfp.img']);
+    file(b).wmmask        = 'WM.4dfp.img';
+    file(b).ventricleseed = 'V.4dfp.img';
+    file(b).eyeseed       = 'E.4dfp.img';
+    file(b).wbmask        = wbmask;
+    file(b).fidlfile      = strcat(subjectf, ['/images/functional/events/' efile]);
+
+
+    bnum = int2str(bolds(f));
+    file(b).froot       = strcat(subjectf, ['/images/functional/bold' bnum]);
+    file(b).boldmask    = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask.4dfp.img']);
+    file(b).bold1       = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1.4dfp.img']);
+    
+    file(b).nfile       = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.4dfp.img']);
+    file(b).nfilepng    = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.png']);
+    
+    file(b).movdata     = strcat(subjectf, ['/images/functional/movement/bold' bnum '_mov.dat']);
+    
+    if strcmp(sbjroi, 'aseg')
+        file(b).sbjroi = file.segmask;
+    elseif strcmp(sbjroi, 'wb')
+        file(b).sbjroi = file.boldmask;
+    else
+        file(b).sbjroi = sbjroi;
+    end
+end
+
+%   ----> GLM variables
+
+glm.rgss    = rgss;
+glm.task    = task;
+glm.eventstring = eventstring;
+
+
+% ======================================================
+%   ----> are we doing coefficients?
+
+docoeff = false;
+if strfind(do, 'c')
+    docoeff = true;
+    do = strrep(do, 'c', '');
+end
+
+
+% ======================================================
+%   ----> run processing loop
+
+tasklist = ['shrl'];
+exts     = {'_g7','_hpss',['_res-' rgss],'_lpss'};
+info     = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
+tail     = '.4dfp.img';
+ext      = '';
+
+for b = 1:nbolds
+    img(b) = gmrimage();
+end
+
+for current = do
+
+    % --- set the source and target filenames
+    
+    c = ismember(tasklist, current);
+    
+    for b = 1:nbolds
+        file(b).sfile = [file(b).froot ext tail];
+        if isempty(ext)
+            ext = variant;
+        end
+        ext   = [ext exts{c}];
+        file(b).tfile = [file(b).froot ext tail];
+    end
+    
+    % --- print info
+    
+    fprintf('%s', info{c});
+    
+    % --- run tasks that are run on individual bolds
+    
+    if ismember(current, ['shl'])
+        for b = 1:nbolds
+            fprintf('---> %s', file(b).sfile)
+            
+            if exist(file(b).tfile, 'file') & ~overwrite
+                fprintf(' ... already completed!\n');
+            else
+                if img(b).empty
+                    img(b) = img(b).mri_readimage(file(b).sfile);
+                end
+        
+                switch current
+                    case 's'
+                        img(b) = img(b).mri_Smooth3D(2, true);
+                    case 'h'
+                        hpsigma = ((1/TR)/0.009)/2;
+                        img(b) = img(b).mri_Filter(hpsigma, 0, omit, true);
+                    case 'l'
+                        lpsigma = ((1/TR)/0.08)/2;
+                        img(b) = img(b).mri_Filter(0, lpsigma, omit, true);
+                end
+        
+                img(b).mri_saveimage(file(b).tfile);
+                fprintf(' ... saved!\n');
+            end
+        end
+    end
+    
+    % --- run tasks that are run on the joint bolds
+    
+    if current == 'r'
+        [img coeff] = regressNuisance(img, omit, file, glm);
+        for b = 1:nbolds
+            img(b).mri_saveimage(file(b).tfile);
+            if docoeff
+                coeff(b).mri_saveimage([file(b).froot ext '_coeff' tail]);
+            end
+        end
+    end
+
+end
+
+return
+
+
+% ======================================================
+%   ----> do GLM removal of nuisance regressors
+%
+
+
+function [img coeff] = regressNuisance(img, omit, file, glm)
+
+    nbolds = length(img);
+    frames = zeros(1, nbolds);
+    
+    %   ----> extract per bold regressors
+    
+    for b = 1:nbolds
+    
+        img(b).data = img(b).image2D;
+        frames(b) = img(b).frames - omit;
+    
+        %   ----> Create nuisance ROI
+    
+        if strfind(glm.rgss, '1b')
+            [V, WB, WM] = firstBoldNuisanceROI(file(b), glm);
+        else
+            [V, WB, WM] = asegNuisanceROI(file(b), glm);
+        end
+    
+        %   ----> mask if necessary
+    
+        if ~isempty(file(b).wbmask)
+            wbmask = gmrimage.mri_ReadROI(file(b).wbmask, file(b).sbjroi);
+            wbmask = wbmask.mri_GrowROI(2);
+            WB.data = WB.image2D;
+            WB.data(wbmask.image2D > 0) = 0;
+        end
+    
+        %   ----> save nuisance masks
+    
+        SaveNuisanceMasks(file(b), WB, V, WM);
+    
+        %   ----> combine nuisances
+    
+        bold(b).nuisance = [];
+        
+        trgss = glm.rgss;
+    
+        if strfind(glm.rgss, 'wm')
+            bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(WM)'];
+            trgss = strrep(trgss, 'wm', '');
+        end
+        
+        if strfind(trgss, 'wb')
+            bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(WB)'];
+            trgss = strrep(trgss, 'wb', '');
+        end
+    
+        if strfind(trgss, 'm')
+            bold(b).nuisance = [bold(b).nuisance ReadMovFile(file(b).movdata, img(b).frames)];
+            trgss = strrep(trgss, 'm', '');
+        end
+    
+        if strfind(trgss, 'v')
+            bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(V)'];
+            trgss = strrep(trgss, 'v', '');
+        end
+
+        %   ----> if requested, get first derivatives
+
+        if strfind(trgss, 'd')
+            d = [zeros(1,size(bold(b).nuisance,2));diff(bold(b).nuisance)];
+            bold(b).nuisance = [bold(b).nuisance d];
+        end
+        
+        bold(b).nuisance = [bold(b).nuisance(omit+1:img(b).frames,:)];
+        
+        %   ----> prepare baseline and trend parameters
+
+        na = img(b).frames-omit;
+        pl = zeros(na,1);
+        for n = 1:na
+            pl(n) = (n-1)/(na-1);
+        end
+        pl = pl-0.5;
+        bs = ones(na,1);
+        bold(b).base = [bs, pl];
+        
+    end
+    
+    %   ----> create overall task regressors
+    
+    if strfind(glm.rgss, 'e')
+        runs = g_CreateTaskRegressors(file(b).fidlfile, frames, eventstring);
+    end
+
+    %   ----> join base, task and nuisance regressors
+    
+    bregs   = size(bold(1).base, 2);
+    nregs   = size(bold(1).nuisance, 2);
+    tregs   = size(runs(1).matrix, 2);
+    nframes = sum(frames);
+    
+    %   --> case of separate nuisance and task regressors
+    
+    if strfind(glm.rgss, 'r1')
+        sregs = bregs + nregs + tregs;
+        regs  = nbolds * sregs;
+        X = zeros(nframes, regs);
+        for b = 1:nbolds
+            fstart = sum(frames(1:b-1)) + 1;
+            fend   = sum(frames(1:b));
+            rstart = sregs * (b-1) + 1;
+            rend   = sregs * b;
+            X(fstart:fend,rstart:rend) = [bold(b).base bold(b).nuisance run(b).matrix];
+        end
+        
+    %   --> case of joint nuisance and task regressors
+    
+    elseif strfind(glm.rgss, 'r1')
+        sregs = bregs;
+        jregs = nregs + tregs;
+        regs  = jregs + nbolds * sregs;
+        X = zeros(nframes, regs);
+        for b = 1:nbolds
+            fstart = sum(frames(1:b-1)) + 1;
+            fend   = sum(frames(1:b));
+            rstart = jregs + sregs * (b-1) + 1;
+            rend   = jregs + sregs * b;
+            X(fstart:fend,1:jregs) = [bold(b).nuisance run(b).matrix];
+            X(fstart:fend,rstart:rend) = bold(b).base;
+        end
+            
+    %   --> case of joint task separate nuisance regressors
+    
+    else 
+        sregs = bregs + nregs;
+        jregs = tregs;
+        regs  = jregs + nbolds * sregs;
+        X = zeros(nframes, regs);
+        for b = 1:nbolds
+            fstart = sum(frames(1:b-1)) + 1;
+            fend   = sum(frames(1:b));
+            rstart = jregs + sregs * (b-1) + 1;
+            rend   = jregs + sregs * b;
+            X(fstart:fend,1:jregs) = run(b).matrix;
+            X(fstart:fend,rstart:rend) = [bold(b).base bold(b).nuisance];
+        end
+    end
+    
+    %   ----> add the additional regressor matrix if present
+
+    if strfind(glm.rgss, 't')
+        X = [X task];
+    end
+
+    %   ----> combine data in a single image
+    
+    Y = img(1).zeroframes(nframes);
+    
+    for b = 1:nbolds
+        fstart = sum(frames(1:b-1)) + 1;
+        fend   = sum(frames(1:b)); 
+        Y.data(:, fstart:fend) = img(b).data;
+    end
+
+    %   ----> do GLM
+    
+    [coeff res] = Y.mri_GLMFit(X);
+    
+    %   ----> put data back into images
+    
+    for b = 1:nbolds
+        fstart = sum(frames(1:b-1)) + 1;
+        fend   = sum(frames(1:b));
+        img(b).data(:,omit+1:end) = res.data(:,fstart:fend);
+    end
+
+return
+
+
+% ======================================================
+%      ----> define nuisance ROI based on 1st bold frame
+%
+
+    
+function [V, WB, WM] = firstBoldNuisanceROI(file, glm);
+
+    % set up masks to be used
+    
+    O  = gmrimage(file.bold1, 'single', 1);
+    V  = O.zeroframes(1);
+    WB = O.zeroframes(1);
+    WM = O.zeroframes(1);
+
+    %   ----> White matter
+    
+    if strfind(glm.rgss, 'wm')
+        WM = gmrimage(file.wmmask); 
+    end
+    
+    %   ----> Ventricle and Whole Brain
+    
+    if (~isempty(strfind(glm.rgss, 'wb')) | ~isempty(strfind(glm.rgss, 'v')))
+    
+        %   ----> compute WB and V masks
+        
+        V = gmrimage(file.ventricleseed); 
+        E = gmrimage(file.eyeseed);
+        [V.data WB.data] = NROI_CreateROI(O.data, V.data, E.data);
+        
+        %   ----> shrink WB
+        
+        if strfind(glm.rgss, 'wb')
+            WB = WB.mri_ShrinkROI();                       
+            WB = WB.mri_ShrinkROI();                       
+        end
+        
+        %   ----> shrink V
+
+        if strfind(glm.rgss, 'v')
+            V = V.mri_ShrinkROI();                         
+        end
+
+    end
+return
+
+
+
+% ======================================================
+%      ----> define nuisance ROI based on FreeSurfer segmentation
+%
+
+
+function [V, WB, WM] = asegNuisanceROI(file, glm);
+        
+    fsimg = gmrimage(file.segmask);
+    bmimg = gmrimage(file.boldmask);
+    WM    = gmrimage(file.wmmask);
+    V     = WM.zeroframes(1);
+    WB    = WM.zeroframes(1);
+
+    bmimg.data = (bmimg.data > 0) & (fsimg.data > 0);
+
+    WM.data = (WM.data > 0) & (fsimg.data == 2 | fsimg.data == 41) & (bmimg.data > 0);
+    V.data  = ismember(fsimg.data, [4 5 14 15 24 43 44 72]) & (bmimg.data > 0);
+    WB.data = (bmimg.data > 0) & ~WM.data & ~V.data;
+
+    %WM = WM.mri_ShrinkROI();
+    V  = V.mri_ShrinkROI('surface', 6);
+    WB = WB.mri_ShrinkROI('edge', 10);
+
+return
+
+
+% ======================================================
+%   ----> read movement files
+
+function x = ReadMovFile(file, nf)
+
+    x = zeros(nf,6);
+
+    fin = fopen(file, 'r');
+    c = 0;
+    while c < nf
+        s = fgetl(fin);
+        if s(1) ~= '#'
+            line = strread(s);
+            c = c+1;
+            x(c,:) = line(2:7);
+        end
+    end
+    fclose(fin);
+
+return
+
+% ======================================================
+%   ----> save nuisance images 
+%   --- needs to be changed
+
+function [] = SaveNuisanceMasks(file, WB, V, WM);
+    
+    O = gmrimage(file.bold1);                       
+    
+    nimg = WB.zeroframes(5);
+    nimg.data = nimg.image2D();
+    nimg.data(:,1) = O.image2D();
+    nimg.data(:,2) = WB.image2D();
+    nimg.data(:,3) = V.image2D();
+    nimg.data(:,4) = WM.image2D();
+    nimg.data(:,5) = (WB.image2D()>0)*1 + (V.image2D()>0)*2 + (WM.image2D()>0)*3;
+    
+    nimg.mri_saveimage(file.nfile);
+    
+    O  = RGBReshape(O.data ,3);
+    WB = RGBReshape(WB.data,3);
+    V  = RGBReshape(V.data ,3);
+    WM = RGBReshape(WM.data,3);
+
+    img(:,:,1) = O;
+    img(:,:,2) = O;
+    img(:,:,3) = O;
+
+    img = img/max(max(max(img)));
+    img = img * 0.7;
+    img(:,:,3) = img(:,:,3)+WB*0.3;
+    img(:,:,2) = img(:,:,2)+V*0.3;
+    img(:,:,1) = img(:,:,1)+WM*0.3;
+
+    imwrite(img, file.nfilepng, 'png');
+
+return
+

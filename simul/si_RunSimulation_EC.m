@@ -1,4 +1,4 @@
-function [cors, sim] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
+function [cors, sim] = si_RunSimulation_EC(r, models, timepoints, nruns, k, md)
 
 %	function [cors, runs] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
 %	
@@ -10,6 +10,7 @@ function [cors, sim] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
 %       - timepoints    what timepoints to extract for correlation analyses
 %       - nruns         how many simulations to run
 %       - k             division coefficient for corr timeseries
+%       - md            maximal allowed difference between desired and actual correlation
 %
 %   Outputs
 %       - cors      matrix with actual and estimated correlations for each model
@@ -18,12 +19,15 @@ function [cors, sim] = si_RunSimulation_EC(r, models, timepoints, nruns, k)
 % 	Created by Grega Repovš on 2010-10-09.
 %	
 
-if nargin < 5
-    k = 6;
-    if nargin < 4
-        nruns = 100;
-        if nargin < 3
-            error('ERROR: Not enough parameters to run simulation!');
+if nargin < 6
+    md = 0.01;
+    if nargin < 5
+        k = 6;
+        if nargin < 4
+            nruns = 100;
+            if nargin < 3
+                error('ERROR: Not enough parameters to run simulation!');
+            end
         end
     end
 end
@@ -76,7 +80,7 @@ for s = 1:nruns
     cs = [];
     
     for c = 1:ncond
-        [cs(c).ts er] = si_GenerateCorrelatedTimeseries([1 r(c); r(c) 1], length(models(1).trials(c).eventlist), 0.01);
+        [cs(c).ts er] = si_GenerateCorrelatedTimeseries([1 r(c); r(c) 1], length(models(1).trials(c).eventlist), md);
         cs(c).ts = 1 + cs(c).ts/k;
         er = corr(cs(c).ts);
         cors(s, c, 1) = er(1,2);

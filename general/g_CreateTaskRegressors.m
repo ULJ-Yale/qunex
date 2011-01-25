@@ -5,8 +5,8 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model)
 %   
 %   INPUT
 %   - fidlf - subject's fidl event file
-%   - concf - subject's conc file
-%   - model - array structure that specifies what needs to be modelled and how
+%   - concf - subject's conc file or an array of run lengths
+%   - model - array structure that specifies what needs to be modelled and how or a string description
 %     - code - event codes (used in fidl file)
 %     - hrf_type 
 %       -> 'boynton' (assumed response) 
@@ -28,14 +28,39 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model)
 %   - !!! it only correctly works with TR precision to 1 decimal point ... should perhaps change to 2 decimal points
 %   - !!! might be better to change downsampling to summation 
 %
-%   Grega Repovš - Created: 2008.7.11
-%                - Updated: 2008.7.16
+%   Grega Repovš - Created: 2008.07.11
+%                - Updated: 2008.07.16
+%                - Updated: 2011.01.24
 %
 
+% ---> get event data
+
 events = g_ReadEventFile(fidlf);
-frames = g_GetImageLength(concf);
+
+% ---> get data on run lengths
+
+if isa(concf, 'char')
+    frames = g_GetImageLength(concf);
+else
+    frames = concf;
+end
 nruns  = length(frames);
+
+% ---> get model data
+
+if isa(model, 'char')
+    model = parseModels(model);
+end
 nmodels = length(model);
+
+% ---> convert string codes to number codes if necessary
+
+for m = 1:nmodels
+    if ischar(model(m).code)
+        model(m).code = find(ismember(events.events, model(m).code)) - 1;
+    end
+end
+
 
 %=========================================================================
 %                                  loop over all the runs in the conc file
@@ -149,7 +174,9 @@ for r = 1:nruns
             ts = conv(ts, hrf);
             ts = resample(ts, 1, round(events.TR*10));
             ts = ts(1:nframes);
-            ts = ts/max(ts);
+            if max(ts) > 0
+                ts = ts/max(ts);
+            end
             
             run(r).matrix = [run(r).matrix ts];
             run(r).regressors = [run(r).regressors, join(events.events(model(m).code+1), '_')];
@@ -174,5 +201,66 @@ if slength > 1
         s = [s delim strings{n}];
     end
 end
+
+
+%   ----> function to parse model description to model structure
+%
+%   - description
+%     - pipe separated list of model information for each event
+%       assumed: <fidl code>:<model>[:<length in s>] --- length assumed empty if not provided
+%       unassumed: <fidl code>:<length in frames>
+%
+%   - model - array structure that specifies what needs to be modelled and how or a string description
+%     - code - event codes (used in fidl file)
+%     - hrf_type 
+%       -> 'boynton' (assumed response) 
+%       -> 'SPM' (assumed response) 
+%       -> 'u' (unassumed response)
+%     - length
+%       - number of frames to model (for unasumed response)
+%       - length of event in s (for assumed response - if empty, duration is taken from event file)
+
+function [model] = parseModels(s)
+
+a = splitby(s, '|');
+
+for n = 1:length(a)
+
+    b = splitby(a{n},':');
+    model(n).code = b{1};
+    
+    % --- is field 2 a number ?
+    
+    if sum(isletter(b{2}))
+        model(n).hrf_type = b{2};
+        model(n).length = [];
+    else
+        model(n).hrf_type = 'u';
+        model(n).length = str2num(b{2});
+    end
+    
+    % --- do we have a third field ?
+    
+    if length(b) == 3
+        model(n).length = str2num(b{3});
+    end
+end
+
+
+
+function [out] = splitby(s, d)
+c = 0;    
+while length(s) >=1
+    c = c+1;
+    [t, s] = strtok(s, d);
+    if length(s) > 1, s = s(2:end); end
+    out{c} = t;
+end
+
+
+
+
+
+
 
 
