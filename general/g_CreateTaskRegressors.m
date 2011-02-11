@@ -12,9 +12,11 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model)
 %       -> 'boynton' (assumed response) 
 %       -> 'SPM' (assumed response) 
 %       -> 'u' (unassumed response)
+%       -> 'block' (block response)
 %     - length
 %       - number of frames to model (for unasumed response)
 %       - length of event in s (for assumed response - if empty, duration is taken from event file)
+%       - start and end offset in frames (for block response)
 %
 %   OUTPUT
 %   - run - array struct for each run
@@ -31,6 +33,7 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model)
 %   Grega Repovš - Created: 2008.07.11
 %                - Updated: 2008.07.16
 %                - Updated: 2011.01.24
+%                - Updated: 2011.02.11
 %
 
 % ---> get event data
@@ -111,11 +114,53 @@ for r = 1:nruns
             for iname = 1:model(m).length
                 run(r).regressors = [run(r).regressors, [basename '_' num2str(iname)]];
             end
-
-        else 
+        
+        
+        %------------------------- code for block models
+        
+        elseif strcmp(model(m).hrf_type, 'block')
+            
+            ts = zeros(nframes, 1);
+            soff = 0;
+            eoff = 0;
+            
+            if ~isempty(model(m).length)
+                soff = model(m).length(1);
+                if length(model(m).length) > 1
+                    eoff = model(m).length(2);
+                end
+            end
+            
+            rel_start = events.frame(relevant);
+            rel_end   = events.frame(relevant) + events.elength(relevant);
+            
+            for ievent = 1:nrelevant
+                e_start = rel_start(ievent) + soff;
+                e_end   = rel_end(ievent) + eoff;
+                if e_end > length(ts)
+                    e_end = length(ts);
+                end
+                if(e_start < 1)
+                    fprintf('r:%d, m:%d, ie:%d, sf:%d, tr:%.4f\n', r, m, ievent, e_start, events.TR);
+                    fprintf('\n');
+                    fprintf('%d ', relevant);
+                    fprintf('\n');
+                    fprintf('%d ', in_run);
+                    fprintf('\n');
+                    fprintf('%d ', frames);
+                    fprintf('\n');
+                    fprintf('%.2f ', events.event_s(relevant));
+                end
+                ts(e_start:e_end,1) = 1;
+            end
+            
+            run(r).matrix = [run(r).matrix ts];
+            run(r).regressors = [run(r).regressors, join(events.events(model(m).code+1), '_')];
+        
         
         %------------------------- code for assumed models
-            
+        
+        elseif ismember(model(m).hrf_type, {'boynton', 'SPM'})
             
             %======================================================================
             %                                                  create the right HRF
@@ -216,9 +261,12 @@ end
 %       -> 'boynton' (assumed response) 
 %       -> 'SPM' (assumed response) 
 %       -> 'u' (unassumed response)
+%       -> 'block' (block response)
 %     - length
 %       - number of frames to model (for unasumed response)
 %       - length of event in s (for assumed response - if empty, duration is taken from event file)
+%       - start and end offset in frames (for block response)
+
 
 function [model] = parseModels(s)
 
@@ -241,8 +289,11 @@ for n = 1:length(a)
     
     % --- do we have a third field ?
     
-    if length(b) == 3
+    if length(b) >= 3
         model(n).length = str2num(b{3});
+    end
+    if length(b) == 4
+        model(n).length = [model(n).length str2num(b{4})];
     end
 end
 
