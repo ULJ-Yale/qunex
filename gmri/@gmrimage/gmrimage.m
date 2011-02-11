@@ -38,6 +38,7 @@ classdef gmrimage
         vsizes
         TR
         frames
+        runframes       = [];
         filename        = [];
         rootfilename    = [];
         mask            = [];
@@ -96,6 +97,9 @@ classdef gmrimage
                 obj.empty = false;
             elseif strcmp(filename(length(filename)-3:end), '.nii') | strcmp(filename(length(filename)-6:end), '.nii.gz') | strcmp(filename(length(filename)-3:end), '.hdr')
                 obj = obj.mri_ReadNIfTI(filename, dtype, frames);
+                obj.empty = false;
+            elseif strcmp(filename(length(filename)-4:end), '.conc')
+                obj = obj.mri_ReadConcImage(filename, dtype, frames);
                 obj.empty = false;
             else
                 error('ERROR: Unknown file format!');
@@ -258,6 +262,7 @@ classdef gmrimage
         function obj = horzcat(obj, add)
             obj.data = [obj.image2D add.image2D];
             obj.frames = obj.frames + add.frames;
+            obj.runframes = [obj.runframes add.frames];
         end
         
         function reply = isempty(obj)
@@ -278,19 +283,57 @@ classdef gmrimage
         function obj = zeroframes(obj, frames)
             obj.data = zeros(obj.voxels, frames);
             obj.frames = frames;
+            obj.runframes = frames;
         end
         
-        function obj = sliceframes(obj, fmask)
+        function obj = sliceframes(obj, fmask, options)
+            if nargin < 3
+                options = [];
+                if nargin < 2
+                    fmask = [];
+                end
+            end
+                        
+            % --- if fmask is a scalar, remove passed number of frames from start of image or each run
+            
             if length(fmask) == 1
                 l = fmask;
                 fmask = ones(1, obj.frames);
-                fmask(1:l) = 0;
-            elseif length(fmask) ~= obj.frames;
-                error('The length of frame mask does not match the lenght of the image file!');
+                if strcmp(options, 'perrun') && length(obj.runframes > 1)
+                    off = 1;
+                    for r = 1:length(obj.runframes)
+                        fmask(off:off+l-1) = 0;
+                        off = off + obj.runframes(r);
+                        obj.runframes(r) = obj.runframes(r) - l;
+                    end
+                else
+                    fmask(1:l) = 0;
+                    obj.runframes(1) = obj.runframes(1) - l;
+                end
+                
+            % --- if fmask is a vector, apply it as a mask for the whole image or at each run
+                
+            elseif length(fmask) > 1
+                mask = zeros(1, obj.frames);
+                if strcmp(options, 'perrun') && length(obj.runframes > 1)
+                    off = 1;
+                    for r = 1:length(obj.runframes)
+                        mask(off:off+min([obj.runframes(r) length(fmask)])-1) = fmask(1:min([obj.runframes(r) length(fmask)]));
+                        off = off + obj.runframes(r);
+                        obj.runframes(r) = sum(fmask(1:min([obj.runframes(r) length(fmask)])) > 0);
+                    end
+                else
+                    mask(1:min([length(fmask), length(mask)])) = fmask(1:min([length(fmask), length(mask)]));
+                    obj.runframes(1) = sum(fmask > 0);
+                end
+                fmask = mask;
             end
-            obj.data = obj.image2D;
-            obj.data = obj.data(:, fmask > 0);
-            obj.frames = sum(fmask>0);
+            
+            if ~isempty(fmask)
+                obj.data = obj.image2D;
+                obj.data = obj.data(:, fmask > 0);
+                obj.frames = sum(fmask>0);
+            end
         end
         
     end

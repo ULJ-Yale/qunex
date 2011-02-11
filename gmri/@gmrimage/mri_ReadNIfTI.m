@@ -165,6 +165,7 @@ img.dim     = img.hdrnifti.dim(2:4);
 img.voxels  = prod(img.dim);
 img.vsizes  = img.hdrnifti.pixdim(2:4);
 img.mformat = mformat;
+img.runframes = img.frames;
 
 % read the data
 

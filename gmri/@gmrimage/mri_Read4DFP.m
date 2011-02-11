@@ -68,6 +68,7 @@ else
 	fclose(fim);
 
     img.frames = length(img.data)/sum(img.voxels);
+    img.runframes = img.frames;
     img.hdr4dfp.value{ismember(img.hdr4dfp.key, {'matrix size [4]'})} = num2str(img.frames);
 
     xmm = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'scaling factor (mm/pixel) [1]'}))));
