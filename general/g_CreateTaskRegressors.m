@@ -131,8 +131,8 @@ for r = 1:nruns
                 end
             end
             
-            rel_start = events.frame(relevant);
-            rel_end   = events.frame(relevant) + events.elength(relevant);
+            rel_start = events.frame(relevant) - start_frame + 1;
+            rel_end   = events.frame(relevant) + events.elength(relevant) - start_frame + 1;
             
             for ievent = 1:nrelevant
                 e_start = rel_start(ievent) + soff;

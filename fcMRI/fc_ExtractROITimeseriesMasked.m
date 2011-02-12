@@ -79,7 +79,7 @@ for n = 1:nsub
 	fprintf('\n     ... reading image file(s)');
 	
 	y = gmrimage(subject(n).files{1});
-	for f = 1:length(subject(n).files)
+	for f = 2:length(subject(n).files)
 	    y = [y gmrimage(subject(n).files{f})];
     end
     
@@ -104,8 +104,12 @@ for n = 1:nsub
     end
     
     % ---> slicing image
-
-    y = y.sliceframes(inmask, 'perrun');        % this might need to be changed to allow for overall masks
+    
+    if length(mask) == 1
+        y = y.sliceframes(mask, 'perrun');        
+    else
+        y = y.sliceframes(mask);                % this might need to be changed to allow for per run timeseries masks
+    end
 	            
 	% ---> extracting timeseries
 	

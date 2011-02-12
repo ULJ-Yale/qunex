@@ -44,7 +44,7 @@ end
 
 if ~isa(roi2, 'gmrimage') & ~isempty(roi2)
     roi2 = gmrimage(roi2);
-    roif2 = roi2;
+    roif2 = roi2.filename;
 else
     if isa(roi2, 'gmrimage')
         roif2 = roi2.filename;

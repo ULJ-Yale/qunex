@@ -118,6 +118,7 @@ for b = 1:nbolds
     
     eroot               = strrep(efile, '.fidl', '');
     file(b).croot       = strcat(subjectf, ['/images/functional/conc_' eroot]);
+    file(b).cfroot      = strcat(subjectf, ['/images/functional/concs/' eroot]);
     
     file(b).nfile       = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.4dfp.img']);
     file(b).nfilepng    = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.png']);
@@ -178,7 +179,7 @@ for current = do
     ext   = [ext exts{c}];
     for b = 1:nbolds    
         file(b).tfile = [file(b).froot ext tail];
-        file(b).tconc = [file(b).croot ext '.conc'];
+        file(b).tconc = [file(b).cfroot ext '.conc'];
     end
     
     

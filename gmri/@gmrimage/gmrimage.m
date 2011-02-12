@@ -54,6 +54,7 @@ classdef gmrimage
         %ifh = mri_ReadIFH(file)
         files = mri_ReadConcFile(file)
         roi   = mri_ReadROI(roiinfo, roif2)
+        mri_SaveConcFile(file, files)
     end
     
     methods
