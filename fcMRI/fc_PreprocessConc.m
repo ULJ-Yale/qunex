@@ -111,7 +111,6 @@ for b = 1:nbolds
     file(b).wbmask        = wbmask;
     file(b).fidlfile      = strcat(subjectf, ['/images/functional/events/' efile]);
 
-
     bnum = int2str(bolds(b));
     file(b).froot       = strcat(subjectf, ['/images/functional/bold' bnum]);
     file(b).boldmask    = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask.4dfp.img']);
@@ -179,7 +178,9 @@ for current = do
     ext   = [ext exts{c}];
     for b = 1:nbolds    
         file(b).tfile = [file(b).froot ext tail];
+        file(b).tconc = [file(b).croot ext '.conc'];
     end
+    
     
     % --- print info
     
@@ -214,6 +215,7 @@ for current = do
                 fprintf('... saved!\n');
             end
         end
+        
     end
     
     % --- run tasks that are run on the joint bolds
@@ -246,6 +248,14 @@ for current = do
                 fprintf('... done!\n');
             end
         end
+    end
+    
+    if exist(file(b).tconc, 'file') && ~overwrite
+        fprintf('---> conc file already saved!\n');
+    else
+        fprintf('---> saving conc file ');
+        gmrimage.mri_SaveConcFile(file(b).tconc, {file.tfile});
+        fprintf('... done!\n');
     end
 
 end
