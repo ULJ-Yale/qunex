@@ -77,6 +77,7 @@ for n = 1:nroi
 	end
     
     img.data(rmask==1) = n;
+    img.roi.nvox(n) = sum(rmask==1);
 
 end
 
