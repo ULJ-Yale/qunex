@@ -65,13 +65,13 @@ for n = 1:nsub
 	
 	fprintf('\n     ... creating ROI mask');
 	
-	if isset(subject(n).roi)
+	if isfield(subject(n), 'roi')
 	    sroifile = subject(n).roi;
 	else
 	    sroifile = [];
     end
 	
-	roi = mri_ReadROI(roiinfo, sroifile);
+	roi = gmrimage.mri_ReadROI(roiinfo, sroifile);
 
 	
 	% ---> reading image files
@@ -89,13 +89,15 @@ for n = 1:nsub
 	
 	if eventbased
 	    mask = [];
-	    if isset(subject(n).fidl)
-	        mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask);
-	        nmask = [];
-	        for r = 1:length(mask)
-	            nmask = [nmask; sum(mask(r).matrix,2)>0];
+	    if isfield(subject(n), 'fidl')
+            if subject(n).fidl
+                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask);
+    	        nmask = [];
+                for r = 1:length(mask)
+                    nmask = [nmask; sum(mask(r).matrix,2)>0];
+                end
+                mask = nmask;
             end
-            mask = nmask;
         end
     else
         mask = inmask;

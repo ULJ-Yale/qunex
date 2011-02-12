@@ -16,7 +16,7 @@ function [img] = mri_ReadConcImage(img, file, dtype, frames)
 %
 
 if nargin < 4
-	frames = []
+	frames = [];
 	if nargin < 3 
 	    dtype = 'single';
     end
