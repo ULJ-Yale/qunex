@@ -375,8 +375,8 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm)
     fprintf('.');
     
     if strfind(glm.rgss, 'r1')
-        sregs = bregs + nregs + tregs;
-        regs  = nbolds * sregs;
+        sregs = bregs + nregs + tregs;          % separate regressors for each run
+        regs  = nbolds * sregs;                 % all regressors
         X = zeros(nframes, regs);
         for b = 1:nbolds
             fstart = sum(frames(1:b-1)) + 1;
@@ -388,10 +388,10 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm)
         
     %   --> case of joint nuisance and task regressors
     
-    elseif strfind(glm.rgss, 'r1')
-        sregs = bregs;
-        jregs = nregs + tregs;
-        regs  = jregs + nbolds * sregs;
+    elseif strfind(glm.rgss, 'r2')
+        sregs = bregs;                          % separate regressors for each run
+        jregs = nregs + tregs;                  % joint regressors for all runs
+        regs  = jregs + nbolds * sregs;         % all regressors
         X = zeros(nframes, regs);
         for b = 1:nbolds
             fstart = sum(frames(1:b-1)) + 1;
@@ -405,9 +405,9 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm)
     %   --> case of joint task separate nuisance regressors
     
     else 
-        sregs = bregs + nregs;
-        jregs = tregs;
-        regs  = jregs + nbolds * sregs;
+        sregs = bregs + nregs;                  % separate regressors for each run
+        jregs = tregs;                          % joint regressors for all runs
+        regs  = jregs + nbolds * sregs;         % all regressors
         X = zeros(nframes, regs);
         for b = 1:nbolds
             fstart = sum(frames(1:b-1)) + 1;

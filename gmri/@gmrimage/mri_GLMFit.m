@@ -27,15 +27,22 @@ if obj.frames ~= size(X, 1)
     error('ERROR: predictor and data number of frames do not match!');
 end
 
+% ---- zero sd regressors
+
+good = std(X) ~= 0;
+good(find(~good & mean(X)==1,1)) = true;
+
 % ---- compute GLM
 
 B = obj.zeroframes(size(X,2));
+B.data = reshape(B.data,B.frames,B.voxels);
 obj.data = obj.image2D';
-B.data = (inv(X'*X)*X')*obj.data;
+X = X(:,good);
+B.data(good,:) = ((X'*X)\X')*obj.data; % was (INV(X'*X)*X')*obj.data;
 
 if nargout > 1
     res  = obj;
-    res.data = (obj.data - X*B.data)';
+    res.data = (obj.data - X*B.data(good,:))';
     
     if nargout > 2
         Xdof = size(X,1) - size(X,2);
