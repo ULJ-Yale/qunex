@@ -68,10 +68,10 @@ froot = strcat(subjectf, ['/images/functional/bold' int2str(bold)]);
 
 file.boldmask  = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask' tail]);
 file.bold1     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1' tail]);
-file.segmask  = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
-file.wmmask    = 'WM.4dfp.img';
-file.ventricleseed = 'V.4dfp.img';
-file.eyeseed   = 'E.4dfp.img';
+file.segmask   = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
+file.wmmask    = ['WM' tail]
+file.ventricleseed = ['V' tail];
+file.eyeseed   = ['E' tail];
 
 file.nfile     = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance' tail]);
 file.nfilepng  = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance.png']);
@@ -314,19 +314,25 @@ function [V, WB, WM] = asegNuisanceROI(file, glm);
         
     fsimg = gmrimage(file.segmask);
     bmimg = gmrimage(file.boldmask);
-    WM    = gmrimage(file.wmmask);
-    V     = WM.zeroframes(1);
-    WB    = WM.zeroframes(1);
+%   WM    = gmrimage(file.wmmask);
+    V     = fsimg.zeroframes(1);
+    WB    = fsimg.zeroframes(1);
+    WM    = fsimg.zeroframes(1);
 
     bmimg.data = (bmimg.data > 0) & (fsimg.data > 0);
 
-    WM.data = (WM.data > 0) & (fsimg.data == 2 | fsimg.data == 41) & (bmimg.data > 0);
+    WM.data = (fsimg.data == 2 | fsimg.data == 41) & (bmimg.data > 0);
+    WM      = WM.mri_ShrinkROI();
+    WM.data = WM.image2D;
+    
     V.data  = ismember(fsimg.data, [4 5 14 15 24 43 44 72]) & (bmimg.data > 0);
-    WB.data = (bmimg.data > 0) & ~WM.data & ~V.data;
+    WB.data = (bmimg.data > 0) & (WM.data ~=1) & ~V.data;
 
-    %WM = WM.mri_ShrinkROI();
-    V  = V.mri_ShrinkROI('surface', 6);
-    WB = WB.mri_ShrinkROI('edge', 10);
+    V  		= V.mri_ShrinkROI('surface', 6);
+    WB 		= WB.mri_ShrinkROI('edge', 10); %'edge', 10
+    WM      = WM.mri_ShrinkROI();
+    WM      = WM.mri_ShrinkROI();
+    
 
 return
 
@@ -344,8 +350,9 @@ function x = ReadMovFile(file, nf)
     	s = fgetl(fin);
     	if s(1) ~= '#'
     		line = strread(s);
+    		l = length(line);
     		c = c+1;
-    		x(c,:) = line(2:7);
+    		x(c,:) = line(l-5:l);
     	end
     end
     fclose(fin);

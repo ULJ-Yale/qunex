@@ -161,9 +161,9 @@ if img.hdrnifti.dim(1) == 4    % we probably have a BOLD (4D) file
     img.TR = img.hdrnifti.pixdim(5);
 end
 
-img.dim     = img.hdrnifti.dim(2:4);
+img.dim     = img.hdrnifti.dim(2:4)';
 img.voxels  = prod(img.dim);
-img.vsizes  = img.hdrnifti.pixdim(2:4);
+img.vsizes  = img.hdrnifti.pixdim(2:4)';
 img.mformat = mformat;
 img.runframes = img.frames;
 

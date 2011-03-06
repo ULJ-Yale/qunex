@@ -6,9 +6,9 @@ function [img] = RGBReshape(in, v)
 
 data = squeeze(in.image4D);
 dim  = size(data);
-x    = dim(x);
-y    = dim(y);
-z    = dim(z);
+x    = dim(1);
+y    = dim(2);
+z    = dim(3);
 
 switch v
 	 case 1
