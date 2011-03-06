@@ -1,44 +1,58 @@
 function [img] = RGBReshape(in, v)
 
 %
-%		reshapes 4dfp image and returns composite of axial, sagital and transversal slices in a 2D matrix
+%		reshapes image and returns composite of axial, sagital and transversal slices in a 2D matrix
 %
 
-in = reshape(in,48, 64, 48);
-img = zeros(384, 384);
+data = squeeze(in.image4D);
+dim  = size(data);
+x    = dim(x);
+y    = dim(y);
+z    = dim(z);
 
 switch v
 	 case 1
-	 	c = 1;
-		for j = 8:-1:1
-			for i = 1:8
-				t = reshape(in(:,c,:),48,48);
-				img((i-1)*48+1:(i)*48,(j-1)*48+1:(j)*48) = t;
+	    side = ceil(sqrt(x));
+        img  = zeros(side*y, side*z);
+		c = 1;
+		for j = 1:side
+			for i = 1:side
+			    if c <= x
+				    t = reshape(data(c,:,:), y, z);
+				    img((i-1)*y+1:(i)*y,(j-1)*z+1:(j)*z) = t;
+				end
 				c = c+1;
 			end
 		end
 		img = imrotate(img,90);
 		
 	 case 2
-		c = 48;
-		for j = 8:-1:1
-			for i = 1:6
-				t = reshape(in(c,:,:),64,48);
-				img((i-1)*64+1:(i)*64,(j-1)*48+1:(j)*48) = t;
-				c = c-1;
+	    side = ceil(sqrt(y));
+        img  = zeros(side*x, side*z);
+		c = 1;
+		for j = 1:side
+			for i = 1:side
+			    if c <= y
+				    t = reshape(data(:,c,:), x, z);
+				    img((i-1)*x+1:(i)*x,(j-1)*z+1:(j)*z) = t;
+				end
+				c = c+1;
 			end
 		end
 		img = imrotate(img,90);
 
 	 case 3
+	    side = ceil(sqrt(z));
+        img  = zeros(side*x, side*y);
 		c = 1;
-		for j = 6:-1:1
-			for i = 1:8
-				t = reshape(in(:,:,c),48,64);
-				img((i-1)*48+1:(i)*48,(j-1)*64+1:(j)*64) = t;
+		for j = 1:side
+			for i = 1:side
+			    if c <= z
+				    t = reshape(data(:,:,c), x, y);
+				    img((i-1)*x+1:(i)*x,(j-1)*y+1:(j)*y) = t;
+				end
 				c = c+1;
 			end
 		end
-
 		img = imrotate(img,270);
 end

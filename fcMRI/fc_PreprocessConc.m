@@ -1,4 +1,4 @@
-function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite)
+function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail)
 
 %   (c) Copyright Grega Repovš, 2011-01-24
 %
@@ -35,7 +35,8 @@ function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efi
 %       variant     - a string to be prepended to files [none]
 %       wbmask      - a mask used to exclude ROI from the whole-brain nuisance regressor [none]
 %       sbjroi      - a mask used to create subject specific wbmask [none]
-%       overwrite   - whether old files should be overwritten [false]          
+%       overwrite   - whether old files should be overwritten [false]     
+%       tail        - what file extension to expect and use for images [.4dfp.img]     
 
 %   Does the preprocesing for the files from subjectf folder.
 %   Saves images in ftarget folder
@@ -53,26 +54,29 @@ function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efi
 %   
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-if nargin < 13
-    overwrite = false;
-    if nargin < 12
-        sbjroi = '';
-        if nargin < 11
-            wbmask = '';
-            if nargin < 10
-                variant = '';
-                if nargin < 9
-                    eventstring = '';
-                    if nargin < 8
-                        efile = '';
-                        if nargin < 7
-                            task = [];
-                            if nargin < 6
-                                rgss = '';
-                                if nargin < 5
-                                    omit = [];
-                                    if nargin < 4
-                                        TR = [];
+if nargin < 14
+tail = '.4dfp.img'
+    if nargin < 13
+        overwrite = false;
+        if nargin < 12
+            sbjroi = '';
+            if nargin < 11
+                wbmask = '';
+                if nargin < 10
+                    variant = '';
+                    if nargin < 9
+                        eventstring = '';
+                        if nargin < 8
+                            efile = '';
+                            if nargin < 7
+                                task = [];
+                                if nargin < 6
+                                    rgss = '';
+                                    if nargin < 5
+                                        omit = [];
+                                        if nargin < 4
+                                            TR = [];
+                                        end
                                     end
                                 end
                             end
@@ -93,7 +97,7 @@ end
 
 nbolds = length(bolds);
 
-fprintf('\nRunning preproces conc script v0.9.0\n');
+fprintf('\nRunning preproces conc script v0.9.1\n');
 
 % ======================================================
 %   ----> prepare paths and glm variables
@@ -104,23 +108,23 @@ for b = 1:nbolds
 
     % ---> general paths
     
-    file(b).segmask       = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_333.4dfp.img']);
-    file(b).wmmask        = 'WM.4dfp.img';
-    file(b).ventricleseed = 'V.4dfp.img';
-    file(b).eyeseed       = 'E.4dfp.img';
+    file(b).segmask       = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
+    file(b).wmmask        = ['WM' tail];
+    file(b).ventricleseed = ['V'  tail];
+    file(b).eyeseed       = ['E'  tail];
     file(b).wbmask        = wbmask;
     file(b).fidlfile      = strcat(subjectf, ['/images/functional/events/' efile]);
 
     bnum = int2str(bolds(b));
     file(b).froot       = strcat(subjectf, ['/images/functional/bold' bnum]);
-    file(b).boldmask    = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask.4dfp.img']);
-    file(b).bold1       = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1.4dfp.img']);
+    file(b).boldmask    = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask' tail]);
+    file(b).bold1       = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1' tail]);
     
     eroot               = strrep(efile, '.fidl', '');
     file(b).croot       = strcat(subjectf, ['/images/functional/conc_' eroot]);
     file(b).cfroot      = strcat(subjectf, ['/images/functional/concs/' eroot]);
     
-    file(b).nfile       = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.4dfp.img']);
+    file(b).nfile       = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance' tail]);
     file(b).nfilepng    = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.png']);
     
     file(b).movdata     = strcat(subjectf, ['/images/functional/movement/bold' bnum '_mov.dat']);
@@ -157,7 +161,6 @@ end
 tasklist = ['shrl'];
 exts     = {'_g7','_hpss',['_res-' rgss],'_lpss'};
 info     = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
-tail     = '.4dfp.img';
 ext      = '';
 
 for b = 1:nbolds
@@ -567,10 +570,10 @@ function [] = SaveNuisanceMasks(file, WB, V, WM);
     
     nimg.mri_saveimage(file.nfile);
     
-    O  = RGBReshape(O.data ,3);
-    WB = RGBReshape(WB.data,3);
-    V  = RGBReshape(V.data ,3);
-    WM = RGBReshape(WM.data,3);
+    O  = RGBReshape(O ,3);
+    WB = RGBReshape(WB,3);
+    V  = RGBReshape(V ,3);
+    WM = RGBReshape(WM,3);
 
     img(:,:,1) = O;
     img(:,:,2) = O;

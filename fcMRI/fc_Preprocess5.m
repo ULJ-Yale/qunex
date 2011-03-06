@@ -1,4 +1,4 @@
-function [TS] = fc_Preprocess5(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite)
+function [TS] = fc_Preprocess5(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite, tail)
 
 %	Written by Grega Repovš, 2007-10-29
 %
@@ -37,26 +37,27 @@ function [TS] = fc_Preprocess5(subjectf, bold, omit, do, rgss, task, efile, TR, 
 %   
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-
-if nargin < 13
-    overwrite = false;
-    if nargin < 12
-        sbjroi = '';
-        if nargin < 11
-            wbmask = '';
-            if nargin < 10
-    	        variant = '';
-    	        if nargin < 9
-            	    eventstring = '';
-            	    if nargin < 8
-                    	TR = 2.5;	
+if nargin < 14
+    tail = '.4dfp.img'
+    if nargin < 13
+        overwrite = false;
+        if nargin < 12
+            sbjroi = '';
+            if nargin < 11
+                wbmask = '';
+                if nargin < 10
+        	        variant = '';
+        	        if nargin < 9
+                	    eventstring = '';
+                	    if nargin < 8
+                        	TR = 2.5;	
+                        end
                     end
                 end
             end
         end
     end
 end
-
 
 fprintf('\nRunning preproces script 5 v0.9.0\n');
 
@@ -65,14 +66,14 @@ fprintf('\nRunning preproces script 5 v0.9.0\n');
 
 froot = strcat(subjectf, ['/images/functional/bold' int2str(bold)]);
 
-file.boldmask  = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask.4dfp.img']);
-file.bold1     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1.4dfp.img']);
-file.segmask  = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_333.4dfp.img']);
+file.boldmask  = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask' tail]);
+file.bold1     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1' tail]);
+file.segmask  = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
 file.wmmask    = 'WM.4dfp.img';
 file.ventricleseed = 'V.4dfp.img';
 file.eyeseed   = 'E.4dfp.img';
 
-file.nfile     = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance.4dfp.img']);
+file.nfile     = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance' tail]);
 file.nfilepng  = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance.png']);
 
 file.movdata  = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '_mov.dat']);
@@ -111,7 +112,6 @@ end
 task = ['shrl'];
 exts = {'_g7','_hpss',['_res-' rgss],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
-tail = '.4dfp.img';
 ext  = '';
 
 img = gmrimage();
@@ -370,10 +370,10 @@ function [] = SaveNuisanceMasks(file, WB, V, WM);
     
     nimg.mri_saveimage(file.nfile);
     
-    O  = RGBReshape(O.data ,3);
-    WB = RGBReshape(WB.data,3);
-    V  = RGBReshape(V.data ,3);
-    WM = RGBReshape(WM.data,3);
+    O  = RGBReshape(O ,3);
+    WB = RGBReshape(WB,3);
+    V  = RGBReshape(V ,3);
+    WM = RGBReshape(WM,3);
 
     img(:,:,1) = O;
     img(:,:,2) = O;
