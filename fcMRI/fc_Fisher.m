@@ -1,4 +1,4 @@
-function [fz] = fc_Fisher(r)
+function [r] = fc_Fisher(r)
 
 %	
 %  converts pearson correlations to fisher z values
@@ -9,7 +9,8 @@ function [fz] = fc_Fisher(r)
 
 r(r > 0.99999) =  0.99999;
 r(r < -0.99999) = -0.99999;
-fz = 0.5*log((1+r)./(1-r));
+%fz = 0.5*log((1+r)./(1-r));
+r = atanh(r);
 
 
 

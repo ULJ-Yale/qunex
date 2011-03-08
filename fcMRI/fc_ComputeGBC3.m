@@ -30,9 +30,9 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 fprintf('\n\nStarting ...');
 
 if nargin < 8
-    rdilate = []
+    rdilate = [];
     if nargin < 7
-        rsmooth = []
+        rsmooth = [];
         if nargin < 6
         	targetf = '';
         	if nargin < 5
