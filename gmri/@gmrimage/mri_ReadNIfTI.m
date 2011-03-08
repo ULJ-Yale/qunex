@@ -186,3 +186,11 @@ if tempfolder
 end
 
 
+% ---- Adjust datatype
+
+switch dtype
+    case 'single'
+        img.hdrnifti.datatype = 16;     % --- float32
+    case 'double'
+        img.hdrnifti.datatype = 64;     % --- float64
+end
