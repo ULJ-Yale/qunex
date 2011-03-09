@@ -188,9 +188,12 @@ end
 
 % ---- Adjust datatype
 
+img.hdrnifti.datatype = 16; 
+
 switch dtype
     case 'single'
         img.hdrnifti.datatype = 16;     % --- float32
     case 'double'
         img.hdrnifti.datatype = 64;     % --- float64
+    	
 end

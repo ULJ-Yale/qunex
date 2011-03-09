@@ -84,8 +84,18 @@ for n = 1:nsteps+1
 	    slen = length(crange);
     end
     
-    r = data * x(:,fstart:fend);
+    r = (data * x(:,fstart:fend))';
+    
+    % removes correlations of voxels with themselves
+    % - code would be expensive on memory and possibly time
+    % - we're adjusting the results in computations below instead
+    %
+    % self = [0:cstep-1]*voxels + [fstart:fend];
+    % r = reshape(r(~ismember(1:voxels*cstep,self)),voxels-1,cstep)'; 
+    
     doFz = true;
+    mFz = [];
+    aFz = [];
 
     for c = 1:ncommands
         tcommand   = commands(c).command;
@@ -95,28 +105,59 @@ for n = 1:nsteps+1
         
             case 'mFz'
             	if doFz, Fz = fc_Fisher(r); doFz = false; end
-                results(fstart:fend,c) = mean(Fz, 1)';
+            	% fprintf(' mFz');
+            	% tic;
+            	if isempty(mFz), mFz = (sum(Fz,2)-fc_Fisher(1))./(voxels-1); end
+                results(fstart:fend,c) = mFz;
+                % fprintf(' [%.3f s]', toc);
             
             case 'aFz'
             	if doFz, Fz = fc_Fisher(r); doFz = false; end
-                results(fstart:fend,c) = mean(abs(Fz), 1)';
+            	% fprintf(' aFz');
+            	% tic;
+            	if isempty(aFz), aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(voxels-1); end
+                results(fstart:fend,c) = aFz;
+                % fprintf(' [%.3f s]', toc);
             
             case 'pFz'
             	if doFz, Fz = fc_Fisher(r); doFz = false; end
-                results(fstart:fend,c) = mean(Fz(Fz>0), 1)';
+            	% fprintf(' pFz');
+            	% tic;
+            	if isempty(mFz), mFz = (sum(Fz,2)-fc_Fisher(1))./(voxels-1); end
+            	if isempty(aFz), aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(voxels-1); end
+            	rp = mean(Fz>0,2);
+            	results(fstart:fend,c) = (mFz+aFz)./(rp.*2);
+                % results(fstart:fend,c) = sum(Fz.*(Fz > 0),2)./sum(Fz > 0,2); % mean(Fz(Fz>0), 2);
+                % fprintf(' [%.3f s]', toc);
                 
             case 'nFz'
             	if doFz, Fz = fc_Fisher(r); doFz = false; end
-                results(fstart:fend,c) = mean(Fz(Fz<0), 1)';
+            	% fprintf(' nFz');
+            	% tic;
+            	if isempty(mFz), mFz = (sum(Fz,2)-fc_Fisher(1))./(voxels-1); end
+            	if isempty(aFz), aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(voxels-1); end
+            	rn = mean(Fz<0,2);
+            	results(fstart:fend,c) = (mFz-aFz)./(rn.*2);
+                % results(fstart:fend,c) = sum(Fz.*(Fz < 0),2)./sum(Fz < 0,2);; % mean(Fz(Fz<0), 2);
+                % fprintf(' [%.3f s]', toc);
                 
             case 'pD'
-                results(fstart:fend,c) = sum(r >= tparameter, 1)'./voxels;
+            	% fprintf(' pD');
+            	% tic;
+                results(fstart:fend,c) = (sum(r >= tparameter, 2)-1)./voxels;
+                % fprintf(' [%.3f s]', toc);
 
             case 'nD'
-                results(fstart:fend,c) = sum(r <= -tparameter, 1)'./voxels;
+            	% fprintf(' nD');
+            	% tic;
+                results(fstart:fend,c) = sum(r <= -tparameter, 2)./voxels;
+                % fprintf(' [%.3f s]', toc);
                 
             case 'aD'
-                results(fstart:fend,c) = sum(abs(r) > tparameter, 1)'./voxels;
+            	% fprintf(' aD');
+            	% tic;
+                results(fstart:fend,c) = (sum(abs(r) >= tparameter, 2)-1)./voxels;
+                % fprintf(' [%.3f s]', toc);
         end
     
     end

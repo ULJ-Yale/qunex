@@ -38,7 +38,7 @@ function [TS] = fc_Preprocess5(subjectf, bold, omit, do, rgss, task, efile, TR, 
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 if nargin < 14
-    tail = '.4dfp.img'
+    tail = '.4dfp.img';
     if nargin < 13
         overwrite = false;
         if nargin < 12
@@ -59,7 +59,7 @@ if nargin < 14
     end
 end
 
-fprintf('\nRunning preproces script 5 v0.9.0\n');
+fprintf('\nRunning preproces script 5 v0.9.1\n');
 
 % ======================================================
 % 	----> prepare paths
@@ -69,7 +69,7 @@ froot = strcat(subjectf, ['/images/functional/bold' int2str(bold)]);
 file.boldmask  = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask' tail]);
 file.bold1     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1' tail]);
 file.segmask   = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
-file.wmmask    = ['WM' tail]
+file.wmmask    = ['WM' tail];
 file.ventricleseed = ['V' tail];
 file.eyeseed   = ['E' tail];
 

@@ -23,6 +23,9 @@ end
 
 img = img.unmaskimg;
 img.hdrnifti.dim(5) = img.frames;
+if img.frames > 1
+	img.hdrnifti.dim(1) = 4;
+end
 
 root = strrep(filename, '.hdr', '');
 root = strrep(root, '.nii', '');
@@ -30,6 +33,51 @@ root = strrep(root, '.gz', '');
 root = strrep(root, '.img', '');
 
 file = [root '.nii'];
+
+
+% get datatype
+
+switch img.hdrnifti.datatype
+    case 1 
+        datatype = 'bitN';
+    case 2
+        datatype = 'uchar';
+        img.hdrnifti.bitpix = 8;
+    case 4
+        datatype = 'int16';
+        img.hdrnifti.bitpix = 16;
+    case 8
+        datatype = 'int32'
+        img.hdrnifti.bitpix = 32;
+    case 16
+        datatype = 'float32';
+        img.hdrnifti.bitpix = 32;
+    case 64
+        datetype = 'float64';
+        img.hdrnifti.bitpix = 64;
+    case 256
+        datatype = 'schar';
+    case 512
+        datatype = 'uint16';
+        img.hdrnifti.bitpix = 16;
+    case 768
+        datatype = 'uint32';
+        img.hdrnifti.bitpix = 32;
+    case 1024
+        datatype = 'int64';
+        img.hdrnifti.bitpix = 64;
+    case 1280
+        datatype = 'uint64';
+        img.hdrnifti.bitpix = 64;
+    case 1280
+        datatype = 'uint64';   
+        img.hdrnifti.bitpix = 64;
+    otherwise
+        error('Uknown datatype or datatype I can not handle!');
+end    
+
+
+
 
 % save it
 
@@ -80,36 +128,6 @@ fwrite(fid, img.hdrnifti.intent_name, 'char');
 fwrite(fid, img.hdrnifti.magic, 'char');
 fwrite(fid, 'repi', 'char');
 
-% get datatype
-
-switch img.hdrnifti.datatype
-    case 1 
-        datatype = 'bitN';
-    case 2
-        datatype = 'uchar';
-    case 4
-        datatype = 'int16';
-    case 8
-        datatype = 'int32'
-    case 16
-        datatype = 'float32';
-    case 64
-        datetype = 'float64';
-    case 256
-        datatype = 'schar';
-    case 512
-        datatype = 'uint16';
-    case 768
-        datatype = 'uint32';
-    case 1024
-        datatype = 'int64';
-    case 1280
-        datatype = 'uint64';
-    case 1280
-        datatype = 'uint64';    
-    otherwise
-        error('Uknown datatype or datatype I can not handle!');
-end    
 
 fwrite(fid, img.data, datatype);
 fclose(fid);
@@ -118,5 +136,4 @@ if compressed
     gzip(file);
     delete(file);
 end
-
 

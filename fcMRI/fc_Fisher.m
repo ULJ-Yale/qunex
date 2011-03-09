@@ -7,8 +7,9 @@ function [r] = fc_Fisher(r)
 %  Copyright (c) 2007 Grega Repovs. All rights reserved.
 %
 
-r(r > 0.99999) =  0.99999;
-r(r < -0.99999) = -0.99999;
+r = r*0.999999999999999;
+%r(r > 0.99999) =  0.99999;
+%r(r < -0.99999) = -0.99999;
 %fz = 0.5*log((1+r)./(1-r));
 r = atanh(r);
 
