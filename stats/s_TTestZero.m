@@ -7,33 +7,37 @@ function [TS] = s_TTestZero(conc, target, dtype)
 %	
 
 if nargin < 3
-	dtype = 'double';
+	dtype = 'single';
 end
-root = strrep(target, '.4dfp.img', '');
+
 
 % ======================================================
 % 	----> read files
 
 fprintf('Computing t-test against 0 [%s] ... reading data ', conc);
-img = reshape(g_Read4DFP(conc, dtype), 48*48*64, []);				fprintf('.');
+img = gmrimage(conc, dtype);                                fprintf('.');
+img.data = img.image2D;		
+m = img.zeroframes(1);
+Z = img.zeroframes(1);
 
 
 % ======================================================
 % 	----> compute t-test
 
 fprintf(' computing ');
-[h, p] = ttest(img, 0, 0.05, 'both', 2);						fprintf('.');
+m.data = mean(img.data, 2);					                    fprintf('.');
+[h, p] = ttest(img.data, 0, 0.05, 'both', 2);					fprintf('.');
                                                                
 %Z = fc_ptoz(1-(p/2),0,1);										fprintf('.');
-Z = icdf('Normal', (1-(p/2)), 0, 1);							fprintf('.');
-Z = Z .* sign(mean(img, 2));									fprintf('.');
+p = icdf('Normal', (1-(p/2)), 0, 1);							fprintf('.');
+Z.data = p .* sign(m.data);								        fprintf('.');
 
 % ======================================================
 % 	----> save results
 
 fprintf(' saving ');
-g_Save4DFP([root '_Z.4dfp.img'], Z);					fprintf('.');
-g_Save4DFP([root '_MFz.4dfp.img'],mean(img,2));		    fprintf('.');
+Z.mri_saveimage([Z.rootfilename 'Z'])                   fprintf('.');
+m.mri_saveimage([m.rootfilename '_M'])                   fprintf('.');
 fprintf(' done!\n');
 
 
