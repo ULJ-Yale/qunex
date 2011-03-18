@@ -86,18 +86,18 @@ for d = do
         out.data(:,c) = s;
 
     case 'sd'
-        if isempty(sd), sd = nanstd(img.data, 2); end
+        if isempty(sd), sd = nanstd(img.data, 0, 2); end
         out.data(:,c) = sd;
     
     case 'var'
-        if isempty(v), v = nanvar(img.data, 2); end
+        if isempty(v), v = nanvar(img.data, 1, 2); end
         out.data(:,c) = v;
     
     case 't'
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
-        if isempty(v), v = nanvar(img.data, 2); end
+        if isempty(v), v = nanvar(img.data, 1, 2); end
         if isempty(t), t = m./(sqrt(v./n)); end
         out.data(:,c) = t;
     
@@ -105,7 +105,7 @@ for d = do
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
-        if isempty(v), v = nanvar(img.data, 2); end
+        if isempty(v), v = nanvar(img.data, 1, 2); end
         if isempty(t), t = m./(sqrt(v./n)); end
         if isempty(p), p = cdf('t', -abs(t), n-1).*2; end
         out.data(:,c) = p;
@@ -114,10 +114,11 @@ for d = do
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
-        if isempty(v), v = nanvar(img.data, 2); end
+        if isempty(v), v = nanvar(img.data, 1, 2); end
         if isempty(t), t = m./(sqrt(v./n)); end
         if isempty(p), p = cdf('t', -abs(t), n-1).*2; end
-        if isempty(z), z = icdf('Normal', (1-(p/2)), 0, 1) .* sign(m); end
+        p(p<0.00000000000001)=0.00000000000001;
+        if isempty(z), z = icdf('Normal', (1-(double(p)/2)), 0, 1) .* sign(m); end
         out.data(:,c) = z;
     end
 end

@@ -36,8 +36,8 @@ Z.data = p .* sign(m.data);								        fprintf('.');
 % 	----> save results
 
 fprintf(' saving ');
-Z.mri_saveimage([Z.rootfilename 'Z'])                   fprintf('.');
-m.mri_saveimage([m.rootfilename '_M'])                   fprintf('.');
+Z.mri_saveimage([Z.rootfilename '_Z']);                   fprintf('.');
+m.mri_saveimage([m.rootfilename '_M']);                   fprintf('.');
 fprintf(' done!\n');
 
 
