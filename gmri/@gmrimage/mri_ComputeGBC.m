@@ -1,4 +1,4 @@
-function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose)
+function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax)
 
 %	
 %	Computes whole brain GBC based on specified mask and command string
@@ -11,15 +11,17 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose)
 %   Grega Repovš, 2009-11-08 - Original version
 %   Grega Repovš, 2010-10-13 - Version with multiple voxels at a time
 %
-
-if nargin < 5
-    verbose = false;
-    if nargin < 4;
-        mask = [];
-        if nargin < 3
-            fmask = [];
-            if nargin < 2
-                error('ERROR: No command given to compute GBC!')
+if nargin < 6
+    rmax = false;
+    if nargin < 5
+        verbose = false;
+        if nargin < 4;
+            mask = [];
+            if nargin < 3
+                fmask = [];
+                if nargin < 2
+                    error('ERROR: No command given to compute GBC!')
+                end
             end
         end
     end
@@ -86,6 +88,17 @@ for n = 1:nsteps+1
     
     r = (data * x(:,fstart:fend))';
     
+    % added to remove within region correlations defined as
+    % correlations above a specified rmax threshold
+    
+    evoxels = voxels;
+    if rmax
+        clip = r >= rmax;
+        r(clip) = 0;
+        evoxels = evoxels - sum(clip,2);
+        if verbose == 3, fprintf(' cliped: %d ', sum(sum(clip))); end;
+    end
+    
     % removes correlations of voxels with themselves
     % - code would be expensive on memory and possibly time
     % - we're adjusting the results in computations below instead
@@ -107,7 +120,13 @@ for n = 1:nsteps+1
             	if doFz, Fz = fc_Fisher(r); doFz = false; end
             	% fprintf(' mFz');
             	% tic;
-            	if isempty(mFz), mFz = (sum(Fz,2)-fc_Fisher(1))./(voxels-1); end
+            	if isempty(mFz)
+            	    if rmax
+            	        mFz = sum(Fz,2)./evoxels;
+            	    else
+            	        mFz = (sum(Fz,2)-fc_Fisher(1))./(evoxels-1); 
+            	    end
+        	    end
                 results(fstart:fend,c) = mFz;
                 % fprintf(' [%.3f s]', toc);
             
@@ -115,7 +134,13 @@ for n = 1:nsteps+1
             	if doFz, Fz = fc_Fisher(r); doFz = false; end
             	% fprintf(' aFz');
             	% tic;
-            	if isempty(aFz), aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(voxels-1); end
+            	if isempty(aFz)
+            	    if rmax
+            	        aFz = sum(abs(Fz),2)./evoxels; 
+            	    else
+            	        aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(evoxels-1); 
+            	    end
+        	    end
                 results(fstart:fend,c) = aFz;
                 % fprintf(' [%.3f s]', toc);
             
@@ -123,8 +148,20 @@ for n = 1:nsteps+1
             	if doFz, Fz = fc_Fisher(r); doFz = false; end
             	% fprintf(' pFz');
             	% tic;
-            	if isempty(mFz), mFz = (sum(Fz,2)-fc_Fisher(1))./(voxels-1); end
-            	if isempty(aFz), aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(voxels-1); end
+            	if isempty(mFz)
+            	    if rmax
+            	        mFz = sum(Fz,2)./evoxels;
+            	    else
+            	        mFz = (sum(Fz,2)-fc_Fisher(1))./(evoxels-1); 
+            	    end
+        	    end
+            	if isempty(aFz)
+            	    if rmax
+            	        aFz = sum(abs(Fz),2)./evoxels; 
+            	    else
+            	        aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(evoxels-1); 
+            	    end
+        	    end
             	rp = mean(Fz>0,2);
             	results(fstart:fend,c) = (mFz+aFz)./(rp.*2);
                 % results(fstart:fend,c) = sum(Fz.*(Fz > 0),2)./sum(Fz > 0,2); % mean(Fz(Fz>0), 2);
@@ -134,8 +171,20 @@ for n = 1:nsteps+1
             	if doFz, Fz = fc_Fisher(r); doFz = false; end
             	% fprintf(' nFz');
             	% tic;
-            	if isempty(mFz), mFz = (sum(Fz,2)-fc_Fisher(1))./(voxels-1); end
-            	if isempty(aFz), aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(voxels-1); end
+            	if isempty(mFz)
+            	    if rmax
+            	        mFz = sum(Fz,2)./evoxels;
+            	    else
+            	        mFz = (sum(Fz,2)-fc_Fisher(1))./(evoxels-1); 
+            	    end
+        	    end
+            	if isempty(aFz)
+            	    if rmax
+            	        aFz = sum(abs(Fz),2)./evoxels; 
+            	    else
+            	        aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(evoxels-1); 
+            	    end
+        	    end
             	rn = mean(Fz<0,2);
             	results(fstart:fend,c) = (mFz-aFz)./(rn.*2);
                 % results(fstart:fend,c) = sum(Fz.*(Fz < 0),2)./sum(Fz < 0,2);; % mean(Fz(Fz<0), 2);
@@ -144,7 +193,11 @@ for n = 1:nsteps+1
             case 'pD'
             	% fprintf(' pD %.2f', tparameter);
             	% tic;
-                results(fstart:fend,c) = (sum(r >= tparameter, 2)-1)./voxels;
+            	if rmax
+            	    results(fstart:fend,c) = sum(r >= tparameter, 2)./voxels;
+            	else
+                    results(fstart:fend,c) = (sum(r >= tparameter, 2)-1)./voxels;
+                end
                 % fprintf(' [%.3f s]', toc);
 
             case 'nD'
@@ -156,7 +209,11 @@ for n = 1:nsteps+1
             case 'aD'
             	% fprintf(' aD');
             	% tic;
-                results(fstart:fend,c) = (sum(abs(r) >= tparameter, 2)-1)./voxels;
+            	if rmax
+            	    results(fstart:fend,c) = sum(abs(r) >= tparameter, 2)./voxels;
+            	else
+                    results(fstart:fend,c) = (sum(abs(r) >= tparameter, 2)-1)./voxels;
+                end
                 % fprintf(' [%.3f s]', toc);
         end
     
