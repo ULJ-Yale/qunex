@@ -93,9 +93,9 @@ for n = 1:nsteps+1
     
     evoxels = voxels;
     if rmax
-        clip = r >= rmax;
-        r(clip) = 0;
-        evoxels = evoxels - sum(clip,2);
+        clip = r < rmax;
+        r = r.*clip;
+        evoxels = sum(clip,2);
         if verbose == 3, fprintf(' cliped: %d ', sum(sum(clip))); end;
     end
     
