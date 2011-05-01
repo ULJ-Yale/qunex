@@ -142,7 +142,7 @@ for n = 1:nsteps+1
                 % fprintf(' [%.3f s]', toc);
                 
             case 'pD'
-            	% fprintf(' pD');
+            	% fprintf(' pD %.2f', tparameter);
             	% tic;
                 results(fstart:fend,c) = (sum(r >= tparameter, 2)-1)./voxels;
                 % fprintf(' [%.3f s]', toc);

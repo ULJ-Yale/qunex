@@ -64,7 +64,7 @@ classdef gmrimage
     end
     
     methods
-        function obj = gmrimage(filename, dtype, frames)
+        function obj = gmrimage(varone, dtype, frames)
         % 
         %  Class constructor, calls readimage function if a parameter is passed
         %
@@ -77,9 +77,19 @@ classdef gmrimage
             
             % obj = gmrimage();
             if nargin > 0
-               if isa(filename, 'char')
+               if isa(varone, 'char')
                     obj = obj.mri_readimage(filename, dtype, frames);
-                end
+                elseif isa(varone, 'numeric')
+                    obj         = gmrimage;
+                    obj.data    = varone;
+                    obj.dim     = ones(1,3);
+                    obj.dim(1)  = size(varone,1);
+                    obj.dim(2)  = size(varone,2);
+                    obj.dim(3)  = size(varone,3);
+                    obj.voxels  = prod(obj.dim(1:3));
+                    obj.frames  = size(varone,4);
+                    obj.empty   = false;
+                end 
             end        
         end
     

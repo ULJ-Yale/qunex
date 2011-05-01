@@ -15,7 +15,7 @@ function ts = mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 %      'maxn'       - average of highest n voxels
 %      'weighted'   - weighted average across ROI voxels
 %   weights         - image file with weights to use []
-%   criterium       - threshold of number of voxels to extract []
+%   criterium       - threshold or number of voxels to extract []
 %
 %
 %   Grega Repovš, 2009-11-08

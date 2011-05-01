@@ -28,16 +28,26 @@ er = [];
 
 % --- generate timeseries
 
+do   = true;
 nVar = size(r, 1);
-ts   = randn(len, nVar);
-C    = chol(r);
-ts   = ts * C;
+c    = 0;
 
-if ~isempty(md)
-    er = corr(ts);
-    dr = max(abs(changeform(er) - changeform(r)));
-    if dr > md;
-        [ts, er, dr] = si_GenerateCorrelatedTimeseries(r, len, md);
+while do 
+    c    = c+1;
+    ts   = randn(len, nVar);
+    C    = chol(r);
+    ts   = ts * C;
+    do   = false;
+    
+    if ~isempty(md)
+        er = corr(ts);
+        dr = max(abs(changeform(er) - changeform(r)));
+        if dr > md;
+            do = true;
+            if c > 10000
+                error('ERROR: Could not generate timeseries even after 10000 atempts. Consider increasing acceptability threshold.');
+            end
+        end
     end
 end
 
