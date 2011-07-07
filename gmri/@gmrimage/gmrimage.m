@@ -79,7 +79,7 @@ classdef gmrimage
             % obj = gmrimage();
             if nargin > 0
                if isa(varone, 'char')
-                    obj = obj.mri_readimage(filename, dtype, frames);
+                    obj = obj.mri_readimage(varone, dtype, frames);
                 elseif isa(varone, 'numeric')
                     obj         = gmrimage;
                     obj.data    = varone;

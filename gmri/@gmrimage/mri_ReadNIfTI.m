@@ -143,7 +143,7 @@ root = strrep(root, '.gz', '');
 root = strrep(root, '.img', '');
 
 img.rootfilename = root;
-img.filename     = [root '.4dfp.nii'];
+img.filename     = [root '.nii'];
 
 % --- format and size details
 
@@ -172,12 +172,16 @@ img.runframes = img.frames;
 if img.hdrnifti.magic(1:3) == 'n+1'
     fid = fopen(file, 'r', mformat);
     garbage = fread(fid, img.hdrnifti.vox_offset, 'char');
-    img.data = fread(fid, prod(img.hdrnifti.dim(2:7)), [datatype '=>' dtype]);
+    toread = img.hdrnifti.dim(2:7);
+    toread = prod(toread(toread>0));
+    img.data = fread(fid, toread, [datatype '=>' dtype]);
     fclose(fid);
 else
     imgfile = strrep(file, '.hdr', '.img');
     fid = fopen(imgfile, 'r', mformat);
-    img.data = fread(fid, prod(img.hdrnifti.dim(2:7)), [datatype '=>' dtype]);
+    toread = img.hdrnifti.dim(2:7);
+    toread = prod(toread(toread>0));
+    img.data = fread(fid, toread, [datatype '=>' dtype]);
     fclose(fid);
 end
 
