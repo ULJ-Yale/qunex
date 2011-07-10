@@ -7,9 +7,9 @@ function [r] = g_QAConcFile(file, do, target)
 %	
 
 if nargin < 3
-    target = strrep(file, ".conc", "");
+    target = strrep(file, '.conc', '');
     if nargin < 2
-        do = {'m','sd'}
+        do = {'m','sd'};
     end
 end
 
