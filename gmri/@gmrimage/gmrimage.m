@@ -174,6 +174,12 @@ classdef gmrimage
         %  Applies a mask so that all non 0 voxels are eliminated
         %
         
+            % - unmask first if already masked!
+            
+            if obj.masked
+                obj = obj.unmaskimg()
+            end
+            
             if isa(mask, 'gmrimage')
                 mask = mask.image2D;
             end
