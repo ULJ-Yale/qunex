@@ -1,4 +1,4 @@
-function [] = ts_ExtractROITimeseriesMultiple(flist, roiinfo, inmask, targetf)
+function [] = ts_ExtractROITimeseriesMultiple(flist, roiinfo, inmask, targetf, tonan)
 
 %	
 %	ts_ExtractROITimeseries
@@ -11,12 +11,17 @@ function [] = ts_ExtractROITimeseriesMultiple(flist, roiinfo, inmask, targetf)
 %	inmask		- an array mask defining which frames to use (1) and which not (0)
 %               - if scalar it signifies how many frames to skip at the beginning of each run
 %	tagetf		- a filename for the extracted timeseries
+%   tonan       - specify which values are to be ignored (default: none)
 %
 % 	Created by Grega Repovš on 2008-07-02.
 %   Adjusted format for multiple subjects and ROI files on 2009-01-22
+%   Added the option to exlude specific values on 2011-07-19
 %
 % 	Copyright (c) 2008. All rights reserved.
 
+if nargin < 5
+    tonan = [];
+end
 
 fprintf('\n\nStarting ...');
 
@@ -146,6 +151,12 @@ for n = 1:nsub
 	N = size(y, 2);
 	y = y'; 
 	
+	% --- convert values to ignore to NaN
+	
+	if length(tonan) > 0
+	    y(ismember(y, tonan)) = nan;
+    end
+	
 	% --- extracting timeseries for each region
 	
 	fprintf('\n     ... extracting timeseries from region ');
@@ -168,7 +179,7 @@ for n = 1:nsub
 		    rmask = ismember(roi1,roicode1{m}) & ismember(roi2,roicode2{m});
 		end
 		
-		roits = mean(y(:, rmask),2);
+		roits = nanmean(y(:, rmask),2);
 		
 		ts{n}(:,m) = roits;
 	

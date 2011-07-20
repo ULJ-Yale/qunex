@@ -15,7 +15,7 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %	verbose		- report what is going on
 %   target      - array of ROI codes that define target ROI [default: FreeSurfer cortex codes]
 %	targetf		- target folder for results
-%   rmsooth     - radius for smoothing (no smoothing if empty)
+%   rsmooth     - radius for smoothing (no smoothing if empty)
 %   rdilate     - radius for dilating mask (no dilation if empty)
 %	
 % 	Created by Grega Repovš on 2009-11-04.
