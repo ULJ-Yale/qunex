@@ -73,7 +73,7 @@ for s = 1:nsubjects
         % --- get filename to save to 
         
         if target
-            [~, fname] = fileparts(subject(s).files{n});
+            [w fname] = fileparts(subject(s).files{n});
         else
             fname = subject(s).files{n};
         end
