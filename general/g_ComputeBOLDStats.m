@@ -27,7 +27,7 @@ brainthreshold = 300;
 
 % ======= Run main
 
-if verbose, fprintf('\n\nStarting ...'); end
+if verbose, fprintf('\n\nStarting processing of %s...\n\n---> Reading in the file', flist); end
 
 [subject nsubjects nallfiles] = g_ReadFileList(flist, verbose);
 
@@ -35,11 +35,13 @@ rois = ismember('roi', fields(subject));
 
 for s = 1:nsubjects
     
+    if verbose, fprintf('\n\nProcessing subject %s...', subject(s).id); end
     %   --- read in roi file
     mask = [];
     if rois
         if ~isempty(subject(s).roi)
             if ~strfind(subject(s).roi, 'none')
+                if verbose, fprintf('---> Reading mask'); end
                 mask = gmrimage(strfind(subject(s).roi));
             end
         end
@@ -50,6 +52,7 @@ for s = 1:nsubjects
 	
 	    % --- read image
 	    
+	    if verbose, fprintf('---> Reading %s', subject(s).files{n}); end
 	    img = gmrimage(subject(s).files{n});
 
         % --- find all below threshold voxels
@@ -68,6 +71,7 @@ for s = 1:nsubjects
         
         % --- compute stats
         
+        if verbose, fprintf('---> Computing stats'); end
         stats = mri_StatsTime(img, [], bmask);
         
         % --- get filename to save to 
@@ -86,6 +90,8 @@ for s = 1:nsubjects
         
         % --- open the file and save
         
+        if verbose, fprintf('---> Saving stats'); end
+        
         fout = fopen(fullfile(target, [fname '_bstats.txt']), 'w');
         fprintf(fout, 'frame\tn\tm\tmin\tmax\tvar\tsd\tdvars\tdvarsm\tdvarsme\n');
         for f = 1:img.frames
@@ -94,5 +100,7 @@ for s = 1:nsubjects
         fclose(fout);
     end
 end
+
+if verbose, fprintf('\n\nFINISHED!'); end
 
 
