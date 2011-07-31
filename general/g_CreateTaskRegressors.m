@@ -1,4 +1,4 @@
-function [run] = g_CreateTaskRegressors(fidlf, concf, model)
+function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 
 %   
 %   Returns task regressors for each bold run 
@@ -17,6 +17,11 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model)
 %       - number of frames to model (for unasumed response)
 %       - length of event in s (for assumed response - if empty, duration is taken from event file)
 %       - start and end offset in frames (for block response)
+%   - ignore - what to do with frames to ignore
+%       -> 'no' (don't do anything)
+%       -> 'ignore' (ignore those frames)
+%       -> 'specify' (create a separate regressor)
+%       -> 'both' (ignore and specify)
 %
 %   OUTPUT
 %   - run - array struct for each run
@@ -35,6 +40,17 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model)
 %                - Updated: 2011.01.24
 %                - Updated: 2011.02.11
 %
+
+% ---> set variables
+
+if narigin < 4
+    ignore = [];
+end
+
+if isempty(ignore)
+    ignore = 'no';
+end
+
 
 % ---> get event data
 
@@ -230,6 +246,39 @@ for r = 1:nruns
     
     %------------------------- end models loop
     end
+    
+    %======================================================================
+    %                                                 zero frames to ignore
+    
+    if ~strcmpi(ignore, 'no')
+        
+        ts = zeros(nframes, 1);
+        
+        relevant = in_run & (events.event = -1);
+        nrelevant = sum(relevant);
+
+        rel_start = events.frame(relevant) - start_frame + 1;
+        rel_end   = events.frame(relevant) + events.elength(relevant) - start_frame + 1;
+        
+        for ievent = 1:nrelevant
+            e_start = rel_start(ievent) + soff;
+            e_end   = rel_end(ievent) + eoff;
+            if e_end > nframes
+                e_end = nframes;
+            end
+            ts(e_start:e_end,1) = 1;
+        end
+        
+        if strcmpi(ignore, 'ignore') | strcmpi(ignore, 'both')
+            run(r).matrix(ts==1,:) = 0;
+        end
+        if strcmpi(ignore, 'specify') | strcmpi(ignore, 'both')
+            run(r).matrix = [run(r).matrix ts];
+            run(r).regressors = [run(r).regressors, 'ignore'];
+        end
+        
+    end
+    %------------------------- end zero frames to ignore
 
 end
 

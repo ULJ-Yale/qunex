@@ -1,6 +1,6 @@
-function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method)
+function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore)
 
-%function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method)
+%function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore)
 %	
 %	fc_ExtractROITimeseriesMasked
 %
@@ -13,18 +13,41 @@ function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, opt
 %	tagetf		- the matlab file to save timeseries in
 %   options     - options for alternative output: t - create a tab delimited text file, m - create a matlab file (default)
 %   method      - method for extracting timeseries - mean, pca [mean]
+%   ignore      - do we omit frames to be ignored [false]
 %
 %	
 % 	Created by Grega Repovš on 2009-06-25.
-%   Adjusted for a different file list format and an additional ROI mask - 2008-01-23
-%   Rewritten to use gmrimage objects and ability for event defined masks - 2011-02-11
+%   2008-01-23 - Adjusted for a different file list format and an additional ROI mask
+%   2011-02-11 - Rewritten to use gmrimage objects and ability for event defined masks
+%   2012-07-30 - Added option to omit frames specified to be ignored in the fidl file
+%   
 % 	Copyright (c) 2008. All rights reserved.
+%
 
-if nargin < 6
-    method = 'mean';
-    if nargin < 5
-        options = 'm';
+if nargin < 7
+    ignore = [];
+    if nargin < 6
+        method = 'mean';
+        if nargin < 5
+            options = 'm';
+        end
     end
+end
+
+if isempty(options)
+    options = 'm';
+end
+if isempty(method)
+    method = 'mean';
+end
+if isempty(ignore)
+    ignore = false;
+end
+
+if ignore
+    ignore = 'ignore';
+else
+    ignore = 'no';
 end
 
 eventbased = false;
@@ -91,7 +114,7 @@ for n = 1:nsub
 	    mask = [];
 	    if isfield(subject(n), 'fidl')
             if subject(n).fidl
-                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask);
+                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, ignore);
     	        nmask = [];
                 for r = 1:length(mask)
                     nmask = [nmask; sum(mask(r).matrix,2)>0];

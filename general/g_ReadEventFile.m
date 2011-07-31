@@ -11,6 +11,9 @@ function [out] = g_ReadEventFile(file)
 %	events  - list of event names
 %	TR      - tr in s
 %	
+%   (c) Grega Repovš
+%   2011-07-30 - Added coding of frames to ignore
+%
 
 [fin message] = fopen(file);
 if fin == -1
@@ -51,6 +54,14 @@ while feof(fin) == 0
 		end
 		if nbeh
 			beh = [beh; data(4:end)'];
+		end
+	elseif length(data) == 2
+	    if data(2) < 0
+	        frame 	= [frame floor(data(1)/TR)];
+    		event_s = [event_s data(1)];
+    		elength = [elength abs(data(2))];
+    		event_l = [event_l floor(abs(data(2))*TR)];
+    		event 	= [event -1]; 
 		end
 	end
 end
