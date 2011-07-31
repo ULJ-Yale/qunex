@@ -24,7 +24,8 @@ classdef gmrimage
 %  mri_ComputeCorrelations - computes correlations with the provided data matrix
 %
 %  Created by Grega Repovš, 2009-10-04
-%  Last modification by Grega Repovsš, 2010-03-18
+%  Last modification by Grega Repovš, 2010-03-18
+%  2011-07-31 - Added importing of existing movement, fstat and scrubbing data
 %
 
     properties
@@ -48,6 +49,16 @@ classdef gmrimage
         correlized      = false;
         info            = [];
         roi             = [];
+        
+        % ---> various statistical data
+        
+        mov        = [];
+        mov_hdr    = [];
+        fstats     = [];
+        fstars_hdr = [];
+        scrub      = [];
+        scrub_hdr  = [];
+        
     end
     
     methods(Static = true)
@@ -107,9 +118,11 @@ classdef gmrimage
         
             if strcmp(filename(length(filename)-8:end), '.4dfp.img') | strcmp(filename(length(filename)-4:end), '.conc')
                 obj = obj.mri_Read4DFP(filename, dtype, frames);
+                obj = obj.mri_ReadStats(filename, frames)
                 obj.empty = false;
             elseif strcmp(filename(length(filename)-3:end), '.nii') | strcmp(filename(length(filename)-6:end), '.nii.gz') | strcmp(filename(length(filename)-3:end), '.hdr')
                 obj = obj.mri_ReadNIfTI(filename, dtype, frames);
+                obj = obj.mri_ReadStats(filename, frames)
                 obj.empty = false;
             elseif strcmp(filename(length(filename)-4:end), '.conc')
                 obj = obj.mri_ReadConcImage(filename, dtype, frames);
@@ -118,6 +131,7 @@ classdef gmrimage
                 error('ERROR: Unknown file format!');
                 obj = gmrimage();
             end
+            
         end
         
         function mri_saveimage(obj, filename)
@@ -277,11 +291,42 @@ classdef gmrimage
         function obj = ismember(obj, B)
             obj.data = ismember(obj.image2D, B);
         end
+
+        
+        % =================================================
+        %                                           horzcat
+        %
+        %   method for concatenation of image volumes
+        %
         
         function obj = horzcat(obj, add)
             obj.data = [obj.image2D add.image2D];
             obj.frames = obj.frames + add.frames;
             obj.runframes = [obj.runframes add.frames];
+            
+            % --> combine movement data 
+            if obj.mov & add.mov
+                obj.mov = [obj.mov; add.mov];
+            else
+                obj.mov     = [];
+                obj.mov_hdr = [];
+            end
+            
+            % --> combine fstats data 
+            if obj.fstats & add.fstats
+                obj.fstats = [obj.fstats; add.fstats];
+            else
+                obj.fstats     = [];
+                obj.fstats_hdr = [];
+            end
+            
+            % --> combine scrub data 
+            if obj.scrub & add.scrub
+                obj.scrub = [obj.scrub; add.scrub];
+            else
+                obj.scrub     = [];
+                obj.scrub_hdr = [];
+            end
         end
         
         function reply = isempty(obj)
@@ -299,11 +344,48 @@ classdef gmrimage
             end
         end
         
+        
+        % =================================================
+        %                                        zeroframes
+        %
+        %   method for creating image with empty frames
+        %
+        
         function obj = zeroframes(obj, frames)
             obj.data = zeros(obj.voxels, frames);
             obj.frames = frames;
             obj.runframes = frames;
+            
+            % ---> erase movement data
+            
+            if obj.mov
+                obj.mov     = [];
+                obj.mov_hdr = [];
+            end
+            
+            % ---> erase fstats data
+            
+            if obj.fstats
+                obj.fstats     = [];
+                obj.fstats_hdr = [];
+            end
+            
+            % ---> erase scrub data
+            
+            if obj.scrub
+                obj.scrub     = [];
+                obj.scrub_hdr = [];
+            end
         end
+
+
+
+        
+        % =================================================
+        %                                       sliceframes
+        %
+        %   method for removing masked volumes from image
+        %
         
         function obj = sliceframes(obj, fmask, options)
             if nargin < 3
@@ -352,6 +434,24 @@ classdef gmrimage
                 obj.data = obj.image2D;
                 obj.data = obj.data(:, fmask > 0);
                 obj.frames = sum(fmask>0);
+                
+                % ---> mask movement data
+                
+                if mov
+                    obj.mov = obj.mov(fmask > 0, :);
+                end
+                
+                % ---> mask fstats data
+                
+                if fstats
+                    obj.fstats = obj.fstats(fmask > 0, :);
+                end
+                
+                % ---> mask scrub data
+                
+                if scrub
+                    obj.scrub = obj.scrub(fmask > 0, :);
+                end
             end
         end
         
