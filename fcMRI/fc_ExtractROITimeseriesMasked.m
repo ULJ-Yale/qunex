@@ -13,7 +13,10 @@ function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, opt
 %	tagetf		- the matlab file to save timeseries in
 %   options     - options for alternative output: t - create a tab delimited text file, m - create a matlab file (default)
 %   method      - method for extracting timeseries - mean, pca [mean]
-%   ignore      - do we omit frames to be ignored [false]
+%   ignore      - do we omit frames to be ignored (
+%               -> no:    do not ignore any additional frames
+%               -> event: ignore frames as marked in .fidl file
+%               -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
 %
 %	
 % 	Created by Grega Repovš on 2009-06-25.
@@ -40,13 +43,8 @@ end
 if isempty(method)
     method = 'mean';
 end
-if isempty(ignore)
-    ignore = false;
-end
 
-if ignore
-    ignore = 'ignore';
-else
+if isempty(ignore)
     ignore = 'no';
 end
 
@@ -133,7 +131,19 @@ for n = 1:nsub
     else
         y = y.sliceframes(mask);                % this might need to be changed to allow for per run timeseries masks
     end
-	            
+    
+    % ---> remove additional frames to be ignored
+    
+    if ~strcmp(ignore, 'no')
+        scol = ismember(y.scrub_hdr, ignore);
+        if sum(scol) == 1;
+            mask = y.scrub(:,scol)';
+            y = y.sliceframes(mask==0);
+        else
+            fprintf("WARNING: Field %s not present in scrubbing data, no frames scrubbed!", ignore);
+        end
+    end
+    
 	% ---> extracting timeseries
 	
 	fprintf('\n     ... extracting timeseries ');
@@ -187,5 +197,7 @@ if ismember('t', options)
 end
 
 fprintf('\n\n FINISHED!\n\n');
+
+
 
 
