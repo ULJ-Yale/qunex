@@ -43,7 +43,7 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 
 % ---> set variables
 
-if narigin < 4
+if nargin < 4
     ignore = [];
 end
 
@@ -254,7 +254,7 @@ for r = 1:nruns
         
         ts = zeros(nframes, 1);
         
-        relevant = in_run & (events.event = -1);
+        relevant = in_run & (events.event == -1);
         nrelevant = sum(relevant);
 
         rel_start = events.frame(relevant) - start_frame + 1;

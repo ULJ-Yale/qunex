@@ -13,38 +13,58 @@ if nargin < 3
     frames = [];
 end
 
+% ---> check if movement folder exists
+
+
+[fpath, fname] = fileparts(filename);
+if isempty(fpath) || strcmp(fpath,'.') || strcmp(fpath, '~')
+    fpath = pwd;
+end
+if exist(fullfile(fpath, 'movement'), 'dir')
+    movfolder = fullfile(fpath, 'movement');
+elseif exist(fullfile(fileparts(fpath),'movement'), 'dir')
+    movfolder = fullfile(fileparts(fpath),'movement');
+else
+    return
+end
+
+
 % ---> check for movement data
 
-tfile = FindMatchingFile(filename, '.dat')
-[data header] = ReadTextFile(tfile);
-data = CheckData(data, frames, obj.frames);
-if data
-    obj.mov     = data;
-    obj.mov_hdr = header;
+tfile = FindMatchingFile(movfolder, fname, '.dat');
+if tfile
+    [data header] = ReadTextFile(tfile);
+    data = CheckData(data, frames, obj.frames);
+    if ~isempty(data)
+        obj.mov     = data;
+        obj.mov_hdr = header;
+    end
 end
 
 
 % ---> check for per-frame stats data
 
-tfile = FindMatchingFile(filename, '_bstats.txt')
-[data header] = ReadTextFile(tfile);
-data = CheckData(data, frames, obj.frames);
-if data
-    obj.fstats     = data;
-    obj.fstats_hdr = header;
+tfile = FindMatchingFile(movfolder, fname, '_bstats.txt');
+if tfile
+    [data header] = ReadTextFile(tfile);
+    data = CheckData(data, frames, obj.frames);
+    if ~isempty(data)
+        obj.fstats     = data;
+        obj.fstats_hdr = header;
+    end
 end
-
 
 % ---> check for scrubbing data
 
-tfile = FindMatchingFile(filename, '_scrub.txt')
-[data header] = ReadTextFile(tfile);
-data = CheckData(data, frames, obj.frames);
-if data
-    obj.scrub     = data;
-    obj.scrub_hdr = header;
+tfile = FindMatchingFile(movfolder, fname, '_scrub.txt');
+if tfile
+    [data header] = ReadTextFile(tfile);
+    data = CheckData(data, frames, obj.frames);
+    if ~isempty(data)
+        obj.scrub     = data;
+        obj.scrub_hdr = header;
+    end
 end
-
 
 
 % ===============================================
@@ -52,23 +72,26 @@ end
 
 function [x, header] = ReadTextFile(filename)
 
-fin = fopen(file, 'r');
+fin = fopen(filename, 'r');
 c = 0;
 s = fgetl(fin);
 h = false;
 while ischar(s)
-    if ~ischar(s(1))
-        c = c+1;
-        x(c,:) = strread(s);
-        h = true;
-	elseif ~h
-	    s = strrep(s, '#', '');
-	    header = textscan(s, '%strrep');
-	    header = header{1};
+    s = strtrim(s);
+    if ~isempty(s)
+        if ismember(s(1),'-.0123456789')
+            c = c+1;
+            x(c,:) = strread(s);
+            h = true;
+    	elseif ~h
+    	    s = strrep(s, '#', '');
+    	    header = textscan(s, '%s');
+    	    header = header{1};
+        end
     end
-    s = fgetl(fid);
+    s = fgetl(fin);
 end
-fclose(fin)
+fclose(fin);
 
 
 
@@ -77,12 +100,11 @@ fclose(fin)
 % ===============================================
 %                                FindMatchingFile
 
-function [mfile] = FindMatchingFile(filename, tail)
+function [mfile] = FindMatchingFile(movfolder, froot, tail)
 
 % ---> get the list of files
-[fpath, froot] = fileparts(filename);
-files = dir([fpath filesep 'movement' filesep '*' tail]);
-if length(files) == 0
+files = dir(fullfile(movfolder, ['*' tail]));
+if isempty(files)
     mfile = false;
     return
 end
@@ -91,17 +113,17 @@ end
 li = length(froot);
 nmatch = 0;
 fmatch = 0;
-for f in 1:length(files)
+for f = 1:length(files)
     ld     = length(files(f).name);
     c      = min(li, ld);
-    tmatch = sum(froot(1:c) == file(f).name(1:c));
-    if tmatch > nmatch:
+    tmatch = sum(froot(1:c) == files(f).name(1:c));
+    if tmatch > nmatch
         nmatch = tmatch;
         fmatch = f;
     end
 end
 
-mfile = files(fmatch).name;
+mfile = fullfile(movfolder, files(fmatch).name);
 
 
 
@@ -113,7 +135,7 @@ function [data] = CheckData(data, tframes, iframes)
 l = size(data, 1);
 if tframes
     if tframes > l
-        data = false;
+        data = [];
         return
     end
     data = data(1:tframes,:);
@@ -121,7 +143,7 @@ if tframes
 end
     
 if l ~= iframes
-    data = false;
+    data = [];
 end
 
 

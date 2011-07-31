@@ -45,9 +45,9 @@ else
     img.filename = [root '.4dfp.img'];
     img.TR = [];
 
-    x = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [1]'}))));
-    y = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [2]'}))));
-    z = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [3]'}))));
+    x = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [1]'}))));
+    y = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [2]'}))));
+    z = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [3]'}))));
     img.dim = [x y z];
     img.voxels = x*y*z;
     
@@ -71,9 +71,9 @@ else
     img.runframes = img.frames;
     img.hdr4dfp.value{ismember(img.hdr4dfp.key, {'matrix size [4]'})} = num2str(img.frames);
 
-    xmm = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'scaling factor (mm/pixel) [1]'}))));
-    ymm = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'scaling factor (mm/pixel) [2]'}))));
-    zmm = str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'scaling factor (mm/pixel) [3]'}))));
+    xmm = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'scaling factor (mm/pixel) [1]'}))));
+    ymm = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'scaling factor (mm/pixel) [2]'}))));
+    zmm = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'scaling factor (mm/pixel) [3]'}))));
     img.vsizes = [xmm ymm zmm];
 end
 
