@@ -42,7 +42,7 @@ while feof(fin) == 0
 	
 	if length(data) >= 3
 	
-		frame 	= [frame floor(data(1)/TR)];
+		frame 	= [frame floor(data(1)/TR)+1];
 		event_s = [event_s data(1)];
 		elength = [elength floor(data(3)/TR)];
 		event_l = [event_l data(3)];
@@ -57,7 +57,7 @@ while feof(fin) == 0
 		end
 	elseif length(data) == 2
 	    if data(2) < 0
-	        frame 	= [frame floor(data(1)/TR)];
+	        frame 	= [frame floor(data(1)/TR)+1];
     		event_s = [event_s data(1)];
     		elength = [elength abs(data(2))];
     		event_l = [event_l floor(abs(data(2))*TR)];

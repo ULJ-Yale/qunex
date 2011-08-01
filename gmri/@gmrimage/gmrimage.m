@@ -116,7 +116,7 @@ classdef gmrimage
                 end
             end
         
-            if strcmp(filename(length(filename)-8:end), '.4dfp.img') || strcmp(filename(length(filename)-4:end), '.conc')
+            if strcmp(filename(length(filename)-8:end), '.4dfp.img')
                 obj = obj.mri_Read4DFP(filename, dtype, frames);
                 obj = obj.mri_ReadStats(filename, frames);
                 obj.empty = false;
@@ -303,7 +303,7 @@ classdef gmrimage
             obj.runframes = [obj.runframes add.frames];
             
             % --> combine movement data 
-            if obj.mov && add.mov
+            if ~isempty(obj.mov) && ~isempty(add.mov)
                 obj.mov = [obj.mov; add.mov];
             else
                 obj.mov     = [];
@@ -311,7 +311,7 @@ classdef gmrimage
             end
             
             % --> combine fstats data 
-            if obj.fstats && add.fstats
+            if ~isempty(obj.fstats) && ~isempty(add.fstats)
                 obj.fstats = [obj.fstats; add.fstats];
             else
                 obj.fstats     = [];
@@ -319,7 +319,7 @@ classdef gmrimage
             end
             
             % --> combine scrub data 
-            if obj.scrub && add.scrub
+            if ~isempty(obj.scrub) & ~isempty(add.scrub)
                 obj.scrub = [obj.scrub; add.scrub];
             else
                 obj.scrub     = [];
@@ -356,21 +356,21 @@ classdef gmrimage
             
             % ---> erase movement data
             
-            if obj.mov
+            if ~isempty(obj.mov)
                 obj.mov     = [];
                 obj.mov_hdr = [];
             end
             
             % ---> erase fstats data
             
-            if obj.fstats
+            if ~isempty(obj.fstats)
                 obj.fstats     = [];
                 obj.fstats_hdr = [];
             end
             
             % ---> erase scrub data
             
-            if obj.scrub
+            if ~isempty(obj.scrub)
                 obj.scrub     = [];
                 obj.scrub_hdr = [];
             end
@@ -423,7 +423,7 @@ classdef gmrimage
                     end
                 else
                     mask(1:min([length(fmask), length(mask)])) = fmask(1:min([length(fmask), length(mask)]));
-                    obj.runframes(1) = sum(fmask > 0);
+                    obj.runframes = sum(fmask > 0);
                 end
                 fmask = mask;
             end
@@ -435,19 +435,19 @@ classdef gmrimage
                 
                 % ---> mask movement data
                 
-                if obj.mov
+                if ~isempty(obj.mov)
                     obj.mov = obj.mov(fmask > 0, :);
                 end
                 
                 % ---> mask fstats data
                 
-                if obj.fstats
+                if ~isempty(obj.fstats)
                     obj.fstats = obj.fstats(fmask > 0, :);
                 end
                 
                 % ---> mask scrub data
                 
-                if obj.scrub
+                if ~isempty(obj.scrub)
                     obj.scrub = obj.scrub(fmask > 0, :);
                 end
             end

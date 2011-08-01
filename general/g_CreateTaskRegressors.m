@@ -33,12 +33,15 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %   - !!! assumed response regressors get normalized to 1 only within each run !!!!
 %   ... perhaps add a normalizing pass for all regressors at the end of the script
 %   - !!! it only correctly works with TR precision to 1 decimal point ... should perhaps change to 2 decimal points
+%   -> changed 2011.07.31
 %   - !!! might be better to change downsampling to summation 
+%   -> changed to area under the curve 2011.07.31
 %
-%   Grega Repovš - Created: 2008.07.11
+%   Grega Repovs - Created: 2008.07.11
 %                - Updated: 2008.07.16
 %                - Updated: 2011.01.24
 %                - Updated: 2011.02.11
+%                - Updated: 2011.07.31
 %
 
 % ---> set variables
@@ -117,7 +120,7 @@ for r = 1:nruns
             
             for ievent = 1:nrelevant
                 for iframe = 1:model(m).length
-                    target = rel_frame - start_frame + 1 + iframe;
+                    target = rel_frame(ievent) - start_frame + iframe;
                     if target <= nframes
                         mtx(target, iframe) = 1;
                     end
@@ -148,7 +151,7 @@ for r = 1:nruns
             end
             
             rel_start = events.frame(relevant) - start_frame + 1;
-            rel_end   = events.frame(relevant) + events.elength(relevant) - start_frame + 1;
+            rel_end   = events.frame(relevant) - start_frame + events.elength(relevant);
             
             for ievent = 1:nrelevant
                 e_start = rel_start(ievent) + soff;
@@ -184,12 +187,13 @@ for r = 1:nruns
             hrf = [];
 
             if strcmp(model(m).hrf_type, 'boynton')
-                t = [0:320]./10;
+                % t = [0:3200]./100;
+                t = [0:32*round(100/events.TR)]./round(100/events.TR);
                 hrf = fmri_hemodyn(t, 2.25, 1.25, 2);  % with parameters as suggested in the source
             end
 
             if strcmp(model(m).hrf_type, 'SPM')
-                hrf = spm_hrf(0.1);    % leaving parameters to their defaults
+                hrf = spm_hrf(events.TR/100);    % leaving parameters to their defaults
             end
 
             if isempty(hrf)
@@ -199,7 +203,8 @@ for r = 1:nruns
             %======================================================================
             %                                           create the event timeseries
 
-            ts = zeros(round(events.TR*nframes*10),1);
+            % ts = zeros(round(events.TR*100)*nframes),1);
+            ts = zeros(100*nframes,1);
             
             rel_times = events.event_s(relevant);
             rel_times = rel_times - (start_frame-1)*events.TR;
@@ -210,8 +215,11 @@ for r = 1:nruns
             end
     
             for ievent = 1:nrelevant
-                e_start = floor(rel_times(ievent)*10)+1;
-                e_end = e_start + floor(rel_lengths(ievent)*10) -1;
+                % e_start = floor(rel_times(ievent)*100)+1;
+                % e_end = e_start + floor(rel_lengths(ievent)*100) -1;
+                e_start = floor(rel_times(ievent)/events.TR*100)+1;
+                e_end   = e_start + floor(rel_lengths(ievent)/events.TR*100)-1;
+                
                 if e_end > length(ts)
                     e_end = length(ts);
                 end
@@ -233,13 +241,13 @@ for r = 1:nruns
             %                          convolve event with HRF, downsample and crop
 
             ts = conv(ts, hrf);
-            ts = resample(ts, 1, round(events.TR*10));
-            ts = ts(1:nframes);
+            ts = ts(1:100*nframes);
+            ts = mean(reshape(ts,100,nframes),1);
             if max(ts) > 0
                 ts = ts/max(ts);
             end
             
-            run(r).matrix = [run(r).matrix ts];
+            run(r).matrix = [run(r).matrix ts'];
             run(r).regressors = [run(r).regressors, join(events.events(model(m).code+1), '_')];
             
         end
@@ -254,15 +262,15 @@ for r = 1:nruns
         
         ts = zeros(nframes, 1);
         
-        relevant = in_run & (events.event == -1);
+        relevant  = in_run & (events.event == -1);
         nrelevant = sum(relevant);
 
         rel_start = events.frame(relevant) - start_frame + 1;
-        rel_end   = events.frame(relevant) + events.elength(relevant) - start_frame + 1;
+        rel_end   = events.frame(relevant) - start_frame + events.elength(relevant);
         
         for ievent = 1:nrelevant
-            e_start = rel_start(ievent) + soff;
-            e_end   = rel_end(ievent) + eoff;
+            e_start = rel_start(ievent);
+            e_end   = rel_end(ievent);
             if e_end > nframes
                 e_end = nframes;
             end

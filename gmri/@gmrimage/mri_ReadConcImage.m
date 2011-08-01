@@ -25,9 +25,9 @@ end
 files = img.mri_ReadConcFile(file);
 nfiles = length(files);
 
-img = mri_readimage(char(files{1}), dtype, frames); 
+img = gmrimage(char(files{1}), dtype, frames); 
 img.runframes = img.frames;
 for n = 2:nfiles
-    nimg = mri_readimage(char(files{n}), dtype, frames);
-	img = [img nimg]; 
+    nimg = gmrimage(char(files{n}), dtype, frames);
+	img = [img nimg];
 end

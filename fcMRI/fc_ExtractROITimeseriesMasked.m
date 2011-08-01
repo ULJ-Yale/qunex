@@ -48,9 +48,18 @@ if isempty(ignore)
     ignore = 'no';
 end
 
+if ~ischar(ignore)
+    error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
+end
+
 eventbased = false;
 if isa(inmask, 'char')
     eventbased = true;
+    if strcmp(ignore, 'fidl')
+        fignore = 'ignore';
+    else
+        fignore = 'no';
+    end
 end
 
 fprintf('\n\nStarting ...');
@@ -112,7 +121,7 @@ for n = 1:nsub
 	    mask = [];
 	    if isfield(subject(n), 'fidl')
             if subject(n).fidl
-                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, ignore);
+                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, fignore);
     	        nmask = [];
                 for r = 1:length(mask)
                     nmask = [nmask; sum(mask(r).matrix,2)>0];
@@ -132,15 +141,15 @@ for n = 1:nsub
         y = y.sliceframes(mask);                % this might need to be changed to allow for per run timeseries masks
     end
     
-    % ---> remove additional frames to be ignored
+    % ---> remove additional frames to be ignored 
     
-    if ~strcmp(ignore, 'no')
+    if ~ismember(ignore, {'no', 'fidl'})
         scol = ismember(y.scrub_hdr, ignore);
         if sum(scol) == 1;
             mask = y.scrub(:,scol)';
             y = y.sliceframes(mask==0);
         else
-            fprintf("WARNING: Field %s not present in scrubbing data, no frames scrubbed!", ignore);
+            fprintf('\n         WARNING: Field %s not present in scrubbing data, no frames scrubbed!', ignore);
         end
     end
     
