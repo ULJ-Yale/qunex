@@ -13,6 +13,7 @@ function [img] = mri_Read4DFP(img, file, dtype, frames)
 %           frames - number of frames to read [all]
 %
 %       Grega Repovs - 2009-11-19
+%       2011-07-31 - Changed the handling of conc files to gmrimage main method.
 %
 
 if nargin < 4
@@ -25,13 +26,8 @@ end
 
 if FileType(file)
 
-	files = img.mri_ReadConcFile(file);
-	nfiles = length(files);
+	img = gmrimage(file);
 
-    img = img.mri_Read4DFP(char(files{1}), dtype);
-	for n = 2:nfiles
-		img = [img img.mri_Read4DFP(char(files{n}), dtype)]; 
-	end
 else
     root = strrep(file, '.img', '');
     root = strrep(root, '.4dfp', '');

@@ -88,11 +88,22 @@ nvox = size(pimg,1);
 
 %  ---- finding FDR threshold
 
+% old code
+% vrank = [1:nvox]';
+% vcrit = (vrank./nvox).*q;
+% ps = sort(pimg);
+% vrank(ps>vcrit)=0;
+% vrank = max(vrank);
+% vcrit = (vrank./nvox).*q;
+
 vrank = [1:nvox]';
 vcrit = (vrank./nvox).*q;
 ps = sort(pimg);
-vrank(ps>vcrit)=0;
-vrank = max(vrank);
+test = ps<=vcrit;
+vrank = find(test,1,'last');
+if isempty(vrank)
+    vrank = 0;
+end
 vcrit = (vrank./nvox).*q;
 
 %  ---- making FDR mask

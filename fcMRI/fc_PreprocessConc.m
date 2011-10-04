@@ -51,6 +51,10 @@ function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efi
 %   - these should be placed in the /images/functional/events/ and named boldX_efile
 %
 %   It takes eventstring to describe which events to model and for how many frames
+
+%   To Do
+%   - make movement reading more flexible (n of columns and possibly other formats)
+%
 %   
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -546,16 +550,20 @@ function x = ReadMovFile(file, nf)
     fin = fopen(file, 'r');
     c = 0;
     while c < nf
-        s = fgetl(fin);
-        if s(1) ~= '#'
-            line = strread(s);
-            c = c+1;
-            x(c,:) = line(2:7);
-        end
+    	s = fgetl(fin);
+    	if s(1) ~= '#'
+    		line = strread(s);
+    		l = length(line);
+    		c = c+1;
+    		x(c,:) = line(l-5:l);
+    	end
     end
     fclose(fin);
 
 return
+
+
+
 
 % ======================================================
 %   ----> save nuisance images 
