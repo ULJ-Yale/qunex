@@ -22,6 +22,11 @@ if nargin < 2
 end
 
 if verbose, fprintf('\n ... reading file list: '); end
+if verbose
+    report = 'full';
+else
+    report = 'error';
+end
 
 files     = fopen(flist);
 nsubjects = 0;
@@ -34,19 +39,17 @@ while feof(files) == 0
         nf = 0;
         [t, s] = strtok(s, ':');        
         subject(nsubjects).id = strtrim(s(2:end));
-        if verbose, fprintf('S'); end
+        if verbose, fprintf(subject(nsubjects).id); end
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');        
         subject(nsubjects).roi = strtrim(s(2:end));
-        g_CheckFile(subject(nsubjects).roi);
-        if verbose, fprintf('r'); end
+        g_CheckFile(subject(nsubjects).roi, 'ROI image', report);
     elseif ~isempty(strfind(s, 'file:'))
         nf = nf + 1;
         nfiles = nfiles + 1;
         [t, s] = strtok(s, ':');        
         subject(nsubjects).files{nf} = strtrim(s(2:end));
-        g_CheckFile(s(2:end));      
-        if verbose, fprintf('f'); end  
+        g_CheckFile(s(2:end), 'image file', report);      
     end
 end
 

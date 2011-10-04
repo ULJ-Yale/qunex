@@ -41,7 +41,7 @@ for s = 1:nsubjects
     if rois
         if ~isempty(subject(s).roi)
             if ~strfind(subject(s).roi, 'none')
-                if verbose, fprintf('---> Reading mask'); end
+                if verbose, fprintf('\n---> Reading mask'); end
                 mask = gmrimage(strfind(subject(s).roi));
             end
         end
@@ -52,7 +52,7 @@ for s = 1:nsubjects
 	
 	    % --- read image
 	    
-	    if verbose, fprintf('---> Reading %s', subject(s).files{n}); end
+	    if verbose, fprintf('\n---> Reading %s', subject(s).files{n}); end
 	    img = gmrimage(subject(s).files{n});
 
         % --- find all below threshold voxels
@@ -71,7 +71,7 @@ for s = 1:nsubjects
         
         % --- compute stats
         
-        if verbose, fprintf('---> Computing stats'); end
+        if verbose, fprintf(' ... computing stats'); end
         stats = mri_StatsTime(img, [], bmask);
         
         % --- get filename to save to 
@@ -90,7 +90,7 @@ for s = 1:nsubjects
         
         % --- open the file and save
         
-        if verbose, fprintf('---> Saving stats'); end
+        if verbose, fprintf(' ... saving stats'); end
         
         fout = fopen(fullfile(target, [fname '_bstats.txt']), 'w');
         fprintf(fout, 'frame\tn\tm\tmin\tmax\tvar\tsd\tdvars\tdvarsm\tdvarsme\n');
@@ -98,6 +98,8 @@ for s = 1:nsubjects
             fprintf(fout, '%d\t%d\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.2f\t%.2f\t%.2f\n', f, stats.n(f), stats.mean(f), stats.min(f), stats.max(f), stats.var(f), stats.sd(f), stats.dvars(f), stats.dvarsm(f), stats.dvarsme(f));
         end
         fclose(fout);
+        
+        if verbose, fprintf(' ... done!'); end
     end
 end
 
