@@ -102,10 +102,11 @@ fclose(fin);
 
 function [mfile] = FindMatchingFile(movfolder, froot, tail)
 
+mfile = false;
+
 % ---> get the list of files
 files = dir(fullfile(movfolder, ['*' tail]));
 if isempty(files)
-    mfile = false;
     return
 end
 
@@ -123,7 +124,12 @@ for f = 1:length(files)
     end
 end
 
-mfile = fullfile(movfolder, files(fmatch).name);
+if fmatch > 0
+    mfile = fullfile(movfolder, files(fmatch).name);
+end
+
+
+    
 
 
 
