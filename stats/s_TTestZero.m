@@ -1,43 +1,90 @@
-function [TS] = s_TTestZero(conc, target, dtype)
+function [] = s_TTestZero(dfile, output, exclude, verbose)
 
+%function [] = s_TTestZero(dfile, output, exclude, verbose)
 %	
-%	Computes t-test against 0
-%	conc - input files
-%	target - output root filename
+%	Computes t-test against zero and saves specified results.
 %	
+%	dfile   - the data file to work on - either a single image or a conc file
+%   output  - the type of results to save ['metpz']
+%             m : mean value for each voxel
+%             e : standard error for each voxel
+%             t : t-value for each voxel
+%             p : p-value for each voxel
+%             z : Z-score for each voxel
+%   exclude - values to be excluded from computation
+%   verbose - should report each step?
+%
+%   Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
+%
 
-if nargin < 3
-	dtype = 'single';
+
+if nargin < 4
+    verbose = false;
+    if nargin < 3
+        exclude = [];
+        if nargin < 2
+            output = [];
+            if nargin < 1
+                error('ERROR: file name needs to be provided as input!');
+            end
+        end
+    end
 end
 
+if isempty(output)
+    output = 'metpz';
+end
+
+root = strrep(dfile, '.img', '');
+root = strrep(root, '.4dfp', '');
+root = strrep(root, '.nii', '');
+root = strrep(root, '.gz', '');
+root = strrep(root, '.conc', '');
 
 % ======================================================
-% 	----> read files
+% 	----> read file
 
-fprintf('Computing t-test against 0 [%s] ... reading data ', conc);
-img = gmrimage(conc, dtype);                                fprintf('.');
+if verbose, fprintf('--------------------------\nComputing t-test against zero\n ... reading data (%s) ', dfile), end
+img = gmrimage(dfile);
 img.data = img.image2D;		
-m = img.zeroframes(1);
-Z = img.zeroframes(1);
+
+if ~isempty(exclude)
+    img.data(ismember(img.data, exclude)) = NaN;
+end
 
 
 % ======================================================
 % 	----> compute t-test
 
-fprintf(' computing ');
-m.data = mean(img.data, 2);					                    fprintf('.');
-[h, p] = ttest(img.data, 0, 0.05, 'both', 2);					fprintf('.');
-                                                               
-%Z = fc_ptoz(1-(p/2),0,1);										fprintf('.');
-p = icdf('Normal', (1-(p/2)), 0, 1);							fprintf('.');
-Z.data = p .* sign(m.data);								        fprintf('.');
+if verbose, fprintf('\n ... computing\n --- '), end
+[p Z M SE t] = img.mri_TTestZero(verbose);
+if verbose, fprintf(' --- \n'), end
+
 
 % ======================================================
 % 	----> save results
 
-fprintf(' saving ');
-Z.mri_saveimage([Z.rootfilename '_Z']);                   fprintf('.');
-m.mri_saveimage([m.rootfilename '_M']);                   fprintf('.');
-fprintf(' done!\n');
+if verbose, fprintf(' ... saving results'), end
+if ismember('m', output)
+    M.mri_saveimage([root '_M']);
+    if verbose, fprintf('\n ---> mean values [%s] ', [root '_M']),end
+end
+if ismember('e', output)
+    SE.mri_saveimage([root '_SE']);
+    if verbose, fprintf('\n ---> standard errors [%s] ', [root '_SE']),end
+end
+if ismember('t', output)
+    t.mri_saveimage([root '_t']);
+    if verbose, fprintf('\n ---> t-values [%s] ', [root '_t']),end
+end
+if ismember('p', output)
+    p.mri_saveimage([root '_p']);
+    if verbose, fprintf('\n ---> p-values [%s] ', [root '_p']),end
+end
+if ismember('z', output)
+    Z.mri_saveimage([root '_Z']);
+    if verbose, fprintf('\n ---> Z-scores [%s]', [root '_Z']),end
+end
 
+if verbose, fprintf('\nFinished!\n--------------------------\n'), end
 

@@ -1,41 +1,98 @@
-function [TS] = s_TTestDependent(in1, in2, target, precision)
+function [] = s_TTestDependent(filea, fileb, target, output, exclude, verbose)
 
+%function [] = s_TTestDependent(filea, fileb, target, output, exclude, verbose)
 %	
-%	Compute t-test for two depentend samples
-%	conc - input files
-%	target - output root filename
+%	Computes t-test of differences between two dependent groups.
 %	
+%	filea   - either a single image or a conc file with data of the group to compare to
+%	fileb   - either a single image or a conc file with data of the group to compare with
+%	target  - the base filename (and path) to be used when saving the results
+%   output  - the type of results to save ['medtpz']
+%             m : mean values for each voxel of both groups (A and B)
+%             e : standard errors for each voxel of both groups (A and B) as well as their difference
+%             d : the A - B difference of means of the two groups
+%             t : t-value for each voxel
+%             p : p-value for each voxel
+%             z : Z-score for each voxel
+%   exclude - values to be excluded from computation
+%   verbose - should report each step?
+%
+%   Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
+%
 
-if nargin < 4
-	precision = 'double';
+
+if nargin < 6
+    verbose = false;
+    if nargin < 5
+        exclude = [];
+        if nargin < 4
+            output = [];
+            if verbose < 3
+                error('ERROR: two file names for the input images and a file name for storing the results need to be provided as input!');
+            end
+        end
+    end
 end
 
-root = strrep(target, '.4dfp.img', '');
+if isempty(output)
+    output = 'metdpz';
+end
+
+root = strrep(target, '.img', '');
+root = strrep(root, '.4dfp', '');
+root = strrep(root, '.nii', '');
+root = strrep(root, '.gz', '');
+root = strrep(root, '.conc', '');
 
 % ======================================================
-% 	----> read files
+% 	----> read file
 
-fprintf('Computing dependent t-test [%s - %s]... reading data ', in1, in2);
-img1 = reshape(g_Read4DFP(in1, precision), 48*48*64, []);				fprintf('.');
-img2 = reshape(g_Read4DFP(in2, precision), 48*48*64, []);				fprintf('.');
+if verbose, fprintf('--------------------------\nComputing dependent t-test\n ... reading data (%s and %s) ', filea, fileb), end
+A = gmrimage(filea);
+B = gmrimage(fileb);
+
+if ~isempty(exclude)
+    A.data(ismember(A.data, exclude)) = NaN;
+    B.data(ismember(B.data, exclude)) = NaN;
+end
+
 
 % ======================================================
 % 	----> compute t-test
 
-fprintf(' computing ');
-[h, p] = ttest(img1, img2, 0.05, 'both', 2);					fprintf('.');
-%Z = ptoz(1-(p/2),0,1);											fprintf('.');
-Z = icdf('Normal', (1-(p/2)), 0, 1);							fprintf('.');
-d = mean(img1,2) - mean(img2,2);								fprintf('.');
-Z = Z .* sign (d);												fprintf('.');
+if verbose, fprintf('\n ... computing\n --- '), end
+[p Z M D SE t] = A.mri_TTestDependent(B, verbose);
+if verbose, fprintf(' --- \n'), end
+
 
 % ======================================================
 % 	----> save results
 
-fprintf(' saving ');
-g_Save4DFP(strcat(root, '_Z.4dfp.img'),Z);					fprintf('.');
-g_Save4DFP(strcat(root, '_dFz.4dfp.img'),d);					fprintf('.');
-g_Save4DFP(strcat(root, '_dFz_all.4dfp.img'),img1-img2);					fprintf('.');
-fprintf(' done!\n');
+if verbose, fprintf(' ... saving results'), end
+if ismember('m', output)
+    M.mri_saveimage([root '_M']);
+    if verbose, fprintf('\n ---> mean values [%s] ', [root '_M']),end
+end
+if ismember('e', output)
+    SE.mri_saveimage([root '_SE']);
+    if verbose, fprintf('\n ---> standard errors [%s] ', [root '_SE']),end
+end
+if ismember('d', output)
+    D.mri_saveimage([root '_D']);
+    if verbose, fprintf('\n ---> group differences [%s] ', [root '_D']),end
+end
+if ismember('t', output)
+    t.mri_saveimage([root '_t']);
+    if verbose, fprintf('\n ---> t-values [%s] ', [root '_t']),end
+end
+if ismember('p', output)
+    p.mri_saveimage([root '_p']);
+    if verbose, fprintf('\n ---> p-values [%s] ', [root '_p']),end
+end
+if ismember('z', output)
+    Z.mri_saveimage([root '_Z']);
+    if verbose, fprintf('\n ---> Z-scores [%s]', [root '_Z']),end
+end
 
+if verbose, fprintf('\nFinished!\n--------------------------\n'), end
 
