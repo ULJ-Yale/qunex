@@ -27,7 +27,7 @@ if nargin < 6
         exclude = [];
         if nargin < 4
             output = [];
-            if verbose < 3
+            if nargin < 3
                 error('ERROR: two file names for the input images and a file name for storing the results need to be provided as input!');
             end
         end

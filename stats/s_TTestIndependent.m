@@ -30,7 +30,7 @@ if nargin < 7
             vartype = [];
             if nargin < 4
                 output = [];
-                if verbose < 3
+                if nargin < 3
                     error('ERROR: two input file names and a target output file name need to be provided as input!');
                 end
             end

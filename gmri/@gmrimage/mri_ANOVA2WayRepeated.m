@@ -38,6 +38,9 @@ end
 if verbose, fprintf('\nSetting up data'), end
 
 n = obj.frames / (a*b);
+if n ~= ceil(n)
+    error('ERROR: the number of volumes in the image (%d) is not divisible by number of possible level combinations (%d)! Please check your input data!', obj.frames, (a*b));
+end
 obj.data = reshape(obj.data, [obj.voxels, n, a, b]);
 
 % ---- compute df
