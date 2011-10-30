@@ -92,7 +92,7 @@ for s = 1:nsubjects
         
         if verbose, fprintf(' ... saving stats'); end
         
-        fout = fopen(fullfile(target, [fname '_bstats.txt']), 'w');
+        fout = fopen(fullfile(target, [fname '.bstats']), 'w');
         fprintf(fout, 'frame\tn\tm\tmin\tmax\tvar\tsd\tdvars\tdvarsm\tdvarsme\n');
         for f = 1:img.frames
             fprintf(fout, '%d\t%d\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.2f\t%.2f\t%.2f\n', f, stats.n(f), stats.mean(f), stats.min(f), stats.max(f), stats.var(f), stats.sd(f), stats.dvars(f), stats.dvarsm(f), stats.dvarsme(f));

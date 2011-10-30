@@ -1,6 +1,6 @@
-function [out, do] = mri_StatsTime(img, do, mask)
+function [out, done] = mri_StatsTime(img, do, mask)
 
-%function [out, do] = mri_StatsTime(img, do, mask)
+%function [out, done] = mri_StatsTime(img, do, mask)
 %
 %	Computes the specified statistics across voxels specified in mask
 %   
@@ -17,7 +17,20 @@ function [out, do] = mri_StatsTime(img, do, mask)
 %
 %   mask - mask of voxels to be included in the statistics
 %
+%   Output
+%       out  - structure with results in named fields
+%       done - a cell array of executed commands
+%
+%
 %    (c) Grega Repovs, 2011-07-09
+%
+%   2011-10-24, Grega Repovš
+%       - checks what was actually executed instead of just returning the do cell array
+%
+%   To do
+%       - add possibility of comma separated do list
+%
+
 
 if nargin < 3
     mask = [];
@@ -59,7 +72,7 @@ sm  = [];
 sd  = [];
 v   = [];
 dv  = [];
-
+done = {};
 
 c = 0;
 for d = do
@@ -70,32 +83,40 @@ for d = do
     case 'n'
         if isempty(n), n = sum(~isnan(img.data), 1); end
         out.n = n;
+        done{c} = char(d);
     
     case 'm'
         if isempty(sm), sm = nansum(img.data, 1); end
         if isempty(m), m = sm./n; end
         out.mean = m;
+        done{c} = char(d);
         
     case 'me'
         out.median = nanmedian(img.data, 1);
+        done{c} = char(d);
         
     case 'max'
         out.max = nanmax(img.data, [], 1);
+        done{c} = char(d);
         
     case 'min'
         out.min = nanmin(img.data, [], 1);
+        done{c} = char(d);
         
     case 'sum'
         if isempty(sm), sm = nansum(img.data, 1); end
         out.sum = sm;
+        done{c} = char(d);
 
     case 'sd'
         if isempty(sd), sd = nanstd(img.data, 0, 1); end
         out.sd = sd;
+        done{c} = char(d);
     
     case 'var'
         if isempty(v), v = nanvar(img.data, 1, 1); end
         out.var = v;
+        done{c} = char(d);
     
     case 'dvars'
         if isempty(sm), sm = nansum(img.data, 1); end
@@ -106,6 +127,7 @@ for d = do
         out.dvars   = dv;
         out.dvarsm  = dv ./ m .* 100;
         out.dvarsme = out.dvarsm ./ median(out.dvarsm);
+        done{c} = char(d);
     end
 end
 

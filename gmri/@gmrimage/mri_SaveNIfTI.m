@@ -9,6 +9,7 @@ function [res] = mri_SaveNIfTI(img, filename, compressed)
 %     filename - the filename to use
 %
 %   Grega Repovs - 2010-10-13
+%   Grega Repovs - 2011-10-13 - updated to write NIfTI-2
 %
 
 if nargin < 3
@@ -83,51 +84,108 @@ end
 
 fid = fopen(file, 'w', img.mformat);
 
-fwrite(fid, 348, 'int32');
-fwrite(fid, img.hdrnifti.data_type, 'char');
-fwrite(fid, img.hdrnifti.db_name, 'char');
-fwrite(fid, img.hdrnifti.extents, 'int32');
-fwrite(fid, img.hdrnifti.session_error, 'int16');
-fwrite(fid, img.hdrnifti.regular, 'char');
-fwrite(fid, img.hdrnifti.dim_info, 'char');
-fwrite(fid, img.hdrnifti.dim, 'int16');
-fwrite(fid, img.hdrnifti.intent_p1, 'float32');
-fwrite(fid, img.hdrnifti.intent_p2, 'float32');
-fwrite(fid, img.hdrnifti.intent_p3, 'float32');
-fwrite(fid, img.hdrnifti.intent_code, 'int16');
-fwrite(fid, img.hdrnifti.datatype, 'int16');
-fwrite(fid, img.hdrnifti.bitpix, 'int16');
-fwrite(fid, img.hdrnifti.slice_start, 'int16');
-fwrite(fid, img.hdrnifti.pixdim, 'float32');
-fwrite(fid, 352, 'float32');  % img.hdr.vox_offset
-fwrite(fid, img.hdrnifti.scl_slope, 'float32');
-fwrite(fid, img.hdrnifti.scl_inter, 'float32');
-fwrite(fid, img.hdrnifti.slice_end, 'int16');
-fwrite(fid, img.hdrnifti.slice_code, 'char');
-fwrite(fid, img.hdrnifti.xyzt_units, 'char');
-fwrite(fid, img.hdrnifti.cal_max, 'float32');
-fwrite(fid, img.hdrnifti.cal_min, 'float32');
-fwrite(fid, img.hdrnifti.slice_duration, 'float32');
-fwrite(fid, img.hdrnifti.toffset, 'float32');
-fwrite(fid, img.hdrnifti.glmax, 'int32');
-fwrite(fid, img.hdrnifti.glmin, 'int32');
-fwrite(fid, img.hdrnifti.descrip, 'char');
-fwrite(fid, img.hdrnifti.aux_file, 'char');
-fwrite(fid, img.hdrnifti.qform_code, 'int16');
-fwrite(fid, img.hdrnifti.sform_code, 'int16');
-fwrite(fid, img.hdrnifti.quatern_b, 'float32');
-fwrite(fid, img.hdrnifti.quatern_c, 'float32');
-fwrite(fid, img.hdrnifti.quatern_d, 'float32');
-fwrite(fid, img.hdrnifti.qoffset_x, 'float32');
-fwrite(fid, img.hdrnifti.qoffset_y, 'float32');
-fwrite(fid, img.hdrnifti.qoffset_z, 'float32');
-fwrite(fid, img.hdrnifti.srow_x, 'float32');
-fwrite(fid, img.hdrnifti.srow_y, 'float32');
-fwrite(fid, img.hdrnifti.srow_z, 'float32');
-fwrite(fid, img.hdrnifti.intent_name, 'char');
-fwrite(fid, img.hdrnifti.magic, 'char');
-fwrite(fid, 'repi', 'char');
+% ---> Write NIfTI-1
 
+if img.hdrnifti.version == 1
+    fwrite(fid, 348, 'int32');
+    fwrite(fid, img.hdrnifti.data_type, 'char');
+    fwrite(fid, img.hdrnifti.db_name, 'char');
+    fwrite(fid, img.hdrnifti.extents, 'int32');
+    fwrite(fid, img.hdrnifti.session_error, 'int16');
+    fwrite(fid, img.hdrnifti.regular, 'char');
+    fwrite(fid, img.hdrnifti.dim_info, 'char');
+    fwrite(fid, img.hdrnifti.dim, 'int16');
+    fwrite(fid, img.hdrnifti.intent_p1, 'float32');
+    fwrite(fid, img.hdrnifti.intent_p2, 'float32');
+    fwrite(fid, img.hdrnifti.intent_p3, 'float32');
+    fwrite(fid, img.hdrnifti.intent_code, 'int16');
+    fwrite(fid, img.hdrnifti.datatype, 'int16');
+    fwrite(fid, img.hdrnifti.bitpix, 'int16');
+    fwrite(fid, img.hdrnifti.slice_start, 'int16');
+    fwrite(fid, img.hdrnifti.pixdim, 'float32');
+    fwrite(fid, 352, 'float32');  % img.hdr.vox_offset
+    fwrite(fid, img.hdrnifti.scl_slope, 'float32');
+    fwrite(fid, img.hdrnifti.scl_inter, 'float32');
+    fwrite(fid, img.hdrnifti.slice_end, 'int16');
+    fwrite(fid, img.hdrnifti.slice_code, 'char');
+    fwrite(fid, img.hdrnifti.xyzt_units, 'char');
+    fwrite(fid, img.hdrnifti.cal_max, 'float32');
+    fwrite(fid, img.hdrnifti.cal_min, 'float32');
+    fwrite(fid, img.hdrnifti.slice_duration, 'float32');
+    fwrite(fid, img.hdrnifti.toffset, 'float32');
+    fwrite(fid, img.hdrnifti.glmax, 'int32');
+    fwrite(fid, img.hdrnifti.glmin, 'int32');
+    fwrite(fid, img.hdrnifti.descrip, 'char');
+    fwrite(fid, img.hdrnifti.aux_file, 'char');
+    fwrite(fid, img.hdrnifti.qform_code, 'int16');
+    fwrite(fid, img.hdrnifti.sform_code, 'int16');
+    fwrite(fid, img.hdrnifti.quatern_b, 'float32');
+    fwrite(fid, img.hdrnifti.quatern_c, 'float32');
+    fwrite(fid, img.hdrnifti.quatern_d, 'float32');
+    fwrite(fid, img.hdrnifti.qoffset_x, 'float32');
+    fwrite(fid, img.hdrnifti.qoffset_y, 'float32');
+    fwrite(fid, img.hdrnifti.qoffset_z, 'float32');
+    fwrite(fid, img.hdrnifti.srow_x, 'float32');
+    fwrite(fid, img.hdrnifti.srow_y, 'float32');
+    fwrite(fid, img.hdrnifti.srow_z, 'float32');
+    fwrite(fid, img.hdrnifti.intent_name, 'char');
+    fwrite(fid, img.hdrnifti.magic, 'char');
+    fwrite(fid, 'repi', 'char');
+end
+    
+% ---> Write NIfTI-2 
+    
+if img.hdrnifti.version == 2
+    fwrite(fid, 540, 'int32');
+    
+    img.hdrnifti.magic = [img.hdrnifti.magic '        '];
+    fwrite(fid, img.hdrnifti.magic(1:8),    'char');
+    fwrite(fid, img.hdrnifti.datatype,      'int16');
+    fwrite(fid, img.hdrnifti.bitpix,        'int16');
+    fwrite(fid, img.hdrnifti.dim,           'int64');
+    fwrite(fid, img.hdrnifti.intent_p1,     'float64');
+    fwrite(fid, img.hdrnifti.intent_p2,     'float64');
+    fwrite(fid, img.hdrnifti.intent_p3,     'float64');
+    fwrite(fid, img.hdrnifti.pixdim,        'float64');
+    fwrite(fid, 540,                        'float64');  % img.hdr.vox_offset  --------> set
+    fwrite(fid, img.hdrnifti.scl_slope,     'float64');
+    fwrite(fid, img.hdrnifti.scl_inter,     'float64');
+    fwrite(fid, img.hdrnifti.cal_max,       'float64');
+    fwrite(fid, img.hdrnifti.cal_min,       'float64');
+    fwrite(fid, img.hdrnifti.slice_duration,'float64');
+    fwrite(fid, img.hdrnifti.toffset,       'float64');
+    fwrite(fid, img.hdrnifti.slice_start,   'int64');
+    fwrite(fid, img.hdrnifti.slice_end,     'int64');
+    
+    img.hdrnifti.descrip = [img.hdrnifti.descrip '                                                                                '];
+    img.hdrnifti.aux_file = [img.hdrnifti.aux_file '                        '];
+    fwrite(fid, img.hdrnifti.descrip(1:80), 'char');
+    fwrite(fid, img.hdrnifti.aux_file(1:24),'char');
+    fwrite(fid, img.hdrnifti.qform_code,    'int32');
+    fwrite(fid, img.hdrnifti.sform_code,    'int32');
+    fwrite(fid, img.hdrnifti.quatern_b,     'float64');
+    fwrite(fid, img.hdrnifti.quatern_c,     'float64');
+    fwrite(fid, img.hdrnifti.quatern_d,     'float64');
+    fwrite(fid, img.hdrnifti.qoffset_x,     'float64');
+    fwrite(fid, img.hdrnifti.qoffset_y,     'float64');
+    fwrite(fid, img.hdrnifti.qoffset_z,     'float64');
+    fwrite(fid, img.hdrnifti.srow_x,        'float64');
+    fwrite(fid, img.hdrnifti.srow_y,        'float64');
+    fwrite(fid, img.hdrnifti.srow_z,        'float64');
+    fwrite(fid, img.hdrnifti.slice_code,    'int32');
+    fwrite(fid, img.hdrnifti.xyzt_units,    'int32');
+    fwrite(fid, img.hdrnifti.intent_code,   'int32');
+
+    img.hdrnifti.intent_name = [img.hdrnifti.intent_name '                '];
+    img.hdrnifti.unused_str  = [img.hdrnifti.unused_str '               '];
+    fwrite(fid, img.hdrnifti.intent_name(1:16), 'char');
+    fwrite(fid, img.hdrnifti.dim_info,          'char');
+    fwrite(fid, img.hdrnifti.unused_str(1:15),  'char');
+    
+end    
+    
+    
+% ---> Add data ... 
 
 fwrite(fid, img.data, datatype);
 fclose(fid);

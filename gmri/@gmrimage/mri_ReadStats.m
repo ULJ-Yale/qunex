@@ -44,7 +44,7 @@ end
 
 % ---> check for per-frame stats data
 
-tfile = FindMatchingFile(movfolder, fname, '_bstats.txt');
+tfile = FindMatchingFile(movfolder, fname, '.bstats');
 if tfile
     [data header] = ReadTextFile(tfile);
     data = CheckData(data, frames, obj.frames);
@@ -56,7 +56,7 @@ end
 
 % ---> check for scrubbing data
 
-tfile = FindMatchingFile(movfolder, fname, '_scrub.txt');
+tfile = FindMatchingFile(movfolder, fname, '.scrub');
 if tfile
     [data header] = ReadTextFile(tfile);
     data = CheckData(data, frames, obj.frames);

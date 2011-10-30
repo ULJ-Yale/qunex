@@ -13,6 +13,7 @@ function [img] = mri_ReadNIfTI(img, filename, dtype, frames)
 %           frames - number of frames to read [all]
 %
 %       Grega Repovs - 2010-10-13
+%       Grega Repovs - 2011-10-13 - updated to read NIfTI-2
 %
 
 if nargin < 4
@@ -30,7 +31,7 @@ end
 
 file       = filename;
 separate   = false;
-mformat    = 'b';
+mformat    = 'l';
 tempfolder = [];
 
 % check what type it is
@@ -44,61 +45,32 @@ if file(length(file)-2:end) == '.gz'
     img.hdrnifti.compressed = true;
 end
 
-% check for endianess
+% check for endianess and nifti version
 
 fid = fopen(file, 'r', mformat);
 img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
-if img.hdrnifti.sizeof_hdr ~= 348
-    mformat = 'l';
-    fclose(fid);
-    fid = fopen(file, 'r', mformat);
-    img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
+
+switch img.hdrnifti.sizeof_hdr
+    case 348
+        img.hdrnifti = readHeader_nifti1(fid, img.hdrnifti);
+    case 508
+        img.hdrnifti = readHeader_nifti2(fid, img.hdrnifti);
+    case 1543569408
+        fclose(fid);
+        mformat = 'b';
+        fid = fopen(file, 'r', mformat);
+        img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
+        img.hdrnifti = readHeader_nifti1(fid, img.hdrnifti);
+    case -67043328 
+        fclose(fid);
+        mformat = 'b';
+        fid = fopen(file, 'r', mformat);
+        img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
+        img.hdrnifti = readHeader_nifti2(fid, img.hdrnifti);
+    otherwise
+        error('ERROR: %s does not have a valid NIfTI-1 or -2 header!');
 end
 
-% read header fields
-
-img.hdrnifti.data_type       = fread(fid, 10, '*char')';
-img.hdrnifti.db_name         = fread(fid, 18, '*char')';
-img.hdrnifti.extents         = fread(fid, 1, 'int32');
-img.hdrnifti.session_error   = fread(fid, 1, 'int16');
-img.hdrnifti.regular         = fread(fid, 1, '*char');
-img.hdrnifti.dim_info        = fread(fid, 1, '*char');
-img.hdrnifti.dim             = fread(fid, 8, 'int16');
-img.hdrnifti.intent_p1       = fread(fid, 1, 'float32');
-img.hdrnifti.intent_p2       = fread(fid, 1, 'float32');
-img.hdrnifti.intent_p3       = fread(fid, 1, 'float32');
-img.hdrnifti.intent_code     = fread(fid, 1, 'int16');
-img.hdrnifti.datatype        = fread(fid, 1, 'int16');
-img.hdrnifti.bitpix          = fread(fid, 1, 'int16');
-img.hdrnifti.slice_start     = fread(fid, 1, 'int16');
-img.hdrnifti.pixdim          = fread(fid, 8, 'float32');
-img.hdrnifti.vox_offset      = fread(fid, 1, 'float32');
-img.hdrnifti.scl_slope       = fread(fid, 1, 'float32');
-img.hdrnifti.scl_inter       = fread(fid, 1, 'float32');
-img.hdrnifti.slice_end       = fread(fid, 1, 'int16');
-img.hdrnifti.slice_code      = fread(fid, 1, '*char');
-img.hdrnifti.xyzt_units      = fread(fid, 1, '*char');
-img.hdrnifti.cal_max         = fread(fid, 1, 'float32');
-img.hdrnifti.cal_min         = fread(fid, 1, 'float32');
-img.hdrnifti.slice_duration  = fread(fid, 1, 'float32');
-img.hdrnifti.toffset         = fread(fid, 1, 'float32');
-img.hdrnifti.glmax           = fread(fid, 1, 'int32');
-img.hdrnifti.glmin           = fread(fid, 1, 'int32');
-img.hdrnifti.descrip         = fread(fid, 80, '*char')';
-img.hdrnifti.aux_file        = fread(fid, 24, '*char')';
-img.hdrnifti.qform_code      = fread(fid, 1, 'int16');
-img.hdrnifti.sform_code      = fread(fid, 1, 'int16');
-img.hdrnifti.quatern_b       = fread(fid, 1, 'float32');
-img.hdrnifti.quatern_c       = fread(fid, 1, 'float32');
-img.hdrnifti.quatern_d       = fread(fid, 1, 'float32');
-img.hdrnifti.qoffset_x       = fread(fid, 1, 'float32');
-img.hdrnifti.qoffset_y       = fread(fid, 1, 'float32');
-img.hdrnifti.qoffset_z       = fread(fid, 1, 'float32');
-img.hdrnifti.srow_x          = fread(fid, 4, 'float32');
-img.hdrnifti.srow_y          = fread(fid, 4, 'float32');
-img.hdrnifti.srow_z          = fread(fid, 4, 'float32');
-img.hdrnifti.intent_name     = fread(fid, 16, '*char')';
-img.hdrnifti.magic           = fread(fid, 4, '*char')';
 
 % get datatype
 
@@ -199,5 +171,118 @@ switch dtype
         img.hdrnifti.datatype = 16;     % --- float32
     case 'double'
         img.hdrnifti.datatype = 64;     % --- float64
-    	
 end
+
+
+
+% ----- Read NIfTI-1 Header
+
+
+function [hdrnifti] = readHeader_nifti1(fid, hdrnifti)
+
+    hdrnifti.data_type       = fread(fid, 10, '*char')';
+    hdrnifti.db_name         = fread(fid, 18, '*char')';
+    hdrnifti.extents         = fread(fid, 1, 'int32');
+    hdrnifti.session_error   = fread(fid, 1, 'int16');
+    hdrnifti.regular         = fread(fid, 1, '*char');
+    hdrnifti.dim_info        = fread(fid, 1, '*char');
+    hdrnifti.dim             = fread(fid, 8, 'int16');
+    hdrnifti.intent_p1       = fread(fid, 1, 'float32');
+    hdrnifti.intent_p2       = fread(fid, 1, 'float32');
+    hdrnifti.intent_p3       = fread(fid, 1, 'float32');
+    hdrnifti.intent_code     = fread(fid, 1, 'int16');
+    hdrnifti.datatype        = fread(fid, 1, 'int16');
+    hdrnifti.bitpix          = fread(fid, 1, 'int16');
+    hdrnifti.slice_start     = fread(fid, 1, 'int16');
+    hdrnifti.pixdim          = fread(fid, 8, 'float32');
+    hdrnifti.vox_offset      = fread(fid, 1, 'float32');
+    hdrnifti.scl_slope       = fread(fid, 1, 'float32');
+    hdrnifti.scl_inter       = fread(fid, 1, 'float32');
+    hdrnifti.slice_end       = fread(fid, 1, 'int16');
+    hdrnifti.slice_code      = fread(fid, 1, '*char');
+    hdrnifti.xyzt_units      = fread(fid, 1, '*char');
+    hdrnifti.cal_max         = fread(fid, 1, 'float32');
+    hdrnifti.cal_min         = fread(fid, 1, 'float32');
+    hdrnifti.slice_duration  = fread(fid, 1, 'float32');
+    hdrnifti.toffset         = fread(fid, 1, 'float32');
+    hdrnifti.glmax           = fread(fid, 1, 'int32');
+    hdrnifti.glmin           = fread(fid, 1, 'int32');
+    hdrnifti.descrip         = fread(fid, 80, '*char')';
+    hdrnifti.aux_file        = fread(fid, 24, '*char')';
+    hdrnifti.qform_code      = fread(fid, 1, 'int16');
+    hdrnifti.sform_code      = fread(fid, 1, 'int16');
+    hdrnifti.quatern_b       = fread(fid, 1, 'float32');
+    hdrnifti.quatern_c       = fread(fid, 1, 'float32');
+    hdrnifti.quatern_d       = fread(fid, 1, 'float32');
+    hdrnifti.qoffset_x       = fread(fid, 1, 'float32');
+    hdrnifti.qoffset_y       = fread(fid, 1, 'float32');
+    hdrnifti.qoffset_z       = fread(fid, 1, 'float32');
+    hdrnifti.srow_x          = fread(fid, 4, 'float32');
+    hdrnifti.srow_y          = fread(fid, 4, 'float32');
+    hdrnifti.srow_z          = fread(fid, 4, 'float32');
+    hdrnifti.intent_name     = fread(fid, 16, '*char')';
+    hdrnifti.magic           = fread(fid, 4, '*char')';
+    hdrnifti.version         = 1;
+
+
+    % ----- Read NIfTI-1 Header
+
+
+function [hdrnifti] = readHeader_nifti2(fid, hdrnifti)
+
+    hdrnifti.magic           = fread(fid, 8, '*char')';
+    hdrnifti.datatype        = fread(fid, 1, 'int16');
+    hdrnifti.bitpix          = fread(fid, 1, 'int16');
+    hdrnifti.dim             = fread(fid, 8, 'int64');
+    hdrnifti.intent_p1       = fread(fid, 1, 'float64');
+    hdrnifti.intent_p2       = fread(fid, 1, 'float64');
+    hdrnifti.intent_p3       = fread(fid, 1, 'float64');
+    hdrnifti.pixdim          = fread(fid, 8, 'float64');
+    hdrnifti.vox_offset      = fread(fid, 1, 'int64');
+    hdrnifti.scl_slope       = fread(fid, 1, 'float64');
+    hdrnifti.scl_inter       = fread(fid, 1, 'float64');
+    hdrnifti.cal_max         = fread(fid, 1, 'float64');
+    hdrnifti.cal_min         = fread(fid, 1, 'float64');
+    hdrnifti.slice_duration  = fread(fid, 1, 'float64');
+    hdrnifti.toffset         = fread(fid, 1, 'float64');
+    hdrnifti.slice_start     = fread(fid, 1, 'int64');
+    hdrnifti.slice_end       = fread(fid, 1, 'int64');
+    hdrnifti.descrip         = fread(fid, 80, '*char')';
+    hdrnifti.aux_file        = fread(fid, 24, '*char')';
+    hdrnifti.qform_code      = fread(fid, 1, 'int32');
+    hdrnifti.sform_code      = fread(fid, 1, 'int32');
+    hdrnifti.quatern_b       = fread(fid, 1, 'float64');
+    hdrnifti.quatern_c       = fread(fid, 1, 'float64');
+    hdrnifti.quatern_d       = fread(fid, 1, 'float64');
+    hdrnifti.qoffset_x       = fread(fid, 1, 'float64');
+    hdrnifti.qoffset_y       = fread(fid, 1, 'float64');
+    hdrnifti.qoffset_z       = fread(fid, 1, 'float64');
+    hdrnifti.srow_x          = fread(fid, 4, 'float64');
+    hdrnifti.srow_y          = fread(fid, 4, 'float64');
+    hdrnifti.srow_z          = fread(fid, 4, 'float64');
+    hdrnifti.slice_code      = fread(fid, 1, 'int32');
+    hdrnifti.xyzt_units      = fread(fid, 1, 'int32');
+    hdrnifti.intent_code     = fread(fid, 1, 'int32');
+    hdrnifti.intent_name     = fread(fid, 16, '*char')';
+    hdrnifti.dim_info        = fread(fid, 1, '*char');
+    hdrnifti.unused_str      = fread(fid, 15, '*char');
+    hdrnifti.version         = 2;
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+
+
