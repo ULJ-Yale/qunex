@@ -134,7 +134,7 @@ classdef gmrimage
             
         end
         
-        function mri_saveimage(obj, filename)
+        function mri_saveimage(obj, filename, extra)
         %
         %  Save image based on the existing header data
         %
@@ -144,7 +144,7 @@ classdef gmrimage
         
             switch obj.imageformat
                 case '4dfp'
-                    obj.mri_Save4DFP(filename);
+                    obj.mri_Save4DFP(filename, extra);
                 case 'NIfTI'
                     obj.mri_SaveNIfTI(filename);
             end
@@ -236,6 +236,34 @@ classdef gmrimage
             obj = obj.standardize ./ sqrt(obj.frames -1);
             obj.correlized = true;
         end
+        
+        function obj = mri_p2z(obj, m)
+        %
+        %  Converts p values to Z scores
+        %
+            if nargin < 2
+                obj.data = icdf('Normal', (1-(obj.data./2)), 0, 1);
+            else
+                obj.data = icdf('Normal', (1-(obj.data./2)), 0, 1) .* sign(m.data);
+            end
+        end
+        
+        function obj = mri_Fisher(obj)
+        %
+        %   Converts r to Fisher z values            
+        %
+            obj.data = obj.data*0.999999;
+            obj.data = atanh(obj.data);
+        end
+        
+        function obj = mri_FisherInv(obj)
+        %
+        %   Converts r to Fisher z values            
+        %
+            obj.data = exp(obj.data*2);
+            obj.data = (obj.data-1)./(obj.data+1);
+        end
+            
                 
         function obj = times(obj, times)
             if isa(times, 'gmrimage')
