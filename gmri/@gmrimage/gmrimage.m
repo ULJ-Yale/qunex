@@ -138,8 +138,11 @@ classdef gmrimage
         %
         %  Save image based on the existing header data
         %
-            if nargin < 2
-                filename = obj.filename;
+            if nargin < 3
+                extra = [];
+                if nargin < 2
+                    filename = obj.filename;
+                end
             end
         
             switch obj.imageformat
