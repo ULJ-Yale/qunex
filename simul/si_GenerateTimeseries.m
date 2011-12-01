@@ -82,7 +82,7 @@ tslength = sum(eventlist(nevents, 1:2))+length(hrf);
 te       = zeros(tslength, 1);
 
 for n = 1:nevents
-    te(eventlist(n,1):eventlist(n,1)+eventlist(n,2)-1,1) = eventlist(n,3);
+    te(eventlist(n,1):eventlist(n,1)+eventlist(n,2)-1,1) = te(eventlist(n,1):eventlist(n,1)+eventlist(n,2)-1,1) + eventlist(n,3);
 end
 
 % ---- convolve with hrf and downsample to TR size

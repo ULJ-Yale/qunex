@@ -44,7 +44,7 @@ if verbose, fprintf('\nComputing t-test'), end
 if nargout > 4
     [h, p.data, c, s] = ttest(A.data, B.data, 0.05, 'both', 2);
 else
-    [h, p.data] = ttest2(A.data, B.data, 0.05, 'both', 2);
+    [h, p.data] = ttest(A.data, B.data, 0.05, 'both', 2);
 end
 
 M.data = [mean(A.data, 2) mean(B.data, 2)];
