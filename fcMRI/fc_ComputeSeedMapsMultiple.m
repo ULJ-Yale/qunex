@@ -43,9 +43,9 @@ if nargin < 7
             if nargin < 4
                 options = [];
                 if nargin < 3
-                    inmask = []
+                    inmask = [];
                     if nargin < 2
-                        error("ERROR: At least boldlist and ROI .names file have to be specified!");
+                        error('ERROR: At least boldlist and ROI .names file have to be specified!');
                     end
                 end
             end
@@ -199,13 +199,13 @@ for n = 1:nsub
     
     fprintf('\n     ... computing seed maps ');
 	
-	if instr(options, 'p') | instr(options, 'z')
-        [r, p] = y.mri_ComputeCorrelations(ts');
+	if ~isempty(strfind(options, 'p')) || ~isempty(strfind(options, 'z'))
+        [pr, p] = y.mri_ComputeCorrelations(ts');
         if instr(options, 'z')
             z = p.mri_p2z(p, r);
         end
     else
-        r = y.mri_ComputeCorrelations(ts');
+        pr = y.mri_ComputeCorrelations(ts');
     end
     
     fprintf(' ... done!');
@@ -217,28 +217,28 @@ for n = 1:nsub
         
         % -------> Create data files if it is the first run
         
-        if s == 1
+        if n == 1
             group(r).Fz = roi.zeroframes(nsub);
             group(r).roi = roi.roi.roinames{r};
         end
         
         % -------> Embedd data
         
-        group(r).Fz.data(:,s) = fc_Fisher(r.data(:,r));
+        group(r).Fz.data(:,n) = fc_Fisher(pr.data(:,r));
         
         % ----> if needed, save individual images
         
         if strfind(options, 'r')
-            r.mri_saveimageframe(s, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_r']);   fprintf(' r');
+            pr.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_r']);   fprintf(' r');
     	end
     	if strfind(options, 'f')
-            group(r).Fz.mri_saveimageframe(s, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Fz']);   fprintf(' Fz');
+            group(r).Fz.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Fz']);   fprintf(' Fz');
     	end
     	if strfind(options, 'p')
-            p.mri_saveimageframe(s, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_p']);   fprintf(' p');
+            p.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_p']);   fprintf(' p');
     	end
     	if strfind(options, 'z')
-    	    z.mri_saveimageframe(s, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Z']);   fprintf(' Z');
+    	    z.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Z']);   fprintf(' Z');
     	end
     	
 	end
@@ -261,11 +261,11 @@ for r = 1:nroi
 	fprintf('\n    ... for region %s', group(r).roi);
 
     [p Z M] = group(r).Fz.mri_TTestZero();
-	r = M.mri_FisherInv();
+	pr = M.mri_FisherInv();
 	
 	fprintf('... saving ...');
     
-    r.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_r'], extra);            fprintf(' r');
+    pr.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_r'], extra);            fprintf(' r');
     M.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_Fz'], extra);           fprintf(' Fz');
     Z.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_Z'], extra);            fprintf(' Z');
     group(r).Fz.mri_saveimage([targetf '/' lname '_' group(r).roi '_all_Fz'], extra);   fprintf(' all Fz');

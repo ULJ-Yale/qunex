@@ -118,7 +118,7 @@ classdef gmrimage
         
             if strcmp(filename(length(filename)-8:end), '.4dfp.img')
                 obj = obj.mri_Read4DFP(filename, dtype, frames);
-                % obj = obj.mri_ReadStats(filename, frames);
+                obj = obj.mri_ReadStats(filename, frames);
                 obj.empty = false;
             elseif strcmp(filename(length(filename)-3:end), '.nii') || strcmp(filename(length(filename)-6:end), '.nii.gz') || strcmp(filename(length(filename)-3:end), '.hdr')
                 obj = obj.mri_ReadNIfTI(filename, dtype, frames);
@@ -138,8 +138,11 @@ classdef gmrimage
         %
         %  Save image based on the existing header data
         %
-            if nargin < 2
-                filename = obj.filename;
+            if nargin < 3
+                extra = [];
+                if nargin < 2
+                    filename = obj.filename;
+                end
             end
         
             switch obj.imageformat
