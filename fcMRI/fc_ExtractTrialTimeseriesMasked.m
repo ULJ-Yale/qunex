@@ -34,10 +34,8 @@ end
 fprintf('\n\nStarting ...');
 
 nniz = length(events);							%--- number of separate sets we will be extracting
-[t1, fbase, t2, t3] = fileparts(concf);			%--- details about the filename
+[t1, fbase, t2, t3] = fileparts(roif);			%--- details about the filename
 tlength = frames(2) - frames(1) + 1;			%--- number of timepoints in the timeseries
-f.max = frames(2);
-f.min = frames(1);
 frames = int16(frames); 
 
 %   ------------------------------------------------------------------------------------------
@@ -76,7 +74,11 @@ for s = 1:nsub
 	    sroifile = [];
     end
 	
-	roi = gmrimage.mri_ReadROI(roiinfo, sroifile);
+    if strcmp(sroifile,'none')
+        roi = gmrimage.mri_ReadROI(roif);
+    else
+        roi = gmrimage.mri_ReadROI(roif, sroifile);
+    end
     nregions = length(roi.roi.roinames);
 	
 	% ---> reading image files
@@ -90,7 +92,7 @@ for s = 1:nsub
     nruns = length(y.runframes);
     run = [];
     for r = 1:nruns
-        run = [run [zeros(1,5) ones(1,y.runframes[r]-5)*r]];
+        run = [run [zeros(1,5) ones(1,y.runframes(r)-5)*r]];
     end
     
     fprintf(' ... %d frames read, done.', y.frames);
@@ -100,9 +102,9 @@ for s = 1:nsub
     % ======================================================
     % 	----> filter out the events to include in the analysis
 
-    fprintf('\n... reading event data');
+    fprintf('\n     ... reading event data');
 
-    fevents = g_ReadEventFile(eventf);
+    fevents = g_ReadEventFile(subject(s).fidl);
     temp = fevents.frame(:,1) + 1;
     bframes = int16([temp; 999999]);
     for n = 1:nniz
@@ -145,7 +147,7 @@ for s = 1:nsub
 
 	for n = 1:nniz
 		while niz(n).frames(niz(n).c) < y.frames
-			if (niz(n).frames(niz(n).c) + f.max) < y.frames
+			if (niz(n).frames(niz(n).c) + frames(2)) < y.frames
 				ts = frames + niz(n).frames(niz(n).c);
 				if ts(1) > 0
 					niz(n).N = niz(n).N + 1;

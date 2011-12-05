@@ -14,6 +14,10 @@ if nargin < 2
     roi2 = [];
 end
 
+if strcmp(roi2, 'none')
+    roi2 = [];
+end
+
 % ----> Read the ROI info
 
 rois = fopen(roiinfo);
