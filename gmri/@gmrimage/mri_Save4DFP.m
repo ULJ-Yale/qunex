@@ -19,6 +19,7 @@ if nargin < 3
 	extra = [];
 end
 
+filename = strtrim(filename);
 obj = obj.unmaskimg;
 
 mformat = 'b';

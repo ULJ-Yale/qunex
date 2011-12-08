@@ -20,6 +20,7 @@ if isempty(compressed)
     compressed = img.hdrnifti.compressed;
 end
 
+filename = strtrim(filename);
 % unpack and set up
 
 img = img.unmaskimg;

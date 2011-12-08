@@ -20,8 +20,10 @@ end
 
 % ----> Read the ROI info
 
-rois = fopen(roiinfo);
-roif1 = fgetl(rois);
+roiinfo = strtrim(roiinfo);
+roi2    = strtrim(roi2);
+rois    = fopen(roiinfo);
+roif1   = fgetl(rois);
 
 c = 0;
 while feof(rois) == 0

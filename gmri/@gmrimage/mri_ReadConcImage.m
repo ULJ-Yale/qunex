@@ -22,6 +22,7 @@ if nargin < 4
     end
 end
 
+file = strtrim(file);
 files = img.mri_ReadConcFile(file);
 nfiles = length(files);
 

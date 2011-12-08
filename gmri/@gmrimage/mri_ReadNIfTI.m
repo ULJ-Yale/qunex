@@ -23,6 +23,8 @@ if nargin < 4
     end
 end
 
+filename = strtrim(filename);
+
 if ~exist(filename)
     error('\n\nERROR: %s does not exist. Please check your paths!\n\n', filename);
 end

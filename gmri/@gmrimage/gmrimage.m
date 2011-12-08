@@ -115,7 +115,7 @@ classdef gmrimage
                     dtype = 'single';
                 end
             end
-        
+            filename = strtrim(filename);
             if strcmp(filename(length(filename)-8:end), '.4dfp.img')
                 obj = obj.mri_Read4DFP(filename, dtype, frames);
                 obj = obj.mri_ReadStats(filename, frames);
@@ -144,7 +144,8 @@ classdef gmrimage
                     filename = obj.filename;
                 end
             end
-        
+            filename = strtrim(filename);
+            
             switch obj.imageformat
                 case '4dfp'
                     obj.mri_Save4DFP(filename, extra);
@@ -161,6 +162,7 @@ classdef gmrimage
             if nargin < 3
                 filename = obj.filename;
             end
+            filename = strtrim(filename);
             
             obj.data   = obj.image2D;
             obj.data   = obj.data(:,frame);

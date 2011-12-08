@@ -15,7 +15,7 @@ end
 
 % ---> check if movement folder exists
 
-
+filename = strtrim(filename);
 [fpath, fname] = fileparts(filename);
 if isempty(fpath) || strcmp(fpath,'.') || strcmp(fpath, '~')
     fpath = pwd;

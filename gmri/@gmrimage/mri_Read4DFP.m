@@ -23,7 +23,7 @@ if nargin < 4
     end
 end
 
-
+file = strtrim(file);
 if FileType(file)
 
 	img = gmrimage(file);

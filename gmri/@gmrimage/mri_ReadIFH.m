@@ -11,6 +11,7 @@ function [ifh] = mri_ReadIFH(img, file)
 %   Grega Repovs 2009-11-19
 %
 
+file = strtrim(file);
 root = strrep(file, '.img', '');
 root = strrep(root, '.4dfp', '');
 root = strrep(root, '.ifh', '');

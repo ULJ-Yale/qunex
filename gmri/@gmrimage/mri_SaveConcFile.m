@@ -9,6 +9,7 @@ function [] = mri_SaveConcFile(file, files)
 %	    files   - list of image files
 %	
 
+file = strtrim(file);
 [fout message] = fopen(file,'w');
 if fout == -1
     error('\n\nERROR: Could not open %s for saving. Please check your paths!\n\nMatlab message: %s', file, message);

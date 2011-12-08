@@ -6,6 +6,8 @@ function [files] = mri_ReadConcFile(file)
 %	files - list of paths
 %	
 
+file = strtrim(file);
+
 [fin message] = fopen(file);
 if fin == -1
     error('\n\nERROR: Could not open %s for reading. Please check your paths!\n\nMatlab message: %s', file, message);
