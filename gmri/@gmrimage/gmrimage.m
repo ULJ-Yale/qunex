@@ -128,7 +128,7 @@ classdef gmrimage
                 obj = obj.mri_ReadConcImage(filename, dtype, frames);
                 obj.empty = false;
             else
-                error('ERROR: Unknown file format!');
+                error('ERROR: Unknown file format! [%s]', filename);
                 obj = gmrimage();
             end
             
