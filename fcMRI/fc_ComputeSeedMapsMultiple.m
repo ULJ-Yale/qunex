@@ -201,8 +201,8 @@ for n = 1:nsub
 	
 	if ~isempty(strfind(options, 'p')) || ~isempty(strfind(options, 'z'))
         [pr, p] = y.mri_ComputeCorrelations(ts');
-        if instr(options, 'z')
-            z = p.mri_p2z(p, r);
+        if strfind(options, 'z')
+            z = p.mri_p2z(pr);
         end
     else
         pr = y.mri_ComputeCorrelations(ts');
