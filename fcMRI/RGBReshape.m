@@ -61,7 +61,7 @@ switch v
 		for j = side:-1:1
 			for i = side:-1:1
 			    if c <= nslices
-				    t = reshape(data(:,:,slices(c), x, y);
+				    t = reshape(data(:,:,slices(c)), x, y);
 				    img((i-1)*x+1:(i)*x,(j-1)*y+1:(j)*y) = t;
 				end
 				c = c+1;
