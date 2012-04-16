@@ -45,8 +45,8 @@ switch v
 	    side = ceil(sqrt(z));
         img  = zeros(side*x, side*y);
 		c = 1;
-		for j = 1:side
-			for i = 1:side
+		for j = side:-1:1
+			for i = side:-1:1
 			    if c <= z
 				    t = reshape(data(:,:,c), x, y);
 				    img((i-1)*x+1:(i)*x,(j-1)*y+1:(j)*y) = t;

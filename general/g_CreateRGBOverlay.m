@@ -31,13 +31,13 @@ if ischar(roi)
     roi = gmrimage(roi);
 end
 
-if sum(size(img.data) == size(roi.data)) ~= 1
+if min(size(img.data) == size(roi.data)) ~= 1
     error('ERROR: The specified images are not of the same dimensions!');
 end
     
 img = RGBReshape(img, 3);
 img(:,:,2) = img;
-img(:,:,3) = img;
+img(:,:,3) = img(:,:,1);
 img = img/max(max(max(img)));
 img = img * 0.7;
 
