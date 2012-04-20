@@ -1,6 +1,6 @@
-function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, frames)
+function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, frames, scrubvar)
 
-%function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, frames)
+%function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, frames, scrubvar)
 %	
 %	
 %	flist 	- file list with information on conc, fidl and individual roi files
@@ -8,7 +8,15 @@ function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, f
 %   targetf - target matlab file with results
 %	events 	- the events for which to extract timeseries, can be a cell array of combinations
 %	frames 	- limits of frames to include in the extracted timeseries
-%
+%   scrubvar- critera to use for scrubbing data - scrub based on: 
+%               - [] do not scrub
+%               - mov      ... overall movement displacement
+%               - dvars    ... frame-to-frame variability
+%               - dvarsme  ... median normalized frame-to-frame variability
+%               - idvars   ... mov AND dvars
+%               - idvarsme ... mov AND dvarsme
+%               - udvars   ... mov OR dvars
+%               - udvarsme ... mov OR dvarsme
 %
 %	---------------------
 %
@@ -20,13 +28,21 @@ function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, f
 %		TR		- TR in s 
 %
 %   Written by Grega Repovš, 22.1.2008
-%   2011.11.7 - adjusted and partly rewriten to use gmrimage object
+%   2011.11.07 - adjusted and partly rewriten to use gmrimage object
+%   2012.04.20 - added the option of scrubbing the data
 
 
-if nargin < 5
-    error('ERROR: Five arguments need to be specified for function to run!');
+if nargin < 6
+    scrubvar = [];
+    if nargin < 5
+        error('ERROR: Five arguments need to be specified for function to run!');
+    end
 end
 
+scrubit = true;
+if isempty(scrubvar)
+    scrubit = false;
+end
 
 % ======================================================
 % 	----> set up the variables
@@ -86,9 +102,22 @@ for s = 1:nsub
 	fprintf('\n     ... reading image file(s)');
 
 	y = gmrimage(subject(s).files{1});
-	for f = 2:length(subject(s).files)
+  	for f = 2:length(subject(s).files)
 	    y = [y gmrimage(subject(s).files{f})];
     end
+
+    if scrubit 
+        if size(y.scrub, 1) ~= y.frames
+            fprintf('\n     ... WARNING: missing or invalid scrubbing info!!!')
+            scrub = zeros(1, y.frames);
+        else 
+            scrub = y.scrub(ismember(y.scrub_hdr, scrubvar),:)';
+        end
+    else 
+        scrub = zeros(1, y.frames);
+    end
+    scrub = scrub == 1;
+
     nruns = length(y.runframes);
     run = [];
     for r = 1:nruns
@@ -116,6 +145,7 @@ for s = 1:nsub
     	niz(n).nevents = length(niz(n).fevents.event);				%--- get a number of events we are processing
     	niz(n).frames = int16([niz(n).fevents.frame; 999999]);		%--- get a list of frames we are processing plus an extra large nonexistent frame
     	niz(n).timeseries = zeros(niz(n).nevents, tlength, nregions);			%--- prepare a matrix to hold all the timeseries
+        niz(n).scrub = zeros(niz(n).nevents, tlength);              %--- a matrix to hold scrub markers
     	niz(n).baseline = zeros(nruns, nregions);					%--- a matrix to store baseline data for each region in each run
     	niz(n).eventbaseline = zeros(niz(n).nevents, nregions);		%--- run baseline recorded for each event
     	niz(n).run = zeros(1, niz(n).nevents);						%--- a list to record which run the trial comes from
@@ -132,7 +162,7 @@ for s = 1:nsub
     
     for ni = 1:nruns
 	    for r = 1:nregions
-    		m = mean(mean(y.data(roi.data == r, run == ni)));
+    		m = mean(mean(y.data(roi.data == r, run == ni & ~scrub )));
     		for n = 1:nniz
     			niz(n).baseline(ni,r) = m;
     		end	
@@ -151,6 +181,7 @@ for s = 1:nsub
 				ts = frames + niz(n).frames(niz(n).c);
 				if ts(1) > 0
 					niz(n).N = niz(n).N + 1;
+                    niz(n).scrub(niz(n).N,:) = scrub(ts(1):ts(2));
                     for r = 1:nregions
                         try
                         	niz(n).timeseries(niz(n).N, :, r) = mean(y.data(roi.data == r, ts(1):ts(2)),1);
