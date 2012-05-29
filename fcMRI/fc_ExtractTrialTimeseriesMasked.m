@@ -111,7 +111,7 @@ for s = 1:nsub
             fprintf('\n     ... WARNING: missing or invalid scrubbing info!!!')
             scrub = zeros(1, y.frames);
         else 
-            scrub = y.scrub(ismember(y.scrub_hdr, scrubvar),:)';
+            scrub = y.scrub(:, ismember(y.scrub_hdr, scrubvar))';
         end
     else 
         scrub = zeros(1, y.frames);
