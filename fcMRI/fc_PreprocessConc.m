@@ -368,6 +368,10 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm)
     
     if strfind(glm.rgss, 'e')
         runs = g_CreateTaskRegressors(file(b).fidlfile, frames, eventstring);
+    else
+        for r = 1:nbolds
+            runs(r).matrix = [];
+        end
     end
 
     %   ----> join base, task and nuisance regressors
