@@ -14,6 +14,7 @@ function [subject, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
 %       - nfiles    : number of all files in the list (excluding roi)
 %	
 % 	Created by Grega Repovš on 2010-11-23.
+%   2012-05-20 - Changed to omit missing files
 %
 % 	Copyright (c) 2010. All rights reserved.
 
@@ -42,14 +43,16 @@ while feof(files) == 0
         if verbose, fprintf(subject(nsubjects).id); end
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');        
-        subject(nsubjects).roi = strtrim(s(2:end));
-        g_CheckFile(subject(nsubjects).roi, 'ROI image', report);
+        if g_CheckFile(strtrim(s(2:end)), 'ROI image', report);
+            subject(nsubjects).roi = strtrim(s(2:end));
+        end
     elseif ~isempty(strfind(s, 'file:'))
-        nf = nf + 1;
-        nfiles = nfiles + 1;
         [t, s] = strtok(s, ':');        
-        subject(nsubjects).files{nf} = strtrim(s(2:end));
-        g_CheckFile(s(2:end), 'image file', report);      
+        if g_CheckFile(strtrim(s(2:end)), 'image file', report)            
+            nf = nf + 1;
+            nfiles = nfiles + 1;
+            subject(nsubjects).files{nf} = strtrim(s(2:end));
+        end
     end
 end
 

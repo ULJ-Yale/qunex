@@ -9,7 +9,11 @@ dim  = size(data);
 x    = dim(1);
 y    = dim(2);
 z    = dim(3);
-f    = dim(4);
+if length(dim) == 4
+	f    = dim(4);
+else
+	f = 1;
+end
 
 img = zeros([x+z, y+z, f]);
 
