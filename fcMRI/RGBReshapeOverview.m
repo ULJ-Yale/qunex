@@ -4,7 +4,7 @@ function [img] = RGBReshapeOverview(in, v, slice)
 %		reshapes image and returns composite of specified axial, coronal and saggital slice
 %
 
-data = squeeze(in.image4D);
+data = in.image4D;
 dim  = size(data);
 x    = dim(1);
 y    = dim(2);
