@@ -80,9 +80,9 @@ classdef gmrimage
         % 
         %  Class constructor, calls readimage function if a parameter is passed
         %
-            if nargin < 4
+            if nargin < 3
                 frames = [];
-                if nargin < 3
+                if nargin < 2
                     dtype = 'single';
                 end
             end
@@ -109,11 +109,15 @@ classdef gmrimage
         %
         %  Checks what type the image is and calls the appropriate function
         %
+        
             if nargin < 4
                 frames = [];
                 if nargin < 3
-                    dtype = 'single';
+                    dtype = [];
                 end
+            end
+            if isempty(dtype)
+                dtype = 'single';
             end
             filename = strtrim(filename);
             if strcmp(filename(length(filename)-8:end), '.4dfp.img')
