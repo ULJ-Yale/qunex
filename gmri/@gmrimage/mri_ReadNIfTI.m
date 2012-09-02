@@ -19,11 +19,15 @@ function [img] = mri_ReadNIfTI(img, filename, dtype, frames)
 if nargin < 4
 	frames = [];
 	if nargin < 3
-	    dtype = 'single';
+	    dtype = [];
     end
 end
 
 filename = strtrim(filename);
+
+if isempty(dtype)
+    dtype = 'single';
+end
 
 if ~exist(filename)
     error('\n\nERROR: %s does not exist. Please check your paths!\n\n', filename);
@@ -126,7 +130,7 @@ img.imageformat = 'NIfTI';
 img.TR = [];
 img.frames = 1;
 if img.hdrnifti.dim(1) == 4    % we probably have a BOLD (4D) file
-    if frames
+    if ~isempty(frames)
         img.hdrnifti.dim(5) = frames;
         img.frames = frames;
     else
@@ -147,6 +151,9 @@ if img.hdrnifti.magic(1:3) == 'n+1'
     fid = fopen(file, 'r', mformat);
     garbage = fread(fid, img.hdrnifti.vox_offset, 'char');
     toread = img.hdrnifti.dim(2:7);
+    if ~isempty(frames)
+        toread = [toread(1:3) frames];
+    end
     toread = prod(toread(toread>0));
     img.data = fread(fid, toread, [datatype '=>' dtype]);
     fclose(fid);
@@ -154,6 +161,9 @@ else
     imgfile = strrep(file, '.hdr', '.img');
     fid = fopen(imgfile, 'r', mformat);
     toread = img.hdrnifti.dim(2:7);
+    if ~isempty(frames)
+        toread = [toread(1:3) frames];
+    end
     toread = prod(toread(toread>0));
     img.data = fread(fid, toread, [datatype '=>' dtype]);
     fclose(fid);
@@ -227,7 +237,7 @@ function [hdrnifti] = readHeader_nifti1(fid, hdrnifti)
     hdrnifti.version         = 1;
 
 
-    % ----- Read NIfTI-1 Header
+    % ----- Read NIfTI-2 Header
 
 
 function [hdrnifti] = readHeader_nifti2(fid, hdrnifti)
