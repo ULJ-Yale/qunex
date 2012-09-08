@@ -1,4 +1,4 @@
-function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail)
+function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi)
 
 %   (c) Copyright Grega Repovš, 2011-01-24
 %
@@ -37,6 +37,9 @@ function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efi
 %       sbjroi      - a mask used to create subject specific wbmask [none]
 %       overwrite   - whether old files should be overwritten [false]     
 %       tail        - what file extension to expect and use for images [.4dfp.img]     
+%       nroi        - ROI.names file to use to define additional nuisance ROI to regress out
+%                     when additionally provided a list of ROI, those will not be masked by
+%                     bold brain mask (e.g. 'nroi.names|eyes,scull')
 
 %   Does the preprocesing for the files from subjectf folder.
 %   Saves images in ftarget folder
@@ -51,35 +54,38 @@ function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efi
 %   - these should be placed in the /images/functional/events/ and named boldX_efile
 %
 %   It takes eventstring to describe which events to model and for how many frames
-
+%
 %   To Do
 %   - make movement reading more flexible (n of columns and possibly other formats)
 %
 %   
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-if nargin < 14
-tail = '.4dfp.img'
-    if nargin < 13
-        overwrite = false;
-        if nargin < 12
-            sbjroi = '';
-            if nargin < 11
-                wbmask = '';
-                if nargin < 10
-                    variant = '';
-                    if nargin < 9
-                        eventstring = '';
-                        if nargin < 8
-                            efile = '';
-                            if nargin < 7
-                                task = [];
-                                if nargin < 6
-                                    rgss = '';
-                                    if nargin < 5
-                                        omit = [];
-                                        if nargin < 4
-                                            TR = [];
+if nargin < 15
+    nroi = [];
+    if nargin < 14
+    tail = '.4dfp.img'
+        if nargin < 13
+            overwrite = false;
+            if nargin < 12
+                sbjroi = '';
+                if nargin < 11
+                    wbmask = '';
+                    if nargin < 10
+                        variant = '';
+                        if nargin < 9
+                            eventstring = '';
+                            if nargin < 8
+                                efile = '';
+                                if nargin < 7
+                                    task = [];
+                                    if nargin < 6
+                                        rgss = '';
+                                        if nargin < 5
+                                            omit = [];
+                                            if nargin < 4
+                                                TR = [];
+                                            end
                                         end
                                     end
                                 end
@@ -132,6 +138,11 @@ for b = 1:nbolds
     file(b).nfilepng    = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.png']);
     
     file(b).movdata     = strcat(subjectf, ['/images/functional/movement/bold' bnum '_mov.dat']);
+
+    file(b).nroi        = [];
+    if ~isempty(nroi)
+        file(b).nroi    = nroi;
+    end
     
     if strcmp(sbjroi, 'aseg')
         file(b).sbjroi = file.segmask;
@@ -296,6 +307,23 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm)
         else
             [V, WB, WM] = asegNuisanceROI(file(b), glm);
         end
+
+        eROI = [];
+        if ~isempty(file(b).nroi)
+            [fnroi nomask] = processeROI(file(b).nroi);
+            eROI      = gmrimage.mri_ReadROI(fnroi, file(b).sbjroi);
+            bmimg     = gmrimage(file(b).boldmask);
+            eROI.data = eROI.image2D;
+
+            maskcodes = find(~ismember(eROI.roi.roinames, nomask));
+
+            if ~isempty(maskcodes)
+                bmimg.data = bmimg.image2D;
+                for mc = maskcodes
+                    eROI.data(bmimg.data == 0 & eROI.data == mc) = 0;
+                end
+            end
+        end
     
         %   ----> mask if necessary
         fprintf('.');
@@ -310,7 +338,7 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm)
         %   ----> save nuisance masks
         fprintf('.');
         
-        SaveNuisanceMasks(file(b), WB, V, WM);
+        SaveNuisanceMasks(file, WB, V, WM, eROI, glm);
     
         %   ----> combine nuisances
         fprintf('.');
@@ -338,6 +366,10 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm)
             bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(V)'];
             trgss = strrep(trgss, 'v', '');
         end
+
+        if ~isempty(eROI)
+           bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(eROI)'];
+        end 
 
         %   ----> if requested, get first derivatives
         fprintf('.');
@@ -568,12 +600,11 @@ return
 
 
 
-
 % ======================================================
 %   ----> save nuisance images 
 %   --- needs to be changed
 
-function [] = SaveNuisanceMasks(file, WB, V, WM);
+function [] = SaveNuisanceMasks(file, WB, V, WM, eROI, glm);
     
     O = gmrimage(file.bold1);                       
     
@@ -584,6 +615,10 @@ function [] = SaveNuisanceMasks(file, WB, V, WM);
     nimg.data(:,3) = V.image2D();
     nimg.data(:,4) = WM.image2D();
     nimg.data(:,5) = (WB.image2D()>0)*1 + (V.image2D()>0)*2 + (WM.image2D()>0)*3;
+
+    if ~isempty(eROI)
+        nimg = [nimg eROI];
+    end
     
     nimg.mri_saveimage(file.nfile);
     
@@ -598,11 +633,58 @@ function [] = SaveNuisanceMasks(file, WB, V, WM);
 
     img = img/max(max(max(img)));
     img = img * 0.7;
-    img(:,:,3) = img(:,:,3)+WB*0.3;
-    img(:,:,2) = img(:,:,2)+V*0.3;
-    img(:,:,1) = img(:,:,1)+WM*0.3;
+
+    if strfind(glm.rgss, 'wb')
+        img(:,:,3) = img(:,:,3)+WB*0.3;
+    end
+    if strfind(glm.rgss, 'v')
+        img(:,:,2) = img(:,:,2)+V*0.3;
+    end
+    if strfind(glm.rgss, 'wm')
+        img(:,:,1) = img(:,:,1)+WM*0.3;
+    end
+
+    if ~isempty(eROI)
+        eROI   = RGBReshape(eROI, 3);
+        rcodes = unique(eROI);
+        rcodes = rcodes(rcodes > 0);
+        cmap   = hsv(length(rcodes));
+
+        isize  = size(eROI);
+        eROI   = reshape(eROI, prod(isize), 1);
+        cROI   = repmat(eROI, 1, 3);
+
+        for rc = 1:length(rcodes)
+            tm = eROI==rcodes(rc);
+            cROI(tm,1) = cmap(rc,1);
+            cROI(tm,2) = cmap(rc,2);
+            cROI(tm,3) = cmap(rc,3);
+        end
+        cROI = cROI .*3;
+        cROI = reshape(cROI, [isize 3]);
+        img  = img + cROI;
+    end
 
     imwrite(img, file.nfilepng, 'png');
 
 return
 
+
+
+% ======================================================
+%   ----> process extra ROI name
+%   
+
+function [filename nomask] = processeROI(s);
+    
+    [filename, s] = strtok(s, '|');
+    nomask = {};
+    while ~isempty(s)
+        s = strrep(s, '|', '');
+        [r, s] = strtok(s, ',');
+        if ~isempty(r)
+            nomask(end+1) = {r};
+        end
+    end
+
+return
