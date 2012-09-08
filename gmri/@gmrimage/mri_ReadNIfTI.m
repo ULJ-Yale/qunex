@@ -151,9 +151,6 @@ if img.hdrnifti.magic(1:3) == 'n+1'
     fid = fopen(file, 'r', mformat);
     garbage = fread(fid, img.hdrnifti.vox_offset, 'char');
     toread = img.hdrnifti.dim(2:7);
-    if ~isempty(frames)
-        toread = [toread(1:3) frames];
-    end
     toread = prod(toread(toread>0));
     img.data = fread(fid, toread, [datatype '=>' dtype]);
     fclose(fid);
@@ -161,9 +158,6 @@ else
     imgfile = strrep(file, '.hdr', '.img');
     fid = fopen(imgfile, 'r', mformat);
     toread = img.hdrnifti.dim(2:7);
-    if ~isempty(frames)
-        toread = [toread(1:3) frames];
-    end
     toread = prod(toread(toread>0));
     img.data = fread(fid, toread, [datatype '=>' dtype]);
     fclose(fid);
