@@ -169,6 +169,10 @@ classdef gmrimage
             filename = strtrim(filename);
             
             obj.data   = obj.image2D;
+            if max(max(frame)) > size(obj.data,2)
+                fprintf('\nWARNING: The desired frame number (%d) exceeded the actual number of frames (%d). Image %s not saved! [mri_saveimageframe]', max(max(frame)), size(obj.data,2), filename);
+                return
+            end
             obj.data   = obj.data(:,frame);
             obj.frames = size(obj.data,2);
             
