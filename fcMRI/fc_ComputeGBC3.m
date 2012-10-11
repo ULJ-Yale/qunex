@@ -1,7 +1,6 @@
-function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate)
+function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore)
 
-%	
-%	fc_ComputeGBC
+%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore)	
 %	
 %	Computes GBC maps for individuals as well as group maps.
 %	
@@ -17,6 +16,7 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %	targetf		- target folder for results
 %   rsmooth     - radius for smoothing (no smoothing if empty)
 %   rdilate     - radius for dilating mask (no dilation if empty)
+%   ignore      - the column in *_scrub.txt file that matches bold file to be used for ignore mask []
 %	
 % 	Created by Grega Repovš on 2009-11-04.
 % 	Modified by Grega Repovš on 2010-11-16.
@@ -29,20 +29,23 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 
 fprintf('\n\nStarting ...');
 
-if nargin < 8
-    rdilate = [];
-    if nargin < 7
-        rsmooth = [];
-        if nargin < 6
-        	targetf = '';
-        	if nargin < 5
-           		target = [];
-           	 	if nargin < 4
-                	verbose = false;
-                	if nargin < 3
-                	    mask = [];
+if nargin < 9
+    ignore = [];
+    if nargin < 8
+        rdilate = [];
+        if nargin < 7
+            rsmooth = [];
+            if nargin < 6
+            	targetf = '';
+            	if nargin < 5
+               		target = [];
+               	 	if nargin < 4
+                    	verbose = false;
+                    	if nargin < 3
+                    	    mask = [];
+                    	end
                 	end
-            	end
+                end
             end
         end
     end
@@ -111,14 +114,18 @@ for s = 1:nsubjects
 	nfiles = length(subject(s).files);
 	
 	img = gmrimage(subject(s).files{1});
-	if mask, img = img.sliceframes(mask); end
-	fprintf('1');
+
+    fprintf('1');
+	if ~isempty(mask),   img = img.sliceframes(mask); end
+    if ~isempty(ignore), img = scrub(img, ignore); end
+	
 	if nfiles > 1
     	for n = 2:nfiles
     	    new = gmrimage(subject(s).files{n});
-    	    if mask, new = new.sliceframes(mask); end
+            fprintf(', %d', n);
+    	    if ~isempty(mask),   new = new.sliceframes(mask); end
+            if ~isempty(ignore), new = scrub(new, ignore); end
     	    img = [img new];
-    	    fprintf(', %d', n);
         end
     end
     
@@ -161,6 +168,19 @@ ok = exist(filename, 'file');
 if ~ok
     fprintf('ERROR: File %s does not exists! Aborting processing!', filename);
     error;
+end
+
+%   ---- Do the scrub
+
+function [img] = scrub(img, ignore)
+
+scol = ismember(img.scrub_hdr, ignore);
+if sum(scol) == 1;
+    mask = img.scrub(:,scol)';
+    img  = img.sliceframes(mask==0);
+    fprintf(' (scrubbed %d frames)', sum(mask));
+else
+    fprintf('\nWARNING: Field %s not present in scrubbing data, no frames scrubbed!', ignore);
 end
 
     
