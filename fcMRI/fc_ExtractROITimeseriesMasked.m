@@ -179,8 +179,8 @@ if ismember('t', options)
     
     [fout message] = fopen([targetf '.txt'],'w');
     fprintf(fout, 'subject');
-    for ir = 1:nroi
-        fprintf(fout, '\t%s', roiname{ir});
+    for ir = 1:length(data.roinames)
+        fprintf(fout, '\t%s', data.roinames{ir});
     end
     
     % ---> print data

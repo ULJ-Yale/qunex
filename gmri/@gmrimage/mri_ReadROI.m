@@ -14,16 +14,17 @@ if nargin < 2
     roi2 = [];
 end
 
-if strcmp(roi2, 'none')
-    roi2 = [];
-end
-
 % ----> Read the ROI info
 
 roiinfo = strtrim(roiinfo);
 roi2    = strtrim(roi2);
 rois    = fopen(roiinfo);
 roif1   = fgetl(rois);
+
+
+if strcmp(roi2, 'none')
+    roi2 = [];
+end
 
 c = 0;
 while feof(rois) == 0

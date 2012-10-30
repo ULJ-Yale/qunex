@@ -19,6 +19,11 @@ function [img] = mri_Scrub(img, com)
 %
 %       Grega Repovs - 2012-10-29
 %
+%   ToDo:
+%       Needs shifting added to com and mask!
+%       (Might require changing com syntax)
+%
+%
 
 if nargin < 2
     fprintf('\n\nERROR in the use of gmrimage.mri_Scrub!')
@@ -35,7 +40,7 @@ com = regexp(com, ',|;|:|\|', 'split');
 
 if length(com) < 3
     if isempty(img.scrub), error('ERROR: mri_Scrub(), missing .scrub data file!'); end
-    mask = scrub(:, ismember(img.scrub, com));
+    mask = img.scrub(:, ismember(img.scrub_hdr, com));
     if length(com) == 2
         do = com{2};
     else
@@ -67,7 +72,7 @@ else
             if length(com) > 3, fdt = str2num(com{4}); end
             if length(com) > 4, fdt = str2num(com{5}); end
             mov = evaluateMov(img.mov, r, fdt);
-            if ui = 'i'
+            if ui == 'i'
                 mask = mask == 1 | mov == 1;
             else
                 mask = mask == 1 & mov == 1;
@@ -86,12 +91,29 @@ end
 
 
 
+% -------------------------------------------------
+%                                 support functions
+
+function [ts] = shiftTS(ts, shift)
+
+    if shift == 0, return, end
+    if shift > 0
+        ts = [zeros(1, shift) ts(1:end-shift)];
+    else
+        ts = [ts(1+shift:end) zeros(1, shift)];
+    end
 
 
+function [ts] = spreadTS(ts, s, e)
 
-        mov        = [];
-        mov_hdr    = [];
-        fstats     = [];
-        fstats_hdr = [];
-        scrub      = [];
-        scrub_hdr  = [];
+    nts = [];
+    for n = s:e
+        if n == 0, nts = [nts; ts]; end
+        if n > 0
+            nts = [nts; zeros(1, t) ts(1:end-t)];
+        else
+            nts = [nts; ts(1+n:end) zeros(1, n)];
+        end
+    end
+    ts = sum(nts) > 0;
+
