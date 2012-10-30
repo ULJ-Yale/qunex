@@ -425,6 +425,8 @@ classdef gmrimage
         %
         %   method for removing masked volumes from image
         %
+        %   fmask is scalar or vector with 0 for frames to exclude
+        %
         
         function obj = sliceframes(obj, fmask, options)
             if nargin < 3

@@ -144,13 +144,7 @@ for n = 1:nsub
     % ---> remove additional frames to be ignored 
     
     if ~ismember(ignore, {'no', 'fidl'})
-        scol = ismember(y.scrub_hdr, ignore);
-        if sum(scol) == 1;
-            mask = y.scrub(:,scol)';
-            y = y.sliceframes(mask==0);
-        else
-            fprintf('\n         WARNING: Field %s not present in scrubbing data, no frames scrubbed!', ignore);
-        end
+        y = y.mri_Scrub(ignore);
     end
     
 	% ---> extracting timeseries
