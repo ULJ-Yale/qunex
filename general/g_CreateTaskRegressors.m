@@ -1,16 +1,16 @@
 function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 
-%   
-%   Returns task regressors for each bold run 
-%   
+%
+%   Returns task regressors for each bold run
+%
 %   INPUT
 %   - fidlf - subject's fidl event file
 %   - concf - subject's conc file or an array of run lengths
 %   - model - array structure that specifies what needs to be modelled and how or a string description
 %     - code - event codes (used in fidl file)
-%     - hrf_type 
-%       -> 'boynton' (assumed response) 
-%       -> 'SPM' (assumed response) 
+%     - hrf_type
+%       -> 'boynton' (assumed response)
+%       -> 'SPM' (assumed response)
 %       -> 'u' (unassumed response)
 %       -> 'block' (block response)
 %     - length
@@ -34,7 +34,7 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %   ... perhaps add a normalizing pass for all regressors at the end of the script
 %   - !!! it only correctly works with TR precision to 1 decimal point ... should perhaps change to 2 decimal points
 %   -> changed 2011.07.31
-%   - !!! might be better to change downsampling to summation 
+%   - !!! might be better to change downsampling to summation
 %   -> changed to area under the curve 2011.07.31
 %
 %   Grega Repovs - Created: 2008.07.11
@@ -78,7 +78,7 @@ nmodels = length(model);
 % ---> convert string codes to number codes if necessary
 
 for m = 1:nmodels
-    if ischar(model(m).code)
+    if ischar(model(m).code{1})
         model(m).code = find(ismember(events.events, model(m).code)) - 1;
     end
 end
@@ -90,7 +90,7 @@ end
 for r = 1:nruns
 
     %------------------------- set base variables
-    
+
     nframes = frames(r);
     if r > 1
         start_frame = sum(frames(1:r-1)) + 1;
@@ -98,26 +98,26 @@ for r = 1:nruns
         start_frame = 1;
     end
     end_frame = start_frame + nframes - 1;
-    
+
     in_run = (events.frame >= start_frame) & (events.frame <= end_frame);
-    
+
     run(r).matrix = [];
     run(r).regressors = {};
-    
-    %------------------------- loop over models 
-    
+
+    %------------------------- loop over models
+
     for m = 1:nmodels
-        
+
         relevant = in_run & ismember(events.event, model(m).code);
         nrelevant = sum(relevant);
-        
+
         %------------------------- code for unassumed models
-        
+
         if strcmp(model(m).hrf_type, 'u')
-        
+
             mtx = zeros(nframes, model(m).length);
             rel_frame = events.frame(relevant);
-            
+
             for ievent = 1:nrelevant
                 for iframe = 1:model(m).length
                     target = rel_frame(ievent) - start_frame + iframe;
@@ -126,33 +126,33 @@ for r = 1:nruns
                     end
                 end
             end
-            
+
             run(r).matrix = [run(r).matrix mtx];
-            
+
             basename = join(events.events(model(m).code+1), '_');
             for iname = 1:model(m).length
                 run(r).regressors = [run(r).regressors, [basename '_' num2str(iname)]];
             end
-        
-        
+
+
         %------------------------- code for block models
-        
+
         elseif strcmp(model(m).hrf_type, 'block')
-            
+
             ts = zeros(nframes, 1);
             soff = 0;
             eoff = 0;
-            
+
             if ~isempty(model(m).length)
                 soff = model(m).length(1);
                 if length(model(m).length) > 1
                     eoff = model(m).length(2);
                 end
             end
-            
+
             rel_start = events.frame(relevant) - start_frame + 1;
             rel_end   = events.frame(relevant) - start_frame + events.elength(relevant);
-            
+
             for ievent = 1:nrelevant
                 e_start = rel_start(ievent) + soff;
                 e_end   = rel_end(ievent) + eoff;
@@ -172,18 +172,18 @@ for r = 1:nruns
                 end
                 ts(e_start:e_end,1) = 1;
             end
-            
+
             run(r).matrix = [run(r).matrix ts];
             run(r).regressors = [run(r).regressors, join(events.events(model(m).code+1), '_')];
-        
-        
+
+
         %------------------------- code for assumed models
-        
+
         elseif ismember(model(m).hrf_type, {'boynton', 'SPM'})
-            
+
             %======================================================================
             %                                                  create the right HRF
-            
+
             hrf = [];
 
             if strcmp(model(m).hrf_type, 'boynton')
@@ -199,27 +199,27 @@ for r = 1:nruns
             if isempty(hrf)
                 error('There was no valid HRF type specified! [model: %d]', m);
             end
-            
+
             %======================================================================
             %                                           create the event timeseries
 
             % ts = zeros(round(events.TR*100)*nframes),1);
             ts = zeros(100*nframes,1);
-            
+
             rel_times = events.event_s(relevant);
             rel_times = rel_times - (start_frame-1)*events.TR;
-            
+
             rel_lengths = events.event_l(relevant);
             if (~isempty(model(m).length))
                 rel_lengths(:) = model(m).length;
             end
-    
+
             for ievent = 1:nrelevant
                 % e_start = floor(rel_times(ievent)*100)+1;
                 % e_end = e_start + floor(rel_lengths(ievent)*100) -1;
                 e_start = floor(rel_times(ievent)/events.TR*100)+1;
                 e_end   = e_start + floor(rel_lengths(ievent)/events.TR*100)-1;
-                
+
                 if e_end > length(ts)
                     e_end = length(ts);
                 end
@@ -236,7 +236,7 @@ for r = 1:nruns
                 end
                 ts(e_start:e_end,1) = 1;
             end
-            
+
             %======================================================================
             %                          convolve event with HRF, downsample and crop
 
@@ -246,28 +246,28 @@ for r = 1:nruns
             if max(ts) > 0
                 ts = ts/max(ts);
             end
-            
+
             run(r).matrix = [run(r).matrix ts'];
             run(r).regressors = [run(r).regressors, join(events.events(model(m).code+1), '_')];
-            
+
         end
-    
+
     %------------------------- end models loop
     end
-    
+
     %======================================================================
     %                                                 zero frames to ignore
-    
+
     if ~strcmpi(ignore, 'no')
-        
+
         ts = zeros(nframes, 1);
-        
+
         relevant  = in_run & (events.event == -1);
         nrelevant = sum(relevant);
 
         rel_start = events.frame(relevant) - start_frame + 1;
         rel_end   = events.frame(relevant) - start_frame + events.elength(relevant);
-        
+
         for ievent = 1:nrelevant
             e_start = rel_start(ievent);
             e_end   = rel_end(ievent);
@@ -276,7 +276,7 @@ for r = 1:nruns
             end
             ts(e_start:e_end,1) = 1;
         end
-        
+
         if strcmpi(ignore, 'ignore') | strcmpi(ignore, 'both')
             run(r).matrix(ts==1,:) = 0;
         end
@@ -284,7 +284,7 @@ for r = 1:nruns
             run(r).matrix = [run(r).matrix ts];
             run(r).regressors = [run(r).regressors, 'ignore'];
         end
-        
+
     end
     %------------------------- end zero frames to ignore
 
@@ -314,9 +314,9 @@ end
 %
 %   - model - array structure that specifies what needs to be modelled and how or a string description
 %     - code - event codes (used in fidl file)
-%     - hrf_type 
-%       -> 'boynton' (assumed response) 
-%       -> 'SPM' (assumed response) 
+%     - hrf_type
+%       -> 'boynton' (assumed response)
+%       -> 'SPM' (assumed response)
 %       -> 'u' (unassumed response)
 %       -> 'block' (block response)
 %     - length
@@ -332,10 +332,10 @@ a = splitby(s, '|');
 for n = 1:length(a)
 
     b = splitby(a{n},':');
-    model(n).code = b{1};
-    
+    model(n).code = splitby(b{1},',');
+
     % --- is field 2 a number ?
-    
+
     if sum(isletter(b{2}))
         model(n).hrf_type = b{2};
         model(n).length = [];
@@ -343,9 +343,9 @@ for n = 1:length(a)
         model(n).hrf_type = 'u';
         model(n).length = str2num(b{2});
     end
-    
+
     % --- do we have a third field ?
-    
+
     if length(b) >= 3
         model(n).length = str2num(b{3});
     end
@@ -357,7 +357,7 @@ end
 
 
 function [out] = splitby(s, d)
-c = 0;    
+c = 0;
 while length(s) >=1
     c = c+1;
     [t, s] = strtok(s, d);
