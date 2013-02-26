@@ -1,0 +1,64 @@
+#!/opt/local/bin/python2.7
+
+import g_mri
+import sys
+
+
+help = '''
+--------
+gmri utility for MRI processing.
+
+use: gmri command [option=value] [option=value] ...
+
+List of available commands
+
+dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
+   - folder: the base subject folder with the dicom subfolder that holds session numbered folders with dicom files
+   - clean: whether to remove preexisting NIfTI files (yes), leave them and abort (no)
+     or ask interactively (ask)
+   - unzip: if the dicom files are gziped whether to unzip them (yes), leave them and
+     abort (no) or ask interactively (ask)
+   - gzip: after the dicom files were processed whether to gzip them (yes), leave them (no)
+     or ask interactively (ask)
+
+   example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask
+
+sortDicom [folder=.]
+   - folder: the base subject folder that contains the inbox with unsorted dicom files
+
+   example: gmri sortDicom folder=data
+
+--------
+'''
+
+commands = {'dicom2nii': g_mri.g_dicom.dicom2nii,
+            'sortDicom': g_mri.g_dicom.sortDicom}
+
+def runCommand(command, args):
+    if command in commands:
+        commands[command](**args)
+    else:
+        print help
+        sys.exit(1)
+
+
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+
+    if len(args) == 0:
+        print help
+        sys.exit(1)
+
+    comm = args[0]
+    opts = dict([e.strip().split("=") for e in args[1:]])
+
+    try:
+        runCommand(comm, opts)
+    except:
+        print help
+        raise
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
