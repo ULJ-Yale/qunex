@@ -64,13 +64,17 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
         if first:
             first = False
-            time = datetime.datetime.strptime(d.StudyDate+d.StudyTime, "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+            time = datetime.datetime.strptime(str(int(float(d.StudyDate+d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
             print >> r, "Report for %s scanned on %s\n" % (d.PatientID, time)
             if verbose: print "\n\nProcessing images from %s scanned on %s\n" % (d.PatientID, time)
 
         time = datetime.datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
-        print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d[0x2001,0x1081].value, d.RepetitionTime, d.EchoTime, time)
-        if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d[0x2001,0x1081].value, d.RepetitionTime, d.EchoTime, time)
+        try:
+            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d[0x2001,0x1081].value, d.RepetitionTime, d.EchoTime, time)
+            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d[0x2001,0x1081].value, d.RepetitionTime, d.EchoTime, time)
+        except:
+            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d.RepetitionTime, d.EchoTime, time)
+            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d.RepetitionTime, d.EchoTime, time)
 
         call = "dcm2nii -c -v " + folder
         subprocess.call(call, shell=True, stdout=null, stderr=null)
