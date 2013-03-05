@@ -11,7 +11,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
     null = open(os.devnull, 'w')
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
-    r = open(os.path.join(folder, "DICOM-Report.txt"), 'w')
+    r = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
 
     # check for existing .gz files
 
@@ -59,7 +59,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
     first = True
     c = 0
     for folder in folders:
-        d = dicom.read_file(glob.glob(os.path.join(folder, "*"))[0])
+        d = dicom.read_file(glob.glob(os.path.join(folder, "*"))[1])
         c += 1
 
         if first:
@@ -68,13 +68,33 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             print >> r, "Report for %s scanned on %s\n" % (d.PatientID, time)
             if verbose: print "\n\nProcessing images from %s scanned on %s\n" % (d.PatientID, time)
 
-        time = datetime.datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
         try:
-            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d[0x2001,0x1081].value, d.RepetitionTime, d.EchoTime, time)
-            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d[0x2001,0x1081].value, d.RepetitionTime, d.EchoTime, time)
+            seriesDescription = d.SeriesDescription
         except:
-            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d.RepetitionTime, d.EchoTime, time)
-            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, d.SeriesDescription, d.RepetitionTime, d.EchoTime, time)
+            continue
+
+        try:
+            time = datetime.datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+        except:
+            time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+
+        try:
+            TR = d.RepetitionTime
+        except:
+            TR = 0
+
+        try: 
+            TE = d.EchoTime
+        except:
+            TE = 0
+
+
+        try:
+            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time)
+            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time)
+        except:
+            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time)
+            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time)
 
         call = "dcm2nii -c -v " + folder
         subprocess.call(call, shell=True, stdout=null, stderr=null)
@@ -121,15 +141,20 @@ def sortDicom(folder="."):
         print "---> Created a dicom superfolder"
 
     seqs  = []
-    files = glob.glob(os.path.join(inbox, "*.dcm"))
+    files = glob.glob(os.path.join(inbox, "*"))
+    files = files + glob.glob(os.path.join(inbox, "*/*"))
     for dcm in files:
-        d    = dicom.read_file(dcm)
+        try:
+            d    = dicom.read_file(dcm)
+        except:
+            continue
         sqid = str(d.SeriesNumber)
         sqfl = os.path.join(dcmf, sqid)
         if sqid not in seqs:
             if not os.path.exists(sqfl):
                 os.makedirs(sqfl)
                 print "---> Created subfolder for sequence %s - %s" % (sqid, d.SeriesDescription)
-        os.rename(dcm, os.path.join(sqfl, os.path.basename(dcm)))
+        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (d.AccessionNumber, sqid, d.SOPInstanceUID.split(".")[-1]))
+        os.rename(dcm, tgf)
 
     print "\nDone!\n\n"
