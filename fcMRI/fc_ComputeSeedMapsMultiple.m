@@ -96,7 +96,7 @@ end
 
 % ---- list name
 
-[fpathstr, fname, fext, fversn] = fileparts(flist);
+[fpathstr, fname, fext] = fileparts(flist);
 
 lname = strrep(fname, '.list', '');
 lname = strrep(lname, '.conc', '');
