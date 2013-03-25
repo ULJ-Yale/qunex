@@ -8,10 +8,12 @@ import subprocess
 
 def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
+    base = folder
     null = open(os.devnull, 'w')
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
-    r = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
+    r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
+    stxt = open(os.path.join(folder, "subject.txt"), 'w')
 
     # check for existing .gz files
 
@@ -59,7 +61,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
     first = True
     c = 0
     for folder in folders:
-        d = dicom.read_file(glob.glob(os.path.join(folder, "*"))[1])
+        d = dicom.read_file(glob.glob(os.path.join(folder, "*.dcm"))[-1])
         c += 1
 
         if first:
@@ -67,6 +69,15 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             time = datetime.datetime.strptime(str(int(float(d.StudyDate+d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
             print >> r, "Report for %s scanned on %s\n" % (d.PatientID, time)
             if verbose: print "\n\nProcessing images from %s scanned on %s\n" % (d.PatientID, time)
+
+            # --- setup subject.txt file
+
+            print >> stxt, "id:", d.PatientID
+            print >> stxt, "subject:", d.PatientID
+            print >> stxt, "dicom:", os.path.abspath(os.path.join(base, 'dicom'))
+            print >> stxt, "raw_data:", os.path.abspath(os.path.join(base, 'nii'))
+            print >> stxt, "data:", os.path.abspath(os.path.join(base, '4dfp'))
+            print >> stxt, "hpc:", os.path.abspath(os.path.join(base, 'hpc'))
 
         try:
             seriesDescription = d.SeriesDescription
@@ -83,7 +94,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         except:
             TR = 0
 
-        try: 
+        try:
             TE = d.EchoTime
         except:
             TE = 0
@@ -95,6 +106,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         except:
             print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time)
             if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time)
+
+        print >> stxt, "%02d: %s" % (c, seriesDescription)
 
         call = "dcm2nii -c -v " + folder
         subprocess.call(call, shell=True, stdout=null, stderr=null)
@@ -112,6 +125,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         print "... done!"
 
     r.close()
+    stxt.close()
 
     # gzip files
 
@@ -154,7 +168,7 @@ def sortDicom(folder="."):
             if not os.path.exists(sqfl):
                 os.makedirs(sqfl)
                 print "---> Created subfolder for sequence %s - %s" % (sqid, d.SeriesDescription)
-        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (d.AccessionNumber, sqid, d.SOPInstanceUID.split(".")[-1]))
+        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (d.PatientID, sqid, d.SOPInstanceUID.split(".")[-1]))
         os.rename(dcm, tgf)
 
     print "\nDone!\n\n"

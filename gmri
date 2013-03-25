@@ -28,11 +28,18 @@ sortDicom [folder=.]
 
    example: gmri sortDicom folder=data
 
+setupHPC [folder=.] [sbjf=subject.txt]
+  - folder: the base subject folder that contains the nifti images and subject.txt file
+  - sbjf: the alternative name of the subject.txt file
+
+  example: gmri setupHPC folder=data sbjf=subject1.txt
+
 --------
 '''
 
 commands = {'dicom2nii': g_mri.g_dicom.dicom2nii,
-            'sortDicom': g_mri.g_dicom.sortDicom}
+            'sortDicom': g_mri.g_dicom.sortDicom,
+            'setupHCP':  g_mri.g_HCP.setupHCP}
 
 def runCommand(command, args):
     if command in commands:
