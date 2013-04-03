@@ -92,13 +92,18 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         try:
             TR = d.RepetitionTime
         except:
-            TR = 0
+            try:
+                TR = d[0x5200,0x9229][0][0x0018,0x9112][0][0x0018,0x0080].value
+            except:
+                TR = 0
 
         try:
             TE = d.EchoTime
         except:
-            TE = 0
-
+            try:
+                TE = d[0x5200,0x9230][0][0x0018,0x9114][0][0x0018,0x9082].value
+            except:
+                TE = 0
 
         try:
             print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time)
@@ -150,14 +155,27 @@ def sortDicom(folder="."):
 
     print "============================================\n\nProcessing files from %s\n" % (inbox)
 
+    seqs  = []
+    files = glob.glob(os.path.join(inbox, "*"))
+    files = files + glob.glob(os.path.join(inbox, "*/*"))
+
+    for dcm in files:
+        try:
+            info = dicom.read_file(dcm)
+            time = datetime.datetime.strptime(str(int(float(info.StudyDate+info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+            print "===> Sorting dicoms for %s scanned on %s\n" % (info.PatientID, time)
+            break
+        except:
+            raise
+            pass
+
     if not os.path.exists(dcmf):
         os.makedirs(dcmf)
         print "---> Created a dicom superfolder"
 
-    seqs  = []
-    files = glob.glob(os.path.join(inbox, "*"))
-    files = files + glob.glob(os.path.join(inbox, "*/*"))
     for dcm in files:
+        if os.path.basename(dcm)[0:2] in ["XX", "PS"]:
+            continue
         try:
             d    = dicom.read_file(dcm)
         except:
