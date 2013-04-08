@@ -5,6 +5,7 @@ import os
 import glob
 import datetime
 import subprocess
+import g_mri.g_NIfTI
 
 def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
@@ -61,7 +62,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
     first = True
     c = 0
     for folder in folders:
-        d = dicom.read_file(glob.glob(os.path.join(folder, "*.dcm"))[-1])
+        d = dicom.read_file(glob.glob(os.path.join(folder, "*.dcm"))[-1], stop_before_pixels=True)
         c += 1
 
         if first:
@@ -105,12 +106,19 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             except:
                 TE = 0
 
+        dofz2zf, fz = False, ""
         try:
-            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time)
-            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time)
+            if d.Manufacturer == 'Philips Medical Systems' and int(d[0x2001, 0x1081].value) > 1:
+                dofz2zf, fz = True, "  (switched fz)"
         except:
-            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time)
-            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time)
+            pass
+
+        try:
+            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s%s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time, fz)
+            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s%s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time, fz)
+        except:
+            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time, fz)
+            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time, fz)
 
         print >> stxt, "%02d: %s" % (c, seriesDescription)
 
@@ -125,6 +133,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 os.rename(img, os.path.join(imgf, "%02d-o.nii.gz" % (c)))
             else:
                 os.rename(img, os.path.join(imgf, "%02d.nii.gz" % (c)))
+
+        if dofz2zf:
+            g_mri.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (c)))
 
     if verbose:
         print "... done!"
@@ -158,10 +169,11 @@ def sortDicom(folder="."):
     seqs  = []
     files = glob.glob(os.path.join(inbox, "*"))
     files = files + glob.glob(os.path.join(inbox, "*/*"))
+    files = [e for e in files if os.path.isfile(e)]
 
     for dcm in files:
         try:
-            info = dicom.read_file(dcm)
+            info = dicom.read_file(dcm, stop_before_pixels=True)
             time = datetime.datetime.strptime(str(int(float(info.StudyDate+info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
             print "===> Sorting dicoms for %s scanned on %s\n" % (info.PatientID, time)
             break
@@ -177,7 +189,7 @@ def sortDicom(folder="."):
         if os.path.basename(dcm)[0:2] in ["XX", "PS"]:
             continue
         try:
-            d    = dicom.read_file(dcm)
+            d    = dicom.read_file(dcm, stop_before_pixels=True)
         except:
             continue
         sqid = str(d.SeriesNumber)

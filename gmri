@@ -10,36 +10,43 @@ gmri utility for MRI processing.
 
 use: gmri command [option=value] [option=value] ...
 
-List of available commands
-
-dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
-   - folder: the base subject folder with the dicom subfolder that holds session numbered folders with dicom files
-   - clean: whether to remove preexisting NIfTI files (yes), leave them and abort (no)
-     or ask interactively (ask)
-   - unzip: if the dicom files are gziped whether to unzip them (yes), leave them and
-     abort (no) or ask interactively (ask)
-   - gzip: after the dicom files were processed whether to gzip them (yes), leave them (no)
-     or ask interactively (ask)
-
-   example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask
+List of available commands:
 
 sortDicom [folder=.]
-   - folder: the base subject folder that contains the inbox with unsorted dicom files
+    - folder: the base subject folder that contains the inbox with unsorted dicom files
 
-   example: gmri sortDicom folder=data
+    example: gmri sortDicom folder=data
+
+dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
+    - folder: the base subject folder with the dicom subfolder that holds session numbered folders with dicom files
+    - clean: whether to remove preexisting NIfTI files (yes), leave them and abort (no)
+      or ask interactively (ask)
+    - unzip: if the dicom files are gziped whether to unzip them (yes), leave them and
+      abort (no) or ask interactively (ask)
+    - gzip: after the dicom files were processed whether to gzip them (yes), leave them (no)
+      or ask interactively (ask)
+
+    example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask
+
+fz2zf inf=<input_image> [outf=<output_image>]
+    Converts the xyfz order of data to xyzf (needed for Philips functionals, DTIs, ...).
+    - inf:  input image filename to be shuffled
+    - outf: output image filename
+    If outf is not provided, it replaces the original file.
 
 setupHPC [folder=.] [sbjf=subject.txt]
-  - folder: the base subject folder that contains the nifti images and subject.txt file
-  - sbjf: the alternative name of the subject.txt file
+    - folder: the base subject folder that contains the nifti images and subject.txt file
+    - sbjf: the alternative name of the subject.txt file
 
-  example: gmri setupHPC folder=data sbjf=subject1.txt
+    example: gmri setupHPC folder=data sbjf=subject1.txt
 
 --------
 '''
 
-commands = {'dicom2nii': g_mri.g_dicom.dicom2nii,
-            'sortDicom': g_mri.g_dicom.sortDicom,
-            'setupHCP':  g_mri.g_HCP.setupHCP}
+commands = {'sortDicom': g_mri.g_dicom.sortDicom,
+            'dicom2nii': g_mri.g_dicom.dicom2nii,
+            'fz2zf'    : g_mri.g_NIfTI.fz2zf,
+            'setupHCP' : g_mri.g_HCP.setupHCP}
 
 def runCommand(command, args):
     if command in commands:
