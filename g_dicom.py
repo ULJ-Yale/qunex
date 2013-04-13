@@ -114,11 +114,11 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             pass
 
         try:
-            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s%s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time, fz)
-            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s%s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, time, fz)
+            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, d.PatientID, time, fz)
+            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, d.PatientID, time, fz)
         except:
-            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time, fz)
-            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, time, fz)
+            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, d.PatientID, time, fz)
+            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, d.PatientID, time, fz)
 
         print >> stxt, "%02d: %s" % (c, seriesDescription)
 
@@ -197,7 +197,7 @@ def sortDicom(folder="."):
         if sqid not in seqs:
             if not os.path.exists(sqfl):
                 os.makedirs(sqfl)
-                print "---> Created subfolder for sequence %s - %s" % (sqid, d.SeriesDescription)
+                print "---> Created subfolder for sequence %s %s - %s" % (d.PatientID, sqid, d.SeriesDescription)
         tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (d.PatientID, sqid, d.SOPInstanceUID.split(".")[-1]))
         os.rename(dcm, tgf)
 
