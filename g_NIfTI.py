@@ -50,3 +50,4 @@ def fz2zf(inf, outf=None):
     tf.write(nihdr.packHdr())
     tf.write(out.astype(dataType).tostring())
     tf.close
+

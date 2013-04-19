@@ -6,6 +6,7 @@ import glob
 import datetime
 import subprocess
 import g_mri.g_NIfTI
+import g_mri.g_gimg as gimg
 
 def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
@@ -106,10 +107,12 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             except:
                 TE = 0
 
-        dofz2zf, fz = False, ""
+        recenter, dofz2zf, fz = False, False, ""
         try:
             if d.Manufacturer == 'Philips Medical Systems' and int(d[0x2001, 0x1081].value) > 1:
                 dofz2zf, fz = True, "  (switched fz)"
+            if d.Manufacturer == 'Philips Medical Systems' and d.SpacingBetweenSlices == 0.7:
+                recenter, fz = True, "  (recentered)"
         except:
             pass
 
@@ -128,14 +131,30 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         imgs = glob.glob(os.path.join(folder, "*.gz"))
         for img in imgs:
             if os.path.basename(img)[0:2] == 'co':
-                os.rename(img, os.path.join(imgf, "%02d-co.nii.gz" % (c)))
+                # os.rename(img, os.path.join(imgf, "%02d-co.nii.gz" % (c)))
+                os.remove(img)
             elif os.path.basename(img)[0:1] == 'o':
-                os.rename(img, os.path.join(imgf, "%02d-o.nii.gz" % (c)))
+                if recenter:
+                    timg = gimg.gimg(img)
+                    timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
+                    timg.saveimage(os.path.join(imgf, "%02d-o.nii.gz" % (c)))
+                    os.remove(img)
+                else:
+                    os.rename(img, os.path.join(imgf, "%02d-o.nii.gz" % (c)))
+
+                # -- remove original
+                noob = os.path.join(folder, os.path.basename(img)[1:])
+                noot = os.path.join(imgf, "%02d.nii.gz" % (c))
+                if os.path.exists(noob):
+                    os.remove(noot)
+                elif os.path.exists(noot):
+                    os.remove(noot)
             else:
                 os.rename(img, os.path.join(imgf, "%02d.nii.gz" % (c)))
 
         if dofz2zf:
             g_mri.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (c)))
+
 
     if verbose:
         print "... done!"

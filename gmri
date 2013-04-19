@@ -34,23 +34,35 @@ fz2zf inf=<input_image> [outf=<output_image>]
     - outf: output image filename
     If outf is not provided, it replaces the original file.
 
-setupHPC [folder=.] [sbjf=subject.txt]
-    - folder: the base subject folder that contains the nifti images and subject.txt file
-    - sbjf: the alternative name of the subject.txt file
+setupHCP [folder=.] [tfolder=hcp] [sbjf=subject.txt]
+    - folder:  the base subject folder that contains the nifti images and subject.txt file
+    - tfolder: the folder (within the base folder) where to put the HCP data
+    - sbjf:    the alternative name of the subject.txt file
 
-    example: gmri setupHPC folder=data sbjf=subject1.txt
+    example: gmri setupHCP folder=data tfolder=hcp2 sbjf=subject1.txt
+
+printniftihdr <image_filename>
+    Prints the header contents of the NIfTI file.
+
+modniftihdr <image_filename> <modification string>
+    Modifies the NIfTI header in place. It reads the header, changes according to information
+    in the modification string and writes the header back.
+
+    example: gmri modniftihdr img.nii.gz "srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126]"
 
 --------
 '''
 
-commands = {'sortDicom': g_mri.g_dicom.sortDicom,
-            'dicom2nii': g_mri.g_dicom.dicom2nii,
-            'fz2zf'    : g_mri.g_NIfTI.fz2zf,
-            'setupHCP' : g_mri.g_HCP.setupHCP}
+commands = {'sortDicom'    : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
+            'dicom2nii'    : { 'com': g_mri.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose') },
+            'fz2zf'        : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
+            'setupHCP'     : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },
+            'printniftihdr': { 'com': g_mri.g_img.printniftihdr,      'args': ('filename', ) },
+            'modniftihdr'  : { 'com': g_mri.g_gimg.modifyNIfTIHeader, 'args': ('filename', 's')}}
 
 def runCommand(command, args):
     if command in commands:
-        commands[command](**args)
+        commands[command]['com'](**args)
     else:
         print help
         sys.exit(1)
@@ -65,9 +77,17 @@ def main(args=None):
         sys.exit(1)
 
     comm = args[0]
-    opts = dict([e.strip().split("=") for e in args[1:]])
+    opts = dict()
 
     try:
+        for n in range(1,len(args)):
+            if "=" in args[n]:
+                k, v = args[n].split("=")
+                opts[k] = v
+            else:
+                k = commands[comm]['args'][n-1]
+                opts[k] = args[n]
+
         runCommand(comm, opts)
     except:
         print help

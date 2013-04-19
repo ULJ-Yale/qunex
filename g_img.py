@@ -5,12 +5,13 @@ g_img.py
 
 Some basic functions to be used for work with nifti and 4dfp images.
 
-
 Created by Grega Repovs on 2011-03-05.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
 import struct
+import re
+import gzip
 
 niftiDataTypes = {1:'b', 2:'u1', 4:'i2', 8:'i4', 16:'f4', 32:'c8', 64:'f8', 128:'u1,u1,u1', 256:'i1', 512:'u2', 768:'u4', 1025:'i8', 1280:'u8', 1536:'f16', 2304:'u1,u1,u1,u1'}
 
@@ -57,8 +58,12 @@ def writeConc(filename, conc):
     f.close()
 
 
+def printniftihdr(filename=None):
+    hdr = niftihdr(filename)
+    print hdr
+
 class ifhhdr:
-    
+
     def __init__(self, filename = False):
         self.ifh = {
             "INTERFILE": "",
@@ -78,12 +83,12 @@ class ifhhdr:
             "mmppix": "3.000000 -3.000000 -3.000000"
         }
         self.vlist = ["INTERFILE", "version of keys", "number format", "number of bytes per pixel", "orientation", "number of dimensions", "matrix size [1]", "matrix size [2]", "matrix size [3]", "matrix size [4]", "scaling factor (mm/pixel) [1]", "scaling factor (mm/pixel) [2]", "scaling factor (mm/pixel) [3]", "center", "mmppix"]
-        
+
         if filename:
             self.readHeader(filename)
         else:
             self.hdr = self.packHdr()
-    
+
     def packHdr(self):
         d = dict(self.ifh)
         s = ""
@@ -92,16 +97,16 @@ class ifhhdr:
             del d[k]
         for k, v in d.iteritems():
             s += "%s %s:= %s\n" % (k, " "*(35-len(k)), v)
-        
+
         return s
-    
+
     def unpackHdr(self, s):
         s = s.replace('\r', '\n')
         s = s.replace('\n\n', '\n')
         s = s.split('\n')
         self.ifh = {}
         self.vlist = []
-        
+
         for l in s:
             l = l.split(":=")
             if len(l) == 2:
@@ -109,39 +114,39 @@ class ifhhdr:
                 v = l[1].strip()
                 self.ifh[k] = v
                 self.vlist.append(k)
-        
+
         return
-    
+
     def readHeader(self, filename):
-        
+
         s = file(filename).read()
         self.unpackHdr(s)
         self.hdr = s
-        
+
         return
-    
+
     def writeHeader(self, filename):
-        
+
         h = open(filename, 'w')
         s = self.packHdr()
         h.write(s)
         h.close()
-        
+
         return
-    
+
     def toNIfTI(self):
         nihdr = niftihdr()
         c  = tuple([float(e) for e in self.ifh["center"].split()])
         mm = tuple([abs(float(e)) for e in self.ifh["mmppix"].split()])
-        
+
         nihdr.sizex  = int(self.ifh["matrix size [1]"])
         nihdr.sizey  = int(self.ifh["matrix size [2]"])
         nihdr.sizez  = int(self.ifh["matrix size [3]"])
         nihdr.frames = int(self.ifh["matrix size [4]"])
-        
+
         if nihdr.frames == 1:
             nihdr.ndimensions = 3
-        
+
         if "imagedata byte order" in self.ifh:
             if self.ifh["imagedata byte order"] == "littleendian":
                 nihdr.e = "<"
@@ -149,12 +154,12 @@ class ifhhdr:
                 nihdr.e = ">"
         else:
             nihdr.e = ">"
-        
+
         nihdr.pixdim_x, nihdr.pixdim_y, nihdr.pixdim_z = mm
         x = (mm[0]/2 -c[0]) * nihdr.pixdim_0
         y = -c[1] + mm[1]/2 - mm[1]*nihdr.sizey
         z = -c[2] + mm[2]/2 - mm[2]*nihdr.sizez
-        
+
         nihdr.qoffset_x, nihdr.qoffset_y, nihdr.qoffset_z = x, y, z
         nihdr.srow_x[0] = mm[0] * nihdr.srow_x[0]
         nihdr.srow_x[3] = x
@@ -162,12 +167,12 @@ class ifhhdr:
         nihdr.srow_y[3] = y
         nihdr.srow_z[2] = mm[2] * nihdr.srow_z[2]
         nihdr.srow_z[3] = z
-        
+
         return nihdr
 
 
 class niftihdr:
-        
+
     def __init__(self, filename = False):
         self.dim_info    = chr(0)        # char      - MRI slice ordering ---- information not available in IFH
         self.ndimensions = 4             # short     - number of dimensions used
@@ -203,8 +208,8 @@ class niftihdr:
         self.cal_min     = 0.0           # float     - minimum value in the dataset to be displayed (black))
         self.slice_duration = 0.0        # float     - slice duration if slice_dim is not zero
         self.toffset     = 0.0           # float     - time offset for first datapoint
-        self.descrip     = ""            # char[80]  - data description 
-        self.aux_file    = ""            # char[24]  - auxilary filename 
+        self.descrip     = ""            # char[80]  - data description
+        self.aux_file    = ""            # char[24]  - auxilary filename
         self.qform_code  = 3             # short     - for which space is qform information in (3 - Coordinates aligned to Talairach-Tournoux Atlas)
         self.sform_code  = 3             # short     - niftixform code
         self.quatern_b   = 0.0           # float     - Quaternion b param
@@ -216,7 +221,7 @@ class niftihdr:
         self.srow_x      = [-1, 0, 0, 0]  # float[4]  - affine transform row x
         self.srow_y      = [ 0, 1, 0, 0]  # float[4]  - affine transform row y
         self.srow_z      = [ 0, 0, 1, 0]  # float[4]  - affine transform row z
-        self.intent_name = ""            # char[16]  - intent name 
+        self.intent_name = ""            # char[16]  - intent name
         self.magic       = "n+1"+chr(0)  # char[4]     - magic word and zero char
         self.ext         = chr(0)*4      # extension code
 
@@ -227,9 +232,9 @@ class niftihdr:
         self.e           = ">"           # endiannes
         self.hdr         = False
         self.filename    = False
-        
+
         self.dType      = niftiDataTypes[self.data_type]
-        
+
         if filename:
             self.readHeader(filename)
         else:
@@ -237,12 +242,12 @@ class niftihdr:
 
     def packHdr(self):
         s = struct.pack(self.e+"i", 348)                            # int       - must be 348
-        for n in range(0,10):                                       # char[10]  - unused 
-            s += struct.pack(self.e+"c", " ")            
-        for n in range(0,18):                                       # char[18]  - unused 
+        for n in range(0,10):                                       # char[10]  - unused
             s += struct.pack(self.e+"c", " ")
-        s += struct.pack(self.e+"i", 0)                             # int       - unused 
-        s += struct.pack(self.e+"h", 0)                             # short     - unused 
+        for n in range(0,18):                                       # char[18]  - unused
+            s += struct.pack(self.e+"c", " ")
+        s += struct.pack(self.e+"i", 0)                             # int       - unused
+        s += struct.pack(self.e+"h", 0)                             # short     - unused
         s += struct.pack(self.e+"c", " ")                           # char      - unused
         s += struct.pack(self.e+"c", self.dim_info)                 # char      - MRI slice ordering ---- information not available in IFH
         s += struct.pack(self.e+"h", self.ndimensions)              # short     - number of dimensions used
@@ -293,30 +298,30 @@ class niftihdr:
         s += struct.pack(self.e+"ffff", self.srow_x[0], self.srow_x[1], self.srow_x[2], self.srow_x[3])  # float[4]  - affine transform data - row x
         s += struct.pack(self.e+"ffff", self.srow_y[0], self.srow_y[1], self.srow_y[2], self.srow_y[3])  # float[4]  - affine transform data - row y
         s += struct.pack(self.e+"ffff", self.srow_z[0], self.srow_z[1], self.srow_z[2], self.srow_z[3])  # float[4]  - affine transform data - row z
-        s += (self.intent_name+"1234567890123456")[0:16]            # char[16]  - intent name 
+        s += (self.intent_name+"1234567890123456")[0:16]            # char[16]  - intent name
         s += self.magic[0:3] + chr(0)                               # char[4]   - magic word and zero char
         s += (self.ext + chr(0)*4)[0:4]                             # char[4]   - extension
-    
+
         return s
 
     def unpackHdr(self, s):
-       
+
         si = struct.calcsize('i')
         sc = struct.calcsize('c')
         sh = struct.calcsize('h')
         sf = struct.calcsize('f')
-        
+
         e, = struct.unpack(">i", s.read(si))                        # int       - must be 348
         if e == 348:
             e = ">"
         else:
             e = "<"
         self.e = e
-        
+
         t = s.read(10*sc)                                           # char[10]  - unused
-        t = s.read(18*sc)                                           # char[18]  - unused 
-        t = s.read(si)                                              # int       - unused 
-        t = s.read(sh)                                              # short     - unused 
+        t = s.read(18*sc)                                           # char[18]  - unused
+        t = s.read(si)                                              # int       - unused
+        t = s.read(sh)                                              # short     - unused
         t = s.read(sc)                                              # char      - unused
 
         self.dim_info,      = struct.unpack(e+"c", s.read(sc))      # char      - MRI slice ordering ---- information not available in IFH
@@ -357,8 +362,8 @@ class niftihdr:
         t = s.read(si)                                              # int       - unused
         t = s.read(si)                                              # int       - unused
 
-        self.descrip        = s.read(sc*80)                         # char[80]  - data description 
-        self.aux_file       = s.read(sc*24)                         # char[24]  - auxilary filename 
+        self.descrip        = s.read(sc*80)                         # char[80]  - data description
+        self.aux_file       = s.read(sc*24)                         # char[24]  - auxilary filename
         self.qform_code,    = struct.unpack(e+"h", s.read(sh))      # short     - niftixform code
         self.sform_code,    = struct.unpack(e+"h", s.read(sh))      # short     - niftixform code
         self.quatern_b,     = struct.unpack(e+"f", s.read(sf))      # float     - Quaternion b param
@@ -370,45 +375,43 @@ class niftihdr:
         self.srow_x         = list(struct.unpack(e+"ffff", s.read(sf*4))) # float[4]  - affine transform row x
         self.srow_y         = list(struct.unpack(e+"ffff", s.read(sf*4))) # float[4]  - affine transform row y
         self.srow_z         = list(struct.unpack(e+"ffff", s.read(sf*4))) # float[4]  - affine transform row z
-        self.intent_name    = s.read(sc*16)                         # char[16]  - intent name 
+        self.intent_name    = s.read(sc*16)                         # char[16]  - intent name
         self.magic          = s.read(sc*4)                          # char[4]   - magic word and zero char
         self.ext            = s.read(sc*4)                          # char[4]   - extension
-        
+
         self.dType      = niftiDataTypes[self.data_type]
-        
+
         t = self.xyzt_units
         self.xyz_unit = t % 8
         t = t - (t%8)
         self.t_unit = t % 64
-        
+
         return
-    
+
     def readHeader(self, filename):
 
-        sform = getImgFormat(sfile)
+        sform = getImgFormat(filename)
         if sform == '.nii.gz':
-            h = gzip.open(sfile, 'r')
+            h = gzip.open(filename, 'r')
         else:
-            h = open(sfile,'r')
-            
-        s = h.read(348)
+            h = open(filename,'r')
+
+        self.unpackHdr(h)
         h.close()
-        self.unpackHdr(s)
-        self.hdr = s
 
         return
-    
+
     def writeHeader(self, filename):
-        
+
         h = open(filename, "w")
         s = self.packHdr()
         h.write(s)
         h.close
-        
+
         return
-        
+
     def toIFH(self):
-        
+
         ifhdr = ifhhdr()
         ifhdr.ifh = {
             "INTERFILE": "",
@@ -426,20 +429,20 @@ class niftihdr:
             "scaling factor (mm/pixel) [3]": str(self.pixdim_z)
 #            "center": "73.500000 -87.000000 -84.000000",
 #            "mmppix": "3.000000 -3.000000 -3.000000"
-            }   
+            }
         if self.e == '<':
             ifhdr.ifh["imagedata byte order"] = 'littleendian'
         else:
             ifhdr.ifh["imagedata byte order"] = 'bigendian'
         ifhdr.vlist = ["INTERFILE", "version of keys", "number format", "number of bytes per pixel", "imagedata byte order", "orientation", "number of dimensions", "matrix size [1]", "matrix size [2]", "matrix size [3]", "matrix size [4]", "scaling factor (mm/pixel) [1]", "scaling factor (mm/pixel) [2]", "scaling factor (mm/pixel) [3]", "center", "mmppix"]
-        
+
         if self.sform_code > 0:
-            
+
             if self.srow_x[3] < 0:
                 self.srow_x[3] = abs(self.srow_x[3]) - (self.sizex-1) * abs(self.srow_x[2])
             else:
                 self.srow_x[3] = abs(self.srow_x[3])
-            
+
             if self.srow_y[3] < 0:
                 self.srow_y[3] = abs(self.srow_y[3]) - (self.sizey-1) * abs(self.srow_y[1])
             else:
@@ -449,7 +452,7 @@ class niftihdr:
                 self.srow_z[3] = abs(self.srow_z[3]) - (self.sizez-1) * abs(self.srow_z[2])
             else:
                 self.srow_z[3] = -abs(self.srow_z[3])
-            
+
             x = self.srow_x[3] + abs(self.srow_x[0])/2
             y = self.srow_y[3] - abs(self.srow_y[1])/2
             z = self.srow_z[3] - abs(self.srow_z[2])/2
@@ -465,14 +468,84 @@ class niftihdr:
 #            ifhdr.ifh["mmppix"] = "%.6f %.6f %.6f" % (self.pixdim_x*sign(x), self.pixdim_y*sign(y), self.pixdim_z*sign(z))
 
         return ifhdr
-        
+
     def __str__(self):
-        s = "\n----------------------------------\nNIfTI Header\n\n"
+        s = "# ----------------------------------\n# NIfTI Header\n\n"
         d = self.__dict__
         fields = ["dim_info", "ndimensions", "sizex", "sizey", "sizez", "frames", "size_5", "size_6", "size_7", "intention1", "intention2", "intention3", "intent_code", "data_type", "bitpix", "slice_start", "pixdim_0", "pixdim_x", "pixdim_y", "pixdim_z", "pixdim_t", "pixdim_5", "pixdim_6", "pixdim_7", "vox_offset", "scl_slope", "scl_inter", "slice_end", "slice_code", "xyzt_units", "cal_max", "cal_min", "slice_duration", "toffset", "descrip", "aux_file", "qform_code", "sform_code", "quatern_b", "quatern_c", "quatern_d", "qoffset_x", "qoffset_y", "qoffset_z", "srow_x", "srow_y", "srow_z", "intent_name", "magic"]
         for f in fields:
             s += "%s%s: %s\n" % (f, " "*(15-len(f)), str(d[f]))
-        return s + "\n----------------------------------\n"
+        return s + "\n# ----------------------------------"
+
+    def modifyHeader(self, s):
+        decodef = {"dim_info":       int,
+                    "ndimensions":    int,
+                    "sizex":          int,
+                    "sizey":          int,
+                    "sizez":          int,
+                    "frames":         int,
+                    "size_5":         int,
+                    "size_6":         int,
+                    "size_7":         int,
+                    "intention1":     float,
+                    "intention2":     float,
+                    "intention3":     float,
+                    "intent_code":    int,
+                    "data_type":      int,
+                    "bitpix":         int,
+                    "slice_start":    int,
+                    "pixdim_0":       float,
+                    "pixdim_x":       float,
+                    "pixdim_y":       float,
+                    "pixdim_z":       float,
+                    "pixdim_t":       float,
+                    "pixdim_5":       float,
+                    "pixdim_6":       float,
+                    "pixdim_7":       float,
+                    "vox_offset":     float,
+                    "scl_slope":      float,
+                    "scl_inter":      float,
+                    "slice_end":      int,
+                    "slice_code":     int,
+                    "xyzt_units":     int,
+                    "cal_max":        float,
+                    "cal_min":        float,
+                    "slice_duration": float,
+                    "toffset":        float,
+                    "descrip":        str,
+                    "aux_file":       str,
+                    "qform_code":     int,
+                    "sform_code":     int,
+                    "quatern_b":      float,
+                    "quatern_c":      float,
+                    "quatern_d":      float,
+                    "qoffset_x":      float,
+                    "qoffset_y":      float,
+                    "qoffset_z":      float,
+                    "srow_x":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                    "srow_y":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                    "srow_z":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                    "intent_name":    str,
+                    "magic":          str,
+                    "ext":            str,
+                    "xyz_unit":       int,
+                    "t_unit":         int,
+                    "s_unit":         int,
+                    "e":              str,
+                    "filename":       str}
+        s = s.replace("\r", "\n")
+        s = s.replace("\n\n", "\n")
+        s = s.replace("\n", ";")
+        s = s.split(";")
+        s = [e.split(":") for e in s]
+        s = [[f.strip() for f in e] for e in s if len(e) == 2]
+
+        for k, v in s:
+            if k in decodef:
+                self.__dict__[k] = decodef[k](v)
+            else:
+                print "WARNING: %s not a valid key for NIfTI header" % (k)
+
 
 def main():
     pass
