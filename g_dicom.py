@@ -117,9 +117,11 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             pass
 
         try:
-            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, d.PatientID, time, fz)
-            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, d[0x2001,0x1081].value, TR, TE, d.PatientID, time, fz)
+            nframes = d[0x2001,0x1081].value;
+            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, nframes, TR, TE, d.PatientID, time, fz)
+            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, nframes, TR, TE, d.PatientID, time, fz)
         except:
+            nframes = 0
             print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, d.PatientID, time, fz)
             if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, d.PatientID, time, fz)
 
@@ -128,6 +130,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         call = "dcm2nii -c -v " + folder
         subprocess.call(call, shell=True, stdout=null, stderr=null)
 
+        tfname = False
         imgs = glob.glob(os.path.join(folder, "*.gz"))
         for img in imgs:
             if os.path.basename(img)[0:2] == 'co':
@@ -135,12 +138,14 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 os.remove(img)
             elif os.path.basename(img)[0:1] == 'o':
                 if recenter:
+                    tfname = os.path.join(imgf, "%02d-o.nii.gz" % (c))
                     timg = gimg.gimg(img)
                     timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
-                    timg.saveimage(os.path.join(imgf, "%02d-o.nii.gz" % (c)))
+                    timg.saveimage(tfname)
                     os.remove(img)
                 else:
-                    os.rename(img, os.path.join(imgf, "%02d-o.nii.gz" % (c)))
+                    tfname = os.path.join(imgf, "%02d-o.nii.gz" % (c))
+                    os.rename(img, tfname)
 
                 # -- remove original
                 noob = os.path.join(folder, os.path.basename(img)[1:])
@@ -150,11 +155,26 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 elif os.path.exists(noot):
                     os.remove(noot)
             else:
-                os.rename(img, os.path.join(imgf, "%02d.nii.gz" % (c)))
+                tfname = os.path.join(imgf, "%02d.nii.gz" % (c))
+                os.rename(img, tfname)
+
+        # --- flip z and t dimension if needed
 
         if dofz2zf:
             g_mri.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (c)))
 
+        # --- check final geometry
+
+        if tfname:
+            hdr = g_mri.g_img.niftihdr(tfname)
+
+            if nframes > 1:
+                if hdr.frames != nframes:
+                    print >> r, "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
+                    if verbose: print "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
+            if hdr.sizez > hdr.sizey:
+                print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+                if verbose: print "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
 
     if verbose:
         print "... done!"
@@ -221,3 +241,47 @@ def sortDicom(folder="."):
         os.rename(dcm, tgf)
 
     print "\nDone!\n\n"
+
+
+def listDicom(folder=None):
+    if folder == None:
+        folder = os.path.join(".", 'inbox')
+
+    print "============================================\n\nListing dicoms from %s\n" % (folder)
+
+    files = glob.glob(os.path.join(folder, "*"))
+    files = files + glob.glob(os.path.join(folder, "*/*"))
+    files = [e for e in files if os.path.isfile(e)]
+
+    for dcm in files:
+        try:
+            d    = dicom.read_file(dcm, stop_before_pixels=True)
+            time = datetime.datetime.strptime(str(int(float(d.StudyDate+d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+            print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, d.PatientID, d.SeriesNumber, d.SeriesDescription, time)
+        except:
+            pass
+
+def splitDicom(folder=None):
+    if folder == None:
+        folder = os.path.join(".", 'inbox')
+
+    print "============================================\n\nSorting dicoms from %s\n" % (folder)
+
+    files = glob.glob(os.path.join(folder, "*"))
+    files = files + glob.glob(os.path.join(folder, "*/*"))
+    files = [e for e in files if os.path.isfile(e)]
+
+    subjects = []
+
+    for dcm in files:
+        try:
+            d    = dicom.read_file(dcm, stop_before_pixels=True)
+            time = datetime.datetime.strptime(str(int(float(d.StudyDate+d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+            if d.PatientID not in subjects:
+                subjects.append(d.PatientID)
+                os.makedirs(os.path.join(folder, d.PatientID))
+                print "===> creating subfolder for subject %s" % (d.PatientID)
+            print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, d.PatientID, d.SeriesNumber, d.SeriesDescription, time)
+            os.rename(dcm, os.path.join(folder, d.PatientID, os.path.basename(dcm)))
+        except:
+            pass

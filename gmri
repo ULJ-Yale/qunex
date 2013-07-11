@@ -12,6 +12,16 @@ use: gmri command [option=value] [option=value] ...
 
 List of available commands:
 
+listDicom [folder=.]
+    - folder: the base subject folder that contains the inbox with unsorted dicom files
+
+    example: gmri listDicom folder=data
+
+splitDicom [folder=.]
+    - folder: the base subject folder that contains the inbox with unsorted dicom files
+
+    example: gmri splitDicom folder=data
+
 sortDicom [folder=.]
     - folder: the base subject folder that contains the inbox with unsorted dicom files
 
@@ -53,7 +63,9 @@ modniftihdr <image_filename> <modification string>
 --------
 '''
 
-commands = {'sortDicom'    : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
+commands = {'listDicom'    : { 'com': g_mri.g_dicom.listDicom,        'args': ('folder', ) },
+            'splitDicom'   : { 'com': g_mri.g_dicom.splitDicom,       'args': ('folder', ) },
+            'sortDicom'    : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
             'dicom2nii'    : { 'com': g_mri.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose') },
             'fz2zf'        : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
             'setupHCP'     : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },

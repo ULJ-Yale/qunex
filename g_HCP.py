@@ -81,28 +81,28 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
 
     # --- checking if all bolds have refs
 
-    for k, v in bolds.iteritems():
-        if "ref" not in v:
-            tfold = "BOLD_"+k+"_SBRef_fncb"
-            tfile = sid + "_fncb_BOLD_"+boldn+"_SBRef.nii.gz"
-
-            if not os.path.exists(os.path.join(rawf, v["bold"])):
-                print " ---> WARNING: Can not locate %s - skipping extraction of first frame" % (os.path.join(rawf, v["bold"]))
-                continue
-
-            if not os.path.exists(os.path.join(basef,tfold)):
-                print " ---> creating subfolder", tfold
-                os.makedirs(os.path.join(basef,tfold))
-            else:
-                print " ...  %s subfolder already exists", tfold
-
-            if not os.path.exists(os.path.join(basef,tfold,tfile)):
-                print " ---> extracting first frame of %s to %s" % (v["bold"], tfile)
-                img = g.gimg(os.path.join(rawf, v["bold"]), 1)
-                img.saveimage(os.path.join(basef,tfold,tfile))
-
-            else:
-                print " ...  %s already exists" % (tfile)
+    # for k, v in bolds.iteritems():
+    #     if "ref" not in v:
+    #         tfold = "BOLD_"+k+"_SBRef_fncb"
+    #         tfile = sid + "_fncb_BOLD_"+boldn+"_SBRef.nii.gz"
+    #
+    #         if not os.path.exists(os.path.join(rawf, v["bold"])):
+    #             print " ---> WARNING: Can not locate %s - skipping extraction of first frame" % (os.path.join(rawf, v["bold"]))
+    #             continue
+    #
+    #         if not os.path.exists(os.path.join(basef,tfold)):
+    #             print " ---> creating subfolder", tfold
+    #             os.makedirs(os.path.join(basef,tfold))
+    #         else:
+    #             print " ...  %s subfolder already exists", tfold
+    #
+    #         if not os.path.exists(os.path.join(basef,tfold,tfile)):
+    #             print " ---> extracting first frame of %s to %s" % (v["bold"], tfile)
+    #             img = g.gimg(os.path.join(rawf, v["bold"]), 1)
+    #             img.saveimage(os.path.join(basef,tfold,tfile))
+    #
+    #         else:
+    #             print " ...  %s already exists" % (tfile)
 
 
     print "\n ---=====         DONE          =====---\n"
