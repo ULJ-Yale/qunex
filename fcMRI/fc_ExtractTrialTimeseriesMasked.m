@@ -51,7 +51,7 @@ end
 fprintf('\n\nStarting ...');
 
 nniz = length(events);							%--- number of separate sets we will be extracting
-[t1, fbase, t2, t3] = fileparts(roif);			%--- details about the filename
+[t1, fbase, t2] = fileparts(roif);			%--- details about the filename
 tlength = frames(2) - frames(1) + 1;			%--- number of timepoints in the timeseries
 frames = int16(frames);
 
