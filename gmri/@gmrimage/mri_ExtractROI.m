@@ -104,7 +104,7 @@ ts = zeros(nrois, obj.frames);
 
 for r = 1:nrois
 
-    tmp = target(roi.ROIMask(rcodes(r)), :);
+    tmp = target(roi.mri_ROIMask(rcodes(r)), :);
 
     switch method
 
@@ -112,19 +112,19 @@ for r = 1:nrois
             ts(r, :) = mean(tmp, 1);
 
         case 'weighted'
-            tmpw = weights(roi.ROIMask(rcodes(r)), :);
+            tmpw = weights(roi.mri_ROIMask(rcodes(r)), :);
             if size(tmpw, 2) == 1
                 tmpw = repmat(tmpw, 1, obj.frames);
             end
             ts(r, :) = mean(tmp .* tmpw, 1);
 
         case 'threshold'
-            tmpw = weights(roi.ROIMask(rcodes(r)), :);
+            tmpw = weights(roi.mri_ROIMask(rcodes(r)), :);
             tmpm = tmpw >= criterium;
             ts(r, :) = mean(tmp(tmpm, :), 1);
 
         case 'maxn'
-            tmpw = weights(roi.ROIMask(rcodes(r)), :);
+            tmpw = weights(roi.mri_ROIMask(rcodes(r)), :);
             tmpr = sort(tmpw, 'descend');
             tmpt = tmpr(criterium);
             tmpm = tmpw >= tmpt;

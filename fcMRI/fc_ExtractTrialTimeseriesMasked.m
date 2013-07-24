@@ -163,7 +163,7 @@ for s = 1:nsub
 
     for ni = 1:nruns
 	    for r = 1:nregions
-    		m = mean(mean(y.data(roi.ROIMask(r), run == ni & ~scrub )));
+    		m = mean(mean(y.data(roi.mri_ROIMask(r), run == ni & ~scrub )));
     		for n = 1:nniz
     			niz(n).baseline(ni,r) = m;
     		end
@@ -185,7 +185,7 @@ for s = 1:nsub
                     niz(n).scrub(niz(n).N,:) = scrub(ts(1):ts(2));
                     for r = 1:nregions
                         try
-                        	niz(n).timeseries(niz(n).N, :, r) = mean(y.data(roi.ROIMask(r), ts(1):ts(2)),1);
+                        	niz(n).timeseries(niz(n).N, :, r) = mean(y.data(roi.mri_ROIMask(r), ts(1):ts(2)),1);
                         	ni = run(ts(1));
 							niz(n).run(1, niz(n).N) = ni;
 							niz(n).eventbaseline(niz(n).N, :) = niz(n).baseline(ni,:);

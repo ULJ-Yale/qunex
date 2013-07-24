@@ -84,11 +84,11 @@ end
 for n = 1:nroi
 
     if ((length(roicodes1{n}) == 0 | isempty(roi1)) & (~isempty(roi2)))
-	    rmask = roi2.ROIMask(roicodes2{n});
+	    rmask = roi2.mri_ROIMask(roicodes2{n});
 	elseif ((length(roicodes2{n}) == 0 | isempty(roi2)) & (~isempty(roi1)))
-        rmask = roi1.ROIMask(roicodes1{n});
+        rmask = roi1.mri_ROIMask(roicodes1{n});
     elseif ((~isempty(roi2)) & (~isempty(roi1)));
-	    rmask = roi1.ROIMask(roicodes1{n}) & roi2.ROIMask(roicodes2{n});
+	    rmask = roi1.mri_ROIMask(roicodes1{n}) & roi2.mri_ROIMask(roicodes2{n});
 	else
 	    rmask = [];
 	end
