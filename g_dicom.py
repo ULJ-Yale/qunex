@@ -8,6 +8,21 @@ import subprocess
 import g_mri.g_NIfTI
 import g_mri.g_gimg as gimg
 
+def getDicomTime(info):
+    try:
+        time = datetime.datetime.strptime(str(int(float(info.StudyDate+info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+    except:
+        time = ""
+    return time
+
+def getID(info):
+    if info.PatientID != "":
+        return info.PatientID
+    elif info.StudyID != "":
+        return info.StudyID
+    else:
+        return ""
+
 def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
     base = folder
@@ -68,14 +83,14 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
         if first:
             first = False
-            time = datetime.datetime.strptime(str(int(float(d.StudyDate+d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
-            print >> r, "Report for %s scanned on %s\n" % (d.PatientID, time)
-            if verbose: print "\n\nProcessing images from %s scanned on %s\n" % (d.PatientID, time)
+            time = getDicomTime(d)
+            print >> r, "Report for %s scanned on %s\n" % (getID(d), time)
+            if verbose: print "\n\nProcessing images from %s scanned on %s\n" % (getID(d), time)
 
             # --- setup subject.txt file
 
-            print >> stxt, "id:", d.PatientID
-            print >> stxt, "subject:", d.PatientID
+            print >> stxt, "id:", getID(d)
+            print >> stxt, "subject:", getID(d)
             print >> stxt, "dicom:", os.path.abspath(os.path.join(base, 'dicom'))
             print >> stxt, "raw_data:", os.path.abspath(os.path.join(base, 'nii'))
             print >> stxt, "data:", os.path.abspath(os.path.join(base, '4dfp'))
@@ -89,7 +104,10 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         try:
             time = datetime.datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
         except:
-            time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+            try:
+                time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+            except: 
+                time = ""
 
         try:
             TR = d.RepetitionTime
@@ -118,12 +136,12 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
         try:
             nframes = d[0x2001,0x1081].value;
-            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, nframes, TR, TE, d.PatientID, time, fz)
-            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, nframes, TR, TE, d.PatientID, time, fz)
+            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz)
+            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz)
         except:
             nframes = 0
-            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, d.PatientID, time, fz)
-            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, d.PatientID, time, fz)
+            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz)
+            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz)
 
         print >> stxt, "%02d: %s" % (c, seriesDescription)
 
@@ -213,8 +231,9 @@ def sortDicom(folder="."):
     for dcm in files:
         try:
             info = dicom.read_file(dcm, stop_before_pixels=True)
-            time = datetime.datetime.strptime(str(int(float(info.StudyDate+info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
-            print "===> Sorting dicoms for %s scanned on %s\n" % (info.PatientID, time)
+            sid  = getID(info)
+            time = getDicomTime(info)
+            print "===> Sorting dicoms for %s scanned on %s\n" % (sid, time)
             break
         except:
             raise
@@ -233,11 +252,12 @@ def sortDicom(folder="."):
             continue
         sqid = str(d.SeriesNumber)
         sqfl = os.path.join(dcmf, sqid)
+        sid  = getID(d)
         if sqid not in seqs:
             if not os.path.exists(sqfl):
                 os.makedirs(sqfl)
-                print "---> Created subfolder for sequence %s %s - %s" % (d.PatientID, sqid, d.SeriesDescription)
-        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (d.PatientID, sqid, d.SOPInstanceUID.split(".")[-1]))
+                print "---> Created subfolder for sequence %s %s - %s" % (sid, sqid, d.SeriesDescription)
+        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (sid, sqid, d.SOPInstanceUID.split(".")[-1]))
         os.rename(dcm, tgf)
 
     print "\nDone!\n\n"
@@ -256,8 +276,8 @@ def listDicom(folder=None):
     for dcm in files:
         try:
             d    = dicom.read_file(dcm, stop_before_pixels=True)
-            time = datetime.datetime.strptime(str(int(float(d.StudyDate+d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
-            print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, d.PatientID, d.SeriesNumber, d.SeriesDescription, time)
+            time = getDicomTime(d)
+            print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, getID(d), d.SeriesNumber, d.SeriesDescription, time)
         except:
             pass
 
@@ -276,12 +296,13 @@ def splitDicom(folder=None):
     for dcm in files:
         try:
             d    = dicom.read_file(dcm, stop_before_pixels=True)
-            time = datetime.datetime.strptime(str(int(float(d.StudyDate+d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
-            if d.PatientID not in subjects:
-                subjects.append(d.PatientID)
-                os.makedirs(os.path.join(folder, d.PatientID))
-                print "===> creating subfolder for subject %s" % (d.PatientID)
-            print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, d.PatientID, d.SeriesNumber, d.SeriesDescription, time)
-            os.rename(dcm, os.path.join(folder, d.PatientID, os.path.basename(dcm)))
+            time = getDicomTime(d)
+            sid  = getID(d)
+            if sid not in subjects:
+                subjects.append(sid)
+                os.makedirs(os.path.join(folder, sid))
+                print "===> creating subfolder for subject %s" % (sid)
+            print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time)
+            os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
         except:
             pass
