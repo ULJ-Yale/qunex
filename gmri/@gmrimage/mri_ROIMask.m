@@ -1,6 +1,6 @@
-function [mask] = mri_ROIMask(obj, roi)
+function [mask] = mri_ROIMask(img, roi)
 
-%function [mask] = mri_ROIMask(obj, roi)
+%function [mask] = mri_ROIMask(img, roi)
 %
 %		Checks which voxels have roi codes and returns a binary mask.
 %
@@ -11,15 +11,19 @@ function [mask] = mri_ROIMask(obj, roi)
 %
 
 if nargin < 2
-    mask = zeros(obj.voxels, 1) == 1;
+    mask = zeros(img.voxels, 1) == 1;
     return
+end
+
+multiframe = size(img.image2D,2) > 1;
+if ~isa(roi, 'numeric')
+    roi = find(ismember(img.roi.roinames, roi));
 end
 
 % ----> Do the deed
 
-if isa(roi, 'numeric')
-    mask = sum(ismember(obj.image2D, roi), 2) > 0;
+if multiframe
+    mask = sum(img.image2D(:,roi)) > 0
 else
-    mask = sum(ismember(obj.image2D, find(ismember(obj.roi.roinames, roi))), 2) > 0;
+    mask = ismember(img.image2D, roi);
 end
-
