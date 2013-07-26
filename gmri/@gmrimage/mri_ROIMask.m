@@ -23,7 +23,8 @@ end
 % ----> Do the deed
 
 if multiframe
-    mask = sum(img.image2D(:,roi)) > 0
+    img.data = img.image2D;
+    mask = sum(img.data(:,roi),2) > 0;
 else
     mask = ismember(img.image2D, roi);
 end
