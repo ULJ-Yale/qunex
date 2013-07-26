@@ -106,7 +106,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         except:
             try:
                 time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
-            except: 
+            except:
                 time = ""
 
         try:
@@ -257,7 +257,7 @@ def sortDicom(folder="."):
             if not os.path.exists(sqfl):
                 os.makedirs(sqfl)
                 print "---> Created subfolder for sequence %s %s - %s" % (sid, sqid, d.SeriesDescription)
-        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (sid, sqid, d.SOPInstanceUID.split(".")[-1]))
+        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (sid, sqid, d.SOPInstanceUID))
         os.rename(dcm, tgf)
 
     print "\nDone!\n\n"
