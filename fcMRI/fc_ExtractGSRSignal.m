@@ -77,12 +77,13 @@ for s = 1:nsub
 
         data(s).bold(b).boldid = bolds(b)
 
-        % load original, nogsr, gsr, coeff files
+        % load original, nogsr, gsr, coeff, nuisance files
 
         forig  = gmrimage(sprintf('%s/images/images/functional/bold%d_g7_hpss.4dfp.img', subject(s).folder, b));
         fnogsr = gmrimage(sprintf('%s/images/images/functional/bold%d_g7_hpss_res-mwmvd.4dfp.img', subject(s).folder, b));
         fgsr   = gmrimage(sprintf('%s/images/images/functional/bold%d_g7_hpss_res-mwmvwbd.4dfp.img', subject(s).folder, b));
         fcoeff = gmrimage(sprintf('%s/images/images/functional/bold%d_g7_hpss_res-mwmvwbd-coeff.4dfp.img', subject(s).folder, b));
+        fnuiss = gmrimage(sprintf('%s/images/images/ROI/nuisance/bold%d_nuisance.4dfp.img', subject(s).folder, b));
 
         % compute noGSR - GSR
 
@@ -90,19 +91,37 @@ for s = 1:nsub
 
         % extract WB and WBd
 
-        data(s).bolds(b).WB    = forig.mri_ExtractROI(fcoeff, 2);
+        data(s).bolds(b).WB    = forig.mri_ExtractROI(fnuiss, 2);
         data(s).bolds(b).WBd   = [0 diff(data(s).bolds(b).WB)];
 
-        % extract Type 1 WBsd
+        % set up Type 1 and Type 2 WBsd extraction
 
-        data(s).bolds(b).WBsd1 = zeros(nroi, length(data(s).bolds(b).WB ));
-        for r = 1:nregions
-            data(s).bolds(b).WBsd1(r,:) = data(s).bolds(b).WB * mean(fcoeff.data(roi.mri_ROIMask(r), 11)) + data(s).bolds(b).WBd * mean(fcoeff.data(roi.mri_ROIMask(r), 20));
+        data(s).bolds(b).WBsd1 = zeros(nregions+1, length(data(s).bolds(b).WB ));
+        data(s).bolds(b).WBsd2 = zeros(nregions+1, length(data(s).bolds(b).WB ));
+
+        % if there are ROI specified, do them first
+
+        if nregions > 0
+
+            % Type 1
+
+            for r = 1:nregions
+                data(s).bolds(b).WBsd1(r,:) = data(s).bolds(b).WB * mean(fcoeff.data(roi.mri_ROIMask(r), 11)) + data(s).bolds(b).WBd * mean(fcoeff.data(roi.mri_ROIMask(r), 20));
+            end
+
+            % Type 2
+
+            data(s).bolds(b).WBsd2(1:regions) = fdgsr.mri_ExtractROI(roi);
+
         end
 
-        % extract Type 2 WBsd
+        % add data for WB mask Type 1
 
-        data(s).bolds(b).WBsd2 = fdgsr.mri_ExtractROI(roi);
+        data(s).bolds(b).WBsd1(nregions+1,:) = data(s).bolds(b).WB * mean(fcoeff.data(fnuiss.mri_ROIMask(2), 11)) + data(s).bolds(b).WBd * mean(fcoeff.data(fnuiss.mri_ROIMask(2), 20));
+
+        % add data for WB mask Type 2
+
+        data(s).bolds(b).WBsd2(nregions+1,:) = fdgsr.mri_ExtractROI(fnuiss, 2);
 
     end
 end
