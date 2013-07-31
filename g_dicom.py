@@ -217,17 +217,18 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         print "Finished!\n"
 
 
-def sortDicom(folder="."):
-    inbox = os.path.join(folder, 'inbox')
-    dcmf  = os.path.join(folder, 'dicom')
-
-    print "============================================\n\nProcessing files from %s\n" % (inbox)
+def sortDicom(folder=".", **kwargs):
+    from shutil import copy
+    dcmf  = os.path.join(kwargs.get('out_dir', folder), 'dicom')
+    files = kwargs.get('files', None)
+    if files is None:
+        inbox = os.path.join(folder, 'inbox')
+        print "============================================\n\nProcessing files from %s\n" % (inbox)
+        files = glob.glob(os.path.join(inbox, "*"))
+        files = files + glob.glob(os.path.join(inbox, "*/*"))
+        files = [e for e in files if os.path.isfile(e)]
 
     seqs  = []
-    files = glob.glob(os.path.join(inbox, "*"))
-    files = files + glob.glob(os.path.join(inbox, "*/*"))
-    files = [e for e in files if os.path.isfile(e)]
-
     for dcm in files:
         try:
             info = dicom.read_file(dcm, stop_before_pixels=True)
@@ -258,7 +259,12 @@ def sortDicom(folder="."):
                 os.makedirs(sqfl)
                 print "---> Created subfolder for sequence %s %s - %s" % (sid, sqid, d.SeriesDescription)
         tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (sid, sqid, d.SOPInstanceUID))
-        os.rename(dcm, tgf)
+
+        should_copy = kwargs.get('copy', False)
+        if should_copy:
+            copy(dcm, tgf)
+        else:
+            os.rename(dcm, tgf)
 
     print "\nDone!\n\n"
 
