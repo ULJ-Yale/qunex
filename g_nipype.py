@@ -45,9 +45,7 @@ class G_Step0Workflow(Workflow):
             {'dicom': 'S%03d/scans/*/resources/DICOM/files/*.dcm'}
         self.dicom_grabber.inputs.template_args
             optional, but default just passes sub_num to the template once. eg:
-            {}
-        self.dicom_grabber.inputs.base_directory
-            # optional: default is current dir
+            {'dicom': [['sub_num']]}
         """
         self.dicom_grabber = Node(
                 name='dicom_data_source',
