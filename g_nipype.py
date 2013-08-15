@@ -79,6 +79,10 @@ class G_Step0Workflow(Workflow):
                 (self.dicom_sorter, self.dicom_converter,
                         [('out_dir','subj_directory')]),
                 ])
+        try:
+            pass
+        except Exception, e:
+            raise e
 
 class G_SortInterfaceInputSpec(BaseInterfaceInputSpec):
     dicom_files = InputMultiPath(
@@ -156,7 +160,90 @@ class G_DicomConvert(BaseInterface):
         outputs['nii_files'] = glob(out_glob)
         return outputs
 
+class G_SubTxtMapInputSpec(BaseInterfaceInputSpec):
+    subj_directory = Directory(
+            value='.',
+            usedefault=True,
+            mandatory=False,
+            exists=True,
+            desc='the subject directory')
+    map_dict = traits.Dict(
+            mandatory=True,
+            desc="""A dictionary that maps from your sequence names to the
+                    subject.txt prefixes. Some quick notes... your sequence
+                    names can actually be regex patterns, so go wild. Also,
+                    any prefix that starts with bold: will automatically have
+                    'n' added immediately before the first colon. You are
+                    welcome. Do not include the trailing colon.
+                            {'t1_mpr': 'T1w',
+                             't2_spc': 'T2w',
+                             'bold_Baseline': 'bold:baseline',
+                             'bold_Incentive': 'bold:incentive',
+                             'bold_Gravy_Incentive': 'bold:gravy',}
+                    """)
+
+class G_SubTxtMapOutputSpec(TraitedSpec):
+    subj_directory = Directory(
+            value='.',
+            usedefault=True,
+            mandatory=False,
+            exists=True,
+            desc='the subject directory, mostly so you can pass it on to whatever comes next')
+
+class G_SubTxtMap(BaseInterface):
+    input_spec = G_SubTxtMapInputSpec
+    output_spec = G_SubTxtMapOutputSpec
+    def _run_interface(self, runtime):
+        pass
+
+    def _list_outputs(self):
+        pass
+
 def derive_sub_dir(sub_dir_template, sub_num):
     return sub_dir_template % sub_num
 
-
+def update_txt_file(file_path, seq_map):
+    import os
+    import re
+    seq_test = re.compile('^\d+:\s*(.*)$')
+    b_test = re.compile('^bold(:.*)$')
+    new_lines = []
+    for_map = []
+    found = False
+    with open(file_path, 'r') as f:
+        ls = f.readlines()
+    for l in ls:
+        m = seq_test.match(l)
+        if not m:
+            if found:
+                break
+            new_lines.append(l)
+            continue
+        found = True
+        m = m.groups()[0]
+        for_map.append(m)
+    b_count = 0
+    for i, seq in enumerate(for_map):
+        name = None
+        for k, v in seq_map.iteritems():
+            m = re.search(k, seq)
+            if not m:
+                continue
+            m = b_test.match(v)
+            if not m:
+                name = v
+                break
+            b_count += 1
+            name = 'bold%d%s' % (b_count, m.groups()[0])
+            break
+        if name:
+            name = '%s: %s' % (name, seq)
+        else:
+            name = seq
+        for_map[i] = '%02d: %s\n' % (i, name)
+    new_lines.extend(for_map)
+    os.remove(file_path)
+    with open(file_path, 'w') as f:
+        f.write(''.join(new_lines) + '\n')
+    with open(file_path + '.old', 'w') as f:
+        f.write(''.join(ls))
