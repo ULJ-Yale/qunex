@@ -59,25 +59,31 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
                 sfile = k+".nii.gz"
                 tfile = sid + "_fncb_BOLD_PA_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap1_fncb"
+            elif v['name'] == "DWI":
+                sfile = [k+e for e in ['.nii.gz', '.bval', '.bvec']]
+                tbase = "_".join([sid, 'DWI', v['task']])
+                tfile = [tbase+e for e in ['.nii.gz', '.bval', '.bvec']]
+                tfold = "Diffusion"
             else:
                 print " ... skipping %s %s" % (v['ima'], v['name'])
                 continue
 
-            if not os.path.exists(os.path.join(rawf, sfile)):
-                print " ---> WARNING: Can not locate %s - skipping the file" % (os.path.join(rawf, sfile))
-                continue
+            for sfile, tfile in zip(list(sfile, tfile)):
+                if not os.path.exists(os.path.join(rawf, sfile)):
+                    print " ---> WARNING: Can not locate %s - skipping the file" % (os.path.join(rawf, sfile))
+                    continue
 
-            if not os.path.exists(os.path.join(basef,tfold)):
-                print " ---> creating subfolder", tfold
-                os.makedirs(os.path.join(basef,tfold))
-            else:
-                print " ...  %s subfolder already exists", tfold
+                if not os.path.exists(os.path.join(basef,tfold)):
+                    print " ---> creating subfolder", tfold
+                    os.makedirs(os.path.join(basef,tfold))
+                else:
+                    print " ...  %s subfolder already exists", tfold
 
-            if not os.path.exists(os.path.join(basef,tfold,tfile)):
-                print " ---> linking %s to %s" % (sfile, tfile)
-                os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
-            else:
-                print " ...  %s already exists" % (tfile)
+                if not os.path.exists(os.path.join(basef,tfold,tfile)):
+                    print " ---> linking %s to %s" % (sfile, tfile)
+                    os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
+                else:
+                    print " ...  %s already exists" % (tfile)
 
     # --- checking if all bolds have refs
 

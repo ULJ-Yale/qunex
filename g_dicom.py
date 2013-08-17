@@ -176,6 +176,14 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 tfname = os.path.join(imgf, "%02d.nii.gz" % (c))
                 os.rename(img, tfname)
 
+            # --- check also for .bval and .bvec files
+
+            for dwiextra in ['.bval', '.bvec']:
+                dwisrc = img.replace('.nii.gz', dwiextra)
+                if os.path.exists(dwisrc):
+                    os.rename(dwisrc, os.path.join(imgf, "%02d%s" % (c, dwiextra)))
+
+
         # --- flip z and t dimension if needed
 
         if dofz2zf:
