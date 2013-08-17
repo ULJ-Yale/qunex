@@ -68,7 +68,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
                 print " ... skipping %s %s" % (v['ima'], v['name'])
                 continue
 
-            for sfile, tfile in zip(list(sfile, tfile)):
+            for sfile, tfile in zip(list(sfile), list(tfile)):
                 if not os.path.exists(os.path.join(rawf, sfile)):
                     print " ---> WARNING: Can not locate %s - skipping the file" % (os.path.join(rawf, sfile))
                     continue
