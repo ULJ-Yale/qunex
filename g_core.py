@@ -1,6 +1,7 @@
 #!/opt/local/bin/python2.7
 
 import re
+import os.path
 
 def readSubjectData(filename):
     s = file(filename).read()
@@ -92,6 +93,14 @@ def readSubjectData(filename):
                     print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
+        	
+        	# check paths
+        	
+        	for field in ['dicom', 'raw_data', 'data', 'hpc']:
+        		if field in dic:
+        			if not os.path.exists(dic[field]):
+        				print "WARNING: subject %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
+        	
 
     except:
         print "\n\n=====================================================\nERROR: There was an error with the subjects.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)

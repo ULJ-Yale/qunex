@@ -4,6 +4,7 @@ import os
 import g_mri
 import collections
 import g_mri.g_gimg as g
+import os.path
 
 def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
     inf = g_mri.g_core.readSubjectData(os.path.join(folder, sbjf))[0][0]
@@ -12,6 +13,10 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
     rawf     = inf['raw_data']
     sid      = inf['id']
     bolds    = collections.defaultdict(dict)
+    
+    if not os.path.exists(rawf):
+        print "ERROR: raw_data folder for %s does not exist! Check your paths [%s]! Aborting setupHCP.\n" % (sid, rawf)
+        return
 
     print " ---===== Setting up HCP folder structure for %s =====---\n" % (sid)
 
@@ -67,7 +72,12 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
             else:
                 print " ... skipping %s %s" % (v['ima'], v['name'])
                 continue
-
+            
+            if type(sfile) is not list:
+                sfile = [sfile]
+            if type(tfile) is not list:
+                tfile = [tfile]
+            
             for sfile, tfile in zip(list(sfile), list(tfile)):
                 if not os.path.exists(os.path.join(rawf, sfile)):
                     print " ---> WARNING: Can not locate %s - skipping the file" % (os.path.join(rawf, sfile))
