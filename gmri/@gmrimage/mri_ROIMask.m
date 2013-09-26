@@ -4,7 +4,7 @@ function [mask] = mri_ROIMask(img, roi)
 %
 %		Checks which voxels have roi codes and returns a binary mask.
 %
-%       roi - a list of ROI numberic codes or a cell array of ROI names
+%       roi - a list of ROI numeric codes or a cell array of ROI names
 %
 %    (c) Grega Repovs, 2013-07-24
 %
@@ -15,8 +15,13 @@ if nargin < 2
     return
 end
 
+if isa(img.data, 'logical')
+    mask = img.data;
+    return
+end
+
 multiframe = size(img.image2D,2) > 1;
-if ~isa(roi, 'numeric')
+if ~isa(roi, 'numeric') & ~isa(roi, 'logical')
     roi = find(ismember(img.roi.roinames, roi));
 end
 
