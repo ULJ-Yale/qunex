@@ -151,7 +151,7 @@ for s = 1:nsubjects
     fprintf(' [%.1fs]\n', toc);
 end
 
-[ps, root, ext, v] = fileparts(flist);
+[ps, root, ext] = fileparts(flist);
 
 for c = 1:ncommands
     fname = [root '_gbc_' commands(c).command '_' num2str(commands(c).parameter)];
