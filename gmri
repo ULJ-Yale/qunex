@@ -5,12 +5,15 @@ import sys
 
 
 help = '''
---------
+===============================================================================
 gmri utility for MRI processing.
 
 use: gmri command [option=value] [option=value] ...
 
 List of available commands:
+
+dicom utilities
+---------------
 
 listDicom [folder=.]
     - folder: the base subject folder that contains the inbox with unsorted dicom files
@@ -38,11 +41,19 @@ dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
 
     example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask
 
+
+NIfTI file conversions
+----------------------
+
 fz2zf inf=<input_image> [outf=<output_image>]
     Converts the xyfz order of data to xyzf (needed for Philips functionals, DTIs, ...).
     - inf:  input image filename to be shuffled
     - outf: output image filename
     If outf is not provided, it replaces the original file.
+
+
+HCP setup commands
+------------------
 
 setupHCP [folder=.] [tfolder=hcp] [sbjf=subject.txt]
     - folder:  the base subject folder that contains the nifti images and subject.txt file
@@ -50,6 +61,9 @@ setupHCP [folder=.] [tfolder=hcp] [sbjf=subject.txt]
     - sbjf:    the alternative name of the subject.txt file
 
     example: gmri setupHCP folder=data tfolder=hcp2 sbjf=subject1.txt
+
+NIfTI header utilities
+----------------------
 
 printniftihdr <image_filename>
     Prints the header contents of the NIfTI file.
@@ -60,17 +74,37 @@ modniftihdr <image_filename> <modification string>
 
     example: gmri modniftihdr img.nii.gz "srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126]"
 
---------
+
+Fidl file utilities
+-------------------
+
+joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern>
+    Combines all the fild files matching root based on the information in conc file.
+    - concfile:  the conc file to use as reference
+    - fidlroot:  the root to use to find fild files
+
+    example: gmri joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
+
+joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>]
+    Uses joinFidl to join all the fidl files that match the name of each conc file in the concfolder.
+    - concfolder:  the folder with conc files
+    - fidlfolder:  the folder with fidl files - defaults to concfolder if not provided
+
+    example gmri joinFidlFolder concfolder=concs fidlfolder=fidls
+
+===============================================================================
 '''
 
-commands = {'listDicom'    : { 'com': g_mri.g_dicom.listDicom,        'args': ('folder', ) },
-            'splitDicom'   : { 'com': g_mri.g_dicom.splitDicom,       'args': ('folder', ) },
-            'sortDicom'    : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
-            'dicom2nii'    : { 'com': g_mri.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose') },
-            'fz2zf'        : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
-            'setupHCP'     : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },
-            'printniftihdr': { 'com': g_mri.g_img.printniftihdr,      'args': ('filename', ) },
-            'modniftihdr'  : { 'com': g_mri.g_gimg.modifyNIfTIHeader, 'args': ('filename', 's')}}
+commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': ('folder', ) },
+            'splitDicom'    : { 'com': g_mri.g_dicom.splitDicom,       'args': ('folder', ) },
+            'sortDicom'     : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
+            'dicom2nii'     : { 'com': g_mri.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose') },
+            'fz2zf'         : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
+            'setupHCP'      : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },
+            'printniftihdr' : { 'com': g_mri.g_img.printniftihdr,      'args': ('filename', ) },
+            'modniftihdr'   : { 'com': g_mri.g_gimg.modifyNIfTIHeader, 'args': ('filename', 's')},
+            'joinFidl'      : { 'com': g_mri.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot')},
+            'joinFidlFolder': { 'com': g_mri.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder')} }
 
 def runCommand(command, args):
     if command in commands:
