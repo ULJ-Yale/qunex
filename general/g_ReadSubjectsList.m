@@ -13,6 +13,7 @@ function [subjects] = g_ReadSubjectsList(flist)
 %           ... roi     - path to subject's roi file listed in "roi:" line
 %           ... fidl    - path to subject's fidl file listed in "fidl:" line
 %           ... files   - cell array of paths to files read from "file:" line
+%           ... folder  - path to subject's folder read from "folder:" line
 %
 %   (c) Grega Repovš, 2011-02-11
 %
@@ -30,6 +31,9 @@ while feof(files) == 0
     elseif length(strfind(s, 'roi:')>0)
         [t, s] = strtok(s, ':');        
         subjects(c).roi = s(2:end);
+    elseif length(strfind(s, 'folder:')>0)
+        [t, s] = strtok(s, ':');        
+        subjects(c).folder = s(2:end);
     elseif length(strfind(s, 'fidl:')>0)
         [t, s] = strtok(s, ':');        
         subjects(c).fidl = s(2:end);

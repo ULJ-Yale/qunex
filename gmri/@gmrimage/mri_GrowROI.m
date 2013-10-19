@@ -35,7 +35,7 @@ end
 % --- create a padded target
 
 img.data = img.image4D;
-out = zeros([img.dim(1)+2*pad, img.dim(2)+2*pad, img.dim(3)+2*pad], img.frames);
+out = zeros([img.dim(1)+2*pad, img.dim(2)+2*pad, img.dim(3)+2*pad, img.frames]);
 
 % --- grow
 
