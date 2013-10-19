@@ -18,7 +18,7 @@ function [img] = mri_Read4DFP(img, file, dtype, frames)
 
 if nargin < 4
 	frames = [];
-	if nargin < 3 
+	if nargin < 3
 	    dtype = 'single';
     end
 end
@@ -34,9 +34,9 @@ else
     root = strrep(root, '.ifh', '');
 
     img.rootfilename = root;
-    
+
     img.hdr4dfp = img.mri_ReadIFH([root '.4dfp.ifh']);
-    
+
     img.imageformat = '4dfp';
     img.filename = [root '.4dfp.img'];
     img.TR = [];
@@ -46,7 +46,7 @@ else
     z = str2double(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'matrix size [3]'}))));
     img.dim = [x y z];
     img.voxels = x*y*z;
-    
+
     mformat = 'b';
     if ismember('littleendian', img.hdr4dfp.value)
         mformat = 'l';
@@ -63,7 +63,8 @@ else
     end
 	fclose(fim);
 
-    img.frames = length(img.data)/sum(img.voxels);
+    img.frames    = length(img.data)/sum(img.voxels);
+    img.use       = ones(img.frames,1);
     img.runframes = img.frames;
     img.hdr4dfp.value{ismember(img.hdr4dfp.key, {'matrix size [4]'})} = num2str(img.frames);
 

@@ -13,11 +13,19 @@ function [res] = mri_Save4DFP(obj, filename, extra)
 %
 %   Grega Repovs - 2009-11-19
 %
+%   Grega Repovs - 2013-10-19 - Added call for embedding data
 
 
 if nargin < 3
 	extra = [];
 end
+
+
+% ---> embedd extra data if available
+
+obj = obj.mri_EmbedStats();
+
+% ---> set up file to save
 
 filename = strtrim(filename);
 obj = obj.unmaskimg;
@@ -60,7 +68,7 @@ nhdr = length(hdr.key);
 for n = 1:nhdr
     fprintf(fifh, '%s := %s\n', hdr.key{n}, hdr.value{n});
 end
-    
+
 for n = 1:length(extra)
 	fprintf(fifh, '%s := %s\n', char(extra(n).key), char(extra(n).value));
 end

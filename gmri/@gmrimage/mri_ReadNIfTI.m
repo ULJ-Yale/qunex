@@ -39,6 +39,7 @@ file       = filename;
 separate   = false;
 mformat    = 'l';
 tempfolder = [];
+meta       = 0;
 
 % check what type it is
 
@@ -59,20 +60,24 @@ img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
 switch img.hdrnifti.sizeof_hdr
     case 348
         img.hdrnifti = readHeader_nifti1(fid, img.hdrnifti);
+        meta = 352;
     case 508
         img.hdrnifti = readHeader_nifti2(fid, img.hdrnifti);
+        meta = 540;
     case 1543569408
         fclose(fid);
         mformat = 'b';
         fid = fopen(file, 'r', mformat);
         img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
         img.hdrnifti = readHeader_nifti1(fid, img.hdrnifti);
-    case -67043328 
+        meta = 352;
+    case -67043328
         fclose(fid);
         mformat = 'b';
         fid = fopen(file, 'r', mformat);
         img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
         img.hdrnifti = readHeader_nifti2(fid, img.hdrnifti);
+        meta = 540;
     otherwise
         error('ERROR: %s does not have a valid NIfTI-1 or -2 header!');
 end
@@ -81,7 +86,7 @@ end
 % get datatype
 
 switch img.hdrnifti.datatype
-    case 1 
+    case 1
         datatype = 'bitN';
     case 2
         datatype = 'uchar';
@@ -104,10 +109,10 @@ switch img.hdrnifti.datatype
     case 1280
         datatype = 'uint64';
     case 1280
-        datatype = 'uint64';    
+        datatype = 'uint64';
     otherwise
         error('Uknown datatype or datatype I can not handle!');
-end    
+end
 
 fclose(fid);
 
@@ -144,12 +149,16 @@ img.voxels  = prod(img.dim);
 img.vsizes  = img.hdrnifti.pixdim(2:4)';
 img.mformat = mformat;
 img.runframes = img.frames;
+img.use     = ones(img.frames,1);
 
 % read the data
 
 if img.hdrnifti.magic(1:3) == 'n+1'
     fid = fopen(file, 'r', mformat);
-    garbage = fread(fid, img.hdrnifti.vox_offset, 'char');
+    garbage = fread(fid, meta, 'char');
+    if img.hdrnifti.vox_offset > meta
+        img = img.mri_ReadNIfTIMetaData(fid, img.hdrnifti.vox_offset-meta);
+    end
     toread = img.hdrnifti.dim(2:7);
     toread = prod(toread(toread>0));
     img.data = fread(fid, toread, [datatype '=>' dtype]);
@@ -170,7 +179,7 @@ end
 
 % ---- Adjust datatype
 
-img.hdrnifti.datatype = 16; 
+img.hdrnifti.datatype = 16;
 
 switch dtype
     case 'single'
@@ -273,21 +282,21 @@ function [hdrnifti] = readHeader_nifti2(fid, hdrnifti)
     hdrnifti.dim_info        = fread(fid, 1, '*char');
     hdrnifti.unused_str      = fread(fid, 15, '*char');
     hdrnifti.version         = 2;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

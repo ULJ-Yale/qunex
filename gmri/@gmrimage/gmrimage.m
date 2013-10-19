@@ -52,6 +52,7 @@ classdef gmrimage
 
         % ---> various statistical data
 
+        use        = [];
         mov        = [];
         mov_hdr    = [];
         fstats     = [];
@@ -342,6 +343,7 @@ classdef gmrimage
             obj.data = [obj.image2D add.image2D];
             obj.frames = obj.frames + add.frames;
             obj.runframes = [obj.runframes add.frames];
+            obj.use  = [obj.use; add.use];
 
             % --> combine movement data
             if ~isempty(obj.mov) && ~isempty(add.mov)
@@ -475,6 +477,7 @@ classdef gmrimage
                 obj.data = obj.image2D;
                 obj.data = obj.data(:, fmask > 0);
                 obj.frames = sum(fmask>0);
+                obj.use  = obj.use(:, fmask > 0);
 
                 % ---> mask movement data
 
