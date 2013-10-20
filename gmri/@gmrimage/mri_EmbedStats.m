@@ -32,7 +32,7 @@ end
 % ---> Check for image statistics data
 
 if ~isempty(img.fstats_hdr)
-    data = zeros(7, img.frames);
+    data = zeros(6, img.frames);
     c = 0;
     for s = {'n', 'm', 'sd', 'dvarsm', 'dvarsme', 'fd'};
         c = c + 1;
@@ -49,21 +49,29 @@ end
 
 udata = sum(img.use == 0) > 0;
 
-if ~isempty(img.scrub_hdr) or mdata or fdata or udata
+if ~isempty(img.scrub_hdr)
+    sdata = 1;
+end
+
+if sdata | mdata | fdata | udata
     data = zeros(7, img.frames);
     data(1,:) = img.use;
-    c = 1;
-    for s = {'mov', 'dvars', 'dvarsme'};
-        c = c + 1;
-        x = find(ismember(img.scrub_hdr, s));
-        if x
-            data(c,:) = img.scrub(:,x)';
+
+    if sdata
+        c = 1;
+        for s = {'mov', 'dvars', 'dvarsme'};
+            c = c + 1;
+            x = find(ismember(img.scrub_hdr, s));
+            if x
+                data(c,:) = img.scrub(:,x)';
+            end
         end
     end
+
     data(5,:) = fdata;
     data(6,:) = sdata;
     data(7,:) = mdata;
-    sdata = [1 2 4 8 16 32 64] * data;
-    img.data(1,:) = data;
+    data = [1 2 4 8 16 32 64] * data;
+    img.data(1,:) = typecast(cast(data, 'uint32'), 'single');
 end
 

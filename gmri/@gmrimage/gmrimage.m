@@ -74,24 +74,29 @@ classdef gmrimage
         output = mri_Smooth3DMasked(obj, mask, fwhm, limit, verbose)
         output = mri_Stats(obj, do, exclude)
         output = mri_Stats2(obj, obj2, do, exclude)
+        output = mri_ComputeScrub(obj, do)
     end
 
     methods
-        function obj = gmrimage(varone, dtype, frames)
+        function obj = gmrimage(varone, dtype, frames, verbose)
         %
         %  Class constructor, calls readimage function if a parameter is passed
         %
-            if nargin < 3
-                frames = [];
-                if nargin < 2
-                    dtype = 'single';
+
+            if nargin < 4
+                verbose = false;
+                if nargin < 3
+                    frames = [];
+                    if nargin < 2
+                        dtype = 'single';
+                    end
                 end
             end
 
             % obj = gmrimage();
             if nargin > 0
                if isa(varone, 'char')
-                    obj = obj.mri_readimage(varone, dtype, frames);
+                    obj = obj.mri_readimage(varone, dtype, frames, verbose);
                 elseif isa(varone, 'numeric')
                     obj         = gmrimage;
                     obj.data    = varone;
@@ -106,15 +111,18 @@ classdef gmrimage
             end
         end
 
-        function obj = mri_readimage(obj, filename, dtype, frames)
+        function obj = mri_readimage(obj, filename, dtype, frames, verbose)
         %
         %  Checks what type the image is and calls the appropriate function
         %
 
-            if nargin < 4
-                frames = [];
-                if nargin < 3
-                    dtype = [];
+            if nargin < 5
+                verbose = false;
+                if nargin < 4
+                    frames = [];
+                    if nargin < 3
+                        dtype = [];
+                    end
                 end
             end
             if isempty(dtype)
@@ -122,15 +130,15 @@ classdef gmrimage
             end
             filename = strtrim(filename);
             if strcmp(filename(length(filename)-8:end), '.4dfp.img')
-                obj = obj.mri_Read4DFP(filename, dtype, frames);
-                obj = obj.mri_ReadStats(filename, frames);
+                obj = obj.mri_Read4DFP(filename, dtype, frames, verbose);
+                obj = obj.mri_ReadStats(filename, frames, verbose);
                 obj.empty = false;
             elseif strcmp(filename(length(filename)-3:end), '.nii') || strcmp(filename(length(filename)-6:end), '.nii.gz') || strcmp(filename(length(filename)-3:end), '.hdr')
-                obj = obj.mri_ReadNIfTI(filename, dtype, frames);
-                obj = obj.mri_ReadStats(filename, frames);
+                obj = obj.mri_ReadNIfTI(filename, dtype, frames, verbose);
+                obj = obj.mri_ReadStats(filename, frames, verbose);
                 obj.empty = false;
             elseif strcmp(filename(length(filename)-4:end), '.conc')
-                obj = obj.mri_ReadConcImage(filename, dtype, frames);
+                obj = obj.mri_ReadConcImage(filename, dtype, frames, verbose);
                 obj.empty = false;
             else
                 error('ERROR: Unknown file format! [%s]', filename);

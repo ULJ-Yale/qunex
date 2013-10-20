@@ -1,6 +1,6 @@
-function [img] = mri_ReadNIfTI(img, filename, dtype, frames)
+function [img] = mri_ReadNIfTI(img, filename, dtype, frames, verbose)
 
-%       function [img] = mri_ReadNIfTI(img, file, dtype, frames)
+%function [img] = mri_ReadNIfTI(img, file, dtype, frames, verbose)
 %
 %		Reads in a NIfTI image into an image object
 %
@@ -14,12 +14,16 @@ function [img] = mri_ReadNIfTI(img, filename, dtype, frames)
 %
 %       Grega Repovs - 2010-10-13
 %       Grega Repovs - 2011-10-13 - updated to read NIfTI-2
+%       Grega Repovs - 2013-10-20 - Added verbose option
 %
 
-if nargin < 4
-	frames = [];
-	if nargin < 3
-	    dtype = [];
+if nargin < 5
+    verbose = false;
+    if nargin < 4
+    	frames = [];
+    	if nargin < 3
+    	    dtype = [];
+        end
     end
 end
 
@@ -149,7 +153,6 @@ img.voxels  = prod(img.dim);
 img.vsizes  = img.hdrnifti.pixdim(2:4)';
 img.mformat = mformat;
 img.runframes = img.frames;
-img.use     = ones(img.frames,1);
 
 % read the data
 

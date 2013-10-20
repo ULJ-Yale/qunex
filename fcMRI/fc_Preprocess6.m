@@ -1,6 +1,6 @@
-function [] = fc_Preprocess6(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi)
+function [] = fc_Preprocess6(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
 
-%function [] = fc_Preprocess6(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi)
+%function [] = fc_Preprocess6(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
 %
 %  Inputs
 %       subjectf    - the folder with subjects images and data
@@ -19,7 +19,7 @@ function [] = fc_Preprocess6(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %           wm - white matter
 %           wb - whole brain
 %           d  - first derivative
-%           t  - task 
+%           t  - task
 %           e  - events
 %           1b - use the first bold run to define whole brain and ventricle mask
 %       task        - matrix of custom regressors to be entered in GLM
@@ -29,18 +29,24 @@ function [] = fc_Preprocess6(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %       variant     - a string to be prepended to files [none]
 %       wbmask      - a mask used to exclude ROI from the whole-brain nuisance regressor [none]
 %       sbjroi      - a mask used to create subject specific wbmask [none]
-%       overwrite   - whether old files should be overwritten [false]     
+%       overwrite   - whether old files should be overwritten [false]
 %       tail        - what file extension to expect and use for images [.4dfp.img]
 %       nroi        - ROI.names file to use to define additional nuisance ROI to regress out
 %                     when additionally provided a list of ROI, those will not be masked by
 %                     bold brain mask (e.g. 'nroi.names|eyes,scull')
+%       ignores     - how to deal with the frames marked as not used in filering and regression steps
+%                     specified in a single string, separated with pipes
+%                     hipass  - keep / linear / spline
+%                     regress - keep / ignore
+%                     lopass  - keep / linear /spline
+%                     example: 'hipass:linear|regress:ignore|lopass:spline'
 %
 %   Additional notes
 %   - Taks matrix is prepended to the GLM regression
-%   - Event data is read from efile fidl event file 
+%   - Event data is read from efile fidl event file
 %   - fidl files should be placed in the /images/functional/events/ and named boldX_efile
 %
-%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %
 %   2007-10-29  Written by Grega Repovš
 %
@@ -57,25 +63,31 @@ function [] = fc_Preprocess6(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %               - Implemented the option of specifying arbitrary ROI to be used for
 %                 definition of nuisance signal
 %               - Cleaned up help text
-%   
-%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%
+%   2013-10-20 Grega Repovs (v0.9.3)
+%              - Added option for ignoring the frames marked as not to be used
+%
+%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15
-    nroi = [];
-    if nargin < 14
-        tail = '.4dfp.img';
-        if nargin < 13
-            overwrite = false;
-            if nargin < 12
-                sbjroi = '';
-                if nargin < 11
-                    wbmask = '';
-                    if nargin < 10
-                        variant = '';
-                        if nargin < 9
-                            eventstring = '';
-                            if nargin < 8
-                                TR = 2.5;   
+    ignores = [];
+    if nargin < 15
+        nroi = [];
+        if nargin < 14
+            tail = '.4dfp.img';
+            if nargin < 13
+                overwrite = false;
+                if nargin < 12
+                    sbjroi = '';
+                    if nargin < 11
+                        wbmask = '';
+                        if nargin < 10
+                            variant = '';
+                            if nargin < 9
+                                eventstring = '';
+                                if nargin < 8
+                                    TR = 2.5;
+                                end
                             end
                         end
                     end
@@ -85,7 +97,25 @@ if nargin < 15
     end
 end
 
-fprintf('\nRunning preproces script 5 v0.9.2\n');
+fprintf('\nRunning preproces script 6 v0.9.3\n');
+
+ignore.hipass  = 'keep';
+ignore.regress = 'keep';
+ignore.lopass  = 'keep';
+
+ignores = regexp(ignores, ',|;|:|\|', 'split');
+if length(ignores)>=2
+    ignores = reshape(ignores, 2, [])';
+    for p = size(ignores, 1)
+        val = str2num(ignores{p,2});
+        if isempty(val)
+            setfield(ignore, ignores{p,1}, ignores{p,2});
+        else
+            setfield(ignore, ignores{p,1}, val);
+        end
+    end
+end
+
 
 % ======================================================
 %   ----> prepare paths
@@ -150,7 +180,7 @@ img = gmrimage();
 for current = do
 
     % --- set the source and target filename
-    
+
     c = ismember(task, current);
     sfile = [froot ext tail];
     if isempty(ext)
@@ -158,36 +188,36 @@ for current = do
     end
     ext   = [ext exts{c}];
     tfile = [froot ext tail];
-    
+
     % --- print info
-    
+
     fprintf('%s %s ', info{c}, sfile);
-    
+
     % --- run it
-    
+
     if exist(tfile, 'file') & ~overwrite
         fprintf(' ... already completed!\n');
     else
         if img.empty
             img = img.mri_readimage(sfile);
         end
-        
+
         switch current
             case 's'
                 img = img.mri_Smooth3D(2, true);
             case 'h'
                 hpsigma = ((1/TR)/0.009)/2;
-                img = img.mri_Filter(hpsigma, 0, omit, true);
+                img = img.mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
             case 'l'
                 lpsigma = ((1/TR)/0.08)/2;
-                img = img.mri_Filter(0, lpsigma, omit, true);
+                img = img.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
             case 'r'
-                [img coeff] = regressNuisance(img, omit, file, glm);
+                [img coeff] = regressNuisance(img, omit, file, glm, ignore.regress);
                 if docoeff
                     coeff.mri_saveimage([froot ext '_coeff' tail]);
                 end
         end
-        
+
         img.mri_saveimage(tfile);
         fprintf(' ... saved!\n');
     end
@@ -202,12 +232,13 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, file, glm)
+function [img coeff] = regressNuisance(img, omit, file, glm, ignore)
+
 
     img.data = img.image2D;
-    
+
     %   ----> Create nuisance ROI
-    
+
     if strfind(glm.rgss, '1b')
         [V, WB, WM] = firstBoldNuisanceROI(file, glm);
     else
@@ -232,28 +263,28 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
             end
         end
     end
-    
+
     %   ----> mask if necessary
-    
+
     if ~isempty(file.wbmask)
         wbmask = gmrimage.mri_ReadROI(file.wbmask, file.sbjroi);
         wbmask = wbmask.mri_GrowROI(2);
         WB.data = WB.image2D;
         WB.data(wbmask.image2D > 0) = 0;
     end
-    
+
     %   ----> save nuisance masks
-    
+
     SaveNuisanceMasks(file, WB, V, WM, eROI, glm);
-    
+
     %   ----> combine nuisances
-    
+
     nuisance = [];
-    
+
     if strfind(glm.rgss, 'm')
         nuisance = [nuisance ReadMovFile(file.movdata, img.frames)];
     end
-    
+
     if strfind(glm.rgss, 'v')
         nuisance = [nuisance img.mri_ExtractROI(V)'];
     end
@@ -268,22 +299,22 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
 
     if ~isempty(eROI)
        nuisance = [nuisance img.mri_ExtractROI(eROI)'];
-    end 
-    
+    end
+
     %   ----> if requested, get first derivatives
 
     if strfind(glm.rgss, 'd')
         d = [zeros(1,size(nuisance,2));diff(nuisance)];
         nuisance = [nuisance d];
     end
-    
+
     %   ----> add event data from fidl file
-    
+
     if strfind(glm.rgss, 'e')
         events = g_CreateUnassumedResponseTaskRegressors(file.fidlfile, file.eventstring, img.frames);
         nuisance = [nuisance events];
     end
-    
+
     %   ----> prepare trend parameters
 
     na = img.frames-omit;
@@ -292,7 +323,7 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
         pl(n)= (n-1)/(na-1);
     end
     pl = pl-0.5;
-    
+
     %   ----> put all regressors together
 
     if strfind(glm.rgss, 't')
@@ -302,11 +333,19 @@ function [img coeff] = regressNuisance(img, omit, file, glm)
     end
 
     %   ----> do GLM
-    
-    Y = img.sliceframes(omit);
-    
+
+    if strcmp(ignore, 'ignore')
+        mask = img.use;
+    else
+        mask = true(1, img.frames);
+    end
+    mask(1:omit) = false;
+
+    Y = img.sliceframes(mask);
+
     [coeff res] = Y.mri_GLMFit(X);
-    img.data(:,omit+1:img.frames) = res.image2D;
+    img.data(:,mask) = res.image2D;
+
 
 return
 
@@ -315,43 +354,43 @@ return
 %      ----> define nuisance ROI based on 1st bold frame
 %
 
-    
+
 function [V, WB, WM] = firstBoldNuisanceROI(file, glm);
 
     % set up masks to be used
-    
+
     O  = gmrimage(file.bold1, 'single', 1);
     V  = O.zeroframes(1);
     WB = O.zeroframes(1);
     WM = O.zeroframes(1);
 
     %   ----> White matter
-    
+
     if strfind(glm.rgss, 'wm')
-        WM = gmrimage(file.wmmask); 
+        WM = gmrimage(file.wmmask);
     end
-    
+
     %   ----> Ventricle and Whole Brain
-    
+
     if (~isempty(strfind(glm.rgss, 'wb')) | ~isempty(strfind(glm.rgss, 'v')))
-    
+
         %   ----> compute WB and V masks
-        
-        V = gmrimage(file.ventricleseed); 
+
+        V = gmrimage(file.ventricleseed);
         E = gmrimage(file.eyeseed);
         [V.data WB.data] = NROI_CreateROI(O.data, V.data, E.data);
-        
+
         %   ----> shrink WB
-        
+
         if strfind(glm.rgss, 'wb')
-            WB = WB.mri_ShrinkROI();                       
-            WB = WB.mri_ShrinkROI();                       
+            WB = WB.mri_ShrinkROI();
+            WB = WB.mri_ShrinkROI();
         end
-        
+
         %   ----> shrink V
 
         if strfind(glm.rgss, 'v')
-            V = V.mri_ShrinkROI();                         
+            V = V.mri_ShrinkROI();
         end
 
     end
@@ -365,7 +404,7 @@ return
 
 
 function [V, WB, WM] = asegNuisanceROI(file, glm);
-        
+
     fsimg = gmrimage(file.segmask);
     bmimg = gmrimage(file.boldmask);
 %   WM    = gmrimage(file.wmmask);
@@ -378,7 +417,7 @@ function [V, WB, WM] = asegNuisanceROI(file, glm);
     WM.data = (fsimg.data == 2 | fsimg.data == 41) & (bmimg.data > 0);
     WM      = WM.mri_ShrinkROI();
     WM.data = WM.image2D;
-    
+
     V.data  = ismember(fsimg.data, [4 5 14 15 24 43 44 72]) & (bmimg.data > 0);
     WB.data = (bmimg.data > 0) & (WM.data ~=1) & ~V.data;
 
@@ -386,7 +425,7 @@ function [V, WB, WM] = asegNuisanceROI(file, glm);
     WB      = WB.mri_ShrinkROI('edge', 10); %'edge', 10
     WM      = WM.mri_ShrinkROI();
     WM      = WM.mri_ShrinkROI();
-    
+
 
 return
 
@@ -414,13 +453,13 @@ function x = ReadMovFile(file, nf)
 return
 
 % ======================================================
-%   ----> save nuisance images 
+%   ----> save nuisance images
 %   --- needs to be changed
 
 function [] = SaveNuisanceMasks(file, WB, V, WM, eROI, glm);
-    
-    O = gmrimage(file.bold1);                       
-    
+
+    O = gmrimage(file.bold1);
+
     nimg = WB.zeroframes(5);
     nimg.data = nimg.image2D();
     nimg.data(:,1) = O.image2D();
@@ -432,9 +471,9 @@ function [] = SaveNuisanceMasks(file, WB, V, WM, eROI, glm);
     if ~isempty(eROI)
         nimg = [nimg eROI];
     end
-    
+
     nimg.mri_saveimage(file.nfile);
-    
+
     O  = RGBReshape(O ,3);
     WB = RGBReshape(WB,3);
     V  = RGBReshape(V ,3);
@@ -486,10 +525,10 @@ return
 
 % ======================================================
 %   ----> process extra ROI name
-%   
+%
 
 function [filename nomask] = processeROI(s);
-    
+
     [filename, s] = strtok(s, '|');
     nomask = {};
     while ~isempty(s)

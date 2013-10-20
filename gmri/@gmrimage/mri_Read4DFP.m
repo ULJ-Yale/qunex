@@ -1,6 +1,6 @@
-function [img] = mri_Read4DFP(img, file, dtype, frames)
+function [img] = mri_Read4DFP(img, file, dtype, frames, verbose)
 
-%       function [img] = mri_Read4DFP(img, file, dtype)
+%function [img] = mri_Read4DFP(img, file, dtype, verbose)
 %
 %		Reads in a 4dfp image into an image object
 %
@@ -14,12 +14,16 @@ function [img] = mri_Read4DFP(img, file, dtype, frames)
 %
 %       Grega Repovs - 2009-11-19
 %       2011-07-31 - Changed the handling of conc files to gmrimage main method.
+%       2013-10-20 - Added verbose option
 %
 
-if nargin < 4
-	frames = [];
-	if nargin < 3
-	    dtype = 'single';
+if nargin < 5
+    verbose = false;
+    if nargin < 4
+    	frames = [];
+    	if nargin < 3
+    	    dtype = 'single';
+        end
     end
 end
 
@@ -64,7 +68,6 @@ else
 	fclose(fim);
 
     img.frames    = length(img.data)/sum(img.voxels);
-    img.use       = ones(img.frames,1);
     img.runframes = img.frames;
     img.hdr4dfp.value{ismember(img.hdr4dfp.key, {'matrix size [4]'})} = num2str(img.frames);
 

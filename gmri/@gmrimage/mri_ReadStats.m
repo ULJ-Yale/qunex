@@ -1,6 +1,6 @@
-function [obj] = mri_ReadStats(obj, filename, frames)
+function [obj] = mri_ReadStats(obj, filename, frames, verbose)
 
-%function [obj] = mri_ReadStats(obj, filename, frames)
+%function [obj] = mri_ReadStats(obj, filename, frames, verbose)
 %
 %	Reads in available files with information on movement,
 %	per frame image stats and scrubbing inf.
@@ -8,22 +8,48 @@ function [obj] = mri_ReadStats(obj, filename, frames)
 %   (c) Grega Repovs
 %   2011-07-31 - Initial version
 %   2013-10-19 - Added reading embedded data
+%   2013-10-20 - Added verbose option
 %
 
-
-if nargin < 3
-    frames = [];
+if nargin < 4
+    verbose = false;
+    if nargin < 3
+        frames = [];
+    end
 end
+
+obj.use = true(1, obj.frames);
 
 % ---> check for embedded data
 
+if verbose, fprintf('---> checking for embedded data ...'), end
+
 obj.data = obj.image2D;
 sel      = typecast(single(obj.data(1,:)), 'uint32');
-ebstats  = sum(bitand(sel, 16) == 0) == 0;
-esel     = sum(bitand(sel, 32) == 0) == 0;
-emov     = sum(bitand(sel, 64) == 0) == 0;
+embd     = sum(bitand(sel, 2147483520) > 0) == 0;
+if embd
+    ebstats  = sum(bitand(sel, 16) == 0) == 0;
+    esel     = sum(bitand(sel, 32) == 0) == 0;
+    emov     = sum(bitand(sel, 64) == 0) == 0;
+else
+    ebstats = false;
+    esel    = false;
+    emov    = false;
+end
+
+if verbose
+    if ~embd, fprintf(' no embedded data'), end;
+    if ebstats, fprintf(' stats'), end;
+    if emov, fprintf(' movement'), end;
+    if esel, fprintf(' scrub'), end;
+    fprintf('\n')
+end
+
+% obj.data(1,1:10)
+% sel(1:10)
 
 if esel
+    if verbose, fprintf('---> reading ebbedded scrub data\n'), end
     obj.scrub_hdr  = {'frame', 'mov', 'dvars', 'dvarsme', 'idvars', 'idvarsme', 'udvars', 'udvarsme'};
     obj.scrub      = zeros(obj.frames, 8);
     obj.scrub(:,1) = 1:obj.frames;
@@ -38,12 +64,13 @@ if esel
 end
 
 if ebstats
+    if verbose, fprintf('---> reading ebbedded stats data\n'), end
     obj.fstats_hdr  = {'frame', 'n', 'm', 'var', 'sd', 'dvars', 'dvarsm', 'dvarsme', 'fd'};
     obj.fstats      = zeros(obj.frames, 9);
     obj.fstats(:,1) = 1:obj.frames;
     obj.fstats(:,2) = obj.data(2,:);
     obj.fstats(:,3) = obj.data(3,:);
-    obj.fstats(:,4) = obj.data(4,:)^2;
+    obj.fstats(:,4) = obj.data(4,:).^2;
     obj.fstats(:,5) = obj.data(4,:);
     obj.fstats(:,6) = obj.data(5,:) .* obj.data(3,:) ./100;
     obj.fstats(:,7) = obj.data(5,:);
@@ -52,6 +79,7 @@ if ebstats
 end
 
 if emov
+    if verbose, fprintf('---> reading ebbedded movement data\n'), end
     obj.mov_hdr  = {'frame', 'dx(mm)', 'dy(mm)', 'dz(mm)', 'X(deg)', 'Y(deg)', 'Z(deg)', 'scale'};
     obj.mov      = zeros(obj.frames, 8);
     obj.mov(:,1) = 1:obj.frames;
@@ -59,7 +87,7 @@ if emov
 end
 
 
-if ~ emov
+if (~emov) | (~ebstats) | (~esel)
 
     % ---> check if movement folder exists
 
@@ -76,10 +104,17 @@ if ~ emov
         return
     end
 
+    if verbose, fprintf('---> found movement folder at %s\n', movfolder), end
+end
+
+
+
+if ~emov
 
     % ---> check for movement data
 
     tfile = FindMatchingFile(movfolder, fname, '.dat');
+    if verbose, fprintf('---> reading movement data from %s\n', tfile), end
     if tfile
         [data header] = ReadTextFile(tfile);
         data = CheckData(data, frames, obj.frames);
@@ -96,6 +131,7 @@ if ~ebstats
     % ---> check for per-frame stats data
 
     tfile = FindMatchingFile(movfolder, fname, '.bstats');
+    if verbose, fprintf('---> reading stats data from %s\n', tfile), end
     if tfile
         [data header] = ReadTextFile(tfile);
         data = CheckData(data, frames, obj.frames);
@@ -111,6 +147,7 @@ if ~esel
     % ---> check for scrubbing data
 
     tfile = FindMatchingFile(movfolder, fname, '.scrub');
+    if verbose, fprintf('---> reading scrub data from %s\n', tfile), end
     if tfile
         [data header] = ReadTextFile(tfile);
         data = CheckData(data, frames, obj.frames);

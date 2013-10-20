@@ -43,7 +43,7 @@ while feof(files) == 0
         nf  = 0;
         [t, s] = strtok(s, ':');
         subject(nsubjects).id = strtrim(s(2:end));
-        if verbose, fprintf(subject(nsubjects).id); end
+        if verbose, fprintf('%s \n', subject(nsubjects).id); end
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');
         if g_CheckFile(strtrim(s(2:end)), 'ROI image', report);
