@@ -39,7 +39,10 @@ img.data = img.image2D;
 
 %------- Interpolate?
 
+fprintf('\n bad frames: %d, ignore: %s', sum(img.use ==0), ignore);
+
 if sum(img.use==0) > 0 & (~strcmp(ignore, 'keep'))
+    if verbose, fprintf('\n---> interpolating %d frames\n', sum(img.use==0)); end
     x  = [1:img.frames]';
     xi = x;
     x  = x(img.use);

@@ -129,12 +129,11 @@ ignore.lopass  = 'keep';
 ignores = regexp(ignores, ',|;|:|\|', 'split');
 if length(ignores)>=2
     ignores = reshape(ignores, 2, [])';
-    for p = size(ignores, 1)
-        val = str2num(ignores{p,2});
-        if isempty(val)
-            setfield(ignore, ignores{p,1}, ignores{p,2});
+    for p = 1:size(ignores, 1)
+        if isempty(regexp(ignores{p,2}, '^-?[\d\.]+$'))
+            ignore = setfield(ignore, ignores{p,1}, ignores{p,2});
         else
-            setfield(ignore, ignores{p,1}, val);
+            ignore = setfield(ignore, ignores{p,1}, str2num(ignores{p,2}));
         end
     end
 end
@@ -319,7 +318,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore.regress)
+function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore)
 
     nbolds = length(img);
     frames = zeros(1, nbolds);
@@ -329,7 +328,7 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
     for b = 1:nbolds
 
         img(b).data = img(b).image2D;
-        frames(b) = img(b).frames - omit;
+        frames(b)   = img(b).frames;
 
         %   ----> Create nuisance ROI
         fprintf(' .');
@@ -411,8 +410,6 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
             bold(b).nuisance = [bold(b).nuisance d];
         end
 
-        bold(b).nuisance = [bold(b).nuisance(omit+1:img(b).frames,:)];
-
         %   ----> prepare baseline and trend parameters
         fprintf('.');
 
@@ -424,6 +421,7 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
         pl = pl-0.5;
         bs = ones(na,1);
         bold(b).base = [bs, pl];
+        bold(b).base = [zeros(omit, 2); bold(b).base];
 
     end
 
@@ -508,8 +506,11 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
 
     masks   = {};
     mframes = zeros(1,nbolds);
+    nmask   = [];
+    if strcmp(ignore, 'ignore'), fprintf(' ignoring'); end
     for b = 1:nbolds
         if strcmp(ignore, 'ignore')
+            fprintf(' %d', sum(img(b).use == 0));
             mask = img(b).use;
         else
             mask = true(1, img(b).frames);
@@ -517,7 +518,9 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
         mask(1:omit) = false;
         masks{b}     = mask;
         mframes(b)   = sum(mask);
+        nmask        = [nmask mask];
     end
+    if strcmp(ignore, 'ignore'), fprintf(' frames '); end
 
     %   ---> create and fill placeholder image
 
@@ -529,9 +532,10 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
         Y.data(:, fstart:fend) = img(b).data(:,masks{b});
     end
 
-    %   ----> do GLM
+    %   ----> mask nuisance and do GLM
     fprintf('.');
 
+    X = X(nmask==1, :);
     [coeff res] = Y.mri_GLMFit(X);
 
     %   ----> put data back into images

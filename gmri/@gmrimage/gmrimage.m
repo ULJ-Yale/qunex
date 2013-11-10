@@ -404,6 +404,7 @@ classdef gmrimage
             obj.data = zeros(obj.voxels, frames);
             obj.frames = frames;
             obj.runframes = frames;
+            obj.use = true(1, frames);
 
             % ---> erase movement data
 

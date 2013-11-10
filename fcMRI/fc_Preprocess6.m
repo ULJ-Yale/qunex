@@ -69,7 +69,7 @@ function [] = fc_Preprocess6(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-if nargin < 15
+if nargin < 16
     ignores = [];
     if nargin < 15
         nroi = [];
@@ -106,16 +106,14 @@ ignore.lopass  = 'keep';
 ignores = regexp(ignores, ',|;|:|\|', 'split');
 if length(ignores)>=2
     ignores = reshape(ignores, 2, [])';
-    for p = size(ignores, 1)
-        val = str2num(ignores{p,2});
-        if isempty(val)
-            setfield(ignore, ignores{p,1}, ignores{p,2});
+    for p = 1:size(ignores, 1)
+        if isempty(regexp(ignores{p,2}, '^-?[\d\.]+$'))
+            ignore = setfield(ignore, ignores{p,1}, ignores{p,2});
         else
-            setfield(ignore, ignores{p,1}, val);
+            ignore = setfield(ignore, ignores{p,1}, str2num(ignores{p,2}));
         end
     end
 end
-
 
 % ======================================================
 %   ----> prepare paths
@@ -335,7 +333,9 @@ function [img coeff] = regressNuisance(img, omit, file, glm, ignore)
     %   ----> do GLM
 
     if strcmp(ignore, 'ignore')
+        fprintf(' ignoring %d bad frames', sum(img.use == 0));
         mask = img.use;
+        X = X(mask(omit+1:end),:);
     else
         mask = true(1, img.frames);
     end

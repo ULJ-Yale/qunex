@@ -13,6 +13,8 @@ mdata = 0;
 fdata = 0;
 sdata = 0;
 
+img.data = img.image2D;
+
 % ---> Check for movement data
 
 if ~isempty(img.mov_hdr)
