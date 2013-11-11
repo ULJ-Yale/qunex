@@ -50,6 +50,11 @@ def readConc(concf, TR):
     nfiles = int(s[0].split(":")[1])
     boldfiles = [e.split(":")[1] for e in s[1:nfiles+1]]
 
+    for boldfile in boldfiles:
+        if not os.path.exists(boldfile):
+            print "===> ERROR: image does not exist! (%s)" % (boldfile)
+            return []
+
     m = re.compile('_b.*?([0-9]+)')
     bolds = []
     start = 0
@@ -62,7 +67,7 @@ def readConc(concf, TR):
     return bolds
 
 
-def joinFidl(concfile, fidlroot):
+def joinFidl(concfile, fidlroot, outfolder=None):
     """
     Joins fidl files matching root pattern based on the sequence of bold files in conc file and their lengths.
     concfile - the path to the conc file
@@ -74,7 +79,14 @@ def joinFidl(concfile, fidlroot):
     fidlf = glob.glob(fidlroot+'*.fidl')
     fidlf.sort()
     fidldata = [readFidl(f) for f in fidlf]
-    TR = fidldata[1]['TR']
+    try:
+        TR = fidldata[0]['TR']
+    except:
+        if len(fidldata) == 0:
+            print "===> WARNING: No fidl files correspond to %s!" % (concfile)
+        else:
+            print "===> WARNING: Error in processing concfile: %s, fidlroot: %s!" % (concfile, fidlrrot)
+        return
 
     # ---> read the conc file, check if the number matches
 
@@ -106,7 +118,11 @@ def joinFidl(concfile, fidlroot):
         tfidl = tfidl + [[e[0]+bold[1]]+e[1:] for e in sfidl['events'] if e[0] < bold[2]]
         c += 1
 
-    out = open(fidlroot + '.fidl', 'w')
+    jointfile = fidlroot + '.fidl'
+    if outfolder is not None:
+        jointfile = os.path.join(outfolder, os.path.basename(jointfile))        
+
+    out = open(jointfile, 'w')
     print >> out, sfidl['header']
 
     for l in tfidl:
@@ -116,7 +132,7 @@ def joinFidl(concfile, fidlroot):
     return True
 
 
-def joinFidlFolder(concfolder, fidlfolder=None):
+def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
     """
     Looks up all conc files in a conc folder and tries to match them up with fidl files in the fidl folder.
     It expects fidl files to have the same root as the conc file.
@@ -126,8 +142,11 @@ def joinFidlFolder(concfolder, fidlfolder=None):
     if fidlfolder is None:
         fidlfolder = concfolder
 
+    if outfolder is None:
+        outfolder = fidlfolder
+
     concfiles = glob.glob(concfolder+'/*.conc')
 
     for concfile in concfiles:
         root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ''))
-        joinFidl(concfile, root)
+        joinFidl(concfile, root, outfolder)
