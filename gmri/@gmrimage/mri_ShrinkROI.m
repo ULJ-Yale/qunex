@@ -3,7 +3,7 @@ function [out] = mri_ShrinkROI(img, method, crit)
 %function [out] = mri_ShrinkROI(img, method, crit)
 %
 %		Peels a layer off region to reduce its size at the borders
-%       in - single volume to be shrinked
+%       in - a ROI image volume to be shrinked
 %       method - what is considered as neighbour
 %           surface - sharing a surface (default) [ 7]
 %           edge    - sharing at least an edge    [19]
@@ -11,6 +11,11 @@ function [out] = mri_ShrinkROI(img, method, crit)
 %       crit - how many of the neighbouring voxels need to be present to survive - default is all
 %
 %    (c) Grega Repovs, 2010-05-10
+%
+%   ---- Changelog ----
+%
+%   Grega Repovs, 2013-07-24 ... adjusted for multivolume ROI files
+%
 
 if nargin < 2
     method = 'surface';
@@ -33,19 +38,22 @@ if nargin < 3
     crit = sum(sum(sum(nearest)));
 end
 
-for x = 2:img.dim(1)-1
-	for y = 2:img.dim(2)-1
-		for z = 2:img.dim(3)-1
-			if(img.data(x,y,z,1))
-				focus = img.data(x-1:x+1,y-1:y+1,z-1:z+1,1) & nearest;
-				if (sum(sum(sum(focus))) < crit)
-					out.data(x,y,z,1) = 0;
-				end					
-			end
-		end
-	end
+for f = 1:img.frames
+    for x = 2:img.dim(1)-1
+    	for y = 2:img.dim(2)-1
+    		for z = 2:img.dim(3)-1
+    			if(img.data(x,y,z,f))
+    				focus = img.data(x-1:x+1,y-1:y+1,z-1:z+1,f) & nearest;
+    				if (sum(sum(sum(focus))) < crit)
+    					out.data(x,y,z,f) = 0;
+    				end
+    			end
+    		end
+    	end
+    end
+    out.data([1 out.dim(1)],:,:,f) = 0;
+    out.data(:,[1 out.dim(2)],:,f) = 0;
+    out.data(:,:,[1 out.dim(3)],f) = 0;
 end
 
-out.data([1 out.dim(1)],:,:,1) = 0;
-out.data(:,[1 out.dim(2)],:,1) = 0;
-out.data(:,:,[1 out.dim(3)],1) = 0;
+

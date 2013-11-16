@@ -1,51 +1,27 @@
-function [img] = mri_ReadNIfTI(img, filename, dtype, frames, verbose)
+function [img] = mri_ReadNIfTIMetaData(img, fid, meta)
 
-%function [img] = mri_ReadNIfTI(img, file, dtype, frames, verbose)
+%function [img] = mri_ReadNIfTIMetaData(img, fid, meta)
 %
-%		Reads in a NIfTI image into an image object
+%		Reads NIfTI meta data, processes and stores it.
 %
 %       required:
 %		    img       - mrimage object
-%           filename  - filename (can be a .nii, .nii.gz or .hdr file)
+%           fid       - file id of an open file handle
+%           meta      - the length of the metadata
 %
-%		optional:
-%           dtype  - datatype to read into [single]
-%           frames - number of frames to read [all]
-%
-%       Grega Repovs - 2010-10-13
-%       Grega Repovs - 2011-10-13 - updated to read NIfTI-2
-%       Grega Repovs - 2013-10-20 - Added verbose option
+%       Grega Repovs - 2013-09-06
 %
 
-if nargin < 5
-    verbose = false;
-    if nargin < 4
-    	frames = [];
-    	if nargin < 3
-    	    dtype = [];
-        end
-    end
+if nargin < 3
+	error('\n\nERROR: Not enough parameters for the mri_ReadNIfTIMetaData() method!\n\n';
 end
 
-filename = strtrim(filename);
 
-if isempty(dtype)
-    dtype = 'single';
-end
+% --- jump to metadata
 
-if ~exist(filename)
-    error('\n\nERROR: %s does not exist. Please check your paths!\n\n', filename);
-end
 
-% get the full filename
 
-file       = filename;
-separate   = false;
-mformat    = 'l';
-tempfolder = [];
-meta       = 0;
 
-% check what type it is
 
 img.hdrnifti.compressed = false;
 
@@ -158,9 +134,11 @@ img.runframes = img.frames;
 
 if img.hdrnifti.magic(1:3) == 'n+1'
     fid = fopen(file, 'r', mformat);
-    garbage = fread(fid, meta, 'char');
+
     if img.hdrnifti.vox_offset > meta
-        img = img.mri_ReadNIfTIMetaData(fid, img.hdrnifti.vox_offset-meta);
+        img = img.mri_readMetaData(fid, meta);
+    else
+        garbage = fread(fid, img.hdrnifti.vox_offset, 'char');
     end
     toread = img.hdrnifti.dim(2:7);
     toread = prod(toread(toread>0));

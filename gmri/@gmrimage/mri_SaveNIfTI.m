@@ -10,6 +10,7 @@ function [res] = mri_SaveNIfTI(img, filename, compressed)
 %
 %   Grega Repovs - 2010-10-13
 %   Grega Repovs - 2011-10-13 - updated to write NIfTI-2
+%   Grega Repovs - 2013-10-19 - Added call for embedding data
 %
 
 if nargin < 3
@@ -19,6 +20,12 @@ end
 if isempty(compressed)
     compressed = img.hdrnifti.compressed;
 end
+
+% ---> embedd extra data if available
+
+obj = obj.mri_EmbedStats();
+
+% ---> set up file to save
 
 filename = strtrim(filename);
 % unpack and set up
@@ -40,7 +47,7 @@ file = [root '.nii'];
 % get datatype
 
 switch img.hdrnifti.datatype
-    case 1 
+    case 1
         datatype = 'bitN';
     case 2
         datatype = 'uchar';
@@ -72,11 +79,11 @@ switch img.hdrnifti.datatype
         datatype = 'uint64';
         img.hdrnifti.bitpix = 64;
     case 1280
-        datatype = 'uint64';   
+        datatype = 'uint64';
         img.hdrnifti.bitpix = 64;
     otherwise
         error('Uknown datatype or datatype I can not handle!');
-end    
+end
 
 
 
@@ -133,12 +140,12 @@ if img.hdrnifti.version == 1
     fwrite(fid, img.hdrnifti.magic, 'char');
     fwrite(fid, 'repi', 'char');
 end
-    
-% ---> Write NIfTI-2 
-    
+
+% ---> Write NIfTI-2
+
 if img.hdrnifti.version == 2
     fwrite(fid, 540, 'int32');
-    
+
     img.hdrnifti.magic = [img.hdrnifti.magic '        '];
     fwrite(fid, img.hdrnifti.magic(1:8),    'char');
     fwrite(fid, img.hdrnifti.datatype,      'int16');
@@ -157,7 +164,7 @@ if img.hdrnifti.version == 2
     fwrite(fid, img.hdrnifti.toffset,       'float64');
     fwrite(fid, img.hdrnifti.slice_start,   'int64');
     fwrite(fid, img.hdrnifti.slice_end,     'int64');
-    
+
     img.hdrnifti.descrip = [img.hdrnifti.descrip '                                                                                '];
     img.hdrnifti.aux_file = [img.hdrnifti.aux_file '                        '];
     fwrite(fid, img.hdrnifti.descrip(1:80), 'char');
@@ -182,16 +189,16 @@ if img.hdrnifti.version == 2
     fwrite(fid, img.hdrnifti.intent_name(1:16), 'char');
     fwrite(fid, img.hdrnifti.dim_info,          'char');
     fwrite(fid, img.hdrnifti.unused_str(1:15),  'char');
-    
-end    
-    
-    
-% ---> Add data ... 
+
+end
+
+
+% ---> Add data ...
 
 fwrite(fid, img.data, datatype);
 fclose(fid);
 
-if compressed 
+if compressed
     gzip(file);
     delete(file);
 end

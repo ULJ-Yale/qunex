@@ -1,14 +1,14 @@
 function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, frames, scrubvar)
 
 %function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, frames, scrubvar)
-%	
-%	
+%
+%
 %	flist 	- file list with information on conc, fidl and individual roi files
 %	roif 	- region "names" file
 %   targetf - target matlab file with results
 %	events 	- the events for which to extract timeseries, can be a cell array of combinations
 %	frames 	- limits of frames to include in the extracted timeseries
-%   scrubvar- critera to use for scrubbing data - scrub based on: 
+%   scrubvar- critera to use for scrubbing data - scrub based on:
 %               - [] do not scrub
 %               - mov      ... overall movement displacement
 %               - dvars    ... frame-to-frame variability
@@ -25,11 +25,12 @@ function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, f
 %		elength - array with event duration in frames
 %		event 	- array with event codes
 %		events	- list of event names
-%		TR		- TR in s 
+%		TR		- TR in s
 %
 %   Written by Grega Repovš, 22.1.2008
 %   2011.11.07 - adjusted and partly rewriten to use gmrimage object
 %   2012.04.20 - added the option of scrubbing the data
+%   2013.07.24 - adjusted to use the new ROIMask method
 
 
 if nargin < 6
@@ -50,9 +51,9 @@ end
 fprintf('\n\nStarting ...');
 
 nniz = length(events);							%--- number of separate sets we will be extracting
-[t1, fbase, t2, t3] = fileparts(roif);			%--- details about the filename
+[t1, fbase, t2] = fileparts(roif);			%--- details about the filename
 tlength = frames(2) - frames(1) + 1;			%--- number of timepoints in the timeseries
-frames = int16(frames); 
+frames = int16(frames);
 
 %   ------------------------------------------------------------------------------------------
 %                                                      make a list of all the files to process
@@ -81,24 +82,24 @@ for s = 1:nsub
     fprintf('\n ... processing %s', subject(s).id);
 
     % ---> reading ROI file
-	
+
 	fprintf('\n     ... creating ROI mask');
-	
+
 	if isfield(subject(s), 'roi')
 	    sroifile = subject(s).roi;
 	else
 	    sroifile = [];
     end
-	
+
     if strcmp(sroifile,'none')
         roi = gmrimage.mri_ReadROI(roif);
     else
         roi = gmrimage.mri_ReadROI(roif, sroifile);
     end
     nregions = length(roi.roi.roinames);
-	
+
 	% ---> reading image files
-	
+
 	fprintf('\n     ... reading image file(s)');
 
 	y = gmrimage(subject(s).files{1});
@@ -106,14 +107,14 @@ for s = 1:nsub
 	    y = [y gmrimage(subject(s).files{f})];
     end
 
-    if scrubit 
+    if scrubit
         if size(y.scrub, 1) ~= y.frames
             fprintf('\n     ... WARNING: missing or invalid scrubbing info!!!')
             scrub = zeros(1, y.frames);
-        else 
+        else
             scrub = y.scrub(:, ismember(y.scrub_hdr, scrubvar))';
         end
-    else 
+    else
         scrub = zeros(1, y.frames);
     end
     scrub = scrub == 1;
@@ -123,7 +124,7 @@ for s = 1:nsub
     for r = 1:nruns
         run = [run [zeros(1,5) ones(1,y.runframes(r)-5)*r]];
     end
-    
+
     fprintf(' ... %d frames read, done.', y.frames);
 
 
@@ -141,7 +142,7 @@ for s = 1:nsub
     	niz(n).fevents.event = fevents.event(do);					%--- get a list of events we are processing
     	niz(n).fevents.frame = fevents.frame(do) + 1;				%--- get the start frames of events we are processing
     	niz(n).fevents.events = fevents.events(events{n}+1);		%--- get list of events names we included
-	
+
     	niz(n).nevents = length(niz(n).fevents.event);				%--- get a number of events we are processing
     	niz(n).frames = int16([niz(n).fevents.frame; 999999]);		%--- get a list of frames we are processing plus an extra large nonexistent frame
     	niz(n).timeseries = zeros(niz(n).nevents, tlength, nregions);			%--- prepare a matrix to hold all the timeseries
@@ -157,20 +158,20 @@ for s = 1:nsub
     % 	----> extract data
 
 	%------- extract baseline for this run
-    
+
 	fprintf(' baseline ...');
-    
+
     for ni = 1:nruns
 	    for r = 1:nregions
-    		m = mean(mean(y.data(roi.data == r, run == ni & ~scrub )));
+    		m = mean(mean(y.data(roi.mri_ROIMask(r), run == ni & ~scrub )));
     		for n = 1:nniz
     			niz(n).baseline(ni,r) = m;
-    		end	
+    		end
     	end
     end
-    
+
 	fprintf(' computed');
-    
+
 	%------- extract datapoints for this run
 
 	fprintf(', extracting data ');
@@ -184,7 +185,7 @@ for s = 1:nsub
                     niz(n).scrub(niz(n).N,:) = scrub(ts(1):ts(2));
                     for r = 1:nregions
                         try
-                        	niz(n).timeseries(niz(n).N, :, r) = mean(y.data(roi.data == r, ts(1):ts(2)),1);
+                        	niz(n).timeseries(niz(n).N, :, r) = mean(y.data(roi.mri_ROIMask(r), ts(1):ts(2)),1);
                         	ni = run(ts(1));
 							niz(n).run(1, niz(n).N) = ni;
 							niz(n).eventbaseline(niz(n).N, :) = niz(n).baseline(ni,:);
@@ -193,7 +194,7 @@ for s = 1:nsub
                         	niz(n).frames(niz(n).c)
                             niz(n).c
                             rethrow(lasterror)
-                        end	
+                        end
                     end
                 end
 			end
@@ -202,7 +203,7 @@ for s = 1:nsub
 		fprintf('.');
 	end
 	fprintf(' done');
-    
+
     data(s).subject = subject(s).id;
     data(s).niz = niz;
 end

@@ -1,20 +1,57 @@
-function [img] = mri_Filter(img, hp_sigma, lp_sigma, omit, verbose)
+function [img] = mri_Filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
+
+%function [img] = mri_Filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
+%
+%   input
+%       img      - image to be filtered
+%       hp_sigma - sigma for high-pass filter
+%       lp_sigma - sigma for low-pass filter
+%       omit     - how many frames to omit at the start of the run
+%       verbose  - should we talk much
+%       ignore   - what to do with frames marked as "do not use"
+%                   - keep   : do nothing
+%                   - linear : do linear interpolation
+%                   - spline : do spline interpolation
+%
+% Grega Repovš - 2013-10-20
+%              - added the ignore / interpolate option
+%
 
 
 
 %------- Check input
 
-if nargin < 5
-    verbose = false;
-    if nargin < 4
-        omit = 0;
-        if nargin < 3
-            lp_sigma = 0;
+if nargin < 6
+    ignore = [];
+    if nargin < 5
+        verbose = false;
+        if nargin < 4
+            omit = 0;
+            if nargin < 3
+                lp_sigma = 0;
+            end
         end
     end
 end
 
+if isempty(ignore), ignore = 'keep'; end
 img.data = img.image2D;
+
+%------- Interpolate?
+
+fprintf('\n bad frames: %d, ignore: %s', sum(img.use ==0), ignore);
+
+if sum(img.use==0) > 0 & (~strcmp(ignore, 'keep'))
+    if verbose, fprintf('\n---> interpolating %d frames\n', sum(img.use==0)); end
+    x  = [1:img.frames]';
+    xi = x;
+    x  = x(img.use);
+    Y  = img.data(:, img.use)';
+    img.data = interp1(x, Y, xi, ignore)';
+end
+
+%------- Prepare data
+
 nvox     = img.voxels;
 len      = img.frames - omit;
 data     = img.data(:,omit+1:img.frames);
@@ -54,19 +91,19 @@ if hp_sigma
     sAf = sum(A);
     sCf = sum(C);
     denom = sCf*sum(hp_exp) - sAf^2;
-    
+
     if verbose, fprintf('hipass frame    '), end
     first = true;
     c0 = zeros(nvox,1);
     for t = 1:len
         if verbose, fprintf('\b\b\b\b%4d',t), end
-        
+
         bot = max([t-hp_mask, 1]);
         top = min([t+hp_mask, len]);
-        
+
         wbot = bot-t+hp_mask+1;
         wtop = top-t+hp_mask+1;
-    
+
         if wtop-wbot == length(A)
             sA = sAf;
             sC = sCf;
@@ -76,7 +113,7 @@ if hp_sigma
             sA = sum(A(wbot:wtop));
             tmpdenom = sC*sum(hp_exp(wbot:wtop)) - sA^2;
         end
-        
+
         if tmpdenom
             tc = (sum(data(:,bot:top).*repmat(hp_exp(wbot:wtop),nvox,1),2).*sC - sum(data(:,bot:top).*repmat(A(wbot:wtop),nvox,1),2) .* sA) ./ tmpdenom;
             if first
@@ -103,7 +140,7 @@ if lp_sigma
         tmp(:,n) = tmp(:,lp_mask+1);
         tmp(:,len+lp_mask+n) = tmp(:,len+lp_mask);
     end
-    
+
     w = repmat(lp_exp, nvox,1);
     if verbose, fprintf('lopass frame     '), end
     for t = 1:len
