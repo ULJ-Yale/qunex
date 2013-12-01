@@ -16,12 +16,13 @@ def getDicomTime(info):
     return time
 
 def getID(info):
-    if info.PatientID != "":
-        return info.PatientID
-    elif info.StudyID != "":
-        return info.StudyID
-    else:
-        return ""
+    v = ""
+    if "PatientID" in info:
+        v = info.PatientID
+    if v == "":
+        if "StudyID" in info:
+            v = info.StudyID
+    return v
 
 def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
