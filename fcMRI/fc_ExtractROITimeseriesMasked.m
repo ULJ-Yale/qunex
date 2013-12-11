@@ -154,9 +154,9 @@ for n = 1:nsub
 
 	% ---> extracting timeseries
 
-	fprintf('\n     ... extracting timeseries ');
+	fprintf('\n     ... extracting timeseries [%d frames]', y.frames);
 
-    data.timeseries{n} = y.mri_ExtractROI(roi, [], method, rcodes);
+    data.timeseries{n} = y.mri_ExtractROI(roi, rcodes, method);
     data.n_roi_vox{n}  = roi.roi.nvox;
 
     fprintf(' ... done!');

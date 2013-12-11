@@ -351,7 +351,7 @@ classdef gmrimage
             obj.data = [obj.image2D add.image2D];
             obj.frames = obj.frames + add.frames;
             obj.runframes = [obj.runframes add.frames];
-            obj.use  = [obj.use; add.use];
+            obj.use  = [obj.use add.use];
 
             % --> combine movement data
             if ~isempty(obj.mov) && ~isempty(add.mov)
