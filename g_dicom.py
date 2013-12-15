@@ -129,12 +129,14 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             except:
                 TE = 0
 
-        recenter, dofz2zf, fz = False, False, ""
+        recenter, dofz2zf, fz, reorder = False, False, "", False
         try:
             if d.Manufacturer == 'Philips Medical Systems' and int(d[0x2001, 0x1081].value) > 1:
                 dofz2zf, fz = True, "  (switched fz)"
             if d.Manufacturer == 'Philips Medical Systems' and d.SpacingBetweenSlices in [0.7, 0.8]:
                 recenter, fz = d.SpacingBetweenSlices, "  (recentered)"
+            if d.Manufacturer == 'SIEMENS' and d.InstitutionName == 'Univerisity North Carolina' and d.AcquisitionMatrix == [0, 64, 64, 0]:
+                reorder, fz = True, " (reordered slices)"
         except:
             pass
 
@@ -195,6 +197,16 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
         if dofz2zf:
             g_mri.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (c)))
+
+        # --- reorder slices if needed
+
+        if reorder:
+            #g_mri.g_NIfTI.reorder(os.path.join(imgf,"%02d.nii.gz" % (c)))
+            timgf = os.path.join(imgf,"%02d.nii.gz" % (c))
+            timg  = gimg.gimg(timgf)
+            timg.data = timg.data[:,::-1,...]
+            timg.hdrnifti.modifyHeader("srow_x:[-3.4,0.0,0.0,-108.5];srow_y:[0.0,3.4,0.0,-102.0];srow_z:[0.0,0.0,5.0,-63.0];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:108.5;qoffset_y:-102.0;qoffset_z:-63.0")
+            timg.saveimage(timgf)
 
         # --- check final geometry
 

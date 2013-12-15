@@ -51,3 +51,45 @@ def fz2zf(inf, outf=None):
     tf.write(out.astype(dataType).tostring())
     tf.close
 
+def reorder(inf, outf=None):
+
+    # ---> check data format
+
+    sform = g.getImgFormat(inf)
+    if sform == '.nii.gz':
+        sf = gzip.open(inf, 'r')
+    else:
+        sf = open(inf,'r')
+
+    # ---> read the header info
+
+    nihdr = g.niftihdr()
+    nihdr.unpackHdr(sf)
+    dataType = np.dtype(nihdr.e + nihdr.dType)
+
+    # ---> read and reshuffle the data
+
+    sf.seek(int(nihdr.vox_offset))
+    img = np.fromstring(sf.read(), dtype=dataType)
+    sf.close()
+    img.shape = (nihdr.frames, nihdr.sizez, nihdr.sizey, nihdr.sizex)
+
+    out = img[:,::-1,...]
+
+    # ---> check data format
+
+    if outf is None:
+        outf = inf
+
+    tform = g.getImgFormat(outf)
+    if tform == '.nii.gz':
+        tf = gzip.open(outf, 'w')
+    else:
+        tf = open(outf,'w')
+
+    # ---> save image data
+
+    tf.write(nihdr.packHdr())
+    tf.write(out.astype(dataType).tostring())
+    tf.close
+
