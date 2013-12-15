@@ -100,7 +100,10 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         try:
             seriesDescription = d.SeriesDescription
         except:
-            continue
+            try:
+                seriesDescription = d.ProtocolName
+            except:
+                seriesDescription = "None"
 
         try:
             time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
@@ -130,8 +133,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         try:
             if d.Manufacturer == 'Philips Medical Systems' and int(d[0x2001, 0x1081].value) > 1:
                 dofz2zf, fz = True, "  (switched fz)"
-            if d.Manufacturer == 'Philips Medical Systems' and d.SpacingBetweenSlices == 0.7:
-                recenter, fz = True, "  (recentered)"
+            if d.Manufacturer == 'Philips Medical Systems' and d.SpacingBetweenSlices in [0.7, 0.8]:
+                recenter, fz = d.SpacingBetweenSlices, "  (recentered)"
         except:
             pass
 
@@ -159,7 +162,10 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 if recenter:
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (c))
                     timg = gimg.gimg(img)
-                    timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
+                    if recenter == 0.7:
+                        timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
+                    elif recenter == 0.8:
+                        timg.hdrnifti.modifyHeader("srow_x:[0.8,0.0,0.0,-94.8];srow_y:[0.0,0.8,0.0,-128.0];srow_z:[0.0,0.0,0.8,-130];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-94.8;qoffset_y:-128.0;qoffset_z:-130.0")
                     timg.saveimage(tfname)
                     os.remove(img)
                 else:
@@ -266,7 +272,11 @@ def sortDicom(folder=".", **kwargs):
         if sqid not in seqs:
             if not os.path.exists(sqfl):
                 os.makedirs(sqfl)
-                print "---> Created subfolder for sequence %s %s - %s" % (sid, sqid, d.SeriesDescription)
+                try:
+                    print "---> Created subfolder for sequence %s %s - %s" % (sid, sqid, d.SeriesDescription)
+                except:
+                    print "---> Created subfolder for sequence %s %s - %s " % (sid, sqid, d.ProtocolName)
+
         tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (sid, sqid, d.SOPInstanceUID))
 
         should_copy = kwargs.get('copy', False)
@@ -292,7 +302,10 @@ def listDicom(folder=None):
         try:
             d    = dicom.read_file(dcm, stop_before_pixels=True)
             time = getDicomTime(d)
-            print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, getID(d), d.SeriesNumber, d.SeriesDescription, time)
+            try:
+                print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, getID(d), d.SeriesNumber, d.SeriesDescription, time)
+            except:
+                print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, getID(d), d.SeriesNumber, d.ProtocolName, time)
         except:
             pass
 
