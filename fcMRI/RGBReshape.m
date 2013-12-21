@@ -67,5 +67,5 @@ switch v
 				c = c+1;
 			end
 		end
-		img = imrotate(img,270);
+		img = imrotate(img,90);
 end
