@@ -1,11 +1,11 @@
-function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore)
+function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes)
 
-%function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore)
-%	
+%function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes)
+%
 %	fc_ExtractROITimeseriesMasked
 %
 %	Extracts and saves region timeseries defined by provided roiinfo file
-%	
+%
 %	flist   	- conc style list of subject image files or conc files, header row, one subject per line
 %   inmask      - per run mask information, number of frames to skip or a vector of frames to keep (1) and reject (0)
 %               - or a string with definition used to extract event-defined timepoints only
@@ -14,25 +14,30 @@ function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, opt
 %   options     - options for alternative output: t - create a tab delimited text file, m - create a matlab file (default)
 %   method      - method for extracting timeseries - mean, pca [mean]
 %   ignore      - do we omit frames to be ignored (
-%               -> no:    do not ignore any additional frames
-%               -> event: ignore frames as marked in .fidl file
-%               -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
+%               -> no:     do not ignore any additional frames
+%               -> event:  ignore frames as marked in .fidl file
+%               -> other:  the column in *_scrub.txt file that matches bold file to be used for ignore mask
+%               -> usevec: as specified in the use vector
 %
-%	
+%
 % 	Created by Grega Repovš on 2009-06-25.
 %   2008-01-23 - Adjusted for a different file list format and an additional ROI mask
 %   2011-02-11 - Rewritten to use gmrimage objects and ability for event defined masks
 %   2012-07-30 - Added option to omit frames specified to be ignored in the fidl file
-%   
+%   2013-12-11 - Added ignore as specified in use vector and rcodes to specify ROI.
+%
 % 	Copyright (c) 2008. All rights reserved.
 %
 
-if nargin < 7
-    ignore = [];
-    if nargin < 6
-        method = 'mean';
-        if nargin < 5
-            options = 'm';
+if nargin < 8
+    rcodes = [];
+    if nargin < 7
+        ignore = [];
+        if nargin < 6
+            method = 'mean';
+            if nargin < 5
+                options = 'm';
+            end
         end
     end
 end
@@ -79,7 +84,7 @@ fprintf(' ... done.');
 
 for n = 1:nsub
     data.subjects{n} = subject(n).id;
-    data.timeseries{n} = []; 
+    data.timeseries{n} = [];
 end
 
 
@@ -92,31 +97,31 @@ for n = 1:nsub
     fprintf('\n ... processing %s', subject(n).id);
 
     % ---> reading ROI file
-	
+
 	fprintf('\n     ... creating ROI mask');
-	
+
 	if isfield(subject(n), 'roi')
 	    sroifile = subject(n).roi;
 	else
 	    sroifile = [];
     end
-	
+
 	roi = gmrimage.mri_ReadROI(roiinfo, sroifile);
 
-	
+
 	% ---> reading image files
-	
+
 	fprintf('\n     ... reading image file(s)');
-	
+
 	y = gmrimage(subject(n).files{1});
 	for f = 2:length(subject(n).files)
 	    y = [y gmrimage(subject(n).files{f})];
     end
-    
+
     fprintf(' ... %d frames read, done.', y.frames);
-	
-	% ---> creating timeseries mask 
-	
+
+	% ---> creating timeseries mask
+
 	if eventbased
 	    mask = [];
 	    if isfield(subject(n), 'fidl')
@@ -132,30 +137,30 @@ for n = 1:nsub
     else
         mask = inmask;
     end
-    
+
     % ---> slicing image
-    
+
     if length(mask) == 1
-        y = y.sliceframes(mask, 'perrun');        
+        y = y.sliceframes(mask, 'perrun');
     else
         y = y.sliceframes(mask);                % this might need to be changed to allow for per run timeseries masks
     end
-    
-    % ---> remove additional frames to be ignored 
-    
+
+    % ---> remove additional frames to be ignored
+
     if ~ismember(ignore, {'no', 'fidl'})
         y = y.mri_Scrub(ignore);
     end
-    
+
 	% ---> extracting timeseries
-	
-	fprintf('\n     ... extracting timeseries ');
-	
-    data.timeseries{n} = y.mri_ExtractROI(roi, [], method);
+
+	fprintf('\n     ... extracting timeseries [%d frames]', y.frames);
+
+    data.timeseries{n} = y.mri_ExtractROI(roi, rcodes, method);
     data.n_roi_vox{n}  = roi.roi.nvox;
-    
+
     fprintf(' ... done!');
-    
+
 end
 
 data.roinames  = roi.roi.roinames;
@@ -174,17 +179,17 @@ if ismember('m', options)
 end
 
 if ismember('t', options)
-    
+
     % ---> open file and print header
-    
+
     [fout message] = fopen([targetf '.txt'],'w');
     fprintf(fout, 'subject');
     for ir = 1:length(data.roinames)
         fprintf(fout, '\t%s', data.roinames{ir});
     end
-    
+
     % ---> print data
-    
+
     for is = 1:nsub
         ts = data.timeseries{is};
         tslen = size(ts,1);
@@ -193,9 +198,9 @@ if ismember('t', options)
             fprintf(fout, '\t%.5f', ts(it,:));
         end
     end
-    
+
     % -- close file
-    
+
     fclose(fout);
 end
 

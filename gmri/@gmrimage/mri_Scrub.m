@@ -39,8 +39,13 @@ fdt = 0.5;
 com = regexp(com, ',|;|:|\|', 'split');
 
 if length(com) < 3
-    if isempty(img.scrub), error('ERROR: mri_Scrub(), missing .scrub data file!'); end
-    mask = img.scrub(:, ismember(img.scrub_hdr, com));
+    if strcmp(com{1}, 'usevec')
+        if isempty(img.use), error('ERROR: mri_Scrub(), missing .use data!'); end
+        mask = img.use == 0;
+    else
+        if isempty(img.scrub), error('ERROR: mri_Scrub(), missing .scrub data file!'); end
+        mask = img.scrub(:, ismember(img.scrub_hdr, com));
+    end
     if length(com) == 2
         do = com{2};
     else
