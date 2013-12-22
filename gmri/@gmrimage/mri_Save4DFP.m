@@ -30,6 +30,12 @@ obj = obj.mri_EmbedStats();
 filename = strtrim(filename);
 obj = obj.unmaskimg;
 
+% -- force littleendian
+%
+% if find(ismember(obj.hdr4dfp.value, 'bigendian'))
+%    obj.hdr4dfp.value{ismember(obj.hdr4dfp.value, 'bigendian')} = 'littleendian';
+% end
+
 mformat = 'b';
 if ismember('littleendian', obj.hdr4dfp.value)
     mformat = 'l';
