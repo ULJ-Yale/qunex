@@ -51,6 +51,11 @@ fz2zf inf=<input_image> [outf=<output_image>]
     - outf: output image filename
     If outf is not provided, it replaces the original file.
 
+reorder inf=<input_image> [outf=<output_image>]
+    Reorders the slices (y dimension) for images that are upside down.
+    - inf:  input image filename to be reordered
+    - outf: output image filename
+    If outf is not provided, it replaces the original file.
 
 HCP setup commands
 ------------------
@@ -101,6 +106,7 @@ commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': (
             'sortDicom'     : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
             'dicom2nii'     : { 'com': g_mri.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose') },
             'fz2zf'         : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
+            'reorder'       : { 'com': g_mri.g_NIfTI.reorder,          'args': ('inf', 'outf') },
             'setupHCP'      : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },
             'printniftihdr' : { 'com': g_mri.g_img.printniftihdr,      'args': ('filename', ) },
             'modniftihdr'   : { 'com': g_mri.g_gimg.modifyNIfTIHeader, 'args': ('filename', 's')},

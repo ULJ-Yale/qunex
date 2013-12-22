@@ -135,8 +135,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 dofz2zf, fz = True, "  (switched fz)"
             if d.Manufacturer == 'Philips Medical Systems' and d.SpacingBetweenSlices in [0.7, 0.8]:
                 recenter, fz = d.SpacingBetweenSlices, "  (recentered)"
-            if d.Manufacturer == 'SIEMENS' and d.InstitutionName == 'Univerisity North Carolina' and d.AcquisitionMatrix == [0, 64, 64, 0]:
-                reorder, fz = True, " (reordered slices)"
+            #if d.Manufacturer == 'SIEMENS' and d.InstitutionName == 'Univerisity North Carolina' and d.AcquisitionMatrix == [0, 64, 64, 0]:
+            #    reorder, fz = True, " (reordered slices)"
         except:
             pass
 
