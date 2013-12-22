@@ -1,11 +1,11 @@
 
-function [] = g_ComputeBOLDStats(boldfile, mask, target, store, scrub, verbose);
+function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 
-%function [] = g_ComputeBOLDStats(boldfile, mask, target, store, scrub, verbose);
+%function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %
 %	Computes BOLD run per frame statistics and scrubs.
 %
-%	boldfile   	- gmrimage or a path to a bold file to process
+%	img      	- gmrimage or a path to a bold file to process
 %   mask        - gmrimage or a path to a mask file to use
 %   target      - folder to save results into, default: where bold image is, 'none': do not save in external file
 %   store       - how to store the data - 'same': in the same file, '<ext>': new file with extension, '': no img file
@@ -38,143 +38,134 @@ brainthreshold = 300;
 
 % ======= Run main
 
-if mask
-    if verbose, fprintf('\n\nProcessing subject %s...', subject(s).id); end
-    %   --- read in roi file
-    mask = [];
-    if rois
-        if ~isempty(subject(s).roi)
-            if ~strfind(subject(s).roi, 'none')
-                if verbose, fprintf('\n---> Reading mask'); end
-                mask = gmrimage(strfind(subject(s).roi));
-            end
-        end
-    end
+% --- check mask
 
-    nfiles = length(subject(s).files);
-	for n = 1:nfiles
-
-	    % --- read image
-
-	    if verbose, fprintf('\n---> Reading %s', subject(s).files{n}); end
-	    img = gmrimage(subject(s).files{n});
-
-        % --- find all below threshold voxels
-
-        img.data = img.image2D;
-        img.data(isnan(img.data)) = 0;
-        img.data(img.data < brainthreshold) = 0;
-        bmask = img.zeroframes(1);
-        bmask.data = min(img.data, [], 2) > 0;
-
-        % --- apply also subject roi mask
-
-	    if mask
-	        bmask.data(mask.data == 0) = 0;
-	    end
-
-        % --- compute stats
-
-        if verbose, fprintf(' ... computing stats'); end
-        stats = mri_StatsTime(img, [], bmask);
-
-        % --------------------------------------------------------------
-        %                                       save in an external file
-
-        ext = true;
-        if target
-            if strcmp(target, 'none')
-                ext = false;
-            end
-        end
-
-        [w fname] = fileparts(subject(s).files{n});
-
-        % --- get filename to save to
-
-        fname = strrep(fname, '.img', '');
-        fname = strrep(fname, '.ifh', '');
-        fname = strrep(fname, '.4dfp', '');
-        fname = strrep(fname, '.gz', '');
-        fname = strrep(fname, '.nii', '');
-
-
-        % --------------------------------------------------------------
-        %                                                  prepare stats
-
-        img.fstats_hdr = {'frame', 'n', 'm', 'var', 'sd', 'dvars', 'dvarsm', 'dvarsme', 'fd'};
-        img.fstats      = zeros(img.frames, 9);
-        img.fstats(:,1) = 1:img.frames;
-        img.fstats(:,2) = stats.n;
-        img.fstats(:,3) = stats.mean;
-        img.fstats(:,4) = stats.var;
-        img.fstats(:,5) = stats.sd;
-        img.fstats(:,6) = stats.dvars;
-        img.fstats(:,7) = stats.dvarsm;
-        img.fstats(:,8) = stats.dvarsme;
-
-
-        % --------------------------------------------------------------
-        %                                              compute scrubbing
-
-        if ~isempty(scrub)
-            img = img.mri_ComputeScrub(scrub);
-        end
-
-
-        % --------------------------------------------------------------
-        %                                                 embed and save
-
-        if ~isempty(store)
-            if strcmp(store, 'same')
-                img.mri_saveimage();
-            else
-                tname = strrep(img.filename, img.rootfilename, [img.rootfilename '_' store]);
-                img.mri_saveimage(tname);
-            end
-        end
-
-
-        % --------------------------------------------------------------
-        %                                                  save external
-
-        if ext
-
-            % --- save stats
-
-            if verbose, fprintf(' ... saving stats'); end
-
-            if ismember('fd', img.fstats_hdr)
-                stats.fd = img.fstats(:, ismember(img.fstats_hdr, {'fd'}));
-            else
-                stats.fd = zeros(1, img.frames);
-            end
-
-            fout = fopen(fullfile(w, target, [fname '.bstats']), 'w');
-            fprintf(fout, 'frame\tn\tm\tvar\tsd\tdvars\tdvarsm\tdvarsme\tfd\n');
-            for f = 1:img.frames
-                fprintf(fout, '%d\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', f, stats.n(f), stats.mean(f), stats.var(f), stats.sd(f), stats.dvars(f), stats.dvarsm(f), stats.dvarsme(f), stats.fd(f));
-            end
-            fclose(fout);
-
-            % --- save scrub
-
-            if ~isempty(img.scrub_hdr)
-
-                if verbose, fprintf(' ... saving scrubbing data'); end
-                fout = fopen(fullfile(w, target, [fname '.scrub']), 'w');
-                fprintf(fout, 'frame\tmov\tdvars\tdvarsme\tidvars\tidvarsme\tudvars\tudvarsme\n');
-                for f = 1:img.frames
-                    fprintf(fout, '%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n', img.scrub(f,:));
-                end
-                fclose(fout);
-            end
-        end
-
-        if verbose, fprintf(' ... done!'); end
+if ~isempty(mask)
+    if ~isa(mask, 'gmrimage')
+        if verbose, fprintf('\n---> Reading mask [%s]', mask); end
+        mask = gmrimage(mask);
     end
 end
 
-if verbose, fprintf('\n\nFINISHED!'); end
+% --- check bold
+
+if ~isa(img, 'gmrimage')
+    if verbose, fprintf('\n---> Reading bold [%s]', img); end
+    img = gmrimage(img);
+end
+
+% --- find all below threshold voxels
+
+img.data = img.image2D;
+img.data(isnan(img.data)) = 0;
+img.data(img.data < brainthreshold) = 0;
+bmask = img.zeroframes(1);
+bmask.data = min(img.data, [], 2) > 0;
+
+% --- apply also subject roi mask
+
+if mask
+    bmask.data(mask.data == 0) = 0;
+end
+
+% --- compute stats
+
+if verbose, fprintf(' ... computing stats'); end
+stats = img.mri_StatsTime([], bmask);
+
+% --------------------------------------------------------------
+%                                       save in an external file
+
+ext = true;
+if target
+    if strcmp(target, 'none')
+        ext = false;
+    end
+end
+
+[w fname] = fileparts(subject(s).files{n});
+
+% --- get filename to save to
+
+fname = strrep(fname, '.img', '');
+fname = strrep(fname, '.ifh', '');
+fname = strrep(fname, '.4dfp', '');
+fname = strrep(fname, '.gz', '');
+fname = strrep(fname, '.nii', '');
+
+
+% --------------------------------------------------------------
+%                                                  prepare stats
+
+img.fstats_hdr = {'frame', 'n', 'm', 'var', 'sd', 'dvars', 'dvarsm', 'dvarsme', 'fd'};
+img.fstats      = zeros(img.frames, 9);
+img.fstats(:,1) = 1:img.frames;
+img.fstats(:,2) = stats.n;
+img.fstats(:,3) = stats.mean;
+img.fstats(:,4) = stats.var;
+img.fstats(:,5) = stats.sd;
+img.fstats(:,6) = stats.dvars;
+img.fstats(:,7) = stats.dvarsm;
+img.fstats(:,8) = stats.dvarsme;
+
+
+% --------------------------------------------------------------
+%                                              compute scrubbing
+
+if ~isempty(scrub)
+    img = img.mri_ComputeScrub(scrub);
+end
+
+
+% --------------------------------------------------------------
+%                                                 embed and save
+
+if ~isempty(store)
+    if strcmp(store, 'same')
+        img.mri_saveimage();
+    else
+        tname = strrep(img.filename, img.rootfilename, [img.rootfilename '_' store]);
+        img.mri_saveimage(tname);
+    end
+end
+
+
+% --------------------------------------------------------------
+%                                                  save external
+
+if ext
+
+    % --- save stats
+
+    if verbose, fprintf(' ... saving stats'); end
+
+    if ismember('fd', img.fstats_hdr)
+        stats.fd = img.fstats(:, ismember(img.fstats_hdr, {'fd'}));
+    else
+        stats.fd = zeros(1, img.frames);
+    end
+
+    fout = fopen(fullfile(w, target, [fname '.bstats']), 'w');
+    fprintf(fout, 'frame\tn\tm\tvar\tsd\tdvars\tdvarsm\tdvarsme\tfd\n');
+    for f = 1:img.frames
+        fprintf(fout, '%d\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', f, stats.n(f), stats.mean(f), stats.var(f), stats.sd(f), stats.dvars(f), stats.dvarsm(f), stats.dvarsme(f), stats.fd(f));
+    end
+    fclose(fout);
+
+    % --- save scrub
+
+    if ~isempty(img.scrub_hdr)
+
+        if verbose, fprintf(' ... saving scrubbing data'); end
+        fout = fopen(fullfile(w, target, [fname '.scrub']), 'w');
+        fprintf(fout, 'frame\tmov\tdvars\tdvarsme\tidvars\tidvarsme\tudvars\tudvarsme\n');
+        for f = 1:img.frames
+            fprintf(fout, '%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n', img.scrub(f,:));
+        end
+        fclose(fout);
+    end
+end
+
+if verbose, fprintf(' ... done!'); end
 
 
