@@ -1,7 +1,8 @@
-function [] = fc_ComputeSeedMaps(flist, roif, roinfile, inmask, options, targetf)
+function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore)
 
+%function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore)
 %	
-%	fc_ComputeSeedMaps
+%	fc_ComputeSeedMapsMultiple
 %
 %	A memory optimised version of the script.
 %	
@@ -10,12 +11,17 @@ function [] = fc_ComputeSeedMaps(flist, roif, roinfile, inmask, options, targetf
 %	flist   	- conc style list of subject image files or conc files, header row, one subject per line
 %	roif		- 4dfp image file with ROI
 %	roinfile	- file with region names, one region per line in format: "value\tname"
-%	mask		- an array mask defining which frames to use (1) and which not (0)
+%	inmask		- an array mask defining which frames to use (1) and which not (0)
 %	options		- a string defining which subject files to save
 %		r		- save map of correlations
 %		f		- save map of Fisher z values
 %		z		- save map of Z scores
 %	tagetf		- the folder to save images in
+%   method      - method for extracting timeseries - mean, pca [mean]
+%   ignore      - do we omit frames to be ignored (
+%               -> no:    do not ignore any additional frames
+%               -> event: ignore frames as marked in .fidl file
+%               -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
 %
 %	It saves group files:
 %		_group_Fz	- average Fz over all the subjects
@@ -23,292 +29,252 @@ function [] = fc_ComputeSeedMaps(flist, roif, roinfile, inmask, options, targetf
 %		_group_Z	- p values converted to Z scores based on t-test testing if Fz over subject differ significantly from 0 (two-tailed)
 %	
 % 	Created by Grega Repovš on 2008-02-07.
+%   2008-01-23 Adjusted for a different file list format and an additional ROI mask [Grega Repovš]
+%   2011-11-10 Changed to make use of gmrimage and allow ignoring of bad frames [Grega Repovš]
 % 	Copyright (c) 2008. All rights reserved.
 
 
+if nargin < 7
+    ignore = [];
+    if nargin < 6
+        method = [];
+        if nargin < 5
+            targetf = [];
+            if nargin < 4
+                options = [];
+                if nargin < 3
+                    inmask = [];
+                    if nargin < 2
+                        error('ERROR: At least boldlist and ROI .names file have to be specified!');
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+if isempty(targetf)
+    method = '.';
+end
+
+if isempty(method)
+    method = 'mean';
+end
+
+if isempty(ignore)
+    ignore = 'no';
+end
+
+if ~ischar(ignore)
+    error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
+end
+
+eventbased = false;
+if isa(inmask, 'char')
+    eventbased = true;
+    if strcmp(ignore, 'fidl')
+        fignore = 'ignore';
+    else
+        fignore = 'no';
+    end
+end
+
+% ----- Check if the files are there!
+
+go = true;
+
+fprintf('\n\nChecking ...\n');
+go = go & g_CheckFile(flist, 'image file list','error');
+go = go & g_CheckFile(roiinfo, 'ROI definition file','error');
+g_CheckFolder(targetf, 'results folder');
+
+if ~go
+	fprintf('ERROR: Some files were not found. Please check the paths and start again!\n\n');
+	return
+end
+
+% ---- list name
+
+[fpathstr, fname, fext] = fileparts(flist);
+
+lname = strrep(fname, '.list', '');
+lname = strrep(lname, '.conc', '');
+lname = strrep(lname, '.4dfp', '');
+lname = strrep(lname, '.img', '');
+
+
+% ---- Start
+
 fprintf('\n\nStarting ...');
 
-
-startframe = 1;
-if length(inmask) == 1
-    startframe = inmask + 1;
-    inmask = [];
-end
-
 %   ------------------------------------------------------------------------------------------
-%   ------------------------------------------------ get list of region codes and region names
-
-fprintf('\n ... reading ROI names');
-
-roicode = [];
-roiname = {};
-
-rois = fopen(roinfile);
-c = 0;
-while feof(rois) == 0
-	s = fgetl(rois);
-
-	c = c + 1;
-	[roistr, roiname{c}] = strtok(s, '|');
-	roiname{c} = strrep(roiname{c}, '|', '');
-	roicode(c) = str2num(roistr);
-end
-nroi = c;
-fclose(rois);
-
-fprintf(' ... done.');
-
-%   ------------------------------------------------------------------------------------------
-%   -------------------------------------------------- make a list of all the files to process
+%                                                      make a list of all the files to process
 
 fprintf('\n ... listing files to process');
 
-sfiles = g_ReadConcFile(flist);
-nsub = length(sfiles);
-
-% --- check if files are concs and read them if so
-
-for n = 1:nsub
-
-	cfile = sfiles{n};
-	if (findstr(char(cfile), '.conc'))
-%	if (cfile(length(cfile)-5:end) == '.conc')
-		subject(n).files = g_ReadConcFile(cfile);
-	else
-		subject(n).files{1} = cfile;
-	end
-
-end
+subject = g_ReadSubjectsList(flist);
+nsub = length(subject);
 
 fprintf(' ... done.');
 
 
 %   ------------------------------------------------------------------------------------------
-%   -------------------------------------------- The main loop ... go through all the subjects
+%                                                The main loop ... go through all the subjects
 
-%   --- Get variables ready first
-
-fprintf('\n ... reading ROI image');
-
-g_fz_img = zeros(48*48*64,nsub,nroi);
-roi		 = g_Read4DFP(roif, 'int8');
-
-fprintf('\n ... done.');
-book = [786 147456];
-
-x = zeros(book, 'single');
-y = zeros(book, 'single');
-%sx = zeros(book);
-%sy = zeros(book);
-%sx2 = zeros(book);
-%sy2 =zeros(book);
-%sxy = zeros(book);
-%r = zeros(book);
-%Fz = zeros(book);
-%Z = zeros(book);
 
 for n = 1:nsub
 
-	%   --- reading in image files
+    fprintf('\n ... processing %s', subject(n).id);
 
-	fprintf('\n ... processing %s', char(sfiles{n}));
+    % ---> reading ROI file
+	
+	fprintf('\n     ... creating ROI mask');
+	
+	if isfield(subject(n), 'roi')
+	    sroifile = subject(n).roi;
+	else
+	    sroifile = [];
+    end
+	
+	roi = gmrimage.mri_ReadROI(roiinfo, sroifile);
+
+	
+	% ---> reading image files
+	
 	fprintf('\n     ... reading image file(s)');
-
-	y = [];
-
-	nfiles = length(subject(n).files);
 	
-	sumframes = 0;
-	if nfiles > 1
-		for m = 1:nfiles
-			in = g_Read4DFP(subject(n).files{m}, 'single');
-			nframes = size(in,1)/(48*48*64);
-			in = reshape(in, 48*48*64, nframes);
-			y = [y in(:,startframe:end)];
-			fprintf(' %d ', m);
-			sumframes = sumframes + nframes;
-		end
-		in = [];
-	else
-		fim = fopen(subject(n).files{1}, 'r', 'b');
-		y = fread(fim, 'float32=>single');
-		fclose(fim);
-		nframes = size(y,1)/(48*48*64);
-		y = reshape(y, 48*48*64, nframes);
-		y = y(:,startframe:end);
-		sumframes = nframes;
-	end
-
-	fprintf(' ... %d frames read, done.', sumframes);
-	
-	if (isempty(inmask))
-		mask = ones(1, nframes);
-	else
-		mask = inmask;
-		if (size(mask,2) ~= nframes)
-			fprintf('\n\nERROR: Length of img files (%d frames) does not match length of mask (%d frames).', nframes, size(mask,2));
-		end
-	end
-	
-	if (min(mask) == 0)
-		fprintf(' ... masking.');
-		y = y(:,mask==1);
-	end
-	N = size(y, 2);
-	y = y'; 
-	
-	%   --- creating base filename
-	
-	[fpathstr, fname, fext, fversn] = fileparts(sfiles{n});
-	
-	bname = strrep(fname, '.conc', '');
-	bname = strrep(bname, '.4dfp', '');
-	bname = strrep(bname, '.img', '');
-		
-	%   --- doing correlations for each region
-	
-	% --- get memory
-	
-	%book = size(y);
-	%x = [];
-	%x = zeros(book, 'single');
-		
-	
-	for m = 1:nroi
-	
-		fprintf('\n     ... computing correlation map for seed region %s ', roiname{m});
-		
-		rmask = roi == roicode(m);
-		roits = mean(y(:, rmask),2);
-		
-		% ------------------------> setting up
-	 			
-		x = [];
-		x = repmat(roits,1,147456);
-		fprintf('.');
-
-		% ------------------------> compute correlation
-
-   % 	sx = sum(x,1);			fprintf('.');
-   % 	sy = sum(y,1);			fprintf('.');
-   % 	sx2 = sum(x.*x, 1);		fprintf('.');
-   % 	sy2 = sum(y.*y, 1);		fprintf('.');
-   % 	sxy = sum(x.*y, 1);		fprintf('.');
-   % 
-   % 	r = (N*sxy - sx.*sy)./sqrt((N*sx2 - sx.*sx).*(N*sy2 - sy.*sy));		fprintf('.');
-   % 	
-   % 	sx = []; sy = []; sx2 = []; sy2 =[]; sxy = []; 
-		
-		
-	
-		% ------------------------> alternate computation of correlation
-
-	%	sx = sum(x,1);			fprintf('.');
-	%	sy = sum(y,1);			fprintf('.');
-	%	sx2 = sum(x.*x, 1);		fprintf('.');
-	%	sy2 = sum(y.*y, 1);		fprintf('.');
-	%	sxy = sum(x.*y, 1);		fprintf('.');
+	y = gmrimage(subject(n).files{1});
+	for f = 2:length(subject(n).files)
+	    y = [y gmrimage(subject(n).files{f})];
+    end
     
-		r = (N*sum(x.*y, 1) - sum(x,1).*sum(y,1))./sqrt((N*sum(x.^2, 1) - sum(x,1).^2).*(N*sum(y.^2, 1) - sum(y,1).^2));		fprintf('.');
-		
-	%	sx = []; sy = []; sx2 = []; sy2 =[]; sxy = []; 
-	
-	
-	
-	
-	
-	% ---- alternative
-	
-  %	 y = img';
-  %	 x = roits';
-  %	 [r, p] = corr(y, x);
-	
-		% ------------------------> compute Fz and significance
+    fprintf(' ... %d frames read, done.', y.frames);
 
-		Fz = fc_Fisher(r);			fprintf('.');
-		
-		if strfind(options, 'z')
-			Z = Fz/(1/sqrt(N-3));			fprintf('.');
-		end
-		
-	% Z = icdf('Normal', (1-p), 0, 1);	
-		
-		fprintf(' done.');
-		
-		% ------------------------> saving images
-		
-		if (length(options)>0)
-			fprintf('\n     ... saving images');
-			
-			ifhextra.key = 'number of samples';
-			ifhextra.value = int2str(N);
-			
-			if strfind(options, 'r')
-				g_Save4DFP([targetf '/' bname '_' roiname{m} '_r.4dfp.img'], r, ifhextra); 		fprintf(' r');
-			end
-			if strfind(options, 'f')
-				g_Save4DFP([targetf '/' bname '_' roiname{m} '_Fz.4dfp.img'], Fz, ifhextra); 		fprintf(' Fz');
-			end
-			if strfind(options, 'z')
-				g_Save4DFP([targetf '/' bname '_' roiname{m} '_Z.4dfp.img'], Z, ifhextra); 		fprintf(' Z');
-			end
-			
-			fprintf(' ... done.');
-
-		end
-		
-		g_fz_img(:,n,m) = reshape(Fz, 48*48*64, 1);
-
-		r = []; Fz = []; Z = [];
+    % ---> creating timeseries mask 
 	
+	if eventbased
+	    mask = [];
+	    if isfield(subject(n), 'fidl')
+            if subject(n).fidl
+                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, fignore);
+    	        nmask = [];
+                for r = 1:length(mask)
+                    nmask = [nmask; sum(mask(r).matrix,2)>0];
+                end
+                mask = nmask;
+            end
+        end
+    else
+        mask = inmask;
+    end
+    
+    % ---> slicing image
+    
+    if length(mask) == 1
+        y = y.sliceframes(mask, 'perrun');        
+    else
+        y = y.sliceframes(mask);                % this might need to be changed to allow for per run timeseries masks
+    end
+    
+    % ---> remove additional frames to be ignored 
+    
+    if ~ismember(ignore, {'no', 'fidl'})
+        scol = ismember(y.scrub_hdr, ignore);
+        if sum(scol) == 1;
+            mask = y.scrub(:,scol)';
+            y = y.sliceframes(mask==0);
+        else
+            fprintf('\n         WARNING: Field %s not present in scrubbing data, no frames scrubbed!', ignore);
+        end
+    end
+    
+	% ---> extracting ROI timeseries
+	
+	fprintf('\n     ... extracting timeseries ');
+	
+    ts = y.mri_ExtractROI(roi, [], method);
+    
+    fprintf(' ... done!');
+    
+    fprintf('\n     ... computing seed maps ');
+	
+	if ~isempty(strfind(options, 'p')) || ~isempty(strfind(options, 'z'))
+        [pr, p] = y.mri_ComputeCorrelations(ts');
+        if strfind(options, 'z')
+            z = p.mri_p2z(pr);
+        end
+    else
+        pr = y.mri_ComputeCorrelations(ts');
+    end
+    
+    fprintf(' ... done!');
+    
+    % ------> Embedd results
+    
+    nroi = length(roi.roi.roinames);
+    for r = 1:nroi
+        
+        % -------> Create data files if it is the first run
+        
+        if n == 1
+            group(r).Fz = roi.zeroframes(nsub);
+            group(r).roi = roi.roi.roinames{r};
+        end
+        
+        % -------> Embedd data
+        
+        group(r).Fz.data(:,n) = fc_Fisher(pr.data(:,r));
+        
+        % ----> if needed, save individual images
+        
+        if strfind(options, 'r')
+            pr.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_r']);   fprintf(' r');
+    	end
+    	if strfind(options, 'f')
+            group(r).Fz.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Fz']);   fprintf(' Fz');
+    	end
+    	if strfind(options, 'p')
+            p.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_p']);   fprintf(' p');
+    	end
+    	if strfind(options, 'z')
+    	    z.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Z']);   fprintf(' Z');
+    	end
+    	
 	end
-
+            
 end
 
 
 %   ---------------------------------------------
 %   --- And now group results
 
-
 fprintf('\n\n... computing group results');
 
+for r = 1:nroi
+    
+    for s = 1:nsub
+        extra(s).key = ['subject ' int2str(n)];
+        extra(s).value = subject(n).id;
+    end
 
-%   --- setting up file details
+	fprintf('\n    ... for region %s', group(r).roi);
 
-[fpathstr, fname, fext, fversn] = fileparts(flist);
-
-bname = strrep(fname, '.list', '');
-bname = strrep(fname, '.conc', '');
-bname = strrep(bname, '.4dfp', '');
-bname = strrep(bname, '.img', '');
-
-ifhextra.key = 'number of subjects';
-ifhextra.value = int2str(nsub);
-
-
-%   --- running ROI loop
-
-for m = 1:nroi
-
-	fprintf('\n    ... for region %s', roiname{m});
-
-	Fz = g_fz_img(:,:,m)';
-	p  = fc_ttest(Fz);
-	Fz = mean(Fz,1);
-%	Z = fc_ptoz(1-(p),0,1) .* sign(Fz);
-	Z = icdf('Normal', (1-(p/2)), 0, 1) .* sign(Fz);
-	r = fc_FisherInv(Fz);
+    [p Z M] = group(r).Fz.mri_TTestZero();
+	pr = M.mri_FisherInv();
 	
 	fprintf('... saving ...');
-
-	g_Save4DFP([targetf '/' bname '_' roiname{m} '_group_r.4dfp.img'], r, ifhextra); 		fprintf(' r');
-	g_Save4DFP([targetf '/' bname '_' roiname{m} '_group_Fz.4dfp.img'], Fz, ifhextra); 	fprintf(' Fz');
-	g_Save4DFP([targetf '/' bname '_' roiname{m} '_group_Z.4dfp.img'], Z, ifhextra); 		fprintf(' Z');
-	g_Save4DFP([targetf '/' bname '_' roiname{m} '_all_Fz.4dfp.img'], g_fz_img(:,:,m)); 		fprintf(' all Fz');
+    
+    pr.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_r'], extra);            fprintf(' r');
+    M.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_Fz'], extra);           fprintf(' Fz');
+    Z.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_Z'], extra);            fprintf(' Z');
+    group(r).Fz.mri_saveimage([targetf '/' lname '_' group(r).roi '_all_Fz'], extra);   fprintf(' all Fz');
 	
 	fprintf(' ... done.');
 
 end
+
+
 
 fprintf('\n\n FINISHED!\n\n');
 
