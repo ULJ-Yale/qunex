@@ -150,6 +150,10 @@ if ext
     for f = 1:img.frames
         fprintf(fout, '%d\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', f, stats.n(f), stats.mean(f), stats.var(f), stats.sd(f), stats.dvars(f), stats.dvarsm(f), stats.dvarsme(f), stats.fd(f));
     end
+    fprintf(fout, '#frame\tn\tm\tvar\tsd\tdvars\tdvarsm\tdvarsme\tfd\n');
+    fprintf(fout, '#max\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', max(stats.n), max(stats.mean), max(stats.var), max(stats.sd), max(stats.dvars), max(stats.dvarsm), max(stats.dvarsme), max(stats.fd));
+    fprintf(fout, '#mean\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', mean(stats.n), mean(stats.mean), mean(stats.var), mean(stats.sd), mean(stats.dvars), mean(stats.dvarsm), mean(stats.dvarsme), mean(stats.fd));
+
     fclose(fout);
 
     % --- save scrub
@@ -162,6 +166,9 @@ if ext
         for f = 1:img.frames
             fprintf(fout, '%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n', img.scrub(f,:));
         end
+        fprintf(fout, '#frame\tmov\tdvars\tdvarsme\tidvars\tidvarsme\tudvars\tudvarsme\n');
+        fprintf(fout, '#sum\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n', sum(img.scrub(:,2:end)));
+        fprintf(fout, '#%%\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n', sum(img.scrub(:,2:end))./size(img.scrub,1)*100);
         fclose(fout);
     end
 end
