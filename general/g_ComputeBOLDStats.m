@@ -83,7 +83,7 @@ if target
     end
 end
 
-[w fname] = fileparts(subject(s).files{n});
+[w fname] = fileparts(img.filename);
 
 % --- get filename to save to
 
@@ -145,7 +145,7 @@ if ext
         stats.fd = zeros(1, img.frames);
     end
 
-    fout = fopen(fullfile(w, target, [fname '.bstats']), 'w');
+    fout = fopen(fullfile(target, [fname '.bstats']), 'w');
     fprintf(fout, 'frame\tn\tm\tvar\tsd\tdvars\tdvarsm\tdvarsme\tfd\n');
     for f = 1:img.frames
         fprintf(fout, '%d\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', f, stats.n(f), stats.mean(f), stats.var(f), stats.sd(f), stats.dvars(f), stats.dvarsm(f), stats.dvarsme(f), stats.fd(f));
@@ -157,7 +157,7 @@ if ext
     if ~isempty(img.scrub_hdr)
 
         if verbose, fprintf(' ... saving scrubbing data'); end
-        fout = fopen(fullfile(w, target, [fname '.scrub']), 'w');
+        fout = fopen(fullfile(target, [fname '.scrub']), 'w');
         fprintf(fout, 'frame\tmov\tdvars\tdvarsme\tidvars\tidvarsme\tudvars\tudvarsme\n');
         for f = 1:img.frames
             fprintf(fout, '%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n', img.scrub(f,:));
@@ -166,6 +166,6 @@ if ext
     end
 end
 
-if verbose, fprintf(' ... done!'); end
+if verbose, fprintf(' ... done!\n'); end
 
 
