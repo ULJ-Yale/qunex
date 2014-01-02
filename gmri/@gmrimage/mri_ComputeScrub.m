@@ -32,18 +32,7 @@ param.dvarsmt  = 3.0;
 param.dvarsmet = 1.6;
 param.reject   = 'udvarsme';
 
-comm = regexp(comm, ',|;|:|\|', 'split');
-if length(comm)>=2
-    comm = reshape(comm, 2, [])';
-    for p = size(comm, 1)
-        val = str2num(comm{p,2});
-        if isempty(val)
-            setfield(param, comm{p,1}, comm{p,2});
-        else
-            setfield(param, comm{p,1}, val);
-        end
-    end
-end
+param = g_SetParam(param, comm);
 
 % ---- check for the relevant data
 
@@ -127,15 +116,17 @@ function [ts] = shiftTS(ts, shift)
 
 function [ts] = spreadTS(ts, s, e)
 
-    nts = zeros(size(ts));
+    tsl = size(ts,2);
+    tsw = size(ts,1);
+    nts = zeros(tsw, tsl);
+
     for n = s:e
         if n == 0
             nts = nts + ts;
         elseif n > 0
-            nts = nts + [zeros(1, n) ts(1:end-n)];
+            nts = nts + [zeros(tsw, n) ts(:, 1:end-n)];
         else
-            nts = nts + [ts(1+n:end) zeros(1, n)];
+            nts = nts + [ts(:,1-n:end) zeros(tsw, -n)];
         end
     end
     ts = nts > 0;
-
