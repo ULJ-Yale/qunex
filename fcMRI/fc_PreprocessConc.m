@@ -248,6 +248,9 @@ for current = do
             else
                 if img(b).empty
                     img(b) = img(b).mri_readimage(file(b).sfile);
+                    if ~isempty(omit)
+                        img(b).use(1:omit) = 0;
+                    end
                 end
 
                 switch current

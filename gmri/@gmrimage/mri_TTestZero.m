@@ -1,14 +1,14 @@
 function [p Z M SE t] = mri_TTestZero(obj, verbose)
 
 %function [p Z M SE t] = mri_TTestZero(obj, verbose)
-%	
+%
 %	Computes t-test against zero across all the volumes in the image.
-%	
+%
 %	obj     - the images to work on
 %   verbose - should it talk a lot [no]
 %
 %   Returns
-%       p   - an image with p-values 
+%       p   - an image with p-values
 %       t   - an image with t-values
 %       Z   - an image with Z-scores converted from p-values
 %       M   - an image with means across all volumes
@@ -27,6 +27,8 @@ end
 if verbose, fprintf('\nSetting up data'), end
 
 obj.data = obj.image2D;
+obj = obj.sliceframes(~isnan(nanmean(obj.data)));
+
 M = obj.zeroframes(1);
 p = obj.zeroframes(1);
 
@@ -40,7 +42,7 @@ else
     [h, p.data] = ttest(obj.data, 0, 0.05, 'both', 2);
 end
 
-M.data = mean(obj.data, 2);
+M.data = nanmean(obj.data, 2);
 
 % ---- compute Z scores
 

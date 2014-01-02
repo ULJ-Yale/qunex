@@ -21,40 +21,43 @@ function [img] = mri_Filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
 
 %------- Check input
 
-if nargin < 6
-    ignore = [];
-    if nargin < 5
-        verbose = false;
-        if nargin < 4
-            omit = 0;
-            if nargin < 3
-                lp_sigma = 0;
-            end
-        end
-    end
-end
+if nargin < 6, ignore = []; end
+if nargin < 5, verbose = false; end
+if nargin < 4, omit = 0; end
+if nargin < 3, lp_sigma = 0; end
 
 if isempty(ignore), ignore = 'keep'; end
 img.data = img.image2D;
 
-%------- Interpolate?
-
-fprintf('\n bad frames: %d, ignore: %s', sum(img.use ==0), ignore);
-
-if sum(img.use==0) > 0 & (~strcmp(ignore, 'keep'))
-    if verbose, fprintf('\n---> interpolating %d frames\n', sum(img.use==0)); end
-    x  = [1:img.frames]';
-    xi = x;
-    x  = x(img.use);
-    Y  = img.data(:, img.use)';
-    img.data = interp1(x, Y, xi, ignore)';
+use = ones(1, img.frames);
+if omit > 0
+    use(1:omit) = 0;
 end
+if ~strcmp(ignore, 'keep')
+    use = img.use & (use > 0);
+end
+ffirst = find(use, 1, 'first');
+flast  = find(use, 1, 'last');
 
 %------- Prepare data
 
 nvox     = img.voxels;
-len      = img.frames - omit;
-data     = img.data(:,omit+1:img.frames);
+len      = flast - ffirst + 1;
+data     = img.data(:,ffirst:flast);
+use      = use(ffirst:flast);
+
+%------- Interpolate?
+fprintf('\n---> triming: %d on start, %d on end', ffirst-1, img.frames-flast);
+fprintf('\n---> remaining bad frames: %d, action: %s', sum(use==0), ignore);
+
+if sum(use==0) > 0 & (~strcmp(ignore, 'keep'))
+    if verbose, fprintf('\n---> interpolating %d frames\n', sum(use==0)); end
+    x  = [1:len]';
+    xi = x;
+    x  = x(use==1);
+    Y  = data(:, use==1)';
+    data = interp1(x, Y, xi, ignore)';
+end
 
 %------- Create mask, window, and tmp
 
@@ -152,4 +155,4 @@ else
     out = tmp;
 end
 
-img.data(:,omit+1:img.frames) = out;
+img.data(:,ffirst:flast) = out;
