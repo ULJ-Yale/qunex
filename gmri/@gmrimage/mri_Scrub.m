@@ -6,7 +6,7 @@ function [img] = mri_Scrub(img, com)
 %
 %       input:
 %           img   - mrimage object
-%           comm  - the description of how to scrub
+%           com   - the description of how to scrub
 %                      format:
 %                      a) string only --> use the relevant column from .scrub file
 %                      b) string:string --> use the relevant columnd from .scrub and then either
