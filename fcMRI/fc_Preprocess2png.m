@@ -124,7 +124,7 @@ function x = SaveNuisancePNG(nfilepng, nroi, bold1);
 	img(:,:,2) = T2;
 	img(:,:,3) = T2;
 
-	img = img/max(max(max(img)));
+	img = img/2000 % max(max(max(img))); --- Change due to high values in embedded data!
 	img = img * 0.7;
 	img(:,:,3) = img(:,:,3)+WB*0.3;
 	img(:,:,2) = img(:,:,2)+V*0.3;

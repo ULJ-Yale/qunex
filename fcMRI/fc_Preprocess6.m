@@ -199,7 +199,7 @@ for current = do
         if img.empty
             img = img.mri_readimage(sfile);
             if ~isempty(omit)
-                img(b).use(1:omit) = 0;
+                img.use(1:omit) = 0;
             end
         end
 
@@ -486,7 +486,7 @@ function [] = SaveNuisanceMasks(file, WB, V, WM, eROI, glm);
     img(:,:,2) = O;
     img(:,:,3) = O;
 
-    img = img/max(max(max(img)));
+    img = img/2000 % max(max(max(img))); --- Change due to high values in embedded data!
     img = img * 0.7;
 
     if strfind(glm.rgss, 'wb')
