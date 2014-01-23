@@ -1,4 +1,4 @@
-function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
+img = img/2000 % max(max(max(img))); --- Change due to high values in embedded data!function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
 
 %function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
 %   (c) Copyright Grega Repovš, 2011-01-24
@@ -657,7 +657,7 @@ return
 
 
 % ======================================================
-%   ----> save nuisance images
+%   ----> save nuisance imagesimg = img/2000 % max(max(max(img))); --- Change due to high values in embedded data!
 %   --- needs to be changed
 
 function [] = SaveNuisanceMasks(file, WB, V, WM, eROI, glm);
@@ -687,7 +687,7 @@ function [] = SaveNuisanceMasks(file, WB, V, WM, eROI, glm);
     img(:,:,2) = O;
     img(:,:,3) = O;
 
-    img = img/max(max(max(img)));
+    img = img/2000 % max(max(max(img))); --- Change due to high values in embedded data!
     img = img * 0.7;
 
     if strfind(glm.rgss, 'wb')
