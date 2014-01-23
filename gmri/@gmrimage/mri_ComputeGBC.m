@@ -6,22 +6,34 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rm
 %
 %   Input
 %	    obj     - image
-%       command - string describing GBC to compute
+%       command - string describing GBC to compute (pipe separated)
 %                   > mFz:t  ... computes mean Fz value across all voxels (over threshold t)
 %                   > aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t)
 %                   > pFz:t  ... computes mean positive Fz value across all voxels (over threshold t)
-%                   > nFz:t  ... computes mean positive Fz value across all voxels (over threshold t)
-%                   > aD:t   ... computes number of voxels with absolute r over t
-%                   > pD:t   ... computes number of voxels with positive r over t
-%                   > nD:t   ... computes number of voxels with negative r over t
+%                   > nFz:t  ... computes mean positive Fz value across all voxels (below threshold t)
+%                   > aD:t   ... computes proportion of voxels with absolute r over t
+%                   > pD:t   ... computes proportion of voxels with positive r over t
+%                   > nD:t   ... computes proportion of voxels with negative r below t
+%                   > mFzp:n ... computes mean Fz value across n proportional ranges
+%                   > aFzp:n ... computes mean absolute Fz value across n proportional ranges
+%                   > mFzs:n ... computes mean Fz value across n strength ranges
+%                   > pFzs:n ... computes mean Fz value across n strength ranges for positive correlations
+%                   > nFzs:n ... computes mean Fz value across n strength ranges for negative correlations
+%                   > aFzs:n ... computes mean absolute Fz value across n strength ranges
+%                   > mDs:n  ... computes proportion of voxels within n strength ranges of r
+%                   > aDs:n  ... computes proportion of voxels within n strength ranges of absolute r
+%                   > pDs:n  ... computes proportion of voxels within n strength ranges of positive r
+%                   > nDs:n  ... computes proportion of voxels within n strength ranges of negative r
 %
 %       fmask   - frame mask to use (passed to sliceframes)
 %       mask    - mask to use to define what voxels to include in GBC
 %       verbose - should it talk a lot [no]
-%       rmax    -
+%       rmax    - the r value above which the correlations are considered to be of the same functional ROI
+%       time    - whether to print timing information
 %
 %   Grega Repovš, 2009-11-08 - Original version
 %   Grega Repovš, 2010-10-13 - Version with multiple voxels at a time
+%   Grega Repovš, 2013-01-22 - A version that computes strength and proportion ranges not yet fully optimized
 %
 
 if nargin < 7, time = [];       end
@@ -59,8 +71,8 @@ nvox = size(obj.image2D, 1);
 
 % ---- parse command
 
-if verbose, fprintf('\n\nStarting GBC on %s', obj.filename), tic, end
-commands, sortit  = parseCommand(command, nvox);
+if verbose, fprintf('\n\nStarting GBC on %s', obj.filename); stime = tic; end
+[commands, sortit] = parseCommand(command, nvox)
 ncommands = length(commands);
 nvolumes  = sum([commands.volumes]);
 coffsets  = [1 cumsum([commands.volumes])+1];
@@ -77,15 +89,15 @@ results = zeros(nvox, nvolumes);
 voxels = obj.voxels;
 data   = obj.data;
 %vstep = floor(56250/obj.frames);    % optimal matrix size : 5625000
-vstep  = 12000;
+vstep  = 12000/2;
 cstep  = vstep;
 nsteps = floor(voxels/vstep);
 lstep  = mod(voxels,vstep);
+Fz     = false;
+aFz    = false;
 
 if verbose
-    crange = ['1:' num2str(vstep)];
-    fprintf('\n... %d voxels & %d frames to process in %d steps\n... computing GBC for voxels: %s', voxels, obj.frames, nsteps+1, crange);
-    slen = length(crange);
+    fprintf('\n... %d voxels & %d frames to process in %d steps\n... computing GBC for voxels:', voxels, obj.frames, nsteps+1);
 end
 
 x = data';
@@ -98,228 +110,191 @@ for n = 1:nsteps+1
 
     if verbose
         crange = [num2str(fstart) ':' num2str(fend)];
-        for c = 1:slen, fprintf('\b'), end
-	    fprintf('%s', crange);
+        % for c = 1:slen, fprintf('\b'), end
+	    fprintf('\n     ... %s', crange);
 	    slen = length(crange);
     end
 
-    r = (data * x(:,fstart:fend))';
-    if sortit
-        r = sort(r, 2);
-    end
+    if time, fprintf(' r'); tic; end
+    r = (data * x(:,fstart:fend));
+    if time fprintf(' [%.3f s]', toc); end
 
     % added to remove within region correlations defined as
-    % correlations above a specified rmax threshold
+    % correlations above a specified rmax threshold if not, it
+    % sets the correlation with itself to 0
 
+    if time, fprintf(' clip'); tic; end
     evoxels = voxels;
     if rmax
         clip = r < rmax;
         r = r.*clip;
-        evoxels = sum(clip,2);
+        evoxels = sum(clip,1);
         clipped = voxels - evoxels;
         if verbose == 3, fprintf(' cliped: %d ', sum(sum(clip))); end;
+    else
+        l = [0:(cstep-1)] * voxels + [fstart:fend];
+        r(l) = 0;
+        clipped = 1;
+        evoxels = voxels-1;
+    end
+    if time fprintf(' [%.3f s]', toc); end
+
+    if sortit
+        if time, fprintf(' sort'); tic; end
+        r = sort(r);
+        if time fprintf(' [%.3f s]', toc); end
     end
 
-    % removes correlations of voxels with themselves
-    % - code would be expensive on memory and possibly time
-    % - we're adjusting the results in computations below instead
-    %
-    % self = [0:cstep-1]*voxels + [fstart:fend];
-    % r = reshape(r(~ismember(1:voxels*cstep,self)),voxels-1,cstep)';
+    if time, fprintf(' transpose'); tic; end
+    r = r';
+    if time fprintf(' [%.3f s]', toc); end
 
-    doFz = true;
-    mFz  = [];
-    aFz  = [];
+    % To save space we're switching to Fz and replacing r.
+    % From here on, everything needs to be adjusted to work with Fz
+
+    if time, fprintf(' Fz'); tic; end
+    r = fc_Fisher(r);
+    if time fprintf(' [%.3f s]', toc); end
+
+
+    % -------- Compute common stuff ---------
+
+    coms = {commands.command};
+
+    % -- aFz
+
+    if strfind(strjoin(coms), 'aFz')
+        if time, fprintf(' aFz'); tic; end
+        aFz = abs(r);
+        if sortit
+            aFz = sort(aFz, 2);
+        end
+        if time fprintf(' [%.3f s]', toc); end
+    end
+
+
+    % -------- Run the command loop ---------
 
     for c = 1:ncommands
         tcommand   = commands(c).command;
         tparameter = commands(c).parameter;
-        scommand   = commands(c).subset;
         tvolumes   = commands(c).volumes;
-        slimits    = commands(c).limits;
         toffset    = coffsets(c);
 
         if time, fprintf(' %s', tcommand); tic; end
 
         switch tcommand
 
+            % !!! Missing thresholding
+
             % -----> compute mFz
 
             case 'mFz'
-            	if doFz, Fz = fc_Fisher(r); doFz = false; end
-
-                % --- no subrange
-
-            	if isempty(scommand)
-                    if isempty(mFz)
-                        if rmax
-                            mFz = sum(Fz,2)./evoxels;
-                        else
-                            mFz = (sum(Fz,2)-fc_Fisher(1))./(evoxels-1);
-                        end
-                    end
-                    results(fstart:fend,toffset) = mFz;
-
-                % --- prange
-
-                elseif strcmp(scommand, 'prange')
-                    pevox = slimits(:,2) - slimits(:,1) + 1;
-                    if rmax, pevox(tvolumes) = pevox(tvolumes) - clipped; end  % we're assuming all clipped voxels are in the top group
-                    for p = 1:tvolumes
-                        if ~rmax && p = tvolumes
-                            results(fstart:fend,toffset+(p-1)) = (sum(Fz(slimits(p,1):slimits(p,2),:),2)-fc_Fisher(1))./(pevox(p)-1);
-                        else
-                            results(fstart:fend,toffset+(p-1)) = sum(Fz(slimits(p,1):slimits(p,2),:),2)./pevox(p);
-                        end
-                    end
-
-                % --- srange
-
-                elseif strcmp(scommand, 'srange')
-                    for s = 1:tvolumes
-                        smask = Fz >= slimits(s) && Fz < slimits(s+1);
-                        pevox = sum(smask, 2);
-                        if rmax && 0 >= slimits(s) && 0 < slimits(s+1); pevox = pevox - clipped; end
-                        if ~rmax && p = tvolumes
-                            results(fstart:fend,toffset+(s-1)) = (sum(Fz(smask),2)-fc_Fisher(1))./(pevox-1);
-                        else
-                            results(fstart:fend,toffset+(s-1)) = sum(Fz(smask),2)./pevox;
-                        end
-                    end
-                end
+                results(fstart:fend,toffset) = sum(r,2)./evoxels;
 
 
             % -----> compute aFz
 
             case 'aFz'
-            	if doFz, Fz = fc_Fisher(r); doFz = false; end
-            	if time, fprintf(' aFz'); tic; end
-
-                % --- no subrange
-
-                if isempty(scommand)
-                    if isempty(aFz)
-                        if rmax
-                            aFz = sum(abs(Fz),2)./evoxels;
-                        else
-                            aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(evoxels-1);
-                        end
-                    end
-                    results(fstart:fend,c) = aFz;
-
-                % --- prange
-
-                elseif strcmp(scommand, 'prange')
-                    pevox = slimits(:,2) - slimits(:,1) + 1;
-                    if rmax, pevox(tvolumes) = pevox(tvolumes) - clipped; end  % we're assuming all clipped voxels are in the top group
-                    for p = 1:tvolumes
-                        if ~rmax && p = tvolumes
-                            results(fstart:fend,toffset+(p-1)) = (sum(abs(Fz(slimits(p,1):slimits(p,2),:),2)-fc_Fisher(1)))./(pevox(p)-1);
-                        else
-                            results(fstart:fend,toffset+(p-1)) = sum(abs(Fz(slimits(p,1):slimits(p,2),:),2))./pevox(p);
-                        end
-                    end
-
-                % --- srange
-
-                elseif strcmp(scommand, 'srange')
-                    taFz = abs(Fz);
-                    for s = 1:tvolumes
-                        smask = taFz >= slimits(s) && taFz < slimits(s+1);
-                        pevox = sum(smask, 2);
-                        if rmax && 0 >= slimits(s) && 0 < slimits(s+1); pevox = pevox - clipped; end
-                        if ~rmax && p = tvolumes
-                            results(fstart:fend,toffset+(s-1)) = (sum(taFz(smask),2)-fc_Fisher(1))./(pevox-1);
-                        else
-                            results(fstart:fend,toffset+(s-1)) = sum(taFz(smask),2)./pevox;
-                        end
-                    end
+                if tparameter == 0
+                    results(fstart:fend,toffset) = sum(aFz,2)./evoxels;
+                else
+                    results(fstart:fend,toffset) = rmean(aFz, (aFz > tparameter),2);
                 end
-
-
-                if time fprintf(' [%.3f s]', toc);
-
 
             % -----> compute pFz
 
             case 'pFz'
-            	if doFz, Fz = fc_Fisher(r); doFz = false; end
-            	if isempty(mFz)
-            	    if rmax
-            	        mFz = sum(Fz,2)./evoxels;
-            	    else
-            	        mFz = (sum(Fz,2)-fc_Fisher(1))./(evoxels-1);
-            	    end
-        	    end
-            	if isempty(aFz)
-            	    if rmax
-            	        aFz = sum(abs(Fz),2)./evoxels;
-            	    else
-            	        aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(evoxels-1);
-            	    end
-        	    end
-            	rp = mean(Fz>0,2);
-            	results(fstart:fend,c) = (mFz+aFz)./(rp.*2);
+                results(fstart:fend,toffset) = rmean(r, r >= tparameter, 2);
 
 
-            % -----> compute nFz
+            % -----> compute pFz
 
             case 'nFz'
-            	if doFz, Fz = fc_Fisher(r); doFz = false; end
-            	if isempty(mFz)
-            	    if rmax
-            	        mFz = sum(Fz,2)./evoxels;
-            	    else
-            	        mFz = (sum(Fz,2)-fc_Fisher(1))./(evoxels-1);
-            	    end
-        	    end
-            	if isempty(aFz)
-            	    if rmax
-            	        aFz = sum(abs(Fz),2)./evoxels;
-            	    else
-            	        aFz = (sum(abs(Fz),2)-fc_Fisher(1))./(evoxels-1);
-            	    end
-        	    end
-            	rn = mean(Fz<0,2);
-            	results(fstart:fend,c) = (mFz-aFz)./(rn.*2);
-
+                results(fstart:fend,toffset) = rmean(r, r <= tparameter, 2);
 
             % -----> compute pD
 
             case 'pD'
-            	if rmax
-            	    results(fstart:fend,c) = sum(r >= tparameter, 2)./voxels;
-            	else
-                    results(fstart:fend,c) = (sum(r >= tparameter, 2)-1)./voxels;
-                end
+                results(fstart:fend,toffset) = sum(r >= tparameter, 2)./evoxels;
 
 
             % -----> compute nD
 
             case 'nD'
-                results(fstart:fend,c) = sum(r <= -tparameter, 2)./voxels;
-
+                results(fstart:fend,toffset) = sum(r <= tparameter, 2)./evoxels;
 
             % -----> compute aD
 
             case 'aD'
-            	if rmax
-            	    results(fstart:fend,c) = sum(abs(r) >= tparameter, 2)./voxels;
-            	else
-                    results(fstart:fend,c) = (sum(abs(r) >= tparameter, 2)-1)./voxels;
+                results(fstart:fend,toffset) = sum(aFz >= tparameter, 2)./evoxels;
+
+
+            % -----> compute over prange
+
+            case 'mFzp'
+
+                pevox = tparameter(:,2) - tparameter(:,1) + 1;
+                pevox(tvolumes) = pevox(tvolumes) - clipped;  % we're assuming all clipped voxels are in the top group
+                for p = 1:tvolumes
+                    results(fstart:fend,toffset+(p-1)) = sum(r(:,[tparameter(p,1):tparameter(p,2)]),2)./pevox(p);
                 end
+
+
+            case 'aFzp'
+
+                pevox = tparameter(:,2) - tparameter(:,1) + 1;
+                pevox(tvolumes) = pevox(tvolumes) - clipped;  % we're assuming all clipped voxels are in the top group
+                for p = 1:tvolumes
+                    results(fstart:fend,toffset+(p-1)) = sum(aFz(:,[tparameter(p,1):tparameter(p,2)]),2)./pevox(p);
+                end
+
+            % -----> compute over srange
+
+            case {'mFzs', 'nFzs', 'pFzs'}
+
+                for s = 1:tvolumes
+                    smask = (r >= tparameter(s)) & (r < tparameter(s+1));
+                    pevox = sum(smask, 2);
+                    results(fstart:fend,toffset+(s-1)) = rsum(r, smask,2)./pevox;
+                end
+
+
+            case 'aFzs'
+
+                for s = 1:tvolumes
+                    smask = (aFz >= tparameter(s)) & (aFz < tparameter(s+1));
+                    pevox = sum(smask, 2);
+                    results(fstart:fend,toffset+(s-1)) = rsum(aFz, smask ,2)./pevox;
+                end
+
+            case {'mDs', 'nDs', 'pDs'}
+
+                for s = 1:tvolumes
+                    smask = (r >= tparameter(s)) & (r < tparameter(s+1));
+                    results(fstart:fend,toffset+(s-1)) = sum(smask, 2)./evoxels;
+                end
+
+            case 'aDs'
+
+                for s = 1:tvolumes
+                    smask = (aFz >= tparameter(s)) & (aFz < tparameter(s+1));
+                    results(fstart:fend,toffset+(s-1)) = sum(smask, 2)./evoxels;
+                end
+
         end
 
-        if time, fprintf(' [%.3f s]', toc); end
+        if time fprintf(' [%.3f s]', toc); end
 
     end
+
 end
 
-if verbose, fprintf('\n... done! [%.3f s]', toc), end
+if verbose, fprintf('\n... done! [%.3f s]', toc(stime)), end
 
 obj.data = results;
 obj.info = command;
-obj.frames = ncommands;
+obj.frames = nvolumes;
 
 end
 
@@ -329,21 +304,19 @@ end
 %       - s   : string specifying the types of GBC to be done
 %               individual types of GBC are to be pipe delimited, parmeters colon separated
 %               format:
-%               * GBC type - mFz, aFz, pFz, nFz, aD, pD, nD
+%               * GBC type - mFz, aFz, pFz, nFz, mD, aD, pD, nD
+%                 ... to each of these either p or s can be added at the end, for
+%                     computing results for proportion or strength bands respectively
 %               * threshold to be used for the GBC
-%               * optional string specifying the way to specify the "bands" for subsampling of the target space
-%                 - srange : the bands are defined based on the actual strength of correlation values
-%                 - prange : the bands are specified by the proportion of voxels sorted from -1 to 1
-%               * optional number of bands to use (default is 10)
+%                 ... or number of bins for proportion or strength range bands
+%
 %       - nvox : the number of voxels in the mask (necessary to compute bands for prange)
 %
 %   Output
 %       - out  : vector of structure with fieldsČ
 %                - command      ... type of GBC to run
-%                - parameter    ... threshold
-%                - subset       ... what type of subset to use (or [])
-%                - volumes      ... how many volumes the results wil span
-%                - limits       ... what are the limits for prange/srange to use
+%                - parameter    ... threshold or limits to be used
+%                - volumes      ... how many volumes the results will span
 
 
 function [out, sortit] = parseCommand(s, nvox)
@@ -352,32 +325,45 @@ function [out, sortit] = parseCommand(s, nvox)
     a = splitby(s,'|');
     for n = 1:length(a)
         b = splitby(a{n}, ':');
-        out(n).command = b{1};
-        out(n).parameter = str2num(b{2});
-        if length(b) > 2
-            out(n).subset  = b{3};
-            if length(b) == 3
-                out(n).volumes = 10;
-            else
-                out(n).volumes = str2num(b{4});
-            end
 
-            if strcmp(b{3}, 'srange')
-                sstep = 2 / out(n).volumes;
-                out(n).limits = [-1:sstep:1];
-                out(n).limits = out(n).limits + 0.1;
-            elseif strcmp(b{3}, 'prange')
-                sstep = nvox / out(n).volumes;
-                out(n).limits = floor([[1:sstep:nvox]', [1:sstep:nvox]'+(sstep-1)]);
+        com = b{1};
+        par = str2num(b{2});
+        out(n).command = com;
+
+        pre = com(1);
+        pos = com(end);
+
+        if ismember(pos, 'ps')
+            if pos == 'p'
+                sstep = nvox / par;
+                out(n).parameter = floor([[1:sstep:nvox]', [1:sstep:nvox]'+(sstep-1)]);
                 sortit = true;
             else
-                error('\nERROR: unknown subset %s in mri_ComputeGBC [%s]!\n\n', b{3}, s);
-            end
+                if ismember(pre, 'ap')
+                    sv = 0;
+                    ev = 1;
+                    al = 1;
+                elseif pre == 'm'
+                    sv = -1;
+                    ev = 1;
+                    al = 1;
+                else
+                    sv = -1;
+                    ev = 0;
+                    al = 0;
+                end
 
+                sstep = (ev-sv) / par;
+                out(n).parameter = [sv:sstep:ev];
+
+                % --- Switching to Fz
+                out(n).parameter = fc_Fisher(out(n).parameter);
+                out(n).parameter(end) = out(n).parameter(end) + al;
+            end
+            out(n).volumes = par;
         else
-            out(n).subset  = [];
+            out(n).parameter = fc_Fisher(par);
             out(n).volumes = 1;
-            out(n).limits  = [];
         end
     end
 end
@@ -390,4 +376,17 @@ function [out] = splitby(s, d)
         if length(s) > 1, s = s(2:end); end
         out{c} = t;
     end
+end
+
+
+function [matrix] = rmean(matrix, mask, dim)
+    if nargin < 3, dim = 1; end
+    matrix(~mask) = 0;
+    matrix = sum(matrix, dim) ./ sum(mask, dim);
+end
+
+function [matrix] = rsum(matrix, mask, dim)
+    if nargin < 3, dim = 1; end
+    matrix(~mask) = 0;
+    matrix = sum(matrix, dim);
 end
