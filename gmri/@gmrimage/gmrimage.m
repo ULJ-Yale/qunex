@@ -50,6 +50,7 @@ classdef gmrimage
         info            = [];
         roi             = [];
         glm;
+        xml             = [];
 
         % ---> various statistical data
 
@@ -167,6 +168,8 @@ classdef gmrimage
                 case '4dfp'
                     obj.mri_Save4DFP(filename, extra);
                 case 'NIfTI'
+                    obj.mri_SaveNIfTI(filename);
+                case 'CIFTI'
                     obj.mri_SaveNIfTI(filename);
             end
         end
