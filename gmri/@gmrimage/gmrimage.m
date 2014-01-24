@@ -61,6 +61,7 @@ classdef gmrimage
         fstats_hdr = [];
         scrub      = [];
         scrub_hdr  = [];
+        nuisance   = [];
 
     end
 

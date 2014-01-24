@@ -419,3 +419,10 @@ function [matrix] = rsum(matrix, mask, dim)
     matrix(~mask) = 0;
     matrix = sum(matrix, dim);
 end
+
+function [s] = strjoin(c)
+    s = '';
+    for n = 1:length(c)
+        s = [s c{n}];
+    end
+end

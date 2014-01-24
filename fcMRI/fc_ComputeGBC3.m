@@ -1,6 +1,6 @@
-function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore)
+function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time)
 
-%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore)
+%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time)
 %
 %	Computes GBC maps for individuals as well as group maps.
 %
@@ -31,6 +31,7 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 
 fprintf('\n\nStarting ...');
 
+if nargin < 10, time = true;      end
 if nargin < 9, ignore = [];     end
 if nargin < 8, rdilate = [];    end
 if nargin < 7, rsmooth = [];    end
@@ -83,7 +84,7 @@ template  = gmrimage(subject(c).roi);
 nvoxels   = template.voxels;
 nsubjects = length(subject);
 desc      = parseCommand(command);
-nvolumes  = length(ext);
+nvolumes  = length(desc);
 
 template = template.zeroframes(nsubjects);
 for n = 1:nvolumes
@@ -131,7 +132,7 @@ for s = 1:nsubjects
     end
 
     img = img.maskimg(imask);
-    [img commands] = img.mri_ComputeGBC(command, [], [], verbose);
+    [img commands] = img.mri_ComputeGBC(command, [], [], verbose, [], time);
     img = img.unmaskimg();
 
     for n = 1:nvolumes
@@ -143,7 +144,7 @@ end
 [ps, root, ext] = fileparts(flist);
 
 for c = 1:nvolumes
-    fname = [root '_gbc_' desc{c})];
+    fname = [root '_gbc_' desc{c}];
     gbc(c).mri_saveimage(fullfile(targetf,fname));
 end
 
@@ -155,8 +156,7 @@ function [ok] = checkFile(filename)
 
 ok = exist(filename, 'file');
 if ~ok
-    fprintf('ERROR: File %s does not exists! Aborting processing!', filename);
-    error;
+    error('ERROR: File %s does not exists! Aborting processing!', filename);
 end
 
 %   ---- Do the scrub
@@ -194,7 +194,7 @@ function [ext] = parseCommand(s)
                 sstep = 100 / par;
                 parameter = floor([[1:sstep:100]', [1:sstep:100]'+(sstep-1)]);
                 for p = 1:par
-                    ext(end+1) = [com '_' num2str(parameter(p,1)) '_' num2str(parameter(p,2))];
+                    ext{end+1} = [com '_' num2str(parameter(p,1)) '_' num2str(parameter(p,2))];
                 end
             else
                 if ismember(pre, 'ap')
@@ -218,10 +218,10 @@ function [ext] = parseCommand(s)
 
             end
         else
-            ext(end+1) = [com '_' num2str(par)];
+            ext{end+1} = [com '_' num2str(par)];
         end
     end
-end
+
 
 function [out] = splitby(s, d)
     c = 0;
@@ -231,4 +231,4 @@ function [out] = splitby(s, d)
         if length(s) > 1, s = s(2:end); end
         out{c} = t;
     end
-end
+
