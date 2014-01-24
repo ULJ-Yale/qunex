@@ -72,7 +72,7 @@ nvox = size(obj.image2D, 1);
 % ---- parse command
 
 if verbose, fprintf('\n\nStarting GBC on %s', obj.filename); stime = tic; end
-[commands, sortit] = parseCommand(command, nvox)
+[commands, sortit] = parseCommand(command, nvox);
 ncommands = length(commands);
 nvolumes  = sum([commands.volumes]);
 coffsets  = [1 cumsum([commands.volumes])+1];
@@ -93,7 +93,7 @@ vstep  = 12000/2;
 cstep  = vstep;
 nsteps = floor(voxels/vstep);
 lstep  = mod(voxels,vstep);
-Fz     = false;
+rmax   = fc_Fisher(rmax);
 aFz    = false;
 
 if verbose
@@ -107,17 +107,65 @@ for n = 1:nsteps+1
     if n > nsteps, cstep=lstep; end
     fstart = vstep*(n-1) + 1;
     fend   = vstep*(n-1) + cstep;
+    pevox  = false;
 
     if verbose
         crange = [num2str(fstart) ':' num2str(fend)];
         % for c = 1:slen, fprintf('\b'), end
-	    fprintf('\n     ... %s', crange);
+	    fprintf('\n     ... %14s', crange);
 	    slen = length(crange);
     end
 
     if time, fprintf(' r'); tic; end
     r = (data * x(:,fstart:fend));
     if time fprintf(' [%.3f s]', toc); end
+
+    % fprintf('NaN: %d ', sum(sum(isnan(r))));
+
+
+    % To save space we're switching to Fz and replacing r.
+    % From here on, everything needs to be adjusted to work with Fz
+
+    if time, fprintf(' Fz'); tic; end
+    r = fc_Fisher(r);
+    if ~isreal(r)
+        fprintf(' c>r')
+        r = real(r);
+    end
+    if time fprintf(' [%.3f s]', toc); end
+
+
+    % -------- Compute common stuff ---------
+
+    coms = {commands.command};
+
+    % -- do we need absolute values?
+
+    if strfind(strjoin(coms), 'aFz')
+        if time, fprintf(' aFz'); tic; end
+        aFz = abs(r);
+        if time fprintf(' [%.3f s]', toc); end
+    end
+
+    % -- are we sorting?
+
+    if sortit
+        if time, fprintf(' sort'); tic; end
+        r = sort(r, 1);
+        fprintf(' %.3f %.3f', r(1,1), r(end,1));
+        % if r(1,1) > -0.001
+        %     fprintf(' resort');
+        %     r = sort(r);
+        %     fprintf(' %.3f %.3f', min(r(1,:)), max(r(end,:)));
+        % end
+
+        if strfind(strjoin(coms), 'aFz')
+            fprintf('+');
+            aFz = sort(aFz, 1);
+        end
+        if time fprintf(' [%.3f s]', toc); end
+    end
+
 
     % added to remove within region correlations defined as
     % correlations above a specified rmax threshold if not, it
@@ -132,45 +180,25 @@ for n = 1:nsteps+1
         clipped = voxels - evoxels;
         if verbose == 3, fprintf(' cliped: %d ', sum(sum(clip))); end;
     else
-        l = [0:(cstep-1)] * voxels + [fstart:fend];
-        r(l) = 0;
+        if sortit
+            r(end,:) = 0;
+            if aFz
+                aFz(end,:) = 0;
+            end
+        else
+            l = [0:(cstep-1)] * voxels + [fstart:fend];
+            r(l) = 0;
+        end
         clipped = 1;
         evoxels = voxels-1;
     end
     if time fprintf(' [%.3f s]', toc); end
 
-    if sortit
-        if time, fprintf(' sort'); tic; end
-        r = sort(r);
-        if time fprintf(' [%.3f s]', toc); end
-    end
+    % .... let's not transpose to save on time
 
-    if time, fprintf(' transpose'); tic; end
-    r = r';
-    if time fprintf(' [%.3f s]', toc); end
-
-    % To save space we're switching to Fz and replacing r.
-    % From here on, everything needs to be adjusted to work with Fz
-
-    if time, fprintf(' Fz'); tic; end
-    r = fc_Fisher(r);
-    if time fprintf(' [%.3f s]', toc); end
-
-
-    % -------- Compute common stuff ---------
-
-    coms = {commands.command};
-
-    % -- aFz
-
-    if strfind(strjoin(coms), 'aFz')
-        if time, fprintf(' aFz'); tic; end
-        aFz = abs(r);
-        if sortit
-            aFz = sort(aFz, 2);
-        end
-        if time fprintf(' [%.3f s]', toc); end
-    end
+    % if time, fprintf(' transpose'); tic; end
+    % r = r';
+    % if time fprintf(' [%.3f s]', toc); end
 
 
     % -------- Run the command loop ---------
@@ -185,68 +213,69 @@ for n = 1:nsteps+1
 
         switch tcommand
 
-            % !!! Missing thresholding
-
             % -----> compute mFz
 
             case 'mFz'
-                results(fstart:fend,toffset) = sum(r,2)./evoxels;
-
+                results(fstart:fend,toffset) = sum(r,1)./evoxels;
 
             % -----> compute aFz
 
             case 'aFz'
                 if tparameter == 0
-                    results(fstart:fend,toffset) = sum(aFz,2)./evoxels;
+                    results(fstart:fend,toffset) = sum(aFz,1)./evoxels;
                 else
-                    results(fstart:fend,toffset) = rmean(aFz, (aFz > tparameter),2);
+                    results(fstart:fend,toffset) = rmean(aFz, (aFz > tparameter), 1);
                 end
 
             % -----> compute pFz
 
             case 'pFz'
-                results(fstart:fend,toffset) = rmean(r, r >= tparameter, 2);
+                results(fstart:fend,toffset) = rmean(r, r >= tparameter, 1);
 
 
             % -----> compute pFz
 
             case 'nFz'
-                results(fstart:fend,toffset) = rmean(r, r <= tparameter, 2);
+                results(fstart:fend,toffset) = rmean(r, r <= tparameter, 1);
 
             % -----> compute pD
 
             case 'pD'
-                results(fstart:fend,toffset) = sum(r >= tparameter, 2)./evoxels;
+                results(fstart:fend,toffset) = sum(r >= tparameter, 1)./evoxels;
 
 
             % -----> compute nD
 
             case 'nD'
-                results(fstart:fend,toffset) = sum(r <= tparameter, 2)./evoxels;
+                results(fstart:fend,toffset) = sum(r <= tparameter, 1)./evoxels;
 
             % -----> compute aD
 
             case 'aD'
-                results(fstart:fend,toffset) = sum(aFz >= tparameter, 2)./evoxels;
+                results(fstart:fend,toffset) = sum(aFz >= tparameter, 1)./evoxels;
 
 
             % -----> compute over prange
 
-            case 'mFzp'
+            case {'mFzp', 'aFzp'}
 
-                pevox = tparameter(:,2) - tparameter(:,1) + 1;
-                pevox(tvolumes) = pevox(tvolumes) - clipped;  % we're assuming all clipped voxels are in the top group
-                for p = 1:tvolumes
-                    results(fstart:fend,toffset+(p-1)) = sum(r(:,[tparameter(p,1):tparameter(p,2)]),2)./pevox(p);
+                if ~pevox
+                    pevox = tparameter(:,2) - tparameter(:,1) + 1;
+                    if rmax
+                        pevox = repmat(pevox, 1, cstep);
+                        pevox(tvolumes,:) = pevox(tvolumes,:) - clipped;  % we're assuming all clipped voxels are in the top group
+                    else
+                        pevox(tvolumes) = pevox(tvolumes) - clipped;  % we're assuming all clipped voxels are in the top group
+                    end
                 end
 
 
-            case 'aFzp'
-
-                pevox = tparameter(:,2) - tparameter(:,1) + 1;
-                pevox(tvolumes) = pevox(tvolumes) - clipped;  % we're assuming all clipped voxels are in the top group
                 for p = 1:tvolumes
-                    results(fstart:fend,toffset+(p-1)) = sum(aFz(:,[tparameter(p,1):tparameter(p,2)]),2)./pevox(p);
+                    if strcmp(tcommand, 'mFzp')
+                        results(fstart:fend,toffset+(p-1)) = sum(r([tparameter(p,1):tparameter(p,2)],:),1)./pevox(p);
+                    else
+                        results(fstart:fend,toffset+(p-1)) = sum(aFz([tparameter(p,1):tparameter(p,2)],:),1)./pevox(p);
+                    end
                 end
 
             % -----> compute over srange
@@ -255,8 +284,8 @@ for n = 1:nsteps+1
 
                 for s = 1:tvolumes
                     smask = (r >= tparameter(s)) & (r < tparameter(s+1));
-                    pevox = sum(smask, 2);
-                    results(fstart:fend,toffset+(s-1)) = rsum(r, smask,2)./pevox;
+                    pevox = sum(smask, 1);
+                    results(fstart:fend,toffset+(s-1)) = rsum(r, smask, 1)./pevox;
                 end
 
 
@@ -264,22 +293,22 @@ for n = 1:nsteps+1
 
                 for s = 1:tvolumes
                     smask = (aFz >= tparameter(s)) & (aFz < tparameter(s+1));
-                    pevox = sum(smask, 2);
-                    results(fstart:fend,toffset+(s-1)) = rsum(aFz, smask ,2)./pevox;
+                    pevox = sum(smask, 1);
+                    results(fstart:fend,toffset+(s-1)) = rsum(aFz, smask , 1)./pevox;
                 end
 
             case {'mDs', 'nDs', 'pDs'}
 
                 for s = 1:tvolumes
                     smask = (r >= tparameter(s)) & (r < tparameter(s+1));
-                    results(fstart:fend,toffset+(s-1)) = sum(smask, 2)./evoxels;
+                    results(fstart:fend,toffset+(s-1)) = sum(smask, 1)./evoxels;
                 end
 
             case 'aDs'
 
                 for s = 1:tvolumes
                     smask = (aFz >= tparameter(s)) & (aFz < tparameter(s+1));
-                    results(fstart:fend,toffset+(s-1)) = sum(smask, 2)./evoxels;
+                    results(fstart:fend,toffset+(s-1)) = sum(smask, 1)./evoxels;
                 end
 
         end
