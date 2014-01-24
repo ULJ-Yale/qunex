@@ -175,6 +175,20 @@ for b = 1:nbolds
         file(b).nroi    = nroi;
     end
 
+    % --- read and write nuisance data
+
+    if ~isempty(variant), nvar = ['_' variant]; else nvar = ''; end
+    file(b).writenuisance = strcat(subjectf, ['/images/functional/movement/nuisance_' int2str(bold) nvar '.dat']);
+
+    if strcmp(tail, '.dtseries.nii')
+        if ~isempty(variant), nvar = ['_' variant]; else nvar = ''; end
+        file(b).readnuisance = strcat(subjectf, ['/images/functional/movement/nuisance_' int2str(bold) nvar '.dat']);
+    else
+        file(b).readnuisance = [];
+    end
+
+    % --- aseg stuff
+
     if strcmp(sbjroi, 'aseg')
         file(b).sbjroi = file.segmask;
     elseif strcmp(sbjroi, 'wb')
@@ -333,76 +347,93 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
         img(b).data = img(b).image2D;
         frames(b)   = img(b).frames;
 
-        %   ----> Create nuisance ROI
-        fprintf(' .');
 
-        if strfind(glm.rgss, '1b')
-            [V, WB, WM] = firstBoldNuisanceROI(file(b), glm);
+        % --- should we read nuisance
+
+        if ~isempty(file(b).readnuisance)
+
+            nuisance = dlmread(file.readnuisance);
+
+        % --- compute generate nuisance data
+
         else
-            [V, WB, WM] = asegNuisanceROI(file(b), glm);
-        end
 
-        eROI = [];
-        if ~isempty(file(b).nroi)
-            [fnroi nomask] = processeROI(file(b).nroi);
-            eROI      = gmrimage.mri_ReadROI(fnroi, file(b).sbjroi);
-            bmimg     = gmrimage(file(b).boldmask);
-            eROI.data = eROI.image2D;
+            %   ----> Create nuisance ROI
+            fprintf(' .');
 
-            maskcodes = find(~ismember(eROI.roi.roinames, nomask));
+            if strfind(glm.rgss, '1b')
+                [V, WB, WM] = firstBoldNuisanceROI(file(b), glm);
+            else
+                [V, WB, WM] = asegNuisanceROI(file(b), glm);
+            end
 
-            if ~isempty(maskcodes)
-                bmimg.data = bmimg.image2D;
-                for mc = maskcodes
-                    eROI.data(bmimg.data == 0 & eROI.data == mc) = 0;
+            eROI = [];
+            if ~isempty(file(b).nroi)
+                [fnroi nomask] = processeROI(file(b).nroi);
+                eROI      = gmrimage.mri_ReadROI(fnroi, file(b).sbjroi);
+                bmimg     = gmrimage(file(b).boldmask);
+                eROI.data = eROI.image2D;
+
+                maskcodes = find(~ismember(eROI.roi.roinames, nomask));
+
+                if ~isempty(maskcodes)
+                    bmimg.data = bmimg.image2D;
+                    for mc = maskcodes
+                        eROI.data(bmimg.data == 0 & eROI.data == mc) = 0;
+                    end
                 end
             end
-        end
 
-        %   ----> mask if necessary
-        fprintf('.');
+            %   ----> mask if necessary
+            fprintf('.');
 
-        if ~isempty(file(b).wbmask)
-            wbmask = gmrimage.mri_ReadROI(file(b).wbmask, file(b).sbjroi);
-            wbmask = wbmask.mri_GrowROI(2);
-            WB.data = WB.image2D;
-            WB.data(wbmask.image2D > 0) = 0;
-        end
+            if ~isempty(file(b).wbmask)
+                wbmask = gmrimage.mri_ReadROI(file(b).wbmask, file(b).sbjroi);
+                wbmask = wbmask.mri_GrowROI(2);
+                WB.data = WB.image2D;
+                WB.data(wbmask.image2D > 0) = 0;
+            end
 
-        %   ----> save nuisance masks
-        fprintf('.');
+            %   ----> save nuisance masks
+            fprintf('.');
 
-        SaveNuisanceMasks(file(b), WB, V, WM, eROI, glm);
+            SaveNuisanceMasks(file(b), WB, V, WM, eROI, glm);
 
-        %   ----> combine nuisances
-        fprintf('.');
+            %   ----> combine nuisances
+            fprintf('.');
 
-        bold(b).nuisance = [];
+            bold(b).nuisance = [];
 
-        trgss = glm.rgss;
+            trgss = glm.rgss;
 
-        if strfind(glm.rgss, 'wm')
-            bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(WM)'];
-            trgss = strrep(trgss, 'wm', '');
-        end
+            if strfind(glm.rgss, 'wm')
+                bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(WM)'];
+                trgss = strrep(trgss, 'wm', '');
+            end
 
-        if strfind(trgss, 'wb')
-            bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(WB)'];
-            trgss = strrep(trgss, 'wb', '');
-        end
+            if strfind(trgss, 'wb')
+                bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(WB)'];
+                trgss = strrep(trgss, 'wb', '');
+            end
 
-        if strfind(trgss, 'm')
-            bold(b).nuisance = [bold(b).nuisance ReadMovFile(file(b).movdata, img(b).frames)];
-            trgss = strrep(trgss, 'm', '');
-        end
+            if strfind(trgss, 'm')
+                bold(b).nuisance = [bold(b).nuisance ReadMovFile(file(b).movdata, img(b).frames)];
+                trgss = strrep(trgss, 'm', '');
+            end
 
-        if strfind(trgss, 'v')
-            bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(V)'];
-            trgss = strrep(trgss, 'v', '');
-        end
+            if strfind(trgss, 'v')
+                bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(V)'];
+                trgss = strrep(trgss, 'v', '');
+            end
 
-        if ~isempty(eROI)
-           bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(eROI)'];
+            if ~isempty(eROI)
+               bold(b).nuisance = [bold(b).nuisance img(b).mri_ExtractROI(eROI)'];
+            end
+
+            %   ----> Save nuisance
+
+            dlmwrite(file(b).writenuisance, nuisance, 'delimiter', '\t');
+
         end
 
         %   ----> if requested, get first derivatives

@@ -8,13 +8,15 @@ function [r] = fc_Fisher(r)
 %
 
 r = double(r);
-
-r = r*0.99999999;
+r = r*0.9999999;
 %r(r > 0.99999) =  0.99999;
 %r(r < -0.99999) = -0.99999;
 %fz = 0.5*log((1+r)./(1-r));
 r = atanh(r);
 r = single(r);
+if ~isreal(r)
+    r = real(r);
+end
 
 
 
