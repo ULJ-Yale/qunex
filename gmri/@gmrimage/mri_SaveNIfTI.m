@@ -23,25 +23,31 @@ end
 
 % ---> embedd extra data if available
 
-obj = obj.mri_EmbedStats();
+img = img.mri_EmbedStats();
 
 % ---> set up file to save
 
 filename = strtrim(filename);
 % unpack and set up
 
-img = img.unmaskimg;
-img.hdrnifti.dim(5) = img.frames;
-if img.frames > 1
-	img.hdrnifti.dim(1) = 4;
-end
-
 root = strrep(filename, '.hdr', '');
 root = strrep(root, '.nii', '');
 root = strrep(root, '.gz', '');
 root = strrep(root, '.img', '');
+root = strrep(root, '.dtseries', '');
 
-file = [root '.nii'];
+img = img.unmaskimg;
+
+if strcmp(img.imageformat, 'NIfTI')
+    img.hdrnifti.dim(5) = img.frames;
+    if img.frames > 1
+        img.hdrnifti.dim(1) = 4;
+    end
+    file = [root '.nii'];
+elseif strcmp(img.imageformat, 'CIFTI')
+    img.hdrnifti.dim(7) = img.frames;
+    file = [root '.dtseries.nii'];
+end
 
 
 % get datatype
@@ -155,7 +161,7 @@ if img.hdrnifti.version == 2
     fwrite(fid, img.hdrnifti.intent_p2,     'float64');
     fwrite(fid, img.hdrnifti.intent_p3,     'float64');
     fwrite(fid, img.hdrnifti.pixdim,        'float64');
-    fwrite(fid, 540,                        'float64');  % img.hdr.vox_offset  --------> set
+    fwrite(fid, img.hdrnifti.vox_offset,    'int64');  % img.hdr.vox_offset  --------> set
     fwrite(fid, img.hdrnifti.scl_slope,     'float64');
     fwrite(fid, img.hdrnifti.scl_inter,     'float64');
     fwrite(fid, img.hdrnifti.cal_max,       'float64');
@@ -164,7 +170,6 @@ if img.hdrnifti.version == 2
     fwrite(fid, img.hdrnifti.toffset,       'float64');
     fwrite(fid, img.hdrnifti.slice_start,   'int64');
     fwrite(fid, img.hdrnifti.slice_end,     'int64');
-
     img.hdrnifti.descrip = [img.hdrnifti.descrip '                                                                                '];
     img.hdrnifti.aux_file = [img.hdrnifti.aux_file '                        '];
     fwrite(fid, img.hdrnifti.descrip(1:80), 'char');
@@ -192,6 +197,11 @@ if img.hdrnifti.version == 2
 
 end
 
+% ---> Add metadata
+
+if img.hdrnifti.metalen > 0
+    fwrite(fid, img.hdrnifti.meta, 'char');
+end
 
 % ---> Add data ...
 

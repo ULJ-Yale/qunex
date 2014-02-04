@@ -50,6 +50,7 @@ classdef gmrimage
         info            = [];
         roi             = [];
         glm;
+        xml             = [];
 
         % ---> various statistical data
 
@@ -60,6 +61,7 @@ classdef gmrimage
         fstats_hdr = [];
         scrub      = [];
         scrub_hdr  = [];
+        nuisance   = [];
 
     end
 
@@ -167,6 +169,8 @@ classdef gmrimage
                 case '4dfp'
                     obj.mri_Save4DFP(filename, extra);
                 case 'NIfTI'
+                    obj.mri_SaveNIfTI(filename);
+                case 'CIFTI'
                     obj.mri_SaveNIfTI(filename);
             end
         end

@@ -65,9 +65,9 @@ switch img.hdrnifti.sizeof_hdr
     case 348
         img.hdrnifti = readHeader_nifti1(fid, img.hdrnifti);
         meta = 352;
-    case 508
+    case 540 % 508
         img.hdrnifti = readHeader_nifti2(fid, img.hdrnifti);
-        meta = 540;
+        meta = 553;
     case 1543569408
         fclose(fid);
         mformat = 'b';
@@ -75,13 +75,13 @@ switch img.hdrnifti.sizeof_hdr
         img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
         img.hdrnifti = readHeader_nifti1(fid, img.hdrnifti);
         meta = 352;
-    case -67043328
+    case -67043328   % ----- NOT CORRECT!
         fclose(fid);
         mformat = 'b';
         fid = fopen(file, 'r', mformat);
         img.hdrnifti.sizeof_hdr = fread(fid, 1, 'int32');
         img.hdrnifti = readHeader_nifti2(fid, img.hdrnifti);
-        meta = 540;
+        meta = 553;
     otherwise
         error('ERROR: %s does not have a valid NIfTI-1 or -2 header!');
 end
@@ -124,43 +124,71 @@ fclose(fid);
 
 % --- file root
 
+if strfind(filename, 'dtseries')
+    img.imageformat = 'CIFTI';
+else
+    img.imageformat = 'NIfTI';
+end
+
+
 root = strrep(filename, '.hdr', '');
 root = strrep(root, '.nii', '');
 root = strrep(root, '.gz', '');
 root = strrep(root, '.img', '');
+root = strrep(root, '.dtseries', '');
 
 img.rootfilename = root;
 img.filename     = [root '.nii'];
 
 % --- format and size details
 
-img.imageformat = 'NIfTI';
-
-img.TR = [];
-img.frames = 1;
-if img.hdrnifti.dim(1) == 4    % we probably have a BOLD (4D) file
-    if ~isempty(frames)
-        img.hdrnifti.dim(5) = frames;
-        img.frames = frames;
-    else
-        img.frames = img.hdrnifti.dim(5);
+if strcmp(img.imageformat, 'NIfTI')
+    img.TR = [];
+    img.frames = 1;
+    if img.hdrnifti.dim(1) == 4    % we probably have a BOLD (4D) file
+        if ~isempty(frames)
+            img.hdrnifti.dim(5) = frames;
+            img.frames = frames;
+        else
+            img.frames = img.hdrnifti.dim(5);
+        end
+        img.TR = img.hdrnifti.pixdim(5);
     end
-    img.TR = img.hdrnifti.pixdim(5);
-end
 
-img.dim     = img.hdrnifti.dim(2:4)';
-img.voxels  = prod(img.dim);
-img.vsizes  = img.hdrnifti.pixdim(2:4)';
-img.mformat = mformat;
-img.runframes = img.frames;
+    img.dim     = img.hdrnifti.dim(2:4)';
+    img.voxels  = prod(img.dim);
+    img.vsizes  = img.hdrnifti.pixdim(2:4)';
+    img.mformat = mformat;
+    img.runframes = img.frames;
+elseif strcmp(img.imageformat, 'CIFTI')
+    img.TR = [];
+    img.frames = 1;
+    if img.hdrnifti.dim(1) == 6    % we probably have a BOLD (4D) file
+        if ~isempty(frames)
+            img.hdrnifti.dim(7) = frames;
+            img.frames = frames;
+        else
+            img.frames = img.hdrnifti.dim(7);
+        end
+    end
+    img.dim     = img.hdrnifti.dim(6:7)';
+    img.voxels  = img.hdrnifti.dim(6);
+    img.vsizes  = [];
+    img.mformat = mformat;
+    img.runframes = img.frames;
+end
 
 % read the data
 
-if img.hdrnifti.magic(1:3) == 'n+1'
+if strcmp(img.hdrnifti.magic(1:3), 'n+1') || strcmp(img.hdrnifti.magic(1:3), 'n+2')
     fid = fopen(file, 'r', mformat);
-    garbage = fread(fid, meta, 'char');
-    if img.hdrnifti.vox_offset > meta
-        img = img.mri_ReadNIfTIMetaData(fid, img.hdrnifti.vox_offset-meta);
+    garbage = fread(fid, img.hdrnifti.sizeof_hdr, 'char');
+    img.hdrnifti.metalen = img.hdrnifti.vox_offset-img.hdrnifti.sizeof_hdr;
+    if img.hdrnifti.metalen > 0
+        img.hdrnifti.meta = fread(fid, img.hdrnifti.metalen, '*char')';
+        % img.mri_ReadNIfTIMetaData(fid, img.hdrnifti.vox_offset-meta);
+    else
+        img.hdrnifti.meta = '';
     end
     toread = img.hdrnifti.dim(2:7);
     toread = prod(toread(toread>0));
@@ -283,7 +311,7 @@ function [hdrnifti] = readHeader_nifti2(fid, hdrnifti)
     hdrnifti.intent_code     = fread(fid, 1, 'int32');
     hdrnifti.intent_name     = fread(fid, 16, '*char')';
     hdrnifti.dim_info        = fread(fid, 1, '*char');
-    hdrnifti.unused_str      = fread(fid, 15, '*char');
+    hdrnifti.unused_str      = fread(fid, 15, '*char')';
     hdrnifti.version         = 2;
 
 

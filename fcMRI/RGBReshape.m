@@ -40,7 +40,7 @@ switch v
 			end
 		end
 		img = imrotate(img,90);
-		
+
 	 case 2
         img  = zeros(side*x, side*z);
 		c = 1;
@@ -67,5 +67,5 @@ switch v
 				c = c+1;
 			end
 		end
-		img = imrotate(img,90);
+		img = imrotate(img,-90);
 end

@@ -18,21 +18,11 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %
 % 	Copyright (c) 2011 Grega Repovs. All rights reserved.
 
-if nargin < 6
-	verbose = false;
-    if nargin < 5
-        scrub = [];
-        if nargin < 4
-            store = [];
-        	if nargin < 3
-        	    target = [];
-                if nargin < 2
-                    mask = [];
-                end
-        	end
-        end
-    end
-end
+if nargin < 6, verbose = false; end
+if nargin < 5, scrub = [];      end
+if nargin < 4, store = [];      end
+if nargin < 3, target = [];     end
+if nargin < 2, mask = [];       end
 
 brainthreshold = 300;
 
