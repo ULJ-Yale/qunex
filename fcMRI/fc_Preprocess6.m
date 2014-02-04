@@ -199,7 +199,7 @@ for current = do
         if img.empty
             img = img.mri_readimage(sfile);
             if ~isempty(omit)
-                img(b).use(1:omit) = 0;
+                img.use(1:omit) = 0;
             end
         end
 
