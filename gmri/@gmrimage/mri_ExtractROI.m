@@ -24,18 +24,12 @@ function ts = mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 %
 %   Grega Repovs, 2013-07-24 ... Adjusted to use multivolume ROI objects
 
-if nargin < 6;
-    criterium = [];
-    if nargin < 5
-        weights = [];
-        if nargin < 4
-            method = 'mean';
-            if nargin < 3
-                rcodes = [];
-            end
-        end
-    end
-end
+if nargin < 6; criterium = [];  end
+if nargin < 5; weights = [];    end
+if nargin < 4; method = [];     end
+if nargin < 3; rcodes = [];     end
+
+if isempty (method) method = 'mean'; end
 
 method = lower(method);
 

@@ -15,7 +15,7 @@ function [img] = mri_ReadROI(roiinfo, roi2)
 %
 
 if nargin < 2
-    roi2 = [];
+    roi2 = 'none';
 end
 
 % ----> Read the ROI info
