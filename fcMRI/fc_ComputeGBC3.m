@@ -1,6 +1,6 @@
-function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time)
+function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv)
 
-%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time)
+%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv)
 %
 %	Computes GBC maps for individuals as well as group maps.
 %
@@ -17,6 +17,8 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %   rsmooth     - radius for smoothing (no smoothing if empty)
 %   rdilate     - radius for dilating mask (no dilation if empty)
 %   ignore      - the column in *_scrub.txt file that matches bold file to be used for ignore mask []
+%   time        - whether to print timing information
+%   cv          - whether to work with covariances instead of correlations [false]
 %
 % 	Created by Grega Repovš on 2009-11-04.
 % 	Modified by Grega Repovš on 2010-11-16.
@@ -31,7 +33,8 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 
 fprintf('\n\nStarting ...');
 
-if nargin < 10, time = true;      end
+if nargin < 11, cv = [];        end
+if nargin < 10, time = true;    end
 if nargin < 9, ignore = [];     end
 if nargin < 8, rdilate = [];    end
 if nargin < 7, rsmooth = [];    end
@@ -132,7 +135,7 @@ for s = 1:nsubjects
     end
 
     img = img.maskimg(imask);
-    [img commands] = img.mri_ComputeGBC(command, [], [], verbose, [], time);
+    [img commands] = img.mri_ComputeGBC(command, [], [], verbose, [], time, cv);
     img = img.unmaskimg();
 
     for n = 1:nvolumes

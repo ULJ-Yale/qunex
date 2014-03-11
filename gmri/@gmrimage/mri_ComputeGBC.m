@@ -1,6 +1,6 @@
-function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time)
+function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time, cv)
 
-%function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time)
+%function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time, cv)
 %
 %	Computes whole brain GBC based on specified mask and command string
 %
@@ -30,12 +30,15 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rm
 %       verbose - should it talk a lot [no]
 %       rmax    - the r value above which the correlations are considered to be of the same functional ROI
 %       time    - whether to print timing information
+%       cv      - whether to work with covariances instead of correlations [false]
 %
 %   Grega Repovš, 2009-11-08 - Original version
 %   Grega Repovš, 2010-10-13 - Version with multiple voxels at a time
 %   Grega Repovš, 2013-01-22 - A version that computes strength and proportion ranges not yet fully optimized
+%   Grega Repovš, 2013-03-11 - Added an option to work with covariances instead of correlations
 %
 
+if nargin < 8, cv = [];         end
 if nargin < 7, time = [];       end
 if nargin < 6, rmax = [];       end
 if nargin < 5, verbose = false; end
@@ -49,6 +52,7 @@ if ~isempty(fmask)
 end
 if isempty(rmax), rmax = false; end
 if isempty(time), time = false; end
+if isempty(cv),   cv   = false; end
 
 
 % ---- prepare data
@@ -61,13 +65,19 @@ if ~obj.masked
     end
 end
 
-if ~obj.correlized
+if ~obj.correlized && ~cv
     obj = obj.correlize;
 end
 
 obj.data = obj.image2D;
 nvox = size(obj.image2D, 1);
 
+if cv
+    if verbose, fprintf('\n... setting up for covariances instead of correlations '), end
+    obj.data = obj.data';
+    obj.data = bsxfun(@minus, obj.data, mean(obj.data)) ./ sqrt(nvox-1);
+    obj.data = obj.data';
+end
 
 % ---- parse command
 
