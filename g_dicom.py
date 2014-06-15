@@ -106,10 +106,10 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 seriesDescription = "None"
 
         try:
-            time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+            time = datetime.datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
         except:
             try:
-                time = datetime.datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
+                time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
             except:
                 time = ""
 
@@ -128,6 +128,11 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 TE = d[0x5200,0x9230][0][0x0018,0x9114][0][0x0018,0x9082].value
             except:
                 TE = 0
+
+        try:
+            nslices = d[0x2001,0x1018].value
+        except:
+            nslices = 0
 
         recenter, dofz2zf, fz, reorder = False, False, "", False
         try:
@@ -213,13 +218,22 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         if tfname:
             hdr = g_mri.g_img.niftihdr(tfname)
 
+            if hdr.sizez > hdr.sizey:
+                print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+                if verbose: print "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+
             if nframes > 1:
                 if hdr.frames != nframes:
                     print >> r, "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
                     if verbose: print "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
-            if hdr.sizez > hdr.sizey:
-                print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
-                if verbose: print "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+                    if nslices > 0:
+                        gframes = int(hdr.sizez / nslices)
+                        print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
+                        if verbose: print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
+                        g_mri.g_NIfTI.reslice(tfname, nslices)
+                    else:
+                        print >> r, "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
+                        if verbose: print "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
 
     if verbose:
         print "... done!"
