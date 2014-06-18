@@ -1,12 +1,26 @@
 #!/opt/local/bin/python2.7
 
-import dicom
+# import dicom
 import os
 import glob
 import datetime
 import subprocess
 import g_mri.g_NIfTI
 import g_mri.g_gimg as gimg
+import dicom.filereader as dfr
+
+
+def _at_frame(tag, VR, length):
+    return tag == (0x5200, 0x9230)
+
+def readDICOMBase(filename):
+    # d = dicom.read_file(filename, stop_before_pixels=True)
+    # return d
+
+    f = open(filename, "rb")
+    d = dfr.read_partial(f, stop_when=_at_frame)
+    f.close()
+    return d
 
 def getDicomTime(info):
     try:
@@ -79,7 +93,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
     first = True
     c = 0
     for folder in folders:
-        d = dicom.read_file(glob.glob(os.path.join(folder, "*.dcm"))[-1], stop_before_pixels=True)
+        # d = dicom.read_file(glob.glob(os.path.join(folder, "*.dcm"))[-1], stop_before_pixels=True)
+        d = readDICOMBase(glob.glob(os.path.join(folder, "*.dcm"))[-1])
         c += 1
 
         if first:
@@ -272,7 +287,8 @@ def sortDicom(folder=".", **kwargs):
     seqs  = []
     for dcm in files:
         try:
-            info = dicom.read_file(dcm, stop_before_pixels=True)
+            #info = dicom.read_file(dcm, stop_before_pixels=True)
+            info = readDICOMBase(dcm)
             sid  = getID(info)
             time = getDicomTime(info)
             print "===> Sorting dicoms for %s scanned on %s\n" % (sid, time)
@@ -289,7 +305,8 @@ def sortDicom(folder=".", **kwargs):
         if os.path.basename(dcm)[0:2] in ["XX", "PS"]:
             continue
         try:
-            d    = dicom.read_file(dcm, stop_before_pixels=True)
+            #d    = dicom.read_file(dcm, stop_before_pixels=True)
+            d    = readDICOMBase(dcm)
         except:
             continue
         sqid = str(d.SeriesNumber)
@@ -326,7 +343,8 @@ def listDicom(folder=None):
 
     for dcm in files:
         try:
-            d    = dicom.read_file(dcm, stop_before_pixels=True)
+            #d    = dicom.read_file(dcm, stop_before_pixels=True)
+            d    = readDICOMBase(dcm)
             time = getDicomTime(d)
             try:
                 print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, getID(d), d.SeriesNumber, d.SeriesDescription, time)
@@ -349,7 +367,8 @@ def splitDicom(folder=None):
 
     for dcm in files:
         try:
-            d    = dicom.read_file(dcm, stop_before_pixels=True)
+            #d    = dicom.read_file(dcm, stop_before_pixels=True)
+            d    = readDICOMBase(dcm)
             time = getDicomTime(d)
             sid  = getID(d)
             if sid not in subjects:
