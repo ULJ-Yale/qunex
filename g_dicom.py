@@ -24,9 +24,12 @@ def readDICOMBase(filename):
 
 def getDicomTime(info):
     try:
-        time = datetime.datetime.strptime(str(int(float(info.StudyDate+info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+        time = datetime.datetime.strptime(str(int(float(info.StudyDate+info.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
     except:
-        time = ""
+        try:
+            time = datetime.datetime.strptime(str(int(float(info.StudyDate+info.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+        except:
+            time = ""
     return time
 
 def getID(info):
