@@ -41,6 +41,17 @@ dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
 
     example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask
 
+processPhilips [folder=.] [check=yes]
+    Checks for new packages off the scanner in the inbox folder, unzips them and moves them to Archive folder,
+    runs sortDicom and dicom2nii on the package contents. Assumes that packages are in the inbox folder and
+    their names contain OP number. The command is adjusted to work with packages off the Philips scanner in Ljubljana.
+
+    - folder: the base study subjects folder (e.g. WM44/subjects) where OP folders and the inbox folder with the
+      new packages from the scanner reside
+    - check: whether to ask for confirmation to proceed once zip packages in inbox are identified and listed.
+
+    example: gmri processPhilips folder=. check=yes
+
 
 NIfTI file conversions
 ----------------------
@@ -119,6 +130,7 @@ commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': (
             'splitDicom'    : { 'com': g_mri.g_dicom.splitDicom,       'args': ('folder', ) },
             'sortDicom'     : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
             'dicom2nii'     : { 'com': g_mri.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose') },
+            'processPhilips': { 'com': g_mri.g_dicom.processPhilips,   'args': ('folder', 'check') },
             'fz2zf'         : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
             'reorder'       : { 'com': g_mri.g_NIfTI.reorder,          'args': ('inf', 'outf') },
             'reslice'       : { 'com': g_mri.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf') },

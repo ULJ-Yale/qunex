@@ -2,12 +2,15 @@
 
 # import dicom
 import os
+import re
 import glob
+import shutil
 import datetime
 import subprocess
 import g_mri.g_NIfTI
 import g_mri.g_gimg as gimg
 import dicom.filereader as dfr
+import zipfile
 
 
 def _at_frame(tag, VR, length):
@@ -382,3 +385,105 @@ def splitDicom(folder=None):
             os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
         except:
             pass
+
+def processPhilips(folder=None, check=None):
+    if check == 'no':
+        check = False
+    else:
+        check = True
+
+    if folder == None:
+        folder = "."
+    inbox = os.path.join(folder, 'inbox')
+
+    # ---- get file list
+
+    print "\n---> Checking for packets in %s ..." % (inbox)
+
+    zips = glob.glob(os.path.join(inbox, '*.zip'))
+    getop = re.compile(r"(OP[0-9.-]+)")
+
+    okpackets  = []
+    badpackets = []
+    for zipf in zips:
+        m = getop.search(zipf)
+        if m.groups():
+            okpackets.append((zipf, m.group(0)))
+        else:
+            badpackets.append(zipf)
+
+    print "---> Found the following packets to process:"
+    for p, o in okpackets:
+        print "     %s: %s" % (o, os.path.basename(p))
+
+    if len(badpackets):
+        print "---> For these packets no OP code was found and won't be processed:"
+        for p in badpackets:
+            print "     %s" % (os.path.basename(p))
+
+    if check:
+        s = raw_input("\n===> Should I proceeed with processing the listed packages [y/n]: ")
+        if s != "y":
+            print "---> Aborting operation!\n"
+            return
+
+    print "---> Starting to process %d packets ..." % (len(okpackets))
+
+
+    # ---- Ok, now loop through the packets
+
+    afolder = os.path.join(folder, "Archive")
+    if not os.path.exists(afolder):
+        os.makedirs(afolder)
+        print "---> Created Archive folder for processed packages."
+
+    for p, o in okpackets:
+
+        # --- Big info
+
+        print "\n\n---=== PROCESSING %s ===---\n" % (o)
+
+        # --- create a new OP folder
+        opfolder = os.path.join(folder, o)
+
+        if os.path.exists(opfolder):
+            print "---> WARNING: %s folder exists, skipping package %s" % (o, os.path.basename(p))
+            continue
+
+        os.makedirs(opfolder)
+
+        # --- unzip the file
+
+        print "...  unzipping %s" % (os.path.basename(p))
+        with zipfile.ZipFile(p, 'r') as z:
+            z.extractall(opfolder)
+        print "     -> done!"
+
+        # --- move package to archive
+
+        print "... moving %s to archive" % (os.path.basename(p))
+        shutil.move(p, afolder)
+        print "     -> done!"
+
+        # --- move dicom files to inbox
+
+        print "... moving dicoms to inbox"
+        shutil.move(os.path.join(opfolder, "Dicom", "DICOM"), os.path.join(opfolder, "inbox"))
+        shutil.rmtree(os.path.join(opfolder, "Dicom"))
+        print "     -> done!"
+
+        # --- run sort dicom
+
+        print "\n\n===> running sortDicom"
+        sortDicom(folder=opfolder)
+
+        # --- run dicom to nii
+
+        print "\n\n===> running dicom2nii"
+        dicom2nii(folder=opfolder, clean='no', unzip='yes', gzip='yes', verbose=True)
+
+    print "\n\n---=== DONE PROCESSING PACKAGES - Have a nice day! ===---\n"
+
+    return
+
+
