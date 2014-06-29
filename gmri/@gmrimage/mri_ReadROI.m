@@ -109,6 +109,7 @@ end
 % ----> Encode metadata
 
 img.roi.roinames  = roinames;
+img.roi.roicodes  = [1:nroi];
 img.roi.roicodes1 = roicodes1;
 img.roi.roicodes2 = roicodes2;
 img.roi.roifile1  = roif1;

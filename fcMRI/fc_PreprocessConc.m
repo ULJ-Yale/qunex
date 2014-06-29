@@ -73,52 +73,19 @@ img = img/2000 % max(max(max(img))); --- Change due to high values in embedded d
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-if nargin < 16
-    ignores = [];
-    if nargin < 15
-        nroi = [];
-        if nargin < 14
-        tail = '.4dfp.img'
-            if nargin < 13
-                overwrite = false;
-                if nargin < 12
-                    sbjroi = '';
-                    if nargin < 11
-                        wbmask = '';
-                        if nargin < 10
-                            variant = '';
-                            if nargin < 9
-                                eventstring = '';
-                                if nargin < 8
-                                    efile = '';
-                                    if nargin < 7
-                                        task = [];
-                                        if nargin < 6
-                                            rgss = '';
-                                            if nargin < 5
-                                                omit = [];
-                                                if nargin < 4
-                                                    TR = [];
-                                                end
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-if isempty(TR)
-    TR = 2.5;
-end
-if isempty(omit)
-    omit = 5;
-end
+if nargin < 16, ignores = [];                               end
+if nargin < 15, nroi = [];                                  end
+if nargin < 14 || isempty(tail), tail = '.4dfp.img';        end
+if nargin < 13 || isempty(overwrite), overwrite = false;    end
+if nargin < 12, sbjroi = '';                                end
+if nargin < 11, wbmask = '';                                end
+if nargin < 10, variant = '';                               end
+if nargin < 9,  eventstring = '';                           end
+if nargin < 8,  efile = '';                                 end
+if nargin < 7,  task = [];                                  end
+if nargin < 6,  rgss = '';                                  end
+if nargin < 5 || isempty(omit), omit = [];                  end
+if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
 nbolds = length(bolds);
 
@@ -138,7 +105,7 @@ if length(ignores)>=2
     end
 end
 
-fprintf('\nRunning preproces conc script v0.9.3\n');
+fprintf('\nRunning preproces conc script v0.9.4\n');
 
 % ======================================================
 %   ----> prepare paths and glm variables

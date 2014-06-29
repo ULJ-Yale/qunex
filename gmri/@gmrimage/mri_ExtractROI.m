@@ -69,8 +69,12 @@ else
 end
 
 if isempty (rcodes)
-    rcodes = unique(roi.data);
-    rcodes = rcodes(rcodes ~= 0);
+    if isfield(roi.roi, 'roicodes') && ~isempty(roi.roi.roicodes)
+        rcodes = roi.roi.roicodes;
+    else
+        rcodes = unique(roi.data);
+        rcodes = rcodes(rcodes ~= 0);
+    end
 end
 
 % ---- check weights data

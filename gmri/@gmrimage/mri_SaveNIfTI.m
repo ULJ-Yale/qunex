@@ -1,6 +1,6 @@
-function [res] = mri_SaveNIfTI(img, filename, compressed)
+function [res] = mri_SaveNIfTI(img, filename, verbose)
 
-%   function [res] = mri_SaveNIfTI(obj, filename, extra)
+%   function [res] = mri_SaveNIfTI(obj, filename, verbose)
 %
 %   Saves a NIfTI image based on the existing header information.
 %
@@ -9,21 +9,18 @@ function [res] = mri_SaveNIfTI(img, filename, compressed)
 %     filename - the filename to use
 %
 %   Grega Repovs - 2010-10-13
-%   Grega Repovs - 2011-10-13 - updated to write NIfTI-2
+%   Grega Repovs - 2011-10-13 - Updated to write NIfTI-2
 %   Grega Repovs - 2013-10-19 - Added call for embedding data
+%   Grega Repovs - 2014-06-29 - Update to use MEX function
 %
 
-if nargin < 3
-    compressed = [];
-end
-
-if isempty(compressed)
-    compressed = img.hdrnifti.compressed;
-end
+if nargin < 3, verbose = false; end
 
 % ---> embedd extra data if available
 
-img = img.mri_EmbedStats();
+if ~strcmp(img.imageformat, 'CIFTI') || img.frames < 2
+    img = img.mri_EmbedStats();
+end
 
 % ---> set up file to save
 
@@ -50,166 +47,172 @@ elseif strcmp(img.imageformat, 'CIFTI')
 end
 
 
-% get datatype
+% ---> setup datatype
 
-switch img.hdrnifti.datatype
-    case 1
-        datatype = 'bitN';
-    case 2
-        datatype = 'uchar';
+switch class(img.data)
+    case 'bitN'
+        img.hdrnifti.datatype = 1;
         img.hdrnifti.bitpix = 8;
-    case 4
-        datatype = 'int16';
+    case 'uchar'
+        img.hdrnifti.datatype = 2;
+        img.hdrnifti.bitpix = 8;
+    case 'int16';
+        img.hdrnifti.datatype = 4;
         img.hdrnifti.bitpix = 16;
-    case 8
-        datatype = 'int32'
+    case 'int32'
+        img.hdrnifti.datatype = 8;
         img.hdrnifti.bitpix = 32;
-    case 16
-        datatype = 'float32';
+    case {'float32', 'single'};
+        img.hdrnifti.datatype = 16;
         img.hdrnifti.bitpix = 32;
-    case 64
-        datetype = 'float64';
+    case {'float64', 'double'};
+        img.hdrnifti.datatype = 64;
         img.hdrnifti.bitpix = 64;
-    case 256
-        datatype = 'schar';
-    case 512
-        datatype = 'uint16';
+    case 'schar';
+        img.hdrnifti.datatype = 256;
+        img.hdrnifti.bitpix = 8;
+    case 'uint16';
+        img.hdrnifti.datatype = 512;
         img.hdrnifti.bitpix = 16;
-    case 768
-        datatype = 'uint32';
+    case 'uint32';
+        img.hdrnifti.datatype = 768;
         img.hdrnifti.bitpix = 32;
-    case 1024
-        datatype = 'int64';
+    case 'int64';
+        img.hdrnifti.datatype = 1024;
         img.hdrnifti.bitpix = 64;
-    case 1280
-        datatype = 'uint64';
-        img.hdrnifti.bitpix = 64;
-    case 1280
-        datatype = 'uint64';
+    case 'uint64';
+        img.hdrnifti.datatype = 1280;
         img.hdrnifti.bitpix = 64;
     otherwise
         error('Uknown datatype or datatype I can not handle!');
 end
 
-
-
-
-% save it
-
-fid = fopen(file, 'w', img.mformat);
-
-% ---> Write NIfTI-1
+% ---> pack header
 
 if img.hdrnifti.version == 1
-    fwrite(fid, 348, 'int32');
-    fwrite(fid, img.hdrnifti.data_type, 'char');
-    fwrite(fid, img.hdrnifti.db_name, 'char');
-    fwrite(fid, img.hdrnifti.extents, 'int32');
-    fwrite(fid, img.hdrnifti.session_error, 'int16');
-    fwrite(fid, img.hdrnifti.regular, 'char');
-    fwrite(fid, img.hdrnifti.dim_info, 'char');
-    fwrite(fid, img.hdrnifti.dim, 'int16');
-    fwrite(fid, img.hdrnifti.intent_p1, 'float32');
-    fwrite(fid, img.hdrnifti.intent_p2, 'float32');
-    fwrite(fid, img.hdrnifti.intent_p3, 'float32');
-    fwrite(fid, img.hdrnifti.intent_code, 'int16');
-    fwrite(fid, img.hdrnifti.datatype, 'int16');
-    fwrite(fid, img.hdrnifti.bitpix, 'int16');
-    fwrite(fid, img.hdrnifti.slice_start, 'int16');
-    fwrite(fid, img.hdrnifti.pixdim, 'float32');
-    fwrite(fid, 352, 'float32');  % img.hdr.vox_offset
-    fwrite(fid, img.hdrnifti.scl_slope, 'float32');
-    fwrite(fid, img.hdrnifti.scl_inter, 'float32');
-    fwrite(fid, img.hdrnifti.slice_end, 'int16');
-    fwrite(fid, img.hdrnifti.slice_code, 'char');
-    fwrite(fid, img.hdrnifti.xyzt_units, 'char');
-    fwrite(fid, img.hdrnifti.cal_max, 'float32');
-    fwrite(fid, img.hdrnifti.cal_min, 'float32');
-    fwrite(fid, img.hdrnifti.slice_duration, 'float32');
-    fwrite(fid, img.hdrnifti.toffset, 'float32');
-    fwrite(fid, img.hdrnifti.glmax, 'int32');
-    fwrite(fid, img.hdrnifti.glmin, 'int32');
-    fwrite(fid, img.hdrnifti.descrip, 'char');
-    fwrite(fid, img.hdrnifti.aux_file, 'char');
-    fwrite(fid, img.hdrnifti.qform_code, 'int16');
-    fwrite(fid, img.hdrnifti.sform_code, 'int16');
-    fwrite(fid, img.hdrnifti.quatern_b, 'float32');
-    fwrite(fid, img.hdrnifti.quatern_c, 'float32');
-    fwrite(fid, img.hdrnifti.quatern_d, 'float32');
-    fwrite(fid, img.hdrnifti.qoffset_x, 'float32');
-    fwrite(fid, img.hdrnifti.qoffset_y, 'float32');
-    fwrite(fid, img.hdrnifti.qoffset_z, 'float32');
-    fwrite(fid, img.hdrnifti.srow_x, 'float32');
-    fwrite(fid, img.hdrnifti.srow_y, 'float32');
-    fwrite(fid, img.hdrnifti.srow_z, 'float32');
-    fwrite(fid, img.hdrnifti.intent_name, 'char');
-    fwrite(fid, img.hdrnifti.magic, 'char');
-    fwrite(fid, 'repi', 'char');
+    fhdr = packHeader_nifti1(img.hdrnifti);
+elseif img.hdrnifti.version == 2
+    fhdr = packHeader_nifti2(img.hdrnifti);
+else
+    error('ERROR: Unknown NIfTI version!');
 end
 
-% ---> Write NIfTI-2
 
-if img.hdrnifti.version == 2
-    fwrite(fid, 540, 'int32');
+% ---> save it
 
-    img.hdrnifti.magic = [img.hdrnifti.magic '        '];
-    fwrite(fid, img.hdrnifti.magic(1:8),    'char');
-    fwrite(fid, img.hdrnifti.datatype,      'int16');
-    fwrite(fid, img.hdrnifti.bitpix,        'int16');
-    fwrite(fid, img.hdrnifti.dim,           'int64');
-    fwrite(fid, img.hdrnifti.intent_p1,     'float64');
-    fwrite(fid, img.hdrnifti.intent_p2,     'float64');
-    fwrite(fid, img.hdrnifti.intent_p3,     'float64');
-    fwrite(fid, img.hdrnifti.pixdim,        'float64');
-    fwrite(fid, img.hdrnifti.vox_offset,    'int64');  % img.hdr.vox_offset  --------> set
-    fwrite(fid, img.hdrnifti.scl_slope,     'float64');
-    fwrite(fid, img.hdrnifti.scl_inter,     'float64');
-    fwrite(fid, img.hdrnifti.cal_max,       'float64');
-    fwrite(fid, img.hdrnifti.cal_min,       'float64');
-    fwrite(fid, img.hdrnifti.slice_duration,'float64');
-    fwrite(fid, img.hdrnifti.toffset,       'float64');
-    fwrite(fid, img.hdrnifti.slice_start,   'int64');
-    fwrite(fid, img.hdrnifti.slice_end,     'int64');
-    img.hdrnifti.descrip = [img.hdrnifti.descrip '                                                                                '];
-    img.hdrnifti.aux_file = [img.hdrnifti.aux_file '                        '];
-    fwrite(fid, img.hdrnifti.descrip(1:80), 'char');
-    fwrite(fid, img.hdrnifti.aux_file(1:24),'char');
-    fwrite(fid, img.hdrnifti.qform_code,    'int32');
-    fwrite(fid, img.hdrnifti.sform_code,    'int32');
-    fwrite(fid, img.hdrnifti.quatern_b,     'float64');
-    fwrite(fid, img.hdrnifti.quatern_c,     'float64');
-    fwrite(fid, img.hdrnifti.quatern_d,     'float64');
-    fwrite(fid, img.hdrnifti.qoffset_x,     'float64');
-    fwrite(fid, img.hdrnifti.qoffset_y,     'float64');
-    fwrite(fid, img.hdrnifti.qoffset_z,     'float64');
-    fwrite(fid, img.hdrnifti.srow_x,        'float64');
-    fwrite(fid, img.hdrnifti.srow_y,        'float64');
-    fwrite(fid, img.hdrnifti.srow_z,        'float64');
-    fwrite(fid, img.hdrnifti.slice_code,    'int32');
-    fwrite(fid, img.hdrnifti.xyzt_units,    'int32');
-    fwrite(fid, img.hdrnifti.intent_code,   'int32');
+mri_SaveNIfTImx(filename, fhdr, img.data, img.meta, img.hdrnifti.swapped == 1, verbose);
 
-    img.hdrnifti.intent_name = [img.hdrnifti.intent_name '                '];
-    img.hdrnifti.unused_str  = [img.hdrnifti.unused_str '               '];
-    fwrite(fid, img.hdrnifti.intent_name(1:16), 'char');
-    fwrite(fid, img.hdrnifti.dim_info,          'char');
-    fwrite(fid, img.hdrnifti.unused_str(1:15),  'char');
 
-end
 
-% ---> Add metadata
+% ----- Pack NIfTI-1 Header
 
-if img.hdrnifti.metalen > 0
-    fwrite(fid, img.hdrnifti.meta, 'char');
-end
 
-% ---> Add data ...
+function [s] = packHeader_nifti1(hdrnifti)
 
-fwrite(fid, img.data, datatype);
-fclose(fid);
+    if hdrnifti.swap
+        sw = @(x, c) typecast(swapbytes(cast(x, c)), 'uint8');
+    else
+        sw = @(x, c) typecast(cast(x, c), 'uint8');
+    end
 
-if compressed
-    gzip(file);
-    delete(file);
-end
+    s = zeros(348, 1, 'uint8');
+
+    s(1:4)     =   sw(348                     , 'int32');
+    s(5:14)    =   sw(hdrnifti.data_type      , 'uint8');
+    s(15:32)   =   sw(hdrnifti.db_name        , 'uint8');
+    s(33:36)   =   sw(hdrnifti.extents        , 'int32');
+    s(37:38)   =   sw(hdrnifti.session_error  , 'int16');
+    s(39)      =   sw(hdrnifti.regular        , 'uint8');
+    s(40)      =   sw(hdrnifti.dim_info       , 'uint8');
+    s(41:56)   =   sw(hdrnifti.dim            , 'int16');
+    s(57:60)   =   sw(hdrnifti.intent_p1      , 'single');
+    s(61:64)   =   sw(hdrnifti.intent_p2      , 'single');
+    s(65:68)   =   sw(hdrnifti.intent_p3      , 'single');
+    s(69:70)   =   sw(hdrnifti.intent_code    , 'int16');
+    s(71:72)   =   sw(hdrnifti.datatype       , 'int16');
+    s(73:74)   =   sw(hdrnifti.bitpix         , 'int16');
+    s(75:76)   =   sw(hdrnifti.slice_start    , 'int16');
+    s(77:108)  =   sw(hdrnifti.pixdim         , 'single');
+    s(109:112) =   sw(hdrnifti.vox_offset     , 'single');
+    s(113:116) =   sw(hdrnifti.scl_slope      , 'single');
+    s(117:120) =   sw(hdrnifti.scl_inter      , 'single');
+    s(121:122) =   sw(hdrnifti.slice_end      , 'int16');
+    s(123)     =   sw(hdrnifti.slice_code     , 'uint8');
+    s(124)     =   sw(hdrnifti.xyzt_units     , 'uint8');
+    s(125:128) =   sw(hdrnifti.cal_max        , 'single');
+    s(129:132) =   sw(hdrnifti.cal_min        , 'single');
+    s(133:136) =   sw(hdrnifti.slice_duration , 'single');
+    s(137:140) =   sw(hdrnifti.toffset        , 'single');
+    s(141:144) =   sw(hdrnifti.glmax          , 'int32');
+    s(145:148) =   sw(hdrnifti.glmin          , 'int32');
+    s(149:228) =   sw(hdrnifti.descrip        , 'uint8');
+    s(229:252) =   sw(hdrnifti.aux_file       , 'uint8');
+    s(253:254) =   sw(hdrnifti.qform_code     , 'int16');
+    s(255:256) =   sw(hdrnifti.sform_code     , 'int16');
+    s(257:260) =   sw(hdrnifti.quatern_b      , 'single');
+    s(261:264) =   sw(hdrnifti.quatern_c      , 'single');
+    s(265:268) =   sw(hdrnifti.quatern_d      , 'single');
+    s(269:272) =   sw(hdrnifti.qoffset_x      , 'single');
+    s(273:276) =   sw(hdrnifti.qoffset_y      , 'single');
+    s(277:280) =   sw(hdrnifti.qoffset_z      , 'single');
+    s(281:296) =   sw(hdrnifti.srow_x         , 'single');
+    s(297:312) =   sw(hdrnifti.srow_y         , 'single');
+    s(313:328) =   sw(hdrnifti.srow_z         , 'single');
+    s(329:344) =   sw(hdrnifti.intent_name    , 'uint8');
+    s(345:348) =   sw(hdrnifti.magic          , 'uint8');
+
+
+
+% ----- Pack NIfTI-2 Header
+
+
+function [s] = packHeader_nifti2(hdrnifti)
+
+    if hdrnifti.swap
+        sw = @(x, c) typecast(swapbytes(cast(x, c)), 'uint8');
+    else
+        sw = @(x, c) typecast(cast(x, c), 'uint8');
+    end
+
+    s = zeros(540, 1, 'uint8');
+
+    s(1:4)     = sw(348,                     'int32');
+    s(5:12)    = sw(hdrnifti.magic,          'uint8');
+    s(13:14)   = sw(hdrnifti.datatype,       'int16');
+    s(15:16)   = sw(hdrnifti.bitpix,         'int16');
+    s(17:80)   = sw(hdrnifti.dim,            'int64');
+    s(81:88)   = sw(hdrnifti.intent_p1,      'double');
+    s(89:96)   = sw(hdrnifti.intent_p2,      'double');
+    s(97:104)  = sw(hdrnifti.intent_p3,      'double');
+    s(105:168) = sw(hdrnifti.pixdim,         'double');
+    s(169:176) = sw(hdrnifti.vox_offset,     'int64');
+    s(177:184) = sw(hdrnifti.scl_slope,      'double');
+    s(185:192) = sw(hdrnifti.scl_inter,      'double');
+    s(193:200) = sw(hdrnifti.cal_max,        'double');
+    s(201:208) = sw(hdrnifti.cal_min,        'double');
+    s(209:216) = sw(hdrnifti.slice_duration, 'double');
+    s(217:224) = sw(hdrnifti.toffset,        'double');
+    s(225:232) = sw(hdrnifti.slice_start,    'int64');
+    s(233:240) = sw(hdrnifti.slice_end,      'int64');
+    s(241:320) = sw(hdrnifti.descrip,        'uint8');
+    s(321:344) = sw(hdrnifti.aux_file,       'uint8');
+    s(345:348) = sw(hdrnifti.qform_code,     'int32');
+    s(349:352) = sw(hdrnifti.sform_code,     'int32');
+    s(353:360) = sw(hdrnifti.quatern_b,      'double');
+    s(361:368) = sw(hdrnifti.quatern_c,      'double');
+    s(369:376) = sw(hdrnifti.quatern_d,      'double');
+    s(377:384) = sw(hdrnifti.qoffset_x,      'double');
+    s(385:392) = sw(hdrnifti.qoffset_y,      'double');
+    s(393:400) = sw(hdrnifti.qoffset_z,      'double');
+    s(401:432) = sw(hdrnifti.srow_x,         'double');
+    s(433:464) = sw(hdrnifti.srow_y,         'double');
+    s(465:496) = sw(hdrnifti.srow_z,         'double');
+    s(497:500) = sw(hdrnifti.slice_code,     'int32');
+    s(501:504) = sw(hdrnifti.xyzt_units,     'int32');
+    s(505:508) = sw(hdrnifti.intent_code,    'int32');
+    s(509:524) = sw(hdrnifti.intent_name,    'uint8');
+    s(525)     = sw(hdrnifti.dim_info,       'uint8');
+    s(526:540) = sw(hdrnifti.unused_str,     'uint8');
+
+
 

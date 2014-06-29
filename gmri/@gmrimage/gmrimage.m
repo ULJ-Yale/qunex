@@ -51,6 +51,7 @@ classdef gmrimage
         roi             = [];
         glm;
         xml             = [];
+        meta            = [];
 
         % ---> various statistical data
 
@@ -153,36 +154,34 @@ classdef gmrimage
 
         end
 
-        function mri_saveimage(obj, filename, extra)
+        function mri_saveimage(obj, filename, extra, verbose)
         %
         %  Save image based on the existing header data
         %
-            if nargin < 3
-                extra = [];
-                if nargin < 2
-                    filename = obj.filename;
-                end
-            end
+            if nargin < 4 verbose = [];            end
+            if nargin < 3 extra = [];              end
+            if nargin < 2 filename = obj.filename; end
+
             filename = strtrim(filename);
 
             switch obj.imageformat
                 case '4dfp'
                     obj.mri_Save4DFP(filename, extra);
                 case 'NIfTI'
-                    obj.mri_SaveNIfTI(filename);
+                    obj.mri_SaveNIfTI(filename, verbose);
                 case 'CIFTI'
-                    obj.mri_SaveNIfTI(filename);
+                    obj.mri_SaveNIfTI(filename, verbose);
             end
         end
 
-        function mri_saveimageframe(obj, frame, filename)
+        function mri_saveimageframe(obj, frame, filename, verbose)
         %
         %  Save image based on the existing header data, it only saves the specified frames.
         %
         %
-            if nargin < 3
-                filename = obj.filename;
-            end
+            if nargin < 4, verbose = []; end
+            if nargin < 3, filename = obj.filename; end
+
             filename = strtrim(filename);
 
             obj.data   = obj.image2D;
@@ -193,7 +192,7 @@ classdef gmrimage
             obj.data   = obj.data(:,frame);
             obj.frames = size(obj.data,2);
 
-            mri_saveimage(obj, filename);
+            mri_saveimage(obj, filename, [], verbose);
         end
 
 
