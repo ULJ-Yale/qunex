@@ -6,6 +6,12 @@
 #include "g_nifti.h"
 #include "znzlib.h"
 
+// function [] = mri_ReadNIfTImx(filename, hdr, data, meta, doswap, verbose)
+//
+// To compile run: mex -lz mri_SaveNIfTI1.cpp g_nifti.c znzlib.c
+//
+
+
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
