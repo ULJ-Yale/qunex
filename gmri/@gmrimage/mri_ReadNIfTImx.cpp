@@ -117,7 +117,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     // mexPrintf("hlen: %d, dstart: %d, dlen: %d, dtype: %d, mstart: %d, mlen: %d!\n", ninfo.hlen, ninfo.dstart, ninfo.dlen, ninfo.dtype, ninfo.mstart, ninfo.mlen);
-    if (verbose) mexPrintf("\nPOSITION\nhlen:   %d\ndstart: %d\ndlen:   %d\ndtype:  %d\nmstart: %d\nmlen:   %d\n", ninfo.hlen, ninfo.dstart, ninfo.dlen, ninfo.dtype, ninfo.mstart, ninfo.mlen);
+    if (verbose) mexPrintf("\nPOSITIONS\nhlen:   %d\ndstart: %d\ndlen:   %d\ndtype:  %d\nmstart: %d\nmlen:   %d\n", ninfo.hlen, ninfo.dstart, ninfo.dlen, ninfo.dtype, ninfo.mstart, ninfo.mlen);
 
     plhs[0] = hdr;
 
