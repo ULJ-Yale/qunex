@@ -137,7 +137,7 @@ for n = 1:nsteps+1
     % From here on, everything needs to be adjusted to work with Fz
 
     if time, fprintf(' Fz'); tic; end
-    r = fc_Fisher(r);
+    if ~cv, r = fc_Fisher(r); end
     if ~isreal(r)
         fprintf(' c>r')
         r = real(r);
