@@ -1,4 +1,3 @@
-
 function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 
 %function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
