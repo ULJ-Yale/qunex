@@ -71,6 +71,8 @@ classdef gmrimage
         files = mri_ReadConcFile(file)
         roi   = mri_ReadROI(roiinfo, roif2)
         mri_SaveConcFile(file, files)
+        mri_SaveNIfTImx(filename, hdr, data, meta, doswap, verbose)
+        [hdr, data, meta, doswap] = mri_ReadNIfTImx(filename, verbose)
     end
 
     methods

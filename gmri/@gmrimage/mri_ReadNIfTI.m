@@ -35,7 +35,7 @@ end
 
 % --- read the file
 
-[fhdr fdata fmeta fswap] = mri_ReadNIfTImx(filename, verbose);
+[fhdr fdata fmeta fswap] = gmrimage.mri_ReadNIfTImx(filename, verbose);
 
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = fswap;

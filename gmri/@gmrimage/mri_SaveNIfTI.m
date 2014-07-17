@@ -100,7 +100,7 @@ end
 
 % ---> save it
 
-mri_SaveNIfTImx(filename, fhdr, img.data, img.meta, img.hdrnifti.swapped == 1, verbose);
+gmrimage.mri_SaveNIfTImx(filename, fhdr, img.data, img.meta, img.hdrnifti.swapped == 1, verbose);
 
 
 
