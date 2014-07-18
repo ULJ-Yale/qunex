@@ -55,14 +55,15 @@ classdef gmrimage
 
         % ---> various statistical data
 
-        use        = [];
-        mov        = [];
-        mov_hdr    = [];
-        fstats     = [];
-        fstats_hdr = [];
-        scrub      = [];
-        scrub_hdr  = [];
-        nuisance   = [];
+        use             = [];
+        mov             = [];
+        mov_hdr         = [];
+        fstats          = [];
+        fstats_hdr      = [];
+        scrub           = [];
+        scrub_hdr       = [];
+        nuisance        = [];
+        nuisance_hdr    = [];
 
     end
 

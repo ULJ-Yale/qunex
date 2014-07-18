@@ -1,4 +1,4 @@
-img = img/2000 % max(max(max(img))); --- Change due to high values in embedded data!function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
+function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
 
 %function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
 %   (c) Copyright Grega Repovš, 2011-01-24
