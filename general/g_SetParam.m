@@ -11,6 +11,10 @@ function [param] = g_SetParam(param, comm)
 %   Grega Repovs, 2014-01-01
 %
 
+if isempty(comm)
+    return
+end
+
 comm = regexp(comm, ',|;|:|\|', 'split');
 if length(comm)>=2
     comm = reshape(comm, 2, [])';

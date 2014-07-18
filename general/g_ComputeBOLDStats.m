@@ -2,20 +2,20 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 
 %function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %
-%	Computes BOLD run per frame statistics and scrubs.
+%   Computes BOLD run per frame statistics and scrubs.
 %
-%	img      	- gmrimage or a path to a bold file to process
+%   img         - gmrimage or a path to a bold file to process
 %   mask        - gmrimage or a path to a mask file to use
 %   target      - folder to save results into, default: where bold image is, 'none': do not save in external file
-%   store       - how to store the data - 'same': in the same file, '<ext>': new file with extension, '': no img file
+%   store       - whether to store the data in the image file - 'same': in the same file, '<ext>': new file with extension, '': no img file
 %   scrub       - whether and how to scrub - a string specifying parameters eg 'pre:1|post:1|fd:4|ignore:udvarsme'
-%	verbose		- to report on progress or not [not]
+%   verbose     - to report on progress or not [not]
 %
-% 	Created by Grega Repovš on 2011-07-09.
+%   Created by Grega Repovš on 2011-07-09.
 %   Grega Repovs - 2013-10-20 - Added embedding and scrubbing
 %   Grega Repovs - 2013-12-18 - Split in two to enable single bold file processing
 %
-% 	Copyright (c) 2011 Grega Repovs. All rights reserved.
+%   Copyright (c) 2011 Grega Repovs. All rights reserved.
 
 if nargin < 6, verbose = false; end
 if nargin < 5, scrub = [];      end
@@ -86,7 +86,7 @@ fname = strrep(fname, '.nii', '');
 % --------------------------------------------------------------
 %                                                  prepare stats
 
-img.fstats_hdr = {'frame', 'n', 'm', 'var', 'sd', 'dvars', 'dvarsm', 'dvarsme', 'fd'};
+img.fstats_hdr  = {'frame', 'n', 'm', 'var', 'sd', 'dvars', 'dvarsm', 'dvarsme', 'fd'};
 img.fstats      = zeros(img.frames, 9);
 img.fstats(:,1) = 1:img.frames;
 img.fstats(:,2) = stats.n;
@@ -101,7 +101,8 @@ img.fstats(:,8) = stats.dvarsme;
 % --------------------------------------------------------------
 %                                              compute scrubbing
 
-if ~isempty(scrub)
+if ~strcmp(scrub, 'none')
+    if verbose, fprintf(' ... scrubbing'); end
     img = img.mri_ComputeScrub(scrub);
 end
 
@@ -128,37 +129,19 @@ if ext
 
     if verbose, fprintf(' ... saving stats'); end
 
-    if ismember('fd', img.fstats_hdr)
-        stats.fd = img.fstats(:, ismember(img.fstats_hdr, {'fd'}));
-    else
-        stats.fd = zeros(1, img.frames);
-    end
+    % if ismember('fd', img.fstats_hdr)
+    %     stats.fd = img.fstats(:, ismember(img.fstats_hdr, {'fd'}));
+    % else
+    %     stats.fd = zeros(1, img.frames);
+    % end
 
-    fout = fopen(fullfile(target, [fname '.bstats']), 'w');
-    fprintf(fout, 'frame\tn\tm\tvar\tsd\tdvars\tdvarsm\tdvarsme\tfd\n');
-    for f = 1:img.frames
-        fprintf(fout, '%d\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', f, stats.n(f), stats.mean(f), stats.var(f), stats.sd(f), stats.dvars(f), stats.dvarsm(f), stats.dvarsme(f), stats.fd(f));
-    end
-    fprintf(fout, '#frame\tn\tm\tvar\tsd\tdvars\tdvarsm\tdvarsme\tfd\n');
-    fprintf(fout, '#max\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', max(stats.n), max(stats.mean), max(stats.var), max(stats.sd), max(stats.dvars), max(stats.dvarsm), max(stats.dvarsme), max(stats.fd));
-    fprintf(fout, '#mean\t%d\t%.2f\t%.2f\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\n', mean(stats.n), mean(stats.mean), mean(stats.var), mean(stats.sd), mean(stats.dvars), mean(stats.dvarsm), mean(stats.dvarsme), mean(stats.fd));
-
-    fclose(fout);
+    g_WriteTable(fullfile(target, [fname '.bstats']), img.fstats, img.fstats_hdr, 'max|mean|sd', '%-10s|%-10d|%-10g|%-9s', ' ');   % '%s|%d|%.3f|%s'
 
     % --- save scrub
 
-    if ~isempty(img.scrub_hdr)
-
+    if ~strcmp(scrub, 'none')
         if verbose, fprintf(' ... saving scrubbing data'); end
-        fout = fopen(fullfile(target, [fname '.scrub']), 'w');
-        fprintf(fout, 'frame\tmov\tdvars\tdvarsme\tidvars\tidvarsme\tudvars\tudvarsme\n');
-        for f = 1:img.frames
-            fprintf(fout, '%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n', img.scrub(f,:));
-        end
-        fprintf(fout, '#frame\tmov\tdvars\tdvarsme\tidvars\tidvarsme\tudvars\tudvarsme\n');
-        fprintf(fout, '#sum\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n', sum(img.scrub(:,2:end)));
-        fprintf(fout, '#%%\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\n', sum(img.scrub(:,2:end))./size(img.scrub,1)*100);
-        fclose(fout);
+        g_WriteTable(fullfile(target, [fname '.scrub']), [img.scrub img.use'], [img.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
     end
 end
 

@@ -9,6 +9,7 @@ function [obj] = mri_ReadStats(obj, filename, frames, verbose)
 %   2011-07-31 - Initial version
 %   2013-10-19 - Added reading embedded data
 %   2013-10-20 - Added verbose option
+%   2014-07-19 - Switched to g_ReadTable
 %
 
 if nargin < 4
@@ -116,7 +117,7 @@ if ~emov
     tfile = FindMatchingFile(movfolder, fname, '.dat');
     if verbose, fprintf('---> reading movement data from %s\n', tfile), end
     if tfile
-        [data header] = ReadTextFile(tfile);
+        [data header] = g_ReadTable(tfile);
         data = CheckData(data, frames, obj.frames);
         if ~isempty(data)
             obj.mov     = data;
@@ -133,7 +134,7 @@ if ~ebstats
     tfile = FindMatchingFile(movfolder, fname, '.bstats');
     if verbose, fprintf('---> reading stats data from %s\n', tfile), end
     if tfile
-        [data header] = ReadTextFile(tfile);
+        [data header] = g_ReadTable(tfile);
         data = CheckData(data, frames, obj.frames);
         if ~isempty(data)
             obj.fstats     = data;
@@ -149,7 +150,7 @@ if ~esel
     tfile = FindMatchingFile(movfolder, fname, '.scrub');
     if verbose, fprintf('---> reading scrub data from %s\n', tfile), end
     if tfile
-        [data header] = ReadTextFile(tfile);
+        [data header] = g_ReadTable(tfile);
         data = CheckData(data, frames, obj.frames);
         if ~isempty(data)
             obj.scrub     = data;
@@ -157,33 +158,6 @@ if ~esel
         end
     end
 end
-
-% ===============================================
-%                                    ReadTextFile
-
-function [x, header] = ReadTextFile(filename)
-
-fin = fopen(filename, 'r');
-c = 0;
-s = fgetl(fin);
-h = false;
-while ischar(s)
-    s = strtrim(s);
-    if ~isempty(s)
-        if ismember(s(1),'-.0123456789')
-            c = c+1;
-            x(c,:) = strread(s);
-            h = true;
-    	elseif ~h
-    	    s = strrep(s, '#', '');
-    	    header = textscan(s, '%s');
-    	    header = header{1};
-        end
-    end
-    s = fgetl(fin);
-end
-fclose(fin);
-
 
 
 
