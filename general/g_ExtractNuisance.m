@@ -1,6 +1,6 @@
-function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sbjroi, nroi, verbose);
+function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sbjroi, nroi, shrink, verbose);
 
-%function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sbjroi, nroi, verbose);
+%function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sbjroi, nroi, shrink, verbose);
 %
 %	Computes BOLD run per frame statistics and scrubs.
 %
@@ -20,13 +20,14 @@ function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, 
 %
 % 	Copyright (c) 2014 Grega Repovs. All rights reserved.
 
-if nargin < 9, verbose = false; end
-if nargin < 8, nroi    = [];    end
-if nargin < 7, sbjroi  = [];    end
-if nargin < 6, wbmask  = [];    end
-if nargin < 5, store   = [];    end
-if nargin < 4, target  = [];    end
-if nargin < 3, bmimg   = [];    end
+if nargin < 10, verbose = false; end
+if nargin < 9,  shrink = false;  end
+if nargin < 8,  nroi    = [];    end
+if nargin < 7,  sbjroi  = [];    end
+if nargin < 6,  wbmask  = [];    end
+if nargin < 5,  store   = [];    end
+if nargin < 4,  target  = [];    end
+if nargin < 3,  bmimg   = [];    end
 
 if nargin < 2
     error('ERROR: No tissue segmentation image (aseg, aparc+aseg) provided!');
@@ -80,20 +81,23 @@ WM  = fsimg.zeroframes(1);
 bmimg.data = (bmimg.data > 0) & (fsimg.data > 0);
 
 WM.data = (ismember(fsimg.data, fs_wm)) & (bmimg.data > 0);
-%WM      = WM.mri_ShrinkROI();
-%WM.data = WM.image2D;
+if shrink, WM = WM.mri_ShrinkROI(); end
+WM.data = WM.image2D;
 
 V.data  = ismember(fsimg.data, fs_csf) & (bmimg.data > 0);
 WB.data = (bmimg.data > 0) & (WM.data ~=1) & ~V.data;
 
-%V       = V.mri_ShrinkROI('surface', 6);
-%WB      = WB.mri_ShrinkROI('edge', 10); %'edge', 10
+if shrink, V  = V.mri_ShrinkROI('surface', 6); end
+if shrink, WB = WB.mri_ShrinkROI('edge', 10);  end %'edge', 10
 %WM      = WM.mri_ShrinkROI();
 %WM      = WM.mri_ShrinkROI();
+
+WB.data = WB.image2D;
+V.data  = V.image2D;
 
 
 % --------------------------------------------------------------
-%                                     ine ROI to exclude from WB
+%                                  define ROI to exclude from WB
 
 if verbose, verbose = '\n---> Reading whole brain exclusion mask [%s]'; end
 wbmask = getImage(wbmask, fsimg, verbose);
@@ -168,24 +172,7 @@ if ~strcmp(target, 'none')
     % --- save stats
 
     if verbose, fprintf('\n---> saving nuisance signals'); end
-
-    fout = fopen(fullfile(target, [fname '.nuisance']), 'w');
-    fprintf(fout, 'frame');
-
-    % --- output header
-
-    for n = 1:length(hdr)
-        fprintf(fout, '\t%s', hdr{n});
-    end
-
-    % --- output data
-
-    for n = 1:size(nuisance,1)
-        fprintf(fout, '\n%d', n);
-        fprintf(fout, '\t%.6f', nuisance(n,:));
-    end
-
-    fclose(fout);
+    g_WriteTable(fullfile(target, [fname '.nuisance']), [[1:size(nuisance,1)]' nuisance], ['frame', hdr], 'mean,sd', '%-16s|%-16d|%-16.10f|%-15s', ' ');
 
 end
 
@@ -315,14 +302,4 @@ function [filename nomask] = processeROI(s);
         end
     end
 
-
-% ======================================================
-%   ----> save nuisance images
-%   --- needs to be changed
-
-function [] = SaveNuisanceMasks(img, WB, V, WM, eROI);
-
-
-
-return
 

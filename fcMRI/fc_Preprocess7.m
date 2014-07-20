@@ -75,7 +75,8 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-if nargin < 13, ignores = [];       end
+if nargin < 14, ignores = '';       end
+if nargin < 13, scrub = '';         end
 if nargin < 12, tail = '.4dfp.img'; end
 if nargin < 11, overwrite = false;  end
 if nargin < 10, variant = '';       end
@@ -112,9 +113,6 @@ froot = strcat(subjectf, ['/images/functional/bold' int2str(bold)]);
 file.boldmask  = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask' tail]);
 file.bold1     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1' tail]);
 file.segmask   = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
-file.wmmask    = ['WM' tail];
-file.ventricleseed = ['V' tail];
-file.eyeseed   = ['E' tail];
 
 file.nfile     = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance' tail]);
 file.nfilepng  = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance.png']);
@@ -181,7 +179,7 @@ nuisance.use = nuisance.scrub(:,ismember(nuisance.scrub_hdr, {'use'}))';
 
 if strfind(do, 'r')
 
-    % ---> signal and movement nuisance
+    % ---> signal nuisance
 
     [nuisance.signal nuisance.signal_hdr] = g_ReadTable(file.nuisance);
     nuisance.nsignal = size(nuisance.signal,2);
