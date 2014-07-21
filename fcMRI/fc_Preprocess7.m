@@ -12,13 +12,16 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %           r - regresses out nuisance, optional parameter:
 %           c - save coefficients in _coeff file
 %           l - lowpass temporal filter
+%           m - motion scrubbing
 %       rgss        - what to regress in the regression step, comma separated list
-%           M   - motion
+%           m   - motion
 %           V   - ventricles
 %           WM  - white matter
 %           WB  - whole brain
 %           mWB - masked whole brain
 %           1d  - first derivatives of nuisance signal and movement
+%           t   - task
+%           e   - event
 %       task        - matrix of custom regressors to be entered in GLM
 %       efile       - event (fild) file to be used for removing task structure [none]
 %       TR          - TR of the data [2.5]
@@ -110,13 +113,6 @@ rgss  = regexp(rgss, '|,|;| |\|', 'split');
 
 froot = strcat(subjectf, ['/images/functional/bold' int2str(bold)]);
 
-file.boldmask  = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask' tail]);
-file.bold1     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1' tail]);
-file.segmask   = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
-
-file.nfile     = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance' tail]);
-file.nfilepng  = strcat(subjectf, ['/images/ROI/nuisance/bold' int2str(bold) variant '_nuisance.png']);
-
 file.movdata   = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '_mov.dat']);
 file.oscrub    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.scrub']);
 file.tscrub    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) variant '.scrub']);
@@ -149,14 +145,14 @@ nuisance.nframes = size(nuisance.mov,1);
 
 %   ----> exclude extra data from mov
 
-me = {'frame', 'scale'};
+me               = {'frame', 'scale'};
 nuisance.mov     = nuisance.mov(:,~ismember(nuisance.mov_hdr, me));
 nuisance.mov_hdr = nuisance.mov_hdr(~ismember(nuisance.mov_hdr, me));
 nuisance.nmov    = size(nuisance.mov,2);
 
 %   ----> do scrubbing anew if needed!
 
-if ~isempty(scrub)
+if strfind(do, 'm')
     timg = gmrimage;
     timg.fstats     = nuisance.fstats;
     timg.fstats_hdr = nuisance.fstats_hdr;
@@ -192,7 +188,8 @@ if strfind(do, 'r')
     % ---> event file
 
     if ~isempty(eventstring)
-        nuisance.events = g_CreateUnassumedResponseTaskRegressors(file.fidlfile, eventstring, nuisance.nframes);
+        runs            = g_CreateTaskRegressors(file.fidlfile, nuisance.nframes, eventstring);
+        nuisance.events = runs(1).matrix;
     else
         nuisance.events = [];
     end
@@ -299,8 +296,10 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
     img.data = img.image2D;
 
     derivatives = ismember('1d', rgss);
-    rgss = rgss(~ismember('1d', rgss));
-
+    movement    = ismember('m', rgss);
+    task        = ismember('t', rgss);
+    event       = ismember('e', rgss);
+    rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm'}));
 
     %   ----> baseline and linear trend
 
@@ -316,8 +315,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     %   ----> movement
 
-    if ismember('M', rgss)
-        rgss = rgss(~ismember('M', rgss));
+    if movement
         X = [X nuisance.mov(omit+1:end,:)];
         if derivatives
             if omit, z = []; else z = zeros(1,nuisance.nmov); end
@@ -339,14 +337,14 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     %   ----> task
 
-    if nuisance.ntask
+    if task && nuisance.ntask
         X = [X nuisance.task(omit+1:end,:)];
     end
 
 
     %   ----> events
 
-    if nuisance.nevents
+    if event && nuisance.nevents
         X = [X nuisance.events(omit+1:end,:)];
     end
 
@@ -366,7 +364,6 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     [coeff res] = Y.mri_GLMFit(X);
     img.data(:,mask) = res.image2D;
-
 
 return
 

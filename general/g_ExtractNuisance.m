@@ -21,7 +21,7 @@ function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, 
 % 	Copyright (c) 2014 Grega Repovs. All rights reserved.
 
 if nargin < 10, verbose = false; end
-if nargin < 9,  shrink = false;  end
+if nargin < 9,  shrink  = true;  end
 if nargin < 8,  nroi    = [];    end
 if nargin < 7,  sbjroi  = [];    end
 if nargin < 6,  wbmask  = [];    end
@@ -87,12 +87,13 @@ WM.data = WM.image2D;
 V.data  = ismember(fsimg.data, fs_csf) & (bmimg.data > 0);
 WB.data = (bmimg.data > 0) & (WM.data ~=1) & ~V.data;
 
-if shrink, V  = V.mri_ShrinkROI('surface', 6); end
+%if shrink, V  = V.mri_ShrinkROI('surface', 6); end
 if shrink, WB = WB.mri_ShrinkROI('edge', 10);  end %'edge', 10
-%WM      = WM.mri_ShrinkROI();
-%WM      = WM.mri_ShrinkROI();
+if shrink, WM = WM.mri_ShrinkROI();            end
+%if shrink, WM = WM.mri_ShrinkROI();            end
 
 WB.data = WB.image2D;
+WM.data = WM.image2D;
 V.data  = V.image2D;
 
 

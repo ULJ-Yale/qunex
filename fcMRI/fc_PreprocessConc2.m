@@ -1,6 +1,6 @@
-function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores)
+function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores)
 
-%function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores)
+%function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores)
 %   (c) Copyright Grega Repovš, 2011-01-24
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -18,15 +18,16 @@ function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efi
 %           c - save coefficients in _coeff file
 %           p - saves png image files of nusance ROI mask
 %           l - lowpass temporal filter
+%           m - motion scrubbing
 %
 %       TR          - TR of the data [2.5]
 %       omit        - the number of frames to omit at the start of each bold [5]
 %       rgss        - what to regress in the regression step
 %           m  - motion
-%           v  - ventricles
-%           wm - white matter
-%           wb - whole brain
-%           d  - first derivative
+%           V  - ventricles
+%           WM - white matter
+%           WB - whole brain
+%           1d - first derivative
 %           t  - task
 %           e  - events
 %
@@ -122,13 +123,6 @@ for b = 1:nbolds
     bnum = int2str(bolds(b));
     file(b).froot       = strcat(subjectf, ['/images/functional/bold' bnum]);
 
-    file(b).boldmask    = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask' tail]);
-    file(b).bold1       = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1' tail]);
-    file(b).segmask     = strcat(subjectf, ['/images/segmentation/freesurfer/mri/aseg_bold' tail]);
-
-    file(b).nfile       = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance' tail]);
-    file(b).nfilepng    = strcat(subjectf, ['/images/ROI/nuisance/bold' bnum variant '_nuisance.png']);
-
     file(b).movdata     = strcat(subjectf, ['/images/functional/movement/bold' bnum '_mov.dat']);
     file(b).oscrub      = strcat(subjectf, ['/images/functional/movement/bold' bnum '.scrub']);
     file(b).tscrub      = strcat(subjectf, ['/images/functional/movement/bold' bnum variant '.scrub']);
@@ -157,6 +151,7 @@ end
 %                  ---> deal with nuisance and scrubbing
 
 allframes = 0;
+frames    = zeros(1, nbolds);
 
 for b = 1:nbolds
 
@@ -167,6 +162,7 @@ for b = 1:nbolds
     [nuisance(b).mov    nuisance(b).mov_hdr]    = g_ReadTable(file(b).movdata);
 
     nuisance(b).nframes = size(nuisance(b).mov,1);
+    frames(b) = nuisance(b).nframes;
     allframes = allframes + nuisance(b).nframes;
 
     %   ----> exclude extra data from mov
@@ -178,7 +174,7 @@ for b = 1:nbolds
 
     %   ----> do scrubbing anew if needed!
 
-    if ~isempty(scrub)
+    if strfind(do, 'm')
         timg = gmrimage;
         timg.fstats     = nuisance.fstats;
         timg.fstats_hdr = nuisance.fstats_hdr;
@@ -216,9 +212,11 @@ end
 if strfind(do, 'r')
 
     if ~isempty(eventstring)
-        eventsn = g_CreateUnassumedResponseTaskRegressors(file(1).fidlfile, eventstring, allframes);
+        runs = g_CreateTaskRegressors(file(1).fidlfile, frames, eventstring);
     else
-        eventsn = [];
+        for b = 1:nbolds
+            runs(b).matrix = [];
+        end
     end
 
     bstart = 1;
@@ -226,18 +224,15 @@ if strfind(do, 'r')
         bend = bstart + nuisance(b).nframes - 1;
 
         if isempty(task)
-            nuisance(b).task  = []
+            nuisance(b).task  = [];
         else
             nuisance(b).task  = task(bstart:bend,:);
             nuisance(b).ntask = size(task,2);
         end
 
-        if isempty(eventstring)
-            nuisance(b).events  = []
-        else
-            nuisance(b).events  = eventsn(bstart:bend,:);
-            nuisance(b).nevents = size(eventsn,2);
-        end
+        nuisance(b).events  = runs(b).matrix;
+        nuisance(b).nevents = size(nuisance(b).events,2);
+
         bstart = bstart + nuisance(b).nframes;
     end
 
@@ -262,6 +257,8 @@ ext      = '';
 for b = 1:nbolds
     img(b) = gmrimage();
 end
+
+dor      = true;
 
 for current = do
 
@@ -320,21 +317,23 @@ for current = do
 
             % --- filter nuisance if needed
 
-            switch current
-                case 'h'
-                    hpsigma = ((1/TR)/0.009)/2;
-                    tnimg = tmpimg(nuisance(b).signal', nuisance(b).use);
-                    tnimg = tnimg.mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
-                    nuisance(b).signal = tnimg.data';
+            if dor
+                switch current
+                    case 'h'
+                        hpsigma = ((1/TR)/0.009)/2;
+                        tnimg = tmpimg(nuisance(b).signal', nuisance(b).use);
+                        tnimg = tnimg.mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
+                        nuisance(b).signal = tnimg.data';
 
-                case 'l'
-                    lpsigma = ((1/TR)/0.08)/2;
-                    tnimg = tmpimg([nuisance(b).signal nuisance(b).task nuisance(b).events nuisance(b).mov]', nuisance(b).use);
-                    tnimg = tnimg.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
-                    nuisance(b).signal = tnimg.data(1:nuisance(b).nsignal,:)';
-                    nuisance(b).task   = tnimg.data((nuisance(b).nsignal+1):(nuisance(b).nsignal+nuisance(b).ntask),:)';
-                    nuisance(b).events = tnimg.data((nuisance(b).nsignal+nuisance(b).ntask+1):(nuisance(b).nsignal+nuisance(b).ntask+nuisance(b).nevents),:)';
-                    nuisance(b).mov    = tnimg.data(end-nuisance(b).nmov:end,:)';
+                    case 'l'
+                        lpsigma = ((1/TR)/0.08)/2;
+                        tnimg = tmpimg([nuisance(b).signal nuisance(b).task nuisance(b).events nuisance(b).mov]', nuisance(b).use);
+                        tnimg = tnimg.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
+                        nuisance(b).signal = tnimg.data(1:nuisance(b).nsignal,:)';
+                        nuisance(b).task   = tnimg.data((nuisance(b).nsignal+1):(nuisance(b).nsignal+nuisance(b).ntask),:)';
+                        nuisance(b).events = tnimg.data((nuisance(b).nsignal+nuisance(b).ntask+1):(nuisance(b).nsignal+nuisance(b).ntask+nuisance(b).nevents),:)';
+                        nuisance(b).mov    = tnimg.data(end-nuisance(b).nmov:end,:)';
+                end
             end
         end
     end
@@ -369,6 +368,7 @@ for current = do
                 fprintf('... done!\n');
             end
         end
+        dor = false;
     end
 
     if exist(file(b).tconc, 'file') && ~overwrite
@@ -389,7 +389,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress)
+function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
 
     % ---> basic settings
 
@@ -397,17 +397,20 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.
     frames = zeros(1, nbolds);
 
     derivatives = ismember('1d', rgss);
-    rgss = rgss(~ismember('1d', rgss));
+    movement    = ismember('m', rgss);
+    task        = ismember('t', rgss);
+    event       = ismember('e', rgss);
+    rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm'}));
 
     % ---> bold starts, frames
 
-    st = 1
-    smask = ismember(nuisance.signal_hdr, rgss);
+    st = 1;
+    smask = ismember(nuisance(1).signal_hdr, rgss);
     for b = 1:nbolds
         bS(b)     = st;
-        frames(b) = nuisance(b).nframes - omit;
-        bE(b)     = st + frames - 1;
-        st        = st + frames;
+        frames(b) = nuisance(b).nframes;
+        bE(b)     = st + frames(b) - 1;
+        st        = st + frames(b);
 
         nuisance(b).signal  = nuisance(b).signal(:,smask);
         nuisance(b).nsignal = sum(smask);
@@ -416,10 +419,10 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.
     % ---> X size and init
 
     nB = 2;
-    nT = nuisance(1).ntask;
-    nM = nuisance(1).nmov;
     nS = nuisance(1).nsignal;
-    nE = nuisance(1).nevent;
+    if task,     nT = nuisance(1).ntask;   else nT = 0; end
+    if movement, nM = nuisance(1).nmov;    else nM = 0; end
+    if event,    nE = nuisance(1).nevents; else nE = 0; end
     nBj = nB*nbolds;
     nTj = nT;
 
@@ -452,34 +455,37 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.
     xS = 1;
     for b = 1:nbolds
         xE = xS + nB - 1;
-        pl = zeros(frames(b),1);
-        for n = 1:frames(b)
-            pl(n)= (n-1)/(frames(b)-1);
+        nf = frames(b) - omit;
+        pl = zeros(nf,1);
+        for n = 1:nf
+            pl(n)= (n-1)/(nf-1);
         end
         pl = pl-0.5;
 
-        X(bS(b):bE(b), xS:xE) = [ones(frames,1) pl];
+        X(bS(b):bE(b), xS:xE) = [ones(frames(b),1) [zeros(omit,1); pl]];
         xS = xS+2;
     end
 
 
     %   ----> movement
 
-    for b = 1:nbolds
-        xE = xS + nM - 1;
-        X(bS(b):bE(b), xS:xE) = nuisance(b).mov(omit+1:end,:);
-        if ~joinn
-            xS = xS+nM;
+    if movement
+        for b = 1:nbolds
+            xE = xS + nM - 1;
+            X(bS(b):bE(b), xS:xE) = nuisance(b).mov;
+            if ~joinn
+                xS = xS+nM;
+            end
         end
+        xS = xS+nM;
     end
-    xS = xS+nM;
 
 
     %   ----> signal
 
     for b = 1:nbolds
         xE = xS + nS - 1;
-        X(bS(b):bE(b), xS:xE) = nuisance(b).signal(omit+1:end,:);
+        X(bS(b):bE(b), xS:xE) = nuisance(b).signal;
         if ~joinn
             xS = xS+nS;
         end
@@ -493,21 +499,22 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.
 
         %   ----> movement
 
-        if omit, z = []; else z = zeros(1,nuisance(b).nmov); end
-        for b = 1:nbolds
-            xE = xS + nM - 1;
-            X(bS(b):bE(b), xS:xE) = [z; diff(nuisance(b).mov(omit:end,:))];
-            if ~joinn
-                xS = xS+nM;
+        if movement
+            for b = 1:nbolds
+                xE = xS + nM - 1;
+                X(bS(b):bE(b), xS:xE) = [zeros(1,nuisance(b).nmov); diff(nuisance(b).mov)];
+                if ~joinn
+                    xS = xS+nM;
+                end
             end
+            xS = xS+nM;
         end
-        xS = xS+nM;
 
         %   ----> signal
 
         for b = 1:nbolds
             xE = xS + nS - 1;
-            X(bS(b):bE(b), xS:xE) = [zeros(1, nuisance(b).nsignal); diff(nuisance(b).signal(omit+1:end,:))];
+            X(bS(b):bE(b), xS:xE) = [zeros(omit+1, nuisance(b).nsignal); diff(nuisance(b).signal(omit+1:end,:))];
             if ~joinn
                 xS = xS+nS;
             end
@@ -518,23 +525,27 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.
 
     %   ----> events
 
-    for b = 1:nbolds
-        xE = xS + nE - 1;
-        X(bS(b):bE(b), xS:xE) = nuisance(b).events(omit+1:end,:);
-        if ~joine
-            xS = xS+nE;
+    if event
+        for b = 1:nbolds
+            xE = xS + nE - 1;
+            X(bS(b):bE(b), xS:xE) = nuisance(b).events;
+            if ~joine
+                xS = xS+nE;
+            end
         end
+        xS = xS+nE;
     end
-    xS = xS+nE;
 
 
     %   ----> task
 
-    xE = xS + nT - 1;
-    for b = 1:nbolds
-        X(bS(b):bE(b), xS:xE) = nuisance(b).task(omit+1:end,:);
+    if task
+        xE = xS + nT - 1;
+        for b = 1:nbolds
+            X(bS(b):bE(b), xS:xE) = nuisance(b).task;
+        end
+        xS = xS+nT;
     end
-    xS = xS+nT;
 
     %   ----> combine data in a single image
     fprintf('.');
