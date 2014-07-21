@@ -1,12 +1,12 @@
 function img = mri_Smooth3D(img, fwhm, verbose)
 
-%	
+%
 %	Adjusted function, accepts fwhm in voxels.
 %	Assumes isometric voxels of 333 format
 %	Uses kernel window size 7
-%	
+%
 %	Grega Repovs 2008.7.11
-%	
+%
 
 if nargin < 3
     verbose = false;
@@ -22,7 +22,7 @@ for n = 1:img.frames
 	if verbose, fprintf('\b\b\b\b%4d',n);, end
 	data(:,:,:,n) = smoothvolume(data(:,:,:,n), ksd);
 end
-if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b');, end
+if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b                    \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b');, end
 img.data = single(data);
 
 function smoothed = smoothvolume(data, ksd)
@@ -114,7 +114,7 @@ D2 = numel(S);
 if (((D > 1) && (~isvectord(R))) || ((D2> 1) && (~isvectord(S)))),
     error('Matrix arguments are not supported.');
 end
-if ((D>1)&&(D2>1)&&(D~=D2)), 
+if ((D>1)&&(D2>1)&&(D~=D2)),
     error('R and S must have same number of elements (unless one is scalar).');
 end;
 
@@ -129,13 +129,13 @@ RR = 2*R + 1;
 for k = 1:D
     % Make the appropriate 1-D Gaussian
     grid = [-R(k):R(k)]';
-    gauss = exp(-grid.^2./(2*S(k).^2));  
+    gauss = exp(-grid.^2./(2*S(k).^2));
     gauss = gauss ./ sum(gauss);
 
     % Then expand it against kernel-so-far ...
     if (k == 1),
         kernel = gauss;
-    else    
+    else
         Dpast = ones(1,(k-1));
         expand = repmat(reshape(gauss, [Dpast RR(k)]), [RR(1:k-1) 1]);
         kernel = repmat(kernel, [Dpast RR(k)]) .* expand;
@@ -176,9 +176,9 @@ function C = convnsep(varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Parse Inputs %%%%%%%%%%%%%%%%%%%%%%%%%%
 % determine output shape
 if (nargin < 2), error('At least two arguments are required.'); end;
-if (ischar(varargin{end})),  
+if (ischar(varargin{end})),
     shape = varargin{end};   varargin = varargin(1:end-1);
-    if (length(varargin) == 1), 
+    if (length(varargin) == 1),
         C = varargin{1};   return;     % If no kernels specified, no work to do
     end;
 else
@@ -211,25 +211,25 @@ for k = 1:N,
     kernel = reshape(H{k}, orient);
 
     if (Hisreal(k) & isreal(C))
-        C = convnc(kernel,C);  
+        C = convnc(kernel,C);
     elseif (Hisreal(k) & ~isreal(C))
         C = convnc(kernel,real(C)) + j*convnc(kernel,imag(C));
     elseif (~Hisreal(k) & isreal(C))
-        C = convnc(real(kernel),C) + j*convnc(imag(kernel),C);  
+        C = convnc(real(kernel),C) + j*convnc(imag(kernel),C);
     else
         Hr = real(kernel);    Hi = imag(kernel);
         Cr = real(C);         Ci = imag(C);
-        C = convnc(Hr,Cr) - convnc(Hi,Ci) + j*(convnc(Hi,Cr) + convnc(Hr,Ci)); 
+        C = convnc(Hr,Cr) - convnc(Hi,Ci) + j*(convnc(Hi,Cr) + convnc(Hr,Ci));
     end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%% Get the right shape %%%%%%%%%%%%%%%%%%%%%%
 % nothing more to do for 'full' shape
 if (strcmp(shape,'full')),  return;  end;
- 
+
 % but for 'same' or 'valid' we need to crop the conv result
 subs = cell(1,ndims(C));
-if (strcmp(shape,'same'))  
+if (strcmp(shape,'same'))
   for k = 1:D
       subs{k}  = floor(length(H{k})/2) + [1:size(A,k)];  % central region
   end

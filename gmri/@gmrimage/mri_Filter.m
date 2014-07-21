@@ -47,11 +47,11 @@ data     = img.data(:,ffirst:flast);
 use      = use(ffirst:flast);
 
 %------- Interpolate?
-fprintf('\n---> triming: %d on start, %d on end', ffirst-1, img.frames-flast);
-fprintf('\n---> remaining bad frames: %d, action: %s', sum(use==0), ignore);
+if verbose, fprintf('\n---> triming: %d on start, %d on end', ffirst-1, img.frames-flast); end
+if verbose, fprintf('\n---> remaining bad frames: %d, action: %s', sum(use==0), ignore); end
 
 if sum(use==0) > 0 & (~strcmp(ignore, 'keep'))
-    if verbose, fprintf('\n---> interpolating %d frames\n', sum(use==0)); end
+    if verbose, fprintf('\n---> interpolating %d frames', sum(use==0)); end
     x  = [1:len]';
     xi = x;
     x  = x(use==1);
@@ -95,7 +95,7 @@ if hp_sigma
     sCf = sum(C);
     denom = sCf*sum(hp_exp) - sAf^2;
 
-    if verbose, fprintf('hipass frame    '), end
+    if verbose, fprintf('\n---> hipass frame    '), end
     first = true;
     c0 = zeros(nvox,1);
     for t = 1:len
@@ -128,7 +128,7 @@ if hp_sigma
             tmp(:,t+lp_mask) = data(:,t);
         end
     end
-    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
+    if verbose, fprintf('\n'), end
 else
     tmp(:,lp_mask+1:len+lp_mask) = data;
 end
@@ -145,12 +145,12 @@ if lp_sigma
     end
 
     w = repmat(lp_exp, nvox,1);
-    if verbose, fprintf('lopass frame     '), end
+    if verbose, fprintf('\n---> lopass frame     '), end
     for t = 1:len
-        fprintf('\b\b\b\b%4d',t);
+        if verbose, fprintf('\b\b\b\b%4d',t); end
         out(:,t) = sum(tmp(:,t:t+2*lp_mask).*w,2);
     end
-    if verbose, fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b'), end
+    if verbose, fprintf('\n'), end  %fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\n')
 else
     out = tmp;
 end

@@ -265,13 +265,13 @@ for current = do
         case 'h'
             hpsigma = ((1/TR)/0.009)/2;
             tnimg = tmpimg(nuisance.signal', nuisance.use);
-            tnimg = tnimg.mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
+            tnimg = tnimg.mri_Filter(hpsigma, 0, omit, false, ignore.hipass);
             nuisance.signal = tnimg.data';
 
         case 'l'
             lpsigma = ((1/TR)/0.08)/2;
             tnimg = tmpimg([nuisance.signal nuisance.task nuisance.events nuisance.mov]', nuisance.use);
-            tnimg = tnimg.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
+            tnimg = tnimg.mri_Filter(0, lpsigma, omit, false, ignore.lopass);
             nuisance.signal = tnimg.data(1:nuisance.nsignal,:)';
             nuisance.task   = tnimg.data((nuisance.nsignal+1):(nuisance.nsignal+nuisance.ntask),:)';
             nuisance.events = tnimg.data((nuisance.nsignal+nuisance.ntask+1):(nuisance.nsignal+nuisance.ntask+nuisance.nevents),:)';
