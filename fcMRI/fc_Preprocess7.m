@@ -1,6 +1,6 @@
-function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores)
+function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 
-%function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores)
+%function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 %
 %  Inputs
 %       subjectf    - the folder with subjects images and data
@@ -45,6 +45,13 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %                     regress - keep / ignore
 %                     lopass  - keep / linear /spline
 %                     example: 'hipass:linear|regress:ignore|lopass:spline'
+%       options     - additional options that can be set using the 'key=value|key=value' string:
+%                     surface_smooth: 6
+%                     volume_smooth:  6
+%                     voxel_smooth:   2
+%                     lopass_filter:  0.08
+%                     hipass_filter:  0.009
+%
 %
 %   Additional notes
 %   - Taks matrix is prepended to the GLM regression
@@ -78,6 +85,7 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+if nargin < 15, options = '';       end
 if nargin < 14, ignores = '';       end
 if nargin < 13, scrub = '';         end
 if nargin < 12, tail = '.4dfp.img'; end
@@ -86,6 +94,8 @@ if nargin < 10, variant = '';       end
 if nargin < 9,  eventstring = '';   end
 if nargin < 8,  TR = 2.5;           end
 
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|left_surface=L32k.pial.surf.gii|right_surface=R32k.pial.surf.gii|atlas_folder=/usr/local/atlas';
+options = g_ParseOptions([], options, default);
 
 fprintf('\nRunning preproces script 7 v0.9.4\n');
 
@@ -108,6 +118,8 @@ end
 rgsse = strrep(strrep(strrep(strrep(rgss, ',', ''), ' ', ''), ';', ''), '|', '');
 rgss  = regexp(rgss, '|,|;| |\|', 'split');
 
+
+
 % ======================================================
 %   ----> prepare paths
 
@@ -117,7 +129,7 @@ file.movdata   = strcat(subjectf, ['/images/functional/movement/bold' int2str(bo
 file.oscrub    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.scrub']);
 file.tscrub    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) variant '.scrub']);
 file.bstats    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.bstats']);
-file.fidlfile  = strcat(subjectf, ['/images/functional/events/bold' int2str(bold) efile]);
+file.fidlfile  = strcat(subjectf, ['/images/functional/events/bold'   int2str(bold) efile]);
 
 file.nuisance  = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.nuisance']);
 
@@ -231,31 +243,36 @@ for current = do
     if exist(tfile, 'file') & ~overwrite
         fprintf(' ... already completed!\n');
     else
-        if img.empty
-            img = img.mri_readimage(sfile);
-            if ~isempty(omit)
-                img.use(1:omit) = 0;
-            end
-        end
 
         switch current
             case 's'
-                img = img.mri_Smooth3D(2, true);
+                if strcmp(tail, '.dtseries.nii')
+                    wbSmooth(sfile, tfile, options);
+                    img = gmrimage();
+                else
+                    img = readIfEmpty(img, sfile, omit);
+                    img = img.mri_Smooth3D(options.voxel_smooth, true);
+                end
             case 'h'
-                hpsigma = ((1/TR)/0.009)/2;
+                img = readIfEmpty(img, sfile, omit);
+                hpsigma = ((1/TR)/options.hipass_filter)/2;
                 img = img.mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
             case 'l'
-                lpsigma = ((1/TR)/0.08)/2;
+                img = readIfEmpty(img, sfile, omit);
+                lpsigma = ((1/TR)/options.lopass_filter)/2;
                 img = img.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
             case 'r'
+                img = readIfEmpty(img, sfile, omit);
                 [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore.regress);
                 if docoeff
                     coeff.mri_saveimage([froot ext '_coeff' tail]);
                 end
         end
 
-        img.mri_saveimage(tfile);
-        fprintf(' ... saved!\n');
+        if ~img.empty
+            img.mri_saveimage(tfile);
+            fprintf(' ... saved!\n');
+        end
     end
 
 
@@ -263,13 +280,13 @@ for current = do
 
     switch current
         case 'h'
-            hpsigma = ((1/TR)/0.009)/2;
+            hpsigma = ((1/TR)/options.hipass_filter)/2;
             tnimg = tmpimg(nuisance.signal', nuisance.use);
             tnimg = tnimg.mri_Filter(hpsigma, 0, omit, false, ignore.hipass);
             nuisance.signal = tnimg.data';
 
         case 'l'
-            lpsigma = ((1/TR)/0.08)/2;
+            lpsigma = ((1/TR)/options.lopass_filter)/2;
             tnimg = tmpimg([nuisance.signal nuisance.task nuisance.events nuisance.mov]', nuisance.use);
             tnimg = tnimg.mri_Filter(0, lpsigma, omit, false, ignore.lopass);
             nuisance.signal = tnimg.data(1:nuisance.nsignal,:)';
@@ -372,7 +389,7 @@ return
 %                           ----> create temporary image
 %
 
-function [img] = tmpimg(data, use);
+function [img] = tmpimg(data, use)
 
     img = gmrimage();
     img.data = data;
@@ -380,3 +397,36 @@ function [img] = tmpimg(data, use);
     [img.voxels img.frames] = size(data);
 
 
+% ======================================================
+%                                    ----> read if empty
+%
+
+function [img] = readIfEmpty(img, src, omit)
+
+    if isempty(img) || img.empty
+        fprintf('---> reading %s ', src);
+        img = gmrimage(src);
+        if ~isempty(omit)
+            img.use(1:omit) = 0;
+        end
+        fprintf('... done!\n');
+    end
+
+
+% ======================================================
+%                                         ----> wbSmooth
+%
+
+function [] = wbSmooth(sfile, tfile, options)
+
+    fprintf('\n---> running wb_command -cifti-smoothing');
+    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s%s -right-surface %s%s', sfile, options.surface_smooth, options.volume_smooth, tfile, options.atlas_folder, options.left_surface, options.atlas_folder, options.right_surface);
+    [status out] = system(comm);
+
+    if status
+        fprintf('\nERROR: wb_command finished with error!\n       ran: %s\n', comm);
+        fprintf('\n --- wb_command output ---\n%s\n --- end wb_command output ---\n', out);
+        error('\nAborting processing!');
+    end
+
+    fprintf(' ... done!');
