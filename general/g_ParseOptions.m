@@ -41,7 +41,7 @@ function [options] = parseString(options, s)
             k = strtrim(s{p,1});
             v = strtrim(s{p,2});
             if isempty(regexp(v, '^-?[\d\.]+$'))
-                if ismember(v(1), {'{', '['})
+                if length(v)>1 && ismember(v(1), {'{', '['})
                     options = setfield(options, k, eval(v));
                 else
                     options = setfield(options, k, v);

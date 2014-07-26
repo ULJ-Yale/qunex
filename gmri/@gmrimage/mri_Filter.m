@@ -95,11 +95,11 @@ if hp_sigma
     sCf = sum(C);
     denom = sCf*sum(hp_exp) - sAf^2;
 
-    if verbose, fprintf('\n---> hipass frame    '), end
+    if verbose, fprintf('\n---> hipass frame     '), end
     first = true;
     c0 = zeros(nvox,1);
     for t = 1:len
-        if verbose, fprintf('\b\b\b\b%4d',t), end
+        if verbose, fprintf('\b\b\b\b\b%5d',t), end
 
         bot = max([t-hp_mask, 1]);
         top = min([t+hp_mask, len]);
@@ -145,9 +145,9 @@ if lp_sigma
     end
 
     w = repmat(lp_exp, nvox,1);
-    if verbose, fprintf('\n---> lopass frame     '), end
+    if verbose, fprintf('\n---> lopass frame      '), end
     for t = 1:len
-        if verbose, fprintf('\b\b\b\b%4d',t); end
+        if verbose, fprintf('\b\b\b\b\b%5d',t); end
         out(:,t) = sum(tmp(:,t:t+2*lp_mask).*w,2);
     end
     if verbose, fprintf('\n'), end  %fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\n')

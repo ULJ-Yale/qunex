@@ -48,7 +48,10 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %                     volume_smooth:  6
 %                     voxel_smooth:   2
 %                     lopass_filter:  0.08
-%                     hipass_filter:  0.0
+%                     hipass_filter:  0.009
+%                     framework_path:
+%                     wb_command_path:
+%                     omp_threads:    0
 %
 %   Does the preprocesing for the files from subjectf folder.
 %   Saves images in ftarget folder
@@ -91,12 +94,12 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|left_surface=L32k.pial.surf.gii|right_surface=R32k.pial.surf.gii|atlas_folder=/usr/local/atlas';
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0';
 options = g_ParseOptions([], options, default);
 
 
 
-fprintf('\nRunning preproces conc script v0.9.5\n');
+fprintf('\nRunning preproces conc 2 script v0.9.5 [%s]\n', tail);
 
 
 % ======================================================
@@ -145,6 +148,9 @@ for b = 1:nbolds
     eroot               = strrep(efile, '.fidl', '');
     file(b).croot       = strcat(subjectf, ['/images/functional/conc_' eroot]);
     file(b).cfroot      = strcat(subjectf, ['/images/functional/concs/' eroot]);
+
+    file(b).lsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
+    file(b).rsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
 
 end
 
@@ -299,17 +305,17 @@ for current = do
 
     if ismember(current, 'shl')
         for b = 1:nbolds
-            fprintf('---> %s ', file(b).sfile)
+            fprintf('\n---> %s ', file(b).sfile)
 
             if exist(file(b).tfile, 'file') && ~overwrite
-                fprintf('... already completed!\n');
+                fprintf('... already completed!');
                 img(b).empty = true;
             else
 
                 switch current
                     case 's'
                         if strcmp(tail, '.dtseries.nii')
-                            wbSmooth(file(b).sfile, file(b).tfile, options);
+                            wbSmooth(file(b).sfile, file(b).tfile, file(b), options);
                             img(b) = gmrimage();
                         else
                             img(b) = readIfEmpty(img(b), file(b).sfile, omit);
@@ -327,7 +333,7 @@ for current = do
 
                 if ~img(b).empty
                     img(b).mri_saveimage(file(b).tfile);
-                    fprintf(' ... saved!\n');
+                    fprintf(' ... saved!');
                 end
             end
 
@@ -358,37 +364,37 @@ for current = do
 
     if current == 'r'
         if exist(file(b).tfile, 'file') && ~overwrite
-            fprintf('... already completed!\n');
+            fprintf('... already completed!');
             img(b).empty = true;
         else
             for b = 1:nbolds
                 img(b) = readIfEmpty(img(b), file(b).sfile, omit);
             end
-            fprintf('---> running regression ');
+            fprintf('\n---> running regression ');
             [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress);
-            fprintf('... done!\n');
+            fprintf('... done!');
             for b = 1:nbolds
-                fprintf('---> saving %s ', file(b).tfile);
+                fprintf('\n---> saving %s ', file(b).tfile);
                 img(b).mri_saveimage(file(b).tfile);
-                fprintf('... done!\n');
+                fprintf('... done!');
             end
 
             if docoeff
                 cname = [file(b).croot ext '_coeff' tail];
-                fprintf('---> saving %s ', cname);
+                fprintf('\n---> saving %s ', cname);
                 coeff.mri_saveimage(cname);
-                fprintf('... done!\n');
+                fprintf('... done!');
             end
         end
         dor = false;
     end
 
     if exist(file(b).tconc, 'file') && ~overwrite
-        fprintf('---> conc file already saved!\n');
+        fprintf('\n---> conc file already saved!');
     else
-        fprintf('---> saving conc file ');
+        fprintf('\n---> saving conc file ');
         gmrimage.mri_SaveConcFile(file(b).tconc, {file.tfile});
-        fprintf('... done!\n');
+        fprintf('... done!');
     end
 
 end
@@ -632,29 +638,78 @@ function [img] = tmpimg(data, use);
 function [img] = readIfEmpty(img, src, omit)
 
     if isempty(img) || img.empty
-        fprintf('---> reading %s ', src);
+        fprintf('\n---> reading %s ', src);
         img = gmrimage(src);
         if ~isempty(omit)
             img.use(1:omit) = 0;
         end
-        fprintf('... done!\n');
+        fprintf('... done!');
     end
+
 
 
 % ======================================================
 %                                         ----> wbSmooth
 %
 
-function [] = wbSmooth(sfile, tfile, options)
+function [] = wbSmooth(sfile, tfile, file, options)
+
+    % --- set up variables
+
+    tmpf = strrep(tfile, 'g7', 'g7flipped');
+
+    % --- convert FWHM to sd
+
+    options.surface_smooth = options.surface_smooth / 2.35482004503; % (sqrt(8*log(2)))
+    options.volume_smooth  = options.volume_smooth / 2.35482004503;
+
 
     fprintf('\n---> running wb_command -cifti-smoothing');
-    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s%s -right-surface %s%s', sfile, options.surface_smooth, options.volume_smooth, tfile, options.atlas_folder, options.left_surface, options.atlas_folder, options.right_surface);
+
+    if ~isempty(options.framework_path)
+        s = getenv('DYDL_FRAMEWORK_PATH');
+        if isempty(strfind(s, options.framework_path))
+            fprintf('\n     ... setting DYDL_FRAMEWORK_PATH to %s', options.framework_path);
+            setenv('DYDL_FRAMEWORK_PATH', [options.framework_path ':' s]);
+        end
+    end
+    if ~isempty(options.wb_command_path)
+        s = getenv('PATH');
+        if isempty(strfind(s, options.wb_command_path))
+            fprintf('\n     ... setting PATH to %s', options.wb_command_path);
+            setenv('PATH', [options.wb_command_path ':' s]);
+        end
+    end
+    if options.omp_threads > 0
+        setenv('OMP_NUM_THREADS', num2str(options.omp_threads));
+    end
+
+    fprintf('\n     ... smoothing');
+    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tmpf, file.lsurf, file.rsurf);
     [status out] = system(comm);
 
     if status
         fprintf('\nERROR: wb_command finished with error!\n       ran: %s\n', comm);
         fprintf('\n --- wb_command output ---\n%s\n --- end wb_command output ---\n', out);
         error('\nAborting processing!');
+    else
+        fprintf(' ... done!');
     end
+
+    fprintf('\n     ... transposing');
+    comm = sprintf('wb_command -cifti-transpose %s %s', tmpf, tfile);
+    [status out] = system(comm);
+
+    if status
+        fprintf('\nERROR: wb_command finished with error!\n       ran: %s\n', comm);
+        fprintf('\n --- wb_command output ---\n%s\n --- end wb_command output ---\n', out);
+        error('\nAborting processing!');
+    else
+        fprintf(' ... done!');
+    end
+
+
+    fprintf('\n     ... removing temporary flipped file');
+    delete(tmpf);
 
     fprintf(' ... done!');
