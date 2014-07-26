@@ -53,6 +53,25 @@ processPhilips [folder=.] [check=yes]
     example: gmri processPhilips folder=. check=yes
 
 
+runAvi [folder=.] [overwrite=no]
+    Runs Avi preprocessing script on the subject data in specified folder. Uses subject.txt to identify structural and
+    BOLD runs and DICOM-report.txt to get TR value. The processing is saved to a datestamped log in the 4dfp folder.
+
+    - folder: subject's folder with nii and dicom folders and subject.txt file.
+    - overwrite: whether to overwrite existing params file or exisiting BOLD data
+
+
+runAviFolder [folder=.] [pattern=OP*] [overwrite=no]
+    Goes through the folder and runs runAvi on all the subfolders that match the pattern. Setting overwrite
+    to overwrite.
+
+    - folder: the base study subjects folder (e.g. WM44/subjects) where OP folders and the inbox folder with the
+      new packages from the scanner reside,
+    - pattern: which subjectfolders to match (default OP*),
+    - overwrite: whether to overwrite existing (params and BOLD) files.
+
+    example: gmri runAviFolder folder=. pattern=OP* overwrite=no
+
 NIfTI file conversions
 ----------------------
 
@@ -131,6 +150,8 @@ commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': (
             'sortDicom'     : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
             'dicom2nii'     : { 'com': g_mri.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose') },
             'processPhilips': { 'com': g_mri.g_dicom.processPhilips,   'args': ('folder', 'check') },
+            'runAviFolder'  : { 'com': g_mri.g_4dfp.runAviFolder,      'args': ('folder', 'pattern', 'overwite') },
+            'runAvi'        : { 'com': g_mri.g_4dfp.runAvi,            'args': ('folder', 'overwite') },
             'fz2zf'         : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
             'reorder'       : { 'com': g_mri.g_NIfTI.reorder,          'args': ('inf', 'outf') },
             'reslice'       : { 'com': g_mri.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf') },
