@@ -3,7 +3,7 @@
 import re
 import os.path
 
-def readSubjectData(filename):
+def readSubjectData(filename, verbose=False):
     s = file(filename).read()
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")
@@ -88,19 +88,21 @@ def readSubjectData(filename):
 
             if len(dic) > 0:
                 if "id" not in dic:
-                    print "WARNING: There is a record missing an id field and is being omitted from processing."
+                    if verbose:
+                        print "WARNING: There is a record missing an id field and is being omitted from processing."
                 elif "data" not in dic:
-                    print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
+                    if verbose:
+                        print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
-        	
+
         	# check paths
-        	
+
         	for field in ['dicom', 'raw_data', 'data', 'hpc']:
         		if field in dic:
-        			if not os.path.exists(dic[field]):
+        			if not os.path.exists(dic[field]) and verbose:
         				print "WARNING: subject %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
-        	
+
 
     except:
         print "\n\n=====================================================\nERROR: There was an error with the subjects.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
