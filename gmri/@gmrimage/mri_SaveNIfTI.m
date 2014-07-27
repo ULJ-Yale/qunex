@@ -50,6 +50,7 @@ switch img.imageformat
         file = [root '.dtseries.nii'];
 
     case 'CIFTI-2'
+        img.meta = framesHack(img.meta, img.hdrnifti.dim(6), img.frames);
         img.hdrnifti.dim(6) = img.frames;
         file = [root '.dtseries.nii'];
 
@@ -60,7 +61,8 @@ end
 % ---> flip before saving if needed
 
 if ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
-    img.data = img.data';
+    img.data = single(img.data');
+    % img.data = img.data';
 end
 
 % ---> setup datatype
@@ -231,4 +233,23 @@ function [s] = packHeader_nifti2(hdrnifti)
     s(526:540) = sw(hdrnifti.unused_str,     'uint8');
 
 
+
+
+
+function [meta] = framesHack(meta, oframes, nframes);
+
+    if oframes == nframes
+        return
+    end
+
+    s = cast(meta', 'char');
+    olds = sprintf('SeriesPoints="%d"', oframes);
+    news = sprintf('SeriesPoints="%d"', nframes);
+    dlen = length(olds)-length(news);
+    if dlen > 0
+        news = [news repmat(' ', 1, dlen)];
+    end
+    sstart = strfind(s, olds);
+    s(sstart:sstart+length(news)-1) = news;
+    meta = cast(s', 'uint8');
 
