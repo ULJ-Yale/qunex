@@ -18,7 +18,7 @@ if nargin < 3, verbose = false; end
 
 % ---> embedd extra data if available
 
-if ~strcmp(img.imageformat, 'CIFTI') || img.frames < 2
+if ~ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'}) && img.frames > 2
     img = img.mri_EmbedStats();
 end
 
@@ -27,25 +27,41 @@ end
 filename = strtrim(filename);
 % unpack and set up
 
-root = strrep(filename, '.hdr', '');
-root = strrep(root, '.nii', '');
-root = strrep(root, '.gz', '');
-root = strrep(root, '.img', '');
-root = strrep(root, '.dtseries', '');
+root = strrep(filename, '.hdr',      '');
+root = strrep(root,     '.nii',      '');
+root = strrep(root,     '.gz',       '');
+root = strrep(root,     '.img',      '');
+root = strrep(root,     '.dtseries', '');
 
 img = img.unmaskimg;
 
-if strcmp(img.imageformat, 'NIfTI')
-    img.hdrnifti.dim(5) = img.frames;
-    if img.frames > 1
-        img.hdrnifti.dim(1) = 4;
-    end
-    file = [root '.nii'];
-elseif strcmp(img.imageformat, 'CIFTI')
-    img.hdrnifti.dim(7) = img.frames;
-    file = [root '.dtseries.nii'];
+% ---> save dimension information
+
+switch img.imageformat
+    case 'NIfTI'
+        img.hdrnifti.dim(5) = img.frames;
+        if img.frames > 1
+            img.hdrnifti.dim(1) = 4;
+        end
+        file = [root '.nii'];
+
+    case 'CIFTI-1'
+        img.hdrnifti.dim(7) = img.frames;
+        file = [root '.dtseries.nii'];
+
+    case 'CIFTI-2'
+        img.hdrnifti.dim(6) = img.frames;
+        file = [root '.dtseries.nii'];
+
+    otherwise
+        file = filename;
 end
 
+% ---> flip before saving if needed
+
+if ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
+    img.data = img.data';
+end
 
 % ---> setup datatype
 
@@ -176,7 +192,7 @@ function [s] = packHeader_nifti2(hdrnifti)
 
     s = zeros(540, 1, 'uint8');
 
-    s(1:4)     = sw(348,                     'int32');
+    s(1:4)     = sw(540,                     'int32');
     s(5:12)    = sw(hdrnifti.magic,          'uint8');
     s(13:14)   = sw(hdrnifti.datatype,       'int16');
     s(15:16)   = sw(hdrnifti.bitpix,         'int16');

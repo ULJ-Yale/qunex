@@ -86,22 +86,24 @@ end
 
 % --- file root
 
-if strfind(filename, 'dtseries')
+root = strrep(filename, '.hdr',      '');
+root = strrep(root,     '.nii',      '');
+root = strrep(root,     '.gz',       '');
+root = strrep(root,     '.img',      '');
+root = strrep(root,     '.dtseries', '');
+
+img.rootfilename = root;
+[p, n, e]        = fileparts(filename);
+img.filename     = [n e];
+
+% --- format and size details
+
+if img.hdrnifti.dim(1) > 4
     img.imageformat = 'CIFTI';
 else
     img.imageformat = 'NIfTI';
 end
 
-root = strrep(filename, '.hdr', '');
-root = strrep(root, '.nii', '');
-root = strrep(root, '.gz', '');
-root = strrep(root, '.img', '');
-root = strrep(root, '.dtseries', '');
-
-img.rootfilename = root;
-img.filename     = [root '.nii'];
-
-% --- format and size details
 
 if strcmp(img.imageformat, 'NIfTI')
     img.TR = [];
@@ -115,37 +117,58 @@ if strcmp(img.imageformat, 'NIfTI')
         end
         img.TR = img.hdrnifti.pixdim(5);
     end
-    img.dim     = img.hdrnifti.dim(2:4)';
-    img.voxels  = prod(img.dim);
-    img.vsizes  = img.hdrnifti.pixdim(2:4)';
+    img.dim       = img.hdrnifti.dim(2:4)';
+    img.voxels    = prod(img.dim);
+    img.vsizes    = img.hdrnifti.pixdim(2:4)';
     % img.mformat = mformat;
     img.runframes = img.frames;
+
+    % ---- Map data and adjust datatype
+
+    img.data = reshape(fdata, img.voxels, []);
+    img.data = img.data(:,1:img.frames);
+
+    img.hdrnifti.datatype = 16;
 
 elseif strcmp(img.imageformat, 'CIFTI')
-    img.TR = [];
-    img.frames = 1;
-    if img.hdrnifti.dim(1) == 6    % we probably have a BOLD (4D) file
-        if ~isempty(frames)
-            img.hdrnifti.dim(7) = frames;
-            img.frames = frames;
+
+    img.TR     = [];
+
+    if img.hdrnifti.dim(1) == 6                             % we probably have 2d cifi file
+        if img.hdrnifti.dim(6) > img.hdrnifti.dim(7)
+            img.imageformat = 'CIFTI-1';
+            img.dim = img.hdrnifti.dim(6:7)';
         else
-            img.frames = img.hdrnifti.dim(7);
+            img.imageformat = 'CIFTI-2';
+            img.dim = img.hdrnifti.dim([7 6])';
         end
+        img.frames = img.dim(2);
+    else
+        img.dim    = img.hdrnifti.dim(6);
+        img.frames = 1;
     end
-    img.dim     = img.hdrnifti.dim(6:7)';
-    img.voxels  = img.hdrnifti.dim(6);
+
+    img.voxels  = img.dim(1);
     img.vsizes  = [];
     % img.mformat = mformat;
+
+    % ---- Reorganize and map data
+
+    img.data = reshape(fdata, img.frames, img.voxels);
+
+    if ~isempty(frames)
+        img.frames = frames;
+        img.data   = img.data(1:frames,:);
+    end
+
+    img.data      = img.data';
     img.runframes = img.frames;
+
+    % ---- Adjust datatype
+
+    img.hdrnifti.datatype = 16;
+
 end
-
-
-% ---- Map data and adjust datatype
-
-img.data = reshape(fdata, img.voxels, []);
-img.data = img.data(:,1:img.frames);
-
-img.hdrnifti.datatype = 16;
 
 switch dtype
     case 'single'

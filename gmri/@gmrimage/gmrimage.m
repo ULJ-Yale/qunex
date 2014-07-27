@@ -170,10 +170,10 @@ classdef gmrimage
             switch obj.imageformat
                 case '4dfp'
                     obj.mri_Save4DFP(filename, extra);
-                case 'NIfTI'
+                case {'NIfTI', 'CIFTI', 'CIFTI-1', 'CIFTI-2'}
                     obj.mri_SaveNIfTI(filename, verbose);
-                case 'CIFTI'
-                    obj.mri_SaveNIfTI(filename, verbose);
+                otherwise
+                    error('ERROR: Unknown file format, could not save image! [%s]', obj.imageformat);
             end
         end
 
