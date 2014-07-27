@@ -105,7 +105,7 @@ ignore.hipass  = 'keep';
 ignore.regress = 'keep';
 ignore.lopass  = 'keep';
 
-ignores = regexp(ignores, ',|;|:|\|', 'split');
+ignores = regexp(ignores, '=|,|;|:|\|', 'split');
 if length(ignores)>=2
     ignores = reshape(ignores, 2, [])';
     for p = 1:size(ignores, 1)
@@ -424,10 +424,6 @@ function [img] = readIfEmpty(img, src, omit)
 
 function [] = wbSmooth(sfile, tfile, file, options)
 
-    % --- set up variables
-
-    tmpf = strrep(tfile, 'g7', 'g7flipped');
-
     % --- convert FWHM to sd
 
     options.surface_smooth = options.surface_smooth / 2.35482004503; % (sqrt(8*log(2)))
@@ -455,7 +451,7 @@ function [] = wbSmooth(sfile, tfile, file, options)
     end
 
     fprintf('\n     ... smoothing');
-    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tmpf, file.lsurf, file.rsurf);
+    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tfile, file.lsurf, file.rsurf);
     [status out] = system(comm);
 
     if status
@@ -466,20 +462,3 @@ function [] = wbSmooth(sfile, tfile, file, options)
         fprintf(' ... done!');
     end
 
-    fprintf('\n     ... transposing');
-    comm = sprintf('wb_command -cifti-transpose %s %s', tmpf, tfile);
-    [status out] = system(comm);
-
-    if status
-        fprintf('\nERROR: wb_command finished with error!\n       ran: %s\n', comm);
-        fprintf('\n --- wb_command output ---\n%s\n --- end wb_command output ---\n', out);
-        error('\nAborting processing!');
-    else
-        fprintf(' ... done!');
-    end
-
-
-    fprintf('\n     ... removing temporary flipped file');
-    delete(tmpf);
-
-    fprintf(' ... done!');
