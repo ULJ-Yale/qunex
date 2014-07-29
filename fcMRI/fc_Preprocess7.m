@@ -222,9 +222,37 @@ end
 task = ['shrl'];
 exts = {'_g7','_hpss',['_res-' rgsse],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
-ext  = '';
 
+% ---> clear exisitng data
+
+if overwrite
+    ext  = '';
+    first = true;
+
+    for current = do
+        c = ismember(task, current);
+        sfile = [froot ext tail];
+        if isempty(ext)
+            ext = variant;
+        end
+        ext   = [ext exts{c}];
+        tfile = [froot ext tail];
+        if exist(tfile, 'file')
+            if first
+                fprintf('\n---> removing old files:');
+                first = false;
+            end
+            fprintf('\n     ... %s', tfile);
+            delete(tfile);
+        end
+    end
+end
+
+% ---> start the loop
+
+ext  = '';
 img = gmrimage();
+
 
 for current = do
 
@@ -240,7 +268,7 @@ for current = do
 
     % --- print info
 
-    fprintf('\n%s %s ', info{c}, sfile);
+    fprintf('\n\n%s %s ', info{c}, sfile);
 
 
     % --- run it on image
@@ -375,7 +403,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     if strcmp(ignore, 'ignore')
         fprintf(' ignoring %d bad frames', sum(img.use == 0));
-        mask = img.use;
+        mask = img.use == 1;
         X = X(mask(omit+1:end),:);
     else
         mask = true(1, img.frames);

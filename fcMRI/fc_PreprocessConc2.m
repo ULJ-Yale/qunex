@@ -270,6 +270,52 @@ end
 tasklist = ['shrl'];
 exts     = {'_g7','_hpss',['_res-' rgsse],'_lpss'};
 info     = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
+
+
+% ---> clean old files
+
+if overwrite
+    ext   = '';
+    first = true;
+
+    for current = do
+
+        for b = 1:nbolds
+            file(b).sfile = [file(b).froot ext tail];
+        end
+        if isempty(ext)
+            ext = variant;
+        end
+        ext   = [ext exts{c}];
+        for b = 1:nbolds
+            file(b).tfile = [file(b).froot ext tail];
+            file(b).tconc = [file(b).cfroot ext '.conc'];
+        end
+
+        if exist(file(b).tfile, 'file')
+            if first
+                fprintf('\n---> removing old files:');
+                first = false;
+            end
+            fprintf('\n     ... %s', file(b).tfile);
+            delete(file(b).tfile);
+        end
+
+        if exist(file(b).tconc, 'file')
+            if first
+                fprintf('\n---> removing old files:');
+                first = false;
+            end
+            fprintf('\n     ... %s', file(b).tconc);
+            delete(file(b).tconc);
+        end
+
+    end
+end
+
+
+% ---> start the loop
+
 ext      = '';
 
 for b = 1:nbolds
@@ -299,7 +345,7 @@ for current = do
 
     % --- print info
 
-    fprintf('\n%s\n', info{c});
+    fprintf('\n\n%s\n', info{c});
 
     % --- run tasks that are run on individual bolds
 
@@ -577,7 +623,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
     for b = 1:nbolds
         if strcmp(ignore, 'ignore')
             fprintf(' %d', sum(img(b).use == 0));
-            mask = img(b).use;
+            mask = img(b).use == 1;
         else
             mask = true(1, img(b).frames);
         end
