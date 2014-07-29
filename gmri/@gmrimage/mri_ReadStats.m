@@ -155,6 +155,9 @@ if ~esel
         if ~isempty(data)
             obj.scrub     = data;
             obj.scrub_hdr = header;
+            if ismember('use', header)
+                obj.use = data(:,ismember(header, 'use'))';
+            end
         end
     end
 end
@@ -165,24 +168,40 @@ end
 % ===============================================
 %                                FindMatchingFile
 
-function [mfile] = FindMatchingFile(movfolder, froot, tail)
+function [mfile] = FindMatchingFile(movfolder, froot, tail, verbose)
+if nargin < 4 || isempty(verbose), verbose = false; end
+
+if verbose, fprintf('\n---> matching: %s %s', froot, tail); end
 
 mfile = false;
 
-% ---> get the list of files
-files = dir(fullfile(movfolder, ['*' tail]));
+% ---> split the source
+
+ssplit = regexp(froot,'\.|-|_', 'split');
+
+
+% ---> get the list of candidate files
+files = dir(fullfile(movfolder, [ ssplit{1} '*' tail]));
 if isempty(files)
+    if verbose, fprintf('\n---> no match\n', froot, tail); end
     return
 end
 
 % ---> get the one that matches best
-li = length(froot);
+li = length(ssplit);
 nmatch = 0;
 fmatch = 0;
 for f = 1:length(files)
-    ld     = length(files(f).name);
+    tsplit = regexp(files(f).name,'\.|-|_', 'split');
+    ld     = length(tsplit);
     c      = min(li, ld);
-    tmatch = sum(froot(1:c) == files(f).name(1:c));
+    tmatch = 0;
+    for n = 1:c
+        if ~strcmp(ssplit{n}, tsplit{n})
+            tmatch = n-1;
+            break
+        end
+    end
     if tmatch > nmatch
         nmatch = tmatch;
         fmatch = f;
@@ -192,6 +211,8 @@ end
 if fmatch > 0
     mfile = fullfile(movfolder, files(fmatch).name);
 end
+
+if verbose, fprintf('\n---> matched: %s\n', mfile); end
 
 
 
