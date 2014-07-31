@@ -111,6 +111,11 @@ setupHCP [folder=.] [tfolder=hcp] [sbjf=subject.txt]
 
     example: gmri setupHCP folder=data tfolder=hcp2 sbjf=subject1.txt
 
+HCPPhilips [folder=.] [sfile=subject.txt] [tfile=subject.txt]
+    Processes subject.txt file for data off Philips scanner in Ljubljana to insert appropriate
+    names undestood by setupHCP command.
+
+
 NIfTI header utilities
 ----------------------
 
@@ -156,6 +161,7 @@ commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': (
             'reorder'       : { 'com': g_mri.g_NIfTI.reorder,          'args': ('inf', 'outf') },
             'reslice'       : { 'com': g_mri.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf') },
             'setupHCP'      : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },
+            'HCPPhilips'    : { 'com': g_mri.g_HCP.renameHCPPhilips,   'args': ('folder', 'sfile', 'tfile') },
             'printniftihdr' : { 'com': g_mri.g_img.printniftihdr,      'args': ('filename', ) },
             'modniftihdr'   : { 'com': g_mri.g_gimg.modifyNIfTIHeader, 'args': ('filename', 's')},
             'joinFidl'      : { 'com': g_mri.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot')},

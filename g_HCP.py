@@ -125,3 +125,50 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
 
 
     print "\n ---=====         DONE          =====---\n"
+
+
+
+
+def renameHCPPhilips(folder=".", sfile="subject.txt", tfile="subject.txt"):
+
+    sfile = os.path.join(folder, sfile)
+    tfile = os.path.join(folder, tfile)
+
+    nmap = (('C-BOLD 3mm 48 2.5s FS-P', 'SE-FM-AP'), ('C-BOLD 3mm 48 2.5s FS-A', 'SE-FM-PA'), ('T1w', 'T1w'), ('T2w', 'T2w'))
+
+    lines = [line.strip() for line in open(sfile)]
+
+    bold   = 0
+    nlines = []
+    for line in lines:
+        e = line.split(':')
+        if len(e) > 1:
+            if e[0].strip().isdigit():
+                repl  = " "
+                for k, v in nmap:
+                    if k in e[1]:
+                        repl = v
+                        cbold = False
+                if repl == " ":
+                    if 'RSBOLD' in e[1]:
+                        bold += 1
+                        repl = "bold%-3d:rest" % (bold)
+                    elif 'BOLD' in e[1]:
+                        bold += 1
+                        repl = "bold%-3d:task" % (bold)
+
+                e[1] = " %-16s:%s" % (repl, e[1])
+                nlines.append(":".join(e))
+            else:
+                nlines.append(line)
+        else:
+            nlines.append(line)
+
+    fout = open(tfile, 'w')
+    for line in nlines:
+        print >> fout, line
+
+
+
+
+
