@@ -64,6 +64,7 @@ classdef gmrimage
         scrub_hdr       = [];
         nuisance        = [];
         nuisance_hdr    = [];
+        cifti           = [];
 
     end
 
