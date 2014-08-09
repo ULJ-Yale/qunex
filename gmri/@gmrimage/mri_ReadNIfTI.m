@@ -53,7 +53,9 @@ end
 
 % get datatype
 
-switch img.hdrnifti.datatype
+datatype = 'None';
+
+switch  img.hdrnifti.datatype
     case 1
         datatype = 'bitN';
     case 2
@@ -65,7 +67,7 @@ switch img.hdrnifti.datatype
     case 16
         datatype = 'single';
     case 64
-        datetype = 'double';
+        datatype = 'double';
     case 256
         datatype = 'schar';
     case 512
@@ -81,6 +83,8 @@ switch img.hdrnifti.datatype
     otherwise
         error('Uknown datatype or datatype I can not handle!');
 end
+
+% fprintf('\nDatatype: %s\n', datatype);
 
 % ------ Process header
 
@@ -208,7 +212,7 @@ function [hdrnifti] = readHeader_nifti1(s, hdrnifti)
         sw = @(x) x;
     end
 
-    hdrnifti.data_type       = char(s(5:14))';                              % 10
+    hdrnifti.datatype        = char(s(5:14))';                              % 10
     hdrnifti.db_name         = char(s(15:32))';                             % 18
     hdrnifti.extents         = double(sw(typecast(s(33:36),   'int32')));   % 1
     hdrnifti.session_error   = double(sw(typecast(s(37:38),   'int16')));   % 1

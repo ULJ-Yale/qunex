@@ -43,7 +43,7 @@ switch img.imageformat
         if img.frames > 1
             img.hdrnifti.dim(1) = 4;
         end
-        file = [root '.nii'];
+        file = [root '.nii.gz'];
 
     case 'CIFTI-1'
         img.hdrnifti.dim(7) = img.frames;
@@ -55,7 +55,9 @@ switch img.imageformat
         file = [root '.dtseries.nii'];
 
     otherwise
-        file = filename;
+        fprintf('\nWARNING: Imageformat info not recognized [%s], using .nii.gz\n', img.imageformat);
+        file = [root '.nii.gz'];
+
 end
 
 % ---> flip before saving if needed
@@ -118,7 +120,7 @@ end
 
 % ---> save it
 
-gmrimage.mri_SaveNIfTImx(filename, fhdr, img.data, img.meta, img.hdrnifti.swapped == 1, verbose);
+gmrimage.mri_SaveNIfTImx(file, fhdr, img.data, img.meta, img.hdrnifti.swapped == 1, verbose);
 
 
 
@@ -136,7 +138,7 @@ function [s] = packHeader_nifti1(hdrnifti)
     s = zeros(348, 1, 'uint8');
 
     s(1:4)     =   sw(348                     , 'int32');
-    s(5:14)    =   sw(hdrnifti.data_type      , 'uint8');
+    s(5:14)    =   sw(hdrnifti.datatype       , 'uint8');
     s(15:32)   =   sw(hdrnifti.db_name        , 'uint8');
     s(33:36)   =   sw(hdrnifti.extents        , 'int32');
     s(37:38)   =   sw(hdrnifti.session_error  , 'int16');

@@ -102,6 +102,8 @@ lname = strrep(fname, '.list', '');
 lname = strrep(lname, '.conc', '');
 lname = strrep(lname, '.4dfp', '');
 lname = strrep(lname, '.img', '');
+lname = strrep(lname, '.nii', '');
+lname = strrep(lname, '.gz', '');
 
 
 % ---- Start
@@ -244,7 +246,6 @@ for n = 1:nsub
 	end
             
 end
-
 
 %   ---------------------------------------------
 %   --- And now group results
