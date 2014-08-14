@@ -84,7 +84,7 @@ switch  img.hdrnifti.datatype
         error('Uknown datatype or datatype I can not handle!');
 end
 
-% fprintf('\nDatatype: %s\n', datatype);
+if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 
 % ------ Process header
 
@@ -185,12 +185,16 @@ end
 switch dtype
     case 'single'
         img.hdrnifti.datatype = 16;     % --- float32
+        img.hdrnifti.bitpix   = 32;
         if ~strcmp(dtype, datatype)
+            if verbose , fprintf('---> Switching to single\n'); end
             img.data = single(img.data);
         end
     case 'double'
         img.hdrnifti.datatype = 64;     % --- float64
+        img.hdrnifti.bitpix   = 64;
         if ~strcmp(dtype, datatype)
+            if verbose , fprintf('---> Switching to double\n'); end
             img.data = double(img.data);
         end
 end

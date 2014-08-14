@@ -1,4 +1,4 @@
-function [res] = mri_SaveNIfTI(img, filename, verbose)
+function [res] = mri_SaveNIfTI(img, filename, datatype, verbose)
 
 %   function [res] = mri_SaveNIfTI(obj, filename, verbose)
 %
@@ -14,7 +14,8 @@ function [res] = mri_SaveNIfTI(img, filename, verbose)
 %   Grega Repovs - 2014-06-29 - Update to use MEX function
 %
 
-if nargin < 3, verbose = false; end
+if nargin < 4, verbose = false; end
+if nargin < 3, datatype = []; end
 
 % ---> embedd extra data if available
 
@@ -66,6 +67,16 @@ if ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
     if verbose, fprintf('\n---> Switching data [%s] to single (4byte float) for CIFTI data.\n', class(img.data)); end
     img.data = single(img.data');
     % img.data = img.data';
+else
+    if ~isempty(datatype)
+        if verbose, fprintf('\n---> Switching data from %s to %s.\n', class(img.data), datatype); end
+        img.data = cast(img.data, datatype);
+    else
+        if strcmp(class(img.data), 'double')
+            if verbose, fprintf('\n---> Switching data from double to single.\n'); end
+            img.data = single(img.data);
+        end
+    end
 end
 
 % ---> setup datatype
