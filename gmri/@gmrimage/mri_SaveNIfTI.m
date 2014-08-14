@@ -63,6 +63,7 @@ end
 % ---> flip before saving if needed
 
 if ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
+    if verbose, fprintf('\n---> Switching data [%s] to single (4byte float) for CIFTI data.\n', class(img.data)); end
     img.data = single(img.data');
     % img.data = img.data';
 end
@@ -72,39 +73,39 @@ end
 switch class(img.data)
     case 'bitN'
         img.hdrnifti.datatype = 1;
-        img.hdrnifti.bitpix = 8;
+        img.hdrnifti.bitpix   = 1;
     case 'uchar'
         img.hdrnifti.datatype = 2;
-        img.hdrnifti.bitpix = 8;
+        img.hdrnifti.bitpix   = 8;
     case 'int16';
         img.hdrnifti.datatype = 4;
-        img.hdrnifti.bitpix = 16;
+        img.hdrnifti.bitpix   = 16;
     case 'int32'
         img.hdrnifti.datatype = 8;
-        img.hdrnifti.bitpix = 32;
+        img.hdrnifti.bitpix   = 32;
     case {'float32', 'single'};
         img.hdrnifti.datatype = 16;
-        img.hdrnifti.bitpix = 32;
+        img.hdrnifti.bitpix   = 32;
     case {'float64', 'double'};
         img.hdrnifti.datatype = 64;
-        img.hdrnifti.bitpix = 64;
+        img.hdrnifti.bitpix   = 64;
     case 'schar';
         img.hdrnifti.datatype = 256;
-        img.hdrnifti.bitpix = 8;
+        img.hdrnifti.bitpix   = 8;
     case 'uint16';
         img.hdrnifti.datatype = 512;
-        img.hdrnifti.bitpix = 16;
+        img.hdrnifti.bitpix   = 16;
     case 'uint32';
         img.hdrnifti.datatype = 768;
-        img.hdrnifti.bitpix = 32;
+        img.hdrnifti.bitpix   = 32;
     case 'int64';
         img.hdrnifti.datatype = 1024;
-        img.hdrnifti.bitpix = 64;
+        img.hdrnifti.bitpix   = 64;
     case 'uint64';
         img.hdrnifti.datatype = 1280;
-        img.hdrnifti.bitpix = 64;
+        img.hdrnifti.bitpix   = 64;
     otherwise
-        error('Uknown datatype or datatype I can not handle!');
+        error('\nERROR: Uknown datatype or datatype I can not handle! [%s]', class(img.data));
 end
 
 % ---> pack header
@@ -114,7 +115,7 @@ if img.hdrnifti.version == 1
 elseif img.hdrnifti.version == 2
     fhdr = packHeader_nifti2(img.hdrnifti);
 else
-    error('ERROR: Unknown NIfTI version!');
+    error('\nERROR: Unknown NIfTI version!');
 end
 
 
