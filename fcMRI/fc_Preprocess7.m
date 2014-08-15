@@ -97,7 +97,7 @@ if nargin < 10, variant = '';       end
 if nargin < 9,  eventstring = '';   end
 if nargin < 8,  TR = 2.5;           end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask:false';
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false';
 options = g_ParseOptions([], options, default);
 
 fprintf('\nRunning preproces script 7 v0.9.4 [%s]\n', tail);
@@ -289,7 +289,17 @@ for current = do
                     if strcmp(options.smooth_mask, 'false')
                         img = img.mri_Smooth3D(options.voxel_smooth, true);
                     else
-                        bmask = gmrimage(file.bmask);
+                        if strcmp(options.smooth_mask, 'nonzero')
+                            img.data = img.image2D;
+                            bmask = img.zeroframes(1);
+                            bmask.data = img.data(:,1) > 0;
+                        elseif strcmp(options.smooth_mask, 'brainsignal')
+                            img.data = img.image2D;
+                            bmask = img.zeroframes(1);
+                            bmask.data = img.data(:,1) > 300;
+                        else
+                            bmask = gmrimage(file.bmask);
+                        end
                         img = img.mri_Smooth3DMasked(bmask, options.voxel_smooth, true, true);
                     end
                 end

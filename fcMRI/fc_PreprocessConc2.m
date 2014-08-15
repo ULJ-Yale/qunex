@@ -1,4 +1,4 @@
-function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options)
+=function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options)
 
 %function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options)
 %   (c) Copyright Grega Repovš, 2011-01-24
@@ -95,7 +95,7 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask:false';
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false';
 options = g_ParseOptions([], options, default);
 
 
@@ -370,7 +370,17 @@ for current = do
                             if strcmp(options.smooth_mask, 'false')
                                 img(b) = img(b).mri_Smooth3D(options.voxel_smooth, true);
                             else
-                                bmask = gmrimage(file(b).bmask);
+                                if strcmp(options.smooth_mask, 'nonzero')
+                                    img(b).data = img(b).image2D;
+                                    bmask = img(b).zeroframes(1);
+                                    bmask.data = img(b).data(:,1) > 0;
+                                elseif strcmp(options.smooth_mask, 'brainsignal')
+                                    img(b).data = img(b).image2D;
+                                    bmask = img(b).zeroframes(1);
+                                    bmask.data = img(b).data(:,1) > 300;
+                                else
+                                    bmask = gmrimage(file(b).bmask);
+                                end                                
                                 img(b) = img(b).mri_Smooth3DMasked(bmask, options.voxel_smooth, true, true);
                             end
                         end
