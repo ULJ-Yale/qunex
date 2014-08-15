@@ -52,6 +52,7 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %                     framework_path:
 %                     wb_command_path:
 %                     omp_threads:    0
+%                     smooth_mask:    false
 %
 %   Does the preprocesing for the files from subjectf folder.
 %   Saves images in ftarget folder
@@ -94,7 +95,7 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0';
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask:false';
 options = g_ParseOptions([], options, default);
 
 
@@ -144,6 +145,7 @@ for b = 1:nbolds
     file(b).bstats      = strcat(subjectf, ['/images/functional/movement/bold' bnum '.bstats']);
     file(b).nuisance    = strcat(subjectf, ['/images/functional/movement/bold' bnum '.nuisance']);
     file(b).fidlfile    = strcat(subjectf, ['/images/functional/events/' efile]);
+    file(b).bmask       = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask' tail]);
 
     eroot               = strrep(efile, '.fidl', '');
     file(b).croot       = strcat(subjectf, ['/images/functional/conc_' eroot]);
@@ -365,7 +367,12 @@ for current = do
                             img(b) = gmrimage();
                         else
                             img(b) = readIfEmpty(img(b), file(b).sfile, omit);
-                            img(b) = img(b).mri_Smooth3D(options.voxel_smooth, true);
+                            if strcmp(options.smooth_mask, 'false')
+                                img(b) = img(b).mri_Smooth3D(options.voxel_smooth, true);
+                            else
+                                bmask = gmrimage(file(b).bmask);
+                                img(b) = img(b).mri_Smooth3DMasked(bmask, options.voxel_smooth, true, true);
+                            end
                         end
                     case 'h'
                         img(b) = readIfEmpty(img(b), file(b).sfile, omit);
