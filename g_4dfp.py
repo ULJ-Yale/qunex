@@ -219,6 +219,22 @@ def runAvi(folder=".", overwrite=None):
 
 
 
+def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm'):
+
+    methods = {'interpolated': 'METRIC_INTERPOLATED_VOXEL', 'maximum': 'METRIC_MAXIMUM_VOXEL', 'enclosing': 'METRIC_ENCLOSING_VOXEL', 'strongest': 'METRIC_STRONGEST_VOXEL', 'gaussian': 'METRIC_GAUSSIAN'}
+    if method in methods:
+        method = methods[method]
+
+    volumes = volume.split()
+    mapping = ['-metric-'+e for e in mapping.split()]
+
+    metric = metric.replace('.metric', '') + '.metric'
+
+    for volume in volumes:
+        volume = volume.replace('.img', '').replace('.ifh', '').replace('.4dfp', '') + '.4dfp.ifh'
+        for structure in ['LEFT', 'RIGHT']:
+            print "---> mapping %s to PALS %s [%s %s %s]" % (volume, structure, atlas, method, " ".join(mapping))
+            r = subprocess.call(['caret_command', '-volume-map-to-surface-pals', metric, metric, atlas, structure, method, volume] + mapping)
 
 
 

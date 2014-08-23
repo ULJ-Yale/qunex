@@ -147,6 +147,26 @@ joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl
 
     example gmri joinFidlFolder concfolder=concs fidlfolder=fidls
 
+
+Transformation utilities
+------------------------
+
+map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
+    Maps volume files to metric surface files using PALS12 surface atlas.
+    - volume:   a volume file or a space separated list of volume files - put in quotes
+    - metric:   the name of the metric file that stores the mapping
+    - atlas:    volume atlas from which to map (711-2C by default or 711-2B, AFNI, FLIRT, FNIRT, SPM2, SPM5, SPM95, SPM96, SPM99, MRITOTAL)
+    - method:   intepolated, maximum, enclosing, strongest, gaussian (for other options see caret_command)
+    - mapping:  a single mapping option or a space separated list in quotes, default: afm
+                afm: average fiducial mapping
+                mfm: average of mapping to all PALS cases (multifiducial mapping)
+                min: minimum of mapping to all PALS cases
+                max: maximum of mapping to all PALS cases
+                std-dev: sample standard deviation of mapping to all PALS cases
+                std-error: standard error of mapping to all PALS cases
+                all-cases: mapping to each of the PALS12 cases
+
+
 ===============================================================================
 '''
 
@@ -165,7 +185,9 @@ commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': (
             'printniftihdr' : { 'com': g_mri.g_img.printniftihdr,      'args': ('filename', ) },
             'modniftihdr'   : { 'com': g_mri.g_gimg.modifyNIfTIHeader, 'args': ('filename', 's')},
             'joinFidl'      : { 'com': g_mri.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot')},
-            'joinFidlFolder': { 'com': g_mri.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')} }
+            'joinFidlFolder': { 'com': g_mri.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
+            'map2PALS'      : { 'com': g_mri.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')}
+            }
 
 def runCommand(command, args):
     if command in commands:
