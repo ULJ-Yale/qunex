@@ -386,7 +386,7 @@ def splitDicom(folder=None):
         except:
             pass
 
-def processPhilips(folder=None, check=None):
+def processPhilips(folder=None, check=None, pattern=None):
     if check == 'no':
         check = False
     else:
@@ -396,12 +396,17 @@ def processPhilips(folder=None, check=None):
         folder = "."
     inbox = os.path.join(folder, 'inbox')
 
+    if pattern == None:
+        pattern = r"(OP[0-9.-]+)"
+    else:
+        pattern = r"(%s[0-9.-]+)" % (pattern)
+
     # ---- get file list
 
     print "\n---> Checking for packets in %s ..." % (inbox)
 
     zips = glob.glob(os.path.join(inbox, '*.zip'))
-    getop = re.compile(r"(OP[0-9.-]+)")
+    getop = re.compile(pattern)
 
     okpackets  = []
     badpackets = []
