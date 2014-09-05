@@ -55,6 +55,7 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %                     wb_command_path:
 %                     omp_threads:    0
 %                     smooth_mask:    false
+%                     dilate_mask:    false
 %
 %   Additional notes
 %   - Taks matrix is prepended to the GLM regression
@@ -86,6 +87,9 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %              - Moved to using external nuisance file and preprocessing nuisance in parallel
 %              - Scrubbing can now be re-defined here and a scrubbing file is saved (separately for variant if set)
 %
+%   2014-09-15 Grega Repovs (v0.9.5)
+%              - Added the option to smooth within a mask and use a dilation mask
+%
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -97,10 +101,10 @@ if nargin < 10, variant = '';       end
 if nargin < 9,  eventstring = '';   end
 if nargin < 8,  TR = 2.5;           end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false';
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces script 7 v0.9.4 [%s]\n', tail);
+fprintf('\nRunning preproces script 7 v0.9.5 [%s]\n', tail);
 
 ignore.hipass  = 'keep';
 ignore.regress = 'keep';
@@ -286,21 +290,40 @@ for current = do
                     img = gmrimage();
                 else
                     img = readIfEmpty(img, sfile, omit);
+                    img.data = img.image2D;
                     if strcmp(options.smooth_mask, 'false')
                         img = img.mri_Smooth3D(options.voxel_smooth, true);
                     else
+
+                        % --- set up the smoothing mask
+
                         if strcmp(options.smooth_mask, 'nonzero')
-                            img.data = img.image2D;
                             bmask = img.zeroframes(1);
                             bmask.data = img.data(:,1) > 0;
                         elseif strcmp(options.smooth_mask, 'brainsignal')
-                            img.data = img.image2D;
                             bmask = img.zeroframes(1);
                             bmask.data = img.data(:,1) > 300;
-                        else
+                        elseif strcmp(options.smooth_mask, 'brainmask')
                             bmask = gmrimage(file.bmask);
+                        else
+                            bmask = options.smooth_mask;
                         end
-                        img = img.mri_Smooth3DMasked(bmask, options.voxel_smooth, true, true);
+
+                        % --- set up the dilation mask
+
+                        if strcmp(options.dilate_mask, 'nonzero')
+                            dmask = img.zeroframes(1);
+                            dmask.data = img.data(:,1) > 0;
+                        elseif strcmp(options.dilate_mask, 'brainsignal')
+                            dmask = img.zeroframes(1);
+                            dmask.data = img.data(:,1) > 300;
+                        elseif strcmp(options.dilate_mask, 'brainmask')
+                            dmask = gmrimage(file.bmask);
+                        else
+                            dmask = options.dilate_mask;
+                        end
+
+                        img = img.mri_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
                     end
                 end
             case 'h'
