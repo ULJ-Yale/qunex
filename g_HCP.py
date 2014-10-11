@@ -67,6 +67,14 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
             sfile = k+".nii.gz"
             tfile = sid + "_fncb_BOLD_PA_SB_SE.nii.gz"
             tfold = "SpinEchoFieldMap"+boldn+"_fncb"
+        elif v['name'] == "SE-FM-LR":
+            sfile = k+".nii.gz"
+            tfile = sid + "_fncb_BOLD_LR_SB_SE.nii.gz"
+            tfold = "SpinEchoFieldMap"+boldn+"_fncb"
+        elif v['name'] == "SE-FM-RL":
+            sfile = k+".nii.gz"
+            tfile = sid + "_fncb_BOLD_RL_SB_SE.nii.gz"
+            tfold = "SpinEchoFieldMap"+boldn+"_fncb"
         elif v['name'] == "DWI":
             sfile = [k+e for e in ['.nii.gz', '.bval', '.bvec']]
             tbase = "_".join([sid, 'DWI', v['task']])
