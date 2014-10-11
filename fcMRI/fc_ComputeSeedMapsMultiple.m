@@ -40,7 +40,7 @@ function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, target
 % 	Copyright (c) 2008. All rights reserved.
 
 
-if nargin < 7 || isempty(cv),      cv     = false;  end
+if nargin < 8 || isempty(cv),      cv     = false;  end
 if nargin < 7 || isempty(ignore),  ignore = 'no';   end
 if nargin < 6 || isempty(method),  method = 'mean'; end
 if nargin < 5 || isempty(targetf), targetf = '.';   end

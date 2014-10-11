@@ -1,4 +1,4 @@
-=function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options)
+function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options)
 
 %function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options)
 %   (c) Copyright Grega Repovš, 2011-01-24
@@ -53,6 +53,7 @@
 %                     wb_command_path:
 %                     omp_threads:    0
 %                     smooth_mask:    false
+%                     dilate_mask:    false
 %
 %   Does the preprocesing for the files from subjectf folder.
 %   Saves images in ftarget folder
@@ -80,6 +81,9 @@
 %   2014-07-20 Grega Repovs (v0.9.5)
 %              - Rewrote with separate nuisance signal extraction and parallel processing.
 %
+%   2014-09-15 Grega Repovs (v0.9.6)
+%              - Added the option to smooth within a mask and use a dilation mask
+%
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';                               end
@@ -95,12 +99,12 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false';
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
 options = g_ParseOptions([], options, default);
 
 
 
-fprintf('\nRunning preproces conc 2 script v0.9.5 [%s]\n', tail);
+fprintf('\nRunning preproces conc 2 script v0.9.6 [%s]\n', tail);
 
 
 % ======================================================
@@ -282,6 +286,8 @@ if overwrite
 
     for current = do
 
+        c = ismember(tasklist, current);
+
         for b = 1:nbolds
             file(b).sfile = [file(b).froot ext tail];
         end
@@ -366,23 +372,44 @@ for current = do
                             wbSmooth(file(b).sfile, file(b).tfile, file(b), options);
                             img(b) = gmrimage();
                         else
+
                             img(b) = readIfEmpty(img(b), file(b).sfile, omit);
+                            img(b).data = img(b).image2D;
                             if strcmp(options.smooth_mask, 'false')
                                 img(b) = img(b).mri_Smooth3D(options.voxel_smooth, true);
                             else
+
+                                % --- set up the smoothing mask
+
                                 if strcmp(options.smooth_mask, 'nonzero')
-                                    img(b).data = img(b).image2D;
                                     bmask = img(b).zeroframes(1);
                                     bmask.data = img(b).data(:,1) > 0;
                                 elseif strcmp(options.smooth_mask, 'brainsignal')
-                                    img(b).data = img(b).image2D;
                                     bmask = img(b).zeroframes(1);
                                     bmask.data = img(b).data(:,1) > 300;
-                                else
+                                elseif strcmp(options.smooth_mask, 'brainmask')
                                     bmask = gmrimage(file(b).bmask);
-                                end                                
-                                img(b) = img(b).mri_Smooth3DMasked(bmask, options.voxel_smooth, true, true);
+                                else
+                                    bmask = options.smooth_mask;
+                                end
+
+                                % --- set up the dilation mask
+
+                                if strcmp(options.dilate_mask, 'nonzero')
+                                    dmask = img(b).zeroframes(1);
+                                    dmask.data = img(b).data(:,1) > 0;
+                                elseif strcmp(options.dilate_mask, 'brainsignal')
+                                    dmask = img(b).zeroframes(1);
+                                    dmask.data = img(b).data(:,1) > 300;
+                                elseif strcmp(options.dilate_mask, 'brainmask')
+                                    dmask = gmrimage(file(b).bmask);
+                                else
+                                    dmask = options.dilate_mask;
+                                end
+
+                                img(b) = img(b).mri_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
                             end
+
                         end
                     case 'h'
                         img(b) = readIfEmpty(img(b), file(b).sfile, omit);
