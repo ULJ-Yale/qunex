@@ -187,6 +187,7 @@ commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': (
             'modniftihdr'   : { 'com': g_mri.g_gimg.modifyNIfTIHeader, 'args': ('filename', 's')},
             'joinFidl'      : { 'com': g_mri.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot')},
             'joinFidlFolder': { 'com': g_mri.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
+            'splitFidl'     : { 'com': g_mri.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
             'map2PALS'      : { 'com': g_mri.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')}
             }
 

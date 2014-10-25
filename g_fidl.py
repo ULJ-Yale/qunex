@@ -6,12 +6,16 @@ Adapted from previous joinFidl.py script
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
+import g_mri.g_img as g
 import sys
 import getopt
 import re
 import os
 import os.path
 import glob
+
+
+ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [3]': 'zlen', 'matrix size [4]': 'frames', 'scaling factor (mm/pixel) [1]': 'xsize', 'scaling factor (mm/pixel) [2]': 'ysize', 'scaling factor (mm/pixel) [3]': 'zsize'}
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -25,14 +29,16 @@ def readLines(filename):
     return s
 
 def boldInfo(boldfile):
-    boldfile = boldfile.replace('.img', '.ifh')
-    s = readLines(boldfile)
-    binfo = {}
-    for l in s:
-        l = l.split(':=')
-        if len(l) == 2:
-            binfo[l[0].strip()] = l[1].strip()
-    return binfo
+    if ".4dfp.img" in boldfile:
+        ifhfile = boldfile.replace('.img', '.ifh')
+        ifh = g.ifhhdr(ifhfile)
+        hdr = ifh.toNIfTI()
+    elif ".nii" in boldfile:
+        hdr = g.niftihdr(boldfile)
+    else:
+        hdr = None
+
+    return hdr
 
 def readFidl(fidlf):
     s = readLines(fidlf)
@@ -48,22 +54,27 @@ def readFidl(fidlf):
 def readConc(concf, TR):
     s = readLines(concf)
     nfiles = int(s[0].split(":")[1])
-    boldfiles = [e.split(":")[1] for e in s[1:nfiles+1]]
+    print " ... %d bolds:" % (nfiles),
+    boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles+1]]
 
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
+            print
             print "===> ERROR: image does not exist! (%s)" % (boldfile)
             return []
 
-    m = re.compile('_b.*?([0-9]+)')
+    # m = re.compile('_b.*?([0-9]+)')
+    m = re.compile(".*/.*?[bold]*?([0-9]+)(/|\.).*")
     bolds = []
     start = 0
     for boldfile in boldfiles:
-        boldname = m.search(boldfile).groups(1)[0]
-        length   = int(boldInfo(boldfile)['matrix size [4]']) * TR
+        boldname = m.match(boldfile).group(1)
+        print boldname,
+        length   = boldInfo(boldfile).frames * TR
         bolds.append([boldname, start, length, boldfile])
         start += length
 
+    print
     return bolds
 
 
@@ -120,7 +131,7 @@ def joinFidl(concfile, fidlroot, outfolder=None):
 
     jointfile = fidlroot + '.fidl'
     if outfolder is not None:
-        jointfile = os.path.join(outfolder, os.path.basename(jointfile))        
+        jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 
     out = open(jointfile, 'w')
     print >> out, sfidl['header']
@@ -150,3 +161,61 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
     for concfile in concfiles:
         root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ''))
         joinFidl(concfile, root, outfolder)
+
+
+def splitFidl(concfile, fidlfile, outfolder=None):
+    """
+    Split a multi-bold fidl file into run specific bold files based on the sequence of bold files in conc file and their lengths.
+    concfile - the path to the conc file
+    fidlfile - the path to the fidl file
+    root  - root pattern of the fidl files
+    """
+
+    # ---> read the fidl and conc info
+
+    fidldata = readFidl(fidlfile)
+    try:
+        TR = fidldata['TR']
+    except:
+        if len(fidldata) == 0:
+            print "===> WARNING: No fidl files correspond to %s!" % (concfile)
+        else:
+            print "===> WARNING: Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile)
+        return
+
+    bolddata = readConc(concfile, TR)
+
+    # ---> start the split loop
+
+    bstart = 0
+    for bold in bolddata:
+        # [boldname, start, length, boldfile]
+
+        bend = bstart + bold[2]
+
+        # ---> open fidl file
+
+        ffile = fidlfile.replace(".fidl", "_%s.fidl" % (bold[0]))
+        if outfolder != None:
+            ffile = os.path.join(outfolder, ffile)
+        ffile = open(ffile, 'w')
+
+        # ---> print header
+
+        print >> ffile, fidldata['header']
+
+        # return {'header': header, 'TR':TR, 'events':s, 'source': fidlf}
+
+        # ---> print contents
+
+        for l in fidldata['events']:
+            if l[0] >= bstart and l[0] < bend:
+                print >> ffile, "%.2f\t%s" % (l[0]-bstart, "\t".join(l[1:]))
+
+        # ---> close fidl file
+
+        ffile.close()
+
+        bstart = bend
+
+    return True
