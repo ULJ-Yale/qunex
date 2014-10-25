@@ -52,6 +52,8 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %                     framework_path:
 %                     wb_command_path:
 %                     omp_threads:    0
+%                     smooth_mask:    false
+%                     dilate_mask:    false
 %
 %   Does the preprocesing for the files from subjectf folder.
 %   Saves images in ftarget folder
@@ -79,6 +81,9 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %   2014-07-20 Grega Repovs (v0.9.5)
 %              - Rewrote with separate nuisance signal extraction and parallel processing.
 %
+%   2014-09-15 Grega Repovs (v0.9.6)
+%              - Added the option to smooth within a mask and use a dilation mask
+%
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';                               end
@@ -94,12 +99,12 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0';
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
 options = g_ParseOptions([], options, default);
 
 
 
-fprintf('\nRunning preproces conc 2 script v0.9.5 [%s]\n', tail);
+fprintf('\nRunning preproces conc 2 script v0.9.6 [%s]\n', tail);
 
 
 % ======================================================
@@ -111,7 +116,7 @@ ignore.hipass  = 'keep';
 ignore.regress = 'keep';
 ignore.lopass  = 'keep';
 
-ignores = regexp(ignores, ',|;|:|=|\|', 'split');
+ignores = regexp(ignores, '=|,|;|:|\|', 'split');
 if length(ignores)>=2
     ignores = reshape(ignores, 2, [])';
     for p = 1:size(ignores, 1)
@@ -144,6 +149,7 @@ for b = 1:nbolds
     file(b).bstats      = strcat(subjectf, ['/images/functional/movement/bold' bnum '.bstats']);
     file(b).nuisance    = strcat(subjectf, ['/images/functional/movement/bold' bnum '.nuisance']);
     file(b).fidlfile    = strcat(subjectf, ['/images/functional/events/' efile]);
+    file(b).bmask       = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask' tail]);
 
     eroot               = strrep(efile, '.fidl', '');
     file(b).croot       = strcat(subjectf, ['/images/functional/conc_' eroot]);
@@ -270,6 +276,54 @@ end
 tasklist = ['shrl'];
 exts     = {'_g7','_hpss',['_res-' rgsse],'_lpss'};
 info     = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
+
+
+% ---> clean old files
+
+if overwrite
+    ext   = '';
+    first = true;
+
+    for current = do
+
+        c = ismember(tasklist, current);
+
+        for b = 1:nbolds
+            file(b).sfile = [file(b).froot ext tail];
+        end
+        if isempty(ext)
+            ext = variant;
+        end
+        ext   = [ext exts{c}];
+        for b = 1:nbolds
+            file(b).tfile = [file(b).froot ext tail];
+            file(b).tconc = [file(b).cfroot ext '.conc'];
+        end
+
+        if exist(file(b).tfile, 'file')
+            if first
+                fprintf('\n---> removing old files:');
+                first = false;
+            end
+            fprintf('\n     ... %s', file(b).tfile);
+            delete(file(b).tfile);
+        end
+
+        if exist(file(b).tconc, 'file')
+            if first
+                fprintf('\n---> removing old files:');
+                first = false;
+            end
+            fprintf('\n     ... %s', file(b).tconc);
+            delete(file(b).tconc);
+        end
+
+    end
+end
+
+
+% ---> start the loop
+
 ext      = '';
 
 for b = 1:nbolds
@@ -299,7 +353,7 @@ for current = do
 
     % --- print info
 
-    fprintf('\n%s\n', info{c});
+    fprintf('\n\n%s\n', info{c});
 
     % --- run tasks that are run on individual bolds
 
@@ -318,8 +372,44 @@ for current = do
                             wbSmooth(file(b).sfile, file(b).tfile, file(b), options);
                             img(b) = gmrimage();
                         else
+
                             img(b) = readIfEmpty(img(b), file(b).sfile, omit);
-                            img(b) = img(b).mri_Smooth3D(options.voxel_smooth, true);
+                            img(b).data = img(b).image2D;
+                            if strcmp(options.smooth_mask, 'false')
+                                img(b) = img(b).mri_Smooth3D(options.voxel_smooth, true);
+                            else
+
+                                % --- set up the smoothing mask
+
+                                if strcmp(options.smooth_mask, 'nonzero')
+                                    bmask = img(b).zeroframes(1);
+                                    bmask.data = img(b).data(:,1) > 0;
+                                elseif strcmp(options.smooth_mask, 'brainsignal')
+                                    bmask = img(b).zeroframes(1);
+                                    bmask.data = img(b).data(:,1) > 300;
+                                elseif strcmp(options.smooth_mask, 'brainmask')
+                                    bmask = gmrimage(file(b).bmask);
+                                else
+                                    bmask = options.smooth_mask;
+                                end
+
+                                % --- set up the dilation mask
+
+                                if strcmp(options.dilate_mask, 'nonzero')
+                                    dmask = img(b).zeroframes(1);
+                                    dmask.data = img(b).data(:,1) > 0;
+                                elseif strcmp(options.dilate_mask, 'brainsignal')
+                                    dmask = img(b).zeroframes(1);
+                                    dmask.data = img(b).data(:,1) > 300;
+                                elseif strcmp(options.dilate_mask, 'brainmask')
+                                    dmask = gmrimage(file(b).bmask);
+                                else
+                                    dmask = options.dilate_mask;
+                                end
+
+                                img(b) = img(b).mri_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
+                            end
+
                         end
                     case 'h'
                         img(b) = readIfEmpty(img(b), file(b).sfile, omit);
@@ -577,7 +667,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
     for b = 1:nbolds
         if strcmp(ignore, 'ignore')
             fprintf(' %d', sum(img(b).use == 0));
-            mask = img(b).use;
+            mask = img(b).use == 1;
         else
             mask = true(1, img(b).frames);
         end
@@ -654,10 +744,6 @@ function [img] = readIfEmpty(img, src, omit)
 
 function [] = wbSmooth(sfile, tfile, file, options)
 
-    % --- set up variables
-
-    tmpf = strrep(tfile, 'g7', 'g7flipped');
-
     % --- convert FWHM to sd
 
     options.surface_smooth = options.surface_smooth / 2.35482004503; % (sqrt(8*log(2)))
@@ -685,7 +771,7 @@ function [] = wbSmooth(sfile, tfile, file, options)
     end
 
     fprintf('\n     ... smoothing');
-    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tmpf, file.lsurf, file.rsurf);
+    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tfile, file.lsurf, file.rsurf);
     [status out] = system(comm);
 
     if status
@@ -695,21 +781,3 @@ function [] = wbSmooth(sfile, tfile, file, options)
     else
         fprintf(' ... done!');
     end
-
-    fprintf('\n     ... transposing');
-    comm = sprintf('wb_command -cifti-transpose %s %s', tmpf, tfile);
-    [status out] = system(comm);
-
-    if status
-        fprintf('\nERROR: wb_command finished with error!\n       ran: %s\n', comm);
-        fprintf('\n --- wb_command output ---\n%s\n --- end wb_command output ---\n', out);
-        error('\nAborting processing!');
-    else
-        fprintf(' ... done!');
-    end
-
-
-    fprintf('\n     ... removing temporary flipped file');
-    delete(tmpf);
-
-    fprintf(' ... done!');

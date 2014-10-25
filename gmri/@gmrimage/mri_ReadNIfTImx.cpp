@@ -8,7 +8,7 @@
 
 // function [hdr, data, meta, doswap] = mri_ReadNIfTImx(filename, verbose)
 //
-// To compile run: mex -lz mri_ReadNIfTI1mx.cpp g_nifti.c znzlib.c
+// To compile run: mex -lz mri_ReadNIfTImx.cpp g_nifti.c znzlib.c
 //
 
 
@@ -129,18 +129,40 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (verbose) mexPrintf("\nDATA\ndata type: %d\nnbyper:    %d\nswapsize:  %d\nname:      %s\n\n", dinfo->type, dinfo->nbyper, dinfo->swapsize, dinfo->name);
 
     switch (dinfo->type) {
+        case DT_INT8:
+            dtype = mxINT8_CLASS;
+            break;
+        case DT_UINT8:
+            dtype = mxUINT8_CLASS;
+            break;
+        case DT_INT16:
+            dtype = mxINT16_CLASS;
+            break;
+        case DT_UINT16:
+            dtype = mxUINT16_CLASS;
+            break;
+        case DT_INT32:
+            dtype = mxINT32_CLASS;
+            break;
+        case DT_UINT32:
+            dtype = mxUINT32_CLASS;
+            break;
+        case DT_INT64:
+            dtype = mxINT64_CLASS;
+            break;
+        case DT_UINT64:
+            dtype = mxUINT64_CLASS;
+            break;
         case DT_FLOAT:
             dtype = mxSINGLE_CLASS;
             break;
-        case DT_SIGNED_INT:
-            dtype = mxINT32_CLASS;
+        case DT_DOUBLE:
+            dtype = mxDOUBLE_CLASS;
             break;
-        case DT_UNSIGNED_CHAR:
-            dtype = mxUINT8_CLASS;
-            break;
-        case DT_SIGNED_SHORT:
-            dtype = mxINT16_CLASS;
-            break;
+        default:
+            mexPrintf("ERROR: Datatype that can not be converted to MATLAB equivalent in file %s!\n", filename);
+            mexErrMsgTxt("ERROR: Aborting!");
+            return;
     }
 
     data = mxCreateNumericMatrix(0, 0, dtype, mxREAL);

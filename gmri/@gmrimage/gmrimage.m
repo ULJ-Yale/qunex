@@ -64,6 +64,7 @@ classdef gmrimage
         scrub_hdr       = [];
         nuisance        = [];
         nuisance_hdr    = [];
+        cifti           = [];
 
     end
 
@@ -157,11 +158,12 @@ classdef gmrimage
 
         end
 
-        function mri_saveimage(obj, filename, extra, verbose)
+        function mri_saveimage(obj, filename, extra, datatype, verbose)
         %
         %  Save image based on the existing header data
         %
-            if nargin < 4 verbose = [];            end
+            if nargin < 5 verbose = [];            end
+            if nargin < 4 datatype = [];           end
             if nargin < 3 extra = [];              end
             if nargin < 2 filename = obj.filename; end
 
@@ -170,10 +172,10 @@ classdef gmrimage
             switch obj.imageformat
                 case '4dfp'
                     obj.mri_Save4DFP(filename, extra);
-                case 'NIfTI'
-                    obj.mri_SaveNIfTI(filename, verbose);
-                case 'CIFTI'
-                    obj.mri_SaveNIfTI(filename, verbose);
+                case {'NIfTI', 'CIFTI', 'CIFTI-1', 'CIFTI-2'}
+                    obj.mri_SaveNIfTI(filename, datatype, verbose);
+                otherwise
+                    error('ERROR: Unknown file format, could not save image! [%s]', obj.imageformat);
             end
         end
 

@@ -1,4 +1,4 @@
-function [res] = mri_SaveNIfTI(img, filename, verbose)
+function [res] = mri_SaveNIfTI(img, filename, datatype, verbose)
 
 %   function [res] = mri_SaveNIfTI(obj, filename, verbose)
 %
@@ -14,11 +14,12 @@ function [res] = mri_SaveNIfTI(img, filename, verbose)
 %   Grega Repovs - 2014-06-29 - Update to use MEX function
 %
 
-if nargin < 3, verbose = false; end
+if nargin < 4, verbose = false; end
+if nargin < 3, datatype = []; end
 
 % ---> embedd extra data if available
 
-if ~strcmp(img.imageformat, 'CIFTI') || img.frames < 2
+if ~ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'}) && img.frames > 2
     img = img.mri_EmbedStats();
 end
 
@@ -27,64 +28,95 @@ end
 filename = strtrim(filename);
 % unpack and set up
 
-root = strrep(filename, '.hdr', '');
-root = strrep(root, '.nii', '');
-root = strrep(root, '.gz', '');
-root = strrep(root, '.img', '');
-root = strrep(root, '.dtseries', '');
+root = strrep(filename, '.hdr',      '');
+root = strrep(root,     '.nii',      '');
+root = strrep(root,     '.gz',       '');
+root = strrep(root,     '.img',      '');
+root = strrep(root,     '.dtseries', '');
 
 img = img.unmaskimg;
 
-if strcmp(img.imageformat, 'NIfTI')
-    img.hdrnifti.dim(5) = img.frames;
-    if img.frames > 1
-        img.hdrnifti.dim(1) = 4;
-    end
-    file = [root '.nii'];
-elseif strcmp(img.imageformat, 'CIFTI')
-    img.hdrnifti.dim(7) = img.frames;
-    file = [root '.dtseries.nii'];
+% ---> save dimension information
+
+switch img.imageformat
+    case 'NIfTI'
+        img.hdrnifti.dim(5) = img.frames;
+        if img.frames > 1
+            img.hdrnifti.dim(1) = 4;
+        end
+        file = [root '.nii.gz'];
+
+    case 'CIFTI-1'
+        img.hdrnifti.dim(7) = img.frames;
+        file = [root '.dtseries.nii'];
+
+    case 'CIFTI-2'
+        img.meta = framesHack(img.meta, img.hdrnifti.dim(6), img.frames);
+        img.hdrnifti.dim(6) = img.frames;
+        file = [root '.dtseries.nii'];
+
+    otherwise
+        fprintf('\nWARNING: Imageformat info not recognized [%s], using .nii.gz\n', img.imageformat);
+        file = [root '.nii.gz'];
+
 end
 
+% ---> flip before saving if needed
+
+if ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
+    if verbose, fprintf('\n---> Switching data [%s] to single (4byte float) for CIFTI data.\n', class(img.data)); end
+    img.data = single(img.data');
+    % img.data = img.data';
+else
+    if ~isempty(datatype)
+        if verbose, fprintf('\n---> Switching data from %s to %s.\n', class(img.data), datatype); end
+        img.data = cast(img.data, datatype);
+    else
+        if strcmp(class(img.data), 'double')
+            if verbose, fprintf('\n---> Switching data from double to single.\n'); end
+            img.data = single(img.data);
+        end
+    end
+end
 
 % ---> setup datatype
 
 switch class(img.data)
     case 'bitN'
         img.hdrnifti.datatype = 1;
-        img.hdrnifti.bitpix = 8;
+        img.hdrnifti.bitpix   = 1;
     case 'uchar'
         img.hdrnifti.datatype = 2;
-        img.hdrnifti.bitpix = 8;
+        img.hdrnifti.bitpix   = 8;
     case 'int16';
         img.hdrnifti.datatype = 4;
-        img.hdrnifti.bitpix = 16;
+        img.hdrnifti.bitpix   = 16;
     case 'int32'
         img.hdrnifti.datatype = 8;
-        img.hdrnifti.bitpix = 32;
+        img.hdrnifti.bitpix   = 32;
     case {'float32', 'single'};
         img.hdrnifti.datatype = 16;
-        img.hdrnifti.bitpix = 32;
+        img.hdrnifti.bitpix   = 32;
     case {'float64', 'double'};
         img.hdrnifti.datatype = 64;
-        img.hdrnifti.bitpix = 64;
+        img.hdrnifti.bitpix   = 64;
     case 'schar';
         img.hdrnifti.datatype = 256;
-        img.hdrnifti.bitpix = 8;
+        img.hdrnifti.bitpix   = 8;
     case 'uint16';
         img.hdrnifti.datatype = 512;
-        img.hdrnifti.bitpix = 16;
+        img.hdrnifti.bitpix   = 16;
     case 'uint32';
         img.hdrnifti.datatype = 768;
-        img.hdrnifti.bitpix = 32;
+        img.hdrnifti.bitpix   = 32;
     case 'int64';
         img.hdrnifti.datatype = 1024;
-        img.hdrnifti.bitpix = 64;
+        img.hdrnifti.bitpix   = 64;
     case 'uint64';
         img.hdrnifti.datatype = 1280;
-        img.hdrnifti.bitpix = 64;
+        img.hdrnifti.bitpix   = 64;
     otherwise
-        error('Uknown datatype or datatype I can not handle!');
+        error('\nERROR: Uknown datatype or datatype I can not handle! [%s]', class(img.data));
 end
 
 % ---> pack header
@@ -94,13 +126,13 @@ if img.hdrnifti.version == 1
 elseif img.hdrnifti.version == 2
     fhdr = packHeader_nifti2(img.hdrnifti);
 else
-    error('ERROR: Unknown NIfTI version!');
+    error('\nERROR: Unknown NIfTI version!');
 end
 
 
 % ---> save it
 
-gmrimage.mri_SaveNIfTImx(filename, fhdr, img.data, img.meta, img.hdrnifti.swapped == 1, verbose);
+gmrimage.mri_SaveNIfTImx(file, fhdr, img.data, img.meta, img.hdrnifti.swapped == 1, verbose);
 
 
 
@@ -118,7 +150,7 @@ function [s] = packHeader_nifti1(hdrnifti)
     s = zeros(348, 1, 'uint8');
 
     s(1:4)     =   sw(348                     , 'int32');
-    s(5:14)    =   sw(hdrnifti.data_type      , 'uint8');
+    s(5:14)    =   sw(hdrnifti.datatype       , 'uint8');
     s(15:32)   =   sw(hdrnifti.db_name        , 'uint8');
     s(33:36)   =   sw(hdrnifti.extents        , 'int32');
     s(37:38)   =   sw(hdrnifti.session_error  , 'int16');
@@ -176,7 +208,7 @@ function [s] = packHeader_nifti2(hdrnifti)
 
     s = zeros(540, 1, 'uint8');
 
-    s(1:4)     = sw(348,                     'int32');
+    s(1:4)     = sw(540,                     'int32');
     s(5:12)    = sw(hdrnifti.magic,          'uint8');
     s(13:14)   = sw(hdrnifti.datatype,       'int16');
     s(15:16)   = sw(hdrnifti.bitpix,         'int16');
@@ -215,4 +247,23 @@ function [s] = packHeader_nifti2(hdrnifti)
     s(526:540) = sw(hdrnifti.unused_str,     'uint8');
 
 
+
+
+
+function [meta] = framesHack(meta, oframes, nframes);
+
+    if oframes == nframes
+        return
+    end
+
+    s = cast(meta', 'char');
+    olds = sprintf('SeriesPoints="%d"', oframes);
+    news = sprintf('SeriesPoints="%d"', nframes);
+    dlen = length(olds)-length(news);
+    if dlen > 0
+        news = [news repmat(' ', 1, dlen)];
+    end
+    sstart = strfind(s, olds);
+    s(sstart:sstart+length(news)-1) = news;
+    meta = cast(s', 'uint8');
 

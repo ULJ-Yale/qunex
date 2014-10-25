@@ -54,6 +54,8 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %                     framework_path:
 %                     wb_command_path:
 %                     omp_threads:    0
+%                     smooth_mask:    false
+%                     dilate_mask:    false
 %
 %   Additional notes
 %   - Taks matrix is prepended to the GLM regression
@@ -85,6 +87,9 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %              - Moved to using external nuisance file and preprocessing nuisance in parallel
 %              - Scrubbing can now be re-defined here and a scrubbing file is saved (separately for variant if set)
 %
+%   2014-09-15 Grega Repovs (v0.9.5)
+%              - Added the option to smooth within a mask and use a dilation mask
+%
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -96,16 +101,16 @@ if nargin < 10, variant = '';       end
 if nargin < 9,  eventstring = '';   end
 if nargin < 8,  TR = 2.5;           end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0';
+default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces script 7 v0.9.4 [%s]\n', tail);
+fprintf('\nRunning preproces script 7 v0.9.5 [%s]\n', tail);
 
 ignore.hipass  = 'keep';
 ignore.regress = 'keep';
 ignore.lopass  = 'keep';
 
-ignores = regexp(ignores, ',|;|:|\|', 'split');
+ignores = regexp(ignores, '=|,|;|:|\|', 'split');
 if length(ignores)>=2
     ignores = reshape(ignores, 2, [])';
     for p = 1:size(ignores, 1)
@@ -132,6 +137,7 @@ file.oscrub    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bo
 file.tscrub    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) variant '.scrub']);
 file.bstats    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.bstats']);
 file.fidlfile  = strcat(subjectf, ['/images/functional/events/bold'   int2str(bold) efile]);
+file.bmask     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask' tail]);
 
 file.nuisance  = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.nuisance']);
 
@@ -222,9 +228,37 @@ end
 task = ['shrl'];
 exts = {'_g7','_hpss',['_res-' rgsse],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
-ext  = '';
 
+% ---> clear exisitng data
+
+if overwrite
+    ext  = '';
+    first = true;
+
+    for current = do
+        c = ismember(task, current);
+        sfile = [froot ext tail];
+        if isempty(ext)
+            ext = variant;
+        end
+        ext   = [ext exts{c}];
+        tfile = [froot ext tail];
+        if exist(tfile, 'file')
+            if first
+                fprintf('\n---> removing old files:');
+                first = false;
+            end
+            fprintf('\n     ... %s', tfile);
+            delete(tfile);
+        end
+    end
+end
+
+% ---> start the loop
+
+ext  = '';
 img = gmrimage();
+
 
 for current = do
 
@@ -240,7 +274,7 @@ for current = do
 
     % --- print info
 
-    fprintf('\n%s %s ', info{c}, sfile);
+    fprintf('\n\n%s %s ', info{c}, sfile);
 
 
     % --- run it on image
@@ -256,7 +290,41 @@ for current = do
                     img = gmrimage();
                 else
                     img = readIfEmpty(img, sfile, omit);
-                    img = img.mri_Smooth3D(options.voxel_smooth, true);
+                    img.data = img.image2D;
+                    if strcmp(options.smooth_mask, 'false')
+                        img = img.mri_Smooth3D(options.voxel_smooth, true);
+                    else
+
+                        % --- set up the smoothing mask
+
+                        if strcmp(options.smooth_mask, 'nonzero')
+                            bmask = img.zeroframes(1);
+                            bmask.data = img.data(:,1) > 0;
+                        elseif strcmp(options.smooth_mask, 'brainsignal')
+                            bmask = img.zeroframes(1);
+                            bmask.data = img.data(:,1) > 300;
+                        elseif strcmp(options.smooth_mask, 'brainmask')
+                            bmask = gmrimage(file.bmask);
+                        else
+                            bmask = options.smooth_mask;
+                        end
+
+                        % --- set up the dilation mask
+
+                        if strcmp(options.dilate_mask, 'nonzero')
+                            dmask = img.zeroframes(1);
+                            dmask.data = img.data(:,1) > 0;
+                        elseif strcmp(options.dilate_mask, 'brainsignal')
+                            dmask = img.zeroframes(1);
+                            dmask.data = img.data(:,1) > 300;
+                        elseif strcmp(options.dilate_mask, 'brainmask')
+                            dmask = gmrimage(file.bmask);
+                        else
+                            dmask = options.dilate_mask;
+                        end
+
+                        img = img.mri_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
+                    end
                 end
             case 'h'
                 img = readIfEmpty(img, sfile, omit);
@@ -375,7 +443,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     if strcmp(ignore, 'ignore')
         fprintf(' ignoring %d bad frames', sum(img.use == 0));
-        mask = img.use;
+        mask = img.use == 1;
         X = X(mask(omit+1:end),:);
     else
         mask = true(1, img.frames);
@@ -424,10 +492,6 @@ function [img] = readIfEmpty(img, src, omit)
 
 function [] = wbSmooth(sfile, tfile, file, options)
 
-    % --- set up variables
-
-    tmpf = strrep(tfile, 'g7', 'g7flipped');
-
     % --- convert FWHM to sd
 
     options.surface_smooth = options.surface_smooth / 2.35482004503; % (sqrt(8*log(2)))
@@ -455,7 +519,7 @@ function [] = wbSmooth(sfile, tfile, file, options)
     end
 
     fprintf('\n     ... smoothing');
-    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tmpf, file.lsurf, file.rsurf);
+    comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tfile, file.lsurf, file.rsurf);
     [status out] = system(comm);
 
     if status
@@ -466,20 +530,3 @@ function [] = wbSmooth(sfile, tfile, file, options)
         fprintf(' ... done!');
     end
 
-    fprintf('\n     ... transposing');
-    comm = sprintf('wb_command -cifti-transpose %s %s', tmpf, tfile);
-    [status out] = system(comm);
-
-    if status
-        fprintf('\nERROR: wb_command finished with error!\n       ran: %s\n', comm);
-        fprintf('\n --- wb_command output ---\n%s\n --- end wb_command output ---\n', out);
-        error('\nAborting processing!');
-    else
-        fprintf(' ... done!');
-    end
-
-
-    fprintf('\n     ... removing temporary flipped file');
-    delete(tmpf);
-
-    fprintf(' ... done!');

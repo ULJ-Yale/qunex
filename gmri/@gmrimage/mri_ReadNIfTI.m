@@ -53,7 +53,9 @@ end
 
 % get datatype
 
-switch img.hdrnifti.datatype
+datatype = 'None';
+
+switch  img.hdrnifti.datatype
     case 1
         datatype = 'bitN';
     case 2
@@ -65,7 +67,7 @@ switch img.hdrnifti.datatype
     case 16
         datatype = 'single';
     case 64
-        datetype = 'double';
+        datatype = 'double';
     case 256
         datatype = 'schar';
     case 512
@@ -82,26 +84,30 @@ switch img.hdrnifti.datatype
         error('Uknown datatype or datatype I can not handle!');
 end
 
+if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
+
 % ------ Process header
 
 % --- file root
 
-if strfind(filename, 'dtseries')
+root = strrep(filename, '.hdr',      '');
+root = strrep(root,     '.nii',      '');
+root = strrep(root,     '.gz',       '');
+root = strrep(root,     '.img',      '');
+root = strrep(root,     '.dtseries', '');
+
+img.rootfilename = root;
+[p, n, e]        = fileparts(filename);
+img.filename     = [n e];
+
+% --- format and size details
+
+if img.hdrnifti.dim(1) > 4
     img.imageformat = 'CIFTI';
 else
     img.imageformat = 'NIfTI';
 end
 
-root = strrep(filename, '.hdr', '');
-root = strrep(root, '.nii', '');
-root = strrep(root, '.gz', '');
-root = strrep(root, '.img', '');
-root = strrep(root, '.dtseries', '');
-
-img.rootfilename = root;
-img.filename     = [root '.nii'];
-
-% --- format and size details
 
 if strcmp(img.imageformat, 'NIfTI')
     img.TR = [];
@@ -115,47 +121,80 @@ if strcmp(img.imageformat, 'NIfTI')
         end
         img.TR = img.hdrnifti.pixdim(5);
     end
-    img.dim     = img.hdrnifti.dim(2:4)';
-    img.voxels  = prod(img.dim);
-    img.vsizes  = img.hdrnifti.pixdim(2:4)';
+    img.dim       = img.hdrnifti.dim(2:4)';
+    img.voxels    = prod(img.dim);
+    img.vsizes    = img.hdrnifti.pixdim(2:4)';
     % img.mformat = mformat;
     img.runframes = img.frames;
+
+    % ---- Map data and adjust datatype
+
+    img.data = reshape(fdata, img.voxels, []);
+    img.data = img.data(:,1:img.frames);
+
+    img.hdrnifti.datatype = 16;
 
 elseif strcmp(img.imageformat, 'CIFTI')
-    img.TR = [];
-    img.frames = 1;
-    if img.hdrnifti.dim(1) == 6    % we probably have a BOLD (4D) file
-        if ~isempty(frames)
-            img.hdrnifti.dim(7) = frames;
-            img.frames = frames;
+
+    img.TR     = [];
+
+    if img.hdrnifti.dim(1) == 6                             % we probably have 2d cifi file
+        if img.hdrnifti.dim(6) > img.hdrnifti.dim(7)
+            img.imageformat = 'CIFTI-1';
+            img.dim = img.hdrnifti.dim(6:7)';
         else
-            img.frames = img.hdrnifti.dim(7);
+            img.imageformat = 'CIFTI-2';
+            img.dim = img.hdrnifti.dim([7 6])';
         end
+        img.frames = img.dim(2);
+    else
+        img.dim    = img.hdrnifti.dim(6);
+        img.frames = 1;
     end
-    img.dim     = img.hdrnifti.dim(6:7)';
-    img.voxels  = img.hdrnifti.dim(6);
+
+    img.voxels  = img.dim(1);
     img.vsizes  = [];
     % img.mformat = mformat;
+
+    % ---- Reorganize and map data
+
+    img.data = reshape(fdata, img.frames, img.voxels);
+
+    if ~isempty(frames)
+        img.frames = frames;
+        img.data   = img.data(1:frames,:);
+    end
+
+    img.data      = img.data';
     img.runframes = img.frames;
+
+    % ---- Adjust datatype
+
+    img.hdrnifti.datatype = 16;
+
+    % ---- Add hardcoded structure info
+
+    img.cifti.longnames  = {'CIFTI_STRUCTURE_CORTEX_LEFT', 'CIFTI_STRUCTURE_CORTEX_RIGHT', 'CIFTI_STRUCTURE_ACCUMBENS_LEFT', 'CIFTI_STRUCTURE_ACCUMBENS_RIGHT', 'CIFTI_STRUCTURE_AMYGDALA_LEFT', 'CIFTI_STRUCTURE_AMYGDALA_RIGHT', 'CIFTI_STRUCTURE_BRAIN_STEM', 'CIFTI_STRUCTURE_CAUDATE_LEFT', 'CIFTI_STRUCTURE_CAUDATE_RIGHT', 'CIFTI_STRUCTURE_CEREBELLUM_LEFT', 'CIFTI_STRUCTURE_CEREBELLUM_RIGHT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT', 'CIFTI_STRUCTURE_PALLIDUM_LEFT', 'CIFTI_STRUCTURE_PALLIDUM_RIGHT', 'CIFTI_STRUCTURE_PUTAMEN_LEFT', 'CIFTI_STRUCTURE_PUTAMEN_RIGHT', 'CIFTI_STRUCTURE_THALAMUS_LEFT', 'CIFTI_STRUCTURE_THALAMUS_RIGHT'};
+    img.cifti.shortnames = {'CORTEX_LEFT', 'CORTEX_RIGHT', 'ACCUMBENS_LEFT', 'ACCUMBENS_RIGHT', 'AMYGDALA_LEFT', 'AMYGDALA_RIGHT', 'BRAIN_STEM', 'CAUDATE_LEFT', 'CAUDATE_RIGHT', 'CEREBELLUM_LEFT', 'CEREBELLUM_RIGHT', 'DIENCEPHALON_VENTRAL_LEFT', 'DIENCEPHALON_VENTRAL_RIGHT', 'HIPPOCAMPUS_LEFT', 'HIPPOCAMPUS_RIGHT', 'PALLIDUM_LEFT', 'PALLIDUM_RIGHT', 'PUTAMEN_LEFT', 'PUTAMEN_RIGHT', 'THALAMUS_LEFT', 'THALAMUS_RIGHT'};
+    img.cifti.start      = [1 29697 59413 59548 59688 60003 60335 63807 64535 65290 73999 83143 83849 84561 85325 86120 86417 86677 87737 88747 90035];
+    img.cifti.end        = [29696 59412 59547 59687 60002 60334 63806 64534 65289 73998 83142 83848 84560 85324 86119 86416 86676 87736 88746 90034 91282];
+    img.cifti.length     = [29696 29716 135 140 315 332 3472 728 755 8709 9144 706 712 764 795 297 260 1060 1010 1288 1248];
+
 end
-
-
-% ---- Map data and adjust datatype
-
-img.data = reshape(fdata, img.voxels, []);
-img.data = img.data(:,1:img.frames);
-
-img.hdrnifti.datatype = 16;
 
 switch dtype
     case 'single'
         img.hdrnifti.datatype = 16;     % --- float32
+        img.hdrnifti.bitpix   = 32;
         if ~strcmp(dtype, datatype)
+            if verbose , fprintf('---> Switching to single\n'); end
             img.data = single(img.data);
         end
     case 'double'
         img.hdrnifti.datatype = 64;     % --- float64
+        img.hdrnifti.bitpix   = 64;
         if ~strcmp(dtype, datatype)
+            if verbose , fprintf('---> Switching to double\n'); end
             img.data = double(img.data);
         end
 end
@@ -177,7 +216,7 @@ function [hdrnifti] = readHeader_nifti1(s, hdrnifti)
         sw = @(x) x;
     end
 
-    hdrnifti.data_type       = char(s(5:14))';                              % 10
+    hdrnifti.datatype        = char(s(5:14))';                              % 10
     hdrnifti.db_name         = char(s(15:32))';                             % 18
     hdrnifti.extents         = double(sw(typecast(s(33:36),   'int32')));   % 1
     hdrnifti.session_error   = double(sw(typecast(s(37:38),   'int16')));   % 1

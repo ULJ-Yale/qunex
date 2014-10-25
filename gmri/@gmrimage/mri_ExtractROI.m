@@ -57,7 +57,7 @@ end
 % ---- check ROI data
 
 if isa(roi, 'gmrimage')
-    if ~obj.issize(roi);
+    if obj.voxels ~= roi.voxels;
         error('ERROR: ROI image does not match target in dimensions!');
     end
 else
