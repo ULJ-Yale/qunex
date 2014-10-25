@@ -111,7 +111,7 @@ ignore.hipass  = 'keep';
 ignore.regress = 'keep';
 ignore.lopass  = 'keep';
 
-ignores = regexp(ignores, ',|;|:|\|', 'split');
+ignores = regexp(ignores, ',|;|:|=|\|', 'split');
 if length(ignores)>=2
     ignores = reshape(ignores, 2, [])';
     for p = 1:size(ignores, 1)
