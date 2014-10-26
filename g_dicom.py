@@ -11,6 +11,8 @@ import g_mri.g_NIfTI
 import g_mri.g_gimg as gimg
 import dicom.filereader as dfr
 import zipfile
+import gzip
+import zlib
 
 
 def _at_frame(tag, VR, length):
@@ -116,7 +118,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             print >> stxt, "dicom:", os.path.abspath(os.path.join(base, 'dicom'))
             print >> stxt, "raw_data:", os.path.abspath(os.path.join(base, 'nii'))
             print >> stxt, "data:", os.path.abspath(os.path.join(base, '4dfp'))
-            print >> stxt, "hpc:", os.path.abspath(os.path.join(base, 'hpc'))
+            print >> stxt, "hcp:", os.path.abspath(os.path.join(base, 'hcp'))
 
         try:
             seriesDescription = d.SeriesDescription
@@ -475,6 +477,137 @@ def processPhilips(folder=None, check=None, pattern=None):
         print "... moving dicoms to inbox"
         shutil.move(os.path.join(opfolder, "Dicom", "DICOM"), os.path.join(opfolder, "inbox"))
         shutil.rmtree(os.path.join(opfolder, "Dicom"))
+        print "     -> done!"
+
+        # --- run sort dicom
+
+        print "\n\n===> running sortDicom"
+        sortDicom(folder=opfolder)
+
+        # --- run dicom to nii
+
+        print "\n\n===> running dicom2nii"
+        dicom2nii(folder=opfolder, clean='no', unzip='yes', gzip='yes', verbose=True)
+
+    print "\n\n---=== DONE PROCESSING PACKAGES - Have a nice day! ===---\n"
+
+    return
+
+
+def processInbox(folder=None, check=None, pattern=None):
+    if check == 'no':
+        check = False
+    else:
+        check = True
+
+    if folder == None:
+        folder = "."
+    inbox = os.path.join(folder, 'inbox')
+
+    if pattern == None:
+        pattern = r"(.*).zip"
+
+    igz = re.compile(r'.*\.gz')
+
+    # ---- get file list
+
+    print "\n---> Checking for packets in %s ... using pattern '%s'" % (inbox, pattern)
+
+    zips = glob.glob(os.path.join(inbox, '*.zip'))
+    getop = re.compile(pattern)
+
+    okpackets  = []
+    badpackets = []
+    for zipf in zips:
+        m = getop.search(os.path.basename(zipf))
+        if m.groups():
+            okpackets.append((zipf, m.group(1)))
+        else:
+            badpackets.append(zipf)
+
+    print "---> Found the following packets to process:"
+    for p, o in okpackets:
+        print "     %s: %s" % (o, os.path.basename(p))
+
+    if len(badpackets):
+        print "---> For these packets subject id could not be identified and they won't be processed:"
+        for p in badpackets:
+            print "     %s" % (os.path.basename(p))
+
+    if check:
+        s = raw_input("\n===> Should I proceeed with processing the listed packages [y/n]: ")
+        if s != "y":
+            print "---> Aborting operation!\n"
+            return
+
+    print "---> Starting to process %d packets ..." % (len(okpackets))
+
+
+    # ---- Ok, now loop through the packets
+
+    afolder = os.path.join(folder, "Archive")
+    if not os.path.exists(afolder):
+        os.makedirs(afolder)
+        print "---> Created Archive folder for processed packages."
+
+    for p, o in okpackets:
+
+        # --- Big info
+
+        print "\n\n---=== PROCESSING %s ===---\n" % (o)
+
+        # --- create a new OP folder
+        opfolder = os.path.join(folder, o)
+
+        if os.path.exists(opfolder):
+            print "---> WARNING: %s folder exists, skipping package %s" % (o, os.path.basename(p))
+            continue
+
+        os.makedirs(opfolder)
+
+        # --- create the inbox folder for dicoms
+
+        dfol = os.path.join(opfolder, 'inbox')
+        os.makedirs(dfol)
+
+        # --- unzip the file
+
+        print "...  unzipping %s" % (os.path.basename(p))
+        dnum = 0
+        fnum = 0
+
+        z = zipfile.ZipFile(p, 'r')
+        ilist = z.infolist()
+        for sf in ilist:
+            if sf.file_size > 0:
+
+                if fnum % 1000 == 0:
+                    dnum += 1
+                    os.makedirs(os.path.join(dfol, str(dnum)))
+                fnum += 1
+
+                print "...  extracting:", sf.filename, sf.file_size
+                fdata = z.read(sf)
+                if igz.match(sf.filename):
+                    gzname = os.path.join(dfol, str(dnum), str(fnum)+".gz")
+                    fout = open(gzname, 'wb')
+                    fout.write(fdata)
+                    fout.close()
+                    fin = gzip.open(gzname, 'rb')
+                    fdata = fin.read()
+                    fin.close()
+                    os.remove(gzname)
+                fout = open(os.path.join(dfol, str(dnum), str(fnum)), 'wb')
+                fout.write(fdata)
+                fout.close()
+
+        z.close()
+        print "     -> done!"
+
+        # --- move package to archive
+
+        print "... moving %s to archive" % (os.path.basename(p))
+        shutil.move(p, afolder)
         print "     -> done!"
 
         # --- run sort dicom

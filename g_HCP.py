@@ -1,6 +1,7 @@
 #!/opt/local/bin/python2.7
 
 import os
+import glob
 import g_mri
 import collections
 import g_mri.g_gimg as g
@@ -177,6 +178,81 @@ def renameHCPPhilips(folder=".", sfile="subject.txt", tfile="subject.txt"):
         print >> fout, line
 
 
+def getHCPReady(folder=".", sfile="subject.txt", tfile="subject.txt", pattern=None, mapping=None):
 
+    if pattern == None:
+        pattern = "*"
+    if mapping == None:
+        mapping = os.path.join(folder, 'specs', 'hcpmap.txt')
+
+    # -- get mapping ready
+
+    if not os.path.exists(mapping):
+        print "ERROR: No HCP mapping file found. Aborting."
+        return
+
+    print " ... Reading HCP mapping from %s" % (mapping)
+
+    mapping = [line.strip() for line in open(mapping)]
+    mapping = [e.split('=>') for e in mapping]
+    mapping = [[f.strip() for f in e] for e in mapping if len(e) == 2]
+    mapping = dict(mapping)
+
+    # -- get list of subject folders
+
+    sfolders = glob.glob(os.path.join(folder, pattern))
+
+    # -- loop through subject folders
+
+    for sfolder in sfolders:
+
+        ssfile = os.path.join(sfolder, sfile)
+        stfile = os.path.join(sfolder, tfile)
+
+        if not os.path.exists(ssfile):
+            continue
+        print " ... Processing folder %s" % (sfolder)
+
+
+        lines = [line.strip() for line in open(ssfile)]
+
+        images = False
+        hcpok  = False
+        bold   = 0
+        nlines = []
+        for line in lines:
+            e = line.split(':')
+            if len(e) > 1:
+                if e[0].strip() == 'hcpready' and e[1].strip() == 'true':
+                    hcpok = True
+                if e[0].strip().isdigit():
+                    if not images:
+                        nlines.append('hcpready: true')
+                        images = True
+
+                    oimg = e[1].strip()
+                    if oimg in mapping:
+                        repl  = mapping[oimg]
+                    else:
+                        repl  = " "
+
+                    if 'bold' in repl:
+                        bold += 1
+                        repl.replace('bold', 'bold%-3d' % (bold))
+
+                    e[1] = " %-16s:%s" % (repl, oimg)
+                    nlines.append(":".join(e))
+                else:
+                    nlines.append(line)
+            else:
+                nlines.append(line)
+
+        if hcpok:
+            print "     ... %s already HCP ready" % (sfile)
+        else:
+            print "     ... writing %s" % (tfile)
+            fout = open(stfile, 'w')
+            for line in nlines:
+                print >> fout, line
 
 
