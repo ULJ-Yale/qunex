@@ -20,15 +20,18 @@ listDicom [folder=.]
 
     example: gmri listDicom folder=data
 
+
 splitDicom [folder=.]
     - folder: the base subject folder that contains the inbox with unsorted dicom files
 
     example: gmri splitDicom folder=data
 
+
 sortDicom [folder=.]
     - folder: the base subject folder that contains the inbox with unsorted dicom files
 
     example: gmri sortDicom folder=data
+
 
 dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
     - folder: the base subject folder with the dicom subfolder that holds session numbered folders with dicom files
@@ -40,6 +43,18 @@ dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
       or ask interactively (ask)
 
     example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask
+
+
+processInbox [folder=.] [check=yes] [pattern="(.*).zip"]
+    Checks for new zip files with dicom images in the inbox directory within the folder that match the regex pattern.
+    Once all are identified it extracts the subject code as the first match pattern and, if check is set to yes, asks
+    whether to process them. It then creates subject folders, extracts the dicom files, sorts them and converts them
+    to nifti format. Once .zip package is processed it is moved to archive subfolder.
+
+    - folder: the base study subjects folder (e.g. WM44/subjects) where the ibox and individual subject folders are
+    - check: whether to ask for confirmation to proceed once zip packages in inbox are identified and listed
+    - pattern: the pattern to use to extract subject codes
+
 
 processPhilips [folder=.] [check=yes] [pattern=OP]
     Checks for new packages off the scanner in the inbox folder, unzips them and moves them to Archive folder,
@@ -82,11 +97,13 @@ fz2zf inf=<input_image> [outf=<output_image>]
     - outf: output image filename
     If outf is not provided, it replaces the original file.
 
+
 reorder inf=<input_image> [outf=<output_image>]
     Reorders the slices (y dimension) for images that are upside down.
     - inf:  input image filename to be reordered
     - outf: output image filename
     If outf is not provided, it replaces the original file.
+
 
 reslice inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
     Removes extra slices for interrupted BOLD sequences and creates an image with good
@@ -102,6 +119,7 @@ reslice inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
 
     example: gmri reslice 07.nii.gz 48
 
+
 HCP setup commands
 ------------------
 
@@ -111,6 +129,34 @@ setupHCP [folder=.] [tfolder=hcp] [sbjf=subject.txt]
     - sbjf:    the alternative name of the subject.txt file
 
     example: gmri setupHCP folder=data tfolder=hcp2 sbjf=subject1.txt
+
+
+setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject.txt] [check=interactive]
+    The command looks for sbjf files in all the subfolders of folder and check whether the sbjf are hcp ready
+    and if tfolder exists. If the file is ready and folder does not yet exist, it automatically calls setupHCP
+    on that folder. If the sbjf does not seem to be ready or if the tfolder exists, the action depends on check.
+    If check is "yes", the subject is not processed, if check is "no" the subject is processed. If check is
+    "interactive" the user is asked whether the subject should be processed or not.
+
+    - folder:  the directory that holds the subjects' folders (usually "subjects")
+    - tfolder: the folder in which to set up data for HCP preprocessing
+    - sbjf:    the subject.txt file to use for mapping to HCP folder
+    - check:   whether to check if the subject is safe to run (yes), run in in any case (no) or
+               ask the user (interactive)
+
+
+getHCPReady [folder=.] [sfile=subject.txt] [tfile=subject.txt] [pattern="*"] [mapping=specs/hcpmap.txt]
+    The command checks all the directories in the folder that match the pattern checking for the presence of sfile.
+    If sfile is found, each sequence name is checked against the source specified in hcpmap.txt file and replaced
+    with the provided text. The resulting file is saved to tfile. In hcpmap.txt the mapping is specified line by line
+    in the form of "source text => replacement text". All lines not matching the pattern are ignored.
+
+    - folder:   the directory that holds subjects' folders (usually "subjects")
+    - sfile:    the "source" subject.txt file
+    - tfile:    the replacement subject.txt file
+    - pattern:  glob pattern to use in identifying subject folders
+    - mapping:  the path to the text file describing the mapping
+
 
 HCPPhilips [folder=.] [sfile=subject.txt] [tfile=subject.txt]
     Processes subject.txt file for data off Philips scanner in Ljubljana to insert appropriate
@@ -122,6 +168,7 @@ NIfTI header utilities
 
 printniftihdr <image_filename>
     Prints the header contents of the NIfTI file.
+
 
 modniftihdr <image_filename> <modification string>
     Modifies the NIfTI header in place. It reads the header, changes according to information
@@ -183,6 +230,7 @@ commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': (
             'reorder'       : { 'com': g_mri.g_NIfTI.reorder,          'args': ('inf', 'outf') },
             'reslice'       : { 'com': g_mri.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf') },
             'setupHCP'      : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },
+            'setupHCPFolder': { 'com': g_mri.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check') },
             'HCPPhilips'    : { 'com': g_mri.g_HCP.renameHCPPhilips,   'args': ('folder', 'sfile', 'tfile') },
             'getHCPReady'   : { 'com': g_mri.g_HCP.getHCPReady,        'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping') },
             'printniftihdr' : { 'com': g_mri.g_img.printniftihdr,      'args': ('filename', ) },

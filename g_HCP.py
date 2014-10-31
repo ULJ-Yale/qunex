@@ -138,6 +138,68 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
 
 
 
+def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject.txt", check="interactive"):
+
+    # list all possible sbjfiles and check them
+
+    sfiles = glob.glob(os.path.join(folder, "*", sbjf))
+    flist  = []
+
+    print "---> checking %s files and %s folders in %s" % (sbjf, tfolder, folder)
+
+    for sfile in sfiles:
+
+        ok = True
+        status = "     ... %s: " % (os.path.basename(os.path.dirname(sfile)))
+
+        # --- check if sbjf is hcp ready
+
+        lines = [line.split(":") for line in open(sfile)]
+        lines = [[e.strip() for e in line] for line in lines if len(line) == 2]
+        lines = dict(lines)
+
+        ready = False
+        if "hcpready" in lines:
+            if lines["hcpready"].lower() == "true":
+                ready = True
+
+        if ready:
+            status += "%s is hcp ready" % (sbjf)
+        else:
+            status += "%s does not appear to be hcp ready" % (sbjf)
+            ok = False
+
+        # --- check if tfolder exists
+
+        if os.path.exists(os.path.join(os.path.dirname(sfile), tfolder)):
+            fex = True
+            status += ", %s folder allready exist" % (tfolder)
+            ok = False
+        else:
+            fex = False
+            status += ", %s folder does not yet exist" % (tfolder)
+
+        process = True
+        if ok or check == "no":
+            print status, " => processing the subject"
+        elif check == "yes":
+            print status, " => skipping this subject"
+        elif check == "interactive":
+            print status
+            s = raw_input("     ---> do you want to process this subject [y/n]: ")
+            if s != 'y':
+                process = False
+
+        flist.append((sfile, ready, fex, ok, process))
+
+    for sfile, ready, fex, ok, process in flist:
+        if process:
+            setupHCP(folder=os.path.dirname(sfile), tfolder=tfolder, sbjf=sbjf)
+
+    print "\n\n===> done processing %s\n" % (folder)
+
+
+
 def renameHCPPhilips(folder=".", sfile="subject.txt", tfile="subject.txt"):
 
     sfile = os.path.join(folder, sfile)
