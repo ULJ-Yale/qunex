@@ -19,13 +19,17 @@ def _at_frame(tag, VR, length):
     return tag == (0x5200, 0x9230)
 
 def readDICOMBase(filename):
-    # d = dicom.read_file(filename, stop_before_pixels=True)
-    # return d
+    # try partial read
 
-    f = open(filename, "rb")
-    d = dfr.read_partial(f, stop_when=_at_frame)
-    f.close()
-    return d
+    try:
+        f = open(filename, "rb")
+        d = dfr.read_partial(f, stop_when=_at_frame)
+        f.close()
+        return d
+    except:
+        return None
+        #d = dfr.read_file(filename, stop_before_pixels=True)
+        #return d
 
 def getDicomTime(info):
     try:
@@ -290,6 +294,7 @@ def sortDicom(folder=".", **kwargs):
         print "============================================\n\nProcessing files from %s\n" % (inbox)
         files = glob.glob(os.path.join(inbox, "*"))
         files = files + glob.glob(os.path.join(inbox, "*/*"))
+        files = files + glob.glob(os.path.join(inbox, "*/*/*"))
         files = [e for e in files if os.path.isfile(e)]
 
     seqs  = []
@@ -302,12 +307,14 @@ def sortDicom(folder=".", **kwargs):
             print "===> Sorting dicoms for %s scanned on %s\n" % (sid, time)
             break
         except:
-            raise
+            # raise
             pass
 
     if not os.path.exists(dcmf):
         os.makedirs(dcmf)
         print "---> Created a dicom superfolder"
+
+    dcmn = 0
 
     for dcm in files:
         if os.path.basename(dcm)[0:2] in ["XX", "PS"]:
@@ -315,6 +322,8 @@ def sortDicom(folder=".", **kwargs):
         try:
             #d    = dicom.read_file(dcm, stop_before_pixels=True)
             d    = readDICOMBase(dcm)
+            if d == None:
+                continue
         except:
             continue
         sqid = str(d.SeriesNumber)
@@ -328,7 +337,14 @@ def sortDicom(folder=".", **kwargs):
                 except:
                     print "---> Created subfolder for sequence %s %s - %s " % (sid, sqid, d.ProtocolName)
 
-        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (sid, sqid, d.SOPInstanceUID))
+        dcmn += 1
+
+        try:
+            sop = d.SOPInstanceUID
+        except:
+            sop = "%010d" % (dcmn)
+
+        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (sid, sqid, sop))
 
         should_copy = kwargs.get('copy', False)
         if should_copy:
