@@ -7,6 +7,7 @@ import collections
 import g_mri.g_gimg as g
 import os.path
 
+
 def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
     inf = g_mri.g_core.readSubjectData(os.path.join(folder, sbjf))[0][0]
 
@@ -32,6 +33,10 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
 
     for k in i:
         v = inf[k]
+        if 'o' in v:
+            orient = "_"+v['o']
+        else:
+            orient = ""
         if v['name'] == 'T1w':
             sfile = k+"-o.nii.gz"
             tfile = sid + "_strc_T1w_MPR1.nii.gz"
@@ -51,14 +56,14 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
         elif "boldref" in v['name']:
             boldn = v['name'][7:]
             sfile = k+".nii.gz"
-            tfile = sid + "_fncb_BOLD_"+boldn+"_SBRef.nii.gz"
-            tfold = "BOLD_"+boldn+"_SBRef_fncb"
+            tfile = sid + "_fncb_BOLD_"+boldn+orient+"_SBRef.nii.gz"
+            tfold = "BOLD_"+boldn+orient+"_SBRef_fncb"
             bolds[boldn]["ref"] = sfile
         elif "bold" in v['name']:
             boldn = v['name'][4:]
             sfile = k+".nii.gz"
-            tfile = sid + "_fncb_BOLD_"+boldn+".nii.gz"
-            tfold = "BOLD_"+boldn+"_fncb"
+            tfile = sid + "_fncb_BOLD_"+boldn+orient+".nii.gz"
+            tfold = "BOLD_"+boldn+orient+"_fncb"
             bolds[boldn]["bold"] = sfile
         elif v['name'] == "SE-FM-AP":
             sfile = k+".nii.gz"
@@ -282,6 +287,7 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject.txt", pattern=No
         hcpok  = False
         bold   = 0
         nlines = []
+        hasref = False
         for line in lines:
             e = line.split(':')
             if len(e) > 1:
@@ -298,9 +304,16 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject.txt", pattern=No
                     else:
                         repl  = " "
 
-                    if 'bold' in repl:
+                    if 'boldref' in repl:
                         bold += 1
-                        repl.replace('bold', 'bold%-3d' % (bold))
+                        repl = repl.replace('boldref', 'boldref%d' % (bold))
+                        hasref = True
+                    elif 'bold' in repl:
+                        if hasref:
+                            hasref = False
+                        else:
+                            bold += 1
+                        repl = repl.replace('bold', 'bold%d' % (bold))
 
                     e[1] = " %-16s:%s" % (repl, oimg)
                     nlines.append(":".join(e))

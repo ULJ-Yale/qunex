@@ -56,7 +56,8 @@ def readSubjectData(filename, verbose=False):
                     if ni > 2:
                         image['task'] = line[2]
                     if ni > 3:
-                        image['snr'] = line[2]
+                        image['ext']  = line[3]
+
                     dic[line[0]] = image
 
 
