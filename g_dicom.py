@@ -536,10 +536,11 @@ def processInbox(folder=None, check=None, pattern=None):
     badpackets = []
     for zipf in zips:
         m = getop.search(os.path.basename(zipf))
-        if m.groups():
-            okpackets.append((zipf, m.group(1)))
-        else:
-            badpackets.append(zipf)
+        if m:
+            if m.groups():
+                okpackets.append((zipf, m.group(1)))
+            else:
+                badpackets.append(zipf)
 
     print "---> Found the following packets to process:"
     for p, o in okpackets:
