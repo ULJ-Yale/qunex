@@ -186,6 +186,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         call = "dcm2nii -c -v " + folder
         subprocess.call(call, shell=True, stdout=null, stderr=null)
 
+
         tfname = False
         imgs = glob.glob(os.path.join(folder, "*.gz"))
         for img in imgs:
@@ -225,10 +226,19 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                     os.rename(dwisrc, os.path.join(imgf, "%02d%s" % (c, dwiextra)))
 
 
+        # --- check if resulting nifti is present
+
+        if len(imgs) == 0:
+            print >> r, "     WARNING: no NIfTI file created!"
+            if verbose: print "     WARNING: no NIfTI file created!"
+            continue
+
+
         # --- flip z and t dimension if needed
 
         if dofz2zf:
             g_mri.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (c)))
+
 
         # --- reorder slices if needed
 
@@ -324,9 +334,10 @@ def sortDicom(folder=".", **kwargs):
             d    = readDICOMBase(dcm)
             if d == None:
                 continue
+            sqid = str(d.SeriesNumber)
+
         except:
             continue
-        sqid = str(d.SeriesNumber)
         sqfl = os.path.join(dcmf, sqid)
         sid  = getID(d)
         if sqid not in seqs:
