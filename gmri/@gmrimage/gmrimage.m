@@ -41,6 +41,7 @@ classdef gmrimage
         frames
         runframes       = [];
         filename        = [];
+        filetype        = [];
         rootfilename    = [];
         mask            = [];
         masked          = false;

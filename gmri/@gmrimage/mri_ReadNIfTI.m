@@ -90,15 +90,17 @@ if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 
 % --- file root
 
-root = strrep(filename, '.hdr',      '');
-root = strrep(root,     '.nii',      '');
-root = strrep(root,     '.gz',       '');
-root = strrep(root,     '.img',      '');
-root = strrep(root,     '.dtseries', '');
+root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pconn', '');
 
 img.rootfilename = root;
 [p, n, e]        = fileparts(filename);
 img.filename     = [n e];
+
+ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn)', 'tokens');
+if length(ftype) > 0
+    ftype = char(ftype{1});
+    img.filetype = ftype;
+end
 
 % --- format and size details
 
@@ -139,12 +141,19 @@ elseif strcmp(img.imageformat, 'CIFTI')
     img.TR     = [];
 
     if img.hdrnifti.dim(1) == 6                             % we probably have 2d cifi file
-        if img.hdrnifti.dim(6) > img.hdrnifti.dim(7)
+        cver = regexp(char(fmeta'), 'CIFTI Version="(.)"', 'tokens');
+        if length(cver) == 0
+            error('\nERROR: Could not find information on CIFTI version of the file [%s]!\n', img.filename);
+        end
+        cver = cver{1};
+        if strcmp(cver, '1')
             img.imageformat = 'CIFTI-1';
             img.dim = img.hdrnifti.dim(6:7)';
-        else
+        elseif strcmp(cver, '2')
             img.imageformat = 'CIFTI-2';
             img.dim = img.hdrnifti.dim([7 6])';
+        else
+            error('\nERROR: Unknown CIFTI version (%s) of the file [%s]!\n', cver, img.filename);
         end
         img.frames = img.dim(2);
     else

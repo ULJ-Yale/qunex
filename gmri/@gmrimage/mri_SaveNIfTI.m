@@ -28,13 +28,18 @@ end
 filename = strtrim(filename);
 % unpack and set up
 
-root = strrep(filename, '.hdr',      '');
-root = strrep(root,     '.nii',      '');
-root = strrep(root,     '.gz',       '');
-root = strrep(root,     '.img',      '');
-root = strrep(root,     '.dtseries', '');
+
+root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pconn', '');
+
+ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn)', 'tokens');
+if length(ftype) > 0
+    ftype = char(ftype{1});
+    ftype = ftype(2:end);
+    img.filetype = ftype;
+end
 
 img = img.unmaskimg;
+
 
 % ---> save dimension information
 
@@ -48,12 +53,12 @@ switch img.imageformat
 
     case 'CIFTI-1'
         img.hdrnifti.dim(7) = img.frames;
-        file = [root '.dtseries.nii'];
+        file = [root img.filetype '.nii'];
 
     case 'CIFTI-2'
         img.meta = framesHack(img.meta, img.hdrnifti.dim(6), img.frames);
         img.hdrnifti.dim(6) = img.frames;
-        file = [root '.dtseries.nii'];
+        file = [root img.filetype '.nii'];
 
     otherwise
         fprintf('\nWARNING: Imageformat info not recognized [%s], using .nii.gz\n', img.imageformat);
