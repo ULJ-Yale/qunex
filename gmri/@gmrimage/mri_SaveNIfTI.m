@@ -34,7 +34,6 @@ root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pconn
 ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn)', 'tokens');
 if length(ftype) > 0
     ftype = char(ftype{1});
-    ftype = ftype(2:end);
     img.filetype = ftype;
 end
 
