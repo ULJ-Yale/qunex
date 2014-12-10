@@ -91,9 +91,9 @@ def readSubjectData(filename, verbose=False):
                 if "id" not in dic:
                     if verbose:
                         print "WARNING: There is a record missing an id field and is being omitted from processing."
-                elif "data" not in dic:
-                    if verbose:
-                        print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
+                #elif "data" not in dic:
+                #    if verbose:
+                #        print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
 
