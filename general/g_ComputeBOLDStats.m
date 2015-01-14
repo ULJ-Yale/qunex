@@ -142,6 +142,11 @@ if ext
     if ~strcmp(scrub, 'none')
         if verbose, fprintf(' ... saving scrubbing data'); end
         g_WriteTable(fullfile(target, [fname '.scrub']), [img.scrub img.use'], [img.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
+
+        scr = fopen(fullfile(target, [fname '.use']), 'w');
+        fprintf(scr, '%d\n', img.use);
+        fclose(scr);
+
     end
 end
 
