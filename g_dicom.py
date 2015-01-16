@@ -50,7 +50,7 @@ def getID(info):
             v = info.StudyID
     return v
 
-def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
+def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, debug=False):
 
     base = folder
     null = open(os.devnull, 'w')
@@ -189,33 +189,45 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
         tfname = False
         imgs = glob.glob(os.path.join(folder, "*.gz"))
+        if debug: print "     --> found nifti files: %s" % ("\n                            ".join(imgs))
         for img in imgs:
+            if not os.path.exists(img):
+                continue
+            if debug: print "     --> processing: %s" % (img)
             if os.path.basename(img)[0:2] == 'co':
                 # os.rename(img, os.path.join(imgf, "%02d-co.nii.gz" % (c)))
+                if debug: print "         ... removing: %s" % (img)
                 os.remove(img)
             elif os.path.basename(img)[0:1] == 'o':
                 if recenter:
+                    if debug: print "         ... recentering: %s" % (img)
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (c))
                     timg = gimg.gimg(img)
                     if recenter == 0.7:
                         timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
                     elif recenter == 0.8:
                         timg.hdrnifti.modifyHeader("srow_x:[0.8,0.0,0.0,-94.8];srow_y:[0.0,0.8,0.0,-128.0];srow_z:[0.0,0.0,0.8,-130];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-94.8;qoffset_y:-128.0;qoffset_z:-130.0")
+                    if debug: print "         saving to: %s" % (tfname)
                     timg.saveimage(tfname)
+                    if debug: print "         removing: %s" % (img)
                     os.remove(img)
                 else:
                     tfname = os.path.join(imgf, "%02d-o.nii.gz" % (c))
+                    if debug: print "         ... moving '%s' to '%s'" % (img, tfname)
                     os.rename(img, tfname)
 
                 # -- remove original
                 noob = os.path.join(folder, os.path.basename(img)[1:])
                 noot = os.path.join(imgf, "%02d.nii.gz" % (c))
                 if os.path.exists(noob):
-                    os.remove(noot)
+                    if debug: print "         ... removing '%s' [noob]" % (noob)
+                    os.remove(noob)
                 elif os.path.exists(noot):
+                    if debug: print "         ... removing '%s' [noot]" % (noot)
                     os.remove(noot)
             else:
                 tfname = os.path.join(imgf, "%02d.nii.gz" % (c))
+                if debug: print "         ... moving '%s' to '%s'" % (img, tfname)
                 os.rename(img, tfname)
 
             # --- check also for .bval and .bvec files
