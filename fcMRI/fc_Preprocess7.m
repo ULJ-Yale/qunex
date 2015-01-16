@@ -501,12 +501,26 @@ function [] = wbSmooth(sfile, tfile, file, options)
     fprintf('\n---> running wb_command -cifti-smoothing');
 
     if ~isempty(options.framework_path)
-        s = getenv('DYDL_FRAMEWORK_PATH');
-        if isempty(strfind(s, options.framework_path))
-            fprintf('\n     ... setting DYDL_FRAMEWORK_PATH to %s', options.framework_path);
-            setenv('DYDL_FRAMEWORK_PATH', [options.framework_path ':' s]);
+        if strcmp(options.framework_path, 'NULL')
+            setenv('LD_LIBRARY_PATH');
+            setenv('DYLD_LIBRARY_PATH');
+            setenv('DYLD_FRAMEWORK_PATH');
+        else
+            if isempty(strfind(s, options.framework_path))
+                fprintf('\n     ... setting DYDL_FRAMEWORK_PATH to %s', options.framework_path);
+                setenv('DYLD_FRAMEWORK_PATH');
+            end
+            if isempty(strfind(sl, options.framework_path))
+                fprintf('\n     ... setting DYLD_LIBRARY_PATH to %s', options.framework_path);
+                setenv('DYLD_LIBRARY_PATH', [options.framework_path ':' sl]);
+            end
+            if isempty(strfind(ll, options.framework_path))
+                fprintf('\n     ... setting LD_LIBRARY_PATH to %s', options.framework_path);
+                setenv('LD_LIBRARY_PATH', [options.framework_path ':' ll]);
+            end
         end
     end
+
     if ~isempty(options.wb_command_path)
         s = getenv('PATH');
         if isempty(strfind(s, options.wb_command_path))
