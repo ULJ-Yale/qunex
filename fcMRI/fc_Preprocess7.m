@@ -408,8 +408,11 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
     if movement
         X = [X nuisance.mov(omit+1:end,:)];
         if derivatives
-            if omit, z = []; else z = zeros(1,nuisance.nmov); end
-            X = [X [z; diff(nuisance.mov(omit:end,:))]];
+            if omit
+                X = [X diff(nuisance.mov(omit:end,:))];
+            else
+                X = [X [zeros(1,nuisance.nmov); diff(nuisance.mov)]];
+            end
         end
     end
 
