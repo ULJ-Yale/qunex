@@ -8,7 +8,17 @@ import g_mri.g_gimg as g
 import os.path
 
 
-def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
+def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
+    '''
+    setupHCP [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt]
+
+    - folder:  the base subject folder that contains the nifti images and subject.txt file
+    - tfolder: the folder (within the base folder) where to put the HCP data
+    - sbjf:    the alternative name of the subject.txt file
+
+    example: gmri setupHCP folder=data tfolder=hcp2 sbjf=subject1.txt
+    '''
+
     inf = g_mri.g_core.readSubjectData(os.path.join(folder, sbjf))[0][0]
 
     basef    = os.path.join(folder, tfolder, inf['id'])
@@ -104,13 +114,16 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
                 print " ---> creating subfolder", tfold
                 os.makedirs(os.path.join(basef,tfold))
             else:
-                print " ...  %s subfolder already exists", tfold
+                print " ...  %s subfolder already exists", (tfold)
 
             if not os.path.exists(os.path.join(basef,tfold,tfile)):
                 print " ---> linking %s to %s" % (sfile, tfile)
                 os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
             else:
-                print " ...  %s already exists" % (tfile)
+                print " ---> %s already exists" % (tfile)
+                # print " ---> %s already exists, replacing it with %s " % (tfile, sfile)
+                # os.remove(os.path.join(basef,tfold,tfile))
+                # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
 
     # --- checking if all bolds have refs
 
@@ -143,7 +156,22 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject.txt"):
 
 
 
-def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject.txt", check="interactive"):
+def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject_hcp.txt", check="interactive"):
+    '''
+    setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactive]
+
+    The command looks for sbjf files in all the subfolders of folder and check whether the sbjf are hcp ready
+    and if tfolder exists. If the file is ready and folder does not yet exist, it automatically calls setupHCP
+    on that folder. If the sbjf does not seem to be ready or if the tfolder exists, the action depends on check.
+    If check is "yes", the subject is not processed, if check is "no" the subject is processed. If check is
+    "interactive" the user is asked whether the subject should be processed or not.
+
+    - folder:  the directory that holds the subjects' folders (usually "subjects")
+    - tfolder: the folder in which to set up data for HCP preprocessing
+    - sbjf:    the subject.txt file to use for mapping to HCP folder
+    - check:   whether to check if the subject is safe to run (yes), run in in any case (no) or
+               ask the user (interactive)
+    '''
 
     # list all possible sbjfiles and check them
 
@@ -204,48 +232,21 @@ def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject.txt", check="interac
     print "\n\n===> done processing %s\n" % (folder)
 
 
+def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", pattern=None, mapping=None):
+    '''
+    getHCPReady [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [pattern="*"] [mapping=specs/hcpmap.txt]
 
-def renameHCPPhilips(folder=".", sfile="subject.txt", tfile="subject.txt"):
+    The command checks all the directories in the folder that match the pattern checking for the presence of sfile.
+    If sfile is found, each sequence name is checked against the source specified in hcpmap.txt file and replaced
+    with the provided text. The resulting file is saved to tfile. In hcpmap.txt the mapping is specified line by line
+    in the form of "source text => replacement text". All lines not matching the pattern are ignored.
 
-    sfile = os.path.join(folder, sfile)
-    tfile = os.path.join(folder, tfile)
-
-    nmap = (('C-BOLD 3mm 48 2.5s FS-P', 'SE-FM-AP'), ('C-BOLD 3mm 48 2.5s FS-A', 'SE-FM-PA'), ('T1w', 'T1w'), ('T2w', 'T2w'))
-
-    lines = [line.strip() for line in open(sfile)]
-
-    bold   = 0
-    nlines = []
-    for line in lines:
-        e = line.split(':')
-        if len(e) > 1:
-            if e[0].strip().isdigit():
-                repl  = " "
-                for k, v in nmap:
-                    if k in e[1]:
-                        repl = v
-                        cbold = False
-                if repl == " ":
-                    if 'RSBOLD' in e[1]:
-                        bold += 1
-                        repl = "bold%-3d:rest" % (bold)
-                    elif 'BOLD' in e[1]:
-                        bold += 1
-                        repl = "bold%-3d:task" % (bold)
-
-                e[1] = " %-16s:%s" % (repl, e[1])
-                nlines.append(":".join(e))
-            else:
-                nlines.append(line)
-        else:
-            nlines.append(line)
-
-    fout = open(tfile, 'w')
-    for line in nlines:
-        print >> fout, line
-
-
-def getHCPReady(folder=".", sfile="subject.txt", tfile="subject.txt", pattern=None, mapping=None):
+    - folder:   the directory that holds subjects' folders (usually "subjects")
+    - sfile:    the "source" subject.txt file
+    - tfile:    the replacement subject.txt file
+    - pattern:  glob pattern to use in identifying subject folders
+    - mapping:  the path to the text file describing the mapping
+    '''
 
     if pattern == None:
         pattern = "*"

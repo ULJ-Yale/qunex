@@ -147,7 +147,15 @@ class gimg(object):
         tf.close
 
 
-def modifyNIfTIHeader(filename, s):
+def modniftihdr(filename, s):
+    '''
+    modniftihdr <image_filename> <modification string>
+
+    Modifies the NIfTI header in place. It reads the header, changes according to information
+    in the modification string and writes the header back.
+
+    example: gmri modniftihdr img.nii.gz "srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126]"
+    '''
 
     img = gimg(filename)
     img.hdrnifti.modifyHeader(s)

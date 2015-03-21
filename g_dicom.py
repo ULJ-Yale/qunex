@@ -15,14 +15,27 @@ import gzip
 import zlib
 
 
+# fcount = 0
+#
+# def _at_frame(tag, VR, length):
+#     global fcount
+#     test = tag == (0x5200, 0x9230)
+#     if test and fcount == 1:
+#         fcount = 0
+#         return true
+#     elif test:
+#         fcount = 1
+
 def _at_frame(tag, VR, length):
     return tag == (0x5200, 0x9230)
 
 def readDICOMBase(filename):
     # try partial read
-
     try:
-        f = open(filename, "rb")
+        if '.gz' in filename:
+            f = gzip.open(filename, 'r')
+        else:
+            f = open(filename,'r')
         d = dfr.read_partial(f, stop_when=_at_frame)
         f.close()
         return d
@@ -50,7 +63,44 @@ def getID(info):
             v = info.StudyID
     return v
 
+def getTRTE(info):
+    TR, TE = 0, 0
+    try:
+        TR = info.RepetitionTime
+    except:
+        try:
+            TR = float(info[0x2005, 0x1030].value)
+            # TR = d[0x5200,0x9229][0][0x0018,0x9112][0][0x0018,0x0080].value
+        except:
+            pass
+    try:
+        TE = info.EchoTime
+    except:
+        try:
+            TE = float(info[0x2001, 0x1025].value)
+            # TE = d[0x5200,0x9230][0][0x0018,0x9114][0][0x0018,0x9082].value
+        except:
+            pass
+    return float(TR), float(TE)
+
+
 def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
+    '''
+    dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
+
+    Converts the images from the dicom to NIfTI format. Expects to find the dicoms in the dicom folder with each
+    image in a separate subfolder.
+
+    - folder: the base subject folder with the dicom subfolder that holds session numbered folders with dicom files
+    - clean: whether to remove preexisting NIfTI files (yes), leave them and abort (no)
+      or ask interactively (ask)
+    - unzip: if the dicom files are gziped whether to unzip them (yes), leave them and
+      abort (no) or ask interactively (ask)
+    - gzip: after the dicom files were processed whether to gzip them (yes), leave them (no)
+      or ask interactively (ask)
+
+    example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask
+    '''
 
     base = folder
     null = open(os.devnull, 'w')
@@ -123,6 +173,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             print >> stxt, "raw_data:", os.path.abspath(os.path.join(base, 'nii'))
             print >> stxt, "data:", os.path.abspath(os.path.join(base, '4dfp'))
             print >> stxt, "hcp:", os.path.abspath(os.path.join(base, 'hcp'))
+            print >> stxt, ""
 
         try:
             seriesDescription = d.SeriesDescription
@@ -140,21 +191,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             except:
                 time = ""
 
-        try:
-            TR = d.RepetitionTime
-        except:
-            try:
-                TR = d[0x5200,0x9229][0][0x0018,0x9112][0][0x0018,0x0080].value
-            except:
-                TR = 0
-
-        try:
-            TE = d.EchoTime
-        except:
-            try:
-                TE = d[0x5200,0x9230][0][0x0018,0x9114][0][0x0018,0x9082].value
-            except:
-                TE = 0
+        TR, TE = getTRTE(d)
 
         try:
             nslices = d[0x2001,0x1018].value
@@ -172,16 +209,26 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
         except:
             pass
 
+        # --- Special nii naming for Philips
+
+        niinum = c
+        try:
+            if d.Manufacturer == 'Philips Medical Systems':
+                niinum = (d.SeriesNumber - 1) / 100
+        except:
+            pass
+
         try:
             nframes = d[0x2001,0x1081].value;
-            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz)
-            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz)
+            print >> r, "%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz),
+            if verbose: print "---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz),
         except:
             nframes = 0
-            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz)
-            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (c, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz)
+            print >> r, "%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz),
+            if verbose: print "---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz),
 
-        print >> stxt, "%02d: %s" % (c, seriesDescription)
+        if niinum > 0:
+            print >> stxt, "%02d: %s" % (niinum, seriesDescription)
 
         call = "dcm2nii -c -v " + folder
         subprocess.call(call, shell=True, stdout=null, stderr=null)
@@ -195,7 +242,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                 os.remove(img)
             elif os.path.basename(img)[0:1] == 'o':
                 if recenter:
-                    tfname = os.path.join(imgf, "%02d-o.nii.gz" % (c))
+                    tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
                     timg = gimg.gimg(img)
                     if recenter == 0.7:
                         timg.hdrnifti.modifyHeader("srow_x:[0.7,0.0,0.0,-84.0];srow_y:[0.0,0.7,0.0,-112.0];srow_z:[0.0,0.0,0.7,-126];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:-84.0;qoffset_y:-112.0;qoffset_z:-126.0")
@@ -204,18 +251,18 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
                     timg.saveimage(tfname)
                     os.remove(img)
                 else:
-                    tfname = os.path.join(imgf, "%02d-o.nii.gz" % (c))
+                    tfname = os.path.join(imgf, "%02d-o.nii.gz" % (niinum))
                     os.rename(img, tfname)
 
                 # -- remove original
                 noob = os.path.join(folder, os.path.basename(img)[1:])
-                noot = os.path.join(imgf, "%02d.nii.gz" % (c))
+                noot = os.path.join(imgf, "%02d.nii.gz" % (niinum))
                 if os.path.exists(noob):
                     os.remove(noot)
                 elif os.path.exists(noot):
                     os.remove(noot)
             else:
-                tfname = os.path.join(imgf, "%02d.nii.gz" % (c))
+                tfname = os.path.join(imgf, "%02d.nii.gz" % (niinum))
                 os.rename(img, tfname)
 
             # --- check also for .bval and .bvec files
@@ -223,28 +270,31 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
             for dwiextra in ['.bval', '.bvec']:
                 dwisrc = img.replace('.nii.gz', dwiextra)
                 if os.path.exists(dwisrc):
-                    os.rename(dwisrc, os.path.join(imgf, "%02d%s" % (c, dwiextra)))
+                    os.rename(dwisrc, os.path.join(imgf, "%02d%s" % (niinum, dwiextra)))
 
 
         # --- check if resulting nifti is present
 
         if len(imgs) == 0:
-            print >> r, "     WARNING: no NIfTI file created!"
-            if verbose: print "     WARNING: no NIfTI file created!"
+            print >> r, " WARNING: no NIfTI file created!"
+            if verbose: print " WARNING: no NIfTI file created!"
             continue
+        else:
+            print >>r, ""
+            print ""
 
 
         # --- flip z and t dimension if needed
 
         if dofz2zf:
-            g_mri.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (c)))
+            g_mri.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
 
 
         # --- reorder slices if needed
 
         if reorder:
-            #g_mri.g_NIfTI.reorder(os.path.join(imgf,"%02d.nii.gz" % (c)))
-            timgf = os.path.join(imgf,"%02d.nii.gz" % (c))
+            #g_mri.g_NIfTI.reorder(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
+            timgf = os.path.join(imgf,"%02d.nii.gz" % (niinum))
             timg  = gimg.gimg(timgf)
             timg.data = timg.data[:,::-1,...]
             timg.hdrnifti.modifyHeader("srow_x:[-3.4,0.0,0.0,-108.5];srow_y:[0.0,3.4,0.0,-102.0];srow_z:[0.0,0.0,5.0,-63.0];quatern_b:0;quatern_c:0;quatern_d:0;qoffset_x:108.5;qoffset_y:-102.0;qoffset_z:-63.0")
@@ -296,6 +346,17 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True):
 
 
 def sortDicom(folder=".", **kwargs):
+    '''
+    sortDicom [folder=.]
+
+    Sorts the dicom in the inbox folder into separate folders for easy dicom2nii processing.
+    It checks for all the dicoms in the inbox folder and moves them into dicom folder.
+
+    - folder: the base subject folder that contains the inbox with unsorted dicom files
+
+    example: gmri sortDicom folder=data
+    '''
+
     from shutil import copy
     dcmf  = os.path.join(kwargs.get('out_dir', folder), 'dicom')
     files = kwargs.get('files', None)
@@ -367,6 +428,16 @@ def sortDicom(folder=".", **kwargs):
 
 
 def listDicom(folder=None):
+    '''
+    listDicom [folder=.]
+
+    Lists the sequences present in the dico files.
+
+    - folder: the base subject folder that contains the inbox with unsorted dicom files
+
+    example: gmri listDicom folder=data
+    '''
+
     if folder == None:
         folder = os.path.join(".", 'inbox')
 
@@ -378,7 +449,6 @@ def listDicom(folder=None):
 
     for dcm in files:
         try:
-            #d    = dicom.read_file(dcm, stop_before_pixels=True)
             d    = readDICOMBase(dcm)
             time = getDicomTime(d)
             try:
@@ -389,6 +459,16 @@ def listDicom(folder=None):
             pass
 
 def splitDicom(folder=None):
+    '''
+    splitDicom [folder=.]
+
+    Splits the dicoms from different subjects in separate folders.
+
+    - folder: the base subject folder that contains the inbox with unsorted dicom files
+
+    example: gmri splitDicom folder=data
+    '''
+
     if folder == None:
         folder = os.path.join(".", 'inbox')
 
@@ -522,6 +602,19 @@ def processPhilips(folder=None, check=None, pattern=None):
 
 
 def processInbox(folder=None, check=None, pattern=None):
+    '''
+    processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"]
+
+    Checks for new zip files with dicom images in the inbox directory within the folder that match the regex pattern.
+    Once all are identified it extracts the subject code as the first match pattern and, if check is set to yes, asks
+    whether to process them. It then creates subject folders, extracts the dicom files, sorts them and converts them
+    to nifti format. Once .zip package is processed it is moved to archive subfolder.
+
+    - folder: the base study subjects folder (e.g. WM44/subjects) where the ibox and individual subject folders are
+    - check: whether to ask for confirmation to proceed once zip packages in inbox are identified and listed
+    - pattern: the pattern to use to extract subject codes
+    '''
+
     if check == 'no':
         check = False
     else:
@@ -532,7 +625,7 @@ def processInbox(folder=None, check=None, pattern=None):
     inbox = os.path.join(folder, 'inbox')
 
     if pattern == None:
-        pattern = r"(.*).zip"
+        pattern = r".*?(OP[0-9.-]+).*\.zip"
 
     igz = re.compile(r'.*\.gz')
 

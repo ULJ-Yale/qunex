@@ -1,4 +1,5 @@
 #!/opt/local/bin/python2.7
+# encoding: utf-8
 
 import os
 import g_mri
@@ -35,12 +36,28 @@ set seq = ""
 @ normode = 0
 '''
 
-
 recode = {True: 'ok', False: 'missing'}
 
-def runAviFolder(folder=".", pattern=None, overwrite=None):
+def runAviFolder(folder=".", pattern=None, overwrite=None, subjf=None):
+    '''
+    runAviFolder [folder=.] [pattern=OP*] [overwrite=no] [subjf=subject.txt]
+
+    Goes through the folder and runs runAvi on all the subfolders that match the pattern. Setting overwrite
+    to overwrite.
+
+    - folder: the base study subjects folder (e.g. WM44/subjects) where OP folders and the inbox folder with the
+      new packages from the scanner reside,
+    - pattern: which subjectfolders to match (default OP*),
+    - overwrite: whether to overwrite existing (params and BOLD) files.
+    — subjf: the name of the subject.txt file
+
+    example: gmri runAviFolder folder=. pattern=OP* overwrite=no subjf=subject_hcp.txt
+    '''
+
     if pattern is None:
         pattern = "OP*"
+    if subjf is None:
+        subjf = "subject.txt"
     if overwrite is None:
         overwrite = False
     elif overwrite:
@@ -80,13 +97,24 @@ def runAviFolder(folder=".", pattern=None, overwrite=None):
         return
 
     for s in do:
-        runAvi(s, overwrite)
+        runAvi(s, overwrite, subjf)
 
     print "\n---=== Done Avi preprocessing on folder %s ===---\n" % (folder)
 
 
 
-def runAvi(folder=".", overwrite=None):
+def runAvi(folder=".", overwrite=None, subjf=None):
+    '''
+    runAvi [folder=.] [overwrite=no] [subjf=subject.txt]
+
+    Runs Avi preprocessing script on the subject data in specified folder. Uses subject.txt to identify structural and
+    BOLD runs and DICOM-report.txt to get TR value. The processing is saved to a datestamped log in the 4dfp folder.
+
+    - folder: subject's folder with nii and dicom folders and subject.txt file.
+    - overwrite: whether to overwrite existing params file or exisiting BOLD data
+    — subjf: the name of the subject.txt file
+    '''
+
     if overwrite is None:
         overwrite = False
     elif overwrite:
@@ -95,12 +123,16 @@ def runAvi(folder=".", overwrite=None):
         overwrite = True
     else:
         overwrite = False
+    if subjf is None:
+        subjf = "subject.txt"
 
     print "\n---> processing subject %s" % (os.path.basename(folder))
 
     # ---> process subject.txt
 
-    info, pref = g_mri.g_core.readSubjectData(os.path.join(folder,'subject.txt'))
+    rbold = re.compile(r"bold([0-9]+)")
+
+    info, pref = g_mri.g_core.readSubjectData(os.path.join(folder, subjf))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
@@ -116,15 +148,16 @@ def runAvi(folder=".", overwrite=None):
         elif k == 'id':
             sid = v
         elif k.isdigit():
-            if "T1" in v['name']:
+            rb = rbold.match(v['name'])
+            if v['name'] == "T1w":
                 t1 = k
-            elif "T2" in v['name']:
+            elif v['name'] == "T2w":
                 t2 = k
-            elif ("BOLD" in v['name'] and not "C-BOLD" in v['name']) or ("bold" in v['name']):
-                bold.append(k)
-    bold.sort()
+            elif rb:
+                bold.append((k, rb.group(1)))
+    # bold.sort()
 
-    print "...  identified images: t1: %s, t2: %s, bold:" % (t1, t2), bold
+    print "...  identified images: t1: %s, t2: %s, bold:" % (t1, t2), [k for k, b in bold]
 
 
     # ---- check for 4dfp folder
@@ -166,8 +199,8 @@ def runAvi(folder=".", overwrite=None):
             params = params.replace('{{t1}}', t1+"-o.nii.gz")
         if t2:
             params = params.replace('{{t2}}', t2+"-o.nii.gz")
-        params = params.replace('{{boldnums}}', " ".join(["%d" % (e) for e in range(1, len(bold)+1)]))
-        params = params.replace('{{bolds}}', " ".join([e+".nii.gz" for e in bold]))
+        params = params.replace('{{boldnums}}', " ".join(["%s" % (b) for k, b in bold]))
+        params = params.replace('{{bolds}}', " ".join([k+".nii.gz" for k, b in bold]))
 
         pfile = open(os.path.join(folder, '4dfp', 'params'), 'w')
         print >> pfile, params
@@ -217,10 +250,24 @@ def runAvi(folder=".", overwrite=None):
         print "...  preproc_avi_nifti finished successfully"
 
 
-
-
-
 def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm'):
+    '''
+    map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
+
+    Maps volume files to metric surface files using PALS12 surface atlas.
+    - volume:   a volume file or a space separated list of volume files - put in quotes
+    - metric:   the name of the metric file that stores the mapping
+    - atlas:    volume atlas from which to map (711-2C by default or 711-2B, AFNI, FLIRT, FNIRT, SPM2, SPM5, SPM95, SPM96, SPM99, MRITOTAL)
+    - method:   intepolated, maximum, enclosing, strongest, gaussian (for other options see caret_command)
+    - mapping:  a single mapping option or a space separated list in quotes, default: afm
+                afm: average fiducial mapping
+                mfm: average of mapping to all PALS cases (multifiducial mapping)
+                min: minimum of mapping to all PALS cases
+                max: maximum of mapping to all PALS cases
+                std-dev: sample standard deviation of mapping to all PALS cases
+                std-error: standard error of mapping to all PALS cases
+                all-cases: mapping to each of the PALS12 cases
+    '''
 
     methods = {'interpolated': 'METRIC_INTERPOLATED_VOXEL', 'maximum': 'METRIC_MAXIMUM_VOXEL', 'enclosing': 'METRIC_ENCLOSING_VOXEL', 'strongest': 'METRIC_STRONGEST_VOXEL', 'gaussian': 'METRIC_GAUSSIAN'}
     if method in methods:

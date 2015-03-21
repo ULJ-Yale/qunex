@@ -10,6 +10,16 @@ import numpy as np
 import gzip
 
 def fz2zf(inf, outf=None):
+    '''
+    fz2zf inf=<input_image> [outf=<output_image>]
+
+    Converts the xyfz order of data to xyzf (needed for Philips functionals, DTIs, ...).
+
+    - inf:  input image filename to be shuffled
+    - outf: output image filename
+
+    If outf is not provided, it replaces the original file.
+    '''
 
     # ---> check data format
 
@@ -53,6 +63,22 @@ def fz2zf(inf, outf=None):
 
 #
 def reslice(inf, slices, outf=None):
+    '''
+    reslice inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
+
+    Removes extra slices for interrupted BOLD sequences and creates an image with good
+    frames with data in xyzf order.
+
+    WARNING: it assumes ascending interpolated aquisition of slices!!
+
+    - inf:    input image filename to be reordered
+    - slices: number of slices per volume
+    - outf:   output image filename
+
+    If outf is not provided, it replaces the original file.
+
+    example: gmri reslice 07.nii.gz 48
+    '''
 
     slices = int(slices)
 
@@ -125,6 +151,16 @@ def reslice(inf, slices, outf=None):
     tf.close
 
 def reorder(inf, outf=None):
+    '''
+    reorder inf=<input_image> [outf=<output_image>]
+
+    Reorders the slices (y dimension) for images that are upside down.
+
+    - inf:  input image filename to be reordered
+    - outf: output image filename
+
+    If outf is not provided, it replaces the original file.
+    '''
 
     # ---> check data format
 

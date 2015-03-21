@@ -59,6 +59,12 @@ def writeConc(filename, conc):
 
 
 def printniftihdr(filename=None):
+    '''
+    printniftihdr <image_filename>
+
+    Prints the header contents of the NIfTI file.
+    '''
+
     hdr = niftihdr(filename)
     print hdr
 

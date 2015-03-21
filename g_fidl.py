@@ -17,9 +17,11 @@ import glob
 
 ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [3]': 'zlen', 'matrix size [4]': 'frames', 'scaling factor (mm/pixel) [1]': 'xsize', 'scaling factor (mm/pixel) [2]': 'ysize', 'scaling factor (mm/pixel) [3]': 'zsize'}
 
+
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
+
 
 def readLines(filename):
     s = file(filename).read()
@@ -27,6 +29,7 @@ def readLines(filename):
     s = s.replace("\n\n", "\n")
     s = s.split("\n")
     return s
+
 
 def boldInfo(boldfile):
     if ".4dfp.img" in boldfile:
@@ -40,6 +43,7 @@ def boldInfo(boldfile):
 
     return hdr
 
+
 def readFidl(fidlf):
     s = readLines(fidlf)
 
@@ -47,15 +51,16 @@ def readFidl(fidlf):
     TR = float(header.split()[0])
 
     s = [e.split() for e in s]
-    s = [[float(e[0])]+e[1:] for e in s if len(e) > 1]
+    s = [[float(e[0])] + e[1:] for e in s if len(e) > 1]
 
-    return {'header': header, 'TR':TR, 'events':s, 'source': fidlf}
+    return {'header': header, 'TR': TR, 'events': s, 'source': fidlf}
+
 
 def readConc(concf, TR):
     s = readLines(concf)
     nfiles = int(s[0].split(":")[1])
     print " ... %d bolds:" % (nfiles),
-    boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles+1]]
+    boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles + 1]]
 
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
@@ -79,15 +84,20 @@ def readConc(concf, TR):
 
 
 def joinFidl(concfile, fidlroot, outfolder=None):
-    """
-    Joins fidl files matching root pattern based on the sequence of bold files in conc file and their lengths.
-    concfile - the path to the conc file
-    root  - root pattern of the fidl files
-    """
+    '''
+    joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern>
+
+    Combines all the fild files matching root based on the information in conc file.
+    - concfile:  the conc file to use as reference
+    - fidlroot:  the root to use to find fild files
+    - outfolder: the folder in which to save the results
+
+    example: gmri joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
+    '''
 
     # ---> find all fidl files, sort them, read them, get TR info
 
-    fidlf = glob.glob(fidlroot+'*.fidl')
+    fidlf = glob.glob(fidlroot + '*.fidl')
     fidlf.sort()
     fidldata = [readFidl(f) for f in fidlf]
     try:
@@ -104,8 +114,8 @@ def joinFidl(concfile, fidlroot, outfolder=None):
     bolddata = readConc(concfile, TR)
 
     if len(fidldata) != len(bolddata):
-    	print "\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata]))
-    	return False
+        print "\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata]))
+        return False
 
     # ---> start the matching loop
 
@@ -114,10 +124,10 @@ def joinFidl(concfile, fidlroot, outfolder=None):
     c = 0
     for bold in bolddata:
         sfidl = fidldata[c]
-       	dlen = bold[2] - sfidl['events'][-1][0]
+        dlen = bold[2] - sfidl['events'][-1][0]
 
-       	w = ""
-        if dlen >=0:
+        w = ""
+        if dlen >= 0:
             # print "last event in %s %.1fs [at: %.1f] before end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2])
             pass
         else:
@@ -126,7 +136,7 @@ def joinFidl(concfile, fidlroot, outfolder=None):
 
         print "     \t%s\t%s\t%.1f\t%.1f\t%.1f\t%s" % (os.path.basename(bold[3]), os.path.basename(fidlf[c]), bold[2], sfidl['events'][-1][0], dlen, w)
 
-        tfidl = tfidl + [[e[0]+bold[1]]+e[1:] for e in sfidl['events'] if e[0] < bold[2]]
+        tfidl = tfidl + [[e[0] + bold[1]] + e[1:] for e in sfidl['events'] if e[0] < bold[2]]
         c += 1
 
     jointfile = fidlroot + '.fidl'
@@ -144,19 +154,24 @@ def joinFidl(concfile, fidlroot, outfolder=None):
 
 
 def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
-    """
-    Looks up all conc files in a conc folder and tries to match them up with fidl files in the fidl folder.
-    It expects fidl files to have the same root as the conc file.
-    concfolder - folder with conc files
-    fidlfolder - folder with fidl files (same as concfolder is none)
-    """
+    '''
+    joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]
+
+    Uses joinFidl to join all the fidl files that match the name of each conc file in the concfolder.
+    - concfolder:  the folder with conc files
+    - fidlfolder:  the folder with fidl files - defaults to concfolder if not provided
+    - outfolder:   the folder in which the joint files should be saved, defauts to fidlfolder if not provided
+
+    example gmri joinFidlFolder concfolder=concs fidlfolder=fidls
+    '''
+
     if fidlfolder is None:
         fidlfolder = concfolder
 
     if outfolder is None:
         outfolder = fidlfolder
 
-    concfiles = glob.glob(concfolder+'/*.conc')
+    concfiles = glob.glob(concfolder + '/*.conc')
 
     for concfile in concfiles:
         root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ''))
@@ -165,10 +180,13 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
 
 def splitFidl(concfile, fidlfile, outfolder=None):
     """
-    Split a multi-bold fidl file into run specific bold files based on the sequence of bold files in conc file and their lengths.
-    concfile - the path to the conc file
-    fidlfile - the path to the fidl file
-    root  - root pattern of the fidl files
+    splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
+
+    Splits a multi-bold fidl file into run specific bold files based on the sequence of bold files in conc file and their lengths.
+
+    - concfile:  the path to the conc file
+    - fidlfile:  the path to the fidl file
+    - outfolder: the path to the folder to put split fidls in
     """
 
     # ---> read the fidl and conc info
@@ -196,7 +214,7 @@ def splitFidl(concfile, fidlfile, outfolder=None):
         # ---> open fidl file
 
         ffile = fidlfile.replace(".fidl", "_%s.fidl" % (bold[0]))
-        if outfolder != None:
+        if outfolder is not None:
             ffile = os.path.join(outfolder, ffile)
         ffile = open(ffile, 'w')
 
@@ -210,7 +228,7 @@ def splitFidl(concfile, fidlfile, outfolder=None):
 
         for l in fidldata['events']:
             if l[0] >= bstart and l[0] < bend:
-                print >> ffile, "%.2f\t%s" % (l[0]-bstart, "\t".join(l[1:]))
+                print >> ffile, "%.2f\t%s" % (l[0] - bstart, "\t".join(l[1:]))
 
         # ---> close fidl file
 
