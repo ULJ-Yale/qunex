@@ -504,6 +504,9 @@ function [] = wbSmooth(sfile, tfile, file, options)
     fprintf('\n---> running wb_command -cifti-smoothing');
 
     if ~isempty(options.framework_path)
+        s  = getenv('DYDL_FRAMEWORK_PATH');
+        sl = getenv('DYLD_LIBRARY_PATH');
+        ll = getenv('LD_LIBRARY_PATH');
         if strcmp(options.framework_path, 'NULL')
             setenv('LD_LIBRARY_PATH');
             setenv('DYLD_LIBRARY_PATH');

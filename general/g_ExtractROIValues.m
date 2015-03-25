@@ -108,12 +108,14 @@ if ~isempty(sefs)
 end
 
 if ~isempty(vnames)
-    vnames = regexp(sefs, ',', 'split');
+    vnames = regexp(vnames, ',', 'split');
     if nfiles ~= length(vnames);
         error('\nERROR: Number of variable names does not match number of value files!');
     end
+    createnames = false;
 else
     vnames = {};
+    createnames = true;
 end
 
 for n = 1:nfiles
@@ -132,7 +134,7 @@ for n = 1:nfiles
             error('\nERROR: Number of frames in %s does not match number of frames in %s!', sefs{n}, mfs{n});
         end
     end
-    if isempty(vnames)
+    if createnames
         vnames{n} = ['V' num2str(n)];
     else
         vnames{n} = strtrim(vnames{n});
