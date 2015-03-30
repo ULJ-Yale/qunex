@@ -6,6 +6,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 """
 
 import g_mri.g_img as g
+import g_mri.g_gimg as gimg
 import numpy as np
 import gzip
 
@@ -202,3 +203,23 @@ def reorder(inf, outf=None):
     tf.write(out.astype(dataType).tostring())
     tf.close
 
+def nifti24dfp(inf, outf=None):
+    '''
+    nifti24dfp inf=<input_image> [outf=<output_image>]
+
+    Converts a NIfTI file to a 4dfp file.
+
+    - inf:  input image filename to be converted
+    - outf: output image filename
+
+    If outf is not provided, the same root filename is used.
+    '''
+
+    if outf is None:
+        outf = inf
+
+    # ---> read image
+
+
+    img = gimg.gimg(inf)
+    img.save4DFP(outf)

@@ -155,7 +155,7 @@ def runAvi(folder=".", overwrite=None, subjf=None):
                 t2 = k
             elif rb:
                 bold.append((k, rb.group(1)))
-    # bold.sort()
+    bold.sort(key=lambda e: e[1])
 
     print "...  identified images: t1: %s, t2: %s, bold:" % (t1, t2), [k for k, b in bold]
 

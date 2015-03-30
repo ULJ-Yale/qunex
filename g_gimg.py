@@ -8,6 +8,15 @@ Copyright (c) Grega Repovs. All rights reserved.
 import g_mri.g_img as g
 import numpy as np
 import gzip
+import os.path
+
+
+def removeExt(s, ext):
+    if type(ext) not in (tuple, list):
+        ext = [ext]
+    for e in ext:
+        s = s[:-len(e)] if s.endswith(e) else s
+    return s
 
 
 class gimg(object):
@@ -111,13 +120,54 @@ class gimg(object):
         # ---> read the data
 
         sf.seek(int(nihdr.vox_offset))
-        self.data = np.fromstring(sf.read(self.voxels*nihdr.bitpix/8), dtype=dataType)
+        # self.data = np.fromstring(sf.read(self.voxels*nihdr.bitpix/8), dtype=dataType)
+        self.data = np.fromstring(sf.read(), dtype=dataType)
         sf.close()
         self.data.shape  = (nihdr.frames, nihdr.sizez, nihdr.sizey, nihdr.sizex)
 
 
     def save4DFP(self, filename=None, frames=None, extra=None):
-        pass
+        """Saves a 4dfp file."""
+
+        # ... check filename
+
+        path, fname = ".", self.filename
+
+        if filename is not None:
+            path, fname = os.path.split(filename)
+            self.filename = fname
+
+        # ... see if we need to transform from NIfTI
+
+        if self.imageformat in ['.nii', '.nii.gz']:
+            self.hdr4dfp = self.hdrnifti.toIFH()
+            self.data = self.data[:,:,::-1,...]
+            self.imageformat = '.4dfp.img'
+            self.filename = removeExt(self.filename, ['.gz', '.nii'])
+            self.filename += '.4dfp.img'
+
+        fname = removeExt(self.filename, ['.img', '.4dfp'])
+
+        # ... save IFH header
+
+        self.hdr4dfp.writeHeader(os.path.join(path, fname + '.4dfp.ifh'))
+
+        # ... save data
+
+        if 'imagedata byte order' in self.hdr4dfp.ifh:
+            if self.hdr4dfp.ifh['imagedata byte order'] == 'littleendian':
+                dataType = np.dtype('<f4')
+            else:
+                dataType = np.dtype('>f4')
+        else:
+            self.hdr4dfp.ifh['imagedata byte order'] = 'littleendian'
+            dataType = np.dtype('<f4')
+
+        tf = open(os.path.join(path, fname + '.4dfp.img'), 'w')
+        tf.write(self.data.astype(dataType).tostring())
+        tf.close
+
+
 
     def saveNIfTI(self, filename=None, frames=None, extra=None):
 

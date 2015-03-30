@@ -44,6 +44,7 @@ reorder       inf=<input_image> [outf=<output_image>]
 reslice       inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]
 printniftihdr <image_filename>
 modniftihdr   <image_filename> <modification string>
+nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 
 HCP setup commands
@@ -79,6 +80,7 @@ commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': (
             'fz2zf'         : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
             'reorder'       : { 'com': g_mri.g_NIfTI.reorder,          'args': ('inf', 'outf') },
             'reslice'       : { 'com': g_mri.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf') },
+            'nifti24dfp'    : { 'com': g_mri.g_NIfTI.nifti24dfp,       'args': ('inf', 'outf') },
             'setupHCP'      : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },
             'setupHCPFolder': { 'com': g_mri.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check') },
             'getHCPReady'   : { 'com': g_mri.g_HCP.getHCPReady,        'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping') },
