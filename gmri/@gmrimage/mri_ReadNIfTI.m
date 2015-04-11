@@ -90,13 +90,13 @@ if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 
 % --- file root
 
-root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pconn', '');
+root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.pconn', '');
 
 img.rootfilename = root;
 [p, n, e]        = fileparts(filename);
 img.filename     = [n e];
 
-ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn)', 'tokens');
+ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar)', 'tokens');
 if length(ftype) > 0
     ftype = char(ftype{1});
     img.filetype = ftype;
@@ -161,8 +161,13 @@ elseif strcmp(img.imageformat, 'CIFTI')
         img.frames = 1;
     end
 
-    img.voxels  = img.dim(1);
-    img.vsizes  = [];
+    if strcmp(img.filetype, '.pconn')
+        img.voxels  = img.dim(1) .* img.dim(2);
+        img.frames  = 1;
+    else
+        img.voxels  = img.dim(1);
+        img.vsizes  = [];
+    end
     % img.mformat = mformat;
 
     % ---- Reorganize and map data

@@ -29,9 +29,9 @@ filename = strtrim(filename);
 % unpack and set up
 
 
-root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pconn', '');
+root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.pconn', '');
 
-ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn)', 'tokens');
+ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar)', 'tokens');
 if length(ftype) > 0
     ftype = char(ftype{1});
     img.filetype = ftype;
@@ -51,12 +51,20 @@ switch img.imageformat
         file = [root '.nii.gz'];
 
     case 'CIFTI-1'
-        img.hdrnifti.dim(7) = img.frames;
+        if strcmp(img.filetype, '.pconn')
+            img.hdrnifti.dim(6:7) = img.dim;
+        else
+            img.hdrnifti.dim(7) = img.frames;
+        end
         file = [root img.filetype '.nii'];
 
     case 'CIFTI-2'
         img.meta = framesHack(img.meta, img.hdrnifti.dim(6), img.frames);
-        img.hdrnifti.dim(6) = img.frames;
+        if strcmp(img.filetype, '.pconn')
+            img.hdrnifti.dim(6:7) = img.dim;
+        else
+            img.hdrnifti.dim(6) = img.frames;
+        end
         file = [root img.filetype '.nii'];
 
     otherwise
@@ -268,6 +276,8 @@ function [meta] = framesHack(meta, oframes, nframes);
         news = [news repmat(' ', 1, dlen)];
     end
     sstart = strfind(s, olds);
-    s(sstart:sstart+length(news)-1) = news;
+    if ~isempty(sstart)
+        s(sstart:sstart+length(news)-1) = news;
+    end
     meta = cast(s', 'uint8');
 
