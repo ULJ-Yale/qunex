@@ -1,6 +1,6 @@
 function [img peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
 
-%function [out] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
+%function [img peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
 %
 %		Find peaks and uses watershed algorithm to grow regions from them.
 %
@@ -208,7 +208,10 @@ for n = 1:length(big)
 end
 
 seg(seg < 3) = 0;
-
+for p = 1:length(peak)
+    seg(seg==p+2) = p+1;
+    peak(p).label = p+1;
+end
 
 % --- querry ROI properties
 
@@ -219,11 +222,12 @@ stats = regionprops(seg, data, {'Centroid','WeightedCentroid'});
 if verbose, fprintf('\n\n===> peak report'); end
 for p = 1:length(peak)
     peak(p).value = img.data(peak(p).xyz(1)-1, peak(p).xyz(2)-1, peak(p).xyz(3)-1);
-    peak(p).Centroid = stats(p+2).Centroid - 1;
-    peak(p).WeightedCentroid = stats(p+2).WeightedCentroid - 1;
+    peak(p).Centroid = stats(peak(p).label).Centroid - 1;
+    peak(p).WeightedCentroid = stats(peak(p).label).WeightedCentroid - 1;
     peak(p).xyz = peak(p).xyz - 1;
 
-    if verbose > 1, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  indeces: %3d %3d %3d  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, p+2, peak(p).value, peak(p).size, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
+    % if verbose > 1, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  indeces: %3d %3d %3d  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
+    if verbose > 1, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  indeces: %3d %3d %3d  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
 end
 
 % --- the end
