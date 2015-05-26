@@ -17,7 +17,7 @@ img.data = img.image2D;
 
 % ---> Check for movement data
 
-if ~isempty(img.mov_hdr)
+if ~isempty(img.mov_hdr) && img.frames == size(img.mov, 1);
     data = zeros(7, img.frames);
     c = 0;
     for s = {'dx(mm)', 'dy(mm)', 'dz(mm)', 'X(deg)', 'Y(deg)', 'Z(deg)', 'scale'}
@@ -33,7 +33,7 @@ end
 
 % ---> Check for image statistics data
 
-if ~isempty(img.fstats_hdr)
+if ~isempty(img.fstats_hdr) && img.frames == size(img.fstats, 1);
     data = zeros(6, img.frames);
     c = 0;
     for s = {'n', 'm', 'sd', 'dvarsm', 'dvarsme', 'fd'};
@@ -55,7 +55,7 @@ if ~isempty(img.scrub_hdr)
     sdata = 1;
 end
 
-if sdata | mdata | fdata | udata
+if (sdata | mdata | fdata | udata) && img.frames == size(img.scrub, 1);
     data = zeros(7, img.frames);
     data(1,:) = img.use;
 
