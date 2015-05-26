@@ -1,74 +1,65 @@
-function [] = g_FindPeaks(fin, fout, t, mins, maxs)
+function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, verbose)
 
+%function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, verbose)
 %
-%	Creates an roi file with peak regions of mins and maxs size over threshold t
+%		Uses mri_FindPeaks method to define peak ROI using a watershed algorithm to grow regions from peaks.
 %
-%		
+%       fin         - input image
+%		fout        - output image
+%       mins        - minimal size of the resulting ROI  [0]
+%       maxi        - maximum size of the resulting ROI  [inf]
+%       val         - whether to find positive, negative or both ('n', 'p', 'b') [b]
+%       t           - threshold value [0]
+%       verbose     - whether to report the peaks (1) and be verbose about it (2) [1]
+%
+%    (c) Grega Repovs, 2015-04-11
+%
 
 %  ---- initializing
 
-img = fc_Read4DFP(fin);
-img(img < t) = 0;
-simg = sort(img, 'descend');
-simg = simg(1:sum(img>=t));
+if nargin < 7, verbose = []; end
+if nargin < 6, t       = []; end
+if nargin < 5, val     = []; end
+if nargin < 4, maxs    = []; end
+if nargin < 3, mins    = []; end
+if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 
-img = reshape(img, 48, 64, 48);
-roi = zeros(size(img));
-c = 1;
 
-work = true;
+%  ---- read image and call FindPeaks
 
-fprintf('\nStarting\n  Voxels    Areas    Small    Right\n');
+img = gmrimage(fin);
+[roi peak] = img.mri_FindPeaks(mins, maxs, val, t, verbose > 1);
 
-while 1
-	s = 1;
-	[L num] = bwlabeln(img > simg(end));
-	stats = regionprops(L, 'Area');
-	
-	areas = [stats.Area];	
-	
-	small = find(areas < mins);  		% list of regions smaller than mins	
-	img(ismember(L, small)) = 0;		% zeroing those regions
-	
-	if(length(find(areas > maxs)) == 0)	% check if there are still regions too big if not, there is no need for another iteration
-		work = false;
+
+%  ---- process results
+
+if strcmp(img.imageformat, '4dfp')
+	center = img.hdr4dfp.value(find(ismember([img.hdr4dfp.key], 'center')));
+	mmppix = img.hdr4dfp.value(find(ismember([img.hdr4dfp.key], 'mmppix')));
+
+	center = sscanf(center{1}, '%f')';
+	mmppix = sscanf(mmppix{1}, '%f')';
+
+	for p = 1:length(peak)
+		peak(p).xyz 			 = center .* [1 -1 -1] - peak(p).xyz 			  .* mmppix .* [1 -1 1] - mmppix/2 .* [1 1 -1] + img.dim .* mmppix .* [0 0 1];
+		peak(p).Centroid 		 = center .* [1 -1 -1] - peak(p).Centroid         .* mmppix .* [1 -1 1] - mmppix/2 .* [1 1 -1] + img.dim .* mmppix .* [0 0 1];
+		peak(p).WeightedCentroid = center .* [1 -1 -1] - peak(p).WeightedCentroid .* mmppix .* [1 -1 1] - mmppix/2 .* [1 1 -1] + img.dim .* mmppix .* [0 0 1];
+
+		roi.hdr4dfp.key{end+1}   = 'region names';
+		roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', p-1, sprintf('%.1f_%.1f_%.1f', peak(p).xyz), peak(p).size);
 	end
-	
-	%areas(small) = maxs+100000;			% set small to overly big and 
-	right = find((areas <= maxs) & (areas > mins));		% find the regions of the right size
-	
-	for n = 1:length(right)						% set the regions of the right size into the region map
-		roi(ismember(L, right(n))) = c;
-		c = c + 1;
-	%	fprintf(' region added\n');
-	end
-	
-	img(ismember(L, right)) = 0;		% set the image to zero for the new regions so that they are excluded from further analysis
-	
-	simg = simg(1:sum(sum(sum(img>simg(end)))));
-	
-	if length(simg) == 0
-		break
-	end
-	
-	tail = sum(simg == simg(end));
-	simg = simg(1:length(simg)-tail);
-	
-	if length(simg) == 0
-		big = find(areas > maxs);
-		for n = 1:length(big)						% set the regions of the right size into the region map
-			roi(ismember(L, big(n))) = c;
-			c = c + 1;
-		%	fprintf(' region added\n');
-		end
-		break
-	end
-			
-	fprintf('%8d %8d %8d %8d\n', length(simg), length(areas), length(small), length(right));
 end
 
-fprintf('\nRegions created: %d', c-1);
-fprintf('\n... Saving');
-fc_Save4DFP(fout, roi);
-fprintf('\n... Done.\n');
+%  --- print report
 
+if verbose
+	fprintf('\n\n---=== Peak report ===---');
+	fprintf('\nlabel\tvalue\tvoxels\tpeak\tcentroid\twcentroid');
+	for p = 1:length(peak)
+    	% fprintf('\n%d\t%.1f\t%d\t%.1f %.1f %.1f\t%.1f %.1f %.1f\t%.1f %.1f %.1f', peak(p).label, peak(p).value, peak(p).size, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid);
+    	fprintf('\n%d\t%.1f\t%d\t%.1f %.1f %.1f', peak(p).label, peak(p).value, peak(p).size, peak(p).xyz);
+	end
+	fprintf('\n\n');
+end
+
+roi.mri_saveimage(fout);
