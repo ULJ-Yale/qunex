@@ -224,7 +224,8 @@ if ~strcmp(ntarget, 'none')
     pic(:,:,2) = O;
     pic(:,:,3) = O;
 
-    pic = pic ./ 2800; % max(max(max(pic))); --- Change due to high values in embedded data!
+    % pic = pic ./ 2800; % max(max(max(pic))); --- Change due to high values in embedded data!
+    pic = pic ./ max(max(max(pic)));
     %pic = pic * 0.7;
 
     pic(:,:,3) = pic(:,:,3)+WB*0.3;
