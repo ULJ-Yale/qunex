@@ -78,7 +78,7 @@ for s = 1:nsub
         data(s).bold(b).boldid = bolds(b);
 
         % load original, nogsr, gsr, coeff, nuisance files
-        
+
         fprintf('\n     ... reading data');
 
         forig  = gmrimage(sprintf('%s/images/functional/bold%d_g7_hpss.4dfp.img', subject(s).folder, b));
@@ -86,12 +86,12 @@ for s = 1:nsub
         fgsr   = gmrimage(sprintf('%s/images/functional/bold%d_g7_hpss_res-mwmvwbd.4dfp.img', subject(s).folder, b));
         fcoeff = gmrimage(sprintf('%s/images/functional/bold%d_g7_hpss_res-mwmvwbd_coeff.4dfp.img', subject(s).folder, b));
         fnuiss = gmrimage(sprintf('%s/images/ROI/nuisance/bold%d_nuisance.4dfp.img', subject(s).folder, b));
-        
+
         fcoeff.data = fcoeff.image2D;
         fnuiss.data = fnuiss.image2D;
 
         % compute noGSR - GSR
-        
+
         fprintf('\n     ... extracting signal');
 
         fdgsr  = fnogsr - fgsr;
@@ -100,6 +100,12 @@ for s = 1:nsub
 
         data(s).bold(b).WB    = forig.mri_ExtractROI(fnuiss, 2);
         data(s).bold(b).WBd   = [0 diff(data(s).bold(b).WB)];
+
+        data(s).bold(b).V     = forig.mri_ExtractROI(fnuiss, 3);
+        data(s).bold(b).Vd    = [0 diff(data(s).bold(b).WB)];
+
+        data(s).bold(b).WM    = forig.mri_ExtractROI(fnuiss, 4);
+        data(s).bold(b).WMd   = [0 diff(data(s).bold(b).WB)];
 
         % set up Type 1 and Type 2 WBsd extraction
 
