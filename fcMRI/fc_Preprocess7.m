@@ -56,6 +56,7 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %                     omp_threads:    0
 %                     smooth_mask:    false
 %                     dilate_mask:    false
+%                     boldname:       bold
 %
 %   Additional notes
 %   - Taks matrix is prepended to the GLM regression
@@ -90,6 +91,9 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %   2014-09-15 Grega Repovs (v0.9.5)
 %              - Added the option to smooth within a mask and use a dilation mask
 %
+%   2015-05-26 Grega Repovs (v0.9.6)
+%              - Added the option to provide alternative root names of bolds (boldname)
+%
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -101,10 +105,10 @@ if nargin < 10, variant = '';       end
 if nargin < 9,  eventstring = '';   end
 if nargin < 8,  TR = 2.5;           end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces script 7 v0.9.5 [%s]\n', tail);
+fprintf('\nRunning preproces script 7 v0.9.6 [%s]\n', tail);
 
 ignore.hipass  = 'keep';
 ignore.regress = 'keep';
@@ -130,16 +134,16 @@ rgss  = regexp(rgss, '|,|;| |\|', 'split');
 % ======================================================
 %   ----> prepare paths
 
-froot = strcat(subjectf, ['/images/functional/bold' int2str(bold)]);
+froot = strcat(subjectf, ['/images/functional/' options.boldname int2str(bold)]);
 
-file.movdata   = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '_mov.dat']);
-file.oscrub    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.scrub']);
-file.tscrub    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) variant '.scrub']);
-file.bstats    = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.bstats']);
-file.fidlfile  = strcat(subjectf, ['/images/functional/events/bold'   int2str(bold) efile]);
-file.bmask     = strcat(subjectf, ['/images/segmentation/boldmasks/bold' int2str(bold) '_frame1_brain_mask' tail]);
+file.movdata   = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '_mov.dat']);
+file.oscrub    = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '.scrub']);
+file.tscrub    = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) variant '.scrub']);
+file.bstats    = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '.bstats']);
+file.fidlfile  = strcat(subjectf, ['/images/functional/events/' options.boldname   int2str(bold) efile]);
+file.bmask     = strcat(subjectf, ['/images/segmentation/boldmasks/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
 
-file.nuisance  = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '.nuisance']);
+file.nuisance  = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '.nuisance']);
 
 file.lsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
 file.rsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);

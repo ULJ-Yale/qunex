@@ -84,6 +84,9 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %   2014-09-15 Grega Repovs (v0.9.6)
 %              - Added the option to smooth within a mask and use a dilation mask
 %
+%   2015-05-26 Grega Repovs (v0.9.6)
+%              - Added the option to provide alternative root names of bolds (boldname)
+%
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';                               end
@@ -99,12 +102,12 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
 options = g_ParseOptions([], options, default);
 
 
 
-fprintf('\nRunning preproces conc 2 script v0.9.6 [%s]\n', tail);
+fprintf('\nRunning preproces conc 2 script v0.9.7 [%s]\n', tail);
 
 
 % ======================================================
@@ -141,15 +144,15 @@ for b = 1:nbolds
     % ---> general paths
 
     bnum = int2str(bolds(b));
-    file(b).froot       = strcat(subjectf, ['/images/functional/bold' bnum]);
+    file(b).froot       = strcat(subjectf, ['/images/functional/' options.boldname bnum]);
 
-    file(b).movdata     = strcat(subjectf, ['/images/functional/movement/bold' bnum '_mov.dat']);
-    file(b).oscrub      = strcat(subjectf, ['/images/functional/movement/bold' bnum '.scrub']);
-    file(b).tscrub      = strcat(subjectf, ['/images/functional/movement/bold' bnum variant '.scrub']);
-    file(b).bstats      = strcat(subjectf, ['/images/functional/movement/bold' bnum '.bstats']);
-    file(b).nuisance    = strcat(subjectf, ['/images/functional/movement/bold' bnum '.nuisance']);
+    file(b).movdata     = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum '_mov.dat']);
+    file(b).oscrub      = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum '.scrub']);
+    file(b).tscrub      = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum variant '.scrub']);
+    file(b).bstats      = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum '.bstats']);
+    file(b).nuisance    = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum '.nuisance']);
     file(b).fidlfile    = strcat(subjectf, ['/images/functional/events/' efile]);
-    file(b).bmask       = strcat(subjectf, ['/images/segmentation/boldmasks/bold' bnum '_frame1_brain_mask' tail]);
+    file(b).bmask       = strcat(subjectf, ['/images/segmentation/boldmasks/' options.boldname bnum '_frame1_brain_mask' tail]);
 
     eroot               = strrep(efile, '.fidl', '');
     file(b).croot       = strcat(subjectf, ['/images/functional/conc_' eroot]);
