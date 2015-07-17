@@ -109,7 +109,6 @@ options = g_ParseOptions([], options, default);
 
 fprintf('\nRunning preproces conc 2 script v0.9.7 [%s]\n', tail);
 
-
 % ======================================================
 %                          ----> prepare basic variables
 
@@ -135,6 +134,17 @@ rgsse = strrep(strrep(strrep(strrep(rgss, ',', ''), ' ', ''), ';', ''), '|', '')
 rgss  = regexp(rgss, '|,|;| |\|', 'split');
 rtype = 0;
 
+switch tail
+case '.4dfp.img'
+    fformat = '4dfp';
+case '.nii'
+    fformat = 'nifti';
+case '.nii.gz'
+    fformat = 'nifti';
+case '.dtseries.nii'
+    fformat = 'cifti';
+end
+
 
 % ======================================================
 %                                     ---> prepare paths
@@ -155,8 +165,8 @@ for b = 1:nbolds
     file(b).bmask       = strcat(subjectf, ['/images/segmentation/boldmasks/' options.boldname bnum '_frame1_brain_mask' tail]);
 
     eroot               = strrep(efile, '.fidl', '');
-    file(b).croot       = strcat(subjectf, ['/images/functional/conc_' eroot]);
-    file(b).cfroot      = strcat(subjectf, ['/images/functional/concs/' eroot]);
+    file(b).croot       = strcat(subjectf, ['/images/functional/' options.boldname '_conc_' eroot]);
+    file(b).cfroot      = strcat(subjectf, ['/images/functional/concs/' options.boldname '_' fformat '_' eroot]);
 
     file(b).lsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
     file(b).rsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
