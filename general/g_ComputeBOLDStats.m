@@ -24,6 +24,7 @@ if nargin < 3, target = [];     end
 if nargin < 2, mask = [];       end
 
 brainthreshold = 300;
+minbrainvoxels = 20000;
 
 % ======= Run main
 
@@ -47,9 +48,20 @@ end
 
 img.data = img.image2D;
 img.data(isnan(img.data)) = 0;
-img.data(img.data < brainthreshold) = 0;
+
+% - check whether the image is demeaned
+
 bmask = img.zeroframes(1);
-bmask.data = min(img.data, [], 2) > 0;
+bmask.data = img.data(:,1);
+bmask.data = bmask.data > brainthreshold;
+
+if mean(mean(img.data(bmask.data,:),2)) < brainthreshold
+    bmask.data = var(img.data, 0, 2);
+    bmask.data = bmask.data > 0;
+else
+    img.data(img.data < brainthreshold) = 0;
+    bmask.data = min(img.data, [], 2) > 0;
+end
 
 % --- apply also subject roi mask
 
@@ -110,14 +122,16 @@ end
 % --------------------------------------------------------------
 %                                                 embed and save
 
-if ~isempty(store)
-    if strcmp(store, 'same')
-        img.mri_saveimage();
-    else
-        tname = strrep(img.filename, img.rootfilename, [img.rootfilename '_' store]);
-        img.mri_saveimage(tname);
-    end
-end
+% --- embedding turned off temporariliy
+
+% if ~isempty(store)
+%     if strcmp(store, 'same')
+%         img.mri_saveimage();
+%     else
+%         tname = strrep(img.filename, img.rootfilename, [img.rootfilename '_' store]);
+%         img.mri_saveimage(tname);
+%     end
+% end
 
 
 % --------------------------------------------------------------
