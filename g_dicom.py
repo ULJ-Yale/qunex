@@ -327,9 +327,13 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, de
                     if verbose: print "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
                     if nslices > 0:
                         gframes = int(hdr.sizez / nslices)
-                        print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                        if verbose: print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                        g_mri.g_NIfTI.reslice(tfname, nslices)
+                        if gframes > 1:
+                            print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
+                            if verbose: print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
+                            g_mri.g_NIfTI.reslice(tfname, nslices)
+                        else:
+                            print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
+                            if verbose: print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                     else:
                         print >> r, "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
                         if verbose: print "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)

@@ -13,7 +13,7 @@ import struct
 import re
 import gzip
 
-niftiDataTypes = {1:'b', 2:'u1', 4:'i2', 8:'i4', 16:'f4', 32:'c8', 64:'f8', 128:'u1,u1,u1', 256:'i1', 512:'u2', 768:'u4', 1025:'i8', 1280:'u8', 1536:'f16', 2304:'u1,u1,u1,u1'}
+niftiDataTypes = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
 
 
 def sign(x):
@@ -23,6 +23,7 @@ def sign(x):
         return -1
     else:
         return 0
+
 
 def getImgFormat(filename):
     p = filename.split('.')
@@ -36,6 +37,7 @@ def getImgFormat(filename):
         return '.nii.gz'
     return 'unknown'
 
+
 def readConc(filename):
     s = file(filename).read()
     s = s.replace("\r", "\n")
@@ -46,8 +48,9 @@ def readConc(filename):
     for e in s:
         me = m.match(e)
         if me:
-            f.append( (me.group(1).strip(), me.group(2)) )
+            f.append((me.group(1).strip(), me.group(2)))
     return f
+
 
 def writeConc(filename, conc):
     f = open(filename, 'w')
@@ -68,9 +71,10 @@ def printniftihdr(filename=None):
     hdr = niftihdr(filename)
     print hdr
 
+
 class ifhhdr:
 
-    def __init__(self, filename = False):
+    def __init__(self, filename=False):
         self.ifh = {
             "INTERFILE": "",
             "version of keys": "3.3",
@@ -95,14 +99,15 @@ class ifhhdr:
         else:
             self.hdr = self.packHdr()
 
+
     def packHdr(self):
         d = dict(self.ifh)
         s = ""
         for k in self.vlist:
-            s += "%s %s:= %s\n" % (k, " "*(35-len(k)), d[k])
+            s += "%s %s:= %s\n" % (k, " " * (35 - len(k)), d[k])
             del d[k]
         for k, v in d.iteritems():
-            s += "%s %s:= %s\n" % (k, " "*(35-len(k)), v)
+            s += "%s %s:= %s\n" % (k, " " * (35 - len(k)), v)
 
         return s
 
@@ -162,9 +167,9 @@ class ifhhdr:
             nihdr.e = ">"
 
         nihdr.pixdim_x, nihdr.pixdim_y, nihdr.pixdim_z = mm
-        x = (mm[0]/2 -c[0]) * nihdr.pixdim_0
-        y = -c[1] + mm[1]/2 - mm[1]*nihdr.sizey
-        z = -c[2] + mm[2]/2 - mm[2]*nihdr.sizez
+        x = (mm[0] / 2 - c[0]) * nihdr.pixdim_0
+        y = -c[1] + mm[1] / 2 - mm[1] * nihdr.sizey
+        z = -c[2] + mm[2] / 2 - mm[2] * nihdr.sizez
 
         nihdr.qoffset_x, nihdr.qoffset_y, nihdr.qoffset_z = x, y, z
         nihdr.srow_x[0] = mm[0] * nihdr.srow_x[0]
@@ -179,7 +184,7 @@ class ifhhdr:
 
 class niftihdr:
 
-    def __init__(self, filename = False):
+    def __init__(self, filename=False):
         self.dim_info    = chr(0)        # char      - MRI slice ordering ---- information not available in IFH
         self.ndimensions = 4             # short     - number of dimensions used
         self.sizex       = 48            # short     - size in dimension x
