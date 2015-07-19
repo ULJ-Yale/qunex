@@ -24,6 +24,7 @@ def sign(x):
     else:
         return 0
 
+
 def getImgFormat(filename):
     p = filename.split('.')
     if p[-1] == 'nii':
@@ -32,9 +33,10 @@ def getImgFormat(filename):
         return '.4dfp.img'
     elif ".".join(p[-2:]) == '4dfp.ifh':
         return '.4dfp.img'
-    elif ".".join(p[-2:])  == 'nii.gz':
+    elif ".".join(p[-2:]) == 'nii.gz':
         return '.nii.gz'
     return 'unknown'
+
 
 def readConc(filename):
     s = file(filename).read()
@@ -46,8 +48,9 @@ def readConc(filename):
     for e in s:
         me = m.match(e)
         if me:
-            f.append( (me.group(1).strip(), me.group(2)) )
+            f.append((me.group(1).strip(), me.group(2)))
     return f
+
 
 def writeConc(filename, conc):
     f = open(filename, 'w')
@@ -68,9 +71,10 @@ def printniftihdr(filename=None):
     hdr = niftihdr(filename)
     print hdr
 
+
 class ifhhdr:
 
-    def __init__(self, filename = False):
+    def __init__(self, filename=False):
         self.ifh = {
             "INTERFILE": "",
             "version of keys": "3.3",
@@ -484,7 +488,7 @@ class niftihdr:
         return s + "\n# ----------------------------------"
 
     def modifyHeader(self, s):
-        decodef = {"dim_info":       int,
+        decodef = {"dim_info":        int,
                     "ndimensions":    int,
                     "sizex":          int,
                     "sizey":          int,
