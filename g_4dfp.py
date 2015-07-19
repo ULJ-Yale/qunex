@@ -102,7 +102,6 @@ def runAviFolder(folder=".", pattern=None, overwrite=None, subjf=None):
     print "\n---=== Done Avi preprocessing on folder %s ===---\n" % (folder)
 
 
-
 def runAvi(folder=".", overwrite=None, subjf=None):
     '''
     runAvi [folder=.] [overwrite=no] [subjf=subject.txt]
@@ -159,7 +158,6 @@ def runAvi(folder=".", overwrite=None, subjf=None):
 
     print "...  identified images: t1: %s, t2: %s, bold:" % (t1, t2), [k for k, b in bold]
 
-
     # ---- check for 4dfp folder
 
     if not os.path.exists(os.path.join(folder, '4dfp')):
@@ -180,7 +178,7 @@ def runAvi(folder=".", overwrite=None, subjf=None):
                         m = re.search('TR +([0-9.]+),', line)
                         if m:
                             TR = m.group(1)
-                            TR = float(TR)/1000
+                            TR = float(TR) / 1000
                             print "...  Extracted TR info from DICOM-Report, using TR of", TR
                             break
         if TR is None or TR == 0.0:
@@ -196,7 +194,7 @@ def runAvi(folder=".", overwrite=None, subjf=None):
         params = params.replace('{{patid}}', sid)
         params = params.replace('{{TR}}', str(TR))
         if t1:
-            params = params.replace('{{t1}}', t1+"-o.nii.gz")
+            params = params.replace('{{t1}}', t1 + "-o.nii.gz")
         if t2:
             params = params.replace('{{t2}}', t2+"-o.nii.gz")
         params = params.replace('{{boldnums}}', " ".join(["%s" % (b) for k, b in bold]))
@@ -209,12 +207,11 @@ def runAvi(folder=".", overwrite=None, subjf=None):
     else:
         print "...  using existing params file"
 
-
     # ---- check for existing BOLD data
 
-    isthere, ismissing = [],[]
-    for b in range(1,len(bold)+1):
-        if os.path.exists(os.path.join(folder, '4dfp', 'bold'+str(b), sid+'_b'+str(b)+'_faln_dbnd_xr3d_atl.4dfp.img')):
+    isthere, ismissing = [], []
+    for b in range(1, len(bold) + 1):
+        if os.path.exists(os.path.join(folder, '4dfp', 'bold' + str(b), sid + '_b' + str(b) + '_faln_dbnd_xr3d_atl.4dfp.img')):
             isthere.append(str(b))
         else:
             ismissing.append(str(b))
@@ -236,7 +233,7 @@ def runAvi(folder=".", overwrite=None, subjf=None):
 
     # ---- run avi preprocessing
 
-    logname = 'preprocess.'+datetime.datetime.now().strftime('%Y-%m-%d.%H.%m.%S')+".log"
+    logname = 'preprocess.' + datetime.datetime.now().strftime('%Y-%m-%d.%H.%m.%S') + ".log"
     print "...  running Avi preprocessing, saving log to %s " % (logname)
     logfile = open(os.path.join(folder, '4dfp', logname), 'w')
 
@@ -274,7 +271,7 @@ def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
         method = methods[method]
 
     volumes = volume.split()
-    mapping = ['-metric-'+e for e in mapping.split()]
+    mapping = ['-metric-' + e for e in mapping.split()]
 
     metric = metric.replace('.metric', '') + '.metric'
 
@@ -283,7 +280,3 @@ def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
         for structure in ['LEFT', 'RIGHT']:
             print "---> mapping %s to PALS %s [%s %s %s]" % (volume, structure, atlas, method, " ".join(mapping))
             r = subprocess.call(['caret_command', '-volume-map-to-surface-pals', metric, metric, atlas, structure, method, volume] + mapping)
-
-
-
-

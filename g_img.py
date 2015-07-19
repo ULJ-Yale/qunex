@@ -33,7 +33,7 @@ def getImgFormat(filename):
         return '.4dfp.img'
     elif ".".join(p[-2:]) == '4dfp.ifh':
         return '.4dfp.img'
-    elif ".".join(p[-2:])  == 'nii.gz':
+    elif ".".join(p[-2:]) == 'nii.gz':
         return '.nii.gz'
     return 'unknown'
 
@@ -489,7 +489,7 @@ class niftihdr:
         return s + "\n# ----------------------------------"
 
     def modifyHeader(self, s):
-        decodef = {"dim_info":       int,
+        decodef = {"dim_info":        int,
                     "ndimensions":    int,
                     "sizex":          int,
                     "sizey":          int,

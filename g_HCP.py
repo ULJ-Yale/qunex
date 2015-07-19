@@ -25,6 +25,8 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     rawf     = inf['raw_data']
     sid      = inf['id']
     bolds    = collections.defaultdict(dict)
+    nT1w     = 0
+    nT2w     = 0
 
     if not os.path.exists(rawf):
         print "ERROR: raw_data folder for %s does not exist! Check your paths [%s]! Aborting setupHCP.\n" % (sid, rawf)
@@ -48,12 +50,14 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
         else:
             orient = ""
         if v['name'] == 'T1w':
+            nT1w += 1
             sfile = k+"-o.nii.gz"
-            tfile = sid + "_strc_T1w_MPR1.nii.gz"
+            tfile = sid + "_strc_T1w_MPR%d.nii.gz" % (nT1w)
             tfold = "T1w"
         elif v['name'] == "T2w":
+            nT2w += 1
             sfile = k+"-o.nii.gz"
-            tfile = sid + "_strc_T2w_SPC1.nii.gz"
+            tfile = sid + "_strc_T2w_SPC%d.nii.gz" % (nT2w)
             tfold = "T2w"
         elif v['name'] == "FM-Magnitude":
             sfile = k+".nii.gz"
