@@ -137,7 +137,7 @@ def main(args=None):
 
         runCommand(comm, opts)
     except:
-        print "-----------------------\n\nOps! Something went wrong. Here is the help for the command you ran:"
+        print "\n-----------------------\n\nOps! Something went wrong. Here is the help for the command you ran:"
         printHelp(comm)
         print "-----------------------\n\nHere's the error as caught by python:\n"
         raise
