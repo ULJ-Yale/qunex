@@ -1,0 +1,73 @@
+function  [] = g_ChecKGLM(sfolder, tfolder)
+
+% function  [] = function  [] = g_ChecKGLM(sfolder, tfolder)
+%
+%   function for extraction of images form GLM files
+%
+%   sfolder - path to the folder that has the GLM files
+%   tfolder - path to the folder where to save avi movie files
+%
+%   (c) Grega Repovs - 2015-08-25
+
+if nargin < 2 || isempty(tfolder) , tfolder = '.'; end
+if nargin < 1 || isempty(sfolder) , sfolder = '.'; end
+
+files = dir([sfolder '/*.glm']);
+nfiles = length(files);
+
+fprintf('\nFound %d GLM files [%s].', nfiles, sfolder);
+
+jet = colormap('jet');
+jet(1,:) = 0;
+
+for n = 1:nfiles
+    if files(n).name(1) == '.'
+        continue
+    end
+    fprintf('\n---> processing: %s', files(n).name);
+    img = gmrimage([sfolder '/' files(n).name]);
+
+    img.data = img.image2D;
+    m = mean(img.data);
+    sd = std(img.data) .* 2.5;
+    mask = false(size(img.data));
+
+    for f = 1:img.frames
+        mask(:,f) = img.data(:,f) ~= img.data(1,f);
+        img.data(:,f) = (img.data(:,f) - m(f))./sd(f);
+    end
+
+    mask2 = abs(img.data) > 1;
+    img.data(mask2) = sign(img.data(mask2));
+    img.data = (img.data + 1) ./ 2;
+
+    img.data = img.data .* mask;
+
+    img.data = img.image4D;
+    % mx = max(max(max(img.data)));
+    % mn = min(min(min(img.data)));
+    % mf = max(abs([squeeze(mx) squeeze(mn)]),2);
+    asq = ceil(sqrt(img.dim(3)));
+
+    % -- map to 1
+
+
+    vidimg = img.data;
+    vidimg(:,:,(img.dim(3)+1):(asq*asq),:) = zeros(img.dim(1),img.dim(2),(asq*asq-img.dim(3)),img.frames);
+    imgcell = num2cell(vidimg,[1 2]);
+    imgcell = reshape(imgcell, asq, asq, img.frames); %make the cell array a vector
+    vidcell = reshape(cell2mat(imgcell), asq * img.dim(1), asq * img.dim(2), 1, img.frames);
+    T = gray2ind(vidcell);
+    mov = immovie(T, jet);
+
+    [~, fname, ext] = fileparts(files(n).name);
+    fname = [fname ext];
+
+    writerObj = VideoWriter([tfolder '/' fname '.avi']);
+    open(writerObj);
+    writeVideo(writerObj, mov);
+    close(writerObj);
+end
+
+fprintf('\nDONE\n\n');
+
