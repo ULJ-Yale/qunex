@@ -60,7 +60,13 @@ def readConc(concf, TR):
     s = readLines(concf)
     nfiles = int(s[0].split(":")[1])
     print " ... %d bolds:" % (nfiles),
-    boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles + 1]]
+    s = [e for e in s if "file:" in e]
+
+    if len(s) != nfiles:
+        print "===> ERROR: number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles)
+        return []
+
+    boldfiles = [e.split(":")[1].strip() for e in s]
 
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
@@ -111,6 +117,7 @@ def joinFidl(concfile, fidlroot, outfolder=None):
 
     # ---> read the conc file, check if the number matches
 
+    print "\n===> reading %s" % (os.path.basename(concfile))
     bolddata = readConc(concfile, TR)
 
     if len(fidldata) != len(bolddata):
@@ -123,10 +130,18 @@ def joinFidl(concfile, fidlroot, outfolder=None):
     tfidl = []
     c = 0
     for bold in bolddata:
-        sfidl = fidldata[c]
-        dlen = bold[2] - sfidl['events'][-1][0]
 
         w = ""
+        sfidl = fidldata[c]
+
+        if len(sfidl['events']) > 0:
+            levent = sfidl['events'][-1][0] + float(sfidl['events'][-1][2])
+        else:
+            levent = 0
+            w = "WARNING: Empty fidl file [%s]!" % (sfidl['source'])
+
+        dlen = bold[2] - levent
+
         if dlen >= 0:
             # print "last event in %s %.1fs [at: %.1f] before end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2])
             pass
@@ -134,7 +149,7 @@ def joinFidl(concfile, fidlroot, outfolder=None):
             # print "WARNING: last event in %s %.1fs [at: %.1f] after end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), -dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2])
             w = "WARNING: fidl too long for bold!"
 
-        print "     \t%s\t%s\t%.1f\t%.1f\t%.1f\t%s" % (os.path.basename(bold[3]), os.path.basename(fidlf[c]), bold[2], sfidl['events'][-1][0], dlen, w)
+        print "     \t%s\t%s\t%.1f\t%.1f\t%.1f\t%s" % (os.path.basename(bold[3]), os.path.basename(fidlf[c]), bold[2], levent, dlen, w)
 
         tfidl = tfidl + [[e[0] + bold[1]] + e[1:] for e in sfidl['events'] if e[0] < bold[2]]
         c += 1
