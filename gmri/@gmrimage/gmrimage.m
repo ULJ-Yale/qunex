@@ -98,9 +98,9 @@ classdef gmrimage
 
             if nargin > 0
                if isa(varone, 'char')
-                    images = strsplit(varone, ';');
+                    images = regexp(varone, ';', 'split');
                     for n = 1:length(images)
-                        parts = strsplit(images{n}, '|');
+                        parts = regexp(images{n}, '|', 'split');
                         for p = 1:length(parts)
                             if p == 1
                                 t = obj.mri_readimage(parts{p}, dtype, frames, verbose);;
