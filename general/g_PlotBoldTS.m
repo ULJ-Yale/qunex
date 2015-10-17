@@ -34,6 +34,7 @@ sz.GM   = 60;
 sz.WM   = 30;
 sz.V    = 7;
 sz.WB   = 80;
+sz.GO   = 60;
 
 sz.Fix  = 0;
 sz.Var  = 0;
@@ -82,10 +83,14 @@ for n = 1:nelements
 				elements(n).ROI = roi.(elements(n).name);
 				elements(n).size = sz.(elements(n).name);
 				if verbose, fprintf('\n ---> added ROI codes for %s.', elements(n).name); end
-
 			else
 				if verbose, fprintf('\nWARNING: Unknown tissue type [%s], using all data!', elements(n).name); end
-				elements(n).name = [elements(n).name ' (all)'];
+				if isfield(sz, elements(n).name)
+					if verbose, fprintf('\n ---> imputing size for %s.', elements(n).name); end
+					elements(n).size = sz.(elements(n).name);
+				else
+					if verbose, fprintf('\n ---> no size info found for %s.', elements(n).name); end
+				end
 			end
 		end
 
@@ -247,6 +252,7 @@ text(0, 0, {['\bf\fontsize{16}BOLD Timeseries Plot \rm|\color{red} ' subjid], ['
 set(sp, 'Visible', 'off');
 
 saveas(f, filename);
+%print(f,'-dpdf', '-r72', [filename '.pdf']);
 close(f);
 
 if verbose, fprintf('\n DONE\n'); end
@@ -254,3 +260,11 @@ if verbose, fprintf('\n DONE\n'); end
 
 
 
+function [s] = strjoin(c, d)
+    s = [];
+    for n = 1:length(c)
+        s = [s c{n}];
+        if n < length(c)
+            s = [s d];
+        end
+    end
