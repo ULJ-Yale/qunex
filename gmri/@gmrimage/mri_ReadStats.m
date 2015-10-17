@@ -115,15 +115,20 @@ if ~emov
     % ---> check for movement data
 
     tfile = FindMatchingFile(movfolder, fname, '.dat');
-    if verbose, fprintf('---> reading movement data from %s\n', tfile), end
     if tfile
+        if verbose, fprintf('---> reading movement data from %s\n', tfile), end
         [data header] = g_ReadTable(tfile);
-        data = CheckData(data, frames, obj.frames);
+        data = CheckData(data, frames, obj.frames, verbose);
         if ~isempty(data)
             obj.mov     = data;
             obj.mov_hdr = header;
+        elseif verbose
+            fprintf('---> error reading movement data \n');
         end
+    elseif verbose
+        fprintf('---> could not find movement data\n');
     end
+
 end
 
 
@@ -132,14 +137,18 @@ if ~ebstats
     % ---> check for per-frame stats data
 
     tfile = FindMatchingFile(movfolder, fname, '.bstats');
-    if verbose, fprintf('---> reading stats data from %s\n', tfile), end
     if tfile
+        if verbose, fprintf('---> reading stats data from %s\n', tfile), end
         [data header] = g_ReadTable(tfile);
-        data = CheckData(data, frames, obj.frames);
+        data = CheckData(data, frames, obj.frames, verbose);
         if ~isempty(data)
             obj.fstats     = data;
             obj.fstats_hdr = header;
+        elseif verbose
+            fprintf('---> error reading stats data \n');
         end
+    else
+        if verbose, fprintf('---> could not find stats data!\n'), end
     end
 end
 
@@ -148,17 +157,21 @@ if ~esel
     % ---> check for scrubbing data
 
     tfile = FindMatchingFile(movfolder, fname, '.scrub');
-    if verbose, fprintf('---> reading scrub data from %s\n', tfile), end
     if tfile
+        if verbose, fprintf('---> reading scrub data from %s\n', tfile), end
         [data header] = g_ReadTable(tfile);
-        data = CheckData(data, frames, obj.frames);
+        data = CheckData(data, frames, obj.frames, verbose);
         if ~isempty(data)
             obj.scrub     = data;
             obj.scrub_hdr = header;
             if ismember('use', header)
                 obj.use = data(:,ismember(header, 'use'))';
             end
+        elseif verbose
+            fprintf('---> error reading scrub data \n');
         end
+    elseif verbose
+        fprintf('---> could not find scrub data \n');
     end
 end
 
@@ -222,12 +235,13 @@ if verbose, fprintf('\n---> matched: %s\n', mfile); end
 % ===============================================
 %                                       CheckData
 
-function [data] = CheckData(data, tframes, iframes)
+function [data] = CheckData(data, tframes, iframes, verbose)
 
 l = size(data, 1);
 if tframes
     if tframes > l
         data = [];
+        if verbose, fprintf('     ... data check failed! (data length %d vs %d)!\n', l, tframes); end
         return
     end
     data = data(1:tframes,:);
@@ -236,6 +250,7 @@ end
 
 if l ~= iframes
     data = [];
+    if verbose, fprintf('     ... data check failed! (data length %d vs %d)!\n', l, iframes); end
 end
 
 
