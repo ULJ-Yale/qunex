@@ -15,17 +15,19 @@ function [data, hdr] = g_ReadTable(filename)
 
 hdr  = {};
 data = [];
+l    = 0;
 
 fin = fopen(filename, 'r');
 while ~feof(fin)
 
     s = strtrim(fgetl(fin));
+    l = l + 1;
 
     % --- if empty get the next line
     if length(s) == 0, continue, end
 
-    % --- if characters in line and no data yet, read header, remove first #
-    if max(isstrprop(s, 'alpha')) && isempty(data)
+    % --- if characters excluding "e" in line and no data yet, read header, remove first #
+    if max(isstrprop(strrep(s, 'e', ''), 'alpha')) && isempty(data)
         if s(1) == '#', s = s(2:end); end
         hdr = strread(s, '%s');
 
