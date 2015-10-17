@@ -156,6 +156,7 @@ for n = 1:nsub
     % ---> slicing image
 
     if length(mask) == 1
+        fprintf('\n     ... removing first %d frames ', mask);
         y = y.sliceframes(mask, 'perrun');
     else
         y = y.sliceframes(mask);                % this might need to be changed to allow for per run timeseries masks
@@ -167,6 +168,7 @@ for n = 1:nsub
         scol = ismember(y.scrub_hdr, ignore);
         if sum(scol) == 1;
             mask = y.scrub(:,scol)';
+            fprintf('\n     ... ignoring %d bad frames ', sum(mask));
             y = y.sliceframes(mask==0);
         else
             fprintf('\n         WARNING: Field %s not present in scrubbing data, no frames scrubbed!', ignore);
