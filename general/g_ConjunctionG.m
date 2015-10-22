@@ -57,7 +57,7 @@ if ~strcmp(maskf, 'all')
 
 	if strcmp(maskf, 'nonzero')
 		img.data = img.image2D;
-		mask = sum(img.data, 2) > 0;
+		mask = sum(img.data, 2) ~= 0;
 	else
 		mask = gmrimage(maskf);
 		mask = mask.image2D > 0;

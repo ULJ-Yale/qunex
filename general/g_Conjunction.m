@@ -1,15 +1,15 @@
 function [p, t, c] = g_Conjunction(img, method, effect, q, data)
 
-%	
+%
 %	g_Conjunction
-%		
+%
 %	v 2.0 © Grega Repovš, Feb 27 2008
 %
 %	Accepts matrix of significance estimates [voxels, subjects] and computes conjunction for 1 <= u <= n.
 %	Results at each step are thresholded using FDR q.
 %	Based on Heller et al, NeuroImage 37 (2007) 1178 – 1185
-%		
-%	Arguments:		
+%
+%	Arguments:
 %		 img - data matrix
 %
 %		 method - method of calculating conjunction p
@@ -32,38 +32,19 @@ function [p, t, c] = g_Conjunction(img, method, effect, q, data)
 %		p : images of conjoined p values for u = 1 to u = n
 %		t : p thresholded with q(FDR)
 %		c : image with number of subjects that show significant effect
-%		
+%
+%	========= UPDATE LOG =========
+%
+%	2015-10-20 Grega Repovs
+%              - updated argument parsing
+%
 
 %  ---- parsing arguments
 
-if nargin < 5
-	data = [];
-	if nargin < 4
-		q = [];
-		if nargin < 3
-			effect = [];
-			if nargin < 2
-				method = [];
-			end
-		end
-	end
-end
-
-if isempty(method)
-	method = 'Fisher';
-end
-
-if isempty(effect)
-	effect = 'all';
-end
-
-if isempty(q)
-	q = 0.05;
-end
-
-if isempty(data)
-	data = 'z';
-end
+if nargin < 5 || isempty(data),   data   = 'z';      end
+if nargin < 4 || isempty(q),      q      = 0.05;     end
+if nargin < 3 || isempty(effect), effect = 'all';    end
+if nargin < 2 || isempty(method), method = 'Fisher'; end
 
 tail = 1;
 
@@ -84,14 +65,14 @@ if (strcmpi(data, 'z'))
 
 	switch effect
 		case 'all'
-			s = sign(mean(img,2));
-			img = img.*repmat(s, 1, nsub);
+			s    = sign(mean(img,2));
+			img  = img.*repmat(s, 1, nsub);
 			tail = 2;
 		case 'neg'
 			img = img * -1;
-	end		
-	
-	if (~strcmpi(method,'Stouffer'))	
+	end
+
+	if (~strcmpi(method,'Stouffer'))
 		img = (1-cdf('Normal', img, 0, 1));
 	end
 end
@@ -101,7 +82,7 @@ if (strcmpi(method,'Stouffer') & strcmpi(data, 'p'))
 end
 
 %  _________________________________________________
-%  ---- Simes method
+%  ----                                 Simes method
 
 if strcmpi(method, 'Simes')
 	img = sort(img, 2);
@@ -116,25 +97,24 @@ end
 
 
 %  _________________________________________________
-%  ---- Stouffer method
+%  ----                              Stouffer method
 
 if strcmpi(method, 'Stouffer')
 	img = sort(img, 2);
 	for u = 1:nsub
 		p(:,u) = sum(img(:,1:(nsub-u+1)),2)./sqrt(nsub-u+1);
 	end
-	
 	p = (1-cdf('Normal', p, 0, 1));
 end
 
 
 %  _________________________________________________
-%  ---- Fisher method
+%  ----                                Fisher method
 
 if strcmpi(method, 'Fisher')
 
-	img = sort(img, 2);	
-	img(img==0) = 0.0000000000001;	
+	img = sort(img, 2);
+	img(img==0) = 0.0000000000001;
 	img = log(img);
 
 	for n = 1:nsub
@@ -148,7 +128,7 @@ end
 
 vrank = repmat([1:nvox]', 1, nsub);
 vcrit = (vrank./nvox).*q;
-ps = sort(p);
+ps    = sort(p);
 vrank(ps>vcrit)=0;
 vrank = max(vrank);
 vcrit = (vrank./nvox).*q;
@@ -158,26 +138,26 @@ t = p;
 mask = t>vcrit;
 t(mask)=1/tail;
 
-c = (p<=vcrit);													
-c = sum(c,2);													
+c = (p<=vcrit);
+c = sum(c,2);
 
 
 %  _________________________________________________
 %  ---- If needed convert to z values
 
 if (strcmpi(data, 'z'))
-
 	p = icdf('Normal', (1-p.*tail),0,1);
-	
+	p(p>5) = 5;
+
 	switch effect
 		case 'all'
-			p = p.*repmat(s, 1, nsub);
-			c = c.*s; 
+			p = p .* repmat(s, 1, nsub);
+			c = c .* s;
 		case 'neg'
 			p = p * -1;
 			c = c * -1;
-	end	
-	
+	end
+
 	t = p;
 	t(mask) = 0;
 end
