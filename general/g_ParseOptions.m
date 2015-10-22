@@ -14,40 +14,86 @@ function [options] = g_ParseOptions(options, s, default)
 %
 %
 %   Written by Grega Repovs, 2014-07-22
+%
+%   ====== Change Log ======
+%
+%   Grega Repovs, 2015-10-17
+%   - updated to enable structure arrays and specification of single layer depth structures
+%
+
 
 if nargin < 3, default = ''; end
 if nargin < 2, error('ERROR: Not enough arguments passed to g_ParseOptions!'); end
 
 if ~isempty(default)
-    options = parseString(options, default);
+    options = matchLength(options, default);
 end
+
 if ~isempty(s)
-    options = parseString(options, s);
+    options = matchLength(options, s);
 end
+
+
+function [options] = matchLength(options, s)
+    s = regexp(s, ';', 'split');
+    if length(options) == length(s)
+        for n = 1:length(s)
+            options(n) = parseString(options, s{n});
+        end
+    elseif isempty(options)
+        for n = 1:length(s)
+            options(n) = parseString(options, s{n});
+        end
+    elseif length(options) == 1;
+        t = options;
+        for n = 1:length(s)
+            options(n) = g_ParseOptions(t, s{n});
+        end
+    elseif length(s) == 1
+        for n = 1:length(options)
+            options(n) = parseString(options, s{1});
+        end
+    else
+        error('ERROR: Length of existing structure and given specification do not match: %d vs. %d!', length(options), length(s));
+    end
 
 
 function [options] = parseString(options, s)
 
     s = strrep(s, '"', '''');
-    s = regexp(s, '=|\|', 'split');
+    t = regexp(s, '\|', 'split');
 
-    if mod(length(s),2)
-        error('ERROR: Options string content not divisible by 2!');
+    for n = 1:length(t)
+        if isempty(strfind(t{n}, '>'))
+            f = regexp(t{n}, '=', 'split');
+            if length(f) ~= 2
+                error('ERROR: Could not parse token! [%s]', t{n});
+            end
+            options = setfield(options, f{1}, getValue(f{2}));
+        else
+            f = regexp(t{n}, '>', 'split');
+            for k = 2:length(f)
+                it = regexp(f{k}, ',', 'split');
+                for ni = 1:length(it)
+                    et = regexp(it{ni}, '=', 'split');
+                    if length(et) ~= 2
+                        error('ERROR: Could not parse token! [%s]', t{n});
+                    end
+                    ft(k-1).(et{1}) = getValue(et{2});
+                end
+            end
+            options = setfield(options, f{1}, ft);
+        end
     end
 
-    if length(s)>=2
-        s = reshape(s, 2, [])';
-        for p = 1:size(s, 1)
-            k = strtrim(s{p,1});
-            v = strtrim(s{p,2});
-            if isempty(regexp(v, '^-?[\d\.]+$'))
-                if length(v)>1 && ismember(v(1), {'{', '['})
-                    options = setfield(options, k, eval(v));
-                else
-                    options = setfield(options, k, v);
-                end
-            else
-                options = setfield(options, k, str2num(v));
-            end
+
+
+function [v] = getValue(v)
+
+    if isempty(regexp(v, '^-?[\d\.]+$'))
+        if length(v)>1 && ismember(v(1), {'{', '['})
+            v = eval(v);
         end
+    else
+        v = str2num(v);
     end

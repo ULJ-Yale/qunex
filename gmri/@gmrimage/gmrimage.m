@@ -92,20 +92,28 @@ classdef gmrimage
         %  Class constructor, calls readimage function if a parameter is passed
         %
 
-            if nargin < 4
-                verbose = false;
-                if nargin < 3
-                    frames = [];
-                    if nargin < 2
-                        dtype = 'single';
-                    end
-                end
-            end
+            if nargin < 4, verbose = false;  end
+            if nargin < 3, frames = [];      end
+            if nargin < 2, dtype = 'single'; end
 
-            % obj = gmrimage();
             if nargin > 0
                if isa(varone, 'char')
-                    obj = obj.mri_readimage(varone, dtype, frames, verbose);
+                    images = regexp(varone, ';', 'split');
+                    for n = 1:length(images)
+                        parts = regexp(images{n}, '|', 'split');
+                        for p = 1:length(parts)
+                            if p == 1
+                                t = obj.mri_readimage(parts{p}, dtype, frames, verbose);;
+                            else
+                                t = [t obj.mri_readimage(parts{p}, dtype, frames, verbose);];
+                            end
+                        end
+                        if n == 1
+                            obj = t;
+                        else
+                            obj(end+1:end+length(t)) = t;
+                        end
+                    end
                 elseif isa(varone, 'numeric')
                     obj         = gmrimage;
                     obj.data    = varone;
@@ -116,6 +124,25 @@ classdef gmrimage
                     obj.voxels  = prod(obj.dim(1:3));
                     obj.frames  = size(varone,4);
                     obj.empty   = false;
+                elseif iscell(varone)
+                    for n = 1:length(varone);
+                        if ischar(varone{n})
+                            if n == 1
+                                obj = gmrimage(varone{n}, dtype, frames, verbose);
+                            else
+                                t = gmrimage(varone{n}, dtype, frames, verbose);
+                                obj(end+1:end+length(t)) = t;
+                            end
+                        elseif isa(varone{n}, 'gmrimage')
+                            obj(n) = varone{n};
+                        else
+                            error('ERROR: Could not parse images!');
+                        end
+                    end
+                elseif isa(varone, 'gmrimage')
+                    obj = varone;
+                else
+                    error('ERROR: Could not parse images!');
                 end
             end
         end
