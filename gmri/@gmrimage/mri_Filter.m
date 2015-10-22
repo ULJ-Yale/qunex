@@ -16,6 +16,8 @@ function [img] = mri_Filter(img, hp_sigma, lp_sigma, omit, verbose, ignore)
 % Grega Repovš - 2013-10-20
 %              - added the ignore / interpolate option
 %
+% Grega Repovs - 2015-10-22
+%              - optimized to ignore 0-variance voxels
 
 
 
@@ -41,12 +43,16 @@ flast  = find(use, 1, 'last');
 
 %------- Prepare data
 
-nvox     = img.voxels;
 len      = flast - ffirst + 1;
 data     = img.data(:,ffirst:flast);
 use      = use(ffirst:flast);
+mask     = var(data(:, use==1), 1, 2) > 0;
+data     = data(mask, :);
+nvox     = size(data, 1);
+
 
 %------- Interpolate?
+if verbose, fprintf('\n===> Temporal filtering (15/10/22)'); end
 if verbose, fprintf('\n---> triming: %d on start, %d on end', ffirst-1, img.frames-flast); end
 if verbose, fprintf('\n---> remaining bad frames: %d, action: %s', sum(use==0), ignore); end
 
@@ -155,4 +161,4 @@ else
     out = tmp;
 end
 
-img.data(:,ffirst:flast) = out;
+img.data(mask,ffirst:flast) = out;
