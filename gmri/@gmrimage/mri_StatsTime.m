@@ -3,7 +3,7 @@ function [out, done] = mri_StatsTime(img, do, mask)
 %function [out, done] = mri_StatsTime(img, do, mask)
 %
 %	Computes the specified statistics across voxels specified in mask
-%   
+%
 %   do          - the statistics to compute
 %       n       - non-nan voxels
 %       m       - mean
@@ -77,32 +77,33 @@ done = {};
 c = 0;
 for d = do
     c = c + 1;
-    
+
     switch char(d)
-    
+
     case 'n'
         if isempty(n), n = sum(~isnan(img.data), 1); end
         out.n = n;
         done{c} = char(d);
-    
+
     case 'm'
+        if isempty(n), n = sum(~isnan(img.data), 1); end
         if isempty(sm), sm = nansum(img.data, 1); end
         if isempty(m), m = sm./n; end
         out.mean = m;
         done{c} = char(d);
-        
+
     case 'me'
         out.median = nanmedian(img.data, 1);
         done{c} = char(d);
-        
+
     case 'max'
         out.max = nanmax(img.data, [], 1);
         done{c} = char(d);
-        
+
     case 'min'
         out.min = nanmin(img.data, [], 1);
         done{c} = char(d);
-        
+
     case 'sum'
         if isempty(sm), sm = nansum(img.data, 1); end
         out.sum = sm;
@@ -112,12 +113,12 @@ for d = do
         if isempty(sd), sd = nanstd(img.data, 0, 1); end
         out.sd = sd;
         done{c} = char(d);
-    
+
     case 'var'
         if isempty(v), v = nanvar(img.data, 1, 1); end
         out.var = v;
         done{c} = char(d);
-    
+
     case 'dvars'
         if isempty(sm), sm = nansum(img.data, 1); end
         if isempty(n), n = sum(~isnan(img.data), 1); end
