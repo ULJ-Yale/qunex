@@ -29,7 +29,7 @@ roi.WM = [2 7 41 46 85 192 219 703 3000:3035 4000:4035 3100:3181 4100:4181 5100:
 roi.GM = [3 8:13 16:20 26:28 42 47:56 58:60 96 97 136 137 163 164 169 176 216 218 220 222 225 226 250:255 400:439 500:508 550:558 601:628 640:679 702 1000:1035 2000:2035 1100:1104 1200:1202 1205:1207 1210:1212 1105:1181 2100:2104 2105:2181 2200:2002 2205:2207 2210:2212 7001:7020 7100:7101 8001:8014 9000:9006 9500:9506 11100:11175 12100:12175];
 roi.WB = [roi.WM roi.GM];
 
-sz.Stat = .10;
+sz.Stat = .08;
 sz.GM   = 60;
 sz.WM   = 30;
 sz.V    = 7;
@@ -61,7 +61,7 @@ end
 %  ---- Process figure parts
 
 if ischar(elements)
-	elements = g_ParseOptions([], elements, 'type=image|img=1|mask=[]|ROI=[]|name=[]|size=[]|use=0|scale=0|stats>type=fd,img=1');
+	elements = g_ParseOptions([], elements, 'type=image|img=1|mask=[]|ROI=[]|name=[]|size=[]|use=0|scale=0|stats>type=fd,img=1,mask=1');
 end
 
 nelements = length(elements);
@@ -144,6 +144,13 @@ for n = 1:nelements
 			elseif ismember(elements(n).stats(s).type, {'dvars', 'dvarsm', 'dvarsme'})
 				stats = img(id).mri_StatsTime('dvars');
 				elements(n).stats(s).data = stats.(elements(n).stats(s).type);
+			elseif ismember(elements(n).stats(s).type, {'V', 'WM', 'GM', 'WB'})
+				tmask = ismember(mask(elements(n).stats(s).mask).image2D, roi.(elements(n).stats(s).type));
+				stats = img(id).mri_StatsTime('m', tmask);
+				elements(n).stats(s).data = stats.mean;
+			elseif ismember(elements(n).stats(s).type, {'GO'})
+				stats = img(id).mri_StatsTime('m');
+				elements(n).stats(s).data = stats.mean;
 			elseif strcmp(elements(n).stats(s).type, 'scrub')
 				if isempty(img(id).use)
 					error('\nERROR: Use data not present! [%s]', img(id).filename);
@@ -186,8 +193,17 @@ for n = 1:nelements
 	if strcmp(elements(n).type, 'stats')
 		data = [];
 		fleg = {};
+		thline = false;
 		for sn = 1:length(elements(n).stats)
-			data = [data reshape(elements(n).stats(sn).data, [], 1) ./ th.(elements(n).stats(sn).type)];
+			if isfield(th, elements(n).stats(sn).type)
+				data = [data reshape(elements(n).stats(sn).data, [], 1) ./ th.(elements(n).stats(sn).type)];
+				thline = true;
+			else
+				dmin = min(elements(n).stats(sn).data);
+				dmax = max(elements(n).stats(sn).data);
+				data = [data (reshape(elements(n).stats(sn).data, [], 1) - dmin) / (dmax - dmin) * 2.5 ];
+			end
+
 			fleg{sn} = elements(n).stats(sn).type;
 		end
 		% data = data(dstart:end, :);
@@ -197,7 +213,9 @@ for n = 1:nelements
 		set(sp, 'XLim', [1 size(data, 1)]);
 		set(sp, 'YLim', [0 3]);
 		legend(fleg, 'Color', 'none', 'Box', 'off');
-		line([1:size(data,1)]', ones(size(data,1),1), 'Color', [0.6 0.6 0.6]);
+		if thline
+			line([1:size(data,1)]', ones(size(data,1),1), 'Color', [0.6 0.6 0.6]);
+		end
 
 	else
 
@@ -218,7 +236,8 @@ for n = 1:nelements
 		data = bsxfun(@minus, data, mimg);
 		elements(n).imax = max(max(data(:, tmask)));
 		elements(n).imin = min(min(data(:, tmask)));
-		data(:, ~tmask) = elements(n).imin;
+		data(:, ~tmask) = 0.5;
+		data(1:floor(size(data,1)/16), ~tmask) = elements(n).imin;
 
 		if elements(n).scale == 0
 			imagesc(data, [elements(n).imin, elements(n).imax]);
