@@ -534,6 +534,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
         st        = st + frames(b);
 
         nuisance(b).signal  = nuisance(b).signal(:,smask);
+        nuisance(b).signal  = zscore(nuisance(b).signal);
         nuisance(b).nsignal = sum(smask);
     end
 

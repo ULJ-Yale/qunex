@@ -425,7 +425,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     smask = ismember(nuisance.signal_hdr,rgss);
     if sum(smask)
-        X = [X nuisance.signal(omit+1:end,smask)];
+        X = [X zscore(nuisance.signal(omit+1:end,smask))];
         if derivatives
             X = [X [zeros(1,sum(smask)); diff(nuisance.signal(omit+1:end,smask))]];
         end
