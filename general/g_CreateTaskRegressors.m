@@ -42,6 +42,7 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %                - Updated: 2011.01.24
 %                - Updated: 2011.02.11
 %                - Updated: 2011.07.31
+%                - Updated: 2015.10.23 (Error reporting for missing event info.)
 %
 
 % ---> set variables
@@ -333,6 +334,16 @@ for n = 1:length(a)
 
     b = splitby(a{n},':');
     model(n).code = splitby(b{1},',');
+
+    if length(b) == 0
+        continue
+    end
+
+    % --- do we have event modelling info?
+
+    if length(b) == 1
+        error('\nERROR: Can not parse event model, no information given for event: %s\n', b{1});
+    end
 
     % --- is field 2 a number ?
 
