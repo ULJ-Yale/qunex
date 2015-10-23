@@ -95,7 +95,14 @@ img.scrub(:,7)   = img.scrub(:,2) | img.scrub(:,3);
 img.scrub(:,8)   = img.scrub(:,2) | img.scrub(:,4);
 
 img.scrub(:,2:8) = spreadTS(img.scrub(:,2:8)', -param.before, param.after)';
-img.use          = ~img.scrub(:, ismember(img.scrub_hdr, param.reject))';
+if strcmp(param.reject, 'none')
+    img.use = [img.scrub(:,1) > 0]';
+elseif ismember(param.reject, {'mov', 'dvars', 'dvarsme', 'idvars', 'idvarsme', 'udvars', 'udvarsme'})
+    img.use = ~img.scrub(:, ismember(img.scrub_hdr, param.reject))';
+else
+    error('\nERROR: No valid column (or ''None'') specified as reject parameter!');
+end
+
 
 
 
