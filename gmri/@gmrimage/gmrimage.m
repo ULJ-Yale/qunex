@@ -99,21 +99,28 @@ classdef gmrimage
             if nargin > 0
                if isa(varone, 'char')
                     images = regexp(varone, ';', 'split');
+                    iset = [];
                     for n = 1:length(images)
                         parts = regexp(images{n}, '|', 'split');
                         for p = 1:length(parts)
                             if p == 1
-                                t = obj.mri_readimage(parts{p}, dtype, frames, verbose);;
+                                t = obj.mri_readimage(parts{p}, dtype, frames, verbose);
                             else
-                                t = [t obj.mri_readimage(parts{p}, dtype, frames, verbose);];
+                                t = [t gmrimage(parts{p}, dtype, frames, verbose)];
                             end
                         end
                         if n == 1
-                            obj = t;
+                            iset = t;
                         else
-                            obj(end+1:end+length(t)) = t;
+                            iset(end+1:end+length(t)) = t;
                         end
                     end
+                    if length(images) > 1
+                        obj = iset;
+                    else
+                        obj = iset(1);
+                    end
+
                 elseif isa(varone, 'numeric')
                     obj         = gmrimage;
                     obj.data    = varone;
