@@ -36,7 +36,7 @@ img.imageformat = '4dfp';
 
 if ismember('littleendian', img.hdr4dfp.value)
     fprintf('\n ---> switching to littleendian');
-    fclose(fin)
+    fclose(fin);
     fin = fopen(fname, 'r', 'l');
     img.hdr4dfp = readHeader(fin);
     img.mformat = 'l';
@@ -124,6 +124,7 @@ function [img] = processHeader(img, fin)
     img.glm.nc       = str2double(img.hdr4dfp.value{ismember(img.hdr4dfp.key, 'glm number of contrasts')});
     img.glm.nF       = str2double(img.hdr4dfp.value{ismember(img.hdr4dfp.key, 'glm number of F statistics')});
     img.glm.tdim     = str2double(img.hdr4dfp.value{ismember(img.hdr4dfp.key, 'glm number of frames in raw')});
+    img.glm.bolds    = str2double(img.hdr4dfp.value{ismember(img.hdr4dfp.key, 'glm number of bold files')});
 
     img.glm.effects  = {};
     img.glm.effect   = zeros(1, img.frames);
@@ -137,6 +138,7 @@ function [img] = processHeader(img, fin)
     elen    = [];
     ecol    = [];
     c       = 0;
+    estart  = 2 + img.glm.nF;
 
     % --- Set up effects info
 
@@ -159,8 +161,8 @@ function [img] = processHeader(img, fin)
 
         if ~sum(cellfun(@isempty, {ename, elen, ecol}))
             img.glm.effects{c} = ename;
-            img.glm.effect(ecol+1:ecol+elen) = c;
-            img.glm.eindex(ecol+1:ecol+elen) = 1:elen;
+            img.glm.effect(ecol+estart+1:ecol+elen+estart) = c;
+            img.glm.eindex(ecol+estart+1:ecol+elen+estart) = 1:elen;
             ename = [];
             ecol  = [];
             elen  = [];
