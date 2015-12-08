@@ -15,6 +15,16 @@ if nargin < 1 || isempty(sfolder) , sfolder = '.'; end
 files = dir([sfolder '/*.glm']);
 nfiles = length(files);
 
+if ~exist(sfolder, 'dir')
+    error('\nERROR: source folder does not exist!\n');
+end
+
+if ~exist(tfolder, 'dir')
+    fprintf('\nCreating target folder: %s', tfolder);
+    mkdir(tfolder);
+end
+
+
 fprintf('\nFound %d GLM files [%s].', nfiles, sfolder);
 
 jet = colormap('jet');
