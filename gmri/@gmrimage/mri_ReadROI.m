@@ -12,7 +12,23 @@ function [img] = mri_ReadROI(roiinfo, roi2)
 %
 %   ---- Changelog ----
 %   2013-07-24 Grega Repovs - adjusted to create either single or multiple volume ROI
-%
+%   2015-12-08 Grega Repovs - added option for named region codes
+
+%   ---- Named region codes
+
+rcodes.gray   = [];
+rcodes.lgray  = [];
+rcodes.rgray  = [];
+rcodes.cgray  = [];
+rcodes.lcgray = [];
+rcodes.rcgray = [];
+rcodes.subc   = [];
+rcodes.lsubc  = [];
+rcodes.rsubc  = [];
+
+
+%   ---- Go on ...
+
 
 if nargin < 2
     roi2 = 'none';
@@ -33,12 +49,19 @@ end
 c = 0;
 while feof(rois) == 0
 	s = fgetl(rois);
+    if length(s) < 3
+        continue
+    end
 	c = c + 1;
-	[roinames{c},s] = strtok(s, '|');
-    [t, s] = strtok(s, '|');
-    roicodes1{c} = sscanf(t,'%d,');
-    [t] = strtok(s, '|');
-	roicodes2{c} = sscanf(t,'%d,');
+
+    relements   = regexp(s, '|', 'split');
+    if length(relements) == 3
+        roinames{c}  = relements{1};
+        roicodes1{c} = getCodes(relements{2}, rcodes);
+        roicodes2{c} = getCodes(relements{3}, rcodes);
+    else
+        fprintf('\n WARNING: Not all fields present in ROI definition: ''%s'' — skipping ROI.', s);
+    end
 end
 nroi = c;
 fclose(rois);
@@ -114,4 +137,19 @@ img.roi.roicodes1 = roicodes1;
 img.roi.roicodes2 = roicodes2;
 img.roi.roifile1  = roif1;
 img.roi.roifile2  = roif2;
+
+
+function [codes] = getCodes(s, rcodes)
+
+    codes = [];
+    s = strtrim(regexp(s, '|', 'split'));
+    for n = 1:length(s)
+        if min(isstrprop(s{n}, 'digit'))
+            codes = [codes str2num(s{n})];
+        elseif isfield(s{n}, rcodes)
+            codes = [codes rcodes.(s{n})]
+        else
+            fprintf('\n WARNING: Ignoring unknown region code name: ''%s''!', s{n});
+        end
+    end
 
