@@ -152,13 +152,26 @@ while true
 
     if isempty(small)
         break
+    else
+        minpeak = min(small);
+        psizes  = [peak.size];
+        usizes  = sort(unique([peak.size]));
+        for n = 2:length(usizes)
+            if sum(psizes(psizes<=usizes(n))) < minsize
+                minpeak = usizes(n);
+            else
+                break
+            end
+        end
     end
+
 
     % identify and remove the smallest
 
-    peak = peak([peak.size] > min(small));
+    nremove = sum([peak.size] <= minpeak);
+    peak = peak([peak.size] > minpeak);
 
-    if verbose, fprintf('\n---> %d ROI too small, removing %d ROI of current size %d', length(small), sum(small == min(small)), min(small)); end
+    if verbose, fprintf('\n---> %d ROI too small, removing %d ROI of size %d or smaller, remaining %d ROI.', length(small), nremove, min(small), length(peak)); end
 
 end
 
