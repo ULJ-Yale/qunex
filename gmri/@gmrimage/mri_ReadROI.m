@@ -17,8 +17,8 @@ function [img] = mri_ReadROI(roiinfo, roi2)
 %   ---- Named region codes
 
 rcodes.gray   = [];
-rcodes.lgray  = [];
-rcodes.rgray  = [];
+rcodes.lgray  = [1 3];
+rcodes.rgray  = [2 4];
 rcodes.cgray  = [];
 rcodes.lcgray = [];
 rcodes.rcgray = [];
@@ -54,7 +54,7 @@ while feof(rois) == 0
     end
 	c = c + 1;
 
-    relements   = regexp(s, '|', 'split');
+    relements   = regexp(s, '\|', 'split');
     if length(relements) == 3
         roinames{c}  = relements{1};
         roicodes1{c} = getCodes(relements{2}, rcodes);
@@ -142,12 +142,12 @@ img.roi.roifile2  = roif2;
 function [codes] = getCodes(s, rcodes)
 
     codes = [];
-    s = strtrim(regexp(s, '|', 'split'));
+    s = strtrim(regexp(s, ',', 'split'));
     for n = 1:length(s)
         if min(isstrprop(s{n}, 'digit'))
             codes = [codes str2num(s{n})];
-        elseif isfield(s{n}, rcodes)
-            codes = [codes rcodes.(s{n})]
+        elseif isfield(rcodes, s{n})
+            codes = [codes rcodes.(s{n})];
         else
             fprintf('\n WARNING: Ignoring unknown region code name: ''%s''!', s{n});
         end
