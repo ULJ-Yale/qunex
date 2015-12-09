@@ -138,7 +138,6 @@ function [img] = processHeader(img, fin)
     elen    = [];
     ecol    = [];
     c       = 0;
-    estart  = 2 + img.glm.nF;
 
     % --- Set up effects info
 
@@ -161,8 +160,8 @@ function [img] = processHeader(img, fin)
 
         if ~sum(cellfun(@isempty, {ename, elen, ecol}))
             img.glm.effects{c} = ename;
-            img.glm.effect(ecol+estart+1:ecol+elen+estart) = c;
-            img.glm.eindex(ecol+estart+1:ecol+elen+estart) = 1:elen;
+            img.glm.effect(ecol+1:ecol+elen) = c;
+            img.glm.eindex(ecol+1:ecol+elen) = 1:elen;
             ename = [];
             ecol  = [];
             elen  = [];
@@ -199,13 +198,11 @@ function [img] = processHeader(img, fin)
     img.glm.sd    = fread(fin, img.voxels, 'float32');
     img.glm.var   = fread(fin, img.voxels, 'float64');
 
-    if img.glm.nF > 1
+    if img.glm.nF >= 1
         img.glm.fzstat = fread(fin, [img.voxels, img.glm.nF], 'float32');
     end
-
-
-
-
+    img.glm.x     = fread(fin, img.voxels, 'float32');
+    img.glm.gmean = fread(fin, img.voxels, 'float32');
 
 
 
