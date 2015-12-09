@@ -483,7 +483,9 @@ classdef gmrimage
         %
         %   method for removing masked volumes from image
         %
-        %   fmask is scalar or vector with 0 for frames to exclude
+        %   fmask can be:
+        %   - a scalar specifying how many frames to exclude from the start
+        %   - a boolean or 1/0 vector specifying which frames to keep
         %
 
         function obj = sliceframes(obj, fmask, options)
@@ -533,7 +535,12 @@ classdef gmrimage
                 obj.data = obj.image2D;
                 obj.data = obj.data(:, fmask > 0);
                 obj.frames = sum(fmask>0);
-                obj.use  = obj.use(:, fmask > 0);
+
+                % ---> mask use data
+
+                if ~isempty(obj.use)
+                    obj.use  = obj.use(:, fmask > 0);
+                end
 
                 % ---> mask movement data
 
@@ -552,7 +559,19 @@ classdef gmrimage
                 if ~isempty(obj.scrub)
                     obj.scrub = obj.scrub(fmask > 0, :);
                 end
+
+                % ---> mask glm data
+
+                if ~isempty(obj.glm)
+                    obj.glm.effect = obj.glm.effect(fmask > 0);
+                    obj.glm.eindex = obj.glm.eindex(fmask > 0);
+                    obj.glm.A      = obj.glm.A(:, fmask > 0);
+                    obj.glm.c      = obj.glm.c(:, fmask > 0);
+                    obj.glm.ATAm1  = obj.glm.ATAm1(fmask > 0, fmask > 0);
+                end
+
             end
+
         end
 
     end
