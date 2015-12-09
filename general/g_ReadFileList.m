@@ -9,6 +9,8 @@ function [subject, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
 %       - subjects    : a structure array with information
 %           - id      : subject id
 %           - roi     : path to a subject ROI file
+%           - glm     : path to a subject glm file
+%           - fidl    : path to a subject fidl file
 %           - files   : cell array of file paths
 %           - folder  : subjects root folder
 %       - nsubjects : number of subjects in the list
@@ -17,6 +19,7 @@ function [subject, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
 % 	Created by Grega Repovš on 2010-11-23.
 %   2012-05-20 - Changed to omit missing files
 %   2013-07-26 - Added folder to the list of things to list
+%   2015-12-09 - Added reading of fidl and glm files
 %
 % 	Copyright (c) 2010. All rights reserved.
 
@@ -55,6 +58,16 @@ while feof(files) == 0
             nf = nf + 1;
             nfiles = nfiles + 1;
             subject(nsubjects).files{nf} = strtrim(s(2:end));
+        end
+    elseif ~isempty(strfind(s, 'fidl:'))
+        [t, s] = strtok(s, ':');
+        if g_CheckFile(strtrim(s(2:end)), 'fidl file', report);
+            subject(nsubjects).fidl = strtrim(s(2:end));
+        end
+    elseif ~isempty(strfind(s, 'glm:'))
+        [t, s] = strtok(s, ':');
+        if g_CheckFile(strtrim(s(2:end)), 'GLM file', report);
+            subject(nsubjects).glm = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'folder:'))
         [t, s] = strtok(s, ':');
