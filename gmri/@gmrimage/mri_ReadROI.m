@@ -16,19 +16,24 @@ function [img] = mri_ReadROI(roiinfo, roi2)
 
 %   ---- Named region codes
 
-rcodes.gray   = [];
-rcodes.lgray  = [1 3];
-rcodes.rgray  = [2 4];
-rcodes.cgray  = [];
-rcodes.lcgray = [];
-rcodes.rcgray = [];
-rcodes.subc   = [];
-rcodes.lsubc  = [];
-rcodes.rsubc  = [];
+rcodes.lcgray = [3 415 417 419 421:422 424 427 429 431 433 435 438 11100:11175 1000:1035 1100:1104 1200:1202 1205:1207 1210:1212 1105:1181];
+rcodes.rcgray = [42 416 418 420 423 425:426 428 430 432 434 436 439 12100:12175 2000:2035 2100:2104 2105:2181 2200:2202 2205:2207 2210:2212];
+rcodes.cgray  = [rcodes.lcgray rcodes.rcgray 220 222 225 400:414 437];
+
+rcodes.lsubc  = [9:13 17:20 26 27 96 193 195:196 9000:9006 550 552:557];
+rcodes.rsubc  = [48:56 58:59 97 197 199:200 9500:9506 500 502:507];
+rcodes.subc   = [rcodes.lsubc rcodes.rsubc 16 170:175 203:209 212 214:218 226 7001:7020 7100:7101 8001:8014];
+
+rcodes.lcerc  = [8 601 603 605 608 611 614 617 620 623 626 660:679];
+rcodes.rcerc  = [47 602 604 607 610 613 616 619 622 625 628 640:659];
+rcodes.cerc   = [rcodes.lcerc rcodes.rcerc 606 609 612 615 618 621 624 627];
+
+rcodes.lgray  = [rcodes.lcgray rcodes.lsubc rcodes.lcerc];
+rcodes.rgray  = [rcodes.rcgray rcodes.rsubc rcodes.rcerc];
+rcodes.gray   = [rcodes.cgray rcodes.subc rcodes.cerc];
 
 
 %   ---- Go on ...
-
 
 if nargin < 2
     roi2 = 'none';
@@ -36,11 +41,27 @@ end
 
 % ----> Read the ROI info
 
+if isempty(strfind(roiinfo, '.names'))
+    img = gmrimage(roiinfo);
+    img.data = img.image2D;
+    rcodes = unique(img.data);
+    rcodes = sort(rcodes(rcodes > 0));
+    for r = 1:length(rcodes)
+        img.data(img.data == rcodes(r)) = r;
+        img.roi.roinames{r} = ['ROI' num2str(r)];
+        img.roi.roicodes(r) = r;
+        img.roi.roicodes1{r} = rcodes(r);
+        img.roi.roicodes2{r} = [];
+    end
+    img.roi.roifile1  = roiinfo;
+    img.roi.roifile2  = [];
+    return
+end
+
 roiinfo = strtrim(roiinfo);
 roi2    = strtrim(roi2);
 rois    = fopen(roiinfo);
 roif1   = fgetl(rois);
-
 
 if strcmp(roi2, 'none')
     roi2 = [];
