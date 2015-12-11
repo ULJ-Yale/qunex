@@ -25,12 +25,12 @@ roi  = img.zeroframes(nroi);
 
 for n = 1:nroi
 
-    if length(img.roi.roicodes1{n}) == 0
-        rmask = roi2.mri_ROIMask(img.roi.roicodes2{n});
-    elseif length(img.roi.roicodes2{n}) == 0
-        rmask = img.mri_ROIMask(img.roi.roicodes1{n});
+    % if length(img.roi.roicodes{n}) == 0
+    %   rmask = roi2.mri_ROIMask(img.roi.roicodes2{n});
+    if length(img.roi.roicodes2{n}) == 0
+        rmask = img.mri_ROIMask(img.roi.roicodes(n));
     else
-        rmask = img.mri_ROIMask(img.roi.roicodes1{n}) & roi2.mri_ROIMask(img.roi.roicodes2{n});
+        rmask = img.mri_ROIMask(img.roi.roicodes(n)) & roi2.mri_ROIMask(img.roi.roicodes2{n});
     end
 
     roi.data(rmask==1, n) = n;
