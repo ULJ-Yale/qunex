@@ -171,7 +171,7 @@ while true
     nremove = sum([peak.size] <= minpeak);
     peak = peak([peak.size] > minpeak);
 
-    if verbose, fprintf('\n---> %d ROI too small, removing %d ROI of size %d or smaller, remaining %d ROI.', length(small), nremove, min(small), length(peak)); end
+    if verbose, fprintf('\n---> %d ROI too small, removing %d ROI of size %d or smaller, remaining %d ROI.', length(small), nremove, minpeak, length(peak)); end
 
 end
 
