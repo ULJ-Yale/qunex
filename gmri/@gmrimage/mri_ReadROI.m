@@ -165,12 +165,14 @@ function [codes] = getCodes(s, rcodes)
     codes = [];
     s = strtrim(regexp(s, ',', 'split'));
     for n = 1:length(s)
-        if min(isstrprop(s{n}, 'digit'))
-            codes = [codes str2num(s{n})];
-        elseif isfield(rcodes, s{n})
-            codes = [codes rcodes.(s{n})];
-        else
-            fprintf('\n WARNING: Ignoring unknown region code name: ''%s''!', s{n});
+        if ~isempty(s{n})
+            if min(isstrprop(s{n}, 'digit'))
+                codes = [codes str2num(s{n})];
+            elseif isfield(rcodes, s{n})
+                codes = [codes rcodes.(s{n})];
+            else
+                fprintf('\n WARNING: Ignoring unknown region code name: ''%s''!', s{n});
+            end
         end
     end
 

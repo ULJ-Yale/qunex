@@ -1,13 +1,14 @@
-function [report] = g_ExtractROIGLMValues(flist, roif, outf, estimates, frames, verbose);
+function [] = g_ExtractROIGLMValues(flist, roif, outf, estimates, frames, values, verbose);
 
-%function function [report] = g_ExtractROIGLMValues(flist, roif, estimates, frames, verbose);
+%function function [] = g_ExtractROIGLMValues(flist, roif, estimates, frames, values, verbose);
 %
 %	Extracts statistics from GLM files provided in a file list.
 %
 %   flist       - list of files
 %   roif        - names ROI file
 %   outf        - name of the output file [list + .dat]
-%   estimates 	- list of estimates of interest [all but trend and baseline]
+%   estimates   - list of estimates of interest [all but trend and baseline]
+%   values 	    - whether to work on raw beta values ('raw') or percent signal change ('psc') ['raw']
 %   frames      - list of frames [all]
 %
 %	verbose		- to report on progress or not [not]
@@ -21,7 +22,8 @@ function [report] = g_ExtractROIGLMValues(flist, roif, outf, estimates, frames, 
 %   — additional info (roi xyz, peak value ...)
 %
 
-if nargin < 6, verbose   = false; end
+if nargin < 7, verbose   = false; end
+if nargin < 6 || isempty(values), values = 'raw'; end
 if nargin < 5, frames    = [];    end
 if nargin < 4, estimates = [];    end
 if nargin < 3, outf      = [];    end
@@ -52,7 +54,7 @@ nroi = length(roi.roi.roinames);
 %                                             create output file
 
 if isempty(outf)
-    outf = [flist '.dat'];
+    outf = [flist '_' values '.dat'];
 end
 
 rfile = fopen(outf, 'w');
@@ -68,7 +70,7 @@ for s = 1:nsub
 
     if verbose, fprintf('\n---> processing subject: %s', subjects(s).id); end
 
-    glm = gmrimage(subjects(s).glm);
+    glm = gmrimage(subjects(s).glm, [], [], verbose);
     glm = glm.mri_ExtractGLMEstimates(estimates, frames);
 
     % ---> update ROI
@@ -79,7 +81,12 @@ for s = 1:nsub
         sroi = roi;
     end
 
+    if strcmp(values, 'psc')
+        glm.data = bsxfun(@rdivide, glm.data, glm.glm.gmean / 100);
+    end
+
     stats   = glm.mri_ExtractROIStats(sroi);
+
     nframes = length(stats(1).mean);
 
     for r = 1:nroi
@@ -89,9 +96,8 @@ for s = 1:nsub
     end
 end
 
-fclose(rfile)
+fclose(rfile);
 
 if verbose, fprintf('\n===> DONE\n'); end
 
-report = [];
 

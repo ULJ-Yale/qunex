@@ -50,7 +50,7 @@ img.filename = fname;
 img.frames = count/img.voxels;
 img.hdr4dfp.value{ismember(img.hdr4dfp.key, 'matrix size [4]')} = num2str(img.frames);
 
-fprintf('\n ---> read %d voxels\n', count);
+if verbose, fprintf('\n ---> read %d voxels\n', count); end
 fclose(fin);
 
 
