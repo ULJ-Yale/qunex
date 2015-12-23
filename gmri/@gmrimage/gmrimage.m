@@ -101,7 +101,7 @@ classdef gmrimage
                     images = regexp(varone, ';', 'split');
                     iset = [];
                     for n = 1:length(images)
-                        parts = regexp(images{n}, '|', 'split');
+                        parts = regexp(images{n}, '\|', 'split');
                         for p = 1:length(parts)
                             if p == 1
                                 t = obj.mri_readimage(parts{p}, dtype, frames, verbose);
