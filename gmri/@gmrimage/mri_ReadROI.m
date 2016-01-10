@@ -70,7 +70,7 @@ end
 c = 0;
 while feof(rois) == 0
 	s = fgetl(rois);
-    if length(s) < 3
+    if length(s) < 3 || s(1) == '#'
         continue
     end
 	c = c + 1;
