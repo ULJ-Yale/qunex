@@ -140,6 +140,14 @@ for r = 1:nrois
         stats(r).sd     = zeros(1, nfrms);
         stats(r).se     = zeros(1, nfrms);
         continue
+    elseif stats(r).N == 1
+        stats(r).median = tmp;
+        stats(r).max    = tmp;
+        stats(r).min    = tmp;
+        stats(r).mean   = tmp;
+        stats(r).sd     = zeros(1, nfrms);
+        stats(r).se     = zeros(1, nfrms);
+        continue
     end
 
     stats(r).median = median(tmp);
