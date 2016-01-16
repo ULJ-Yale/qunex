@@ -1,0 +1,125 @@
+function [xyz] = mri_GetXYZ(img, ijk)
+
+%function [xyz] = mri_GetXYZ(img, ijk)
+%
+%	Returns the XYZ world coordinates for given image indeces or ROI
+%
+%   input
+%       ijk     - a matrix of voxel indeces or a weight matrix, weight image
+%
+%   Output
+%       xyz  - depending on the input:
+%              a matrix of voxel indeces -> a matrix of x, y, z coordinates
+%              a ROI image -> a structure inlcuding matrices reporting centroids for each ROI in XYZ and IJK
+%              a weight image -> a structure including matrices reporting centroids for each ROI in XYZ and IJK and matrices reporting weighted centroids for each ROI in XYZ and IJK
+%
+%   Notes
+%            - The coordinates are computed based on the 1-based indeces x = 1 .. N, not 0-based indeces!
+%            - The coordinates are computed based on the nifti header affine transform matrix (srow_x/y/z)
+%
+%   (c) Grega Repovs, 2016-01-16
+%
+%
+
+if nargin < 2, ijk = []; end
+
+img.data = img.image4D;
+
+% =================================================================================================
+% ---                                                                               The main switch
+
+% --> if we have no input matrix, assume and check we have an ROI image
+if isempty(ijk)
+    if isroi(img.data)
+        xyz.cijk = getROICentroids(img.data);
+        xyz.cxyz = getXYZ(img, xyz.cijk);
+    else
+        error('\nERROR mri_XYZ: The image is not an ROI mask. Can not compute ROI coordinates!\n');
+    end
+
+% --> is ijk an image or a 3D matrix?
+
+elseif isa(ijk, 'gmrimage') || (length(size(ijk)) == 3)
+
+    % - extract ijk data matrix
+
+    if isa(ijk, 'gmrimage')
+        ijk = ijk.image4D;
+    end
+
+    % - check size matching
+
+    if size(ijk) ~= size(img.data)
+        error('\nERROR mri_XYZ: The sizes of provided images do not match!\n');
+    end
+
+    % - check which one is an ROI and which one a weight image
+
+    if isroi(img.data) && ~isroi(ijk)
+        roi  = img.data;
+        wimg = ijk;
+    elseif ~isroi(img.data) && isroi(ijk)
+        roi  = ijk;
+        wimg = img.data;
+    else
+        error('\nERROR mri_XYZ: Of the two images one has to be and ROI and the other a weight image!\n');
+    end
+
+    xyz.cijk  = getROICentroids(roi);
+    xyz.wcijk = getROIWeightedCentroids(roi, wimg);
+    xyz.cxyz  = getXYZ(img, xyz.cijk);
+    xyz.wcxyz = getXYZ(img, xyz.wcijk);
+
+% --> is ijk a 2D matrix
+
+elseif size(ijk, 2) > 3
+    xyz = getXYZ(img, ijk);
+
+% --> nothing matches
+
+else
+    error('\nERROR mri_XYZ: Invalid input. Please check the use of the function and the provided input!\n');
+end
+
+
+% =================================================================================================
+% ---                                                                             Support functions
+
+
+% --> computing the XYZ from IJK
+
+function [xyz] = getXYZ(img, ijk)
+
+    xyz = ijk;
+    af  = [img.hdrnifti.srow_x'; img.hdrnifti.srow_y'; img.hdrnifti.srow_z'];
+    xyz(:, end-2:end) = (ijk(:, end-2:end) - 1) * af(1:3,1:3) + repmat(af(:,4)', size(ijk, 1), 1);
+
+
+% --> getting ROI Centroids
+
+function [xyz] = getROICentroids(roi)
+
+    stats = regionprops(roi, 'Centroid');
+    rois  = sort(unique(roi));
+    rois  = rois(rois>0);
+    xyz   = [rois reshape([stats(rois).Centroid], 3, [])'];
+    xyz   = xyz(:, [1 3 2 4]);
+
+
+% --> getting Weighted ROI Centroids
+
+function [xyz] = getROIWeightedCentroids(roi, W)
+
+    stats = regionprops(roi, W, 'WeightedCentroid');
+    rois  = sort(unique(roi));
+    rois  = rois(rois>0);
+    xyz   = [rois reshape([stats(rois).WeightedCentroid], 3, [])'];
+    xyz   = xyz(:, [1 3 2 4]);
+
+
+% --> checking if we have an ROI image
+
+function [isr] = isroi(img)
+
+    isr = sum(sum(sum(img - round(img)))) == 0 & min(min(min(img))) >= 0 & length(unique(img)) < 1000;
+
