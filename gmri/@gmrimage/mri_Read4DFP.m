@@ -78,6 +78,81 @@ else
 end
 
 
+
+% --- Create general NIfTI header
+
+img.hdrnifti.magic           = 'n+1';                                          % --- needs to be adjusted when saving
+img.hdrnifti.datatype        = 16;
+img.hdrnifti.bitpix          = 32;
+img.hdrnifti.dim             = [4 img.dim img.frames 0 0 0];
+img.hdrnifti.intent_code     = 0;
+img.hdrnifti.intent_name     = char(ones(1,16)*32);
+img.hdrnifti.intent_p1       = 0;
+img.hdrnifti.intent_p2       = 0;
+img.hdrnifti.intent_p3       = 0;
+img.hdrnifti.pixdim          = [1 img.vsizes 1 0 0 0];
+img.hdrnifti.vox_offset      = 352;                                            % --- set for n1, needs to be adjusted when saving
+img.hdrnifti.scl_slope       = 0;
+img.hdrnifti.scl_inter       = 0;
+img.hdrnifti.cal_max         = 0;
+img.hdrnifti.cal_min         = 0;
+img.hdrnifti.slice_duration  = 0;
+img.hdrnifti.toffset         = 0;
+img.hdrnifti.slice_start     = 0;
+img.hdrnifti.slice_end       = 0;
+img.hdrnifti.descrip         = char(ones(1,80)*32);
+img.hdrnifti.aux_file        = char(ones(1,24)*32);
+img.hdrnifti.qform_code      = 0;
+img.hdrnifti.sform_code      = guessSpace(img.dim);
+img.hdrnifti.quatern_b       = 0;
+img.hdrnifti.quatern_c       = 0;
+img.hdrnifti.quatern_d       = 0;
+img.hdrnifti.qoffset_x       = 0;
+img.hdrnifti.qoffset_y       = 0;
+img.hdrnifti.qoffset_z       = 0;
+img.hdrnifti.slice_code      = 0;
+img.hdrnifti.xyzt_units      = 10;
+img.hdrnifti.dim_info        = char(0);
+img.hdrnifti.unused_str      = char(ones(1,24)*32);
+img.hdrnifti.version         = 1;                                              % --- adjust when saving
+
+[img.hdrnifti.srow_x, img.hdrnifti.srow_y, img.hdrnifti.srow_z] = ifh2af(img.dim, str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'mmppix'})))), str2num(char(img.hdr4dfp.value(ismember(img.hdr4dfp.key, {'center'})))));
+
+% --- add NIfTI-1 specific fields
+
+img.hdrnifti.data_type       = char(ones(1,10)*32);
+img.hdrnifti.db_name         = char(ones(1,18)*32);
+img.hdrnifti.extents         = 0;
+img.hdrnifti.session_error   = 0;
+img.hdrnifti.regular         = char(0);
+img.hdrnifti.glmax           = 0;
+img.hdrnifti.glmin           = 0;
+
+img.hdrnifti.swap    = false;
+img.hdrnifti.swapped = false;
+
+% --- add empty meta info
+
+img.meta = char(ones(1,4)*0);
+
+
+function [space] = guessSpace(dim)
+    space = 4;
+    if (length(dim) == 3)
+        if min(dim == [48 64 48]) | min(dim == [176 208 176])
+            space = 3;
+        end
+    end
+
+
+function [x, y, z] = ifh2af(dim, mmppix, center)
+    x = [-mmppix(1); 0; 0; (dim(1) - center(1)/mmppix(1)) * mmppix(1)];
+    y = [0;  mmppix(2); 0;          -center(2)                       ];
+    z = [0; 0; -mmppix(3); (dim(3) - center(3)/mmppix(3)) * mmppix(3)];
+
+    % y = [0; -mmppix(2); 0; (dim(2) - center(2)/mmppix(2)) * mmppix(2)]; % --- would be the flipped version
+
+
 function [ftype] = FileType(filename)
 
 if strcmp(filename(length(filename)-4:end), '.conc')
