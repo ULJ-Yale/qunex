@@ -40,6 +40,14 @@ end
 img = img.unmaskimg;
 
 
+% ---> transform if necessary
+
+if strcmp(img.imageformat, '4dfp')
+    img.imageformat = 'NIfTI';
+    img.data = flip(img.image4D, 2);
+    img.hdrnifti.srow_y = [0; -img.hdrnifti.srow_y(2); 0; (img.dim(2) - img.hdrnifti.srow_y(4) / -img.hdrnifti.srow_y(2)) * img.hdrnifti.srow_y(2)];
+end
+
 % ---> save dimension information
 
 switch img.imageformat
@@ -161,49 +169,49 @@ function [s] = packHeader_nifti1(hdrnifti)
 
     s = zeros(348, 1, 'uint8');
 
-    s(1:4)     =   sw(348                     , 'int32');
-    s(5:14)    =   sw(hdrnifti.datatype       , 'uint8');
-    s(15:32)   =   sw(hdrnifti.db_name        , 'uint8');
-    s(33:36)   =   sw(hdrnifti.extents        , 'int32');
-    s(37:38)   =   sw(hdrnifti.session_error  , 'int16');
-    s(39)      =   sw(hdrnifti.regular        , 'uint8');
-    s(40)      =   sw(hdrnifti.dim_info       , 'uint8');
-    s(41:56)   =   sw(hdrnifti.dim            , 'int16');
-    s(57:60)   =   sw(hdrnifti.intent_p1      , 'single');
-    s(61:64)   =   sw(hdrnifti.intent_p2      , 'single');
-    s(65:68)   =   sw(hdrnifti.intent_p3      , 'single');
-    s(69:70)   =   sw(hdrnifti.intent_code    , 'int16');
-    s(71:72)   =   sw(hdrnifti.datatype       , 'int16');
-    s(73:74)   =   sw(hdrnifti.bitpix         , 'int16');
-    s(75:76)   =   sw(hdrnifti.slice_start    , 'int16');
-    s(77:108)  =   sw(hdrnifti.pixdim         , 'single');
-    s(109:112) =   sw(hdrnifti.vox_offset     , 'single');
-    s(113:116) =   sw(hdrnifti.scl_slope      , 'single');
-    s(117:120) =   sw(hdrnifti.scl_inter      , 'single');
-    s(121:122) =   sw(hdrnifti.slice_end      , 'int16');
-    s(123)     =   sw(hdrnifti.slice_code     , 'uint8');
-    s(124)     =   sw(hdrnifti.xyzt_units     , 'uint8');
-    s(125:128) =   sw(hdrnifti.cal_max        , 'single');
-    s(129:132) =   sw(hdrnifti.cal_min        , 'single');
-    s(133:136) =   sw(hdrnifti.slice_duration , 'single');
-    s(137:140) =   sw(hdrnifti.toffset        , 'single');
-    s(141:144) =   sw(hdrnifti.glmax          , 'int32');
-    s(145:148) =   sw(hdrnifti.glmin          , 'int32');
-    s(149:228) =   sw(hdrnifti.descrip        , 'uint8');
-    s(229:252) =   sw(hdrnifti.aux_file       , 'uint8');
-    s(253:254) =   sw(hdrnifti.qform_code     , 'int16');
-    s(255:256) =   sw(hdrnifti.sform_code     , 'int16');
-    s(257:260) =   sw(hdrnifti.quatern_b      , 'single');
-    s(261:264) =   sw(hdrnifti.quatern_c      , 'single');
-    s(265:268) =   sw(hdrnifti.quatern_d      , 'single');
-    s(269:272) =   sw(hdrnifti.qoffset_x      , 'single');
-    s(273:276) =   sw(hdrnifti.qoffset_y      , 'single');
-    s(277:280) =   sw(hdrnifti.qoffset_z      , 'single');
-    s(281:296) =   sw(hdrnifti.srow_x         , 'single');
-    s(297:312) =   sw(hdrnifti.srow_y         , 'single');
-    s(313:328) =   sw(hdrnifti.srow_z         , 'single');
-    s(329:344) =   sw(hdrnifti.intent_name    , 'uint8');
-    s(345:348) =   sw(hdrnifti.magic          , 'uint8');
+    s(1:4)     =   sw(348                          , 'int32');
+    s(5:14)    =   sw(hdrnifti.data_type           , 'uint8');
+    s(15:32)   =   sw(hdrnifti.db_name             , 'uint8');
+    s(33:36)   =   sw(hdrnifti.extents             , 'int32');
+    s(37:38)   =   sw(hdrnifti.session_error       , 'int16');
+    s(39)      =   sw(hdrnifti.regular             , 'uint8');
+    s(40)      =   sw(hdrnifti.dim_info            , 'uint8');
+    s(41:56)   =   sw(hdrnifti.dim                 , 'int16');
+    s(57:60)   =   sw(hdrnifti.intent_p1           , 'single');
+    s(61:64)   =   sw(hdrnifti.intent_p2           , 'single');
+    s(65:68)   =   sw(hdrnifti.intent_p3           , 'single');
+    s(69:70)   =   sw(hdrnifti.intent_code         , 'int16');
+    s(71:72)   =   sw(hdrnifti.datatype            , 'int16');
+    s(73:74)   =   sw(hdrnifti.bitpix              , 'int16');
+    s(75:76)   =   sw(hdrnifti.slice_start         , 'int16');
+    s(77:108)  =   sw(hdrnifti.pixdim              , 'single');
+    s(109:112) =   sw(hdrnifti.vox_offset          , 'single');
+    s(113:116) =   sw(hdrnifti.scl_slope           , 'single');
+    s(117:120) =   sw(hdrnifti.scl_inter           , 'single');
+    s(121:122) =   sw(hdrnifti.slice_end           , 'int16');
+    s(123)     =   sw(hdrnifti.slice_code          , 'uint8');
+    s(124)     =   sw(hdrnifti.xyzt_units          , 'uint8');
+    s(125:128) =   sw(hdrnifti.cal_max             , 'single');
+    s(129:132) =   sw(hdrnifti.cal_min             , 'single');
+    s(133:136) =   sw(hdrnifti.slice_duration      , 'single');
+    s(137:140) =   sw(hdrnifti.toffset             , 'single');
+    s(141:144) =   sw(hdrnifti.glmax               , 'int32');
+    s(145:148) =   sw(hdrnifti.glmin               , 'int32');
+    s(149:228) =   sw(hdrnifti.descrip             , 'uint8');
+    s(229:252) =   sw(hdrnifti.aux_file            , 'uint8');
+    s(253:254) =   sw(hdrnifti.qform_code          , 'int16');
+    s(255:256) =   sw(hdrnifti.sform_code          , 'int16');
+    s(257:260) =   sw(hdrnifti.quatern_b           , 'single');
+    s(261:264) =   sw(hdrnifti.quatern_c           , 'single');
+    s(265:268) =   sw(hdrnifti.quatern_d           , 'single');
+    s(269:272) =   sw(hdrnifti.qoffset_x           , 'single');
+    s(273:276) =   sw(hdrnifti.qoffset_y           , 'single');
+    s(277:280) =   sw(hdrnifti.qoffset_z           , 'single');
+    s(281:296) =   sw(hdrnifti.srow_x              , 'single');
+    s(297:312) =   sw(hdrnifti.srow_y              , 'single');
+    s(313:328) =   sw(hdrnifti.srow_z              , 'single');
+    s(329:344) =   sw(hdrnifti.intent_name(1:16)   , 'uint8');
+    s(345:348) =   sw([hdrnifti.magic(1:3) char(0)], 'uint8');
 
 
 
@@ -221,7 +229,7 @@ function [s] = packHeader_nifti2(hdrnifti)
     s = zeros(540, 1, 'uint8');
 
     s(1:4)     = sw(540,                     'int32');
-    s(5:12)    = sw(hdrnifti.magic,          'uint8');
+    s(5:12)    = sw([hdrnifti.magic(1:3) char([0 13 10 26 10])],          'uint8');
     s(13:14)   = sw(hdrnifti.datatype,       'int16');
     s(15:16)   = sw(hdrnifti.bitpix,         'int16');
     s(17:80)   = sw(hdrnifti.dim,            'int64');
