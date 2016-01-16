@@ -1,6 +1,6 @@
-function [img peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
+function [roi peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
 
-%function [img peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
+%function [roi peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
 %
 %       Find peaks and uses watershed algorithm to grow regions from them.
 %
@@ -17,6 +17,9 @@ function [img peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
 %    — A faster flooding implementation.
 %    — Optimised reflooding of small ROI.
 %    — Flipped verbosity.
+%
+%   Grega Repovs, 2016-01-16
+%    - Now uses mri_GetXYZ to get world coordinates of peaks and centroids.
 %
 %    ToDo
 %    — Clean up code.
@@ -254,32 +257,41 @@ for p = 1:length(peak)
     end
 end
 
-% --- remove emptu peaks
+% --- remove empty peaks
 
 peak = peak([peak.size]>0);
 
-% --- querry ROI properties
+% --- embedd ROI
 
-stats = regionprops(seg, data, {'Centroid','WeightedCentroid'});
+roi = img.zeroframes(1);
+roi.data = seg(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1));
 
-% --- report peaks
 
-if report, fprintf('\n\n===> peak report'); end
+% --- gather statistics
+
+roiinfo     = roi.mri_XYZ(img);
+roiinfo.ijk = [reshape([peak.label], [],1) reshape([peak.xyz], 3, [])' - 1];
+roiinfo.xyz = roi.mri_GetXYZ(roiinfo.ijk);
+
+if report, fprintf('\n===> peak report\n'); end
+
 for p = 1:length(peak)
-    peak(p).value = img.data(peak(p).xyz(1)-1, peak(p).xyz(2)-1, peak(p).xyz(3)-1);
-    peak(p).Centroid = stats(peak(p).label).Centroid - 1;
-    peak(p).WeightedCentroid = stats(peak(p).label).WeightedCentroid - 1;
-    peak(p).xyz = peak(p).xyz - 1;
+    peak(p).ijk = peak(p).xyz - 1;
+    peak(p).xyz = roiinfo.xyz(p, end-2:end);
+    peak(p).value = img.data(peak(p).ijk(1), peak(p).ijk(2), peak(p).ijk(3));
+    peak(p).Centroid = roiinfo.cxyz(p, end-2:end);
+    peak(p).WeightedCentroid = roiinfo.wcxyz(p, end-2:end);
 
-    % if verbose > 1, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  indeces: %3d %3d %3d  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
-    if report, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  indeces: %3d %3d %3d  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
+    if report, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  peak indeces: %3d %3d %3d  peak: %5.1f %5.1f %5.1f  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).ijk, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
 end
+
+if report, fprintf('\n'); end
 
 % --- the end
 
 if verbose, fprintf('\n===> DONE\n'); end
 
-img.data = seg(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1));
+
 
 
 % --- SUPPORT FUNCTIONS
