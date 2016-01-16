@@ -24,8 +24,9 @@ classdef gmrimage
 %  mri_ComputeCorrelations - computes correlations with the provided data matrix
 %
 %  Created by Grega Repovš, 2009-10-04
-%  Last modification by Grega Repovš, 2010-03-18
+%
 %  2011-07-31 - Added importing of existing movement, fstat and scrubbing data
+%  2016-01-16 - Added GetXY and specifying save format with file extension.
 %
 
     properties
@@ -84,6 +85,7 @@ classdef gmrimage
         output = mri_Stats(obj, do, exclude)
         output = mri_Stats2(obj, obj2, do, exclude)
         output = mri_ComputeScrub(obj, do)
+        output = mri_GetXYZ(obj, ijk)
     end
 
     methods
@@ -172,6 +174,15 @@ classdef gmrimage
                 dtype = 'single';
             end
             filename = strtrim(filename);
+
+            % --- check if file exists
+
+            if ~exist(filename)
+                error('\nERROR mri_readimage: File does not exist [%s]!\n', filename);
+            end
+
+            % --- load depending on filename extension
+
             if length(filename) > 8 && strcmp(filename(length(filename)-8:end), '.4dfp.img')
                 obj = obj.mri_Read4DFP(filename, dtype, frames, verbose);
                 obj = obj.mri_ReadStats(filename, frames, verbose);
@@ -204,13 +215,24 @@ classdef gmrimage
 
             filename = strtrim(filename);
 
-            switch obj.imageformat
-                case '4dfp'
-                    obj.mri_Save4DFP(filename, extra);
-                case {'NIfTI', 'CIFTI', 'CIFTI-1', 'CIFTI-2'}
-                    obj.mri_SaveNIfTI(filename, datatype, verbose);
-                otherwise
-                    error('ERROR: Unknown file format, could not save image! [%s]', obj.imageformat);
+            % --- Let's see if we have an explicit extension and take that into account
+
+            if ~isempty(strfind(filename, '.4dfp.img'))
+                obj.mri_Save4DFP(filename, extra);
+            elseif ~isempty(strfind(filename, '.nii.gz'))
+                obj.mri_SaveNIfTI(filename, datatype, verbose);
+
+            % --- Otherwise save based on the set imageformat
+
+            else
+                switch obj.imageformat
+                    case '4dfp'
+                        obj.mri_Save4DFP(filename, extra);
+                    case {'NIfTI', 'CIFTI', 'CIFTI-1', 'CIFTI-2'}
+                        obj.mri_SaveNIfTI(filename, datatype, verbose);
+                    otherwise
+                        error('ERROR: Unknown file format, could not save image! [%s]', obj.imageformat);
+                end
             end
         end
 
