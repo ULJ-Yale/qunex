@@ -230,7 +230,7 @@ function [hdrnifti] = readHeader_nifti1(s, hdrnifti)
         sw = @(x) x;
     end
 
-    hdrnifti.datatype        = char(s(5:14))';                              % 10
+    hdrnifti.data_type       = char(s(5:14))';                              % 10
     hdrnifti.db_name         = char(s(15:32))';                             % 18
     hdrnifti.extents         = double(sw(typecast(s(33:36),   'int32')));   % 1
     hdrnifti.session_error   = double(sw(typecast(s(37:38),   'int16')));   % 1
@@ -274,9 +274,12 @@ function [hdrnifti] = readHeader_nifti1(s, hdrnifti)
     hdrnifti.magic           = char(s(345:348))';                           % 4
     hdrnifti.version         = 1;
 
+    % --- add NIfTI-2 fields
 
-    % ----- Read NIfTI-2 Header
+    hdrnifti.unused_str      = char(ones(1,24)*32);
 
+
+% ----- Read NIfTI-2 Header
 
 function [hdrnifti] = readHeader_nifti2(s, hdrnifti)
 
@@ -324,11 +327,15 @@ function [hdrnifti] = readHeader_nifti2(s, hdrnifti)
     hdrnifti.unused_str      = char(s(526:540))';                              % 15
     hdrnifti.version         = 2;
 
+    % --- add NIfTI-1 fields
 
-
-
-
-
+    hdrnifti.data_type       = '          ';
+    hdrnifti.db_name         = '                  ';
+    hdrnifti.extents         = 0;
+    hdrnifti.session_error   = 0;
+    hdrnifti.regular         = ' ';
+    hdrnifti.glmax           = 0;
+    hdrnifti.glmin           = 0;
 
 
 
