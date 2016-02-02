@@ -54,6 +54,7 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %                     omp_threads:    0
 %                     smooth_mask:    false
 %                     dilate_mask:    false
+%                     glm_matrix:     none / text / image / both
 %
 %   Does the preprocesing for the files from subjectf folder.
 %   Saves images in ftarget folder
@@ -87,6 +88,9 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %   2015-05-26 Grega Repovs (v0.9.6)
 %              - Added the option to provide alternative root names of bolds (boldname)
 %
+%   2016-02-02 Grega Repovs (v0.9.8)
+%              - Added additional GLM options
+%
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';                               end
@@ -102,12 +106,12 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none';
 options = g_ParseOptions([], options, default);
 
 
 
-fprintf('\nRunning preproces conc 2 script v0.9.7 [%s]\n', tail);
+fprintf('\nRunning preproces conc 2 script v0.9.8 [%s]\n', tail);
 
 % ======================================================
 %                          ----> prepare basic variables
@@ -167,6 +171,8 @@ for b = 1:nbolds
     eroot               = strrep(efile, '.fidl', '');
     file(b).croot       = strcat(subjectf, ['/images/functional/' options.boldname '_conc_' eroot]);
     file(b).cfroot      = strcat(subjectf, ['/images/functional/concs/' options.boldname '_' fformat '_' eroot]);
+
+    file(b).Xroot       = strcat(subjectf, ['/images/functional/glm/' options.boldname '_GLM-X_' eroot]);
 
     file(b).lsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
     file(b).rsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
@@ -263,12 +269,13 @@ if strfind(do, 'r')
         if isempty(task)
             nuisance(b).task  = [];
         else
-            nuisance(b).task  = task(bstart:bend,:);
-            nuisance(b).ntask = size(task,2);
+            nuisance(b).task  = task(bstart:bend, :);
+            nuisance(b).ntask = size(task, 2);
         end
 
-        nuisance(b).events  = runs(b).matrix;
-        nuisance(b).nevents = size(nuisance(b).events,2);
+        nuisance(b).events     = runs(b).matrix;
+        nuisance(b).nevents = size(nuisance(b).events, 2);
+        nuisance(b).eventnames = runs(b).regressors;
 
         bstart = bstart + nuisance(b).nframes;
     end
@@ -474,7 +481,7 @@ for current = do
                 img(b) = readIfEmpty(img(b), file(b).sfile, omit);
             end
             fprintf('\n---> running regression ');
-            [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress);
+            [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext]);
             fprintf('... done!');
             for b = 1:nbolds
                 fprintf('\n---> saving %s ', file(b).tfile);
@@ -510,7 +517,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
+function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot)
 
     % ---> basic settings
 
@@ -522,6 +529,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
     task        = ismember('t', rgss);
     event       = ismember('e', rgss);
     rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm'}));
+    hdr         = {};
 
     % ---> bold starts, frames
 
@@ -586,6 +594,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
 
         X(bS(b):bE(b), xS:xE) = [ones(frames(b),1) [zeros(omit,1); pl]];
         xS = xS+2;
+        hdr{end+1} = sprintf('baseline_b%d', b);
+        hdr{end+1} = sprintf('trend_b%d', b);
     end
 
 
@@ -597,9 +607,17 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
             X(bS(b):bE(b), xS:xE) = nuisance(b).mov;
             if ~joinn
                 xS = xS+nM;
+                for mi = 1:nM
+                    hdr{end+1} = sprintf('mov_%s_b%d', nuisance(1).mov_hdr{mi}, b);
+                end
             end
         end
         xS = xS+nM;
+        if joinn
+            for mi = 1:nM
+                hdr{end+1} = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+            end
+        end
     end
 
 
@@ -610,6 +628,14 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
         X(bS(b):bE(b), xS:xE) = nuisance(b).signal;
         if ~joinn
             xS = xS+nS;
+            for mi = 1:nS
+                hdr{end+1} = sprintf('%s_b%d', nuisance(1).signal_hdr{mi}, b);
+            end
+        end
+        if joinn
+            for mi = 1:nS
+                hdr{end+1} = sprintf('%s', nuisance(1).signal_hdr{mi});
+            end
         end
     end
     xS = xS+nS;
@@ -627,9 +653,17 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
                 X(bS(b):bE(b), xS:xE) = [zeros(1,nuisance(b).nmov); diff(nuisance(b).mov)];
                 if ~joinn
                     xS = xS+nM;
+                    for mi = 1:nM
+                        hdr{end+1} = sprintf('mov_%s_b%d_d1', nuisance(1).mov_hdr{mi}, b);
+                    end
                 end
             end
             xS = xS+nM;
+            if joinn
+                for mi = 1:nM
+                    hdr{end+1} = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
+                end
+            end
         end
 
         %   ----> signal
@@ -639,9 +673,17 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
             X(bS(b):bE(b), xS:xE) = [zeros(omit+1, nuisance(b).nsignal); diff(nuisance(b).signal(omit+1:end,:))];
             if ~joinn
                 xS = xS+nS;
+                for mi = 1:nS
+                    hdr{end+1} = sprintf('%s_b%d_d1', nuisance(b).signal_hdr{mi}, b);
+                end
             end
         end
         xS = xS+nS;
+        if joinn
+            for mi = 1:nS
+                hdr{end+1} = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+            end
+        end
     end
 
 
@@ -653,9 +695,15 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
             X(bS(b):bE(b), xS:xE) = nuisance(b).events;
             if ~joine
                 xS = xS+nE;
+                for mi = 1:nE
+                    hdr{end+1} = sprintf('%s_b%d', nuisance(b).eventnames{mi}, b);
+                end
             end
         end
         xS = xS+nE;
+        for mi = 1:nE
+            hdr{end+1} = sprintf('%s', nuisance(1).eventnames{mi});
+        end
     end
 
 
@@ -667,6 +715,9 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
             X(bS(b):bE(b), xS:xE) = nuisance(b).task;
         end
         xS = xS+nT;
+        for mi = 1:nT
+            hdr{end+1} = sprintf('task%d', mi);
+        end
     end
 
     %   ----> combine data in a single image
@@ -700,6 +751,19 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore)
         fstart = sum(mframes(1:b-1)) + 1;
         fend   = sum(mframes(1:b));
         Y.data(:, fstart:fend) = img(b).data(:,masks{b});
+    end
+
+    %   ----> save GLM matrix data
+
+    if ismember(options.glm_matrix, {'text', 'both'})
+        g_WriteTable([Xroot '.txt'], [[1:sum(nmask==1)]' X(nmask==1, :)], hdr, 'sd|mean|min|max');
+    end
+
+    if ismember(options.glm_matrix, {'image', 'both'})
+        mimg = X(nmask==1, :);
+        mimg = mimg / (max(max(abs(mimg))) * 2);
+        mimg = mimg + 0.5;
+        imwrite(mimg, [Xroot '.png']);
     end
 
     %   ----> mask nuisance and do GLM
