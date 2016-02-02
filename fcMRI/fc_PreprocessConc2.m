@@ -106,12 +106,12 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save';
 options = g_ParseOptions([], options, default);
+options
 
 
-
-fprintf('\nRunning preproces conc 2 script v0.9.8 [%s]\n', tail);
+fprintf('\nRunning preproces conc 2 script v0.9.8.1 [%s]\n', tail);
 
 % ======================================================
 %                          ----> prepare basic variables
@@ -480,17 +480,22 @@ for current = do
             for b = 1:nbolds
                 img(b) = readIfEmpty(img(b), file(b).sfile, omit);
             end
-            fprintf('\n---> running regression ');
+            fprintf('\n---> running GLM ');
             [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext]);
             fprintf('... done!');
-            for b = 1:nbolds
-                fprintf('\n---> saving %s ', file(b).tfile);
-                img(b).mri_saveimage(file(b).tfile);
-                fprintf('... done!');
+
+            if strcmp(options.glm_residuals, 'save')
+                for b = 1:nbolds
+                    fprintf('\n---> saving %s ', file(b).tfile);
+                    img(b).mri_saveimage(file(b).tfile);
+                    fprintf('... done!');
+                end
+            else
+                fprintf('\n---> not saving residuals (glm_residuals set to %s)', options.glm_residuals);
             end
 
             if docoeff
-                cname = [file(b).croot ext '_coeff' tail];
+                cname = [file(b).croot ext '_Bcoeff' tail];
                 fprintf('\n---> saving %s ', cname);
                 coeff.mri_saveimage(cname);
                 fprintf('... done!');
