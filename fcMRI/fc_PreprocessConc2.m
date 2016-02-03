@@ -1,6 +1,6 @@
-function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options)
+function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 
-%function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options)
+%function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 %   (c) Copyright Grega Repovš, 2011-01-24
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,6 +55,7 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %                     smooth_mask:    false
 %                     dilate_mask:    false
 %                     glm_matrix:     none / text / image / both
+%       done        - path to file to save to confirm all is a-ok
 %
 %   Does the preprocesing for the files from subjectf folder.
 %   Saves images in ftarget folder
@@ -93,6 +94,7 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+if nargin < 15, done = [];                                  end
 if nargin < 15, options = '';                               end
 if nargin < 14, ignores = '';                               end
 if nargin < 13, scrub = '';                                 end
@@ -108,10 +110,10 @@ if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save';
 options = g_ParseOptions([], options, default);
-options
-
 
 fprintf('\nRunning preproces conc 2 script v0.9.8.1 [%s]\n', tail);
+
+options
 
 % ======================================================
 %                          ----> prepare basic variables
@@ -295,7 +297,7 @@ end
 
 tasklist = ['shrl'];
 exts     = {'_g7','_hpss',['_res-' rgsse],'_lpss'};
-info     = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
+info     = {'Smoothing','High-pass filtering','Computing GLM','Low-pass filtering'};
 
 
 % ---> clean old files
@@ -353,6 +355,8 @@ end
 dor      = true;
 
 for current = do
+
+    saveconc = true;
 
     % --- set the source and target filenames
 
@@ -490,8 +494,10 @@ for current = do
                     img(b).mri_saveimage(file(b).tfile);
                     fprintf('... done!');
                 end
+                saveconc = true;
             else
                 fprintf('\n---> not saving residuals (glm_residuals set to %s)', options.glm_residuals);
+                saveconc = false;
             end
 
             if docoeff
@@ -504,15 +510,24 @@ for current = do
         dor = false;
     end
 
-    if exist(file(b).tconc, 'file') && ~overwrite
-        fprintf('\n---> conc file already saved!');
-    else
-        fprintf('\n---> saving conc file ');
-        gmrimage.mri_SaveConcFile(file(b).tconc, {file.tfile});
-        fprintf('... done!');
+    if saveconc
+        if exist(file(b).tconc, 'file') && ~overwrite
+            fprintf('\n---> conc file already saved!');
+        else
+            fprintf('\n---> saving conc file ');
+            gmrimage.mri_SaveConcFile(file(b).tconc, {file.tfile});
+            fprintf('... done!');
+        end
     end
 
 end
+
+if ~isempty(done)
+    fout = fopen(done, 'w');
+    fprintf(fout, 'OK');
+    fclose(fout);
+end
+fprintf('\n==> preproces conc 2 finished successfully\n');
 
 return
 
