@@ -1,8 +1,8 @@
 function [out] = g_ReadEventFile(file)
 
-%	
+%
 %	Reads fidl event file and returns a structure that includes:
-%	
+%
 %	frame   - frame number of the event start
 %	elength - event length in frames
 %	event_s - start of the event in s
@@ -10,9 +10,10 @@ function [out] = g_ReadEventFile(file)
 %	event   - event code
 %	events  - list of event names
 %	TR      - tr in s
-%	
+%
 %   (c) Grega Repovš
 %   2011-07-30 - Added coding of frames to ignore
+%   2016-02-03 - Added checking for event length in ms
 %
 
 [fin message] = fopen(file);
@@ -37,17 +38,23 @@ first = 1;
 while feof(fin) == 0
 	s = fgetl(fin);
 	s = strrep(s, 'NA', 'NaN');
-	
+
 	data = strread(s, '%f');
-	
+
 	if length(data) >= 3
-	
+
 		frame 	= [frame floor(data(1)/TR)+1];
 		event_s = [event_s data(1)];
-		elength = [elength floor(data(3)/TR)];
-		event_l = [event_l data(3)];
+
+		el      = data(3);
+		if el > 100
+			el  = el / 1000;
+		end
+
+		elength = [elength floor(el/TR)];
+		event_l = [event_l el];
 		event 	= [event data(2)];
-	
+
 		if first
 			nbeh = length(data)-3;
 			first = 0;
@@ -61,18 +68,20 @@ while feof(fin) == 0
     		event_s = [event_s data(1)];
     		elength = [elength abs(data(2))];
     		event_l = [event_l floor(abs(data(2))*TR)];
-    		event 	= [event -1]; 
+    		event 	= [event -1];
 		end
 	end
 end
 
+
 fclose(fin);
 
-out.frame = frame';
+out.frame   = frame';
 out.elength = elength';
 out.event_s = event_s';
 out.event_l = event_l';
-out.event = event';
-out.events = events;
-out.beh = beh;
-out.TR = TR;
+out.event   = event';
+out.events  = events;
+out.beh     = beh;
+out.TR      = TR;
+out.nevents = length(frame);
