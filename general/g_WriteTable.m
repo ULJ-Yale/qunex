@@ -1,6 +1,6 @@
-function [] = g_WriteTable(filename, data, hdr, extra, sform, sep)
+function [] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
 
-%function [] = g_WriteTable(filename, data, hdr, extra, sform, sep)
+%function [] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
 %
 %   A general function for writing data tables.
 %
@@ -11,9 +11,16 @@ function [] = g_WriteTable(filename, data, hdr, extra, sform, sep)
 %       - extra     : optional summary rows to be added at the end (e.g. 'mean|sd|min|max|%|sum')
 %       - sform     : optional format string for header, first data column, rest of the data columns and extra row names (e.g. '%s|%d|%.5f|%s')
 %       - sep       : optional separator (default '\t')
+%       - pre       : optional text to prepend before the header
+%       - post      : optional text to append at the end of the file
 %
 %    Whipped together by Grega Repovs, 2014-07-18
+%
+%    2016.02.05 Grega Repovs ... Added pre and post options
+%
 
+if nargin < 8                    post  = [];                end
+if nargin < 7                    pre   = [];                end
 if nargin < 6 || isempty(sep),   sep   = '\t';              end
 if nargin < 5 || isempty(sform), sform = '%s|%d|%.5g|%s';   end
 if nargin < 4,                   extra = [];                end
@@ -32,6 +39,13 @@ end
 % --- start writing!
 
 fout = fopen(filename, 'w');
+
+% --- is there a pre
+
+if ~isempty(pre)
+    fprintf(fout, '%s\n', pre);
+end
+
 
 % --- write header
 
@@ -73,5 +87,14 @@ for ex = extra
         fprintf(fout, [sep sf], sum(data(:,2:end))./size(data,1).*100);
     end
 end
+
+% --- is there a post
+
+if ~isempty(post)
+    fprintf(fout, '\n%s', post);
+end
+
+
+
 
 fclose(fout);

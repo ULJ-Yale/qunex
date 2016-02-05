@@ -215,7 +215,8 @@ if strfind(do, 'r')
     % ---> event file
 
     if ~isempty(eventstring)
-        runs            = g_CreateTaskRegressors(file.fidlfile, nuisance.nframes, eventstring);
+        rmodel          = g_CreateTaskRegressors(file.fidlfile, nuisance.nframes, eventstring);
+        runs            = rmodel.run;
         nuisance.events = runs(1).matrix;
     else
         nuisance.events = [];

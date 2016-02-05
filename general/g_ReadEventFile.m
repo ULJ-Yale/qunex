@@ -33,8 +33,8 @@ beh 	= [];
 event_l = [];
 event_s = [];
 
-
 first = 1;
+
 while feof(fin) == 0
 	s = fgetl(fin);
 	s = strrep(s, 'NA', 'NaN');
@@ -76,6 +76,7 @@ end
 
 fclose(fin);
 
+out.fidl    = file;
 out.frame   = frame';
 out.elength = elength';
 out.event_s = event_s';

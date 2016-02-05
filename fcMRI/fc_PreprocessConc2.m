@@ -257,8 +257,10 @@ end
 if strfind(do, 'r')
 
     if ~isempty(eventstring)
-        runs = g_CreateTaskRegressors(file(1).fidlfile, frames, eventstring);
+        rmodel = g_CreateTaskRegressors(file(1).fidlfile, frames, eventstring);
+        runs   = rmodel.run;
     else
+        rmodel = [];
         for b = 1:nbolds
             runs(b).matrix = [];
         end
@@ -275,9 +277,11 @@ if strfind(do, 'r')
             nuisance(b).ntask = size(task, 2);
         end
 
-        nuisance(b).events     = runs(b).matrix;
-        nuisance(b).nevents = size(nuisance(b).events, 2);
-        nuisance(b).eventnames = runs(b).regressors;
+        nuisance(b).events      = runs(b).matrix;
+        nuisance(b).nevents     = size(nuisance(b).events, 2);
+        nuisance(b).eventnamesr = runs(b).regressors;
+        nuisance(b).eventnames  = rmodel.columns.event;
+        nuisance(b).eventframes = rmodel.columns.frame;
 
         bstart = bstart + nuisance(b).nframes;
     end
@@ -485,7 +489,7 @@ for current = do
                 img(b) = readIfEmpty(img(b), file(b).sfile, omit);
             end
             fprintf('\n---> running GLM ');
-            [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext]);
+            [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore.regress, options, [file(b).Xroot ext], rmodel);
             fprintf('... done!');
 
             if strcmp(options.glm_residuals, 'save')
@@ -537,7 +541,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot)
+function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore, options, Xroot, rmodel)
 
     % ---> basic settings
 
@@ -550,6 +554,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     event       = ismember('e', rgss);
     rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm'}));
     hdr         = {};
+    hdre        = {};
+    hdrf        = [];
 
     % ---> bold starts, frames
 
@@ -614,8 +620,11 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
         X(bS(b):bE(b), xS:xE) = [ones(frames(b),1) [zeros(omit,1); pl]];
         xS = xS+2;
-        hdr{end+1} = sprintf('baseline_b%d', b);
-        hdr{end+1} = sprintf('trend_b%d', b);
+        hdr{end+1}  = sprintf('baseline_b%d', b);
+        hdr{end+1}  = sprintf('trend_b%d', b);
+        hdre{end+1} = sprintf('baseline.b%d', b);
+        hdre{end+1} = sprintf('trend.b%d', b);
+        hdrf(end+1:end+2) = [1 1];
     end
 
 
@@ -628,14 +637,18 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             if ~joinn
                 xS = xS+nM;
                 for mi = 1:nM
-                    hdr{end+1} = sprintf('mov_%s_b%d', nuisance(1).mov_hdr{mi}, b);
+                    hdr{end+1}  = sprintf('mov_%s_b%d', nuisance(1).mov_hdr{mi}, b);
+                    hdre{end+1} = sprintf('mov_%s.b%d', nuisance(1).mov_hdr{mi}, b);
+                    hdrf(end+1) = 1;
                 end
             end
         end
         xS = xS+nM;
         if joinn
             for mi = 1:nM
-                hdr{end+1} = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+                hdr{end+1}  = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+                hdre{end+1} = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+                hdrf(end+1) = 1;
             end
         end
     end
@@ -649,12 +662,16 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         if ~joinn
             xS = xS+nS;
             for mi = 1:nS
-                hdr{end+1} = sprintf('%s_b%d', nuisance(1).signal_hdr{mi}, b);
+                hdr{end+1}  = sprintf('%s_b%d', nuisance(1).signal_hdr{mi}, b);
+                hdre{end+1} = sprintf('%s.b%d', nuisance(1).signal_hdr{mi}, b);
+                hdrf(end+1) = 1;
             end
         end
         if joinn
             for mi = 1:nS
-                hdr{end+1} = sprintf('%s', nuisance(1).signal_hdr{mi});
+                hdr{end+1}  = sprintf('%s', nuisance(1).signal_hdr{mi});
+                hdre{end+1} = sprintf('%s', nuisance(1).signal_hdr{mi});
+                hdrf(end+1) = 1;
             end
         end
     end
@@ -674,14 +691,18 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                 if ~joinn
                     xS = xS+nM;
                     for mi = 1:nM
-                        hdr{end+1} = sprintf('mov_%s_b%d_d1', nuisance(1).mov_hdr{mi}, b);
+                        hdr{end+1}  = sprintf('mov_%s_d1.b%d', nuisance(1).mov_hdr{mi}, b);
+                        hdre{end+1} = sprintf('mov_%s_d1.b%d', nuisance(1).mov_hdr{mi}, b);
+                        hdrf(end+1) = 1;
                     end
                 end
             end
             xS = xS+nM;
             if joinn
                 for mi = 1:nM
-                    hdr{end+1} = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
+                    hdr{end+1}  = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
+                    hdre{end+1} = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
+                    hdrf(end+1) = 1;
                 end
             end
         end
@@ -694,14 +715,18 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             if ~joinn
                 xS = xS+nS;
                 for mi = 1:nS
-                    hdr{end+1} = sprintf('%s_b%d_d1', nuisance(b).signal_hdr{mi}, b);
+                    hdr{end+1}  = sprintf('%s_d1.b%d', nuisance(b).signal_hdr{mi}, b);
+                    hdre{end+1} = sprintf('%s_d1.b%d', nuisance(b).signal_hdr{mi}, b);
+                    hdrf(end+1) = 1;
                 end
             end
         end
         xS = xS+nS;
         if joinn
             for mi = 1:nS
-                hdr{end+1} = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+                hdr{end+1}  = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+                hdre{end+1} = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+                hdrf(end+1) = 1;
             end
         end
     end
@@ -716,13 +741,17 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             if ~joine
                 xS = xS+nE;
                 for mi = 1:nE
-                    hdr{end+1} = sprintf('%s_b%d', nuisance(b).eventnames{mi}, b);
+                    hdr{end+1}  = sprintf('%s_b%d', nuisance(b).eventnamesr{mi}, b);
+                    hdre{end+1} = sprintf('%s.b%d', nuisance(b).eventnames{mi}, b);
+                    hdrf(end+1) = nuisance(b).eventframes(mi);
                 end
             end
         end
         xS = xS+nE;
         for mi = 1:nE
-            hdr{end+1} = sprintf('%s', nuisance(1).eventnames{mi});
+            hdr{end+1}  = sprintf('%s', nuisance(1).eventnamesr{mi});
+            hdre{end+1} = sprintf('%s', nuisance(1).eventnames{mi});
+            hdrf(end+1) = nuisance(1).eventframes(mi);
         end
     end
 
@@ -736,7 +765,9 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         end
         xS = xS+nT;
         for mi = 1:nT
-            hdr{end+1} = sprintf('task%d', mi);
+            hdr{end+1}  = sprintf('task%d', mi);
+            hdre{end+1} = sprintf('task%d', mi);
+            hdrf(end+1) = 1;
         end
     end
 
@@ -774,9 +805,13 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     end
 
     %   ----> save GLM matrix data
+    %   ----> Header not written right yet ... need to change columns according to the regression type (per run matrices)
 
     if ismember(options.glm_matrix, {'text', 'both'})
-        g_WriteTable([Xroot '.txt'], [[1:sum(nmask==1)]' X(nmask==1, :)], hdr, 'sd|mean|min|max');
+        xevents = sprintf(strjoin(hdre, '\t'));
+        xframes = sprintf('%d\t', hdrf);
+        pre     = sprintf('# fidl: %s\n# model: %s\n# ignore: %s\n# event: %s\n# frame: %s', rmodel.fidl.fidl, rmodel.description, rmodel.ignore, xevents, xframes(1:end-1));
+        g_WriteTable([Xroot '.txt'], [[1:sum(nmask==1)]' X(nmask==1, :)], hdr, 'sd|mean|min|max', [], [], pre);
     end
 
     if ismember(options.glm_matrix, {'image', 'both'})
@@ -893,3 +928,5 @@ function [] = wbSmooth(sfile, tfile, file, options)
     else
         fprintf(' ... done!');
     end
+
+

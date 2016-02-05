@@ -149,6 +149,7 @@ for n = 1:nsub
         finfo = [];
     else
         finfo = g_CreateTaskRegressors(subject(n).fidl, y.runframes, fstring, fignore);
+        finfo = finfo.run;
         matrix = [];
         for r = 1:length(finfo)
             matrix = [matrix; finfo(r).matrix];

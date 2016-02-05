@@ -430,7 +430,8 @@ function [img coeff] = regressNuisance(img, omit, file, eventstring, glm, ignore
     fprintf(' .');
 
     if strfind(glm.rgss, 'e')
-        runs = g_CreateTaskRegressors(file(b).fidlfile, frames, eventstring);
+        rmodel = g_CreateTaskRegressors(file(b).fidlfile, frames, eventstring);
+        runs   = rmodel.run;
     else
         for r = 1:nbolds
             runs(r).matrix = [];

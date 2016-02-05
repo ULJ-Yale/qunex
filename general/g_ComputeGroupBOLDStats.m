@@ -114,8 +114,9 @@ for n = 1:nsub
         mask = [];
         if isfield(subject(n), 'fidl')
             if subject(n).fidl
-                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, fignore);
-                nmask = [];
+                rmodel = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, fignore);
+                mask   = rmodel.run;
+                nmask  = [];
                 for r = 1:length(mask)
                     nmask = [nmask; sum(mask(r).matrix,2)>0];
                 end

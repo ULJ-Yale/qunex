@@ -1,4 +1,4 @@
-function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
+function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 
 %
 %   Returns task regressors for each bold run
@@ -7,16 +7,23 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %   - fidlf - subject's fidl event file
 %   - concf - subject's conc file or an array of run lengths
 %   - model - array structure that specifies what needs to be modelled and how or a string description
-%     - code - event codes (used in fidl file)
-%     - hrf_type
-%       -> 'boynton' (assumed response)
-%       -> 'SPM' (assumed response)
-%       -> 'u' (unassumed response)
-%       -> 'block' (block response)
-%     - length
-%       - number of frames to model (for unasumed response)
-%       - length of event in s (for assumed response - if empty, duration is taken from event file)
-%       - start and end offset in frames (for block response)
+%     - decription - description of the model
+%     - regressor  - a structure array that specifies each regressor with fields:
+%         - name - given name
+%         - code - event codes (used in fidl file)
+%         - hrf_type
+%           -> 'boynton' (assumed response)
+%           -> 'SPM' (assumed response)
+%           -> 'u' (unassumed response)
+%           -> 'block' (block response)
+%         - length
+%           - number of frames to model (for unasumed response)
+%           - length of event in s (for assumed response - if empty, duration is taken from event file)
+%           - start and end offset in frames (for block response)
+%         - weight
+%           - column
+%           - normalize (within vs. across)
+%           - method    (z, 01, -11, none)
 %   - ignore - what to do with frames to ignore
 %       -> 'no' (don't do anything)
 %       -> 'ignore' (ignore those frames)
@@ -24,9 +31,17 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %       -> 'both' (ignore and specify)
 %
 %   OUTPUT
-%   - run - array struct for each run
-%     - regressors - cell array of regressor names taken from event file
-%     - matrix - matrix of regressor values for the run
+%   - model - struct with the specified model
+%     - run - struct array with per run data
+%       - regressors - cell array of regressor names taken from event file
+%       - matrix - matrix of regressor values for the run
+%     - columns - description of columns
+%       - event - event name
+%       - frame - frame of that event (for unassumed models)
+%     - regressor
+%     - description
+%     - ignore
+%     - fidl
 %
 %   NOTES
 %   - would be good to include other HRF types as well as estimated HRF
@@ -43,6 +58,7 @@ function [run] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %                - Updated: 2011.02.11
 %                - Updated: 2011.07.31
 %                - Updated: 2015.10.23 (Error reporting for missing event info.)
+%                - Updated: 2016.02.04 (Added behavioral regressors and changed output structure)
 %
 
 % ---> set variables
@@ -74,19 +90,73 @@ nruns  = length(frames);
 if isa(model, 'char')
     model = parseModels(model);
 end
-nmodels = length(model);
+nregressors = length(model.regressor);
 
 % ---> convert string codes to number codes if necessary
 
-for m = 1:nmodels
-    if ischar(model(m).code{1})
-        model(m).code = find(ismember(events.events, model(m).code)) - 1;
+for m = 1:nregressors
+    if isempty(model.regressor(m).code)
+        model.regressor(m).code = find(ismember(events.events, model.regressor(m).event)) - 1;
+    end
+end
+
+
+%=========================================================================
+%                         loop over all the models and compute the weights
+
+events.weights = ones(events.nevents, nregressors);
+
+for m = 1:nregressors
+    if ~isempty(model.regressor(m).weight.column)
+        w = events.beh(:, model.regressor(m).weight.column);
+
+        % --- are we normalizing at all
+
+        if ~strcmp(model.regressor(m).weight.method, 'none')
+
+            % --- what are we normalizing over > create a mask, extract relevant data
+
+            wm = ones(events.nevents, 1) == 1;
+            if model.regressor(m).weight.normalize(1) == 'w'
+                wm = ismember(events.event, model.regressor(m).code);
+            end
+
+            tw = w(wm);
+
+            % --- normalize
+
+            switch model.regressor(m).weight.method
+
+            case 'z'
+                tw = zscore(tw);
+
+            case '01'
+                tw = (tw - min(tw)) / (max(tw) - min(tw));
+
+            case '-11'
+                tw = (tw - min(tw)) / (max(tw) - min(tw)) * 2 - 1;
+
+            otherwise
+                error('\nERROR: No known option for behavioral covariates normalization method [%s]!\n', model.regressor(m).weight.method);
+
+            end
+
+            % --- embed back
+
+            w(wm) = tw;
+            w(~wm) = 0;
+        end
+
+        events.weights(:, m) = w;
     end
 end
 
 
 %=========================================================================
 %                                  loop over all the runs in the conc file
+
+model.columns.event = {};
+model.columns.frame = [];
 
 for r = 1:nruns
 
@@ -107,52 +177,59 @@ for r = 1:nruns
 
     %------------------------- loop over models
 
-    for m = 1:nmodels
+    for m = 1:nregressors
 
-        relevant = in_run & ismember(events.event, model(m).code);
+        relevant = in_run & ismember(events.event, model.regressor(m).code);
         nrelevant = sum(relevant);
+
+        basename = model.regressor(m).name;
 
         %------------------------- code for unassumed models
 
-        if strcmp(model(m).hrf_type, 'u')
+        if strcmp(model.regressor(m).hrf_type, 'u')
 
-            mtx = zeros(nframes, model(m).length);
-            rel_frame = events.frame(relevant);
+            mtx = zeros(nframes, model.regressor(m).length);
+            rel_frame  = events.frame(relevant);
+            rel_weight = events.weights(relevant, m);
 
             for ievent = 1:nrelevant
-                for iframe = 1:model(m).length
+                for iframe = 1:model.regressor(m).length
                     target = rel_frame(ievent) - start_frame + iframe;
                     if target <= nframes
-                        mtx(target, iframe) = 1;
+                        mtx(target, iframe) = rel_weight(ievent);
                     end
                 end
             end
 
             run(r).matrix = [run(r).matrix mtx];
 
-            basename = join(events.events(model(m).code+1), '_');
-            for iname = 1:model(m).length
-                run(r).regressors = [run(r).regressors, [basename '_' num2str(iname)]];
+            for iname = 1:model.regressor(m).length
+                run(r).regressors = [run(r).regressors, [basename '.' num2str(iname)]];
+            end
+            if r == 1
+                model.columns.event(end+1:end+model.regressor(m).length) = {basename};
+                model.columns.frame(end+1:end+model.regressor(m).length) = 1:model.regressor(m).length;
             end
 
 
         %------------------------- code for block models
 
-        elseif strcmp(model(m).hrf_type, 'block')
+        elseif strcmp(model.regressor(m).hrf_type, 'block')
 
             ts = zeros(nframes, 1);
             soff = 0;
             eoff = 0;
 
-            if ~isempty(model(m).length)
-                soff = model(m).length(1);
-                if length(model(m).length) > 1
-                    eoff = model(m).length(2);
+            if ~isempty(model.regressor(m).length)
+                soff = model.regressor(m).length(1);
+                if length(model.regressor(m).length) > 1
+                    eoff = model.regressor(m).length(2);
                 end
             end
 
-            rel_start = events.frame(relevant) - start_frame + 1;
-            rel_end   = events.frame(relevant) - start_frame + events.elength(relevant);
+            rel_start   = events.frame(relevant) - start_frame + 1;
+            rel_end     = events.frame(relevant) - start_frame + events.elength(relevant);
+            rel_weights = events.weights(relevant, m);
 
             for ievent = 1:nrelevant
                 e_start = rel_start(ievent) + soff;
@@ -171,29 +248,33 @@ for r = 1:nruns
                     fprintf('\n');
                     fprintf('%.2f ', events.event_s(relevant));
                 end
-                ts(e_start:e_end,1) = 1;
+                ts(e_start:e_end, 1) = rel_weights(ievent);
             end
 
             run(r).matrix = [run(r).matrix ts];
-            run(r).regressors = [run(r).regressors, join(events.events(model(m).code+1), '_')];
+            run(r).regressors = [run(r).regressors, basename];
+            if r == 1
+                model.columns.event(end+1) = {basename};
+                model.columns.frame(end+1) = 1;
+            end
 
 
         %------------------------- code for assumed models
 
-        elseif ismember(model(m).hrf_type, {'boynton', 'SPM'})
+        elseif ismember(model.regressor(m).hrf_type, {'boynton', 'SPM'})
 
             %======================================================================
             %                                                  create the right HRF
 
             hrf = [];
 
-            if strcmp(model(m).hrf_type, 'boynton')
+            if strcmp(model.regressor(m).hrf_type, 'boynton')
                 % t = [0:3200]./100;
                 t = [0:32*round(100/events.TR)]./round(100/events.TR);
                 hrf = fmri_hemodyn(t, 2.25, 1.25, 2);  % with parameters as suggested in the source
             end
 
-            if strcmp(model(m).hrf_type, 'SPM')
+            if strcmp(model.regressor(m).hrf_type, 'SPM')
                 hrf = spm_hrf(events.TR/100);    % leaving parameters to their defaults
             end
 
@@ -207,12 +288,13 @@ for r = 1:nruns
             % ts = zeros(round(events.TR*100)*nframes),1);
             ts = zeros(100*nframes,1);
 
-            rel_times = events.event_s(relevant);
-            rel_times = rel_times - (start_frame-1)*events.TR;
+            rel_times   = events.event_s(relevant);
+            rel_times   = rel_times - (start_frame-1) * events.TR;
+            rel_weights = events.weights(relevant, m);
 
             rel_lengths = events.event_l(relevant);
-            if (~isempty(model(m).length))
-                rel_lengths(:) = model(m).length;
+            if (~isempty(model.regressor(m).length))
+                rel_lengths(:) = model.regressor(m).length;
             end
 
             for ievent = 1:nrelevant
@@ -235,7 +317,7 @@ for r = 1:nruns
                     fprintf('\n');
                     fprintf('%.2f ', events.event_s(relevant));
                 end
-                ts(e_start:e_end,1) = 1;
+                ts(e_start:e_end,1) = rel_weights(ievent);
             end
 
             %======================================================================
@@ -243,13 +325,18 @@ for r = 1:nruns
 
             ts = conv(ts, hrf);
             ts = ts(1:100*nframes);
-            ts = mean(reshape(ts,100,nframes),1);
+            ts = mean(reshape(ts, 100, nframes), 1);
             if max(ts) > 0
                 ts = ts/max(ts);
             end
 
             run(r).matrix = [run(r).matrix ts'];
-            run(r).regressors = [run(r).regressors, join(events.events(model(m).code+1), '_')];
+            run(r).regressors = [run(r).regressors, basename];
+
+            if r == 1
+                model.columns.event(end+1) = {basename};
+                model.columns.frame(end+1) = 1;
+            end
 
         end
 
@@ -275,11 +362,11 @@ for r = 1:nruns
             if e_end > nframes
                 e_end = nframes;
             end
-            ts(e_start:e_end,1) = 1;
+            ts(e_start:e_end, 1) = 1;
         end
 
         if strcmpi(ignore, 'ignore') | strcmpi(ignore, 'both')
-            run(r).matrix(ts==1,:) = 0;
+            run(r).matrix(ts==1, :) = 0;
         end
         if strcmpi(ignore, 'specify') | strcmpi(ignore, 'both')
             run(r).matrix = [run(r).matrix ts];
@@ -291,27 +378,21 @@ for r = 1:nruns
 
 end
 
+model.run    = run;
+model.ignore = ignore;
+model.fidl   = events;
 
 
-%------------------------ additional functions
-
-function [s] = join(strings, delim)
-
-s = strings{1};
-slength = length(strings);
-if slength > 1
-    for n = 2:slength
-        s = [s delim strings{n}];
-    end
-end
 
 
 %   ----> function to parse model description to model structure
 %
 %   - description
-%     - pipe separated list of model information for each event
-%       assumed: <fidl code>:<model>[:<length in s>] --- length assumed empty if not provided
+%     - pipe separated list of regressor information for each event
+%       assumed: <fidl code>:<hrf>[:<length in s>] --- length assumed empty if not provided
 %       unassumed: <fidl code>:<length in frames>
+%     - each regressor info can follow with ">" and a weight descriptor in a form
+%       <name of the resulting regressor>[:<behavioral column to use from fidl file (1-based)>[:<normalization span>[:<normalization method>]]]
 %
 %   - model - array structure that specifies what needs to be modelled and how or a string description
 %     - code - event codes (used in fidl file)
@@ -324,6 +405,11 @@ end
 %       - number of frames to model (for unasumed response)
 %       - length of event in s (for assumed response - if empty, duration is taken from event file)
 %       - start and end offset in frames (for block response)
+%     - weight
+%       - name
+%       - column
+%       - normalize (within vs. across)
+%       - method    (z, 01, -11, none)
 
 
 function [model] = parseModels(s)
@@ -332,8 +418,16 @@ a = splitby(s, '|');
 
 for n = 1:length(a)
 
-    b = splitby(a{n},':');
-    model(n).code = splitby(b{1},',');
+    m = splitby(a{n}, '>');
+    if length(m) == 0
+        continue
+    end
+
+    % --=> deal with the event modelling specification
+
+    b = splitby(m{1}, ':');
+    regressor(n).event = splitby(b{1}, ',');
+    regressor(n).code  = [];
 
     if length(b) == 0
         continue
@@ -348,22 +442,43 @@ for n = 1:length(a)
     % --- is field 2 a number ?
 
     if sum(isletter(b{2}))
-        model(n).hrf_type = b{2};
-        model(n).length = [];
+        regressor(n).hrf_type = b{2};
+        regressor(n).length = [];
     else
-        model(n).hrf_type = 'u';
-        model(n).length = str2num(b{2});
+        regressor(n).hrf_type = 'u';
+        regressor(n).length = str2num(b{2});
     end
 
     % --- do we have a third field ?
 
     if length(b) >= 3
-        model(n).length = str2num(b{3});
+        regressor(n).length = str2num(b{3});
     end
     if length(b) == 4
-        model(n).length = [model(n).length str2num(b{4})];
+        regressor(n).length = [regressor(n).length str2num(b{4})];
     end
+
+    % --=> deal with weighting specification
+
+    if length(m) > 1
+        c = splitby(m{2}, ':');
+        nc = length(c);
+
+        if nc > 0, regressor(n).name             = c{1}         ; else regressor(n).name             = [];       end
+        if nc > 1, regressor(n).weight.column    = str2num(c{2}); else regressor(n).weight.normalize = [];       end
+        if nc > 2, regressor(n).weight.normalize = c{3}         ; else regressor(n).weight.normalize = 'within'; end
+        if nc > 3, regressor(n).weight.method    = c{4}         ; else regressor(n).weight.method    = 'z';      end
+    else
+        regressor(n).name             = strjoin(regressor(n).event, '|');
+        regressor(n).weight.column    = [];
+        regressor(n).weight.normalize = [];
+        regressor(n).weight.method    = [];
+    end
+
 end
+
+model.regressor   = regressor;
+model.description = s;
 
 
 
