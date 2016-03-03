@@ -147,7 +147,11 @@ end
 
 % --- reassign ROI too small
 
-small = peak([peak.size] < minsize);
+if ~isempty(peak)
+    small = peak([peak.size] < minsize);
+else
+    small = [];
+end
 
 while ~isempty(small)
 
@@ -205,8 +209,11 @@ end
 
 % --- Trim regions that are too large
 
-
-big = find([peak.size] > maxsize);
+if ~isempty(peak)
+    big = find([peak.size] > maxsize);
+else
+    big = [];
+end
 
 if ~isempty(big) && verbose, fprintf('\n\n---> found %d ROI that are too large', length(big)); end
 
@@ -259,7 +266,9 @@ end
 
 % --- remove empty peaks
 
-peak = peak([peak.size]>0);
+if ~isempty(peak)
+    peak = peak([peak.size]>0);
+end
 
 % --- embedd ROI
 
@@ -269,23 +278,28 @@ roi.data = seg(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1));
 
 % --- gather statistics
 
-roiinfo     = roi.mri_XYZ(img);
-roiinfo.ijk = [reshape([peak.label], [],1) reshape([peak.xyz], 3, [])' - 1];
-roiinfo.xyz = roi.mri_GetXYZ(roiinfo.ijk);
+if isempty(peak)
+    if report, fprintf('\n===> No peaks to report on!\n'); end
+else
 
-if report, fprintf('\n===> peak report\n'); end
+    roiinfo     = roi.mri_GetXYZ(img);
+    roiinfo.ijk = [reshape([peak.label], [],1) reshape([peak.xyz], 3, [])' - 1];
+    roiinfo.xyz = roi.mri_GetXYZ(roiinfo.ijk);
 
-for p = 1:length(peak)
-    peak(p).ijk = peak(p).xyz - 1;
-    peak(p).xyz = roiinfo.xyz(p, end-2:end);
-    peak(p).value = img.data(peak(p).ijk(1), peak(p).ijk(2), peak(p).ijk(3));
-    peak(p).Centroid = roiinfo.cxyz(p, end-2:end);
-    peak(p).WeightedCentroid = roiinfo.wcxyz(p, end-2:end);
+    if report, fprintf('\n===> peak report\n'); end
 
-    if report, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  peak indeces: %3d %3d %3d  peak: %5.1f %5.1f %5.1f  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).ijk, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
+    for p = 1:length(peak)
+        peak(p).ijk = peak(p).xyz - 1;
+        peak(p).xyz = roiinfo.xyz(p, end-2:end);
+        peak(p).value = img.data(peak(p).ijk(1), peak(p).ijk(2), peak(p).ijk(3));
+        peak(p).Centroid = roiinfo.cxyz(p, end-2:end);
+        peak(p).WeightedCentroid = roiinfo.wcxyz(p, end-2:end);
+
+        if report, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  peak indeces: %3d %3d %3d  peak: %5.1f %5.1f %5.1f  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).ijk, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
+    end
+
+    if report, fprintf('\n'); end
 end
-
-if report, fprintf('\n'); end
 
 % --- the end
 

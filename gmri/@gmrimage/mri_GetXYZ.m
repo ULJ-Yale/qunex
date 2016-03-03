@@ -92,7 +92,9 @@ function [xyz] = getXYZ(img, ijk)
 
     xyz = ijk;
     af  = [img.hdrnifti.srow_x'; img.hdrnifti.srow_y'; img.hdrnifti.srow_z'];
-    xyz(:, end-2:end) = (ijk(:, end-2:end) - 1) * af(1:3,1:3) + repmat(af(:,4)', size(ijk, 1), 1);
+    if ~isempty(xyz)
+        xyz(:, end-2:end) = (ijk(:, end-2:end) - 1) * af(1:3,1:3) + repmat(af(:,4)', size(ijk, 1), 1);
+    end
 
 
 % --> getting ROI Centroids
@@ -102,8 +104,11 @@ function [xyz] = getROICentroids(roi)
     stats = regionprops(roi, 'Centroid');
     rois  = sort(unique(roi));
     rois  = rois(rois>0);
-    xyz   = [rois reshape([stats(rois).Centroid], 3, [])'];
-    xyz   = xyz(:, [1 3 2 4]);
+    xyz   = [];
+    if ~isempty(rois)
+        xyz = [rois reshape([stats(rois).Centroid], 3, [])'];
+        xyz = xyz(:, [1 3 2 4]);
+    end
 
 
 % --> getting Weighted ROI Centroids
@@ -113,8 +118,11 @@ function [xyz] = getROIWeightedCentroids(roi, W)
     stats = regionprops(roi, W, 'WeightedCentroid');
     rois  = sort(unique(roi));
     rois  = rois(rois>0);
-    xyz   = [rois reshape([stats(rois).WeightedCentroid], 3, [])'];
-    xyz   = xyz(:, [1 3 2 4]);
+    xyz   = [];
+    if ~isempty(rois)
+        xyz = [rois reshape([stats(rois).WeightedCentroid], 3, [])'];
+        xyz = xyz(:, [1 3 2 4]);
+    end
 
 
 % --> checking if we have an ROI image
