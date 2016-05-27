@@ -1,7 +1,7 @@
 #!/bin/sh 
 #set -x
 
-# push test for Omega
+# push test for aCode
 
 ## --> PENDING TASKS:
 ##
