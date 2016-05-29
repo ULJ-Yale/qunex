@@ -1,6 +1,6 @@
-function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time, cv)
+function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)
 
-%function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time, cv)
+%function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)
 %
 %	Computes whole brain GBC based on specified mask and command string
 %
@@ -31,13 +31,16 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rm
 %       rmax    - the r value above which the correlations are considered to be of the same functional ROI
 %       time    - whether to print timing information
 %       cv      - whether to work with covariances instead of correlations [false]
+%       vstep   - how many voxels to process in a step [1200]
 %
 %   Grega Repovš, 2009-11-08 - Original version
 %   Grega Repovš, 2010-10-13 - Version with multiple voxels at a time
 %   Grega Repovš, 2013-01-22 - A version that computes strength and proportion ranges not yet fully optimized
 %   Grega Repovš, 2013-03-11 - Added an option to work with covariances instead of correlations
+%   Grega Repovš, 2016-02-08 - Added an option to specify how many voxels to work with in a single step
 %
 
+if nargin < 9 || isempty(vstep), vstep = 1200; end
 if nargin < 8, cv = [];         end
 if nargin < 7, time = [];       end
 if nargin < 6, rmax = [];       end
@@ -98,8 +101,9 @@ results = zeros(nvox, nvolumes);
 
 voxels = obj.voxels;
 data   = obj.data;
-%vstep = floor(56250/obj.frames);    % optimal matrix size : 5625000
-vstep  = 12000/2;
+% vstep = floor(56250/obj.frames);    % optimal matrix size : 5625000
+% vstep  = 12000/2;
+% vstep  = 100000;
 cstep  = vstep;
 nsteps = floor(voxels/vstep);
 lstep  = mod(voxels,vstep);

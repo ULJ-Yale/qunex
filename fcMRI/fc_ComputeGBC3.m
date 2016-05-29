@@ -1,6 +1,6 @@
-function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv)
+function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
 
-%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv)
+%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
 %
 %	Computes GBC maps for individuals as well as group maps.
 %
@@ -19,6 +19,7 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %   ignore      - the column in *_scrub.txt file that matches bold file to be used for ignore mask []
 %   time        - whether to print timing information
 %   cv          - whether to work with covariances instead of correlations [false]
+%   vstep       - how many voxels to process in a step [1200]
 %
 % 	Created by Grega Repovš on 2009-11-04.
 % 	Modified by Grega Repovš on 2010-11-16.
@@ -27,12 +28,15 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %   - added in script smoothing and dilation
 %   Modified by Grega Repovs on 2014-01-22
 %   - took care of commands that return mulitiple volumes (e.g. mFzp)
+%   Modified by Grega Repovš, 2016-02-08
+%   - Added an option to specify how many voxels to work with in a single step
 %
 % 	Copyright (c) 2009. All rights reserved.
 
 
 fprintf('\n\nStarting ...');
 
+if nargin < 11 || isempty(vstep), vstep = [];   end
 if nargin < 11, cv = [];        end
 if nargin < 10, time = true;    end
 if nargin < 9, ignore = [];     end
@@ -146,7 +150,7 @@ for s = 1:nsubjects
 
         img = img.maskimg(imask);
     end
-    [img commands] = img.mri_ComputeGBC(command, [], [], verbose, [], time, cv);
+    [img commands] = img.mri_ComputeGBC(command, [], [], verbose, [], time, cv, vstep);
 
     if usemask
         img = img.unmaskimg();
