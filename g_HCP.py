@@ -2,9 +2,9 @@
 
 import os
 import glob
-import g_mri
+import gCodeU
 import collections
-import g_mri.g_gimg as g
+import gCodeU.g_gimg as g
 import os.path
 
 
@@ -19,7 +19,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     example: gmri setupHCP folder=data tfolder=hcp2 sbjf=subject1.txt
     '''
 
-    inf = g_mri.g_core.readSubjectData(os.path.join(folder, sbjf))[0][0]
+    inf = gCodeU.g_core.readSubjectData(os.path.join(folder, sbjf))[0][0]
 
     basef    = os.path.join(folder, tfolder, inf['id'])
     rawf     = inf['raw_data']

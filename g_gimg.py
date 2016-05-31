@@ -5,7 +5,7 @@ Created by Grega Repovs on 2013-04-13.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import g_mri.g_img as g
+import gCodeU.g_img as g
 import numpy as np
 import gzip
 import os.path

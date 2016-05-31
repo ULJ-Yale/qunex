@@ -2,10 +2,10 @@
 # encoding: utf-8
 
 import os
-import g_mri
+import gCodeU
 import collections
 import subprocess
-import g_mri.g_gimg as g
+import gCodeU.g_gimg as g
 import os.path
 import glob
 import re
@@ -131,7 +131,7 @@ def runAvi(folder=".", overwrite=None, subjf=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, pref = g_mri.g_core.readSubjectData(os.path.join(folder, subjf))
+    info, pref = gCodeU.g_core.readSubjectData(os.path.join(folder, subjf))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 

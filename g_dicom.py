@@ -7,8 +7,8 @@ import glob
 import shutil
 import datetime
 import subprocess
-import g_mri.g_NIfTI
-import g_mri.g_gimg as gimg
+import gCodeU.g_NIfTI
+import gCodeU.g_gimg as gimg
 import dicom.filereader as dfr
 import zipfile
 import gzip
@@ -299,13 +299,13 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, de
         # --- flip z and t dimension if needed
 
         if dofz2zf:
-            g_mri.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
+            gCodeU.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
 
 
         # --- reorder slices if needed
 
         if reorder:
-            #g_mri.g_NIfTI.reorder(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
+            #gCodeU.g_NIfTI.reorder(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
             timgf = os.path.join(imgf,"%02d.nii.gz" % (niinum))
             timg  = gimg.gimg(timgf)
             timg.data = timg.data[:,::-1,...]
@@ -315,7 +315,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, de
         # --- check final geometry
 
         if tfname:
-            hdr = g_mri.g_img.niftihdr(tfname)
+            hdr = gCodeU.g_img.niftihdr(tfname)
 
             if hdr.sizez > hdr.sizey:
                 print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
@@ -330,7 +330,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, de
                         if gframes > 1:
                             print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
                             if verbose: print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                            g_mri.g_NIfTI.reslice(tfname, nslices)
+                            gCodeU.g_NIfTI.reslice(tfname, nslices)
                         else:
                             print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                             if verbose: print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
@@ -447,7 +447,7 @@ def listDicom(folder=None):
     '''
     listDicom [folder=.]
 
-    Lists the sequences present in the dico files.
+    Lists the sequences present in the dicom files.
 
     - folder: the base subject folder that contains the inbox with unsorted dicom files
 
@@ -512,6 +512,13 @@ def splitDicom(folder=None):
             pass
 
 def processPhilips(folder=None, check=None, pattern=None):
+    '''
+    processPhilips [folder=.] [check=yes] [pattern=OP]
+
+    The "original" processInbox function written specifically for data coming off the Ljubljana Philips scanner,
+    it has been adapted for more flexible use in the form of the processInbox function, which should be used instead.
+    '''
+
     if check == 'no':
         check = False
     else:

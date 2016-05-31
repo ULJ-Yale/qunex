@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import g_mri
+import gCodeU
 import sys
 
 
@@ -69,27 +69,27 @@ Caret surface mapping utilities
 map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
 '''
 
-commands = {'listDicom'     : { 'com': g_mri.g_dicom.listDicom,        'args': ('folder', ) },
-            'splitDicom'    : { 'com': g_mri.g_dicom.splitDicom,       'args': ('folder', ) },
-            'sortDicom'     : { 'com': g_mri.g_dicom.sortDicom,        'args': ('folder', ) },
-            'dicom2nii'     : { 'com': g_mri.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose') },
-            'processPhilips': { 'com': g_mri.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern') },
-            'processInbox'  : { 'com': g_mri.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern') },
-            'runAviFolder'  : { 'com': g_mri.g_4dfp.runAviFolder,      'args': ('folder', 'pattern', 'overwite', 'subjf') },
-            'runAvi'        : { 'com': g_mri.g_4dfp.runAvi,            'args': ('folder', 'overwite', 'subjf') },
-            'fz2zf'         : { 'com': g_mri.g_NIfTI.fz2zf,            'args': ('inf', 'outf') },
-            'reorder'       : { 'com': g_mri.g_NIfTI.reorder,          'args': ('inf', 'outf') },
-            'reslice'       : { 'com': g_mri.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf') },
-            'nifti24dfp'    : { 'com': g_mri.g_NIfTI.nifti24dfp,       'args': ('inf', 'outf') },
-            'setupHCP'      : { 'com': g_mri.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf') },
-            'setupHCPFolder': { 'com': g_mri.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check') },
-            'getHCPReady'   : { 'com': g_mri.g_HCP.getHCPReady,        'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping') },
-            'printniftihdr' : { 'com': g_mri.g_img.printniftihdr,      'args': ('filename', ) },
-            'modniftihdr'   : { 'com': g_mri.g_gimg.modniftihdr,       'args': ('filename', 's')},
-            'joinFidl'      : { 'com': g_mri.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot', 'outfolder')},
-            'joinFidlFolder': { 'com': g_mri.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
-            'splitFidl'     : { 'com': g_mri.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
-            'map2PALS'      : { 'com': g_mri.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')}
+commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': ('folder', )},
+            'splitDicom'    : {'com': gCodeU.g_dicom.splitDicom,       'args': ('folder', )},
+            'sortDicom'     : {'com': gCodeU.g_dicom.sortDicom,        'args': ('folder', )},
+            'dicom2nii'     : {'com': gCodeU.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose')},
+            'processPhilips': {'com': gCodeU.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern')},
+            'processInbox'  : {'com': gCodeU.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern')},
+            'runAviFolder'  : {'com': gCodeU.g_4dfp.runAviFolder,      'args': ('folder', 'pattern', 'overwite', 'subjf')},
+            'runAvi'        : {'com': gCodeU.g_4dfp.runAvi,            'args': ('folder', 'overwite', 'subjf')},
+            'fz2zf'         : {'com': gCodeU.g_NIfTI.fz2zf,            'args': ('inf', 'outf')},
+            'reorder'       : {'com': gCodeU.g_NIfTI.reorder,          'args': ('inf', 'outf')},
+            'reslice'       : {'com': gCodeU.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf')},
+            'nifti24dfp'    : {'com': gCodeU.g_NIfTI.nifti24dfp,       'args': ('inf', 'outf')},
+            'setupHCP'      : {'com': gCodeU.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf')},
+            'setupHCPFolder': {'com': gCodeU.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check')},
+            'getHCPReady'   : {'com': gCodeU.g_HCP.getHCPReady,        'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping')},
+            'printniftihdr' : {'com': gCodeU.g_img.printniftihdr,      'args': ('filename', )},
+            'modniftihdr'   : {'com': gCodeU.g_gimg.modniftihdr,       'args': ('filename', 's')},
+            'joinFidl'      : {'com': gCodeU.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot', 'outfolder')},
+            'joinFidlFolder': {'com': gCodeU.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
+            'splitFidl'     : {'com': gCodeU.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
+            'map2PALS'      : {'com': gCodeU.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')}
             }
 
 
