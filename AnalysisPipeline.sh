@@ -3802,12 +3802,11 @@ makedenseconnectome() {
 #  Source relevant repositories
 # ------------------------------------------------------------------------------
 
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" &> /dev/null
-	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi
-
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" &> /dev/null
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi
 # ------------------------------------------------------------------------------
 #  Load relevant libraries for logging and parsing options
 # ------------------------------------------------------------------------------
