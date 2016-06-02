@@ -40,9 +40,14 @@ def readDICOMBase(filename):
         f.close()
         return d
     except:
-        return None
-        #d = dfr.read_file(filename, stop_before_pixels=True)
-        #return d
+        # return None
+        # print " ===> WARNING: Could not partial read dicom file, attempting full read! [%s]" % (filename)
+        try:
+            d = dfr.read_file(filename, stop_before_pixels=True)
+            return d
+        except:
+            # print " ===> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename)
+            return None
 
 def getDicomTime(info):
     try:
@@ -157,8 +162,13 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, de
     for folder in folders:
         # d = dicom.read_file(glob.glob(os.path.join(folder, "*.dcm"))[-1], stop_before_pixels=True)
         d = readDICOMBase(glob.glob(os.path.join(folder, "*.dcm"))[-1])
-        c += 1
 
+        if d is None:
+            print >> r, "# WARNING: Could not read dicom file! Skipping folder %s" % (folder)
+            print "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
+            continue
+
+        c += 1
         if first:
             first = False
             time = getDicomTime(d)
@@ -432,7 +442,15 @@ def sortDicom(folder=".", **kwargs):
         except:
             sop = "%010d" % (dcmn)
 
-        tgf = os.path.join(sqfl, "%s-%s-%s.dcm" % (sid, sqid, sop))
+        # --- check if for some reason we are dealing with gzipped dicom files and add an extension when renaming
+
+        ext = dcm.split('.')[-1]
+        if ext == "gz":
+            ext = ".gz"
+        else:
+            ext = ""
+
+        tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (sid, sqid, sop, ext))
 
         should_copy = kwargs.get('copy', False)
         if should_copy:
