@@ -3811,9 +3811,7 @@ autoptx() {
 #  probtracallgpu - Executes the HCP Pretractography code (Stam's implementation for all grayordinates)
 # ------------------------------------------------------------------------------------------------------
 
-
 # Code goes here...
-
 
 # ------------------------------------------------------------------------------------------------------
 #  probtrackcortexgpu - Executes the HCP Matrix1 or 3 code (Stam's implementation for all grayordinates)
