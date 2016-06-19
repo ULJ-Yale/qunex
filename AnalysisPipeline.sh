@@ -3784,7 +3784,6 @@ makedenseconnectome() {
 			done
 }
 
-
 # ------------------------------------------------------------------------------------------------------------------------------
 #  autoptx - Executes the autoptx script from FSL (needed for probabilistic estimation of large-scale fiber bundles / tracts)
 # -------------------------------------------------------------------------------------------------------------------------------
@@ -3812,9 +3811,7 @@ autoptx() {
 #  probtracallgpu - Executes the HCP Pretractography code (Stam's implementation for all grayordinates)
 # ------------------------------------------------------------------------------------------------------
 
-
 # Code goes here...
-
 
 # ------------------------------------------------------------------------------------------------------
 #  probtrackcortexgpu - Executes the HCP Matrix1 or 3 code (Stam's implementation for all grayordinates)
@@ -3831,8 +3828,58 @@ autoptx() {
 # - fsl_prepare_fieldmap (PRELUDE) PRELUDE unwraps the Phase Map # The FieldMap measured on the scanner is not in the distorted space # Take standard fieldmap to the FSL format #  Implements it in the distorted data space
 # - Call EpiReg - (FUGUE) taks the fielfmap and applies the distortion correction
 
+# ------------------------------------------------------------------------------------------------------------------------------
+#  Sync data from AWS buckets - customized for HCP
+# -------------------------------------------------------------------------------------------------------------------------------
 
+awshcpsync() {
 
+mkdir "$StudyFolder"/aws.logs &> /dev/null
+cd "$StudyFolder"/aws.logs
+
+if [ "$RunType" == "1" ]; then
+
+	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
+		
+		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
+
+		time aws s3 sync --dryrun s3:/"$AwsFolder"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+
+	else
+
+		mkdir "$StudyFolder"/"$CASE" &> /dev/null
+		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
+		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
+		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
+
+		time aws s3 sync --dryrun s3:/"$AwsFolder"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+
+	fi
+
+fi
+
+if [ "$RunType" == "2" ]; then
+
+	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
+	
+		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
+
+		time aws s3 sync s3:/"$AwsFolder"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+
+	else
+
+		mkdir "$StudyFolder"/"$CASE" &> /dev/null
+		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
+		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
+		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
+
+		time aws s3 sync s3:/"$AwsFolder"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+
+	fi
+
+fi
+	
+}
 
 #################################################################################################################################
 #################################################################################################################################
@@ -3852,12 +3899,11 @@ autoptx() {
 #  Source relevant repositories
 # ------------------------------------------------------------------------------
 
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" &> /dev/null
-	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi
-
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" &> /dev/null
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi
 # ------------------------------------------------------------------------------
 #  Load relevant libraries for logging and parsing options
 # ------------------------------------------------------------------------------
@@ -5127,5 +5173,30 @@ if [ "$FunctionToRunInt" == "makedenseconnectome" ]; then
 		echo "ERROR: Environment script is missing. Check your user profile paths!"
 	fi 	
 fi  		
+
+# ------------------------------------------------------------------------------
+#  AWS S3 Sync command wrapper
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRunInt" == "awshcpsync" ]; then
+	echo "Running AWS S3 Sync... Make sure you configured your AWS credentials."
+	echo "Dry run [1] or real run [2]:"
+	if read answer; then
+	RunType=$answer
+	echo "Enter the AWS URI (e.g. /hcp-openaccess/HCP_900)" 
+	if read answer; then
+	AwsFolder=$answer
+	echo "Which modality/folder do you want to sync (e.g. MEG, MNINonLinear, T1w)" 
+	if read answer; then
+	Modality=$answer
+	fi
+	fi
+	fi
+	
+	for CASE in $CASES
+	do
+  		awshcpsync "$CASE"
+	done
+fi	
 
 exit 0
