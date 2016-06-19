@@ -3784,6 +3784,56 @@ makedenseconnectome() {
 			done
 }
 
+
+# ------------------------------------------------------------------------------------------------------------------------------
+#  autoptx - Executes the autoptx script from FSL (needed for probabilistic estimation of large-scale fiber bundles / tracts)
+# -------------------------------------------------------------------------------------------------------------------------------
+
+autoptx() {
+	
+	cd "$StudyFolder"/../fcMRI/hcp.logs/
+	
+	#minimumfilesize=100000
+  	#actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_FA.nii.gz)
+  	#if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
+  	#	echo "DTI Fit completed for $CASE"
+  	#else
+  	
+	if [ "$Cluster" == 1 ]; then
+ 		dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
+	else
+ 		fsl_sub.torque -Q "$QUEUE" dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
+	fi
+	fi
+}
+
+
+# ------------------------------------------------------------------------------------------------------
+#  probtracallgpu - Executes the HCP Pretractography code (Stam's implementation for all grayordinates)
+# ------------------------------------------------------------------------------------------------------
+
+
+# Code goes here...
+
+
+# ------------------------------------------------------------------------------------------------------
+#  probtrackcortexgpu - Executes the HCP Matrix1 or 3 code (Stam's implementation for all grayordinates)
+# ------------------------------------------------------------------------------------------------------
+
+# Code goes here...
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  Diffusion Preprocessing via FOGUE - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# this code is designed to circumvent TOPUP, which estimates a Fieldmap
+
+# - fsl_prepare_fieldmap (PRELUDE) PRELUDE unwraps the Phase Map # The FieldMap measured on the scanner is not in the distorted space # Take standard fieldmap to the FSL format #  Implements it in the distorted data space
+# - Call EpiReg - (FUGUE) taks the fielfmap and applies the distortion correction
+
+
+
+
 #################################################################################################################################
 #################################################################################################################################
 ################################## SOURCE REPOS, SETUP LOG & PARSE COMMAND LINE INPUTS ACROSS FUNCTIONS #########################
