@@ -787,3 +787,80 @@ def processInbox(folder=None, check=None, pattern=None):
     return
 
 
+def getHCPInfo(dfile=None, scanner='siemens'):
+    '''
+    getHCPInfo dfile=<dicom_file> [scanner=siemens]
+
+    Inspects the dicom file for information that is relevant for HCP preprocessing.
+
+    - dfile: the path to the dicom file
+    - scanner: the scanner on which the data was acquired, currently only "siemens" is supported
+    '''
+
+    if dfile is None:
+        print "\nERROR: No path to the dicom file is provided!"
+        return
+
+    if not os.path.exists(dfile):
+        print "\nERROR: Could not find the requested dicom file! [%s]" % (dfile)
+        return
+
+    if scanner not in ['siemens']:
+        print "\nERROR: The provided scanner is not supported! [%s]" % (scanner)
+        return
+
+    d = readDICOMBase(dfile)
+    ok = True
+
+    print "\nHCP relevant information\n(dicom %s)\n" % (dfile)
+
+    try:
+        print "       Institution:", d[0x0008, 0x0080].value
+    except:
+        print "       Institution: undefined"
+
+    try:
+        print "           Scanner:", d[0x0008, 0x0070].value, d[0x0008, 0x1090].value
+    except:
+        print "           Scanner: undefined"
+
+    try:
+        print "          Sequence:", d[0x0008, 0x103e].value
+    except:
+        print "          Sequence: undefined"
+
+    try:
+        print "        Subject ID:", d[0x0010, 0x0020].value
+    except:
+        print "        Subject ID: undefined"
+
+    try:
+        print "    Sample spacing:", d[0x0019, 0x1018].value
+    except:
+        print "    Sample spacing: undefined"
+
+    try:
+        bw = d[0x0019, 0x1028].value
+        print "          Bandwith:", bw
+    except:
+        print "          Bandwith: undefined"
+        ok = False
+
+    try:
+        am = d[0x0051, 0x100b].value
+        print "Acquisition Matrix:", am
+        am = float(am.split('*')[0])
+    except:
+        print "Acquisition Matrix: undefined"
+        ok = False
+
+    if ok:
+        dt = 1 / (bw * am)
+        print "        Dwell Time:", dt
+    else:
+        print "        Dwell Time: Could not compute, data missing!"
+
+    print
+
+
+
