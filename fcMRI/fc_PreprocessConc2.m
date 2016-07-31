@@ -136,6 +136,8 @@ if length(ignores)>=2
     end
 end
 
+doscrubbing = ~any(ismember({ignore.hipass, ignore.regress, ignore.lopass}, {'keep'}));
+
 rgsse = strrep(strrep(strrep(strrep(rgss, ',', ''), ' ', ''), ';', ''), '|', '');
 rgss  = regexp(rgss, '|,|;| |\|', 'split');
 rtype = 0;
@@ -202,8 +204,10 @@ for b = 1:nbolds
 
     %   ----> read data
 
-    [nuisance(b).fstats nuisance(b).fstats_hdr] = g_ReadTable(file(b).bstats);
-    [nuisance(b).scrub  nuisance(b).scrub_hdr]  = g_ReadTable(file(b).oscrub);
+    if doscrubbing
+        [nuisance(b).scrub  nuisance(b).scrub_hdr]  = g_ReadTable(file(b).oscrub);
+    end
+
     [nuisance(b).mov    nuisance(b).mov_hdr]    = g_ReadTable(file(b).movdata);
 
     nuisance(b).nframes = size(nuisance(b).mov,1);
@@ -220,6 +224,8 @@ for b = 1:nbolds
     %   ----> do scrubbing anew if needed!
 
     if strfind(do, 'm')
+        [nuisance(b).fstats nuisance(b).fstats_hdr] = g_ReadTable(file(b).bstats);
+
         timg = gmrimage;
         timg.fstats     = nuisance.fstats;
         timg.fstats_hdr = nuisance.fstats_hdr;
@@ -236,17 +242,24 @@ for b = 1:nbolds
 
     %  ----> what are the frames to be used
 
-    nuisance(b).use = nuisance(b).scrub(:,ismember(nuisance(b).scrub_hdr, {'use'}))';
+    if doscrubbing
+        nuisance(b).use = nuisance(b).scrub(:,ismember(nuisance(b).scrub_hdr, {'use'}))';
+    else
+        nuisance(b).use = ones(1, nuisance(b).nframes);
+    end
 
     %   ----> lets setup nuisances!
 
-    if strfind(do, 'r')
+    if strfind(do, 'r') && any(ismember({'V', 'WM', 'WB'}, rgss));
 
         % ---> signal nuisance
 
         [nuisance(b).signal nuisance(b).signal_hdr] = g_ReadTable(file(b).nuisance);
         nuisance(b).nsignal = size(nuisance(b).signal,2);
-
+    else
+        nuisance(b).signal = [];
+        nuisance(b).signal_hdr = {};
+        nuisance(b).nsignal = 0;
     end
 
 end
