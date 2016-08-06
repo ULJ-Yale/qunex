@@ -848,7 +848,7 @@ def getHCPInfo(dfile=None, scanner='siemens'):
 
     try:
         am = d[0x0051, 0x100b].value
-        print "Acquisition Matrix:", am
+        print "     Acquisition Matrix:", am
         am = float(am.split('*')[0])
     except:
         print "     Acquisition Matrix: undefined"
@@ -864,7 +864,7 @@ def getHCPInfo(dfile=None, scanner='siemens'):
 
     try:
         sinfo = d[0x0029, 0x1020].value
-        sinfo = split('\n')
+        sinfo = sinfo.split('\n')
         for l in sinfo:
             if 'sSliceArray.ucMode' in l:
                 for k, v in [('0x1', 'Sequential Ascending'), ('0x2', 'Sequential Ascending'), ('0x4', 'Interleaved')]:
