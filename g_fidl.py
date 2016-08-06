@@ -135,7 +135,10 @@ def joinFidl(concfile, fidlroot, outfolder=None):
         sfidl = fidldata[c]
 
         if len(sfidl['events']) > 0:
-            levent = sfidl['events'][-1][0] + float(sfidl['events'][-1][2])
+            if len(sfidl['events'][-1]) > 2:
+                levent = sfidl['events'][-1][0] + float(sfidl['events'][-1][2])
+            else:
+                levent = sfidl['events'][-1][0] - float(sfidl['events'][-1][1]) * TR
         else:
             levent = 0
             w = "WARNING: Empty fidl file [%s]!" % (sfidl['source'])
