@@ -815,35 +815,35 @@ def getHCPInfo(dfile=None, scanner='siemens'):
     print "\nHCP relevant information\n(dicom %s)\n" % (dfile)
 
     try:
-        print "       Institution:", d[0x0008, 0x0080].value
+        print "            Institution:", d[0x0008, 0x0080].value
     except:
-        print "       Institution: undefined"
+        print "            Institution: undefined"
 
     try:
-        print "           Scanner:", d[0x0008, 0x0070].value, d[0x0008, 0x1090].value
+        print "                Scanner:", d[0x0008, 0x0070].value, d[0x0008, 0x1090].value
     except:
-        print "           Scanner: undefined"
+        print "                Scanner: undefined"
 
     try:
-        print "          Sequence:", d[0x0008, 0x103e].value
+        print "               Sequence:", d[0x0008, 0x103e].value
     except:
-        print "          Sequence: undefined"
+        print "               Sequence: undefined"
 
     try:
-        print "        Subject ID:", d[0x0010, 0x0020].value
+        print "             Subject ID:", d[0x0010, 0x0020].value
     except:
-        print "        Subject ID: undefined"
+        print "             Subject ID: undefined"
 
     try:
-        print "    Sample spacing:", d[0x0019, 0x1018].value
+        print "         Sample spacing:", d[0x0019, 0x1018].value
     except:
-        print "    Sample spacing: undefined"
+        print "         Sample spacing: undefined"
 
     try:
         bw = d[0x0019, 0x1028].value
-        print "          Bandwith:", bw
+        print "               Bandwith:", bw
     except:
-        print "          Bandwith: undefined"
+        print "               Bandwith: undefined"
         ok = False
 
     try:
@@ -851,14 +851,27 @@ def getHCPInfo(dfile=None, scanner='siemens'):
         print "Acquisition Matrix:", am
         am = float(am.split('*')[0])
     except:
-        print "Acquisition Matrix: undefined"
+        print "     Acquisition Matrix: undefined"
         ok = False
 
     if ok:
         dt = 1 / (bw * am)
-        print "        Dwell Time:", dt
+        print "             Dwell Time:", dt
     else:
-        print "        Dwell Time: Could not compute, data missing!"
+        print "             Dwell Time: Could not compute, data missing!"
+
+    # --- look for slice ordering info
+
+    try:
+        sinfo = d[0x0029, 0x1020].value
+        sinfo = split('\n')
+        for l in sinfo:
+            if 'sSliceArray.ucMode' in l:
+                for k, v in [('0x1', 'Sequential Ascending'), ('0x2', 'Sequential Ascending'), ('0x4', 'Interleaved')]:
+                    if k in l:
+                        print "Slice Acquisition Order: %s" % (v)
+    except:
+        print "Slice Acquisition Order: Unknown"
 
     print
 
