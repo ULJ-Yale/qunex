@@ -225,9 +225,9 @@ else
 end
 
 ext = double(typecast(fmeta(1:4), 'int8'));
+mi  = 0;
 if ext(1) > 0
     pt = 4;
-    mi = 0;
     while length(fmeta) >= pt + 8
         mi = mi + 1;
         img.meta(mi).size = double(typecast(fmeta(pt+1:pt+4), 'int32'));
@@ -245,26 +245,27 @@ end
 
 % ---- Process metadata
 
-for m = 1:mi
-    if img.meta(m).code == 64
-        ms = cast(img.meta(m).data, 'char');
-        [mdata, mhdr, mmeta] = g_ReadTable(ms);
+if mi > 0
+    for m = 1:mi
+        if img.meta(m).code == 64
+            ms = cast(img.meta(m).data, 'char');
+            [mdata, mhdr, mmeta] = g_ReadTable(ms);
 
-        if strcmp(mmeta.meta, 'GLM')
-            img.glm         = mmeta;
-            img.glm.event   = textscan(img.glm.event, '%s'); img.glm.event = img.glm.event{1}';
-            img.glm.effects = textscan(img.glm.effects, '%s'); img.glm.effects = img.glm.effects{1}';
-            img.glm.effect  = sscanf(img.glm.effect, '%d')';
-            img.glm.eindex  = sscanf(img.glm.eindex, '%d')';
-            img.glm.frame   = sscanf(img.glm.frame, '%d')';
-            img.glm.bolds   = sscanf(img.glm.bolds, '%d')';
-            img.glm.A       = mdata;
-            img.glm.hdr     = mhdr;
-            [img.glm.Nrow, img.glm.Mcol] = size(mdata);
+            if strcmp(mmeta.meta, 'GLM')
+                img.glm         = mmeta;
+                img.glm.event   = textscan(img.glm.event, '%s'); img.glm.event = img.glm.event{1}';
+                img.glm.effects = textscan(img.glm.effects, '%s'); img.glm.effects = img.glm.effects{1}';
+                img.glm.effect  = sscanf(img.glm.effect, '%d')';
+                img.glm.eindex  = sscanf(img.glm.eindex, '%d')';
+                img.glm.frame   = sscanf(img.glm.frame, '%d')';
+                img.glm.bolds   = sscanf(img.glm.bolds, '%d')';
+                img.glm.A       = mdata;
+                img.glm.hdr     = mhdr;
+                [img.glm.Nrow, img.glm.Mcol] = size(mdata);
+            end
         end
     end
 end
-
 
 
 
