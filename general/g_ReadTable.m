@@ -1,27 +1,39 @@
-function [data, hdr] = g_ReadTable(filename)
+function [data, hdr, meta] = g_ReadTable(instr)
 
-%function [data, hdr] = g_ReadTable(filename)
+%function [data, hdr, meta] = g_ReadTable(instr)
 %
 %   A general function for reading whitespace separated data tables.
 %
 %   input
-%       - filename  the path to the file
+%       - instr     either a path to file or a multiline string to parse
 %
 %   output
 %       - hdr       cell array of strings with column names
 %       - data      data matrix
 %
 %    Whipped together by Grega Repovs, 2014-07-18
+%    --------
+%    2016-08-18 Grega Repovs, Adapted to work with strings
+%
+
 
 hdr  = {};
 data = [];
+meta = [];
 l    = 0;
 
-fin = fopen(filename, 'r');
-while ~feof(fin)
+if isempty(regexp(instr, '\n', 'once'))
+    instr = fileread(instr);
+end
 
-    s = strtrim(fgetl(fin));
+lines = textscan(instr, '%s', 'delimiter', '\n');
+lines = lines{1};
+
+header = true;
+l = 0;
+while header
     l = l + 1;
+    s = lines{l};
 
     % --- if empty get the next line
     if length(s) == 0, continue, end
@@ -29,12 +41,25 @@ while ~feof(fin)
     % --- if characters excluding "e" in line and no data yet, read header, remove first #
     if max(isstrprop(strrep(s, 'e', ''), 'alpha')) && isempty(data)
         if s(1) == '#', s = s(2:end); end
-        hdr = strread(s, '%s');
+        if strfind(s, ':')
+            el = regexp(s, ':', 'split');
+            meta.(strtrim(el{1})) = strtrim(el{2});
+        else
+            hdr = strread(s, '%s')';
+        end
 
     % --- otherwise, if not a hashed line, read values
     elseif s(1) ~= '#'
-        data = [data; strread(s)];
+        nc = length(strread(s, '%s'));
+        header = false;
     end
 end
 
-fclose(fin);
+data = textscan(instr, '%f', 'CommentStyle', '#', 'HeaderLines', l-1);
+data = data{1};
+data = reshape(data, nc, [])';
+
+if nc == 1 + length(hdr)
+    hdr = ['id', hdr];
+end
+
