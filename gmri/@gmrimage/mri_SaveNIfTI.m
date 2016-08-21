@@ -67,7 +67,8 @@ switch img.imageformat
         file = [root img.filetype '.nii'];
 
     case 'CIFTI-2'
-        img.meta = framesHack(img.meta, img.hdrnifti.dim(6), img.frames);
+        cmeta = find([img.meta.code] == 32);
+        img.meta(cmeta).data = framesHack(img.meta(cmeta).data, img.hdrnifti.dim(6), img.frames);
         if strcmp(img.filetype, '.pconn')
             img.hdrnifti.dim(6:7) = img.dim;
         else
@@ -139,20 +140,46 @@ switch class(img.data)
         error('\nERROR: Uknown datatype or datatype I can not handle! [%s]', class(img.data));
 end
 
+% ---> pack metadata
+
+if img.hdrnifti.swap
+    sw = @(x, c) typecast(swapbytes(cast(x, c)), 'uint8');
+else
+    sw = @(x, c) typecast(cast(x, c), 'uint8');
+end
+
+pt = 4;
+if length(img.meta) > 0
+    img.metadata = zeros(4 + sum([img.meta.size]), 1, 'uint8');
+    img.metadata(1:4) = sw([1 0 0 0], 'uint8');
+    for n = 1:length(img.meta)
+        img.metadata(pt+1:pt+4) = sw(img.meta(n).size, 'int32');
+        img.metadata(pt+5:pt+8) = sw(img.meta(n).code, 'int32');
+        img.metadata(pt+9:pt+img.meta(n).size) = img.meta(n).data;
+        pt = pt + img.meta(n).size;
+    end
+else
+    img.metadata = sw([0 0 0 0], 'uint8');
+end
+
+
 % ---> pack header
 
 if img.hdrnifti.version == 1
     fhdr = packHeader_nifti1(img.hdrnifti);
+    img.hdrnifti.vox_offset = 384 + pt;
 elseif img.hdrnifti.version == 2
     fhdr = packHeader_nifti2(img.hdrnifti);
+    img.hdrnifti.vox_offset = 540 + pt;
 else
     error('\nERROR: Unknown NIfTI version!');
 end
 
 
+
 % ---> save it
 
-gmrimage.mri_SaveNIfTImx(file, fhdr, img.data, img.meta, img.hdrnifti.swapped == 1, verbose);
+gmrimage.mri_SaveNIfTImx(file, fhdr, img.data, img.metadata, img.hdrnifti.swapped == 1, verbose);
 
 
 
