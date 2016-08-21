@@ -22,6 +22,7 @@ data = [];
 meta = [];
 l    = 0;
 
+instr = instr(:)';
 if isempty(regexp(instr, '\n', 'once'))
     instr = fileread(instr);
 end
@@ -42,8 +43,8 @@ while header
     if max(isstrprop(strrep(s, 'e', ''), 'alpha')) && isempty(data)
         if s(1) == '#', s = s(2:end); end
         if strfind(s, ':')
-            el = regexp(s, ':', 'split');
-            meta.(strtrim(el{1})) = strtrim(el{2});
+            [fname, fdata] = strtok(s, ':');
+            meta.(strtrim(fname)) = strtrim(fdata(2:end));
         else
             hdr = strread(s, '%s')';
         end

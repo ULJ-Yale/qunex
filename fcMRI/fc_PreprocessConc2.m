@@ -892,7 +892,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     xeffect  = sprintf('%d\t', effect);
     xeindex  = sprintf('%d\t', eindex);
     pre      = sprintf('# fidl: %s\n# model: %s\n# bolds: %d\n# effects: %s\n# effect: %s\n# eindex: %s\n# ignore: %s\n# event: %s\n# frame: %s', rmodel.fidl.fidl, rmodel.description, nbolds, xeffects, xeffect, xeindex, rmodel.ignore, xevents, xframes(1:end-1));
-    xtable   = g_WriteTable(xfile, [[1:sum(nmask==1)]' X(nmask==1, :)], hdr, 'sd|mean|min|max', [], [], pre);
+    xtable   = g_WriteTable(xfile, [X(nmask==1, :)], hdr, 'sd|mean|min|max', [], [], pre);
 
     if ismember(options.glm_matrix, {'image', 'both'})
         mimg = X(nmask==1, :);

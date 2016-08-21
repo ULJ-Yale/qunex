@@ -233,7 +233,7 @@ if ext(1) > 0
         img.meta(mi).size = double(typecast(fmeta(pt+1:pt+4), 'int32'));
         img.meta(mi).code = double(typecast(fmeta(pt+5:pt+8), 'int32'));
         if length(fmeta) >= pt + img.meta(mi).size - 1
-            img.meta(mi).data = fmeta(pt+9:pt+img.meta(mi).size)
+            img.meta(mi).data = fmeta(pt+9:pt+img.meta(mi).size);
             if verbose , fprintf('---> Read metablock %d, code: %d, size %d.\n', mi, img.meta(mi).code, img.meta(mi).size); end
         else
             if verbose , fprintf('---> WARNING: Meta block size (%d) reported larger than available data (%d)!\n', img.meta(mi).size, length(fmeta) - pt); end

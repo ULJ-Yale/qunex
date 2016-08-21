@@ -38,11 +38,13 @@ if ~isempty(hdr) && isa(hdr, 'char')
 end
 
 s = '';
+sep = sprintf(sep);
+nl  = sprintf('\n');
 
 % --- is there a pre
 
 if ~isempty(pre)
-    s = [s pre '\n'];
+    s = [s pre nl];
 end
 
 
@@ -90,7 +92,7 @@ end
 % --- is there a post
 
 if ~isempty(post)
-    s = [s '\n', post];
+    s = [s nl, post];
 end
 
 
