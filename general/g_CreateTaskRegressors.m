@@ -125,7 +125,7 @@ for m = 1:nregressors
 
             % --- normalize
 
-            switch model.regressor(m).weight.method
+            switch strtrim(model.regressor(m).weight.method)
 
             case 'z'
                 tw = zscore(tw);

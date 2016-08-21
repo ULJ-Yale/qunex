@@ -35,7 +35,7 @@ end
 
 
 function [options] = matchLength(options, s)
-    s = regexp(s, ';', 'split');
+    s = strtrim(regexp(s, ';', 'split'));
     if length(options) == length(s)
         for n = 1:length(s)
             options(n) = parseString(options, s{n});
@@ -65,17 +65,17 @@ function [options] = parseString(options, s)
 
     for n = 1:length(t)
         if isempty(strfind(t{n}, '>'))
-            f = regexp(t{n}, '=', 'split');
+            f = strtrim(regexp(t{n}, '=', 'split'));
             if length(f) ~= 2
                 error('ERROR: Could not parse token! [%s]', t{n});
             end
             options = setfield(options, f{1}, getValue(f{2}));
         else
-            f = regexp(t{n}, '>', 'split');
+            f = strtrim(regexp(t{n}, '>', 'split'));
             for k = 2:length(f)
-                it = regexp(f{k}, ',', 'split');
+                it = strtrim(regexp(f{k}, ',', 'split'));
                 for ni = 1:length(it)
-                    et = regexp(it{ni}, '=', 'split');
+                    et = strtrim(regexp(it{ni}, '=', 'split'));
                     if length(et) ~= 2
                         error('ERROR: Could not parse token! [%s]', t{n});
                     end
