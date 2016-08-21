@@ -570,6 +570,9 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     hdr         = {};
     hdre        = {};
     hdrf        = [];
+    effects     = {};
+    effect      = [];
+    eindex      = [];
 
     % ---> bold starts, frames
 
@@ -622,6 +625,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
     %   ----> baseline and linear trend
 
+    effects = {'Baseline', 'Trend'};
+
     xS = 1;
     for b = 1:nbolds
         xE = xS + nB - 1;
@@ -639,10 +644,16 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         hdre{end+1} = sprintf('baseline.b%d', b);
         hdre{end+1} = sprintf('trend.b%d', b);
         hdrf(end+1:end+2) = [1 1];
+        effect(end+1:end+2) = [1 2];
+        eindex(end+1:end+2) = [b b];
     end
 
 
     %   ----> movement
+
+    for mi = 1:nM
+        effects{end+1}  = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+    end
 
     if movement
         for b = 1:nbolds
@@ -651,24 +662,33 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             if ~joinn
                 xS = xS+nM;
                 for mi = 1:nM
-                    hdr{end+1}  = sprintf('mov_%s_b%d', nuisance(1).mov_hdr{mi}, b);
-                    hdre{end+1} = sprintf('mov_%s.b%d', nuisance(1).mov_hdr{mi}, b);
-                    hdrf(end+1) = 1;
+                    ts = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+                    hdr{end+1}  = sprintf('%s_b%d', ts, b);
+                    hdre{end+1} = sprintf('%s.b%d', ts, b);
+                    effect(end+1) = find(ismember(effects, ts));
+                    eindex(end+1) = b;
                 end
             end
         end
         xS = xS+nM;
         if joinn
             for mi = 1:nM
-                hdr{end+1}  = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
-                hdre{end+1} = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+                ts = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
+                hdr{end+1}  = ts;
+                hdre{end+1} = ts;
                 hdrf(end+1) = 1;
+                effect(end+1) = find(ismember(effects, ts));
+                eindex(end+1) = 1;
             end
         end
     end
 
 
     %   ----> signal
+
+    for mi = 1:nS
+        effects{end+1}  = nuisance(1).signal_hdr{mi};
+    end
 
     for b = 1:nbolds
         xE = xS + nS - 1;
@@ -679,13 +699,18 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                 hdr{end+1}  = sprintf('%s_b%d', nuisance(1).signal_hdr{mi}, b);
                 hdre{end+1} = sprintf('%s.b%d', nuisance(1).signal_hdr{mi}, b);
                 hdrf(end+1) = 1;
+                effect(end+1) = find(ismember(effects, nuisance(1).signal_hdr{mi}));
+                eindex(end+1) = b;
             end
         end
         if joinn
             for mi = 1:nS
-                hdr{end+1}  = sprintf('%s', nuisance(1).signal_hdr{mi});
-                hdre{end+1} = sprintf('%s', nuisance(1).signal_hdr{mi});
+                ts = nuisance(1).signal_hdr{mi};
+                hdr{end+1}  = ts;
+                hdre{end+1} = ts;
                 hdrf(end+1) = 1;
+                effect(end+1) = find(ismember(effects, ts));
+                eindex(end+1) = 1;
             end
         end
     end
@@ -698,6 +723,10 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
         %   ----> movement
 
+        for mi = 1:nM
+            effects{end+1}  = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
+        end
+
         if movement
             for b = 1:nbolds
                 xE = xS + nM - 1;
@@ -705,23 +734,33 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                 if ~joinn
                     xS = xS+nM;
                     for mi = 1:nM
-                        hdr{end+1}  = sprintf('mov_%s_d1.b%d', nuisance(1).mov_hdr{mi}, b);
-                        hdre{end+1} = sprintf('mov_%s_d1.b%d', nuisance(1).mov_hdr{mi}, b);
+                        ts = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
+                        hdr{end+1}  = sprintf('%s.b%d', ts, b);
+                        hdre{end+1} = sprintf('%s.b%d', ts, b);
                         hdrf(end+1) = 1;
+                        effect(end+1) = find(ismember(effects, ts));
+                        eindex(end+1) = b;
                     end
                 end
             end
             xS = xS+nM;
             if joinn
                 for mi = 1:nM
-                    hdr{end+1}  = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
-                    hdre{end+1} = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
+                    ts = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
+                    hdr{end+1}  = ts;
+                    hdre{end+1} = ts;
                     hdrf(end+1) = 1;
+                    effect(end+1) = find(ismember(effects, ts));
+                    eindex(end+1) = 1;
                 end
             end
         end
 
         %   ----> signal
+
+        for mi = 1:nS
+            effects{end+1}  = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+        end
 
         for b = 1:nbolds
             xE = xS + nS - 1;
@@ -729,24 +768,34 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             if ~joinn
                 xS = xS+nS;
                 for mi = 1:nS
-                    hdr{end+1}  = sprintf('%s_d1.b%d', nuisance(b).signal_hdr{mi}, b);
-                    hdre{end+1} = sprintf('%s_d1.b%d', nuisance(b).signal_hdr{mi}, b);
+                    ts = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
+                    hdr{end+1}  = sprintf('%s.b%d', ts, b);
+                    hdre{end+1} = sprintf('%s.b%d', ts, b);
                     hdrf(end+1) = 1;
+                    effect(end+1) = find(ismember(effects, ts));
+                    eindex(end+1) = b;
                 end
             end
         end
         xS = xS+nS;
         if joinn
             for mi = 1:nS
+                ts = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
                 hdr{end+1}  = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
                 hdre{end+1} = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
                 hdrf(end+1) = 1;
+                effect(end+1) = find(ismember(effects, ts));
+                eindex(end+1) = 1;
             end
         end
     end
 
 
     %   ----> events
+
+    for mi = 1:nE
+        effects{end+1}  = nuisance(b).eventnamesr{mi};
+    end
 
     if event
         for b = 1:nbolds
@@ -758,6 +807,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                     hdr{end+1}  = sprintf('%s_b%d', nuisance(b).eventnamesr{mi}, b);
                     hdre{end+1} = sprintf('%s.b%d', nuisance(b).eventnames{mi}, b);
                     hdrf(end+1) = nuisance(b).eventframes(mi);
+                    effect(end+1) = find(ismember(effects, nuisance(b).eventnamesr{mi}));
+                    eindex(end+1) = b;
                 end
             end
         end
@@ -766,11 +817,17 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             hdr{end+1}  = sprintf('%s', nuisance(1).eventnamesr{mi});
             hdre{end+1} = sprintf('%s', nuisance(1).eventnames{mi});
             hdrf(end+1) = nuisance(1).eventframes(mi);
+            effect(end+1) = find(ismember(effects, nuisance(b).eventnamesr{mi}));
+            eindex(end+1) = 1;
         end
     end
 
 
     %   ----> task
+
+    for mi = 1:nT
+        effects{end+1}  = sprintf('task%d', mi);
+    end
 
     if task
         xE = xS + nT - 1;
@@ -779,9 +836,12 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         end
         xS = xS+nT;
         for mi = 1:nT
-            hdr{end+1}  = sprintf('task%d', mi);
-            hdre{end+1} = sprintf('task%d', mi);
+            ts = sprintf('task%d', mi);
+            hdr{end+1}  = ts;
+            hdre{end+1} = ts;
             hdrf(end+1) = 1;
+            effect(end+1) = find(ismember(effects, ts));
+            eindex(end+1) = 1;
         end
     end
 
@@ -822,11 +882,17 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     %   ----> Header not written right yet ... need to change columns according to the regression type (per run matrices)
 
     if ismember(options.glm_matrix, {'text', 'both'})
-        xevents = sprintf(strjoin(hdre, '\t'));
-        xframes = sprintf('%d\t', hdrf);
-        pre     = sprintf('# fidl: %s\n# model: %s\n# ignore: %s\n# event: %s\n# frame: %s', rmodel.fidl.fidl, rmodel.description, rmodel.ignore, xevents, xframes(1:end-1));
-        g_WriteTable([Xroot '.txt'], [[1:sum(nmask==1)]' X(nmask==1, :)], hdr, 'sd|mean|min|max', [], [], pre);
+        xfile = [Xroot '.txt'];
+    else
+        xfile = [];
     end
+    xevents  = sprintf(strjoin(hdre, '\t'));
+    xframes  = sprintf('%d\t', hdrf);
+    xeffects = sprintf(strjoin(effects, '\t'));
+    xeffect  = sprintf('%d\t', effect);
+    xeindex  = sprintf('%d\t', eindex);
+    pre      = sprintf('# fidl: %s\n# model: %s\n# bolds: %d\n# effects: %s\n# effect: %s\n# eindex: %s\n# ignore: %s\n# event: %s\n# frame: %s', rmodel.fidl.fidl, rmodel.description, nbolds, xeffects, xeffect, xeindex, rmodel.ignore, xevents, xframes(1:end-1));
+    xtable   = g_WriteTable(xfile, [[1:sum(nmask==1)]' X(nmask==1, :)], hdr, 'sd|mean|min|max', [], [], pre);
 
     if ismember(options.glm_matrix, {'image', 'both'})
         mimg = X(nmask==1, :);
@@ -849,6 +915,9 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         fend   = sum(mframes(1:b));
         img(b).data(:,masks{b}) = res.data(:,fstart:fend);
     end
+
+    coeff = coeff.mri_EmbedMeta(xtable, 64, 'GLM');
+
 
 return
 

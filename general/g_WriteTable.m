@@ -1,6 +1,6 @@
-function [] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
+function [s] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
 
-%function [] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
+%function [s] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
 %
 %   A general function for writing data tables.
 %
@@ -17,6 +17,7 @@ function [] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
 %    Whipped together by Grega Repovs, 2014-07-18
 %
 %    2016.02.05 Grega Repovs ... Added pre and post options
+%    2016.08.18 Grega Repovs ... Added printing to string
 %
 
 if nargin < 8                    post  = [];                end
@@ -36,14 +37,12 @@ if ~isempty(hdr) && isa(hdr, 'char')
     hdr = regexp(sform, '|,|;| |\|', 'split');
 end
 
-% --- start writing!
-
-fout = fopen(filename, 'w');
+s = '';
 
 % --- is there a pre
 
 if ~isempty(pre)
-    fprintf(fout, '%s\n', pre);
+    s = [s pre '\n'];
 end
 
 
@@ -52,17 +51,17 @@ end
 if ~isempty(hdr)
     for n = 1:length(hdr)
         if n > 1
-            fprintf(fout, sep);
+            s = [s sep];
         end
-        fprintf(fout, sform{1}, hdr{n});
+        s = [s sprintf(sform{1}, hdr{n})];
     end
 end
 
 % --- write data
 
 for n = 1:size(data, 1)
-    fprintf(fout, ['\n' sform{2}], data(n,1));
-    fprintf(fout, [sep sform{3}], data(n,2:end));
+    s = [s sprintf(['\n' sform{2}], data(n,1))];
+    s = [s sprintf([sep sform{3}], data(n,2:end))];
 end
 
 % --- write optional summary
@@ -71,30 +70,34 @@ for ex = extra
     ex = ex{1};
     sf = strrep(sform{3}, 'd', 'g');
 
-    fprintf(fout, ['\n#' sform{4}], ex);
+    s = [s sprintf(['\n#' sform{4}], ex)];
     switch ex
     case 'mean'
-        fprintf(fout, [sep sf], mean(data(:,2:end)));
+        s = [s sprintf([sep sf], mean(data(:,2:end)))];
     case 'min'
-        fprintf(fout, [sep sform{3}], min(data(:,2:end)));
+        s = [s sprintf([sep sform{3}], min(data(:,2:end)))];
     case 'max'
-        fprintf(fout, [sep sform{3}], max(data(:,2:end)));
+        s = [s sprintf([sep sform{3}], max(data(:,2:end)))];
     case 'sd'
-        fprintf(fout, [sep sf], std(data(:,2:end)));
+        s = [s sprintf([sep sf], std(data(:,2:end)))];
     case 'sum'
-        fprintf(fout, [sep sform{3}], sum(data(:,2:end)));
+        s = [s sprintf([sep sform{3}], sum(data(:,2:end)))];
     case '%'
-        fprintf(fout, [sep sf], sum(data(:,2:end))./size(data,1).*100);
+        s = [s sprintf([sep sf], sum(data(:,2:end))./size(data,1).*100)];
     end
 end
 
 % --- is there a post
 
 if ~isempty(post)
-    fprintf(fout, '\n%s', post);
+    s = [s '\n', post];
 end
 
 
+% --- are we writing to file
 
-
-fclose(fout);
+if ~isempty(filename)
+    fout = fopen(filename, 'w');
+    fprintf(fout, s);
+    fclose(fout);
+end

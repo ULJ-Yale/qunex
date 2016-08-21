@@ -54,6 +54,7 @@ classdef gmrimage
         glm;
         xml             = [];
         meta            = [];
+        metadata        = [];
 
         % ---> various statistical data
 
@@ -554,42 +555,48 @@ classdef gmrimage
             end
 
             if ~isempty(fmask)
+                fmask = fmask > 0;
                 obj.data = obj.image2D;
-                obj.data = obj.data(:, fmask > 0);
-                obj.frames = sum(fmask>0);
+                obj.data = obj.data(:, fmask);
+                obj.frames = sum(fmask);
 
                 % ---> mask use data
 
                 if ~isempty(obj.use)
-                    obj.use  = obj.use(:, fmask > 0);
+                    obj.use  = obj.use(:, fmask);
                 end
 
                 % ---> mask movement data
 
                 if ~isempty(obj.mov)
-                    obj.mov = obj.mov(fmask > 0, :);
+                    obj.mov = obj.mov(fmask, :);
                 end
 
                 % ---> mask fstats data
 
                 if ~isempty(obj.fstats)
-                    obj.fstats = obj.fstats(fmask > 0, :);
+                    obj.fstats = obj.fstats(fmask, :);
                 end
 
                 % ---> mask scrub data
 
                 if ~isempty(obj.scrub)
-                    obj.scrub = obj.scrub(fmask > 0, :);
+                    obj.scrub = obj.scrub(fmask, :);
                 end
 
                 % ---> mask glm data
 
                 if ~isempty(obj.glm)
-                    obj.glm.effect = obj.glm.effect(fmask > 0);
-                    obj.glm.eindex = obj.glm.eindex(fmask > 0);
-                    obj.glm.A      = obj.glm.A(:, fmask > 0);
-                    obj.glm.c      = obj.glm.c(:, fmask > 0);
-                    obj.glm.ATAm1  = obj.glm.ATAm1(fmask > 0, fmask > 0);
+                    obj.glm.effect = obj.glm.effect(fmask);
+                    obj.glm.eindex = obj.glm.eindex(fmask);
+                    obj.glm.A      = obj.glm.A(:, fmask);
+                    if isfield(obj.glm, 'c'),      obj.glm.c      = obj.glm.c(:, fmask);    end
+                    if isfield(obj.glm, 'ATAm1'),  obj.glm.ATAm1  = obj.glm.ATAm1(fmask, fmask); end
+                    if isfield(obj.glm, 'event'),  obj.glm.event  = obj.glm.event(fmask);   end
+                    if isfield(obj.glm, 'frame'),  obj.glm.frame  = obj.glm.frame(fmask);   end
+                    if isfield(obj.glm, 'effect'), obj.glm.effect = obj.glm.effect(fmask);  end
+                    if isfield(obj.glm, 'eindex'), obj.glm.eindex = obj.glm.eindex(fmask);  end
+                    if isfield(obj.glm, 'hdr'),    obj.glm.hdr    = obj.glm.hdr(fmask);     end
                 end
 
             end
