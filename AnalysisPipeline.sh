@@ -123,6 +123,7 @@ show_usage() {
   				echo "		hpc4				VOLUME COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
   				echo "		hpc5				SURFACE COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
   				echo "		hpcd				DIFFUSION COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
+  				echo "		hpcdlegacy			DIFFUSION PROCESSING THAT IS HCP COMPLIANT FOR LEGACY DATA WITH STANDARD FIELDMAPS (CLUSTER AWARE)"
   				echo ""  				
   				echo "		--- GENERATE LISTS & QC FUNCTIONS ---"
   				echo "		setuplist	 		SETUP LIST FOR FCMRI ANALYSIS / PREPROCESSING or VOLUME SNR CALCULATIONS"
@@ -447,6 +448,7 @@ hpcsync() {
 	fi
 }
 
+
 hpcsync2() {
 
 	if [ "$Direction" == 1 ]; then
@@ -770,7 +772,7 @@ ciftiparcellate() {
 					
 			if [ "$DatatoParcellate" == "dwi_cortex" ]; then
 			
-			if [ "$Force" == "YES" ]; then
+			if [ "$Overwrite" == "yes" ]; then
 				rm -r "$StudyFolder"/../Parcellated/DWI/"$CASE"*matrix1*.pconn.nii
 				rm -r "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"*matrix1*.pconn.nii
 				rm -r "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"*matrix1*pconn.nii
@@ -906,8 +908,7 @@ ciftiparcellate() {
 						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
 						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
 						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
-						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
-						
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii						
 						# setup hard links
 						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
 						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
@@ -1040,7 +1041,7 @@ ciftiparcellate() {
     		do
 					for BOLD in $BOLDS
 					do
-						if [ "$Force" == "YES" ]; then
+						if [ "$Overwrite" == "yes" ]; then
 						
 							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
 							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
@@ -1175,7 +1176,6 @@ ciftiparcellate() {
 							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
 							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
 							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
-
 							# Parcell-level R
 							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands_R.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
 							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands_R.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
@@ -1206,7 +1206,7 @@ ciftiparcellate() {
 					for BOLD in $BOLDS
 					do
 					
-						if [ "$Force" == "YES" ]; then
+						if [ "$Overwrite" == "yes" ]; then
 						
 							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
 							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
@@ -1389,7 +1389,7 @@ ciftiparcellate() {
 					for BOLD in $BOLDS
 					do
 					
-						if [ "$Force" == "YES" ]; then
+						if [ "$Overwrite" == "yes" ]; then
 						
 							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
 							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
@@ -2671,7 +2671,7 @@ fixica() {
 
 		for BOLD in $BOLDS
 			do
-				if [ "$Force" == "YES" ]; then
+				if [ "$Overwrite" == "yes" ]; then
 					rm -r "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"*_hp2000*  &> /dev/null
 				fi		
 				
@@ -2695,7 +2695,7 @@ postfix() {
 
 		for BOLD in $BOLDS
 			do
-				if [ "$Force" == "YES" ]; then
+				if [ "$Overwrite" == "yes" ]; then
 					rm -r "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$CASE"_"$BOLD"_ICA_Classification_singlescreen.scene   &> /dev/null
 				fi					
 					
@@ -2996,7 +2996,7 @@ hcp1() {
     	
     	else
 
-    		fsl_sub.torque -Q "$QUEUE" \
+    		fsl_sub."$fslsub" -Q "$QUEUE" \
      		${HCPPIPEDIR}/PreFreeSurfer/PreFreeSurferPipeline.sh \
       		--path="$StudyFolder" \
       		--subject="$Subject" \
@@ -3026,7 +3026,6 @@ hcp1() {
       		--avgrdcmethod="$AvgrdcSTRING" \
       		--topupconfig="$TopupConfig" \
       		--printcom=$PRINTCOM
-    
     	fi
     	
     	# The following lines are used for interactive debugging to set the positional parameters: $1 $2 $3 ...
@@ -3071,7 +3070,7 @@ hcp2() {
 
 		# Cleanup FS run if force flag on
 		
-		if [ "$Force" == "YES" ]; then
+		if [ "$Overwrite" == "yes" ]; then
 			rm -r "$StudyFolder"/"$CASE"/T1w/"$CASE"   &> /dev/null
 		fi
 		
@@ -3111,7 +3110,7 @@ hcp2() {
       		--t2="$T2wImage" \
       		--printcom=$PRINTCOM
   		else 
-    		fsl_sub.torque -T 5000 -Q "$QUEUE" \
+    		fsl_sub."$fslsub" -T 5000 -Q "$QUEUE" \
      		${HCPPIPEDIR}/FreeSurfer/FreeSurferPipeline.sh \
       		--subject="$Subject" \
       		--subjectDIR="$SubjectDIR" \
@@ -3185,7 +3184,7 @@ hcp3() {
       		--regname="$RegName" \
       		--printcom=$PRINTCOM
   		else 
-    		fsl_sub.torque -Q "$QUEUE" \
+    		fsl_sub."$fslsub" -Q "$QUEUE" \
      		${HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh \
       		--path="$StudyFolder" \
       		--subject="$Subject" \
@@ -3317,7 +3316,7 @@ hcp4() {
       		--topupconfig="$TopUpConfig" \
       		--printcom="$PRINTCOM"
   		else 
-  		    fsl_sub.torque -Q "$QUEUE" \
+  		    fsl_sub."$fslsub" -Q "$QUEUE" \
       		${HCPPIPEDIR}/fMRIVolume/GenericfMRIVolumeProcessingPipeline.sh \
       		--path="$StudyFolder" \
       		--subject="$Subject" \
@@ -3416,7 +3415,7 @@ hcp5() {
       		--grayordinatesres="$GrayordinatesResolution" \
       		--regname="$RegName"
       	else
-      		fsl_sub.torque -Q "$QUEUE" \
+      		fsl_sub."$fslsub" -Q "$QUEUE" \
       		${HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh \
       		--path="$StudyFolder" \
       		--subject="$Subject" \
@@ -3444,7 +3443,7 @@ hcp5() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  hcpd - Executes the Diffusion Processing Script
+#  hcpd - Executes the Diffusion Processing HCP Script using TOPUP implementation
 # ------------------------------------------------------------------------------------------------------
 
 hcpd() {
@@ -3479,20 +3478,32 @@ hcpd() {
 		######################################### DO WORK ##########################################
 
 		#Acquisition Parameters
-		EchoSpacing="0.69" #EPI Echo Spacing for data (in msec)
-		PEdir="1" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
-		Gdcoeffs="NONE"    
+		EchoSpacing="$EchoSpacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
+		PEdir="$PEdir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
+		Gdcoeffs="NONE"
+		Directions="$Directions"    
+		BVal="$BVal"
 		#Gdcoeffs="/vols/Data/HCP/Pipelines/global/config/coeff_SC72C_Skyra.grad" #Coefficients that describe spatial variations of the scanner gradients. Use NONE if not available.
+
+		if [ "$PEdir" == 1 ]; then
+			PEdirPos="RL"
+			PEdirNeg="LR"
+		else
+			PEdirPos="AP"
+			PEdirNeg="PA"
+		fi
 
 		#Input Variables
 		Subject="$CASE"
   		SubjectID="$Subject" #Subject ID Name
+  		
   		#RawDataDir="$StudyFolder/$SubjectID/Diffusion" #Folder where unprocessed diffusion data are
   		#PosData="${RawDataDir}/RL_data1@${RawDataDir}/RL_data2@${RawDataDir}/RL_data3" #Data with positive Phase encoding direction. Up to N>=1 series (here N=2), separated by @
   		#NegData="${RawDataDir}/LR_data1@${RawDataDir}/LR_data2@${RawDataDir}/LR_data3" #Data with negative Phase encoding direction. Up to N>=1 series (here N=2), separated by @
                                                                                  #If corresponding series is missing [e.g. 2 RL series and 1 LR) use EMPTY.
-  		PosData=`echo "${StudyFolder}/${Subject}/Diffusion/${Subject}_DWI_dir90_RL.nii.gz@${StudyFolder}/${Subject}/Diffusion/${Subject}_DWI_dir91_RL.nii.gz"` # "$1" #dataRL1@dataRL2@...dataRLN
-  		NegData=`echo "${StudyFolder}/${Subject}/Diffusion/${Subject}_DWI_dir90_LR.nii.gz@${StudyFolder}/${Subject}/Diffusion/${Subject}_DWI_dir91_LR.nii.gz"` # "$2" #dataLR1@dataLR2@...dataLRN
+		
+		PosData=`echo "${StudyFolder}/${Subject}/Diffusion/${Subject}_DWI_dir${Directions}_${PEdirPos}.nii.gz@${StudyFolder}/${Subject}/Diffusion/${Subject}_DWI_dir${Directions}_${PEdirPos}.nii.gz"` # "$1" #dataRL1@dataRL2@...dataRLN
+  		NegData=`echo "${StudyFolder}/${Subject}/Diffusion/${Subject}_DWI_dir${Directions}_${PEdirNeg}.nii.gz@${StudyFolder}/${Subject}/Diffusion/${Subject}_DWI_dir${Directions}_${PEdirNeg}.nii.gz"` # "$2" #dataLR1@dataLR2@...dataLRN
    		
 		if [ "$Cluster" == 1 ]; then
 		
@@ -3508,7 +3519,7 @@ hcpd() {
 		
       	else
       	
-      	fsl_sub.torque -T 3000 -Q "$QUEUE" \
+      	fsl_sub."$fslsub" -T 3000 -Q "$QUEUE" \
 		${HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh \
       	--posData="${PosData}" \
       	--negData="${NegData}" \
@@ -3528,6 +3539,158 @@ hcpd() {
       		--gdcoeffs=$Gdcoeffs \
       		--printcom=$PRINTCOM"
       	fi	
+      	
+}
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  hcpdlegacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+hcpdlegacy() {
+
+		# Requirements for this function
+		# installed versions of: FSL5.0.9 or higher
+		# environment: FSLDIR
+		# Needs CUDA 6.0 libraries to run eddy_cuda (10x faster than on a CPU)
+		
+		########################################## INPUTS ########################################## 
+
+		# DWI Data and T1w data needed in HCP-style format to perform legacy DWI preprocessing
+		# The data should be in $DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion
+		# Also assumes that hcp1 (PreFreeSurfeer) T1 preprocessing has been carried out with results in "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w
+		# Mandatory input parameters:
+    		# StudyFolder
+    		# Subject
+    		# PEdir
+    		# EchoSpacing
+    		# TE
+    		# UnwarpDir
+    		# DiffDataSuffix
+    	# Additional parameters that AP demands:	
+    		# QUEUE
+    		# Cluster
+    		# Scheduler
+		
+		########################################## OUTPUTS #########################################
+		
+		# DiffFolder=${StudyFolder}/${Subject}/Diffusion
+		# T1wDiffFolder=${StudyFolder}/${Subject}/T1w/Diffusion
+		#    $DiffFolder/rawdata
+		#    $DiffFolder/topup    
+		#    $DiffFolder/eddy
+		#    $DiffFolder/data
+		#    $DiffFolder/reg
+		#    $DiffFolder/logs
+		#    $T1wDiffFolder
+		
+		# Parse all Parameters
+		EchoSpacing="$EchoSpacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
+		PEdir="$PEdir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
+		TE="$TE" #delta TE in ms for field map or "NONE" if not used
+		UnwarpDir="$UnwarpDir" # direction along which to unwarp
+		DiffData="$DiffDataSuffix" # Diffusion data suffix name - e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+		CUDAQUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		DwellTime="$EchoSpacing" #same variable as EchoSpacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
+		DwellTimeSec=`echo "scale=6; $DwellTime/1000" | bc` # set the dwell time to seconds:
+
+		# Establish global directory paths
+		T1wFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w
+		DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion
+		T1wDiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion
+		FieldMapFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/FieldMap_strc
+		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion/log
+		Overwrite="$Overwrite"
+		
+		if [ "$Cluster" == 1 ]; then
+		
+		echo "Running locally on `hostname`"
+		echo "Check log file output here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+				
+		${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--PEdir="${PEdir}" \
+		--echospacing="${EchoSpacing}" \
+		--TE="${TE}" \
+		--unwarpdir="${UnwarpDir}" \
+		--overwrite="${Overwrite}" \
+		--diffdatasuffix="${DiffDataSuffix}" >> "$LogFolder"/DiffPreprocPipelineLegacy_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+				
+		# Print log on screen
+		#LogFile=`ls -ltr $LogFolder/DiffPreprocPipelineLegacy_$CASE_*log | tail -n 1 | awk '{ print $9 }'`
+		#echo ""
+		#echo "Log file location:"
+		#echo "$LogFolder/$LogFile"
+		#echo ""
+		#echo `tail -f $LogFolder/$LogFile`
+		
+		else
+		
+		# set scheduler for fsl_sub command
+		fslsub="$Scheduler"
+		
+		fsl_sub."$fslsub" -Q "$CUDAQUEUE" -l "$LogFolder" ${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--PEdir="${PEdir}" \
+		--echospacing="${EchoSpacing}" \
+		--TE="${TE}" \
+		--unwarpdir="${UnwarpDir}" \
+		--diffdatasuffix="${DiffDataSuffix}" \
+		--overwrite="${Overwrite}"
+
+		echo "--------------------------------------------------------------"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+		fi
+}
+
+show_usage_hcpdlegacy() {
+				
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function runs the DWI preprocessing using the FUGUE method for legacy data that are not TOPUP compatible"
+				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
+				echo ""
+				echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
+				echo " <study_folder>/<case>/hcp/<case>/T1w       ---> T1w data needs to be here"
+				echo ""
+				echo "	Note: "
+				echo " 		- If PreFreeSurfer component of the HCP Pipelines was run the function will make use of the T1w data [Results will be better due to superior brain stripping]."
+				echo " 		- If PreFreeSurfer component of the HCP Pipelines was NOT run the function will start from raw T1w data [Results may be less optimal]."
+				echo "		- If you are this function interactively you need to be on a GPU-enabled node or send it to a GPU-enabled queue."
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>			Name of function"
+				echo "		--path=<study_folder>				Path to study data folder"
+				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--echospacing=<echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69"
+				echo "		--PEdir=<phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
+				echo "		--TE=<delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
+				echo "		--unwarpdir=<epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
+				echo "		--diffdatasuffix=<diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
+				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "" 
+				echo "-- Example with flagged parameters for a local run:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='anticevic-gpu' --runmethod='1'"
+				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='anticevic-gpu' --runmethod='2' --scheduler='lsf'"
+				echo ""				
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "		AP hcpdlegacy hcpdlegacy /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
+				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -3547,7 +3710,7 @@ fsldtifit() {
 	if [ "$Cluster" == 1 ]; then
  		dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
 	else
- 		fsl_sub.torque -Q "$QUEUE" dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
+ 		fsl_sub."$fslsub" -Q "$QUEUE" dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
 	fi
 	fi
 }
@@ -3558,41 +3721,54 @@ fsldtifit() {
 
 fslbedpostxgpu() {
 
-	cd "$StudyFolder"/../fcMRI/hcp.logs/
+	export SGE_ROOT=1
+	export FSLGECUDAQ=anticevic-gpu
+	
+	if [ "$Overwrite" == "yes" ]; then
+		rm -rf "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX
+	fi
+  	  	
+	if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/grad_dev.nii.gz ]; then
+		bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
+	else	
+  		bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
+	fi	
 
-  	minimumfilesize=20000000
-  	actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz) > /dev/null 2>&1
-  	if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then  > /dev/null 2>&1
-  		echo "Bedpostx completed for $CASE"
-  	else
-
-	if [ "$Cluster" == 1 ]; then
-				echo "Running bedpostx for $CASE ... "
+  	# minimumfilesize=20000000
+  	# actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz) > /dev/null 2>&1
+  	# if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then  > /dev/null 2>&1
+  		# echo "Bedpostx completed for $CASE"
+  	# else
+  	
+	# if [ "$Cluster" == 1 ]; then
+				# echo "Running bedpostx for $CASE ... "
 				# load all needed modules
-				module load Apps/FSL/5.0.6  > /dev/null 2>&1
-				module load GPU/Cuda/5.0  > /dev/null 2>&1
-				module load GPU/Cuda/6.5  > /dev/null 2>&1
-				module load GPU/Cuda/7.0  > /dev/null 2>&1
-				source "$TOOLS"/etc/fslconf/fsl.sh > /dev/null 2>&1
+				# module load Apps/FSL/5.0.6  > /dev/null 2>&1
+				# module load GPU/Cuda/5.0  > /dev/null 2>&1
+				# module load GPU/Cuda/6.5  > /dev/null 2>&1
+				# module load GPU/Cuda/7.0  > /dev/null 2>&1
+				# source "$TOOLS"/etc/fslconf/fsl.sh > /dev/null 2>&1
 				
-				if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/grad_dev.nii.gz ]; then
-					echo "Found grad_dev.nii.gz and using -g flag... "
-					bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
-				else	
-					echo "Omitting -g flag... "
-					bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
-				fi	
-	else
-				echo "Submitting bedpostx job for $CASE to $QUEUE queue ..."
-				if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/grad_dev.nii.gz ]; then
-					echo "Found grad_dev.nii.gz and using -g flag... "
-					fsl_sub.torque -Q "$QUEUE" bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
-				else
-					echo "Omitting -g flag... "
-					fsl_sub.torque -Q "$QUEUE" bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
-				fi
-	fi
-	fi
+				# if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/grad_dev.nii.gz ]; then
+				#	echo "Found grad_dev.nii.gz and using -g flag... "
+				#	bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
+				#else	
+				#	echo "Omitting -g flag... "
+				#	bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
+				#fi	
+	# else
+				# echo "Submitting bedpostx job for $CASE to $QUEUE queue ..."
+				# if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/grad_dev.nii.gz ]; then
+				#	echo "Found grad_dev.nii.gz and using -g flag... "
+				#	fsl_sub."$fslsub" -Q "$QUEUE" bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
+				#else
+				#	echo "Omitting -g flag... "
+				#	fsl_sub."$fslsub" -Q "$QUEUE" bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
+				#fi
+				
+				
+	# fi
+	# fi
 }
 
 
@@ -3632,7 +3808,7 @@ pretractography() {
     		--subject="$Subject" \
     		--lowresmesh="$LowResMesh"
     	else
-    		fsl_sub.torque -Q "$QUEUE" \
+    		fsl_sub."$fslsub" -Q "$QUEUE" \
     	    ${HCPPIPEDIR}/DiffusionTractography/PreTractography.sh \
     		--path="$StudyFolder" \
     		--subject="$Subject" \
@@ -3683,7 +3859,7 @@ probtrackcortexgpu() {
   				  		
   				  		minimumfilesize=50000000 # define file size for checking
   						
-  						if [ "$PD" == "YES" ]; then
+  						if [ "$PD" == "yes" ]; then
   							PDPath="pd_"
   							ResultPD="$StudyFolder"/"$CASE"/T1w/Results/"$Hemisphere"_Trajectory_Matrix1_"$PDPath""$StepSize"
   						fi
@@ -3705,7 +3881,7 @@ probtrackcortexgpu() {
     							"$GitRepo"/DiffusionTractography/scripts/RunMatrix1Tractography_gpu.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$NumberOfSamples" "$StepSize" "$Curvature" "$DistanceThreshold" "$GlobalBinariesDir" "$PD"
 							else
 								echo "Submitting probtrackx2_gpu job $CASE $HemisphereSTRING hemisphere and distance parameter $PDSTRING to $QUEUE queue..."
-								fsl_sub.torque -Q "$QUEUE" "$GitRepo"/DiffusionTractography/scripts/RunMatrix1Tractography_gpu.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$NumberOfSamples" "$StepSize" "$Curvature" "$DistanceThreshold" "$GlobalBinariesDir" "$PD"
+								fsl_sub."$fslsub" -Q "$QUEUE" "$GitRepo"/DiffusionTractography/scripts/RunMatrix1Tractography_gpu.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$NumberOfSamples" "$StepSize" "$Curvature" "$DistanceThreshold" "$GlobalBinariesDir" "$PD"
 							fi
 							echo "set -- $StudyFolder $Subject $DownSampleNameI $DiffusionResolution $Caret7_Command $Hemisphere $NumberOfSamples $StepSize $Curvature $DistanceThreshold $GlobalBinariesDir $PD"
 						fi
@@ -3750,7 +3926,7 @@ makedenseconnectome() {
   				  		
   				  		minimumfilesize=100000000 # define file size for checking
   					
-  						if [ "$PD" == "YES" ]; then
+  						if [ "$PD" == "yes" ]; then
   							PDPath="pd_"
   							ResultPD="$StudyFolder"/"$CASE"/T1w/Results/"$Hemisphere"_Trajectory_Matrix1_"$PDPath""$StepSize"
   						fi
@@ -3772,7 +3948,7 @@ makedenseconnectome() {
       							"$GitRepo"/DiffusionTractography/scripts/MakeTractographyDenseConnectomesNoMatrix2.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$MatrixNumber" "$PD" "$StepSize"
 							else
 								echo "Submitting dense connectome job $CASE $HemisphereSTRING hemisphere and distance parameter $PDSTRING to $QUEUE queue..."
-						    	fsl_sub.torque -Q "$QUEUE" "$GitRepo"/DiffusionTractography/scripts/MakeTractographyDenseConnectomesNoMatrix2.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$MatrixNumber" "$PD" "$StepSize"
+						    	fsl_sub."$fslsub" -Q "$QUEUE" "$GitRepo"/DiffusionTractography/scripts/MakeTractographyDenseConnectomesNoMatrix2.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$MatrixNumber" "$PD" "$StepSize"
 							fi
 								echo "set -- $StudyFolder $Subject $DownSampleNameI $DiffusionResolution $Caret7_Command $Hemisphere $MatrixNumber $PD $StepSize"
 						fi
@@ -3788,7 +3964,16 @@ makedenseconnectome() {
 #  autoptx - Executes the autoptx script from FSL (needed for probabilistic estimation of large-scale fiber bundles / tracts)
 # -------------------------------------------------------------------------------------------------------------------------------
 
-#autoptx() {
+# autoptx() {
+
+# Subject=100307
+# StudyFolder=/gpfs/project/fas/n3/Studies/Connectome/subjects/$Subject/hcp
+# BpxFolder=Diffusion.bedpostX_model2
+
+# $AutoPtxFolder/autoPtx $StudyFolder $Subject $BpxFolder
+
+# $AutoPtxFolder/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
+# $AutoPtxFolder/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
 	
 #	cd "$StudyFolder"/../fcMRI/hcp.logs/
 	
@@ -3801,32 +3986,41 @@ makedenseconnectome() {
 #	if [ "$Cluster" == 1 ]; then
 # 		dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
 #	else
-# 		fsl_sub.torque -Q "$QUEUE" dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
+# 		fsl_sub."$fslsub" -Q "$QUEUE" dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
 #	fi
 #	fi
-#}
+
+# }
 
 
 # ------------------------------------------------------------------------------------------------------
-#  probtracallgpu - Executes the HCP Pretractography code (Stam's implementation for all grayordinates)
+#  pretractographydense - Executes the HCP Pretractography code (Stam's implementation for all grayordinates)
 # ------------------------------------------------------------------------------------------------------
+
+# pretractographydense() {
+
+# ScriptsFolder=/gpfs/project/fas/n3/software/CodeHCPe/DiffusionTractographyStam/PreTractography
+# Subject=100307
+# StudyFolder=/gpfs/project/fas/n3/Studies/Connectome/subjects/$Subject/hcp
+
+# $ScriptsFolder/PreTractography.sh $StudyFolder $Subject 0
+
+# ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/PreTractography
+# Subject="$CASE"
+# StudyFolder="$StudyFolder"/"$CASE"/hcp
+
+# if [ "$Cluster" == 1 ]; then
+	# "$ScriptsFolder"/PreTractography.sh "$StudyFolder" "$Subject" 0
+# else
+	# fsl_sub."$fslsub" -Q "$QUEUE" "$ScriptsFolder"/PreTractography.sh "$StudyFolder" "$Subject" 0
+# fi
+# }
+
+# -------------------------------------------------------------------------------------------------------------------
+#  probtrackcortexgpudense - Executes the HCP Matrix1 or 3 code (Stam's implementation for all grayordinates)
+# --------------------------------------------------------------------------------------------------------------------
 
 # Code goes here...
-
-# ------------------------------------------------------------------------------------------------------
-#  probtrackcortexgpu - Executes the HCP Matrix1 or 3 code (Stam's implementation for all grayordinates)
-# ------------------------------------------------------------------------------------------------------
-
-# Code goes here...
-
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  Diffusion Preprocessing via FOGUE - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-# this code is designed to circumvent TOPUP, which estimates a Fieldmap
-
-# - fsl_prepare_fieldmap (PRELUDE) PRELUDE unwraps the Phase Map # The FieldMap measured on the scanner is not in the distorted space # Take standard fieldmap to the FSL format #  Implements it in the distorted data space
-# - Call EpiReg - (FUGUE) taks the fielfmap and applies the distortion correction
 
 # ------------------------------------------------------------------------------------------------------------------------------
 #  Sync data from AWS buckets - customized for HCP
@@ -4040,7 +4234,7 @@ unset CASES
 flag=`echo $1 | cut -c1-2`
 
 if [ "$flag" == "--" ] ; then
-	ceho "Running pipeline in flag mode."
+	ceho "Running pipeline in parameter mode with flags."
 	#
 	# List of command line options across all functions
 	#
@@ -4050,7 +4244,17 @@ if [ "$flag" == "--" ] ; then
 	NetID=`opts_GetOpt1 "--netid" $@` # NetID for cluster rsync command
 	HCPStudyFolder=`opts_GetOpt1 "--clusterpath" $@` # cluster study folder for cluster rsync command
 	Direction=`opts_GetOpt1 "--dir" $@` # direction of rsync command (1 to cluster; 2 from cluster)
+	RunMethod=`opts_GetOpt1 "--runmethod" $@` # Specifies whether to run on the cluster or on the local node
 	ClusterName=`opts_GetOpt1 "--cluster" $@` # cluster address [e.g. louise.yale.edu)
+	EchoSpacing=`opts_GetOpt1 "--echospacing" $@` # <echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69
+	PEdir=`opts_GetOpt1 "--PEdir" $@` # <phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
+	TE=`opts_GetOpt1 "--TE" $@` # <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
+	UnwarpDir=`opts_GetOpt1 "--unwarpdir" $@` # <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
+	DiffDataSuffix=`opts_GetOpt1 "--diffdatasuffix" $@` # <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+	QUEUE=`opts_GetOpt1 "--queue" $@` # <name_of_cluster_queue>			Cluster queue name	
+	PRINTCOM=`opts_GetOpt1 "--printcom" $@` #Option for printing the entire command
+	Scheduler=`opts_GetOpt1 "--scheduler" $@` #Specify the type of scheduler to use 
+	Overwrite=`opts_GetOpt1 "--overwrite" $@` #Clean prior run and starr fresh [yes/no]
 else
 	ceho "Running pipeline in interactive mode."
 	#
@@ -4061,9 +4265,6 @@ else
 	CASES="$3"
 fi	
 
-# Use --printcom=echo for just printing everything and not actually
-# running the commands (the default is to actually run the commands)
-#RUN=`opts_GetOpt1 "--printcom" $@`
 
 #################################################################################################################################
 #################################################################################################################################
@@ -4199,10 +4400,10 @@ if [ "$FunctionToRunInt" == "hpcsync" ]; then
 			echo "Enter your NetID..."
 			if read answer; then
 				NetID=$answer
-				echo "Enter your HPC cluster folder where data are located... [e.g. /lustre/home/client/fas/anticevic/aa353/scratch/Anticevic.DP5/subjects)"
+				echo "Enter your HPC cluster folder where data are located... [e.g. /lustre/home/client/fas/anticevic/aa353/scratch/Anticevic.DP5/subjects]"
 				if read answer; then
 					HCPStudyFolder=$answer
-					echo "Enter rsync direction [NMDA-->HPC: 1 or HPC-->NMDA: 2)"
+					echo "Enter rsync direction [NMDA-->HPC: 1 or HPC-->NMDA: 2]"
 					if read answer; then
 					Direction=$answer
 						for CASE in $CASES
@@ -4226,7 +4427,7 @@ if [ "$FunctionToRunInt" == "hpcsync2" ]; then
 			echo "Enter your NetID..."
 			if read answer; then
 				NetID=$answer
-				echo "Enter your HPC cluster folder where data are located... [e.g. /lustre/home/client/fas/anticevic/aa353/scratch/Anticevic.DP5/subjects)"
+				echo "Enter your HPC cluster folder where data are located... [e.g. /lustre/home/client/fas/anticevic/aa353/scratch/Anticevic.DP5/subjects]"
 				if read answer; then
 					HCPStudyFolder=$answer
 					echo "Enter rsync direction [NMDA-->HPC: 1 or HPC-->NMDA: 2]"
@@ -4401,9 +4602,9 @@ if [ "$FunctionToRunInt" == "ciftiparcellate" ]; then
 			if read answer; then
 			DatatoParcellate=$answer
 				if [ "$DatatoParcellate" == "bold" ]; then
- 					echo "Overwrite existing parcellation run [YES, NO]:"
+ 					echo "Overwrite existing parcellation run [yes, no]:"
 						if read answer; then
-						Force=$answer
+						Overwrite=$answer
 						fi  
 					echo "Enter BOLD numbers you want to run the parcellation on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
 						if read answer; then
@@ -4419,9 +4620,9 @@ if [ "$FunctionToRunInt" == "ciftiparcellate" ]; then
   						fi
   				fi
  				if [ "$DatatoParcellate" == "boldfixica" ]; then
- 					echo "Overwrite existing parcellation run [YES, NO]:"
+ 					echo "Overwrite existing parcellation run [yes, no]:"
 						if read answer; then
-						Force=$answer
+						Overwrite=$answer
 						fi  
 					echo "Enter BOLD numbers you want to run the parcellation on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
 						if read answer; then
@@ -4433,9 +4634,9 @@ if [ "$FunctionToRunInt" == "ciftiparcellate" ]; then
   						fi
   				fi 	
  				if [ "$DatatoParcellate" == "bold_raw" ]; then
- 					echo "Overwrite existing parcellation run [YES, NO]:"
+ 					echo "Overwrite existing parcellation run [yes, no]:"
 						if read answer; then
-						Force=$answer
+						Overwrite=$answer
 						fi  
 					echo "Enter BOLD numbers you want to run the parcellation on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
 						if read answer; then
@@ -4447,9 +4648,9 @@ if [ "$FunctionToRunInt" == "ciftiparcellate" ]; then
   						fi
   				fi 	  							
   				if [ "$DatatoParcellate" == "dwi_cortex" ]; then
-  				 	echo "Overwrite existing parcellation run [YES, NO]:"
+  				 	echo "Overwrite existing parcellation run [yes, no]:"
 						if read answer; then
-						Force=$answer
+						Overwrite=$answer
 						fi  
 					echo "Enter Step Size [Yale: 0.45, HCP: 0.3125]"
 						if read answer; then
@@ -4526,9 +4727,9 @@ fi
 
 if [ "$FunctionToRunInt" == "boldmergecifti" ]; then
 
- 	echo "Overwrite existing merged run [YES, NO]:"
+ 	echo "Overwrite existing merged run [yes, no]:"
 		if read answer; then
-		Force=$answer
+		Overwrite=$answer
 		fi  
 	echo "Enter which study and data you want to merge"
 	echo ""
@@ -4569,9 +4770,9 @@ fi
 if [ "$FunctionToRunInt" == "fixica" ]; then
 	echo "Note: Expects that minimally processed NIFTI & CIFTI BOLDs"
 	echo ""
-	echo "Overwrite existing run [YES, NO]:"
+	echo "Overwrite existing run [yes, no]:"
 		if read answer; then
-		Force=$answer
+		Overwrite=$answer
 		fi  
 	echo "Enter BOLD numbers you want to run FIX ICA on - e.g. 1 2 3 or 1_3 for merged BOLDs:"
 		if read answer; then
@@ -4590,9 +4791,9 @@ fi
 if [ "$FunctionToRunInt" == "postfix" ]; then
 	echo "Note: This function depends on fsl, wb_command and matlab and expects startup.m to point to wb_command and fsl."
 	echo ""
-	echo "Overwrite existing postfix scenes [YES, NO]:"
+	echo "Overwrite existing postfix scenes [yes, no]:"
 		if read answer; then
-		Force=$answer
+		Overwrite=$answer
 		fi  
 	echo "Enter BOLD numbers you want to run PostFix.sh on [e.g. 1 2 3]:"
 		if read answer; then
@@ -4725,6 +4926,12 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "fslbedpostxgpu" ]; then
+
+	echo "Overwrite FreeSurfer run [yes, no]:"
+	if read answer; then
+		Overwrite=$answer 
+	fi
+	
 	echo "Enter # of fibers per voxel [e.g. 3]:"
 		if read answer; then
 		Fibers=$answer 
@@ -4737,25 +4944,35 @@ if [ "$FunctionToRunInt" == "fslbedpostxgpu" ]; then
 		if read answer; then
 		Burnin=$answer
 		fi 		
-	echo "Run locally [1] or run on cluster [2]:"
-		if read answer; then
-		Cluster=$answer 
-		if [ "$Cluster" == "2" ]; then
-			echo "Enter queue name to submit jobs to [e.g. general, scavenge, anticevic, anti_gpu]:"
-			if read answer; then
-			QUEUE=$answer 
-				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done
-  			fi
-  		else
+	
+	#echo "Run locally [1] or run on cluster [2]:"
+	#	if read answer; then
+	#	Cluster=$answer 
+	#	if [ "$Cluster" == "2" ]; then
+	#		echo "Enter queue name to submit jobs to [e.g. general, scavenge, anticevic, anti_gpu]:"
+	#		if read answer; then
+	#		QUEUE=$answer 
+	#			for CASE in $CASES
+	#			do
+  	#				"$FunctionToRunInt" "$CASE"
+  	#			done
+  	#		fi
+  	#	else
   				for CASE in $CASES
 				do
   					"$FunctionToRunInt" "$CASE"
   				done	
-  		fi	
-  	fi
+  	#	fi	
+  	#fi
+
+fi
+
+if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
+
+  	for CASE in $CASES
+	do
+		"$FunctionToRunInt" "$CASE"
+	done	
 fi
 
 # ------------------------------------------------------------------------------
@@ -4763,11 +4980,16 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp1" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
-		MasterFolder="$StudyFolder" 
-		echo "Run locally [1] or run on cluster [2]:"
+	
+	#echo "Note: Making sure global environment script is sourced..."
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" 
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi 	
+	
+	MasterFolder="$StudyFolder" 
+	echo "Run locally [1] or run on cluster [2]:"
 	if read answer; then
 		Cluster=$answer 
 		if [ "$Cluster" == "2" ]; then
@@ -4790,9 +5012,6 @@ if [ "$FunctionToRunInt" == "hcp1" ]; then
   				done	
   		fi	
   	fi
-  	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -4800,13 +5019,18 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp2" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
-		MasterFolder="$StudyFolder"
-		echo "Overwrite FreeSurfer run (YES, NO]:"
+	
+	#echo "Note: Making sure global environment script is sourced..."
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" 
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi 	
+	
+	MasterFolder="$StudyFolder"
+	echo "Overwrite FreeSurfer run [yes, no]:"
 	if read answer; then
-		Force=$answer  
+		Overwrite=$answer  
 		echo "Run locally [1] or run on cluster [2]:"
 	if read answer; then
 		Cluster=$answer 
@@ -4831,9 +5055,6 @@ if [ "$FunctionToRunInt" == "hcp2" ]; then
   		fi	
   	fi
   	fi
-  	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -4841,11 +5062,16 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp3" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
-		MasterFolder="$StudyFolder" 
-		echo "Run locally [1] or run on cluster [2]:"
+		
+	#echo "Note: Making sure global environment script is sourced..."
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" 
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi
+	
+	MasterFolder="$StudyFolder" 
+	echo "Run locally [1] or run on cluster [2]:"
 	if read answer; then
 		Cluster=$answer 
 		if [ "$Cluster" == "2" ]; then
@@ -4868,9 +5094,6 @@ if [ "$FunctionToRunInt" == "hcp3" ]; then
   				done	
   		fi	
   	fi
-  	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -4878,14 +5101,19 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp4" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-		if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
+
+		#echo "Note: Making sure global environment script is sourced..."
+		#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+		#	. "$TOOLS/hcpsetup.sh" 
+		#else
+		#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+		#fi 	
+		
 		MasterFolder="$StudyFolder" 
 		echo "Enter BOLD numbers you want to run the HCP Volume pipeline on [e.g. 1 2 3]:"
 		if read answer; then
 			BOLDS=$answer
-		echo "Enter Phase Encoding Directions for BOLDs or only a single value if no counterbalancing (y=PA; y-=AP; x=RL; -x=LR]:"
+		echo "Enter Phase Encoding Directions for BOLDs or only a single value if no counterbalancing [y=PA; y-=AP; x=RL; -x=LR]:"
 		if read answer; then
 			PhaseEncodinglist=$answer 	 
 		echo "Run locally [1] or run on cluster [2]:"
@@ -4913,9 +5141,6 @@ if [ "$FunctionToRunInt" == "hcp4" ]; then
   		fi
   		fi
   		fi
-  	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -4923,9 +5148,14 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp5" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-		if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
+	
+		#echo "Note: Making sure global environment script is sourced..."
+		#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+		#	. "$TOOLS/hcpsetup.sh" 
+		#else
+		#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+		#fi 	
+		
 		MasterFolder="$StudyFolder" 
 		echo "Enter BOLD numbers you want to run the HCP Surface pipeline on [e.g. 1 2 3]:"
 		if read answer; then
@@ -4954,9 +5184,6 @@ if [ "$FunctionToRunInt" == "hcp5" ]; then
   			fi	
   		fi
   		fi  	
-  	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -4964,11 +5191,17 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcpd" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
-		MasterFolder="$StudyFolder" 
-		echo "Run locally [1] or run on cluster [2]:"
+	
+	#echo "Note: Making sure global environment script is sourced..."
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" 
+	#fi
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi
+	
+	MasterFolder="$StudyFolder" 
+	echo "Run locally [1] or run on cluster [2]:"
 	if read answer; then
 		Cluster=$answer 
 		if [ "$Cluster" == "2" ]; then
@@ -4991,21 +5224,119 @@ if [ "$FunctionToRunInt" == "hcpd" ]; then
   				done	
   		fi	
   	fi
-  	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi
 fi
 
+
+# ------------------------------------------------------------------------------
+#  Diffusion legacy processing function loop (hcpdlegacy)
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "hcpdlegacy" ]; then
+	
+	# Check all the user-defined parameters: 1. EchoSpacing, 2. PEdir, 3. TE, 4. UnwarpDir, 5. DiffDataSuffix, 6. QUEUE
+	
+#	if [ "$#" -ne 10 ]; then
+#		ceho "Error: Your input parameters are incomplete. Please check usage by running <AP hcpdlegacy>"	
+
+		if [ -z "$FunctionToRun" ]; then ceho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then ceho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then ceho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$EchoSpacing" ]; then ceho "Error: Echo Spacing value missing"; exit 1; fi
+		if [ -z "$PEdir" ]; then ceho "Error: Phase Encoding Direction value missing"; exit 1; fi
+		if [ -z "$TE" ]; then ceho "Error: TE value for Fieldmap missing"; exit 1; fi
+		if [ -z "$UnwarpDir" ]; then ceho "Error: EPI Unwarp Direction value missing"; exit 1; fi
+		if [ -z "$DiffDataSuffix" ]; then ceho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
+		if [ -z "$QUEUE" ]; then ceho "Error: Queue name missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then ceho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+		if [ -z "$Scheduler" ]; then ceho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi		
+		echo ""
+		echo "Running DWI legacy processing with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Echo Spacing: $EchoSpacing"
+		echo "Phase Encoding Direction: $PEdir"
+		echo "TE value for Fieldmap: $TE"
+		echo "EPI Unwarp Direction: $UnwarpDir"
+		echo "Diffusion Data Suffix Name: $DiffDataSuffix"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi
+
+if [ "$FunctionToRunInt" == "hcpdlegacy" ]; then
+
+	echo "Running DWI legacy processing interactively. First enter the necessary parameters."
+	# Request all the user-defined parameters: 1. EchoSpacing, 2. PEdir, 3. TE, 4. UnwarpDir, 5. DiffDataSuffix, 6. QUEUE
+	echo ""
+	echo ""
+	
+		echo "-- EPI Echo Spacing for data [in msec]; e.g. 0.69"
+		if read answer; then EchoSpacing=$answer; fi
+		echo ""
+		echo "-- Phase Encoding Direction - Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
+		if read answer; then PEdir=$answer; fi
+		echo ""
+		echo "-- Enter Delta TE value for fieldmap - This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
+		if read answer; then TE=$answer; fi
+		echo ""
+		echo "-- Epi phase unwarping direction - Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
+		if read answer; then UnwarpDir=$answer; fi
+		echo ""
+		echo "-- Diffusion data suffix name - e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
+		if read answer; then DiffDataSuffix=$answer; fi
+		echo ""
+		echo "Overwrite FreeSurfer run [yes, no]:"
+		if read answer; then Overwrite=$answer; fi  
+		echo ""
+		echo "-- Run locally [1] or run on cluster [2]"
+		if read answer; then Cluster=$answer; fi
+		echo ""
+		if [ "$Cluster" == "2" ]; then
+			echo "-- Enter queue name - always submit this job to a GPU-enabled queue [e.g. anticevic-gpu]"
+			if read answer; then QUEUE=$answer; fi
+			echo ""
+			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
+			if read answer; then Scheduler=$answer; fi
+			echo ""
+		fi
+		
+		echo "Running DWI legacy processing with the following parameters:"
+		echo ""
+		echo "-------------------------------------------------------------"
+		echo "Echo Spacing: $EchoSpacing"
+		echo "Phase Encoding Direction: $PEdir"
+		echo "TE value for Fieldmap: $TE"
+		echo "EPI Unwarp Direction: $UnwarpDir"
+		echo "Diffusion Data Suffix Name: $DiffDataSuffix"
+		
+		for CASE in $CASES
+			do
+  			"$FunctionToRunInt" "$CASE"
+  		done
+fi
 
 # ------------------------------------------------------------------------------
 #  Pretractography processing function loop (Matt's original code)
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "pretractography" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
-		MasterFolder="$StudyFolder" 	
+
+	#echo "Note: Making sure global environment script is sourced..."
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" 
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi 	
+	
+	MasterFolder="$StudyFolder" 	
 	echo "Run locally [1] or run on cluster [2]:"
 	if read answer; then
 	Cluster=$answer 
@@ -5029,9 +5360,6 @@ if [ "$FunctionToRunInt" == "pretractography" ]; then
   				done	
   		fi	
   	fi
-   	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi 	
 fi
 
 
@@ -5040,10 +5368,15 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "probtrackcortexgpu" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
-		MasterFolder="$StudyFolder" 	
+	
+	#echo "Note: Making sure global environment script is sourced..."
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" 
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi 	
+	
+	MasterFolder="$StudyFolder" 	
 	echo "Run locally [1] or run on cluster [2]:"
 	if read answer; then
 	Cluster=$answer 
@@ -5099,9 +5432,6 @@ if [ "$FunctionToRunInt" == "probtrackcortexgpu" ]; then
   						fi
   		fi	
   	fi
-    else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi 	 	
 fi
   
 
@@ -5110,10 +5440,15 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "makedenseconnectome" ]; then
-		echo "Note: Making sure global environment script is sourced..."
-	if [ -f "$TOOLS/hcpsetup.sh" ]; then
-		. "$TOOLS/hcpsetup.sh" 
-		MasterFolder="$StudyFolder" 	
+	
+	#echo "Note: Making sure global environment script is sourced..."
+	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
+	#	. "$TOOLS/hcpsetup.sh" 
+	#else
+	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
+	#fi 		
+	
+	MasterFolder="$StudyFolder" 	
 	echo "Run locally [1] or run on cluster [2]:"
 	if read answer; then
 	Cluster=$answer 
@@ -5169,9 +5504,6 @@ if [ "$FunctionToRunInt" == "makedenseconnectome" ]; then
   						fi
   		fi	
   	fi
-  	else
-		echo "ERROR: Environment script is missing. Check your user profile paths!"
-	fi 	
 fi  		
 
 # ------------------------------------------------------------------------------
@@ -5179,24 +5511,26 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "awshcpsync" ]; then
-	echo "Running AWS S3 Sync... Make sure you configured your AWS credentials."
-	echo "Dry run [1] or real run [2]:"
-	if read answer; then
-	RunType=$answer
-	echo "Enter the AWS URI (e.g. /hcp-openaccess/HCP_900)" 
-	if read answer; then
-	AwsFolder=$answer
-	echo "Which modality/folder do you want to sync (e.g. MEG, MNINonLinear, T1w)" 
-	if read answer; then
-	Modality=$answer
-	fi
-	fi
-	fi
 	
+	echo "Running AWS S3 Sync... Make sure you configured your AWS credentials"
+	echo "Dry run [1] or real run [2]"
+	
+	if read answer; then
+		RunType=$answer
+	fi
+	echo "Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
+	if read answer; then
+		AwsFolder=$answer
+	fi
+	echo "Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
+	if read answer; then
+		Modality=$answer
+	fi
+
 	for CASE in $CASES
 	do
-  		awshcpsync "$CASE"
+  		"$FunctionToRunInt" "$CASE"
 	done
-fi	
+fi
 
 exit 0
