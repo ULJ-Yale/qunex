@@ -167,7 +167,7 @@ end
 % ---> pack header
 
 if img.hdrnifti.version == 1
-    img.hdrnifti.vox_offset = 384 + pt;
+    img.hdrnifti.vox_offset = 348 + pt;
     fhdr = packHeader_nifti1(img.hdrnifti);
 elseif img.hdrnifti.version == 2
     img.hdrnifti.vox_offset = 540 + pt;

@@ -34,6 +34,7 @@ if nargin < 2 || isempty(minsize), minsize = 1;     end
 
 % --- Script verbosity
 
+report = false;
 if verbose == 1
     verbose = false;
     report  = true;
