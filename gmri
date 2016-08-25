@@ -28,7 +28,7 @@ splitDicom   [folder=.]
 sortDicom    [folder=.]
 dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
 processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"]
-getHCPInfo   dfile=<dicom_file> [scanner=siemens]
+getDICOMInfo dfile=<dicom_file> [scanner=siemens]
 
 
 Avi pipeline utilities
@@ -76,7 +76,7 @@ commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': (
             'dicom2nii'     : {'com': gCodeU.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose')},
             'processPhilips': {'com': gCodeU.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern')},
             'processInbox'  : {'com': gCodeU.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern')},
-            'getHCPInfo'    : {'com': gCodeU.g_dicom.getHCPInfo,       'args': ('dfile', 'scanner')},
+            'getDICOMInfo'  : {'com': gCodeU.g_dicom.getDICOMInfo,     'args': ('dfile', 'scanner')},
             'runAviFolder'  : {'com': gCodeU.g_4dfp.runAviFolder,      'args': ('folder', 'pattern', 'overwite', 'subjf')},
             'runAvi'        : {'com': gCodeU.g_4dfp.runAvi,            'args': ('folder', 'overwite', 'subjf')},
             'fz2zf'         : {'com': gCodeU.g_NIfTI.fz2zf,            'args': ('inf', 'outf')},

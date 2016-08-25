@@ -787,9 +787,9 @@ def processInbox(folder=None, check=None, pattern=None):
     return
 
 
-def getHCPInfo(dfile=None, scanner='siemens'):
+def getDICOMInfo(dfile=None, scanner='siemens'):
     '''
-    getHCPInfo dfile=<dicom_file> [scanner=siemens]
+    getDICOMInfo dfile=<dicom_file> [scanner=siemens]
 
     Inspects the dicom file for information that is relevant for HCP preprocessing.
 
@@ -849,7 +849,7 @@ def getHCPInfo(dfile=None, scanner='siemens'):
     try:
         am = d[0x0051, 0x100b].value
         print "     Acquisition Matrix:", am
-        am = float(am.split('*')[0])
+        am = float(am.split('*')[0].replace('p', ''))
     except:
         print "     Acquisition Matrix: undefined"
         ok = False
