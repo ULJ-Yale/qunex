@@ -35,7 +35,7 @@ img.mformat = 'b';
 img.imageformat = '4dfp';
 
 if ismember('littleendian', img.hdr4dfp.value)
-    fprintf('\n ---> switching to littleendian');
+    if verbose, fprintf('\n ---> switching to littleendian'); end
     fclose(fin);
     fin = fopen(fname, 'r', 'l');
     img.hdr4dfp = readHeader(fin);
@@ -71,6 +71,7 @@ function [hdr] = readHeader(fin)
         hdr.key{c} = key;
         hdr.value{c} = value;
         l = fgetl(fin);
+        % fprintf('\n --> "%s"', l);
     end
 
 function [img] = processHeader(img, fin)
@@ -170,9 +171,19 @@ function [img] = processHeader(img, fin)
 
     % --- Read contrast names
 
+    % fseek(fin, 0, 'bof');
+    % ttt = fread(fin, 40, '*char')';
+    % while ttt(end-12:end-1) ~= 'START_BINARY'
+    %     ttt = [ttt fread(fin, 1, '*char')];
+    % end
+
     ncontrasts = str2double(values{ismember(keys, 'glm number of contrasts')});
     for n = 1:ncontrasts
         clen = fread(fin, 1, 'int16');
+        % fprintf('\n-> contrast %d: %d', n, clen);
+        if clen > 25
+            % fprintf('\nWARNING: clen of contrast too long: %d', clen);
+        end
         if clen > 0
             cname = fread(fin, clen, '*char');
         else
