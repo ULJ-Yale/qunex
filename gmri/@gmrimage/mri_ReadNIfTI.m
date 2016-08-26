@@ -262,6 +262,19 @@ if mi > 0
                 img.glm.A       = mdata;
                 img.glm.hdr     = mhdr;
                 [img.glm.Nrow, img.glm.Mcol] = size(mdata);
+
+            elseif strcmp(mmeta.meta, 'list')
+                img.list = mmeta;
+                lists    = fields(img.list);
+                lists    = lists(~ismember(lists, 'meta'));
+                for l = lists(:)'
+                    l = l{1};
+                    if max(isstrprop(strrep(img.list.(l), 'e', ''), 'alpha'))
+                        img.list.(l) = strread(img.list.(l), '%s')';
+                    else
+                        img.list.(l) = strread(img.list.(l), '%f')';
+                    end
+                end
             end
         end
     end

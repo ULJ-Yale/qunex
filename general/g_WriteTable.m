@@ -60,10 +60,11 @@ if ~isempty(hdr)
 end
 
 % --- write data
-
-for n = 1:size(data, 1)
-    s = [s sprintf(['\n' sform{2}], data(n,1))];
-    s = [s sprintf([sep sform{3}], data(n,2:end))];
+if ~isempty(data)
+    for n = 1:size(data, 1)
+        s = [s sprintf(['\n' sform{2}], data(n,1))];
+        s = [s sprintf([sep sform{3}], data(n,2:end))];
+    end
 end
 
 % --- write optional summary

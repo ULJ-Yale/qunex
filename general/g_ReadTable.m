@@ -32,7 +32,7 @@ lines = lines{1};
 
 header = true;
 l = 0;
-while header
+while header && length(lines) > l
     l = l + 1;
     s = lines{l};
 
@@ -56,11 +56,16 @@ while header
     end
 end
 
-data = textscan(instr, '%f', 'CommentStyle', '#', 'HeaderLines', l-1);
-data = data{1};
-data = reshape(data, nc, [])';
+if ~header
+    data = textscan(instr, '%f', 'CommentStyle', '#', 'HeaderLines', l-1);
+    data = data{1};
+    data = reshape(data, nc, [])';
 
-if nc == 1 + length(hdr)
-    hdr = ['id', hdr];
+    if nc == 1 + length(hdr)
+        hdr = ['id', hdr];
+    end
+else
+    data = [];
 end
+
 

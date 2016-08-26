@@ -95,7 +95,7 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-if nargin < 15, done = [];                                  end
+if nargin < 16, done = [];                                  end
 if nargin < 15, options = '';                               end
 if nargin < 14, ignores = '';                               end
 if nargin < 13, scrub = '';                                 end
