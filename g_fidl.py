@@ -110,9 +110,9 @@ def joinFidl(concfile, fidlroot, outfolder=None):
         TR = fidldata[0]['TR']
     except:
         if len(fidldata) == 0:
-            print "===> WARNING: No fidl files correspond to %s!" % (concfile)
+            print "===> WARNING: No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot)
         else:
-            print "===> WARNING: Error in processing concfile: %s, fidlroot: %s!" % (concfile, fidlrrot)
+            print "===> WARNING: Error in processing concfile: %s, fidlroot: %s!" % (concfile, fidlroot)
         return
 
     # ---> read the conc file, check if the number matches
