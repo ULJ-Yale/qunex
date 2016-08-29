@@ -68,6 +68,7 @@ Caret surface mapping utilities
 -------------------------------
 
 map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
+map2HCP volume=<volume file> [method=trilinear]
 '''
 
 commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': ('folder', )},
@@ -91,7 +92,8 @@ commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': (
             'joinFidl'      : {'com': gCodeU.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot', 'outfolder')},
             'joinFidlFolder': {'com': gCodeU.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
             'splitFidl'     : {'com': gCodeU.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
-            'map2PALS'      : {'com': gCodeU.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')}
+            'map2PALS'      : {'com': gCodeU.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
+            'map2HCP'       : {'com': gCodeU.g_4dfp.map2HCP,           'args': ('volume', 'method')}
             }
 
 

@@ -280,3 +280,40 @@ def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
         for structure in ['LEFT', 'RIGHT']:
             print "---> mapping %s to PALS %s [%s %s %s]" % (volume, structure, atlas, method, " ".join(mapping))
             r = subprocess.call(['caret_command', '-volume-map-to-surface-pals', metric, metric, atlas, structure, method, volume] + mapping)
+
+
+
+def map2HCP(volume, method='trilinear'):
+    '''
+    map2HCP volume=<volume file> [method=trilinear]
+
+    Maps volume files to dense scalar files using HCP templates.
+    - volume:   a volume file or a space separated list of volume files - put in quotes
+    - method:   one of: trilinear, enclosing, cubic, ribbon constrained
+
+    It expects "HCPATLAS" environment variable to be set, to be able to find the right templates.
+    '''
+
+    if not "HCPATLAS" in os.environ:
+        print "ERROR: HCPATLAS environment variable not set. Can not find HCP Template files!"
+        return
+
+    apath = os.environ["HCPATLAS"]
+    tpath = os.path.join(apath, '91282_Greyordinates')
+
+    if method not in ['trilinear', 'enclosing', 'cubic', 'ribbon-constrained']:
+        print "ERROR: Unrecognised mapping method [%s]!" % (method)
+        return
+    method = "-" + method
+
+    volumes = volume.split()
+    for volume in volumes:
+        target = volume.replace('.nii', '').replace('.gz', '') + '.dscalar.nii'
+        print "---> mapping %s to %s using %s" % (volume, target, method,)
+        for structure in ['L', 'R']:
+            r = subprocess.call(['wb_command', '-volume-to-surface-mapping', volume, os.path.join(apath, "Q1-Q6_R440.%s.midthickness.32k_fs_LR.surf.gii" % (structure)), "tmp.%s.func.gii" % (structure), method])
+        r = subprocess.call(['wb_command', '-cifti-create-dense-scalar', target, '-volume', volume, os.path.join(tpath, 'Atlas_ROIs.2.nii.gz'),
+            '-left-metric', 'tmp.L.func.gii', '-roi-left', os.path.join(tpath, 'L.atlasroi.32k_fs_LR.shape.gii'),
+            '-right-metric', 'tmp.R.func.gii', '-roi-right', os.path.join(tpath, 'R.atlasroi.32k_fs_LR.shape.gii')])
+        os.remove('tmp.L.func.gii')
+        os.remove('tmp.R.func.gii')
