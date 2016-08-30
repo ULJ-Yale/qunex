@@ -263,6 +263,17 @@ if mi > 0
                 img.glm.hdr     = mhdr;
                 [img.glm.Nrow, img.glm.Mcol] = size(mdata);
 
+                % --- copy out grand mean and sd images
+                img.data = img.image2D;
+                midx  = find(ismember(img.glm.event, 'gmean'));
+                sdidx = find(ismember(img.glm.event, 'sd'));
+                if ~isempty(midx)
+                    img.glm.gmean = img.data(:, midx);
+                end
+                if ~isempty(midx)
+                    img.glm.sd = img.data(:, sdidx);
+                end
+
             elseif strcmp(mmeta.meta, 'list')
                 img.list = mmeta;
                 lists    = fields(img.list);

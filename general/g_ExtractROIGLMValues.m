@@ -70,7 +70,8 @@ for s = 1:nsub
 
     if verbose, fprintf('\n---> processing subject: %s', subjects(s).id); end
 
-    glm = gmrimage(subjects(s).glm, [], [], verbose);
+    % glm = gmrimage(subjects(s).glm, [], [], verbose);
+    glm = gmrimage(subjects(s).glm);
     glm = glm.mri_ExtractGLMEstimates(estimates, frames);
 
     % ---> update ROI
