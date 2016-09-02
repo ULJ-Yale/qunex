@@ -105,6 +105,8 @@ end
 %                         loop over all the models and compute the weights
 
 events.weights = ones(events.nevents, nregressors);
+valide  = events.event >= 0;
+nvalide = sum(valide);
 
 for m = 1:nregressors
     if ~isempty(model.regressor(m).weight.column)
@@ -116,9 +118,9 @@ for m = 1:nregressors
 
             % --- what are we normalizing over > create a mask, extract relevant data
 
-            wm = ones(events.nevents, 1) == 1;
+            wm = ones(nvalide, 1) == 1;
             if model.regressor(m).weight.normalize(1) == 'w'
-                wm = ismember(events.event, model.regressor(m).code);
+                wm = ismember(events.event(valide), model.regressor(m).code);
             end
 
             tw = w(wm);
@@ -147,7 +149,7 @@ for m = 1:nregressors
             w(~wm) = 0;
         end
 
-        events.weights(:, m) = w;
+        events.weights(valide, m) = w;
     end
 end
 
@@ -414,19 +416,19 @@ model.fidl   = events;
 
 function [model] = parseModels(s)
 
-a = splitby(s, '|');
+a = strtrim(splitby(s, '|'));
 
 for n = 1:length(a)
 
-    m = splitby(a{n}, '>');
+    m = strtrim(splitby(a{n}, '>'));
     if length(m) == 0
         continue
     end
 
     % --=> deal with the event modelling specification
 
-    b = splitby(m{1}, ':');
-    regressor(n).event = splitby(b{1}, ',');
+    b = strtrim(splitby(m{1}, ':'));
+    regressor(n).event = strtrim(splitby(b{1}, ','));
     regressor(n).code  = [];
 
     if length(b) == 0
@@ -461,7 +463,7 @@ for n = 1:length(a)
     % --=> deal with weighting specification
 
     if length(m) > 1
-        c = splitby(m{2}, ':');
+        c = strtrim(splitby(m{2}, ':'));
         nc = length(c);
 
         if nc > 0, regressor(n).name             = c{1}         ; else regressor(n).name             = [];       end

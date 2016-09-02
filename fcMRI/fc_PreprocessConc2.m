@@ -116,6 +116,8 @@ fprintf('\nRunning preproces conc 2 script v0.9.8.1 [%s]\n', tail);
 
 options
 
+TS = [];
+
 % ======================================================
 %                          ----> prepare basic variables
 
@@ -305,8 +307,6 @@ if strfind(do, 'r')
     if strfind(do, 'r1'), rtype = 1; end
     if strfind(do, 'r2'), rtype = 2; end
 end
-
-
 
 
 
@@ -809,6 +809,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         for b = 1:nbolds
             xE = xS + nE - 1;
             X(bS(b):bE(b), xS:xE) = nuisance(b).events;
+            % fprintf('\n---> events run %d %d %d %d %d', b, bS(b), bE(b), xS, xE);
             if ~joine
                 xS = xS+nE;
                 for mi = 1:nE
@@ -920,7 +921,10 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
     %   ----> mask nuisance and do GLM
     fprintf('.');
-
+    % fprintf('\n -> X\n'); fprintf('%.2f ', sum(X));
+    % fprintf('\n -> X\n'); fprintf('%.2f ', sum(X(nmask==1, :)));
+    % fprintf('\n -> mask %d', sum(nmask==1));
+    % fprintf(xevents);
     X = X(nmask==1, :);
     [coeff res] = Y.mri_GLMFit(X);
     coeff = [coeff Y.mri_Stats({'m', 'sd'})];
