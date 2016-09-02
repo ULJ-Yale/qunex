@@ -6,12 +6,13 @@
 ## --> PENDING TASKS:
 ##
 ## --> build sub-routines for Concs, FILDs, etc
-## --> Make sure to document adjustments to diffusion connectome code for GPU version [e.g. omission of matrixes etc.)
+## --> Make sure to document adjustments to diffusion connectome code for GPU version [e.g. omission of matrixes etc.]
 ## --> Integrate functions for Stam's full dense connectomes independently of Matt's calls
-## --> Integrate command line flags for functions into IF statements (Partially done but works; see example for hcpsync2)
-## --> Integrate usage calls for each function (Partially done but works; see example dicomsort)
+## --> Integrate command line flags for functions into IF statements [see example for hcpdlegacy]
+## --> Integrate usage calls for each function
 ## --> Integrate log generation for each function and build IF statement to override log generation if nolog flag
 ## --> Issue w/logging - the exec function effectively double-logs everything for each case and for the whole command
+## --> Program autoptx function
 
 ## Commands for rsyncing to HPC clusters
 ##  rsync /usr/local/analysispipeline/AnalysisPipeline.sh aa353@omega1.hpc.yale.edu:/home/fas/anticevic/software/analysispipeline/
@@ -115,6 +116,7 @@ show_usage() {
   				echo "		setuphcp 			SETUP DATA STRUCTURE FOR HCP PROCESSING"
   				echo "		hpcsync 			SYNC WITH YALE HPC CLUSTER(S) FOR ORIGINAL HCP PIPELINES (StudyFolder/$ubject)"
   				echo "		hpcsync2			SYNC WITH YALE HPC CLUSTER(S) FOR dofcMRI INTEGRATION (StudyFolder/Subject/hcp/Subject)"
+  				echo "		awshcpsync			SYNC HCP DATA FROM AWS S3 CLOUD"
   				echo ""  				
   				echo "		--- HCP PIPELINES FUNCTIONS ---"
   				echo "		hpc1				PREFREESURFER COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
@@ -133,15 +135,17 @@ show_usage() {
   				echo "		ciftismooth 		SMOOTH & CONVERT CIFTI BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
   				echo "		fidlconc 			SETUP CONC & FIDL EVEN FILES FOR GLM ANALYSES"
   				echo ""  				
-  				echo "		--- TRACTOGRAPHY FUNCTIONS ---"
+  				echo "		--- DWI ANALYSES & TRACTOGRAPHY FUNCTIONS ---"
   				echo "		fsldtifit 			RUN FSL DTIFIT (CLUSTER AWARE)"
   				echo "		fslbedpostxgpu 			RUN FSL BEDPOSTX w/GPU (CLUSTER AWARE)"
   				echo "		isolatesubcortexrois 		ISOLATE SUBJECT-SPECIFIC SUBCORTICAL ROIs FOR TRACTOGRAPHY"
   				echo "		isolatethalamusfslnuclei 	ISOLATE FSL THALAMIC ROIs FOR TRACTOGRAPHY"
   				echo "		probtracksubcortex 		RUN FSL PROBTRACKX ACROSS SUBCORTICAL NUCLEI (CPU)"
   				echo "		pretractography			GENERATES SPACE FOR CORTICAL DENSE CONNECTOMES (CLUSTER AWARE)"
+  				echo "		pretractographydense		GENERATES SPACE FOR WHOLE-BRAIN DENSE CONNECTOMES (CLUSTER AWARE)"
   				echo "		probtrackcortexgpu		RUN FSL PROBTRACKX ACROSS CORTICAL MESH FOR DENSE CONNECTOMES w/GPU (CLUSTER AWARE)"
   				echo "		makedenseconnectome		GENERATE DENSE CORTICAL CONNECTOMES (CLUSTER AWARE)"
+  				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (CLUSTER AWARE)"
   				echo ""  				
   				echo "		--- ANALYSES FUNCTIONS ---"  				
   				echo "		ciftiparcellate			PARCELLATE BOLD, DWI, MYELIN or THICKNESS DATA VIA 7 & 17 NETWORK SOLUTIONS"
@@ -308,6 +312,15 @@ setuplist() {
 	fi
 }
 
+show_usage_setuplist() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
+}
+
 
 # ------------------------------------------------------------------------------------------------------
 #  fidlconcorganize - Organize all CONCs and FIDL files for GLM analyses across various tasks
@@ -320,6 +333,16 @@ fidlconcorganize() {
 	source "$ListFunction" #reads fidlconcorganize.sh 
 
 }
+
+show_usage_fidlconcorganize() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
+}
+
 
 # ------------------------------------------------------------------------------------------------------
 #  nii4dfpconvert - Convert NIFTI files into 4DFP for FIDL GLM analyses
@@ -352,6 +375,15 @@ do
 	fi
 
 done
+}
+
+show_usage_nii4dfpconvert() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -387,6 +419,15 @@ do
 	fi
 
 done
+}
+
+show_usage_cifti4dfpconvert() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -429,6 +470,15 @@ do
 	
 	done
 done
+}
+
+show_usage_ciftismooth() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -541,6 +591,15 @@ isolatesubcortexrois() {
 
 }
 
+show_usage_isolatesubcortexrois() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
+}
+
 # ------------------------------------------------------------------------------------------------------
 #  isolatethalamusfslnuclei - Find thalamic ROIs needed for subcortical seed-based tractography via FSL
 # ------------------------------------------------------------------------------------------------------
@@ -587,7 +646,17 @@ isolatethalamusfslnuclei() {
 	#thal_associative_lvol_L=`fslstats Atlas_thalamus_associative.L.nii.gz -V | cut -d " " -f 1` #128 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 832 / 32492 number of vertices
 	#thal_associative_lvol_R=`fslstats Atlas_thalamus_associative.R.nii.gz -V | cut -d " " -f 1` #117 - get # of R thalamic voxels needed to adjust the nsamples flag - 5000 * 765 / 32492 number of vertices
 
-}	
+}
+
+show_usage_isolatethalamusfslnuclei() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
+}
+	
 
 # ------------------------------------------------------------------------------------------------------
 #  probtracksubcortex - For a given subcortical ROI run probabilistic tractography (CPU version)
@@ -728,6 +797,15 @@ probtracksubcortex() {
 		done
 	done
 
+}
+
+show_usage_probtracksubcortex() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1564,6 +1642,15 @@ ciftiparcellate() {
 				fi
 }
 
+show_usage_ciftiparcellate() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
+}
+
 # ------------------------------------------------------------------------------------------------------
 #  printmatrix - Sets hard links for BOLDs into Parcellated folder for modeling use
 # ------------------------------------------------------------------------------------------------------
@@ -1579,6 +1666,14 @@ linkmovement() {
 			done
 }
 
+show_usage_linkmovement() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
+}
 
 # ------------------------------------------------------------------------------------------------------
 #  printmatrix - Extract matrix data from parcellated files (BOLD)
@@ -1614,6 +1709,16 @@ printmatrix() {
 			done
 			fi
 
+}
+
+
+show_usage_printmatrix() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1713,6 +1818,15 @@ boldmergenifti() {
 				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/17/17.nii.gz 0.7
 		fi
 		fi
+}
+
+show_usage_boldmergenifti() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "USAGE INFO PENDING..."
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -3679,17 +3793,21 @@ show_usage_hcpdlegacy() {
 				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+ 				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='anticevic-gpu' --runmethod='1'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='anticevic-gpu' --runmethod='1' --overwrite='yes'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='anticevic-gpu' --runmethod='2' --scheduler='lsf'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='anticevic-gpu' --runmethod='2' --scheduler='lsf' --overwrite='yes'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
-				echo "		AP hcpdlegacy hcpdlegacy /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
+				echo "AP hcpdlegacy /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
 				echo ""
 }
 
@@ -3721,54 +3839,114 @@ fsldtifit() {
 
 fslbedpostxgpu() {
 
-	export SGE_ROOT=1
-	export FSLGECUDAQ=anticevic-gpu
-	
-	if [ "$Overwrite" == "yes" ]; then
-		rm -rf "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX
-	fi
-  	  	
-	if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/grad_dev.nii.gz ]; then
-		bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
-	else	
-  		bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
-	fi	
+		# Establish global directory paths
+		FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		T1wDiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion
+		BedPostXFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX
+		LogFolder="$BedPostXFolder"/logs
+		Overwrite="$Overwrite"
+		export FSLGECUDAQ
+		export SGE_ROOT=1
+		NJOBS=4
+		module load GPU/Cuda/6.5
+		
+		# Check of overwrite flag was set
+		if [ "$Overwrite" == "yes" ]; then
+			echo ""
+			echo "Removing existing Bedpostx run for $CASE..."
+			echo ""
+			rm -rf "$BedPostXFolder"
+		fi
+		
+		# Set variables to check for completion
+		minimumfilesize=20000000
+  		actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz) > /dev/null 2>&1
+  		
+  		echo ""
+  		echo "Checking if Bedpostx was completed on $CASE..."
+  		echo ""
+  		
+  		if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then  > /dev/null 2>&1
 
-  	# minimumfilesize=20000000
-  	# actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz) > /dev/null 2>&1
-  	# if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then  > /dev/null 2>&1
-  		# echo "Bedpostx completed for $CASE"
-  	# else
-  	
-	# if [ "$Cluster" == 1 ]; then
-				# echo "Running bedpostx for $CASE ... "
-				# load all needed modules
-				# module load Apps/FSL/5.0.6  > /dev/null 2>&1
-				# module load GPU/Cuda/5.0  > /dev/null 2>&1
-				# module load GPU/Cuda/6.5  > /dev/null 2>&1
-				# module load GPU/Cuda/7.0  > /dev/null 2>&1
-				# source "$TOOLS"/etc/fslconf/fsl.sh > /dev/null 2>&1
+  			echo "Bedpostx completed for $CASE"
+  			echo ""
+  			echo "Check prior output logs here: $LogFolder"
+  			echo "--------------------------------------------------------------"
+  			echo ""
+
+  		else
+  				if [ "$Cluster" == 1 ]; then
+  				
+  					# unset the queue variables
+  				    unset SGE_ROOT
+					unset FSLGECUDAQ
+		
+					echo "Running bedpostx_gpu locally on `hostname`"
+					echo "Check log file output here: $LogFolder"
+					echo "--------------------------------------------------------------"
+					echo ""
+  	  	
+					if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
+						bedpostx_gpu "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
+					else	
+  						bedpostx_gpu "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
+					fi
+		
+				else
 				
-				# if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/grad_dev.nii.gz ]; then
-				#	echo "Found grad_dev.nii.gz and using -g flag... "
-				#	bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
-				#else	
-				#	echo "Omitting -g flag... "
-				#	bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
-				#fi	
-	# else
-				# echo "Submitting bedpostx job for $CASE to $QUEUE queue ..."
-				# if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/grad_dev.nii.gz ]; then
-				#	echo "Found grad_dev.nii.gz and using -g flag... "
-				#	fsl_sub."$fslsub" -Q "$QUEUE" bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
-				#else
-				#	echo "Omitting -g flag... "
-				#	fsl_sub."$fslsub" -Q "$QUEUE" bedpostx_gpu "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
-				#fi
+					# set scheduler for fsl_sub command
+					fslsub="$Scheduler"
+					# set the queue variables
+					FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+					export FSLGECUDAQ
+					export SGE_ROOT=1
+					NJOBS=4
 				
+					if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
+						bedpostx_gpu "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
+					else	
+  						bedpostx_gpu "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
+					fi
 				
-	# fi
-	# fi
+					echo "--------------------------------------------------------------"
+					echo "Data successfully submitted to $QUEUE" 
+					echo "Check output logs here: $LogFolder"
+					echo "--------------------------------------------------------------"
+					echo ""
+				fi
+		fi
+}
+
+show_usage_fslbedpostxgpu() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled node"
+				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
+				echo ""
+				echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>			Name of function"
+				echo "		--path=<study_folder>				Path to study data folder"
+				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--fibers=<number_of_fibers>		Number of fibres per voxel, default 3"
+				echo "		--model=<deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins"
+				echo "		--burnin=<burnin_period_value>		Burnin period, default 1000"
+				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
+				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "		 --overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "" 
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='fslbedpostxgpu' --fibers='3' --burnin='3000' --model='3' --queue='anticevic-gpu' --runmethod='2' --overwrite='yes'"
+				echo ""				
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "AP fslbedpostxgpu /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
+				echo ""
 }
 
 
@@ -3960,67 +4138,146 @@ makedenseconnectome() {
 			done
 }
 
+show_usage_makedenseconnectome() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "USAGE PENDING..."
+				echo ""
+}
+
+
 # ------------------------------------------------------------------------------------------------------------------------------
 #  autoptx - Executes the autoptx script from FSL (needed for probabilistic estimation of large-scale fiber bundles / tracts)
 # -------------------------------------------------------------------------------------------------------------------------------
 
-# autoptx() {
+autoptx() {
 
-# Subject=100307
-# StudyFolder=/gpfs/project/fas/n3/Studies/Connectome/subjects/$Subject/hcp
-# BpxFolder=Diffusion.bedpostX_model2
+Subject="$CASE"
+StudyFolder="$StudyFolder"/"$CASE"/hcp/
+BpxFolder="$BedPostXFolder"
+QUEUE="$QUEUE"
 
-# $AutoPtxFolder/autoPtx $StudyFolder $Subject $BpxFolder
+if [ "$Cluster" == 1 ]; then
 
-# $AutoPtxFolder/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
-# $AutoPtxFolder/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
-	
-#	cd "$StudyFolder"/../fcMRI/hcp.logs/
-	
-	#minimumfilesize=100000
-  	#actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_FA.nii.gz)
-  	#if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
-  	#	echo "DTI Fit completed for $CASE"
-  	#else
-  	
-#	if [ "$Cluster" == 1 ]; then
-# 		dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
-#	else
-# 		fsl_sub."$fslsub" -Q "$QUEUE" dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
-#	fi
-#	fi
+		echo "--------------------------------------------------------------"
+		echo "Running locally on `hostname`"
+		echo "Check log file output here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
 
-# }
+		"$AutoPtxFolder"/autoPtx "$StudyFolder" "$Subject" "$BpxFolder"
+		"$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
+		"$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
 
+else 
 
-# ------------------------------------------------------------------------------------------------------
-#  pretractographydense - Executes the HCP Pretractography code (Stam's implementation for all grayordinates)
-# ------------------------------------------------------------------------------------------------------
+		# set scheduler for fsl_sub command
+		fslsub="$Scheduler"
+		fsl_sub."$fslsub" -Q "$QUEUE" "$AutoPtxFolder"/autoPtx "$StudyFolder" "$Subject" "$BpxFolder"
+		fsl_sub."$fslsub" -Q "$QUEUE" -j <jid> "$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
+		fsl_sub."$fslsub" -Q "$QUEUE" -j <jid> "$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
 
-# pretractographydense() {
+		echo "--------------------------------------------------------------"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+fi
+}
 
-# ScriptsFolder=/gpfs/project/fas/n3/software/CodeHCPe/DiffusionTractographyStam/PreTractography
-# Subject=100307
-# StudyFolder=/gpfs/project/fas/n3/Studies/Connectome/subjects/$Subject/hcp
+show_usage_autoptx() {
 
-# $ScriptsFolder/PreTractography.sh $StudyFolder $Subject 0
-
-# ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/PreTractography
-# Subject="$CASE"
-# StudyFolder="$StudyFolder"/"$CASE"/hcp
-
-# if [ "$Cluster" == 1 ]; then
-	# "$ScriptsFolder"/PreTractography.sh "$StudyFolder" "$Subject" 0
-# else
-	# fsl_sub."$fslsub" -Q "$QUEUE" "$ScriptsFolder"/PreTractography.sh "$StudyFolder" "$Subject" 0
-# fi
-# }
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "USAGE PENDING..."
+				echo ""
+}
 
 # -------------------------------------------------------------------------------------------------------------------
-#  probtrackcortexgpudense - Executes the HCP Matrix1 or 3 code (Stam's implementation for all grayordinates)
-# --------------------------------------------------------------------------------------------------------------------
+#  pretractographydense - Executes the HCP Pretractography code (Stam's implementation for all grayordinates)
+# ------------------------------------------------------------------------------------------------------------------
 
-# Code goes here...
+pretractographydense() {
+
+		ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/PreTractography
+		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/log_pretractographydense
+		mkdir "$LogFolder"  &> /dev/null
+		Subject="$CASE"
+		StudyFolder="$StudyFolder"/"$CASE"/hcp
+		
+		# Check of overwrite flag was set
+		if [ "$Overwrite" == "yes" ]; then
+			echo ""
+			echo "Removing existing Pretractography Dense run for $CASE..."
+			echo ""
+			# rm -rf "$BedPostXFolder"
+		fi
+		
+		if [ "$Cluster" == 1 ]; then
+  				
+					echo "Running Pretractography Dense locally on `hostname`"
+					echo "Check output here: $LogFolder"
+					echo "--------------------------------------------------------------"
+					echo ""
+					"$ScriptsFolder"/PreTractography.sh "$StudyFolder" "$Subject" 0 >> "$LogFolder"/PretractographyDense_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+		else
+					# set scheduler for fsl_sub command
+					fslsub="$Scheduler"
+					fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ScriptsFolder"/PreTractography.sh "$StudyFolder" "$Subject" 0
+
+					echo "--------------------------------------------------------------"
+					echo "Data successfully submitted to $QUEUE" 
+					echo "Check output logs here: $LogFolder"
+					echo "--------------------------------------------------------------"
+					echo ""
+	fi
+
+}
+
+show_usage_pretractographydense() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "USAGE PENDING..."
+				echo ""
+}
+
+# --------------------------------------------------------------------------------------------------------------------------------------------
+#  probtrackxgpudense - Executes the HCP Matrix1 or 3 code and generates wb dense connectomes (Stam's implementation for all grayordinates)
+# ---------------------------------------------------------------------------------------------------------------------------------------------
+
+# probtrackxgpudense() {
+
+# export FSLGECUDAQ=anticevic-gpu
+# Subject=105216
+# StudyFolder=/gpfs/project/fas/n3/Studies/Connectome/subjects/$Subject/hcp
+# ScriptsFolder=$HCPPIPEDIR/DiffusionTractographyStam/Tractography_gpu_scripts
+
+# $ScriptsFolder/RunMatrix1.sh $StudyFolder $Subject
+# $ScriptsFolder/RunMatrix3.sh $StudyFolder $Subject
+
+# If Matrix1
+
+# $ScriptsFolder/RunMatrix1.sh $StudyFolder $Subject
+
+# If Matrix3
+
+# $ScriptsFolder/RunMatrix3.sh $StudyFolder $Subject
+
+# }
+
+show_usage_probtrackxgpudense() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "USAGE PENDING..."
+				echo ""
+}
 
 # ------------------------------------------------------------------------------------------------------------------------------
 #  Sync data from AWS buckets - customized for HCP
@@ -4073,6 +4330,15 @@ if [ "$RunType" == "2" ]; then
 
 fi
 	
+}
+
+show_usage_awshcpsync() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "USAGE PENDING..."
+				echo ""
 }
 
 #################################################################################################################################
@@ -4157,6 +4423,10 @@ opts_CheckForHelpRequest() {
     return 1
 }
 
+# ------------------------------------------------------------------------------
+#  Setup color outputs
+# ------------------------------------------------------------------------------
+
 #
 # Description: 
 #
@@ -4167,6 +4437,14 @@ opts_CheckForHelpRequest() {
 ceho() {
     echo
     echo -e "\033[31m $1 \033[0m"
+}
+
+reho() {
+    echo -e "\033[31m $1 \033[0m"
+}
+
+geho() {
+    echo -e "\033[32m $1 \033[0m"
 }
 
 #
@@ -4230,33 +4508,63 @@ unset FunctionToRun
 unset FunctionToRunInt
 unset StudyFolder
 unset CASES
+unset Overwrite
+unset Scheduler
+unset QUEUE
+unset NetID
+unset ClusterName
 
 flag=`echo $1 | cut -c1-2`
 
 if [ "$flag" == "--" ] ; then
-	ceho "Running pipeline in parameter mode with flags."
+	echo ""
+	ceho "-----------------------------------------------------"
+	ceho "--- Running pipeline in parameter mode with flags ---"
+	ceho "-----------------------------------------------------"
+	echo ""
+	
 	#
 	# List of command line options across all functions
 	#
+	# generic input flags
 	FunctionToRun=`opts_GetOpt1 "--function" $@` # function to execute
 	StudyFolder=`opts_GetOpt1 "--path" $@` # local folder to work on
 	CASES=`opts_GetOpt1 "--subjects" $@ | sed 's/,/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g'` # list of input cases; removing the comma
+	QUEUE=`opts_GetOpt1 "--queue" $@` # <name_of_cluster_queue>			Cluster queue name	
+	PRINTCOM=`opts_GetOpt1 "--printcom" $@` #Option for printing the entire command
+	Scheduler=`opts_GetOpt1 "--scheduler" $@` #Specify the type of scheduler to use 
+	Overwrite=`opts_GetOpt1 "--overwrite" $@` #Clean prior run and starr fresh [yes/no]
+	RunMethod=`opts_GetOpt1 "--runmethod" $@` # Specifies whether to run on the cluster or on the local node
+	
+	# hpcsync input flags
 	NetID=`opts_GetOpt1 "--netid" $@` # NetID for cluster rsync command
 	HCPStudyFolder=`opts_GetOpt1 "--clusterpath" $@` # cluster study folder for cluster rsync command
 	Direction=`opts_GetOpt1 "--dir" $@` # direction of rsync command (1 to cluster; 2 from cluster)
-	RunMethod=`opts_GetOpt1 "--runmethod" $@` # Specifies whether to run on the cluster or on the local node
 	ClusterName=`opts_GetOpt1 "--cluster" $@` # cluster address [e.g. louise.yale.edu)
+
+	# hcpdlegacy input flags
 	EchoSpacing=`opts_GetOpt1 "--echospacing" $@` # <echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69
 	PEdir=`opts_GetOpt1 "--PEdir" $@` # <phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
 	TE=`opts_GetOpt1 "--TE" $@` # <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
 	UnwarpDir=`opts_GetOpt1 "--unwarpdir" $@` # <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
 	DiffDataSuffix=`opts_GetOpt1 "--diffdatasuffix" $@` # <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
-	QUEUE=`opts_GetOpt1 "--queue" $@` # <name_of_cluster_queue>			Cluster queue name	
-	PRINTCOM=`opts_GetOpt1 "--printcom" $@` #Option for printing the entire command
-	Scheduler=`opts_GetOpt1 "--scheduler" $@` #Specify the type of scheduler to use 
-	Overwrite=`opts_GetOpt1 "--overwrite" $@` #Clean prior run and starr fresh [yes/no]
+	
+	# fslbedpostxgpu input flags
+	Fibers=`opts_GetOpt1 "--fibers" $@`  # <number_of_fibers>		Number of fibres per voxel, default 3
+	Model=`opts_GetOpt1 "--model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
+	Burnin=`opts_GetOpt1 "--burnin" $@`  # <burnin_period_value>		Burnin period, default 1000
+	Jumps=`opts_GetOpt1 "--jumps" $@`    # <number_of_jumps>		Number of jumps, default 1250
+
+		if [ -z "$Fibers" ]; then ceho "Error: Fibers value missing"; exit 1; fi
+		if [ -z "$Model" ]; then ceho "Error: Model value missing"; exit 1; fi
+		if [ -z "$Burnin" ]; then ceho "Error: Burnin value missing"; exit 1; fi
+		
 else
-	ceho "Running pipeline in interactive mode."
+	echo ""
+	ceho "--------------------------------------------"
+	ceho "--- Running pipeline in interactive mode ---"
+	ceho "--------------------------------------------"
+	echo ""
 	#
 	# Read core interactive command line inputs as default positional variables (i.e. function, path & cases)
 	#
@@ -4312,19 +4620,22 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "qaimages" ]; then
+	module load Langs/Julia/0.4.0
 	cd "$StudyFolder"/QC
+	ln -s "$TOOLS"/bin/qa.jl ./
 	mkdir BOLD &> /dev/null
 	mkdir T1 &> /dev/null
 	mkdir T1nonlin &> /dev/null
 	cd "$StudyFolder" &> /dev/null
 	echo "Running QC on $CASES..."
-	julia -e 'include("QC/qa.jl")' bold $CASES
-	julia -e 'include("QC/qa.jl")' t1 $CASES
+	julia -e 'include("./QC/qa.jl")' bold $CASES
+	julia -e 'include("./QC/qa.jl")' t1 $CASES
 fi
 
 if [ "$FunctionToRunInt" == "qaimages" ]; then
-	
+	module load Langs/Julia/0.4.0
 	cd "$StudyFolder"/QC
+	ln -s "$TOOLS"/bin/qa.jl ./
 	mkdir BOLD &> /dev/null
 	mkdir T1 &> /dev/null
 	mkdir T1nonlin &> /dev/null
@@ -4334,8 +4645,8 @@ if [ "$FunctionToRunInt" == "qaimages" ]; then
 		if read answer; then
 			QACases=$answer
 			echo "Running QC..."
-			julia -e 'include("QC/qa.jl")' bold $QACases
-			julia -e 'include("QC/qa.jl")' t1 $QACases
+			julia -e 'include("./QC/qa.jl")' bold $QACases
+			julia -e 'include("./QC/qa.jl")' t1 $QACases
 		fi
 fi
 
@@ -4925,54 +5236,86 @@ fi
 #  fslbedpostxgpu function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "fslbedpostxgpu" ]; then
-
-	echo "Overwrite FreeSurfer run [yes, no]:"
-	if read answer; then
-		Overwrite=$answer 
-	fi
+if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 	
-	echo "Enter # of fibers per voxel [e.g. 3]:"
-		if read answer; then
-		Fibers=$answer 
-		fi
-	echo "Enter model for bedpostx [1 for monoexponential, 2 for multiexponential]:"
-		if read answer; then
-		Model=$answer 	
-		fi
-	echo "Enter burnin period for bedpostx [e.g. 3000; default 1000]:"
-		if read answer; then
-		Burnin=$answer
-		fi 		
+		# Check all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE
 	
-	#echo "Run locally [1] or run on cluster [2]:"
-	#	if read answer; then
-	#	Cluster=$answer 
-	#	if [ "$Cluster" == "2" ]; then
-	#		echo "Enter queue name to submit jobs to [e.g. general, scavenge, anticevic, anti_gpu]:"
-	#		if read answer; then
-	#		QUEUE=$answer 
-	#			for CASE in $CASES
-	#			do
-  	#				"$FunctionToRunInt" "$CASE"
-  	#			done
-  	#		fi
-  	#	else
-  				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done	
-  	#	fi	
-  	#fi
-
+		if [ -z "$FunctionToRun" ]; then ceho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then ceho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then ceho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$Fibers" ]; then ceho "Error: Fibers value missing"; exit 1; fi
+		if [ -z "$Model" ]; then ceho "Error: Model value missing"; exit 1; fi
+		if [ -z "$Burnin" ]; then ceho "Error: Burnin value missing"; exit 1; fi
+		if [ -z "$QUEUE" ]; then ceho "Error: Queue name missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then ceho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
+		Cluster="$RunMethod"
+		
+		if [ "$Cluster" == "2" ]; then
+				FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+				export FSLGECUDAQ
+				export SGE_ROOT=1
+				NJOBS=4
+		fi				
+		
+		echo ""
+		echo "Running fslbedpostxgpu processing with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Number of Fibers: $Fibers"
+		echo "Model Type: $Model"
+		echo "Burnin Period: $Burnin"
+		echo "EPI Unwarp Direction: $UnwarpDir"
+		echo "QUEUE Name: $QUEUE"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
 fi
 
-if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
+if [ "$FunctionToRunInt" == "fslbedpostxgpu" ]; then
 
-  	for CASE in $CASES
-	do
-		"$FunctionToRunInt" "$CASE"
-	done	
+	echo "Running fslbedpostxgpu processing interactively. First enter the necessary parameters."
+	# Request all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE
+	echo ""
+	echo "Overwrite existing run [yes, no]:"
+	if read answer; then Overwrite=$answer; fi
+	echo ""
+	echo "Enter # of fibers per voxel [e.g. 3]:"
+	if read answer; then Fibers=$answer; fi
+	echo ""
+	echo "Enter model for bedpostx [1 for monoexponential, 2 for multiexponential, 3 for multiexponential-deconvolution]:"
+	if read answer; then Model=$answer; fi
+	echo ""
+	echo "Enter burnin period for bedpostx [e.g. 3000; default 1000]:"
+	if read answer; then Burnin=$answer; fi 	
+	echo ""	
+	echo "-- Run locally [1] or run on cluster [2]"
+	if read answer; then Cluster=$answer; fi
+	echo ""
+	if [ "$Cluster" == "2" ]; then
+		echo "-- Enter queue name - always submit this job to a GPU-enabled queue [e.g. anticevic-gpu]"
+		if read answer; then QUEUE=$answer; fi
+		echo ""
+	fi
+		echo "Running fslbedpostxgpu processing with the following parameters:"
+		echo ""
+		echo "-------------------------------------------------------------"
+		echo "Number of Fibers: $Fibers"
+		echo "Model Type: $Model"
+		echo "Burnin Period: $Burnin"
+		echo "EPI Unwarp Direction: $UnwarpDir"
+		echo "QUEUE Name: $QUEUE"
+		echo "Overwrite prior run: $Overwrite"
+		
+		for CASE in $CASES
+			do
+  			"$FunctionToRunInt" "$CASE"
+  		done
 fi
 
 # ------------------------------------------------------------------------------
@@ -5028,7 +5371,7 @@ if [ "$FunctionToRunInt" == "hcp2" ]; then
 	#fi 	
 	
 	MasterFolder="$StudyFolder"
-	echo "Overwrite FreeSurfer run [yes, no]:"
+	echo "Overwrite existing run [yes, no]:"
 	if read answer; then
 		Overwrite=$answer  
 		echo "Run locally [1] or run on cluster [2]:"
@@ -5293,7 +5636,7 @@ if [ "$FunctionToRunInt" == "hcpdlegacy" ]; then
 		echo "-- Diffusion data suffix name - e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
 		if read answer; then DiffDataSuffix=$answer; fi
 		echo ""
-		echo "Overwrite FreeSurfer run [yes, no]:"
+		echo "Overwrite existing run [yes, no]:"
 		if read answer; then Overwrite=$answer; fi  
 		echo ""
 		echo "-- Run locally [1] or run on cluster [2]"
@@ -5504,7 +5847,92 @@ if [ "$FunctionToRunInt" == "makedenseconnectome" ]; then
   						fi
   		fi	
   	fi
-fi  		
+fi
+
+
+# ------------------------------------------------------------------------------
+#  autoptx function loop
+# ------------------------------------------------------------------------------
+
+## -- NEED TO CODE
+
+# ------------------------------------------------------------------------------
+#  pretractographydense function loop
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "pretractographydense" ]; then
+	
+		# Check all the user-defined parameters: 1. Overwrite, 2. RunMethod, 3. QUEUE, 4. Scheduler
+	
+		if [ -z "$FunctionToRun" ]; then ceho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then ceho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then ceho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then ceho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
+		Cluster="$RunMethod"
+		
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$QUEUE" ]; then ceho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then ceho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi				
+		
+		echo ""
+		echo "Running Pretractography Dense processing with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "CASES: $CASES"
+		echo "Scheduler: $Scheduler"
+		echo "QUEUE Name: $QUEUE"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi
+
+if [ "$FunctionToRunInt" == "pretractographydense" ]; then
+
+	echo "Running Pretractography Dense processing interactively. First enter the necessary parameters."
+	# Request all the user-defined parameters: 1. Overwrite, 2. RunMethod, 3. QUEUE, 4. Scheduler
+	echo ""
+	echo "Overwrite existing run [yes, no]:"
+	if read answer; then Overwrite=$answer; fi
+	echo ""
+	echo "-- Run locally [1] or run on cluster [2]"
+	if read answer; then Cluster=$answer; fi
+	echo ""
+		if [ "$Cluster" == "2" ]; then
+			echo "-- Enter queue name [e.g. anticevic]"
+			if read answer; then QUEUE=$answer; fi
+			echo ""
+			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
+			if read answer; then Scheduler=$answer; fi
+			echo ""
+		fi
+		
+		echo "Running Pretractography processing with the following parameters:"
+		echo ""
+		echo "-------------------------------------------------------------"
+		echo "CASES: $CASES"
+		echo "Scheduler: $Scheduler"
+		echo "QUEUE Name: $QUEUE"
+		echo "Overwrite prior run: $Overwrite"
+		
+		for CASE in $CASES
+			do
+  			"$FunctionToRunInt" "$CASE"
+  		done
+fi
+
+# ------------------------------------------------------------------------------
+#  probtrackcortexgpudense function loop
+# ------------------------------------------------------------------------------
+
+## -- NEED TO CODE
+
 
 # ------------------------------------------------------------------------------
 #  AWS S3 Sync command wrapper
