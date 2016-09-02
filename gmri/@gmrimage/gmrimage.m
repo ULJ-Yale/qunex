@@ -423,6 +423,9 @@ classdef gmrimage
             obj.frames = obj.frames + add.frames;
             obj.runframes = [obj.runframes add.frames];
             obj.use  = [obj.use add.use];
+            if strcmp(obj.imageformat, 'CIFTI-2')
+                obj.dim = size(obj.data);
+            end
 
             % --> combine movement data
             if ~isempty(obj.mov) && ~isempty(add.mov)

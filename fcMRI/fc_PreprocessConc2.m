@@ -109,7 +109,7 @@ if nargin < 6,  rgss = '';                                  end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|bold_tail=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
 options = g_ParseOptions([], options, default);
 
 fprintf('\nRunning preproces conc 2 script v0.9.8.1 [%s]\n', tail);
@@ -495,6 +495,14 @@ for current = do
     % --- run tasks that are run on the joint bolds
 
     if current == 'r'
+
+        ext = [ext options.glm_name];
+
+        for b = 1:nbolds
+            file(b).tfile = [file(b).froot ext tail];
+            file(b).tconc = [file(b).cfroot ext '.conc'];
+        end
+
         if exist(file(b).tfile, 'file') && ~overwrite
             fprintf('... already completed!');
             img(b).empty = true;
