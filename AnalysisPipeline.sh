@@ -86,31 +86,73 @@
 ###########################################################################################################################
 
 # ------------------------------------------------------------------------------
+#  Setup color outputs
+# ------------------------------------------------------------------------------
+
+BLACK_F="\033[30m"; BLACK_B="\033[40m"
+RED_F="\033[31m"; RED_B="\033[41m"
+GREEN_F="\033[32m"; GREEN_B="\033[42m"
+YELLOW_F="\033[33m"; YELLOW_B="\033[43m"
+BLUE_F="\033[34m"; BLUE_B="\033[44m"
+MAGENTA_F="\033[35m"; MAGENTA_B="\033[45m"
+CYAN_F="\033[36m"; CYAN_B="\033[46m"
+WHITE_F="\033[37m"; WHITE_B="\033[47m"
+
+reho() {
+    echo -e "$RED_F $1 \033[0m"
+}
+
+geho() {
+    echo -e "$GREEN_F $1 \033[0m"
+}
+
+yeho() {
+    echo -e "$YELLOW_F $1 \033[0m"
+}
+
+beho() {
+    echo -e "$BLUE_F $1 \033[0m"
+}
+
+mageho() {
+    echo -e "$MAGENTA_F $1 \033[0m"
+}
+
+cyaneho() {
+    echo -e "$CYAN_F $1 \033[0m"
+}
+
+weho() {
+    echo -e "$WHITE_F $1 \033[0m"
+}
+
+
+# ------------------------------------------------------------------------------
 #  General usage function
 # ------------------------------------------------------------------------------
 
 show_usage() {
   				echo ""
-  				echo "HELP FOR ANALYSIS PIPELINE:"
+  				cyaneho "	-------- GENERAL HELP FOR ANALYSIS PIPELINE: --------"
   				echo ""
-  				echo "		* GENERAL INTERACTIVE USAGE:"
+  				weho "		* GENERAL INTERACTIVE USAGE:"
   				echo "		AP <function_name> <study_folder> '<list of cases>' [options]"
   				echo ""
-  				echo "		* GENERAL FLAG USAGE:"
+  				weho "		* GENERAL FLAG USAGE:"
   				echo "		AP --function=<function_name> --studyfolder=<study_folder> --subjects='<list of cases>' [options]"  				 
   				echo ""
-  				echo "		* EXAMPLE TO RUN INTERACTIVELY FROM TERMINAL (NO FLAG]:"
+  				weho "		* EXAMPLE TO RUN INTERACTIVELY FROM TERMINAL (NO FLAG]:"
   				echo "		AP dicomsort /Volumes/syn1/Studies/Connectome/subjects '100307 100408'"
   				echo ""
-  				echo "		* EXAMPLE TO RUN WITH FLAGS (NO INTERACTIVE TERMINAL INPUT]:"
+  				weho "		* EXAMPLE TO RUN WITH FLAGS (NO INTERACTIVE TERMINAL INPUT]:"
   				echo "		AP --function=dicomsort --studyfolder=/Volumes/syn1/Studies/Connectome/subjects --subjects='100307,100408'"
   				echo ""
-  				echo "		* FUNCTION-SPECIFIC USAGE:"
+  				weho "		* FUNCTION-SPECIFIC USAGE:"
   				echo "		AP dicomsort"
   				echo ""
-  				echo "LIST OF SUPPORTED FUNCTIONS:"
+  				cyaneho "	-------- LIST OF SPECIFIC SUPPORTED FUNCTIONS: --------"
   				echo ""  				
-  				echo "		--- DATA ORGANIZATION FUNCTIONS ---"
+  				weho "		--- DATA ORGANIZATION FUNCTIONS ---"
   				echo "		dicomsort			SORT DICOMs and SETUP NIFTI FILES FROM DICOMS"
   				echo "		dicom2nii			CONVERT DICOMs TO NIFTI FILES"
   				echo "		setuphcp 			SETUP DATA STRUCTURE FOR HCP PROCESSING"
@@ -118,7 +160,7 @@ show_usage() {
   				echo "		hpcsync2			SYNC WITH YALE HPC CLUSTER(S) FOR dofcMRI INTEGRATION (StudyFolder/Subject/hcp/Subject)"
   				echo "		awshcpsync			SYNC HCP DATA FROM AWS S3 CLOUD"
   				echo ""  				
-  				echo "		--- HCP PIPELINES FUNCTIONS ---"
+  				weho "		--- HCP PIPELINES FUNCTIONS ---"
   				echo "		hpc1				PREFREESURFER COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
   				echo "		hpc2				FREESURFER COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
   				echo "		hpc3				POSTFREESURFER COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
@@ -127,7 +169,7 @@ show_usage() {
   				echo "		hpcd				DIFFUSION COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
   				echo "		hpcdlegacy			DIFFUSION PROCESSING THAT IS HCP COMPLIANT FOR LEGACY DATA WITH STANDARD FIELDMAPS (CLUSTER AWARE)"
   				echo ""  				
-  				echo "		--- GENERATE LISTS & QC FUNCTIONS ---"
+  				weho "		--- GENERATE LISTS & QC FUNCTIONS ---"
   				echo "		setuplist	 		SETUP LIST FOR FCMRI ANALYSIS / PREPROCESSING or VOLUME SNR CALCULATIONS"
   				echo "		qaimages	 		RUN VISUAL QA FOR T1w and BOLD IMAGES"
   				echo "		nii4dfpconvert 		CONVERT NIFTI HCP-PROCESSED BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
@@ -135,7 +177,7 @@ show_usage() {
   				echo "		ciftismooth 		SMOOTH & CONVERT CIFTI BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
   				echo "		fidlconc 			SETUP CONC & FIDL EVEN FILES FOR GLM ANALYSES"
   				echo ""  				
-  				echo "		--- DWI ANALYSES & TRACTOGRAPHY FUNCTIONS ---"
+  				weho "		--- DWI ANALYSES & TRACTOGRAPHY FUNCTIONS ---"
   				echo "		fsldtifit 			RUN FSL DTIFIT (CLUSTER AWARE)"
   				echo "		fslbedpostxgpu 			RUN FSL BEDPOSTX w/GPU (CLUSTER AWARE)"
   				echo "		isolatesubcortexrois 		ISOLATE SUBJECT-SPECIFIC SUBCORTICAL ROIs FOR TRACTOGRAPHY"
@@ -147,14 +189,14 @@ show_usage() {
   				echo "		makedenseconnectome		GENERATE DENSE CORTICAL CONNECTOMES (CLUSTER AWARE)"
   				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (CLUSTER AWARE)"
   				echo ""  				
-  				echo "		--- ANALYSES FUNCTIONS ---"  				
+  				weho "		--- ANALYSES FUNCTIONS ---"  				
   				echo "		ciftiparcellate			PARCELLATE BOLD, DWI, MYELIN or THICKNESS DATA VIA 7 & 17 NETWORK SOLUTIONS"
   				echo "		printmatrix			EXTRACT PARCELLATED MATRIX FOR BOLD DATA VIA YEO 17 NETWORK SOLUTIONS"
   				echo "		boldmergenifti			MERGE SPECIFIED NII BOLD TIMESERIES"
   				echo "		boldmergecifti			MERGE SPECIFIED CITI BOLD TIMESERIES"
   				echo "		bolddense			COMPUTE BOLD DENSE CONNECTOME (NEEDS >30GB RAM PER BOLD)"
   				echo ""  				
-  				echo "		--- FIX ICA DE-NOISING FUNCTIONS ---"    				
+  				weho "		--- FIX ICA DE-NOISING FUNCTIONS ---"    				
   				echo "		fixica				RUN FIX ICA DE-NOISING ON A GIVEN VOLUME"
   				echo "		postfix				GENERATES WB_VIEW SCENE FILES IN EACH SUBJECTS DIRECTORY FOR FIX ICA RESULTS"
   				echo "		boldhardlinkfixica		SETUP HARD LINKS FOR SINGLE RUN FIX ICA RESULTS"  				
@@ -4337,7 +4379,27 @@ show_usage_awshcpsync() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
-				echo "USAGE PENDING..."
+				echo "This function enables syncing of HCP data from the Amazon AWS S3 repository."
+				echo "It assumes you have enabled your AWS credentials via the HCP website."
+				echo "These credentials are expected in your home folder under ./aws/credentials."
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>			Name of function"
+				echo "		--path=<study_folder>				Path to study data folder"
+				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--modality=<modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
+				echo "		--awsuri=<aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
+				echo "		--runmethod=<type_of_run>			Perform a dry test run [1] or real run [2]"
+				echo "" 
+				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/Volumes/syn5science/Studies/Connectome/subjects' --subjects='173536' --function='awshcpsync' --modality='T1w' --awsuri='/hcp-openaccess/HCP_900' --runmethod='2'"
+				echo ""				
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "AP awshcpsync /Volumes/syn5science/Studies/Connectome/subjects '173536' "
 				echo ""
 }
 
@@ -4423,30 +4485,6 @@ opts_CheckForHelpRequest() {
     return 1
 }
 
-# ------------------------------------------------------------------------------
-#  Setup color outputs
-# ------------------------------------------------------------------------------
-
-#
-# Description: 
-#
-#   checks command adds color to an echo call
-#   Very useful for logging
-#
-
-ceho() {
-    echo
-    echo -e "\033[31m $1 \033[0m"
-}
-
-reho() {
-    echo -e "\033[31m $1 \033[0m"
-}
-
-geho() {
-    echo -e "\033[32m $1 \033[0m"
-}
-
 #
 # Description: 
 #
@@ -4518,9 +4556,9 @@ flag=`echo $1 | cut -c1-2`
 
 if [ "$flag" == "--" ] ; then
 	echo ""
-	ceho "-----------------------------------------------------"
-	ceho "--- Running pipeline in parameter mode with flags ---"
-	ceho "-----------------------------------------------------"
+	reho "-----------------------------------------------------"
+	reho "--- Running pipeline in parameter mode with flags ---"
+	reho "-----------------------------------------------------"
 	echo ""
 	
 	#
@@ -4554,16 +4592,16 @@ if [ "$flag" == "--" ] ; then
 	Model=`opts_GetOpt1 "--model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
 	Burnin=`opts_GetOpt1 "--burnin" $@`  # <burnin_period_value>		Burnin period, default 1000
 	Jumps=`opts_GetOpt1 "--jumps" $@`    # <number_of_jumps>		Number of jumps, default 1250
-
-		if [ -z "$Fibers" ]; then ceho "Error: Fibers value missing"; exit 1; fi
-		if [ -z "$Model" ]; then ceho "Error: Model value missing"; exit 1; fi
-		if [ -z "$Burnin" ]; then ceho "Error: Burnin value missing"; exit 1; fi
+	
+	# awshcpsync input flags
+	 Modality=`opts_GetOpt1 "--modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
+	 Awsuri=`opts_GetOpt1 "--awsuri" $@`	 # <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
 else
 	echo ""
-	ceho "--------------------------------------------"
-	ceho "--- Running pipeline in interactive mode ---"
-	ceho "--------------------------------------------"
+	reho "--------------------------------------------"
+	reho "--- Running pipeline in interactive mode ---"
+	reho "--------------------------------------------"
 	echo ""
 	#
 	# Read core interactive command line inputs as default positional variables (i.e. function, path & cases)
@@ -5240,14 +5278,14 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 	
 		# Check all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE
 	
-		if [ -z "$FunctionToRun" ]; then ceho "Error: Name of function to run missing"; exit 1; fi
-		if [ -z "$StudyFolder" ]; then ceho "Error: Study Folder missing"; exit 1; fi
-		if [ -z "$CASES" ]; then ceho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$Fibers" ]; then ceho "Error: Fibers value missing"; exit 1; fi
-		if [ -z "$Model" ]; then ceho "Error: Model value missing"; exit 1; fi
-		if [ -z "$Burnin" ]; then ceho "Error: Burnin value missing"; exit 1; fi
-		if [ -z "$QUEUE" ]; then ceho "Error: Queue name missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then ceho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
+		if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
+		if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
+		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		
@@ -5579,21 +5617,21 @@ if [ "$FunctionToRun" == "hcpdlegacy" ]; then
 	# Check all the user-defined parameters: 1. EchoSpacing, 2. PEdir, 3. TE, 4. UnwarpDir, 5. DiffDataSuffix, 6. QUEUE
 	
 #	if [ "$#" -ne 10 ]; then
-#		ceho "Error: Your input parameters are incomplete. Please check usage by running <AP hcpdlegacy>"	
+#		reho "Error: Your input parameters are incomplete. Please check usage by running <AP hcpdlegacy>"	
 
-		if [ -z "$FunctionToRun" ]; then ceho "Error: Name of function to run missing"; exit 1; fi
-		if [ -z "$StudyFolder" ]; then ceho "Error: Study Folder missing"; exit 1; fi
-		if [ -z "$CASES" ]; then ceho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$EchoSpacing" ]; then ceho "Error: Echo Spacing value missing"; exit 1; fi
-		if [ -z "$PEdir" ]; then ceho "Error: Phase Encoding Direction value missing"; exit 1; fi
-		if [ -z "$TE" ]; then ceho "Error: TE value for Fieldmap missing"; exit 1; fi
-		if [ -z "$UnwarpDir" ]; then ceho "Error: EPI Unwarp Direction value missing"; exit 1; fi
-		if [ -z "$DiffDataSuffix" ]; then ceho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
-		if [ -z "$QUEUE" ]; then ceho "Error: Queue name missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then ceho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$EchoSpacing" ]; then reho "Error: Echo Spacing value missing"; exit 1; fi
+		if [ -z "$PEdir" ]; then reho "Error: Phase Encoding Direction value missing"; exit 1; fi
+		if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
+		if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
+		if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
+		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-		if [ -z "$Scheduler" ]; then ceho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
 		fi		
 		echo ""
 		echo "Running DWI legacy processing with the following parameters:"
@@ -5864,16 +5902,16 @@ if [ "$FunctionToRun" == "pretractographydense" ]; then
 	
 		# Check all the user-defined parameters: 1. Overwrite, 2. RunMethod, 3. QUEUE, 4. Scheduler
 	
-		if [ -z "$FunctionToRun" ]; then ceho "Error: Name of function to run missing"; exit 1; fi
-		if [ -z "$StudyFolder" ]; then ceho "Error: Study Folder missing"; exit 1; fi
-		if [ -z "$CASES" ]; then ceho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then ceho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then ceho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then ceho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
 		fi				
 		
 		echo ""
@@ -5935,9 +5973,36 @@ fi
 
 
 # ------------------------------------------------------------------------------
-#  AWS S3 Sync command wrapper
+#  awshcpsync - AWS S3 Sync command wrapper
 # ------------------------------------------------------------------------------
 
+if [ "$FunctionToRun" == "awshcpsync" ]; then
+	
+		# Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Dry Run; 2=Real Run] missing"; exit 1; fi
+		if [ -z "$Modality" ]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
+		if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
+		
+		echo ""
+		echo "Running sync for HCP data from Amazon AWS S3 with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "CASES: $CASES"
+		echo "Run Method: $RunMethod"
+		echo "Modality: $Modality"
+		echo "AWS URI Path: $Awsuri"
+		echo "--------------------------------------------------------------"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi		
+		
 if [ "$FunctionToRunInt" == "awshcpsync" ]; then
 	
 	echo "Running AWS S3 Sync... Make sure you configured your AWS credentials"
