@@ -64,11 +64,19 @@ joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl
 splitFidl      concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
 
 
-Caret surface mapping utilities
--------------------------------
+Caret & Workbench surface mapping utilities
+-------------------------------------------
 
 map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
 map2HCP volume=<volume file> [method=trilinear]
+maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>]
+
+
+PALM utilities
+--------------
+
+runPALM image=<image file> [design=<design string>] [args=<arguments string>]
+
 '''
 
 commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': ('folder', )},
@@ -93,7 +101,9 @@ commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': (
             'joinFidlFolder': {'com': gCodeU.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
             'splitFidl'     : {'com': gCodeU.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
             'map2PALS'      : {'com': gCodeU.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
-            'map2HCP'       : {'com': gCodeU.g_4dfp.map2HCP,           'args': ('volume', 'method')}
+            'map2HCP'       : {'com': gCodeU.g_4dfp.map2HCP,           'args': ('volume', 'method')},
+            'maskMap'       : {'com': gCodeU.g_palm.maskMap,           'args': ('image', 'masks', 'output', 'minv', 'maxv')},
+            'runPALM'       : {'com': gCodeU.g_palm.runPALM,           'args': ('image', 'design', 'args')}
             }
 
 
@@ -140,6 +150,11 @@ def main(args=None):
                 opts[k] = args[n]
 
         runCommand(comm, opts)
+    except ValueError as e:
+        print "\n-----------------------\n", e, "\nInstructions on command use:"
+        printHelp(comm)
+        print "-----------------------\n"
+        sys.exit(1)
     except:
         print "\n-----------------------\n\nOps! Something went wrong. Here is the help for the command you ran:"
         printHelp(comm)
