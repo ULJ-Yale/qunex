@@ -287,7 +287,7 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None):
         raise ValueError("ERROR: The specified image file does not exist! [%s]" % (image))
 
     if masks is None:
-        raise ValueError("ERROR: No msk file was specified!")
+        raise ValueError("ERROR: No mask file was specified!")
     masks = [e.strip() for e in masks.split(',')]
     for mask in masks:
         if not os.path.exists(mask):
@@ -337,4 +337,65 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None):
 
     if subprocess.call(command):
         raise ValueError("ERROR: Running wb_command failed! Call: %s" % (" ".join(command)))
+
+
+
+def joinMaps(images=None, output=None, names=None, originals=None):
+    '''
+    joinMaps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
+
+    Wrapper for wb_command that concatenates the listed cifti images and names the individual volumes if names are provided.
+    Both lists should be comma separated.
+
+    The result will be saved in "output". If originals is set to remove. The original files will be deleted after successful merge.
+    '''
+
+    # --- process the arguments
+
+    if images is None:
+        raise ValueError("ERROR: No input image file was specified!")
+    images = [e.strip() for e in images.split(',')]
+    for image in images:
+        if not os.path.exists(image):
+            raise ValueError("ERROR: The specified image file does not exist! [%s]" % (image))
+    nimages = len(images)
+
+    if output is None:
+        raise ValueError("ERROR: No output image file was specified!")
+
+    if names is not None:
+        names = [e.strip() for e in names.split(',')]
+        if len(names) != nimages:
+            raise ValueError("ERROR: List of map names (%d names) does not match the number of maps (%d)! " % (len(names), nimages))
+
+    # --- build the expression and merge files
+
+    command = ['wb_command', '-cifti-merge', output]
+
+    for image in images:
+        command += ['-cifti', image]
+
+    print " --> Merging maps"
+    if subprocess.call(command):
+        raise ValueError("ERROR: Running wb_command failed! Call: %s" % (" ".join(command)))
+
+    # --- build the expression and name maps
+
+    if names is not None:
+        command = ['wb_command', '-set-map-names', output]
+        m = 0
+        for name in names:
+            m += 1
+            command += ['-map', str(m), name]
+
+        print " --> Naming maps"
+        if subprocess.call(command):
+            raise ValueError("ERROR: Running wb_command failed! Call: %s" % (" ".join(command)))
+
+    # --- remove originals
+
+    if (originals is not None) and (originals == "remove"):
+        print " --> Removing originals"
+        for image in images:
+            os.remove(image)
 

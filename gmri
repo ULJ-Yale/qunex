@@ -70,6 +70,7 @@ Caret & Workbench surface mapping utilities
 map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
 map2HCP volume=<volume file> [method=trilinear]
 maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>]
+joinMaps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
 
 
 PALM utilities
@@ -103,6 +104,7 @@ commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': (
             'map2PALS'      : {'com': gCodeU.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
             'map2HCP'       : {'com': gCodeU.g_4dfp.map2HCP,           'args': ('volume', 'method')},
             'maskMap'       : {'com': gCodeU.g_palm.maskMap,           'args': ('image', 'masks', 'output', 'minv', 'maxv')},
+            'joinMaps'      : {'com': gCodeU.g_palm.joinMaps,          'args': ('images', 'output', 'names', 'originals')},
             'runPALM'       : {'com': gCodeU.g_palm.runPALM,           'args': ('image', 'design', 'args')}
             }
 
