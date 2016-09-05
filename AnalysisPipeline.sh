@@ -10,8 +10,8 @@
 ## --> Integrate usage calls for each function [In progress]
 ## --> Integrate log generation for each function and build IF statement to override log generation if nolog flag [In progress]
 ## --> Issue w/logging - the exec function effectively double-logs everything for each case and for the whole command
-## --> Finish autoptx, probtrackxgpudense functions
-## --> Revise parcellation functions to use the Glasser parcellation and allow for more flexibility
+## --> Finish autoptx function
+## --> Revise parcellation functions to use the Glasser parcellation and allow for more flexibility & clean up the prior calls
 
 ## Commands for rsyncing to HPC clusters
 ##  rsync /usr/local/analysispipeline/AnalysisPipeline.sh aa353@omega1.hpc.yale.edu:/home/fas/anticevic/software/analysispipeline/
@@ -3912,9 +3912,9 @@ fslbedpostxgpu() {
   			# Then check if run is complete based on size
   			if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
   				echo ""
-  				geho "DONE -- Bedpostx completed for $CASE"
+  				cyaneho "DONE -- Bedpostx completed for $CASE"
   				echo ""
-  				geho "Check prior output logs here: $LogFolder"
+  				cyaneho "Check prior output logs here: $LogFolder"
   				echo ""
   				echo "--------------------------------------------------------------"
   				echo ""  			
@@ -4289,9 +4289,11 @@ show_usage_pretractographydense() {
 				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the Pretractography Dense trajectory space generation."
-				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
+				echo "Note that this is a very quick function to run [< 5min] so no overwrite options exist."
+				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion and bedpostX processing: "
 				echo ""
 				echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
+				echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX ---> BedpostX output data needs to be here"
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
@@ -4318,55 +4320,163 @@ show_usage_pretractographydense() {
 
 probtrackxgpudense() {
 
+		# -- Set parameters
 		ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/Tractography_gpu_scripts
-		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/log_probtrackxgpudense
-		mkdir "$LogFolder"  &> /dev/null
+		ResultsFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 		RunFolder="$StudyFolder"/"$CASE"/hcp/
+		NsamplesMatrixOne="$NsamplesMatrixOne"
+		NsamplesMatrixThree="$NsamplesMatrixThree"
+		
+		# -- Generate the results and log folders
+		mkdir "$ResultsFolder"  &> /dev/null
+		mkdir "$LogFolder"  &> /dev/null
+		
+		# -- Set the CUDA queue 
+		FSLGECUDAQ="$QUEUE"
 		export FSLGECUDAQ="$QUEUE"
 		
-		# Check of overwrite flag was set
-		if [ "$Overwrite" == "yes" ]; then
-			echo ""
-			echo "Removing existing Probtrackxgpu dense run for $CASE..."
-			echo ""
-			rm -rf "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/
-		fi
+		# -------------------------------------------------
+		# -- Do work for Matrix 1 if --omatrix1 flag set 
+		# -------------------------------------------------
 		
-				if [ "$Cluster" == 1 ]; then
+		if [ "$MatrixOne" == "yes" ]; then
+		
+			LogFolder="$ResultsFolder"/Mat1_logs
+		
+			# -- Check of overwrite flag was set
+			if [ "$Overwrite" == "yes" ]; then
+				echo ""
+				echo "Removing existing Probtrackxgpu Matrix1 dense run for $CASE..."
+				echo ""
+				rm -f "$ResultsFolder"/Conn1.dconn.nii.gz &> /dev/null
+			fi
+			
+			# -- Check for Matrix 1 completion
+			echo ""
+  			geho "Checking if ProbtrackX Matrix 1 and dense connectome was completed on $CASE..."
+  			echo ""
+  			
+  			# -- Check if the file even exists
+  			if [ -f "$ResultsFolder"/Conn1.dconn.nii.gz ]; then
+  		
+  				# -- Set file sizes to check for completion
+				minimumfilesize=100000000
+  				actualfilesize=`wc -c < "$ResultsFolder"/Conn1.dconn.nii.gz` > /dev/null 2>&1  		
   				
+  				# -- Then check if Matrix 1 run is complete based on size
+  				if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
+  					echo ""
+  					cyaneho "DONE -- ProbtrackX Matrix1 solution and dense connectome was completed for $CASE"
+  					cyaneho "To re-run set overwrite flag to 'yes'"
+  					cyaneho "Check prior output logs here: $LogFolder"
   					echo ""
   					echo "--------------------------------------------------------------"
-					echo "Running Probtrackxgpudense locally on `hostname`"
-					echo "Check output here: $LogFolder"
-					echo "--------------------------------------------------------------"
-					echo ""
+  					echo ""  			
+  				fi
 
-					echo "Running Matrix 1..."
-					echo ""
-					"$ScriptsFolder"/RunMatrix1.sh "$RunFolder" "$CASE"
-					echo "Running Matrix 2..."
-					echo ""
-					"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE"
+			else 
 				
-				else	
+				# -- If run is incomplete perform run for Matrix 1
+				echo ""
+  				geho "ProbtrackX Matrix1 solution and dense connectome incomplete for $CASE. Starting run..."
+  				echo ""
+  								
+				# -- Set nsamples variable 
+				if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
+		
+				# -- submit script
+				# set scheduler for fsl_sub command
+				fslsub="$Scheduler"
+				echo ""
+				echo "Job ID:"
+				echo ""
+				"$ScriptsFolder"/RunMatrix1.sh "$RunFolder" "$CASE" "$NsamplesMatrixOne" "$Scheduler"
 				
-					echo "Job ID:"
-					fslsub="$Scheduler" # set scheduler for fsl_sub command
-					echo ""
-					fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" "$ScriptsFolder"/RunMatrix1.sh "$RunFolder" "$CASE"
-					echo "Submitted Matrix 1 job."
-					echo ""
-					fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" "$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE"
-					echo "Submitted Matrix 1 job."
-					echo ""
-					echo "--------------------------------------------------------------"
-					echo "Scheduler: $Scheduler"
-					echo "QUEUE Name: $QUEUE"
-					echo "Data successfully submitted to $QUEUE" 
-					echo "Check output logs here: $LogFolder"
-					echo "--------------------------------------------------------------"
-					echo ""
-				fi	
+				# -- record output calls
+				echo ""
+				echo "Submitted Matrix 1 job for $CASE"
+				echo ""
+				echo ""
+				echo "--------------------------------------------------------------"
+				echo "Scheduler: $Scheduler"
+				echo "QUEUE Name: $QUEUE"
+				echo "Data successfully submitted to $QUEUE" 
+				echo "Check output logs here: $LogFolder"
+				echo "--------------------------------------------------------------"
+				echo ""
+			fi	
+		fi
+		
+		# -------------------------------------------------
+		# -- Do work for Matrix 3 if --omatrix3 flag set 
+		# -------------------------------------------------
+		
+		if [ "$MatrixThree" == "yes" ]; then
+		
+			LogFolder="$ResultsFolder"/Mat3_logs
+		
+			# -- Check of overwrite flag was set
+			if [ "$Overwrite" == "yes" ]; then
+				echo ""
+				echo "Removing existing Probtrackxgpu Matrix3 dense run for $CASE..."
+				echo ""
+				rm -f "$ResultsFolder"/Conn3.dconn.nii.gz  &> /dev/null
+			fi
+			
+			# -- Check for Matrix 3 completion
+			echo ""
+  			geho "Checking if ProbtrackX Matrix 3 and dense connectome was completed on $CASE..."
+  			echo ""
+  			
+  			# -- Check if the file even exists
+  			if [ -f "$ResultsFolder"/Conn3.dconn.nii.gz ]; then
+  		
+  				# -- Set file sizes to check for completion
+				minimumfilesize=100000000
+  				actualfilesize=`wc -c < "$ResultsFolder"/Conn3.dconn.nii.gz` > /dev/null 2>&1  		
+  				
+  				# -- Then check if Matrix 3 run is complete based on size
+  				if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
+  					echo ""
+  					cyaneho "DONE -- ProbtrackX Matrix1 solution and dense connectome was completed for $CASE"
+  					cyaneho "To re-run set overwrite flag to 'yes'"
+  					cyaneho "Check prior output logs here: $LogFolder"
+  					echo ""
+  					echo "--------------------------------------------------------------"
+  					echo ""  			
+  				fi
+			
+			else 
+			
+				# -- If run is incomplete perform run for Matrix 3
+  				geho "ProbtrackX Matrix3 solution and dense connectome incomplete for $CASE. Starting run..."
+  				echo ""
+  				
+				# -- Set nsamples variable 
+				if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
+		
+				# -- submit script
+				# set scheduler for fsl_sub command
+				fslsub="$Scheduler"
+				echo ""
+				echo "Job ID:"
+				echo ""
+				"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE" "$NsamplesMatrixOne" "$Scheduler"
+				
+				# -- record output calls
+				echo ""
+				echo "Submitted Matrix 1 job for $CASE"
+				echo ""
+				echo ""
+				echo "--------------------------------------------------------------"
+				echo "Scheduler: $Scheduler"
+				echo "QUEUE Name: $QUEUE"
+				echo "Data successfully submitted to $QUEUE" 
+				echo "Check output logs here: $LogFolder"
+				echo "--------------------------------------------------------------"
+				echo ""
+			fi	
+		fi		
 }
 
 show_usage_probtrackxgpudense() {
@@ -4374,28 +4484,50 @@ show_usage_probtrackxgpudense() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
-				echo "This function runs the probtrackxgpu dense whole-brain connectome generation."
-				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed fslbedpostxgpu and pretractographydense functions processing: "
+				echo "This function runs the probtrackxgpu dense whole-brain connectome generation by calling $ScriptsFolder/RunMatrix1.sh or $ScriptsFolder/RunMatrix3.sh"
+				echo "Note that this function needs to be send work to a GPU-enabled queue. It is cluster-enabled by default."
+				echo "It explicitly assumes the Human Connectome Project folder structure and completed fslbedpostxgpu and pretractographydense functions processing:"
 				echo ""
-				echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion          ---> Processed DWI data needs to be here"
-				echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX ---> BedpostX output data needs to be here"
+				echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion            ---> Processed DWI data needs to be here"
+				echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX   ---> BedpostX output data needs to be here"
+				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear             ---> T1w images need to be in MNINonLinear space here"
+				echo ""
+				echo "Outputs will be here:"
+				echo ""
+				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Conn1.dconn.nii.gz   ---> Dense Connectome CIFTI Results in MNI space for Matrix1"
+				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Conn3.dconn.nii.gz   ---> Dense Connectome CIFTI Results in MNI space for Matrix3"
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>			Name of function"
-				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<list_of_cases>			List of subjects to run"
-				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
-				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
-				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--function=<function_name>					Name of function"
+				echo "		--path=<study_folder>						Path to study data folder"
+				echo "		--subjects=<list_of_cases>					List of subjects to run"
+				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>				Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--overwrite=<clean_prior_run>					Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
+				echo "		--omatrix1=<matrix1_model>					Specify if you wish to run matrix 1 model [yes or omit flag]"
+				echo "		--omatrix3=<matrix3_model>					Specify if you wish to run matrix 3 model [yes or omit flag]"
+				echo "		--nsamplesmatrix1=<Number_of_Samples_for_Matrix1>		Number of samples - default=10000" 
+				echo "		--nsamplesmatrix3=<Number_of_Samples_for_Matrix3>		Number of samples - default=3000" 
 				echo "" 
+				echo "-- GENERIC PARMETERS SET BY DEFAULT:"
+				echo ""
+				echo "       --loopcheck --forcedir --fibthresh=0.01 -c 0.2 --sampvox=2 --randfib=1 -S 2000 --steplength=0.5"
+				echo ""
+				echo "       ** The function calls either of these based on the --omatrix1 and --omatrix3 flags: "
+				echo ""
+				echo "                               $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix1.sh"
+				echo "                               $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix3.sh"
+				echo ""
+				echo "                               --> both are cluster-aware and send the jobs to the GPU-enabled queue. They do not work interactively."
+				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta9342' --function='probtrackxgpudense' --queue='anticevic' --runmethod='2' --scheduler='lsf'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta9776' --function='probtrackxgpudense' --queue='anticevic-gpu' --scheduler='lsf' --omatrix1='yes' --nsamplesmatrix1='10000' --overwrite='no'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
-				echo "AP probtrackxgpudense /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
+				echo "AP probtrackxgpudense /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta9776' "
 				echo ""
 }
 
@@ -4670,6 +4802,12 @@ if [ "$flag" == "--" ] ; then
 	Model=`opts_GetOpt1 "--model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
 	Burnin=`opts_GetOpt1 "--burnin" $@`  # <burnin_period_value>		Burnin period, default 1000
 	Jumps=`opts_GetOpt1 "--jumps" $@`    # <number_of_jumps>		Number of jumps, default 1250
+	
+	# probtrackxgpudense input flags
+	MatrixOne=`opts_GetOpt1 "--omatrix1" $@`  # <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
+	MatrixThree=`opts_GetOpt1 "--omatrix3" $@`  # <matrix3_model>		Specify if you wish to run matrix 3 model [yes or omit flag]
+	NsamplesMatrixOne=`opts_GetOpt1 "--nsamplesmatrix1" $@`  # <Number_of_Samples_for_Matrix1>		Number of samples - default=5000
+	NsamplesMatrixThree=`opts_GetOpt1 "--nsamplesmatrix3" $@`  # <Number_of_Samples_for_Matrix3>>		Number of samples - default=5000
 	
 	# awshcpsync input flags
 	 Modality=`opts_GetOpt1 "--modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
@@ -6035,10 +6173,86 @@ if [ "$FunctionToRunInt" == "pretractographydense" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  probtrackcortexgpudense function loop
+#  probtrackxgpudense function loop
 # ------------------------------------------------------------------------------
 
-## -- NEED TO CODE
+if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
+	
+		# Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+		if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
+		if [ "$MatrixOne" == "yes" ]; then
+			if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
+		fi
+		if [ "$MatrixThree" == "yes" ]; then
+			if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
+		fi
+
+		echo ""
+		echo "Running Pretractography Dense processing with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "CASES: $CASES"
+		echo "QUEUE: $QUEUE"
+		echo "Compute Matrix1: $MatrixOne"
+		echo "Compute Matrix3: $MatrixThree"
+		echo "Number of samples for Matrix1: $NsamplesMatrixOne"
+		echo "Number of samples for Matrix3: $NsamplesMatrixThree"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi
+
+if [ "$FunctionToRunInt" == "probtrackxgpudense" ]; then
+
+	echo "Running Pretractography Dense processing interactively. First enter the necessary parameters."
+	# Request all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
+	echo ""
+	echo "-- Enter queue name [e.g. anticevic]"
+	if read answer; then QUEUE=$answer; fi
+	echo ""
+	echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
+	if read answer; then Scheduler=$answer; fi
+	echo ""
+	echo "-- Compute Matrix1 [e.g. yes or leave empty]"
+	if read answer; then Matrix1=$answer; fi
+	echo ""
+	echo "-- Compute Matrix3 [e.g. yes or leave empty]"
+	if read answer; then Matrix3=$answer; fi
+	echo ""
+	echo "-- Number of samples for Matrix1 [Default - 10000]"
+	if read answer; then NsamplesMatrixOne=$answer; fi
+	echo ""
+	echo "-- Number of samples for Matrix3 [Default - 3000]"
+	if read answer; then NsamplesMatrixThree=$answer; fi
+	echo ""
+		
+		echo "Running Pretractography processing with the following parameters:"
+		echo ""
+		echo "-------------------------------------------------------------"
+		echo "CASES: $CASES"
+		echo "QUEUE: $QUEUE"
+		echo "Compute Matrix1: $Matrix1"
+		echo "Compute Matrix3: $Matrix3"
+		echo "Number of samples for Matrix1: $NsamplesMatrix1"
+		echo "Number of samples for Matrix3: $NsamplesMatrix1"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRunInt" "$CASE"
+  		done
+fi
 
 
 # ------------------------------------------------------------------------------
