@@ -44,7 +44,7 @@ while header && length(lines) > l
         if s(1) == '#', s = s(2:end); end
         if strfind(s, ':')
             [fname, fdata] = strtok(s, ':');
-            meta.(strtrim(fname)) = strtrim(fdata(2:end));
+            meta.(validName(fname)) = strtrim(fdata(2:end));
         else
             hdr = strread(s, '%s')';
         end
@@ -69,3 +69,10 @@ else
 end
 
 
+% ----- function for making valid field names
+
+function [s] = validName(s)
+
+    s = strtrim(s);
+    s = s(isstrprop(s, 'alphanum'));
+    s = s(find(~isstrprop(s, 'digit'), 1, 'first'):end);
