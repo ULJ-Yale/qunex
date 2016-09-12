@@ -194,6 +194,7 @@ show_usage() {
   				echo "		boldmergenifti			MERGE SPECIFIED NII BOLD TIMESERIES"
   				echo "		boldmergecifti			MERGE SPECIFIED CITI BOLD TIMESERIES"
   				echo "		bolddense			COMPUTE BOLD DENSE CONNECTOME (NEEDS >30GB RAM PER BOLD)"
+  				echo "		palmanalysis			RUN PALM AND EXTRACT DATA FROM ROIs (CLUSTER AWARE)"
   				echo ""  				
   				weho "		--- FIX ICA DE-NOISING FUNCTIONS ---"    				
   				echo "		fixica				RUN FIX ICA DE-NOISING ON A GIVEN VOLUME"
@@ -4314,9 +4315,9 @@ show_usage_pretractographydense() {
 				echo ""
 }
 
-# --------------------------------------------------------------------------------------------------------------------------------------------
-#  probtrackxgpudense - Executes the HCP Matrix1 or 3 code and generates wb dense connectomes (Stam's implementation for all grayordinates)
-# ---------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------
+#  probtrackxgpudense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
+# --------------------------------------------------------------------------------------------------------------------------------------------------
 
 probtrackxgpudense() {
 
@@ -4346,7 +4347,7 @@ probtrackxgpudense() {
 			# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "yes" ]; then
 				echo ""
-				echo "Removing existing Probtrackxgpu Matrix1 dense run for $CASE..."
+				reho " --- Removing existing Probtrackxgpu Matrix1 dense run for $CASE..."
 				echo ""
 				rm -f "$ResultsFolder"/Conn1.dconn.nii.gz &> /dev/null
 			fi
@@ -4401,6 +4402,7 @@ probtrackxgpudense() {
 				echo "Scheduler: $Scheduler"
 				echo "QUEUE Name: $QUEUE"
 				echo "Data successfully submitted to $QUEUE" 
+				echo "Number of samples for Matrix1: $NsamplesMatrixOne"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
@@ -4418,7 +4420,7 @@ probtrackxgpudense() {
 			# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "yes" ]; then
 				echo ""
-				echo "Removing existing Probtrackxgpu Matrix3 dense run for $CASE..."
+				reho " --- Removing existing Probtrackxgpu Matrix3 dense run for $CASE..."
 				echo ""
 				rm -f "$ResultsFolder"/Conn3.dconn.nii.gz  &> /dev/null
 			fi
@@ -4438,7 +4440,7 @@ probtrackxgpudense() {
   				# -- Then check if Matrix 3 run is complete based on size
   				if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
   					echo ""
-  					cyaneho "DONE -- ProbtrackX Matrix1 solution and dense connectome was completed for $CASE"
+  					cyaneho "DONE -- ProbtrackX Matrix3 solution and dense connectome was completed for $CASE"
   					cyaneho "To re-run set overwrite flag to 'yes'"
   					cyaneho "Check prior output logs here: $LogFolder"
   					echo ""
@@ -4453,7 +4455,7 @@ probtrackxgpudense() {
   				echo ""
   				
 				# -- Set nsamples variable 
-				if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
+				if [ "$NsamplesMatrixThree" == "" ];then NsamplesMatrixThree=3000; fi
 		
 				# -- submit script
 				# set scheduler for fsl_sub command
@@ -4461,17 +4463,18 @@ probtrackxgpudense() {
 				echo ""
 				echo "Job ID:"
 				echo ""
-				"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE" "$NsamplesMatrixOne" "$Scheduler"
+				"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE" "$NsamplesMatrixThree" "$Scheduler"
 				
 				# -- record output calls
 				echo ""
-				echo "Submitted Matrix 1 job for $CASE"
+				echo "Submitted Matrix 3 job for $CASE"
 				echo ""
 				echo ""
 				echo "--------------------------------------------------------------"
 				echo "Scheduler: $Scheduler"
 				echo "QUEUE Name: $QUEUE"
 				echo "Data successfully submitted to $QUEUE" 
+				echo "Number of samples for Matrix3: $NsamplesMatrixThree"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
@@ -4874,9 +4877,9 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "qaimages" ]; then
-	module load Langs/Julia/0.4.0
+	module load Langs/Julia/0.4.6
 	cd "$StudyFolder"/QC
-	ln -s "$TOOLS"/bin/qa.jl ./
+	ln -s "$TOOLS"/bin/qa.jl ./ &> /dev/null
 	mkdir BOLD &> /dev/null
 	mkdir T1 &> /dev/null
 	mkdir T1nonlin &> /dev/null
@@ -6241,10 +6244,10 @@ if [ "$FunctionToRunInt" == "probtrackxgpudense" ]; then
 		echo "-------------------------------------------------------------"
 		echo "CASES: $CASES"
 		echo "QUEUE: $QUEUE"
-		echo "Compute Matrix1: $Matrix1"
-		echo "Compute Matrix3: $Matrix3"
-		echo "Number of samples for Matrix1: $NsamplesMatrix1"
-		echo "Number of samples for Matrix3: $NsamplesMatrix1"
+		echo "Compute Matrix1: $MatrixOne"
+		echo "Compute Matrix3: $MatrixThree"
+		echo "Number of samples for Matrix1: $NsamplesMatrixOne"
+		echo "Number of samples for Matrix3: $NsamplesMatrixThree"
 		echo "Overwrite prior run: $Overwrite"
 		echo "--------------------------------------------------------------"
 		
@@ -6254,6 +6257,11 @@ if [ "$FunctionToRunInt" == "probtrackxgpudense" ]; then
   		done
 fi
 
+# ------------------------------------------------------------------------------
+#  palmanalysis function loop
+# ------------------------------------------------------------------------------
+
+## -- NEED TO CODE
 
 # ------------------------------------------------------------------------------
 #  awshcpsync - AWS S3 Sync command wrapper
