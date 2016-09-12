@@ -4879,6 +4879,7 @@ fi
 if [ "$FunctionToRun" == "qaimages" ]; then
 	#module load Langs/Julia/0.4.6
 	cd "$StudyFolder"/QC
+	rm -f ./qa.jl
 	ln -s "$TOOLS"/bin/qa.jl ./ &> /dev/null
 	mkdir BOLD &> /dev/null
 	mkdir T1 &> /dev/null
