@@ -2,6 +2,10 @@
 
 import re
 import os.path
+import subprocess
+import time
+import multiprocessing
+import datetime
 
 def readSubjectData(filename, verbose=False):
     s = file(filename).read()
@@ -110,3 +114,60 @@ def readSubjectData(filename, verbose=False):
         raise
 
     return slist, gpref
+
+
+
+def runExternalParallel(calls, cores=None, prepend=''):
+
+    if cores is None:
+        cores = multiprocessing.cpu_count()
+
+    running   = []
+    completed = []
+
+    while True:
+
+        # --- check if we can add a process to run
+        if len(running) < cores:
+            if calls:
+                call = calls.pop(0)
+                sout = open(call['sout'], 'w', 1)
+                print >> sout, "Starting log for %s at %s\nThe command being run: \n>> %s\n" % (call['name'], str(datetime.datetime.now()).split('.')[0], " ".join(call['args']))
+                running.append({'call': call, 'sout': sout, 'p': subprocess.Popen(call['args'], stdout=sout, stderr=sout, bufsize=0)})
+                print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.datetime.now()).split('.')[0], call['sout'])
+                continue
+
+        # --- check if a process finished
+        done = []
+        for n in range(len(running)):
+            running[n]['sout'].flush()
+
+            if running[n]['p'].poll() is not None:
+                running[n]['sout'].close()
+                print prepend + "finished running %s (exit code: %d), log in %s" % (running[n]['call']['name'], running[n]['p'].poll(), running[n]['call']['sout'])
+                completed.append({'exit': running[n]['p'].poll(), 'name': running[n]['call']['name'], 'log': running[n]['call']['sout'], 'args': running[n]['call']['args']})
+                done.append(n)
+        if done:
+            while done:
+                running.pop(done.pop())
+            continue
+
+        # --- check if we are done:
+        if not calls and not running:
+            print prepend + "DONE"
+            break
+
+        # --- wait a bit
+        time.sleep(1)
+
+    return completed
+
+
+
+
+
+
+
+
+
+

@@ -76,7 +76,7 @@ joinMaps images=<image file list> output=<output file name> [names=<volume names
 PALM utilities
 --------------
 
-runPALM image=<image file> [design=<design string>] [args=<arguments string>]
+runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
 
 '''
 
@@ -105,7 +105,7 @@ commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': (
             'map2HCP'       : {'com': gCodeU.g_4dfp.map2HCP,           'args': ('volume', 'method')},
             'maskMap'       : {'com': gCodeU.g_palm.maskMap,           'args': ('image', 'masks', 'output', 'minv', 'maxv')},
             'joinMaps'      : {'com': gCodeU.g_palm.joinMaps,          'args': ('images', 'output', 'names', 'originals')},
-            'runPALM'       : {'com': gCodeU.g_palm.runPALM,           'args': ('image', 'design', 'args')}
+            'runPALM'       : {'com': gCodeU.g_palm.runPALM,           'args': ('image', 'design', 'args', 'root', 'cores')}
             }
 
 

@@ -11,10 +11,13 @@ import subprocess
 import gzip
 import shutil
 import glob
+import gCodeU
+import re
 
-def runPALM(image, design=None, args=None, root=None):
+
+def runPALM(image, design=None, args=None, root=None, cores=None):
     '''
-    runPALM image=<image file> design=<design string> [args=<list of arguments>]
+    runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
 
     Runs PALM on the provided image using the provided design files. The image can be either
     a volume NIfTI file or a CIFT .dtseries.nii file. In the latter case the file will be
@@ -31,11 +34,11 @@ def runPALM(image, design=None, args=None, root=None):
 
     If "none" is given as value, that file is not specified.
 
-    All design files need to be provided with the design name root:
-    - design_d.csv for the design matrix
-    - design_t.csv for the t contrast file
-    - design_f.csv for the f contrast file (if it does not exist, it will be skipped)
-    - design_eb.csv for the exchangibility block file
+    All design files need to be provided with the design name root and appendix:
+    - <design name>_<design d>.csv for the design matrix
+    - <design name>_<design t>.csv for the t contrast file
+    - <design name>_<design f>.csv for the f contrast file (if it does not exist, it will be skipped)
+    - <design name>_<design eb>.csv for the exchangibility block file
 
     args is a string specifying what additional arguments to pass to palm. The format of the string is:
     "arg1|arg2|arg3:value:value|arg4:value".
@@ -56,6 +59,10 @@ def runPALM(image, design=None, args=None, root=None):
     fdr     : compute a fdr correction for multiple comparisons
     T       : Enable TFCE inference
     C <z>   : Enable cluster inference for univariate tests with z cutoff
+
+    Additional optional parameters
+    - root  : optional root name for the result images, design name if not specified
+    - cores : optional number of cores to use in parallel, all available if not specified
     '''
 
     print "\n Running PALM"
@@ -114,6 +121,7 @@ def runPALM(image, design=None, args=None, root=None):
     # --- setup and run
 
     toclean   = [];
+    cnum = re.compile('.*_c([0-9]+).nii')
 
     try:
 
@@ -179,32 +187,31 @@ def runPALM(image, design=None, args=None, root=None):
                 raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
 
         else:
-            print " --> running PALM for CIFTI input"
+            print " --> setting up PALM for CIFTI input"
+            calls = []
 
             print "     ... Volume"
             inargs  = ['-i', root + '_volume.nii', '-m', os.path.join(atlas, 'masks', 'volume.cifti.mask.nii')]
             command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_volume']
-            if subprocess.call(command):
-                print "ERROR: Command failed: %s" % (" ".join(command))
-                raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
+            calls.append({'name': 'PALM Volume', 'args': command, 'sout': root + '_volume.log'})
 
             print "     ... Left Surface"
             inargs  = ['-i', root + '_left.func.gii', '-m', os.path.join(atlas, 'masks', 'surface.cifti.L.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_L']
             if '-T' in command:
                 command += ['-tfce2D']
-            if subprocess.call(command):
-                print "ERROR: Command failed: %s" % (" ".join(command))
-                raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
+            calls.append({'name': 'PALM Left Surface', 'args': command, 'sout': root + '_left_surface.log'})
 
-            print "     ... Left Surface"
+            print "     ... Right Surface"
             inargs  = ['-i', root + '_right.func.gii', '-m', os.path.join(atlas, 'masks', 'surface.cifti.R.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_R']
             if '-T' in command:
                 command += ['-tfce2D']
-            if subprocess.call(command):
-                print "ERROR: Command failed: %s" % (" ".join(command))
-                raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
+            calls.append({'name': 'PALM Right Surface', 'args': command, 'sout': root + '_right_surface.log'})
+
+            print " --> running PALM for CIFTI input"
+
+            done = gCodeU.g_core.runExternalParallel(calls, cores=cores, prepend='     ... ')
 
         # --- process output
 
@@ -215,20 +222,30 @@ def runPALM(image, design=None, args=None, root=None):
 
             for pval in ['_fdrp', '_fwep', '_uncp', '']:
                 for stat in ['tstat', 'fstat', 'ztstat', 'zfstat']:
-                    for volumeUnit, surfaceUnit, unitKind in [('vox', 'dpv', 'reg'), ('tfce', 'tfce', 'tfce')]:
+                    for volumeUnit, surfaceUnit, unitKind in [('vox', 'dpv', 'reg'), ('tfce', 'tfce', 'tfce'), ('clustere', 'clustere', 'clustere'), ('clusterm', 'clusterm', 'clusterm')]:
                         rvolumes       = glob.glob("%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval))
                         rleftsurfaces  = glob.glob("%s_L_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
                         rrightsurfaces = glob.glob("%s_R_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
 
-                        C = 0
-                        while rvolumes:
-                            C += 1
-                            targetfile     = "%s_%s_%s%s_C%d.dscalar.nii" % (root, unitKind, stat, pval, C)
-                            print "     ... creating", targetfile,
+                        rvolumes.sort()
+                        rleftsurfaces.sort()
+                        rrightsurfaces.sort()
 
+                        while rvolumes:
                             rvolume       = rvolumes.pop(0)
                             rleftsurface  = rleftsurfaces.pop(0)
                             rrightsurface = rrightsurfaces.pop(0)
+
+                            # --- get the contrast number
+                            C = cnum.match(rvolume)
+                            if C is None:
+                                C = '0'
+                            else:
+                                C = C.group(1)
+
+                            # --- compile target name
+                            targetfile     = "%s_%s_%s%s_C%s.dscalar.nii" % (root, unitKind, stat, pval, C)
+                            print "     ... creating", targetfile,
 
                             # --- and func to gii
                             os.rename(rleftsurface, rleftsurface.replace('.gii', '.func.gii'))
@@ -251,7 +268,6 @@ def runPALM(image, design=None, args=None, root=None):
                                 os.remove(rrightsurface)
                             else:
                                 print "... ops! File was not created!"
-
 
     except:
         for f in toclean:
