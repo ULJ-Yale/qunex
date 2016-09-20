@@ -131,9 +131,9 @@ img.hdrnifti.glmin           = 0;
 img.hdrnifti.swap    = false;
 img.hdrnifti.swapped = false;
 
-% --- add empty meta info
+% --- add empty metadata info
 
-img.meta = char(ones(1,4)*0);
+img.metadata = char(ones(1,4)*0);
 
 
 function [space] = guessSpace(dim)
