@@ -1,6 +1,6 @@
 function [] = g_ExtractGLMVolumes(flist, outf, estimates, frames, saveoption, verbose);
 
-%function [] = g_ExtractGLMVolumes(flist, outf, estimates, saveoption, verbose);
+%function [] = g_ExtractGLMVolumes(flist, outf, estimates, frames, saveoption, verbose);
 %
 %	Extracts volumes from GLM files provided in a file list.
 %
