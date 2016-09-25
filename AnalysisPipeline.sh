@@ -13,6 +13,18 @@
 ## --> Finish autoptx function
 ## --> Revise parcellation functions to use the Glasser parcellation and allow for more flexibility & clean up the prior calls
 
+## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
+## - Sync to Grace crontab job
+## - Rsync to subject folder based on acq_log.txt
+## - Dicomsort if data complete w/o error
+## - Generate subject.txt -- IF 0 ERR then RUN; ELSE ABORT
+## - Run HCP 1-5 via bash script submitted to bigmem02; setup checkpoints (will need param file)
+## - Run QC: i) SNR, ii) Visual, iii) fcMRI
+## - dtifit
+## - bedpostX
+## - probtrackX
+## - FIX ICA / denoising (will need param file)
+
 ## Commands for rsyncing to HPC clusters
 ##  rsync /usr/local/analysispipeline/AnalysisPipeline.sh aa353@omega1.hpc.yale.edu:/home/fas/anticevic/software/analysispipeline/
 
@@ -3903,8 +3915,16 @@ fslbedpostxgpu() {
 		echo ""
   		geho "Checking if Bedpostx was completed on $CASE..."
   		  		
+  		# Set file depending on model specification
+  		if [ "$Model" == 2 ]; then  
+  			CheckFile="mean_d_stdsamples.nii.gz"
+  		fi
+  		if [ "$Model" == 3 ]; then
+  			CheckFile="mean_Rsamples.nii.gz"
+		fi
+
   		# Check if the file even exists
-  		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz ]; then
+  		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/"$CheckFile" ]; then
   		
   		# Set file sizes to check for completion
 		minimumfilesize=20000000
@@ -4392,7 +4412,8 @@ probtrackxgpudense() {
 				echo "Job ID:"
 				echo ""
 				"$ScriptsFolder"/RunMatrix1.sh "$RunFolder" "$CASE" "$NsamplesMatrixOne" "$Scheduler"
-				
+
+					
 				# -- record output calls
 				echo ""
 				echo "Submitted Matrix 1 job for $CASE"
@@ -4464,7 +4485,7 @@ probtrackxgpudense() {
 				echo "Job ID:"
 				echo ""
 				"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE" "$NsamplesMatrixThree" "$Scheduler"
-				
+
 				# -- record output calls
 				echo ""
 				echo "Submitted Matrix 3 job for $CASE"
@@ -6239,6 +6260,10 @@ if [ "$FunctionToRunInt" == "probtrackxgpudense" ]; then
 	echo "-- Number of samples for Matrix3 [Default - 3000]"
 	if read answer; then NsamplesMatrixThree=$answer; fi
 	echo ""
+	
+		#Set job limits
+		#JobLimitMatrix1=0
+		#JobLimitMatrix3=0
 		
 		echo "Running Pretractography processing with the following parameters:"
 		echo ""
