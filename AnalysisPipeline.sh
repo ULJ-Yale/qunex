@@ -32,7 +32,7 @@
 ## git commands:
 ## git add LICENSE.md
 ## git add AnalysisPipeline.sh
-## git commit . -m'Update from nmda'
+## git commit . -m'Update from Grace'
 ## git push origin master
 ## git pull origin master
 ## added AMPA sever - git remote add ampa ssh://aanticevic@ampa.yale.edu/usr/local/analysispipeline
@@ -202,6 +202,7 @@ show_usage() {
   				echo ""  				
   				weho "		--- ANALYSES FUNCTIONS ---"  				
   				echo "		ciftiparcellate			PARCELLATE BOLD, DWI, MYELIN or THICKNESS DATA VIA 7 & 17 NETWORK SOLUTIONS"
+  				echo "		dwidenseparcellation		PARCELLATE DENSE DWI TRACTOGRAPHY DATA VIA SPECIFIED NETWORK SOLUTIONS"
   				echo "		printmatrix			EXTRACT PARCELLATED MATRIX FOR BOLD DATA VIA YEO 17 NETWORK SOLUTIONS"
   				echo "		boldmergenifti			MERGE SPECIFIED NII BOLD TIMESERIES"
   				echo "		boldmergecifti			MERGE SPECIFIED CITI BOLD TIMESERIES"
@@ -3865,6 +3866,136 @@ show_usage_hcpdlegacy() {
 				echo ""
 }
 
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  dwidenseparcellation - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+dwidenseparcellation() {
+
+		# Requirements for this function
+		# Connectome Workbench (v1.0 or above)
+		
+		########################################## INPUTS ########################################## 
+
+		# DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
+		# The data should be in $DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
+		# Mandatory input parameters:
+    	# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+    	# Subject	  # e.g. 100307
+    	# MatrixVersion # e.g. 1 or 3
+    	# ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+
+		########################################## OUTPUTS #########################################
+
+		# Outputs will be *pconn.nii files located here:
+		#    DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+
+		
+		# Parse General Parameters
+		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		StudyFolder="$StudyFolder"
+		CASE="$CASE"
+		MatrixVersion="$MatrixVersion"
+		ParcellationFile="$ParcellationFile"
+		OutName="$OutName"
+		DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+		mkdir "$DWIOutput"/log > /dev/null 2>&1
+		LogFolder="$DWIOutput"/log
+		Overwrite="$Overwrite"
+		
+		if [ "$Cluster" == 1 ]; then
+		
+		echo "Running locally on `hostname`"
+		echo "Check log file output here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+				
+		DWIDenseParcellation.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--matrixversion="${MatrixVersion}" \
+		--parcellationfile="${ParcellationFile}" \
+		--outname="${OutName}" \
+		--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+		
+		else
+		
+		# set scheduler for fsl_sub command
+		fslsub="$Scheduler"
+		
+		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" DWIDenseParcellation.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--matrixversion="${MatrixVersion}" \
+		--parcellationfile="${ParcellationFile}" \
+		--outname="${OutName}" \
+		--overwrite="${Overwrite}"
+
+		echo "--------------------------------------------------------------"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+		fi
+}
+
+show_usage_dwidenseparcellation() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function implements parcellation on the DWI dense connectomes using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)."
+				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
+				echo ""
+				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Tractography/ ---> Dense Connectome DWI data needs to be here"
+				echo ""
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>			Name of function"
+				echo "		--path=<study_folder>				Path to study data folder"
+				echo "		--subject=<list_of_cases>			List of subjects to run"
+				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
+				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
+				echo "		--outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file"
+				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "" 
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+ 				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+ 				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='dwidenseparcellation' \ "
+				echo "--subjects='100206' \ "
+				echo "--matrixversion='3' \ "
+				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
+				echo "--runmethod='1'"
+				echo ""	
+				echo "-- Example with flagged parameters for a local run:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='dwidenseparcellation' \ "
+				echo "--subjects='100206' \ "
+				echo "--matrixversion='3' \ "
+				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
+				echo "--queue='anticevic' \ " 
+				echo "--runmethod='2' \ "
+				echo "--scheduler='lsf'"
+				echo ""
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "AP dwidenseparcellation /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
+				echo ""
+}
+
 # ------------------------------------------------------------------------------------------------------
 #  fsldtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
@@ -4820,6 +4951,11 @@ if [ "$flag" == "--" ] ; then
 	TE=`opts_GetOpt1 "--TE" $@` # <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
 	UnwarpDir=`opts_GetOpt1 "--unwarpdir" $@` # <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
 	DiffDataSuffix=`opts_GetOpt1 "--diffdatasuffix" $@` # <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+	
+	# dwidenseparcellation input flags
+	MatrixVersion=`opts_GetOpt1 "--matrixversion" $@` # <matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
+	ParcellationFile=`opts_GetOpt1 "--parcellationfile" $@` # <file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
+	OutName=`opts_GetOpt1 "--outname" $@` # <name_of_output_pconn_file>	Specify the suffix output name of the pconn file"
 	
 	# fslbedpostxgpu input flags
 	Fibers=`opts_GetOpt1 "--fibers" $@`  # <number_of_fibers>		Number of fibres per voxel, default 3
@@ -5938,6 +6074,89 @@ if [ "$FunctionToRunInt" == "hcpdlegacy" ]; then
 		echo "TE value for Fieldmap: $TE"
 		echo "EPI Unwarp Direction: $UnwarpDir"
 		echo "Diffusion Data Suffix Name: $DiffDataSuffix"
+		
+		for CASE in $CASES
+			do
+  			"$FunctionToRunInt" "$CASE"
+  		done
+fi
+
+
+# ------------------------------------------------------------------------------
+#  DWIDenseParcellation function loop (dwidenseparcellation)
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
+	
+# Check all the user-defined parameters: 1. MatrixVersion, 2. ParcellationFile, 3. OutName, 4. QUEUE, 5. RunMethod
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
+		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
+		if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi		
+		echo ""
+		echo "Running DWIDenseParcellation function with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Matrix version used for input: $MatrixVersion"
+		echo "File to use for parcellation: $ParcellationFile"
+		echo "Dense DWI Parcellated Connectome Output Name: $OutName"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi
+
+if [ "$FunctionToRunInt" == "dwidenseparcellation" ]; then
+
+	echo "Running DWIDenseParcellation function interactively. First enter the necessary parameters."
+	# Request all the user-defined parameters:  1. MatrixVersion, 2. ParcellationFile, 3. OutName, 4. QUEUE, 5. RunMethod
+	echo ""
+	echo ""
+	
+		echo "-- Matrix Version; e.g. 1 or 3"
+		if read answer; then MatrixVersion=$answer; fi
+		echo ""
+		echo "-- Absolute path of the parcellation file"
+		if read answer; then ParcellationFile=$answer; fi
+		echo ""
+		echo "-- Enter name of output pconn file"
+		if read answer; then TE=$OutName; fi
+		echo ""
+		echo "Overwrite existing run [yes, no]:"
+		if read answer; then Overwrite=$answer; fi  
+		echo ""
+		echo "-- Run locally [1] or run on cluster [2]"
+		if read answer; then Cluster=$answer; fi
+		echo ""
+		if [ "$Cluster" == "2" ]; then
+			echo "-- Enter queue name - always submit this job to a GPU-enabled queue [e.g. anticevic-gpu]"
+			if read answer; then QUEUE=$answer; fi
+			echo ""
+			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
+			if read answer; then Scheduler=$answer; fi
+			echo ""
+		fi
+		
+		echo "Running DWI legacy processing with the following parameters:"
+		echo ""
+		echo "-------------------------------------------------------------"
+		echo "Matrix version used for input: $MatrixVersion"
+		echo "File to use for parcellation: $ParcellationFile"
+		echo "Dense DWI Parcellated Connectome Output Name: $OutName"
+		echo "Overwrite prior run: $Overwrite"
 		
 		for CASE in $CASES
 			do

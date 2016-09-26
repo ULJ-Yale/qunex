@@ -20,7 +20,7 @@
 #
 # ## License
 #
-# * The DWIDenseParcellation = the "Software"
+# * The DWIDenseParcellation.sh = the "Software"
 # * This Software is distributed "AS IS" without warranty of any kind, either 
 # * expressed or implied, including, but not limited to, the implied warranties
 # * of merchantability and fitness for a particular purpose.
@@ -65,11 +65,21 @@ usage() {
 				echo "		--subject=<list_of_cases>			List of subjects to run"
 				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
 				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
+				echo "		--outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file"
 				echo ""
-				#echo "-- OPTIONAL PARMETERS:"
-				#echo "" 
- 				#echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+ 				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
  				echo ""
+ 				echo "-- Example:"
+				echo ""
+				echo "DWIDenseParcellation.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--subject='100206' \ "
+				echo "--matrixversion='3' \ "
+				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex'"
+				echo ""	
 }
 
 
@@ -112,6 +122,7 @@ get_options() {
     unset Subject
     unset MatrixVersion
     unset ParcellationFile
+    unset OutName
     unset Overwrite
     runcmd=""
 
@@ -148,6 +159,10 @@ get_options() {
                 ParcellationFile=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
+            --outname=*)
+                OutName=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
             --overwrite=*)
                 Overwrite=${argument/*=/""}
                 index=$(( index + 1 ))
@@ -155,6 +170,7 @@ get_options() {
             *)
                 usage
                 reho "ERROR: Unrecognized Option: ${argument}"
+        		echo ""
                 exit 1
                 ;;
         esac
@@ -164,27 +180,37 @@ get_options() {
     if [ -z ${StudyFolder} ]; then
         usage
         reho "ERROR: <study-path> not specified"
+        echo ""
         exit 1
     fi
 
     if [ -z ${CASE} ]; then
         usage
         reho "ERROR: <subject-id> not specified"
+        echo ""
         exit 1
     fi
 
     if [ -z ${MatrixVersion} ]; then
         usage
-        reho "ERROR: <phase-encoding-dir> not specified"
+        reho "ERROR: <matrix_version_value> not specified"
+        echo ""
         exit 1
     fi
 
     if [ -z ${ParcellationFile} ]; then
         usage
-        reho "ERROR: <echo-spacing> not specified"
+        reho "ERROR: <file_for_parcellation> not specified"
+        echo ""
         exit 1
     fi
 
+    if [ -z ${OutName} ]; then
+        usage
+        reho "ERROR: <name_of_output_pconn_file> not specified"
+        exit 1
+    fi
+    
     # report options
     echo ""
     echo ""
@@ -193,6 +219,7 @@ get_options() {
     echo "   Subject: ${CASE}"
     echo "   MatrixVersion: ${MatrixVersion}"
     echo "   ParcellationFile: ${ParcellationFile}"
+    echo "   OutName: ${OutName}"
     echo "   Overwrite: ${Overwrite}"
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
@@ -207,25 +234,56 @@ main() {
     # Get Command Line Options
     get_options $@
 
-# -- Define input
+# -- Define inputs and output
+reho "--- Establishing paths for all input and output folders:"
+echo ""
+
 DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii.gz"
 # -- Define output
 DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
-# -- Define cases to work on
 
-# -- First parcellate by COLUMN and save a *pdconn file
-wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/Conn"$MatrixVersion".pdconn.nii
-# -- Next parcellate by ROW and save final *pconn file
-wb_command -cifti-parcellate "$DWIOutput"/Conn3.pdconn.nii "$ParcellationFile" ROW "$DWIOutput"/Conn"$MatrixVersion".pconn.nii
-	
-exit 1
+echo "      Dense DWI Connectome Input:              ${DWIInput}"
+echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
+echo ""
+
+# -- Delete any existing output sub-directories
+if [ "$Overwrite" == "yes" ]; then
+	reho "--- Deleting prior runs for $DiffData..."
+	echo ""
+	rm -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii > /dev/null 2>&1
+	rm -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii > /dev/null 2>&1
+fi
+
+# Check if PreFreeSurfer was completed to use existing inputs and avoid re-running BET
+
+reho "--- Checking if parcellation was completed..."
+echo ""
+
+if [ -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii ]; then
+	geho "Parcellation data found: "
+	echo ""
+	echo "      ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
+	echo ""
+	exit 1
+else
+	geho "Parcellation data not found."
+	echo ""
+	geho "Computing parcellation by COLUMN on $DWIInput..."
+	echo ""
+	# -- First parcellate by COLUMN and save a *pdconn file
+	wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii
+	geho "Computing parcellation by ROW on ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii..."
+	echo ""
+	# -- Next parcellate by ROW and save final *pconn file
+	wb_command -cifti-parcellate "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii "$ParcellationFile" ROW "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii
+fi	
 
 # Perform completion checks"
 
 	reho "--- Checking outputs..."
 	echo ""
-	if [ -f "$DWIOutput"/Conn3.pdconn.nii "$ParcellationFile" ROW "$DWIOutput"/Conn"$MatrixVersion".pconn.nii ]; then
-		OutFile="$DWIOutput"/Conn3.pdconn.nii "$ParcellationFile" ROW "$DWIOutput"/Conn"$MatrixVersion".pconn.nii
+	if [ -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii ]; then
+		OutFile="$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii
 		geho "Parcellated (pconn) file for Matrix $MatrixVersion:           $OutFile"
 		echo ""
 	else
@@ -238,9 +296,12 @@ exit 1
 	echo ""
     geho "------------------------- End of work --------------------------------"
 
+exit 1
+
 }	
 
 #
 # Invoke the main function to get things started
 #
+
 main $@
