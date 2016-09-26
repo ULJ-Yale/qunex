@@ -35,7 +35,7 @@
 ## git commands:
 ## git add LICENSE.md
 ## git add AnalysisPipeline.sh
-## git commit . -m'Update from Grace'
+## git commit . -m'Update from Grace `date "+%Y.%m.%d.%H.%M.%S"`'
 ## git push origin master
 ## git pull origin master
 ## added AMPA sever - git remote add ampa ssh://aanticevic@ampa.yale.edu/usr/local/analysispipeline
