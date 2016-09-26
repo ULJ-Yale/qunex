@@ -37,7 +37,7 @@
 ## git add AnalysisPipeline.sh
 ## date=`date "+%Y.%m.%d.%H.%M.%S"`
 ## host=`hostname`
-## git commit . --message=<Update from "$host" "$date">
+## git commit . --message=<Update from $host $date"
 ## git push origin master
 ## git pull origin master
 ## added AMPA sever - git remote add ampa ssh://aanticevic@ampa.yale.edu/usr/local/analysispipeline
