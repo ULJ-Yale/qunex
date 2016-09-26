@@ -283,16 +283,25 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
 
 
-def maskMap(image=None, masks=None, output=None, minv=None, maxv=None):
+def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'):
     '''
-    maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>]
+    maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
 
     Wrapper for wb_command that takes the provided image (e.g. ztstat image from PALM) and masks it using the listes masks.
-    There can be more than one mask, they should be in a comma separated string. At least minv or maxv needs to be specified.
-    If there is just one value, all the masks will be thresholded using the same value. If more values are provided as comma separated list,
-    they should match the number of masks. If both minv and maxv are provided, both will be used.
+    There can be more than one mask, they should be in a comma separated string. The resulting mask will be combination of all the masks.
+    Depending on the join operation (the default is 'OR') the resulting mask will be a union (logical OR) or an intersection (logical AND)
+    of all the individual masks.
 
-    The result will be saved in "output". If none is provided it will saved as the original image with "masked" appended.
+    At least minv or maxv needs to be specified.
+
+    If only minv is given, images will be masked with:  mask >= minv.
+    If only maxv is given, images will be masked with:  mask <= maxv.
+    If both are given, images will be masked with:      minv <= mask <= maxv
+
+    If there is just one minv or maxv value, all the masks will be thresholded using the same value. If more values are
+    provided as comma separated list, they should match the number of masks.
+
+    The result will be saved in "output". If none is provided, it will saved as the original image with "masked" appended.
     '''
 
     # --- process the arguments
@@ -337,13 +346,16 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None):
 
     for n in range(nmasks):
         if minv is None:
-            ex.append("(m%d < %.3f)" % (n, maxv[n]))
+            ex.append("(m%d <= %.3f)" % (n, maxv[n]))
         elif maxv is None:
-            ex.append("(m%d > %.3f)" % (n, minv[n]))
+            ex.append("(m%d >= %.3f)" % (n, minv[n]))
         else:
-            ex.append("((m%d > %.3f) * (m%d < %.3f))" % (n, minv[n], maxv[n]))
+            ex.append("((m%d >= %.3f) * (m%d <= %.3f))" % (n, minv[n], maxv[n]))
 
-    ex = ["((%s) > 0) * img" % (" + ".join(ex))]
+    if join == 'OR':
+        ex = ["((%s) > 0) * img" % (" + ".join(ex))]
+    elif join == 'AND':
+        ex = ["((%s) > 0) * img" % (" * ".join(ex))]
 
     files = ['-var', 'img', image]
     for n in range(nmasks):
@@ -363,7 +375,8 @@ def joinMaps(images=None, output=None, names=None, originals=None):
     Wrapper for wb_command that concatenates the listed cifti images and names the individual volumes if names are provided.
     Both lists should be comma separated.
 
-    The result will be saved in "output". If originals is set to remove. The original files will be deleted after successful merge.
+    The result will be saved in "output". If originals is set to remove, the original files will be deleted after successful merge.
+    The default is to keep the originals.
     '''
 
     # --- process the arguments
