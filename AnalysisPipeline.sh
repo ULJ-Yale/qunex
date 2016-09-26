@@ -1,30 +1,33 @@
 #!/bin/sh 
 #set -x
 
-# push test for aCode
-
-## --> PENDING TASKS:
-##
+## --> PENDING GENERAL TASKS:
+## ------------------------------------------------------------------------------------------------------------------------------------------
 ## --> Make sure to document adjustments to diffusion connectome code for GPU version [e.g. omission of matrixes etc.]
-## --> Integrate command line flags for functions into IF statements [In progress... see example for hcpdlegacy]
+## --> Integrate all command line flags for functions into IF statements [In progress... see example for hcpdlegacy]
 ## --> Integrate usage calls for each function [In progress]
 ## --> Integrate log generation for each function and build IF statement to override log generation if nolog flag [In progress]
 ## --> Issue w/logging - the exec function effectively double-logs everything for each case and for the whole command
 ## --> Finish autoptx function
-## --> Revise parcellation functions to use the Glasser parcellation and allow for more flexibility & clean up the prior calls
-
+## --> Revise functional parcellation using the dwidenseparcellated example to allow for more flexibility & clean up the prior calls
+## ------------------------------------------------------------------------------------------------------------------------------------------
+#
 ## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
-## - Sync to Grace crontab job
-## - Rsync to subject folder based on acq_log.txt
-## - Dicomsort if data complete w/o error
-## - Generate subject.txt -- IF 0 ERR then RUN; ELSE ABORT
-## - Run HCP 1-5 via bash script submitted to bigmem02; setup checkpoints (will need param file)
-## - Run QC: i) SNR, ii) Visual, iii) fcMRI
-## - dtifit
-## - bedpostX
-## - probtrackX
-## - FIX ICA / denoising (will need param file)
-
+## ------------------------------------------------------------------------------------------------------------------------------------------
+## - Sync to Grace crontab job 																				-- DONE
+## - Rsync to subject folder based on acq_log.txt															-- IN PROGRESS
+## - Dicomsort if data complete w/o error															        -- IN PROGRESS
+## - Generate subject.txt -- IF 0 ERR then RUN; ELSE ABORT													-- IN PROGRESS
+## - Run HCP 1-5 via bash script submitted to bigmem02; setup checkpoints (will need param file)			-- IN PROGRESS
+## - Run QC: i) SNR, ii) Visual, iii) fcMRI 															    -- IN PROGRESS (Need to vet w/Grega)
+## - dtifit																									-- IN PROGRESS
+## - bedpostX																								-- IN PROGRESS
+## - probtrackX																								-- IN PROGRESS
+## - dwidenseparcellated																					-- IN PROGRESS
+## - FIX ICA / denoising (will need param file)																-- IN PROGRESS
+## ------------------------------------------------------------------------------------------------------------------------------------------
+#
+#
 ## Commands for rsyncing to HPC clusters
 ##  rsync /usr/local/analysispipeline/AnalysisPipeline.sh aa353@omega1.hpc.yale.edu:/home/fas/anticevic/software/analysispipeline/
 
