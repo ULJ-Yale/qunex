@@ -3870,7 +3870,7 @@ show_usage_hcpdlegacy() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  dwidenseparcellation - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+#  dwidenseparcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the AP wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 dwidenseparcellation() {
@@ -3960,7 +3960,7 @@ show_usage_dwidenseparcellation() {
 				echo "		--subject=<list_of_cases>			List of subjects to run"
 				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
 				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
-				echo "		--outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file"
+				echo "		--outname=<name_of_output_pconn_file>		Specify the suffix output name of the pconn file"
 				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
 				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
@@ -3969,7 +3969,7 @@ show_usage_dwidenseparcellation() {
 				echo "" 
  				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
  				echo ""
-				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
 				echo "--function='dwidenseparcellation' \ "
@@ -3980,7 +3980,7 @@ show_usage_dwidenseparcellation() {
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--runmethod='1'"
 				echo ""	
-				echo "-- Example with flagged parameters for a local run:"
+				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
 				echo "--function='dwidenseparcellation' \ "
@@ -3989,7 +3989,7 @@ show_usage_dwidenseparcellation() {
 				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
-				echo "--queue='anticevic' \ " 
+				echo "--queue='anticevic' \ "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='lsf'"
 				echo ""
@@ -3998,6 +3998,161 @@ show_usage_dwidenseparcellation() {
 				echo "AP dwidenseparcellation /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
 				echo ""
 }
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  boldparcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the AP wrapper
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+boldparcellation() {
+
+		# Requirements for this function
+		# Connectome Workbench (v1.0 or above)
+		
+		########################################## INPUTS ########################################## 
+
+		# BOLD data should be pre-processed and in CIFTI format
+		# The data should be in the folder relative to the master study folder, specified by the inputfile
+		# Mandatory input parameters:
+		# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+		# Subject	  # e.g. 100206
+		# InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
+		# InputPath # e.g. /images/functional/
+		# InputDataType # e.g.dtseries
+		# OutPath # e.g. /images/functional/
+		# OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
+		# ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+		# ComputePConn # Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
+		# UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
+		# WeightsFile # Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
+
+		########################################## OUTPUTS #########################################
+
+		# Outputs will be *pconn.nii files located in the location specified in the outputpath:
+		#    DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+
+		
+		# Parse General Parameters
+		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		StudyFolder="$StudyFolder"
+		CASE="$CASE"
+		InputFile="$InputFile"
+		InputPath="$InputPath"
+		InputDataType="$InputDataType"
+		OutPath="$OutPath"
+		OutName="$OutName"
+		ComputePConn="$ComputePConn"
+		UseWeights="$UseWeights"
+		WeightsFile="$WeightsFile"
+		ParcellationFile="$ParcellationFile"
+		BOLDOutput="$StudyFolder/$CASE/$OutPath/"
+		mkdir "$BOLDOutput"/log > /dev/null 2>&1
+		LogFolder="$BOLDOutput"/boldparcellation_log
+		Overwrite="$Overwrite"
+		
+		if [ "$Cluster" == 1 ]; then
+		
+		echo "Running locally on `hostname`"
+		echo "Check log file output here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+				
+		#DWIDenseParcellation.sh \
+		#--path="${StudyFolder}" \
+		#--subject="${CASE}" \
+		#--matrixversion="${MatrixVersion}" \
+		#--parcellationfile="${ParcellationFile}" \
+		#--outname="${OutName}" \
+		#--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+		
+		else
+		
+		# set scheduler for fsl_sub command
+		fslsub="$Scheduler"
+		
+		#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" DWIDenseParcellation.sh \
+		#--path="${StudyFolder}" \
+		#--subject="${CASE}" \
+		#--matrixversion="${MatrixVersion}" \
+		#--parcellationfile="${ParcellationFile}" \
+		#--outname="${OutName}" \
+		#--overwrite="${Overwrite}"
+
+		echo "--------------------------------------------------------------"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+		fi
+}
+
+show_usage_boldparcellation() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function implements parcellation on the BOLD dense files using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)."
+				echo ""
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>				Name of function"
+ 				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--subject=<list_of_cases>				List of subjects to run"
+				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
+				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
+				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)"
+				echo "		--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder (e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii)"
+				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
+				echo "		--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)"
+				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "" 
+				echo ""
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+ 				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
+ 				echo "		--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no)."
+ 				echo "		--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
+ 				echo "		--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)"
+ 				echo ""
+				echo "-- Example with flagged parameters for a local run:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='boldparcellation' \ "
+				echo "--subject='100206' \ "
+				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
+				echo "--inputpath='/images/functional/' \ "
+				echo "--inputdatatype='dtseries' \ "
+				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
+				echo "--outpath='/images/functional/' \ "
+				echo "--runmethod='1' "
+				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='boldparcellation' \ "
+				echo "--subject='100206' \ "
+				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
+				echo "--inputpath='/images/functional/' \ "
+				echo "--inputdatatype='dtseries' \ "
+				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
+				echo "--outpath='/images/functional/' \ "
+				echo "--queue='anticevic' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='lsf' "
+				echo "" 
+ 				echo ""
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "AP boldparcellation /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
+				echo ""
+}
+
 
 # ------------------------------------------------------------------------------------------------------
 #  fsldtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)

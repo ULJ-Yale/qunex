@@ -103,7 +103,8 @@ geho() {
     # StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
     # Subject	  # e.g. 100307
     # MatrixVersion # e.g. 1 or 3
-    # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+    # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
+    # OutName  # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
 
 ########################################## OUTPUTS #########################################
 
@@ -179,35 +180,35 @@ get_options() {
     # check required parameters
     if [ -z ${StudyFolder} ]; then
         usage
-        reho "ERROR: <study-path> not specified"
+        reho "ERROR: <study-path> not specified>"
         echo ""
         exit 1
     fi
 
     if [ -z ${CASE} ]; then
         usage
-        reho "ERROR: <subject-id> not specified"
+        reho "ERROR: <subject-id> not specified>"
         echo ""
         exit 1
     fi
 
     if [ -z ${MatrixVersion} ]; then
         usage
-        reho "ERROR: <matrix_version_value> not specified"
+        reho "ERROR: <matrix_version_value> not specified>"
         echo ""
         exit 1
     fi
 
     if [ -z ${ParcellationFile} ]; then
         usage
-        reho "ERROR: <file_for_parcellation> not specified"
+        reho "ERROR: <file_for_parcellation> not specified>"
         echo ""
         exit 1
     fi
 
     if [ -z ${OutName} ]; then
         usage
-        reho "ERROR: <name_of_output_pconn_file> not specified"
+        reho "ERROR: <name_of_output_pconn_file> not specified>"
         exit 1
     fi
     
@@ -238,6 +239,7 @@ main() {
 reho "--- Establishing paths for all input and output folders:"
 echo ""
 
+# -- Define input
 DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii.gz"
 # -- Define output
 DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
@@ -266,7 +268,7 @@ if [ -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii ]; then
 	echo ""
 	exit 1
 else
-	geho "Parcellation data not found."
+	reho "Parcellation data not found."
 	echo ""
 	geho "Computing parcellation by COLUMN on $DWIInput..."
 	echo ""
@@ -295,6 +297,7 @@ fi
 	reho "--- DWI Parcellation successfully completed"
 	echo ""
     geho "------------------------- End of work --------------------------------"
+    echo ""
 
 exit 1
 
