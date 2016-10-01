@@ -1,6 +1,6 @@
-function [] = g_ExtractROIGLMValues(flist, roif, outf, estimates, frames, values, verbose);
+function [data] = g_ExtractROIGLMValues(flist, roif, outf, estimates, frames, values, tformat, verbose);
 
-%function function [] = g_ExtractROIGLMValues(flist, roif, estimates, frames, values, verbose);
+%function function [] = g_ExtractROIGLMValues(flist, roif, estimates, frames, values, tformat, verbose);
 %
 %	Extracts statistics from GLM files provided in a file list.
 %
@@ -8,12 +8,15 @@ function [] = g_ExtractROIGLMValues(flist, roif, outf, estimates, frames, values
 %   roif        - names ROI file
 %   outf        - name of the output file [list + .dat]
 %   estimates   - list of estimates of interest [all but trend and baseline]
-%   values 	    - whether to work on raw beta values ('raw') or percent signal change ('psc') ['raw']
 %   frames      - list of frames [all]
-%
+%   values 	    - whether to work on raw beta values ('raw') or percent signal change ('psc') ['raw']
+%   tformat     - what format to use: a combination of 'mat', 'wide', 'long'
 %	verbose		- to report on progress or not [not]
 %
 % 	Created by Grega Repovš on 2015-12-09.
+%
+%   Changelog
+%   - 2016-09-25 Grega Repovš: added option of wide and mat
 %
 % 	Copyright (c) 2015 Grega Repovs. All rights reserved.
 %
@@ -22,7 +25,8 @@ function [] = g_ExtractROIGLMValues(flist, roif, outf, estimates, frames, values
 %   — additional info (roi xyz, peak value ...)
 %
 
-if nargin < 7, verbose   = false; end
+if nargin < 8, verbose   = false; end
+if nargin < 7 || isempty(tformat), tformat = 'wide,long,mat'; end
 if nargin < 6 || isempty(values), values = 'raw'; end
 if nargin < 5, frames    = [];    end
 if nargin < 4, estimates = [];    end
@@ -54,11 +58,24 @@ nroi = length(roi.roi.roinames);
 %                                             create output file
 
 if isempty(outf)
-    outf = [flist '_' values '.dat'];
+    outf = [flist '_' values];
 end
 
-rfile = fopen(outf, 'w');
-fprintf(rfile, 'subject\troi\troicode\tevent\tframe\tmin\tmax\tmean\tmedian\tsd\tse\tN');
+ltext = false;
+wtext = false;
+
+if ~isempty(strfind(tformat, 'long'))
+    ltext = fopen([outf '_long.txt'], 'w');
+    fprintf(ltext, 'subject\troi\troicode\tevent\tframe\tmin\tmax\tmean\tmedian\tsd\tse\tN');
+end
+if ~isempty(strfind(tformat, 'wide'))
+    wtext = fopen([outf '_wide.txt'], 'w');
+    fprintf(wtext, 'subject\tevent\tframe');
+    for r = 1:nroi
+        fprintf(wtext, '\t%s', roi.roi.roinames{r});
+    end
+end
+
 
 
 % --------------------------------------------------------------
@@ -87,17 +104,35 @@ for s = 1:nsub
     end
 
     stats   = glm.mri_ExtractROIStats(sroi);
+    data(s).stats = stats;
+    data(s).effect = glm.glm.effects(glm.glm.effect);
+    data(s).frame = glm.glm.eindex;
 
     nframes = length(stats(1).mean);
 
-    for r = 1:nroi
+    if ltext
+        for r = 1:nroi
+            for f = 1:nframes
+                fprintf(ltext, '\n%s\t%s\t%d\t%s\t%d\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%d', subjects(s).id, stats(r).roiname, stats(r).roicode, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f), stats(r).min(f), stats(r).max(f), stats(r).mean(f), stats(r).median(f), stats(r).sd(f), stats(r).se(f), stats(r).N);
+            end
+        end
+    end
+    if wtext
         for f = 1:nframes
-            fprintf(rfile, '\n%s\t%s\t%d\t%s\t%d\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%d', subjects(s).id, stats(r).roiname, stats(r).roicode, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f), stats(r).min(f), stats(r).max(f), stats(r).mean(f), stats(r).median(f), stats(r).sd(f), stats(r).se(f), stats(r).N);
+            fprintf(wtext, '\n%s\t%s\t%s', subjects(s).id, glm.glm.effects{glm.glm.effect(f)}, glm.glm.eindex(f));
+            for r = 1:nroi
+                fprintf(wtext, '\t%.3f', stats(r).mean(f));
+            end
         end
     end
 end
 
-fclose(rfile);
+if ltext, fclose(ltext); end
+if wtext, fclose(wtext); end
+
+if ~isempty(strfind(tformat, 'mat'))
+    save([outf '.mat'], 'data');
+end
 
 if verbose, fprintf('\n===> DONE\n'); end
 
