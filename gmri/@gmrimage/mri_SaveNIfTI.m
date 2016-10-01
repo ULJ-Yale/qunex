@@ -29,9 +29,9 @@ filename = strtrim(filename);
 % unpack and set up
 
 
-root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.pconn', '');
+root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.dscalar|\.pconn', '');
 
-ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar)', 'tokens');
+ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar|\.dscalar)', 'tokens');
 if length(ftype) > 0
     ftype = char(ftype{1});
     img.filetype = ftype;

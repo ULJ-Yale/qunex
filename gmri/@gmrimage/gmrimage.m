@@ -450,6 +450,22 @@ classdef gmrimage
                 obj.scrub     = [];
                 obj.scrub_hdr = [];
             end
+
+            % --> combine list data
+            if ~isempty(obj.list) & ~isempty(add.list)
+                for f = fields(obj.list)'
+                    f = f{1};
+                    if strcmp(f, 'meta')
+                        continue
+                    elseif isfield(add.list, f)
+                        obj.list.(f) = [obj.list.(f) add.list.(f)];
+                    else
+                        obj.list = rmfield(obj.list, f);
+                    end
+                end
+            else
+                obj.list     = [];
+            end
         end
 
         function reply = isempty(obj)
