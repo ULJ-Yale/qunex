@@ -205,7 +205,8 @@ show_usage() {
   				echo ""  				
   				weho "		--- ANALYSES FUNCTIONS ---"  				
   				echo "		ciftiparcellate			PARCELLATE BOLD, DWI, MYELIN or THICKNESS DATA VIA 7 & 17 NETWORK SOLUTIONS"
-  				echo "		dwidenseparcellation		PARCELLATE DENSE DWI TRACTOGRAPHY DATA VIA SPECIFIED NETWORK SOLUTIONS"
+  				echo "		boldparcellation		PARCELLATE BOLD DATA and GENERATE PCONN FILES VIA USER-SPECIFIED PARCELLATION"
+  				echo "		dwidenseparcellation		PARCELLATE DENSE DWI TRACTOGRAPHY DATA VIA USER-SPECIFIED PARCELLATION"
   				echo "		printmatrix			EXTRACT PARCELLATED MATRIX FOR BOLD DATA VIA YEO 17 NETWORK SOLUTIONS"
   				echo "		boldmergenifti			MERGE SPECIFIED NII BOLD TIMESERIES"
   				echo "		boldmergecifti			MERGE SPECIFIED CITI BOLD TIMESERIES"
@@ -4044,9 +4045,9 @@ boldparcellation() {
 		UseWeights="$UseWeights"
 		WeightsFile="$WeightsFile"
 		ParcellationFile="$ParcellationFile"
-		BOLDOutput="$StudyFolder/$CASE/$OutPath/"
-		mkdir "$BOLDOutput"/log > /dev/null 2>&1
-		LogFolder="$BOLDOutput"/boldparcellation_log
+		BOLDOutput="$StudyFolder/$CASE$OutPath"
+		mkdir "$BOLDOutput"/boldparcellation_log > /dev/null 2>&1
+		LogFolder="$BOLDOutput"boldparcellation_log
 		Overwrite="$Overwrite"
 		
 		if [ "$Cluster" == 1 ]; then
@@ -4056,27 +4057,39 @@ boldparcellation() {
 		echo "--------------------------------------------------------------"
 		echo ""
 				
-		#DWIDenseParcellation.sh \
-		#--path="${StudyFolder}" \
-		#--subject="${CASE}" \
-		#--matrixversion="${MatrixVersion}" \
-		#--parcellationfile="${ParcellationFile}" \
-		#--outname="${OutName}" \
-		#--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+		BOLDParcellation.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--inputfile="${InputFile}" \
+		--inputpath="${InputPath}" \
+		--inputdatatype="${InputDataType}" \
+		--parcellationfile="${ParcellationFile}" \
+		--overwrite="${Overwrite}" \
+		--outname="${OutName}" \
+		--outpath="${OutPath}" \
+		--computepconn="${ComputePConn}" \
+		--useweights="${UseWeights}" \
+		--weightsfile="${WeightsFile}" >> "$LogFolder"/BOLDParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 		
 		else
 		
 		# set scheduler for fsl_sub command
 		fslsub="$Scheduler"
 		
-		#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" DWIDenseParcellation.sh \
-		#--path="${StudyFolder}" \
-		#--subject="${CASE}" \
-		#--matrixversion="${MatrixVersion}" \
-		#--parcellationfile="${ParcellationFile}" \
-		#--outname="${OutName}" \
-		#--overwrite="${Overwrite}"
-
+		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" BOLDParcellation.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--inputfile="${InputFile}" \
+		--inputpath="${InputPath}" \
+		--inputdatatype="${InputDataType}" \
+		--parcellationfile="${ParcellationFile}" \
+		--overwrite="${Overwrite}" \
+		--outname="${OutName}" \
+		--outpath="${OutPath}" \
+		--computepconn="${ComputePConn}" \
+		--useweights="${UseWeights}" \
+		--weightsfile="${WeightsFile}"
+		
 		echo "--------------------------------------------------------------"
 		echo "Data successfully submitted to $QUEUE" 
 		echo "Check output logs here: $LogFolder"
@@ -4120,7 +4133,7 @@ show_usage_boldparcellation() {
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
 				echo "--function='boldparcellation' \ "
-				echo "--subject='100206' \ "
+				echo "--subjects='100206' \ "
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
@@ -4128,13 +4141,15 @@ show_usage_boldparcellation() {
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
+				echo "--computepconn='yes' \ "
+				echo "--useweights='no' \"
 				echo "--runmethod='1' "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
 				echo "--function='boldparcellation' \ "
-				echo "--subject='100206' \ "
+				echo "--subjects='100206' \ "
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
@@ -4142,6 +4157,8 @@ show_usage_boldparcellation() {
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
+				echo "--computepconn='yes' \ "
+				echo "--useweights='no' \"
 				echo "--queue='anticevic' \ "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='lsf' "
@@ -5110,10 +5127,21 @@ if [ "$flag" == "--" ] ; then
 	UnwarpDir=`opts_GetOpt1 "--unwarpdir" $@` # <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
 	DiffDataSuffix=`opts_GetOpt1 "--diffdatasuffix" $@` # <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
 	
+	# boldparcellation input flags
+	InputFile=`opts_GetOpt1 "--inputfile" $@` # --inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
+	InputPath=`opts_GetOpt1 "--inputpath" $@` # --inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
+	InputDataType=`opts_GetOpt1 "--inputdatatype" $@` # --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
+	OutPath=`opts_GetOpt1 "--outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
+	OutName=`opts_GetOpt1 "--outname" $@` # --outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file
+	ComputePConn=`opts_GetOpt1 "--computepconn" $@` # --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
+	UseWeights=`opts_GetOpt1 "--useweights" $@` # --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
+	WeightsFile=`opts_GetOpt1 "--useweights" $@` # --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
+	ParcellationFile=`opts_GetOpt1 "--parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+
 	# dwidenseparcellation input flags
-	MatrixVersion=`opts_GetOpt1 "--matrixversion" $@` # <matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
-	ParcellationFile=`opts_GetOpt1 "--parcellationfile" $@` # <file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
-	OutName=`opts_GetOpt1 "--outname" $@` # <name_of_output_pconn_file>	Specify the suffix output name of the pconn file"
+	MatrixVersion=`opts_GetOpt1 "--matrixversion" $@` # --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
+	ParcellationFile=`opts_GetOpt1 "--parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	OutName=`opts_GetOpt1 "--outname" $@` # --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
 	
 	# fslbedpostxgpu input flags
 	Fibers=`opts_GetOpt1 "--fibers" $@`  # <number_of_fibers>		Number of fibres per voxel, default 3
@@ -6239,6 +6267,134 @@ if [ "$FunctionToRunInt" == "hcpdlegacy" ]; then
   		done
 fi
 
+# ------------------------------------------------------------------------------
+#  BOLDeParcellation function loop (boldparcellation)
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "boldparcellation" ]; then	
+	
+# Check all the user-defined parameters: 1. InputFile, 2. InputPath, 3. InputDataType, 4. OutPath, 5. OutName, 6. ParcellationFile, 7. QUEUE, 8. RunMethod, 9. Scheduler
+# Optional: ComputePConn, UseWeights, WeightsFile
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
+		if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
+		if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
+		if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
+		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi
+		
+		# Parse optional parameters if not specified 
+		if [ -z "$UseWeights" ]; then UseWeights="no"; fi
+		if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
+		if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
+		
+		echo ""
+		echo "Running BOLDParcellation function with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Study Folder: ${StudyFolder}"
+		echo "Subjects: ${CASES}"
+		echo "Input File: ${InputFile}"
+		echo "Input Path: ${InputPath}"
+		echo "ParcellationFile: ${ParcellationFile}"
+		echo "BOLD Parcellated Connectome Output Name: ${OutName}"
+		echo "BOLD Parcellated Connectome Output Path: ${OutPath}"
+		echo "Input Data Type: ${InputDataType}"
+		echo "Compute PConn File: ${ComputePConn}"
+		echo "Weights file specified to omit certain frames: ${UseWeights}"
+		echo "Weights file name: ${WeightsFile}"
+		echo "Overwrite prior run: ${Overwrite}"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi
+
+if [ "$FunctionToRunInt" == "boldparcellation" ]; then
+
+	echo "Running BOLDParcellation function interactively. First enter the necessary parameters."
+	# Check all the user-defined parameters: 1. InputFile, 2. InputPath, 3. InputDataType, 4. OutPath, 5. OutName, 6. ParcellationFile, 7. QUEUE, 8. RunMethod, 9. Scheduler
+	# Optional: ComputePConn, UseWeights, WeightsFile	echo ""
+			
+	echo ""
+	
+		echo "-- Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
+		if read answer; then InputFile=$answer; fi
+		echo ""
+		echo "-- Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
+		if read answer; then InputPath=$answer; fi
+		echo ""
+		echo "-- Specify the type of data for the input file (e.g. dscalar or dtseries)"
+		if read answer; then InputDataType=$answer; fi
+		echo ""
+		echo "-- Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
+		if read answer; then ParcellationFile=$answer; fi
+		echo ""
+		echo "-- Specify the suffix output name of the pconn file"
+		if read answer; then OutName=$answer; fi
+		echo ""
+		echo "-- Specify the output path name of the pconn file relative to the master study folder [e.g. /images/functional/]"
+		if read answer; then OutPath=$answer; fi
+		echo ""
+		# Ask for optional parameters
+		echo "-- Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation [e.g. yes; default is set to no]"
+		if read answer; then ComputePConn=$answer; fi
+		echo ""
+		echo "-- If computing a  parcellated connectivity file you can specify which frames to omit [e.g. yes' or no; default is set to no]"
+		if read answer; then UseWeights=$answer; fi
+		echo ""
+		echo "-- Specify the location of the weights file relative to the master study folder [e.g. /images/functional/movement/bold1.use]"
+		if read answer; then WeightsFile=$answer; fi
+		echo ""
+		echo "-- Overwrite existing run [yes, no]:"
+		if read answer; then Overwrite=$answer; fi  
+		echo ""
+		echo "-- Run locally [1] or run on cluster [2]"
+		if read answer; then Cluster=$answer; fi
+		echo ""
+		if [ "$Cluster" == "2" ]; then
+			echo "-- Enter queue name [e.g. anticevic]"
+			if read answer; then QUEUE=$answer; fi
+			echo ""
+			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
+			if read answer; then Scheduler=$answer; fi
+			echo ""
+		fi
+		
+		echo "Running DWI legacy processing with the following parameters:"
+		echo ""
+		echo "-------------------------------------------------------------"
+		echo "Study Folder: ${StudyFolder}"
+		echo "Subjects: ${CASES}"
+		echo "Input File: ${InputFile}"
+		echo "Input Path: ${InputPath}"
+		echo "ParcellationFile: ${ParcellationFile}"
+		echo "BOLD Parcellated Connectome Output Name: ${OutName}"
+		echo "BOLD Parcellated Connectome Output Path: ${OutPath}"
+		echo "Input Data Type: ${InputDataType}"
+		echo "Compute PConn File: ${ComputePConn}"
+		echo "Weights file specified to omit certain frames: ${UseWeights}"
+		echo "Weights file name: ${WeightsFile}"
+		echo "Overwrite prior run: ${Overwrite}"
+		
+		for CASE in $CASES
+			do
+  			"$FunctionToRunInt" "$CASE"
+  		done
+fi
+
 
 # ------------------------------------------------------------------------------
 #  DWIDenseParcellation function loop (dwidenseparcellation)
@@ -6284,23 +6440,23 @@ if [ "$FunctionToRunInt" == "dwidenseparcellation" ]; then
 	echo ""
 	echo ""
 	
-		echo "-- Matrix Version; e.g. 1 or 3"
+		echo "-- Specify Matrix Version; e.g. 1 or 3"
 		if read answer; then MatrixVersion=$answer; fi
 		echo ""
-		echo "-- Absolute path of the parcellation file"
+		echo "-- Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
 		if read answer; then ParcellationFile=$answer; fi
 		echo ""
-		echo "-- Enter name of output pconn file"
-		if read answer; then TE=$OutName; fi
+		echo "-- Specify name of output pconn file"
+		if read answer; then OutName=$answer; fi
 		echo ""
-		echo "Overwrite existing run [yes, no]:"
+		echo "-- Overwrite existing run [yes, no]:"
 		if read answer; then Overwrite=$answer; fi  
 		echo ""
 		echo "-- Run locally [1] or run on cluster [2]"
 		if read answer; then Cluster=$answer; fi
 		echo ""
 		if [ "$Cluster" == "2" ]; then
-			echo "-- Enter queue name - always submit this job to a GPU-enabled queue [e.g. anticevic-gpu]"
+			echo "-- Enter queue name [e.g. anticevic]"
 			if read answer; then QUEUE=$answer; fi
 			echo ""
 			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"

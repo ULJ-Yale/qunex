@@ -62,7 +62,7 @@ usage() {
 				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
 				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
 				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)"
-				echo "		--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder (e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii)"
+				echo "		--parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
 				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
 				echo "		--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)"
 				echo ""
@@ -325,9 +325,9 @@ if [ "$InputDataType" == "dtseries" ]; then
 	InputFileExt="dtseries.nii"
 	OutFileExt="ptseries.nii"
 	# -- Define input
-	BOLDInput="$StudyFolder/$CASE/$InputPath/$InputFile.$InputFileExt"
+	BOLDInput="$StudyFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
 	# -- Define output
-	BOLDOutput="$StudyFolder/$CASE/$OutPath/${InputFile}_$OutName.$OutFileExt"
+	BOLDOutput="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}.${OutFileExt}"
 
 	echo "      Dense BOLD Input:              ${BOLDInput}"
 	echo ""
@@ -342,9 +342,9 @@ if [ "$InputDataType" == "dscalar" ]; then
 	InputFileExt="dscalar.nii"
 	OutFileExt="pscalar.nii"
 	# -- Define input
-	BOLDInput="$StudyFolder/$CASE/$InputPath/$InputFile.$InputFileExt"
+	BOLDInput="$StudyFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
 	# -- Define output
-	BOLDOutput="$StudyFolder/$CASE/$OutPath/$InputFile_$OutName.$OutFileExt"
+	BOLDOutput="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}.${OutFileExt}"
 
 	echo "      Dense BOLD Input:              ${BOLDInput}"
 	echo ""
@@ -387,10 +387,10 @@ else
 		if [ "$ComputePConn" == "yes" ]; then
 		
 		# -- Specify pconn file outputs for correlation (r) value and covariance 
-		OutPConnFileExtR="_r.pconn.nii"
-		PConnBOLDOutputR="$StudyFolder/$CASE/$OutPath/${InputFile}_$OutName.$OutPConnFileExtR"
-		OutPConnFileExtCov="_cov.pconn.nii"
-		PConnBOLDOutputCov="$StudyFolder/$CASE/$OutPath/${InputFile}_$OutName.$OutPConnFileExtCov"
+		OutPConnFileExtR="r.pconn.nii"
+		PConnBOLDOutputR="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}_${OutPConnFileExtR}"
+		OutPConnFileExtCov="cov.pconn.nii"
+		PConnBOLDOutputCov="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}_${OutPConnFileExtCov}"
 		
 		# - Check if weights file is specified
 		geho "Using weights: $UseWeights"

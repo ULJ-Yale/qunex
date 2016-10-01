@@ -64,7 +64,7 @@ usage() {
  				echo "		--path=<study_folder>				Path to study data folder"
 				echo "		--subject=<list_of_cases>			List of subjects to run"
 				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
-				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
+				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
 				echo "		--outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file"
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
