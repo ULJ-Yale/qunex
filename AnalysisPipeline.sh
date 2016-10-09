@@ -9,9 +9,10 @@
 ## --> Integrate log generation for each function and build IF statement to override log generation if nolog flag [In progress]
 ## --> Issue w/logging - the exec function effectively double-logs everything for each case and for the whole command
 ## --> Finish autoptx function
-## --> Revise functional parcellation using the dwidenseparcellated example to allow for more flexibility & clean up the prior calls
+## --> Add MYELIN or THICKNESS parcellation functions as with boldparcellation and dwidenseparcellation
+## --> Optimize list generation function to take multiple inputs and naming conventions
 ## ------------------------------------------------------------------------------------------------------------------------------------------
-#
+
 ## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 ## - Sync to Grace crontab job 																				-- DONE
@@ -26,20 +27,18 @@
 ## - dwidenseparcellated																					-- IN PROGRESS
 ## - FIX ICA / denoising (will need param file)																-- IN PROGRESS
 ## ------------------------------------------------------------------------------------------------------------------------------------------
-#
-#
-## Commands for rsyncing to HPC clusters
-##  rsync /usr/local/analysispipeline/AnalysisPipeline.sh aa353@omega1.hpc.yale.edu:/home/fas/anticevic/software/analysispipeline/
 
-# GitRepo: https://bitbucket.org/alan.anticevic/analysispipeline/overview
-## git commands:
+## --> BITBUCKET INFO:
+## ------------------------------------------------------------------------------------------------------------------------------------------
+## GitRepo: https://bitbucket.org/alan.anticevic/analysispipeline/overview
+## git command reference:
 ## git add LICENSE.md
 ## git add AnalysisPipeline.sh
 ## git commit . --message="Update"
 ## git push origin master
 ## git pull origin master
 ## added AMPA sever - git remote add ampa ssh://aanticevic@ampa.yale.edu/usr/local/analysispipeline
-## testing change from NMDA
+## ------------------------------------------------------------------------------------------------------------------------------------------
 
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
@@ -74,12 +73,14 @@
 # * FSL (version 5.0.6 or above)
 # * MATLAB (version 2012b or above)
 # * FIX ICA
-# * dofcMRIp tools
+# * gCode (all repositories)
 # * PALM
 # * Julia
 # * Python (version 2.7 or above)
 # * AFNI
 # * Gradunwarp
+# * CodeHCPe (HCP Pipelines modified code)
+# * R Software library
 #
 # ### Expected Environment Variables
 #
@@ -186,9 +187,9 @@ show_usage() {
   				weho "		--- GENERATE LISTS & QC FUNCTIONS ---"
   				echo "		setuplist	 		SETUP LIST FOR FCMRI ANALYSIS / PREPROCESSING or VOLUME SNR CALCULATIONS"
   				echo "		qaimages	 		RUN VISUAL QA FOR T1w and BOLD IMAGES"
-  				echo "		nii4dfpconvert 		CONVERT NIFTI HCP-PROCESSED BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
+  				echo "		nii4dfpconvert 			CONVERT NIFTI HCP-PROCESSED BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
   				echo "		cifti4dfpconvert 		CONVERT CIFTI HCP-PROCESSED BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
-  				echo "		ciftismooth 		SMOOTH & CONVERT CIFTI BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
+  				echo "		ciftismooth 				SMOOTH & CONVERT CIFTI BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
   				echo "		fidlconc 			SETUP CONC & FIDL EVEN FILES FOR GLM ANALYSES"
   				echo ""  				
   				weho "		--- DWI ANALYSES & TRACTOGRAPHY FUNCTIONS ---"
@@ -199,8 +200,8 @@ show_usage() {
   				echo "		probtracksubcortex 		RUN FSL PROBTRACKX ACROSS SUBCORTICAL NUCLEI (CPU)"
   				echo "		pretractography			GENERATES SPACE FOR CORTICAL DENSE CONNECTOMES (CLUSTER AWARE)"
   				echo "		pretractographydense		GENERATES SPACE FOR WHOLE-BRAIN DENSE CONNECTOMES (CLUSTER AWARE)"
-  				echo "		probtrackcortexgpu		RUN FSL PROBTRACKX ACROSS CORTICAL MESH FOR DENSE CONNECTOMES w/GPU (CLUSTER AWARE)"
-  				echo "		makedenseconnectome		GENERATE DENSE CORTICAL CONNECTOMES (CLUSTER AWARE)"
+  				echo "		probtrackxgpucortex		RUN FSL PROBTRACKX ACROSS CORTICAL MESH FOR DENSE CONNECTOMES w/GPU (CLUSTER AWARE)"
+  				echo "		makedensecortex		GENERATE DENSE CORTICAL CONNECTOMES (CLUSTER AWARE)"
   				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (CLUSTER AWARE)"
   				echo ""  				
   				weho "		--- ANALYSES FUNCTIONS ---"  				
@@ -864,7 +865,10 @@ show_usage_probtracksubcortex() {
   				echo ""
   				echo "-- DESCRIPTION:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			reho "		*** This function is deprecated and not supported any longer since the dense connectome implementation."
+    			reho "		*** The new usage for dense connectome computation can be found via the following functions:"
+    			echo ""
+  				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (CLUSTER AWARE)"
     			echo ""
 }
 
@@ -1707,8 +1711,13 @@ show_usage_ciftiparcellate() {
   				echo ""
   				echo "-- DESCRIPTION:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			reho "		*** This function is deprecated and not supported any longer."
+    			reho "		*** The new usage for parcellartion can be found via the following functions:"
     			echo ""
+    			echo "		boldparcellation		PARCELLATE BOLD DATA and GENERATE PCONN FILES VIA USER-SPECIFIED PARCELLATION"
+    			echo "		dwidenseparcellation		PARCELLATE DENSE DWI TRACTOGRAPHY DATA VIA USER-SPECIFIED PARCELLATION"
+    			echo ""
+
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -4377,10 +4386,10 @@ pretractography() {
 
 
 # ------------------------------------------------------------------------------------------------------
-#  probtrackcortexgpu - Executes the HCP Matrix1 code (Matt's original implementation for cortex)
+#  probtrackxgpucortex - Executes the HCP Matrix1 code (Matt's original implementation for cortex)
 # ------------------------------------------------------------------------------------------------------
 
-probtrackcortexgpu() {
+probtrackxgpucortex() {
 
 		mkdir "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null
 		cd "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null
@@ -4447,10 +4456,10 @@ probtrackcortexgpu() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  makedenseconnectome - Executes the code for creating dense cortical connectomes (Matt's original code)
+#  makedensecortex - Executes the code for creating dense cortical connectomes (Matt's original code)
 # ------------------------------------------------------------------------------------------------------
 
-makedenseconnectome() {
+makedensecortex() {
 
 		# Requirements for this function
 		#  installed versions of: FSL5.0.6 or higher with probtrackx2_gpu binary
@@ -4515,7 +4524,7 @@ makedenseconnectome() {
 			done
 }
 
-show_usage_makedenseconnectome() {
+show_usage_makedensecortex() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
@@ -6523,7 +6532,7 @@ fi
 #  Matrix 1 Cortex processing function loop (Matt's original code w/o m2 and m4)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "probtrackcortexgpu" ]; then
+if [ "$FunctionToRunInt" == "probtrackxgpucortex" ]; then
 	
 	#echo "Note: Making sure global environment script is sourced..."
 	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
@@ -6595,7 +6604,7 @@ fi
 #  Dense Connectome Cortex function loop (Matt's original code following GPU)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "makedenseconnectome" ]; then
+if [ "$FunctionToRunInt" == "makedensecortex" ]; then
 	
 	#echo "Note: Making sure global environment script is sourced..."
 	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
