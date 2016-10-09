@@ -349,12 +349,13 @@ setuplist() {
 	if [ "$ListGenerate" == "fcmri" ]; then
 		#generate fcMRI analysis list for all subjects across all BOLDs
 		cd "$StudyFolder"
-		cd ../fcMRI/lists
+		cd "$StudyFolder"/../fcMRI/lists
+		ln -s "$APPATH"/functions/"$ListFunction" ./"$ListFunction" &> /dev/null
 		source "$ListFunction"
 	fi
 	
 	if [ "$ListGenerate" == "snr" ]; then
-	#generate subject SNR list for all subjects across all BOLDs
+		#generate subject SNR list for all subjects across all BOLDs
 		cd "$StudyFolder"/QC/snr
 		for BOLD in $BOLDS
 		do
