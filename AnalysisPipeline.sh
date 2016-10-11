@@ -11,6 +11,23 @@
 ## --> Finish autoptx function
 ## --> Add MYELIN or THICKNESS parcellation functions as with boldparcellation and dwidenseparcellation
 ## --> Optimize list generation function to take multiple inputs and naming conventions
+## --> Optimize the QC function to take different modalities as inputs
+## --> Write function / wrapper for StarCluster deployment
+## --> Write turn-key function for processing and QC: 
+##			dicomsort
+##			setupchp
+##			hcp1 (PreFreeSurfer)
+##			hcp2 (FreeSurfer)
+##			hcp3 (PostFreeSurfer)
+##			hcp3 (BOLD Processing volume)
+##			hcp4 (BOLD Processing surface)
+##			hcpdlegacy (DWI processing, FUGUE etc.)
+##			QC preprocessing scripts (DWI, BOLD, T1w, T2w, surfaces, etc)
+##			dtifit (FSL DWI tools)
+##			bedpostX (FSL DWI tools)
+##			probtrackX (FSL DWI tools)
+##			dofcMRI (our inhouse functional connectivity code)
+##			QC postprocessing scripts (DWI, BOLD, T1w, T2w, surfaces, etc)
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 
 ## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
@@ -20,7 +37,7 @@
 ## - Dicomsort if data complete w/o error															        -- IN PROGRESS
 ## - Generate subject.txt -- IF 0 ERR then RUN; ELSE ABORT													-- IN PROGRESS
 ## - Run HCP 1-5 via bash script submitted to bigmem02; setup checkpoints (will need param file)			-- IN PROGRESS
-## - Run QC: i) SNR, ii) Visual, iii) fcMRI 															    -- IN PROGRESS (Need to vet w/Grega)
+## - Run QC: i) Visual multi-modal; ii) BOLD SNR, iii) fcMRI; iv) DWI  										-- IN PROGRESS
 ## - dtifit																									-- IN PROGRESS
 ## - bedpostX																								-- IN PROGRESS
 ## - probtrackX																								-- IN PROGRESS
@@ -186,12 +203,12 @@ show_usage() {
   				echo ""  				
   				weho "		--- GENERATE LISTS & QC FUNCTIONS ---"
   				echo "		setuplist	 		SETUP LIST FOR FCMRI ANALYSIS / PREPROCESSING or VOLUME SNR CALCULATIONS"
-  				echo "		qaimages	 		RUN VISUAL QC FOR T1w and BOLD IMAGES"
+  				echo "		qaimages	 		RUN VISUAL QC FOR T1w and BOLD IMAGES USING JULIA	`reho "[ -- DEPRECATED --]"`"
   				echo "		nii4dfpconvert 			CONVERT NIFTI HCP-PROCESSED BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
   				echo "		cifti4dfpconvert 		CONVERT CIFTI HCP-PROCESSED BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
   				echo "		ciftismooth 			SMOOTH & CONVERT CIFTI BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
   				echo "		fidlconc 			SETUP CONC & FIDL EVEN FILES FOR GLM ANALYSES"
-  				echo "		qcstructural	 		RUN VISUAL QC FOR T1w IMAGES"
+  				echo "		qcpreproc			RUN VISUAL QC FOR A GIVEN MODALITY (T1w,Tw2,myelin,BOLD,DWI)"
 
   				echo ""  				
   				weho "		--- DWI ANALYSES & TRACTOGRAPHY FUNCTIONS ---"
@@ -207,7 +224,7 @@ show_usage() {
   				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (CLUSTER AWARE)"
   				echo ""  				
   				weho "		--- ANALYSES FUNCTIONS ---"  				
-  				echo "		ciftiparcellate			PARCELLATE BOLD, DWI, MYELIN or THICKNESS DATA VIA 7 & 17 NETWORK SOLUTIONS"
+  				echo "		ciftiparcellate			PARCELLATE BOLD, DWI, MYELIN or THICKNESS DATA VIA 7 & 17 NETWORK SOLUTIONS	`reho "[ -- DEPRECATED --]"`"
   				echo "		boldparcellation		PARCELLATE BOLD DATA and GENERATE PCONN FILES VIA USER-SPECIFIED PARCELLATION"
   				echo "		dwidenseparcellation		PARCELLATE DENSE DWI TRACTOGRAPHY DATA VIA USER-SPECIFIED PARCELLATION"
   				echo "		printmatrix			EXTRACT PARCELLATED MATRIX FOR BOLD DATA VIA YEO 17 NETWORK SOLUTIONS"
@@ -4956,33 +4973,29 @@ show_usage_awshcpsync() {
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
-#  Structural QC - customized for HCP - qcstructural
+#  Structural QC - customized for HCP - qcpreproc
 # -------------------------------------------------------------------------------------------------------------------------------
 
-qcstructural() {
+qcpreproc() {
 
-
-	# The following only needs modification if you have modified the
-	# provided TEMPLATE_structuralQC.scene file
-	DummyPath="DUMMYPATH" #This is an actual string in the TEMPLATE_structuralQC.scene file.
 	
 	# -- Check of overwrite flag was set
 	if [ "$Overwrite" == "yes" ]; then
 		echo ""
-		reho " --- Removing existing structural QC scene: ${OutPath}/${CASE}.structuralQC.wb.scene"
+		reho " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
-		rm -f "$OutPath"/"$CASE".structuralQC.wb.scene &> /dev/null
+		rm -f "$OutPath"/"$CASE"."$Modality".* &> /dev/null
 	fi
 	
 	# -- Check if a given case exists
-	if [ -f "$OutPath"/"$CASE".structuralQC.wb.scene ]; then
+	if [ -f "$OutPath"/"$CASE"."$Modality".QC.wb.scene ]; then
 		echo ""
-		geho " --- Structural QC scene completed: ${OutPath}/${CASE}.structuralQC.wb.scene"
+		geho " --- ${Modality} QC scene completed: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 		exit 1
 	fi
 
-		geho " --- Generating Structural QC scene: ${OutPath}/${CASE}.structuralQC.wb.scene"
+		geho " --- Generating ${Modality} Structural QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 	
 	# -- Check general output folders for QC
@@ -4994,57 +5007,59 @@ qcstructural() {
 		mkdir -p "$OutPath" &> /dev/null
 	fi
 	# -- Define log folder
-	LogFolder="$OutPath"/log_qcstructural
+	LogFolder="$OutPath"/qclog
 	mkdir "$LogFolder"  &> /dev/null
-	
-	# -- Copy over template files
-	cp -r "$TemplateFolder"/. "$OutPath" &> /dev/null
-	rm "$OutPath"/TEMPLATE_original_structuralQC.scene &> /dev/null
 
 
-	# -- Generate a QC scene file appropriate for each subject
+	# -- Generate a QC scene file appropriate for each subject for each modality
 	
-		if [ "$Cluster" == 1 ]; then
+	if [ "$Modality" == "T1w" ]; then
+	
+					# -- Copy over template files for a given modality
+					Com1="cp -R ${TemplateFolder}/. ${OutPath} &> /dev/null"
+					Com2="rm ${OutPath}/TEMPLATE* &> /dev/null"
+					Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.scene ${OutPath} &> /dev/null"
+					
+					# -- Generate scene
+					Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+					Com5a='sed -i -e "' 
+					Com5b="s|DUMMYPATH|${StudyFolder}|"
+					#g" ${OutPath}/${CASE}.${Modality}.QC.wb.scene'
+					Com5="$Com5a$Com5b"
+					Com6="sed -i -e "s|DUMMYCASE|${CASE}|g" ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+
+					# -- Output image of the scene
+					Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
+					
+					# -- Clean templates for next subject
+					#Com8=`rm *.scene-e &> /dev/null`
+					#Com9=`rm ${OutPath}/TEMPLATE.${Modality}.QC.scene &> /dev/null`
+					
+					# -- Combine all the calls
+					#ComQUEUE=`cp -R ${TemplateFolder}/. ${OutPath} &> /dev/null; rm ${OutPath}/TEMPLATE* &> /dev/null; cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.scene ${OutPath} &> /dev/null; cp ${OutPath}/TEMPLATE.${Modality}.QC.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene; sed -i -e "s|DUMMYPATH|${StudyFolder}|g" ${OutPath}/${CASE}.${Modality}.QC.wb.scene; sed -i -e "s|DUMMYCASE|${CASE}|g" ${OutPath}/${CASE}.${Modality}.QC.wb.scene; wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539; rm *.scene-e &> /dev/null; rm ${OutPath}/TEMPLATE.${Modality}.QC.scene &> /dev/null` 
+
+					ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5b; $Com6"
+					
+					#>> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+					
+					echo "$ComQUEUE"
+					eval "$ComQUEUE"
+	fi
+				
+	
+	if [ "$Cluster" == 1 ]; then
   					echo ""
   					echo "--------------------------------------------------------------"
 					echo "Running QC locally on `hostname`"
 					echo "Check output here: $OutPath"
 					echo "--------------------------------------------------------------"
 					echo ""
-					# -- Generate scene # >> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 					
-					# -- Correct path names in scene
-					#CASEPATH="$CASE/hcp/$CASE"
-					#BROKENPATH="MNINonLinear/$CASE/hcp"
 					
-					#SurfacesName="${CASE}/hcp/${CASE} surfaces"
-					#ArealName="${CASE}/hcp/${CASE} Areal Distortion"
-					#VolumeName="${CASE}/hcp/${CASE} Volume Distortion"
-					
-					#SurfacesNameCorr="${CASE} surfaces"
-					#ArealNameCorr="${CASE} Areal Distortion"
-					#VolumeNameCorr="${CASE} Volume Distortion"
-										
-					cp "$OutPath"/TEMPLATE_structuralQC.scene "$OutPath"/"$CASE".structuralQC.wb.scene
-					sed -i -e "s|DUMMYPATH|${StudyFolder}|g" "$OutPath"/"$CASE".structuralQC.wb.scene
-					sed -i -e "s|DUMMYCASE|${CASE}|g" "$OutPath"/"$CASE".structuralQC.wb.scene
-					#sed -i -e "s|${BROKENPATH}|MNINonLinear|g" "$OutPath"/"$CASE".structuralQC.wb.scene
-					
-					#sed -i -e "s|${SurfacesName}|${SurfacesNameCorr}|g" ta6455.structuralQC.wb.scene
-					#sed -i -e "s|${ArealName}|${ArealNameCorr}|g" ta6455.structuralQC.wb.scene
-					#sed -i -e "s|${VolumeName}|${SurfacesNameCorr}|g" ta6455.structuralQC.wb.scene
-
-					# -- Output image of the scene
-					wb_command -show-scene "$OutPath"/"$CASE".structuralQC.wb.scene 1 "$OutPath"/"$CASE".structuralQC.png 1194 539
-					
-					rm "$CASE".structuralQC.wb.scene-e &> /dev/null
-		else
-					Command1='sed "s#${DummyPath}#${StudyFolder}#g" ${OutPath}/TEMPLATE_structuralQC.scene | sed "s#100307#${CASE}#g" > ${OutPath}/${CASE}.structuralQC.wb.scene"'
-					Command2='wb_command -show-scene ${OutPath}/${CASE}.structuralQC.wb.scene ${OutPath}/${CASE}.structuralQC.png 1194 539'
-					Command3="$Command1 ; $Command2"
+	else
 					echo "Job ID:"
 					fslsub="$Scheduler" # set scheduler for fsl_sub command
-					fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$Command3"
+					fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ComQUEUE"
 					echo ""
 					echo "--------------------------------------------------------------"
 					echo "Scheduler: $Scheduler"
@@ -5053,11 +5068,11 @@ qcstructural() {
 					echo "Check output logs here: $LogFolder"
 					echo "--------------------------------------------------------------"
 					echo ""
-		fi
+	fi
+		
 }
 
-
-show_usage_qcstructural() {
+show_usage_qcpreproc() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
@@ -5070,41 +5085,44 @@ show_usage_qcstructural() {
 				echo "		--function=<function_name>					Name of function"
 				echo "		--path=<study_folder>						Path to study data folder"
 				echo "		--subjects=<list_of_cases>					List of subjects to run"
-				echo "		--outpath=<path_for_output_file>				Specify the output path name of the QC folder"
-				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/aCode/templates)"
+				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)"
+				echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
 				echo "		--scheduler=<name_of_cluster_scheduler>				Cluster scheduler program: e.g. LSF or PBS"
-				echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>		Delete prior QC run"
+ 				echo "		--overwrite=<clean_prior_run>					Delete prior QC run"
+ 				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/aCode/templates)"
+				echo "		--outpath=<path_for_output_file>				Specify the output path name of the QC folder"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
-				echo "--function='qcstructural' \ "
+				echo "--function='qcpreproc' \ "
 				echo "--subjects='100206' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/QC/T1w' \ "
 				echo "--templatefolder='$TOOLS/aCode/templates' \ "
+				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
 				echo "--runmethod='1'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
-				echo "--function='qcstructural' \ "
+				echo "--function='qcpreproc' \ "
 				echo "--subjects='100206' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/QC/T1w' \ "
 				echo "--templatefolder='$TOOLS/aCode/templates' \ "
+				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
-				echo "--queue='anticevic' \ "
 				echo "--runmethod='2' \ "
+				echo "--queue='anticevic' \ "
 				echo "--scheduler='lsf' "
 				echo "" 			
 				echo "-- Example with interactive terminal:"
 				echo ""
-				echo "AP qcstructural /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
+				echo "AP qcpreproc /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
 				echo ""
 }
 
@@ -5226,12 +5244,54 @@ if [ "$1" == "help" ]; then
 fi
 
 # Check if specific function help requested
+	
+	# get all the functions from the usage calls
+	UsageName=`more ${TOOLS}/aCode/AnalysisPipeline.sh | grep show_usage_${1}`
 
-if [ -z "$2" ]; then
-    show_usage_"$1"
-    exit 0
-fi
-
+	#  check for input with double flags
+	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
+		Usage="$1"
+		UsageInput=`echo ${Usage:2}`
+			if [ "$UsageInput" == "" ]; then
+				reho "Function does not exist! Refer to general usage below: "
+				echo ""
+				show_usage
+				exit 0
+			else	
+    			show_usage_"$UsageInput"
+    		fi
+    	exit 0
+	fi
+		
+	#  check for input with single flags
+	if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then 
+		Usage="$1"
+		UsageInput=`echo ${Usage:1}`
+			if [ "$UsageInput" == "" ]; then
+				reho "Function does not exist! Refer to general usage below: "
+				echo ""
+				show_usage
+				exit 0
+			else	
+    			show_usage_"$UsageInput"
+    		fi
+    	exit 0
+	fi
+			
+	#  check for input with no flags
+	if [ -z "$2" ]; then
+			UsageInput="$1"
+			if [ "$UsageInput" == "" ]; then
+				reho "Function does not exist! Refer to general usage below: "
+				echo ""
+				show_usage
+				exit 0
+			else	
+    			show_usage_"$UsageInput"
+    		fi
+    	exit 0
+	fi
+		
 # ------------------------------------------------------------------------------
 #  Setup log calls
 # ------------------------------------------------------------------------------
@@ -5327,6 +5387,7 @@ if [ "$flag" == "--" ] ; then
 	# qc input flags
 	OutPath=`opts_GetOpt1 "--outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the QC folder
 	TemplateFolder=`opts_GetOpt1 "--templatefolder" $@` # --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/aCode/templates)
+	Modality=`opts_GetOpt1 "--modality" $@` # --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
 
 
 else
@@ -5421,27 +5482,21 @@ if [ "$FunctionToRunInt" == "qaimages" ]; then
 		fi
 fi
 
-if [ "$FunctionToRunInt" == "qcstructural" ]; then
-	
-	for CASE in $CASES; do
-	  	"$FunctionToRunInt" "$CASE"
-	done
-fi
-
 # ------------------------------------------------------------------------------
-#  Visual QC Images function loop - qcstructural - wb_command based
+#  Visual QC Images function loop - qcpreproc - wb_command based
 # ------------------------------------------------------------------------------
 
 
-if [ "$FunctionToRun" == "qcstructural" ]; then
+if [ "$FunctionToRun" == "qcpreproc" ]; then
 	
-		# Check all the user-defined parameters: 1. Overwrite, 2. OutPath, 3. TemplateFolder, 4. Cluster, 5. QUEUE
+		# Check all the user-defined parameters: 1. Overwrite, 2. OutPath, 3. TemplateFolder, 4. Cluster, 5. QUEUE. 6. Modality
 	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$OutPath" ]; then reho "Error: Output QC folder path value missing"; exit 1; fi
+		if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing (Supported: T1w, T2w, myelin, BOLD, DWI)"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
@@ -5450,12 +5505,15 @@ if [ "$FunctionToRun" == "qcstructural" ]; then
 		
 		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/aCode/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
 		
+		if [ -z "$OutPath" ]; then OutPath="${StudyFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
+
 		echo ""
-		echo "Running qcstructural with the following parameters:"
+		echo "Running qcpreproc with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "Study Folder: ${StudyFolder}"
 		echo "Subjects: ${CASES}"
+		echo "QC Modality: ${Modality}"
 		echo "QC Output Path: ${OutPath}"
 		echo "QC Scene Template: ${TemplateFolder}"
 		echo "Overwrite prior run: ${Overwrite}"
@@ -5468,16 +5526,22 @@ if [ "$FunctionToRun" == "qcstructural" ]; then
   		done
 fi
 
-if [ "$FunctionToRunInt" == "qcstructural" ]; then
+if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 
-	echo "Running qcstructural processing interactively. First enter the necessary parameters."
-	# Request all the user-defined parameters: 1. Overwrite, 2. OutPath, 3. TemplateFolder, 4. Cluster, 5. QUEUE
+	echo "Running qcpreproc processing interactively. First enter the necessary parameters."
+	# Request all the user-defined parameters: 1. Overwrite, 2. OutPath, 3. TemplateFolder, 4. Cluster, 5. QUEUE. 6. Modality
 	echo ""
 	echo "Overwrite existing run [yes, no]:"
 	if read answer; then Overwrite=$answer; fi
 	echo ""
+	echo "Enter modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI):"
+	if read answer; then Modality=$answer; fi
+	echo ""
 	echo "Enter Output QC folder path:"
-	if read answer; then OutPath=$answer; fi
+	if read answer; then OutPath=$answer; else 
+	OutPath="${StudyFolder}/QC/${Modality}"; 
+	echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; 
+	fi
 	echo ""
 	echo "Enter template scene folder path value:"
 	if read answer; then TemplateFolder=$answer; else 
@@ -5485,6 +5549,7 @@ if [ "$FunctionToRunInt" == "qcstructural" ]; then
 	echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"
 	fi
 	echo ""
+	
 	echo "-- Run locally [1] or run on cluster [2]"
 	if read answer; then Cluster=$answer; fi
 	echo ""
@@ -5493,7 +5558,7 @@ if [ "$FunctionToRunInt" == "qcstructural" ]; then
 		if read answer; then QUEUE=$answer; fi
 		echo ""
 	fi
-		echo "Running qcstructural with the following parameters:"
+		echo "Running qcpreproc with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "Study Folder: ${StudyFolder}"
@@ -7131,8 +7196,4 @@ if [ "$FunctionToRunInt" == "awshcpsync" ]; then
 
 	for CASE in $CASES
 	do
-  		"$FunctionToRunInt" "$CASE"
-	done
-fi
-
-exit 0
+  		"$FunctionT
