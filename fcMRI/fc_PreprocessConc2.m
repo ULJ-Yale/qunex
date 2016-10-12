@@ -293,6 +293,7 @@ if strfind(do, 'r')
             nuisance(b).ntask = size(task, 2);
         end
 
+        nuisance(b).effects     = {rmodel.regressor.name};
         nuisance(b).events      = runs(b).matrix;
         nuisance(b).nevents     = size(nuisance(b).events, 2);
         nuisance(b).eventnamesr = runs(b).regressors;
@@ -801,9 +802,11 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
     %   ----> events
 
-    for mi = 1:nE
-        effects{end+1}  = nuisance(b).eventnamesr{mi};
-    end
+    % for mi = 1:nE
+    %     effects{end+1}  = nuisance(b).eventnamesr{mi};
+    % end
+
+    effects = [effects nuisance(1).effects];
 
     if event
         for b = 1:nbolds
@@ -816,7 +819,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                     hdr{end+1}  = sprintf('%s_b%d', nuisance(b).eventnamesr{mi}, b);
                     hdre{end+1} = sprintf('%s.b%d', nuisance(b).eventnames{mi}, b);
                     hdrf(end+1) = nuisance(b).eventframes(mi);
-                    effect(end+1) = find(ismember(effects, nuisance(b).eventnamesr{mi}));
+                    effect(end+1) = find(ismember(effects, nuisance(b).eventnames{mi}));
                     eindex(end+1) = b;
                 end
             end
@@ -826,7 +829,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
             hdr{end+1}  = sprintf('%s', nuisance(1).eventnamesr{mi});
             hdre{end+1} = sprintf('%s', nuisance(1).eventnames{mi});
             hdrf(end+1) = nuisance(1).eventframes(mi);
-            effect(end+1) = find(ismember(effects, nuisance(b).eventnamesr{mi}));
+            effect(end+1) = find(ismember(effects, nuisance(b).eventnames{mi}));
             eindex(end+1) = 1;
         end
     end

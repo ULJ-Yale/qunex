@@ -68,7 +68,7 @@ switch img.imageformat
 
     case 'CIFTI-2'
         cmeta = find([img.meta.code] == 32);
-        img.meta(cmeta).data = framesHack(img.meta(cmeta).data, img.hdrnifti.dim(6), img.frames);
+        img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
         if strcmp(img.filetype, '.pconn')
             img.hdrnifti.dim(6:7) = img.dim;
         else
@@ -305,16 +305,19 @@ function [meta] = framesHack(meta, oframes, nframes);
         return
     end
 
-    s = cast(meta', 'char');
+    s = cast(meta.data', 'char');
     olds = sprintf('SeriesPoints="%d"', oframes);
     news = sprintf('SeriesPoints="%d"', nframes);
-    dlen = length(olds)-length(news);
-    if dlen > 0
-        news = [news repmat(' ', 1, dlen)];
+    s = strrep(s, olds, news);
+    s = cast(s', 'uint8');
+
+    if length(olds) ~ length(news)
+        meta.size   = ceil((length(s)+8)/16)*16;
+        meta.data   = zeros(1, meta.size-8, 'uint8');
+        meta.data(1:length(s)) = s;
+    else
+        meta.data = s;
     end
-    sstart = strfind(s, olds);
-    if ~isempty(sstart)
-        s(sstart:sstart+length(news)-1) = news;
-    end
-    meta = cast(s', 'uint8');
+
+
 
