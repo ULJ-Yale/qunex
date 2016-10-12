@@ -4977,7 +4977,6 @@ show_usage_awshcpsync() {
 # -------------------------------------------------------------------------------------------------------------------------------
 
 qcpreproc() {
-
 	
 	# -- Check of overwrite flag was set
 	if [ "$Overwrite" == "yes" ]; then
@@ -4994,7 +4993,6 @@ qcpreproc() {
 		echo ""
 		exit 1
 	fi
-
 		geho " --- Generating ${Modality} Structural QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 	
@@ -5013,61 +5011,44 @@ qcpreproc() {
 
 	# -- Generate a QC scene file appropriate for each subject for each modality
 	
-	if [ "$Modality" == "T1w" ]; then
-	
-					# -- Copy over template files for a given modality
-					Com1="cp -R ${TemplateFolder}/. ${OutPath} &> /dev/null"
-					Com2="rm ${OutPath}/TEMPLATE* &> /dev/null"
-					Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.scene ${OutPath} &> /dev/null"
-					
-					# -- Generate scene
-					Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-					Com5a='sed -i -e "' 
-					Com5b="s|DUMMYPATH|${StudyFolder}|"
-					#g" ${OutPath}/${CASE}.${Modality}.QC.wb.scene'
-					Com5="$Com5a$Com5b"
-					Com6="sed -i -e "s|DUMMYCASE|${CASE}|g" ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-
-					# -- Output image of the scene
-					Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
-					
-					# -- Clean templates for next subject
-					#Com8=`rm *.scene-e &> /dev/null`
-					#Com9=`rm ${OutPath}/TEMPLATE.${Modality}.QC.scene &> /dev/null`
-					
-					# -- Combine all the calls
-					#ComQUEUE=`cp -R ${TemplateFolder}/. ${OutPath} &> /dev/null; rm ${OutPath}/TEMPLATE* &> /dev/null; cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.scene ${OutPath} &> /dev/null; cp ${OutPath}/TEMPLATE.${Modality}.QC.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene; sed -i -e "s|DUMMYPATH|${StudyFolder}|g" ${OutPath}/${CASE}.${Modality}.QC.wb.scene; sed -i -e "s|DUMMYCASE|${CASE}|g" ${OutPath}/${CASE}.${Modality}.QC.wb.scene; wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539; rm *.scene-e &> /dev/null; rm ${OutPath}/TEMPLATE.${Modality}.QC.scene &> /dev/null` 
-
-					ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5b; $Com6"
-					
-					#>> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
-					
-					echo "$ComQUEUE"
-					eval "$ComQUEUE"
-	fi
-				
-	
+	# -- Copy over template files for a given modality
+	Com1="cp -R ${TemplateFolder}/. ${OutPath} &> /dev/null"
+	Com2="rm ${OutPath}/TEMPLATE* &> /dev/null"
+	Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+	# -- Generate scene
+	Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+	Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
+	Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+	# -- Output image of the scene
+	Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
+	# -- Clean templates for next subject
+	Com8="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
+	Com9="rm ${OutPath}/*.scene-e &> /dev/null"
+	# -- Combine all the calls into a single command
+	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
+			
+	# -- queue a local task or a scheduler job
+ 	
 	if [ "$Cluster" == 1 ]; then
-  					echo ""
-  					echo "--------------------------------------------------------------"
-					echo "Running QC locally on `hostname`"
-					echo "Check output here: $OutPath"
-					echo "--------------------------------------------------------------"
-					echo ""
-					
-					
+  		echo ""
+  		echo "---------------------------------------------------------------------------------"
+		echo "Running QC locally on `hostname`"
+		echo "Check output here: $LogFolder"
+		echo "---------------------------------------------------------------------------------"
+		echo ""
+		eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 	else
-					echo "Job ID:"
-					fslsub="$Scheduler" # set scheduler for fsl_sub command
-					fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ComQUEUE"
-					echo ""
-					echo "--------------------------------------------------------------"
-					echo "Scheduler: $Scheduler"
-					echo "QUEUE Name: $QUEUE"
-					echo "Data successfully submitted to $QUEUE" 
-					echo "Check output logs here: $LogFolder"
-					echo "--------------------------------------------------------------"
-					echo ""
+		echo "Job ID:"
+		fslsub="$Scheduler" # set scheduler for fsl_sub command
+		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ComQUEUE"
+		echo ""
+		echo "---------------------------------------------------------------------------------"
+		echo "Scheduler: $Scheduler"
+		echo "QUEUE Name: $QUEUE"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "---------------------------------------------------------------------------------"
+		echo ""
 	fi
 		
 }
@@ -5077,15 +5058,19 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
-				echo "This function runs the DWI preprocessing using the FUGUE method for legacy data that are not TOPUP compatible"
-				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing: "
+				echo "This function runs the QC preprocessing for a given specified modality.Supported: T1w, T2w, myelin, BOLD, DWI."
+				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and the following steps:"
+				echo ""
+				echo "PreFreeSurfer (hcp1); FreeSurfer (hcp2) and PostFreeSurfer (hcp3)"
+				echo ""
+				echo "The function is compabible with both legacy data [without T2w scans] and HCP-compliant data [with T2w scans and DWI]"
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "		--function=<function_name>					Name of function"
 				echo "		--path=<study_folder>						Path to study data folder"
 				echo "		--subjects=<list_of_cases>					List of subjects to run"
-				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)"
+				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
 				echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
 				echo "		--scheduler=<name_of_cluster_scheduler>				Cluster scheduler program: e.g. LSF or PBS"
@@ -5122,7 +5107,7 @@ show_usage_qcpreproc() {
 				echo "" 			
 				echo "-- Example with interactive terminal:"
 				echo ""
-				echo "AP qcpreproc /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
+				echo "AP qcpreproc /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
 				echo ""
 }
 
@@ -5494,7 +5479,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing (Supported: T1w, T2w, myelin, BOLD, DWI)"; exit 1; fi
+		if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
@@ -5518,7 +5503,6 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		echo "QC Scene Template: ${TemplateFolder}"
 		echo "Overwrite prior run: ${Overwrite}"
 		echo "--------------------------------------------------------------"
-		echo "Job ID:"
 		
 		for CASE in $CASES
 		do
@@ -5534,21 +5518,20 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 	echo "Overwrite existing run [yes, no]:"
 	if read answer; then Overwrite=$answer; fi
 	echo ""
-	echo "Enter modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI):"
+	echo "Enter modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]:"
 	if read answer; then Modality=$answer; fi
 	echo ""
-	echo "Enter Output QC folder path:"
-	if read answer; then OutPath=$answer; else 
-	OutPath="${StudyFolder}/QC/${Modality}"; 
-	echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; 
-	fi
-	echo ""
-	echo "Enter template scene folder path value:"
-	if read answer; then TemplateFolder=$answer; else 
+	
+	#echo "Enter Output QC folder path [uses defaults if nothing specified]:"
+	#if read answer; then OutPath=$answer; else echo "Using default: ${OutPath}"; fi
+	#echo ""
+	#echo "Enter template scene folder path value [uses defaults if nothing specified]:"
+	#if read answer; then TemplateFolder=$answer; else echo "Using default: ${TemplateFolder}"; fi
+	#echo ""
+	
+	# Set defaults for templates and outputs
 	TemplateFolder="${TOOLS}/aCode/templates"
-	echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"
-	fi
-	echo ""
+	OutPath="${StudyFolder}/QC/${Modality}" 
 	
 	echo "-- Run locally [1] or run on cluster [2]"
 	if read answer; then Cluster=$answer; fi
@@ -5563,9 +5546,11 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 		echo "--------------------------------------------------------------"
 		echo "Study Folder: ${StudyFolder}"
 		echo "Subjects: ${CASES}"
+		echo "QC Modality: ${Modality}"
 		echo "QC Output Path: ${OutPath}"
 		echo "QC Scene Template: ${TemplateFolder}"
 		echo "Overwrite prior run: ${Overwrite}"
+		echo "--------------------------------------------------------------"
 		
 		for CASE in $CASES
 			do
@@ -7196,4 +7181,8 @@ if [ "$FunctionToRunInt" == "awshcpsync" ]; then
 
 	for CASE in $CASES
 	do
-  		"$FunctionT
+  		"$FunctionToRunInt" "$CASE"
+	done
+fi
+
+exit 0
