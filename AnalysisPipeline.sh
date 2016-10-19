@@ -51,7 +51,7 @@
 ## git command reference:
 ## git add LICENSE.md
 ## git add AnalysisPipeline.sh
-## git commit . --message="Update"
+## git commit . --message="Update`hostname`"
 ## git push origin master
 ## git pull origin master
 ## added AMPA sever - git remote add ampa ssh://aanticevic@ampa.yale.edu/usr/local/analysispipeline
