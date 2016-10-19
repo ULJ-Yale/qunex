@@ -4984,16 +4984,14 @@ qcpreproc() {
 		reho " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 		rm -f "$OutPath"/"$CASE"."$Modality".* &> /dev/null
-	    rm -f "$OutPath"/TEMPLATE* &> /dev/null
 	fi
 	
 	# -- Check if a given case exists
-	if [ -f "$OutPath"/"$CASE"."$Modality".QC.wb.scene ]; then
+	if [ -f "$OutPath"/"$CASE"."$Modality".QC.png ]; then
 		echo ""
 		geho " --- ${Modality} QC scene completed: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
-		exit 1
-	fi
+	else
 		geho " --- Generating ${Modality} Structural QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 	
@@ -5012,10 +5010,10 @@ qcpreproc() {
 
 	# -- Generate a QC scene file appropriate for each subject for each modality
 	
-	# -- Copy over template files for a given modality
-	Com1="cp -R ${TemplateFolder}/. ${OutPath} &> /dev/null"
-	Com2="rm ${OutPath}/TEMPLATE* &> /dev/null"
-	Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+	# -- Rsyn over template files for a given modality
+	Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
+	Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
+	Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
 	# -- Generate scene
 	Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 	Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
@@ -5023,10 +5021,8 @@ qcpreproc() {
 	# -- Output image of the scene
 	Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
 	# -- Clean templates for next subject
-	Com8="rm ${OutPath}/TEMPLATE.*.scene &> /dev/null"
-	Com9="rm ${OutPath}/*.scene-e &> /dev/null"
 	# -- Combine all the calls into a single command
-	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
+	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7"
 			
 	# -- queue a local task or a scheduler job
  	
@@ -5042,7 +5038,7 @@ qcpreproc() {
 	if [ "$Cluster" == 2 ]; then
 		echo "Job ID:"
 		fslsub="$Scheduler" # set scheduler for fsl_sub command
-		rm "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
+		rm -f "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
 		echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE.sh
 		chmod 700 "$LogFolder"/"$CASE"_ComQUEUE.sh
 		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
@@ -5054,6 +5050,7 @@ qcpreproc() {
 		echo "Check output logs here: $LogFolder"
 		echo "---------------------------------------------------------------------------------"
 		echo ""
+	fi
 	fi
 		
 }
