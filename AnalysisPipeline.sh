@@ -4984,6 +4984,7 @@ qcpreproc() {
 		reho " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 		rm -f "$OutPath"/"$CASE"."$Modality".* &> /dev/null
+	    rm -f "$OutPath"/TEMPLATE* &> /dev/null
 	fi
 	
 	# -- Check if a given case exists
@@ -5022,7 +5023,7 @@ qcpreproc() {
 	# -- Output image of the scene
 	Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
 	# -- Clean templates for next subject
-	Com8="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
+	Com8="rm ${OutPath}/TEMPLATE.*.scene &> /dev/null"
 	Com9="rm ${OutPath}/*.scene-e &> /dev/null"
 	# -- Combine all the calls into a single command
 	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
@@ -5037,10 +5038,14 @@ qcpreproc() {
 		echo "---------------------------------------------------------------------------------"
 		echo ""
 		eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
-	else
+	fi
+	if [ "$Cluster" == 2 ]; then
 		echo "Job ID:"
 		fslsub="$Scheduler" # set scheduler for fsl_sub command
-		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ComQUEUE"
+		rm "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
+		echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE.sh
+		chmod 700 "$LogFolder"/"$CASE"_ComQUEUE.sh
+		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
 		echo ""
 		echo "---------------------------------------------------------------------------------"
 		echo "Scheduler: $Scheduler"
@@ -5489,7 +5494,6 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		fi
 		
 		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/aCode/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
-		
 		if [ -z "$OutPath" ]; then OutPath="${StudyFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
 
 		echo ""
