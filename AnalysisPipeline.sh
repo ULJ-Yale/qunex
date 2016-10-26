@@ -3798,9 +3798,9 @@ hcpdlegacy() {
 		# Establish global directory paths
 		T1wFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w
 		DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion
-		T1wDiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion
+		T1wDiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion_"$DiffDataSuffix"
 		FieldMapFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/FieldMap_strc
-		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion/log
+		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion/"$DiffDataSuffix"/log
 		Overwrite="$Overwrite"
 		
 		if [ "$Cluster" == 1 ]; then
@@ -4230,7 +4230,7 @@ fslbedpostxgpu() {
 
 		# Establish global directory paths
 		FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
-		T1wDiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion
+		T1wDiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/"$T1wDiffFolder"	
 		BedPostXFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX
 		LogFolder="$BedPostXFolder"/logs
 		Overwrite="$Overwrite"
@@ -4330,13 +4330,13 @@ show_usage_fslbedpostxgpu() {
 				echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled node"
 				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
 				echo ""
-				echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
 				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--diffinput=<input_diffusion_data_folder>			Diffusion data input folder (e.g. Diffusion or DWI_dir91_LR)"
 				echo "		--fibers=<number_of_fibers>			Number of fibres per voxel, default 3"
 				echo "		--model=<deconvolution_model>			Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins"
 				echo "		--burnin=<burnin_period_value>			Burnin period, default 1000"
@@ -4346,7 +4346,7 @@ show_usage_fslbedpostxgpu() {
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='fslbedpostxgpu' --fibers='3' --burnin='3000' --model='3' --queue='anticevic-gpu' --runmethod='2' --overwrite='yes'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --diffinput='DWI_dir91_LR' --function='fslbedpostxgpu' --fibers='3' --burnin='3000' --model='3' --queue='anticevic-gpu' --runmethod='2' --overwrite='yes'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -5375,6 +5375,7 @@ if [ "$flag" == "--" ] ; then
 	Model=`opts_GetOpt1 "--model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
 	Burnin=`opts_GetOpt1 "--burnin" $@`  # <burnin_period_value>		Burnin period, default 1000
 	Jumps=`opts_GetOpt1 "--jumps" $@`    # <number_of_jumps>		Number of jumps, default 1250
+	T1wDiffFolder=`opts_GetOpt1 "--diffinput" $@`    # <input_diffusion_data_folder>			Diffusion data input folder (e.g. Diffusion or DWI_dir91_LR)
 	
 	# probtrackxgpudense input flags
 	MatrixOne=`opts_GetOpt1 "--omatrix1" $@`  # <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
@@ -6164,12 +6165,42 @@ fi
 #  fsldtifit function loop
 # ------------------------------------------------------------------------------
 
+if [ "$FunctionToRun" == "fsldtifit" ]; then
+
+		# Check all the user-defined parameters: 1. Overwrite, 2. Cluster, 3. QUEUE, 4. T1wDiffFolder
+		
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		if [ -z "$T1wDiffFolder" ]; then reho "Error: Diffusion input folder name not specified"; exit 1; fi
+		
+		Cluster="$RunMethod"
+		
+		echo ""
+		echo "Running dtifit with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Diffusion input folder: $T1wDiffFolder"
+		echo "QUEUE Name: $QUEUE"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi
+
+
+
 if [ "$FunctionToRunInt" == "fsldtifit" ]; then
 	echo "Run locally [1] or run on cluster [2]:"
 	if read answer; then
 	Cluster=$answer 
 		if [ "$Cluster" == "2" ]; then
-			echo "Enter queue name to submit jobs to [e.g. general, scavenge, anticevic, anti_gpu]:"
+			echo "Enter queue name to submit jobs to [e.g. general, anticevic, anticevic-gpu]:"
 			if read answer; then
 			QUEUE=$answer 
 				for CASE in $CASES
@@ -6192,7 +6223,7 @@ fi
 
 if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 	
-		# Check all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE
+		# Check all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE, 7. T1wDiffFolder
 	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
@@ -6202,6 +6233,7 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
 		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		if [ -z "$T1wDiffFolder" ]; then reho "Error: Diffusion input folder name not specified"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		
@@ -6216,6 +6248,7 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		echo "Running fslbedpostxgpu processing with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
+		echo "Number of Fibers: $T1wDiffFolder"
 		echo "Number of Fibers: $Fibers"
 		echo "Model Type: $Model"
 		echo "Burnin Period: $Burnin"
@@ -6234,10 +6267,13 @@ fi
 if [ "$FunctionToRunInt" == "fslbedpostxgpu" ]; then
 
 	echo "Running fslbedpostxgpu processing interactively. First enter the necessary parameters."
-	# Request all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE
+	# Request all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE, 7. T1wDiffFolder
 	echo ""
 	echo "Overwrite existing run [yes, no]:"
 	if read answer; then Overwrite=$answer; fi
+	echo ""
+	echo "Enter diffusion input folder name [e.g. Diffusion]:"
+	if read answer; then T1wDiffFolder=$answer; fi
 	echo ""
 	echo "Enter # of fibers per voxel [e.g. 3]:"
 	if read answer; then Fibers=$answer; fi
@@ -6259,6 +6295,7 @@ if [ "$FunctionToRunInt" == "fslbedpostxgpu" ]; then
 		echo "Running fslbedpostxgpu processing with the following parameters:"
 		echo ""
 		echo "-------------------------------------------------------------"
+		echo "Number of Fibers: $T1wDiffFolder"
 		echo "Number of Fibers: $Fibers"
 		echo "Model Type: $Model"
 		echo "Burnin Period: $Burnin"
