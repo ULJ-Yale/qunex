@@ -4992,7 +4992,7 @@ qcpreproc() {
 		geho " --- ${Modality} QC scene completed: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 	else
-		geho " --- Generating ${Modality} Structural QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+		geho " --- Generating ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 	
 	# -- Check general output folders for QC
@@ -5014,16 +5014,28 @@ qcpreproc() {
 	Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
 	Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
 	Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+	
 	# -- Generate scene
 	Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 	Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
 	Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+	
+	if [ "$Modality" == "DWI" ]; then
+		Com6a="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			if [ "$DWILegacy" == "YES" ]; then
+				Com6b="sed -i -e 's|DUMMYDWIDATA|$CASE_$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			else
+				Com6b="sed -i -e 's|DUMMYDWIPATH|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			fi
+		Com6="$Com6; $Com6a; $Com6b"
+	fi
+	
 	# -- Output image of the scene
 	Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
 	# -- Clean templates for next subject
 	# -- Combine all the calls into a single command
 	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7"
-			
+	
 	# -- queue a local task or a scheduler job
  	
 	if [ "$Cluster" == 1 ]; then
@@ -5061,9 +5073,8 @@ show_usage_qcpreproc() {
 				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the QC preprocessing for a given specified modality.Supported: T1w, T2w, myelin, BOLD, DWI."
-				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and the following steps:"
+				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing."
 				echo ""
-				echo "PreFreeSurfer (hcp1); FreeSurfer (hcp2) and PostFreeSurfer (hcp3)"
 				echo ""
 				echo "The function is compabible with both legacy data [without T2w scans] and HCP-compliant data [with T2w scans and DWI]"
 				echo ""
@@ -5082,6 +5093,10 @@ show_usage_qcpreproc() {
  				echo "		--overwrite=<clean_prior_run>					Delete prior QC run"
  				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/aCode/templates)"
 				echo "		--outpath=<path_for_output_file>				Specify the output path name of the QC folder"
+				echo "		--dwipath=<path_for_dwi_data>				Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
+				echo "		--dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
+				echo "		--dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES or NO]"
+				echo ""
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -5371,11 +5386,13 @@ if [ "$flag" == "--" ] ; then
 	 Modality=`opts_GetOpt1 "--modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
 	 Awsuri=`opts_GetOpt1 "--awsuri" $@`	 # <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
-	# qc input flags
+	# qcpreproc input flags
 	OutPath=`opts_GetOpt1 "--outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the QC folder
 	TemplateFolder=`opts_GetOpt1 "--templatefolder" $@` # --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/aCode/templates)
 	Modality=`opts_GetOpt1 "--modality" $@` # --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
-
+	DWIPath=`opts_GetOpt1 "--dwipath" $@` # --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
+	DWIData=`opts_GetOpt1 "--dwidata" $@` # --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
+	DWILegacy=`opts_GetOpt1 "--dwilegacy" $@` # --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
 
 else
 	echo ""
@@ -5493,6 +5510,12 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/aCode/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
 		if [ -z "$OutPath" ]; then OutPath="${StudyFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
 
+		if [ "$Modality" = "DWI" ]; then
+			if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
+			if [ -z "$DWIData" ]; then DWIData="data"; echo "DWI data name not explicitly specified. Using default: ${DWIData}"; fi
+			if [ -z "$DWILegacy" ]; then DWILegacy="NO"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; fi
+		fi
+
 		echo ""
 		echo "Running qcpreproc with the following parameters:"
 		echo ""
@@ -5503,6 +5526,11 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		echo "QC Output Path: ${OutPath}"
 		echo "QC Scene Template: ${TemplateFolder}"
 		echo "Overwrite prior run: ${Overwrite}"
+		if [ "$Modality" = "DWI" ]; then
+		echo "DWI input path: ${DWIPath}"
+		echo "DWI input name: ${DWIData}"
+		echo "DWI legacy processing: ${DWILegacy}"
+		fi
 		echo "--------------------------------------------------------------"
 		
 		for CASE in $CASES
@@ -5542,6 +5570,16 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 		if read answer; then QUEUE=$answer; fi
 		echo ""
 	fi
+	
+	if [ "$Modality" = "DWI" ]; then
+			echo "-- Specify the input path for the DWI data [e.g. Diffusion]"
+			if read answer; then DWIPath=$answer; fi
+			echo "-- Specify the input name for the DWI data [e.g. data]"
+			if read answer; then DWIData=$answer; fi
+			echo "-- Specify if DWI data was processed via legacy pipelines [YES or NO]"
+			if read answer; then DWILegacy=$answer; fi
+	fi
+	
 		echo "Running qcpreproc with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
@@ -5551,6 +5589,11 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 		echo "QC Output Path: ${OutPath}"
 		echo "QC Scene Template: ${TemplateFolder}"
 		echo "Overwrite prior run: ${Overwrite}"
+		if [ "$Modality" = "DWI" ]; then
+		echo "DWI input path: ${DWIPath}"
+		echo "DWI input name: ${DWIData}"
+		echo "DWI legacy processing: ${DWILegacy}"
+		fi
 		echo "--------------------------------------------------------------"
 		
 		for CASE in $CASES
