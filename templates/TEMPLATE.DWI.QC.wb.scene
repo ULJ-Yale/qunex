@@ -306,7 +306,7 @@ Window 1:
                         <Element Index="1">
                            <Object Type="class"
                                    Class="CaretDataFile"
-                                   Name="DUMMYPATH/DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz"
+                                   Name="DUMMYPATH/DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz"
                                    Version="1">
                               <Object Type="class"
                                       Class="LabelDrawingProperties"
@@ -10822,7 +10822,7 @@ Window 1:
                                       Version="1">
                                  <Object Type="enumeratedType" Name="dataFileType"><![CDATA[VOLUME]]></Object>
                                  <Object Type="enumeratedType" Name="structure"><![CDATA[INVALID]]></Object>
-                                 <Object Type="pathName" Name="fileName"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
+                                 <Object Type="pathName" Name="fileName"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
                                  <Object Type="boolean" Name="selected">true</Object>
                               </Object>
                            </Element>
@@ -12479,8 +12479,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -12617,8 +12617,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -12911,8 +12911,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">4</Object>
                                                 </Object>
@@ -13049,8 +13049,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -13343,8 +13343,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">4</Object>
                                                 </Object>
@@ -13775,8 +13775,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -13913,8 +13913,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -14219,8 +14219,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -14357,8 +14357,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -14495,8 +14495,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -14651,8 +14651,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -14789,8 +14789,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -14927,8 +14927,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -15083,8 +15083,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -15221,8 +15221,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -15359,8 +15359,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -15515,8 +15515,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -15653,8 +15653,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -15791,8 +15791,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -16005,8 +16005,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -16143,8 +16143,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -16437,8 +16437,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -16575,8 +16575,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -16869,8 +16869,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -17007,8 +17007,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -17301,8 +17301,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
@@ -17439,8 +17439,8 @@ Window 1:
                                                          <Element Index="3">1</Element>
                                                       </ObjectArray>
                                                    </Object>
-                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMDWIDATA.nii.gz]]></Object>
-                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="pathName" Name="selectedMapFileNameWithPath"><![CDATA[../../DUMMYCASE/hcp/DUMMYCASE/T1w/DUMMYDWIPATH/DUMMYDWIDATA.nii.gz]]></Object>
+                                                   <Object Type="string" Name="selectedMapFile"><![CDATA[DUMMYDWIDATA.nii.gz]]></Object>
                                                    <Object Type="string" Name="selectedMapName"><![CDATA[]]></Object>
                                                    <Object Type="integer" Name="selectedMapIndex">0</Object>
                                                 </Object>
