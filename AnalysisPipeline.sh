@@ -5034,9 +5034,10 @@ qcpreproc() {
 	# -- Output image of the scene
 	Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
 	# -- Clean templates for next subject
-	
+	Com8="rm ${OutPath}/${CASE}.${Modality}.QC.wb.scene-e &> /dev/null"
+	Com9="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
 	# -- Combine all the calls into a single command
-	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7"
+	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
 	
 	# -- queue a local task or a scheduler job
  	
