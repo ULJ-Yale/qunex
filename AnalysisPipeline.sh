@@ -5022,11 +5022,12 @@ qcpreproc() {
 	
 	if [ "$Modality" == "DWI" ]; then
 		Com6a="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-			if [ "$DWILegacy" == "YES" ]; then
-				DWIData="$CASE"_"$DWIData"
-				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			if [ "$DWILegacy" == "yes" ]; then
+				unset "$DWIDataLegacy"
+				DWIDataLegacy="${CASE}_${DWIData}"
+				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			else
-				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			fi
 		Com6="$Com6; $Com6a; $Com6b"
 	fi
