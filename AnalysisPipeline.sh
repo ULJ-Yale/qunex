@@ -5010,24 +5010,25 @@ qcpreproc() {
 
 	# -- Generate a QC scene file appropriate for each subject for each modality
 	
-	# -- Rsyn over template files for a given modality
+	# -- Rsync over template files for a given modality
 	Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
 	Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
 	Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
 	
-	# -- Generate scene
+	# -- Setup naming conventions before generating scene
 	Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 	Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
 	Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 	
 	if [ "$Modality" == "DWI" ]; then
+		# -- Setup naming conventions for DWI before generating scene
 		Com6a="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			if [ "$DWILegacy" == "yes" ]; then
 				unset "$DWIDataLegacy"
 				DWIDataLegacy="${CASE}_${DWIData}"
 				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			else
-				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			fi
 		Com6="$Com6; $Com6a; $Com6b"
 	fi
@@ -5039,6 +5040,49 @@ qcpreproc() {
 	Com9="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
 	# -- Combine all the calls into a single command
 	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
+	
+	if [ "$Modality" == "BOLD" ]; then
+		for BOLD in $BOLDS; do
+		
+			# -- Generate QC statistics for a given BOLD
+			geho " --- Generating QC statistics for ${BOLD} on ${CASE}..."
+
+			wb_command -cifti-reduce "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix".dtseries.nii TSNR "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_TSNR.dscalar.nii
+			echo -n "$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/$BOLD/$BOLD_$BOLDSuffix_TSNR.dscalar.nii: " >> ${OutPath}/TSNR_Report_`date +%Y-%m-%d`.txt; wb_command -cifti-stats "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_TSNR.dscalar.nii -reduce MEAN >> TSNR_Report_`date +%Y-%m-%d`.txt
+			wb_command -cifti-reduce "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix".dtseries.nii MEAN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.dtseries.nii -direction COLUMN
+			wb_command -cifti-stats "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.dtseries.niii -reduce MEAN >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.txt
+			TR=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
+			wb_command -cifti-create-scalar-series "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.txt "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.sdseries.nii -transpose -series SECOND 0 ${TR} 
+			
+			# -- Rsync over template files for a given BOLD
+			Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
+			Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
+			Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+	
+			# -- Setup naming conventions before generating scene
+			Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
+			Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com6a="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+
+			if [ "$BOLDSuffix" == "" ]; then
+				Com6b="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			else
+				Com6b="sed -i -e 's|DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			fi
+			
+			Com6="$Com6; $Com6a; $Com6b"
+			
+			# -- Output image of the scene
+			Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.png 1194 539"
+			# -- Clean templates for next subject
+			Com8="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
+			Com9="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
+			# -- Combine all the calls into a single command
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
+	
+		done
+	fi
 	
 	# -- queue a local task or a scheduler job
  	
@@ -5100,6 +5144,8 @@ show_usage_qcpreproc() {
 				echo "		--dwipath=<path_for_dwi_data>				Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
 				echo "		--dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
 				echo "		--dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES or NO]"
+				echo "		--bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
+				echo "		--boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
 				echo ""
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
@@ -5397,6 +5443,8 @@ if [ "$flag" == "--" ] ; then
 	DWIPath=`opts_GetOpt1 "--dwipath" $@` # --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
 	DWIData=`opts_GetOpt1 "--dwidata" $@` # --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
 	DWILegacy=`opts_GetOpt1 "--dwilegacy" $@` # --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
+	BOLDS=`opts_GetOpt1 "--bolddata" $@` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	BOLDSuffix=`opts_GetOpt1 "--boldsuffix" $@` # --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
 
 else
 	echo ""
@@ -5520,6 +5568,11 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 			if [ -z "$DWILegacy" ]; then DWILegacy="NO"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; fi
 		fi
 
+		if [ "$Modality" = "BOLD" ]; then
+			if [ -z "$BOLDS" ]; then reho "Error: BOLD input names missing"; exit 1; fi
+			if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "BOLD suffix not specified. Assuming no suffix"; fi
+		fi
+
 		echo ""
 		echo "Running qcpreproc with the following parameters:"
 		echo ""
@@ -5534,6 +5587,10 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		echo "DWI input path: ${DWIPath}"
 		echo "DWI input name: ${DWIData}"
 		echo "DWI legacy processing: ${DWILegacy}"
+		fi
+		if [ "$Modality" = "BOLD" ]; then
+		echo "BOLD data input: ${BOLDS}"
+		echo "BOLD suffix: ${BOLDSuffix}"
 		fi
 		echo "--------------------------------------------------------------"
 		
@@ -5584,6 +5641,13 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 			if read answer; then DWILegacy=$answer; fi
 	fi
 	
+	if [ "$Modality" = "BOLD" ]; then
+			echo "-- Specify the input name for the BOLD data [e.g. 1 or rfMRI_REST1_LR]"
+			if read answer; then BOLDS=$answer; fi
+			echo "-- Specify the suffix for the BOLD data [Atlas]"
+			if read answer; then BOLDSuffix=$answer; fi
+	fi
+	
 		echo "Running qcpreproc with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
@@ -5597,6 +5661,10 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 		echo "DWI input path: ${DWIPath}"
 		echo "DWI input name: ${DWIData}"
 		echo "DWI legacy processing: ${DWILegacy}"
+		fi
+		if [ "$Modality" = "BOLD" ]; then
+		echo "BOLD data input: ${BOLDS}"
+		echo "BOLD suffix: ${BOLDSuffix}"
 		fi
 		echo "--------------------------------------------------------------"
 		
