@@ -5051,7 +5051,7 @@ qcpreproc() {
 			echo -n "$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/$BOLD/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: " >> ${OutPath}/TSNR_Report_`date +%Y-%m-%d`.txt
 			wb_command -cifti-stats "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_TSNR.dscalar.nii -reduce MEAN >> TSNR_Report_`date +%Y-%m-%d`.txt
 			wb_command -cifti-reduce "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix".dtseries.nii MEAN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.dtseries.nii -direction COLUMN
-			wb_command -cifti-stats "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.dtseries.niii -reduce MEAN >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.txt
+			wb_command -cifti-stats "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.dtseries.nii -reduce MEAN >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.txt
 			TR=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
 			wb_command -cifti-create-scalar-series "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.txt "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.sdseries.nii -transpose -series SECOND 0 ${TR} 
 			
