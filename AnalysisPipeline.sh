@@ -5444,7 +5444,7 @@ if [ "$flag" == "--" ] ; then
 	DWIPath=`opts_GetOpt1 "--dwipath" $@` # --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
 	DWIData=`opts_GetOpt1 "--dwidata" $@` # --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
 	DWILegacy=`opts_GetOpt1 "--dwilegacy" $@` # --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
-	BOLDS=`opts_GetOpt1 "--bolddata" $@` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	BOLDS=`opts_GetOpt1 "--bolddata" $@ | sed 's/,/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
 	BOLDSuffix=`opts_GetOpt1 "--boldsuffix" $@` # --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
 
 else
