@@ -4984,6 +4984,7 @@ qcpreproc() {
 		reho " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 		rm -f "$OutPath"/"$CASE"."$Modality".* &> /dev/null
+		rm -f "$OutPath"/TSNR_Report.* &> /dev/null
 	fi
 	
 	# -- Check if a given case exists
@@ -5006,68 +5007,6 @@ qcpreproc() {
 	# -- Define log folder
 	LogFolder="$OutPath"/qclog
 	mkdir "$LogFolder"  &> /dev/null
-
-
-	# -- Generate a QC scene file appropriate for each subject for each modality
-	
-	# -- Rsync over template files for a given modality
-	Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
-	Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
-	Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
-	
-	# -- Setup naming conventions before generating scene
-	Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-	Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
-	Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-	
-	if [ "$Modality" == "DWI" ]; then
-		# -- Setup naming conventions for DWI before generating scene
-		Com6a="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-			if [ "$DWILegacy" == "yes" ]; then
-				unset "$DWIDataLegacy"
-				DWIDataLegacy="${CASE}_${DWIData}"
-				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-			else
-				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-			fi
-		Com6="$Com6; $Com6a; $Com6b"
-	fi
-	
-	# -- Output image of the scene
-	Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
-	# -- Clean templates for next subject
-	Com8="rm ${OutPath}/${CASE}.${Modality}.QC.wb.scene-e &> /dev/null"
-	Com9="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
-	# -- Combine all the calls into a single command
-	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
-	
-	# -- queue a local task or a scheduler job
- 	
-	if [ "$Cluster" == 1 ]; then
-  		echo ""
-  		echo "---------------------------------------------------------------------------------"
-		echo "Running QC locally on `hostname`"
-		echo "Check output here: $LogFolder"
-		echo "---------------------------------------------------------------------------------"
-		echo ""
-		eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
-	fi
-	if [ "$Cluster" == 2 ]; then
-		echo "Job ID:"
-		fslsub="$Scheduler" # set scheduler for fsl_sub command
-		rm -f "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
-		echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE.sh
-		chmod 700 "$LogFolder"/"$CASE"_ComQUEUE.sh
-		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
-		echo ""
-		echo "---------------------------------------------------------------------------------"
-		echo "Scheduler: $Scheduler"
-		echo "QUEUE Name: $QUEUE"
-		echo "Data successfully submitted to $QUEUE" 
-		echo "Check output logs here: $LogFolder"
-		echo "---------------------------------------------------------------------------------"
-		echo ""
-	fi
 		
 	
 	if [ "$Modality" == "BOLD" ]; then
@@ -5139,7 +5078,70 @@ qcpreproc() {
 	fi
 
 		done
-	fi	
+	
+	else	
+	
+	# -- Generate a QC scene file appropriate for each subject for each modality
+	
+	# -- Rsync over template files for a given modality
+	Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
+	Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
+	Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+	
+	# -- Setup naming conventions before generating scene
+	Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+	Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
+	Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+	
+	if [ "$Modality" == "DWI" ]; then
+		# -- Setup naming conventions for DWI before generating scene
+		Com6a="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			if [ "$DWILegacy" == "yes" ]; then
+				unset "$DWIDataLegacy"
+				DWIDataLegacy="${CASE}_${DWIData}"
+				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			else
+				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			fi
+		Com6="$Com6; $Com6a; $Com6b"
+	fi
+	
+	# -- Output image of the scene
+	Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
+	# -- Clean templates for next subject
+	Com8="rm ${OutPath}/${CASE}.${Modality}.QC.wb.scene-e &> /dev/null"
+	Com9="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
+	# -- Combine all the calls into a single command
+	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
+	
+	# -- queue a local task or a scheduler job
+ 	
+	if [ "$Cluster" == 1 ]; then
+  		echo ""
+  		echo "---------------------------------------------------------------------------------"
+		echo "Running QC locally on `hostname`"
+		echo "Check output here: $LogFolder"
+		echo "---------------------------------------------------------------------------------"
+		echo ""
+		eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+	fi
+	if [ "$Cluster" == 2 ]; then
+		echo "Job ID:"
+		fslsub="$Scheduler" # set scheduler for fsl_sub command
+		rm -f "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
+		echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE.sh
+		chmod 700 "$LogFolder"/"$CASE"_ComQUEUE.sh
+		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
+		echo ""
+		echo "---------------------------------------------------------------------------------"
+		echo "Scheduler: $Scheduler"
+		echo "QUEUE Name: $QUEUE"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "---------------------------------------------------------------------------------"
+		echo ""
+	fi
+	
 	fi
 }
 
