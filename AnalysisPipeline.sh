@@ -5068,7 +5068,6 @@ qcpreproc() {
 		echo "---------------------------------------------------------------------------------"
 		echo ""
 	fi
-	fi
 		
 	
 	if [ "$Modality" == "BOLD" ]; then
@@ -5142,6 +5141,7 @@ qcpreproc() {
 		done
 	fi
 	
+	fi
 }
 
 show_usage_qcpreproc() {
