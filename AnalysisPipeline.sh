@@ -4984,7 +4984,7 @@ qcpreproc() {
 		reho " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 		rm -f "$OutPath"/"$CASE"."$Modality".* &> /dev/null
-		rm -f "$OutPath"/TSNR_Report.* &> /dev/null
+		rm -f "$OutPath"/TSNR_Report_*.txt &> /dev/null
 	fi
 	
 	# -- Check if a given case exists
@@ -5012,73 +5012,68 @@ qcpreproc() {
 	if [ "$Modality" == "BOLD" ]; then
 		for BOLD in $BOLDS; 
 		do
-		
 			# -- Generate QC statistics for a given BOLD
-			geho " --- Generating QC statistics for ${BOLD} on ${CASE}..."
-
-			wb_command -cifti-reduce "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix".dtseries.nii TSNR "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_TSNR.dscalar.nii
-			echo -n "$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/$BOLD/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: " >> ${OutPath}/TSNR_Report_`date +%Y-%m-%d`.txt
-			wb_command -cifti-stats "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_TSNR.dscalar.nii -reduce MEAN >> ${OutPath}/TSNR_Report_`date +%Y-%m-%d`.txt
-			wb_command -cifti-reduce "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix".dtseries.nii MEAN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.dtseries.nii -direction COLUMN
-			wb_command -cifti-stats "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.dtseries.nii -reduce MEAN >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.txt
+			geho " --- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
+			
+			# -- Compute TSNR and TR variables for later input
+			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii TSNR ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii
+			TSNR=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
 			TR=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
-			wb_command -cifti-create-scalar-series "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.txt "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_"$BOLDSuffix"_GS.sdseries.nii -transpose -series SECOND 0 ${TR} 
+			
+			Com1="echo -n '${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: ' >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt"
+			Com2="echo '${TSNR}' >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt"
+			Com3="wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii MEAN ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -direction COLUMN"
+			Com4="wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt"
+			Com5="wb_command -cifti-create-scalar-series ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}"
 			
 			# -- Rsync over template files for a given BOLD
-			Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
-			Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
-			Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+			Com6="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
+			Com7="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
 	
 			# -- Setup naming conventions before generating scene
-			Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
-			Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com6a="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com8="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com9="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
+			Com10="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com11="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 
 			if [ "$BOLDSuffix" == "" ]; then
-				Com6b="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+				Com12="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			else
-				Com6b="sed -i -e 's|DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+				Com12="sed -i -e 's|DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			fi
-			
-			Com6="$Com6; $Com6a; $Com6b"
-			
+						
 			# -- Output image of the scene
-			Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.png 1194 539"
+			Com13="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.png 1194 539"
 			# -- Clean templates for next subject
-			Com8="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
-			Com9="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
+			Com14="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
 			# -- Combine all the calls into a single command
-			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14"
 	
-	if [ "$Cluster" == 1 ]; then
-  		echo ""
-  		echo "---------------------------------------------------------------------------------"
-		echo "Running QC locally on `hostname`"
-		echo "Check output here: $LogFolder"
-		echo "---------------------------------------------------------------------------------"
-		echo ""
-		eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
-	fi
-	if [ "$Cluster" == 2 ]; then
-		echo "Job ID:"
-		fslsub="$Scheduler" # set scheduler for fsl_sub command
-		rm -f "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
-		echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE.sh
-		chmod 700 "$LogFolder"/"$CASE"_ComQUEUE.sh
-		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
-		echo ""
-		echo "---------------------------------------------------------------------------------"
-		echo "Scheduler: $Scheduler"
-		echo "QUEUE Name: $QUEUE"
-		echo "Data successfully submitted to $QUEUE" 
-		echo "Check output logs here: $LogFolder"
-		echo "---------------------------------------------------------------------------------"
-		echo ""
-	fi
-
+			if [ "$Cluster" == 1 ]; then
+  				echo ""
+  				echo "---------------------------------------------------------------------------------"
+				echo "Running QC locally on `hostname`"
+				echo "Check output here: $LogFolder"
+				echo "---------------------------------------------------------------------------------"
+		 		echo ""
+				eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			else
+				echo "Job ID:"
+				fslsub="$Scheduler" # set scheduler for fsl_sub command
+				rm -f "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh &> /dev/null
+				echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
+				chmod 770 "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
+				fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
+				echo ""
+				echo "---------------------------------------------------------------------------------"
+				echo "Scheduler: $Scheduler"
+				echo "QUEUE Name: $QUEUE"
+				echo "Data successfully submitted to $QUEUE" 
+				echo "Check output logs here: $LogFolder"
+				echo "---------------------------------------------------------------------------------"
+				echo ""
+			fi
 		done
-	
 	else	
 	
 	# -- Generate a QC scene file appropriate for each subject for each modality
