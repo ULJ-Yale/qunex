@@ -5041,8 +5041,39 @@ qcpreproc() {
 	# -- Combine all the calls into a single command
 	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
 	
+	# -- queue a local task or a scheduler job
+ 	
+	if [ "$Cluster" == 1 ]; then
+  		echo ""
+  		echo "---------------------------------------------------------------------------------"
+		echo "Running QC locally on `hostname`"
+		echo "Check output here: $LogFolder"
+		echo "---------------------------------------------------------------------------------"
+		echo ""
+		eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+	fi
+	if [ "$Cluster" == 2 ]; then
+		echo "Job ID:"
+		fslsub="$Scheduler" # set scheduler for fsl_sub command
+		rm -f "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
+		echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE.sh
+		chmod 700 "$LogFolder"/"$CASE"_ComQUEUE.sh
+		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
+		echo ""
+		echo "---------------------------------------------------------------------------------"
+		echo "Scheduler: $Scheduler"
+		echo "QUEUE Name: $QUEUE"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "---------------------------------------------------------------------------------"
+		echo ""
+	fi
+	fi
+		
+	
 	if [ "$Modality" == "BOLD" ]; then
-		for BOLD in $BOLDS; do
+		for BOLD in $BOLDS; 
+		do
 		
 			# -- Generate QC statistics for a given BOLD
 			geho " --- Generating QC statistics for ${BOLD} on ${CASE}..."
@@ -5082,11 +5113,6 @@ qcpreproc() {
 			# -- Combine all the calls into a single command
 			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
 	
-		done
-	fi
-	
-	# -- queue a local task or a scheduler job
- 	
 	if [ "$Cluster" == 1 ]; then
   		echo ""
   		echo "---------------------------------------------------------------------------------"
@@ -5113,7 +5139,9 @@ qcpreproc() {
 		echo ""
 	fi
 	fi
-		
+		done
+	fi
+	
 }
 
 show_usage_qcpreproc() {
