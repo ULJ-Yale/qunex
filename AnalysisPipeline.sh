@@ -4983,8 +4983,14 @@ qcpreproc() {
 		echo ""
 		reho " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
-		rm -f "$OutPath"/"$CASE"."$Modality".* &> /dev/null
-		rm -f "$OutPath"/TSNR_Report_*.txt &> /dev/null
+		if [ "$Modality" == "BOLD" ]; then
+			for BOLD in $BOLDS
+			do
+				rm -f ${OutPath}/${CASE}.${Modality}.${BOLD}.* &> /dev/null
+			done
+		else
+			rm -f "$OutPath"/"$CASE"."$Modality".* &> /dev/null
+		fi	
 	fi
 	
 	# -- Check if a given case exists
@@ -5015,41 +5021,41 @@ qcpreproc() {
 			# -- Generate QC statistics for a given BOLD
 			geho " --- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
 			
-			# -- Compute TSNR and TR variables for later input
+			# -- Compute TSNR and log it
 			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii TSNR ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii
 			TSNR=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
-			TR=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
+			TSNRLog="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
+			printf "${TSNRLog}\n" >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt
 			
-			Com1="echo -n '${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: ' >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt"
-			Com2="echo '${TSNR}' >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt"
-			Com3="wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii MEAN ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -direction COLUMN"
-			Com4="wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt"
-			Com5="wb_command -cifti-create-scalar-series ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}"
+			# -- Compute the GS scalar series file
+			Com1="wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii MEAN ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -direction COLUMN"
 			
 			# -- Rsync over template files for a given BOLD
-			Com6="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
-			Com7="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
+			Com2="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
+			Com3="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
 	
 			# -- Setup naming conventions before generating scene
-			Com8="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com9="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
-			Com10="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com11="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com4="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
+			Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com7="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 
+			# -- Set the BOLDSuffix variable
 			if [ "$BOLDSuffix" == "" ]; then
-				Com12="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+				Com8="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			else
-				Com12="sed -i -e 's|DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+				Com8="sed -i -e 's|DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			fi
 						
 			# -- Output image of the scene
-			Com13="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.GSmap.QC.wb.png 1194 539"
-			Com14="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 2 ${OutPath}/${CASE}.${Modality}.${BOLD}.GStimeseries.QC.wb.png 1194 539"
+			Com9="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.GSmap.QC.wb.png 1194 539"
+			Com10="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 2 ${OutPath}/${CASE}.${Modality}.${BOLD}.GStimeseries.QC.wb.png 1194 539"
 
-			# -- Clean templates for next subject
-			Com15="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
+			# -- Clean temp scene
+			Com11="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
+			
 			# -- Combine all the calls into a single command
-			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14; $Com15"
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11"
 	
 			if [ "$Cluster" == 1 ]; then
   				echo ""
@@ -5597,6 +5603,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		fi
 
 		if [ "$Modality" = "BOLD" ]; then
+			for BOLD in $BOLDS; do rm -f ${OutPath}/TSNR_Report_${BOLD}*.txt &> /dev/null; done
 			if [ -z "$BOLDS" ]; then reho "Error: BOLD input names missing"; exit 1; fi
 			if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "BOLD suffix not specified. Assuming no suffix"; fi
 		fi
@@ -5670,6 +5677,7 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 	fi
 	
 	if [ "$Modality" = "BOLD" ]; then
+			for BOLD in $BOLDS; do rm -f ${OutPath}/TSNR_Report_${BOLD}*.txt &> /dev/null; done
 			echo "-- Specify the input name for the BOLD data [e.g. 1 or rfMRI_REST1_LR]"
 			if read answer; then BOLDS=$answer; fi
 			echo "-- Specify the suffix for the BOLD data [Atlas]"
