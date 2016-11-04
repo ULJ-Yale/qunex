@@ -5022,7 +5022,7 @@ qcpreproc() {
 			geho " --- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
 			
 			# -- Compute TSNR and log it
-			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii TSNR ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii
+			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii TSNR ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -exclude-outliers 4 4
 			TSNR=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
 			TSNRLog="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
 			printf "${TSNRLog}\n" >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt
@@ -5037,11 +5037,21 @@ qcpreproc() {
 			# -- Regenerate outputs
 			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii MEAN ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
 			wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt
-			wb_command -cifti-create-scalar-series  ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
+
+			if [ ${SkipFrames} > 0 ]; then 
+				rm -f ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt &> /dev/null
+				tail -n +${SkipFrames} ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt >> ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt
+				TR=`cat ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt | wc -l` 
+				wb_command -cifti-create-scalar-series ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
+				xmax="$TR"
+			else
+				wb_command -cifti-create-scalar-series ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
+				xmax=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
+			fi
+			
 			# -- Get mix/max stats
 			ymax=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`	
 			ymin=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
-			xmax=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
 	
 			# -- Rsync over template files for a given BOLD
 			Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
@@ -5197,6 +5207,7 @@ show_usage_qcpreproc() {
 				echo "		--dwilegacy=<dwi_data_processed_via_legacy_pipeline>		Specify is DWI data was processed via legacy pipelines [e.g. YES or NO]"
 				echo "		--bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
 				echo "		--boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
+				echo "		--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
 				echo ""
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
@@ -5567,7 +5578,8 @@ if [ "$flag" == "--" ] ; then
 	DWILegacy=`opts_GetOpt1 "--dwilegacy" $@` # --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
 	BOLDS=`opts_GetOpt1 "--bolddata" $@ | sed 's/,/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
 	BOLDSuffix=`opts_GetOpt1 "--boldsuffix" $@` # --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
-
+	SkipFrames=`opts_GetOpt1 "--skipframes" $@` # --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation
+	
 else
 	echo ""
 	reho "--------------------------------------------"
@@ -5667,7 +5679,7 @@ fi
 
 if [ "$FunctionToRun" == "qcpreproc" ]; then
 	
-		# Check all the user-defined parameters: 1. Overwrite, 2. OutPath, 3. TemplateFolder, 4. Cluster, 5. QUEUE. 6. Modality
+		# Check all the user-defined parameters: 1. Overwrite, 2. OutPath, 3. TemplateFolder, 4. Cluster, 5. QUEUE. 6. Modality. 7. SkipFrames
 	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
@@ -5694,6 +5706,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 			for BOLD in $BOLDS; do rm -f ${OutPath}/TSNR_Report_${BOLD}*.txt &> /dev/null; done
 			if [ -z "$BOLDS" ]; then reho "Error: BOLD input names missing"; exit 1; fi
 			if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "BOLD suffix not specified. Assuming no suffix"; fi
+			if [ -z "$SkipFrames" ]; then SkipFrames="0"; fi
 		fi
 
 		echo ""
@@ -5714,6 +5727,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		if [ "$Modality" = "BOLD" ]; then
 		echo "BOLD data input: ${BOLDS}"
 		echo "BOLD suffix: ${BOLDSuffix}"
+		echo "Skip Initial Frames: ${SkipFrames}"
 		fi
 		echo "--------------------------------------------------------------"
 		
@@ -5770,6 +5784,8 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 			if read answer; then BOLDS=$answer; fi
 			echo "-- Specify the suffix for the BOLD data [Atlas]"
 			if read answer; then BOLDSuffix=$answer; fi
+			echo "-- Specify the number of initial frames to skip for BOLD QC"
+			if read answer; then SkipFrames=$answer; fi
 	fi
 	
 		echo "Running qcpreproc with the following parameters:"
@@ -5789,6 +5805,7 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 		if [ "$Modality" = "BOLD" ]; then
 		echo "BOLD data input: ${BOLDS}"
 		echo "BOLD suffix: ${BOLDSuffix}"
+		echo "Skip Initial Frames: ${SkipFrames}"
 		fi
 		echo "--------------------------------------------------------------"
 		
