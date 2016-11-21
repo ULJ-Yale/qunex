@@ -26,8 +26,8 @@ dicom utilities
 listDicom    [folder=.]
 splitDicom   [folder=.]
 sortDicom    [folder=.]
-dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask]
-processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"]
+dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=None]
+processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=None]
 getDICOMInfo dfile=<dicom_file> [scanner=siemens]
 
 
@@ -83,9 +83,9 @@ runPALM image=<image file> [design=<design string>] [args=<arguments string>] [r
 commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': ('folder', )},
             'splitDicom'    : {'com': gCodeU.g_dicom.splitDicom,       'args': ('folder', )},
             'sortDicom'     : {'com': gCodeU.g_dicom.sortDicom,        'args': ('folder', )},
-            'dicom2nii'     : {'com': gCodeU.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose')},
+            'dicom2nii'     : {'com': gCodeU.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
             'processPhilips': {'com': gCodeU.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern')},
-            'processInbox'  : {'com': gCodeU.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern')},
+            'processInbox'  : {'com': gCodeU.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern', 'cores')},
             'getDICOMInfo'  : {'com': gCodeU.g_dicom.getDICOMInfo,     'args': ('dfile', 'scanner')},
             'runAviFolder'  : {'com': gCodeU.g_4dfp.runAviFolder,      'args': ('folder', 'pattern', 'overwite', 'subjf')},
             'runAvi'        : {'com': gCodeU.g_4dfp.runAvi,            'args': ('folder', 'overwite', 'subjf')},

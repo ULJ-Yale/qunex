@@ -118,6 +118,22 @@ def readSubjectData(filename, verbose=False):
 
 
 def runExternalParallel(calls, cores=None, prepend=''):
+    '''
+    runExternalParallel(calls, cores=None, prepend='')
+
+    Runs external commands specified in 'calls' in parallel utilizing all the available or the number of cores specified in 'cores'.
+    Parameters:
+
+    calls   : A list of dictionaries that specifies the commands to run. It should consists of:
+              - name : The name of the command to run.
+              - args : The actual command provided as a list of arguments.
+              - sout : The name of the log file to which to direct the standard output from the command ran.
+    cores   : The number of cores to utilize. All available if left as None.
+    prepend : The string to prepend to each line of progress report.
+
+    Example call:
+    runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, cores=1, prepend=' ... ')
+    '''
 
     if cores is None:
         cores = multiprocessing.cpu_count()
