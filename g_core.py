@@ -128,15 +128,20 @@ def runExternalParallel(calls, cores=None, prepend=''):
               - name : The name of the command to run.
               - args : The actual command provided as a list of arguments.
               - sout : The name of the log file to which to direct the standard output from the command ran.
-    cores   : The number of cores to utilize. All available if left as None.
+    cores   : The number of cores to utilize. If specified as None or 'all', all available cores will be utilised.
     prepend : The string to prepend to each line of progress report.
 
     Example call:
     runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, cores=1, prepend=' ... ')
     '''
 
-    if cores is None:
+    if cores is None or cores in ['all', 'All', 'ALL']:
         cores = multiprocessing.cpu_count()
+    else:
+        try:
+            cores = int(cores)
+        except:
+            cores = 1
 
     running   = []
     completed = []

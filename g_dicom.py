@@ -90,9 +90,9 @@ def getTRTE(info):
     return float(TR), float(TE)
 
 
-def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, cores=None, debug=False):
+def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, cores=1, debug=False):
     '''
-    dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=None]
+    dicom2nii [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
 
     Converts the images from the dicom to NIfTI format. Expects to find the dicoms in the dicom folder with each
     image in a separate subfolder.
@@ -105,8 +105,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     - gzip    : After the dicom files were processed whether to gzip them (yes), leave them (no)
                 or ask interactively (ask).
     - verbose : Whether to be report on the progress.
-    - cores   : How many parallel processes to run dcm2nii conversion with. If 'None', the number of
-                available cores is utlized
+    - cores   : How many parallel processes to run dcm2nii conversion with. The number is one by defaults, if
+                specified as 'all', the number of available cores is utilized.
 
     example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask cores=3
     '''
@@ -254,7 +254,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
         files.append([niinum, folder])
         # subprocess.call(call, shell=True, stdout=null, stderr=null)
 
-    done = gCodeU.g_core.runExternalParallel(calls, cores=int(cores), prepend=' ... ')
+    done = gCodeU.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 
     for niinum, folder in files:
 
@@ -659,9 +659,9 @@ def processPhilips(folder=None, check=None, pattern=None):
     return
 
 
-def processInbox(folder=None, check=None, pattern=None, cores=None):
+def processInbox(folder=None, check=None, pattern=None, cores=1):
     '''
-    processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=None]
+    processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1]
 
     Checks for new zip files with dicom images in the inbox directory within the folder that match the regex pattern.
     Once all are identified it extracts the subject code as the first match pattern and, if check is set to yes, asks
@@ -671,7 +671,8 @@ def processInbox(folder=None, check=None, pattern=None, cores=None):
     - folder  : The base study subjects folder (e.g. WM44/subjects) where the ibox and individual subject folders are.
     - check   : Whether to ask for confirmation to proceed once zip packages in inbox are identified and listed.
     - pattern : The pattern to use to extract subject codes.
-    - cores   : The number of parallel processes to use when running dcm2nii command.
+    - cores   : The number of parallel processes to use when running dcm2nii command. One by default. If specified as
+                'all', all the avaliable cores will be utilized.
     '''
 
     if check == 'no':
@@ -798,7 +799,7 @@ def processInbox(folder=None, check=None, pattern=None, cores=None):
         # --- run dicom to nii
 
         print "\n\n===> running dicom2nii"
-        dicom2nii(folder=opfolder, clean='no', unzip='yes', gzip='yes', cores=None, verbose=True)
+        dicom2nii(folder=opfolder, clean='no', unzip='yes', gzip='yes', cores=cores, verbose=True)
 
     print "\n\n---=== DONE PROCESSING PACKAGES - Have a nice day! ===---\n"
 
