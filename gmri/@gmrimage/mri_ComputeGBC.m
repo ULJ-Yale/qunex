@@ -2,10 +2,10 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rm
 
 %function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rmax, time, cv, vstep)
 %
-%	Computes whole brain GBC based on specified mask and command string
+%	Computes whole brain GBC based on the specified mask and command string.
 %
-%   Input
-%	    obj     - image
+%   INPUT
+%	    obj     - gmrimage object.
 %       command - string describing GBC to compute (pipe separated)
 %                   > mFz:t  ... computes mean Fz value across all voxels (over threshold t)
 %                   > aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t)
@@ -25,14 +25,71 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rm
 %                   > pDs:n  ... computes proportion of voxels within n strength ranges of positive r
 %                   > nDs:n  ... computes proportion of voxels within n strength ranges of negative r
 %
-%       fmask   - frame mask to use (passed to sliceframes)
-%       mask    - mask to use to define what voxels to include in GBC
-%       verbose - should it talk a lot [no]
-%       rmax    - the r value above which the correlations are considered to be of the same functional ROI
-%       time    - whether to print timing information
-%       cv      - whether to work with covariances instead of correlations [false]
-%       vstep   - how many voxels to process in a step [1200]
+%       fmask   - Mask specifying which frames of the original image to use. []
+%       mask    - Mask specifying which voxels to compute GMC for. []
+%       verbose - Should it talk a lot. [false]
+%       rmax    - The r value above which the correlations are considered to be of the same functional ROI
+%               - or false if it should not be used. [false]
+%       time    - Whether to print timing information. [false]
+%       cv      - Whether to work with covariances instead of correlations [false]
+%       vstep   - How many voxels to process in a single step [1200]
 %
+%   OUTPUT
+%       obj      - The resulting gmrimage object with as many frames as there were commands given.
+%       commands - A data structure describing the parameters of commands used.
+%
+%   USE
+%   The method enables computing a set of Global Brain Connectivity values. The input image is expected
+%   to hold a time- or data-series for each voxel, across which the correlations (or covariances) will
+%   be computed. What is to be computed is specified using the command string. The string consists of a
+%   pipe separated key:value pairs. Key specifies what is to be computed (as listed above), whereas value
+%   specifies what threshold or number of strength or proportional ranges is to be used. Strength range
+%   is here defined as n intervals of correlation values. For instance, when computing mean Fz with n of
+%   4 the ranges would be [-1 -.5], [-.5 0] [0 .5] [.5 1]. Proportional range would separate all the
+%   correlations into n strength groups of the same number of voxels in each group.
+%   An example of command string can be:
+%
+%   'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2'
+%
+%   This would result in an image with 6 frames. The first frame would hold for each voxel the mean Fz
+%   of its correlation with all other voxels, where the correlation is higher than .1 or lower than -.1.
+%   The second frame would hold the results with the threshold of .2. The third and fourth would hold the
+%   mean absolute correlation above the respective thresholds, the fifth and sixth the mean of only positive
+%   correlations above the specified thresholds. Combining multiple commands in a single call significantly
+%   cuts down on time as the correlations need to be computed only once, just their aggregation function
+%   changes.
+%
+%   fmask defines what frames from the original image are to be used for computing correlations (covariances).
+%   It is to be provided as a string of nonzero/zero or true/false values. If empty or not provided, the
+%   correlations will be computed across all frames. mask specifies which voxels to compute GBC for, and at the
+%   same time, with which voxels it is to be computed with. It can be provided as a vector of nonzero/zero
+%   values or a gmrimage object storing the same values. It has to match the number of voxels in the original
+%   image.
+%
+%   As neighboring voxels can belong to the same functional parcel, correlation between them approaches 1.
+%   Including them in the computation of GBC can inflate its value. One way to deal with that is to assume that
+%   voxels that have correlation higher than rmax belong to the same parcel and need to be excluded from the
+%   computation of the GBC. It has to be taken into account that sepecifying rmax does not exclude only the
+%   contiguous voxels but any voxel for which correlation is above threshold.
+%
+%   Computing GBC is computationally expensive. If time is set to true, the time it takes to compute GBC will
+%   be reported. This can inform setting of vstep. vstep defines how many voxels to compute the GBC for in a
+%   single step. Having too small vstep results in more steps, which reduces the inherent paralelization in
+%   computing correlations. Too large vstep can result in chunks that don't fit into memory, which requires use
+%   of memory paging and consequent longer execution times.
+%
+%   The resulting commands variable will be a structure list. It will provide fields 'command' with the type of
+%   GBC computed, 'parameter' with the threshold or limits used in computation of GBC, and 'volumes' with the
+%   information on how many volumes the results of the command will span (e.g. 5 for 5 strength ranges). The
+%   list will be in the same order as the volumes in the resulting image.
+%
+%   EXAMPLE USE
+%   img = img.mri_ComputeGBC('mFz:0.1|pFz:0.1|nFz:0.1', [], roiPFCimage, false, 0.99, false, false, 100000);
+%
+%
+%   (c) Grega Repovš, 2009-11-08
+%
+%   Change log
 %   Grega Repovš, 2009-11-08 - Original version
 %   Grega Repovš, 2010-10-13 - Version with multiple voxels at a time
 %   Grega Repovš, 2013-01-22 - A version that computes strength and proportion ranges not yet fully optimized

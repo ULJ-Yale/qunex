@@ -2,11 +2,35 @@ function [img] = mri_CIFTIEmbedd(img, structures, data)
 
 %function [img] = mri_CIFTIEmbedd(img, structures, data)
 %
-%	Embedds given data in the listed structures. The data must be either a single string and a matrix
-%   or a cell array of strings and matrices.
+%	Embedds given data in the listed CIFTI structures.
 %
+%   INPUT
+%   img          : A CIFTI image.
+%   structures   : Either a single string or a cell array of strings, specifying the CIFTI structures
+%                  for which data is to be embedded in.
+%   data         : Either a single matrix or a cell array of matrices, that hold the data that is to
+%                  be embedded for the given structure.
+%
+%   OUTPUT
+%   img          : An image with the specified data embedded.
+%
+%   USE
+%   The method assumes that the image provided is a standard 32k CIFTI image and enables embedding data
+%   into a desired structure or structures. The stuctures can be specified either using their short
+%   (e.g. CORTEX_LEFT) or long (e.g. CIFTI_STRUCTURE_CORTEX_LEFT) names. For successfull embedding, first, the
+%   structures listed in the structures variable have to be in the same order as matrices passed in the data
+%   variable. Second, the dimensions of the data matrice(s) have to match the structure dimensions in both
+%   number of rows (the number of vertices or voxels in the structure) and number of columns (the number of)
+%   dataframes in the original image. List of structure names is listed in img.cifti.longnames and
+%   img.cifti.shortnames.
+%
+%   EXAMPLE USE
+%   img = img.mri_CIFTIEmbedd({'CORTEX_LEFT', 'CORTEX_RIGHT'}, {cortex_left_data, cortex_right_data});
 %
 %   (c) Grega Repovs, 2014-08-01
+%
+%   Change history
+%   2016-11-25 - Grega Repovs - Updated help information
 %
 
 if nargin < 3

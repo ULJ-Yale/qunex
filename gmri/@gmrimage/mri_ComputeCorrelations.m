@@ -1,17 +1,42 @@
 function [correlations, significances] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
 
-%   function [correlations, significances] = mri_ComputeCorrelations(obj, bdata, verbose)
+%function [correlations, significances] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
 %
-%	Computes whole brain GBC based on specified mask and command string
+%	For each voxel, computes correlation with the provided (behavioral or other) data.
 %
-%	obj     - image
+%   INPUT
+%	obj     - gmrimage object
 %   bdata   - data matrix to compute correlations with
 %   verbose - should it talk a lot [no]
-%   cv      - should it compute covariances instead
+%   cv      - should it compute covariances instead of correlations
 %
-%   Grega Repovš, 2010-03-18
+%   OUTPUT
+%   correlations  - a gmrimage object with computed correlations.
+%   significances - a gmrimage of p-values for each of the correlation.
 %
-%   2014-09-03 - added covariance option
+%   USE
+%   The method computes correlations of each voxel with each column of the bdata matrix.
+%   the bdata matrix can have any number of columns, but has to have the same number of
+%   rows as there are frames in the original image. The first frame of the resulting images
+%   will hold for each voxel the correlation / p-value of its original dataseries across
+%   frames, with the first column of the bdata. In a possible use scenario, each frame of the
+%   original image can hold an activation or functional connectivity seed-map for one subject
+%   while each row of the bdata can hold that person's behavioral data, age, diagnostic values
+%   etc. Each frame of the resulting image will hold a map of correlations between activation
+%   maps and behavioral variables across subjects.
+%
+%   If cv is set to true (or non-zero) the computed and reported values will be covariances
+%   instead of correlations.
+%
+%   EXAMPLE USE
+%   [rimg, pimg] = img.mri_ComputeCorrelations(behdata);
+%
+%   (c) Grega Repovš, 2010-03-18
+%
+%   Change log
+%   2014-09-03 - Grega Repovs - Added covariance option.
+%   2016-11-25 - Grega Repovs - Updated documentation.
+%
 
 if nargin < 4 || isempty(cv),      cv      = false; end
 if nargin < 3 || isempty(verbose), verbose = false; end

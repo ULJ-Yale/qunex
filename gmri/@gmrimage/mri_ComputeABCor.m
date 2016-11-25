@@ -1,15 +1,36 @@
 function [obj] = mri_ComputeABCor(obj, smask, tmask, verbose)
 
 %function [obj] = mri_ComputeABCor(obj, smask, tmask, verbose)
-%	
+%
 %	Compute correlation between each source and target voxels and returns a correlational image.
-%	
-%	obj     - bold data
-%   smask   - mask of source voxels
-%   tamsk   - mask of target voxels (that will form an image)
+%
+%   INPUT
+%	obj     - gmrimage data object.
+%   smask   - Mask of source voxels. It can be a gmriimage file or a matrix.
+%   tamsk   - Mask of target voxels. It can be a gmriimage file or a matrix.
 %   verbose - should it talk a lot [no]
 %
+%   OUTPUT
+%   obj     - a resulting gmrimage data object.
+%
+%   USE
+%   The method enables computing correlations betweeen specific sets of source and target voxels
+%   from the same timeseries image. The resulting image holds correlations of each target voxel
+%   with each source voxel. Specifically, the first frame of the resulting image will hold
+%   correlations of each target voxel with the first source voxel, the second image will hold
+%   correlations of each target voxels withe the second source voxel and so on.
+%
+%   Each mask can be provided either as a row vector the number of voxels in the image coding the
+%   voxels to use with true or more than 0, or as a gmrimage object with image data specifying
+%   the same.
+%
+%   EXAMPLE USE
+%   img = img.mri_ComputeABCor(roiAimage, roiBimage);
+%
 %   Grega Repovš, 2010-08-08
+%
+%   Change history
+%   2016-11-25 - Grega Repovs - Updated documentation.
 %
 
 if nargin < 4
@@ -27,7 +48,7 @@ if verbose, fprintf('\n... setting up data'), end
 
 jmask = smask + tmask;
 
-if ~obj.correlized    
+if ~obj.correlized
     if ~obj.masked
         obj = obj.maskimg(jmask);
     end
@@ -42,7 +63,7 @@ obj = obj.maskimg(tmask);
 
 if verbose, fprintf('\n... computing'), end
 
-obj.data = obj.image2D*src.image2D';
+obj.data = obj.image2D * src.image2D';
 obj.frames = src.voxels;
 
 if verbose, fprintf('\n... done!\n'), end
