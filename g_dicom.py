@@ -134,7 +134,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                 os.remove(p)
         else:
             print "\nPlease remove existing NIfTI files or run the command with 'clean' set to 'yes'. \nAborting processing of DICOM files!\n"
-            exit()
+            return
+            # exit()
 
     # gzipped files
 
@@ -149,7 +150,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                 subprocess.call("gunzip "+g, shell=True) #, stdout=null, stderr=null)
         else:
             print "\nCan not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.\nAborting processing of DICOM files!\n"
-            exit()
+            return
+            # exit()
 
     # get a list of folders
 
