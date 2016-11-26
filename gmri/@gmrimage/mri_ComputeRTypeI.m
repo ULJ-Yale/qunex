@@ -1,14 +1,34 @@
 function [B, Z] = mri_ComputeRTypeI(obj, bdata, verbose)
 
-%   function [B, Z] = mri_ComputeRTypeI(obj, bdata, verbose)
-%	
-%	Computes whole brain regression and significances using Type I SS
-%	
-%	obj     - image
-%   bdata   - data matrix to compute correlations with
-%   verbose - should it talk a lot [no]
+%function [B, Z] = mri_ComputeRTypeI(obj, bdata, verbose)
 %
-%   Grega Repovš, 2010-03-18
+%	Computes whole brain regression and significances using Type I SS
+%
+%   INPUT
+%	obj     - gmrimage image object
+%   bdata   - Data matrix to compute linear regression with and estimate significances.
+%   verbose - Should it talk a lot [no]
+%
+%   OUTPUT
+%   B       - Beta values image for each of the regressors
+%   Z       - Z converted p-values for each of the regressors
+%
+%   USE
+%   The method performs a linear regression of each column of the bdata and returns
+%   Type I SS based significance for each regressor. Specifically, it first computes
+%   intercept and then adds each regressor, comparing each residual SS with the previous
+%   one using an F-test. In essence it provided an estimate of statistical significance of
+%   improvement of fit by adding each of the regressors in order.
+%
+%   It returns a beta image (B) with beta values for each of the regressors when they were
+%   first added to the regression, and Z, a significance map for addition of each of the
+%   regressors in order.
+%
+%   ---
+%   (c) Grega Repovš, 2010-03-18
+%
+%   Change log
+%   2016-11-26 - Grega Repovš - Updated documentation.
 %
 
 if nargin < 3
@@ -50,4 +70,4 @@ end
 
 if verbose, fprintf('\n... done!'), end
 
-     
+

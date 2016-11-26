@@ -1,14 +1,35 @@
 function [B, Z] = mri_ComputeRTypeIII(obj, bdata, verbose)
 
-%   function [B, Z] = mri_ComputeRTypeIII(obj, bdata, verbose)
-%	
-%	Computes whole brain regression and significances using Type III SS
-%	
-%	obj     - image
-%   bdata   - data matrix to compute correlations with
-%   verbose - should it talk a lot [no]
+%function [B, Z] = mri_ComputeRTypeIII(obj, bdata, verbose)
 %
-%   Grega Repovš, 2010-03-18
+%   Computes whole brain regression and significances using Type III SS
+%
+%   INPUT
+%   obj     - gmrimage image object
+%   bdata   - Data matrix to compute linear regression with and estimate significances.
+%   verbose - Should it talk a lot [no]
+%
+%   OUTPUT
+%   B       - Beta values image for each of the regressors
+%   Z       - Z converted p-values for each of the regressors
+%
+%   USE
+%   The method performs a linear regression of each column of the bdata and returns
+%   Type III SS based significance for each regressor. Specifically, it adds an intercept
+%   and first computes a regression and the resulting sum of squares for the full model.
+%   Then it computes regression of models for which it takes out one of the regressors and
+%   using an F-test compares the resulting sums of squares. In essence it provides an
+%   estimate of statistical significance of improvement of fit of the model due to each of
+%   regressors by controlling for all the other regressors
+%
+%   It returns a beta image (B) with beta values for each of the regressors for the full
+%   model, and Z, a significance map of significances of adding the regressor.
+%
+%   ---
+%   (c) Grega Repovš, 2010-03-18
+%
+%   Change log
+%   2016-11-26 - Grega Repovš - Updated documentation.
 %
 
 if nargin < 3
@@ -49,4 +70,4 @@ end
 
 if verbose, fprintf('\n... done!'), end
 
-     
+

@@ -1,11 +1,11 @@
 function [B, res, rvar, Xdof] = mri_GLMFit(obj, X)
 
-%   function [B, rvar, Xdof, res] = mri_GLMFit(obj, X)
-%	
+%function [B, res, rvar, Xdof] = mri_GLMFit(obj, X)
+%
 %	Computes GLM fit to whole brain
-%	
-%   Input parameters
-%	    obj     - image
+%
+%   INPUT
+%	    obj     - gmrimage image object
 %       X       - predictor matrix (frames x predictors)
 %
 %   Outputs
@@ -13,8 +13,26 @@ function [B, res, rvar, Xdof] = mri_GLMFit(obj, X)
 %       rvar    - variance of the residual
 %       Xdof    - model degrees of freedom
 %       res     - residual image
-%   
-%   Grega Repovš, 2010-03-18
+%
+%   USE
+%   The method computes a linear regression between dataseries of each voxel and all the columns
+%   of the X regressor matrix. The image can be a series of activation values for a set of subjects,
+%   and columns of X behavioral, demographic or other variables. X can have whatever number of columns,
+%   but the number of rows need to match the number of frames in the image.
+%
+%   The results in an image of beta values for each voxel of the image, each frame holding the beta value for
+%   each of the columns of the X matrix. res is an image holding the residual remaining after regression.
+%   Xdof holds the model's degrees of freedom (ncols - nrows). rvar holds the variance image, the sum of squares
+%   of the residuals divided by the model degrees of freedom.
+%
+%   EXAMPLE USE
+%   [B, res, rvar, Xdof] = img.mri_GLMFit2(behmatrix);
+%
+%   ---
+%   (c) Grega Repovš, 2010-03-18
+%
+%   Change log
+%   2016-11-26 - Grega Repovš - Updated documentation
 %
 
 % ---- check input
@@ -43,7 +61,7 @@ B.data(good,:) = ((X'*X)\X')*obj.data; % was (INV(X'*X)*X')*obj.data;
 if nargout > 1
     res  = obj;
     res.data = (obj.data - X*B.data(good,:))';
-    
+
     if nargout > 2
         Xdof = size(X,1) - size(X,2);
         rvar = obj.zeroframes(1);
