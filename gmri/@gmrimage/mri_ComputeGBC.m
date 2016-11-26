@@ -86,7 +86,7 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rm
 %   EXAMPLE USE
 %   img = img.mri_ComputeGBC('mFz:0.1|pFz:0.1|nFz:0.1', [], roiPFCimage, false, 0.99, false, false, 100000);
 %
-%
+%   ---
 %   (c) Grega Repovš, 2009-11-08
 %
 %   Change log
@@ -95,6 +95,7 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rm
 %   Grega Repovš, 2013-01-22 - A version that computes strength and proportion ranges not yet fully optimized
 %   Grega Repovš, 2013-03-11 - Added an option to work with covariances instead of correlations
 %   Grega Repovš, 2016-02-08 - Added an option to specify how many voxels to work with in a single step
+%   Grega Repovš, 2016-11-26 - Updated documentation.
 %
 
 if nargin < 9 || isempty(vstep), vstep = 1200; end

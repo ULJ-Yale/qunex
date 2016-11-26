@@ -4,34 +4,59 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %
 %	Computes GBC maps for individuals as well as group maps.
 %
+%   INPUT
 %	flist   	- conc-like style list of subject image files or conc files:
 %                  subject id:<subject_id>
 %                  roi:<path to the individual's ROI file>
 %                  file:<path to bold files - one per line>
 %   command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, aFzp, ...
 %                  <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
-%	mask		- an array mask defining which frames to use (1) and which not (0)
-%	verbose		- report what is going on
-%   target      - array of ROI codes that define target ROI [default: FreeSurfer cortex codes]
-%	targetf		- target folder for results
-%   rsmooth     - radius for smoothing (no smoothing if empty)
-%   rdilate     - radius for dilating mask (no dilation if empty)
-%   ignore      - the column in *_scrub.txt file that matches bold file to be used for ignore mask []
-%   time        - whether to print timing information
-%   cv          - whether to work with covariances instead of correlations [false]
-%   vstep       - how many voxels to process in a step [1200]
+%	mask		- An array mask defining which frames to use (1) and which not (0). All if empty.
+%	verbose		- Report what is going on. [false]
+%   target      - Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]
+%	targetf		- Target folder for results.
+%   rsmooth     - Radius for smoothing (no smoothing if empty). []
+%   rdilate     - Radius for dilating mask (no dilation if empty). []
+%   ignore      - The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. []
+%   time        - Whether to print timing information. [false]
+%   cv          - Whether to compute covariances instead of correlations. [false]
+%   vstep       - How many voxels to process in a single step. [1200]
 %
-% 	Created by Grega Repovš on 2009-11-04.
-% 	Modified by Grega Repovš on 2010-11-16.
-% 	Modified by Grega Repovs on 2010-11-22.
-% 	Modified by Grega Repovs on 2010-12-01.
-%   - added in script smoothing and dilation
-%   Modified by Grega Repovs on 2014-01-22
-%   - took care of commands that return mulitiple volumes (e.g. mFzp)
-%   Modified by Grega Repovš, 2016-02-08
-%   - Added an option to specify how many voxels to work with in a single step
+%   USE
+%   This function is a wrapper for gmrimage.mri_ComputeGBC method. It enables computing GBC for a list of subjects.
+%   flist specifies the subject identities, bold files to compute GBC on and roi to use for specifying the volume mask,
+%   voxels over which to compute GBC. mask specifies what frames of an image to work on. target specifies the ROI codes
+%   that define ROI from the subject specific ROI files over which to compute GBC for. Usually the subject specific
+%   roi file would be that subject's FreeSurfer aseg or aseg+aparc segmentation. And if no target is specified all
+%   gray matter voxels are used for computing GBC.
 %
-% 	Copyright (c) 2009. All rights reserved.
+%   What specifically gets computed is defined in the command string. For specifics see help for the gmrimage.mri_ComputeGBC
+%   method.
+%
+%   In addition, if rsmoot and rdilate are specified, each subjects bold image will be 3D smoothed with the specifed FWHM
+%   in voxels. As subjects gray matter masks differ and do not overlap precisely, rdilate will dilate the borders with the
+%   provided number of voxels. Here it is important to note tha values from the expanded mask will not be used, rather the
+%   values from the valid mask will be smeared into the dilated area.
+%
+%   The results will be saved in the targetf folder. The results of each command will be saved in a separate file holding
+%   the computed GBC values for all the subjects. The files will be named with the root of the flist with _gbc_ and code
+%   for the specific gbc computed added.
+%
+%   For more information see documentation for gmrimage.mri_ComputeGBC method.
+%
+%   ---
+%   (c) Grega Repovš on 2009-11-04.
+%
+%   Change log
+% 	2009-11-04 - Created by Grega Repovš.
+% 	2010-11-16 - Modified by Grega Repovš.
+% 	2010-11-22 - Modified by Grega Repovš.
+% 	2010-12-01 - Modified by Grega Repovš - added in smoothing and dilation of images.
+%   2014-01-22 - Modified by Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
+%   2016-02-08 - Modified by Grega Repovš - added an option to specify how many voxels to work with in a single step.
+%   2016-11-26 - Mofidied by Grega Repovš - updated documentation.
+%
+
 
 
 fprintf('\n\nStarting ...');

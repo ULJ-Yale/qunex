@@ -33,19 +33,41 @@ function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose,
 %       weights         - image file with weights to use []
 %       criterium       - threshold or number of voxels to extract []
 %
-%   --- History
+%   USE
+%   This is a wrapper function for computing GBC for specified ROI across the specified number of
+%   distance bands. The function goes through a list of subjects specified by flist file and runs
+%   mri_ComputeGBCd method on bold files listed for each subject. ROI to compute GBC for are specified
+%   in roi and roicodes parameters, whereas the mask of what voxels to compute GBC over is specified
+%   by target parameter. The values should match roicodes used in subject specific roi file. Usually
+%   this would be a freesurfer segmentation image and if no target values are specified all the gray
+%   matter related values present in aseg files are used.
 %
-% 	Created by Grega Repovš on 2009-11-04.
-% 	Modified by Grega Repovš on 2010-11-16.
-% 	Modified by Grega Repovs on 2010-11-22.
-% 	Modified by Grega Repovs on 2010-12-01.
-%   - added in script smoothing and dilation
-%   Modified by Grega Repovs on 2014-01-22
-%   - took care of commands that return mulitiple volumes (e.g. mFzp)
-%   Modified by Grega Repovs on 2014-02-16
-%   - forked from fcComputeGBC3 to do distance based bands
+%   The results are aggregated and stored in a matlab data file which holds a data structure with the
+%   following fields:
 %
-% 	Copyright (c) 2009. All rights reserved.
+%   — data.gbcd(s).gbc     ... resulting GBC matrix for each subject
+%   — data.gbcd(s).roiinfo ... names of ROI for which the GBC was computed for
+%   — data.gbcd(s).rdata   ... inforation on center mass and distance bands for each of the ROI
+%   — data.roifile         ... the file used to defined ROI
+%   — data.rcodes          ... codes used to identify ROI
+%   - data.subjects        ... cell array of subject ids
+%
+%   targetf specifies the folder in which the results will be saved. The file will be named using the
+%   root of the flist with '_GBCd.mat' added to it.
+%
+%   For more specific information on what is computed, see help for gmrimage method mri_ComputeGBCd
+%
+%   ---
+%   (c) Created by Grega Repovš on 2009-11-04.
+%
+%   Change log
+% 	2009-11-04 - Created by Grega Repovš
+% 	2010-11-16 - Modified by Grega Repovš
+% 	2010-11-22 - Modified by Grega Repovs
+% 	2010-12-01 - Modified by Grega Repovs - added in script for smoothing and dilation
+%   2014-01-22 - Modified by Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
+%   2014-02-16 - Modified by Grega Repovs - forked from fcComputeGBC3 to do distance based bands
+%
 
 
 fprintf('\n\nStarting ...');

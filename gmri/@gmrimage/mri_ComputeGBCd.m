@@ -2,9 +2,9 @@ function [results, roiinfo, rdata] = mri_ComputeGBCd(obj, command, roi, rcodes, 
 
 %function [results, roiinfo, rdata] = mri_ComputeGBCd(obj, command, roi, rcodes, nbands, fmask, mask, verbose, rmax, time, method, weights, criterium)
 %
-%	Computes whole brain GBC based on specified mask and command string
+%	Computes GBC averages for each specified ROI for n bands defined as distance from ROI.
 %
-%   Input
+%   INPUT
 %	    obj     - image
 %       command - string describing GBC to compute (pipe separated)
 %                   > mFz:t  ... computes mean Fz value across all voxels (over threshold t)
@@ -15,25 +15,52 @@ function [results, roiinfo, rdata] = mri_ComputeGBCd(obj, command, roi, rcodes, 
 %                   > pD:t   ... computes proportion of voxels with positive r over t
 %                   > nD:t   ... computes proportion of voxels with negative r below t
 %
-%       fmask   - frame mask to use (passed to sliceframes)
-%       mask    - mask to use to define what voxels to include in GBC
-%       verbose - should it talk a lot [no]
-%       rmax    - the r value above which the correlations are considered to be of the same functional ROI
-%       time    - whether to print timing information
-%       method  - method name [mean]
-%          'mean'       - average value of the ROI
-%          'pca'        - first eigenvariate of the ROI
-%          'threshold'  - average of all voxels above threshold
-%          'maxn'       - average of highest n voxels
-%          'weighted'   - weighted average across ROI voxels
-%       weights         - image file with weights to use []
-%       criterium       - threshold or number of voxels to extract []
+%       roi     - Roi names file, image name or a vector the size of image.
+%       rcodes  - Codes of regions from roi file to compute GBC for (all if not provided or left empty).
+%       nbands  - Number of distance bands to compute GBC for. [10]
+%       fmask   - Vector specifying what frames to use (nonzero, true) and which not (zero, false). If empty, all are used.
+%       mask    - Mask to define what voxels to include in GBC.
+%       verbose - Should it talk a lot [no]
+%       rmax    - The r value above which the correlations are considered to be of the same functional ROI. []
+%       time    - Whether to print timing information. [false]
+%       method  - Name of the method ethod name. [mean]
+%          'mean'       - Average value of the ROI.
+%          'pca'        - First eigenvariate of the ROI.
+%          'threshold'  - Average of all voxels above threshold.
+%          'maxn'       - Average of highest n voxels.
+%          'weighted'   - Weighted average across ROI voxels.
+%       weights         - Image file with weights to use in ROI time series extraction. []
+%       criterium       - Threshold or number of voxels to extract []
 %
+%   USE
+%   The method takes each specified ROI—specified with roi and rcodes paramtes. It extracts its representative timecourse using
+%   the specified method (mean / pca / threshold / maxn / weighted), and then computes its GBC (using the specified GBC method)
+%   with each of the bands of voxels specified by distance from the ROI center mass.
+%
+%   For instance the following call:
+%
+%   [results, roiinfo, rdata] = img.mri_ComputeCBCd('mFz:0.1|pFz:0.1', 'dlpfc.names', [1, 2, 3], 10, [], 'graymatter.names', false, [], false, 'pca');
+%
+%   Would for each of the three dlpfc regions defined in the dlpfc.names file extract the first eigenvariate of its timeseries. It would sparate
+%   voxels specified in graymatter.names file into 10 bands defined by their distance from the roi center mass, compute correlation with all the
+%   voxels in the band, ignore those with correlation less than ansolute 0.1 and compute mean Fz across all of them them as well as the mean across
+%   only voxels with positive correlations.
+%
+%   The resuls woud be returned in a 3D results matrix, the rows being each of the 10 bands, the columns each of the ROI and the depth (3rd dimension)
+%   each of the GBC commands. roiinfo would hold the names of the ROI used in cell matrix of strings. rdata is a list of fields holding x, y and z
+%   coordinates of center mass (.rx, .ry, and .rz fields respectively), and a vector the specifies the membership of the distance bands for all the
+%   voxels GBC was computed on (.d field).
+%
+%   ---
+%   (c) Grega Repovš, 2009-11-08
+%
+%   Change log
 %   Grega Repovš, 2009-11-08 - Original version
 %   Grega Repovš, 2010-10-13 - Version with multiple voxels at a time
 %   Grega Repovš, 2014-01-22 - A version that computes strength and proportion ranges not yet fully optimized
 %   Grega Repovš, 2014-02-04 - Forked and adopted version to support computation of GBC based on distance
 %
+
 
 if nargin < 13, criterium = []; end
 if nargin < 12, weights = [];   end
