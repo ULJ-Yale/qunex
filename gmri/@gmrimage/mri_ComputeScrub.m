@@ -2,25 +2,70 @@ function [img] = mri_ComputeScrub(img, comm)
 
 %function [img] = mri_ComputeScrub(img, comm)
 %
-%   Scrubs image according to the command
+%   Method that computes image scrubbing parameters.
 %
-%       input:
-%           img   - mrimage object
-%           comm  - the description of how to compute scrubbing - a string in 'param:value|param:value' format
-%                   parameters:
-%                   - radius   : head radius in mm [50]
-%                   - fdt      : frame displacement threshold
-%                   - dvarsmt  : dvarsm threshold
-%                   - dvarsmet : dvarsme threshold
-%                   - after    : how many frames after the bad one to reject
-%                   - before   : how many frames before the bad one to reject
-%                   - reject   : which criteria to use for rejection (mov, dvars, dvarsme, idvars, udvars ...)
-%       output:
-%           img  - image with scrubbing data included
+%   INPUT:
+%       img   - gmrimage image object
+%       comm  - the description of how to compute scrubbing - a string in 'param:value|param:value' format
+%               parameters:
+%               - radius   : head radius in mm [50]
+%               - fdt      : frame displacement threshold [0.5]
+%               - dvarsmt  : dvarsm threshold [3.0]
+%               - dvarsmet : dvarsme threshold [1.6]
+%               - after    : how many frames after the bad one to reject [0]
+%               - before   : how many frames before the bad one to reject [0]
+%               - reject   : which criteria to use for rejection [udvarsme]
+%                            - mov      ... frame displacement threshold (fdt) is exceeded
+%                            - dvars    ... root mean squared error (RMSE) threshold (dvarsmt) is exceeded
+%                            - dvarsme  ... median normalised RMSE (dvarsmet) threshold is exceeded
+%                            - idvars   ... both fdt and dvarsmt are exceeded (i for intersection)
+%                            - uvars    ... either fdt or dvarsmt are exceeded (u for union)
+%                            - idvarsme ... both fdt and dvarsmet are exceeded
+%                            - udvarsme ... either fdt or udvarsmet are exceeded
+%   OUTPUT
+%       img  - gmrimage image object with scrubbing data embedded:
+%              ... img.scrub_hdr - a cell array of strings listing variables computed
+%              ... img.scrub     - a nframes x nvariables matrix where 0 denotes threshold was not exceeded,
+%                                  1 threshold was exceeded
+%              ... img.use       - a vector denoting for each image frame whether it should be used (1) on not (0)
+%                                  based on whether the specified threshold / condition was exceeded or not
 %
-%       Grega Repovs - 2013-10-20
+%   USE
+%   The method is used on an gmrimage img object that has both movement parameters data (img.mov) and
+%   per frame statistics data (img.fstats) already computed and present. Movement data is read automatically
+%   when the image is loaded, if the data is present in the relevant folder (images/functional/movement).
+%   Frame statistics data is also read if present. It is computed and saved using g_ComputeBOLDStats function
+%   that makes use of mri_StatsTime method.
+%
+%   The function is meant to identify frames with artefacts that should be excluded in functional connectivity
+%   analyses. It makes use of three statistics. fdt is mean frame displacement. It estimates the mean distance
+%   that cortext has moved due to head movement. dvars is computed as root of mean sqared differences (RMSD)
+%   between intensities of each voxel in the current and previous frame. It is normalised by the mean frame
+%   intensity. As dvars can differ significantly depending on the SNR, image geometry etc, a median normalised
+%   dvars measure can be computed. This measure assumes that artefacts are relatively rare and estimates the
+%   baseline dvars as median across the timecourse. dvars at each time point is then divided by the median
+%   resulting in a measure in which frames with baseline frame to frame differences in intensities have a value
+%   round 1 and the rest are marked with the multiple of baseline. This measure works well even with different
+%   base SNR and with different image geometries.
+%
+%   In marking the bad frames any of the three methods can be used, as well as their combination. For instance
+%   a frame can be marked bad if it exceeds the threshold for either frame displacement or dvarsme (udvarsme).
+%   A more conservative criterium would be a requirement that it exceeds both (idvarsme).
+%
+%   If desired, a number of frames before or after the marked frame can also be marked for exclusion.
+%
+%   The image is not scrubbed, only the scrubbing parameters are computed and the chosen criterium is used to
+%   create the "img.use" mask that in other functions and methods defines what frames to use or not.
 %
 %
+% ---
+%   (c) Grega Repovs - 2013-10-20
+%
+%   Change log
+%   2016-11-29 - Grega Repovs - Updated documentation
+%
+%   ToDo
+%   - Add computation of frame statistics if they are not already present.
 %
 
 

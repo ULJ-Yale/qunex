@@ -1,13 +1,13 @@
 function [ifh] = mri_ReadIFH(img, file)
 
-%	function [ifh] = mri_ReadIFH(img, file)
+%function [ifh] = mri_ReadIFH(img, file)
 %
 %	Reads .ifh header from a 4dfp file
 %
 %   Requires:
 %       img  - gmrimage object
 %       file - filename
-%	
+%
 %   Grega Repovs 2009-11-19
 %
 

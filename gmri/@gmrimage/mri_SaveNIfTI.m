@@ -1,6 +1,6 @@
 function [res] = mri_SaveNIfTI(img, filename, datatype, verbose)
 
-%   function [res] = mri_SaveNIfTI(obj, filename, verbose)
+%   function [res] = mri_SaveNIfTI(obj, filename, datatype, verbose)
 %
 %   Saves a NIfTI image based on the existing header information.
 %

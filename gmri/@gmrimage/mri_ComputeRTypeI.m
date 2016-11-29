@@ -17,7 +17,7 @@ function [B, Z] = mri_ComputeRTypeI(obj, bdata, verbose)
 %   The method performs a linear regression of each column of the bdata and returns
 %   Type I SS based significance for each regressor. Specifically, it first computes
 %   intercept and then adds each regressor, comparing each residual SS with the previous
-%   one using an F-test. In essence it provided an estimate of statistical significance of
+%   one using an F-test. In essence it provides an estimate of statistical significance of
 %   improvement of fit by adding each of the regressors in order.
 %
 %   It returns a beta image (B) with beta values for each of the regressors when they were
