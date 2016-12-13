@@ -92,6 +92,7 @@
 # * FIX ICA
 # * gCode (all repositories)
 # * PALM
+# * Julia
 # * Python (version 2.7 or above)
 # * AFNI
 # * Gradunwarp
@@ -164,80 +165,82 @@ weho() {
 
 show_usage() {
   				echo ""
-  				cyaneho "	-------- general help for analysis pipeline: --------"
+  				cyaneho "	-------- General help for Analysis Pipeline: --------"
   				echo ""
-  				weho "		* interactive usage:"
+  				weho "		* Interactive usage:"
   				echo "		ap <function_name> <study_folder> '<list of cases>' [options]"
   				echo ""
-  				weho "		* flagged usage:"
+  				weho "		* Flagged usage:"
   				echo "		ap --function=<function_name> --studyfolder=<study_folder> --subjects='<list of cases>' [options]"  				 
   				echo ""
-  				weho "		* interactive example (no flags):"
-  				echo "		ap dicomsort /some/path/to/study/subjects '100001 100002'"
+  				weho "		* Interactive example (no flags):"
+  				echo "		ap dicomsort /Some/path/to/study/subjects '100001 100002'"
   				echo ""
-  				weho "		* flagged example (no interactive terminal input):"
-  				echo "		ap --function=dicomsort --studyfolder=/some/path/to/study/subjects --subjects='100001,100002'"
+  				weho "		* Flagged example (no interactive terminal input):"
+  				echo "		ap --function=dicomsort --studyfolder=/Some/path/to/study/subjects --subjects='100001,100002'"
   				echo ""
-  				weho "		* function-specific help and usage:"
+  				weho "		* Function-specific help and usage:"
   				echo "		ap dicomsort"
   				echo ""
-  				cyaneho "	-------- list of specific supported function: --------"
+  				cyaneho "	-------- List of specific supported function: --------"
   				echo ""  				
-  				weho "		--- data organization ---"
-  				echo "		dicomsort			sort dicoms and setup nifti files from dicoms"
-  				echo "		dicom2nii			convert dicoms to nifti files"
-  				echo "		setuphcp 			setup data structure for hcp processing"
-  				echo "		hpcsync 			sync with yale hpc cluster(s) for original hcp pipelines (studyfolder/$ubject)"
-  				echo "		hpcsync2			sync with yale hpc cluster(s) for dofcmri integration (studyfolder/subject/hcp/subject)"
-  				echo "		awshcpsync			sync hcp data from aws s3 cloud"
+  				weho "		--- Data Organization ---"
+  				echo "		dicomsort			SORT DICOMs and SETUP NIFTI FILES FROM DICOMS"
+  				echo "		dicom2nii			CONVERT DICOMs TO NIFTI FILES"
+  				echo "		setuphcp 			SETUP DATA STRUCTURE FOR HCP PROCESSING"
+  				echo "		hpcsync 			SYNC WITH YALE HPC CLUSTER(S) FOR ORIGINAL HCP PIPELINES (StudyFolder/$ubject)"
+  				echo "		hpcsync2			SYNC WITH YALE HPC CLUSTER(S) FOR dofcMRI INTEGRATION (StudyFolder/Subject/hcp/Subject)"
+  				echo "		awshcpsync			SYNC HCP DATA FROM AWS S3 CLOUD"
   				echo ""  				
-  				weho "		--- hcp pipeline ---"
-  				echo "		hpc1				prefreesurfer component of the hcp pipeline (cluster aware)"
-  				echo "		hpc2				freesurfer component of the hcp pipeline (cluster aware)"
-  				echo "		hpc3				postfreesurfer component of the hcp pipeline (cluster aware)"
-  				echo "		hpc4				volume component of the hcp pipeline (cluster aware)"
-  				echo "		hpc5				surface component of the hcp pipeline (cluster aware)"
-  				echo "		hpcd				diffusion component of the hcp pipeline (cluster aware)"
-  				echo "		hcpdlegacy			diffusion processing that is hcp compliant for legacy data with standard fieldmaps (cluster aware)"
+  				weho "		--- HCP Pipeline ---"
+  				echo "		hpc1				PREFREESURFER COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
+  				echo "		hpc2				FREESURFER COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
+  				echo "		hpc3				POSTFREESURFER COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
+  				echo "		hpc4				VOLUME COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
+  				echo "		hpc5				SURFACE COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
+  				echo "		hpcd				DIFFUSION COMPONENT OF THE HCP PIPELINE (CLUSTER AWARE)"
+  				echo "		hcpdlegacy			DIFFUSION PROCESSING THAT IS HCP COMPLIANT FOR LEGACY DATA WITH STANDARD FIELDMAPS (CLUSTER AWARE)"
   				echo ""  				
-  				weho "		--- generating lists & qc functions ---"
-  				echo "		setuplist	 		setup list for fcmri analysis / preprocessing or volume snr calculations"
-  				echo "		nii4dfpconvert 			convert nifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "		cifti4dfpconvert 		convert cifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "		ciftismooth 			smooth & convert cifti bold data to 4dpf format for fild analyses"
-  				echo "		fidlconc 			setup conc & fidl even files for glm analyses"
-  				echo "		qcpreproc			run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
+  				weho "		--- Generating Lists & QC Functions ---"
+  				echo "		setuplist	 		SETUP LIST FOR FCMRI ANALYSIS / PREPROCESSING or VOLUME SNR CALCULATIONS"
+  				echo "		qaimages	 		RUN VISUAL QC FOR T1w and BOLD IMAGES USING JULIA	`reho "[ -- deprecated --]"`"
+  				echo "		nii4dfpconvert 			CONVERT NIFTI HCP-PROCESSED BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
+  				echo "		cifti4dfpconvert 		CONVERT CIFTI HCP-PROCESSED BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
+  				echo "		ciftismooth 			SMOOTH & CONVERT CIFTI BOLD DATA TO 4DPF FORMAT FOR FILD ANALYSES"
+  				echo "		fidlconc 			SETUP CONC & FIDL EVEN FILES FOR GLM ANALYSES"
+  				echo "		qcpreproc			RUN VISUAL QC FOR A GIVEN MODALITY (T1w,Tw2,myelin,BOLD,DWI)"
 
   				echo ""  				
-  				weho "		--- dwi analyses & probabilistic tractography functions ---"
-  				echo "		fsldtifit 			run fsl dtifit (cluster aware)"
-  				echo "		fslbedpostxgpu 			run fsl bedpostx w/gpu (cluster aware)"
-  				echo "		isolatesubcortexrois 		isolate subject-specific subcortical rois for tractography"
-  				echo "		isolatethalamusfslnuclei 	isolate fsl thalamic rois for tractography"
-  				echo "		probtracksubcortex 		run fsl probtrackx across subcortical nuclei (cpu)"
-  				echo "		pretractography			generates space for cortical dense connectomes (cluster aware)"
-  				echo "		pretractographydense		generates space for whole-brain dense connectomes (cluster aware)"
-  				echo "		probtrackxgpucortex		run fsl probtrackx across cortical mesh for dense connectomes w/gpu (cluster aware)"
-  				echo "		makedensecortex			generate dense cortical connectomes (cluster aware)"
-  				echo "		probtrackxgpudense		run fsl probtrackx for whole brain & generates dense whole-brain connectomes (cluster aware)"
+  				weho "		--- DWI Analyses & Probabilistic Tractography Functions ---"
+  				echo "		fsldtifit 			RUN FSL DTIFIT (CLUSTER AWARE)"
+  				echo "		fslbedpostxgpu 			RUN FSL BEDPOSTX w/GPU (CLUSTER AWARE)"
+  				echo "		isolatesubcortexrois 		ISOLATE SUBJECT-SPECIFIC SUBCORTICAL ROIs FOR TRACTOGRAPHY"
+  				echo "		isolatethalamusfslnuclei 	ISOLATE FSL THALAMIC ROIs FOR TRACTOGRAPHY"
+  				echo "		probtracksubcortex 		RUN FSL PROBTRACKX ACROSS SUBCORTICAL NUCLEI (CPU)"
+  				echo "		pretractography			GENERATES SPACE FOR CORTICAL DENSE CONNECTOMES (CLUSTER AWARE)"
+  				echo "		pretractographydense		GENERATES SPACE FOR WHOLE-BRAIN DENSE CONNECTOMES (CLUSTER AWARE)"
+  				echo "		probtrackxgpucortex		RUN FSL PROBTRACKX ACROSS CORTICAL MESH FOR DENSE CONNECTOMES w/GPU (CLUSTER AWARE)"
+  				echo "		makedensecortex			GENERATE DENSE CORTICAL CONNECTOMES (CLUSTER AWARE)"
+  				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (CLUSTER AWARE)"
   				echo ""  				
-  				weho "		--- misc analyses ---"  				
-  				echo "		boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
-  				echo "		dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
-  				echo "		printmatrix			extract parcellated matrix for bold data via yeo 17 network solutions"
-  				echo "		boldmergenifti			merge specified nii bold timeseries"
-  				echo "		boldmergecifti			merge specified citi bold timeseries"
-  				echo "		bolddense			compute bold dense connectome (needs >30gb ram per bold)"
-  				echo "		palmanalysis			run palm and extract data from rois (cluster aware)"
+  				weho "		--- Misc Analyses ---"  				
+  				echo "		ciftiparcellate			PARCELLATE BOLD, DWI, MYELIN or THICKNESS DATA VIA 7 & 17 NETWORK SOLUTIONS	`reho "[ -- deprecated --]"`"
+  				echo "		boldparcellation		PARCELLATE BOLD DATA and GENERATE PCONN FILES VIA USER-SPECIFIED PARCELLATION"
+  				echo "		dwidenseparcellation		PARCELLATE DENSE DWI TRACTOGRAPHY DATA VIA USER-SPECIFIED PARCELLATION"
+  				echo "		printmatrix			EXTRACT PARCELLATED MATRIX FOR BOLD DATA VIA YEO 17 NETWORK SOLUTIONS"
+  				echo "		boldmergenifti			MERGE SPECIFIED NII BOLD TIMESERIES"
+  				echo "		boldmergecifti			MERGE SPECIFIED CITI BOLD TIMESERIES"
+  				echo "		bolddense			COMPUTE BOLD DENSE CONNECTOME (NEEDS >30GB RAM PER BOLD)"
+  				echo "		palmanalysis			RUN PALM AND EXTRACT DATA FROM ROIs (CLUSTER AWARE)"
   				echo ""  				
-  				weho "		--- fix ica de-noising ---"    				
-  				echo "		fixica				run fix ica de-noising on a given volume"
-  				echo "		postfix				generates wb_view scene files in each subjects directory for fix ica results"
-  				echo "		boldhardlinkfixica		setup hard links for single run fix ica results"  				
-  				echo "		fixicainsertmean		re-insert mean image back into mapped fix ica data (needed prior to dofcmrip calls)"
-  				echo "		fixicaremovemean		remove mean image from mapped fix ica data"
-  				echo "		boldseparateciftifixica		separate specified bold timeseries (results from fix ica - use if bolds merged)"
-  				echo "		boldhardlinkfixicamerged	setup hard links for merged fix ica results (use if bolds merged)"  				
+  				weho "		--- FIX ICA De-noising ---"    				
+  				echo "		fixica				RUN FIX ICA DE-NOISING ON A GIVEN VOLUME"
+  				echo "		postfix				GENERATES WB_VIEW SCENE FILES IN EACH SUBJECTS DIRECTORY FOR FIX ICA RESULTS"
+  				echo "		boldhardlinkfixica		SETUP HARD LINKS FOR SINGLE RUN FIX ICA RESULTS"  				
+  				echo "		fixicainsertmean		RE-INSERT MEAN IMAGE BACK INTO MAPPED FIX ICA DATA (NEEDED PRIOR TO dofcMRIp calls)"
+  				echo "		fixicaremovemean		REMOVE MEAN IMAGE FROM MAPPED FIX ICA DATA"
+  				echo "		boldseparateciftifixica		SEPARATE SPECIFIED BOLD TIMESERIES (RESULTS FROM FIX ICA - USE IF BOLDs MERGED)"
+  				echo "		boldhardlinkfixicamerged	SETUP HARD LINKS FOR MERGED FIX ICA RESULTS (USE IF BOLDs MERGED)"  				
   				echo ""
 }
 
@@ -270,7 +273,7 @@ show_usage_dicomsort() {
   				echo "This function expects a set of raw DICOMs in <study_folder>/<case>/inbox."
   				echo "DICOMs are organized, gzipped and converted to NIFTI format for additional processing."
   				echo ""
-    			echo "-- Usage for dicomsort"
+    			echo "-- USAGE FOR dicomsort"
     			echo ""
 				echo "* Example with interactive terminal:"
 				echo "AP dicomsort <study_folder> '<list of cases>'"
@@ -301,7 +304,7 @@ show_usage_dicom2nii() {
     			echo ""
   				echo "This function converts DICOMs to NIFTI format for additional processing."
   				echo ""
-    			echo "-- Usage for dicom2nii"
+    			echo "-- USAGE FOR dicom2nii"
     			echo ""
 				echo "* Example with interactive terminal:"
 				echo "AP dicom2nii <study_folder> '<list of cases>'"
@@ -334,7 +337,7 @@ show_usage_setuphcp() {
   				echo "This function generates the Human Connectome Project folder structure for preprocessing."
   				echo "It should be executed after proper dicomsort and subject.txt file has been vetted."
   				echo ""
-    			echo "-- Usage for setuphcp"
+    			echo "-- USAGE FOR setuphcp"
     			echo ""
 				echo "* Example with interactive terminal:"
 				echo "AP dicom2nii <study_folder> '<list of cases>'"
@@ -384,7 +387,7 @@ show_usage_setuplist() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "This function generates list files for functional connectivity analyses."
+    			echo "USAGE INFO PENDING..."
     			echo ""
 }
 
@@ -449,7 +452,7 @@ show_usage_nii4dfpconvert() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "This function converts NII files to legacy 4dfp file format used by WashU NIL pipelines."
+    			echo "USAGE INFO PENDING..."
     			echo ""
 }
 
@@ -493,7 +496,7 @@ show_usage_cifti4dfpconvert() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "Function for converting a CIFTI file to a legacy 4dfp 4dfp file format used by WashU NIL pipelines for a given BOLD file."
+    			echo "USAGE INFO PENDING..."
     			echo ""
 }
 
@@ -544,7 +547,7 @@ show_usage_ciftismooth() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "Function for CIFTI smoothing."
+    			echo "USAGE INFO PENDING..."
     			echo ""
 }
 
@@ -591,7 +594,7 @@ show_usage_hpcsync2() {
   				echo "It explicitly preserves the Human Connectome Project folder structure for preprocessing:"
   				echo "    <study_folder>/<case>/hcp/<case>"
   				echo ""
-    			echo "-- Usage for hpcsync2"
+    			echo "-- USAGE FOR hpcsync2"
     			echo ""
 				echo "* Example with interactive terminal:"
 				echo "AP hpcsync2 <study_folder> '<list of cases>'"
@@ -663,7 +666,7 @@ show_usage_isolatesubcortexrois() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "Function for isolating subcortical ROIs based on individual anatomy to be used in probabilistic tractography."
+    			echo "USAGE INFO PENDING..."
     			echo ""
 }
 
@@ -876,6 +879,854 @@ show_usage_probtracksubcortex() {
     			echo ""
   				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (CLUSTER AWARE)"
     			echo ""
+}
+
+# ------------------------------------------------------------------------------------------------------
+#  ciftiparcellate - Generate parcellated data across modalities (DWI, BOLD, MYELIN, THICKNESS)
+# ------------------------------------------------------------------------------------------------------
+	
+
+ciftiparcellate() {
+
+			# David's Yeo 17 network file: "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii
+
+			# check order for labels 
+			# wb_command -cifti-label-export-table "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii 1 "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.txt
+
+			# first separate parcellation for L and R hemis
+			#wb_command -cifti-separate Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN -label CORTEX_LEFT Yeo2011_17Networks.L.50sqmm_dilate3.0.32k_fs_LR.label.gii -roi Yeo_L_17Networks.func.gii
+			#wb_command -cifti-separate Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN -label CORTEX_RIGHT Yeo2011_17Networks.R.50sqmm_dilate3.0.32k_fs_LR.label.gii -roi Yeo_R_17Networks.func.gii
+			#wb_command -cifti-create-label Yeo2011_17Networks.L.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii -left-label Yeo2011_17Networks.L.50sqmm_dilate3.0.32k_fs_LR.label.gii -roi-left Yeo_L_17Networks.func.gii
+			#wb_command -cifti-create-label Yeo2011_17Networks.R.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii -right-label Yeo2011_17Networks.R.50sqmm_dilate3.0.32k_fs_LR.label.gii -roi-right Yeo_R_17Networks.func.gii
+    		
+    		
+    		# Lisa's Yeo 7 & 17 network file: /Volumes/syn1/Studies/Anticevic.DP5/fcMRI/roi/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum/Yeo_Cortex
+
+			#wb_command -cifti-separate rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN -label CORTEX_LEFT rsn_yeo_cortex_7Networks_islands_L.32k_fs_LR.label.gii -roi rsn_yeo_cortex_7Networks_islands_L.func.gii
+			#wb_command -cifti-separate rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN -label CORTEX_RIGHT rsn_yeo_cortex_7Networks_islands_R.32k_fs_LR.label.gii -roi rsn_yeo_cortex_7Networks_islands_R.func.gii
+			#wb_command -cifti-create-label rsn_yeo_cortex_7Networks_islands_L.dlabel.nii -left-label rsn_yeo_cortex_7Networks_islands_L.32k_fs_LR.label.gii -roi-left rsn_yeo_cortex_7Networks_islands_L.func.gii
+			#wb_command -cifti-create-label rsn_yeo_cortex_7Networks_islands_R.dlabel.nii -right-label rsn_yeo_cortex_7Networks_islands_R.32k_fs_LR.label.gii -roi-right rsn_yeo_cortex_7Networks_islands_R.func.gii
+    		
+    		#wb_command -cifti-separate rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN -label CORTEX_LEFT rsn_yeo_cortex_17Networks_islands_L.32k_fs_LR.label.gii -roi rsn_yeo_cortex_17Networks_islands_L.func.gii
+			#wb_command -cifti-separate rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN -label CORTEX_RIGHT rsn_yeo_cortex_17Networks_islands_R.32k_fs_LR.label.gii -roi rsn_yeo_cortex_17Networks_islands_R.func.gii
+			#wb_command -cifti-create-label rsn_yeo_cortex_17Networks_islands_L.dlabel.nii -left-label rsn_yeo_cortex_17Networks_islands_L.32k_fs_LR.label.gii -roi-left rsn_yeo_cortex_17Networks_islands_L.func.gii
+			#wb_command -cifti-create-label rsn_yeo_cortex_17Networks_islands_R.dlabel.nii -right-label rsn_yeo_cortex_17Networks_islands_R.32k_fs_LR.label.gii -roi-right rsn_yeo_cortex_17Networks_islands_R.func.gii
+    		
+			##################################################################
+		 	##################  DWI - cortex2cortex ##########################
+			##################################################################
+			
+			
+			NetworkFolder="/Volumes/syn1/Studies/Anticevic.DP5/fcMRI/roi/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum/Yeo_Cortex"
+			
+			## Parcellation for the N=7 Network Solution (David's version)
+					
+			if [ "$DatatoParcellate" == "dwi_cortex" ]; then
+			
+			if [ "$Overwrite" == "yes" ]; then
+				rm -r "$StudyFolder"/../Parcellated/DWI/"$CASE"*matrix1*.pconn.nii
+				rm -r "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"*matrix1*.pconn.nii
+				rm -r "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"*matrix1*pconn.nii
+				rm -r "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"*matrix1*pconn.nii
+			fi
+			
+					if [ -f "$StudyFolder"/../Parcellated/DWI/"$CASE"_L_fdt_matrix1_CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii ]; then
+						echo "Parcellation done for $CASE for left hemisphere. Skipping to next subject..."
+					else		
+						echo "Running Cortex2Cortex Yeo 17 network parcellation on DWI data Left Hemisphere for $CASE..."
+						mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated  &> /dev/null
+					
+						# run parcellations for each and distance adjustment
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/fdt_matrix1.dconn.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/fdt_matrix1.dconn.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+				
+						# setup hard links
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/*CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/*CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/*CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/*CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+					fi
+			
+					if [ -f "$StudyFolder"/../Parcellated/DWI/"$CASE"_R_fdt_matrix1_CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii ]; then
+						echo "Parcellation done for $CASE for right hemisphere. Skipping to next subject..."
+					else
+						echo "Running Cortex2Cortex Yeo 17 network parcellation on DWI data Right Hemisphere for $CASE..."
+						mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated  &> /dev/null
+
+						# run parcellations for each and distance adjustment
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/fdt_matrix1.dconn.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/fdt_matrix1.dconn.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						
+						# setup hard links
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*CR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+
+					fi
+					
+					## Parcellation for the N=17 Network Solution (Lisa's version)
+			
+					if [ -f "$StudyFolder"/../Parcellated/DWI/"$CASE"_L_fdt_matrix1_CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii ]; then
+						
+						echo "Parcellation done for $CASE for left hemisphere. Skipping to next subject..."
+					else		
+						echo "Running Cortex2Cortex Yeo 17 network parcellation on DWI data Left Hemisphere for $CASE..."
+						mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated  &> /dev/null
+						
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/*_RSN_CSC_17Networks*.nii  &> /dev/null	
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/*_RSN_CSC_17Networks*.nii  &> /dev/null
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/*_fdt_matrix1_CR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii  &> /dev/null
+						
+						# run parcellations for each and distance adjustment
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_17Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_17Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+				
+						# setup hard links
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+					fi
+			
+					if [ -f "$StudyFolder"/../Parcellated/DWI/"$CASE"_R_fdt_matrix1_CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii ]; then
+						echo "Parcellation done for $CASE for right hemisphere. Skipping to next subject..."
+					else
+						echo "Running Cortex2Cortex Yeo 17 network parcellation on DWI data Right Hemisphere for $CASE..."
+						mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated  &> /dev/null
+						
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*_RSN_CSC_17Networks*.nii  &> /dev/null	
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*_RSN_CSC_17Networks*.nii  &> /dev/null
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/*_fdt_matrix1_CR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii  &> /dev/null
+
+						# run parcellations for each and distance adjustment
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_17Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_17Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+						
+						# setup hard links
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+
+					fi
+					
+					## Parcellation for the N=7 Network Solution (Lisa's version)
+					
+					if [ -f "$StudyFolder"/../Parcellated/DWI/"$CASE"_L_fdt_matrix1_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii ]; then
+						
+						echo "Parcellation done for $CASE for left hemisphere. Skipping to next subject..."
+					else		
+						echo "Running Cortex2Cortex Yeo 7 network parcellation on DWI data Left Hemisphere for $CASE..."
+						mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated  &> /dev/null
+						
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/*_RSN_CSC_7Networks*.nii  &> /dev/null	
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/*_RSN_CSC_7Networks*.nii  &> /dev/null
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/*_fdt_matrix1_CR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii  &> /dev/null
+					
+						# run parcellations for each and distance adjustment
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/"$CASE"_L_fdt_matrix1_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_L_fdt_matrix1_pd_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+				
+						# setup hard links
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/L_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+					fi
+			
+					if [ -f "$StudyFolder"/../Parcellated/DWI/"$CASE"_R_fdt_matrix1_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii ]; then
+						echo "Parcellation done for $CASE for right hemisphere. Skipping to next subject..."
+					else
+						echo "Running Cortex2Cortex Yeo 7 network parcellation on DWI data Right Hemisphere for $CASE..."
+						mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated  &> /dev/null
+						
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*_RSN_CSC_7Networks*.nii  &> /dev/null	
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*_RSN_CSC_7Networks*.nii  &> /dev/null
+						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/*_fdt_matrix1_CR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii  &> /dev/null
+							
+						# run parcellations for each and distance adjustment
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/"$CASE"_R_fdt_matrix1_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/fdt_matrix1.dconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+						wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$NetworkFolder"/rsn_yeo_cortex_7Networks_islands.dlabel.nii ROW "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/"$CASE"_R_fdt_matrix1_pd_CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii						
+						# setup hard links
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_pd_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+						ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/R_Trajectory_Matrix1_"$StepSize"/*CR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/DWI
+
+					fi	
+			fi
+			
+			##################################################################
+		 	##################  DWI - thalmus2cortex #########################
+			##################################################################
+			
+			if [ "$DatatoParcellate" == "dwi_subcortex" ]; then
+			
+			# supported: thalamus caudate accumbens putamen pallidum thalamus_sensory thalamus_associative
+			
+			for STRUCTURE in $STRUCTURES
+    		do
+			
+			if [ -f "$StudyFolder"/../Parcellated/DWI/"$CASE"_"$STRUCTURE"2cortex_L_norm_Yeo2011_17Networks.32k_fs_LR.pscalar.nii ]; then
+				echo "Parcellation done for $CASE and $STRUCTURE for left hemisphere. Skipping to next subject..."
+			else
+				echo "Running Subcortex2Cortex Yeo 17 network parcellation on DWI data left hemisphere for $CASE..."
+					
+					# clean up older work
+					rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_L/*_"$STRUCTURE"2cortex_*Yeo*.pscalar.nii &> /dev/null
+					rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/*_"$STRUCTURE"2cortex_*Yeo*.pscalar.nii &> /dev/null
+
+					# run parcellations for normalized and non-normalized data
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_L/"$CASE"_"$STRUCTURE"2cortex_L_norm.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_L/"$CASE"_"$STRUCTURE"2cortex_L_norm_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_L/"$CASE"_"$STRUCTURE"2cortex_L.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_L/"$CASE"_"$STRUCTURE"2cortex_L_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+					
+					mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+					
+					# setup hard links
+					ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_L/*_"$STRUCTURE"2cortex_*Yeo*.pscalar.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+					ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_L/*_"$STRUCTURE"2cortex_*Yeo*.pscalar.nii "$StudyFolder"/../Parcellated/DWI
+			fi
+
+			if [ -f "$StudyFolder"/../Parcellated/DWI/"$CASE"_"$STRUCTURE"2cortex_R_norm_Yeo2011_17Networks.32k_fs_LR.pscalar.nii ]; then
+				echo "Parcellation done for $CASE and $STRUCTURE for right hemisphere. Skipping to next subject..."
+			else
+				echo "Running Subcortex2Cortex Yeo 17 network parcellation on DWI data right hemisphere for $CASE..."
+
+					# clean up older work
+					rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_R/*_"$STRUCTURE"2cortex_*Yeo*.pscalar.nii &> /dev/null
+					rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/*_"$STRUCTURE"2cortex_*Yeo*.pscalar.nii &> /dev/null
+					
+					# run parcellations for normalized and non-normalized data
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_R/"$CASE"_"$STRUCTURE"2cortex_R_norm.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_R/"$CASE"_"$STRUCTURE"2cortex_R_norm_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_R/"$CASE"_"$STRUCTURE"2cortex_R.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_R/"$CASE"_"$STRUCTURE"2cortex_R_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+
+					mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+					
+					# setup hard links
+					ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_R/*_"$STRUCTURE"2cortex_*Yeo*.pscalar.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+					ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_R/*_"$STRUCTURE"2cortex_*Yeo*.pscalar.nii "$StudyFolder"/../Parcellated/DWI
+			fi
+			
+			done
+			
+			fi
+			
+			##################################################################
+		 	##################  Structure - myelin ###########################
+			##################################################################
+			
+			# Note: Use _BC_ file for intensity normalization for residual transmit field effects to remove variability across subjects dur to head size / shape 
+			
+			if [ "$DatatoParcellate" == "myelin" ]; then
+			
+			if [ -f "$StudyFolder"/../Parcellated/Myelin/"$CASE".LR.MyelinMap_BC_Yeo2011_17Networks.32k_fs_LR.pscalar.nii ]; then
+				echo "Parcellation done for $CASE. Skipping to next subject..."
+			else
+					echo "Running Yeo 17 network parcellation on MyelinMap data across hemispheres for $CASE..."
+
+					# clean up older work
+					rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".*.MyelinMap_BC_Yeo2011_17Networks.32k_fs_LR.pscalar.nii &> /dev/null
+
+					# run parcellations across hemispheres
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".MyelinMap_BC.32k_fs_LR.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.L.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".L.MyelinMap_BC_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".MyelinMap_BC.32k_fs_LR.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.R.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".R.MyelinMap_BC_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".MyelinMap_BC.32k_fs_LR.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".LR.MyelinMap_BC_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+
+					mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+					
+					# setup hard links
+					ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/*.MyelinMap_BC_Yeo2011_17Networks.32k_fs_LR.pscalar.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+					ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/*.MyelinMap_BC_Yeo2011_17Networks.32k_fs_LR.pscalar.nii "$StudyFolder"/../Parcellated/Myelin
+			fi
+			fi
+			
+			##################################################################
+		 	##################  Structure - thickness ########################
+			##################################################################
+			
+			if [ "$DatatoParcellate" == "thickness" ]; then
+			
+			if [ -f "$StudyFolder"/../Parcellated/Thickness/"$CASE".LR.corrThickness_Yeo2011_17Networks.32k_fs_LR.pscalar.nii ]; then
+				echo "Parcellation done for $CASE. Skipping to next subject..."
+			else
+					echo "Running Yeo 17 network parcellation on corrThickness data across hemispheres for $CASE..."
+
+					# clean up older work
+					rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".*.corrThickness_Yeo2011_17Networks.32k_fs_LR.pscalar.nii &> /dev/null
+
+					# run parcellations across hemispheres
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".corrThickness.32k_fs_LR.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.L.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".L.corrThickness_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".corrThickness.32k_fs_LR.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.R.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".R.corrThickness_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+					wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".corrThickness.32k_fs_LR.dscalar.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".LR.corrThickness_Yeo2011_17Networks.32k_fs_LR.pscalar.nii
+
+					mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+					
+					# setup hard links
+					ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/*.corrThickness_Yeo2011_17Networks.32k_fs_LR.pscalar.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated
+					ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/*.corrThickness_Yeo2011_17Networks.32k_fs_LR.pscalar.nii "$StudyFolder"/../Parcellated/Thickness
+			fi
+			fi
+			
+			##################################################
+		 	##################  BOLD  ########################
+			##################################################
+			
+			if [ "$DatatoParcellate" == "bold" ]; then
+			
+			NetworkFolder="/Volumes/syn1/Studies/Anticevic.DP5/fcMRI/roi/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum"
+
+    		for STEP in $STEPS
+    		do
+					for BOLD in $BOLDS
+					do
+						if [ "$Overwrite" == "yes" ]; then
+						
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+						
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+						
+						fi
+						
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii ]; then
+												
+							echo "Cortex2Cortex Yeo 17 Parcellation done for $CASE run $BOLD and $STEP. Skipping to next subject..."
+						else		
+					    	echo "Running Cortex2Cortex Yeo 17 network parcellation on BOLD data for $CASE and $STEP..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+    		
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.L.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.R.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+				
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						 
+						 	ln -f "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD".use
+
+						fi
+						
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii ]; then
+
+							echo "Full RSN Yeo/Buckner/Choi 7 & 17 Parcellation done for $CASE run $BOLD and $STEP. Skipping to next subject..."
+						else		
+					    	echo "Running Full RSN Yeo/Buckner/Choi 7 & 17 area and network parcellation on BOLD data for $CASE and $STEP..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+						
+							# Network-level
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_7network_networks.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17network_networks.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii
+							
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii
+						
+							# Parcell-level
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_7network_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17network_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii
+						
+						fi
+						
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii ]; then
+
+							echo "Cortex2Cortex RSN Yeo/Buckner/Choi 7 & 17 Parcellation done for $CASE run $BOLD and $STEP. Skipping to next subject..."
+						else		
+					    	echo "Running Cortex2Cortex RSN Yeo/Buckner/Choi 7 & 17 area and network parcellation on BOLD data for $CASE and $STEP..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+						
+							# Parcell-level LR
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							# Parcell-level L
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands_L.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands_L.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+							# Parcell-level R
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands_R.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands_R.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+						fi						
+						
+					done
+			done
+			fi
+
+			if [ "$DatatoParcellate" == "boldfixica" ]; then
+			
+			NetworkFolder="/Volumes/syn1/Studies/Anticevic.DP5/fcMRI/roi/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum"
+
+					for BOLD in $BOLDS
+					do
+					
+						if [ "$Overwrite" == "yes" ]; then
+						
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+						fi
+											
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii ]; then
+												
+							echo "Cortex2Cortex Yeo 17 Parcellation done for $CASE run $BOLD. Skipping to next subject..."
+						else		
+					    	echo "Running Cortex2Cortex Yeo 17 network parcellation on BOLD data for $CASE..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+    		
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.L.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.R.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+				
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							
+							ln -f "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD".use
+						
+						fi
+						
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii ]; then
+
+							echo "Full RSN Yeo/Buckner/Choi 7 & 17 Parcellation done for $CASE run $BOLD. Skipping to next subject..."
+						else		
+					    	echo "Running Full RSN Yeo/Buckner/Choi 7 & 17 area and network parcellation on BOLD data for $CASE..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+						
+							# Network-level
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_7network_networks.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17network_networks.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii
+							
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii
+						
+							# Parcell-level
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_7network_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17network_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii
+						
+						fi
+
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii ]; then
+
+							echo "Cortex2Cortex RSN Yeo/Buckner/Choi 7 & 17 Parcellation done for $CASE run $BOLD and $STEP. Skipping to next subject..."
+						else		
+					    	echo "Running Cortex2Cortex RSN Yeo/Buckner/Choi 7 & 17 area and network parcellation on BOLD data for $CASE..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+						
+							# Parcell-level LR
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							# Parcell-level L
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands_L.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands_L.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							# Parcell-level R
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands_R.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands_R.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+						fi						
+						
+					done
+				fi
+
+			if [ "$DatatoParcellate" == "bold_raw" ]; then
+			
+			NetworkFolder="/Volumes/syn1/Studies/Anticevic.DP5/fcMRI/roi/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum"
+
+					for BOLD in $BOLDS
+					do
+					
+						if [ "$Overwrite" == "yes" ]; then
+						
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+							rm -r "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii &> /dev/null
+
+						fi
+											
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii ]; then
+												
+							echo "Cortex2Cortex Yeo 17 Parcellation done for $CASE run $BOLD. Skipping to next subject..."
+						else		
+					    	echo "Running Cortex2Cortex Yeo 17 network parcellation on BOLD data for $CASE..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+    		
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.L.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.R.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$StudyFolder"/../Parcellated/YeoFinal/Yeo2011_17Networks.LR.50sqmm_dilate3.0.32k_fs_LR.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+				
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_Yeo2011_17Networks.32k_fs_LR.pconn.nii
+						
+						fi
+						
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii ]; then
+
+							echo "Full RSN Yeo/Buckner/Choi 7 & 17 Parcellation done for $CASE run $BOLD. Skipping to next subject..."
+						else		
+					    	echo "Running Full RSN Yeo/Buckner/Choi 7 & 17 area and network parcellation on BOLD data for $CASE..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+						
+							# Network-level
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_7network_networks.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17network_networks.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii
+							
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii
+						
+							# Parcell-level
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_7network_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17network_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii
+						
+						fi
+
+						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii ]; then
+
+							echo "Cortex2Cortex RSN Yeo/Buckner/Choi 7 & 17 Parcellation done for $CASE run $BOLD and $STEP. Skipping to next subject..."
+						else		
+					    	echo "Running Cortex2Cortex RSN Yeo/Buckner/Choi 7 & 17 area and network parcellation on BOLD data for $CASE..."
+						
+							mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated &> /dev/null
+						
+							# Parcell-level LR
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_LR_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							# Parcell-level L
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands_L.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands_L.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_L_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							# Parcell-level R
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_7Networks_islands_R.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							wb_command -cifti-parcellate "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii "$NetworkFolder"/Yeo_Cortex/rsn_yeo_cortex_17Networks_islands_R.dlabel.nii COLUMN "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Parcellated/"$CASE"_bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_RSN_Cortex_7Networks_islands.32k_fs_LR.pconn.nii
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii  "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.ptseries.nii 
+							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_R_RSN_Cortex_17Networks_islands.32k_fs_LR.pconn.nii
+				
+						fi						
+						
+					done
+				fi
+}
+
+show_usage_ciftiparcellate() {
+
+  				echo ""
+  				echo "-- Description:"
+    			echo ""
+    			reho "		*** This function is deprecated and not supported any longer."
+    			reho "		*** The new usage for parcellartion can be found via the following functions:"
+    			echo ""
+    			echo "		boldparcellation		PARCELLATE BOLD DATA and GENERATE PCONN FILES VIA USER-SPECIFIED PARCELLATION"
+    			echo "		dwidenseparcellation		PARCELLATE DENSE DWI TRACTOGRAPHY DATA VIA USER-SPECIFIED PARCELLATION"
+    			echo ""
+
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1802,14 +2653,6 @@ boldmergecifti() {
 
 }
 
-show_usage_boldmergecifti() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
 
 # ------------------------------------------------------------------------------------------------------
 #  boldseparateciftifixica - Separate CIFTI files across runs *** needs cleanup
@@ -1989,15 +2832,6 @@ boldseparateciftifixica() {
 		
 }
 
-show_usage_boldseparateciftifixica() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
 # ------------------------------------------------------------------------------------------------------
 #  bolddense - Compute the dense connectome file for BOLD timeseries
 # ------------------------------------------------------------------------------------------------------
@@ -2018,15 +2852,6 @@ bolddense() {
 						fi
 					done
 			done
-}
-
-show_usage_bolddense() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
 }
 
 
@@ -2054,15 +2879,6 @@ fixica() {
 
 }
 
-show_usage_fixica() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
 # ------------------------------------------------------------------------------------------------------
 #  postfix - Compute PostFix code on FIX ICA cleaned BOLD timeseries to generate scene files
 # ------------------------------------------------------------------------------------------------------
@@ -2082,15 +2898,6 @@ postfix() {
 						/usr/local/PostFix_beta/GitRepo/PostFix.sh "$StudyFolder"/"$CASE"/hcp "$CASE" "$BOLD" /usr/local/PostFix_beta/GitRepo "$HighPass" wb_command /usr/local/PostFix_beta/GitRepo/PostFixScenes/ICA_Classification_DualScreenTemplate.scene /usr/local/PostFix_beta/GitRepo/PostFixScenes/ICA_Classification_SingleScreenTemplate.scene
 				fi
 			done
-}
-
-show_usage_postfix() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -2138,15 +2945,6 @@ boldhardlinkfixica() {
 			done		
 }
 
-show_usage_boldhardlinkfixica() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
 # ------------------------------------------------------------------------------------------------------
 #  fixicainsertmean - Re-insert means into FIX ICA cleaned BOLDs for connectivity preprocessing (dofcMRI)
 # ------------------------------------------------------------------------------------------------------
@@ -2176,16 +2974,6 @@ fixicainsertmean() {
 			done
 }
 
-show_usage_fixicainsertmean() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
-
 # ------------------------------------------------------------------------------------------------------
 #  fixicaremovemean - Remove means from FIX ICA cleaned BOLDs for functional connectivity analysis
 # ------------------------------------------------------------------------------------------------------
@@ -2212,15 +3000,6 @@ fixicaremovemean() {
 					#fi
 					#rm boldfixica"$BOLD"_mean.txt &> /dev/null
 			done
-}
-
-show_usage_fixicaremovemean() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -2272,16 +3051,7 @@ boldhardlinkfixicamerged() {
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/16_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica16.nii.gz
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica17.nii.gz
 
-}	
-
-show_usage_boldhardlinkfixicamerged() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}			
+}				
 
 #########################################################################################################################
 #########################################################################################################################
@@ -2484,15 +3254,6 @@ hcp1() {
   		
 }
 
-show_usage_hcp1() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
 # ------------------------------------------------------------------------------------------------------
 #  hcp2 - Executes the FreeSurfer Script
 # ------------------------------------------------------------------------------------------------------
@@ -2560,15 +3321,6 @@ hcp2() {
       		--printcom=$PRINTCOM"
 
   		#echo ". ${EnvironmentScript}"
-}
-
-show_usage_hcp2() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -2656,15 +3408,6 @@ hcp3() {
 
   		#echo ". ${EnvironmentScript}"
   		
-}
-
-show_usage_hcp3() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
 }
 
 
@@ -2815,15 +3558,6 @@ hcp4() {
 		
 }
 
-show_usage_hcp4() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
 # ------------------------------------------------------------------------------------------------------
 #  hcp5 - Executes the Surface BOLD Script
 # ------------------------------------------------------------------------------------------------------
@@ -2898,15 +3632,6 @@ hcp5() {
       	fi	
             
 		done
-}
-
-show_usage_hcp5() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -3007,15 +3732,6 @@ hcpd() {
       		--printcom=$PRINTCOM"
       	fi	
       	
-}
-
-show_usage_hcpd() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3496,15 +4212,6 @@ fsldtifit() {
 	fi
 }
 
-show_usage_fsldtifit() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
 # ------------------------------------------------------------------------------------------------------
 #  fslbedpostxgpu - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
@@ -3686,14 +4393,6 @@ pretractography() {
     	--lowresmesh=$LowResMesh"
 }
 
-show_usage_pretractography() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
 
 # ------------------------------------------------------------------------------------------------------
 #  probtrackxgpucortex - Executes the HCP Matrix1 code (Matt's original implementation for cortex)
@@ -3763,15 +4462,6 @@ probtrackxgpucortex() {
 						unset PD
 				done
 			done
-}
-
-show_usage_probtrackxgpucortex() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -4937,6 +5627,42 @@ if [ "$FunctionToRunInt" == "dicom2nii" ]; then
 fi
 
 # ------------------------------------------------------------------------------
+#  Visual QC Images function loop - Julia Based
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "qaimages" ]; then
+	#module load Langs/Julia/0.4.6
+	cd "$StudyFolder"/QC
+	rm -f ./qa.jl
+	ln -s "$TOOLS"/bin/qa.jl ./ &> /dev/null
+	mkdir BOLD &> /dev/null
+	mkdir T1 &> /dev/null
+	mkdir T1nonlin &> /dev/null
+	cd "$StudyFolder" &> /dev/null
+	echo "Running QC on $CASES..."
+	julia -e 'include("./QC/qa.jl")' bold $CASES
+	julia -e 'include("./QC/qa.jl")' t1 $CASES
+fi
+
+if [ "$FunctionToRunInt" == "qaimages" ]; then
+	module load Langs/Julia/0.4.0
+	cd "$StudyFolder"/QC
+	ln -s "$TOOLS"/bin/qa.jl ./
+	mkdir BOLD &> /dev/null
+	mkdir T1 &> /dev/null
+	mkdir T1nonlin &> /dev/null
+	cd "$StudyFolder" &> /dev/null
+	
+	echo "Enter all the cases you want to run QA on:"	
+		if read answer; then
+			QACases=$answer
+			echo "Running QC..."
+			julia -e 'include("./QC/qa.jl")' bold $QACases
+			julia -e 'include("./QC/qa.jl")' t1 $QACases
+		fi
+fi
+
+# ------------------------------------------------------------------------------
 #  Visual QC Images function loop - qcpreproc - wb_command based
 # ------------------------------------------------------------------------------
 
@@ -5333,6 +6059,93 @@ if [ "$FunctionToRunInt" == "probtracksubcortex" ]; then
   					done
   				fi
   			fi
+fi
+
+# ------------------------------------------------------------------------------
+#  ciftiparcellate function loop
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRunInt" == "ciftiparcellate" ]; then
+	echo "Enter which type of data you want to parcelate [supported: bold, boldfixica, bold_raw, dwi_cortex, dwi_subcortex, myelin, thickness]:"
+			if read answer; then
+			DatatoParcellate=$answer
+				if [ "$DatatoParcellate" == "bold" ]; then
+ 					echo "Overwrite existing parcellation run [yes, no]:"
+						if read answer; then
+						Overwrite=$answer
+						fi  
+					echo "Enter BOLD numbers you want to run the parcellation on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
+						if read answer; then
+						BOLDS=$answer 
+						echo "Enter BOLD processing steps you want to run the parcellation on [e.g. g7_hpss_res-mVWM g7_hpss_res-mVWMWB hpss_res-mVWM hpss_res-mVWMWB]:"
+							if read answer; then
+							STEPS=$answer 
+								for CASE in $CASES
+									do
+  									"$FunctionToRunInt" "$CASE"
+  								done
+  							fi
+  						fi
+  				fi
+ 				if [ "$DatatoParcellate" == "boldfixica" ]; then
+ 					echo "Overwrite existing parcellation run [yes, no]:"
+						if read answer; then
+						Overwrite=$answer
+						fi  
+					echo "Enter BOLD numbers you want to run the parcellation on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
+						if read answer; then
+						BOLDS=$answer 
+								for CASE in $CASES
+									do
+  									"$FunctionToRunInt" "$CASE"
+  								done
+  						fi
+  				fi 	
+ 				if [ "$DatatoParcellate" == "bold_raw" ]; then
+ 					echo "Overwrite existing parcellation run [yes, no]:"
+						if read answer; then
+						Overwrite=$answer
+						fi  
+					echo "Enter BOLD numbers you want to run the parcellation on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
+						if read answer; then
+						BOLDS=$answer 
+								for CASE in $CASES
+									do
+  									"$FunctionToRunInt" "$CASE"
+  								done
+  						fi
+  				fi 	  							
+  				if [ "$DatatoParcellate" == "dwi_cortex" ]; then
+  				 	echo "Overwrite existing parcellation run [yes, no]:"
+						if read answer; then
+						Overwrite=$answer
+						fi  
+					echo "Enter Step Size [Yale: 0.45, HCP: 0.3125]"
+						if read answer; then
+						StepSize=$answer
+  							for CASE in $CASES
+								do
+  								"$FunctionToRunInt" "$CASE"
+  							done
+  						fi
+  				fi
+  				if [ "$DatatoParcellate" == "dwi_subcortex" ]; then
+  					echo "Enter which subcortical structure probrackx results you want to parcellate"
+					echo "supported: thalamus caudate accumbens putamen pallidum thalamus_sensory thalamus_associative"
+						if read answer; then
+						STRUCTURES=$answer
+  							for CASE in $CASES
+								do
+  								"$FunctionToRunInt" "$CASE"
+  							done
+  						fi
+  				else
+  							for CASE in $CASES
+								do
+  								"$FunctionToRunInt" "$CASE"
+  							done	
+				fi
+			fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -6011,7 +6824,7 @@ if [ "$FunctionToRunInt" == "hcpdlegacy" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  BOLDParcellation function loop (boldparcellation)
+#  BOLDeParcellation function loop (boldparcellation)
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "boldparcellation" ]; then	
