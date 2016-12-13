@@ -187,8 +187,7 @@ show_usage() {
   				echo "		dicomsort			sort dicoms and setup nifti files from dicoms"
   				echo "		dicom2nii			convert dicoms to nifti files"
   				echo "		setuphcp 			setup data structure for hcp processing"
-  				echo "		hpcsync 			sync with yale hpc cluster(s) for original hcp pipelines (studyfolder/$ubject)"
-  				echo "		hpcsync2			sync with yale hpc cluster(s) for dofcmri integration (studyfolder/subject/hcp/subject)"
+  				echo "		hpcsync			sync with yale hpc cluster(s) for preprocessing (studyfolder/subject/hcp/subject)"
   				echo "		awshcpsync			sync hcp data from aws s3 cloud"
   				echo ""  				
   				weho "		--- hcp pipeline ---"
@@ -205,7 +204,6 @@ show_usage() {
   				echo "		nii4dfpconvert 			convert nifti hcp-processed bold data to 4dpf format for fild analyses"
   				echo "		cifti4dfpconvert 		convert cifti hcp-processed bold data to 4dpf format for fild analyses"
   				echo "		ciftismooth 			smooth & convert cifti bold data to 4dpf format for fild analyses"
-  				echo "		fidlconc 			setup conc & fidl even files for glm analyses"
   				echo "		qcpreproc			run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
 
   				echo ""  				
@@ -390,28 +388,6 @@ show_usage_setuplist() {
 
 
 # ------------------------------------------------------------------------------------------------------
-#  fidlconcorganize - Organize all CONCs and FIDL files for GLM analyses across various tasks
-# ------------------------------------------------------------------------------------------------------
-
-fidlconcorganize() {
-	
-	cd "$StudyFolder"
-	cd ../GLM.Analyses/
-	source "$ListFunction" #reads fidlconcorganize.sh 
-
-}
-
-show_usage_fidlconcorganize() {
-
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
-
-# ------------------------------------------------------------------------------------------------------
 #  nii4dfpconvert - Convert NIFTI files into 4DFP for FIDL GLM analyses
 # ------------------------------------------------------------------------------------------------------
 
@@ -552,21 +528,8 @@ show_usage_ciftismooth() {
 #  hpcsync - Sync files to Yale HPC and back to the Yale server after HCP preprocessing
 # ------------------------------------------------------------------------------------------------------
 
+
 hpcsync() {
-
-	if [ "$Direction" == 1 ]; then
-		echo "Syncing data to $ClusterName for $CASE ..."
-		rsync --checksum --rsh=ssh -avz --exclude=* "$StudyFolder"/"$CASE"/hcp/"$CASE" "$NetID"@"$ClusterName":"$HCPStudyFolder"/ &> /dev/null
-		rsync --checksum --rsh=ssh --exclude=*dicom* --exclude=*Results* --exclude=inbox --exclude=images -avz "$StudyFolder"/"$CASE"/hcp/"$CASE" "$NetID"@"$ClusterName":"$HCPStudyFolder"/ &> /dev/null
-	else 
-		echo "Syncing data from $ClusterName for $CASE ..." 
-		rsync --checksum --rsh=ssh -avz "$NetID"@"$ClusterName":"$HCPStudyFolder"/"$CASE"/MNINonLinear "$StudyFolder"/"$CASE"/hcp/"$CASE"/ &> /dev/null
-		rsync --checksum --rsh=ssh -avz "$NetID"@"$ClusterName":"$HCPStudyFolder"/"$CASE"/T1w "$StudyFolder"/"$CASE"/hcp/"$CASE"/ &> /dev/null
-	fi
-}
-
-
-hpcsync2() {
 
 	if [ "$Direction" == 1 ]; then
 		echo "Syncing data to $ClusterName for $CASE ..."
@@ -583,7 +546,7 @@ hpcsync2() {
 	fi
 }
 
-show_usage_hpcsync2() {
+show_usage_hpcsync() {
   				echo ""
   				echo "-- Description:"
     			echo ""
@@ -591,14 +554,14 @@ show_usage_hpcsync2() {
   				echo "It explicitly preserves the Human Connectome Project folder structure for preprocessing:"
   				echo "    <study_folder>/<case>/hcp/<case>"
   				echo ""
-    			echo "-- Usage for hpcsync2"
+    			echo "-- Usage for hpcsync"
     			echo ""
 				echo "* Example with interactive terminal:"
-				echo "AP hpcsync2 <study_folder> '<list of cases>'"
+				echo "AP hpcsync <study_folder> '<list of cases>'"
     			echo ""
     			echo ""
 				echo "* Example with flags:"
-				echo "AP --function=hpcsync2 --path=<study_folder> --subjects='<list of cases>'--cluster=<cluster_address> --dir=<rsync_direction> --netid=<Yale_NetID> --clusterpath=<cluster_study_folder>"
+				echo "AP --function=hpcsync --path=<study_folder> --subjects='<list of cases>'--cluster=<cluster_address> --dir=<rsync_direction> --netid=<Yale_NetID> --clusterpath=<cluster_study_folder>"
     			echo ""
     			echo ""
   				echo "-- OPTIONS:"
@@ -5117,6 +5080,7 @@ fi
 #  hpcsync function loop
 # ------------------------------------------------------------------------------
 
+
 if [ "$FunctionToRun" == "hpcsync" ]; then
 	echo "You are about to sync data between the local server and Yale HPC Clusters."
 		for CASE in $CASES
@@ -5125,42 +5089,8 @@ if [ "$FunctionToRun" == "hpcsync" ]; then
   		done
 fi
 
-if [ "$FunctionToRun" == "hpcsync2" ]; then
-	echo "You are about to sync data between the local server and Yale HPC Clusters."
-		for CASE in $CASES
-			do
-  			"$FunctionToRun" "$CASE"
-  		done
-fi
 
 if [ "$FunctionToRunInt" == "hpcsync" ]; then
-	echo "You are about to sync data between the local server and Yale HPC Clusters."
-	echo "Note: Make sure your HPC ssh key is setup on your local NMDA account."
-	echo "Enter exact HPC cluster address [e.g. louise.hpc.yale.edu or omega1.hpc.yale.edu]:"
-		if read answer; then
-			ClusterName=$answer
-			echo "Enter your NetID..."
-			if read answer; then
-				NetID=$answer
-				echo "Enter your HPC cluster folder where data are located... [e.g. /lustre/home/client/fas/anticevic/aa353/scratch/Anticevic.DP5/subjects]"
-				if read answer; then
-					HCPStudyFolder=$answer
-					echo "Enter rsync direction [NMDA-->HPC: 1 or HPC-->NMDA: 2]"
-					if read answer; then
-					Direction=$answer
-						for CASE in $CASES
-							do
-  							"$FunctionToRunInt" "$CASE"
-  						done
-  					fi
-  				fi
-  			fi
-  		else
-  			 echo "Something is wrong with your input. Refer to function usage."
-		fi
-fi
-
-if [ "$FunctionToRunInt" == "hpcsync2" ]; then
 	echo "You are about to sync data between the local server and Yale HPC Clusters."
 	echo "Note: Make sure your HPC ssh key is setup on your local NMDA account."
 	echo "Enter exact HPC cluster address [e.g. louise.hpc.yale.edu or omega1.hpc.yale.edu]:"
