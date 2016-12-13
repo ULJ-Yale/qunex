@@ -5,8 +5,8 @@ Created by Grega Repovs on 2013-04-08.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import gCodeU.g_img as g
-import gCodeU.g_gimg as gimg
+import niutilities.g_img as g
+import niutilities.g_gimg as gimg
 import numpy as np
 import gzip
 

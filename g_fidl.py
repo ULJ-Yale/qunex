@@ -6,7 +6,7 @@ Adapted from previous joinFidl.py script
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import gCodeU.g_img as g
+import niutilities.g_img as g
 import sys
 import getopt
 import re

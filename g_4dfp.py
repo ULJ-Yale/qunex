@@ -2,10 +2,10 @@
 # encoding: utf-8
 
 import os
-import gCodeU
+import niutilities
 import collections
 import subprocess
-import gCodeU.g_gimg as g
+import niutilities.g_gimg as g
 import os.path
 import glob
 import re
@@ -131,7 +131,7 @@ def runAvi(folder=".", overwrite=None, subjf=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, pref = gCodeU.g_core.readSubjectData(os.path.join(folder, subjf))
+    info, pref = niutilities.g_core.readSubjectData(os.path.join(folder, subjf))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 

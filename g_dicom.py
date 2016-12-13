@@ -7,9 +7,9 @@ import glob
 import shutil
 import datetime
 import subprocess
-import gCodeU.g_NIfTI
-import gCodeU.g_gimg as gimg
-import gCodeU
+import niutilities.g_NIfTI
+import niutilities.g_gimg as gimg
+import niutilities
 import dicom.filereader as dfr
 import zipfile
 import gzip
@@ -256,7 +256,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
         files.append([niinum, folder])
         # subprocess.call(call, shell=True, stdout=null, stderr=null)
 
-    done = gCodeU.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
+    done = niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 
     for niinum, folder in files:
 
@@ -328,13 +328,13 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
         # --- flip z and t dimension if needed
 
         if dofz2zf:
-            gCodeU.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
+            niutilities.g_NIfTI.fz2zf(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
 
 
         # --- reorder slices if needed
 
         if reorder:
-            #gCodeU.g_NIfTI.reorder(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
+            #niutilities.g_NIfTI.reorder(os.path.join(imgf,"%02d.nii.gz" % (niinum)))
             timgf = os.path.join(imgf,"%02d.nii.gz" % (niinum))
             timg  = gimg.gimg(timgf)
             timg.data = timg.data[:,::-1,...]
@@ -344,7 +344,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
         # --- check final geometry
 
         if tfname:
-            hdr = gCodeU.g_img.niftihdr(tfname)
+            hdr = niutilities.g_img.niftihdr(tfname)
 
             if hdr.sizez > hdr.sizey:
                 print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
@@ -359,7 +359,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                         if gframes > 1:
                             print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
                             if verbose: print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                            gCodeU.g_NIfTI.reslice(tfname, nslices)
+                            niutilities.g_NIfTI.reslice(tfname, nslices)
                         else:
                             print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                             if verbose: print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)

@@ -11,7 +11,7 @@ import subprocess
 import gzip
 import shutil
 import glob
-import gCodeU
+import niutilities
 import re
 
 
@@ -211,7 +211,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
             print " --> running PALM for CIFTI input"
 
-            done = gCodeU.g_core.runExternalParallel(calls, cores=cores, prepend='     ... ')
+            done = niutilities.g_core.runExternalParallel(calls, cores=cores, prepend='     ... ')
 
         # --- process output
 

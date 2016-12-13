@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import gCodeU
+import niutilities
 import sys
 
 
@@ -80,32 +80,32 @@ runPALM image=<image file> [design=<design string>] [args=<arguments string>] [r
 
 '''
 
-commands = {'listDicom'     : {'com': gCodeU.g_dicom.listDicom,        'args': ('folder', )},
-            'splitDicom'    : {'com': gCodeU.g_dicom.splitDicom,       'args': ('folder', )},
-            'sortDicom'     : {'com': gCodeU.g_dicom.sortDicom,        'args': ('folder', )},
-            'dicom2nii'     : {'com': gCodeU.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
-            'processPhilips': {'com': gCodeU.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern')},
-            'processInbox'  : {'com': gCodeU.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern', 'cores')},
-            'getDICOMInfo'  : {'com': gCodeU.g_dicom.getDICOMInfo,     'args': ('dfile', 'scanner')},
-            'runAviFolder'  : {'com': gCodeU.g_4dfp.runAviFolder,      'args': ('folder', 'pattern', 'overwite', 'subjf')},
-            'runAvi'        : {'com': gCodeU.g_4dfp.runAvi,            'args': ('folder', 'overwite', 'subjf')},
-            'fz2zf'         : {'com': gCodeU.g_NIfTI.fz2zf,            'args': ('inf', 'outf')},
-            'reorder'       : {'com': gCodeU.g_NIfTI.reorder,          'args': ('inf', 'outf')},
-            'reslice'       : {'com': gCodeU.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf')},
-            'nifti24dfp'    : {'com': gCodeU.g_NIfTI.nifti24dfp,       'args': ('inf', 'outf')},
-            'setupHCP'      : {'com': gCodeU.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf')},
-            'setupHCPFolder': {'com': gCodeU.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check')},
-            'getHCPReady'   : {'com': gCodeU.g_HCP.getHCPReady,        'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping')},
-            'printniftihdr' : {'com': gCodeU.g_img.printniftihdr,      'args': ('filename', )},
-            'modniftihdr'   : {'com': gCodeU.g_gimg.modniftihdr,       'args': ('filename', 's')},
-            'joinFidl'      : {'com': gCodeU.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot', 'outfolder')},
-            'joinFidlFolder': {'com': gCodeU.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
-            'splitFidl'     : {'com': gCodeU.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
-            'map2PALS'      : {'com': gCodeU.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
-            'map2HCP'       : {'com': gCodeU.g_4dfp.map2HCP,           'args': ('volume', 'method')},
-            'maskMap'       : {'com': gCodeU.g_palm.maskMap,           'args': ('image', 'masks', 'output', 'minv', 'maxv')},
-            'joinMaps'      : {'com': gCodeU.g_palm.joinMaps,          'args': ('images', 'output', 'names', 'originals', 'join')},
-            'runPALM'       : {'com': gCodeU.g_palm.runPALM,           'args': ('image', 'design', 'args', 'root', 'cores')}
+commands = {'listDicom'     : {'com': niutilities.g_dicom.listDicom,        'args': ('folder', )},
+            'splitDicom'    : {'com': niutilities.g_dicom.splitDicom,       'args': ('folder', )},
+            'sortDicom'     : {'com': niutilities.g_dicom.sortDicom,        'args': ('folder', )},
+            'dicom2nii'     : {'com': niutilities.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
+            'processPhilips': {'com': niutilities.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern')},
+            'processInbox'  : {'com': niutilities.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern', 'cores')},
+            'getDICOMInfo'  : {'com': niutilities.g_dicom.getDICOMInfo,     'args': ('dfile', 'scanner')},
+            'runAviFolder'  : {'com': niutilities.g_4dfp.runAviFolder,      'args': ('folder', 'pattern', 'overwite', 'subjf')},
+            'runAvi'        : {'com': niutilities.g_4dfp.runAvi,            'args': ('folder', 'overwite', 'subjf')},
+            'fz2zf'         : {'com': niutilities.g_NIfTI.fz2zf,            'args': ('inf', 'outf')},
+            'reorder'       : {'com': niutilities.g_NIfTI.reorder,          'args': ('inf', 'outf')},
+            'reslice'       : {'com': niutilities.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf')},
+            'nifti24dfp'    : {'com': niutilities.g_NIfTI.nifti24dfp,       'args': ('inf', 'outf')},
+            'setupHCP'      : {'com': niutilities.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf')},
+            'setupHCPFolder': {'com': niutilities.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check')},
+            'getHCPReady'   : {'com': niutilities.g_HCP.getHCPReady,        'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping')},
+            'printniftihdr' : {'com': niutilities.g_img.printniftihdr,      'args': ('filename', )},
+            'modniftihdr'   : {'com': niutilities.g_gimg.modniftihdr,       'args': ('filename', 's')},
+            'joinFidl'      : {'com': niutilities.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot', 'outfolder')},
+            'joinFidlFolder': {'com': niutilities.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
+            'splitFidl'     : {'com': niutilities.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
+            'map2PALS'      : {'com': niutilities.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
+            'map2HCP'       : {'com': niutilities.g_4dfp.map2HCP,           'args': ('volume', 'method')},
+            'maskMap'       : {'com': niutilities.g_palm.maskMap,           'args': ('image', 'masks', 'output', 'minv', 'maxv')},
+            'joinMaps'      : {'com': niutilities.g_palm.joinMaps,          'args': ('images', 'output', 'names', 'originals', 'join')},
+            'runPALM'       : {'com': niutilities.g_palm.runPALM,           'args': ('image', 'design', 'args', 'root', 'cores')}
             }
 
 
