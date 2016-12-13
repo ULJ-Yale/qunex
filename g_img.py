@@ -245,6 +245,7 @@ class niftihdr:
         self.filename    = False
 
         self.dType      = niftiDataTypes[self.data_type]
+        self.meta       = []
 
         if filename:
             self.readHeader(filename)
@@ -252,66 +253,76 @@ class niftihdr:
             self.hdr = self.packHdr()
 
     def packHdr(self):
-        s = struct.pack(self.e+"i", 348)                            # int       - must be 348
-        for n in range(0,10):                                       # char[10]  - unused
-            s += struct.pack(self.e+"c", " ")
-        for n in range(0,18):                                       # char[18]  - unused
-            s += struct.pack(self.e+"c", " ")
-        s += struct.pack(self.e+"i", 0)                             # int       - unused
-        s += struct.pack(self.e+"h", 0)                             # short     - unused
-        s += struct.pack(self.e+"c", " ")                           # char      - unused
-        s += struct.pack(self.e+"c", self.dim_info)                 # char      - MRI slice ordering ---- information not available in IFH
-        s += struct.pack(self.e+"h", self.ndimensions)              # short     - number of dimensions used
-        s += struct.pack(self.e+"h", self.sizex)                    # short     - size in dimension x
-        s += struct.pack(self.e+"h", self.sizey)                    # short     - size in dimension y
-        s += struct.pack(self.e+"h", self.sizez)                    # short     - size in dimension z
-        s += struct.pack(self.e+"h", self.frames)                   # short     - number of frames (4th dimension)
-        s += struct.pack(self.e+"h", self.size_5)                   # short     - size of 5th dimension
-        s += struct.pack(self.e+"h", self.size_6)                   # short     - size of 6th dimension
-        s += struct.pack(self.e+"h", self.size_7)                   # short     - size of 7th dimension
-        s += struct.pack(self.e+"f", self.intention1)               # float     - intention 1 parameter
-        s += struct.pack(self.e+"f", self.intention2)               # float     - intention 2 parameter
-        s += struct.pack(self.e+"f", self.intention3)               # float     - intention 3 parameter
-        s += struct.pack(self.e+"h", self.intent_code)              # short     - intent code
-        s += struct.pack(self.e+"h", self.data_type)                # short     - datatype
-        s += struct.pack(self.e+"h", self.bitpix)                   # short     - bits per voxel
-        s += struct.pack(self.e+"h", self.slice_start)              # short     - First slice index
-        s += struct.pack(self.e+"f", self.pixdim_0)                 # float     - zero dimension size (important for orientation)
-        s += struct.pack(self.e+"f", self.pixdim_x)                 # float     - x dimension size (important for orientation)
-        s += struct.pack(self.e+"f", self.pixdim_y)                 # float     - y dimension size (important for orientation)
-        s += struct.pack(self.e+"f", self.pixdim_z)                 # float     - z dimension size (important for orientation)
-        s += struct.pack(self.e+"f", self.pixdim_t)                 # float     - t dimension size (important for orientation)
-        s += struct.pack(self.e+"f", self.pixdim_5)                 # float     - 5 dimension size (important for orientation)
-        s += struct.pack(self.e+"f", self.pixdim_6)                 # float     - 6 dimension size (important for orientation)
-        s += struct.pack(self.e+"f", self.pixdim_7)                 # float     - 7 dimension size (important for orientation)
-        s += struct.pack(self.e+"f", self.vox_offset)               # float     - offset of data when within the same file
-        s += struct.pack(self.e+"f", self.scl_slope)                # float     - slope of data scaling
-        s += struct.pack(self.e+"f", self.scl_inter)                # float     - intersect of data scaling
-        s += struct.pack(self.e+"h", self.slice_end)                # short     - Last slice index
-        s += struct.pack(self.e+"b", self.slice_code)               # char      - slice order code
-        s += struct.pack(self.e+"b", self.xyz_unit + self.t_unit)   # char      - codes for units used
-        s += struct.pack(self.e+"f", self.cal_max)                  # float     - maximum value in the dataset to be displayed (white)
-        s += struct.pack(self.e+"f", self.cal_min)                  # float     - minimum value in the dataset to be displayed (black)
-        s += struct.pack(self.e+"f", self.slice_duration)           # float     - minimum value in the dataset to be displayed (black)
-        s += struct.pack(self.e+"f", self.toffset)                  # float     - time offset for first datapoint
-        s += struct.pack(self.e+"i", 0)                             # int       - unused
-        s += struct.pack(self.e+"i", 0)                             # int       - unused
-        s += (self.descrip+"12345678901234567890123456789012345678901234567890123456789012345678901234567890")[0:80] # char[80]  - data description
-        s += (self.aux_file+"123456789012345678901234")[0:24]       # char[24]  - auxilary filename
-        s += struct.pack(self.e+"h", self.qform_code)               # short     - niftixform code
-        s += struct.pack(self.e+"h", self.sform_code)               # short     - niftixform code
-        s += struct.pack(self.e+"f", self.quatern_b)                # float     - Quaternion b param
-        s += struct.pack(self.e+"f", self.quatern_c)                # float     - Quaternion c param
-        s += struct.pack(self.e+"f", self.quatern_d)                # float     - Quaternion d param
-        s += struct.pack(self.e+"f", self.qoffset_x)                # float     - Quaternion x shift
-        s += struct.pack(self.e+"f", self.qoffset_y)                # float     - Quaternion y shift
-        s += struct.pack(self.e+"f", self.qoffset_z)                # float     - Quaternion z shift
-        s += struct.pack(self.e+"ffff", self.srow_x[0], self.srow_x[1], self.srow_x[2], self.srow_x[3])  # float[4]  - affine transform data - row x
-        s += struct.pack(self.e+"ffff", self.srow_y[0], self.srow_y[1], self.srow_y[2], self.srow_y[3])  # float[4]  - affine transform data - row y
-        s += struct.pack(self.e+"ffff", self.srow_z[0], self.srow_z[1], self.srow_z[2], self.srow_z[3])  # float[4]  - affine transform data - row z
-        s += (self.intent_name+"1234567890123456")[0:16]            # char[16]  - intent name
-        s += self.magic[0:3] + chr(0)                               # char[4]   - magic word and zero char
-        s += (self.ext + chr(0)*4)[0:4]                             # char[4]   - extension
+
+        self.vox_offset = 352
+        for m in self.meta:
+            self.vox_offset += m[0]
+
+        s = struct.pack(self.e + "i", 348)                            # int       - must be 348
+        for n in range(0, 10):                                        # char[10]  - unused
+            s += struct.pack(self.e + "c", " ")
+        for n in range(0, 18):                                        # char[18]  - unused
+            s += struct.pack(self.e + "c", " ")
+        s += struct.pack(self.e + "i", 0)                             # int       - unused
+        s += struct.pack(self.e + "h", 0)                             # short     - unused
+        s += struct.pack(self.e + "c", " ")                           # char      - unused
+        s += struct.pack(self.e + "c", self.dim_info)                 # char      - MRI slice ordering ---- information not available in IFH
+        s += struct.pack(self.e + "h", self.ndimensions)              # short     - number of dimensions used
+        s += struct.pack(self.e + "h", self.sizex)                    # short     - size in dimension x
+        s += struct.pack(self.e + "h", self.sizey)                    # short     - size in dimension y
+        s += struct.pack(self.e + "h", self.sizez)                    # short     - size in dimension z
+        s += struct.pack(self.e + "h", self.frames)                   # short     - number of frames (4th dimension)
+        s += struct.pack(self.e + "h", self.size_5)                   # short     - size of 5th dimension
+        s += struct.pack(self.e + "h", self.size_6)                   # short     - size of 6th dimension
+        s += struct.pack(self.e + "h", self.size_7)                   # short     - size of 7th dimension
+        s += struct.pack(self.e + "f", self.intention1)               # float     - intention 1 parameter
+        s += struct.pack(self.e + "f", self.intention2)               # float     - intention 2 parameter
+        s += struct.pack(self.e + "f", self.intention3)               # float     - intention 3 parameter
+        s += struct.pack(self.e + "h", self.intent_code)              # short     - intent code
+        s += struct.pack(self.e + "h", self.data_type)                # short     - datatype
+        s += struct.pack(self.e + "h", self.bitpix)                   # short     - bits per voxel
+        s += struct.pack(self.e + "h", self.slice_start)              # short     - First slice index
+        s += struct.pack(self.e + "f", self.pixdim_0)                 # float     - zero dimension size (important for orientation)
+        s += struct.pack(self.e + "f", self.pixdim_x)                 # float     - x dimension size (important for orientation)
+        s += struct.pack(self.e + "f", self.pixdim_y)                 # float     - y dimension size (important for orientation)
+        s += struct.pack(self.e + "f", self.pixdim_z)                 # float     - z dimension size (important for orientation)
+        s += struct.pack(self.e + "f", self.pixdim_t)                 # float     - t dimension size (important for orientation)
+        s += struct.pack(self.e + "f", self.pixdim_5)                 # float     - 5 dimension size (important for orientation)
+        s += struct.pack(self.e + "f", self.pixdim_6)                 # float     - 6 dimension size (important for orientation)
+        s += struct.pack(self.e + "f", self.pixdim_7)                 # float     - 7 dimension size (important for orientation)
+        s += struct.pack(self.e + "f", self.vox_offset)               # float     - offset of data when within the same file
+        s += struct.pack(self.e + "f", self.scl_slope)                # float     - slope of data scaling
+        s += struct.pack(self.e + "f", self.scl_inter)                # float     - intersect of data scaling
+        s += struct.pack(self.e + "h", self.slice_end)                # short     - Last slice index
+        s += struct.pack(self.e + "b", self.slice_code)               # char      - slice order code
+        s += struct.pack(self.e + "b", self.xyz_unit + self.t_unit)   # char      - codes for units used
+        s += struct.pack(self.e + "f", self.cal_max)                  # float     - maximum value in the dataset to be displayed (white)
+        s += struct.pack(self.e + "f", self.cal_min)                  # float     - minimum value in the dataset to be displayed (black)
+        s += struct.pack(self.e + "f", self.slice_duration)           # float     - minimum value in the dataset to be displayed (black)
+        s += struct.pack(self.e + "f", self.toffset)                  # float     - time offset for first datapoint
+        s += struct.pack(self.e + "i", 0)                             # int       - unused
+        s += struct.pack(self.e + "i", 0)                             # int       - unused
+        s += (self.descrip + "12345678901234567890123456789012345678901234567890123456789012345678901234567890")[0:80]  # char[80]  - data description
+        s += (self.aux_file + "123456789012345678901234")[0:24]       # char[24]  - auxilary filename
+        s += struct.pack(self.e + "h", self.qform_code)               # short     - niftixform code
+        s += struct.pack(self.e + "h", self.sform_code)               # short     - niftixform code
+        s += struct.pack(self.e + "f", self.quatern_b)                # float     - Quaternion b param
+        s += struct.pack(self.e + "f", self.quatern_c)                # float     - Quaternion c param
+        s += struct.pack(self.e + "f", self.quatern_d)                # float     - Quaternion d param
+        s += struct.pack(self.e + "f", self.qoffset_x)                # float     - Quaternion x shift
+        s += struct.pack(self.e + "f", self.qoffset_y)                # float     - Quaternion y shift
+        s += struct.pack(self.e + "f", self.qoffset_z)                # float     - Quaternion z shift
+        s += struct.pack(self.e + "ffff", self.srow_x[0], self.srow_x[1], self.srow_x[2], self.srow_x[3])  # float[4]  - affine transform data - row x
+        s += struct.pack(self.e + "ffff", self.srow_y[0], self.srow_y[1], self.srow_y[2], self.srow_y[3])  # float[4]  - affine transform data - row y
+        s += struct.pack(self.e + "ffff", self.srow_z[0], self.srow_z[1], self.srow_z[2], self.srow_z[3])  # float[4]  - affine transform data - row z
+        s += (self.intent_name + "1234567890123456")[0:16]            # char[16]  - intent name
+        s += self.magic[0:3] + chr(0)                                 # char[4]   - magic word and zero char
+        s += (self.ext + chr(0) * 4)[0:4]                             # char[4]   - extension
+
+        for msize, mcode, mdata in self.meta:
+            s += struct.pack(self.e + "I", msize)                     # int       - length
+            s += struct.pack(self.e + "I", mcode)                     # int       - code
+            s += mdata                                                # data
 
         return s
 
@@ -329,74 +340,88 @@ class niftihdr:
             e = "<"
         self.e = e
 
-        t = s.read(10*sc)                                           # char[10]  - unused
-        t = s.read(18*sc)                                           # char[18]  - unused
-        t = s.read(si)                                              # int       - unused
-        t = s.read(sh)                                              # short     - unused
-        t = s.read(sc)                                              # char      - unused
+        t = s.read(10 * sc)                                           # char[10]  - unused
+        t = s.read(18 * sc)                                           # char[18]  - unused
+        t = s.read(si)                                                # int       - unused
+        t = s.read(sh)                                                # short     - unused
+        t = s.read(sc)                                                # char      - unused
 
-        self.dim_info,      = struct.unpack(e+"c", s.read(sc))      # char      - MRI slice ordering ---- information not available in IFH
+        self.dim_info,      = struct.unpack(e + "c", s.read(sc))      # char      - MRI slice ordering ---- information not available in IFH
 
-        self.ndimensions,   = struct.unpack(e+"h", s.read(sh))      # short     - number of dimensions used
-        self.sizex,         = struct.unpack(e+"h", s.read(sh))      # short     - size in dimension x
-        self.sizey,         = struct.unpack(e+"h", s.read(sh))      # short     - size in dimension y
-        self.sizez,         = struct.unpack(e+"h", s.read(sh))      # short     - size in dimension z
-        self.frames,        = struct.unpack(e+"h", s.read(sh))      # short     - number of frames (4th dimension))
-        self.size_5,        = struct.unpack(e+"h", s.read(sh))      # short     - size of 5th dimension
-        self.size_6,        = struct.unpack(e+"h", s.read(sh))      # short     - size of 6th dimension
-        self.size_7,        = struct.unpack(e+"h", s.read(sh))      # short     - size of 7th dimension
-        self.intention1,    = struct.unpack(e+"f", s.read(sf))      # float     - intention 1 parameter
-        self.intention2,    = struct.unpack(e+"f", s.read(sf))      # float     - intention 2 parameter
-        self.intention3,    = struct.unpack(e+"f", s.read(sf))      # float     - intention 3 parameter
-        self.intent_code,   = struct.unpack(e+"h", s.read(sh))      # short     - intent code
-        self.data_type,     = struct.unpack(e+"h", s.read(sh))      # short     - datatype
-        self.bitpix,        = struct.unpack(e+"h", s.read(sh))      # short     - bits per voxel
-        self.slice_start,   = struct.unpack(e+"h", s.read(sh))      # short     - First slice index
-        self.pixdim_0,      = struct.unpack(e+"f", s.read(sf))      # float     - zero dimension size (important for orientation))
-        self.pixdim_x,      = struct.unpack(e+"f", s.read(sf))      # float     - x dimension size (important for orientation))
-        self.pixdim_y,      = struct.unpack(e+"f", s.read(sf))      # float     - y dimension size (important for orientation))
-        self.pixdim_z,      = struct.unpack(e+"f", s.read(sf))      # float     - z dimension size (important for orientation))
-        self.pixdim_t,      = struct.unpack(e+"f", s.read(sf))      # float     - t dimension size (important for orientation))
-        self.pixdim_5,      = struct.unpack(e+"f", s.read(sf))      # float     - 5 dimension size (important for orientation))
-        self.pixdim_6,      = struct.unpack(e+"f", s.read(sf))      # float     - 6 dimension size (important for orientation))
-        self.pixdim_7,      = struct.unpack(e+"f", s.read(sf))      # float     - 7 dimension size (important for orientation))
-        self.vox_offset,    = struct.unpack(e+"f", s.read(sf))      # float     - offset of data when within the same file
-        self.scl_slope,     = struct.unpack(e+"f", s.read(sf))      # float     - slope of data scaling
-        self.scl_inter,     = struct.unpack(e+"f", s.read(sf))      # float     - intersect of data scaling
-        self.slice_end,     = struct.unpack(e+"h", s.read(sh))      # short     - Last slice index
-        self.slice_code,    = struct.unpack(e+"b", s.read(sc))      # char      - slice order code
-        self.xyzt_units,    = struct.unpack(e+"b", s.read(sc))      # char      - codes for units used
-        self.cal_max,       = struct.unpack(e+"f", s.read(sf))      # float     - maximum value in the dataset to be displayed (white))
-        self.cal_min,       = struct.unpack(e+"f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
-        self.slice_duration,= struct.unpack(e+"f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
-        self.toffset,       = struct.unpack(e+"f", s.read(sf))      # float     - time offset for first datapoint
+        self.ndimensions,   = struct.unpack(e + "h", s.read(sh))      # short     - number of dimensions used
+        self.sizex,         = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension x
+        self.sizey,         = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension y
+        self.sizez,         = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension z
+        self.frames,        = struct.unpack(e + "h", s.read(sh))      # short     - number of frames (4th dimension))
+        self.size_5,        = struct.unpack(e + "h", s.read(sh))      # short     - size of 5th dimension
+        self.size_6,        = struct.unpack(e + "h", s.read(sh))      # short     - size of 6th dimension
+        self.size_7,        = struct.unpack(e + "h", s.read(sh))      # short     - size of 7th dimension
+        self.intention1,    = struct.unpack(e + "f", s.read(sf))      # float     - intention 1 parameter
+        self.intention2,    = struct.unpack(e + "f", s.read(sf))      # float     - intention 2 parameter
+        self.intention3,    = struct.unpack(e + "f", s.read(sf))      # float     - intention 3 parameter
+        self.intent_code,   = struct.unpack(e + "h", s.read(sh))      # short     - intent code
+        self.data_type,     = struct.unpack(e + "h", s.read(sh))      # short     - datatype
+        self.bitpix,        = struct.unpack(e + "h", s.read(sh))      # short     - bits per voxel
+        self.slice_start,   = struct.unpack(e + "h", s.read(sh))      # short     - First slice index
+        self.pixdim_0,      = struct.unpack(e + "f", s.read(sf))      # float     - zero dimension size (important for orientation))
+        self.pixdim_x,      = struct.unpack(e + "f", s.read(sf))      # float     - x dimension size (important for orientation))
+        self.pixdim_y,      = struct.unpack(e + "f", s.read(sf))      # float     - y dimension size (important for orientation))
+        self.pixdim_z,      = struct.unpack(e + "f", s.read(sf))      # float     - z dimension size (important for orientation))
+        self.pixdim_t,      = struct.unpack(e + "f", s.read(sf))      # float     - t dimension size (important for orientation))
+        self.pixdim_5,      = struct.unpack(e + "f", s.read(sf))      # float     - 5 dimension size (important for orientation))
+        self.pixdim_6,      = struct.unpack(e + "f", s.read(sf))      # float     - 6 dimension size (important for orientation))
+        self.pixdim_7,      = struct.unpack(e + "f", s.read(sf))      # float     - 7 dimension size (important for orientation))
+        self.vox_offset,    = struct.unpack(e + "f", s.read(sf))      # float     - offset of data when within the same file
+        self.scl_slope,     = struct.unpack(e + "f", s.read(sf))      # float     - slope of data scaling
+        self.scl_inter,     = struct.unpack(e + "f", s.read(sf))      # float     - intersect of data scaling
+        self.slice_end,     = struct.unpack(e + "h", s.read(sh))      # short     - Last slice index
+        self.slice_code,    = struct.unpack(e + "b", s.read(sc))      # char      - slice order code
+        self.xyzt_units,    = struct.unpack(e + "b", s.read(sc))      # char      - codes for units used
+        self.cal_max,       = struct.unpack(e + "f", s.read(sf))      # float     - maximum value in the dataset to be displayed (white))
+        self.cal_min,       = struct.unpack(e + "f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
+        self.slice_duration,= struct.unpack(e + "f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
+        self.toffset,       = struct.unpack(e + "f", s.read(sf))      # float     - time offset for first datapoint
         t = s.read(si)                                              # int       - unused
         t = s.read(si)                                              # int       - unused
 
-        self.descrip        = s.read(sc*80)                         # char[80]  - data description
-        self.aux_file       = s.read(sc*24)                         # char[24]  - auxilary filename
-        self.qform_code,    = struct.unpack(e+"h", s.read(sh))      # short     - niftixform code
-        self.sform_code,    = struct.unpack(e+"h", s.read(sh))      # short     - niftixform code
-        self.quatern_b,     = struct.unpack(e+"f", s.read(sf))      # float     - Quaternion b param
-        self.quatern_c,     = struct.unpack(e+"f", s.read(sf))      # float     - Quaternion c param
-        self.quatern_d,     = struct.unpack(e+"f", s.read(sf))      # float     - Quaternion d param
-        self.qoffset_x,     = struct.unpack(e+"f", s.read(sf))      # float     - Quaternion x shift
-        self.qoffset_y,     = struct.unpack(e+"f", s.read(sf))      # float     - Quaternion y shift
-        self.qoffset_z,     = struct.unpack(e+"f", s.read(sf))      # float     - Quaternion z shift
-        self.srow_x         = list(struct.unpack(e+"ffff", s.read(sf*4))) # float[4]  - affine transform row x
-        self.srow_y         = list(struct.unpack(e+"ffff", s.read(sf*4))) # float[4]  - affine transform row y
-        self.srow_z         = list(struct.unpack(e+"ffff", s.read(sf*4))) # float[4]  - affine transform row z
-        self.intent_name    = s.read(sc*16)                         # char[16]  - intent name
-        self.magic          = s.read(sc*4)                          # char[4]   - magic word and zero char
-        self.ext            = s.read(sc*4)                          # char[4]   - extension
+        self.descrip        = s.read(sc * 80)                         # char[80]  - data description
+        self.aux_file       = s.read(sc * 24)                         # char[24]  - auxilary filename
+        self.qform_code,    = struct.unpack(e + "h", s.read(sh))      # short     - niftixform code
+        self.sform_code,    = struct.unpack(e + "h", s.read(sh))      # short     - niftixform code
+        self.quatern_b,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion b param
+        self.quatern_c,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion c param
+        self.quatern_d,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion d param
+        self.qoffset_x,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion x shift
+        self.qoffset_y,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion y shift
+        self.qoffset_z,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion z shift
+        self.srow_x         = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row x
+        self.srow_y         = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row y
+        self.srow_z         = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row z
+        self.intent_name    = s.read(sc * 16)                         # char[16]  - intent name
+        self.magic          = s.read(sc * 4)                          # char[4]   - magic word and zero char
+        self.ext            = s.read(sc * 4)                          # char[4]   - extension
 
         self.dType      = niftiDataTypes[self.data_type]
 
         t = self.xyzt_units
         self.xyz_unit = t % 8
-        t = t - (t%8)
+        t = t - (t % 8)
         self.t_unit = t % 64
 
+
+        # --- Read extensions
+
+        self.meta = []
+        pointer = 352
+
+        if self.ext == [1, 0, 0, 0]:
+            while pointer < self.vox_offset:
+                msize = struct.unpack(e + "I", s.read(si))
+                mcode = struct.unpack(e + "I", s.read(si))
+                if pointer + msize <= self.vox_offset:
+                    mdata = s.read(sc * msize - 8)
+                    pointer += msize
+                self.meta.append([msize, mcode, mdata])
         return
 
     def readHeader(self, filename):
@@ -405,7 +430,7 @@ class niftihdr:
         if sform == '.nii.gz':
             h = gzip.open(filename, 'r')
         else:
-            h = open(filename,'r')
+            h = open(filename, 'r')
 
         self.unpackHdr(h)
         h.close()
@@ -438,9 +463,9 @@ class niftihdr:
             "scaling factor (mm/pixel) [1]": str(self.pixdim_x),
             "scaling factor (mm/pixel) [2]": str(self.pixdim_y),
             "scaling factor (mm/pixel) [3]": str(self.pixdim_z)
-#            "center": "73.500000 -87.000000 -84.000000",
-#            "mmppix": "3.000000 -3.000000 -3.000000"
-            }
+            # "center": "73.500000 -87.000000 -84.000000",
+            # "mmppix": "3.000000 -3.000000 -3.000000"
+        }
         if self.e == '<':
             ifhdr.ifh["imagedata byte order"] = 'littleendian'
         else:
@@ -450,26 +475,26 @@ class niftihdr:
         if self.sform_code > 0:
 
             if self.srow_x[3] < 0:
-                self.srow_x[3] = abs(self.srow_x[3]) - (self.sizex-1) * abs(self.srow_x[2])
+                self.srow_x[3] = abs(self.srow_x[3]) - (self.sizex - 1) * abs(self.srow_x[2])
             else:
                 self.srow_x[3] = abs(self.srow_x[3])
 
             if self.srow_y[3] < 0:
-                self.srow_y[3] = abs(self.srow_y[3]) - (self.sizey-1) * abs(self.srow_y[1])
+                self.srow_y[3] = abs(self.srow_y[3]) - (self.sizey - 1) * abs(self.srow_y[1])
             else:
                 self.srow_y[3] = -abs(self.srow_y[3])
 
             if self.srow_z[3] < 0:
-                self.srow_z[3] = abs(self.srow_z[3]) - (self.sizez-1) * abs(self.srow_z[2])
+                self.srow_z[3] = abs(self.srow_z[3]) - (self.sizez - 1) * abs(self.srow_z[2])
             else:
                 self.srow_z[3] = -abs(self.srow_z[3])
 
-            x = self.srow_x[3] + abs(self.srow_x[0])/2
-            y = self.srow_y[3] - abs(self.srow_y[1])/2
-            z = self.srow_z[3] - abs(self.srow_z[2])/2
+            x = self.srow_x[3] + abs(self.srow_x[0]) / 2
+            y = self.srow_y[3] - abs(self.srow_y[1]) / 2
+            z = self.srow_z[3] - abs(self.srow_z[2]) / 2
 
             ifhdr.ifh["center"] = "%.6f %.6f %.6f" % (x, y, z)
-            ifhdr.ifh["mmppix"] = "%.6f %.6f %.6f" % (self.pixdim_x*sign(x), self.pixdim_y*sign(y), self.pixdim_z*sign(z))
+            ifhdr.ifh["mmppix"] = "%.6f %.6f %.6f" % (self.pixdim_x * sign(x), self.pixdim_y * sign(y), self.pixdim_z * sign(z))
 
 #        elif self.qform_code > 0:
 #            x = -self.qoffset_x*self.pixdim_0 + self.pixdim_x/2
@@ -485,65 +510,72 @@ class niftihdr:
         d = self.__dict__
         fields = ["dim_info", "ndimensions", "sizex", "sizey", "sizez", "frames", "size_5", "size_6", "size_7", "intention1", "intention2", "intention3", "intent_code", "data_type", "bitpix", "slice_start", "pixdim_0", "pixdim_x", "pixdim_y", "pixdim_z", "pixdim_t", "pixdim_5", "pixdim_6", "pixdim_7", "vox_offset", "scl_slope", "scl_inter", "slice_end", "slice_code", "xyzt_units", "cal_max", "cal_min", "slice_duration", "toffset", "descrip", "aux_file", "qform_code", "sform_code", "quatern_b", "quatern_c", "quatern_d", "qoffset_x", "qoffset_y", "qoffset_z", "srow_x", "srow_y", "srow_z", "intent_name", "magic"]
         for f in fields:
-            s += "%s%s: %s\n" % (f, " "*(15-len(f)), str(d[f]))
+            s += "%s%s: %s\n" % (f, " " * (15 - len(f)), str(d[f]))
+        if len(self.meta) > 0:
+            s += "\nMetadata:"
+            mi = 0
+            for msize, mcode, mdata in self.meta:
+                mi += 1
+                s += "\n- metadata chunk %d, size: %d bytes, code: %d" % (mi, msize, mcode)
+
         return s + "\n# ----------------------------------"
 
     def modifyHeader(self, s):
         decodef = {"dim_info":        int,
-                    "ndimensions":    int,
-                    "sizex":          int,
-                    "sizey":          int,
-                    "sizez":          int,
-                    "frames":         int,
-                    "size_5":         int,
-                    "size_6":         int,
-                    "size_7":         int,
-                    "intention1":     float,
-                    "intention2":     float,
-                    "intention3":     float,
-                    "intent_code":    int,
-                    "data_type":      int,
-                    "bitpix":         int,
-                    "slice_start":    int,
-                    "pixdim_0":       float,
-                    "pixdim_x":       float,
-                    "pixdim_y":       float,
-                    "pixdim_z":       float,
-                    "pixdim_t":       float,
-                    "pixdim_5":       float,
-                    "pixdim_6":       float,
-                    "pixdim_7":       float,
-                    "vox_offset":     float,
-                    "scl_slope":      float,
-                    "scl_inter":      float,
-                    "slice_end":      int,
-                    "slice_code":     int,
-                    "xyzt_units":     int,
-                    "cal_max":        float,
-                    "cal_min":        float,
-                    "slice_duration": float,
-                    "toffset":        float,
-                    "descrip":        str,
-                    "aux_file":       str,
-                    "qform_code":     int,
-                    "sform_code":     int,
-                    "quatern_b":      float,
-                    "quatern_c":      float,
-                    "quatern_d":      float,
-                    "qoffset_x":      float,
-                    "qoffset_y":      float,
-                    "qoffset_z":      float,
-                    "srow_x":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
-                    "srow_y":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
-                    "srow_z":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
-                    "intent_name":    str,
-                    "magic":          str,
-                    "ext":            str,
-                    "xyz_unit":       int,
-                    "t_unit":         int,
-                    "s_unit":         int,
-                    "e":              str,
-                    "filename":       str}
+                   "ndimensions":    int,
+                   "sizex":          int,
+                   "sizey":          int,
+                   "sizez":          int,
+                   "frames":         int,
+                   "size_5":         int,
+                   "size_6":         int,
+                   "size_7":         int,
+                   "intention1":     float,
+                   "intention2":     float,
+                   "intention3":     float,
+                   "intent_code":    int,
+                   "data_type":      int,
+                   "bitpix":         int,
+                   "slice_start":    int,
+                   "pixdim_0":       float,
+                   "pixdim_x":       float,
+                   "pixdim_y":       float,
+                   "pixdim_z":       float,
+                   "pixdim_t":       float,
+                   "pixdim_5":       float,
+                   "pixdim_6":       float,
+                   "pixdim_7":       float,
+                   "vox_offset":     float,
+                   "scl_slope":      float,
+                   "scl_inter":      float,
+                   "slice_end":      int,
+                   "slice_code":     int,
+                   "xyzt_units":     int,
+                   "cal_max":        float,
+                   "cal_min":        float,
+                   "slice_duration": float,
+                   "toffset":        float,
+                   "descrip":        str,
+                   "aux_file":       str,
+                   "qform_code":     int,
+                   "sform_code":     int,
+                   "quatern_b":      float,
+                   "quatern_c":      float,
+                   "quatern_d":      float,
+                   "qoffset_x":      float,
+                   "qoffset_y":      float,
+                   "qoffset_z":      float,
+                   "srow_x":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                   "srow_y":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                   "srow_z":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                   "intent_name":    str,
+                   "magic":          str,
+                   "ext":            str,
+                   "xyz_unit":       int,
+                   "t_unit":         int,
+                   "s_unit":         int,
+                   "e":              str,
+                   "filename":       str}
         s = s.replace("\r", "\n")
         s = s.replace("\n\n", "\n")
         s = s.replace("\n", ";")
