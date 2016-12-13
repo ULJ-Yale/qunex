@@ -32,17 +32,17 @@
 
 ## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
 ## ------------------------------------------------------------------------------------------------------------------------------------------
-## - Sync to Grace crontab job 																				-- DONE
-## - Rsync to subject folder based on acq_log.txt															-- IN PROGRESS
-## - Dicomsort if data complete w/o error															        -- IN PROGRESS
-## - Generate subject.txt -- IF 0 ERR then RUN; ELSE ABORT													-- IN PROGRESS
-## - Run HCP 1-5 via bash script submitted to bigmem02; setup checkpoints (will need param file)			-- IN PROGRESS
-## - Run QC: i) Visual multi-modal; ii) BOLD SNR, iii) fcMRI; iv) DWI  										-- IN PROGRESS
-## - dtifit																									-- IN PROGRESS
-## - bedpostX																								-- IN PROGRESS
-## - probtrackX																								-- IN PROGRESS
-## - dwidenseparcellated																					-- IN PROGRESS
-## - FIX ICA / denoising (will need param file)																-- IN PROGRESS
+## - Sync to Grace crontab job -- DONE
+## - Rsync to subject folder based on acq_log.txt -- IN PROGRESS
+## - Dicomsort if data complete w/o error -- IN PROGRESS
+## - Generate subject.txt -- IF 0 ERR then RUN; ELSE ABORT -- IN PROGRESS
+## - Run HCP 1-5 via bash script submitted to bigmem02; setup checkpoints (will need param file) -- IN PROGRESS
+## - Run QC: i) Visual multi-modal; ii) BOLD SNR, iii) fcMRI; iv) DWI -- IN PROGRESS
+## - dtifit -- IN PROGRESS
+## - bedpostX -- IN PROGRESS
+## - probtrackX -- IN PROGRESS
+## - dwidenseparcellated -- IN PROGRESS
+## - FIX ICA / denoising (will need param file) -- IN PROGRESS
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 
 ## --> BITBUCKET INFO:
@@ -166,76 +166,85 @@ show_usage() {
   				echo ""
   				cyaneho "	-------- general help for analysis pipeline: --------"
   				echo ""
-  				weho "		* interactive usage:"
-  				echo "		ap <function_name> <study_folder> '<list of cases>' [options]"
+  				weho "* interactive usage:"
+  				echo "ap <function_name> <study_folder> '<list of cases>' [options]"
   				echo ""
-  				weho "		* flagged usage:"
-  				echo "		ap --function=<function_name> --studyfolder=<study_folder> --subjects='<list of cases>' [options]"  				 
+  				weho "* flagged usage:"
+  				echo "ap --function=<function_name> --studyfolder=<study_folder> \ " 
+  				echo "--subjects='<list of cases>' [options]"  				 
   				echo ""
-  				weho "		* interactive example (no flags):"
-  				echo "		ap dicomsort /some/path/to/study/subjects '100001 100002'"
+  				weho "* interactive example (no flags):"
+  				echo "ap dicomsort /some/path/to/study/subjects '100001 100002'"
   				echo ""
-  				weho "		* flagged example (no interactive terminal input):"
-  				echo "		ap --function=dicomsort --studyfolder=/some/path/to/study/subjects --subjects='100001,100002'"
+  				weho "* flagged example (no interactive terminal input):"
+  				echo "ap --function=dicomsort \ "
+  				echo "--studyfolder=/some/path/to/study/subjects \ "
+  				echo "--subjects='100001,100002'"
   				echo ""
-  				weho "		* function-specific help and usage:"
-  				echo "		ap dicomsort"
+  				weho "* function-specific help and usage:"
+  				echo "ap dicomsort"
   				echo ""
-  				cyaneho "	-------- list of specific supported function: --------"
+  				echo "* Square brackets []: Specify a value that is optional."
+  				echo "			Note: Value within brackets is the default value."
+  				echo "* Angle brackets <>: Contents describe what should go there."
+				echo "* Dashes or flags -- : Define input variables."
+				echo "* All descriptions use regular case and all options use CAPS"
+  				echo ""
+  				echo ""
+  				cyaneho "-------- list of specific supported function: --------"
   				echo ""  				
-  				weho "		--- data organization ---"
-  				echo "		dicomsort			sort dicoms and setup nifti files from dicoms"
-  				echo "		dicom2nii			convert dicoms to nifti files"
-  				echo "		setuphcp 			setup data structure for hcp processing"
-  				echo "		hpcsync			sync with yale hpc cluster(s) for preprocessing (studyfolder/subject/hcp/subject)"
-  				echo "		awshcpsync			sync hcp data from aws s3 cloud"
+  				weho "--- data organization ---"
+  				echo "dicomsort		sort dicoms and setup nifti files from dicoms"
+  				echo "dicom2nii		convert dicoms to nifti files"
+  				echo "setuphcp		setup data structure for hcp processing"
+  				echo "hpcsync			sync with hpc cluster(s) for preprocessing"
+  				echo "awshcpsync		sync hcp data from aws s3 cloud"
   				echo ""  				
-  				weho "		--- hcp pipeline ---"
-  				echo "		hpc1				prefreesurfer component of the hcp pipeline (cluster aware)"
-  				echo "		hpc2				freesurfer component of the hcp pipeline (cluster aware)"
-  				echo "		hpc3				postfreesurfer component of the hcp pipeline (cluster aware)"
-  				echo "		hpc4				volume component of the hcp pipeline (cluster aware)"
-  				echo "		hpc5				surface component of the hcp pipeline (cluster aware)"
-  				echo "		hpcd				diffusion component of the hcp pipeline (cluster aware)"
-  				echo "		hcpdlegacy			diffusion processing that is hcp compliant for legacy data with standard fieldmaps (cluster aware)"
+  				weho "--- hcp pipeline ---"
+  				echo "hpc1			prefreesurfer component of the hcp pipeline (cluster usable)"
+  				echo "hpc2			freesurfer component of the hcp pipeline (cluster usable)"
+  				echo "hpc3			postfreesurfer component of the hcp pipeline (cluster usable)"
+  				echo "hpc4			volume component of the hcp pipeline (cluster usable)"
+  				echo "hpc5			surface component of the hcp pipeline (cluster usable)"
+  				echo "hpcd			dwi component of the hcp pipeline (cluster usable)"
+  				echo "hcpdlegacy		dwi processing for data with standard fieldmaps (cluster usable)"
   				echo ""  				
-  				weho "		--- generating lists & qc functions ---"
-  				echo "		setuplist	 		setup list for fcmri analysis / preprocessing or volume snr calculations"
-  				echo "		nii4dfpconvert 			convert nifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "		cifti4dfpconvert 		convert cifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "		ciftismooth 			smooth & convert cifti bold data to 4dpf format for fild analyses"
-  				echo "		qcpreproc			run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
-
+  				weho "--- generating lists & qc functions ---"
+  				echo "setuplist		setup list for fcmri analysis / preprocessing or volume snr calculations"
+  				echo "nii4dfpconvert		convert nifti hcp-processed bold data to 4dpf format for fild analyses"
+  				echo "cifti4dfpconvert	convert cifti hcp-processed bold data to 4dpf format for fild analyses"
+  				echo "ciftismooth		smooth & convert cifti bold data to 4dpf format for fild analyses"
+  				echo "qcpreproc		run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
   				echo ""  				
   				weho "		--- dwi analyses & probabilistic tractography functions ---"
-  				echo "		fsldtifit 			run fsl dtifit (cluster aware)"
-  				echo "		fslbedpostxgpu 			run fsl bedpostx w/gpu (cluster aware)"
-  				echo "		isolatesubcortexrois 		isolate subject-specific subcortical rois for tractography"
-  				echo "		isolatethalamusfslnuclei 	isolate fsl thalamic rois for tractography"
-  				echo "		probtracksubcortex 		run fsl probtrackx across subcortical nuclei (cpu)"
-  				echo "		pretractography			generates space for cortical dense connectomes (cluster aware)"
-  				echo "		pretractographydense		generates space for whole-brain dense connectomes (cluster aware)"
-  				echo "		probtrackxgpucortex		run fsl probtrackx across cortical mesh for dense connectomes w/gpu (cluster aware)"
-  				echo "		makedensecortex			generate dense cortical connectomes (cluster aware)"
-  				echo "		probtrackxgpudense		run fsl probtrackx for whole brain & generates dense whole-brain connectomes (cluster aware)"
+  				echo "fsldtifit 			run fsl dtifit (cluster usable)"
+  				echo "fslbedpostxgpu 			run fsl bedpostx w/gpu (cluster usable)"
+  				echo "isolatesubcortexrois 		isolate subject-specific subcortical rois for tractography"
+  				echo "isolatethalamusfslnuclei 	isolate fsl thalamic rois for tractography"
+  				echo "probtracksubcortex 		run fsl probtrackx across subcortical nuclei (cpu)"
+  				echo "pretractography			generates space for cortical dense connectomes (cluster usable)"
+  				echo "pretractographydense		generates space for whole-brain dense connectomes (cluster usable)"
+  				echo "probtrackxgpucortex		run fsl probtrackx across cortical mesh for dense connectomes w/gpu (cluster usable)"
+  				echo "makedensecortex			generate dense cortical connectomes (cluster usable)"
+  				echo "probtrackxgpudense		run fsl probtrackx for whole brain & generates dense whole-brain connectomes (cluster usable)"
   				echo ""  				
   				weho "		--- misc analyses ---"  				
-  				echo "		boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
-  				echo "		dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
-  				echo "		printmatrix			extract parcellated matrix for bold data via yeo 17 network solutions"
-  				echo "		boldmergenifti			merge specified nii bold timeseries"
-  				echo "		boldmergecifti			merge specified citi bold timeseries"
-  				echo "		bolddense			compute bold dense connectome (needs >30gb ram per bold)"
-  				echo "		palmanalysis			run palm and extract data from rois (cluster aware)"
+  				echo "boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
+  				echo "dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
+  				echo "printmatrix			extract parcellated matrix for bold data via yeo 17 network solutions"
+  				echo "boldmergenifti			merge specified nii bold timeseries"
+  				echo "boldmergecifti			merge specified citi bold timeseries"
+  				echo "bolddense			compute bold dense connectome (needs >30gb ram per bold)"
+  				echo "palmanalysis			run palm and extract data from rois (cluster usable)"
   				echo ""  				
   				weho "		--- fix ica de-noising ---"    				
-  				echo "		fixica				run fix ica de-noising on a given volume"
-  				echo "		postfix				generates wb_view scene files in each subjects directory for fix ica results"
-  				echo "		boldhardlinkfixica		setup hard links for single run fix ica results"  				
-  				echo "		fixicainsertmean		re-insert mean image back into mapped fix ica data (needed prior to dofcmrip calls)"
-  				echo "		fixicaremovemean		remove mean image from mapped fix ica data"
-  				echo "		boldseparateciftifixica		separate specified bold timeseries (results from fix ica - use if bolds merged)"
-  				echo "		boldhardlinkfixicamerged	setup hard links for merged fix ica results (use if bolds merged)"  				
+  				echo "fixica				run fix ica de-noising on a given volume"
+  				echo "postfix				generates wb_view scene files in each subjects directory for fix ica results"
+  				echo "boldhardlinkfixica		setup hard links for single run fix ica results"  				
+  				echo "fixicainsertmean		re-insert mean image back into mapped fix ica data (needed prior to dofcmrip calls)"
+  				echo "fixicaremovemean		remove mean image from mapped fix ica data"
+  				echo "boldseparateciftifixica		separate specified bold timeseries (results from fix ica - use if bolds merged)"
+  				echo "boldhardlinkfixicamerged	setup hard links for merged fix ica results (use if bolds merged)"  				
   				echo ""
 }
 
@@ -837,7 +846,7 @@ show_usage_probtracksubcortex() {
     			reho "		*** This function is deprecated and not supported any longer since the dense connectome implementation."
     			reho "		*** The new usage for dense connectome computation can be found via the following functions:"
     			echo ""
-  				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (CLUSTER AWARE)"
+  				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (cluster usable)"
     			echo ""
 }
 
