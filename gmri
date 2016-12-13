@@ -6,11 +6,18 @@ import sys
 
 
 help = '''
-gmri utility for MR processing
+gmri utility for MR image processing
+
 usage: gmri <command> <argument> ...
        gmri -h  (prints this help)
        gmri -l  (list commands)
        gmri -<command> (print help for a given command)
+       
+       Square brackets []: Specify a value that is optional
+              Note: Value within brackets is the default value
+       Angle brackets <>: Contents describe what should go there
+       Dashes or flags - : Define input variables
+       All descriptions use regular case and all options use CAPS
 '''
 
 comlist = '''
@@ -19,6 +26,11 @@ gmri utility for MRI processing.
 
 use: gmri command [option=value] [option=value] ...
 
+       Square brackets []: Specify a value that is optional
+              Note: Value within brackets is the default value
+       Angle brackets <>: Contents describe what should go there
+       Dashes or flags - : Define input variables
+       All descriptions use regular case and all options use CAPS
 
 dicom utilities
 ---------------

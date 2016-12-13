@@ -115,8 +115,6 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     null = open(os.devnull, 'w')
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
-    r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
-    stxt = open(os.path.join(folder, "subject.txt"), 'w')
 
     # check for existing .gz files
 
@@ -152,6 +150,11 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
             print "\nCan not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.\nAborting processing of DICOM files!\n"
             return
             # exit()
+
+    # --- open report files
+
+    r    = open(os.path.join(dmcf, "DICOM-Report.txt"), 'w')
+    stxt = open(os.path.join(folder, "subject.txt"), 'w')
 
     # get a list of folders
 
