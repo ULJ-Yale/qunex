@@ -6,31 +6,46 @@ import sys
 
 
 help = '''
-gmri utility for MR image processing
+gmri utility for MRI processing and analysis.
 
-usage: gmri <command> <argument> ...
-       gmri -h  (prints this help)
-       gmri -l  (list commands)
+usage: gmri <command> [option=value] [option=value] ...
+       gmri -h         (prints this help)
+       gmri -l         (list available commands)
        gmri -<command> (print help for a given command)
-       
-       Square brackets []: Specify a value that is optional
-              Note: Value within brackets is the default value
-       Angle brackets <>: Contents describe what should go there
-       Dashes or flags - : Define input variables
-       All descriptions use regular case and all options use CAPS
+
+       ------------------------------------------------------------------------
+       Note the following conventions used in help and documentation:
+
+       * Square brackets [] denote an option or argument that is optional the
+         value listed in the brackets is the default value used if the argument
+         is not explicitly specified
+       * Angle brackets <> describe the value that should be provided
+       * Dashes or "flags" (-) in the documentation define input variables.
+       * Commands, arguments, and option names are either in small or "camel"
+         case.
+       * Use descriptions are in regular "sentence" case.
+       * Option values are usually specified in capital case (e.g. YES/NO).
+       ------------------------------------------------------------------------
 '''
 
 comlist = '''
 ===============================================================================
-gmri utility for MRI processing.
+gmri utility for MRI processing and analysis.
 
-use: gmri command [option=value] [option=value] ...
+use: gmri <command> [option=value] [option=value] ...
 
-       Square brackets []: Specify a value that is optional
-              Note: Value within brackets is the default value
-       Angle brackets <>: Contents describe what should go there
-       Dashes or flags - : Define input variables
-       All descriptions use regular case and all options use CAPS
+-------------------------------------------------------------------------------
+Note the following conventions used in help and documentation:
+
+* Square brackets [] denote an option or argument that is optional the
+  value listed in the brackets is the default value used if the argument
+  is not explicitly specified
+* Angle brackets <> describe the value that should be provided
+* Dashes or "flags" (-) in the documentation define input variables.
+* Commands, arguments, and option names are either in small or "camel" case.
+* Use descriptions are in regular "sentence" case.
+* Option values are usually specified in capital case (e.g. YES/NO).
+-------------------------------------------------------------------------------
 
 dicom utilities
 ---------------
