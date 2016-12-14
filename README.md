@@ -42,11 +42,11 @@ command itself using the folowing options:
 
 Perusing documentation, please note the following conventions used:
 
-* Square brackets `[]` denote an option or argument that is optional the
-  value listed in the brackets is the default value used if the argument
+* Square brackets `[]` denote an option or argument that is optional. The
+  value listed in the brackets is the default value used, if the argument
   is not explicitly specified
 * Angle brackets `<>` describe the value that should be provided
-* Dashes or "flags" (`-`) in the documentation define input variables.
+* Dashes or "flags", `-` in the documentation define input variables.
 * Commands, arguments, and option names are either in small or "camel" case.
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).

@@ -13,11 +13,11 @@ usage: gmri <command> [option=value] [option=value] ...
        gmri -l         (list available commands)
        gmri -<command> (print help for a given command)
 
-       ------------------------------------------------------------------------
+       -------------------------------------------------------------------------
        Note the following conventions used in help and documentation:
 
-       * Square brackets [] denote an option or argument that is optional the
-         value listed in the brackets is the default value used if the argument
+       * Square brackets [] denote an option or argument that is optional. The
+         value listed in the brackets is the default value used, if the argument
          is not explicitly specified
        * Angle brackets <> describe the value that should be provided
        * Dashes or "flags" (-) in the documentation define input variables.
@@ -25,27 +25,27 @@ usage: gmri <command> [option=value] [option=value] ...
          case.
        * Use descriptions are in regular "sentence" case.
        * Option values are usually specified in capital case (e.g. YES/NO).
-       ------------------------------------------------------------------------
+       -------------------------------------------------------------------------
 '''
 
 comlist = '''
-===============================================================================
+================================================================================
 gmri utility for MRI processing and analysis.
 
 use: gmri <command> [option=value] [option=value] ...
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 Note the following conventions used in help and documentation:
 
-* Square brackets [] denote an option or argument that is optional the
-  value listed in the brackets is the default value used if the argument
+* Square brackets [] denote an option or argument that is optional. The
+  value listed in the brackets is the default value used, if the argument
   is not explicitly specified
 * Angle brackets <> describe the value that should be provided
 * Dashes or "flags" (-) in the documentation define input variables.
 * Commands, arguments, and option names are either in small or "camel" case.
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. YES/NO).
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 dicom utilities
 ---------------
