@@ -38,11 +38,11 @@ set seq = ""
 
 recode = {True: 'ok', False: 'missing'}
 
-def runAviFolder(folder=".", pattern=None, overwrite=None, subjf=None):
+def runNILFolder(folder=".", pattern=None, overwrite=None, subjf=None):
     '''
-    runAviFolder [folder=.] [pattern=OP*] [overwrite=no] [subjf=subject.txt]
+    runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [subjf=subject.txt]
 
-    Goes through the folder and runs runAvi on all the subfolders that match the pattern. Setting overwrite
+    Goes through the folder and runs runNIL on all the subfolders that match the pattern. Setting overwrite
     to overwrite.
 
     - folder: the base study subjects folder (e.g. WM44/subjects) where OP folders and the inbox folder with the
@@ -51,7 +51,7 @@ def runAviFolder(folder=".", pattern=None, overwrite=None, subjf=None):
     - overwrite: whether to overwrite existing (params and BOLD) files.
     — subjf: the name of the subject.txt file
 
-    example: gmri runAviFolder folder=. pattern=OP* overwrite=no subjf=subject_hcp.txt
+    example: gmri runNILFolder folder=. pattern=OP* overwrite=no subjf=subject_hcp.txt
     '''
 
     if pattern is None:
@@ -72,7 +72,7 @@ def runAviFolder(folder=".", pattern=None, overwrite=None, subjf=None):
     subjs = [(e, os.path.exists(os.path.join(e, 'subject.txt')), os.path.exists(os.path.join(e, 'dicom', 'DICOM-Report.txt')), os.path.exists(os.path.join(e, '4dfp', 'params'))) for e in subjs]
 
     do = []
-    print "\n---=== Running Avi preprocessing on folder %s ===---\n" % (folder)
+    print "\n---=== Running NIL preprocessing on folder %s ===---\n" % (folder)
     print "List of subjects to process\n"
     print "%-15s%-15s%-15s%-10s" % ("subject", "subject.txt", "DICOM-Report", "params")
     for subj, stxt, sdicom, sparam in subjs:
@@ -99,14 +99,14 @@ def runAviFolder(folder=".", pattern=None, overwrite=None, subjf=None):
     for s in do:
         runAvi(s, overwrite, subjf)
 
-    print "\n---=== Done Avi preprocessing on folder %s ===---\n" % (folder)
+    print "\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder)
 
 
-def runAvi(folder=".", overwrite=None, subjf=None):
+def runNIL(folder=".", overwrite=None, subjf=None):
     '''
-    runAvi [folder=.] [overwrite=no] [subjf=subject.txt]
+    runNIL [folder=.] [overwrite=no] [subjf=subject.txt]
 
-    Runs Avi preprocessing script on the subject data in specified folder. Uses subject.txt to identify structural and
+    Runs NIL preprocessing script on the subject data in specified folder. Uses subject.txt to identify structural and
     BOLD runs and DICOM-report.txt to get TR value. The processing is saved to a datestamped log in the 4dfp folder.
 
     - folder: subject's folder with nii and dicom folders and subject.txt file.
@@ -234,7 +234,7 @@ def runAvi(folder=".", overwrite=None, subjf=None):
     # ---- run avi preprocessing
 
     logname = 'preprocess.' + datetime.datetime.now().strftime('%Y-%m-%d.%H.%m.%S') + ".log"
-    print "...  running Avi preprocessing, saving log to %s " % (logname)
+    print "...  running NIL preprocessing, saving log to %s " % (logname)
     logfile = open(os.path.join(folder, '4dfp', logname), 'w')
 
     r = subprocess.call(['preproc_avi_nifti', os.path.join(folder, '4dfp', 'params')], stdout=logfile, stderr=subprocess.STDOUT)
@@ -242,9 +242,9 @@ def runAvi(folder=".", overwrite=None, subjf=None):
     logfile.close()
 
     if r:
-        print "...  WARNING: preproc_avi_nifti finished with errors, please check log file"
+        print "...  WARNING: preproc_NIL_nifti finished with errors, please check log file"
     else:
-        print "...  preproc_avi_nifti finished successfully"
+        print "...  preproc_NIL_nifti finished successfully"
 
 
 def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm'):
