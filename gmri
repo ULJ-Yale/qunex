@@ -60,9 +60,14 @@ getDICOMInfo dfile=<dicom_file> [scanner=siemens]
 
 
 WUSTL NIL pipeline utilities
-----------------------
+----------------------------
 runNIL       [folder=.] [overwrite=no] [subjf=subject.txt]
 runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [subjf=subject.txt]
+
+
+General image file utilities
+----------------------------
+sliceImage sfile=<source image> tfile=<target image> [frames=1]
 
 
 NIfTI file conversions
@@ -162,6 +167,7 @@ commands = {'listDicom'     : {'com': niu.g_dicom.listDicom,        'args': ('fo
             'fz2zf'         : {'com': niu.g_NIfTI.fz2zf,            'args': ('inf', 'outf')},
             'reorder'       : {'com': niu.g_NIfTI.reorder,          'args': ('inf', 'outf')},
             'reslice'       : {'com': niu.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf')},
+            'sliceImage'    : {'com': niu.g_img.sliceImage,         'args': ('sfile', 'tfile', 'frames')},
             'nifti24dfp'    : {'com': niu.g_NIfTI.nifti24dfp,       'args': ('inf', 'outf')},
             'setupHCP'      : {'com': niu.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf')},
             'setupHCPFolder': {'com': niu.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check')},
