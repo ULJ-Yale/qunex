@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
+This file holds code for core support functions used by other code for
+preprocessing and analysis. The functions are for internal use
+and can not be called externaly.
+
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.

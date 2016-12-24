@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
+This file holds the core preprocessing hub functions and information it
+defines the commands that can be run, it specifies the options and their
+default values. It has a few support functions and the key `run` function
+that processes the input, prints some of the help and calls processing
+functions either localy or through PBS or LSF queue systems.
+
+None of the code is run directly from the terminal interface.
+
 Created by Grega Repovs on 2016-12-17.
 Code merge from dofcMRIp gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.

@@ -1,6 +1,29 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
+This file holds code for running HCP preprocessing and image mapping. It
+consists of functions:
+
+* hcpPreFS        ... runs HCP PreFS preprocessing
+* hcpFS           ... runs HCP FS preprocessing
+* hcpPostFS       ... runs HCP PostFS preprocessing
+* hcpDiffusion    ... runs HCP Diffusion weighted image preprocessing
+* hcpfMRIVolume   ... runs HCP BOLD Volume preprocessing
+* hcpfMRISurface  ... runs HCP BOLD Surface preprocessing
+* hcpDTIFit       ... runs DTI Fit
+* hcpBedpostx     ... runs Bedpost X
+* mapHCPData      ... maps results of HCP preprocessing into `images`
+                      folder
+
+All the functions are part of the processing suite. They should be called
+from the command line using `gmri` command. Help is available through:
+
+`gmri ?<command>` for command specific help
+`gmri -o` for a list of relevant arguments and options
+
+There are additional support functions that are not to be used
+directly.
+
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.

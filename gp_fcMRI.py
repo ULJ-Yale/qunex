@@ -1,6 +1,23 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
+This file holds code for running functional connectivity preprocessing and
+GLM computation. It consists of functions:
+
+* getBOLDData           ... maps NIL preprocessed data to images folder
+* createBOLDBrainMasks  ... extracts the first frame of each BOLD file
+* computeBOLDStats      ... computes per volume image statistics for scrubbing
+* createStatsReport     ... creates a report of movement and image statistics
+* extractNuisanceSignal ... extracts the nuisance signal for regressions
+* preprocessBold        ... processes a single BOLD file
+* preprocessConc        ... processes concatenated BOLD files
+
+All the functions are part of the processing suite. They should be called
+from the command line using `gmri` command. Help is available through:
+
+`gmri ?<command>` for command specific help
+`gmri -o` for a list of relevant arguments and options
+
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.

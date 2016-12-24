@@ -1,6 +1,19 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
+This file holds code for support functions for image preprocessing and analysis.
+It consists of functions:
+
+* createBoldList   ... creates a list with paths to each subject's BOLD files
+* createConcList   ... creates a list with paths to each subject's conc files
+* listSubjectInfo  ... lists subjects data stored in subjects.txt file
+
+All the functions are part of the processing suite. They should be called
+from the command line using `gmri` command. Help is available through:
+
+`gmri ?<command>` for command specific help
+`gmri -o` for a list of relevant arguments and options
+
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.

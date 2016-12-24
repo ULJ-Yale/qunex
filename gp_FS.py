@@ -1,6 +1,20 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
+This file holds code for running legacy FreeSurfer preprocessing on NIL
+preprocessed images. The specific functions are:
+
+* runBasicStructuralSegmentation
+* checkForFreeSurferData
+* runFreeSurferFullSegmentation
+* runFreeSurferSubcorticalSegmentation
+
+All the functions are part of the processing suite. They should be called
+from the command line using `gmri` command. Help is available through:
+
+`gmri ?<command>` for command specific help
+`gmri -o` for a list of relevant arguments and options
+
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.

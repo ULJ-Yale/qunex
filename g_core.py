@@ -1,4 +1,10 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+This file holds code for core support functions used by other code for
+preprocessing and analysis. The functions are for internal use
+and can not be called externaly.
+"""
 
 import re
 import os.path
