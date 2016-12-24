@@ -549,7 +549,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             task = ""
         else:
             task = task + "_"
-        r = '\n\n%s' % (description)
+        r = '\n%s' % (description)
 
         logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
         logfile = "tmp_%s%s_%s.log" % (task, thread, logstamp)

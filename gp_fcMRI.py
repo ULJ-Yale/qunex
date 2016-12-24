@@ -115,10 +115,44 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
 
 def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     """
-    createBOLDBrainMasks - documentation not yet available.
+    createBOLDBrainMasks [... processing options]
+
+    createBOLDBrainMasks takes the first image of each bold file, and runs FSL
+    bet to extract the brain and create a brain mask. The results are saved
+    into images/segmentation/boldmasks
+
+    The relevant processing parameters are:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+    --bold_preprocess ... Which bold images (as they are specified in the
+                          subjects.txt file) to copy over. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to copy all [rest].
+    --boldname        ... The default name of the bold files in the images
+                          folder [bold].
+
+    The parameters can be specified in command call or subject.txt file.
+
+    Example use:
+    gmri createBOLDBrainMasks subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no hcp_cifti_tail=_Atlas bold-preprocess=all
+
+    (c) Grega Repovš
+
+    Changelog
+    2016-12-24 - Grega Repovš - Added documentation, fixed issue with cifti
+                                targets, switched to gmri functions to extract
+                                the first frame and convert the image.
     """
 
     bsearch = re.compile('bold([0-9]+)')
+    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0}
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -140,6 +174,8 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                     # --- filenames
 
                     f = getFileNames(sinfo, options)
+                    if options['image_target'] == 'cifti':
+                        options['image_target'] = 'nifti'
                     f.update(getBOLDFileNames(sinfo, boldname, options))
 
                     # --- copy over bold data
@@ -148,11 +184,21 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                     r, status = checkForFile2(r, f['bold'], '\n    ... bold data present', '\n    ... bold data missing, skipping bold', status=True)
                     if not status:
                         print "Looked for:", f['bold']
+                        report['boldmissing'] += 1
                         continue
 
                     # --- extract first bold frame
 
-                    r += runExternalForFile(f['bold1'], "g_SliceImage %s %s 1" % (f['bold'], f['bold1']), "    ... slicing first frame from %s" % (os.path.basename(f['bold'])), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='SliceImage')
+                    if not os.path.exists(f['bold1']) and not options['overwrite']:
+                        sliceImage(f['bold'], f['bold1'], 1)
+                        if os.path.exists(f['bold1']):
+                            r += '\n    ... sliced first frame from %s' % (os.path.basename(f['bold']))
+                        else:
+                            r += '\n    ... WARNING: failed slicing first frame from %s' % (os.path.basename(f['bold']))
+                            report['boldfail'] += 1
+                            continue
+                    else:
+                        r += '\n    ... first %s frame already present' % (os.path.basename(f['bold']))
 
                     # --- convert to NIfTI
 
@@ -168,8 +214,10 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
                     if os.path.exists(bbtarget):
                         r += '\n    ... bet on %s already run' % (os.path.basename(bsource))
+                        report['bolddone'] += 1
                     else:
                         r += runExternalForFile(bbtarget, "bet %s %s %s" % (bsource, bbtarget, options['betboldmask']), "    ... running BET on %s with options %s" % (os.path.basename(bsource), options['betboldmask']), overwrite, sinfo['id'], task='bet')
+                        report['boldok'] += 1
 
                     if options['image_target'] == '4dfp':
                         # --- convert nifti to 4dfp
@@ -186,14 +234,17 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
                 except (ExternalFailed, NoSourceFolder), errormessage:
                     r += str(errormessage)
+                    report['boldfail'] += 1
                 except:
+                    report['boldfail'] += 1
                     r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                     time.sleep(1)
 
     r += "\n\nBold mask creation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    rstatus = "bolds done: %(bolddone)d, bolds missing: %(boldmissing)d, bolds processed: %(boldok)d, bolds failed: %(boldfail)d" % (report)
 
     print r
-    return r
+    return (r, (sinfo['id'], rstatus))
 
 
 
