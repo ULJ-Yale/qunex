@@ -22,6 +22,9 @@ import time
 
 
 def createBoldList(sinfo, options, overwrite=False, thread=0):
+    """
+    createBoldList - documentation not yet available.
+    """
     bfile = open(os.path.join(options['basefolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
     bsearch = re.compile('bold([0-9]+)')
 
@@ -45,6 +48,9 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
 
 
 def createConcList(sinfo, options, overwrite=False, thread=0):
+    """
+    createConcList - documentation not yet available.
+    """
     bfile = open(os.path.join(options['basefolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 
     concs = options['bppt'].split("|")
@@ -79,6 +85,9 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
 
 
 def listSubjectInfo(sinfo, options, overwrite=False, thread=0):
+    """
+    listSubjectInfo - documentation not yet available.
+    """
     bfile = open(os.path.join(options['basefolder'], 'SubjectInfo.txt'), 'w')
 
     for subject in sinfo:

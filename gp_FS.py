@@ -21,6 +21,9 @@ import time
 
 
 def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
+    """
+    runBasicStructuralSegmentation - documentation not yet available.
+    """
 
     f = getFileNames(sinfo, options)
     r = "\n---------------------------------------------------------"
@@ -122,6 +125,9 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
 #
 
 def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
+    """
+    checkForFreeSurferData - documentation not yet available.
+    """
 
     if not r:
         verbose = True
@@ -210,6 +216,9 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
 #
 
 def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
+    """
+    runFreeSurferFullSegmentation - documentation not yet available.
+    """
 
     try:
 
@@ -334,6 +343,9 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
 
 
 def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread=0):
+    """
+    runFreeSurferFullSegmentation - documentation not yet available.
+    """
     try:
 
         r = "\n---------------------------------------------------------"

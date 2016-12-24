@@ -20,169 +20,86 @@ from datetime import datetime
 import time
 
 
-def mapHCPData(sinfo, options, overwrite=False, thread=0):
+def getBOLDData(sinfo, options, overwrite=False, thread=0):
+    """
+    getBOLDData - documentation not yet available.
+    """
     bsearch = re.compile('bold([0-9]+)')
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nMapping HCP data ..."
+    r += "\nCopying imaging data ..."
 
-    # --- file/dir structure
-
-
+    r += '\nStructural data ...'
     f = getFileNames(sinfo, options)
-    d = getSubjectFolders(sinfo, options)
 
-    #    MNINonLinear/Results/<boldname>/<boldname>.nii.gz -- volume
-    #    MNINonLinear/Results/<boldname>/<boldname>_Atlas.dtseries.nii -- cifti
-    #    MNINonLinear/Results/<boldname>/Movement_Regressors.txt -- movement
-    #    MNINonLinear/T1w.nii.gz -- atlas T1 hires
-    #    MNINonLinear/aparc+aseg.nii.gz -- FS hires segmentation
+    copy = True
+    if os.path.exists(f['t1']):
+        copy = False
 
-    # --- map T1 and segmentation
-
-    report = {}
-
-    r += "\n\nStructural data: ..."
-    status = True
-
-    if os.path.exists(f['t1']) and not overwrite:
-        r += "\n ... T1 ready"
-        report['T1'] = 'present'
-    else:
-        status, r = linkOrCopy(os.path.join(d['hcp'], 'MNINonLinear', 'T1w.nii.gz'), f['t1'], r, status, "T1")
-        report['T1'] = 'copied'
-
-    if os.path.exists(f['fs_aparc_t1']) and not overwrite:
-        r += "\n ... highres aseg+aparc ready"
-        report['hires aseg+aparc'] = 'present'
-    else:
-        status, r = linkOrCopy(os.path.join(d['hcp'], 'MNINonLinear', 'aparc+aseg.nii.gz'), f['fs_aparc_t1'], r, status, "highres aseg+aparc")
-        report['hires aseg+aparc'] = 'copied'
-
-    if os.path.exists(f['fs_aparc_bold']) and not overwrite:
-        r += "\n ... lowres aseg+aparc ready"
-        report['lores aseg+aparc'] = 'present'
-    else:
-        if os.path.exists(f['fs_aparc_bold']):
-            os.remove(f['fs_aparc_bold'])
-        if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')) and os.path.exists(f['fs_aparc_t1']):
-            r += runExternalForFile(f['fs_aparc_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite, sinfo['id'])
-            report['lores aseg+aparc'] = 'generated'
-        else:
-            r += "\n ... ERROR: could not generate downsampled aseg+aparc, files missing!"
-            report['lores aseg+aparc'] = 'failed'
-            status = False
-
-    report['surface'] = 'ok'
-    if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k')):
-        r += "\n ... processing surface files"
-        sfiles = glob.glob(os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k', '*.*'))
-        npre, ncp = 0, 0
-        if len(sfiles):
-            sid = os.path.basename(sfiles[0]).split(".")[0]
-        for sfile in sfiles:
-            tfile = os.path.join(d['s_s32k'], ".".join(os.path.basename(sfile).split(".")[1:]))
-            if os.path.exists(tfile) and not overwrite:
-                npre += 1
-            else:
-                if ".spec" in tfile:
-                    s = file(sfile).read()
-                    s = s.replace(sid + ".", "")
-                    tf = open(tfile, 'w')
-                    print >> tf, s
-                    tf.close()
-                    r += "\n     -> updated .spec file [%s]" % (sid)
-                    ncp += 1
-                    continue
-                if linkOrCopy(sfile, tfile):
-                    ncp += 1
+    try:
+        if overwrite or copy:
+            r += '\n... copying %s' % (f['t1_source'])
+            if options['image_target'] == '4dfp':
+                if getImgFormat(f['t1_source']) == '.4dfp.img':
+                    linkOrCopy(f['t1_source'], f['t1'])
+                    linkOrCopy(f['t1_source'].replace('.img', '.ifh'), f['t1'].replace('.img', '.ifh'))
                 else:
-                    r += "\n     -> ERROR: could not map or copy %s" % (sfile)
-                    report['surface'] = 'error'
-        if npre:
-            r += "\n     -> %d files already copied" % (npre)
-        if ncp:
-            r += "\n     -> copied %d surface files" % (ncp)
-    else:
-        r += "\n ... ERROR: missing folder: %s!" % (os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k'))
-        status = False
-        report['surface'] = 'error'
+                    tmpfile = f['t1'].replace('.4dfp.img', getImgFormat(f['t1_source']))
+                    linkOrCopy(f['t1_source'], tmpfile)
+                    r += runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpfile, f['t1'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tmpfile)), overwrite, sinfo['id'])
+                    os.remove(tmpfile)
+            if options['image_target'] == 'nifti':
+                if getImgFormat(f['t1_source']) == '.4dfp.img':
+                    tmpimg = f['t1'] + '.4dfp.img'
+                    tmpifh = f['t1'] + '.4dfp.ifh'
+                    linkOrCopy(f['t1_source'], tmpimg)
+                    linkOrCopy(f['t1_source'].replace('.img', '.ifh'), tmpifh)
+                    r += runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpifh, f['t1'].replace('.img', '.ifh')), '... converting %s to NIfTI' % (os.path.basename(tmpimg)), overwrite, sinfo['id'])
+                    os.remove(tmpimg)
+                    os.remove(tmpifh)
+                else:
+                    if getImgFormat(f['t1_source']) == '.nii.gz':
+                        tmpfile = f['t1'] + ".gz"
+                        linkOrCopy(f['t1_source'], tmpfile)
+                        r += runExternalForFile(f['t1'], 'gunzip -f %s' % (tmpfile), '... gunzipping %s' % (os.path.basename(tmpfile)), overwrite, sinfo['id'])
+                        if os.path.exists(tmpfile):
+                            os.remove(tmpfile)
+                    else:
+                        linkOrCopy(f['t1_source'], f['t1'])
 
-    # --- map functional data
-
-    r += "\n\nFunctional data: ... [%s]" % (options['hcp_cifti_tail'])
+        else:
+            r += '\n... %s present' % (f['t1'])
+    except:
+        r += '\n... ERROR getting the data! Please check paths and files!'
 
     btargets = options['bppt'].split("|")
-
-    report['boldok'] = 0
-    report['boldfail'] = 0
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
             bnum = bsearch.match(v['name'])
             if bnum:
-                if v['task'] in btargets or options['bppt'] == 'all':
+                if v['task'] in btargets:
 
                     boldname = v['name']
-                    r += "\n ... " + boldname
-                    bnum = bnum.group(1)
 
-                    # --- filenames
-                    f.update(getBOLDFileNames(sinfo, boldname, options))
-
-                    status = True
-                    bname  = ""
+                    r += "\n\nWorking on: " + boldname + " ..."
 
                     try:
-                        if 'bold' in v:
-                            bname = v['bold']
-                        else:
-                            for posb in ["%s", "bold%s", "BOLD%s", "BOLD_%s"]:
-                                if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'Results', posb % (bnum))):
-                                    bname = posb % (bnum)
-                                    break
-                            if bname == "":
-                                r += "\n     ... ERROR: could not identify HCP boldname for %s!" % (boldname)
-                                status = False
-                                raise NoSourceFolder(r)
-                        boldpath = os.path.join(d['hcp'], 'MNINonLinear', 'Results', bname)
 
-                        if os.path.exists(f['bold']) and not overwrite:
-                            r += "\n     ... volume image ready"
-                        else:
-                            status, r = linkOrCopy(os.path.join(boldpath, bname + '.nii.gz'), f['bold'], r, status, "volume image", "\n     ... ")
+                        # --- filenames
+                        f = getFileNames(sinfo, options)
+                        f.update(getBOLDFileNames(sinfo, boldname, options))
+                        d = getSubjectFolders(sinfo, options)
+                        # f_conc = os.path.join(d['s_bold_concs'], tconc+".conc")
+                        # f_fidl = os.path.join(d['s_bold_events'], tfidl+".fidl")
 
-                        if os.path.exists(f['bold_dts']) and not overwrite:
-                            r += "\n     ... grayordinate image ready"
-                        else:
-                            r += "\n     ... linking %s to %s" % (os.path.join(boldpath, bname + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
-                            status, r = linkOrCopy(os.path.join(boldpath, bname + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'], r, status, "grayordinate image", "\n     ... ")
-
-                        if os.path.exists(f['bold_mov']) and not overwrite:
-                            r += "\n     ... movement data ready"
-                        else:
-                            if os.path.exists(os.path.join(boldpath, 'Movement_Regressors.txt')):
-                                mdata = [line.strip().split() for line in open(os.path.join(boldpath, 'Movement_Regressors.txt'))]
-                                mfile = open(f['bold_mov'], 'w')
-                                print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
-                                c = 0
-                                for mline in mdata:
-                                    c += 1
-                                    mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
-                                    print >> mfile, mline.replace(' -', '-')
-                                mfile.close()
-                                r += "\n     ... movement data prepared"
-                            else:
-                                r += "\n     ... ERROR: could not prepare movement data, source does not exist: %s" % os.path.join(boldpath, 'Movement_Regressors.txt')
-                                status = False
+                        r, status = copyBOLDData(sinfo, options, overwrite, thread, d, f, r)
 
                         if status:
-                            r += "\n     ---> Data ready!\n"
-                            report['boldok'] += 1
+                            r += "\n---> Data ready!"
                         else:
-                            r += "\n     ---> ERROR: Data missing, please check source!\n"
-                            report['boldfail'] += 1
+                            r += "\n---> ERROR: Data missing, please check source!"
 
                     except (ExternalFailed, NoSourceFolder), errormessage:
                         r += str(errormessage)
@@ -190,16 +107,16 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                         time.sleep(3)
 
-    r += "\nHCP data mapping completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    rstatus = "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d" % (report)
+    r += "\n\nImaging data copy completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
-    return (r, (sinfo['id'], rstatus))
-
-
+    return r
 
 
 def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
+    """
+    createBOLDBrainMasks - documentation not yet available.
+    """
 
     bsearch = re.compile('bold([0-9]+)')
 
@@ -281,6 +198,10 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
 
 def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
+    """
+    computeBOLDStats - documentation not yet available.
+    """
+
     bsearch = re.compile('bold([0-9]+)')
 
     r = "\n---------------------------------------------------------"
@@ -345,6 +266,9 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
 
 def createStatsReport(sinfo, options, overwrite=False, thread=0):
+    """
+    createStatsReport - documentation not yet available.
+    """
     try:
         bsearch = re.compile('bold([0-9]+)')
 
@@ -488,6 +412,9 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
 
 def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
+    """
+    extractNuisanceSignal - documentation not yet available.
+    """
     bsearch = re.compile('bold([0-9]+)')
 
     r = "\n---------------------------------------------------------"
@@ -573,6 +500,9 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
 
 def preprocessBold(sinfo, options, overwrite=False, thread=0):
+    """
+    preprocessBold - documentation not yet available.
+    """
 
     bsearch = re.compile('bold([0-9]+)')
 
@@ -703,6 +633,9 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
 
 def preprocessConc(sinfo, options, overwrite=False, thread=0):
+    """
+    preprocessConc - documentation not yet available.
+    """
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))

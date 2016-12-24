@@ -270,7 +270,7 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     - allcodes:   Whether to plot line for all fidl codes even if no event has a particular code.
 
     Example use:
-    gmri chekFidl fidlfolder=jfidls
+    gmri checkFidl fidlfolder=jfidls
     '''
 
     command = ['g_CheckFidl.R']
@@ -283,6 +283,9 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     if allcodes is not None:
         command.append("-allcodes")
 
-    subprocess.call(command)
+    if subprocess.call(command, shell=True):
+        raise ValueError("ERROR: Running checkFidl.R failed! Call: %s" % (" ".join(command)))
+
+    return True
 
 

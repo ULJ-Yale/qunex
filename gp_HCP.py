@@ -26,6 +26,9 @@ import time
 #
 
 def getHCPPaths(sinfo, options):
+    """
+    getHCPPaths - documentation not yet available.
+    """
     d = {}
 
     # ---- HCP Pipeline folders
@@ -85,6 +88,9 @@ def getHCPPaths(sinfo, options):
 
 
 def action(action, run):
+    """
+    action - documentation not yet available.
+    """
     if run == "test":
         if action.istitle():
             return "Test " + action.lower()
@@ -561,6 +567,9 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
 
 def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
+    """
+    hcpDiffusion - documentation not yet available.
+    """
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -1195,6 +1204,9 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
 
 def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
+    """
+    hcpDTIFit - documentation not yet available.
+    """
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -1262,6 +1274,9 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
 
 
 def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
+    """
+    hcpBedpostx - documentation not yet available.
+    """
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -1328,3 +1343,231 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
 
     print r
     return (r, (sinfo['id'], report))
+
+
+def mapHCPData(sinfo, options, overwrite=False, thread=0):
+    """
+    mapHCPData [... processing options]
+
+    mapHCPData maps the results of the HCP preprocessing (in MNINonLinear) to
+    the <basefolder>/<subject id>/images folder structure. Specifically, it
+    copies the files and folders:
+
+    * T1w.nii.gz                  -> images/structural/T1w.nii.gz
+    * aparc+aseg.nii.gz           -> images/segmentation/freesurfer/mri/aparc+aseg_t1.nii.gz
+                                  -> images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz
+                                     (2mm iso downsampled version)
+    * fsaverage_LR32k/*           -> images/segmentation/hcp/fsaverage_LR32k
+    * BOLD_[N].nii.gz             -> images/functional/[boldname][N].nii.gz
+    * BOLD_[N][tail].dtseries.nii -> images/functional/[boldname][N][tail].dtseries.nii
+    * Movement_Regressors.txt     -> images/functional/movement/[boldname][N]_mov.dat
+
+    The relevant processing parameters are:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+    --hcp_cifti_tail  ... The tail (see above) that specifies, which version of
+                          the cifti files to copy over [].
+    --bold_preprocess ... Which bold images (as they are specified in the
+                          subjects.txt file) to copy over. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to copy all [rest].
+    --boldname        ... The default name of the bold files in the images
+                          folder [bold].
+
+    The parameters can be specified in command call or subject.txt file.
+    If possible, the files are not copied but rather hard links are created to
+    save space. If hard links can not be created, the files are copied.
+
+    Example use:
+    gmri mapHCPdata subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no hcp_cifti_tail=_Atlas bold-preprocess=all
+
+    (c) Grega Repovš
+
+    Changelog
+    2016-12-24 - Grega Repovš - Added documentation, fixed copy of volume images.
+    """
+
+    bsearch = re.compile('bold([0-9]+)')
+
+    r = "\n---------------------------------------------------------"
+    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nMapping HCP data ..."
+
+    # --- file/dir structure
+
+
+    f = getFileNames(sinfo, options)
+    d = getSubjectFolders(sinfo, options)
+
+    #    MNINonLinear/Results/<boldname>/<boldname>.nii.gz -- volume
+    #    MNINonLinear/Results/<boldname>/<boldname>_Atlas.dtseries.nii -- cifti
+    #    MNINonLinear/Results/<boldname>/Movement_Regressors.txt -- movement
+    #    MNINonLinear/T1w.nii.gz -- atlas T1 hires
+    #    MNINonLinear/aparc+aseg.nii.gz -- FS hires segmentation
+
+    # ------------------------------------------------------------------------------------------------------------
+    #                                                                                      map T1 and segmentation
+
+    report = {}
+
+    r += "\n\nStructural data: ..."
+    status = True
+
+    if os.path.exists(f['t1']) and not overwrite:
+        r += "\n ... T1 ready"
+        report['T1'] = 'present'
+    else:
+        status, r = linkOrCopy(os.path.join(d['hcp'], 'MNINonLinear', 'T1w.nii.gz'), f['t1'], r, status, "T1")
+        report['T1'] = 'copied'
+
+    if os.path.exists(f['fs_aparc_t1']) and not overwrite:
+        r += "\n ... highres aseg+aparc ready"
+        report['hires aseg+aparc'] = 'present'
+    else:
+        status, r = linkOrCopy(os.path.join(d['hcp'], 'MNINonLinear', 'aparc+aseg.nii.gz'), f['fs_aparc_t1'], r, status, "highres aseg+aparc")
+        report['hires aseg+aparc'] = 'copied'
+
+    if os.path.exists(f['fs_aparc_bold']) and not overwrite:
+        r += "\n ... lowres aseg+aparc ready"
+        report['lores aseg+aparc'] = 'present'
+    else:
+        if os.path.exists(f['fs_aparc_bold']):
+            os.remove(f['fs_aparc_bold'])
+        if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')) and os.path.exists(f['fs_aparc_t1']):
+            r += runExternalForFile(f['fs_aparc_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite, sinfo['id'])
+            report['lores aseg+aparc'] = 'generated'
+        else:
+            r += "\n ... ERROR: could not generate downsampled aseg+aparc, files missing!"
+            report['lores aseg+aparc'] = 'failed'
+            status = False
+
+    report['surface'] = 'ok'
+    if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k')):
+        r += "\n ... processing surface files"
+        sfiles = glob.glob(os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k', '*.*'))
+        npre, ncp = 0, 0
+        if len(sfiles):
+            sid = os.path.basename(sfiles[0]).split(".")[0]
+        for sfile in sfiles:
+            tfile = os.path.join(d['s_s32k'], ".".join(os.path.basename(sfile).split(".")[1:]))
+            if os.path.exists(tfile) and not overwrite:
+                npre += 1
+            else:
+                if ".spec" in tfile:
+                    s = file(sfile).read()
+                    s = s.replace(sid + ".", "")
+                    tf = open(tfile, 'w')
+                    print >> tf, s
+                    tf.close()
+                    r += "\n     -> updated .spec file [%s]" % (sid)
+                    ncp += 1
+                    continue
+                if linkOrCopy(sfile, tfile):
+                    ncp += 1
+                else:
+                    r += "\n     -> ERROR: could not map or copy %s" % (sfile)
+                    report['surface'] = 'error'
+        if npre:
+            r += "\n     -> %d files already copied" % (npre)
+        if ncp:
+            r += "\n     -> copied %d surface files" % (ncp)
+    else:
+        r += "\n ... ERROR: missing folder: %s!" % (os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k'))
+        status = False
+        report['surface'] = 'error'
+
+    # ------------------------------------------------------------------------------------------------------------
+    #                                                                                          map functional data
+
+    r += "\n\nFunctional data: ... [%s]" % (options['hcp_cifti_tail'])
+
+    btargets = options['bppt'].split("|")
+
+    report['boldok'] = 0
+    report['boldfail'] = 0
+
+    for (k, v) in sinfo.iteritems():
+        if k.isdigit():
+            bnum = bsearch.match(v['name'])
+            if bnum:
+                if v['task'] in btargets or options['bppt'] == 'all':
+
+                    boldname = v['name']
+                    r += "\n ... " + boldname
+                    bnum = bnum.group(1)
+
+                    # --- filenames
+                    options['image_target'] = 'nifti'        # -- needs to be set to correctly copy volume files
+                    f.update(getBOLDFileNames(sinfo, boldname, options))
+
+                    status = True
+                    bname  = ""
+
+                    try:
+                        if 'bold' in v:
+                            bname = v['bold']
+                        else:
+                            for posb in ["%s", "bold%s", "BOLD%s", "BOLD_%s"]:
+                                if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'Results', posb % (bnum))):
+                                    bname = posb % (bnum)
+                                    break
+                            if bname == "":
+                                r += "\n     ... ERROR: could not identify HCP boldname for %s!" % (boldname)
+                                status = False
+                                raise NoSourceFolder(r)
+                        boldpath = os.path.join(d['hcp'], 'MNINonLinear', 'Results', bname)
+
+                        if os.path.exists(f['bold']) and not overwrite:
+                            r += "\n     ... volume image ready"
+                        else:
+                            status, r = linkOrCopy(os.path.join(boldpath, bname + '.nii.gz'), f['bold'], r, status, "volume image", "\n     ... ")
+
+                        if os.path.exists(f['bold_dts']) and not overwrite:
+                            r += "\n     ... grayordinate image ready"
+                        else:
+                            r += "\n     ... linking %s to %s" % (os.path.join(boldpath, bname + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
+                            status, r = linkOrCopy(os.path.join(boldpath, bname + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'], r, status, "grayordinate image", "\n     ... ")
+
+                        if os.path.exists(f['bold_mov']) and not overwrite:
+                            r += "\n     ... movement data ready"
+                        else:
+                            if os.path.exists(os.path.join(boldpath, 'Movement_Regressors.txt')):
+                                mdata = [line.strip().split() for line in open(os.path.join(boldpath, 'Movement_Regressors.txt'))]
+                                mfile = open(f['bold_mov'], 'w')
+                                print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
+                                c = 0
+                                for mline in mdata:
+                                    c += 1
+                                    mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
+                                    print >> mfile, mline.replace(' -', '-')
+                                mfile.close()
+                                r += "\n     ... movement data prepared"
+                            else:
+                                r += "\n     ... ERROR: could not prepare movement data, source does not exist: %s" % os.path.join(boldpath, 'Movement_Regressors.txt')
+                                status = False
+
+                        if status:
+                            r += "\n     ---> Data ready!\n"
+                            report['boldok'] += 1
+                        else:
+                            r += "\n     ---> ERROR: Data missing, please check source!\n"
+                            report['boldfail'] += 1
+
+                    except (ExternalFailed, NoSourceFolder), errormessage:
+                        r += str(errormessage)
+                    except:
+                        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+                        time.sleep(3)
+
+    r += "\nHCP data mapping completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    rstatus = "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d" % (report)
+
+    print r
+    return (r, (sinfo['id'], rstatus))

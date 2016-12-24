@@ -15,9 +15,18 @@ import gp_HCP
 import gp_fcMRI
 import gp_simple
 import gp_FS
+import os
+import os.path
 from multiprocessing import Pool
 from datetime import datetime
 
+
+# =======================================================================
+#                                                                 GLOBALS
+
+log     = []
+stati   = []
+logname = ""
 
 # =======================================================================
 #                                                       SUPPORT FUNCTIONS
@@ -307,9 +316,9 @@ options = {}
 #   Empty lists denote there should be a blank line when printing out a command
 #   list.
 
-calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,                            "Map HCP preprocessed data to subjects' image folder."],
+calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,                              "Map HCP preprocessed data to subjects' image folder."],
           [],
-          ['gbd',     'getBOLDData',                 gp_fcMRI.getBOLDData,                           "Copy functional data from 4dfp (Avi) processing pipeline."],
+          ['gbd',     'getBOLDData',                 gp_fcMRI.getBOLDData,                           "Copy functional data from 4dfp (NIL) processing pipeline."],
           ['bbm',     'createBOLDBrainMasks',        gp_fcMRI.createBOLDBrainMasks,                  "Create brain masks for BOLD runs."],
           [],
           ['a',       'runBasicSegmentation',        gp_FS.runBasicStructuralSegmentation,           "Run basic structural image segmentation."],
@@ -369,6 +378,10 @@ for line in flaglist:
 
 def run(command, args):
 
+    global log
+    global stati
+    global logname
+
     # --------------------------------------------------------------------------
     #                                                            Parsing options
 
@@ -377,7 +390,7 @@ def run(command, args):
     # --- set up default options
 
     for line in arglist:
-        if length(line) == 4:
+        if len(line) == 4:
             options[line[0]] = line[1]
 
     # --- read options from subjects.txt
@@ -385,7 +398,7 @@ def run(command, args):
     if 'subjects' in args:
         options['subjects'] = args['subjects']
 
-    subjects, gpref = readSubjectData(options['subjects'])
+    subjects, gpref = gp_core.readSubjectData(options['subjects'])
 
     for (k, v) in gpref.iteritems():
         options[k] = v
@@ -422,11 +435,11 @@ def run(command, args):
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
     logname = "logs/Log-%s-%s.log" % ("-".join(args), logstamp)
 
-    log = []
+    log   = []
     stati = []
 
     sout = "\n\n=================================================================\n"
-    sout += "gmri", command, "\\\n"
+    sout += "gmri " + command + " \\\n"
 
     for (k, v) in args.iteritems():
         sout += '  --%s="%s" \\\n' % (k, v)
@@ -562,7 +575,7 @@ def run(command, args):
 
         print "\n\n===> Final report\n"
         for sid, status in stati:
-            if sid is not "Unknown":
+            if "Unknown" not in sid:
                 print "... %s ---> %s" % (sid, status)
 
 

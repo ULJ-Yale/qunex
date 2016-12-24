@@ -102,6 +102,9 @@ def getExactFile(candidate):
 
 
 def getFileNames(sinfo, options):
+    """
+    getFileNames - documentation not yet available.
+    """
 
     d = getSubjectFolders(sinfo, options)
 
@@ -217,7 +220,9 @@ def getFileNames(sinfo, options):
 
 
 def getBOLDFileNames(sinfo, boldname, options):
-
+    """
+    getBOLDFileNames - documentation not yet available.
+    """
     d = getSubjectFolders(sinfo, options)
     f = {}
 
@@ -308,6 +313,9 @@ def getBOLDFileNames(sinfo, boldname, options):
 
 
 def findFile(sinfo, options, fname):
+    """
+    findFile - documentation not yet available.
+    """
     d = getSubjectFolders(sinfo, options)
 
     tfile = os.path.join(d['inbox'], "%s_%s" % (sinfo['id'], fname))
@@ -326,6 +334,9 @@ def findFile(sinfo, options, fname):
 
 
 def getSubjectFolders(sinfo, options):
+    """
+    getSubjectFolders - documentation not yet available.
+    """
     d = {}
 
     if options['image_source'] == 'hcp':
@@ -380,6 +391,9 @@ def getSubjectFolders(sinfo, options):
 
 
 def readSubjectData(filename):
+    """
+    readSubjectData - documentation not yet available.
+    """
     s = file(filename).read()
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")
@@ -482,6 +496,9 @@ def readSubjectData(filename):
 
 
 def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
+    """
+    linkOrCopy - documentation not yet available.
+    """
     if status is None:
         status = True
     if name is None:
@@ -524,6 +541,9 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
 
 
 def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None):
+    """
+    runExternalForFile - documentation not yet available.
+    """
     if overwrite or not os.path.exists(checkfile):
         if task is None:
             task = ""
@@ -571,6 +591,9 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
 
 def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None):
+    """
+    runExternalForFileShell - documentation not yet available.
+    """
     if overwrite or not os.path.exists(checkfile):
         if task is None:
             task = ""
@@ -612,6 +635,9 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
 
 
 def checkForFile(r, checkfile, message, status=True):
+    """
+    checkForFile - documentation not yet available.
+    """
     if not os.path.exists(checkfile):
         status = False
         r = r + '\n... %s' % (message)
@@ -619,6 +645,9 @@ def checkForFile(r, checkfile, message, status=True):
 
 
 def checkForFile2(r, checkfile, ok, bad, status=True):
+    """
+    checkForFile2 - documentation not yet available.
+    """
     if os.path.exists(checkfile):
         r += ok
         return r, status
