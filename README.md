@@ -18,7 +18,7 @@ data templates provided in a separate library.
 The utilities can be used as a self standing toolset, they were, however,
 developed to efficiently integrate with a set of Matlab functions, methods and
 utilities, and a modified version of HCP (Human Connectome Project)
-preprocessing tools. They are best utilized as a part MNAP (Multimodal
+preprocessing tools. They are best utilized as a part of MNAP (Multimodal
 Neuroimaging Analysis Pipeline).
 
 The utilites are developed and maintained by Grega Repovš, [Mind and Brain
