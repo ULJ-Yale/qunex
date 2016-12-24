@@ -13,6 +13,7 @@ import re
 import os
 import os.path
 import glob
+import subprocess
 
 
 ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [3]': 'zlen', 'matrix size [4]': 'frames', 'scaling factor (mm/pixel) [1]': 'xsize', 'scaling factor (mm/pixel) [2]': 'ysize', 'scaling factor (mm/pixel) [3]': 'zsize'}
@@ -198,7 +199,7 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
 
 def splitFidl(concfile, fidlfile, outfolder=None):
     """
-    splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
+    gmri splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
 
     Splits a multi-bold fidl file into run specific bold files based on the sequence of bold files in conc file and their lengths.
 
@@ -255,3 +256,33 @@ def splitFidl(concfile, fidlfile, outfolder=None):
         bstart = bend
 
     return True
+
+
+def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
+    '''
+    gmri checkFidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
+
+    Prints figures showing fidl events and their duration.
+
+    - fidlfile:   The path to the fidl file to plot. All the fidl files in the folder if none specified.
+    - fidlfolder: The folder from which to plot the fidl files.
+    - plotfile:   The name of the file to save the plot to. Only makes sense if fidlfile is specified.
+    - allcodes:   Whether to plot line for all fidl codes even if no event has a particular code.
+
+    Example use:
+    gmri chekFidl fidlfolder=jfidls
+    '''
+
+    command = ['g_CheckFidl.R']
+    command.append('-fidlfolder="%s"' % (fidlfolder))
+
+    if fidlfile is not None:
+        command.append("-fidlfile=" + fidlfile)
+    if plotfile is not None:
+        command.append("-plotfile=" + plotfile)
+    if allcodes is not None:
+        command.append("-allcodes")
+
+    subprocess.call(command)
+
+
