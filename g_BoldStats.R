@@ -14,9 +14,9 @@
 #       -movement, -m   threshold to use for computing frame-to-frame movement rejections [0.5]
 #       -radius, -rd    radius (in mm) from center of head to cortex to estimate rotation size [50]
 #       -tr             TR to be used when generating .fidl files [2.5]
-#       -fidl           whether to output and what to base fild on (fd, dvars, dvarsme, u/ume - union, i/ime - intersection, none) [none]
+#       -fidl           whether to output and what to base fild on (fd, dvars, dvarsme, udvars, udvarsme, idvars, idvarsme, none) [none]
 #       -plot           root name of the plot file, none to omit plotting [mov_report]
-#       -post           whether to create report of scrubbing effect and what to base it on (fd, dvars, dvarsme, u/ume - union, i/ime - intersection, none) [none]
+#       -post           whether to create report of scrubbing effect and what to base it on (fd, dvars, dvarsme, udvars, udvarsme, idvars, idvarsme, none) [none]
 #       -bolds          | separated list of bold indeces for which to do the stat report
 #       -pref           prefix for the reports
 #       -verbose, -v    be talkative when running the script

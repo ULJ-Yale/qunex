@@ -134,9 +134,19 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     """
     createBOLDBrainMasks [... processing options]
 
+    USE AND RESULTS
+    ===============
+
     createBOLDBrainMasks takes the first image of each bold file, and runs FSL
-    bet to extract the brain and create a brain mask. The results are saved
-    into images/segmentation/boldmasks
+    bet to extract the brain and create a brain mask. The resulting files are
+    saved into images/segmentation/boldmasks in the source image format:
+
+    * bold[n]_frame1.*
+    * bold[n]_frame1_brain.*
+    * bold[n]_frame1_brain_mask.*
+
+    RELEVANT PARAMETERS
+    ===================
 
     The relevant processing parameters are:
 
@@ -156,10 +166,13 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     The parameters can be specified in command call or subject.txt file.
 
-    Example use:
+    EXAMPLE USE
+    ===========
+
     gmri createBOLDBrainMasks subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
          overwrite=no hcp_cifti_tail=_Atlas bold-preprocess=all
 
+    ----------------
     (c) Grega Repovš
 
     Changelog
@@ -258,7 +271,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                     time.sleep(1)
 
     r += "\n\nBold mask creation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    rstatus = "bolds done: %(bolddone)d, bolds missing: %(boldmissing)d, bolds processed: %(boldok)d, bolds failed: %(boldfail)d" % (report)
+    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d" % (report)
 
     print r
     return (r, (sinfo['id'], rstatus))
@@ -267,10 +280,141 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
 def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     """
-    computeBOLDStats - documentation not yet available.
+    computeBOLDStats [... processing options]
+
+    USE AND RESULTS
+    ===============
+
+    computeBOLDStats processes each of the specified BOLD files and saves three
+    files in the images/functional/movement folder:
+
+    bold[n].bstats
+    --------------
+
+    bold[n].bstats includes for each frame of the BOLD image the following
+    computed statistics:
+
+    * n       ... number of brain voxels
+    * m       ... mean signal intensity across all brain voxels
+    * var     ... signal variance across all brain voxels
+    * sd      ... signal standard variation across all brain voxels
+    * dvars   ... RMDS measure of signal intensity difference between this and
+                  the preceeding frame
+    * dvarsm  ... mean normalized dvars measure
+    * dvarsme ... median normalized dvarsm measure
+    * fd      ... frame displacement
+
+    There are three additional lines at the end of the file listing maximum,
+    mean and standar deviation of values across all timepoints / volumes.
+
+    bold[n].scrub
+    -------------
+
+    bold[n].scrub includes for each frame the information on whether the frame
+    should be excluded (1) or not (0) based on any othe following criteria
+    (note below the relevant settings that specify thresholds etc.):
+
+    * mov      ... Is frame displacement higher from the specified threshold?
+    * dvars    ... Is mean normalized dvars (dvarsm) higher than the specified
+                   threshold?
+    * dvarsme  ... Is the median normalized dvarsm higher than the specified
+                   threshold?
+    * idvars   ... Are both frame displacement as well as dvarsm measures above
+                   threshold (intersection of fd and dvarsm).
+    * idvarsme ... Are both frame displacement as well as dvarsme measures above
+                   threshold (intersection of fd and dvarsme).
+    * udvars   ... Are either frame displacement or dvarsm measures above
+                   threshold (union of fs and dvarsm).
+    * udvarsme ... Are either frame displacement or dvarsme measures above
+                   threshold (union of fs and dvarsme).
+
+    The last column of the file is a 'use' column, which specifies, based on the
+    criteria provided, whether the frame should be used in further preprocessing
+    and analysis or not.
+
+    There is an additional #sum line at the end of the file, listing how many
+    frames are marked as bad using each criteria.
+
+    bold[n].use
+    -----------
+
+    bold[n].use file lists for each frame of the relevant BOLD image, whether
+    it is to be used (1) or not (0).
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+    --bold_preprocess ... Which bold images (as they are specified in the
+                          subjects.txt file) to copy over. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to copy all [rest].
+    --boldname        ... The default name of the bold files in the images
+                          folder [bold].
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters define the actual results:
+
+    --mov_radius  ... Estimated head radius (in mm) for computing frame
+                      displacement statistics [50].
+    --mov_fd      ... Frame displacement threshold (in mm) to use for
+                      identifying bad frames [0.5]
+    --mov_dvars   ... The (mean normalized) dvars threshold to use for
+                      identifying bad frames [3.0].
+    --mov_dvarsme ... The (median normalized) dvarsm threshold to use for
+                      identifying bad frames [1.5].
+    --mov_after   ... How many frames after each frame identified as bad
+                      to also exclude from further processing and analysis [0].
+    --mov_before  ... How many frames before each frame identified as bad
+                      to also exclude from further processing and analysis [0].
+    --mov_bad     ... Which criteria to use for identification of bad frames
+                      [udvarsme].
+
+    The listed parameters can be specified in command call or subject.txt file.
+
+
+    NOTES AND DEPENDENCIES
+    ======================
+
+    When 'cifti' is the specified image target, the related nifti volume files
+    will be processed as only they provide all the information for computing
+    the relevant parameters
+
+    The command runs the g_ComputeBOLDStats.m Matlab function for computation
+    of parameters. It also expects that both bold images and the related
+    movement correction parameter files are present in the expected locations.
+
+
+    EXAMPLE USE
+    ===========
+
+    gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no bold-preprocess=all
+
+    ----------------
+    (c) Grega Repovš
+
+    Changelog
+    2016-12-26 - Grega Repovš - Added documentation, fixed the issue with cifti
+                                targets, added summary reporting.
     """
 
     bsearch = re.compile('bold([0-9]+)')
+    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0}
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -293,6 +437,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
                         # --- filenames
                         f = getFileNames(sinfo, options)
+                        if options['image_target'] == 'cifti':
+                            options['image_target'] = 'nifti'
                         f.update(getBOLDFileNames(sinfo, boldname, options))
                         d = getSubjectFolders(sinfo, options)
 
@@ -310,6 +456,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                         # --- check
                         if not status:
                             r += '\n--> ERROR: Files missing, skipping this bold run!'
+                            report['boldmissing'] += 1
                             continue
 
                         # --- running the stats
@@ -318,25 +465,193 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                         comm = "matlab -nojvm -nodisplay -r \"try g_ComputeBOLDStats('%s', '', '%s', 'same', '%s', true), catch fprintf('\\nMatlab error! Processing failed!\\n'), end; exit\"" % (f['bold'], d['s_bold_mov'], scrub)
                         if options['print_command'] == "yes":
                             r += '\n\nRunning\n' + comm + '\n'
+                        runit = True
+                        if os.path.exists(f['bold_stats']) and not overwrite:
+                            report['bolddone'] += 1
+                            runit = False
                         r += runExternalForFileShell(f['bold_stats'], comm, '... running matlab g_ComputeBOLDStats on %s bold %s' % (d['s_bold'], boldnum), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ComputeBOLDStats')
                         r, status = checkForFile(r, f['bold_stats'], 'ERROR: Matlab has failed preprocessing bold using command: %s' % (comm))
 
+                        if status and runit:
+                            report['boldok'] += 1
+                        elif runit:
+                            report['boldfail'] += 1
+
                     except (ExternalFailed, NoSourceFolder), errormessage:
                         r += str(errormessage)
+                        report['boldfail'] += 1
                     except:
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+                        report['boldfail'] += 1
 
     r += "\n\nBold statistics computation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d" % (report)
 
     print r
-    return r
+    return (r, (sinfo['id'], rstatus))
 
 
 
 def createStatsReport(sinfo, options, overwrite=False, thread=0):
     """
-    createStatsReport - documentation not yet available.
+    createStatsReport
+
+    USE AND RESULTS
+    ===============
+
+    createStatsReport processes movement correction parameters and computed
+    BOLD statistics to create per subject plots and fidl snippets and group
+    reports.
+
+    For each subject it saves into images/functional/movement:
+
+    * bold_<mov_plot>_cor.pdf     ... A plot of movement correction parameters
+                                      for each of the BOLD files.
+    * bold_<mov_plot>_dvars.pdf   ... A plot of frame displacement and dvarsm
+                                      statistics with frames that are identified
+                                      as bad marked in blue.
+    * bold_<mov_plot>_dvarsme.pdf ... A plot of frame displacement and dvarsme
+                                      statistics with frames that are identified
+                                      as bad marked in blue.
+    * bold[n]_scrub.fidl          ... A fidl filesnippet that lists, which
+                                      frames are to be excluded from the
+                                      analysis.
+
+    For the group level it creates three report files that are stored in the
+    <basefolder>/QC/movement folder. These files are:
+
+    * <mov_mreport> (bold_movement_report.txt by default)
+      This file lists for each subject and bold file mean, sd, range, max, min,
+      median, and squared mean divided by max statistics for each of the 6
+      movement correction parameters. It also prints mean, median, maximum, and
+      standard deviation of frame displacement statistics. The purpose of this
+      file is to enable easy subject and group level analysis of movement in
+      the scanner.
+
+    * <mov_preport> (bold_movement_report_post.txt by default)
+      This file has the same structure and information as the above, whith
+      frames marked as bad excluded from the statistics computation. This
+      enables subject and group level assessment of the effects of scrubbing.
+
+    * <mov_sreport> (bold_movement_scrubbing_report.txt by default)
+      This file lists for each BOLD of each subject the number and the
+      percentage of frames that would be marked as bad and excluded from the
+      analyses when a specific exclusion criteria would be used. Again, the
+      file supports subject and group level analysis of movement scrubing.
+
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+    --bold_preprocess ... Which bold images (as they are specified in the
+                          subjects.txt file) to copy over. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to copy all [rest].
+    --boldname        ... The default name of the bold files in the images
+                          folder [bold].
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters define the actual results:
+
+    Scrubbing specific options:
+
+    --mov_radius  ... Estimated head radius (in mm) for computing frame
+                      displacement statistics [50].
+    --mov_fd      ... Frame displacement threshold (in mm) to use for
+                      identifying bad frames [0.5]
+    --mov_dvars   ... The (mean normalized) dvars threshold to use for
+                      identifying bad frames [3.0].
+    --mov_dvarsme ... The (median normalized) dvarsm threshold to use for
+                      identifying bad frames [1.5].
+    --mov_after   ... How many frames after each frame identified as bad
+                      to also exclude from further processing and analysis [0].
+    --mov_before  ... How many frames before each frame identified as bad
+                      to also exclude from further processing and analysis [0].
+    --mov_bad     ... Which criteria to use for identification of bad frames
+                      [udvarsme].
+
+    Reporting specific options:
+
+    --TR          ... TR of the BOLD files [2.5].
+    --mov_pref    ... The prefix to be used for the group reports [].
+    --mov_plot    ... The base name of the plot files. If set to empty no plots
+                      are generated [mov_report].
+    --mov_mreport ... The name of the group movement report file. If set to
+                      an empty string, no file is generated
+                      [movement_report.txt].
+    --mov_sreport ... The name of the group scrubbing report file. If set to
+                      an empty string, no file is generated
+                      [movement_scrubbing_report.txt].
+    --mov_preport ... The name of group report file with stats computed with
+                      frames identified as bad exluded from analysis. If set
+                      to an empty string, no file is generated
+                      [movement_report_post.txt].
+    --mov_post    ... The criterium for identification of bad frames that is
+                      used when generating a post scrubbing statistics
+                      group report (fd/dvars/dvars/dvarsme/idvars/idvarsme/
+                      udvars/udvarsme/none) [udvarsme].
+    --mov_fidl    ... Whether to create fidl file snippets with listed bad
+                      frames, and what criterium to use for the definition of
+                      bad frames (fd/dvars/dvars/dvarsme/idvars/idvarsme/udvars/
+                      udvarsme). Set to none to not generate them [udvarsme].
+    --mov_pdf     ... The name of the folder in subjects/QC/movement in which to
+                      copy the individuals' movement plots [movement_plots].
+
+    NOTES AND DEPENDENCIES
+    ======================
+
+    The command runs the g_BoldStats.R R script that computes the statistics
+    and plots the data. The function requires that movement correction
+    parameters files and bold statistics data files (results of the
+    computeBOLDStats command) are present in the expected locations.
+
+    Subject statistics are appended to the group level report files as they
+    are being computed. To avoid messy group level files, it is recommended
+    to run the command with cores set to 1 (example 1), to enforce sequential
+    processing and adding of information to group level statistics files.
+    Another option is to run the processing in two steps. The first step with
+    multiple cores to speed up generation of subject level maps (example 2),
+    and then the second step with a single core, omitting the slow generation
+    of subject specific plots.
+
+
+    EXAMPLE USE
+    ===========
+
+    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no bold-preprocess=all cores=1
+
+    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no bold-preprocess=all cores=10
+
+    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no bold-preprocess=all cores=1 mov_plot=""
+
+    ----------------
+    (c) Grega Repovš
+
+    Changelog
+    2016-12-26 - Grega Repovš - Added documentation, added summary reporting.
+
     """
+
+    preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0}
+
     try:
         bsearch = re.compile('bold([0-9]+)')
 
@@ -353,11 +668,14 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         if options['mov_plot'] != "":
             if os.path.exists(os.path.join(d['s_bold_mov'], options['mov_pref'] + options['mov_plot'] + '_cor.pdf')) and not overwrite:
                 r += "\n... Movement plots already exists! Please use option --overwrite=yes to redo them!"
+                preport['plotdone'] = 'old'
                 plot = ""
             else:
                 plot = options['mov_plot']
+                preport['plotdone'] = 'new'
         else:
             plot = ""
+            preport['plotdone'] = 'none'
 
         for (k, v) in sinfo.iteritems():
             if k.isdigit():
@@ -389,8 +707,10 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                             # --- check
                             if status:
                                 procbolds.append(boldnum)
+                                preport['boldok'] += 1
                             else:
                                 r += '\n--> ERROR: Files missing, skipping this bold run!'
+                                preport['boldmissing'] += 1
 
                         except (ExternalFailed, NoSourceFolder), errormessage:
                             r += str(errormessage)
@@ -411,7 +731,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
             else:
                 report[tf] = ''
 
-        rcomm = 'g_BoldStats --args -f=%s -mr=%s -pr=%s -sr=%s -s=%s -d=%.1f -e=%.1f -m=%.1f -rd=%.1f -tr=%.2f -fidl=%s -post=%s -plot=%s -pref=%s -rname=%s -bolds="%s" -v' % (
+        rcomm = 'g_BoldStats.R --args -f=%s -mr=%s -pr=%s -sr=%s -s=%s -d=%.1f -e=%.1f -m=%.1f -rd=%.1f -tr=%.2f -fidl=%s -post=%s -plot=%s -pref=%s -rname=%s -bolds="%s" -v' % (
             d['s_bold_mov'],            # the folder to look for .dat data [.]
             report['mov_mreport'],      # the file to write movement report to [none]
             report['mov_preport'],      # the file to write movement report after scrubbing to [none]
@@ -434,7 +754,11 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         if options['print_command'] == "yes":
             r += '\n\nRunning\n' + rcomm + '\n'
         r += runExternalForFile(tfile, rcomm, "\nRunning g_BoldStats", overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PlotBoldStats')
-        os.remove(tfile)
+        if os.path.exists(tfile):
+            preport['procok'] = 'ok'
+            os.remove(tfile)
+        else:
+            preport['procok'] = 'failed'
 
         if options['mov_plot'] != '' and options['mov_pdf'] != "no":
             for sf in ['cor', 'dvars', 'dvarsme']:
@@ -447,7 +771,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                     os.remove(os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
                 linkOrCopy(os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
 
-        if options['mov_fidl'] in ['fd', 'dvars', 'dvarsme', 'u', 'ume', 'i', 'ime'] and options['eventfile'] != "" and options['bppt'] != "":
+        if options['mov_fidl'] in ['fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme'] and options['eventfile'] != "" and options['bppt'] != "":
             concf = os.path.join(d['s_bold_concs'], options['bppt'] + '.conc')
             fidlf = os.path.join(d['s_bold_events'], options['eventfile'] + '.fidl')
             ipatt = "_%s_scrub.fidl" % (options['mov_fidl'])
@@ -465,24 +789,168 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
         r += "\nBOLD statistics and movement report failed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-        print r
-        return r
+        preport['procok'] = 'failed'
     except:
         r += "\nBOLD statistics and movement report failed with and unknown error: \n...................................\n%s...................................\n" % (traceback.format_exc())
-        print r
-        return r
+        preport['procok'] = 'failed'
 
-    r += "\n\nBOLD statistics and movement report completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    if preport['procok'] == 'ok':
+        r += "\n\nBOLD statistics and movement report completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    rstatus = "BOLDs ok: %(boldok)2d, missing data: %(boldmissing)2d, processing: %(procok)s" % (preport)
+    if preport['procok'] == 'ok':
+        rstatus += ", plots: %(plotdone)s" % (preport)
 
     print r
-    return r
+    return (r, (sinfo['id'], rstatus))
 
 
 
 def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     """
-    extractNuisanceSignal - documentation not yet available.
+    extractNuisanceSignal [... processing options]
+
+    USE
+    ===
+
+    extractNuisanceSignal is used to extract nuisance signal from volume BOLD
+    files to be used in the latter steps of preprocessing, specifically for
+    regression of nuisance signals. By default it extract nuisance signals from
+    ventricles, white matter and whole brain. Whole brain is defined as those
+    parts of the brain that are not ventricles or white matter, which results
+    in whole brain to mostly overlap with gray matter.
+
+    Using specific parameters listed below, it is also possible to specify
+    additional ROIs for which nuisance signal is to be extracted and/or ROI that
+    are to be excluded from the whole brain mask.
+
+    To exclude specific ROI from the whole brain mask, use the '--wbmask'
+    option. This should be a path to a file that specifies, which ROI are to
+    be excluded from the whole-brain mask. The reason for exclusion might be
+    when one does not want the signals from specific ROI to be inlcuded in
+    the global signal regression, thereby resolving some of the issues taken as
+    arguments agains using global signal regression. The file can be either
+    a binary mask, or a '.names' file. In the latter case, it is possible to
+    additional mask the ROI to be excluded based on subject specific
+    aseg+aparc image (see description of .names file format).
+
+    Another option is to include additional independent nuisance regions that
+    might or might not overlap with the exisiting masks. Two parameters are used
+    to specify this. The first is the '--nroi' parameter. This, again, is a path
+    to either a binary image or a '.names' file. In the latter case, it is again
+    possible to mask the additional ROI either by the binary whole brain mask or
+    the individuals aseg+aparc file. To achieve this, set the additional
+    '--sbjroi' parameter to 'wb' or 'aseg', respectively. If some additional
+    ROI are to be excluded, even though they fall outside of the brain, then
+    these are to be listed as comma separated list of ROI names (that match the
+    ROI names in the .names file), separated from the path by a pipe ('|')
+    symbol. For instance if one also would like to include eyes and scull as
+    two additional nuiscance regions, one has to create a volume mask + a
+    .names file pair, and pass it as the '--nroi' parameter, e.g.:
+
+    --nroi="<path to ROI>/nroi.names|eyes,scull"
+
+    RESULTS
+    =======
+
+    The command generates the following files:
+
+    * bold[n].nuisance
+      A text file that lists for each volume frame the information on mean
+      intensity across the ventricle, white matter and whole brain voxels, and
+      any additional nuisance ROI specified using specific parameters.
+      The file is stored in images/functional/movement folder.
+
+    * bold[n]_nuisance.png
+      A png image of axial slices of the first BOLD frame over which the
+      identified nuisance regions are overlayed. Ventricles in green, white
+      matter in red and the rest of the brain in blue. The ventricle and
+      white matter regions are defined based on FreeSurfer segmentation. Each
+      region is "trimmed" before use, so that there is at least one voxel
+      buffer between each nuisance region mask. The image is stored in
+      images/ROI/nuisance.
+
+    * bold[n]_nuisance.<image format>
+      An image file of the relevant image format that holds the same information
+      as the above PNG. It is a file of five volumes, the first volume holds
+      the first BOLD frame, the second the whole brain mask, the third the
+      ventricles mask and the fourth the white matter mask. The fifth volume
+      stores all three masks coded as 1 (whole brain), 2 (ventricles), or 3
+      (white matter). The image is stored in images/ROI/nuisance.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+    --bold_preprocess ... Which bold images (as they are specified in the
+                          subjects.txt file) to copy over. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to copy all [rest].
+    --boldname        ... The default name of the bold files in the images
+                          folder [bold].
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters are used:
+
+    --wbmask       ... A path to an optional file that specifies which regions
+                       are to be excluded from the whole-brain mask. It can be
+                       used in the case of ROI analyses for which one does not
+                       want to include the ROI specific signals in the global
+                       signal regression.
+    --nroi         ... The path to additional nuisance regressors file. It can
+                       be either a binary mask or a '.names' file that specifies
+                       the ROI to be used. Based on other options, the ROI can
+                       be further masked by subject specific files or not masked
+                       at all (see USE above).
+    --sbjroi       ... A string specifying which subject specific mask to use
+                       for further masking the additional roi. The two options
+                       are 'wb' or 'aseg' for whole brain mask or FreeSurfer
+                       aseg+aparc mask, respectively.
+    --shrinknsroi  ... A string specifying whether to shrink ('true' or 'yes')
+                       the whole brain and white matter masks or not.
+
+    NOTES AND DEPENDENCIES
+    ======================
+
+    When 'cifti' is the specified image target, the related nifti volume files
+    will be processed as only they provide all the information for computing
+    the relevant parameters
+
+    The command runs the g_ExtractNuisance.m Matlab function for actual
+    nuisance signal extraction. It expects that bold images, whole brain masks,
+    and aseg+aparc imags to be present in the expected locations.
+
+
+    EXAMPLE USE
+    ===========
+
+    gmri extractNuisanceSignal subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no bold-preprocess=all cores=10
+
+    ----------------
+    (c) Grega Repovš
+
+    Changelog
+    2016-12-26 - Grega Repovš - Added documentation, fixed the issue with cifti
+                                targets, added summary reporting.
+
     """
+
+    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0}
     bsearch = re.compile('bold([0-9]+)')
 
     r = "\n---------------------------------------------------------"
@@ -506,6 +974,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
                         # --- filenames
                         f = getFileNames(sinfo, options)
+                        if options['image_target'] == 'cifti':
+                            options['image_target'] = 'nifti'
                         f.update(getBOLDFileNames(sinfo, boldname, options))
                         d = getSubjectFolders(sinfo, options)
 
@@ -533,6 +1003,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                         # --- check
                         if not status:
                             r += '\n--> ERROR: Files missing, skipping this bold run!'
+                            report['boldmissing'] += 1
                             continue
 
                         # --- running nuisance extraction
@@ -552,18 +1023,31 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
                         if options['print_command'] == "yes":
                             r += '\n\nRunning\n' + comm + '\n'
+
+                        runit = True
+                        if os.path.exists(f['bold_nuisance']):
+                            report['bolddone'] += 1
+                            runit = False
                         r += runExternalForFileShell(f['bold_nuisance'], comm, '... running matlab g_ExtractNuisance on %s bold %s' % (d['s_bold'], boldnum), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ExtractNuisance')
                         r, status = checkForFile(r, f['bold_nuisance'], 'ERROR: Matlab has failed preprocessing bold using command: %s' % (comm))
 
+                        if runit and status:
+                            report['boldok'] += 1
+                        elif runit:
+                            report['boldfail'] += 1
+
                     except (ExternalFailed, NoSourceFolder), errormessage:
                         r += str(errormessage)
+                        report['boldfail'] += 1
                     except:
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+                        report['boldfail'] += 1
 
     r += "\n\nBold nuisance signal extraction completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d" % (report)
 
     print r
-    return r
+    return (r, (sinfo['id'], rstatus))
 
 
 
