@@ -1186,7 +1186,225 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
 def preprocessConc(sinfo, options, overwrite=False, thread=0):
     """
-    preprocessConc - documentation not yet available.
+    preprocessConc [... processing options]
+
+    USE
+    ===
+
+    preprocessConc is a complex command initially used to prepare BOLD files
+    for further functional connectivity analysis. While it still accomplishes
+    that it can now also be used for complex activation modeling that creates
+    GLM files for further second-level analyses. The function enables the
+    following actions:
+
+    * spatial smoothing (3D or 2D for cifti files)
+    * temporal filtering (high-pass, low-pass)
+    * removal of nuisance signal
+    * complex modeling of events
+
+    The function makes use of a number of files and accepts a long list of
+    arguments that make it very powerfull and flexible but also require care in
+    its use. What follows is a detailed documentation of its actions and
+    parameters organised by actions in the order they would be most commonly
+    done. Use and parameter description will be intertwined.
+
+    BASICS
+    ======
+
+    Basics specify which files are to be processed
+
+    general parameters
+    ------------------
+
+    The function takes the usual general processing parameters:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+    --boldname        ... The default name of the bold files in the images
+                          folder [bold].
+
+    specific parameters
+    -------------------
+
+    There are a number of basic specific parameters for this command that are
+    relevant for all or most of the actions:
+
+    --bold_preprocess ... A pipe ('|') separated list of conc names to process.
+    --eventfile       ... A pipe ('|') separated list of fidl names to use, that
+                          matches the conc list.
+    --bold_actions    ... A string specifying which actions, and in what sequence
+                          to perform [shrcl]
+
+    The two names give the bases for searching for the appropriate .conc and
+    .fidl files. Both are first searched for in images/functional/concs and
+    images/functional/events folders respectively. There they would be named as
+    [<subject id>_]<boldname>_<image_target>_<conc name>.conc and
+    [<subject id>_]<boldname>_<image_target>_<conc name>.fidl. In the case of
+    cifti files, image_target is composed of <cifti_tail>_cifti. If the files
+    are not present in the relevant individual subject's folders, they are
+    searched for in the <basefolder>/inbox folder. In that case the
+    "<subject id>_" is not optional but required.
+
+    The actions that can be performed are denoted by a single letter, and they
+    will be executed in the sequence listed:
+
+    m ... Motion scrubbing.
+    s ... Spatial smooting.
+    h ... High-pass filtering.
+    r ... Regression (nuisance and/or task)
+    c ... Saving of resulting beta coefficients (allways to follow 'r')
+    l ... Low-pass filtering.
+
+    So the default 'shrcl' --bold_actions parameter would lead to the files
+    first being smoothed, then high-pass filtered. Next a regression step
+    would follow in which nuisance signal and/or task related signal would
+    be estimated and regressed out, then the related beta estimates would
+    be saved. Lastly the BOLDs would be also low-pass filtered.
+
+    SCRUBBING
+    =========
+
+    The command either makes use of scrubbing information or performs scrubbing
+    comuputation on its own (when 'm' is part of the command). In the latter
+    case, all the scrubbing parameters need to be specified:
+
+    --mov_radius  ... Estimated head radius (in mm) for computing frame
+                      displacement statistics [50].
+    --mov_fd      ... Frame displacement threshold (in mm) to use for
+                      identifying bad frames [0.5]
+    --mov_dvars   ... The (mean normalized) dvars threshold to use for
+                      identifying bad frames [3.0].
+    --mov_dvarsme ... The (median normalized) dvarsm threshold to use for
+                      identifying bad frames [1.5].
+    --mov_after   ... How many frames after each frame identified as bad
+                      to also exclude from further processing and analysis [0].
+    --mov_before  ... How many frames before each frame identified as bad
+                      to also exclude from further processing and analysis [0].
+    --mov_bad     ... Which criteria to use for identification of bad frames
+                      [udvarsme].
+
+    In any case, if scrubbing was done beforehand or as a part of this commmand,
+    one has to specify, how the scrubbing information is used:
+
+    --pignore  ... String describing how to deal with bad frames.
+
+    The string has the following format:
+
+    'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
+
+    Filtering options are:
+
+    * keep   ... Keep all the bad frames unchanged.
+    * linear ... Replace bad frames with linear interpolated values based on
+                 neighbouring good frames.
+    * spline ... Replace bad frames with spline interpolated values based on
+                 neighouring good frames
+
+    To prevent artefacts present in bad frames to be temporaly spread, use
+    either 'linear' or 'spline' options.
+
+    Regression options are:
+
+    * keep   ... Keep the bad frames and use them in the regression.
+    * ignore ... Exclude bad frames from regression.
+
+    Please note that when the bad frames are not kept, the original values will
+    be retained in the residual signal. In this case they have to be excluded
+    or ignored also in all following analyses, otherwise they can be a
+    significant source of artefacts.
+
+    SPATIAL SMOOTHING
+    =================
+
+    Volume smoothing
+    ----------------
+
+    For volume formats the images will be smoothed using the mri_Smooth3D
+    gmrimage method. For cifti format the smooting will be done by calling the
+    relevant wb_command command. The smoothing specific parameters are:
+
+    --voxel_smooth  ... Gaussian smoothing FWHM in voxels [2]
+    --smooth_mask   ... Whether to smooth only within a mask, and what mask to
+                        use (nonzero/brainsignal/brainmask/<filename>)[false].
+    --dilate_mask   ... Whether to dilate the image after masked smoothing and
+                        what mask to use (nonzero/brainsignal/brainmask/
+                        same/<filename>)[false].
+
+    If a smoothing mask is set, only the signal within the specified mask will
+    be used in the smoothing. If a dilation mask is set, after smoothing within
+    a mask, the resulting signal will be constrained / dilated to the specified
+    dilation mask.
+
+    For both parameters the possible options are:
+
+    * nonzero      ... Mask will consist of all the nonzero voxels of the first
+                       BOLD frame.
+    * brainsignal  ... Mask will consist of all the voxels that are of value
+                       300 or higher in the first BOLD frame (this gave a good
+                       coarse brain mask for images intensity normalized to
+                       mode 1000 in the NIL preprocessing stream).
+    * brainmask    ... Mask will be the actual bet extracted brain mask based
+                       on the first BOLD frame (generated using in the
+                       creatBOLDBrainMasks command).
+    * <filename>   ... All the non-zero voxels in a specified volume file will
+                       be used as a mask.
+    * false        ... No mask will be used.
+    * same         ... Only for dilate_mask, the mask used will be the same as
+                       smooting mask.
+
+    Cifti smoothing
+    ---------------
+
+    For cifti format images, smoothing will be run using wb_command. The
+    following parameters can be set:
+
+    --surface_smooth  ... FWHM for gaussian surface smooting in mm [6.0].
+    --volume_smooth   ... FWHM for gaussian volume smooting in mm [6.0].
+    --omp_threads     ... Number of cores to be used by wb_command. 0 for no
+                          change of system settings [0].
+    --framework_path  ... The path to framework libraries on the Mac system.
+                          No need to use it currently if installed correctly.
+    --wb_command_path ... The path to the wb_command executive. No need to
+                          use it currently if installed correctly.
+
+    Results
+    -------
+
+    The resulting smoothed files are saved with '_g7' added to the BOLD root
+    filename.
+
+
+    TEMPORAL FILTERING
+    ==================
+
+    Temporal filtering is accomplished using mri_Filter gmrimage method. The
+    code is adopted from the FSL C++ code enabling appropriate handling of
+    bad frames (as described above - see SCRUBBING). The specific parameters
+    are:
+
+    --hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
+    --lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
+
+    Please note that the values finaly passed to mri_Filter method are the
+    respective sigma values computed from the specified frequencies and TR.
+
+    Results
+    -------
+
+    The resulting filtered files are saved with '_hpss' or '_bpss' added to the
+    BOLD root filename for high-pass and low-pass filtering, respectively.
+
+
+    ----------------
+    (c) Grega Repovš
+
+    Changelog
+    2016-12-26 - Grega Repovš - Added initial documentation.
     """
 
     r = "\n---------------------------------------------------------"
