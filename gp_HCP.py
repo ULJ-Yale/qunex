@@ -179,7 +179,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             if os.path.exists(tfile):
                 r += "\n---> T1w image file present."
             else:
-                r += "\n---> ERROR: Could not find T1w image file."
+                r += "\n---> ERROR: Could not find T1w image file. [%s]" % (tfile)
                 run = False
 
         if hcp['T2w'] == 'NONE':
@@ -189,7 +189,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(tfile):
                     r += "\n---> T2w image file present."
                 else:
-                    r += "\n---> ERROR: Could not find T2w image file."
+                    r += "\n---> ERROR: Could not find T2w image file. [%s]" % (tfile)
                     run = False
 
 
