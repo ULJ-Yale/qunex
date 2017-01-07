@@ -44,12 +44,15 @@ def readTextFileToLines(filename):
 def getImgFormat(filename):
     p = filename.split('.')
     if p[-1] == 'nii':
-        return '.nii'
+        if ".".join(p[-2:])  == 'dtseries.nii':
+            return '.dtseries.nii'
+        else:
+            return '.nii'
     elif ".".join(p[-2:]) == '4dfp.img':
         return '.4dfp.img'
     elif ".".join(p[-2:]) == '4dfp.ifh':
         return '.4dfp.img'
-    elif ".".join(p[-2:]) == 'nii.gz':
+    elif ".".join(p[-2:])  == 'nii.gz':
         return '.nii.gz'
     return 'unknown'
 
