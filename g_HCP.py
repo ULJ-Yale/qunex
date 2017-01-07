@@ -42,6 +42,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
 
     i = [k for k, v in inf.iteritems() if k.isdigit()]
     i.sort(key=int, reverse=True)
+    boldn = '99'
 
     for k in i:
         v = inf[k]
