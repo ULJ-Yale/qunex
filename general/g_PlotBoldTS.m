@@ -176,6 +176,17 @@ set(f, 'PaperPosition', [0.25 0.25 8 10.5]);
 sz.fac = (1 - (nelements-1) * sz.IPad - sz.VBot - sz.VTop - sz.Fix) / sz.Var;
 vused = 1 - sz.VTop;
 
+% ... j2
+
+j2 = sortrows([[64:-1:1]', jet], 1);
+j2 = [j2(:,2:end); jet ];
+j2 = j2(1:2:128,:);
+
+j2 = sortrows([[64:-1:1]', hsv], 1);
+j2 = [j2(:,2:end); hsv ];
+j2 = j2(1:2:128,:);
+
+
 for n = 1:nelements
 
 	if strcmp(elements(n).type, 'stats')
@@ -244,8 +255,7 @@ for n = 1:nelements
 		else
 			imagesc(data, [elements(elements(n).scale).imin, elements(elements(n).scale).imax]);
 		end
-
-		colormap(sp, gray);
+		colormap(sp, j2);
 		ylabel(sp, elements(n).name);
 	end
 	set(sp, 'YTick', []);
