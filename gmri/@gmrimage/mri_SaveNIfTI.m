@@ -17,17 +17,19 @@ function [res] = mri_SaveNIfTI(img, filename, datatype, verbose)
 if nargin < 4, verbose = false; end
 if nargin < 3, datatype = []; end
 
+fprintf('\n---> Saving image as %s', filename);
+
 % ---> embedd extra data if available
 
 if ~ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'}) && img.frames > 2
     img = img.mri_EmbedStats();
 end
 
+
 % ---> set up file to save
 
 filename = strtrim(filename);
 % unpack and set up
-
 
 root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.dscalar|\.pconn', '');
 
@@ -38,7 +40,6 @@ if length(ftype) > 0
 end
 
 img = img.unmaskimg;
-
 
 % ---> transform if necessary
 
@@ -85,16 +86,16 @@ end
 % ---> flip before saving if needed
 
 if ismember(img.imageformat, {'CIFTI', 'CIFTI-1', 'CIFTI-2'})
-    if verbose, fprintf('\n---> Switching data [%s] to single (4byte float) for CIFTI data.\n', class(img.data)); end
+    if verbose, fprintf('\n---> Switching data [%s] to single (4byte float) for CIFTI data.', class(img.data)); end
     img.data = single(img.data');
     % img.data = img.data';
 else
     if ~isempty(datatype)
-        if verbose, fprintf('\n---> Switching data from %s to %s.\n', class(img.data), datatype); end
+        if verbose, fprintf('\n---> Switching data from %s to %s.', class(img.data), datatype); end
         img.data = cast(img.data, datatype);
     else
         if strcmp(class(img.data), 'double')
-            if verbose, fprintf('\n---> Switching data from double to single.\n'); end
+            if verbose, fprintf('\n---> Switching data from double to single.'); end
             img.data = single(img.data);
         end
     end
@@ -302,7 +303,7 @@ function [s] = packHeader_nifti2(hdrnifti)
 function [meta] = framesHack(meta, oframes, nframes);
 
     if oframes == nframes
-        return
+        return;
     end
 
     s = cast(meta.data', 'char');
@@ -311,7 +312,7 @@ function [meta] = framesHack(meta, oframes, nframes);
     s = strrep(s, olds, news);
     s = cast(s', 'uint8');
 
-    if length(olds) ~ length(news)
+    if length(olds) ~= length(news)
         meta.size   = ceil((length(s)+8)/16)*16;
         meta.data   = zeros(1, meta.size-8, 'uint8');
         meta.data(1:length(s)) = s;
