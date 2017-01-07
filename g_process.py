@@ -146,8 +146,8 @@ arglist = [['# ---- Basic settings'],
            ['omit',               '5',                                           int,    "how many frames to omit at the start of each bold run"],
            ['bppa',               'shrcl',                                       str,    "what processing steps to include in bold preprocessing"],
            ['bold_actions',       'shrcl',                                       str,    "what processing steps to include in bold preprocessing"],
-           ['bppn',               'mwmvwbd',                                     str,    "what regressors to include in nuisance removal"],
-           ['bold_nuisance',      'mwmvwbd',                                     str,    "what regressors to include in nuisance removal"],
+           ['bppn',               'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
+           ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
            ['bppt',               'rest',                                        str,    "which bolds to process (can be multiple joind with | )"],
            ['bold_preprocess',    'rest',                                        str,    "which bolds to process (can be multiple joind with | )"],
            ['boldname',           'bold',                                        str,    "the default name for the bold files"],
@@ -628,7 +628,7 @@ def run(command, args):
                 if options[k] != '':
                     cstr += "%s%s\n" % (o, options[k])
 
-            cstr += "#PBS -N %s%s_#%02d" % (options['jobname'], "-".join(args), c)
+            cstr += "#PBS -N %s%s_#%02d" % (options['jobname'], command, c)
 
             if options['PBS_environ'] != '':
                 cstr += "\n# --- Setting up environment\n\n"
@@ -640,7 +640,7 @@ def run(command, args):
 
             # ---- construct the gmri command
 
-            cstr += "\ngmri", command
+            cstr += "\ngmri " + command
 
             for (k, v) in nopt:
                 if k not in ['subjid', 'queue']:
@@ -655,10 +655,10 @@ def run(command, args):
 
             # ---- pass the command string to qsub
 
-            print "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
+            print "\n==============> submitting %s_#%02d\n" % (command, c)
             print cstr
 
-            print >> flog, "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
+            print >> flog, "\n==============> submitting %s_#%02d\n" % (command, c)
 
             pbs = subprocess.Popen("qsub", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
             pbs.stdin.write(cstr)
@@ -708,7 +708,7 @@ def run(command, args):
         # ---- run jobs
 
         if options['jobname'] == "":
-            options['jobname'] = "-".join(args)
+            options['jobname'] = "gmri"
 
         c = 0
         while subjects:
@@ -727,14 +727,14 @@ def run(command, args):
             # -We hour:minute  estimated runtime
             #  bsub '-M <P>' option specifies the memory limit for each process, while '-R "rusage[mem=<N>]"' specifies the memory to reserve for this job on each node. ... in MB - 5GB default
 
-            cstr  = "#BSUB -o %s%s_#%02d_%%J\n" % (options['jobname'], "-".join(args), c)
+            cstr  = "#BSUB -o %s-%s_#%02d_%%J\n" % (options['jobname'], command, c)
             cstr += "#BSUB -q %s\n" % (lsfo['queue'])
             cstr += "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n" % (lsfo['mem'])
             cstr += "#BSUB -W %s\n" % (lsfo['walltime'])
             cstr += "#BSUB -n %s\n" % (lsfo['cores'])
             if len(options['jobname']) > 0:
-                cstr += "#BSUB -P %s\n" % (options['jobname'])
-                cstr += "#BSUB -J %s_%d\n" % (options['jobname'], c)
+                cstr += "#BSUB -P %s-%s\n" % (options['jobname'], command)
+                cstr += "#BSUB -J %s-%s_%d\n" % (options['jobname'], command, c)
 
 
             if options['LSF_environ'] != '':
@@ -747,7 +747,7 @@ def run(command, args):
 
             # ---- construct the gmri command
 
-            cstr += "\ngmri", command
+            cstr += "\ngmri " + command
 
             for (k, v) in nopt:
                 if k not in ['subjid', 'queue']:
