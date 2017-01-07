@@ -279,7 +279,7 @@ def main(args=None):
     try:
         for n in range(1, len(args)):
             if "=" in args[n]:
-                k, v = args[n].split("=")
+                k, v = args[n].split("=", 1)
                 k = k.strip('-')
                 opts[k] = v
             elif comm in commands:
@@ -293,7 +293,8 @@ def main(args=None):
     except ValueError as e:
         print "\n-----------------------\n", e, "\nInstructions on command use:"
         printHelp(comm)
-        print "-----------------------\n"
+        print "-----------------------\n\nHere's the error as caught by python:\n"
+        raise
         sys.exit(1)
     except:
         print "\n-----------------------\n\nOps! Something went wrong. Here is the help for the command you ran:"
