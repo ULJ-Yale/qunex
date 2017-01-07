@@ -173,12 +173,13 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
          overwrite=no hcp_cifti_tail=_Atlas bold-preprocess=all
 
     ----------------
-    (c) Grega Repovš
+    Written by Grega Repovš
 
     Changelog
-    2016-12-24 - Grega Repovš - Added documentation, fixed issue with cifti
-                                targets, switched to gmri functions to extract
-                                the first frame and convert the image.
+    2016-12-24 Grega Repovš
+             - Added documentation, fixed issue with cifti targets, switched
+               to gmri functions to extract the first frame and convert the
+               image.
     """
 
     bsearch = re.compile('bold([0-9]+)')
@@ -406,11 +407,12 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
          overwrite=no bold-preprocess=all
 
     ----------------
-    (c) Grega Repovš
+    Written by Grega Repovš
 
     Changelog
-    2016-12-26 - Grega Repovš - Added documentation, fixed the issue with cifti
-                                targets, added summary reporting.
+    2016-12-26 Grega Repovš
+             - Added documentation, fixed the issue with cifti targets, added
+               summary reporting.
     """
 
     bsearch = re.compile('bold([0-9]+)')
@@ -643,11 +645,11 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
          overwrite=no bold-preprocess=all cores=1 mov_plot=""
 
     ----------------
-    (c) Grega Repovš
+    Written by Grega Repovš
 
     Changelog
-    2016-12-26 - Grega Repovš - Added documentation, added summary reporting.
-
+    2016-12-26 Grega Repovš
+             - Added documentation, added summary reporting.
     """
 
     preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0}
@@ -942,12 +944,12 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
          overwrite=no bold-preprocess=all cores=10
 
     ----------------
-    (c) Grega Repovš
+    Written by Grega Repovš
 
     Changelog
-    2016-12-26 - Grega Repovš - Added documentation, fixed the issue with cifti
-                                targets, added summary reporting.
-
+    2016-12-26 Grega Repovš
+             - Added documentation, fixed the issue with cifti targets, added
+               summary reporting.
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0}
@@ -1401,10 +1403,11 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
 
     ----------------
-    (c) Grega Repovš
+    Written by Grega Repovš
 
     Changelog
-    2016-12-26 - Grega Repovš - Added initial documentation.
+    2016-12-26 Grega Repovš
+             - Added initial documentation.
     """
 
     r = "\n---------------------------------------------------------"
