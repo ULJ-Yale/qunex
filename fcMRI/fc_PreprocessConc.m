@@ -1,9 +1,6 @@
-function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
+function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 
-%function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
-%   (c) Copyright Grega Repovš, 2011-01-24
-%
-%   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+%function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 %
 %   Inputs
 %       subjectf    - the folder with subjects images and data
@@ -77,6 +74,8 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+%   2011-01-24 Grega Repovs
+%              - Created based on fc_Preprocess.m and other previous code
 %
 %   2013-10-20 Grega Repovs (v0.9.3)
 %              - Added option for ignoring the frames marked as not to be used.
@@ -93,6 +92,8 @@ function [TS] = fc_PreprocessConc2(subjectf, bolds, do, TR, omit, rgss, task, ef
 %   2016-02-02 Grega Repovs (v0.9.8)
 %              - Added additional GLM options
 %
+%   2017-01-07 Grega Repovs (v0.9.9)
+%              - Renamed from fc_PreprocessConc2 to fc_PreprocessConc.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 16, done = [];                                  end
@@ -112,7 +113,7 @@ if nargin < 4 || isempty(TR), TR = 2.5;                     end
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces conc 2 script v0.9.8.1 [%s]\n', tail);
+fprintf('\nRunning preproces conc script v0.9.9 [%s]\n', tail);
 
 options
 
@@ -554,7 +555,7 @@ if ~isempty(done)
     fprintf(fout, 'OK');
     fclose(fout);
 end
-fprintf('\n==> preproces conc 2 finished successfully\n');
+fprintf('\n==> preproces conc finished successfully\n');
 
 return
 

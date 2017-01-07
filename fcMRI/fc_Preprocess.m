@@ -94,6 +94,8 @@ function [] = fc_Preprocess7(subjectf, bold, omit, do, rgss, task, efile, TR, ev
 %   2015-05-26 Grega Repovs (v0.9.6)
 %              - Added the option to provide alternative root names of bolds (boldname)
 %
+%   2017-01-07 Grega Repovs (v0.9.7)
+%              - Renamed from fc_Preprocess7 to fc_Preprocess
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -108,7 +110,7 @@ if nargin < 8,  TR = 2.5;           end
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces script 7 v0.9.6 [%s]\n', tail);
+fprintf('\nRunning preproces script v0.9.7 [%s]\n', tail);
 
 ignore.hipass  = 'keep';
 ignore.regress = 'keep';
@@ -374,6 +376,8 @@ for current = do
     end
 
 end
+
+fprintf('\n==> preproces BOLD finished successfully\n');
 
 return
 
