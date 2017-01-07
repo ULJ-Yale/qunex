@@ -658,3 +658,17 @@ def checkForFile2(r, checkfile, ok, bad, status=True):
     else:
         r += bad
         return r, False
+
+
+def action(action, run):
+    '''
+    action(action, run)
+    A function that prepends "test" to action name if run is set to "test".
+    '''
+    if run == "test":
+        if action.istitle():
+            return "Test " + action.lower()
+        else:
+            return "test " + action
+    else:
+        return action

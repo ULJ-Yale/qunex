@@ -20,7 +20,7 @@ import getopt
 import subprocess
 import gp_core
 import gp_HCP
-import gp_fcMRI
+import gp_workflow
 import gp_simple
 import gp_FS
 import os
@@ -35,6 +35,7 @@ from datetime import datetime
 log     = []
 stati   = []
 logname = ""
+
 
 # =======================================================================
 #                                                       SUPPORT FUNCTIONS
@@ -326,20 +327,20 @@ options = {}
 
 calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,                              "Map HCP preprocessed data to subjects' image folder."],
           [],
-          ['gbd',     'getBOLDData',                 gp_fcMRI.getBOLDData,                           "Copy functional data from 4dfp (NIL) processing pipeline."],
-          ['bbm',     'createBOLDBrainMasks',        gp_fcMRI.createBOLDBrainMasks,                  "Create brain masks for BOLD runs."],
+          ['gbd',     'getBOLDData',                 gp_workflow.getBOLDData,                        "Copy functional data from 4dfp (NIL) processing pipeline."],
+          ['bbm',     'createBOLDBrainMasks',        gp_workflow.createBOLDBrainMasks,               "Create brain masks for BOLD runs."],
           [],
           ['a',       'runBasicSegmentation',        gp_FS.runBasicStructuralSegmentation,           "Run basic structural image segmentation."],
           ['gfs',     'getFSData',                   gp_FS.checkForFreeSurferData,                   "Copy existing FreeSurfer data to subjects' image folder."],
           ['fss',     'runSubcorticalFS',            gp_FS.runFreeSurferSubcorticalSegmentation,     "Run subcortical freesurfer segmentation."],
           ['fsf',     'runFullFS',                   gp_FS.runFreeSurferFullSegmentation,            "Run full freesurfer segmentation"],
           [],
-          ['cbs',     'computeBOLDStats',            gp_fcMRI.computeBOLDStats,                      "Compute BOLD movement and signal statistics."],
-          ['csr',     'createStatsReport',           gp_fcMRI.createStatsReport,                     "Create BOLD movement statistic reports and plots."],
-          ['ens',     'extractNuisanceSignal',       gp_fcMRI.extractNuisanceSignal,                 "Extract nuisance signal from BOLD images."],
+          ['cbs',     'computeBOLDStats',            gp_workflow.computeBOLDStats,                   "Compute BOLD movement and signal statistics."],
+          ['csr',     'createStatsReport',           gp_workflow.createStatsReport,                  "Create BOLD movement statistic reports and plots."],
+          ['ens',     'extractNuisanceSignal',       gp_workflow.extractNuisanceSignal,              "Extract nuisance signal from BOLD images."],
           [],
-          ['bpp',     'preprocessBold',              gp_fcMRI.preprocessBold,                        "Preprocess BOLD images (using old Matlab code)."],
-          ['cpp',     'preprocessConc',              gp_fcMRI.preprocessConc,                        "Preprocess conc bundle of BOLD images (using old Matlab code)."],
+          ['bpp',     'preprocessBold',              gp_workflow.preprocessBold,                     "Preprocess BOLD images (using old Matlab code)."],
+          ['cpp',     'preprocessConc',              gp_workflow.preprocessConc,                     "Preprocess conc bundle of BOLD images (using old Matlab code)."],
           [],
           ['hcp1',    'hcp_PreFS',                   gp_HCP.hcpPreFS,                                "Run HCP PreFS pipeline."],
           ['hcp2',    'hcp_FS',                      gp_HCP.hcpFS,                                   "Run HCP FS pipeline."],
@@ -424,6 +425,13 @@ def run(command, args):
     for line in arglist:
         if len(line) == 4:
             options[line[0]] = line[2](options[line[0]])
+
+    # ---- Take care of mapping
+
+    for line in arglist:
+        if line[0] in tomap:
+            options[tomap[line[0]]] = options[line[0]]
+
 
     # ---- Set key parameters
 

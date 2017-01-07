@@ -10,7 +10,9 @@ setup(name='niutilities',
       package_dir={'niutilities': '../'},
       packages=['niutilities'],
       py_modules=['g_dicom', 'g_gimg', 'g_img', 'g_NIfTI',
-                  'g_core', 'g_fidl', 'g_HCP', 'g_nipype'],
+                  'g_core', 'g_fidl', 'g_HCP', 'g_nipype',
+                  'g_process', 'gp_core', 'gp_FS', 'gp_HCP',
+                  'gp_simple', 'gp_workflow'],
       scripts=['gmri'],
       )
 

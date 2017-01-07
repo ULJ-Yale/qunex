@@ -2,7 +2,7 @@
 # encoding: utf-8
 """
 This file holds code for running functional connectivity preprocessing and
-GLM computation. It consists of functions:
+GLM computation workflow. It consists of functions:
 
 * getBOLDData           ... maps NIL preprocessed data to images folder
 * createBOLDBrainMasks  ... extracts the first frame of each BOLD file
@@ -1060,8 +1060,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nPreprocessing (v7) bold runs ..."
-    r += "\n%s Preprocessing (v7) bold runs ..." % (action("Running", options['run']))
+    r += "\nPreprocessing bold runs ..."
+    r += "\n%s Preprocessing bold runs ..." % (action("Running", options['run']))
 
     report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
 
@@ -1154,7 +1154,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                             options['pignore'],                 # --- how to deal with bad frames ('hipass:keep/linear/spline|regress:keep/ignore|lopass:keep/linear/spline')
                             opts)                               # --- additional options
 
-                        comm = 'matlab -nojvm -nodisplay -r "try %s, catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit"' % (mcomm)
+                        comm = 'matlab -nojvm -nodisplay -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit"' % (mcomm)
 
                         # r += '\n ... running: %s' % (comm)
                         if options['run'] == "run":
@@ -1409,7 +1409,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s Preprocessing conc bundles (v2) ..." % (action("Running", options['run']))
+    r += "\n%s Preprocessing conc bundles ..." % (action("Running", options['run']))
 
     concs = options['bppt'].split("|")
     fidls = options['eventfile'].split("|")
@@ -1579,13 +1579,13 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     opts,                               # --- additional options
                     done)                               # --- file to save when done
 
-                comm = 'matlab -nojvm -nodisplay -r "try %s, catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit"' % (mcomm)
+                comm = 'matlab -nojvm -nodisplay -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit;"' % (mcomm)
 
                 r += '\n\n%s nuisance and task removal' % (action("Running", options['run']))
                 if options['print_command'] == "yes":
                     r += '\n' + comm + '\n'
                 if options['run'] == "run":
-                    r += runExternalForFileShell(done, comm, 'running matlab conc preprocessing (v2) on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PreprocessConc2')
+                    r += runExternalForFileShell(done, comm, 'running matlab conc preprocessing on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PreprocessConc2')
                     r, status = checkForFile(r, done, 'ERROR: Matlab has failed preprocessing bold using command: \n--> %s\n' % (mcomm))
                     if os.path.exists(done):
                         os.remove(done)
