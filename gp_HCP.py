@@ -528,7 +528,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_PFS subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp_FS subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
          overwrite=no cores=10
 
     gmri hcp2 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
@@ -648,19 +648,84 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
 
 def hcpPostFS(sinfo, options, overwrite=False, thread=0):
-    '''hcp_PostFS command (hcp3)
+    '''
+    hcp_PostFS [... processing options]
+    hcp3 [... processing options]
 
-    Runs the Post FS step of HCP Pipeline. It creates Workbench compatible files based on the Freesurfer segmentation and surface registration. It follows PreFS and FS steps.
+    USE
+    ===
 
-    It makes use of the following options:
+    Runs the PostFS step of the HCP Pipeline. It creates Workbench compatible
+    files based on the Freesurfer segmentation and surface registration. It uses
+    the adjusted version of the HCP code that enables the preprocessing to run
+    also if no T2w image is present. A short name 'hcp3' can be used for this
+    command.
 
-    - hcp_suffix           ... Specifies a suffix to the subject id if multiple variants are run, empty otherwise.
-    - hcp_t2               ... NONE if no T2w image is available, anything else otherwise.
-    - hcp_grayordinatesres ... The resolution of the grayordinate voxels (usually 2mm).
-    - hcp_hiresmesh        ... Number of verteces in high-resolution mesh (164).
-    - hcp_lowresmesh       ... Number of verteces in low-resolution mesh (32).
-    - hcp_regname          ... Name of the registration to use (currently only FS).
+    REQUIREMENTS
+    ============
 
+    The code expects the previous step (hcp_FS) to have run successfully and
+    checks for presence of the last file that should have been generated. Due
+    to the number of files that it requires, it does not make a full check for
+    all of them!
+
+    RESULTS
+    =======
+
+    The results of this step will be present in the MNINonLinear folder in the
+    subject's root hcp folder.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    --hcp_suffix           ... Specifies a suffix to the subject id if multiple
+                               variants are run, empty otherwise [].
+    --hcp_t2               ... NONE if no T2w image is available and the
+                               preprocessing should be run without them,
+                               anything else otherwise [t2].
+    --hcp_grayordinatesres ... The resolution of the volume part of the
+                               graordinate representation in mm [2].
+    --hcp_hiresmesh        ... The number of vertices for the high resolution
+                               mesh of each hemisphere (in thousands) [164].
+    --hcp_lowresmesh       ... The number of vertices for the low resolution
+                               mesh of each hemisphere (in thousands) [32].
+    --hcp_regname          ... The registration used, currently only FS [FS].
+
+    EXAMPLE USE
+    ===========
+
+    gmri hcp_PostFS subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10
+
+    gmri hcp3 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10 hcp_t2=NONE
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-01-08 Grega Repovš
+             - Updated documentation.
     '''
 
     r = "\n---------------------------------------------------------"
