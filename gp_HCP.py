@@ -125,31 +125,147 @@ def action(action, run):
 
 
 def hcpPreFS(sinfo, options, overwrite=False, thread=0):
-    '''hcp_PreFS command (hcp1)
+    '''
+    hcp_PreFS [... processing options]
+    hcp1 [... processing options]
 
-    Runs the pre-FS step of HCP Pipeline. It looks for T1w and T2w images in subject's T1w and T2w folder, averages them (if multiple present) and linearly and nonlinearly aligns them to the MNI atlas.
+    USE
+    ===
 
-    It makes use of the following options:
+    Runs the pre-FS step of the HCP Pipeline. It looks for T1w and T2w images in
+    subject's T1w and T2w folder, averages them (if multiple present) and
+    linearly and nonlinearly aligns them to the MNI atlas. It uses the adjusted
+    version of the HCP that enables the preprocessing to run with of without T2w
+    image(s). A short name 'hcp1' can be used for this command.
 
-    - hcp_suffix           ... Specifies a suffix to the subject id if multiple variants are run, empty otherwise.
-    - hcp_biascorrect_t1w      ... Whether to run T1w image bias correction.
-    - hcp_t2               ... NONE if no T2w image is available, anything else otherwise.
-    - hcp_brainsize        ... Specifies the size of the brain in mm (170 is FSL default and seems to be a good choice, HCP uses 150).
-    - hcp_echodiff         ... Difference in TE times if a fieldmap image is used, set to NONE if not used.
-    - hcp_dwelltime        ... Echo Spacing or Dwelltime of Spin Echo Field Map or "NONE" if not used.
-    - hcp_seunwarpdir      ... Phase encoding direction of the spin echo field map (x, y or NONE).
-    - hcp_t1samplespacing  ... T1 image sample spacing, "NONE" if not used.
-    - hcp_t2samplespacing  ... T2 image sample spacing, "NONE" if not used
-    - hcp_unwarpdir        ... Readout direction of the T1w and T2w images (x, y, z; Used with either a regular field map or a spin echo field map)
-    - hcp_gdcoeffs         ... File containing gradient distortion coefficients, Set to "NONE" to turn off.
-    - hcp_avgrdcmethod     ... Averaging and readout distortion correction method.
-                                 "NONE"                    = average any repeats with no readout correction
-                                 "FIELDMAP"                = average any repeats and use Siemens field map for readout correction
-                                 "SiemensFieldMap"         = average any repeats and use Siemens field map for readout correction
-                                 "GeneralElectricFieldMap" = average any repeats and use GE field map for readout correction
-                                 "TOPUP"                   = average any repeats and use spin echo field map for readout correction
-    - hcp_topupconfig      ... Configuration file for topup or "NONE" if not used
-    - hcp_bfsigma          ... Bias Field Smoothing Sigma (optional).
+    REQUIREMENTS
+    ============
+
+    The code expects the input images to be named and present in the specific
+    folder structure. Specifically it will look within the folder:
+
+    <subject id>/hcp/<subject id>
+
+    for folders and files:
+
+    T1w/*T1w_MPR[N]*
+    T2w/*T2w_MPR[N]*
+
+    There has to be at least one T1w image present. If there are more than one
+    T1w or T2w images, they will all be used and averaged together.
+
+    Depending on the type of distortion correction method specified by the
+    --hcp_avgrdcmethod argument (see below), it will also expect the presence
+    of the following files:
+
+    __TOPUP__
+
+    SpinEchoFieldMap[N]*/*_<hcp_sephasepos>_*
+    SpinEchoFieldMap[N]*/*_<hcp_sephaseneg>_*
+
+    If there are more than one pair of spin echo files, the first pair found
+    will be used.
+
+    __SiemensFieldMap__
+
+    FieldMap_strc/<subject id>_strc_FieldMap_Magnitude.nii.gz
+    FieldMap_strc/<subject id>_strc_FieldMap_Phase.nii.gz
+
+    __GeneralElectricFieldMap__
+
+    FieldMap_strc/<subject id>_strc_FieldMap_GE.nii.gz
+
+    RESULTS
+    =======
+
+    The results of this step will be present in the above mentioned T1w and T2w
+    folders as well as MNINonLinear folder generated and populated in the same
+    subject's root hcp folder.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    --hcp_suffix           ... Specifies a suffix to the subject id if multiple
+                               variants are run, empty otherwise [].
+    --hcp_biascorrect_t1w      ... Whether to run T1w image bias correction.
+    --hcp_t2               ... NONE if no T2w image is available and the
+                               preprocessing should be run without them,
+                               anything else otherwise [t2].
+    --hcp_brainsize        ... Specifies the size of the brain in mm. 170 is FSL
+                               default and seems to be a good choice, HCP uses
+                               150, which can lead to problems with larger heads
+                               [150].
+    --hcp_echodiff         ... Difference in TE times if a fieldmap image is
+                               used, set to NONE if not used [NONE].
+    --hcp_dwelltime        ... Echo Spacing or Dwelltime of Spin Echo Field Map
+                               or "NONE" if not used [NONE].
+    --hcp_seunwarpdir      ... Phase encoding direction of the spin echo field
+                               map (x, y or NONE) [NONE].
+    --hcp_t1samplespacing  ... T1 image sample spacing, NONE if not used [NONE].
+    --hcp_t2samplespacing  ... T2 image sample spacing, NONE if not used [NONE].
+    --hcp_unwarpdir        ... Readout direction of the T1w and T2w images (x,
+                               y, z or NONE); used with either a regular field
+                               map or a spin echo field map [NONE].
+    --hcp_gdcoeffs         ... Path to a file containing gradient distortion
+                               coefficients, set to "NONE", if not used [NONE].
+    --hcp_avgrdcmethod     ... Averaging and readout distortion correction
+                               method. Can take the following values:
+                               NONE
+                               ... average any repeats with no readout correction
+                               FIELDMAP
+                               ... average any repeats and use Siemens field
+                                   map for readout correction
+                               SiemensFieldMap
+                               ... average any repeats and use Siemens field
+                                   map for readout correction.
+                               GeneralElectricFieldMap
+                               ... average any repeats and use GE field map for
+                                   readout correction
+                               TOPUP
+                               ... average any repeats and use spin echo field
+                                   map for readout correction.
+                               [NONE]
+    --hcp_topupconfig      ... Path to a configuration file for TOPUP method
+                               or "NONE" if not used [NONE].
+    --hcp_bfsigma          ... Bias Field Smoothing Sigma (optional) [].
+    --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction in PreFS
+                               step (YES or NONE) [NONE].
+
+    EXAMPLE USE
+    ===========
+
+    gmri hcp_PreFS subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10 hcp_brainsize=170
+
+    gmri hcp1 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10 hcp_t2=NONE
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-01-08 Grega Repovš
+             - Updated documentation.
     '''
 
     r = "\n---------------------------------------------------------"
@@ -348,14 +464,82 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
 
 def hcpFS(sinfo, options, overwrite=False, thread=0):
-    '''hcp_FS command (hcp2)
+    '''
+    hcp_FS [... processing options]
+    hcp2 [... processing options]
 
-    Runs the FS step of HCP Pipeline. It makes use of the linearly and nonlinearly registered T1w and T2w images from the PreFS step to run Freesurfer segmentation, surface reconstruction and optimization.
+    USE
+    ===
 
-    It makes use of the following options:
+    Runs the FS step of the HCP Pipeline. It takes the T1w and T2w images
+    processed in the previous (hcp_PreFS) step, segments T1w image by brain
+    matter and CSF, reconstructs the cortical surface of the brain and assigns
+    structure labels for both subcortical and cortical structures. It completes
+    the listed in multiple steps of increased precision and (if present) uses
+    T2w image to refine the surface reconstruction. It uses the adjusted
+    version of the HCP code that enables the preprocessing to run also if no T2w
+    image is present. A short name 'hcp2' can be used for this command.
 
-    - hcp_suffix           ... Specifies a suffix to the subject id if multiple variants are run, empty otherwise.
-    - hcp_t2               ... NONE if no T2w image is available, anything else otherwise.
+    REQUIREMENTS
+    ============
+
+    The code expects the previous step (hcp_PreFS) to have run successfully and
+    checks for presence of a few key files and folders. Due to the number of
+    inputs that it requires, it does not make a full check for all of them!
+
+    RESULTS
+    =======
+
+    The results of this step will be present in the above mentioned T1w folder
+    as well as MNINonLinear folder in the subject's root hcp folder.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+
+    specific parameters
+    -------------------
+
+    In addition the following *specific* parameters will be used to guide the
+    processing in this step:
+
+    --hcp_suffix       ... Specifies a suffix to the subject id if multiple
+                           variants are run, empty otherwise [].
+    --hcp_t2           ... NONE if no T2w image is available and the
+                           preprocessing should be run without them,
+                           anything else otherwise [t2].
+    --hcp_expert_file  ... Path to the read-in expert options file for
+                           FreeSurfer if one is prepared and should be used
+                           empty otherwise [].
+
+    EXAMPLE USE
+    ===========
+
+    gmri hcp_PFS subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10
+
+    gmri hcp2 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10 hcp_t2=NONE
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-01-08 Grega Repovš
+             - Updated documentation.
     '''
 
     r = "\n---------------------------------------------------------"
