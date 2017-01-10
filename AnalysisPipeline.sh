@@ -4472,7 +4472,7 @@ show_usage_qcpreproc() {
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
  				echo "		--overwrite=<clean_prior_run>					Delete prior QC run"
- 				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/aCode/templates)"
+ 				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/MNAP/general/templates)"
 				echo "		--outpath=<path_for_output_file>				Specify the output path name of the QC folder"
 				echo "		--dwipath=<path_for_dwi_data>					Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
 				echo "		--dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
@@ -4488,7 +4488,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='100206' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/QC/T1w' \ "
-				echo "--templatefolder='$TOOLS/aCode/templates' \ "
+				echo "--templatefolder='$TOOLS/MNAP/general/templates' \ "
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
 				echo "--runmethod='1'"
@@ -4499,7 +4499,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='100206' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/QC/T1w' \ "
-				echo "--templatefolder='$TOOLS/aCode/templates' \ "
+				echo "--templatefolder='$TOOLS/MNAP/general/templates' \ "
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
 				echo "--runmethod='2' \ "
@@ -4519,7 +4519,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/T1w' \ "
-				echo "--templatefolder='/gpfs/project/fas/n3/software/aCode/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
 				echo "--modality='T1w' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
@@ -4531,7 +4531,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/T2w' \ "
-				echo "--templatefolder='/gpfs/project/fas/n3/software/aCode/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
 				echo "--modality='T2w' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
@@ -4543,7 +4543,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/myelin' \ "
-				echo "--templatefolder='/gpfs/project/fas/n3/software/aCode/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
 				echo "--modality='myelin' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
@@ -4555,7 +4555,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/DWI' \ "
-				echo "--templatefolder='/gpfs/project/fas/n3/software/aCode/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
 				echo "--modality='DWI' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/DWI_1k25k' \ "
 				echo "--dwilegacy='yes' \ "
@@ -4571,7 +4571,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/BOLD' \ "
-				echo "--templatefolder='/gpfs/project/fas/n3/software/aCode/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
 				echo "--modality='BOLD' \ "
 				echo "--bolddata='1' \ "
 				echo "--boldsuffix='Atlas' \ "
@@ -4703,7 +4703,7 @@ fi
 # Check if specific function help requested
 	
 	# get all the functions from the usage calls
-	UsageName=`more ${TOOLS}/aCode/AnalysisPipeline.sh | grep show_usage_${1}`
+	UsageName=`more ${TOOLS}/MNAP/general/AnalysisPipeline.sh | grep show_usage_${1}`
 
 	#  check for input with double flags
 	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
@@ -4843,7 +4843,7 @@ if [ "$flag" == "--" ] ; then
 		
 	# qcpreproc input flags
 	OutPath=`opts_GetOpt1 "--outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the QC folder
-	TemplateFolder=`opts_GetOpt1 "--templatefolder" $@` # --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/aCode/templates)
+	TemplateFolder=`opts_GetOpt1 "--templatefolder" $@` # --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/general/templates)
 	Modality=`opts_GetOpt1 "--modality" $@` # --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
 	DWIPath=`opts_GetOpt1 "--dwipath" $@` # --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
 	DWIData=`opts_GetOpt1 "--dwidata" $@` # --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
@@ -4929,7 +4929,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
 		fi
 		
-		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/aCode/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
+		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/MNAP/general/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
 		if [ -z "$OutPath" ]; then OutPath="${StudyFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
 
 		if [ "$Modality" = "DWI" ]; then
@@ -4993,7 +4993,7 @@ if [ "$FunctionToRunInt" == "qcpreproc" ]; then
 	#echo ""
 	
 	# Set defaults for templates and outputs
-	TemplateFolder="${TOOLS}/aCode/templates"
+	TemplateFolder="${TOOLS}/MNAP/general/templates"
 	OutPath="${StudyFolder}/QC/${Modality}" 
 	
 	echo "-- Run locally [1] or run on cluster [2]"
