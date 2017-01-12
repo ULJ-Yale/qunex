@@ -2061,7 +2061,7 @@ show_usage_postfix() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING ..."
+    			echo "USAGE INFO PENDING..."
     			echo ""
 }
 
