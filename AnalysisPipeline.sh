@@ -2031,7 +2031,7 @@ show_usage_fixica() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "USAGE INFO FOR FIX ICA PENDING..."
     			echo ""
 }
 
