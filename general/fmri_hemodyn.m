@@ -18,7 +18,6 @@ function h = fmri_hemodyn(t, delta, tau, alpha)
 %
 %
 
-
 %
 % fmri_hemodyn.m
 %
