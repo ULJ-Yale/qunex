@@ -547,10 +547,8 @@ class niftihdr:
         else:
             h = open(filename, 'r')
 
-        s = h.read(348)
+        self.unpackHdr(h)
         h.close()
-        self.unpackHdr(s)
-        self.hdr = s
 
         return
 
