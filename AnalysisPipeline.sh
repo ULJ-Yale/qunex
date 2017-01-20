@@ -256,6 +256,11 @@ show_usage() {
 ###########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------
+#  gmri general wrapper - parse inputs into specific gmri functions 
+# ------------------------------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------------------------------
 #  dicomsort - Sort original DICOMs into sub-folders and then generate NIFTI files
 # ------------------------------------------------------------------------------------------------------
 
@@ -4400,7 +4405,7 @@ qcpreproc() {
 		# -- Setup naming conventions for DWI before generating scene
 		Com6a="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			if [ "$DWILegacy" == "yes" ]; then
-				unset "$DWIDataLegacy"
+				unset "$DWIDataLegacy" >/dev/null 2>&1
 				DWIDataLegacy="${CASE}_${DWIData}"
 				Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			else
