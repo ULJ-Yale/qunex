@@ -3,6 +3,7 @@
 
 ## --> PENDING GENERAL TASKS:
 ## ------------------------------------------------------------------------------------------------------------------------------------------
+##
 ## --> Make sure to document adjustments to diffusion connectome code for GPU version [e.g. omission of matrixes etc.]
 ## --> Integrate all command line flags for functions into IF statements [In progress... see example for hcpdlegacy]
 ## --> Integrate usage calls for each function [In progress]
@@ -65,7 +66,7 @@
 # ## Copyright Notice
 #
 # Copyright (C) 2015 Anticevic Lab 
-# Copyright (C) 2015 MBLAB Lab 
+# Copyright (C) 2015 MBLAB 
 #
 # * Yale University
 # * University of Ljubljana
@@ -77,7 +78,7 @@
 #
 # ## Product
 #
-# * Analysis Pipelines for the general neuroimaging workflow and a wrapper for MNAP
+# * Analysis Pipelines for the general neuroimaging workflow and bash wrapper for MNAP
 #
 # ## License
 #
@@ -106,8 +107,6 @@
 # * HCPPIPEDIR
 # * CARET7DIR
 # * FSLDIR
-# * Note: This script expects hcpsetup.sh in your .bash_profile to ensure correct paths to all the tools
-# * Note: also source hcpsetup.sh in your .bash_profile to ensure correct paths to all the tools
 #
 # ### Expected Previous Processing
 # 
@@ -2707,7 +2706,6 @@ hcp4_orig() {
 
 		# Log the originating call
 		echo "$@"
-	
 
 		########################################## INPUTS ########################################## 
 
@@ -3466,7 +3464,7 @@ show_usage_boldparcellation() {
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
 				echo "--computepconn='yes' \ "
-				echo "--useweights='no' \"
+				echo "--useweights='no' \ "
 				echo "--runmethod='1' "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
@@ -3482,7 +3480,7 @@ show_usage_boldparcellation() {
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
 				echo "--computepconn='yes' \ "
-				echo "--useweights='no' \"
+				echo "--useweights='no' \ "
 				echo "--queue='anticevic' \ "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='lsf' "
@@ -4749,18 +4747,24 @@ if [ "$1" == "help" ]; then
 	exit 0
 fi
 
-# Check if specific function help requested
+# ------------------------------------------------------------------------------
+#  Check if specific function help requested
+# ------------------------------------------------------------------------------
 	
 	# get all the functions from the usage calls
+	unset UsageName
+	unset APFunctions
 	UsageName=`more ${TOOLS}/MNAP/general/AnalysisPipeline.sh | grep show_usage_${1}`
-	APFunctions=`more /gpfs/project/fas/n3/software//MNAP/general/AnalysisPipeline.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
+	APFunctions=`more ${TOOLS}/MNAP/general/AnalysisPipeline.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
 
 	#  check for input with double flags
 	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
 		UsageInput=`echo ${Usage:2}`
-			if [ "$UsageInput" != "$APFunctions" ]; then
-				reho "Function does not exist! Refer to general usage below: "
+			# check if input part of function list
+			if [[ "$APFunctions" != *${UsageInput}* ]]; then
+				echo ""
+				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
 				show_usage
 				exit 0
@@ -4774,9 +4778,10 @@ fi
 	if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
 		UsageInput=`echo ${Usage:1}`
-			if [ "$UsageInput" != "$APFunctions" ]; then
+			# check if input part of function list
+			if [[ "$APFunctions" != *${UsageInput}* ]]; then
 				echo ""
-				reho "Function does not exist! Refer to general usage below: "
+				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
 				show_usage
 				exit 0
@@ -4789,8 +4794,10 @@ fi
 	#  check for input with no flags
 	if [ -z "$2" ]; then
 			UsageInput="$1"
-			if [ "$UsageInput" != "$APFunctions" ]; then
-				reho "Function does not exist! Refer to general usage below: "
+			# check if input part of function list
+			if [[ "$APFunctions" != *${UsageInput}* ]]; then
+				echo ""
+				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
 				show_usage
 				exit 0
