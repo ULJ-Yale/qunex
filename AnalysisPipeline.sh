@@ -1,7 +1,6 @@
 #!/bin/sh 
 #set -x
 
-
 ## --> PENDING GENERAL TASKS:
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 ## --> Make sure to document adjustments to diffusion connectome code for GPU version [e.g. omission of matrixes etc.]
@@ -12,8 +11,13 @@
 ## --> Finish autoptx function
 ## --> Add MYELIN or THICKNESS parcellation functions as with boldparcellation and dwidenseparcellation
 ## --> Optimize list generation function to take multiple inputs and naming conventions
-## --> Optimize the QC function to take different modalities as inputs
 ## --> Write function / wrapper for StarCluster deployment
+## --> printmatrix needs to be updated to work with any input parcellation
+## --> isolatethalamusfslnuclei needs to be finished to get atlas-based ROIs
+## --> boldmergecifti & boldmergenifti need to be updated and made more general; perhaps rely on concatenation files?
+## --> boldseparateciftifixica needs to be updates
+##
+##
 ## --> Write turn-key function for processing and QC: 
 ##			dicomsort
 ##			setupchp
@@ -29,6 +33,7 @@
 ##			probtrackX (FSL DWI tools)
 ##			dofcMRI (our inhouse functional connectivity code)
 ##			QC postprocessing scripts (DWI, BOLD, T1w, T2w, surfaces, etc)
+##
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 
 ## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
@@ -48,14 +53,8 @@
 
 ## --> BITBUCKET INFO:
 ## ------------------------------------------------------------------------------------------------------------------------------------------
-## GitRepo: https://bitbucket.org/alan.anticevic/analysispipeline/overview
-## git command reference:
-## git add LICENSE.md
-## git add AnalysisPipeline.sh
-## git commit . --message="Update-`hostname`-`date +%Y-%m-%d-%H-%M-%S`"
-## git push origin master
-## git pull origin master
-## added AMPA sever - git remote add ampa ssh://aanticevic@ampa.yale.edu/usr/local/analysispipeline
+## GitRepo for MNAP pipelines: https://bitbucket.org/mnap/
+## GitRepo for general pipeline wrapper: https://bitbucket.org/mnap/general
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 
 #~ND~FORMAT~MARKDOWN~
@@ -65,21 +64,24 @@
 #
 # ## Copyright Notice
 #
-# Copyright (C) 2015 Anticevic Lab
+# Copyright (C) 2015 Anticevic Lab 
+# Copyright (C) 2015 MBLAB Lab 
 #
 # * Yale University
+# * University of Ljubljana
 #
 # ## Author(s)
 #
 # * Alan Anticevic, Department of Psychiatry, Yale University
+# * Grega Repovs , Department of Psychology,  University of Ljubljana
 #
 # ## Product
 #
-# * Analysis Pipelines for the general lab neuroimaging workflow
+# * Analysis Pipelines for the general neuroimaging workflow and a wrapper for MNAP
 #
 # ## License
 #
-# See the [LICENSE](https://bitbucket.org/alan.anticevic/analysispipeline/LICENSE.md) file
+# See the [LICENSE](https://bitbucket.org/mnap/general/LICENSE.md) file
 #
 # ## Description:
 #
@@ -91,7 +93,7 @@
 # * FSL (version 5.0.6 or above)
 # * MATLAB (version 2012b or above)
 # * FIX ICA
-# * gCode (all repositories)
+# * MNAP (all repositories)
 # * PALM
 # * Python (version 2.7 or above)
 # * AFNI
@@ -201,7 +203,7 @@ show_usage() {
   				echo "hpcsync			sync with hpc cluster(s) for preprocessing"
   				echo "awshcpsync		sync hcp data from aws s3 cloud"
   				echo ""  				
-  				weho "--- hcp pipeline ---"
+  				weho "--- hcp pipelines via gmri wrapper (supports subject parameter files) ---"
   				echo "hpc1			prefreesurfer component of the hcp pipeline (cluster usable)"
   				echo "hpc2			freesurfer component of the hcp pipeline (cluster usable)"
   				echo "hpc3			postfreesurfer component of the hcp pipeline (cluster usable)"
@@ -209,7 +211,15 @@ show_usage() {
   				echo "hpc5			surface component of the hcp pipeline (cluster usable)"
   				echo "hpcd			dwi component of the hcp pipeline (cluster usable)"
   				echo "hcpdlegacy		dwi processing for data with standard fieldmaps (cluster usable)"
-  				echo ""  				
+  				echo ""
+  				weho "--- hcp pipeline original calls directly from HCP code (deprecated in 2017) ---"
+  				echo "hpc1_orig		prefreesurfer component of the hcp pipeline (cluster usable)"
+  				echo "hpc2_orig		freesurfer component of the hcp pipeline (cluster usable)"
+  				echo "hpc3_orig		postfreesurfer component of the hcp pipeline (cluster usable)"
+  				echo "hpc4_orig		volume component of the hcp pipeline (cluster usable)"
+  				echo "hpc5_orig		surface component of the hcp pipeline (cluster usable)"
+  				echo "hpcd_orig		dwi component of the hcp pipeline (cluster usable)"
+  				echo ""
   				weho "--- generating lists & qc functions ---"
   				echo "setuplist		setup list for fcmri analysis / preprocessing or volume snr calculations"
   				echo "nii4dfpconvert		convert nifti hcp-processed bold data to 4dpf format for fild analyses"
@@ -245,7 +255,7 @@ show_usage() {
   				echo "fixicainsertmean		re-insert mean image back into mapped fix ica data (needed prior to dofcmrip calls)"
   				echo "fixicaremovemean		remove mean image from mapped fix ica data"
   				echo "boldseparateciftifixica		separate specified bold timeseries (results from fix ica - use if bolds merged)"
-  				echo "boldhardlinkfixicamerged	setup hard links for merged fix ica results (use if bolds merged)"  				
+  				echo "boldhardlinkfixicamerged	setup hard links for merged fix ica results (use if bolds merged)" 
   				echo ""
 }
 
@@ -259,6 +269,26 @@ show_usage() {
 #  gmri general wrapper - parse inputs into specific gmri functions 
 # ------------------------------------------------------------------------------------------------------
 
+#gmri_function_wrapper(){
+
+# First get all commands from gmri:
+
+#gmrifunctions=`more $TOOLS/MNAP/niutilities/gmri | grep -w "{'com':" | awk '{print $1}' | grep -v "commands" | sed "s/'//g" | sed "s/://g" | sed ':a;N;$!ba;s/\n/ /g'`
+
+#}
+
+show_usage_gmri_wrapper() {
+  				
+  				gmri
+  				echo ""
+  				echo ""
+  				echo "-------------- Help for ${gmrifunction} ---------------------"
+  				echo ""
+    			echo ""
+  				gmri -${gmrifunction}
+  				echo ""
+  				echo ""
+}
 
 # ------------------------------------------------------------------------------------------------------
 #  dicomsort - Sort original DICOMs into sub-folders and then generate NIFTI files
@@ -367,7 +397,7 @@ show_usage_setuphcp() {
 setuplist() {
 
 	if [ "$ListGenerate" == "fcmri" ]; then
-		#generate fcMRI analysis list for all subjects across all BOLDs
+		# - generate fcMRI analysis list for all subjects across all BOLDs
 		cd "$StudyFolder"
 		cd "$StudyFolder"/../fcMRI/lists
 		ln -s "$APPATH"/functions/"$ListFunction" ./"$ListFunction" &> /dev/null
@@ -375,7 +405,7 @@ setuplist() {
 	fi
 	
 	if [ "$ListGenerate" == "snr" ]; then
-		#generate subject SNR list for all subjects across all BOLDs
+		# - generate subject SNR list for all subjects across all BOLDs
 		cd "$StudyFolder"/QC/snr
 		for BOLD in $BOLDS
 		do
@@ -385,7 +415,7 @@ setuplist() {
 	fi
 	
 	if [ "$ListGenerate" == "fcmripreprocess" ]; then
-		#generate fcMRI preprocess list for all subjects across all BOLDs
+		# - generate fcMRI preprocess list for all subjects across all BOLDs
 		cd "$StudyFolder"
 		cd ../fcMRI
 		source "$ListFunction"
@@ -442,6 +472,8 @@ show_usage_nii4dfpconvert() {
     			echo ""
     			echo "This function converts NII files to legacy 4dfp file format used by WashU NIL pipelines."
     			echo ""
+    			echo "Note: Assumptions are made that there exists _hp2000_clean NIFTI file in the HCP folder structure."
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -485,6 +517,8 @@ show_usage_cifti4dfpconvert() {
   				echo "-- Description:"
     			echo ""
     			echo "Function for converting a CIFTI file to a legacy 4dfp 4dfp file format used by WashU NIL pipelines for a given BOLD file."
+    			echo ""
+    			echo "Note: Assumptions are made that there exists _hp2000_clean CIFTI file in the HCP folder structure."
     			echo ""
 }
 
@@ -536,6 +570,8 @@ show_usage_ciftismooth() {
   				echo "-- Description:"
     			echo ""
     			echo "Function for CIFTI smoothing."
+    			echo ""
+    			echo "Note: Assumptions are made that there exists _hp2000_clean NIFTI file in the HCP folder structure."
     			echo ""
 }
 
@@ -643,6 +679,8 @@ show_usage_isolatesubcortexrois() {
     			echo ""
     			echo "Function for isolating subcortical ROIs based on individual anatomy to be used in probabilistic tractography."
     			echo ""
+    			echo "Note: it assumes that there is data inside <$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/ROIs> "
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -650,6 +688,8 @@ show_usage_isolatesubcortexrois() {
 # ------------------------------------------------------------------------------------------------------
 
 isolatethalamusfslnuclei() {
+
+    			echo "FUNCTION UNDER DEVELOPMENT - NOT DEPLOYMENT READY..."
 
 	# isolate FSL-intersecting thalamic voxels 
 	#cp "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz ./
@@ -679,11 +719,11 @@ isolatethalamusfslnuclei() {
 	#fslstats Thalamus-maxprob-thr0-2mm-sensory.nii.gz -V # 2909 23272.000000 
 	#fslstats Thalamus-maxprob-thr0-2mm-associative.nii.gz -V # 3655 29240.000000 
 
-	cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs
-	3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sensory.nii.gz -b Atlas_thalamus.R.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_sensory.R.nii.gz # isolate right thalamus from FSL mask file
-	3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sensory.nii.gz -b Atlas_thalamus.L.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_sensory.L.nii.gz # isolate right thalamus from FSL mask file
-	3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-associative.nii.gz -b Atlas_thalamus.R.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_associative.R.nii.gz # isolate right thalamus from FSL mask file
-	3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-associative.nii.gz -b Atlas_thalamus.L.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_associative.L.nii.gz # isolate right thalamus from FSL mask file
+	#cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs
+	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sensory.nii.gz -b Atlas_thalamus.R.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_sensory.R.nii.gz # isolate right thalamus from FSL mask file
+	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sensory.nii.gz -b Atlas_thalamus.L.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_sensory.L.nii.gz # isolate right thalamus from FSL mask file
+	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-associative.nii.gz -b Atlas_thalamus.R.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_associative.R.nii.gz # isolate right thalamus from FSL mask file
+	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-associative.nii.gz -b Atlas_thalamus.L.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_associative.L.nii.gz # isolate right thalamus from FSL mask file
 	
 	# Get FSL-intersecting thalamus sub-nuclei volumes
 	#thal_sensory_lvol_L=`fslstats Atlas_thalamus_sensory.L.nii.gz -V | cut -d " " -f 1` #70 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 456 / 32492 number of vertices
@@ -698,7 +738,7 @@ show_usage_isolatethalamusfslnuclei() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "UNDER DEVELOPMENT - USAGE INFO PENDING..."
     			echo ""
 }
 	
@@ -849,7 +889,7 @@ show_usage_probtracksubcortex() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			reho "		*** This function is deprecated and not supported any longer since the dense connectome implementation."
+    			reho "		*** As of 2017 this function is deprecated and not supported any longer since the dense connectome implementation."
     			reho "		*** The new usage for dense connectome computation can be found via the following functions:"
     			echo ""
   				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (cluster usable)"
@@ -876,7 +916,7 @@ show_usage_linkmovement() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Function links processed motion data from the HCP folder structure into the appropriate 'Parcellated' folder structure to use later."
     			echo ""
 }
 
@@ -922,7 +962,10 @@ show_usage_printmatrix() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Function prints a data matrix in CVS format for a given parcellation."
+    			echo ""
+    			echo "Note: Currently the function is hard coded to support only the LR_RSN_CSC_7Networks_networks file."
+    			echo ""
     			echo ""
 }
 
@@ -2271,7 +2314,7 @@ show_usage_boldhardlinkfixicamerged() {
 #  hcp1 - Executes the PreFreeSurfer Script
 # ------------------------------------------------------------------------------------------------------
 
-hcp1() {
+hcp1_orig() {
 
 		########################################## INPUTS ########################################## 
 
@@ -2462,7 +2505,7 @@ hcp1() {
   		
 }
 
-show_usage_hcp1() {
+show_usage_hcp1_orig() {
 
   				echo ""
   				echo "-- Description:"
@@ -2475,7 +2518,7 @@ show_usage_hcp1() {
 #  hcp2 - Executes the FreeSurfer Script
 # ------------------------------------------------------------------------------------------------------
 
-hcp2() {
+hcp2_orig() {
 
 		# Cleanup FS run if force flag on
 		
@@ -2540,7 +2583,7 @@ hcp2() {
   		#echo ". ${EnvironmentScript}"
 }
 
-show_usage_hcp2() {
+show_usage_hcp2_orig() {
 
   				echo ""
   				echo "-- Description:"
@@ -2553,7 +2596,7 @@ show_usage_hcp2() {
 #  hcp3 - Executes the PostFreeSurfer Script
 # ------------------------------------------------------------------------------------------------------
 
-hcp3() {
+hcp3_orig() {
 		
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
 		cd "$StudyFolder"/../../../fcMRI/hcp.logs/
@@ -2636,7 +2679,7 @@ hcp3() {
   		
 }
 
-show_usage_hcp3() {
+show_usage_hcp3_orig() {
 
   				echo ""
   				echo "-- Description:"
@@ -2650,7 +2693,7 @@ show_usage_hcp3() {
 #  hcp4 - Executes the Volume BOLD Script
 # ------------------------------------------------------------------------------------------------------
 
-hcp4() {
+hcp4_orig() {
 		
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
 		cd "$StudyFolder"/../../../fcMRI/hcp.logs/
@@ -2793,7 +2836,7 @@ hcp4() {
 		
 }
 
-show_usage_hcp4() {
+show_usage_hcp4_orig() {
 
   				echo ""
   				echo "-- Description:"
@@ -2806,7 +2849,7 @@ show_usage_hcp4() {
 #  hcp5 - Executes the Surface BOLD Script
 # ------------------------------------------------------------------------------------------------------
 
-hcp5() {
+hcp5_orig() {
 
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
 		mkdir "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null 	
@@ -2878,7 +2921,7 @@ hcp5() {
 		done
 }
 
-show_usage_hcp5() {
+show_usage_hcp5_orig() {
 
   				echo ""
   				echo "-- Description:"
@@ -2891,7 +2934,7 @@ show_usage_hcp5() {
 #  hcpd - Executes the Diffusion Processing HCP Script using TOPUP implementation
 # ------------------------------------------------------------------------------------------------------
 
-hcpd() {
+hcpd_orig() {
 
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
 		cd "$StudyFolder"/../../../fcMRI/hcp.logs/
@@ -2987,7 +3030,7 @@ hcpd() {
       	
 }
 
-show_usage_hcpd() {
+show_usage_hcpd_orig() {
 
   				echo ""
   				echo "-- Description:"
@@ -4710,12 +4753,13 @@ fi
 	
 	# get all the functions from the usage calls
 	UsageName=`more ${TOOLS}/MNAP/general/AnalysisPipeline.sh | grep show_usage_${1}`
+	APFunctions=`more /gpfs/project/fas/n3/software//MNAP/general/AnalysisPipeline.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
 
 	#  check for input with double flags
 	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
 		UsageInput=`echo ${Usage:2}`
-			if [ "$UsageInput" == "" ]; then
+			if [ "$UsageInput" != "$APFunctions" ]; then
 				reho "Function does not exist! Refer to general usage below: "
 				echo ""
 				show_usage
@@ -4730,7 +4774,8 @@ fi
 	if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
 		UsageInput=`echo ${Usage:1}`
-			if [ "$UsageInput" == "" ]; then
+			if [ "$UsageInput" != "$APFunctions" ]; then
+				echo ""
 				reho "Function does not exist! Refer to general usage below: "
 				echo ""
 				show_usage
@@ -4744,7 +4789,7 @@ fi
 	#  check for input with no flags
 	if [ -z "$2" ]; then
 			UsageInput="$1"
-			if [ "$UsageInput" == "" ]; then
+			if [ "$UsageInput" != "$APFunctions" ]; then
 				reho "Function does not exist! Refer to general usage below: "
 				echo ""
 				show_usage
@@ -4844,8 +4889,8 @@ if [ "$flag" == "--" ] ; then
 	NsamplesMatrixThree=`opts_GetOpt1 "--nsamplesmatrix3" $@`  # <Number_of_Samples_for_Matrix3>>		Number of samples - default=5000
 	
 	# awshcpsync input flags
-	 Modality=`opts_GetOpt1 "--modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
-	 Awsuri=`opts_GetOpt1 "--awsuri" $@`	 # <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
+	Modality=`opts_GetOpt1 "--modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
+	Awsuri=`opts_GetOpt1 "--awsuri" $@`	 # <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
 	# qcpreproc input flags
 	OutPath=`opts_GetOpt1 "--outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the QC folder
@@ -5608,10 +5653,10 @@ if [ "$FunctionToRunInt" == "fslbedpostxgpu" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  PreFreesurfer function loop (hcp1)
+#  PreFreesurfer function loop (hcp1_orig)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "hcp1" ]; then
+if [ "$FunctionToRunInt" == "hcp1_orig" ]; then
 	
 	#echo "Note: Making sure global environment script is sourced..."
 	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
@@ -5647,10 +5692,10 @@ if [ "$FunctionToRunInt" == "hcp1" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Freesurfer function loop (hcp2)
+#  Freesurfer function loop (hcp2_orig)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "hcp2" ]; then
+if [ "$FunctionToRunInt" == "hcp2_orig" ]; then
 	
 	#echo "Note: Making sure global environment script is sourced..."
 	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
@@ -5690,10 +5735,10 @@ if [ "$FunctionToRunInt" == "hcp2" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  PostFreesurfer function loop (hcp3)
+#  PostFreesurfer function loop (hcp3_orig)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "hcp3" ]; then
+if [ "$FunctionToRunInt" == "hcp3_orig" ]; then
 		
 	#echo "Note: Making sure global environment script is sourced..."
 	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
@@ -5729,10 +5774,10 @@ if [ "$FunctionToRunInt" == "hcp3" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Volume BOLD processing function loop (hcp4)
+#  Volume BOLD processing function loop (hcp4_orig)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "hcp4" ]; then
+if [ "$FunctionToRunInt" == "hcp4_orig" ]; then
 
 		#echo "Note: Making sure global environment script is sourced..."
 		#if [ -f "$TOOLS/hcpsetup.sh" ]; then
@@ -5776,10 +5821,10 @@ if [ "$FunctionToRunInt" == "hcp4" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Surface BOLD processing function loop (hcp5)
+#  Surface BOLD processing function loop (hcp5_orig)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "hcp5" ]; then
+if [ "$FunctionToRunInt" == "hcp5_orig" ]; then
 	
 		#echo "Note: Making sure global environment script is sourced..."
 		#if [ -f "$TOOLS/hcpsetup.sh" ]; then
@@ -5819,10 +5864,10 @@ if [ "$FunctionToRunInt" == "hcp5" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Diffusion processing function loop (hcpd)
+#  Diffusion processing function loop (hcpd_orig)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "hcpd" ]; then
+if [ "$FunctionToRunInt" == "hcpd_orig" ]; then
 	
 	#echo "Note: Making sure global environment script is sourced..."
 	#if [ -f "$TOOLS/hcpsetup.sh" ]; then
