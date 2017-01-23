@@ -202,6 +202,22 @@ def printHelp(com):
     if com == 'l':
         print comlist
 
+    # --- print list of gmri local commands
+    if com == 'available':
+        # -> gmri commands
+        for c, v in commands.iteritems():
+            print c
+        # -> complex processing commands
+        for l in gp.calist:
+            if len(l):
+                print l[0]
+                print l[1]
+        # -> simple processing commands
+        for l in gp.salist:
+            if len(l):
+                print l[0]
+                print l[1]
+
     # --- print list of processing options and flags
     elif com in ['o']:
         print "================================================================================"

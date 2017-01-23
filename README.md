@@ -52,9 +52,20 @@ Perusing documentation, please note the following conventions used:
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).
 
 
-
 External dependencies
 =====================
+
+# * Connectome Workbench (v1.0 or above)
+# * FSL (version 5.0.6 or above)
+# * FreeSurfer
+# * MATLAB (version 2012b or above with signal processing and imaging toolbox)
+# * FIX ICA
+# * PALM
+# * Python (version 2.7 or above)
+# * AFNI
+# * Gradunwarp
+# * Human Connectome Pipelines
+# * R Statistical Environment
 
 
 File formats
