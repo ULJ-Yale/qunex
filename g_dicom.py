@@ -111,6 +111,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     example: gmri dicom2nii folder=. clean=yes unzip=yes gzip=ask cores=3
     '''
 
+    # debug = True
     base = folder
     null = open(os.devnull, 'w')
     dmcf = os.path.join(folder, 'dicom')
@@ -256,15 +257,18 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
 
         niiid = str(niinum)
         calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
-        files.append([niinum, folder])
+        files.append([niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices])
         # subprocess.call(call, shell=True, stdout=null, stderr=null)
 
     done = niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 
-    for niinum, folder in files:
+    for niinum, folder, dofz2zf, recenter, fz, reorder, nframes, nslices in files:
 
         print >> r, logs.pop(0),
-        if verbose: print reps.pop(0),
+        if verbose:
+            print reps.pop(0),
+            if debug:
+                print ""
 
         tfname = False
         imgs = glob.glob(os.path.join(folder, "*.gz"))
@@ -272,7 +276,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
         for img in imgs:
             if not os.path.exists(img):
                 continue
-            if debug: print "     --> processing: %s" % (img)
+            if debug: print "     --> processing: %s [%s]" % (img, os.path.basename(img))
             if os.path.basename(img)[0:2] == 'co':
                 # os.rename(img, os.path.join(imgf, "%02d-co.nii.gz" % (c)))
                 if debug: print "         ... removing: %s" % (img)

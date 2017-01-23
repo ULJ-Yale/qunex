@@ -82,9 +82,9 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
+getHCPReady    [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [pattern="*"] [mapping=specs/hcpmap.txt]
 setupHCP       [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt]
 setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactive]
-getHCPReady    [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [pattern="*"] [mapping=specs/hcpmap.txt]
 
 
 Fidl file utilities
@@ -203,7 +203,7 @@ def printHelp(com):
         print comlist
 
     # --- print list of gmri local commands
-    if com == 'available':
+    elif com == 'available':
         # -> gmri commands
         for c, v in commands.iteritems():
             print c
