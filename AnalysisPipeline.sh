@@ -170,10 +170,10 @@ show_usage() {
   				cyaneho "================================================================================"
   				echo ""
   				echo "* interactive usage:"
-  				echo "ap <function_name> <study_folder> '<list of cases>' [options]"
+  				echo "ap <command> <study_folder> '<list of cases>' [options]"
   				echo ""
   				echo "* flagged usage:"
-  				echo "ap --function=<function_name> --studyfolder=<study_folder> \ " 
+  				echo "ap --function=<command> --studyfolder=<study_folder> \ " 
   				echo "--subjects='<list of cases>' [options]"  				 
   				echo ""
   				echo "* interactive example (no flags):"
@@ -185,7 +185,8 @@ show_usage() {
   				echo "--subjects='100001,100002'"
   				echo ""
   				echo "* function-specific help and usage:"
-  				echo "ap dicomsort"
+  				echo "ap -<command>   OR   ap ?<command>"
+  				echo ""
   				echo ""
   				echo "* Square brackets []: Specify a value that is optional."
   				echo "			Note: Value within brackets is the default value."
@@ -264,6 +265,7 @@ show_usage() {
   				cyaneho "---------------------------------------------"							    
   				echo ""
   				echo " * Note: ap parses all functions from gmri as standard input"	
+  				echo "`gmri`"
   				echo "`gmri -l`"
   				echo ""
   				echo""
@@ -292,9 +294,9 @@ gmri_function() {
 show_usage_gmri() {
   				
   	gmri
-  	cyaneho " Help for ${GmriFunctionToRun}"
+  	cyaneho " Help for ${UsageInput}"
   	cyaneho "----------------------------------------------------------------------------"
-  	gmri -${GmriFunctionToRun}
+  	gmri ?${UsageInput}
   	echo ""
 }
 
@@ -4764,28 +4766,39 @@ fi
 gmrifunctions=`gmri -available`
 
 # Check if command-line input matches any of the gmri functions
-if [[ "$gmrifunctions" == *"$1"* ]]; then
+if [ -z "${gmrifunctions##*$1*}" ]; then
 
 	# If yes then set the gmri function variable
 	GmriFunctionToRun="$1"
+	GmriFunctionToRunEcho=`echo ${GmriFunctionToRun} | cut -c 2-`
+	
+	# Print message that command is running via AP wrapper
 	echo ""
-	cyaneho "Running gmri function $GmriFunctionToRun via AP wrapper"
+	cyaneho "Running gmri function $GmriFunctionToRunEcho via AP wrapper"
   	cyaneho "----------------------------------------------------------------------------"
-  	
-  	# If no other input is provided print help
-  	if [ -z "$2" ]; then
-  		echo ""
-  		reho "** No gmri input provided **"
-  		reho "** Refer to gmri help and specific $GmriFunctionToRun help **"
-		UsageInputGmri="gmri"
-		echo "$UsageInputGmri" &> /dev/null
-		show_usage_"$UsageInputGmri"
-	    exit 0
+	
+	#  check for input with question mark
+	if [[ "$GmriFunctionToRun" =~ .*?.* ]] && [ -z "$2" ]; then 
+		# Set UsageInput variable to pass and remove question mark
+		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
+	  	# If no other input is provided print help
+		show_usage_gmri
+		exit 0
 	else
-	# Otherwise pass the function with all inputs from the command line
-		gmriinput="$@"
+	#  check for input with flag
+	if [[ "$GmriFunctionToRun" =~ .*-.* ]] && [ -z "$2" ]; then 
+		# Set UsageInput variable to pass and remove flag	
+		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
+	  	# If no other input is provided print help
+		show_usage_gmri
+		exit 0
+    else
+    	# Otherwise pass the function with all inputs from the command line
+    	gmriinput="$@"
 		gmri_function
+		exit 0
 	fi
+	fi		
 fi
 
 # ------------------------------------------------------------------------------
@@ -4832,6 +4845,23 @@ fi
     		fi
     	exit 0
 	fi
+	
+	#  check for input with question mark
+	if [[ "$1" =~ .*?.* ]] && [ -z "$2" ]; then 
+		Usage="$1"
+		UsageInput=`echo ${Usage} | cut -c 2-`
+			# check if input part of function list
+			if [[ "$APFunctions" != *${UsageInput}* ]]; then
+				echo ""
+				reho "Function $UsageInput does not exist! Refer to general usage below: "
+				echo ""
+				show_usage
+				exit 0
+			else	
+    			show_usage_"$UsageInput"
+    		fi
+    	exit 0
+	fi
 			
 	#  check for input with no flags
 	if [ -z "$2" ]; then
@@ -4848,6 +4878,7 @@ fi
     		fi
     	exit 0
 	fi
+	
 		
 # ------------------------------------------------------------------------------
 #  Setup log calls
