@@ -166,24 +166,25 @@ weho() {
 
 show_usage() {
   				echo ""
-  				cyaneho "	-------- general help for analysis pipeline: --------"
+  				cyaneho "General help for MNAP analysis pipeline"
+  				cyaneho "================================================================================"
   				echo ""
-  				weho "* interactive usage:"
+  				echo "* interactive usage:"
   				echo "ap <function_name> <study_folder> '<list of cases>' [options]"
   				echo ""
-  				weho "* flagged usage:"
+  				echo "* flagged usage:"
   				echo "ap --function=<function_name> --studyfolder=<study_folder> \ " 
   				echo "--subjects='<list of cases>' [options]"  				 
   				echo ""
-  				weho "* interactive example (no flags):"
+  				echo "* interactive example (no flags):"
   				echo "ap dicomsort /some/path/to/study/subjects '100001 100002'"
   				echo ""
-  				weho "* flagged example (no interactive terminal input):"
+  				echo "* flagged example (no interactive terminal input):"
   				echo "ap --function=dicomsort \ "
   				echo "--studyfolder=/some/path/to/study/subjects \ "
   				echo "--subjects='100001,100002'"
   				echo ""
-  				weho "* function-specific help and usage:"
+  				echo "* function-specific help and usage:"
   				echo "ap dicomsort"
   				echo ""
   				echo "* Square brackets []: Specify a value that is optional."
@@ -193,25 +194,23 @@ show_usage() {
 				echo "* All descriptions use regular case and all options use CAPS"
   				echo ""
   				echo ""
-  				cyaneho "-------- list of specific supported function: --------"
+  				echo "Note: All gmri functions are supported and take the list of arguments."
+  				echo ""
+  				echo ""
+  				cyaneho "List of specific supported function"
+  				cyaneho "================================================================================"
   				echo ""  				
-  				weho "--- data organization ---"
+  				cyaneho "Data organization functions"
+  				cyaneho "----------------------------"
   				echo "dicomsort		sort dicoms and setup nifti files from dicoms"
   				echo "dicom2nii		convert dicoms to nifti files"
   				echo "setuphcp		setup data structure for hcp processing"
-  				echo "hpcsync			sync with hpc cluster(s) for preprocessing"
-  				echo "awshcpsync		sync hcp data from aws s3 cloud"
+  				echo "hpcsync		sync with hpc cluster(s) for preprocessing"
+  				echo "awshcpsync	sync hcp data from aws s3 cloud"
   				echo ""  				
-  				weho "--- hcp pipelines via gmri wrapper (supports subject parameter files) ---"
-  				echo "hpc1			prefreesurfer component of the hcp pipeline (cluster usable)"
-  				echo "hpc2			freesurfer component of the hcp pipeline (cluster usable)"
-  				echo "hpc3			postfreesurfer component of the hcp pipeline (cluster usable)"
-  				echo "hpc4			volume component of the hcp pipeline (cluster usable)"
-  				echo "hpc5			surface component of the hcp pipeline (cluster usable)"
-  				echo "hpcd			dwi component of the hcp pipeline (cluster usable)"
-  				echo "hcpdlegacy		dwi processing for data with standard fieldmaps (cluster usable)"
   				echo ""
-  				weho "--- hcp pipeline original calls directly from HCP code (deprecated in 2017) ---"
+  				cyaneho "HCP Pipelines original calls directly from HCP code (deprecated in 2017)"
+  				cyaneho "------------------------------------------------------------------------"
   				echo "hpc1_orig		prefreesurfer component of the hcp pipeline (cluster usable)"
   				echo "hpc2_orig		freesurfer component of the hcp pipeline (cluster usable)"
   				echo "hpc3_orig		postfreesurfer component of the hcp pipeline (cluster usable)"
@@ -219,14 +218,17 @@ show_usage() {
   				echo "hpc5_orig		surface component of the hcp pipeline (cluster usable)"
   				echo "hpcd_orig		dwi component of the hcp pipeline (cluster usable)"
   				echo ""
-  				weho "--- generating lists & qc functions ---"
+  				cyaneho "Generating lists & qc functions"
+  				cyaneho "--------------------------------"
   				echo "setuplist		setup list for fcmri analysis / preprocessing or volume snr calculations"
   				echo "nii4dfpconvert		convert nifti hcp-processed bold data to 4dpf format for fild analyses"
   				echo "cifti4dfpconvert	convert cifti hcp-processed bold data to 4dpf format for fild analyses"
   				echo "ciftismooth		smooth & convert cifti bold data to 4dpf format for fild analyses"
   				echo "qcpreproc		run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
   				echo ""  				
-  				weho "		--- dwi analyses & probabilistic tractography functions ---"
+  				cyaneho "DWI processing, analyses & probabilistic tractography functions"
+  				cyaneho "----------------------------------------------------------------"
+  				echo "hcpdlegacy		dwi processing for data with standard fieldmaps (cluster usable)"
   				echo "fsldtifit 			run fsl dtifit (cluster usable)"
   				echo "fslbedpostxgpu 			run fsl bedpostx w/gpu (cluster usable)"
   				echo "isolatesubcortexrois 		isolate subject-specific subcortical rois for tractography"
@@ -238,7 +240,8 @@ show_usage() {
   				echo "makedensecortex			generate dense cortical connectomes (cluster usable)"
   				echo "probtrackxgpudense		run fsl probtrackx for whole brain & generates dense whole-brain connectomes (cluster usable)"
   				echo ""  				
-  				weho "		--- misc analyses ---"  				
+  				cyaneho "Misc functions and analyses"  	
+  				cyaneho "---------------------------"			
   				echo "boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
   				echo "dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
   				echo "printmatrix			extract parcellated matrix for bold data via yeo 17 network solutions"
@@ -247,7 +250,8 @@ show_usage() {
   				echo "bolddense			compute bold dense connectome (needs >30gb ram per bold)"
   				echo "palmanalysis			run palm and extract data from rois (cluster usable)"
   				echo ""  				
-  				weho "		--- fix ica de-noising ---"    				
+  				cyaneho "FIX ICA de-noising"    
+  				cyaneho "---------------------------"							
   				echo "fixica				run fix ica de-noising on a given volume"
   				echo "postfix				generates wb_view scene files in each subjects directory for fix ica results"
   				echo "boldhardlinkfixica		setup hard links for single run fix ica results"  				
@@ -256,6 +260,13 @@ show_usage() {
   				echo "boldseparateciftifixica		separate specified bold timeseries (results from fix ica - use if bolds merged)"
   				echo "boldhardlinkfixicamerged	setup hard links for merged fix ica results (use if bolds merged)" 
   				echo ""
+  				cyaneho "GMRI utilities for preprocessing and analyses"
+  				cyaneho "---------------------------------------------"							    
+  				echo ""
+  				echo " * Note: ap parses all functions from gmri as standard input"	
+  				echo "`gmri -l`"
+  				echo ""
+  				echo""
 }
 
 ###########################################################################################################################
@@ -268,23 +279,25 @@ show_usage() {
 #  gmri general wrapper - parse inputs into specific gmri functions via AP 
 # ------------------------------------------------------------------------------------------------------
 
-#gmri_function_wrapper(){
 
-# First get all commands from gmri:
+gmri_function() {
 
-#gmrifunctions=`more $TOOLS/MNAP/niutilities/gmri | grep -w "{'com':" | awk '{print $1}' | grep -v "commands" | sed "s/'//g" | sed "s/://g" | sed ':a;N;$!ba;s/\n/ /g'`
 
-#}
+echo "$gmriinput"
+echo ""
 
-show_usage_gmri_wrapper() {
+exit 0 
+
+}
+
+show_usage_gmri() {
   				
   				gmri
   				echo ""
-  				echo ""
-  				echo "-------------- Help for ${gmrifunction} ---------------------"
-  				echo ""
+  				cyaneho " Help for ${GmriFunctionToRun}"
+  				cyaneho "----------------------------------------------------------------------------"
     			echo ""
-  				gmri -${gmrifunction}
+  				gmri -${GmriFunctionToRun}
   				echo ""
   				echo ""
 }
@@ -4748,8 +4761,39 @@ if [ "$1" == "help" ]; then
 fi
 
 # ------------------------------------------------------------------------------
+#  gmri function loop outside local functions to bypass checking
+# ------------------------------------------------------------------------------
+
+# Get list of all supported gmri functions
+
+gmrifunctions=`gmri -available`
+
+if [[ "$gmrifunctions" == *"$1"* ]]; then
+
+	GmriFunctionToRun="$1"
+	echo ""
+	cyaneho "Running gmri function $GmriFunctionToRun via AP wrapper"
+  	cyaneho "----------------------------------------------------------------------------"
+  	
+  	if [ -z "$2" ]; then
+  		echo ""
+  		reho "** No gmri input provided **"
+  		reho "** Refer to gmri help and specific $GmriFunctionToRun help **"
+  		echo ""
+		UsageInputGmri="gmri"
+		echo "$UsageInputGmri" &> /dev/null
+		show_usage_"$UsageInputGmri"
+	    exit 0
+	else
+		gmriinput="$@"
+		gmri_function
+	fi
+fi
+
+# ------------------------------------------------------------------------------
 #  Check if specific function help requested
 # ------------------------------------------------------------------------------
+
 	
 	# get all the functions from the usage calls
 	unset UsageName
@@ -4832,9 +4876,10 @@ unset QUEUE
 unset NetID
 unset ClusterName
 
-flag=`echo $1 | cut -c1-2`
+doubleflag=`echo $1 | cut -c1-2`
+singleflag=`echo $1 | cut -c1`
 
-if [ "$flag" == "--" ] ; then
+if [ "$doubleflag" == "--" ] || [ "$singleflag" == "-" ]; then
 	echo ""
 	reho "-----------------------------------------------------"
 	reho "--- Running pipeline in parameter mode with flags ---"
