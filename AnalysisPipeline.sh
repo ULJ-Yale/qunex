@@ -282,24 +282,20 @@ show_usage() {
 
 gmri_function() {
 
-
-echo "$gmriinput"
-echo ""
-
-exit 0 
+	# Issue the complete gmri originating call
+	echo "$gmriinput"
+	echo ""
+	exit 0 
 
 }
 
 show_usage_gmri() {
   				
-  				gmri
-  				echo ""
-  				cyaneho " Help for ${GmriFunctionToRun}"
-  				cyaneho "----------------------------------------------------------------------------"
-    			echo ""
-  				gmri -${GmriFunctionToRun}
-  				echo ""
-  				echo ""
+  	gmri
+  	cyaneho " Help for ${GmriFunctionToRun}"
+  	cyaneho "----------------------------------------------------------------------------"
+  	gmri -${GmriFunctionToRun}
+  	echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -4765,26 +4761,28 @@ fi
 # ------------------------------------------------------------------------------
 
 # Get list of all supported gmri functions
-
 gmrifunctions=`gmri -available`
 
+# Check if command-line input matches any of the gmri functions
 if [[ "$gmrifunctions" == *"$1"* ]]; then
 
+	# If yes then set the gmri function variable
 	GmriFunctionToRun="$1"
 	echo ""
 	cyaneho "Running gmri function $GmriFunctionToRun via AP wrapper"
   	cyaneho "----------------------------------------------------------------------------"
   	
+  	# If no other input is provided print help
   	if [ -z "$2" ]; then
   		echo ""
   		reho "** No gmri input provided **"
   		reho "** Refer to gmri help and specific $GmriFunctionToRun help **"
-  		echo ""
 		UsageInputGmri="gmri"
 		echo "$UsageInputGmri" &> /dev/null
 		show_usage_"$UsageInputGmri"
 	    exit 0
 	else
+	# Otherwise pass the function with all inputs from the command line
 		gmriinput="$@"
 		gmri_function
 	fi
