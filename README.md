@@ -10,23 +10,23 @@ functions developed around other tools.
 External dependencies
 =====================
 
-# * Connectome Workbench (v1.0 or above)
-# * FSL (version 5.0.6 or above)
-# * FreeSurfer
-# * MATLAB (version 2012b or above with signal processing and imaging toolbox)
-# * FIX ICA
-# * PALM
-# * Python (version 2.7 or above)
-# * AFNI
-# * Gradunwarp
-# * Human Connectome Pipelines
-# * R Statistical Environment
+* Connectome Workbench (v1.0 or above)
+* FSL (version 5.0.6 or above with CUDA libraries)
+* FreeSurfer (5.3 HCP version)
+* MATLAB (version 2012b or above with signal processing and imaging toolbox)
+* FIX ICA
+* PALM
+* Python (version 2.7 or above)
+* AFNI
+* Gradunwarp
+* Human Connectome Pipelines (Modified versions for single-band preprocessing)
+* R Statistical Environment
 
 Usage & Descriptions of functions
 ==================================
 List of functions can be obtained by running the following command from the terminal: 
 
-ap help
+* ap -help
 
 References
 ==========
