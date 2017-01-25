@@ -1,16 +1,17 @@
 function [] = fc_AddGroupCorrelation(fname)
 
 %	
-%	fc_AddGroupCorrelation
+%%	fc_AddGroupCorrelation
 %
 %	r, Fz, p, group p, mean group Fz, and mean group correlations are added to the input data structure
 %	
 %	fname   	- path to the file containing the original data structure
 %
 % 	Created by Joshua J Kim on 2008-07-29.
+%
 %   Small changes and additions Grega Repovs 2008-07-31
 %
-
+%
 
 fprintf('\n\nAdding group correlations ...');
 
