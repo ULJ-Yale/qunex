@@ -271,12 +271,16 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                 print ""
 
         tfname = False
-        imgs = glob.glob(os.path.join(folder, "*.gz"))
+        imgs = glob.glob(os.path.join(folder, "*.nii*"))
         if debug: print "     --> found nifti files: %s" % ("\n                            ".join(imgs))
         for img in imgs:
             if not os.path.exists(img):
                 continue
             if debug: print "     --> processing: %s [%s]" % (img, os.path.basename(img))
+            if img[-3:] == 'nii':
+                if debug: print "     --> gzipping: %s" % (img)
+                subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
+                img += '.gz'
             if os.path.basename(img)[0:2] == 'co':
                 # os.rename(img, os.path.join(imgf, "%02d-co.nii.gz" % (c)))
                 if debug: print "         ... removing: %s" % (img)
