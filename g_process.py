@@ -449,7 +449,7 @@ def run(command, args):
     if not os.path.exists('logs'):
         os.mkdir('logs')
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-    logname = "logs/Log-%s-%s.log" % ("-".join(args), logstamp)
+    logname = "logs/Log-%s-%s.log" % (command, logstamp)
 
     log   = []
     stati = []
