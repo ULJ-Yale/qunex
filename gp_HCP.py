@@ -957,7 +957,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     - hcp_bold_stcorr        ... Whether to do slice timing correction TRUE or NONE". [TRUE]
     - hcp_bold_stcorrdir     ... The direction of slice acquisition. [up]
-    - hcp_bold_stcorrint     ... Whether slices were acquired in an interleaved fashion (odd or even) or not (empty). [odd]
+    - hcp_bold_stcorrint     ... Whether slices were acquired in an interleaved fashion (odd) or not (empty). [odd]
 
     - hcp_bold_preregister   ... What code to use to preregister BOLDs before FSL BBR epi_reg (default) or flirt. [epi_reg]
     - hcp_bold_movreg        ... Whether to use FLIRT (default and best for multiband images) or McFLIRT for motion correction. [FLIRT]
@@ -1170,8 +1170,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                         hcp_bold_stcorrdir = '--down'
                     if options['hcp_bold_stcorrint'] == 'odd':
                         hcp_bold_stcorrint = "--odd"
-                    elif options['hcp_bold_stcorrint'] == 'even':
-                        hcp_bold_stcorrint = "--even"
 
                 comm = '%(script)s \
                     --path="%(path)s" \
