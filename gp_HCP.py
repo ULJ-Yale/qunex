@@ -1619,6 +1619,9 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     """
     mapHCPData [... processing options]
 
+    USE
+    ===
+
     mapHCPData maps the results of the HCP preprocessing (in MNINonLinear) to
     the <basefolder>/<subject id>/images folder structure. Specifically, it
     copies the files and folders:
@@ -1631,6 +1634,9 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     * BOLD_[N].nii.gz             -> images/functional/[boldname][N].nii.gz
     * BOLD_[N][tail].dtseries.nii -> images/functional/[boldname][N][tail].dtseries.nii
     * Movement_Regressors.txt     -> images/functional/movement/[boldname][N]_mov.dat
+
+    PARAMETERS
+    ==========
 
     The relevant processing parameters are:
 
@@ -1654,11 +1660,14 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     If possible, the files are not copied but rather hard links are created to
     save space. If hard links can not be created, the files are copied.
 
-    Example use:
+    EXAMPLE USE
+    ===========
+
     gmri mapHCPdata subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
          overwrite=no hcp_cifti_tail=_Atlas bold-preprocess=all
 
-    (c) Grega Repovš
+    ----------
+    Written by Grega Repovš
 
     Changelog
     2016-12-24 - Grega Repovš - Added documentation, fixed copy of volume images.
