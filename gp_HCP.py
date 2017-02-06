@@ -937,36 +937,163 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
 
 def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
-    '''hcp_fMRIVolume command (hcp4)
+    '''
+    hcp_fMRIVolume [... processing options]
+    hcp4 [... processing options]
 
-    Runs the fMRI Volume step of HCP Pipeline. It preprocesses BOLD images and linearly and nonlinearly registers them to the MNI atlas. It makes use of the PreFS and FS steps of the pipeline.
+    USE
+    ===
 
-    It makes use of the following options:
+    Runs the fMRI Volume step of HCP Pipeline. It preprocesses BOLD images and
+    linearly and nonlinearly registers them to the MNI atlas. It makes use of
+    the PreFS and FS steps of the pipeline. It enables the use of a number of
+    parameters to customize the specific preprocessing steps. A short name
+    'hcp4' can be used for this command.
 
-    - hcp_suffix             ... Specifies a suffix to the subject id if multiple variants are run, empty otherwise. []
-    - hcp_bold_sequencetype  ... The type of the sequence used: multi(band) vs single(band). [multi]
-    - hcp_bold_prefix        ... To be specified if multiple variants of BOLD processing are run. The prefix is prepended to the bold name. []
-    - hcp_bold_echospacing   ... Echo Spacing or Dwelltime of BOLD images. [0.00035]
-    - hcp_bold_ref           ... Whether BOLD image Reference images should be recorded - NONE or USE. [NONE]
+    REQUIREMENTS
+    ============
 
-    - hcp_bold_correct       ... BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE. [TOPUP]
-    - hcp_bold_echodiff      ... Delta TE for BOLD fieldmap images or NONE if not used. [NONE]
-    - hcp_bold_unwarpdir     ... The direction of unwarping, can be specified separately for LR/RL : 'LR=x|RL=-x|x'. [y]
-    - hcp_bold_res           ... Target image resolution 2mm recommended. [2].
-    - hcp_bold_gdcoeffs      ... Gradient distorsion correction coefficients or NONE. [NONE]
+    The code expects the first two HCP preprocessing steps (hcp_PreFS and
+    hcp_FS) to have been run and finished successfully. It also tests for the
+    presence of fieldmap or spin-echo images if they were specified. It does
+    not make a thorough check for PreFS and FS steps due to the large number
+    of files.
 
-    - hcp_bold_stcorr        ... Whether to do slice timing correction TRUE or NONE". [TRUE]
-    - hcp_bold_stcorrdir     ... The direction of slice acquisition. [up]
-    - hcp_bold_stcorrint     ... Whether slices were acquired in an interleaved fashion (odd) or not (empty). [odd]
+    RESULTS
+    =======
 
-    - hcp_bold_preregister   ... What code to use to preregister BOLDs before FSL BBR epi_reg (default) or flirt. [epi_reg]
-    - hcp_bold_movreg        ... Whether to use FLIRT (default and best for multiband images) or McFLIRT for motion correction. [FLIRT]
+    The results of this step will be present in the MNINonLinear folder in the
+    subject's root hcp folder.
 
-    - hcp_bold_movref        ... What reference to use for movement correction (independent, first). [independent]
-    - hcp_bold_seimg         ... What image to use for spin-echo distorsion correction (independent, first). [independent]
-    - hcp_bold_usemask       ... What mask to use for the bold images (T1: default, BOLD: mask based on bet of the scout, DILATED: dilated MNI brain mask, NONE: do not use a mask). [T1]
-    - hcp_bold_refreg        ... Whether to use only linaer (default) or also nonlinear registration of motion corrected bold to reference. [linear]
+    RELEVANT PARAMETERS
+    ===================
 
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+
+    In addition a number of *specific* parameters can be used to guide the
+    processing in this step:
+
+    naming options
+    --------------
+
+    --hcp_suffix             ... Specifies a suffix to the subject id if
+                                 multiple variants of preprocessing are run,
+                                 empty otherwise. []
+    --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
+                                 preprocessing are run. The prefix is prepended
+                                 to the bold name. []
+
+    image acquisition details
+    -------------------------
+
+    --hcp_bold_sequencetype  ... The type of the sequence used: multi(band) vs
+                                 single(band). [multi]
+    --hcp_bold_echospacing   ... Echo Spacing or Dwelltime of BOLD images.
+                                 [0.00035]
+    --hcp_bold_ref           ... Whether BOLD Reference images should be used
+                                 - NONE or USE. [NONE]
+
+    distortion correction details
+    -----------------------------
+
+    --hcp_bold_correct       ... BOLD image deformation correction that should
+                                 be used: TOPUP, FIELDMAP / SiemensFieldMap,
+                                 GeneralElectricFieldMap or NONE. [TOPUP]
+    --hcp_bold_echodiff      ... Delta TE for BOLD fieldmap images or NONE if
+                                 not used. [NONE]
+    --hcp_bold_unwarpdir     ... The direction of unwarping. Can be specified
+                                 separately for LR/RL : 'LR=x|RL=-x|x'. [y]
+    --hcp_bold_res           ... Target image resolution. 2mm recommended. [2].
+    --hcp_bold_gdcoeffs      ... Gradient distorsion correction coefficients
+                                 or NONE. [NONE]
+
+    slice timing correction
+    -----------------------
+
+    --hcp_bold_stcorr        ... Whether to do slice timing correction TRUE or
+                                 NONE. [TRUE]
+    --hcp_bold_stcorrdir     ... The direction of slice acquisition ('up' or
+                                 'down'. [up]
+    --hcp_bold_stcorrint     ... Whether slices were acquired in an interleaved
+                                 fashion (odd) or not (empty). [odd]
+
+    motion correction and atlas registration
+    ----------------------------------------
+
+    --hcp_bold_preregister   ... What code to use to preregister BOLDs before
+                                 FSL BBR is run, epi_reg (default) or flirt.
+                                 [epi_reg]
+    --hcp_bold_movreg        ... Whether to use FLIRT (default and best for
+                                 multiband images) or McFLIRT for motion
+                                 correction. [FLIRT]
+    --hcp_bold_movref        ... What reference to use for movement correction
+                                 (independent, first). [independent]
+    --hcp_bold_seimg         ... What image to use for spin-echo distorsion
+                                 correction (independent, first). [independent]
+    --hcp_bold_refreg        ... Whether to use only linaer (default) or also
+                                 nonlinear registration of motion corrected bold
+                                 to reference. [linear]
+    --hcp_bold_usemask       ... What mask to use for the bold images (T1: mask
+                                 based on the T1 image, BOLD: mask based on bet
+                                 brain identification of the scout image,
+                                 DILATED: dilated MNI brain mask, NONE: do not
+                                 use a mask). [T1]
+
+    These last parameters enable fine-tuning of preprocessing and deserve
+    additional information. In general the defaults should be appropriate for
+    multiband images, single-band can profit from specific adjustments.
+      Whereas FLIRT is best used for motion registration of high-resolution BOLD
+    images, lower resolution single-band images might be better motion aligned
+    using McFLIRT (--hcp_bold_movreg).
+      As a movement correction target, either each BOLD can be independently
+    registered to T1 image, or all BOLD images can be motion correction aligned
+    to the first BOLD in the series and only that image is registered to the T1
+    structural image (--hcp_bold_moveref). Do note that in this case also
+    distortion correction will be computed for the first BOLD image in the
+    series only and applied to all subsequent BOLD images after they were
+    motion-correction aligned to the first BOLD.
+      Similarly, for distortion correction, either the last preceeding spin-echo
+    image pair can be used (independent) or only the first spin-echo pair is
+    used for all BOLD images (first; --hcp_bold_seimg). Do note that this also
+    affects the previous motion correction target setting. If independent
+    spin-echo pairs are used, then the first BOLD image after a new spin-echo
+    pair serves as a new starting motion-correction reference.
+      When BOLD images are registered to the first BOLD in the series, due to
+    larger movement between BOLD images it might be advantageous to use also
+    nonlinear alignment to the first bold reference image (--hcp_bold_refreg).
+      Lastly, for lower resolution BOLD images it might be better not to use
+    subject specific T1 image based brain mask, but rather a mask generated on
+    the BOLD image itself or based on the dilated standard MNI brain mask.
+
+
+    EXAMPLE USE
+    ===========
+
+    gmri hcp_fMRIVolume subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10
+
+    gmri hcp4 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
+         hcp_bold_refreg=nonlinear hcp_bold_usemask=DILATED
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-02-06 Grega Repovš
+             - Updated documentation.
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1292,20 +1419,92 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
 
 def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
-    '''hcp_fMRISurface command (hcp5)
+    '''
+    hcp_fMRISurface [... processing options]
+    hcp5 [... processing options]
 
-    Runs the fMRI Surface step of HCP Pipeline. It maps BOLD data prepared in the prvious step to surface and creates a grayordinate representation of the data.
+    USE
+    ===
 
-    It makes use of the following options:
+    Runs the fMRI Surface step of HCP Pipeline. It uses the FreeSurfer
+    segmentation and surface reconstruction to map BOLD timeseries to
+    grayordinate representation and generates .dtseries.nii files.
+    A short name 'hcp5' can be used for this command.
 
-    - hcp_suffix           ... Specifies a suffix to the subject id if multiple variants are run, empty otherwise. []
-    - hcp_bold_prefix      ... To be specified if multiple variants of BOLD processing are run. The prefix is prepended to the bold name. []
-    - hcp_lowresmesh       ... The number of vertices used in the low-resolution grayordinate mesh. [32]
-    - hcp_bold_res         ... The resolution of the BOLD volume data in mm. [2]
-    - hcp_grayordinatesres ... The size of voxels for the subcortical and cerebellar data in grayordinate space in mm. [2]
-    - hcp_bold_smoothFWHM  ... The size of the smoothing kernel. [2]
-    - hcp_regname          ... The name of the registration used. [FS]
+    REQUIREMENTS
+    ============
 
+    The code expects all the previous HCP preprocessing steps (hcp_PreFS,
+    hcp_FS, hcp_PostFS, hcp_fMRIVolume) to have been run and finished
+    successfully. The command will test for presence of key files but do note
+    that it won't run a thorough check for all the required files.
+
+    RESULTS
+    =======
+
+    The results of this step will be present in the MNINonLinear folder in the
+    subject's root hcp folder.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+
+    In addition a number of *specific* parameters can be used to guide the
+    processing in this step:
+
+    naming options
+    --------------
+
+    --hcp_suffix             ... Specifies a suffix to the subject id if
+                                 multiple variants of preprocessing are run,
+                                 empty otherwise. []
+    --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
+                                 preprocessing are run. The prefix is prepended
+                                 to the bold name. []
+
+    grayordinate image mapping details
+    ----------------------------------
+
+    --hcp_lowresmesh         ... The number of vertices to be used in the
+                                 low-resolution grayordinate mesh (in thousands)
+                                 [32].
+    --hcp_bold_res           ... The resolution of the BOLD volume data in mm.
+                                 [2]
+    --hcp_grayordinatesres   ... The size of voxels for the subcortical and
+                                 cerebellar data in grayordinate space in mm.
+                                 [2]
+    --hcp_bold_smoothFWHM    ... The size of the smoothing kernel (in mm). [2]
+    --hcp_regname            ... The name of the registration used. [FS]
+
+
+    EXAMPLE USE
+    ===========
+
+    gmri hcp_fMRISurface subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10
+
+    gmri hcp5 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-02-06 Grega Repovš
+             - Updated documentation.
     '''
 
     r = "\n---------------------------------------------------------"
