@@ -15,6 +15,14 @@ import datetime
 
 
 def readSubjectData(filename, verbose=False):
+    '''
+    readSubjectData(filename, verbose=False)
+
+    An internal function for reading subjects.txt files. It reads the file and
+    returns a list of subjects with the information on images and the additional
+    parameters specified in the header.
+
+    '''
     s = file(filename).read()
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")

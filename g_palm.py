@@ -1,6 +1,15 @@
 #!/opt/local/bin/python2.7
 # encoding: utf-8
 """
+This file holds code for running PALM second level analyses, CIFTI map masking
+and concatenation. The specific commands implemented here are:
+
+* runPALM  ... for running PALM resampling
+* maskMap  ... for masking results
+* joinMaps ... for joining individual cifti maps into named concatencated maps
+
+The functions are to be run using the gmri terminal command.
+
 Created by Grega Repovs on 2016-08-30.
 Copyright (c) Grega Repovs. All rights reserved.
 """
