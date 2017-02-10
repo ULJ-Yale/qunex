@@ -1,25 +1,60 @@
-function img = mri_Smooth3DMasked(img, mask, fwhm, mlimit, verbose)
+function img = mri_Smooth3DMasked(img, mask, fwhm, mlimit, verbose, ftype, ksize)
 
-%	function img = mri_Smooth3DMasked(img, mask, fwhm, mlimit, verbose)
+%function img = mri_Smooth3DMasked(img, mask, fwhm, mlimit, verbose, ftype, ksize)
 %
 %	Function for smoothing that takes into account only the voxels
 %	within a specified mask.
 %
-%   Input:
-%       mask    - the mask to use for limiting smoothing (gmrimage or filename)
-%       fwhm    - size of smoothing in voxels
-%       mlimit  - whether to limit the output to mask (true, same for the same as mask, gmrimage or filename)
-%       verbose - to be talkative or not
+%   INPUT
+%       img     ... gmrimage object with (isometric) volume data to be smoothed.
+%       mask    ... The mask to use for limiting smoothing (gmrimage or a filename of a mask).
+%       fwhm    ... Size of smoothing in voxels (Full width at half maximum).
+%       mlimit  ... Whether to limit the output to mask. Options are:
+%                   * 'true' or 'same' : Use the same mask as for smoothing.
+%                   * gmrimage object  : Use the image in the gmrimage object as a final mask.
+%                   * filename         : Use the image in the filename as the final mask.
+%       verbose ... to be talkative or not [false]
+%       ftype   ... Type of smoothing filter, 'gaussian' or 'box'. []
+%       ksize   ... Size of the smoothing kernel. []
 %
-%	Grega Repovs 2010-11-16
-%   Modified by Grega Rrepovs 2010-12-01
-%   Further update by Grega Repovs 2014-08-15
+%   OUTPUT
+%       img     - A smoothed image.
+%
+%   USE
+%   The function is used when one wants to run a 3D smoothing on volume data, but limit the
+%   smoothing only to the volume specified in the mask. The mask might specify a specific
+%   brain structure, or all the gray matter. The final image will only take into account the
+%   signal from within the specified mask.
+%
+%   The signal within the mask can be smoothed outside of the mask. That signal will still
+%   consist only of signal within the mask, it will however be smudged outside of the mask.
+%   To limit the final image, specify 'mlimit' argument to either 'true'/'same', which will
+%   limit the results to the mask used to define the signal, or another mask that specifies
+%   the desired final extent of the image.
+%
+%   A common use scenario might be when one wants to compute a smoothed image of the gray
+%   matter signal, but because the signal will be used in a second level analysis, one would
+%   let the signal be smoothed out to cover all the voxels in the desired atlas space.
+%
+%   EXAMPLE
+%   smoothed = img_Smooth3DMasked(subjectMask, 3, atlasMask);
+%
+%   ---
+%	Written by Grega Repovs 2010-11-16
+%
+%   Changlog
+%   2010-12-01 - Grega Repovs: Modifications
+%   2014-08-15 - Grega Repovs: Further update
+%   2017-02-10 - Grega Repovs: Added ftype and ksize options, updated documentation
+%
 
 % ---------  basic settings
 
 rmasked = false;
 zeroed  = false;
 
+if nargin < 7                      ksize   = [];    end
+if nargin < 6                      ftype   = [];    end
 if nargin < 5 || isempty(verbose), verbose = false; end
 if nargin < 4 || isempty(mlimit),  mlimit  = true;  end
 if nargin < 3, fhwm   = []; end
@@ -109,7 +144,6 @@ function [img mask] = zerononmask(img, mask)
     img.data(~mask.data,:) = 0;
 
 end
-
 
 
 function [nimg] = createImage(img, data)
