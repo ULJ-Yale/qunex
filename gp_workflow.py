@@ -1055,7 +1055,351 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
 def preprocessBold(sinfo, options, overwrite=False, thread=0):
     """
-    preprocessBold - documentation not yet available.
+    preprocessBold [... processing options]
+
+    USE
+    ===
+
+    preprocessBold is a complex command initially used to prepare BOLD files
+    for further functional connectivity analysis. The function enables the
+    following actions:
+
+    * spatial smoothing (3D or 2D for cifti files)
+    * temporal filtering (high-pass, low-pass)
+    * removal of nuisance signal and task structure
+
+    The function makes use of a number of files and accepts a long list of
+    arguments that make it very powerfull and flexible but also require care in
+    its use. What follows is a detailed documentation of its actions and
+    parameters organised by actions in the order they would be most commonly
+    done. Use and parameter description will be intertwined.
+
+    BASICS
+    ======
+
+    Basics specify which files are to be processed
+
+    general parameters
+    ------------------
+
+    The function takes the usual general processing parameters:
+
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --basefolder      ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+    --boldname        ... The default name of the bold files in the images
+                          folder [bold].
+
+    specific parameters
+    -------------------
+
+    There are a number of basic specific parameters for this command that are
+    relevant for all or most of the actions:
+
+    --bold_preprocess ... A pipe ('|') separated list of bold files to process.
+    --eventfile       ... The name of the fidl file to be used with each bold.
+    --bold_actions    ... A string specifying which actions, and in what sequence
+                          to perform [shrcl]
+
+    List of bold files specify, which types of bold files are to be processed,
+    as they are specified in the subjects.txt file. An example of a list of
+    bolds in subjects.txt would be:
+
+    07: bold1:blink       :BOLD blink 3mm 48 2.5s
+    08: bold2:flanker     :BOLD flanker 3mm 48 2.5s
+    09: bold3:EC          :BOLD EC 3mm 48 2.5s
+    10: bold4:mirror      :BOLD mirror 3mm 48 2.5s
+    11: bold5:rest        :RSBOLD 3mm 48 2.5s
+
+    With --bold_preprocess set to "blink|EC|rest", bold1, 3, and 5 would be
+    processed. If it were set to "all", all would be processed. As each bold
+    gets processed independently and only one fidl file can be specified, you
+    are advised to use preprocessConc when regressing task structure, and only
+    use preprocessBold for resting state data. If you would still use like to
+    regress out events specified in a fidl file. They would neet to be named as
+    [<subject id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
+    cifti files, image_target is composed of <cifti_tail>_cifti. If the files
+    are not present in the relevant individual subject's folders, they are
+    searched for in the <basefolder>/inbox folder. In that case the
+    "<subject id>_" is not optional but required.
+
+    The actions that can be performed are denoted by a single letter, and they
+    will be executed in the sequence listed:
+
+    m ... Motion scrubbing.
+    s ... Spatial smooting.
+    h ... High-pass filtering.
+    r ... Regression (nuisance and/or task) with an optional number 0, 1, or 2
+          specifying the type of regression to use (see REGRESSION below).
+    c ... Saving of resulting beta coefficients (allways to follow 'r').
+    l ... Low-pass filtering.
+
+    So the default 'shrcl' --bold_actions parameter would lead to the files
+    first being smoothed, then high-pass filtered. Next a regression step
+    would follow in which nuisance signal and/or task related signal would
+    be estimated and regressed out, then the related beta estimates would
+    be saved. Lastly the BOLDs would be also low-pass filtered.
+
+    SCRUBBING
+    =========
+
+    The command either makes use of scrubbing information or performs scrubbing
+    comuputation on its own (when 'm' is part of the command). In the latter
+    case, all the scrubbing parameters need to be specified:
+
+    --mov_radius  ... Estimated head radius (in mm) for computing frame
+                      displacement statistics [50].
+    --mov_fd      ... Frame displacement threshold (in mm) to use for
+                      identifying bad frames [0.5]
+    --mov_dvars   ... The (mean normalized) dvars threshold to use for
+                      identifying bad frames [3.0].
+    --mov_dvarsme ... The (median normalized) dvarsm threshold to use for
+                      identifying bad frames [1.5].
+    --mov_after   ... How many frames after each frame identified as bad
+                      to also exclude from further processing and analysis [0].
+    --mov_before  ... How many frames before each frame identified as bad
+                      to also exclude from further processing and analysis [0].
+    --mov_bad     ... Which criteria to use for identification of bad frames
+                      [udvarsme].
+
+    In any case, if scrubbing was done beforehand or as a part of this commmand,
+    one has to specify, how the scrubbing information is used:
+
+    --pignore  ... String describing how to deal with bad frames.
+
+    The string has the following format:
+
+    'hipass:<filtering opt.>|regress:<regression opt.>|lopass:<filtering opt.>'
+
+    Filtering options are:
+
+    * keep   ... Keep all the bad frames unchanged.
+    * linear ... Replace bad frames with linear interpolated values based on
+                 neighbouring good frames.
+    * spline ... Replace bad frames with spline interpolated values based on
+                 neighouring good frames
+
+    To prevent artefacts present in bad frames to be temporaly spread, use
+    either 'linear' or 'spline' options.
+
+    Regression options are:
+
+    * keep   ... Keep the bad frames and use them in the regression.
+    * ignore ... Exclude bad frames from regression.
+
+    Please note that when the bad frames are not kept, the original values will
+    be retained in the residual signal. In this case they have to be excluded
+    or ignored also in all following analyses, otherwise they can be a
+    significant source of artefacts.
+
+    SPATIAL SMOOTHING
+    =================
+
+    Volume smoothing
+    ----------------
+
+    For volume formats the images will be smoothed using the mri_Smooth3D
+    gmrimage method. For cifti format the smooting will be done by calling the
+    relevant wb_command command. The smoothing specific parameters are:
+
+    --voxel_smooth  ... Gaussian smoothing FWHM in voxels [2]
+    --smooth_mask   ... Whether to smooth only within a mask, and what mask to
+                        use (nonzero/brainsignal/brainmask/<filename>)[false].
+    --dilate_mask   ... Whether to dilate the image after masked smoothing and
+                        what mask to use (nonzero/brainsignal/brainmask/
+                        same/<filename>)[false].
+
+    If a smoothing mask is set, only the signal within the specified mask will
+    be used in the smoothing. If a dilation mask is set, after smoothing within
+    a mask, the resulting signal will be constrained / dilated to the specified
+    dilation mask.
+
+    For both parameters the possible options are:
+
+    * nonzero      ... Mask will consist of all the nonzero voxels of the first
+                       BOLD frame.
+    * brainsignal  ... Mask will consist of all the voxels that are of value
+                       300 or higher in the first BOLD frame (this gave a good
+                       coarse brain mask for images intensity normalized to
+                       mode 1000 in the NIL preprocessing stream).
+    * brainmask    ... Mask will be the actual bet extracted brain mask based
+                       on the first BOLD frame (generated using in the
+                       creatBOLDBrainMasks command).
+    * <filename>   ... All the non-zero voxels in a specified volume file will
+                       be used as a mask.
+    * false        ... No mask will be used.
+    * same         ... Only for dilate_mask, the mask used will be the same as
+                       smooting mask.
+
+    Cifti smoothing
+    ---------------
+
+    For cifti format images, smoothing will be run using wb_command. The
+    following parameters can be set:
+
+    --surface_smooth  ... FWHM for gaussian surface smooting in mm [6.0].
+    --volume_smooth   ... FWHM for gaussian volume smooting in mm [6.0].
+    --omp_threads     ... Number of cores to be used by wb_command. 0 for no
+                          change of system settings [0].
+    --framework_path  ... The path to framework libraries on the Mac system.
+                          No need to use it currently if installed correctly.
+    --wb_command_path ... The path to the wb_command executive. No need to
+                          use it currently if installed correctly.
+
+    Results
+    -------
+
+    The resulting smoothed files are saved with '_g7' added to the BOLD root
+    filename.
+
+
+    TEMPORAL FILTERING
+    ==================
+
+    Temporal filtering is accomplished using mri_Filter gmrimage method. The
+    code is adopted from the FSL C++ code enabling appropriate handling of
+    bad frames (as described above - see SCRUBBING). The specific parameters
+    are:
+
+    --hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
+    --lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
+
+    Please note that the values finaly passed to mri_Filter method are the
+    respective sigma values computed from the specified frequencies and TR.
+
+    Results
+    -------
+
+    The resulting filtered files are saved with '_hpss' or '_bpss' added to the
+    BOLD root filename for high-pass and low-pass filtering, respectively.
+
+
+    REGRESSION
+    ==========
+
+    Regression is a complex step in which GLM is used to estimate the beta
+    weights for the specified nuisance regressors and events. The resulting
+    beta weights are then stored in a GLM file (a regular file with additional
+    information on the design used) and residuals are stored in a separate file.
+    This step can therefore be used for two puposes: (1) to remove nuisance
+    signal and event structure from BOLD files, removing unwanted potential
+    sources of correlation for further functional connectivity analyses, and
+    (2) to get task beta estimates for further activational analyses. The
+    following specific parameters are used in this step:
+
+    --bold_nuisance  ... A comma separated list of regressors to include in GLM.
+                         Possible values are:
+                         * m  - motion parameters
+                         * V  - ventricles signal
+                         * WM - white matter signal
+                         * WB - whole brain signal
+                         * 1d - first derivative of above nuisance signals
+                         * e  - events listed in the provided fidl files (see
+                                above), modeled as specified in the event_string
+                                parameter.
+                         [m,V,WM,WB,1d]
+    --event_string   ... A string describing, how to model the events listed in
+                         the provided fidl files [].
+    --glm_matrix     ... Whether to save the GLM matrix as a text file ('text'),
+                         a png image file ('image'), both ('both') or not
+                         ('none') [none].
+    --glm_residuals  ... Whether to save the residuals after GLM regression
+                         ('save') or not ('none') [save].
+    --glm_name       ... An additional name to add to the residuals and GLM
+                         files to distinguish between different possible models
+                         used.
+
+    GLM modeling
+    ------------
+
+    The exact GLM model used to estimate nuisance and task beta coefficients
+    and regress them from the signal is defined by the event string provided
+    by the --event_string parameter. The event string is a pipe ('|') separated
+    list of regressor specifications. The possibilities are:
+
+    __Unassumed Modelling__
+    <fidl code>:<length in frames>
+    where <fidl code> is the code for the event used in the fidl file, and
+    <length in frames> specifies, for how many frames of the bold run (since
+    the onset of the event) the event should be modeled.
+
+    __Assumed Modelling__
+    <fidl code>:<hrf>[:<length>]
+    where <fidl code> is the same as above, <hrf> is the type of the hemodynamic
+    response function to use, and <length> is an optional parameter, with its
+    value dependent on the model used. The allowed <hrf> are:
+
+    boynton ... uses the Boynton HRF
+    SPM     ... uses the SPM double gaussian HRF
+    u       ... unassumed (see above)
+    block   ... block response
+
+    For the first two, the <length> parameter is optional and would override the
+    event duration information provided in the fidl file. For 'u' the length is
+    the same as in previous section: the number of frames to model. For 'block'
+    length should be two numbers separated by a colon (e.g. 2:9) that specify
+    the start and end offset (from the event onset) to model as a block.
+
+    __Naming And Behavioral Regressors__
+    Each of the above (unassumed and assumed modelling specification) can be
+    followed by a ">" (greater-than character), which signifies additional
+    information in the form:
+
+    <name>[:<column>[:<normalization span>[:<normalization method>]]]
+
+    name   ... The name of the resulting regressor.
+    column ... The number of the additional behavioral regressor column in the
+               fidl file (1-based) to use as a weight for the regressor.
+    normalization span   ... Whether to normalize the behavioral weight within
+                             a specific event type ('within') or across all
+                             events ('across') [within].
+    normalization method ... The method to use for normalization. Options are
+                             z   ... compute Z-score
+                             01  ... normalize to fixed range 0 to 1
+                             -11 ... normalize to fixed range -1 to 1
+
+    Example string:
+    'block:boynton|target:9|target:9>target_rt:1:within:z'
+
+    This would result in three sets of task regressors: one assumed task
+    regressor for the sustained activity across the block, one unassumed
+    task regressor set spanning 9 frames that would model the presentation of
+    the target, and one behaviorally weighted unassumed regressor that would
+    for each frame estimate the variability in response as explained by the
+    reaction time to the target.
+
+    Results
+    -------
+
+    This step results in the following files (if requested):
+
+    * residual image:
+      <root>_res-<regressors>.<ext>
+    * GLM coefficient image:
+      <root>_res-<regressors>_coeff.<ext>
+
+    If you want more specific GLM results and information, please use
+    preprocessConc command.
+
+    EXAMPLE USE
+    ===========
+
+    gmri preprocessBold subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10 bold_preprocess=rest bold_actions=shrcl \\
+         bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
+         pignore="hipass=linear|regress=ignore|lopass=linear" \\
+         nprocess=0
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-02-11 Grega Repovš
+             - Added additional documentation.
     """
 
     bsearch = re.compile('bold([0-9]+)')
@@ -1136,7 +1480,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                         else:
                             boldow = 'false'
 
-                        scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsme:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
+                        scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
                         opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(hcp_cifti_tail)s" % (options)
 
                         mcomm = 'fc_Preprocess(\'%s\', %s, %d, \'%s\', \'%s\', %s, \'%s\', %f, \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\')' % (
@@ -1246,7 +1590,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     .fidl files. Both are first searched for in images/functional/concs and
     images/functional/events folders respectively. There they would be named as
     [<subject id>_]<boldname>_<image_target>_<conc name>.conc and
-    [<subject id>_]<boldname>_<image_target>_<conc name>.fidl. In the case of
+    [<subject id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual subject's folders, they are
     searched for in the <basefolder>/inbox folder. In that case the
@@ -1539,7 +1883,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     gmri preprocessConc subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
          overwrite=no cores=10 bold_preprocess=SRT event_file=SRT glm_name=-FC \\
-         bold_actions=shrcl bold_nuisance=e mov_bad=udvarsme \\
+         bold_actions=shrcl bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\
          glm_matrix=none glm_residuals=save nprocess=0 \\
          pignore="hipass=linear|regress=ignore|lopass=linear"
@@ -1706,7 +2050,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
                 done = f['conc_final'] + ".ok"
 
-                scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsme:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
+                scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
                 opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(hcp_cifti_tail)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
