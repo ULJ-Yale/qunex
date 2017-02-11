@@ -1,24 +1,24 @@
 function [frames] = g_GetImageLength(file)
 
-%	
-%	Reads number of frames from IFH file for a given file or set of files listed in conc file
-%	Return column row with lengths in frames
+%function [frames] = g_GetImageLength(file)
 %
+%	Reads a regular image or a conc file and returns the number of frames in
+%   each of the files.
 %
-%	Grega Repovš - 2008.7.11
+%   Input
+%       - file ... it can be a filename, a list of files, a conc file (see
+%                  documentation for gmrimage object constructor).
+%
+%   Output
+%       - frames ... A column vector of frame lengths of the files specified.
+%
+%   ---
+%   Written by Grega Repovš 2008-07-11
+%
+%	Changelog
+%       2017-02-11 Grega Repovš - Updated to work with any files gmrimage can handle
 %
 
-if strfind(file, '.conc')
-	files = g_ReadConcFile(file);
-else
-	files = {file};
-end
-
-nfiles = length(files);
-frames = zeros(nfiles,1);
-
-for n = 1:nfiles
-	ifh = g_ReadIFH(files{n});
-	frames(n,1) = ifh.frames;
-end
+img = gmrimage(file);
+frames = img.runframes;
 

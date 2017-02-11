@@ -14,6 +14,7 @@ function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %         - hrf_type
 %           -> 'boynton' (assumed response)
 %           -> 'SPM' (assumed response)
+%           -> 'gamma' (assumed response)
 %           -> 'u' (unassumed response)
 %           -> 'block' (block response)
 %         - length

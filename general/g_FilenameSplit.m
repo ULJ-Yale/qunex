@@ -1,14 +1,31 @@
-function [elements] = g_FilenameSplit(t, delim)
+function [elements] = g_FilenameSplit(filename, delim)
 
+%function [elements] = g_FilenameSplit(filename, delim)
 %
-%		reads in a 4dfp image and returns a vector with all the voxels
+%   Splits the filename into elements separated by delim
 %
+%   INPUT
+%       - filename  ... The filename to be split.
+%       - delim     ... The delimiter to be used.
+%
+%   OUTPUT
+%       - elements  ... Cell array of file elements excluding extension.
+%
+%   EXAMPLE
+%
+%   elements = g_FilenameSplit('bold3_g7_hpss.nii.gz');
+%
+%   will result in elements = {'bold3', 'g7', 'hpss'}
+%
+%   ---
+%   Written by Grega Repovš
+%
+%   Changelog
+%             2017-02-11 Grega Repovš - Updated documentation
 
-if nargin < 2
-	delim = '_';
-end
+if nargin < 2, delim = '_'; end
 
-[t, r] = strtok(t, '.');
+[t, r] = strtok(filename, '.');
 
 items = sum(ismember(t, delim));
 

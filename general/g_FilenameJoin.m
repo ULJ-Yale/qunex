@@ -1,12 +1,30 @@
 function [filename] = g_FilenameJoin(elements, delim)
 
+%function [filename] = g_FilenameJoin(elements, delim)
 %
-%		reads in a 4dfp image and returns a vector with all the voxels
+%   Joins all the elements of a file with the specified delimiter.
 %
+%   INPUT
+%       - elements ... Cell array of file name elements.
+%       - delim    ... Delimiter to use for concatenation. ['_']
+%
+%   OUTPUT
+%       - filename ... The generated filename
+%
+%   EXAMPLE
+%
+%   filename = g_FilenameJoin({'bold1', 'g7', 'hpss'});
+%
+%   will result in 'bold1_g7_hpss'
+%
+%   ---
+%   Written by Grega Repovš
+%
+%   Changelog
+%             2017-02-11 Grega Repovš - Updated documentation
 
-if nargin < 2
-	delim = '_';
-end
+
+if nargin < 2, delim = '_'; end
 
 items = length(elements);
 

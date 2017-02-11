@@ -2,7 +2,7 @@ function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, 
 
 %function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, wbmask, sbjroi, nroi, shrink, verbose);
 %
-%	Computes BOLD run per frame statistics and scrubs.
+%	Extracts the specified nuisances and saves it into .nuisance file.
 %
 %   img         - gmrimage or a path to a bold file to process
 %   fsimg       - gmrimage, a path to a freesurfer segmentation or '1b' for extraction based on first frame

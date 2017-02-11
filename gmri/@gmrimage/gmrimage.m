@@ -92,9 +92,73 @@ classdef gmrimage
 
     methods
         function obj = gmrimage(varone, dtype, frames, verbose)
+
+        %function obj = gmrimage(varone, dtype, frames, verbose)
         %
-        %  Class constructor, calls readimage function if a parameter is passed
+        %   Class constructor, calls readimage function if a parameter is passed otherwise it
+        %   generates an empty image object.
         %
+        %   Input
+        %       - varone ... A number of possible argument types:
+        %                    * string       ... File(s) will be read into a gmrimage object.
+        %                    * data matrix  ... F gmrimage object will be generated with data
+        %                                       from the data matrix.
+        %                    * cell array   ... An array of grimage objects will be generated
+        %                                       each item dependent on the type of the cell type.
+        %                    * gmrimage     ... The image will be copied.
+        %       - dtype  ... The datatype to store the data in. ['single']
+        %       - frames ... The number of frames to read from the image.
+        %       - verbose ... Whether to be talkative
+        %
+        %   Output
+        %       - obj  ... A single gmrimage object or an array of gmrimage objects.
+        %
+        %   Strings
+        %   -------
+        %
+        %   If varone is a string, reading of files will be attempted. The results depend on the
+        %   Specifics of a string provided:
+        %
+        %   * a single filename
+        %   A single filename will be read as a single file and will result in a single gmrimage object.
+        %   If the filename is a .conc file, all the files listed in the .conc file will be concatenated
+        %   together in one long file. The number of frames from each file will be stored in obj.runframes
+        %   vector
+        %
+        %   * pipe separated list of files
+        %   A pipe (|) separated list of files will result in reading and concatenating all of the listed
+        %   files into a single long image object. The number of frames from each file will be stored
+        %   in the obj.runframes vector.
+        %
+        %   * a semicolon separated list of files
+        %   A semicolon (';') separated list of files will result in an array of gmrimage objects, each
+        %   object can be a single image, .conc list of images or pipe separated list of images.
+        %
+        %   Examples
+        %   --------
+        %
+        %   img1 = gmrimage();
+        %   img2 = gmrimage('t1w.nii.gz');
+        %   img3 = gmrimage('boldlist.conc');
+        %   img4 = gmrimage('bold1.nii.gz|bold2.nii.gz|bold3.nii.gz');
+        %   img5 = gmrimahe('boldlist.conc;bold1.nii.gz;bold2.nii.gz|bold3.nii.gz');
+        %   img6 = gmrimage(randn(91,191,91));
+        %
+        %   The results will be:
+        %   img1 ... An empty gmrimage object.
+        %   img2 ... A gmrimage object with the content of a T1w image.
+        %   img3 ... A gmrimage object with concatenated files listed in 'boldlist.conc'.
+        %   img4 ... A gmrimage object with three bold files concatenated.
+        %   img5 ... A vector of three image objects, img5(1) a concatenated set of images
+        %            as specified in 'boldlist.conc', img5(2) a single bold run, and img5(3)
+        %            a two concatenated bold images.
+        %
+        %   ---
+        %   Written by Grega Repovš
+        %
+        %   Changelog
+        %       2017-02-11 Grega Repovš - Updated the documentation
+
 
             if nargin < 4, verbose = false;  end
             if nargin < 3, frames = [];      end
@@ -163,18 +227,10 @@ classdef gmrimage
         %  Checks what type the image is and calls the appropriate function
         %
 
-            if nargin < 5
-                verbose = false;
-                if nargin < 4
-                    frames = [];
-                    if nargin < 3
-                        dtype = [];
-                    end
-                end
-            end
-            if isempty(dtype)
-                dtype = 'single';
-            end
+            if nargin < 5                     verbose = false;   end
+            if nargin < 4                     frames = [];       end
+            if nargin < 3 || isempty(dtype),  dtype = 'single';  end
+
             filename = strtrim(filename);
 
             % --- check if file exists
