@@ -4,10 +4,10 @@
 
 MNAP General Pipeline = THIS SOFTWARE
 
-Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana 
+Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
 & Alan Anticevic, [AnticevicLab], Yale University
 
-The Software remains the joint property of Alan Anticevic (Yale University) 
+The Software remains the joint property of Alan Anticevic (Yale University)
 & Grega Repovs (University of Ljubljana) ("the Authors").
 
 * The Software is distributed "AS IS" under this Licence solely for
@@ -50,9 +50,10 @@ developing software products for sale or license to a third party or
 final aim of developing non-software products for sale or license to a
 third party, or (4) use of the Software to provide any service to an
 external organisation for which payment is received. If you are
-interested in using the Software commercially, please contact 
-Yale University Office of Cooperative Research to negotiate a licence. 
-Contact details are: http://ocr.yale.edu/
+interested in using the Software commercially, please contact either
+Yale University Office of Cooperative Research <http://ocr.yale.edu/>
+or University of Ljubljana Intelectual Property Office
+<intelektualna.lastnina@uni-lj.si> to negotiate a licence.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
