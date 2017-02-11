@@ -1,16 +1,17 @@
 function [ts] = g_CreateAssumedResponse(TR, frames, delay, elength, hrf_type)
 
-%   
-%   Returns timecourse of an assumed response to an event 
-%   
+%
+%   Returns timecourse of an assumed response to an event
+%
 %   INPUT
 %   - TR        - TR of the bold run
 %   - frames    - number of frames over which to create response
 %   - delay     - delay in s from the TR boundary
 %   - elength   - duration of event in seconds
 %   - hrf_type  - the type of assumed response to use
-%       -> 'boynton' 
-%       -> 'SPM'  
+%       -> 'boynton'
+%       -> 'SPM'
+%       -> 'gamma'
 %       -> 'empirical' (not yet implemented)
 %
 %   OUTPUT
@@ -19,7 +20,11 @@ function [ts] = g_CreateAssumedResponse(TR, frames, delay, elength, hrf_type)
 %   NOTES
 %   - would be good to include other HRF types as well as estimated HRF
 %
-%   Grega Repovš - 2008.7.12
+%   ---
+%   Written by Grega Repovš - 2008.7.12
+%
+%   Changelog
+%   2017-02-11 Grega Repovš: Updated to use general g_HRF function.
 %
 
 
@@ -28,17 +33,12 @@ function [ts] = g_CreateAssumedResponse(TR, frames, delay, elength, hrf_type)
 
 hrf = [];
 
-if strcmp(hrf_type, 'boynton')
-    t = [0:320]./10;
-    hrf = fmri_hemodyn(t, 2.25, 1.25, 2);  % with parameters as suggested in the source
-end
+hrf_type = lower(hrf_type);
 
-if strcmp(hrf_type, 'SPM')
-    hrf = spm_hrf(0.1);    % leaving parameters to their defaults
-end
-
-if isempty(hrf)
-    error('There was no valid HRF type specified [g_CreateTaskRegressors(TR, frames, delay, elength, hrf_type)]');
+if ismember(hrf_type, {'boynton', 'spm', 'gamma'}
+    hrf = g_HRF(0.1, hrf_type);
+else
+    error('ERROR: There was no valid HRF type specified [g_CreateTaskRegressors(TR, frames, delay, elength, hrf_type)]');
 end
 
 %======================================================================

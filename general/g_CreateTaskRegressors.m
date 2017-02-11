@@ -52,14 +52,19 @@ function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %   - !!! might be better to change downsampling to summation
 %   -> changed to area under the curve 2011.07.31
 %
-%   Grega Repovs - Created: 2008.07.11
-%                - Updated: 2008.07.16
-%                - Updated: 2011.01.24
-%                - Updated: 2011.02.11
-%                - Updated: 2011.07.31
-%                - Updated: 2015.10.23 (Error reporting for missing event info.)
-%                - Updated: 2016.02.04 (Added behavioral regressors and changed output structure)
+%   ---
+%   Grega Repovs - Created: 2008-07-11
 %
+%   Changelog
+%          2008-07-16 Grega Repovš - Updated
+%          2011-01-24 Grega Repovš - Updated
+%          2011-02-11 Grega Repovš - Updated
+%          2011-07-31 Grega Repovš - Updated
+%          2015-10-23 Grega Repovš - Updated (Error reporting for missing event info.)
+%          2016-02-04 Grega Repovš - Updated (Added behavioral regressors and changed output structure)
+%          2017-02-11 Grega Repovš - Updated to use the general g_HRF function.
+
+
 
 % ---> set variables
 
@@ -186,6 +191,8 @@ for r = 1:nruns
 
         basename = model.regressor(m).name;
 
+        model.regressor(m).hrf_type = lower(model.regressor(m).hrf_type);
+
         %------------------------- code for unassumed models
 
         if strcmp(model.regressor(m).hrf_type, 'u')
@@ -263,26 +270,12 @@ for r = 1:nruns
 
         %------------------------- code for assumed models
 
-        elseif ismember(model.regressor(m).hrf_type, {'boynton', 'SPM'})
+        elseif ismember(model.regressor(m).hrf_type, {'boynton', 'spm', 'gamma'})
 
             %======================================================================
             %                                                  create the right HRF
 
-            hrf = [];
-
-            if strcmp(model.regressor(m).hrf_type, 'boynton')
-                % t = [0:3200]./100;
-                t = [0:32*round(100/events.TR)]./round(100/events.TR);
-                hrf = fmri_hemodyn(t, 2.25, 1.25, 2);  % with parameters as suggested in the source
-            end
-
-            if strcmp(model.regressor(m).hrf_type, 'SPM')
-                hrf = spm_hrf(events.TR/100);    % leaving parameters to their defaults
-            end
-
-            if isempty(hrf)
-                error('There was no valid HRF type specified! [model: %d]', m);
-            end
+            hrf = g_HRF(events.TR/100, model.regressor(m).hrf_type);
 
             %======================================================================
             %                                           create the event timeseries

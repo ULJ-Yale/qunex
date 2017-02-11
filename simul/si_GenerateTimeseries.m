@@ -1,7 +1,7 @@
 function [ts, hrf, tso, te] = si_GenerateTimeseries(TR, eventlist, model, modeldata)
 
 %	function [ts] = si_GenerateTimeseries(TR, eventlist, model)
-%	
+%
 %   Function for generation of simulated BOLD timeseries
 %
 %   Inputs
@@ -10,11 +10,14 @@ function [ts, hrf, tso, te] = si_GenerateTimeseries(TR, eventlist, model, modeld
 %           - start time in seconds
 %           - duration in seconds
 %           - weight
-%       - model:        boynton | spm | empirical | raw | unassumed
+%       - model:        boynton | spm | gamma | empirical | raw | unassumed
 %       - modeldata:    parameters or the actual HRF timecourse depending on model
-%	
+%
+%   ---
 % 	Created by Grega Repovš on 2010-10-09.
-%	
+%
+%   Changelog
+%   2017-02-11 Grega Repovš: Updated to use the general g_HRF function.
 
 if nargin < 4
     modeldata = [];
@@ -25,6 +28,8 @@ if nargin < 4
         end
     end
 end
+
+model = lower(model);
 
 % ---- Check if we have a cell array on our hands
 
@@ -44,13 +49,13 @@ if strcmp(model, 'unassumed')
     nevents = size(eventlist,1);
     tslength = floor(eventlist(nevents, 1)/TR)+nreg;
     ts = zeros(tslength, nreg);
-    
+
     for n = 1:nevents
         for m = 1:nreg
             ts(floor(eventlist(n,1)/TR)+m-1,m) = 1;
         end
     end
-    
+
     hrf = [];
     return
 end
@@ -59,18 +64,15 @@ end
 % ---- Generate HRF
 
 switch model
-    case 'boynton'
-        if isempty(modeldata)
-            modeldata = [2.25, 1.25, 2];
-        end
-        t = [0:320]./10;
-        hrf = fmri_hemodyn(t, 2.25, 1.25, 2);
-    case 'spm'
-        hrf = spm_hrf(0.1);
+
+    case {'boynton', 'spm', 'gamma'}
+        hrf = g_HRF(0.1, hrf_type, [], modeldata);
     case 'empirical'
         hrf = resample(modeldata, round(TR*10), 1);
     case 'raw'
         hrf = modeldata;
+    otherwise
+        error('There was no valid HRF type specified! [%s]', model);
 end
 
 % ---- Generate event timeseries
