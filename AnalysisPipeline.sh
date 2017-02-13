@@ -249,7 +249,6 @@ show_usage() {
   				echo "boldmergenifti			merge specified nii bold timeseries"
   				echo "boldmergecifti			merge specified citi bold timeseries"
   				echo "bolddense			compute bold dense connectome (needs >30gb ram per bold)"
-  				echo "palmanalysis			run palm and extract data from rois (cluster usable)"
   				echo ""  				
   				cyaneho "FIX ICA de-noising"    
   				cyaneho "---------------------------"							
@@ -6755,12 +6754,6 @@ if [ "$FunctionToRunInt" == "probtrackxgpudense" ]; then
   			"$FunctionToRunInt" "$CASE"
   		done
 fi
-
-# ------------------------------------------------------------------------------
-#  palmanalysis function loop
-# ------------------------------------------------------------------------------
-
-## -- NEED TO CODE
 
 # ------------------------------------------------------------------------------
 #  awshcpsync - AWS S3 Sync command wrapper
