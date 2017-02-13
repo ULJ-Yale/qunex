@@ -285,7 +285,8 @@ show_usage() {
 gmri_function() {
 
 	# Issue the complete gmri originating call
-	echo "$gmriinput"
+	echo ""
+	gmri ${gmriinput}
 	echo ""
 	exit 0 
 
@@ -438,6 +439,9 @@ show_usage_setuplist() {
   				echo "-- Description:"
     			echo ""
     			echo "This function generates list files for functional connectivity analyses."
+    			echo ""
+    			echo "Example: AP setuplist <absolute_path_to_subjects_folder> 'list_of_cases' "
+    			echo ""
     			echo ""
 }
 
@@ -3510,17 +3514,35 @@ show_usage_boldparcellation() {
 
 fsldtifit() {
 	
+	mkdir "$StudyFolder"/../fcMRI/hcp.logs/ > /dev/null 2>&1
 	cd "$StudyFolder"/../fcMRI/hcp.logs/
 	
+			# Check if overwrite flag was set
+	if [ "$Overwrite" == "yes" ]; then
+		echo ""
+		reho "Removing existing dtifit run for $CASE..."
+		echo ""
+		rm -rf "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_* > /dev/null 2>&1
+	fi
+	
 	minimumfilesize=100000
-  	actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_FA.nii.gz)
+  	
+  	if [ -a "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_FA.nii.gz ]; then 
+  		actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_FA.nii.gz)
+  	else
+  		actualfilesize="0"
+  	fi
+  	
   	if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
-  		echo "DTI Fit completed for $CASE"
+  		echo ""
+  		echo "--- DTI Fit completed for $CASE ---"
+  		echo ""
   	else
   	
 	if [ "$Cluster" == 1 ]; then
  		dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
 	else
+ 		fslsub="$Scheduler"
  		fsl_sub."$fslsub" -Q "$QUEUE" dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
 	fi
 	fi
@@ -3528,11 +3550,31 @@ fsldtifit() {
 
 show_usage_fsldtifit() {
 
-  				echo ""
-  				echo "-- Description:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
+				echo ""
+				echo "-- Description:"
+				echo ""
+				echo "This function runs the FSL dtifit processing using locally or via a scheduler."
+				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
+				echo ""
+				echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>			Name of function"
+				echo "		--path=<study_folder>				Path to study data folder"
+				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
+				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
+				echo "" 
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='fsldtifit' --queue='anticevic-gpu' --runmethod='2' --overwrite='yes'"
+				echo ""				
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "AP fsldtifit <path_to_study_subjects_folder> '<case_id>' "
+				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -3659,11 +3701,11 @@ show_usage_fslbedpostxgpu() {
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='fslbedpostxgpu' --fibers='3' --burnin='3000' --model='3' --queue='anticevic-gpu' --runmethod='2' --overwrite='yes'"
+				echo "AP --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='fslbedpostxgpu' --fibers='3' --burnin='3000' --model='3' --queue='anticevic-gpu' --runmethod='2' --overwrite='yes'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
-				echo "AP fslbedpostxgpu /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
+				echo "AP fslbedpostxgpu <path_to_study_subjects_folder> '<case_id>' "
 				echo ""
 }
 
@@ -4842,21 +4884,21 @@ fi
 	fi
 	
 	# -- check for input with question mark
-	if [[ "$1" =~ .*?.* ]] && [ -z "$2" ]; then 
-		Usage="$1"
-		UsageInput=`echo ${Usage} | cut -c 2-`
+	# if [ -z "${1##*?*}" ] && [ -z "$2" ]; then 
+	#	Usage="$1"
+	#	UsageInput=`echo ${Usage} | cut -c 2-`
 			# -- check if input part of function list
-			if [[ "$APFunctions" != *${UsageInput}* ]]; then
-				echo ""
-				reho "Function $UsageInput does not exist! Refer to general usage below: "
-				echo ""
-				show_usage
-				exit 0
-			else	
-    			show_usage_"$UsageInput"
-    		fi
-    	exit 0
-	fi
+	#		if [[ "$APFunctions" != *${UsageInput}* ]]; then
+	#			echo ""
+	#			reho "Function $UsageInput does not exist! Refer to general usage below: "
+	#			echo ""
+	#			show_usage
+	#			exit 0
+	#		else	
+    #			show_usage_"$UsageInput"
+    #		fi
+    #	exit 0
+	#fi
 			
 	# -- check for input with no flags
 	if [ -z "$2" ]; then
@@ -5673,6 +5715,33 @@ if [ "$FunctionToRunInt" == "fsldtifit" ]; then
   				done	
   		fi	
   	fi
+fi
+
+if [ "$FunctionToRun" == "fsldtifit" ]; then
+	
+		# Check all the user-defined parameters: 1. Overwrite, 2. Cluster, 3. QUEUE
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
+		Cluster="$RunMethod"
+				
+		echo ""
+		echo "Running fsldtifit processing with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "QUEUE Name: $QUEUE"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
 fi
 
 # ------------------------------------------------------------------------------
