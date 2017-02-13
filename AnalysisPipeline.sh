@@ -3786,7 +3786,9 @@ show_usage_pretractography() {
     			echo "Function to generate the cortical dense connectome trajectory space."
     			echo ""
     			echo "Note: This function is deprecated as of 01/2017. The maintained function is pretractographydense"
-    			echo "		-- run ap pretractographydense for up-to-date help call of the supported function"}
+    			echo "		-- run ap probtrackxgpudense for up-to-date help call of the supported function"
+    			
+}
 
 # ------------------------------------------------------------------------------------------------------
 #  probtrackxgpucortex - Executes the HCP Matrix1 code (Matt's original implementation for cortex)
@@ -4709,11 +4711,10 @@ show_usage_qcpreproc() {
 				echo ""
 }
 
-
-
-
+#################################################################################################################################
 #################################################################################################################################
 ################################## SOURCE REPOS, SETUP LOG & PARSE COMMAND LINE INPUTS ACROSS FUNCTIONS #########################
+#################################################################################################################################
 #################################################################################################################################
 
 # ------------------------------------------------------------------------------
