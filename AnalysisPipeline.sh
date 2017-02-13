@@ -99,7 +99,7 @@
 # * Python (version 2.7 or above)
 # * AFNI
 # * Gradunwarp
-# * CodeHCPe (HCP Pipelines modified code)
+# * HCP Pipelines modified code for legacy BOLD data
 # * R Software library
 #
 # ### Expected Environment Variables
@@ -198,7 +198,7 @@ show_usage() {
   				echo "Note: All gmri functions are supported and take the list of arguments."
   				echo ""
   				echo ""
-  				cyaneho "List of specific supported function"
+  				cyaneho "List of specific supported functions"
   				cyaneho "================================================================================"
   				echo ""  				
   				cyaneho "Data organization functions"
@@ -930,7 +930,7 @@ show_usage_linkmovement() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "Function links processed motion data from the HCP folder structure into the appropriate 'Parcellated' folder structure to use later."
+    			echo "Function links processed motion data from the HCP folder structure into the appropriate 'Parcellated' folder structure for later use."
     			echo ""
 }
 
@@ -2157,7 +2157,7 @@ boldhardlinkfixica() {
 				#rm "$StudyFolder"/"$CASE"/images/functional/boldfixicarfMRI_REST*     &> /dev/null
 				#rm "$StudyFolder"/"$CASE"/images/functional/boldrfMRI_REST*     &> /dev/null
 				
-				#echo "Setting up hard links for movement data for BOLD# $BOLD for $CASE... "
+				echo "Setting up hard links for movement data for BOLD# $BOLD for $CASE... "
 				
 				# Clean up movement regressor file to match dofcMRIp convention and copy to movement directory
 				export PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH     &> /dev/null
@@ -2178,7 +2178,7 @@ show_usage_boldhardlinkfixica() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Function for hard-linking minimally preprocessed HCP BOLD images after FIX ICA was done for further denoising."
     			echo ""
 }
 
@@ -2216,7 +2216,7 @@ show_usage_fixicainsertmean() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Function for imputing mean of the image after FIX ICA was done for further denoising."
     			echo ""
 }
 
@@ -2254,7 +2254,7 @@ show_usage_fixicaremovemean() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Function for removing the mean of the image after FIX ICA was done for further denoising."
     			echo ""
 }
 
@@ -2314,7 +2314,9 @@ show_usage_boldhardlinkfixicamerged() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Function for hard-linking minimally preprocessed and merged HCP BOLD images after FIX ICA was done for further denoising."
+    			echo ""
+    			echo "NOTE: This function needs cleanup as it was designed for a specific study"
     			echo ""
 }			
 
@@ -2524,7 +2526,10 @@ show_usage_hcp1_orig() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Original implementation of the PreFreeSurfer (hcp1) code."
+    			echo ""
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp1, called via gmri functions."
+    			echo "		--> run ap ?hcp1 for up-to-date help call of the supported function"
     			echo ""
 }
 
@@ -2602,7 +2607,10 @@ show_usage_hcp2_orig() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Original implementation of the FreeSurfer (hcp2) code."
+    			echo ""
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp2, called via gmri functions."
+    			echo "		--> run ap ?hcp2 for up-to-date help call of the supported function"
     			echo ""
 }
 
@@ -2698,7 +2706,10 @@ show_usage_hcp3_orig() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Original implementation of the PostFreeSurfer (hcp3) code."
+    			echo ""
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp3, called via gmri functions."
+    			echo "		--> run ap ?hcp3 for up-to-date help call of the supported function"
     			echo ""
 }
 
@@ -2854,7 +2865,10 @@ show_usage_hcp4_orig() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Original implementation of the HCP Volume Preprocessing (hcp4) code."
+    			echo ""
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp4, called via gmri functions."
+    			echo "		--> run ap ?hcp4 for up-to-date help call of the supported function"
     			echo ""
 }
 
@@ -2939,7 +2953,10 @@ show_usage_hcp5_orig() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Original implementation of the HCP Surface Preprocessing (hcp5) code."
+    			echo ""
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp5, called via gmri functions."
+    			echo "		--> run ap ?hcp5 for up-to-date help call of the supported function"
     			echo ""
 }
 
@@ -3048,7 +3065,10 @@ show_usage_hcpd_orig() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Original implementation of the HCP Diffusion Preprocessing (hcpd) code."
+    			echo ""
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcpd, called via gmri functions."
+    			echo "		--> run ap ?hcpd for up-to-date help call of the supported function"
     			echo ""
 }
 
@@ -3763,9 +3783,10 @@ show_usage_pretractography() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Function to generate the cortical dense connectome trajectory space."
     			echo ""
-}
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is pretractographydense"
+    			echo "		-- run ap pretractographydense for up-to-date help call of the supported function"}
 
 # ------------------------------------------------------------------------------------------------------
 #  probtrackxgpucortex - Executes the HCP Matrix1 code (Matt's original implementation for cortex)
@@ -3842,7 +3863,10 @@ show_usage_probtrackxgpucortex() {
   				echo ""
   				echo "-- Description:"
     			echo ""
-    			echo "USAGE INFO PENDING..."
+    			echo "Original implementation of cortical dense connectome."
+    			echo ""
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is probtrackxgpudense"
+    			echo "		-- run ap probtrackxgpudense for up-to-date help call of the supported function"
     			echo ""
 }
 
@@ -3917,11 +3941,14 @@ makedensecortex() {
 
 show_usage_makedensecortex() {
 
-				echo ""
-				echo "-- Description:"
-				echo ""
-				echo "USAGE PENDING..."
-				echo ""
+  				echo ""
+  				echo "-- Description:"
+    			echo ""
+    			echo "Original implementation of cortical dense connectome final file generation."
+    			echo ""
+    			echo "Note: This function is deprecated as of 01/2017. The maintained function is probtrackxgpudense"
+    			echo "		-- run ap probtrackxgpudense for up-to-date help call of the supported function"
+    			echo ""
 }
 
 
@@ -4682,10 +4709,11 @@ show_usage_qcpreproc() {
 				echo ""
 }
 
-#################################################################################################################################
+
+
+
 #################################################################################################################################
 ################################## SOURCE REPOS, SETUP LOG & PARSE COMMAND LINE INPUTS ACROSS FUNCTIONS #########################
-#################################################################################################################################
 #################################################################################################################################
 
 # ------------------------------------------------------------------------------
