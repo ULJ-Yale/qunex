@@ -702,7 +702,7 @@ show_usage_isolatesubcortexrois() {
 
 isolatethalamusfslnuclei() {
 
-    			echo "FUNCTION UNDER DEVELOPMENT - NOT DEPLOYMENT READY..."
+    echo "FUNCTION UNDER DEVELOPMENT - NOT DEPLOYMENT READY..."
 
 	# isolate FSL-intersecting thalamic voxels 
 	#cp "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz ./
@@ -920,7 +920,6 @@ linkmovement() {
 				echo "Linking scrubbing data - BOLD $BOLD for $CASE..."
 				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD".use
 				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD".use
-
 			done
 }
 
@@ -949,18 +948,14 @@ printmatrix() {
     		do
 					for BOLD in $BOLDS
 					do
-						
 						if [ -f "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.csv ]; then
-
 							echo "Matrix printing done for $CASE run $BOLD and $STEP. Skipping to next subject..."
 						else		
 					    	echo "Printing parcellated data on BOLD data for $CASE..."
-						
 							wb_command -nifti-information -print-matrix "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.pconn.nii > "$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_networks.32k_fs_LR.csv
 							wb_command -nifti-information -print-matrix "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.pconn.nii > "$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_networks.32k_fs_LR.csv
 							wb_command -nifti-information -print-matrix "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.pconn.nii > "$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_7Networks_islands.32k_fs_LR.csv
 							wb_command -nifti-information -print-matrix "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.pconn.nii > "$CASE"_bold"$BOLD"_"$STEP"_LR_RSN_CSC_17Networks_islands.32k_fs_LR.csv
-
 						fi
 						
 					done
