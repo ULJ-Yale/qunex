@@ -191,7 +191,8 @@ arglist = [['# ---- Basic settings'],
            ['mov_sreport',         'movement_scrubbing_report.txt',               str,    "the name of the scrubbing report file"],
            ['mov_pdf',             'movement_plots',                              str,    "the name of the folder that holds movement stats plots"],
            ['mov_pref',            "",                                            str,    "the prefix for the movement report files"],
-           ['queue',               'local',                                       str,    "whether the command is to run a local, a PBS  or an LSF queue"],
+           ['scheduler',           'local',                                       str,    "whether the command is to run localy, through a PBS or an LSF scheduler"],
+           ['queue',               'local',                                       str,    "whether the command is to run localy, through a PBS or an LSF scheduler (deprecated, see scheduler)"],
            ['jobname',             '',                                            str,    "optional prefix for the submitted job names"],
            ['subjid',              '',                                            plist,  "list of | separated subject ids for which to run the command"],
 
@@ -287,7 +288,8 @@ tomap = {'bold_preprocess': 'bppt',
          'bold_actions':    'bppa',
          'bold_nuisance':   'bppn',
          'event_string':    'eventstring',
-         'event_file':      'eventfile'}
+         'event_file':      'eventfile',
+         'queue':           'scheduler'}
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -531,7 +533,7 @@ def run(command, args):
     # -----------------------------------------------------------------------
     #                                                               local cue
 
-    if options['queue'] == 'local' or options['run'] == 'test':
+    if options['scheduler'] == 'local' or options['run'] == 'test':
         pool = Pool(processes=cores)
         result = []
         c = 0
@@ -598,16 +600,16 @@ def run(command, args):
     # -----------------------------------------------------------------------
     #                                                                 PBS cue
 
-    elif options['queue'] == 'PBS':
+    elif options['scheduler'] == 'PBS':
 
         # ---- setup options to pass to each job
 
         nopt = []
         for (k, v) in args.iteritems():
-            if k not in ['PBS_options', 'PBS_environ', 'PBS_shell', 'PBS_queue', 'PBS_sleep', 'queue', 'nprocess']:
+            if k not in ['PBS_options', 'PBS_environ', 'PBS_shell', 'PBS_queue', 'PBS_sleep', 'scheduler', 'nprocess']:
                 nopt.append((k, v))
 
-        nopt.append(('queue', 'local'))
+        nopt.append(('scheduler', 'local'))
         nopt.append(('nprocess', '0'))
 
         # ---- open log
@@ -643,14 +645,14 @@ def run(command, args):
             cstr += "\ngmri " + command
 
             for (k, v) in nopt:
-                if k not in ['subjid', 'queue']:
+                if k not in ['subjid', 'scheduler']:
                     cstr += ' --%s="%s"' % (k, v)
 
             slist = []
             [slist.append(subjects.pop(0)['subject']) for e in range(cores) if subjects]   # might need to change to id
 
             cstr += ' --subjid="%s"' % ("|".join(slist))
-            cstr += ' --queue="local"'
+            cstr += ' --scheduler="local"'
             cstr += '\n'
 
             # ---- pass the command string to qsub
@@ -684,16 +686,16 @@ def run(command, args):
     # -----------------------------------------------------------------------
     #                                                                 LSF cue
 
-    elif options['queue'] == 'LSF':
+    elif options['scheduler'] == 'LSF':
 
         # ---- setup options to pass to each job
 
         nopt = []
         for (k, v) in args.iteritems():
-            if k not in ['LSF_environ', 'LSF_folder', 'LSF_options', 'queue', 'nprocess']:
+            if k not in ['LSF_environ', 'LSF_folder', 'LSF_options', 'scheduler', 'nprocess']:
                 nopt.append((k, v))
 
-        nopt.append(('queue', 'local'))
+        nopt.append(('scheduler', 'local'))
         nopt.append(('nprocess', '0'))
 
         # ---- open log
@@ -750,14 +752,14 @@ def run(command, args):
             cstr += "\ngmri " + command
 
             for (k, v) in nopt:
-                if k not in ['subjid', 'queue']:
+                if k not in ['subjid', 'scheduler']:
                     cstr += ' --%s="%s"' % (k, v)
 
             slist = []
             [slist.append(subjects.pop(0)['subject']) for e in range(cores) if subjects]   # might need to change to id
 
             cstr += ' --subjid="%s"' % ("|".join(slist))
-            cstr += ' --queue="local"'
+            cstr += ' --scheduler="local"'
             cstr += '\n'
 
             # ---- pass the command string to qsub
