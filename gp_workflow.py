@@ -199,7 +199,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
                 boldname = v['name']
 
-                r += "\n\nWorking on: " + boldname + " ..."
+                r += "\n\nWorking on: " + boldname + " ..." + 'overwrite:'
 
                 try:
                     # --- filenames
@@ -220,7 +220,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
                     # --- extract first bold frame
 
-                    if not os.path.exists(f['bold1']) and not options['overwrite']:
+                    if not os.path.exists(f['bold1']) or overwrite:
                         sliceImage(f['bold'], f['bold1'], 1)
                         if os.path.exists(f['bold1']):
                             r += '\n    ... sliced first frame from %s' % (os.path.basename(f['bold']))
@@ -243,7 +243,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
                     # --- run BET
 
-                    if os.path.exists(bbtarget):
+                    if os.path.exists(bbtarget) and not overwrite:
                         r += '\n    ... bet on %s already run' % (os.path.basename(bsource))
                         report['bolddone'] += 1
                     else:
