@@ -110,7 +110,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     The default arguments and values are: "n:100|zstats", which specify that
     100 permutations should be run and the statistics of interest expressed in
     z values. To exclude a default argument, specify "<arg>:remove", e.g.:
-    'zstats:remove' if the statistics are not to be converted to z values.
+    "zstats:remove" if the statistics are not to be converted to z values.
 
     For full list of possible arguments and values, please consult PALM user
     guide. Some relevant arguments to consider:
@@ -130,7 +130,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     Example additional arguments
     ----------------------------
 
-    args='n:500|accel:tail|T|fonly'
+    args="n:500|accel:tail|T|fonly"
 
     In this case PALM would run 500 permutations and the p-values would be
     estimated by a help of the tail estimation acceleration method, TFCE
@@ -148,7 +148,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     Example use
     -----------
 
-    gmri runPALM design='name:sustained|t:taov' args='n:500|accel:tail|T|fonly' \\
+    gmri runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
          root=sustained_aov
 
     ----------------
