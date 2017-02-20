@@ -645,7 +645,7 @@ def run(command, args):
             cstr += "\ngmri " + command
 
             for (k, v) in nopt:
-                if k not in ['subjid', 'scheduler']:
+                if k not in ['subjid', 'scheduler', 'queue']:
                     cstr += ' --%s="%s"' % (k, v)
 
             slist = []
@@ -752,7 +752,7 @@ def run(command, args):
             cstr += "\ngmri " + command
 
             for (k, v) in nopt:
-                if k not in ['subjid', 'scheduler']:
+                if k not in ['subjid', 'scheduler', 'queue']:
                     cstr += ' --%s="%s"' % (k, v)
 
             slist = []
