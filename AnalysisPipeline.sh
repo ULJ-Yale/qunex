@@ -487,6 +487,8 @@ show_usage_nii4dfpconvert() {
     			echo ""
     			echo "Note: Assumptions are made that there exists _hp2000_clean NIFTI file in the HCP folder structure."
     			echo ""
+    			echo "Example: AP setuplist <absolute_path_to_subjects_folder> 'list_of_cases' "
+    			echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
