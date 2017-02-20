@@ -486,16 +486,13 @@ show_usage_setuphcp() {
     			echo "-- Usage for setuphcp"
     			echo ""
 				echo "* Example with interactive terminal:"
-<<<<<<< HEAD
 				echo "AP setuphcp <study_folder> 'comma_separarated_list_of_cases>'"
-=======
 				echo "AP setuphcp <study_folder> '<list of cases>'"
     			echo ""
 				echo "* Example with flags:"
 				echo "AP --function=setuphcp --path=<study_folder> --subjects='<list of cases>'"
     			echo ""
     			echo ""
->>>>>>> b58031b194bc916f8041539132ad33f54d518d99
     			echo ""
     			echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -4709,11 +4706,8 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "		--function=<function_name>					Name of function"
 				echo "		--path=<study_folder>						Path to study data folder"
-<<<<<<< HEAD
 				echo "		--subjects=<comma_separated_list_of_cases>					List of subjects to run"
-=======
 				echo "		--subjects=<list_of_cases>					List of subjects to run, separated by commas"
->>>>>>> b58031b194bc916f8041539132ad33f54d518d99
 				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
 				echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
