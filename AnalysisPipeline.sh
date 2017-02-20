@@ -307,13 +307,45 @@ show_usage_gmri() {
 dicomsort() {
 
 	cd "$StudyFolder"/"$CASE"
-
-	echo " ---> running sortDicom"
-	gmri sortDicom
-
-	echo " ---> running dicom2nii"
-	gmri dicom2nii unzip=yes gzip=yes clean=yes	
 	
+			if [ "$Cluster" == 1 ]; then
+  				
+  				echo ""
+  				echo "---------------------------------------------------------------------------------"
+				echo "Running dicomsort locally on `hostname`"
+				echo "Check output here: $StudyFolder/$CASE/dicom "
+				echo "---------------------------------------------------------------------------------"
+		 		echo ""
+		 		Com1="cd ${StudyFolder}/${CASE}"
+				echo " ---> running sortDicom"
+				Com2="gmri sortDicom"
+				echo " ---> running dicom2nii"
+				Com3="gmri dicom2nii unzip=yes gzip=yes clean=yes"
+			 	# -- Combine all the calls into a single command
+				ComQUEUE="$Com1; $Com2; $Com3"
+				eval "$ComQUEUE" &> "$StudyFolder"/"$CASE"/dicom/"$CASE"_dicomsort_`date +%Y-%m-%d-%H-%M-%S`.log	
+			
+			else
+			
+				echo "Job ID:"
+				fslsub="$Scheduler" # set scheduler for fsl_sub command
+				# -- Set the scheduler commands
+				rm -f "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh &> /dev/null
+				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
+				chmod 770 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
+				# -- Run the scheduler commands
+				fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
+				
+				echo ""
+				echo "---------------------------------------------------------------------------------"
+				echo "Scheduler: $Scheduler"
+				echo "QUEUE Name: $QUEUE"
+				echo "Data successfully submitted to $QUEUE" 
+				echo "Check output logs here: $StudyFolder/$CASE/dicom"
+				echo "---------------------------------------------------------------------------------"
+				echo ""
+			fi
+
 }
 
 show_usage_dicomsort() {
@@ -323,15 +355,37 @@ show_usage_dicomsort() {
   				echo "This function expects a set of raw DICOMs in <study_folder>/<case>/inbox."
   				echo "DICOMs are organized, gzipped and converted to NIFTI format for additional processing."
   				echo ""
+  				echo ""
+  				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>				Name of function"
+				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
+				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo ""  
     			echo "-- Usage for dicomsort"
     			echo ""
 				echo "* Example with interactive terminal:"
-				echo "AP dicomsort <study_folder> '<list of cases>'"
+				echo "AP dicomsort <study_folder> 'comma_separarated_list_of_cases>'"
     			echo ""
-				echo "* Example with flags:"
-				echo "AP --function=dicomsort --path=<study_folder> --subjects='<list of cases>'"
-    			echo ""
-    			echo ""
+    			echo "-- Example with flagged parameters for a local run:"
+				echo ""
+				echo "AP --path='<study_folder>' \ "
+				echo "--function='dicomsort' \ "
+				echo "--subjects='<comma_separarated_list_of_cases>' \ "
+				echo "--runmethod='1'"
+				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='<study_folder>' \ "
+				echo "--function='dicomsort' \ "
+				echo "--subjects='<comma_separarated_list_of_cases>' \ "
+				echo "--runmethod='2' \ "
+				echo "--queue='<name_of_queue>' \ "
+				echo "--scheduler='<name_of_scheduler>' "
+				echo "" 
     			echo ""
 }
 
@@ -373,9 +427,42 @@ show_usage_dicom2nii() {
 setuphcp() {
 
 	cd "$StudyFolder"/"$CASE"
-
-	echo " ---> running setupHCP"
-	gmri setupHCP
+		
+			if [ "$Cluster" == 1 ]; then
+  				
+  				echo ""
+  				echo "---------------------------------------------------------------------------------"
+				echo "Running setuphcp locally on `hostname`"
+				echo "Check output here: $StudyFolder/$CASE/dicom "
+				echo "---------------------------------------------------------------------------------"
+		 		echo ""
+		 		Com1="cd ${StudyFolder}/${CASE}"
+				echo " ---> running setupHCP"
+				Com2="gmri setupHCP"
+			 	# -- Combine all the calls into a single command
+				ComQUEUE="$Com1; $Com2"
+				eval "$ComQUEUE"
+			
+			else
+			
+				echo "Job ID:"
+				fslsub="$Scheduler" # set scheduler for fsl_sub command
+				# -- Set the scheduler commands
+				rm -f "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh &> /dev/null
+				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh
+				chmod 770 "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh
+				# -- Run the scheduler commands
+				fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/" -R 10000 "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh
+				
+				echo ""
+				echo "---------------------------------------------------------------------------------"
+				echo "Scheduler: $Scheduler"
+				echo "QUEUE Name: $QUEUE"
+				echo "Data successfully submitted to $QUEUE" 
+				echo "Check output logs here: $StudyFolder/$CASE/dicom"
+				echo "---------------------------------------------------------------------------------"
+				echo ""
+			fi
 	
 }
 
@@ -387,16 +474,46 @@ show_usage_setuphcp() {
   				echo "This function generates the Human Connectome Project folder structure for preprocessing."
   				echo "It should be executed after proper dicomsort and subject.txt file has been vetted."
   				echo ""
+  				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>				Name of function"
+				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
+				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo "" 
     			echo "-- Usage for setuphcp"
     			echo ""
 				echo "* Example with interactive terminal:"
+<<<<<<< HEAD
+				echo "AP setuphcp <study_folder> 'comma_separarated_list_of_cases>'"
+=======
 				echo "AP setuphcp <study_folder> '<list of cases>'"
     			echo ""
 				echo "* Example with flags:"
 				echo "AP --function=setuphcp --path=<study_folder> --subjects='<list of cases>'"
     			echo ""
     			echo ""
+>>>>>>> b58031b194bc916f8041539132ad33f54d518d99
     			echo ""
+    			echo "-- Example with flagged parameters for a local run:"
+				echo ""
+				echo "AP --path='<study_folder>' \ "
+				echo "--function='setuphcp' \ "
+				echo "--subjects='<comma_separarated_list_of_cases>' \ "
+				echo "--runmethod='1'"
+				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='<study_folder>' \ "
+				echo "--function='setuphcp' \ "
+				echo "--subjects='<comma_separarated_list_of_cases>' \ "
+				echo "--runmethod='2' \ "
+				echo "--queue='<name_of_queue>' \ "
+				echo "--scheduler='<name_of_scheduler>' "
+				echo "" 
+    			echo ""    			echo ""
 }
 
 
@@ -3199,7 +3316,7 @@ show_usage_hcpdlegacy() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
 				echo "		--echospacing=<echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69"
 				echo "		--PEdir=<phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
 				echo "		--TE=<delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
@@ -3315,7 +3432,7 @@ show_usage_dwidenseparcellation() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subject=<list_of_cases>			List of subjects to run"
+				echo "		--subject=<comma_separated_list_of_cases>			List of subjects to run"
 				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
 				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
 				echo "		--outname=<name_of_output_pconn_file>		Specify the suffix output name of the pconn file"
@@ -3467,7 +3584,7 @@ show_usage_boldparcellation() {
 				echo ""
 				echo "		--function=<function_name>				Name of function"
  				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subject=<list_of_cases>				List of subjects to run"
+				echo "		--subject=<comma_separated_list_of_cases>				List of subjects to run"
 				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
 				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
 				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)"
@@ -3582,7 +3699,7 @@ show_usage_fsldtifit() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
 				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
@@ -3711,7 +3828,7 @@ show_usage_fslbedpostxgpu() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
 				echo "		--fibers=<number_of_fibers>			Number of fibres per voxel, default 3"
 				echo "		--model=<deconvolution_model>			Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins"
 				echo "		--burnin=<burnin_period_value>			Burnin period, default 1000"
@@ -4056,7 +4173,7 @@ show_usage_pretractographydense() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
 				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
@@ -4261,7 +4378,7 @@ show_usage_probtrackxgpudense() {
 				echo ""
 				echo "		--function=<function_name>					Name of function"
 				echo "		--path=<study_folder>						Path to study data folder"
-				echo "		--subjects=<list_of_cases>					List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>					List of subjects to run"
 				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
 				echo "		--scheduler=<name_of_cluster_scheduler>				Cluster scheduler program: e.g. LSF or PBS"
 				echo "		--overwrite=<clean_prior_run>					Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
@@ -4357,7 +4474,7 @@ show_usage_awshcpsync() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<list_of_cases>			List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
 				echo "		--modality=<modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
 				echo "		--awsuri=<aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 				echo "		--runmethod=<type_of_run>			Perform a dry test run [1] or real run [2]"
@@ -4592,7 +4709,11 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "		--function=<function_name>					Name of function"
 				echo "		--path=<study_folder>						Path to study data folder"
+<<<<<<< HEAD
+				echo "		--subjects=<comma_separated_list_of_cases>					List of subjects to run"
+=======
 				echo "		--subjects=<list_of_cases>					List of subjects to run, separated by commas"
+>>>>>>> b58031b194bc916f8041539132ad33f54d518d99
 				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
 				echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
@@ -5112,11 +5233,26 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "dicomsort" ]; then
+
+		# Check all the user-defined parameters: 1. Cluster, 2. QUEUE.
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi
+		
 	for CASE in $CASES
 	do
   		"$FunctionToRun" "$CASE"
   	done
 fi
+
 if [ "$FunctionToRunInt" == "dicomsort" ]; then
 	for CASE in $CASES
 	do
@@ -5129,11 +5265,13 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "dicom2nii" ]; then
+		
 	for CASE in $CASES
 	do
   		"$FunctionToRun" "$CASE"
   	done
 fi
+
 if [ "$FunctionToRunInt" == "dicom2nii" ]; then
 	for CASE in $CASES
 	do
@@ -5289,16 +5427,30 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "setuphcp" ]; then
-	echo "Did you make sure to check and correct subjects.txt files after the scan? [yes/no]:"
-		if read answer; then
-		if [ "$answer" == "yes" ]; then
+	
+		# Check all the user-defined parameters: 1. Cluster, 2. QUEUE.
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
+		Cluster="$RunMethod"
+		
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi
+		
+		echo "Makeing sure that and correct subjects_hcp.txt files is generated..."
+				
+		if [ -f "$StudyFolder"/"$CASE"/subjects_hcp.txt ]; then 
 			for CASE in $CASES
 				do
   				"$FunctionToRun" "$CASE"
   			done
   		else
-  			echo "Please setup the subject.txt files and re-run function."
-		fi
+  			echo "--> $StudyFolder/$CASE/subjects_hcp.txt is missing - please setup the subject.txt files and re-run function."
 		fi
 fi
 
@@ -5306,6 +5458,7 @@ if [ "$FunctionToRunInt" == "setuphcp" ]; then
 	echo "Did you make sure to check and correct subjects.txt files after the scan? [yes/no]:"
 		if read answer; then
 		if [ "$answer" == "yes" ]; then
+			Cluster=1
 			for CASE in $CASES
 				do
   				"$FunctionToRunInt" "$CASE"
