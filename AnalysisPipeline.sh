@@ -40,7 +40,7 @@
 ## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 ## - Sync to Grace crontab job -- DONE
-## - Rsync to subject folder based on acq_log.txt -- IN PROGRESS
+## - Rsync to subject folder based on acquisition log -- IN PROGRESS
 ## - Dicomsort if data complete w/o error -- IN PROGRESS
 ## - Generate subject.txt -- IF 0 ERR then RUN; ELSE ABORT -- IN PROGRESS
 ## - Run HCP 1-5 via bash script submitted to bigmem02; setup checkpoints (will need param file) -- IN PROGRESS
@@ -114,9 +114,9 @@
 #
 #~ND~END~
 
-###########################################################################################################################
-###################################################  CODE START ###########################################################
-###########################################################################################################################
+# ===============================================================================================================================
+# ================================================== CODE START  ================================================================
+# ===============================================================================================================================
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -206,8 +206,8 @@ show_usage() {
   				echo "dicomsort		sort dicoms and setup nifti files from dicoms"
   				echo "dicom2nii		convert dicoms to nifti files"
   				echo "setuphcp		setup data structure for hcp processing"
-  				echo "hpcsync		sync with hpc cluster(s) for preprocessing"
-  				echo "awshcpsync	sync hcp data from aws s3 cloud"
+  				echo "hpcsync			sync with hpc cluster(s) for preprocessing"
+  				echo "awshcpsync		sync hcp data from aws s3 cloud"
   				echo ""  				
   				echo ""
   				cyaneho "HCP Pipelines original calls directly from HCP code (deprecated in 2017)"
@@ -229,7 +229,7 @@ show_usage() {
   				echo ""  				
   				cyaneho "DWI processing, analyses & probabilistic tractography functions"
   				cyaneho "----------------------------------------------------------------"
-  				echo "hcpdlegacy		dwi processing for data with standard fieldmaps (cluster usable)"
+  				echo "hcpdlegacy			dwi processing for data with standard fieldmaps (cluster usable)"
   				echo "fsldtifit 			run fsl dtifit (cluster usable)"
   				echo "fslbedpostxgpu 			run fsl bedpostx w/gpu (cluster usable)"
   				echo "isolatesubcortexrois 		isolate subject-specific subcortical rois for tractography"
@@ -309,13 +309,14 @@ dicomsort() {
 	  		# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "no" ]; then
 			echo ""
-			reho " --- Checking for presence of ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
+			reho "===> Checking for presence of ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
 			
 			if (test -f ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt); then
 				echo ""
 				geho "--- Found ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
-				geho "Note: To re-run set --overwrite='yes'"
-				geho "--- dicomsort COMPLETE"
+				geho "    Note: To re-run set --overwrite='yes'"
+				echo ""
+				geho " ... $CASE ---> dicomsort done"
 				echo ""
 
 			else
@@ -536,7 +537,7 @@ show_usage_setuphcp() {
 				echo "--queue='<name_of_queue>' \ "
 				echo "--scheduler='<name_of_scheduler>' "
 				echo "" 
-    			echo ""    			echo ""
+    			echo ""
 }
 
 
@@ -4853,11 +4854,9 @@ show_usage_qcpreproc() {
 				echo ""
 }
 
-#################################################################################################################################
-#################################################################################################################################
-################################## SOURCE REPOS, SETUP LOG & PARSE COMMAND LINE INPUTS ACROSS FUNCTIONS #########################
-#################################################################################################################################
-#################################################################################################################################
+# ===============================================================================================================================
+# ================================ SOURCE REPOS, SETUP LOG & PARSE COMMAND LINE INPUTS ACROSS FUNCTIONS =========================
+# ===============================================================================================================================
 
 # ------------------------------------------------------------------------------
 #  Set exit if error is reported (turn on for debugging)
@@ -5142,14 +5141,13 @@ if [[ "$setflag" =~ .*-.* ]]; then
 
 	echo ""
 	reho "-----------------------------------------------------"
-	reho "--- Running pipeline in parameter mode with flags ---"
+	reho "------- Running pipeline with flagged inputs --------"
 	reho "-----------------------------------------------------"
 	echo ""
 	
-	#
-	# List of command line options across all functions
-	#
-	# generic input flags
+	# ------------------------------------------------------------------------------
+	#  List of command line options across all functions
+	# ------------------------------------------------------------------------------
 	
 	# First get function / command input (to harmonize input with gmri)
 	FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
@@ -5162,7 +5160,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		FunctionToRun="$FunctionInput"		
 	fi
 	
-	# general input flags
+	# -- general input flags
 	StudyFolder=`opts_GetOpt "${setflag}path" $@` # local folder to work on
 	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 	QUEUE=`opts_GetOpt "${setflag}queue" $@` # <name_of_cluster_queue>			Cluster queue name	
@@ -5171,20 +5169,20 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` #Clean prior run and starr fresh [yes/no]
 	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` # Specifies whether to run on the cluster or on the local node
 	
-	# hpcsync input flags
+	# -- hpcsync input flags
 	NetID=`opts_GetOpt "${setflag}netid" $@` # NetID for cluster rsync command
 	HCPStudyFolder=`opts_GetOpt "${setflag}clusterpath" $@` # cluster study folder for cluster rsync command
 	Direction=`opts_GetOpt "${setflag}dir" $@` # direction of rsync command (1 to cluster; 2 from cluster)
 	ClusterName=`opts_GetOpt "${setflag}cluster" $@` # cluster address [e.g. louise.yale.edu)
 
-	# hcpdlegacy input flags
+	# -- hcpdlegacy input flags
 	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@` # <echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69
 	PEdir=`opts_GetOpt "${setflag}PEdir" $@` # <phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
 	TE=`opts_GetOpt "${setflag}TE" $@` # <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
 	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@` # <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
 	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@` # <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
 	
-	# boldparcellation input flags
+	# -- boldparcellation input flags
 	InputFile=`opts_GetOpt "${setflag}inputfile" $@` # --inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
 	InputPath=`opts_GetOpt "${setflag}inputpath" $@` # --inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
 	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` # --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
@@ -5195,28 +5193,28 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` # --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
-	# dwidenseparcellation input flags
+	# -- dwidenseparcellation input flags
 	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` # --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 	OutName=`opts_GetOpt "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
 	
-	# fslbedpostxgpu input flags
+	# -- fslbedpostxgpu input flags
 	Fibers=`opts_GetOpt "${setflag}fibers" $@`  # <number_of_fibers>		Number of fibres per voxel, default 3
 	Model=`opts_GetOpt "${setflag}model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
 	Burnin=`opts_GetOpt "${setflag}burnin" $@`  # <burnin_period_value>		Burnin period, default 1000
 	Jumps=`opts_GetOpt "${setflag}jumps" $@`    # <number_of_jumps>		Number of jumps, default 1250
 	
-	# probtrackxgpudense input flags
+	# -- probtrackxgpudense input flags
 	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`  # <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
 	MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`  # <matrix3_model>		Specify if you wish to run matrix 3 model [yes or omit flag]
 	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`  # <Number_of_Samples_for_Matrix1>		Number of samples - default=5000
 	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`  # <Number_of_Samples_for_Matrix3>>		Number of samples - default=5000
 	
-	# awshcpsync input flags
+	# -- awshcpsync input flags
 	Modality=`opts_GetOpt "${setflag}modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
 	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`	 # <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
-	# qcpreproc input flags
+	# -- qcpreproc input flags
 	OutPath=`opts_GetOpt "${setflag}outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the QC folder
 	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` # --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/general/templates)
 	Modality=`opts_GetOpt "${setflag}modality" $@` # --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
@@ -5252,8 +5250,9 @@ else
 	StudyFolder="$2" 
 	CASESInput="$3"
 	
-	# Make list of subjects compatible with either space- or comma-delimited input:
+	# -- Make list of subjects compatible with either space- or comma-delimited input:
 	CASES=`echo ${CASESInput} | sed 's/,/ /g'`
+
 fi	
 
 # ===============================================================================================================================
