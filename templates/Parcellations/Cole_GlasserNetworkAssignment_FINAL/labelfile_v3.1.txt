@@ -1,0 +1,25 @@
+Visual
+1 0 0 255 255
+Somatomotor
+2 0 255 255 255
+Cingulo-Opercular
+3 153 0 153 255
+Default
+8 255 0 0 255
+Frontoparietal
+6 255 255 0 255
+Auditory
+7 250 62 251 255
+Ventral Attention
+5 0 155 155 255
+Posterior Multimodal
+9 177 89 40 255
+Dorsal-attention
+4 0 255 0 255
+Hippocampal
+10 255 143 0 255
+Unknown2
+11 31 120 180 255
+Unknown3
+12 42 100 100 255
+

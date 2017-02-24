@@ -305,26 +305,41 @@ show_usage_gmri() {
 # ------------------------------------------------------------------------------------------------------
 
 dicomsort() {
+	  				
+	  		# -- Check of overwrite flag was set
+			if [ "$Overwrite" == "no" ]; then
+			echo ""
+			reho " --- Checking for presence of ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
+			
+			if (test -f ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt); then
+				echo ""
+				geho "--- Found ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
+				geho "Note: To re-run set --overwrite='yes'"
+				geho "--- dicomsort COMPLETE"
+				echo ""
 
-	cd "$StudyFolder"/"$CASE"
-	
+			else
+			
+			echo ""
+	  		
+	  		# -- Combine all the calls into a single command
+		 	Com1="cd ${StudyFolder}/${CASE}"
+			echo " ---> running sortDicom and dicom2nii for $CASE"
+			echo ""
+			Com2="gmri sortDicom"
+			Com3="gmri dicom2nii unzip=yes gzip=yes clean=yes"
+			ComQUEUE="$Com1; $Com2; $Com3"
+		
 			if [ "$Cluster" == 1 ]; then
-  				
-  				echo ""
+
+			  	echo ""
   				echo "---------------------------------------------------------------------------------"
 				echo "Running dicomsort locally on `hostname`"
 				echo "Check output here: $StudyFolder/$CASE/dicom "
 				echo "---------------------------------------------------------------------------------"
 		 		echo ""
-		 		Com1="cd ${StudyFolder}/${CASE}"
-				echo " ---> running sortDicom"
-				Com2="gmri sortDicom"
-				echo " ---> running dicom2nii"
-				Com3="gmri dicom2nii unzip=yes gzip=yes clean=yes"
-			 	# -- Combine all the calls into a single command
-				ComQUEUE="$Com1; $Com2; $Com3"
-				eval "$ComQUEUE" &> "$StudyFolder"/"$CASE"/dicom/"$CASE"_dicomsort_`date +%Y-%m-%d-%H-%M-%S`.log	
-			
+		 		eval "$ComQUEUE"
+
 			else
 			
 				echo "Job ID:"
@@ -344,8 +359,10 @@ dicomsort() {
 				echo "Check output logs here: $StudyFolder/$CASE/dicom"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
+			
 			fi
-
+			fi
+			fi
 }
 
 show_usage_dicomsort() {
@@ -364,6 +381,11 @@ show_usage_dicomsort() {
 				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
 				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo ""
+				echo "-- OPTIONAL PARAMETERS: "
+				echo ""
+				echo "		--overwrite=<re-run_dicomsort>				Explicitly force a re-run of dicomsort"
+				echo ""
 				echo ""  
     			echo "-- Usage for dicomsort"
     			echo ""
@@ -428,21 +450,24 @@ setuphcp() {
 
 	cd "$StudyFolder"/"$CASE"
 		
-			if [ "$Cluster" == 1 ]; then
   				
-  				echo ""
+			echo " ---> running setuphcp for $CASE"
+		 	echo ""
+		 	# -- Combine all the calls into a single command
+		 	Com1="cd ${StudyFolder}/${CASE}"
+			Com2="gmri setupHCP"
+			ComQUEUE="$Com1; $Com2"
+			
+			if [ "$Cluster" == 1 ]; then
+			
+				echo ""
   				echo "---------------------------------------------------------------------------------"
 				echo "Running setuphcp locally on `hostname`"
-				echo "Check output here: $StudyFolder/$CASE/dicom "
+				echo "Check output here: $StudyFolder/$CASE/hcp "
 				echo "---------------------------------------------------------------------------------"
 		 		echo ""
-		 		Com1="cd ${StudyFolder}/${CASE}"
-				echo " ---> running setupHCP"
-				Com2="gmri setupHCP"
-			 	# -- Combine all the calls into a single command
-				ComQUEUE="$Com1; $Com2"
 				eval "$ComQUEUE"
-			
+
 			else
 			
 				echo "Job ID:"
@@ -462,6 +487,7 @@ setuphcp() {
 				echo "Check output logs here: $StudyFolder/$CASE/dicom"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
+			
 			fi
 	
 }
@@ -4535,6 +4561,7 @@ qcpreproc() {
 		do
 			# -- Generate QC statistics for a given BOLD
 			geho " --- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
+			echo ""
 			
 			# -- Compute TSNR and log it
 			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii TSNR ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -exclude-outliers 4 4
@@ -4877,10 +4904,10 @@ log_SetToolName "AnalysisPipeline.sh"
 #   The remaining parameters are the full list of command line arguments
 #
 
-opts_GetOpt1() {
+opts_GetOpt() {
     sopt="$1"
     shift 1
-    for fn in $@ ; do
+    for fn in "$@" ; do
     if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ] ; then
         echo $fn | sed "s/^${sopt}=//"
         return 0
@@ -4896,7 +4923,7 @@ opts_GetOpt1() {
 #
    
 opts_CheckForHelpRequest() {
-    for fn in $@ ; do
+    for fn in "$@" ; do
         if [ "$fn" = "--help" ]; then
             return 0
         fi
@@ -4915,7 +4942,7 @@ timestamp() {
    echo "AP.$1.`date "+%Y.%m.%d.%H.%M.%S"`.txt"
 }
 
-opts_ShowVersionIfRequested $@
+# opts_ShowVersionIfRequested "$@"
 
 # ------------------------------------------------------------------------------
 #  Parse Command Line Options
@@ -5077,6 +5104,7 @@ log_Msg "Parsing Command Line Options: "
 # -- Clear variables for new run
 
 unset FunctionToRun
+unset subjects
 unset FunctionToRunInt
 unset StudyFolder
 unset CASES
@@ -5109,7 +5137,6 @@ else
 
 fi
 
-
 # -- Next check if any flags are set
 if [[ "$setflag" =~ .*-.* ]]; then
 
@@ -5125,8 +5152,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	# generic input flags
 	
 	# First get function / command input (to harmonize input with gmri)
-	FunctionInput=`opts_GetOpt1 "${setflag}function" $@` # function to execute
-	CommamndInput=`opts_GetOpt1 "${setflag}command" $@` # function to execute
+	FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
+	CommamndInput=`opts_GetOpt "${setflag}command" "$@"` # function to execute
 	
 	# If input name uses 'command' instead of function set that to $FunctionToRun
 	if [[ -z "$FunctionInput" ]]; then
@@ -5135,71 +5162,82 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		FunctionToRun="$FunctionInput"		
 	fi
 	
-	StudyFolder=`opts_GetOpt1 "${setflag}path" $@` # local folder to work on
-	CASES=`opts_GetOpt1 "${setflag}subjects" $@ | sed 's/,/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g'` # list of input cases; removing the comma
-	QUEUE=`opts_GetOpt1 "${setflag}queue" $@` # <name_of_cluster_queue>			Cluster queue name	
-	PRINTCOM=`opts_GetOpt1 "${setflag}printcom" $@` #Option for printing the entire command
-	Scheduler=`opts_GetOpt1 "${setflag}scheduler" $@` #Specify the type of scheduler to use 
-	Overwrite=`opts_GetOpt1 "${setflag}overwrite" $@` #Clean prior run and starr fresh [yes/no]
-	RunMethod=`opts_GetOpt1 "${setflag}runmethod" $@` # Specifies whether to run on the cluster or on the local node
+	# general input flags
+	StudyFolder=`opts_GetOpt "${setflag}path" $@` # local folder to work on
+	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+	QUEUE=`opts_GetOpt "${setflag}queue" $@` # <name_of_cluster_queue>			Cluster queue name	
+	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@` #Option for printing the entire command
+	Scheduler=`opts_GetOpt "${setflag}scheduler" $@` #Specify the type of scheduler to use 
+	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` #Clean prior run and starr fresh [yes/no]
+	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` # Specifies whether to run on the cluster or on the local node
 	
 	# hpcsync input flags
-	NetID=`opts_GetOpt1 "${setflag}netid" $@` # NetID for cluster rsync command
-	HCPStudyFolder=`opts_GetOpt1 "${setflag}clusterpath" $@` # cluster study folder for cluster rsync command
-	Direction=`opts_GetOpt1 "${setflag}dir" $@` # direction of rsync command (1 to cluster; 2 from cluster)
-	ClusterName=`opts_GetOpt1 "${setflag}cluster" $@` # cluster address [e.g. louise.yale.edu)
+	NetID=`opts_GetOpt "${setflag}netid" $@` # NetID for cluster rsync command
+	HCPStudyFolder=`opts_GetOpt "${setflag}clusterpath" $@` # cluster study folder for cluster rsync command
+	Direction=`opts_GetOpt "${setflag}dir" $@` # direction of rsync command (1 to cluster; 2 from cluster)
+	ClusterName=`opts_GetOpt "${setflag}cluster" $@` # cluster address [e.g. louise.yale.edu)
 
 	# hcpdlegacy input flags
-	EchoSpacing=`opts_GetOpt1 "${setflag}echospacing" $@` # <echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69
-	PEdir=`opts_GetOpt1 "${setflag}PEdir" $@` # <phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
-	TE=`opts_GetOpt1 "${setflag}TE" $@` # <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
-	UnwarpDir=`opts_GetOpt1 "${setflag}unwarpdir" $@` # <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
-	DiffDataSuffix=`opts_GetOpt1 "${setflag}diffdatasuffix" $@` # <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@` # <echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69
+	PEdir=`opts_GetOpt "${setflag}PEdir" $@` # <phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
+	TE=`opts_GetOpt "${setflag}TE" $@` # <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
+	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@` # <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
+	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@` # <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
 	
 	# boldparcellation input flags
-	InputFile=`opts_GetOpt1 "${setflag}inputfile" $@` # --inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
-	InputPath=`opts_GetOpt1 "${setflag}inputpath" $@` # --inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
-	InputDataType=`opts_GetOpt1 "${setflag}inputdatatype" $@` # --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
-	OutPath=`opts_GetOpt1 "${setflag}outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
-	OutName=`opts_GetOpt1 "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file
-	ComputePConn=`opts_GetOpt1 "${setflag}computepconn" $@` # --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
-	UseWeights=`opts_GetOpt1 "${setflag}useweights" $@` # --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
-	WeightsFile=`opts_GetOpt1 "${setflag}useweights" $@` # --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
-	ParcellationFile=`opts_GetOpt1 "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	InputFile=`opts_GetOpt "${setflag}inputfile" $@` # --inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
+	InputPath=`opts_GetOpt "${setflag}inputpath" $@` # --inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
+	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` # --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
+	OutPath=`opts_GetOpt "${setflag}outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
+	OutName=`opts_GetOpt "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file
+	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@` # --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
+	UseWeights=`opts_GetOpt "${setflag}useweights" $@` # --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
+	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` # --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
 	# dwidenseparcellation input flags
-	MatrixVersion=`opts_GetOpt1 "${setflag}matrixversion" $@` # --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
-	ParcellationFile=`opts_GetOpt1 "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
-	OutName=`opts_GetOpt1 "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
+	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` # --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	OutName=`opts_GetOpt "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
 	
 	# fslbedpostxgpu input flags
-	Fibers=`opts_GetOpt1 "${setflag}fibers" $@`  # <number_of_fibers>		Number of fibres per voxel, default 3
-	Model=`opts_GetOpt1 "${setflag}model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
-	Burnin=`opts_GetOpt1 "${setflag}burnin" $@`  # <burnin_period_value>		Burnin period, default 1000
-	Jumps=`opts_GetOpt1 "${setflag}jumps" $@`    # <number_of_jumps>		Number of jumps, default 1250
+	Fibers=`opts_GetOpt "${setflag}fibers" $@`  # <number_of_fibers>		Number of fibres per voxel, default 3
+	Model=`opts_GetOpt "${setflag}model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
+	Burnin=`opts_GetOpt "${setflag}burnin" $@`  # <burnin_period_value>		Burnin period, default 1000
+	Jumps=`opts_GetOpt "${setflag}jumps" $@`    # <number_of_jumps>		Number of jumps, default 1250
 	
 	# probtrackxgpudense input flags
-	MatrixOne=`opts_GetOpt1 "${setflag}omatrix1" $@`  # <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
-	MatrixThree=`opts_GetOpt1 "${setflag}omatrix3" $@`  # <matrix3_model>		Specify if you wish to run matrix 3 model [yes or omit flag]
-	NsamplesMatrixOne=`opts_GetOpt1 "${setflag}nsamplesmatrix1" $@`  # <Number_of_Samples_for_Matrix1>		Number of samples - default=5000
-	NsamplesMatrixThree=`opts_GetOpt1 "${setflag}nsamplesmatrix3" $@`  # <Number_of_Samples_for_Matrix3>>		Number of samples - default=5000
+	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`  # <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
+	MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`  # <matrix3_model>		Specify if you wish to run matrix 3 model [yes or omit flag]
+	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`  # <Number_of_Samples_for_Matrix1>		Number of samples - default=5000
+	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`  # <Number_of_Samples_for_Matrix3>>		Number of samples - default=5000
 	
 	# awshcpsync input flags
-	Modality=`opts_GetOpt1 "${setflag}modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
-	Awsuri=`opts_GetOpt1 "${setflag}awsuri" $@`	 # <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
+	Modality=`opts_GetOpt "${setflag}modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
+	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`	 # <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
 	# qcpreproc input flags
-	OutPath=`opts_GetOpt1 "${setflag}outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the QC folder
-	TemplateFolder=`opts_GetOpt1 "${setflag}templatefolder" $@` # --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/general/templates)
-	Modality=`opts_GetOpt1 "${setflag}modality" $@` # --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
-	DWIPath=`opts_GetOpt1 "${setflag}dwipath" $@` # --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
-	DWIData=`opts_GetOpt1 "${setflag}dwidata" $@` # --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
-	DWILegacy=`opts_GetOpt1 "${setflag}dwilegacy" $@` # --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
-	BOLDS=`opts_GetOpt1 "${setflag}bolddata" $@ | sed 's/,/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
-	BOLDSuffix=`opts_GetOpt1 "${setflag}boldsuffix" $@` # --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
-	SkipFrames=`opts_GetOpt1 "${setflag}skipframes" $@` # --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation
+	OutPath=`opts_GetOpt "${setflag}outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the QC folder
+	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` # --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/general/templates)
+	Modality=`opts_GetOpt "${setflag}modality" $@` # --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
+	DWIPath=`opts_GetOpt "${setflag}dwipath" $@` # --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
+	DWIData=`opts_GetOpt "${setflag}dwidata" $@` # --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
+	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@` # --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
+	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` # --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
+	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@` # --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation
 	
+	# -- Check if subject input is a parameter file instead of list of cases
+	if [[ ${CASES} == *.txt ]]; then
+		SubjectParamFile="$CASES"
+		echo ""
+		echo "Using $SubjectParamFile for input."
+		echo ""
+		CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
+	fi
+
 else
+
 	# -- If no flags were found the pipeline defaults to 'interactive' mode. 
 	# -- Not all functions are supported in interactive mode
 	echo ""
@@ -5212,15 +5250,15 @@ else
 	#
 	FunctionToRunInt="$1"
 	StudyFolder="$2" 
-	CASES="$3"
+	CASESInput="$3"
+	
+	# Make list of subjects compatible with either space- or comma-delimited input:
+	CASES=`echo ${CASESInput} | sed 's/,/ /g'`
 fi	
 
-#################################################################################################################################
-#################################################################################################################################
-################################## EXECUTE SELECTED FUNCTION AND LOOP THROUGH ALL THE CASES #####################################
-#################################################################################################################################
-#################################################################################################################################
-
+# ===============================================================================================================================
+# ================================ EXECUTE SELECTED FUNCTION AND LOOP THROUGH ALL THE CASES =====================================
+# ===============================================================================================================================
 
 # ------------------------------------------------------------------------------
 #  dicomsort function loop
@@ -5234,6 +5272,7 @@ if [ "$FunctionToRun" == "dicomsort" ]; then
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		if [ -z "$Overwrite" ]; then Overwrite="no"; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -5241,15 +5280,19 @@ if [ "$FunctionToRun" == "dicomsort" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
 		fi
 		
-	for CASE in $CASES
-	do
+	for CASE in $CASES; do
   		"$FunctionToRun" "$CASE"
   	done
 fi
 
 if [ "$FunctionToRunInt" == "dicomsort" ]; then
-	for CASE in $CASES
-	do
+	
+	Cluster=1
+	echo "Re-run existing run [yes, no]:"
+	if read answer; then Overwrite=$answer; fi
+	echo ""
+	
+	for CASE in $CASES; do
   		"$FunctionToRunInt" "$CASE"
   	done  	
 fi
@@ -5449,17 +5492,15 @@ if [ "$FunctionToRun" == "setuphcp" ]; then
 fi
 
 if [ "$FunctionToRunInt" == "setuphcp" ]; then
-	echo "Did you make sure to check and correct subjects.txt files after the scan? [yes/no]:"
-		if read answer; then
-		if [ "$answer" == "yes" ]; then
-			Cluster=1
+
+		if [ -f "$StudyFolder"/"$CASE"/subjects_hcp.txt ]; then 
+		Cluster=1
 			for CASE in $CASES
 				do
-  				"$FunctionToRunInt" "$CASE"
+  				"$FunctionToRun" "$CASE"
   			done
   		else
-  			echo "Please setup the subject.txt files and re-run function."
-		fi
+  			echo "--> $StudyFolder/$CASE/subjects_hcp.txt is missing - please setup the subject.txt files and re-run function."
 		fi
 fi
 
