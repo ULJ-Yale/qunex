@@ -5480,27 +5480,29 @@ if [ "$FunctionToRun" == "setuphcp" ]; then
 		
 		echo "Makeing sure that and correct subjects_hcp.txt files is generated..."
 				
-		if [ -f "$StudyFolder"/"$CASE"/subjects_hcp.txt ]; then 
 			for CASE in $CASES
-				do
-  				"$FunctionToRun" "$CASE"
+			do
+				if [ -f "$StudyFolder"/"$CASE"/subject_hcp.txt ]; then 
+  					"$FunctionToRun" "$CASE"
+  				else	
+  					echo "--> $StudyFolder/$CASE/subject_hcp.txt is missing - please setup the subject.txt files and re-run function."
+  				fi
   			done
-  		else
-  			echo "--> $StudyFolder/$CASE/subjects_hcp.txt is missing - please setup the subject.txt files and re-run function."
-		fi
 fi
 
 if [ "$FunctionToRunInt" == "setuphcp" ]; then
-
-		if [ -f "$StudyFolder"/"$CASE"/subjects_hcp.txt ]; then 
-		Cluster=1
+			
+			# Always run locally if command is interactive
+			Cluster=1
+			
 			for CASE in $CASES
-				do
-  				"$FunctionToRun" "$CASE"
+			do
+				if [ -f "$StudyFolder"/"$CASE"/subject_hcp.txt ]; then 
+  					"$FunctionToRunInt" "$CASE"
+  				else	
+  					echo "--> $StudyFolder/$CASE/subject_hcp.txt is missing - please setup the subject.txt files and re-run function."
+  				fi
   			done
-  		else
-  			echo "--> $StudyFolder/$CASE/subjects_hcp.txt is missing - please setup the subject.txt files and re-run function."
-		fi
 fi
 
 # ------------------------------------------------------------------------------
