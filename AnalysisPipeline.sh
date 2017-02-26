@@ -206,6 +206,7 @@ show_usage() {
   				echo "dicomsort		sort dicoms and setup nifti files from dicoms"
   				echo "dicom2nii		convert dicoms to nifti files"
   				echo "setuphcp		setup data structure for hcp processing"
+  				echo "createlists		setup subject lists for preprocessing or analyses"
   				echo "hpcsync			sync with hpc cluster(s) for preprocessing"
   				echo "awshcpsync		sync hcp data from aws s3 cloud"
   				echo ""  				
@@ -219,12 +220,8 @@ show_usage() {
   				echo "hcp5_orig		surface component of the hcp pipeline (cluster usable)"
   				echo "hcpd_orig		dwi component of the hcp pipeline (cluster usable)"
   				echo ""
-  				cyaneho "Generating lists & qc functions"
+  				cyaneho "QC and Misc processing functions"
   				cyaneho "--------------------------------"
-  				echo "setuplist		setup list for fcmri analysis / preprocessing or volume snr calculations"
-  				echo "nii4dfpconvert		convert nifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "cifti4dfpconvert	convert cifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "ciftismooth		smooth & convert cifti bold data to 4dpf format for fild analyses"
   				echo "qcpreproc		run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
   				echo ""  				
   				cyaneho "DWI processing, analyses & probabilistic tractography functions"
@@ -249,6 +246,9 @@ show_usage() {
   				echo "boldmergenifti			merge specified nii bold timeseries"
   				echo "boldmergecifti			merge specified citi bold timeseries"
   				echo "bolddense			compute bold dense connectome (needs >30gb ram per bold)"
+  				echo "nii4dfpconvert		convert nifti hcp-processed bold data to 4dpf format for fild analyses"
+  				echo "cifti4dfpconvert	convert cifti hcp-processed bold data to 4dpf format for fild analyses"
+  				echo "ciftismooth		smooth & convert cifti bold data to 4dpf format for fild analyses"
   				echo ""  				
   				cyaneho "FIX ICA de-noising"    
   				cyaneho "---------------------------"							
@@ -368,7 +368,7 @@ dicomsort() {
 
 show_usage_dicomsort() {
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
   				echo "This function expects a set of raw DICOMs in <study_folder>/<case>/inbox."
   				echo "DICOMs are organized, gzipped and converted to NIFTI format for additional processing."
@@ -427,7 +427,7 @@ dicom2nii() {
 
 show_usage_dicom2nii() {
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
   				echo "This function converts DICOMs to NIFTI format for additional processing."
   				echo ""
@@ -496,7 +496,7 @@ setuphcp() {
 show_usage_setuphcp() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
   				echo "This function generates the Human Connectome Project folder structure for preprocessing."
   				echo "It should be executed after proper dicomsort and subject.txt file has been vetted."
@@ -540,48 +540,135 @@ show_usage_setuphcp() {
     			echo ""
 }
 
-
 # ------------------------------------------------------------------------------------------------------
-#  setuplist - Generate processing & analysis lists for fcMRI
+#  createlists - Generate processing & analysis lists for fcMRI
 # ------------------------------------------------------------------------------------------------------
 
-setuplist() {
+createlists() {
 
-	if [ "$ListGenerate" == "fcmri" ]; then
-		# - generate fcMRI analysis list for all subjects across all BOLDs
-		cd "$StudyFolder"
-		cd "$StudyFolder"/../fcMRI/lists
-		ln -s "$APPATH"/functions/"$ListFunction" ./"$ListFunction" &> /dev/null
+	if [ "$ListGenerate" == "preprocessing" ]; then
+			
+	# - Check if appending list
+	if [ "$Append" == "yes" ]; then
+	
+		# --> If append was set to yes and file exists then clear header
+		ParameterFile="no"
+		
+		echo ""
+		geho "---------------------------------------------------------------------"
+		geho "--> You are appending the paramater file with $CASE                  "
+		geho "--> --parameterfile flag will be cleared"
+		geho "--> Check usage to overwrite the file"
+		geho "---------------------------------------------------------------------"
+		echo ""
+		
 		source "$ListFunction"
+	
+	else
+		
+		echo ""
+		geho "---------------------------------------------------------------------"
+		geho "--> Generaring new file with parameter header for $CASE              "
+		geho "---------------------------------------------------------------------"
+		echo ""
+		
+		source "$ListFunction"
+		
+	fi
+	fi
+
+	if [ "$ListGenerate" == "analysis" ]; then
+	
+		unset ParameterFile
+		unset Append
+		
+		echo ""
+		geho "---------------------------------------------------------------------"
+		geho "--> Generaring analysis list files for $CASE... "
+		geho "--> Check output here: ${StudyFolder}/lists... "
+		geho "---------------------------------------------------------------------"
+		echo ""
+		
+		source "$ListFunction"
+
 	fi
 	
 	if [ "$ListGenerate" == "snr" ]; then
+	
 		# - generate subject SNR list for all subjects across all BOLDs
 		cd "$StudyFolder"/QC/snr
 		for BOLD in $BOLDS
 		do
 			echo subject id:"$CASE" >> subjects.snr.txt
-			echo file:"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz >> subjects.snr.txt
+			echo file:"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz >> "$StudyFolder"/QC/snr/subjects.snr.txt
 		done
-	fi
-	
-	if [ "$ListGenerate" == "fcmripreprocess" ]; then
-		# - generate fcMRI preprocess list for all subjects across all BOLDs
-		cd "$StudyFolder"
-		cd ../fcMRI
-		source "$ListFunction"
 	fi
 }
 
-show_usage_setuplist() {
-
+show_usage_createlists() {
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
-    			echo "This function generates list files for functional connectivity analyses."
+  				echo "This function generates a lists for processing or analyses for multiple subjects."
+  				echo "The function supports generation of parameter files for HCP processing for either 'legacy' of multiband data."
+  				echo ""
+  				echo "Supported lists:"
+  				echo ""
+  				echo "	* preprocessing --> Subject parameter list with cases to preprocess"
+  				echo "	* analysis --> List of cases to compute seed connectivity or GBC"
+  				echo "	* snr --> List of cases to compute signal-to-noise ratio"
+  				echo ""
+  				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>				Name of function"
+				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
+				echo "		--listname=<list_to_generate>				Type of list to generate. "
+				echo "	 	* Supported: preprocessing, analysis, snr"
+				echo ""
+				echo "-- OPTIONAL PARAMETERS: "
+				echo ""
+				echo "		--overwrite=<yes/no>			Explicitly delete any prior lists"
+				echo "		--append=<yes>				Explicitly append the existing list"
+				echo "		* Note: If --append set to <yes> then function will append new cases to the end"
+				echo ""								
+				echo "		--parameterfile=<header_file_for_processing_list>		Set header for the processing list."
+				echo ""
+				echo "		* Default:"
+				echo ""
+				echo "`ls ${TOOLS}/MNAP/general/functions/subjectparamlist_header_multiband.txt`"
+				echo ""
+				echo "		* Supported: "
+				echo ""
+				echo "`ls ${TOOLS}/MNAP/general/functions/subjectparamlist_header*` "
+				echo ""
+				echo "		* Note: If --parameterfile set to <no> then function will not add a header"
+				echo ""								
+				echo "      --listfunction=<function_used_to_create_list>   	Point to external function to use"
+				echo "      --bolddata=<comma_separated_list_of_bolds>   	List of BOLD files to append to analysis or snr lists"
+				echo "      --parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation in {$TOOLS}/MNAP/general/templates/Parcellations/) "
+				echo "      --filetype=<file_extension>			Extension for BOLDs in the analysis (e.g. _Atlas). Default []"
+				echo "      --boldsuffix=<comma_separated_bold_suffix>	List of BOLDs to iterate over in the analysis list"
+#    			echo "		--subjecthcpfile=<yes/no>		Use individual subject_hcp.txt file for for appending the parameter list"
     			echo ""
-    			echo "Example: AP setuplist <absolute_path_to_subjects_folder> 'list_of_cases' "
+    			echo "-- Usage for createsubjectlists"
     			echo ""
+				echo "* Example with interactive terminal:"
+				echo ""
+				echo "AP createlists <study_folder> 'comma_separarated_list_of_cases>'"
+    			echo ""
+    			echo "-- Example with flagged parameters:"
+				echo ""
+				echo "AP --path='<study_folder>' \ "
+				echo "--function='createlists' \ "
+				echo "--subjects='<comma_separarated_list_of_cases>' \ "
+				echo "--listtocreate='preprocessing' \ "
+				echo "--overwrite='yes' \ "
+				echo "--listname='<list_to_generate>' \ "
+				echo "--parameterfile='no' \ "
+				echo "--append='yes' "
+				echo ""
+				echo "" 
     			echo ""
 }
 
@@ -622,7 +709,7 @@ done
 show_usage_nii4dfpconvert() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "This function converts NII files to legacy 4dfp file format used by WashU NIL pipelines."
     			echo ""
@@ -670,7 +757,7 @@ done
 show_usage_cifti4dfpconvert() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function for converting a CIFTI file to a legacy 4dfp 4dfp file format used by WashU NIL pipelines for a given BOLD file."
     			echo ""
@@ -725,7 +812,7 @@ done
 show_usage_ciftismooth() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function for CIFTI smoothing."
     			echo ""
@@ -759,7 +846,7 @@ hpcsync() {
 
 show_usage_hpcsync() {
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "This function runs rsync to or from the Yale Clusters [e.g. Omega, Louise, Grace) and local servers."
   				echo "It explicitly preserves the Human Connectome Project folder structure for preprocessing:"
@@ -835,7 +922,7 @@ isolatesubcortexrois() {
 show_usage_isolatesubcortexrois() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function for isolating subcortical ROIs based on individual anatomy to be used in probabilistic tractography."
     			echo ""
@@ -896,7 +983,7 @@ isolatethalamusfslnuclei() {
 show_usage_isolatethalamusfslnuclei() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "UNDER DEVELOPMENT - USAGE INFO PENDING..."
     			echo ""
@@ -1047,7 +1134,7 @@ probtracksubcortex() {
 show_usage_probtracksubcortex() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			reho "		*** As of 2017 this function is deprecated and not supported any longer since the dense connectome implementation."
     			reho "		*** The new usage for dense connectome computation can be found via the following functions:"
@@ -1073,7 +1160,7 @@ linkmovement() {
 show_usage_linkmovement() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function links processed motion data from the HCP folder structure into the appropriate 'Parcellated' folder structure for later use."
     			echo ""
@@ -1115,7 +1202,7 @@ printmatrix() {
 show_usage_printmatrix() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function prints a data matrix in CVS format for a given parcellation."
     			echo ""
@@ -1226,7 +1313,7 @@ boldmergenifti() {
 show_usage_boldmergenifti() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "USAGE INFO PENDING..."
     			echo ""
@@ -1981,7 +2068,7 @@ boldmergecifti() {
 show_usage_boldmergecifti() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "USAGE INFO PENDING..."
     			echo ""
@@ -2168,7 +2255,7 @@ boldseparateciftifixica() {
 show_usage_boldseparateciftifixica() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "USAGE INFO PENDING..."
     			echo ""
@@ -2199,7 +2286,7 @@ bolddense() {
 show_usage_bolddense() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "USAGE INFO PENDING..."
     			echo ""
@@ -2233,7 +2320,7 @@ fixica() {
 show_usage_fixica() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "USAGE INFO FOR FIX ICA PENDING..."
     			echo ""
@@ -2263,7 +2350,7 @@ postfix() {
 show_usage_postfix() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "USAGE INFO PENDING ... "
     			echo ""
@@ -2317,7 +2404,7 @@ boldhardlinkfixica() {
 show_usage_boldhardlinkfixica() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function for hard-linking minimally preprocessed HCP BOLD images after FIX ICA was done for further denoising."
     			echo ""
@@ -2355,7 +2442,7 @@ fixicainsertmean() {
 show_usage_fixicainsertmean() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function for imputing mean of the image after FIX ICA was done for further denoising."
     			echo ""
@@ -2393,7 +2480,7 @@ fixicaremovemean() {
 show_usage_fixicaremovemean() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function for removing the mean of the image after FIX ICA was done for further denoising."
     			echo ""
@@ -2453,7 +2540,7 @@ boldhardlinkfixicamerged() {
 show_usage_boldhardlinkfixicamerged() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function for hard-linking minimally preprocessed and merged HCP BOLD images after FIX ICA was done for further denoising."
     			echo ""
@@ -2665,7 +2752,7 @@ hcp1_orig() {
 show_usage_hcp1_orig() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Original implementation of the PreFreeSurfer (hcp1) code."
     			echo ""
@@ -2746,7 +2833,7 @@ hcp2_orig() {
 show_usage_hcp2_orig() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Original implementation of the FreeSurfer (hcp2) code."
     			echo ""
@@ -2845,7 +2932,7 @@ hcp3_orig() {
 show_usage_hcp3_orig() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Original implementation of the PostFreeSurfer (hcp3) code."
     			echo ""
@@ -3004,7 +3091,7 @@ hcp4_orig() {
 show_usage_hcp4_orig() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Original implementation of the HCP Volume Preprocessing (hcp4) code."
     			echo ""
@@ -3092,7 +3179,7 @@ hcp5_orig() {
 show_usage_hcp5_orig() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Original implementation of the HCP Surface Preprocessing (hcp5) code."
     			echo ""
@@ -3204,7 +3291,7 @@ hcpd_orig() {
 show_usage_hcpd_orig() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Original implementation of the HCP Diffusion Preprocessing (hcpd) code."
     			echo ""
@@ -3323,7 +3410,7 @@ hcpdlegacy() {
 show_usage_hcpdlegacy() {
 				
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the DWI preprocessing using the FUGUE method for legacy data that are not TOPUP compatible"
 				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing: "
@@ -3385,7 +3472,7 @@ dwidenseparcellation() {
     	# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
     	# Subject	  # e.g. 100307
     	# MatrixVersion # e.g. 1 or 3
-    	# ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+    	# ParcellationFile  # e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
 
 		########################################## OUTPUTS #########################################
 
@@ -3444,7 +3531,7 @@ dwidenseparcellation() {
 show_usage_dwidenseparcellation() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function implements parcellation on the DWI dense connectomes using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)."
 				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
@@ -3474,7 +3561,7 @@ show_usage_dwidenseparcellation() {
 				echo "--function='dwidenseparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
-				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--runmethod='1'"
@@ -3485,7 +3572,7 @@ show_usage_dwidenseparcellation() {
 				echo "--function='dwidenseparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
-				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--queue='anticevic' \ "
@@ -3519,7 +3606,7 @@ boldparcellation() {
 		# InputDataType # e.g.dtseries
 		# OutPath # e.g. /images/functional/
 		# OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
-		# ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+		# ParcellationFile  # e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
 		# ComputePConn # Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
 		# UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
 		# WeightsFile # Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
@@ -3599,7 +3686,7 @@ boldparcellation() {
 show_usage_boldparcellation() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function implements parcellation on the BOLD dense files using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)."
 				echo ""
@@ -3635,7 +3722,7 @@ show_usage_boldparcellation() {
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
-				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
@@ -3651,7 +3738,7 @@ show_usage_boldparcellation() {
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
-				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
@@ -3712,7 +3799,7 @@ fsldtifit() {
 show_usage_fsldtifit() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the FSL dtifit processing locally or via a scheduler."
 				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
@@ -3841,7 +3928,7 @@ fslbedpostxgpu() {
 show_usage_fslbedpostxgpu() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled node."
 				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
@@ -3922,7 +4009,7 @@ pretractography() {
 show_usage_pretractography() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Function to generate the cortical dense connectome trajectory space."
     			echo ""
@@ -4004,7 +4091,7 @@ probtrackxgpucortex() {
 show_usage_probtrackxgpucortex() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Original implementation of cortical dense connectome."
     			echo ""
@@ -4085,7 +4172,7 @@ makedensecortex() {
 show_usage_makedensecortex() {
 
   				echo ""
-  				echo "-- Description:"
+  				echo "-- DESCRIPTION:"
     			echo ""
     			echo "Original implementation of cortical dense connectome final file generation."
     			echo ""
@@ -4137,7 +4224,7 @@ fi
 show_usage_autoptx() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "USAGE PENDING..."
 				echo ""
@@ -4184,7 +4271,7 @@ pretractographydense() {
 show_usage_pretractographydense() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the Pretractography Dense trajectory space generation."
 				echo "Note that this is a very quick function to run [< 5min] so no overwrite options exist."
@@ -4383,7 +4470,7 @@ probtrackxgpudense() {
 show_usage_probtrackxgpudense() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the probtrackxgpu dense whole-brain connectome generation by calling $ScriptsFolder/RunMatrix1.sh or $ScriptsFolder/RunMatrix3.sh"
 				echo "Note that this function needs to send work to a GPU-enabled queue. It is cluster-enabled by default."
@@ -4488,7 +4575,7 @@ fi
 show_usage_awshcpsync() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function enables syncing of HCP data from the Amazon AWS S3 repository."
 				echo "It assumes you have enabled your AWS credentials via the HCP website."
@@ -4722,7 +4809,7 @@ qcpreproc() {
 show_usage_qcpreproc() {
 
 				echo ""
-				echo "-- Description:"
+				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the QC preprocessing for a given specified modality. Supported: T1w, T2w, myelin, BOLD, DWI."
 				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing."
@@ -4915,7 +5002,7 @@ opts_GetOpt() {
 }
 
 #
-# -- Description: 
+# -- DESCRIPTION: 
 #
 #   checks command line arguments for "--help" indicating that 
 #   help has been requested
@@ -4931,7 +5018,7 @@ opts_CheckForHelpRequest() {
 }
 
 #
-# -- Description: 
+# -- DESCRIPTION: 
 #
 #   Generates a timestamp for the log exec call
 #
@@ -5169,6 +5256,18 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` #Clean prior run and starr fresh [yes/no]
 	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` # Specifies whether to run on the cluster or on the local node
 	
+	# -- create lists input flags
+	ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@` # Which lists to generate
+	Append=`opts_GetOpt "${setflag}append" $@` # Append the list
+	ListName=`opts_GetOpt "${setflag}listname" $@` # Name of the list
+	ParameterFile=`opts_GetOpt "${setflag}parameterfile" $@` # Use parameter file header
+	ListFunction=`opts_GetOpt "${setflag}listfunction" $@` # Which function to use to generate the list
+	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	FileType=`opts_GetOpt "${setflag}filetype" $@` # --filetype=<file_extension>
+	BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` # --boldsuffix=<bold_suffix>
+	SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@` # Use subject HCP File for appending the parameter list
+
 	# -- hpcsync input flags
 	NetID=`opts_GetOpt "${setflag}netid" $@` # NetID for cluster rsync command
 	HCPStudyFolder=`opts_GetOpt "${setflag}clusterpath" $@` # cluster study folder for cluster rsync command
@@ -5191,11 +5290,11 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@` # --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
 	UseWeights=`opts_GetOpt "${setflag}useweights" $@` # --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
 	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` # --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
 	# -- dwidenseparcellation input flags
 	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` # --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 	OutName=`opts_GetOpt "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
 	
 	# -- fslbedpostxgpu input flags
@@ -5221,7 +5320,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	DWIPath=`opts_GetOpt "${setflag}dwipath" $@` # --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
 	DWIData=`opts_GetOpt "${setflag}dwidata" $@` # --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
 	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@` # --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
-	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
 	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` # --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
 	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@` # --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation
 	
@@ -5511,7 +5610,9 @@ fi
 
 
 if [ "$FunctionToRun" == "hpcsync" ]; then
-	echo "You are about to sync data between the local server and Yale HPC Clusters."
+
+	echo "Syncing data between the local server and Yale HPC Clusters."
+	echo ""
 		for CASE in $CASES
 			do
   			"$FunctionToRun" "$CASE"
@@ -5548,26 +5649,174 @@ fi
 
 
 # ------------------------------------------------------------------------------
-#  setuplist function loop
+#  createlists function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "setuplist" ]; then
-	echo "Enter which type of list you want to run [supported: fcmri, snr, fcmripreprocess]:"
+
+if [ "$FunctionToRun" == "createlists" ]; then
+		
+		mkdir "$StudyFolder"/lists &> /dev/null
+		echo "$CASES"
+
+		# Check all the user-defined parameters: 1. Cluster, 2. QUEUE. 3. GROUP. 
+		# 4. ListFunction 5. ListGenerate. 6. BOLDS 7. Append 8. ParameterFile
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$ListGenerate" ]; then reho "Error: Type of list to generate missing [preprocessing, analysis, snr]"; exit 1; fi
+		# - Check optional parameters
+		if [ -z "$Append" ]; then Append="no"; reho "Setting --append='no' by default"; fi
+		
+		# -- Omit scheduler commands here
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#Cluster="$RunMethod"
+		#if [ "$Cluster" == "2" ]; then
+		#		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+		#		if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		#fi
+		
+		# --------------------------
+		# --- preprocessing loop ---
+		# --------------------------
+		if [ "$ListGenerate" == "preprocessing" ]; then
+		
+			# -- Check of overwrite flag was set
+			if [ "$Overwrite" == "yes" ]; then
+				
+				echo ""
+				reho "===> Deleting prior processing lists"
+  				echo ""
+				rm "$StudyFolder"/lists/subjects.preprocessing."$ListName".param &> /dev/null
+  			fi			
+		
+			if [ -z "$ListFunction" ]; then 
+				reho "List function not set. Using default function."
+				ListFunction="${TOOLS}/MNAP/general/functions/subjectsparamlist.sh"
+				echo ""
+				reho "$ListFunction"
+				echo ""
+			fi
+			
+			if [ -z "$ListName" ]; then reho "Name of preprocessing list for is missing."; exit 1; fi
+			
+			if [ -z "$ParameterFile" ]; then 
+				echo ""
+				echo "No parameter header file set - Using defaults: "
+				ParameterFile="${TOOLS}/MNAP/general/functions/subjectparamlist_header_multiband.txt"
+				echo "--> $ParameterFile"
+				echo ""
+			fi
+			
+			# - Check if skipping parameter file header
+			if [ "$ParameterFile" != "no" ]; then
+				# - Check if lists exists  
+				if [ -s "$StudyFolder"/lists/subjects.preprocessing."$ListName".param ]; then
+					# --> If ParameterFile was set and file exists then exit and report error
+					echo ""
+					reho "---------------------------------------------------------------------"
+					reho "--> The file exists and you are trying to set the header again"
+					reho "--> Check usage to append the file or overwrite it."
+					reho "---------------------------------------------------------------------"
+					echo ""
+					exit 1
+				else
+					echo ""
+					echo "-- Adding Parameter Header: "
+					echo "--> ${ParameterFile}"
+					cat ${ParameterFile} >> ${StudyFolder}/lists/subjects.preprocessing.${ListName}.param
+				fi 
+			fi	
+  			  	
+  			for CASE in $CASES; 
+  			do
+  				"$FunctionToRun" "$CASE"
+  			done
+	  			
+  			echo ""
+  			geho "-------------------------------------------------------------------------------------"
+  			geho "--> Check output:"
+  			geho "  ${StudyFolder}/lists/`ls ${StudyFolder}/lists/ `"
+  			geho "-------------------------------------------------------------------------------------"
+  			echo ""
+		fi
+		
+		# --------------------------
+		# --- analysis loop --------
+		# --------------------------
+		if [ "$ListGenerate" == "analysis" ]; then		
+		
+			if [ -z "$ListFunction" ]; then 
+			reho "List function not set. Using default function."
+				ListFunction="${TOOLS}/MNAP/general/functions/analysislist.sh"
+				echo ""
+				reho "$ListFunction"
+				echo ""
+			fi
+			
+			if [ -z "$ListName" ]; then reho "Name of analysis list for is missing."; exit 1; fi
+			if [ -z "$BOLDS" ]; then reho "List of BOLDs missing."; exit 1; fi
+
+			# -- Check of overwrite flag was set
+			if [ "$Overwrite" == "yes" ]; then
+				echo ""
+				reho "===> Deleting prior analysis lists"
+  				echo ""
+				rm "$StudyFolder"/lists/subjects.analysis."$ListName".*.list &> /dev/null
+  			fi
+  				
+  			  	for CASE in $CASE; do
+  					"$FunctionToRun" "$CASE"
+  				done
+		fi	
+		
+		# ----------------
+		# --- snr loop ---
+		# ----------------
+		if [ "$ListGenerate" == "snr" ]; then		
+		if [ -z "$BOLDS" ]; then reho "Error: BOLDs to generate the snr list for missing"; exit 1; fi
+			
+			# -- Check of overwrite flag was set
+			if [ "$Overwrite" == "yes" ]; then
+				
+				echo ""
+				reho "===> Deleting prior snr lists"
+  				echo ""
+  				cd "$StudyFolder"/QC/snr
+				rm *subjects.snr.txt  &> /dev/null
+  			
+  			  	for CASE in $CASES; do
+  						"$FunctionToRun" "$CASE"
+  				done
+			fi	
+		fi				
+fi			
+
+if [ "$FunctionToRunInt" == "createlists" ]; then
+	echo "Enter which type of list you want to run?"
+	echo ""
+	echo "	* preprocessing --> Subject parameter list with cases to preprocess"
+  	echo "	* analysis --> List of cases to compute seed connectivity or GBC"
+  	echo "	* SNR --> List of cases to compute signal-to-noise ratio"
+  	echo ""
 		if read answer; then
+			
 			ListGenerate=$answer
 			
-			if [ "$ListGenerate" == "fcmri" ]; then
-				echo "Make sure that you have setup the list script in ~/fcMRI/lists folder."
-				echo "Now enter name of fcMRI analysis list script you want to use [e.g. fcmrianalysislist_cifti.sh]:"
+			if [ "$ListGenerate" == "analysis" ]; then
+				echo "Enter name of analysis list script you want to use?"
+				ListFunctions=`ls ${TOOLS}/MNAP/general/functions/analysislist*.sh`
+				echo ""
+				echo "Supported: "
+				echo "$ListFunctions"
+				echo ""
 					if read answer; then
 					ListFunction=$answer 
 						echo "Enter name of group you want to generate a list for [e.g. scz, hcs, ocd... ]:"
 							if read answer; then
 							GROUP=$answer
 								echo "Note: pre-existing lists will now be deleted..."
-								cd "$StudyFolder"
-								cd ../fcMRI/lists
-								rm subjects."$GROUP".*.list &> /dev/null
+								rm "$StudyFolder"/subjects/lists/subjects.analysis."$GROUP".list &> /dev/null
 								for CASE in $CASES
 									do
   									"$FunctionToRunInt" "$CASE"
@@ -5578,8 +5827,7 @@ if [ "$FunctionToRunInt" == "setuplist" ]; then
   			
   			if [ "$ListGenerate" == "snr" ]; then
   				echo "Note: pre-existing snr lists will now be deleted..."
-  				cd "$StudyFolder"
-				cd ../subjects/QC/snr
+  				cd "$StudyFolder"/subjects/QC/snr
 				rm *subjects.snr.txt  &> /dev/null
   				echo "Enter BOLD numbers you want to generate the SNR List for [e.g. 1 2 3]:"
 				if read answer; then
@@ -5591,18 +5839,20 @@ if [ "$FunctionToRunInt" == "setuplist" ]; then
   				fi
   			fi
   		
-  			if [ "$ListGenerate" == "fcmripreprocess" ]; then
-				echo "Make sure that you have setup the list script in ~/fcMRI folder."
-				echo "Now enter name of fcMRI analysis list script you want to use [e.g. fcmri.preprocess.list.sh]:"
+  			if [ "$ListGenerate" == "preprocessing" ]; then
+				echo "Now enter name of preprocessing list script you want to use?"
+				ListFunctions=`ls ${TOOLS}/MNAP/general/functions/*paramlist*.sh`
+				echo ""
+				echo "Supported: "
+				echo "$ListFunctions"
+				echo ""
 					if read answer; then
 					ListFunction=$answer 
 						echo "Enter name of group you want to generate a list for [e.g. scz, hcs, ocd... ]:"
 							if read answer; then
 							GROUP=$answer
 								echo "Note: pre-existing list will now be deleted..."
-								cd "$StudyFolder"
-								cd ../fcMRI/lists
-								rm subjects."$GROUP".list &> /dev/null
+								rm "$StudyFolder"/subjects/lists/subjects.preprocessing."$GROUP".list &> /dev/null
 								for CASE in $CASES
 									do
   									"$FunctionToRunInt" "$CASE"
@@ -6468,7 +6718,7 @@ if [ "$FunctionToRunInt" == "boldparcellation" ]; then
 		echo "-- Specify the type of data for the input file (e.g. dscalar or dtseries)"
 		if read answer; then InputDataType=$answer; fi
 		echo ""
-		echo "-- Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
+		echo "-- Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
 		if read answer; then ParcellationFile=$answer; fi
 		echo ""
 		echo "-- Specify the suffix output name of the pconn file"
@@ -6572,7 +6822,7 @@ if [ "$FunctionToRunInt" == "dwidenseparcellation" ]; then
 		echo "-- Specify Matrix Version; e.g. 1 or 3"
 		if read answer; then MatrixVersion=$answer; fi
 		echo ""
-		echo "-- Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
+		echo "-- Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
 		if read answer; then ParcellationFile=$answer; fi
 		echo ""
 		echo "-- Specify name of output pconn file"

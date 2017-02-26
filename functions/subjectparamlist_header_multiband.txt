@@ -1,0 +1,108 @@
+# =======================================
+# == Default HCP preprocessing options ==
+# =======================================
+
+# ---> Environment
+
+_hcp_Pipeline           : {$TOOLS}/MNAP/hcpmodified
+_LSF_environ            : {$TOOLS}/bin/globalsetup.sh
+_LSF_folder             : {$StudyFolder}/subjects/logs/hcp.logs
+ 
+# ---> Pre FS
+ 
+_hcp_suffix             :
+_hcp_brainsize          : 150
+_hcp_t2                 : t2
+_hcp_fmap               : NONE
+_hcp_t1samplespacing    : <_hcp_t1samplespacing>
+_hcp_t2samplespacing    : <_hcp_t2samplespacing>
+_hcp_unwarpdir          : z
+_hcp_gdcoeffs           : PRISMA_Yale_coeff.grad
+_hcp_avgrdcmethod       : TOPUP
+_hcp_topupconfig        : b02b0.cnf
+_hcp_printcom           :
+_hcp_sephaseneg         : AP
+_hcp_sephasepos         : PA
+_hcp_dwelltime          : <_hcp_dwelltime>
+_hcp_seunwarpdir        : y
+ 
+# ---> Post FS
+ 
+_hcp_grayordinatesres   : 2
+_hcp_hiresmesh          : 164
+_hcp_lowresmesh         : 32
+ 
+# ---> Diffusion preprocessing
+ 
+_hcp_dwi_dwelltime      : <_hcp_dwi_dwelltime>
+_hcp_dwi_PEdir          : 2
+  
+# ---> fMRI Volume
+ 
+_hcp_bold_echospacing   : <_hcp_bold_echospacing>
+_hcp_bold_echodiff      : NONE
+_hcp_bold_correct       : TOPUP
+_hcp_bold_ref           : use
+_hcp_bold_unwarpdir     : -y
+_hcp_bold_res           : 2
+_hcp_bold_gdcoeffs      : NONE
+_hcp_bold_stcorr        : NONE
+_hcp_bold_stcorrdir     : up
+_hcp_bold_stcorrint     : odd
+_hcp_bold_sequencetype  : multi
+_hcp_bold_seimg	  	 : independent
+_hcp_bold_movref  	 : independent
+_hcp_bold_prefix 	:
+ 
+# ---> fMRI Surface
+ 
+_hcp_bold_smoothFWHM    : 2
+
+# ===================================
+# == Settings for further analyses ==
+# ===================================
+
+_image_source       : hcp
+_image_target       : cifti
+_bppt               : all
+_TR:                <_TR>
+_omit:              0
+_pignore:           hipass=keep|regress=keep|lopass=keep
+_log              : keep
+_glm_matrix       : both
+_glm_residuals    : forget
+
+# --- nuisance signal
+
+_shrinknsroi:       true
+
+# --- CIFTI mapping naming variable
+
+_hcp_cifti_tail:	_Atlas
+
+# --- smoothing parameters
+
+_surface_smooth:    2
+_volume_smooth:     2
+_voxel_smooth:      1
+_smooth_mask:       nonzero
+_dilate_mask:       {$TOOLS}/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
+
+# --- Movement scrubbing settings
+
+_mov_dvars:         3.0
+_mov_dvarsme:       1.6
+_mov_fd:            0.5
+_mov_radius:        50.0
+_mov_scrub:         yes
+_mov_fidl:          udvarsme
+_mov_plot:          mov_report
+_mov_post:          udvarsme
+_mov_before:        0
+_mov_after:         0
+_mov_bad:           udvarsme
+_mov_mreport:       movement_report.txt
+_mov_preport:       movement_report_post.txt
+_mov_sreport:       movement_scrubbing_report.txt
+_mov_pdf:           movement_plots
+_mov_pref:
