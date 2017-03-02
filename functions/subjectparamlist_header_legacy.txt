@@ -4,9 +4,9 @@
 
 # ---> Environment
 
-_hcp_Pipeline           : {$TOOLS}/MNAP/hcpmodified
-_LSF_environ            : {$TOOLS}/bin/globalsetup.sh
-_LSF_folder             : {$StudyFolder}/subjects/logs/hcp.logs
+_hcp_Pipeline           : <MNAPPath>/MNAP/hcpmodified
+_LSF_environ            : <MNAPPath>/bin/globalsetup.sh
+_LSF_folder             : <StudyFolder>/subjects/logs/hcp.logs
  
 # ---> Pre FS
  
@@ -64,7 +64,7 @@ _hcp_bold_smoothFWHM    : 2
 _image_source       : hcp
 _image_target       : cifti
 _bppt               : all
-_TR					:
+_TR					: <_TR>
 _omit:              0
 _pignore:           hipass=keep|regress=keep|lopass=keep
 _log              : keep
@@ -85,7 +85,7 @@ _surface_smooth:    2
 _volume_smooth:     2
 _voxel_smooth:      1
 _smooth_mask:       nonzero
-_dilate_mask:       {$TOOLS}/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
+_dilate_mask:       <MNAPPath>/MNITemplates/MNI152_T1_2mm_brain_mask.nii.gz
 
 # --- Movement scrubbing settings
 
@@ -105,3 +105,4 @@ _mov_preport:       movement_report_post.txt
 _mov_sreport:       movement_scrubbing_report.txt
 _mov_pdf:           movement_plots
 _mov_pref:
+

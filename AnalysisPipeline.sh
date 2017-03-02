@@ -5,53 +5,51 @@
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 ##
 ## --> Make sure to document adjustments to diffusion connectome code for GPU version [e.g. omission of matrixes etc.]
-## --> Integrate all command line flags for functions into IF statements [In progress... see example for hcpdlegacy]
-## --> Integrate usage calls for each function [In progress]
 ## --> Integrate log generation for each function and build IF statement to override log generation if nolog flag [In progress]
 ## --> Issue w/logging - the exec function effectively double-logs everything for each case and for the whole command
 ## --> Finish autoptx function
 ## --> Add MYELIN or THICKNESS parcellation functions as with boldparcellation and dwidenseparcellation
-## --> Optimize list generation function to take multiple inputs and naming conventions
 ## --> Write function / wrapper for StarCluster deployment
 ## --> printmatrix needs to be updated to work with any input parcellation
 ## --> isolatethalamusfslnuclei needs to be finished to get atlas-based ROIs
 ## --> boldmergecifti & boldmergenifti need to be updated and made more general; perhaps rely on concatenation files?
-## --> boldseparateciftifixica needs to be updates
-##
-##
-## --> Write turn-key function for processing and QC: 
-##			dicomsort
-##			setupchp
-##			hcp1 (PreFreeSurfer)
-##			hcp2 (FreeSurfer)
-##			hcp3 (PostFreeSurfer)
-##			hcp3 (BOLD Processing volume)
-##			hcp4 (BOLD Processing surface)
-##			hcpdlegacy (DWI processing, FUGUE etc.)
-##			QC preprocessing scripts (DWI, BOLD, T1w, T2w, surfaces, etc)
-##			dtifit (FSL DWI tools)
-##			bedpostX (FSL DWI tools)
-##			probtrackX (FSL DWI tools)
-##			dofcMRI (our inhouse functional connectivity code)
-##			QC postprocessing scripts (DWI, BOLD, T1w, T2w, surfaces, etc)
+## --> boldseparateciftifixica needs to be updated
 ##
 ## ------------------------------------------------------------------------------------------------------------------------------------------
-
 ## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
 ## ------------------------------------------------------------------------------------------------------------------------------------------
-## - Sync to Grace crontab job -- DONE
-## - Rsync to subject folder based on acquisition log -- IN PROGRESS
-## - Dicomsort if data complete w/o error -- IN PROGRESS
-## - Generate subject.txt -- IF 0 ERR then RUN; ELSE ABORT -- IN PROGRESS
-## - Run HCP 1-5 via bash script submitted to bigmem02; setup checkpoints (will need param file) -- IN PROGRESS
-## - Run QC: i) Visual multi-modal; ii) BOLD SNR, iii) fcMRI; iv) DWI -- IN PROGRESS
-## - dtifit -- IN PROGRESS
-## - bedpostX -- IN PROGRESS
-## - probtrackX -- IN PROGRESS
-## - dwidenseparcellated -- IN PROGRESS
-## - FIX ICA / denoising (will need param file) -- IN PROGRESS
+##
+##	- Sync to Grace crontab job -- DONE
+## 	- Rsync to subject folder based on acquisition log -- IN PROGRESS (Charlie)
+##	--dicomsort if data complete w/o error -- IN PROGRESS (Charlie)
+##  - Generate subject_hcp.txt -- IF 0 ERR then RUN; ELSE ABORT -- IN PROGRESS
+##	--setuphcp
+##	--createlist to Generate parameter file
+##	--hcp1 --> setup checkpoints
+##	--hcp2 --> setup checkpoints
+##	--hcp3 --> setup checkpoints
+##	--hcp4 --> setup checkpoints
+##	--hcp5 --> setup checkpoints
+##	--hcpd or --hcpdlegacy --> setup checkpoints
+##	--qcpreproc (DWI, BOLD, T1w, T2w, myelin)
+##	--fixica 
+##	--postfix 
+##	--mapHCPData 
+##	--createBOLDBrainMasks 
+##	--computeBOLDStats 
+##	--createStatsReport 
+##	--extractNuisanceSignal 
+##	--preprocessBold 
+##	--preprocessConc 
+##	--fsldtifit 
+##	--fslbedpostxgpu 
+##	--pretractography 
+##	--pretractographydense 
+##	--probtrackxgpudense 
+##	--boldparcellation 
+##	--dwidenseparcellation
+##
 ## ------------------------------------------------------------------------------------------------------------------------------------------
-
 ## --> BITBUCKET INFO:
 ## ------------------------------------------------------------------------------------------------------------------------------------------
 ## GitRepo for MNAP pipelines: https://bitbucket.org/mnap/
@@ -623,16 +621,18 @@ show_usage_createlists() {
 				echo "		--function=<function_name>				Name of function"
 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
-				echo "		--listname=<list_to_generate>				Type of list to generate. "
+				echo "		--listtocreate=<type_of_list_to_generate>		Type of list to generate (e.g. preprocessing). "
+				echo "		--listname=<output_name_of_the_list>			Output name of the list to generate. "
 				echo "	 	* Supported: preprocessing, analysis, snr"
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
-				echo "		--overwrite=<yes/no>			Explicitly delete any prior lists"
-				echo "		--append=<yes>				Explicitly append the existing list"
+				echo "		--overwrite=<yes/no>					Explicitly delete any prior lists"
+				echo "		--append=<yes>						Explicitly append the existing list"
+				echo ""
 				echo "		* Note: If --append set to <yes> then function will append new cases to the end"
 				echo ""								
-				echo "		--parameterfile=<header_file_for_processing_list>		Set header for the processing list."
+				echo "		--parameterfile=<header_file_for_processing_list>	Set header for the processing list."
 				echo ""
 				echo "		* Default:"
 				echo ""
@@ -646,7 +646,7 @@ show_usage_createlists() {
 				echo ""								
 				echo "      --listfunction=<function_used_to_create_list>   	Point to external function to use"
 				echo "      --bolddata=<comma_separated_list_of_bolds>   	List of BOLD files to append to analysis or snr lists"
-				echo "      --parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation in $TOOLS/MNAP/general/templates/Parcellations/ "
+				echo "      --parcellationfile=<file_for_parcellation>	Specify the absolute file path for parcellation in $MNAPPATH/general/templates/Parcellations/ "
 				echo "      --filetype=<file_extension>			Extension for BOLDs in the analysis (e.g. _Atlas). Default empty []"
 				echo "      --boldsuffix=<comma_separated_bold_suffix>	List of BOLDs to iterate over in the analysis list"
 #    			echo "		--subjecthcpfile=<yes/no>		Use individual subject_hcp.txt file for for appending the parameter list"
@@ -5096,6 +5096,120 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 fi
 
 # ------------------------------------------------------------------------------
+#  LSF scheduler engine
+# ------------------------------------------------------------------------------
+
+schedulerfunction() {
+
+echo "Scheduler testing..."
+
+#elif options['scheduler'] == 'LSF':
+
+        # ---- setup options to pass to each job
+
+        #nopt = []
+        #for (k, v) in args.iteritems():
+        #    if k not in ['LSF_environ', 'LSF_folder', 'LSF_options', 'scheduler', 'nprocess']:
+         #       nopt.append((k, v))
+
+        #nopt.append(('scheduler', 'local'))
+        #nopt.append(('nprocess', '0'))
+
+        # ---- open log
+
+        #flog = open(logname + '.log', "w")
+        #print >> flog, "\n\n============================= LOG ================================\n"
+
+        # ---- parse options string
+
+        #lsfo = dict([e.strip().split("=") for e in options['LSF_options'].split(",")])
+
+        # ---- run jobs
+
+        #if options['jobname'] == "":
+         #   options['jobname'] = "gmri"
+
+        #c = 0
+        #while subjects:
+
+         #   c += 1
+
+            # ---- construct the bsub input
+            # -M mem_limit in kb
+            # -n min[, max] ... minimal and maximal number of processors to use
+            # -o output file ... %J adds job id
+            # -P project name
+            # -q queue_name   ("shared" for 24 h more on "long")
+            # -R "res_req" ... resource requirement string
+            #              ... select[selection_string] order[order_string] rusage[usage_string [, usage_string][|| usage_string] ...] span[span_string] same[same_string] cu[cu_string]] affinity[affinity_string]
+            # -R 'span[hosts=1]' ... so that all slots are on the same machine
+            # -W hour:minute  runtime limit
+            # -We hour:minute  estimated runtime
+            #  bsub '-M <P>' option specifies the memory limit for each process, while '-R "rusage[mem=<N>]"' specifies the memory to reserve for this job on each node. ... in MB - 5GB default
+
+            #cstr  = "#BSUB -o %s-%s_#%02d_%%J\n" % (options['jobname'], command, c)
+            #cstr += "#BSUB -q %s\n" % (lsfo['queue'])
+            #cstr += "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n" % (lsfo['mem'])
+            #cstr += "#BSUB -W %s\n" % (lsfo['walltime'])
+            #cstr += "#BSUB -n %s\n" % (lsfo['cores'])
+            #if len(options['jobname']) > 0:
+             #   cstr += "#BSUB -P %s-%s\n" % (options['jobname'], command)
+             #   cstr += "#BSUB -J %s-%s_%d\n" % (options['jobname'], command, c)
+
+
+            #if options['LSF_environ'] != '':
+             #   cstr += "\n# --- Setting up environment\n\n"
+             #   cstr += file(options['LSF_environ']).read()
+
+            #if options['LSF_folder'] != '':
+             #   cstr += "\n# --- changing to the right folder\n\n"
+             #   cstr += "cd %s" % (options['LSF_folder'])
+
+            # ---- construct the gmri command
+
+            #cstr += "\ngmri " + command
+
+            #for (k, v) in nopt:
+             #   if k not in ['subjid', 'scheduler', 'queue']:
+             #       cstr += ' --%s="%s"' % (k, v)
+
+ 			#slist = []
+            #[slist.append(subjects.pop(0)['subject']) for e in range(cores) if subjects]   # might need to change to id
+
+            #cstr += ' --subjid="%s"' % ("|".join(slist))
+            #cstr += ' --scheduler="local"'
+            #cstr += '\n'
+
+            # ---- pass the command string to qsub
+
+            #print "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
+            #print cstr
+
+            #print >> flog, "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
+
+            #lsf = subprocess.Popen("bsub", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+            #lsf.stdin.write(cstr)
+            #lsf.stdin.close()
+
+            # ---- storing results
+
+            #result = lsf.stdout.read()
+
+            #print "\n----------"
+            #print result
+
+            #print >> flog, "\n----------"
+            #print >> flog, result
+
+            #time.sleep(options['LSF_sleep'])
+
+        #print "\n\n============================= DONE ================================\n"
+        #print >> flog, "\n\n============================= DONE ================================\n"
+        #flog.close()
+
+}
+
+# ------------------------------------------------------------------------------
 #  Check if specific function help requested
 # ------------------------------------------------------------------------------
 
@@ -5619,7 +5733,6 @@ if [ "$FunctionToRun" == "hpcsync" ]; then
   		done
 fi
 
-
 if [ "$FunctionToRunInt" == "hpcsync" ]; then
 	echo "You are about to sync data between the local server and Yale HPC Clusters."
 	echo "Note: Make sure your HPC ssh key is setup on your local NMDA account."
@@ -5734,10 +5847,10 @@ if [ "$FunctionToRun" == "createlists" ]; then
   			done
 	  			
   			echo ""
-  			geho "-------------------------------------------------------------------------------------"
+  			geho "-------------------------------------------------------------------------------------------"
   			geho "--> Check output:"
-  			geho "  ${StudyFolder}/lists/`ls ${StudyFolder}/lists/ `"
-  			geho "-------------------------------------------------------------------------------------"
+  			geho "  `ls ${StudyFolder}/lists/subjects.preprocessing.${ListName}.param `"
+  			geho "-------------------------------------------------------------------------------------------"
   			echo ""
 		fi
 		
