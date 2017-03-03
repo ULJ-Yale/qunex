@@ -7,7 +7,7 @@ function [] = imgOverlap(af, bf, tf, v)
 %	Input:
 %		af - the first image file
 %		bf - the second image file
-%		tf - the file to save the overlap to 
+%		tf - the file to save the overlap to
 %		v  - which slice view (1, 2, 3)
 
 if nargin < 4
@@ -20,18 +20,18 @@ end
 
 if isobject(af)
 	a =	af;
-else 
+else
 	a = gmrimage(af);
 end
-	
+
 if isobject(bf)
 	b =	bf;
-else 
+else
 	b = gmrimage(bf);
 end
 
-am = RGBReshape(a, v);
-bm = RGBReshape(b, v);
+am = a.mri_SliceMatrix(v);
+bm = b.mri_SliceMatrix(v);
 
 am = normalize(am);
 bm = normalize(bm);
@@ -44,7 +44,7 @@ imwrite(rgb, tf);
 
 
 function [im] = normalize(im)
-	
+
 	os = size(im);
 	im = reshape(im, [], 1);
 	m  = mean(im);

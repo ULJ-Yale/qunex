@@ -37,14 +37,14 @@ end
 if min(size(img.data) == size(roi.data)) ~= 1
     error('ERROR: The specified images are not of the same dimensions!');
 end
-    
-img = RGBReshape(img, 3, slices);
+
+img = img.mri_SliceMatrix(3, slices);
 img(:,:,2) = img;
 img(:,:,3) = img(:,:,1);
 img = img/max(max(max(img)));
 img = img * 0.7;
 
-roi = RGBReshape(roi, 3, slices);
+roi = roi.mri_SliceMatrix(3, slices);
 
 img(:,:,1) = img(:,:,1) + ismember(roi, R) * 0.3;
 img(:,:,2) = img(:,:,2) + ismember(roi, G) * 0.3;

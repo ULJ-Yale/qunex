@@ -215,10 +215,10 @@ if ~strcmp(ntarget, 'none')
 
     % --- compose PNG
 
-    O  = RGBReshape(O ,3);
-    WB = RGBReshape(WB,3);
-    V  = RGBReshape(V ,3);
-    WM = RGBReshape(WM,3);
+    O  = O.mri_SliceMatrix(O ,3);
+    WB = WB.mri_SliceMatrix(WB,3);
+    V  = V.mri_SliceMatrix(V ,3);
+    WM = WM.mri_SliceMatrix(WM,3);
 
     pic(:,:,1) = O;
     pic(:,:,2) = O;
@@ -233,7 +233,7 @@ if ~strcmp(ntarget, 'none')
     pic(:,:,1) = pic(:,:,1)+WM*0.3;
 
     if ~isempty(nroi)
-        nroi   = RGBReshape(nroi, 3);
+        nroi   = nroi.mri_SliceMatrix(3);
         rcodes = unique(nroi);
         rcodes = rcodes(rcodes > 0);
         cmap   = hsv(length(rcodes));
