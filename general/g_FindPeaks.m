@@ -1,23 +1,48 @@
 function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, verbose)
 
-%function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, verbose)
+%function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, verbose)
 %
-%		Uses mri_FindPeaks method to define peak ROI using a watershed algorithm to grow regions from peaks.
+%	Uses mri_FindPeaks method to define peak ROI using a watershed algorithm to grow regions from peaks.
 %
+%   INPUT
 %       fin         - input image
 %		fout        - output image
 %       mins        - minimal size of the resulting ROI  [0]
 %       maxs        - maximum size of the resulting ROI  [inf]
-%       val         - whether to find positive, negative or both ('n', 'p', 'b') [b]
+%       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') [b]
 %       t           - threshold value [0]
 %		presmooth   - the amount of smoothing to do before finding peaks
 %       verbose     - whether to report the peaks (1) and be verbose about it (2) [1]
 %
-%    (c) Grega Repovs, 2015-04-11
+%   USE
+%   The function is a wrapper to the gmrimage.mri_FindPeaks method and is used
+%   to read the image file of interest, save the resulting ROI file and report
+%   the peak statistics (if requested). Please see the method documentation for
+%   algorithm and specifics about the parameters.
 %
-%	 2016-01-16 Grega Repovs
+%   The function also allows presmoothing, the presmooth parameter specifying
+%   the amount of gaussian smoothing in voxels.
+%
+%   RESULTS
+%   The script saves the resulting ROI file under the specified filename. The report statistics
+%
+%   EXAMPLE USE
+%   To get a roi image of both positive and negative peak regions with miminum z
+%   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
+%   voxels, after applying 1 voxel gaussian smoothing use:
+%
+%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz, 72, 300, 'b', 3, 1, 1);
+%
+%   ---
+%   Written by Grega Repovs, 2015-04-11
+%
+%   Changelog
+%	2016-01-16 Grega Repovs
 %        - Added presmoothing option.
 %		 - Added printing of report file.
+%
+%   2017-03-04 Grega Repovs
+%        - Updated documntation.
 %
 
 %  ---- initializing

@@ -4,22 +4,50 @@ function [roi peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
 %
 %       Find peaks and uses watershed algorithm to grow regions from them.
 %
-%       image       - input image
+%   INPUT
+%       image       - input gmrimage object
 %       minsize     - minimal size of the resulting ROI  [0]
 %       maxize      - maximum size of the resulting ROI  [inf]
-%       val         - whether to find positive, negative or both ('n', 'p', 'b') [b]
+%       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
 %       t           - threshold value [0]
 %       verbose     - whether to report the peaks (1) and also be verbose (2) [false]
 %
-%    (c) Grega Repovs, 2015-04-11
+%   OUTPUT
+%       roi         - A gmrimage with the created ROI.
+%       peak        - A datastructure with information about the extracted peaks.
 %
-%    Grega Repovs, 2015-12-19
-%    — A faster flooding implementation.
-%    — Optimised reflooding of small ROI.
-%    — Flipped verbosity.
+%   USE
+%   The method is used to identify positive and/or negative peaks in the image,
+%   and then generate ROI around them using a watershed algorithm. Specifically,
+%   the method first zeros all the values below the specified threshold (t), it
+%   then finds all the peaks, voxels that have the value higher than the
+%   immediate neighbors. It then uses a wathershed algorithm to flood the peaks,
+%   so that all the peaks that result in regions smaller than the specified
+%   minsize get either removed or flooded in from the adjoining heigher peak (if
+%   if one exists). If final peaks are too large, they get reflooded to the
+%   specified maxsize only.
 %
-%   Grega Repovs, 2016-01-16
-%    - Now uses mri_GetXYZ to get world coordinates of peaks and centroids.
+%   EXAMPLE USE
+%   To get a roi image of both positive and negative peak regions with miminum z
+%   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
+%   voxels, use:
+%
+%   roi = zimg.mri_FindPeaks(72, 300, 'b', 3);
+%
+%   ---
+%   Written by Grega Repovs, 2015-04-11
+%
+%   Changelog
+%   2015-12-19 Grega Repovs,
+%            — A faster flooding implementation.
+%            — Optimised reflooding of small ROI.
+%            — Flipped verbosity.
+%
+%   2016-01-16 Grega Repovs,
+%            - Now uses mri_GetXYZ to get world coordinates of peaks and centroids.
+%
+%   2017-03-04 Grega Repovs
+%            - Updated documentation
 %
 %    ToDo
 %    — Clean up code.
