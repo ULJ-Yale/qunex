@@ -1,24 +1,56 @@
-function [data] = g_ExtractROIGLMValues(flist, roif, outf, estimates, frames, values, tformat, verbose);
+function [data] = g_ExtractROIGLMValues(flist, roif, outf, effects, frames, values, tformat, verbose);
 
-%function function [] = g_ExtractROIGLMValues(flist, roif, estimates, frames, values, tformat, verbose);
+%function function [] = g_ExtractROIGLMValues(flist, roif, effects, frames, values, tformat, verbose);
 %
-%	Extracts statistics from GLM files provided in a file list.
+%	Extracts per ROI estimates of specified effects from a volume or cifti GLM
+%   files as specified in the file list.
 %
-%   flist       - list of files
-%   roif        - names ROI file
-%   outf        - name of the output file [list + .dat]
-%   estimates   - list of estimates of interest [all but trend and baseline]
-%   frames      - list of frames [all]
-%   values 	    - whether to work on raw beta values ('raw') or percent signal change ('psc') ['raw']
-%   tformat     - what format to use: a combination of 'mat', 'wide', 'long'
-%	verbose		- to report on progress or not [not]
+%   INPUT
+%       flist       - List of subjects and files to process.
+%       roif        - .names ROI file descriptor.
+%       outf        - Name of the output file. If left empty the it is set to
+%                     flist root with '.dat' extension. []
+%       effects     - List of effects of interest. If none specified, all but
+%                     trend and baseline are exported. []
+%       frames      - List of frames to extract from all effects. All if empty
+%                     or not specified. []
+%       values 	    - In what form to extract the estimates. Possibilities are
+%                     raw beta values ('raw') or percent signal change ('psc')
+%                     values. ['raw']
+%       tformat     - A comma separated string specifying in what format the
+%                     data is to be extracted. It can be a combination of:
+%                     'mat'  -> a matlab file,
+%                     'wide' -> wide format txt file with one line per subject
+%                               and each ROI and estimate in a separate column,
+%                     'long' -> long format txt file with one line per estimate
+%                               extracted with columns describing the subject,
+%                               ROI, effect and frame that it belongs to.
+%                               The minimum, maximum, median, standard
+%                               deviation, and standard error of the values
+%                               within the ROI are reported, as well as the
+%                               number of effective voxelx within the ROI.
+%	    verbose		- Whether to report on progress or not. [not]
 %
-% 	Created by Grega Repovš on 2015-12-09.
+%   OUTPUT
+%   The results are saved in the specified file but also returned in a
+%   datastructure.
+%
+%   USE
+%   The function is used to extract per ROI estimates of the effects of interest
+%   for each of the ROI and subjects to enable second level analysis and
+%   visualization of the data. In the background the function first extracts the
+%   relevant volumes using the mri_ExtractGLMEstimates. It then defines the ROI
+%   and uses mri_ExtractROIStats method to get per ROI statistics.
+%
+%   EXAMPLE USE
+%   >>> g_ExtractROIGLMValues('wm-glm.list', 'CCN.names', [], 'encoding, delay', [], 'psc', 'long');
+%
+%   ---
+% 	Written by Grega Repovš on 2015-12-09.
 %
 %   Changelog
-%   - 2016-09-25 Grega Repovš: added option of wide and mat
-%
-% 	Copyright (c) 2015 Grega Repovs. All rights reserved.
+%   2016-09-25 Grega Repovš - Added option of wide and mat target format.
+%   2017-03-04 Grega Repovš - Updated documentation.
 %
 %   ToDo
 %   — selection of stats to save
