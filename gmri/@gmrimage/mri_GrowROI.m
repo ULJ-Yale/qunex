@@ -4,12 +4,30 @@ function [img] = mri_GrowROI(img, voxels)
 %
 %	Grows regions by radius of specified voxels
 %
-%   voxels - radius by which to grow in voxels [1]
+%   INPUT
+%       voxels - The radius in voxels by which to the ROI. [1]
 %
-%    (c) Grega Repovs, 2010-05-10
+%   OUTPUT
+%       img    - The resulting image with grown ROI.
 %
-%   ---- Changelog ----
-%   Grega Repovs, 2013-07-24 ... Adjusted to use multiframe ROI images
+%   NOTICE
+%   The function works with volume representation only.
+%   If ROI are too close, the one grown second can grow into the
+%   neighbouring ROI.
+%
+%   EXAMPLE USE
+%   To grow all regions by two voxels:
+%
+%   >>> grownroi = roi.mri_GrowROI(2);
+%
+%   ---
+%   Written by Grega Repovs, 2010-05-10
+%
+%   Changelog
+%   2013-07-24 Grega Repovs
+%            - Adjusted to use multiframe ROI images
+%   2017-03-04 Grega Repovs
+%            - Updated documentation
 %
 
 if nargin < 2

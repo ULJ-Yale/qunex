@@ -4,21 +4,45 @@ function [xyz] = mri_GetXYZ(img, ijk)
 %
 %	Returns the XYZ world coordinates for given image indeces or ROI
 %
-%   input
-%       ijk     - a matrix of voxel indeces or a weight matrix, weight image
+%   INPUT
+%       ijk  - A matrix of voxel indeces or a weight matrix, weight image.
 %
-%   Output
-%       xyz  - depending on the input:
-%              a matrix of voxel indeces -> a matrix of x, y, z coordinates
-%              a ROI image -> a structure inlcuding matrices reporting centroids for each ROI in XYZ and IJK
-%              a weight image -> a structure including matrices reporting centroids for each ROI in XYZ and IJK and matrices reporting weighted centroids for each ROI in XYZ and IJK
+%   OUTPUT
+%       xyz  - Depending on the ijk input:
+%              ... A matrix of voxel indeces
+%                  -> a matrix of x, y, z coordinates for each specified index
+%              ... An ROI image
+%                  -> A structure including matrices reporting centroids for
+%                     each ROI in XYZ (world) and IJK (indeces) cordinates.
+%              ... A weight image
+%                  -> A structure including matrices reporting centroids for
+%                     each ROI as defined in the img image in XYZ (world) and
+%                     IJK (indices) coordinates, and matrices reporting weighted
+%                     centroids for each ROI in XYZ and IJK.
 %
-%   Notes
-%            - The coordinates are computed based on the 1-based indeces x = 1 .. N, not 0-based indeces!
-%            - The coordinates are computed based on the nifti header affine transform matrix (srow_x/y/z)
+%   NOTES
+%   - The coordinates are computed based on the 1-based indeces x = 1 .. N, not 0-based indeces!
+%   - The coordinates are computed based on the nifti header affine transform matrix (srow_x/y/z)
 %
-%   (c) Grega Repovs, 2016-01-16
+%   USE EXAMPLE
+%   To get centroids of all the ROI:
 %
+%   >>> centroids = roi.mri_GetXYZ();
+%
+%   To get world coordinates for specific indeces:
+%
+%   >>> xyz = img.mri_GetXYZ([34, 60, 24; 25, 52, 18]);
+%
+%   To get weighted ROI centroids:
+%
+%   >>> wcentroids = roi.mri_GetXYZ(zimg);
+%
+%   %   ---
+%   Written by Grega Repovs, 2016-01-16
+%
+%   Changelog
+%   2017-03-04 Grega Repovs
+%            - Updated documentation
 %
 
 if nargin < 2, ijk = []; end

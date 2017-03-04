@@ -2,12 +2,45 @@ function [roi] = mri_MaskROI(img, roi2)
 
 %function [img] = mri_MaskROI(img, roi2)
 %
-%		Mask the ROI file based on the second ROI.
+%	Mask the ROI file based on the second ROI.
 %
-%       img    - the original ROI image
-%       roi2   - the additiona ROI image
+%   INPUT
+%       img    - The original gmrimage ROI image object.
+%       roi2   - The additional ROI image passed either as a gmriimage or
+%                a path to the image.
 %
-%    (c) Grega Repovs, 2015-12-09
+%   OUTPUT
+%       roi    - A new image with the original ROI masked with the ROI in the
+%                second ROI file.
+%
+%   USE
+%   The most frequent use case is to generate a subject specific ROI file in
+%   which the group defined ROI provided in the original image are masked by
+%   the second image that provides subjects specific information on brain
+%   segmentation (e.g. aseg+aparc image).
+%
+%   For method to work, the ROI had to be read using the mri_ReadROI method,
+%   called on a .names file, so that it has the information on both group level
+%   and subject specific ROI codes. The method loops through all the original
+%   ROI and if subject specific codes are specified for that group level ROI,
+%   it masks the ROI using the specified codes for the subject specific ROI.
+%
+%   EXAMPLE USE
+%   >>> roi = gmrimage.mri_ReadROI('CCN.names');
+%   >>> sroi = roi.mri_MaskROI('OP338.aseg+aparc.nii.gz');
+%
+%   Note that the above can be simplified by the use of mri_ReadROI itself,
+%   which internaly calls mri_MaskROI if the name of the second ROI image file
+%   is provided.
+%
+%   >>> sroi = gmrimage.mri_ReadROI('CCN.names', 'OP338.aseg+aparc.nii.gz');
+%
+%   ---
+%   Written by Grega Repovs, 2015-12-09
+%
+%   Changelog
+%   2017-03-04 Grega Repovs
+%            - Updated documentation
 %
 
 if nargin < 2

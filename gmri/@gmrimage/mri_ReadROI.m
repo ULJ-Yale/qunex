@@ -1,18 +1,86 @@
 function [img] = mri_ReadROI(roiinfo, roi2)
 
-%function [img] = mri_ReadROI(roiinfo, roifile)
+%function [img] = mri_ReadROI(roiinfo, roi2)
 %
-%		Reads in an ROI file, if a second file is provided, it uses it to mask the first one.
+%	Reads in an ROI file, if a second file is provided, it uses it to mask the first one.
 %
-%       roiinfo - a names formated ROI information file
-%       roifile - a path to the second roifile
+%   INPUT
+%       roiinfo - A .names formated ROI information file.
+%       roi2    - A path to the second ROI image file matching ROI codes
+%                 specified in the third column of the .names file. []
 %
+%   OUTPUT
+%       image   - A gmrimage object with ROI coded using integer values and
+%                 additional data structure describing the ROI sources.
 %
-%    (c) Grega Repovs, 2010-05-10
+%   USE
+%   The method is used to generate an ROI object. It also supports masking the
+%   original image (usually a group ROI fle) with the second ROI image (usually)
+%   a subject specific segmentation file.
 %
-%   ---- Changelog ----
+%   If no file is specified as the second ROI, then no masking is performed.
+%   If a second file exists, it will be used to mask the original data based on
+%   the specified values in the third column of the .names file. For more
+%   specific information see mri_MaskROI method.
+%
+%   The function supports the specification of region codes in the .names file
+%   using either numeric vaues (e.g. 3,8,9) or names. The names are based on
+%   aseg+aparc segmentation. They are:
+%
+%   - lcgray  (left cortex gray matter)
+%   - rcgray  (right cortex gray matter)
+%   - cgray   (cortical gray matter)
+%   - lsubc   (left subcortical gray matter)
+%   - rsubc   (right subcortical gray matter)
+%   - subc    (subcortical gray matter)
+%   - lcerc   (left cerebellar gray matter)
+%   - rcerc   (right cerelebbar gray matter)
+%   - cerc    (cereberal gray matter)
+%   - lgray   (left hemisphere gray matter)
+%   - rgray   (right hemisphere gray matter)
+%   - gray    (whole brain gray matter)
+%
+%   NAMES FILE SPECIFICATION
+%   Names file is a regular text file with .names ending. It specifies how to
+%   generate a ROI file. It has the following example form:
+%
+%   /path-to-resources/CCN_ROI.nii.gz
+%   RDLPFC|1|rcgray
+%   LDLPFC|2|lcgray
+%   ACC|3,4|cgray
+%
+%   This file specifies three cognitive cotrol regions. The original ROI file
+%   is referenced by the first line of the .names file. The following lines
+%   specify the ROI to be generated with a pipe (|) separated columns. The first
+%   column specifies the name of the ROI. The second column specifies the
+%   integer codes that represent the desired region. There can be more than one
+%   code used and the ROI will be a union of all the specified, comma separated
+%   codes. The third column specifies the codes to be used to mask the ROI
+%   generated from the original file. If either the third or the second column
+%   is empty, the specified ROI from the original or secondary image file will
+%   be used. If the first line is set to none, only the third column will be
+%   used to generate ROI.
+%
+%   In the case when the generated ROI would overlap, a multivolume file is
+%   generated with each volume specifying one ROI.
+%
+%   EXAMPLE USE
+%   To create a group level roi file:
+%
+%   >>> roi = gmrimage.mri_ReadROI('resources/CCN.names')
+%
+%   To create a subject specific file:
+%
+%   >>> roi = gmrimage.mri_ReadROI('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
+%
+%   ---
+%   Written by Grega Repovs, 2010-05-10
+%
+%   Changelog
 %   2013-07-24 Grega Repovs - adjusted to create either single or multiple volume ROI
 %   2015-12-08 Grega Repovs - added option for named region codes
+%   2017-03-04 Grega Repovs - updated documentatio
+
 
 %   ---- Named region codes
 
@@ -35,9 +103,7 @@ rcodes.gray   = [rcodes.cgray rcodes.subc rcodes.cerc];
 
 %   ---- Go on ...
 
-if nargin < 2
-    roi2 = 'none';
-end
+if nargin < 2 || isempty(roi2), roi2 = 'none'; end
 
 % ----> Read the ROI info
 
