@@ -90,13 +90,13 @@ if verbose , fprintf('\n---> Datatype: %s\n', datatype); end
 
 % --- file root
 
-root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.pconn', '');
+root = regexprep(filename, '\.hdr|\.nii|\.gz|\.img|\.dtseries|\.ptseries|\.pscalar|\.dscalar|\.pconn', '');
 
 img.rootfilename = root;
 [p, n, e]        = fileparts(filename);
 img.filename     = [n e];
 
-ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar)', 'tokens');
+ftype = regexp(filename, '(\.dtseries|\.ptseries|\.pconn|\.pscalar|\.dscalar)', 'tokens');
 if length(ftype) > 0
     ftype = char(ftype{1});
     img.filetype = ftype;
