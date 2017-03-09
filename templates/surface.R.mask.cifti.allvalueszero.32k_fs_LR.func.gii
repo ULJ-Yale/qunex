@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GIFTI xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="http://brainvis.wustl.edu/caret6/xml_schemas/GIFTI_Caret.xsd"
+       Version="1"
+       NumberOfDataArrays="1">
+   <MetaData>
+      <MD>
+         <Name><![CDATA[AnatomicalStructurePrimary]]></Name>
+         <Value><![CDATA[CortexRight]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[ParentProvenance]]></Name>
+         <Value><![CDATA[surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii:
+/Applications/workbench/bin_macosx64/../macosx64_apps/wb_command.app/Contents/MacOS/wb_command -cifti-separate structures.allvaluesone.dtseries.nii COLUMN -metric CORTEX_LEFT surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii -metric CORTEX_RIGHT surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii -volume-all volume.mask.cifti.allvaluesone.nii
+
+]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[ProgramProvenance]]></Name>
+         <Value><![CDATA[Connectome Workbench
+Type: Command Line Application
+Version: 1.2.3
+Qt Compiled Version: 4.8.4
+Qt Runtime Version: 4.8.4
+Commit: c170db0277de04cb8a5c04fdf96e45adcda47d6d
+Commit Date: 2016-08-23 19:08:10 -0500
+Compiled with OpenMP: YES
+Compiler: g++44 (/usr/bin)
+Compiler Version: 4.4.7
+Compiled Debug: NO
+Operating System: Linux
+]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[Provenance]]></Name>
+         <Value><![CDATA[/gpfs/project2/fas/n3/software/workbench/bin_rh_linux64/../exe_rh_linux64/wb_command -metric-math a-1 surface.R.mask.cifti.allvalueszero.32k_fs_LR.func.gii -var a surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii]]></Value>
+      </MD>
+      <MD>
+         <Name><![CDATA[WorkingDirectory]]></Name>
+         <Value><![CDATA[/gpfs/project2/fas/n3/software/MNAP/general/templates]]></Value>
+      </MD>
+   </MetaData>
+   <LabelTable>
+      <Label Key="0" Red="1" Green="1" Blue="1" Alpha="0"><![CDATA[???]]></Label>
+   </LabelTable>
+<DataArray Intent="NIFTI_INTENT_NORMAL"
+           DataType="NIFTI_TYPE_FLOAT32"
+           ArrayIndexingOrder="RowMajorOrder"
+           Dimensionality="1"
+           Dim0="32492"
+           Encoding="GZipBase64Binary"
+           Endian="LittleEndian"
+           ExternalFileName=""
+           ExternalFileOffset="0">
+   <MetaData>
+   </MetaData>
+   <Data>eJzt3VGO4jAURUGWzs7YWv+2EIQktuN3nSrJH6MRfseZEQlqqXk8tjxfm3+9+brUtbrZ17fCNZ993lHXaXafc+070+y2nueZ3XXnszjD/JXcr1vz3t7KzamdFVurN1bu+6Zq18y2X+7cU6Vlr5UbZs4/In3uUVfPa5l51lVzjswaPWPk/qP2bjViz/e9e+4HsMeM+zQA3Enq/fL/vT7lDGnPKVvPVtX6U54JE55jqzdW/kxQta3iZ6lqn/Eq9VRpaeno1TK7oXV+S8Os2TPm9ph5ZG7arD3zrpgzesbI/UftnbBnz/2q7GNZvxYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABw3PN1bM2cPbMVIEX6+1/ye3jyPSi1Pb07QdI1TmytrHpj5b6qbZW7KqnUU6WlQkeFhrtxzQG40qf7zqfnVz8jAAAAAAAAAAAAAAAAAAAAAAAAALif1N8vl/5781b5rqAVvvso/TuckvtT2zXX7r26ubX1quZenSNbeza+9376c5W+Pe0V2/b8v5jdZFmWZeWv0feTK59BKu/be8+e+/Xaq8c+rXu0vP7sa8+8znPc+WtNhlX/7VY812pnWuU8K70HrnCO9DMk96/SniK5OUFaa3UJjQAAAAAAAAAAAAAAAAAAwKr+AODWg+w=</Data>
+</DataArray>
+</GIFTI>
