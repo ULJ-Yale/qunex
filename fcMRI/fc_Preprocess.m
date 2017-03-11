@@ -332,7 +332,7 @@ function [] = fc_Preprocess(subjectf, bold, omit, do, rgss, task, efile, TR, eve
 %   EXAMPLE USE
 %   ===========
 %
-%  >>> fc_Preprocess('subjects/OP234', 3, 4, 'shr', 'm,V,WM,WB,1d', '', '', 2.5, '', '', true, '', 'udvarsme', 'hipass:linear|regress=ignore|lopass=linear');
+%   >>> fc_Preprocess('subjects/OP234', 3, 4, 'shr', 'm,V,WM,WB,1d', '', '', 2.5, '', '', true, '', 'udvarsme', 'hipass:linear|regress=ignore|lopass=linear');
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %
