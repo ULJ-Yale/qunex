@@ -75,6 +75,7 @@ classdef gmrimage
     methods(Static = true)
         %ifh = mri_ReadIFH(file)
         files = mri_ReadConcFile(file)
+        img   = mri_ReadConcImage(file, dtype, frames, verbose)
         roi   = mri_ReadROI(roiinfo, roif2)
         mri_SaveConcFile(file, files)
         mri_SaveNIfTImx(filename, hdr, data, meta, doswap, verbose)
@@ -243,14 +244,14 @@ classdef gmrimage
 
             if length(filename) > 8 && strcmp(filename(length(filename)-8:end), '.4dfp.img')
                 obj = obj.mri_Read4DFP(filename, dtype, frames, verbose);
-                obj = obj.mri_ReadStats(filename, frames, verbose);
+                obj = obj.mri_ReadStats(verbose);
                 obj.empty = false;
             elseif length(filename) > 3 && strcmp(filename(length(filename)-3:end), '.nii') || strcmp(filename(length(filename)-6:end), '.nii.gz') || strcmp(filename(length(filename)-3:end), '.hdr')
                 obj = obj.mri_ReadNIfTI(filename, dtype, frames, verbose);
-                obj = obj.mri_ReadStats(filename, frames, verbose);
+                obj = obj.mri_ReadStats(verbose);
                 obj.empty = false;
             elseif length(filename) > 4 && strcmp(filename(length(filename)-4:end), '.conc')
-                obj = obj.mri_ReadConcImage(filename, dtype, frames, verbose);
+                obj = gmrimage.mri_ReadConcImage(filename, dtype, frames, verbose);
                 obj.empty = false;
             elseif length(filename) > 3 && strcmp(filename(length(filename)-3:end), '.glm')
                 obj = obj.mri_ReadGLM(filename, dtype, verbose);

@@ -2,49 +2,53 @@ function [out, done] = mri_StatsTime(img, do, mask)
 
 %function [out, done] = mri_StatsTime(img, do, mask)
 %
-%	Computes the specified statistics across voxels specified in mask
+%	Computes the specified statistics across all voxels of each frame specified
+%   by the mask.
 %
-%   do          - the statistics to compute
-%       n       - non-nan voxels
-%       m       - mean
-%       me      - median
-%       max     - max
-%       min     - min
-%       sum     - sum
-%       sd      - standard deviation
-%       var     - variability
-%       dvars   - RMS of BOLD derivative across voxels
+%   INPUT
+%       img  ... A gmrimage object to compute statistics on.
+%       do   ... A comma separated string or a cell array of strings specifying
+%                the statistics to compute
+%                ['n, m, me, max, min, sum, sd, var, dvars']
+%           'n'       - number of non-nan voxels
+%           'm'       - mean
+%           'me'      - median
+%           'max'     - max
+%           'min'     - min
+%           'sum'     - sum
+%           'sd'      - standard deviation
+%           'var'     - variability
+%           'dvars'   - RMS of BOLD derivative across voxels
+%       mask  ... A mask of voxels to be included in the statistics
 %
-%   mask - mask of voxels to be included in the statistics
-%
-%   Output
-%       out  - structure with results in named fields
-%       done - a cell array of executed commands
+%   OUTPUT
+%       out  - Structure with results in named fields.
+%       done - A cell array of the executed commands.
 %
 %
-%    (c) Grega Repovs, 2011-07-09
+%   ---
+%   Written by Grega Repovs, 2011-07-09
 %
-%   2011-10-24, Grega Repovš
-%       - checks what was actually executed instead of just returning the do cell array
-%
-%   To do
-%       - add possibility of comma separated do list
+%   Changelog
+%   2011-10-24 Grega Repovš
+%            - checks what was actually executed instead of just returning the
+%              do cell array
+%   2017-03-11 Grega Repovs
+%            - updated documentation
+%            - command can now be specified using a comma separated string
+%            - more robust do loop
 %
 
 
-if nargin < 3
-    mask = [];
-    if nargin < 2
-        do = [];
-    end
-end
+if nargin < 3, mask = []; end
+if nargin < 2, do = [];   end
 
 if isempty(do)
     do = {'n', 'm', 'me', 'max', 'min', 'sum', 'sd', 'var', 'dvars'};
 end
 
 if ~iscell(do)
-    do = {do};
+    do = strtrim(regexp(do, ',', 'split'));
 end
 
 % --- mask image
@@ -53,7 +57,7 @@ if ~isempty(mask)
     img = img.maskimg(mask);
 end
 
-% --- ensure we have 3d representation
+% --- ensure we have 2D representation
 
 img.data = img.image2D;
 

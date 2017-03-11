@@ -2,24 +2,45 @@ function [out] = mri_ShrinkROI(img, method, crit)
 
 %function [out] = mri_ShrinkROI(img, method, crit)
 %
-%		Peels a layer off region to reduce its size at the borders
-%       in - a ROI image volume to be shrinked
-%       method - what is considered as neighbour
-%           surface - sharing a surface (default) [ 7]
-%           edge    - sharing at least an edge    [19]
-%           corner  - sharing at least a corner   [27]
+%	Peels a layer off all regions to reduce their size.
+%
+%   INPUT
+%       in     ... A gmrimage object with ROI volume data.
+%       method ... What is considered as neighbour ['surface']
+%               surface - sharing a surface (default) (N=7)
+%               edge    - sharing at least an edge    (N=19)
+%               corner  - sharing at least a corner   (N=27)
 %       crit - how many of the neighbouring voxels need to be present to survive - default is all
 %
-%    (c) Grega Repovs, 2010-05-10
+%   OUTPUT
+%       out    ... A gmrimage object with shrunk regions
 %
-%   ---- Changelog ----
+%   USE
+%   The method inspects all the voxels in the image for presence of neighbours.
+%   If a voxel has all the specified neighbors (or a crit number of them), then
+%   it is left as it is. If it does not have the required number of neighbours,
+%   then it is considered a part of the border layer and it is peeled off, set
+%   to zero. Neighbors can be specified as all those voxels that share a
+%   surface, those that share at least an edge or those that share at least a
+%   corner.
 %
-%   Grega Repovs, 2013-07-24 ... adjusted for multivolume ROI files
+%   EXAMPLE USE
+%   To cunt as neighbors voxels that share at least an edge and take out those
+%   that have less than 17 neighbors use:
+%
+%   >>> shrunkimg = img.mri_ShrinkROI('edge', 17);
+%
+%   ---
+%   Written by Grega Repovs, 2010-05-10
+%
+%   Changelog
+%   2013-07-24 Grega Repovs
+%          ... adjusted for multivolume ROI files
+%   2017-03-11 Grega Repovs
+%          ... updated documentation
 %
 
-if nargin < 2
-    method = 'surface';
-end
+if nargin < 2,  method = 'surface';  end
 
 img.data = img.image4D;
 out = img;

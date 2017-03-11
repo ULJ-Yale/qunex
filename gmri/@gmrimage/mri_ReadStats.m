@@ -1,23 +1,41 @@
-function [obj] = mri_ReadStats(obj, filename, frames, verbose)
+function [obj] = mri_ReadStats(obj, verbose)
 
-%function [obj] = mri_ReadStats(obj, filename, frames, verbose)
+%function [obj] = mri_ReadStats(obj, verbose)
 %
-%	Reads in available files with information on movement,
-%	per frame image stats and scrubbing inf.
+%	Reads in available files with information on movement, per frame image stats
+%   and scrubbing information.
 %
-%   (c) Grega Repovs
-%   2011-07-31 - Initial version
-%   2013-10-19 - Added reading embedded data
-%   2013-10-20 - Added verbose option
-%   2014-07-19 - Switched to g_ReadTable
+%   INPUT
+%       obj      ... gmrimage object
+%       verbose  ... should it talk a lot
+%
+%   OUTPUT
+%       obj      ... gmrimage with added data statistics
+%
+%   USE
+%   The method is used internaly to get the different statistical data about the
+%   image. It first tries to see if the statistical data is embedded in the
+%   image itself (as might be the case for volume images), otherwise it checks
+%   for presence of external files and reads data from there.
+%
+%   EXAMPLE USE
+%   img = img.mri_ReadStats();
+%
+%   ---
+%   Writen by Grega Repovs 2011-07-31
+%
+%   Changelog
+%   2013-10-19 Grega Repovs - Added reading embedded data.
+%   2013-10-20 Grega Repovs - Added verbose option.
+%   2014-07-19 Grega Repovs - Switched to g_ReadTable.
+%   2017-03-11 Grega Repovs - Updated documentation and simplified arguments.
 %
 
-if nargin < 4
-    verbose = false;
-    if nargin < 3
-        frames = [];
-    end
-end
+if nargin < 3, verbose = false; end
+if nargin < 2, frames = []; end
+
+filename = obj.filename
+frames   = obj.frames
 
 obj.use = true(1, obj.frames);
 

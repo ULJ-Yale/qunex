@@ -3,33 +3,51 @@ function [out, do] = mri_Stats(img, do, exclude)
 %function [out, do] = mri_Stats(img, do, exclude)
 %
 %	Computes the specified statistics across frames excluding values specified in exclude
-%   
-%   do      - the statistics to compute
-%       n   - number of values
-%       m   - mean
-%       me  - median
-%       max - max
-%       min - min
-%       sum - sum
-%       sd  - standard deviation
-%       var - variability
-%       t   - t value of t-test against zero
-%       tp  - p values of t-test against zero
-%       tz  - z values of t-test against zero
 %
-%   exclude - values to be omitted from computing the statistics
+%   INPUT
+%       img ... A gmrimage object
+%       do  ... A comma separated string or a cell array of the statistics to
+%               compute ['m']:
+%           'n'   ... number of values
+%           'm'   ... mean
+%           'me'  ... median
+%           'max' ... max
+%           'min' ... min
+%           'sum' ... sum
+%           'sd'  ... standard deviation
+%           'var' ... variability
+%           't'   ... t value of t-test against zero
+%           'tp'  ... p values of t-test against zero
+%           'tz'  ... z values of t-test against zero
+%       exclude - values to be omitted from computing the statistics
 %
-%    (c) Grega Repovs, 2011-03-18
+%   OUTPUT
+%       out ... a gmrimage object with one frame for each statistic computed
+%       do  ... the command executed
+%
+%   USE
+%   The method is used to compute the specified statistics across all frames for
+%   each voxel of the image. All the voxels with values specified in exclude are
+%   set to NaN, and all the statistics are computed excluding NaN values.
+%
+%   EXAMPLE USE
+%   >>> msdimg = img.mri_Stats({'m', 'sd'});
+%
+%   ---
+%   Written by Grega Repovs, 2011-03-18
+%
+%   Changelog
+%   2017-03-11 Grega Repovs
+%            - Updated documentation.
+%            - Now accepts string with a comma separated commands.
+%            - Made loop more robust.
 
-if nargin < 3
-    exclude = [];
-    if nargin < 2
-        do = 'm';
-    end
-end
+
+if nargin < 3, exclude = [];            end
+if nargin < 2 || isempty(do), do = 'm'; end
 
 if ~iscell(do)
-    do = {do};
+    do = strtrim(regexp(do, ',', 'split'));
 end
 
 % --- NaN the exclude values
@@ -57,30 +75,30 @@ p  = [];
 z  = [];
 
 c = 0;
-for d = do
+for d = do(:)'
     c = c + 1;
-    
+
     switch char(d)
-    
+
     case 'n'
         if isempty(n), n = sum(~isnan(img.data), 2); end
         out.data(:,c) = n;
-    
+
     case 'm'
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
         if isempty(m), m = s./n; end
         out.data(:,c) = m;
-        
+
     case 'me'
         out.data(:,c) = nanmedian(img.data, 2);
-        
+
     case 'max'
         out.data(:,c) = nanmax(img.data, 2);
-        
+
     case 'min'
         out.data(:,c) = nanmin(img.data, 2);
-        
+
     case 'sum'
         if isempty(s), s = nansum(img.data, 2); end
         out.data(:,c) = s;
@@ -88,11 +106,11 @@ for d = do
     case 'sd'
         if isempty(sd), sd = nanstd(img.data, 0, 2); end
         out.data(:,c) = sd;
-    
+
     case 'var'
         if isempty(v), v = nanvar(img.data, 1, 2); end
         out.data(:,c) = v;
-    
+
     case 't'
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
@@ -100,7 +118,7 @@ for d = do
         if isempty(v), v = nanvar(img.data, 1, 2); end
         if isempty(t), t = m./(sqrt(v./n)); end
         out.data(:,c) = t;
-    
+
     case 'tp'
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
@@ -109,7 +127,7 @@ for d = do
         if isempty(t), t = m./(sqrt(v./n)); end
         if isempty(p), p = cdf('t', -abs(t), n-1).*2; end
         out.data(:,c) = p;
-        
+
     case 'tz'
         if isempty(s), s = nansum(img.data, 2); end
         if isempty(n), n = sum(~isnan(img.data), 2); end
