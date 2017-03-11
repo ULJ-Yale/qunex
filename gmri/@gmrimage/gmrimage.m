@@ -86,7 +86,7 @@ classdef gmrimage
         output = mri_Smooth3D(obj, fwhm, verbose)
         output = mri_Smooth3DMasked(obj, mask, fwhm, limit, verbose)
         output = mri_Stats(obj, do, exclude)
-        output = mri_Stats2(obj, obj2, do, exclude)
+        output = mri_StatsDiff(obj, obj2, do, exclude)
         output = mri_ComputeScrub(obj, do)
         output = mri_GetXYZ(obj, ijk)
     end
