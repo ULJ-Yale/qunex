@@ -1,44 +1,75 @@
-function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, frames, scrubvar)
+function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents, frames, scrubvar)
 
-%function [out] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, events, frames, scrubvar)
+%function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents, frames, scrubvar)
 %
+%   Extracts trial timeseries for each of the specified ROI.
 %
-%	flist 	- file list with information on conc, fidl and individual roi files
-%	roif 	- region "names" file
-%   targetf - target matlab file with results
-%	events 	- the events for which to extract timeseries, can be a cell array of combinations
-%	frames 	- limits of frames to include in the extracted timeseries
-%   scrubvar- critera to use for scrubbing data - scrub based on:
-%               - [] do not scrub
-%               - mov      ... overall movement displacement
-%               - dvars    ... frame-to-frame variability
-%               - dvarsme  ... median normalized frame-to-frame variability
-%               - idvars   ... mov AND dvars
-%               - idvarsme ... mov AND dvarsme
-%               - udvars   ... mov OR dvars
-%               - udvarsme ... mov OR dvarsme
+%   INPUT
+%	  flist    ... File list with information on .conc, .fidl, and individual
+%                  roi (segmentation) files.
+%	  roif 	   ... Region "names" file that specifies the ROI to extract trial
+%                  timeseries for.
+%     targetf  ... The target matlab file with results.
+%	  tevents  ... The indeces of the events for which to extract timeseries,
+%                  can be a cell array of combinations of event indeces.
+%	  frames   ... Limits of frames to include in the extracted timeseries.
+%     scrubvar ... Critera to use for scrubbing data - scrub based on:
+%                   - [] do not scrub
+%                   - 'mov'      ... overall movement displacement
+%                   - 'dvars'    ... frame-to-frame variability
+%                   - 'dvarsme'  ... median normalized dvars
+%                   - 'idvars'   ... mov AND dvars
+%                   - 'idvarsme' ... mov AND dvarsme
+%                   - 'udvars'   ... mov OR dvars
+%                   - 'udvarsme' ... mov OR dvarsme
 %
-%	---------------------
+%   OUTPUT
+%     data(n)    ... A structure with extracted trial timeseries for each subject:
+%       .subject ... Subject id
+%       .set(n)  ... Extracted datasets for the subject.
+%           .fevents.event  ... a list of events processed
+%           .fevents.frame  ... start frames of the events processed
+%           .fevents.events ... list of event names included
+%           .nevents        ... number of events processed
+%           .frames         ... a list of frames processed
+%           .timeseries     ... a 3D matrix with the dimensions:
+%                               - number of events (trials)
+%                               - number of frames extracted for each trial
+%                               - number of regions to extract data from
+%           .scrub          ... a matrix of scrub markers (nevents x n event frames)
+%           .baseline       ... a matrix of baseline data for each ROI for each run (nrun x nroi)
+%           .eventbaseline  ... a matrix of baseline for each event (trial) for each ROI (nevents x nroi)
+%           .run            ... a record of which run each event (trial) comes from
 %
-%	fevents: datastructure for coding events from fidl events file
-%		frame 	- array with event start times in frames
-%		elength - array with event duration in frames
-%		event 	- array with event codes
-%		events	- list of event names
-%		TR		- TR in s
+%   USE
+%   The function is used to extract per trial data from each subject for the
+%   specified events. The data is returned in a data structure described above,
+%   as well as saved to a matlab data file.
 %
-%   Written by Grega Repovš, 22.1.2008
-%   2011.11.07 - adjusted and partly rewriten to use gmrimage object
-%   2012.04.20 - added the option of scrubbing the data
-%   2013.07.24 - adjusted to use the new ROIMask method
+%   EXAMPLE USE
+%
+%   >>> fc_ExtractTrialTimeseriesMasked('scz+con.list', 'ccroi.names', 'ccroits', {[0], [1 2], [3 4]}, [2 4], 'udvarsme');
+%
+%   The above call would extract three sets of timeseries for a) event coded as
+%   0, b) events coded as 1 or 2 and c) events coded as 3 and 4 in the fidl
+%   file. For each matching event in the fidl file, it would extract for each of
+%   the regions specified in the ccroi.names frames 2, 3, and 4. It would save
+%   the results in a file 'ccroits.mat'. At extraction it would ignore all
+%   frames that were marked bad using the 'udvarsme' criterion.
+%
+%   ---
+%   Written by Grega Repovš, 2008-01-22
+%   2011-11-07 Grega Repovs
+%            - adjusted and partly rewriten to use gmrimage object
+%   2012-04-20 Grega Repovs
+%            - added the option of scrubbing the data
+%   2013-07-24 Grega Repovs
+%            - adjusted to use the new ROIMask method
+%   2017-03-11 Grega Repovs
+%            - Cleaned code and updated documentation
 
-
-if nargin < 6
-    scrubvar = [];
-    if nargin < 5
-        error('ERROR: Five arguments need to be specified for function to run!');
-    end
-end
+if nargin < 6, scrubvar = []; end
+if nargin < 5, error('ERROR: Five arguments need to be specified for the function to run!'); end
 
 scrubit = true;
 if isempty(scrubvar)
@@ -50,9 +81,9 @@ end
 
 fprintf('\n\nStarting ...');
 
-nniz = length(events);							%--- number of separate sets we will be extracting
-[t1, fbase, t2] = fileparts(roif);			%--- details about the filename
-tlength = frames(2) - frames(1) + 1;			%--- number of timepoints in the timeseries
+nniz = length(events);							% --- number of separate sets we will be extracting
+[t1, fbase, t2] = fileparts(roif);			    % --- details about the filename
+tlength = frames(2) - frames(1) + 1;			% --- number of timepoints in the timeseries
 frames = int16(frames);
 
 %   ------------------------------------------------------------------------------------------
@@ -131,6 +162,13 @@ for s = 1:nsub
 
     % ======================================================
     % 	----> filter out the events to include in the analysis
+    %
+    %   fevents: datastructure for coding events from fidl events file
+    %       frame   - array with event start times in frames
+    %       elength - array with event duration in frames
+    %       event   - array with event codes
+    %       events  - list of event names
+    %       TR      - TR in s
 
     fprintf('\n     ... reading event data');
 
@@ -138,18 +176,18 @@ for s = 1:nsub
     temp = fevents.frame(:,1) + 1;
     bframes = int16([temp; 999999]);
     for n = 1:nniz
-    	do = ismember(fevents.event, events{n});					%--- get a mask of events to process
-    	niz(n).fevents.event = fevents.event(do);					%--- get a list of events we are processing
-    	niz(n).fevents.frame = fevents.frame(do) + 1;				%--- get the start frames of events we are processing
-    	niz(n).fevents.events = fevents.events(events{n}+1);		%--- get list of events names we included
+    	do = ismember(fevents.event, tevents{n});					% --- get a mask of events to process
+    	niz(n).fevents.event = fevents.event(do);					% --- get a list of events we are processing
+    	niz(n).fevents.frame = fevents.frame(do) + 1;				% --- get the start frames of events we are processing
+    	niz(n).fevents.events = fevents.events(events{n}+1);		% --- get list of events names we included
 
-    	niz(n).nevents = length(niz(n).fevents.event);				%--- get a number of events we are processing
-    	niz(n).frames = int16([niz(n).fevents.frame; 999999]);		%--- get a list of frames we are processing plus an extra large nonexistent frame
-    	niz(n).timeseries = zeros(niz(n).nevents, tlength, nregions);			%--- prepare a matrix to hold all the timeseries
-        niz(n).scrub = zeros(niz(n).nevents, tlength);              %--- a matrix to hold scrub markers
-    	niz(n).baseline = zeros(nruns, nregions);					%--- a matrix to store baseline data for each region in each run
-    	niz(n).eventbaseline = zeros(niz(n).nevents, nregions);		%--- run baseline recorded for each event
-    	niz(n).run = zeros(1, niz(n).nevents);						%--- a list to record which run the trial comes from
+    	niz(n).nevents = length(niz(n).fevents.event);				% --- get a number of events we are processing
+    	niz(n).frames = int16([niz(n).fevents.frame; 999999]);		% --- get a list of frames we are processing plus an extra large nonexistent frame
+    	niz(n).timeseries = zeros(niz(n).nevents, tlength, nregions);			% --- prepare a matrix to hold all the timeseries
+        niz(n).scrub = zeros(niz(n).nevents, tlength);              % --- a matrix to hold scrub markers
+    	niz(n).baseline = zeros(nruns, nregions);					% --- a matrix to store baseline data for each region in each run
+    	niz(n).eventbaseline = zeros(niz(n).nevents, nregions);		% --- run baseline recorded for each event
+    	niz(n).run = zeros(1, niz(n).nevents);						% --- a list to record which run the trial comes from
     	niz(n).c = 1;
     	niz(n).N = 0;
     end
@@ -205,7 +243,7 @@ for s = 1:nsub
 	fprintf(' done');
 
     data(s).subject = subject(s).id;
-    data(s).niz = niz;
+    data(s).set = niz;
 end
 
 % ======================================================
