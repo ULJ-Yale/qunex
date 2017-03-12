@@ -403,8 +403,16 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    Using the defaults:
+
+    $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
          overwrite=no bold-preprocess=all
+
+    Specifying additional parameters for identification of bad frames:
+
+    $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no bold-preprocess=all mov_fd=0.9 mov_dvarsme=1.6 \\
+         mov_before=1 mov_after= 2
 
     ----------------
     Written by Grega Repovš
