@@ -1,9 +1,11 @@
 library(RCurl)
 
-outpath <- "~/gpfs/project/fas/n3/software/MNAP/genera/functions/working/"
+outpath <- "/gpfs/project/fas/n3/software/MNAP/general/functions/working/"
 
 # user-specific API token must be initially created through RedCap website (https://poa-redcap.med.yale.edu/redcap_v6.17.2/) 
 userToken <- as.vector(read.table('~/.redcapAPI/APItoken')[1,1])
+
+# set output filenames 
 fileRecord <- paste(outpath, 'RedCapExport/RedCapExport_record.csv', sep="")
 fileMetadata <- paste(outpath, 'RedCapExport/RedCapExport_metadata.csv', sep="")
 fileEventmap <- paste(outpath, 'RedCapExport/RedCapExport_formEventMapping.csv', sep="")
@@ -13,7 +15,7 @@ fileOutput <- paste(outpath, 'RedCapExport/RedCapExport_OrganizedDatabase.csv', 
 result <- postForm(content='record', uri='https://poa-redcap.med.yale.edu/api/', token=userToken, format='csv', type='flat', rawOrLabel='raw', rawOrLabelHeaders='raw', returnFormat='csv')
 write.table(result, file = fileRecord, append = FALSE, quote = FALSE, sep = ",", eol = "\n", na = "NA", dec = ".", row.names = FALSE, col.names = FALSE) 
 record <- data.frame(read.csv(fileRecord, stringsAsFactors = FALSE))
-# export RedCap data dictionary 
+# export data dictionary 
 result <- postForm( content='metadata', uri='https://poa-redcap.med.yale.edu/api/', token=userToken, format='csv', returnFormat='csv')
 write.table(result, file = fileMetadata, append = FALSE, quote = FALSE, sep = ",", eol = "\n", na = "NA", dec = ".", row.names = FALSE, col.names = FALSE) 
 metadata <- data.frame(read.csv(fileMetadata, stringsAsFactors = FALSE))
@@ -26,10 +28,10 @@ eventmap <- data.frame(read.csv(fileEventmap, stringsAsFactors = FALSE))
 events <- sort(as.matrix(unique(record["redcap_event_name"])))                 
 # list N3 IDs for all subjects 
 allSubjects <- sort(as.matrix(unique(record["anticeviclab_id"])))
-# initialize dataframe to hold results
+
+# initialize dataframe to hold all results
 headersize <- 4
 dfAll <- data.frame(matrix(NA, ncol=(length(events)*ncol(record)), nrow=(length(allSubjects)) + headersize))
-  
 # separate records by event and concatenate horizontally, with one row per subject
 for (i in 1:length(events)){
   
@@ -41,7 +43,9 @@ for (i in 1:length(events)){
   # sort full and empty records into standardized dataframe for all subjects 
   orderedSubjects <- data.frame(matrix(NA, ncol=ncol(record), nrow=length(allSubjects)))
   orderedSubjects[(1:(nrow(df))),] <- as.matrix(df)
-  orderedSubjects[((nrow(df)+1)):(length(allSubjects)),1] <- as.matrix(emptySubjects) 
+  if ( nrow(emptySubjects) > 0){
+    orderedSubjects[((nrow(df)+1)):(length(allSubjects)),1] <- as.matrix(emptySubjects) 
+  }
   orderedSubjects <- orderedSubjects[order(orderedSubjects[1]),]
   rownames(orderedSubjects) <- orderedSubjects[,1]
   
@@ -64,8 +68,8 @@ for (i in 1:length(events)){
     if ((length(mdIndex) > 0) && (length(emIndex) > 0)) {
       df2["FORM", k] <- as.vector(metadata[mdIndex,"form_name"])
       df2["LABEL", k] <- as.vector(metadata[mdIndex,"field_label"])
-      print(cat("building dataframe... ", event, "  field: ",field))
-    } else {
+      print(paste("building dataframe... ", event, "  field:", field))
+    } else { # flag columns for deletion if field has no match in data dictionary and/or form has no match in event
       df2[, k] <- "99999"
     }
   }
@@ -84,4 +88,5 @@ rownames(dfFinal) <- rownames(df2)
 
 # save output
 write.csv(dfFinal, file = fileOutput)
+
 

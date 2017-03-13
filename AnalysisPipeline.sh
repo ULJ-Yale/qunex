@@ -304,6 +304,8 @@ show_usage_gmri() {
 
 dicomsort() {
 	  				
+	  		mkdir ${StudyFolder}/${CASE}/dicom &> /dev/null
+	  		
 	  		# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "no" ]; then
 			echo ""
