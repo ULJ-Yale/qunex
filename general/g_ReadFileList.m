@@ -1,7 +1,6 @@
 function [subject, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
 
-%
-%	function [subjects, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
+%function [subjects, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
 %
 %	Reads a list of files and returns a structure with file information.
 %
@@ -16,12 +15,13 @@ function [subject, nsubjects, nfiles] = g_ReadFileList(flist, verbose)
 %       - nsubjects : number of subjects in the list
 %       - nfiles    : number of all files in the list (excluding roi)
 %
-% 	Created by Grega Repovš on 2010-11-23.
-%   2012-05-20 - Changed to omit missing files
-%   2013-07-26 - Added folder to the list of things to list
-%   2015-12-09 - Added reading of fidl and glm files
+%   ---
+% 	Written by Grega Repovš on 2010-11-23.
 %
-% 	Copyright (c) 2010. All rights reserved.
+%   Changelog
+%   2012-05-20 Grega Repovš - Changed to omit missing files
+%   2013-07-26 Grega Repovš - Added folder to the list of things to list
+%   2015-12-09 Grega Repovš - Added reading of fidl and glm files
 
 
 if nargin < 2

@@ -1,7 +1,8 @@
 function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 
+%function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %
-%   Returns task regressors for each bold run
+%   Create task regressors for each bold run.
 %
 %   INPUT
 %   - fidlf - subject's fidl event file
@@ -25,7 +26,7 @@ function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %           - column
 %           - normalize (within vs. across)
 %           - method    (z, 01, -11, none)
-%   - ignore - what to do with frames to ignore
+%   - ignore - what to do with frames to ignore ['no']
 %       -> 'no' (don't do anything)
 %       -> 'ignore' (ignore those frames)
 %       -> 'specify' (create a separate regressor)
@@ -44,39 +45,35 @@ function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
 %     - ignore
 %     - fidl
 %
+%   USE
+%   The function takes a subject's fidl and conc file and based on the
+%   information provided in the model variable generates a matrix of regressors
+%   for each bold file separately. It returns the information in a data
+%   structure.
+%
+%   EXAMPLE USE
+%   model = g_CreateTaskRegressors('OP354-flanker.fidl', 'OP354-flanker.conc', 'taskblock:boynton|congruent:7|incongruent:7', 'ignore');
+%
 %   NOTES
-%   - would be good to include other HRF types as well as estimated HRF
-%   - !!! assumed response regressors get normalized to 1 only within each run !!!!
-%   ... perhaps add a normalizing pass for all regressors at the end of the script
-%   - !!! it only correctly works with TR precision to 1 decimal point ... should perhaps change to 2 decimal points
-%   -> changed 2011.07.31
-%   - !!! might be better to change downsampling to summation
-%   -> changed to area under the curve 2011.07.31
+%   - Assumed response regressors get normalized to 1 only within each run, not across runs.
 %
 %   ---
-%   Grega Repovs - Created: 2008-07-11
+%   Written by Grega Repovs 2008-07-11
 %
 %   Changelog
-%          2008-07-16 Grega Repovš - Updated
-%          2011-01-24 Grega Repovš - Updated
-%          2011-02-11 Grega Repovš - Updated
-%          2011-07-31 Grega Repovš - Updated
-%          2015-10-23 Grega Repovš - Updated (Error reporting for missing event info.)
-%          2016-02-04 Grega Repovš - Updated (Added behavioral regressors and changed output structure)
-%          2017-02-11 Grega Repovš - Updated to use the general g_HRF function.
-
+%   2008-07-16 Grega Repovš - Updated
+%   2011-01-24 Grega Repovš - Updated
+%   2011-02-11 Grega Repovš - Updated
+%   2011-07-31 Grega Repovš - Updated to use two decimal points precision and area under the curve
+%   2015-10-23 Grega Repovš - Updated (Error reporting for missing event info.)
+%   2016-02-04 Grega Repovš - Updated (Added behavioral regressors and changed output structure)
+%   2017-02-11 Grega Repovš - Updated to use the general g_HRF function.
+%   2017-03-12 Grega Repovš - Updated documentation.
 
 
 % ---> set variables
 
-if nargin < 4
-    ignore = [];
-end
-
-if isempty(ignore)
-    ignore = 'no';
-end
-
+if nargin < 4 || isempty(ignore), ignore = 'no'; end
 
 % ---> get event data
 

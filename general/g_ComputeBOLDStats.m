@@ -2,26 +2,75 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 
 %function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %
-%   Computes BOLD run per frame statistics and scrubs.
+%   Computes BOLD run per frame statistics and scrubbing information.
 %
-%   img         - gmrimage or a path to a bold file to process
-%   mask        - gmrimage or a path to a mask file to use
-%   target      - folder to save results into, default: where bold image is, 'none': do not save in external file
-%   store       - whether to store the data in the image file - 'same': in the same file, '<ext>': new file with extension, '': no img file
-%   scrub       - whether and how to scrub - a string specifying parameters eg 'pre:1|post:1|fd:4|ignore:udvarsme'
-%   verbose     - to report on progress or not [not]
+%   INPUTS
+%       img      ... An gmrimage object or a path to a BOLD file to process.
+%       mask     ... An gmrimage object or a path to a mask file to use.
+%       target   ... A folder to save results into ['']:
+%                    '': where bold image is,
+%                    'none': do not save results in an external file
+%       store    ... Whether to store the data in the image file ['']
+%                    - 'same': in the same file,
+%                    - '<ext>': in a new file with extension <ext>,
+%                    - '': do not save information in an image file
+%       scrub    ... A string describing whether and how to compute scrubbing
+%                    information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' or
+%                    'none' for no scrubbing (see mri_ComputeScrub gmrimage
+%                    method for more information.
+%       verbose  ... To report the progress or not [false].
 %
-%   Created by Grega Repovš on 2011-07-09.
-%   Grega Repovs - 2013-10-20 - Added embedding and scrubbing
-%   Grega Repovs - 2013-12-18 - Split in two to enable single bold file processing
+%   USE
+%   The function is used to compute and save per frame statistics to be used for
+%   bad frames scrubbing. It also initiates computation of scrubbing information
+%   if a scrubbing string is present.
 %
-%   Copyright (c) 2011 Grega Repovs. All rights reserved.
+%   The function identifies relevant brain voxels in two manners. First, it
+%   identifies voxels with intensity higher than 300 on the first BOLD frame. If
+%   there are more than 20000 valid voxels, it then select those for which the
+%   intensity is allways above the specified threshold and selects those for
+%   computation of image statistics.
+%
+%   Second, if the first method fails (e.g. in the case when images were
+%   demeaned), it identifies all the voxels for which the variance across the
+%   frames is more than 0.
+%
+%   After the voxels were identified, the image is additionally masked if a
+%   mask was specified, and the statistics are computed using mri_StatsTime
+%   gmrimage method.
+%
+%   If scrub is not set to 'none', scrubbing information is also computed by
+%   calling mri_ComputeScrub gmrimage method.
+%
+%   The results can then be saved either by embedding them into the volume
+%   image (specified in the store parameter) or by saving them in separate
+%   files in the specified target folder using .bstats extension for bold
+%   statistics, .scrub extension for scrubbing information and .use extension
+%   for information, which frame to use.
+%
+%   NOTICE
+%   Saving data by embedding in a volume file is currently disabled.
+%
+%   EXAMPLE USE
+%   g_ComputeBOLDStats('bold1.nii.gz', [], 'movement', '', '', true);
+%
+%   ---
+%   Written by Grega Repovš on 2011-07-09.
+%
+%   Changelog
+%   2013-10-20 Grega Repovs
+%            - Added embedding and scrubbing
+%   2013-12-18 Grega Repovs
+%            - Split in two to enable single bold file processing
+%   2017-03-12 Grega Repovs
+%            - Updated documentation
+%
 
 if nargin < 6, verbose = false; end
-if nargin < 5, scrub = [];      end
-if nargin < 4, store = [];      end
-if nargin < 3, target = [];     end
-if nargin < 2, mask = [];       end
+if nargin < 5, scrub   = [];    end
+if nargin < 4, store   = [];    end
+if nargin < 3, target  = [];    end
+if nargin < 2, mask    = [];    end
 
 brainthreshold = 300;
 minbrainvoxels = 20000;

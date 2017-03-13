@@ -1,5 +1,6 @@
 function [ts] = g_CreateAssumedResponse(TR, frames, delay, elength, hrf_type)
 
+%function [ts] = g_CreateAssumedResponse(TR, frames, delay, elength, hrf_type)
 %
 %   Returns timecourse of an assumed response to an event
 %

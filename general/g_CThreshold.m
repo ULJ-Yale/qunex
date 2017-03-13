@@ -1,23 +1,34 @@
-function [] = cthreshold(fname, tname, csize, t)
+function [] = g_CThreshold(fname, tname, csize, t)
 
-%function [] = cthreshold(fname, tname, csize, t)
+%function [] = g_CThreshold(fname, tname, csize, t)
 %
-%   Thresholds for cluster size
+%   Thresholding using cluster size for volume images.
 %
-%   input
-%       fname = exisiting Z image name
-%       tname = new, thresholded Z image name
-%       csize = cluster size threshold
-%       t     = Z magnitude threshold (allways does positive and negative)
+%   INPUT
+%       fname ... A path to a Z image.
+%       tname ... The name for the new, thresholded image.
+%       csize ... Minimal cluster size threshold.
+%       t     ... Z magnitude threshold (allways does positive and negative). [3]
 %
-%   What
-%       The functions first applies Z threshold, then finds all 
-%       contiguous (shared voxel side - neighboorhood 18) custers and
-%       zeros all that are smaller than csize.
+%   USE
+%   The functions first applies the specified Z threshold zeroing all voxels
+%   between -t and +t. It then identifies all contiguous clusters of voxels
+%   with non-zero values, voxels that share at least an edge (neighboorhood 18).
+%   Next, it identifies all clusters smaller than csize and zeros them so that
+%   only voxels with Z magnitude more than t, that are part of clusters of at
+%   least csize voxels remain.
 %
-%   (c) Grega Repovs, 2016-04-06
+%   EXAMPLE USE
 %
-
+%   >>> g_CThreshold('encoding_Z.nii.gz', 'encoding_Z_3_72.nii.gz', 72, 3);
+%
+%   ---
+%   Written by Grega Repovs, 2016-04-06
+%
+%   Changelog
+%   2017-03-12 Grega Repovs
+%            - Updated documentation.
+%
 
 
 if nargin < 4 || isempty(t), t = 3; end

@@ -11,9 +11,11 @@ function [data, hdr, meta] = g_ReadTable(instr)
 %       - hdr       cell array of strings with column names
 %       - data      data matrix
 %
-%    Whipped together by Grega Repovs, 2014-07-18
-%    --------
-%    2016-08-18 Grega Repovs, Adapted to work with strings
+%   ---
+%   Written by Grega Repovs, 2014-07-18
+%
+%   Changelog
+%   2016-08-18 Grega Repovs - Adapted to work with strings
 %
 
 

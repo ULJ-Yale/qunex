@@ -1,10 +1,13 @@
 function [files] = g_ReadConcFile(file)
 
-%	
+%function [files] = g_ReadConcFile(file)
+%
 %	Reads a conc file and returns a list of files
-%	
+%
 %	files - list of paths
-%	
+%
+%   ----
+%   Written by Grega Repovš
 
 [fin message] = fopen(file);
 if fin == -1

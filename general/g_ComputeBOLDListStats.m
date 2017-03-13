@@ -1,37 +1,45 @@
 function [] = g_ComputeBOLDListStats(flist, target, store, scrub, verbose)
 
+%function [] = g_ComputeBOLDListStats(flist, target, store, scrub, verbose)
 %
-%	function [] = g_ComputeBOLDListStats(flist, target, store, scrub, verbose)
+%	Computes BOLD run per frame statistics and scrubbing information for a list of subjects.
 %
-%	Computes BOLD run per frame statistics and scrubs.
-%
-%	flist   	- conc-like style list of subject image files or conc files:
+%   INPUT
+%       flist  ... A list text file providing a list of subjects' image or conc files:
 %                  subject id:<subject_id>
 %                  roi:<path to the individual's brain segmentation file>
-%                  file:<path to bold files - one per line>
-%   target      - folder to save results into, default: where bold image is, 'none': do not save in external file
-%   store       - how to store the data - 'same': in the same file, '<ext>': new file with extension, '': no img file
-%   scrub       - whether and how to scrub - a string specifying parameters eg 'pre:1|post:1|fd:4|ignore:udvarsme'
-%	verbose		- to report on progress or not [not]
+%                  file:<path to a bold file - one bold file per line>
+%       target ... A folder to save results into, default: where bold image is,
+%                  'none': do not save the results in an external file [''].
+%       store  ... A string specifying how to store the data ['']:
+%                  - 'same': in the same file,
+%                  - '<ext>': new file with extension,
+%                  - '': no img file
+%       scrub  ... A string specifying whether and how to compute scrubbing
+%                  information, e.g. 'pre:1|post:1|fd:4|ignore:udvarsme' []
+%	    verbose	... Whether to report on progress or not [false].
 %
-% 	Created by Grega Repovš on 2011-07-09.
-%   Grega Repovs - 2013-10-20 - Added embedding and scrubbing
-%   Grega Repovs - 2013-12-19 - Split into two functions to separate list processing and actual statistic computation
+%   USE
+%   The function calls g_ComputeBOLDStats on each of the bolds for each of the
+%   subjects specified in the list file. Please see g_ComputeBOLDStats for
+%   more detailed information. If arguments are left empty, the defaults in
+%   g_ComputeBOLDStats will be used.
 %
-% 	Copyright (c) 2011 Grega Repovs. All rights reserved.
+%   ---
+% 	Written by Grega Repovš, 2011-07-09.
+%
+%   Changelog
+%   2013-10-20 Grega Repovs
+%            - Added embedding and scrubbing
+%   2013-12-19 Grega Repovs
+%            - Split into two functions to separate list processing and actual statistic computation
+%   2017-03-12 Grega Repovs
+%            - Updated documentation
 
-if nargin < 5
-	verbose = false;
-    if nargin < 4
-        scrub = [];
-        if nargin < 3
-            store = [];
-        	if nargin < 2
-        	    target = [];
-        	end
-        end
-    end
-end
+if nargin < 5 || isempty(verbose), verbose = false; end
+if nargin < 4, scrub  = []; end
+if nargin < 3, store  = []; end
+if nargin < 2, target = []; end
 
 % ======= Run main
 
@@ -57,7 +65,6 @@ for s = 1:nsubjects
 
     nfiles = length(subject(s).files);
 	for n = 1:nfiles
-
         g_ComputeBOLDStats(subject(s).files{n}, mask, target, store, scrub, verbose);
 
     end

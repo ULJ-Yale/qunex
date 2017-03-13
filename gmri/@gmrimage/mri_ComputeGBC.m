@@ -26,7 +26,7 @@ function [obj, commands] = mri_ComputeGBC(obj, command, fmask, mask, verbose, rm
 %                   > nDs:n  ... computes proportion of voxels within n strength ranges of negative r
 %
 %       fmask   - Mask specifying which frames of the original image to use. []
-%       mask    - Mask specifying which voxels to compute GMC for. []
+%       mask    - Mask specifying which voxels to compute GBC for. []
 %       verbose - Should it talk a lot. [false]
 %       rmax    - The r value above which the correlations are considered to be of the same functional ROI
 %               - or false if it should not be used. [false]

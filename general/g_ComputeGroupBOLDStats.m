@@ -2,38 +2,80 @@ function  [] = g_ComputeGroupBOLDStats(flist, tfile, stats, inmask, ignore)
 
 % function  [] = g_ComputeGroupBOLDStats(flist, tfile, stats, inmask, ignore)
 %
-%   function for extraction of statistics over the whole group
+%   function for extraction of image statistics over the whole group.
 %
-%   flist   - file with subject list
-%   tfile   - the file root to save the results to
-%   stats   - which statistics to compute
-%   inmask  - mask of frames to exclude
-%   ignore  - do we omit frames to be ignored (no)
-%           -> no:    do not ignore any additional frames
-%           -> event: ignore frames as marked in .fidl file
-%           -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
+%   INPUT
+%       flist   ... A subjects list file.
+%       tfile   ... The file root to save the results to [''].
+%       stats   ... A cell array or a comma separated string specifying, which statistics to compute.
+%       inmask  ... A mask of frames to exclude or an event string specifying which frames to use.
+%       ignore  ... do we omit frames to be ignored (no)
+%               -> 'no':    do not ignore any additional frames
+%               -> 'fidl':  ignore frames as marked in .fidl file
+%               -> '<col>': the column in *_scrub.txt file that matches bold file to be used for ignore mask
 %
-%   (c) Grega Repovs - 2013-09-15
+%   USE
+%   The function computes for each subject the specified image statistics across
+%   the BOLD image, using the gmrimage mri_Stats method. Results are saved for
+%   each computed statistics in a separate file with one volume for each subject
+%   with order of volumes matching the order in which the subjects are listed in
+%   the flist file. The root of the files in which the results are saved is
+%   specified in tfile. If not specified (i.e. left empty) the root will be the
+%   root of the flist.
+%
+%   The function is flexible in specifying what frames to use and/or exclude.
+%   inmask parameter can specify either a mask of frames to exclude for each
+%   subject, or it can specify an eventstring to be used with a per-subject
+%   fidl file. If an eventstring is specifed, then the list file (flist) needs
+%   to also list a fidl file for each subject. The eventstring will then be
+%   used to create a regressor matrix using g_CreateTaskRegressors function,
+%   and each frame for which there is a non-zero value in any of the regressor
+%   columns will be included in the computation of statistics. As an example,
+%   if the statistics are to be computed across the 3rd and 4th frames of each
+%   'neutral' and 'negative' events specified in the fidl file, then the
+%   eventstring would be:
+%
+%   'negative:block:3:4|neutral:block:3:4'
+%
+%   Additionally, the ignore parameter specifies which frames to exclude based
+%   on image scrubbing information. If the information is to be taken out of a
+%   .scrub file then the name of the relevant column needs to be specified in
+%   the ignore parameter. If the ignore parameter is set to 'fidl' then the
+%   ignore frames in the fidl file will be used.
+%
+%   EXAMPLE USE
+%   To compute mean and standard variation and exclude the first 5 frames and
+%   the frames marked bad using udvarsme criterion, use:
+%
+%   >>> g_ComputeGroupBOLDStats('scz-wm.list', [], 'm, sd', 5, 'udvarsme');
+%
+%   To compute the mean and standard variation for all negative trials (frames
+%   3 & 4), and use ignore information in fidl file, use:
+%
+%   >>> g_ComputeGroupBOLDStats('scz-wm.list', [], 'm, sd', 'negative:block:3:4', 'fidl');
+%
+%   SEE ALSO
+%   gmrimage.mri_Stats
+%   g_CreateTaskRegressors
+%
+%   ---
+%   Written by Grega Repovs - 2013-09-15
+%
+%   Changelog
+%   2017-03-12 Grega Repovs
+%            - Updated documentation, cleaned code.
 
 
-if nargin < 5
-    scrub = [];
-    if nargin < 4
-        omit = [];
-        if nargin < 3
-            stats = [];
-            if nargin < 2
-                tfile = [];
-                if nargin < 1
-                    error('ERROR: Please specify list of files to process!');
-                end
-            end
-        end
-    end
+if nargin < 5, ignore = []; end
+if nargin < 4 || isempty(inmask), inmask = 5; end
+if nargin < 3 || isempty(stats),  stats  = 'sd'; end
+if nargin < 2, tfile  = []; end
+if nargin < 1, error('ERROR: Please specify list of files to process!'); end
+
+if ~iscell(stats)
+    stats = strtrim(regexp(stats, ',', 'split'));
 end
 
-if isempty(inmask) == [], inmask = 5; end
-if isempty(stats)  == [], stats  = {'sd'} ; end
 nstats = length(stats);
 
 if isempty(tfile)
@@ -42,6 +84,9 @@ if isempty(tfile)
     tfile = strrep(tfile, '.conc', '');
     tfile = strrep(tfile, '.4dfp', '');
     tfile = strrep(tfile, '.img', '');
+    tfile = strrep(tfile, '.nii', '');
+    tfile = strrep(tfile, '.gz', '');
+    tfile = strrep(tfile, '.dtseries', '');
 end
 
 if isempty(ignore)

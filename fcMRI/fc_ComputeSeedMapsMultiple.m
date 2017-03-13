@@ -9,8 +9,7 @@ function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, target
 %	Computes seed based correlations maps for individuals as well as group maps.
 %
 %	flist   	- conc style list of subject image files or conc files, header row, one subject per line
-%	roif		- 4dfp image file with ROI
-%	roinfile	- file with region names, one region per line in format: "value\tname"
+%	roinfo	    - an ROI file
 %	inmask		- an array mask defining which frames to use (1) and which not (0)
 %	options		- a string defining which subject files to save
 %		r		- save map of correlations
