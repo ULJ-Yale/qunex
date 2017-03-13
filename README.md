@@ -1,3 +1,5 @@
+# README File for MNAP Neuroimaging Utilities
+
 Background
 ==========
 
@@ -18,7 +20,7 @@ data templates provided in a separate library.
 The utilities can be used as a self standing toolset, they were, however,
 developed to efficiently integrate with a set of Matlab functions, methods and
 utilities, and a modified version of HCP (Human Connectome Project)
-preprocessing tools. They are best utilized as a part MNAP (Multimodal
+preprocessing tools. They are best utilized as a part of MNAP (Multimodal
 Neuroimaging Analysis Pipeline).
 
 The utilites are developed and maintained by Grega Repovš, [Mind and Brain
@@ -52,14 +54,23 @@ Perusing documentation, please note the following conventions used:
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).
 
 
-
 External dependencies
 =====================
 
+# * Connectome Workbench (v1.0 or above)
+# * FSL (version 5.0.6 or above)
+# * FreeSurfer (5.3 HCP version or later)
+# * MATLAB (version 2012b or above with signal processing and imaging toolbox)
+# * FIX ICA
+# * PALM
+# * Python (version 2.7 or above)
+# * AFNI
+# * Gradunwarp
+# * Human Connectome Pipelines
+# * R Statistical Environment
 
 File formats
 ============
-
 
 
 [Mind and Brain Lab]: http://mblab.si
