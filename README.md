@@ -1,3 +1,6 @@
+# README File for MNAP General Analysis Pipeline
+
+
 Background
 ==========
 
@@ -57,7 +60,7 @@ External dependencies
 
 # * Connectome Workbench (v1.0 or above)
 # * FSL (version 5.0.6 or above)
-# * FreeSurfer
+# * FreeSurfer (5.3 HCP version or later)
 # * MATLAB (version 2012b or above with signal processing and imaging toolbox)
 # * FIX ICA
 # * PALM
@@ -70,8 +73,6 @@ External dependencies
 
 File formats
 ============
-
-
 
 
 [Mind and Brain Lab]: http://mblab.si
