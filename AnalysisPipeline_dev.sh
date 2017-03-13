@@ -5034,21 +5034,23 @@ fi
 	fi
 	
 	# -- check for input with question mark
-	# if [ -z "${1##*?*}" ] && [ -z "$2" ]; then 
-	#	Usage="$1"
-	#	UsageInput=`echo ${Usage} | cut -c 2-`
+	UsageInput="$1"
+	if [[ "$1" == ?* ]]; then
+		Usage="$1"
+		UsageInput=`echo ${Usage:1}`
+		#UsageInput=`echo ${Usage} | cut -c 2-`
 			# -- check if input part of function list
-	#		if [[ "$APFunctions" != *${UsageInput}* ]]; then
-	#			echo ""
-	#			reho "Function $UsageInput does not exist! Refer to general usage below: "
-	#			echo ""
-	#			show_usage
-	#			exit 0
-	#		else	
-    #			show_usage_"$UsageInput"
-    #		fi
-    #	exit 0
-	#fi
+			if [[ "$APFunctions" != *${UsageInput}* ]]; then
+				echo ""
+				reho "Function $UsageInput does not exist! Refer to general usage below: "
+				echo ""
+				show_usage
+				exit 0
+			else	
+    			show_usage_"$UsageInput"
+    		fi
+    	exit 0
+	fi
 			
 	# -- check for input with no flags
 	if [ -z "$2" ]; then

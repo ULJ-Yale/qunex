@@ -1,15 +1,15 @@
 library(RCurl)
 
-outpath <- "/gpfs/project/fas/n3/software/MNAP/general/functions/working/"
+outpath <- "/gpfs/project/fas/n3/Studies/DataDrop/RedCapExport/"
 
 # user-specific API token must be initially created through RedCap website (https://poa-redcap.med.yale.edu/redcap_v6.17.2/) 
 userToken <- as.vector(read.table('~/.redcapAPI/APItoken')[1,1])
 
 # set output filenames 
-fileRecord <- paste(outpath, 'RedCapExport/RedCapExport_record.csv', sep="")
-fileMetadata <- paste(outpath, 'RedCapExport/RedCapExport_metadata.csv', sep="")
-fileEventmap <- paste(outpath, 'RedCapExport/RedCapExport_formEventMapping.csv', sep="")
-fileOutput <- paste(outpath, 'RedCapExport/RedCapExport_OrganizedDatabase.csv', sep="")
+fileRecord <- paste(outpath, 'RedCapExport_record.csv', sep="")
+fileMetadata <- paste(outpath, 'RedCapExport_metadata.csv', sep="")
+fileEventmap <- paste(outpath, 'RedCapExport_formEventMapping.csv', sep="")
+fileOutput <- paste(outpath, 'RedCapExport_OrganizedDatabase.csv', sep="")
 
 # export all records via RedCap API
 result <- postForm(content='record', uri='https://poa-redcap.med.yale.edu/api/', token=userToken, format='csv', type='flat', rawOrLabel='raw', rawOrLabelHeaders='raw', returnFormat='csv')
