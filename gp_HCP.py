@@ -611,7 +611,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         if run:
             # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')
             # tfile = os.path.join(hcp['T1w_folder'], '_FS.done')
-            tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
+            
+            # -- Alan removed this line; to be added via IF statement for FreeSurfer 5.3 completion 
+            # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
+            #
+            # -- Alan added this line; to be integrated via IF statement for FreeSurfer 6.0 completion 
+            tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
             if options['run'] == "run":
                 if overwrite and os.path.lexists(tfile):
                     os.remove(tfile)
