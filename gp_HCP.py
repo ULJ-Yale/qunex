@@ -631,19 +631,19 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                    tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
                    print "---> FreeSurfer version: stable-pub-v5.3.0-HCP"
             else:
-                print "\n --> FS recon-all.log NOT found!"
+                print "\n --> FS recon-all.log NOT found! Assuming 'legacy' v5.3.0-HCP"
                 # - Set the version based on environment variable 
                 # - first check if FREESURFER_HOME is defined
-                if not "FREESURFER_HOME" in os.environ:
-                   print "ERROR: FREESURFER_HOME environment variable not set. Can not find FreeSuerfer installation!"
-                return
-                freesurferhome = os.environ['FREESURFER_HOME']
-                if '6.0' in freesurferhome:
-                   tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
-                   print "---> FreeSurfer version: 6.0"
-                if '5.3' in freesurferhome:
-                   tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
-                   print "---> FreeSurfer version: 5.3"
+                #if not "FREESURFER_HOME" in os.environ:
+                #   print "ERROR: FREESURFER_HOME environment variable not set. Can not find FreeSuerfer installation!"
+                #return
+                #freesurferhome = os.environ['FREESURFER_HOME']
+                #if '6.0' in freesurferhome:
+                #   tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
+                #   print "---> FreeSurfer version: 6.0"
+                #if '5.3' in freesurferhome:
+                tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
+                print "---> FreeSurfer version: 5.3"
             ### --------------------------------------------------------------
             ### -- End of code for FreeSurfer 6.0 completion check
             ### --------------------------------------------------------------
