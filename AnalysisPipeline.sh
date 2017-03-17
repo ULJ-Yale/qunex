@@ -4587,7 +4587,7 @@ show_usage_awshcpsync() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>	List of subjects to run"
 				echo "		--modality=<modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
 				echo "		--awsuri=<aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 				echo "		--runmethod=<type_of_run>			Perform a dry test run [1] or real run [2]"

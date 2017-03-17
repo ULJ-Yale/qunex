@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 library(RCurl)
 
 outpath <- "/gpfs/project/fas/n3/Studies/DataDrop/RedCapExport/"
