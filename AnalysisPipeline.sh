@@ -4527,6 +4527,8 @@ show_usage_probtrackxgpudense() {
 
 awshcpsync() {
 
+echo "debug"
+
 mkdir "$StudyFolder"/aws.logs &> /dev/null
 cd "$StudyFolder"/aws.logs
 
@@ -7334,6 +7336,7 @@ if [ "$FunctionToRun" == "awshcpsync" ]; then
 		echo "Modality: $Modality"
 		echo "AWS URI Path: $Awsuri"
 		echo "--------------------------------------------------------------"
+		echo ""
 		
 		for CASE in $CASES
 		do
