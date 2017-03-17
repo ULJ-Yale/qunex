@@ -4527,14 +4527,20 @@ show_usage_probtrackxgpudense() {
 
 awshcpsync() {
 
-echo "debug"
+echo "debug1"
 
 mkdir "$StudyFolder"/aws.logs &> /dev/null
 cd "$StudyFolder"/aws.logs
 
+echo "debug2"
+
 if [ "$RunType" == "1" ]; then
 
+echo "debug3"
+
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
+
+echo "debug4"
 		
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 
