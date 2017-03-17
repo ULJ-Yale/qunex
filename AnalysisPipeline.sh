@@ -4534,7 +4534,7 @@ cd "$StudyFolder"/aws.logs
 
 echo "debug2"
 
-if [ "$RunType" == "1" ]; then
+if [ "$RunMethod" == "1" ]; then
 
 echo "debug3"
 
@@ -4559,7 +4559,7 @@ echo "debug4"
 
 fi
 
-if [ "$RunType" == "2" ]; then
+if [ "$RunMethod" == "2" ]; then
 
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
 	
