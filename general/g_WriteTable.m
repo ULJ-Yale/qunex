@@ -4,20 +4,43 @@ function [s] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
 %
 %   A general function for writing data tables.
 %
-%   input
-%       - filename  : the path to the file
-%       - data      : data matrix to be saved
-%       - hdr       : optional header (cell array of strings or a list of columns)
-%       - extra     : optional summary rows to be added at the end (e.g. 'mean|sd|min|max|%|sum')
-%       - sform     : optional format string for header, first data column, rest of the data columns and extra row names (e.g. '%s|%d|%.5f|%s')
-%       - sep       : optional separator (default '\t')
-%       - pre       : optional text to prepend before the header
-%       - post      : optional text to append at the end of the file
+%   INPUT
+%       - filename  : The path to the file ['']
+%       - data      : The data matrix to be saved.
+%       - hdr       : Optional header (cell array of strings or a list of columns) [].
+%       - extra     : Optional summary rows to be added at the end (e.g. 'mean|sd|min|max|%|sum') [].
+%       - sform     : Format string for the header, first data column, rest of the data columns and extra row names ['%s|%d|%.5f|%s'].
+%       - sep       : Separator (default '\t').
+%       - pre       : Optional text to prepend before the header.
+%       - post      : Optional text to append at the end of the file.
 %
-%    Whipped together by Grega Repovs, 2014-07-18
+%   OUTPUT
+%       - s         : a formated text string
 %
-%    2016.02.05 Grega Repovs ... Added pre and post options
-%    2016.08.18 Grega Repovs ... Added printing to string
+%   USE
+%   The function is used to save the data to a text file (if a path / filename
+%   is provided) and/or generate a formulated string. The data should be a
+%   matrix of values, the header either a cell array of strings or a comma,
+%   semicolon, space or pipe separated string. If '#" commented summary rows
+%   should be added at the end of the file, the specific summaries should be
+%   specified in the extra parameter as a pipe separated list.
+%
+%   To specify how values are to be formated, an optional sform string can be
+%   provided. How the data is separated is specified in the sep parameter.
+%   Optional strings to be prepended or appended to the file can be specified
+%   as the pre and post parameters.
+%
+%   EXAMPLE USE
+%   g_WriteTable('mov.dat', movdata, 'frame,X,Y,Z', 'mean,sd,min,max');
+%
+%
+%   ---
+%   Written by Grega Repovs, 2014-07-18
+%
+%   Changelog
+%   2016-02-05 Grega Repovs ... Added pre and post options
+%   2016-08-18 Grega Repovs ... Added printing to string
+%   2017-03-19 Grega Repovs ... Updated documentation
 %
 
 if nargin < 8                    post  = [];                end
