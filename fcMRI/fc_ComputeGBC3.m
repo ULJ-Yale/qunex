@@ -44,6 +44,9 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %
 %   For more information see documentation for gmrimage.mri_ComputeGBC method.
 %
+%   EXAMPLE USE
+%   fc_ComputeGBC3('scz.list', 'mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3', 0, 'true', 'gray', 'GBC', 2, 2, 'udvarsme', true, true);
+%
 %   ---
 %   (c) Grega Repovš on 2009-11-04.
 %
