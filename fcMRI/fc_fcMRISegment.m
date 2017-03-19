@@ -1,44 +1,54 @@
 function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)
 
 %function [] = fc_fcMRISegment(flist, smask, tmask, verbose)
-%	
+%
 %	Segments the voxels in smask based on their connectivity with tmask ROI.
 %   Uses WTA to select the region the voxel is most correlated with.
-%	
-%   flist   - file list with information on subjects bold runs and segmentation files
-%   smask   - .names file for source mask definition
-%   tmask   - .names file for target mask roi definition
-%   mask    - either number of frames to omit or a mask of frames to use [0]
-%   root    - the root of the filename where results are to be saved [flist]
-%   options - whether to use raw, absolute or partial correlations [raw]
-%   verbose - whether to report the progress full, script, none [none]
 %
-%	output
-%		: root_corr_roi - correlations of each subject with the target roi
-%		: root_segs     - segmentations for each subject
-%       : root_scorr    - final segmentation and probabilities of segmentation for each target ROI across the group
-%       : root_gseg     - final segmentation based on group mean correlations
-%	
-% 	Created by Grega Repovš on 2010-08-07.
+%   INPUT
+%       flist   - A .list file information on subjects bold runs and segmentation files.
+%       smask   - .names file for source mask definition
+%       tmask   - .names file for target mask roi definition
+%       mask    - Either number of frames to omit or a mask of frames to use [0].
+%       root    - The root of the filename where results are to be saved [''].
+%       options - Whether to use 'raw', 'absolute' or 'partial' correlations ['raw'].
+%       verbose - Whether to report the progress 'full', 'script', 'none' ['none'].
 %
-% 	Copyright (c) 2010. All rights reserved.
+%	RESULTS
+%   <root>_corr_roi - correlations of each subject with the target roi
+%   <root>_segs     - segmentations for each subject
+%   <root>_scorr    - final segmentation and probabilities of segmentation for each target ROI across the group
+%   <root>_gseg     - final segmentation based on group mean correlations
+%
+%   USE
+%   Use the function to segment voxels specified in smask roi file based on the
+%   correlation with ROI specifed in the tmask file. Each voxel is assigned the
+%   code of the target ROI it most correlates with. For more information see
+%   mri_fcMRISegment() gmrimage method.
+%
+%   If no root is specified, the root of the flist is used.
+%
+%   EXAMPLE USE
+%   >>> fc_fcMRISegment('con.list', 'thalamus.names', 'yeo7.names', 0, 'Th-yeo-seg', 'partial', 'script');
+%
+%   ---
+% 	Written by Grega Repovš, 2010-08-07.
+%
+%   Changelog
+%   2017-03-19 Grega Repovs
+%            - Cleaned code, updated documentation
+%
 
 
-if nargin < 7
-    verbose = none;
-    if nargin < 6
-        options = 'raw';
-        if nargin < 5
-            [ps, root, ext, v] = fileparts(root);
-            root = fullfile(ps, root);
-            if nargin < 4
-                mask = [];
-                if nargin < 3
-                    error('ERROR: At least file list, source and target masks must be specified to run fc_fcMRISegment!');
-                end
-            end
-        end
-    end
+if nargin < 7 || isempty(verbose),  verbose = 'none'; end
+if nargin < 6 || isempty(options),  options = 'raw';  end
+if nargin < 5, root = '';                             end
+if nargin < 4, mask = [];                             end
+if nargin < 3, error('ERROR: At least file list, source and target masks must be specified to run fc_fcMRISegment!'); end
+
+if isempty(root)
+    [ps, root, ext, v] = fileparts(root);
+    root = fullfile(ps, root);
 end
 
 if strcmp(verbose, 'full')
@@ -69,16 +79,16 @@ while feof(files) == 0
     s = fgetl(files);
     if ~isempty(strfind(s, 'subject id:'))
         c = c + 1;
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).id = s(2:end);
         nf = 0;
     elseif ~isempty(strfind(s, 'roi:'))
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).roi = s(2:end);
         checkFile(subject(c).roi);
     elseif ~isempty(strfind(s, 'file:'))
         nf = nf + 1;
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).files{nf} = s(2:end);
         checkFile(s(2:end));
     end
@@ -113,7 +123,7 @@ clear('template');
 clear('tROI');
 
 for s = 1:nsubjects
-    
+
     %   --- reading in image files
     if script, tic, end
 	if script, fprintf('\n------\nProcessing %s', subject(s).id), end
@@ -124,7 +134,7 @@ for s = 1:nsubjects
 	sROI = gmrimage.mri_ReadROI(smask, roif);
 
 	nfiles = length(subject(s).files);
-	
+
 	img = gmrimage(subject(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
@@ -136,14 +146,14 @@ for s = 1:nsubjects
     	    if script, fprintf(', %d', n), end
         end
     end
-    
+
     seg = img.mri_fcMRISegment(sROI, tROI, options, method);
     seg = seg.unmaskimg();
     for r = 1:nroi
         corrs(r).data(:,s) = seg.data(:,r+1);
     end
     segs.data(:,s) = seg.data(:,1);
-    
+
     if script, fprintf(' [%.1fs]\n', toc); end
 end
 
@@ -153,14 +163,14 @@ for r = 1:nroi
     fname = [root '_corr_' segs.roi.roinames{r}];
     if script, fprintf('\n... %s', fname), end
     corrs(r).mri_saveimage(fname);
-    
+
     f = fc_Fisher(corrs(r).data);
     gcorr.data(:,r+1) = fc_FisherInv(mean(f,2));
-    
+
     [h, p] = ttest(f, 0, 0.05, 'both', 2);
     Z = icdf('Normal', (1-(p/2)), 0, 1);
     gZ.data(:,r+1) = Z .* sign(mean(f, 2));
-    
+
     gseg.data(:,r+1) = sum(ismember(segs.data,r),2)./nsubjects;
 end
 
@@ -201,5 +211,4 @@ if ~ok
 end
 
 end
-    
-    
+

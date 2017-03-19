@@ -1,21 +1,29 @@
-function [r] = fc_Fisher(r)
+function [Fz] = fc_Fisher(r)
 
+%function [Fz] = fc_Fisher(r)
 %
-%  converts pearson correlations to fisher z values
+%  Converts Pearson correlations to Fisher z values. As a pre-pass, to avoid
+%  infinite Fisher z values, it multiplies all correlations with 0.9999999.
 %
-%  Created by Grega Repovs on 2007-06-23.
-%  Copyright (c) 2007 Grega Repovs. All rights reserved.
+%  INPUT
+%       f  - Peason's correlation coefficients.
 %
+%  OUTPUT
+%       Fz - Fisher Z values
+%
+%  ---
+%  Written by Grega Repovs, 2007-06-23.
+%
+%  Changelog
+%  2017-03-19 Grega Repovs - updated documentation
+
 
 r = double(r);
-r = r*0.9999999;
-%r(r > 0.99999) =  0.99999;
-%r(r < -0.99999) = -0.99999;
-%fz = 0.5*log((1+r)./(1-r));
-r = atanh(r);
-r = single(r);
-if ~isreal(r)
-    r = real(r);
+r = r * 0.9999999;
+Fz = atanh(r);
+Fz = single(Fz);
+if ~isreal(Fz)
+    Fz = real(Fz);
 end
 
 
