@@ -1,43 +1,51 @@
-function [TS] = s_p2z4DFP(in, out, tail)
+function [img] = s_p2Z(img, out, tail)
 
-%	
-%	Computes t-test against 0
-%	conc - input files
-%	target - output root filename
-%	
+%function [img] = s_p2Z(img, out, tail)
+%
+%	Converts p to Z values considering one or two tails.
+%
+%   INPUTS
+%       img  ... A gmrimage object or a path to an image file.
+%       out  ... A path to the file to save the image to [''].
+%       tail ... Should one ('one') or two ('two') tails be considered ['two'].
+%
+%   OUTPUTS
+%       Z    ... A gmrimage object with results
+%
+%   USE
+%   Use the function to convert p-values to Z-values. If not filename is
+%   provided, no file is saved.
+%
+%   EXAMPLE USE
+%   s_p2Z('WM_p.nii.gz', 'WM_Z.nii.gz');
+%
+%   ---
+%   Written by Grega Repovs
+%
+%   Changelog
+%   2017-03-19 Grega Repovs
+%            - Updated to use gmrimage objects
+%            - Updated documentation
 
 
-if nargin < 3
-	tail = 'two';
-	if nargin < 2
-	    out = strrep(in, '.img', '');
-	    out = strrep(out, '.4dfp', '');
-	    out = [out '_Z.4dfp.img'];
-    end
-end
+if nargin < 3 || isempty(tail), tail = 'two'; end
+if nargin < 2 out = ''; end
 
 % ======================================================
 % 	----> read files
 
-fprintf('Converting p-values to Z scores for [%s] ... reading data ', in);
-p = reshape(g_Read4DFP(in), 48*48*64, []);				fprintf('.');
-
+if ~isobject(img)
+    img = gmrimage(img);
+end
 
 % ======================================================
 % 	----> convert
 
-fprintf(' converting ');
-                                                               
-%Z = fc_ptoz(1-(p/2),0,1);										fprintf('.');
-Z = icdf('Normal', (1-(p/2)), 0, 1);							fprintf('.');
-%Z = Z .* sign(mean(img, 2));									fprintf('.');
+img.data = icdf('Normal', (1-(img.data/2)), 0, 1);
 
 % ======================================================
 % 	----> save results
 
-fprintf(' saving %s', out);
-g_Save4DFP(strcat(out, '_Z.4dfp.img'), Z);					fprintf('.');
-%g_Save4DFP(strcat(out, '_MFz.4dfp.img'),mean(img,2));		fprintf('.');
-fprintf(' done!\n');
-
-
+if ~isempty(out)
+    img.mri_saveimage(out);
+end
