@@ -74,7 +74,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-subject = g_ReadSubjectsList(flist);
+subject = g_ReadFileList(flist);
 nsub = length(subject);
 
 fprintf(' ... done.');
