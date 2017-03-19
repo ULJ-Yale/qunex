@@ -77,7 +77,7 @@ param.dvarsmt  = 3.0;
 param.dvarsmet = 1.6;
 param.reject   = 'udvarsme';
 
-param = g_SetParam(param, comm);
+param = g_ParseOptions(param, comm);
 
 % ---- check for the relevant data
 
