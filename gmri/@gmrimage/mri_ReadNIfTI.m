@@ -17,6 +17,7 @@ function [img] = mri_ReadNIfTI(img, filename, dtype, frames, verbose)
 %       Grega Repovs - 2013-10-20 - added verbose option
 %       Grega Repovs - 2014-05-04 - rewrite to support direct gunzipping
 %       Grega Repovs - 2014-06-29 - rewrite to support mex reading
+%       Grega Repovs - 2017-03-20 - change in reading cifti: not having frame number in dim field
 %
 
 if nargin < 5 verbose = false;  end
