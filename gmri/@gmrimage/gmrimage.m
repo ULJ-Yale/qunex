@@ -247,7 +247,9 @@ classdef gmrimage
                 obj = obj.mri_ReadStats(verbose);
                 obj.empty = false;
             elseif length(filename) > 3 && strcmp(filename(length(filename)-3:end), '.nii') || strcmp(filename(length(filename)-6:end), '.nii.gz') || strcmp(filename(length(filename)-3:end), '.hdr')
+                fprintf('\n -- 1');
                 obj = obj.mri_ReadNIfTI(filename, dtype, frames, verbose);
+                fprintf('\n -- 2');
                 obj = obj.mri_ReadStats(verbose);
                 obj.empty = false;
             elseif length(filename) > 4 && strcmp(filename(length(filename)-4:end), '.conc')
