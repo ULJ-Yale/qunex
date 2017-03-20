@@ -34,8 +34,8 @@ function [obj] = mri_ReadStats(obj, verbose)
 if nargin < 3, verbose = false; end
 if nargin < 2, frames = []; end
 
-filename = obj.filename
-frames   = obj.frames
+filename = obj.filename;
+frames   = obj.frames;
 
 obj.use = true(1, obj.frames);
 
