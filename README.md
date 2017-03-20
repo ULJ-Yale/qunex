@@ -63,7 +63,7 @@ External dependencies
 * Connectome Workbench (v1.0 or above)
 * FSL (version 5.0.6 or above)
 * FreeSurfer (5.3 HCP version or later)
-* MATLAB (version 2012b or above with signal processing and imaging toolbox)
+* MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
 * FIX ICA
 * PALM
 * Python (version 2.7 or above)
