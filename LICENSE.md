@@ -1,4 +1,4 @@
-# Multimodal Neuroimaging Analyses Pipelines (MNAP)
+# Multimodal Neuroimaging Analyses Pipelines (MNAP) General Pipeline
 
 ## License
 
