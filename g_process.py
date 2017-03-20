@@ -226,6 +226,8 @@ arglist = [['# ---- Basic settings'],
 
 
            ['# --- HCP options'],
+           ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder"],
+           ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE"],
            ['hcp_Pipeline',           '',                                         str,    "path to pipeline base folder"],
            ['hcp_suffix',             '',                                         str,    "subject id suffix if running HCP preprocessing variants"],
            ['hcp_brainsize',          '150',                                      int,    "human brain size in mm"],

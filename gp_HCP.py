@@ -517,15 +517,20 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix       ... Specifies a suffix to the subject id if multiple
-                           variants are run, empty otherwise [].
-    --hcp_t2           ... NONE if no T2w image is available and the
-                           preprocessing should be run without them,
-                           anything else otherwise [t2].
-    --hcp_expert_file  ... Path to the read-in expert options file for
-                           FreeSurfer if one is prepared and should be used
-                           empty otherwise [].
-
+    --hcp_suffix               ... Specifies a suffix to the subject id if multiple
+                                   variants are run, empty otherwise [].
+    --hcp_t2                   ... NONE if no T2w image is available and the
+                                   preprocessing should be run without them,
+                                   anything else otherwise [t2].
+    --hcp_expert_file          ... Path to the read-in expert options file for
+                                   FreeSurfer if one is prepared and should be used
+                                   empty otherwise [].
+    --hcp_freesurfer_home      ... Path for FreeSurfer home folder can be manually
+                                   specified to override default environment variable
+                                   to ensure backwards compatiblity and hcp2 customization                      
+    --hcp_freesurfer_module    ... Whether to load FreeSurfer as a module on the cluster
+                                   You can specify using YES or empty otherwise [].
+                                   to ensure backwards compatiblity and hcp2 customization
     EXAMPLE USE
     ===========
 
@@ -534,12 +539,21 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     gmri hcp2 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
+    
+    gmri hcp2 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no cores=10 hcp_t2=NONE \\
+         hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
+         hcp_freesurfer_module=YES
 
     ----------------
     Written by Grega Repovš
 
     Changelog
     2017-01-08 Grega Repovš
+             - Updated documentation.
+    2017-03-19 Alan Anticevic
+             - Updated documentation.
+    2017-03-20 Alan Anticevic
              - Updated documentation.
     '''
 
@@ -598,62 +612,65 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             --subject="%(subject)s" \
             --subjectDIR="%(subjectDIR)s" \
             --ExpertFile="%(ExpertFile)s" \
+            --FreeSurferHome="%(FreeSurferHome)s" \
+            --FSLoadHPCModule="%(FSLoadHPCModule)s" \
             --t1="%(t1)s" \
             --t1brain="%(t1brain)s" \
             --t2="%(t2)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'subjectDIR'        : hcp['T1w_folder'],
+                'FreeSurferHome'    : options['hcp_freesurfer_home'], # -- Alan added option for --hcp_freesurfer_home flag passing
+                'FSLoadHPCModule'    : options['hcp_freesurfer_module'], # -- Alan added option for --hcp_freesurfer_module flag passing
                 'ExpertFile'        : options['hcp_expert_file'],
                 't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                 't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
                 't2'                : t2w}
 
         if run:
-        	# -- Deprecated versions of tfile variable based on prior FS runs
+        	# --- Deprecated versions of tfile variable based on prior FS runs ---------------------------------------------
             # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')
             # tfile = os.path.join(hcp['T1w_folder'], '_FS.done')
             # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
+            # --------------------------------------------------------------------------------------------------------------
             
-            ### --------------------------------------------------------------
-            ### - Alan added integrated code for FreeSurfer 6.0 completion 
-            ### --------------------------------------------------------------
+            ### ------------------------------------------------------------------
+            ### - Alan added integrated code for FreeSurfer 6.0 completion check 
+            ### -----------------------------------------------------------------
+            ###
+            freesurferhome = options['hcp_freesurfer_home']
             # - Check the FREESURFER_HOME in recon-all log
             reconallfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'scripts', 'recon-all.log')
             # - Check if recon-all.log exists to set the FS version
             if os.path.exists(reconallfile):
-                print "\n --> FS recon-all.log was found!"
+                r +=  "\n---> FreeSurfer recon-all.log was found!"
                 # - check FS version for the completed FS run
                 if 'stable-pub-v6.0.0' in open(reconallfile).read():
                    tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
-                   print "---> FreeSurfer version: stable-pub-v6.0.0"
+                   r +=  "\n---> FreeSurfer version used to complete run: stable-pub-v6.0.0"
                 if 'stable-pub-v5.3.0-HCP' in open(reconallfile).read():
                    tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
-                   print "---> FreeSurfer version: stable-pub-v5.3.0-HCP"
+                   r +=  "\n---> FreeSurfer version used to complete run: stable-pub-v5.3.0-HCP"
             else:
-                print "\n --> FS recon-all.log NOT found! Assuming 'legacy' v5.3.0-HCP"
-                # - Set the version based on environment variable 
-                # - first check if FREESURFER_HOME is defined
-                #if not "FREESURFER_HOME" in os.environ:
-                #   print "ERROR: FREESURFER_HOME environment variable not set. Can not find FreeSuerfer installation!"
-                #return
-                #freesurferhome = os.environ['FREESURFER_HOME']
-                #if '6.0' in freesurferhome:
-                #   tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
-                #   print "---> FreeSurfer version: 6.0"
-                #if '5.3' in freesurferhome:
+                r += "\n --> FreeSurfer recon-all.log NOT found! Assuming 'legacy' v5.3.0-HCP was used"
                 tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
-                print "---> FreeSurfer version: 5.3"
+                r +=  "n\---> FreeSurfer version: 5.3"
+            ###    
             ### --------------------------------------------------------------
             ### -- End of code for FreeSurfer 6.0 completion check
             ### --------------------------------------------------------------
             
             if options['run'] == "run":
+                # - Set FREESURFER_HOME based on --hcp_freesurfer_home flag to ensure backward compatibility
+                if freesurferhome:
+                    sys.path.append(freesurferhome)
+                    os.environ['FREESURFER_HOME'] = str(freesurferhome)
+                    r +=  "\n---> FREESURFER_HOME set to: " + str(freesurferhome)
                 if overwrite and os.path.lexists(tfile):
                     os.remove(tfile)
                 if overwrite or not os.path.exists(tfile):
                     if os.path.lexists(hcp['FS_folder']):
-                        r += "\n---> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
+                        r += "\n --> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
                         shutil.rmtree(hcp['FS_folder'])
                     for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
                         if os.path.lexists(os.path.join(hcp['T1w_folder'], toremove)):
@@ -662,6 +679,14 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 r, status = checkForFile(r, tfile, 'ERROR: HCP FS failed running command: %s' % (comm))
                 report = "FS Done" if status else "FS Failed"
             else:
+                # - Set FREESURFER_HOME based on --hcp_freesurfer_home flag to ensure backward compatibility
+                if freesurferhome:
+                    sys.path.append(freesurferhome)
+                    os.environ['FREESURFER_HOME'] = str(freesurferhome)
+                    r +=  "\n---> FREESURFER_HOME set to: " + str(freesurferhome)
+                else:
+                    fshome = os.environ["FREESURFER_HOME"]
+                    r += "\n---> FREESURFER_HOME set to: " + str(fshome)
                 if os.path.exists(tfile):
                     r += "\n---> HCP FS completed"
                     report = "FS done"
