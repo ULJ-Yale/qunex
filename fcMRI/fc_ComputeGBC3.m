@@ -152,9 +152,7 @@ for s = 1:nsubjects
 
 	nfiles = length(subject(s).files);
 
-    fprintf('\n -- 1');
 	img = gmrimage(subject(s).files{1});
-    fprintf('\n -- 2');
 
 	if ~isempty(mask),   img = img.sliceframes(mask); end
     if ~isempty(ignore), img = scrub(img, ignore); end
