@@ -1,33 +1,32 @@
 function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-%% fc_ComputeGBC3.m
-%
-% function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
+
+%function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
 %
 % Computes GBC maps for individuals as well as group maps.
 %
-% INPUT 
+% INPUT
 %
-%  flist       - conc-like style list of subject image files or conc files:
+%    flist       - conc-like style list of subject image files or conc files:
 %                  subject id:<subject_id>
 %                  roi:<path to the individual's ROI file>
 %                  file:<path to bold files - one per line>
-%  command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, 
-%                mFzp, aFzp, ...
+%    command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
+%                  mFzp, aFzp, ...
 %                  <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
-%      mask	       - An array mask defining which frames to use (1) and 
-%                    which not (0). All if empty.
-%      verbose	    - Report what is going on. [false]
-%  target      - Array of ROI codes that define target ROI [default: 
-%                FreeSurfer cortex codes]
-%      targetf	    - Target folder for results.
-%  rsmooth     - Radius for smoothing (no smoothing if empty). []
-%  rdilate     - Radius for dilating mask (no dilation if empty). []
-%  ignore      - The column in *_scrub.txt file that matches bold file to 
-%                be used for ignore mask. All if empty. []
-%  time        - Whether to print timing information. [false]
-%  cv          - Whether to compute covariances instead of correlations. 
-%                [false]
-%  vstep       - How many voxels to process in a single step. [1200]
+%    mask        - An array mask defining which frames to use (1) and
+%                  which not (0). All if empty.
+%    verbose     - Report what is going on. [false]
+%    target      - Array of ROI codes that define target ROI [default:
+%                  FreeSurfer cortex codes]
+%    targetf     - Target folder for results.
+%    rsmooth     - Radius for smoothing (no smoothing if empty). []
+%    rdilate     - Radius for dilating mask (no dilation if empty). []
+%    ignore      - The column in *_scrub.txt file that matches bold file to
+%                  be used for ignore mask. All if empty. []
+%    time        - Whether to print timing information. [false]
+%    cv          - Whether to compute covariances instead of correlations.
+%                  [false]
+%    vstep       - How many voxels to process in a single step. [1200]
 %
 % USE
 %
@@ -52,39 +51,34 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %
 % For more information see documentation for gmrimage.mri_ComputeGBC method.
 %
+% EXAMPLE USE
+% fc_ComputeGBC3('scz.list', 'mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3', 0, 'true', 'gray', 'GBC', 2, 2, 'udvarsme', true, true);
+%
 % ---
-% (c) Grega Repovš on 2009-11-04.
+% Written by Grega Repovš on 2009-11-04.
 %
 % Change log
-%
-% 2009-11-04 - Created by Grega Repovš. 
-% 
+% 2009-11-04 - Created by Grega Repovš.
 % 2010-11-16 - Modified by Grega Repovš.
-%
 % 2010-11-22 - Modified by Grega Repovš.
-% 
 % 2010-12-01 - Modified by Grega Repovš - added in smoothing and dilation of images.
-%  
 % 2014-01-22 - Modified by Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
-%    
 % 2016-02-08 - Modified by Grega Repovš - added an option to specify how many voxels to work with in a single step.
-%  
 % 2016-11-26 - Mofidied by Grega Repovš - updated documentation.
 %
 
-%%
 fprintf('\n\nStarting ...');
 
 if nargin < 11 || isempty(vstep), vstep = [];   end
-if nargin < 11, cv = [];        end
-if nargin < 10, time = true;    end
-if nargin < 9, ignore = [];     end
-if nargin < 8, rdilate = [];    end
-if nargin < 7, rsmooth = [];    end
-if nargin < 6, targetf = '';    end
-if nargin < 5, target = [];     end
-if nargin < 4, verbose = false; end
-if nargin < 3, mask = [];       end
+if nargin < 11, cv = [];         end
+if nargin < 10, time = true;     end
+if nargin < 9,  ignore = [];     end
+if nargin < 8,  rdilate = [];    end
+if nargin < 7,  rsmooth = [];    end
+if nargin < 6,  targetf = '';    end
+if nargin < 5,  target = [];     end
+if nargin < 4,  verbose = false; end
+if nargin < 3,  mask = [];       end
 
 if isempty(target)
 	% target = [3 8 9 10 11 12 13 16 17 18 19 20 26 27 28 42 47 48 49 50 51 52 53 54 55 56 58 59 60 96 97 1002 1003 1012 1014 1018 1019 1020 1026 1027 1028 1032 2002 2003 2012 2014 2018 2019 2020 2026 2027 2028 2032 1005 1006 1007 1008 1009 1010 1011 1013 1015 1016 1017 1021 1022 1023 1024 1025 1029 1030 1031 1033 1034 1035 2005 2006 2007 2008 2009 2010 2011 2013 2015 2016 2017 2021 2022 2023 2024 2025 2029 2030 2031 2033 2034 2035];

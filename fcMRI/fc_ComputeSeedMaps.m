@@ -1,50 +1,75 @@
-function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore)
+function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv)
 
-%function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore)
-%
-%	fc_ComputeSeedMaps
-%
-%	A memory optimised version of the script.
+%function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv)
 %
 %	Computes seed based correlations maps for individuals as well as group maps.
 %
-%	flist   	- conc style list of subject image files or conc files, header row, one subject per line
-%	roif		- 4dfp image file with ROI
-%	roinfile	- file with region names, one region per line in format: "value\tname"
-%	inmask		- an array mask defining which frames to use (1) and which not (0)
-%	event		- a string describing which events to extract timeseries for and the frame offset at start and end ('title1:event1,event2:2:2|title2:event3,event4:1:2')
-%	tagetf		- the folder to save images in
-%   method      - method for extracting timeseries - mean, pca [mean]
-%   ignore      - do we omit frames to be ignored (
-%               -> no:    do not ignore any additional frames
-%               -> use:   ignore frames as marked in the use field of the bold file
-%               -> event: ignore frames as marked in .fidl file
-%               -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask%
+%   INPUT
+%	    flist    - A .list file listing the subjects and their files for which to compute seedmaps.
+%	    roiinfo	 - A names file for the ROI seeds.
+%	    inmask	 - An array mask defining which frames to use (1) and which not (0) or the number of frames to skip at start []
+%	    event	 - A string describing which events to extract timeseries for and the frame offset at start and end
+%                  in format: ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
+%	    tagetf	 - The folder to save images in ['.'].
+%       method   - method for extracting timeseries - 'mean', 'pca' ['mean']
+%       ignore   - do we omit frames to be ignored (
+%                  -> no:    do not ignore any additional frames
+%                  -> use:   ignore frames as marked in the use field of the bold file
+%                  -> event: ignore frames as marked in .fidl file
+%                  -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
+%       cv       - Whether to compute covariances instead of correlations [false].
 %
+%   RESULTS
 %	It saves group files:
-%		_group_Fz	- average Fz over all the subjects
-%		_group_r	- average Fz converted back to Pearson r
-%		_group_Z	- p values converted to Z scores based on t-test testing if Fz over subject differ significantly from 0 (two-tailed)
 %
-% 	Created by Grega Repovš on 2008-02-07.
-%   2008-01-23 Adjusted for a different file list format and an additional ROI mask. [Grega Repovš]
-%   2011-11-10 Changed to make use of gmrimage and allow ignoring of bad frames. [Grega Repovš]
-%   2013-12-28 Moved to a more general name, added block event extraction and use of 'use' info. [Grega Repovš]
+%   <targetf>/<root>[_<event>]_<roi>_group_r  ... Mean group Pearson correlations (converted from Fz).
+%   <targetf>/<root>[_<event>]_<roi>_group_Fz ... Mean group Fisher Z values.
+%   <targetf>/<root>[_<event>]_<roi>_group_Z  ... Z converted p values testing difference from 0.
+%	<targetf>/<root>[_<event>]_<roi>_all_Fz   ... Fisher Z values for all participants.
 %
-% 	Copyright (c) 2008. All rights reserved.
+%   <targetf>/<root>[_<event>]_<roi>_group_cov ... Mean group covariance.
+%   <targetf>/<root>[_<event>]_<roi>_all_cov   ... Covariances for all participants.
+%
+%   <roi> is the name of the ROI for which the seed map was computed for.
+%   <root> is the root name of the flist.
+%   <event> is the title of the event, if event string was specified.
+%
+%   USE
+%   The function computes seed maps for the specified ROI. If an event string is
+%   provided, it uses each subject's .fidl file to extract only the specified
+%   event related frames. The format to specify
+%
+%   EXAMPLE USE
+%   To compute resting state seed maps using first eigenvariate of each ROI:
+%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', 'pca', 'udvarsme');
+%
+%   To compute resting state seed maps using mean of each region and covariances
+%   instead of correlation:
+%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', 'mean', 'udvarsme', true);
+%
+%   To compute seed maps for third and fourth frame of incongruent and congruent
+%   trials (listed as inc and con events in fidl files) using mean of each
+%   region and exclude only frames marked for exclusion in fidl files:
+%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'incongruent:inc:3,4|congruent:con:3,4', 'seed-maps', 'mean', 'event');
+%
+%   ---
+% 	Written by Grega Repovš 2008-02-07.
+%
+%   Changelog
+%   2008-01-23 Grega Repovš - Adjusted for a different file list format and an additional ROI mask.
+%   2011-11-10 Grega Repovš - Changed to make use of gmrimage and allow ignoring of bad frames.
+%   2013-12-28 Grega Repovš - Moved to a more general name, added block event extraction and use of 'use' info.
+%   2017-03-19 Grega Repovs - Cleaned code, updated documentation.
+%
 
-
-if nargin < 7 ignore  = []; end
-if nargin < 6 method  = []; end
-if nargin < 5 targetf = []; end
+if nargin < 8 || isempty(cv),      cv      = false;  end
+if nargin < 7 || isempty(ignore),  ignore  = 'use';  end
+if nargin < 6 || isempty(method),  method  = 'mean'; end
+if nargin < 5 || isempty(targetf), targetf = '.';    end
 if nargin < 4 event   = []; end
 if nargin < 3 inmask  = []; end
 if nargin < 2 error('ERROR: At least boldlist and ROI .names file have to be specified!'); end
 
-
-if isempty(targetf) targetf = '.'; end
-if isempty(method)  method = 'mean'; end
-if isempty(ignore)  ignore = 'use'; end
 if ~ischar(ignore)  error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!'); end
 
 fignore = 'ignore';
@@ -103,7 +128,7 @@ nana = length(ana);
 
 fprintf('\n ... listing files to process');
 
-subject = g_ReadSubjectsList(flist);
+subject = g_ReadFileList(flist);
 nsub = length(subject);
 
 fprintf(' ... done.');
@@ -166,7 +191,7 @@ for n = 1:nsub
         if isempty(finfo)
             mask = ones(1, y.frames);
         else
-            mask = matrix(:,a)';
+            mask = matrix(:, a)';
         end
 
         % --- if we have a long inmask, use it
@@ -195,7 +220,7 @@ for n = 1:nsub
 
         t  = y.sliceframes(mask);
         ts = t.mri_ExtractROI(roi, [], method);
-        pr = t.mri_ComputeCorrelations(ts');
+        pr = t.mri_ComputeCorrelations(ts', [], cv);
 
         % ------> Embedd results
 
@@ -205,13 +230,21 @@ for n = 1:nsub
             % -------> Create data files if it is the first run
 
             if n == 1
-                ana(a).group(r).Fz = roi.zeroframes(nsub);
+                if cv
+                    ana(a).group(r).Fz = roi.zeroframes(nsub);
+                else
+                    ana(a).group(r).cv = roi.zeroframes(nsub);
+                end
                 ana(a).group(r).roi = roi.roi.roinames{r};
             end
 
             % -------> Embedd data
 
-            ana(a).group(r).Fz.data(:,n) = fc_Fisher(pr.data(:,r));
+            if cv
+                ana(a).group(r).cz.data(:,n) = pr.data(:,r);
+            else
+                ana(a).group(r).Fz.data(:,n) = fc_Fisher(pr.data(:,r));
+            end
 
 	   end
     end
@@ -233,12 +266,14 @@ for a = 1:nana
 
     for r = 1:nroi
 
-
-
     	fprintf('\n    ... for region %s', ana(a).group(r).roi);
 
-        [p Z M] = ana(a).group(r).Fz.mri_TTestZero();
-    	pr = M.mri_FisherInv();
+        if cv
+            [p Z M] = ana(a).group(r).cv.mri_TTestZero();
+        else
+            [p Z M] = ana(a).group(r).Fz.mri_TTestZero();
+            pr = M.mri_FisherInv();
+        end
 
     	fprintf('... saving ...');
         if isempty(ana(a).name)
@@ -247,10 +282,16 @@ for a = 1:nana
             tname = [lname '_' ana(a).name];
         end
 
-        pr.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_r'], extra);                  fprintf(' r');
-        M.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Fz'], extra);                  fprintf(' Fz');
+        if cv
+            M.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_cv'], extra);                  fprintf(' cv');
+            ana(a).group(r).cv.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_cv'], extra);   fprintf(' all cv');
+        else
+            pr.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_r'], extra);                  fprintf(' r');
+            M.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Fz'], extra);                  fprintf(' Fz');
+            ana(a).group(r).Fz.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_Fz'], extra);   fprintf(' all Fz');
+        end
+
         Z.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Z'], extra);                   fprintf(' Z');
-        ana(a).group(r).Fz.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_all_Fz'], extra);   fprintf(' all Fz');
 
     	fprintf(' ... done.');
 
@@ -272,11 +313,8 @@ function [ana, fstring] = parseEvent(event)
     fstring = '';
     for m = 1:nsmaps
         fields = regexp(smaps{m}, ':', 'split');
-        ana(m).name     = fields{1};
-        % ana(m).events   = regexp(fields{2}, ',', 'split');
-        % ana(m).startoff = str2num(fields{3})
-        % ana(m).endoff   = str2num(fields{4});
-        fstring         = [fstring fields{2} ':block:' fields{3} ':' fields{4}];
+        ana(m).name = fields{1};
+        fstring     = [fstring fields{2} ':block:' fields{3} ':' fields{4}];
         if m < nsmaps, fstring = [fstring '|']; end
     end
 

@@ -1,46 +1,72 @@
-function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, verbose)
+function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
 
-%function [] = fc_ComputeABCorrKCA(flist, smask, tmask, verbose)
-%	
+%function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, dmeasure, nrep, verbose)
+%
 %	Segments the voxels in smask based on their connectivity pattern with tmask voxels.
 %   Uses k-means to group voxels in smask.
-%	
-%   flist   - file list with information on subjects bold runs and segmentation files
-%   smask   - .names file for source mask definition
-%   tmask   - .names file for target mask roi definition
-%   mask    - either number of frames to omit or a mask of frames to use [0]
-%   root    - the root of the filename where results are to be saved [flist]
-%   options - a list of:
-%               : g - compute mean correlation across subjects (only makes sense with the same sROI for each subject)
-%               : i - save individual subjects' results
-%   nc      - number of clusters to make
-%   verbose - whether to report the progress full, script, none [none]
 %
-%	output
-%		: root_kn      - image with n clusters solution
-%       : root_kc_cent - image with centroids for each of the clusters
-%	
-% 	Created by Grega Repovš on 2010-08-13.
+%   INPUTS
+%       flist    - A file list with information on subjects bold runs and segmentation files.
+%       smask    - .names file for source mask definition.
+%       tmask    - .names file for target mask roi definition.
+%       nc       - List of the number(s) of clusters to compute k-means on.
+%       mask     - Either number of frames to omit or a mask of frames to use [0].
+%       root     - The root of the filename where results are to be saved [flist].
+%       options  - A string with ['g']:
+%                   : g - save results based on group average correlations
+%                   : i - save individual subjects' results
+%       dmeasure - Distance measure to used ['correlation'].
+%       nrep     - Number of replications to run [10].
+%       verbose - whether to report the progress full, script, none [none]
 %
-% 	Copyright (c) 2010. All rights reserved.
+%	RESULTS
+%   The resulting files are:
+%
+%   group:
+%   <root>_group_k[N]       ... Group based cluster assignments for k=N.
+%   <root>_group_k[N]_cent  ... Group based centroids for k=N.
+%
+%   individual:
+%   <root>_<subject id>_group_k[N]      ... Individual's cluster assignments for k=N.
+%   <root>_<subject id>_group_k[N]_cent ... Individual's centroids for k=N.
+%
+%   If root is not specified, it is taken to be the root of the flist.%
+%
+%   USE
+%   Use the function to cluster source voxels (specified by smask) based on their
+%   correlation pattern with target voxels (specified by tmask). The clustering
+%   is computed using k-means for the number of clusters specified in the nc
+%   parameter. If more than one value is specfied, a solution will be computed
+%   for each value.
+%
+%   Correlations are computed using the mri_ComputeABCor gmri method. Clustering
+%   is computed using kmeans function with dmeasure as distance measure, and
+%   taking the best of nrep replications.
+%
+%   EXAMPLE USE
+%   fc_ComputeABCorrKCA('study.list', 'thalamus.names', 'PFC.names', [3:9], 0, 'Th-PFC', 'g', 'correlations', 15);
+%
+%   ---
+% 	Written by Grega Repovš on 2010-08-13.
+%
+%   Changelog
+%   2017-03-19 Grega Repovs
+%            - Cleaned up the code
+%            - Updated documentation
+%
 
-if nargin < 8
-    verbose = none;
-    if nargin < 7
-        options = 'raw';
-        if nargin < 6
-            [ps, root, ext, v] = fileparts(root);
-            root = fullfile(ps, root);
-            if nargin < 5
-                mask = [];
-                if nargin < 4
-                    error('ERROR: At least file list, source and target masks and number of clusters must be specified to run fc_ComputeABCorrKCA!');
-                end
-            end
-        end
-    end
+if nargin < 10 || isempty(verbose),  verbose  = 'none';            end
+if nargin < 9  || isempty(nrep),     nrep     = 10;                end
+if nargin < 8  || isempty(dmeasure), dmeasure = 'correlation';     end
+if nargin < 7  || isempty(options),  options  = 'g';               end
+if nargin < 6, root = '';                                          end
+if nargin < 5  || isempty(mask),     mask     = 0;                 end
+if nargin < 4, error('ERROR: At least file list, source and target masks and number of clusters must be specified to run fc_ComputeABCorrKCA!'); end
+
+if isempty(root)
+    [ps, root, ext] = fileparts(root);
+    root = fullfile(ps, root);
 end
-
 
 if strcmp(verbose, 'full')
     script = true;
@@ -82,16 +108,16 @@ while feof(files) == 0
     s = fgetl(files);
     if ~isempty(strfind(s, 'subject id:'))
         c = c + 1;
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).id = s(2:end);
         nf = 0;
     elseif ~isempty(strfind(s, 'roi:'))
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).roi = s(2:end);
         checkFile(subject(c).roi);
     elseif ~isempty(strfind(s, 'file:'))
         nf = nf + 1;
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).files{nf} = s(2:end);
         checkFile(s(2:end));
     end
@@ -122,7 +148,7 @@ else
     tROIload = true;
 end
 
-if group     
+if group
     nframes = sum(sum(sROI.image2D > 0));
     gres = sROI.zeroframes(nframes);
     gcnt = sROI.zeroframes(1);
@@ -132,7 +158,7 @@ end
 %   --- Start the loop
 
 for s = 1:nsubjects
-    
+
     %   --- reading in image files
     if script, tic, end
 	if script, fprintf('\n------\nProcessing %s', subject(s).id), end
@@ -145,7 +171,7 @@ for s = 1:nsubjects
             roif = gmrimage(subject(s).roi);
         end
     end
-    
+
     if tROIload
 	    tROI = gmrimage.mri_ReadROI(tmask, roif);
     end
@@ -154,9 +180,9 @@ for s = 1:nsubjects
     end
 
     % --- load bold data
-    
+
 	nfiles = length(subject(s).files);
-	
+
 	img = gmrimage(subject(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
@@ -169,30 +195,30 @@ for s = 1:nsubjects
         end
     end
     if script, fprintf('\n... computing ABCor'), end
-    
-    ABCor = img.mri_ComputeABCor(sROI,tROI, method);
-    
+
+    ABCor = img.mri_ComputeABCor(sROI, tROI, method);
+
     if indiv
         data = fc_Fisher(ABCor.image2D');
         CA = sROI.maskimg(sROI);
         Cent = tROI.maskimg(tROI);
-        
+
         for c = 1:length(nc)
             k = nc(c);
 
-            if script, fprintf('\n... computing %d iCA solution', k), end
+            if script, fprintf('\n... computing %d individual CA solution', k), end
             ifile = [root '_' subject(s).id '_k' num2str(k)];
-            
+
             Cent = Cent.zeroframes(k);
-            [CA.data Cent.data] = kmeans(data, k, 'distance', 'correlation', 'replicates', 10);
+            [CA.data Cent.data] = kmeans(data, k, 'distance', dmeasure, 'replicates', nrep);
             Cent.data = Cent.data';
-        
+
             if script, fprintf('\n... saving %s\n', ifile); end
             CA.mri_saveimage(ifile);
             Cent.mri_saveimage([ifile '_cent']);
         end
     end
-    
+
     if group
         if script, fprintf('\n... computing group results\n'); end
         gres.data = gres.data + fc_Fisher(ABCor.data);
@@ -200,30 +226,30 @@ for s = 1:nsubjects
             gcnt.data = gcnt.data + tROI.image2D > 0;
         end
     end
-    
+
     if script, fprintf('... done [%.1fs]\n', toc); end
 end
 
 
 if group
     if script, fprintf('\n=======\nComputing group CA solution'), end
-    
+
     if ~tROIload
         gcnt.data = (tROI.image2D > 0) .* nsubjects;
     end
-    
+
     gres.data = gres.data ./ repmat(gcnt.data,1,nframes);
     CA = sROI.maskimg(sROI);
     Cent = tROI.maskimg(sROI);
-    
+
     for c = 1:length(nc)
         k = nc(c);
         if script, fprintf(' k: %d', k), end
-        
+
         Cent = Cent.zeroframes(k);
-        [CA.data Cent.data] = kmeans(gres.data', k, 'distance', 'correlation', 'replicates', 10);
+        [CA.data Cent.data] = kmeans(gres.data', k, 'distance', dmeasure, 'replicates', nrep);
         Cent.data = Cent.data';
-    
+
         if script, fprintf('\n... saving %s\n', ifile); end
         CA.mri_saveimage([root '_group_k' num2str(k)]);
         Cent.mri_saveimage([root '_group_k' num2str(k) '_cent']);
@@ -247,5 +273,4 @@ if ~ok
 end
 
 end
-    
-    
+

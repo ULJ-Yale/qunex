@@ -29,7 +29,7 @@ if nargin < 1, error('ERROR: Please specify at least file list!'); end
 if verbose, fprintf('\n\nChecking ...\n'); end
 g_CheckFile(flist, 'image file list', 'error');
 
-subject = g_ReadSubjectsList(flist);
+subject = g_ReadFileList(flist);
 nsub = length(subject);
 
 for n = 1:nsub

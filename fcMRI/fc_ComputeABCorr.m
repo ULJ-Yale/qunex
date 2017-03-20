@@ -1,43 +1,59 @@
 function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose)
 
 %function [] = fc_ComputeABCorr(flist, smask, tmask, verbose)
-%	
-%	Segments the voxels in smask based on their connectivity with tmask ROI.
-%   Uses WTA to select the region the voxel is most correlated with.
-%	
-%   flist   - file list with information on subjects bold runs and segmentation files
-%   smask   - .names file for source mask definition
-%   tmask   - .names file for target mask roi definition
-%   mask    - either number of frames to omit or a mask of frames to use [0]
-%   root    - the root of the filename where results are to be saved [flist]
-%   options - a list of:
-%               : g - compute mean correlation across subjects (only makes sense with the same sROI for each subject)
-%               : i - save individual subjects' results
-%   verbose - whether to report the progress full, script, none [none]
 %
-%	output
-%		: AB Correlation map for each listed subject
-%	
+%	Computes the correlation of each source mask voxel with each target mask voxel.
+%
+%   INPUT
+%       flist   - File list with information on subjects bold runs and segmentation files.
+%       smask   - .names file for source mask definition.
+%       tmask   - .names file for target mask roi definition.
+%       mask    - Either number of frames to omit or a mask of frames to use [0].
+%       root    - The root of the filename where results are to be saved [''].
+%       options - A string specifying what correlations to save ['g']:
+%                   : g - compute mean correlation across subjects (only makes sense with the same sROI for each subject)
+%                   : i - save individual subjects' results
+%       verbose - Whether to report the progress full, script, none. ['none']
+%
+%	RESULTS
+%	The resulting files are:
+%
+%   group:
+%   <root>_group_ABCor_Fz   ... Mean Fisher Z value across participants.
+%   <root>_group_ABCor_r    ... Mean Pearson r (converted from Fz) value across participants.
+%
+%   individual:
+%   <root>_<subject id>_ABCor ... Pearson r correlations for the individual.
+%
+%   If root is not specified, it is taken to be the root of the flist.
+%
+%   USE
+%   Use the function to compute individual and/or group correlations of each
+%   smask voxel with each tmask voxel. tmask voxels are spread across the volume
+%   and smask voxels are spread across the volumes. For more details see
+%   mri_ComputeABCorr gmrimage method.
+%
+%   EXAMPLE USE
+%   fc_ComputeABCorr('scz.list', 'PFC.names', 'ACC.names', 5, 'SCZ_PFC-ACC', 'g', 'full');
+%
+%	---
 % 	Created by Grega Repovš on 2010-08-09.
 %
-% 	Copyright (c) 2010. All rights reserved.
+% 	Changelog
+%   2017-03-19 Grega Repovs
+%            - Updated documentation, cleaned code.
 
 
-if nargin < 7
-    verbose = none;
-    if nargin < 6
-        options = 'raw';
-        if nargin < 5
-            [ps, root, ext, v] = fileparts(root);
-            root = fullfile(ps, root);
-            if nargin < 4
-                mask = [];
-                if nargin < 3
-                    error('ERROR: At least file list, source and target masks must be specified to run fc_ComputeABCorr!');
-                end
-            end
-        end
-    end
+if nargin < 7 || isempty(verbose), verbose = 'none'; end
+if nargin < 6 || isempty(options), options = 'g';    end
+if nargin < 5 root = []; end
+if nargin < 4 mask = []; end
+if nargin < 3 error('ERROR: At least file list, source and target masks must be specified to run fc_ComputeABCorr!'); end
+
+
+if isempty(root)
+    [ps, root, ext, v] = fileparts(root);
+    root = fullfile(ps, root);
 end
 
 if strcmp(verbose, 'full')
@@ -80,16 +96,16 @@ while feof(files) == 0
     s = fgetl(files);
     if ~isempty(strfind(s, 'subject id:'))
         c = c + 1;
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).id = s(2:end);
         nf = 0;
     elseif ~isempty(strfind(s, 'roi:'))
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).roi = s(2:end);
         checkFile(subject(c).roi);
     elseif ~isempty(strfind(s, 'file:'))
         nf = nf + 1;
-        [t, s] = strtok(s, ':');        
+        [t, s] = strtok(s, ':');
         subject(c).files{nf} = s(2:end);
         checkFile(s(2:end));
     end
@@ -120,7 +136,7 @@ else
     tROIload = true;
 end
 
-if group     
+if group
     nframes = sum(sum(sROI.image2D > 0));
     gres = sROI.zeroframes(nframes);
     gcnt = sROI.zeroframes(1);
@@ -130,7 +146,7 @@ end
 %   --- Start the loop
 
 for s = 1:nsubjects
-    
+
     %   --- reading in image files
     if script, tic, end
 	if script, fprintf('\n------\nProcessing %s', subject(s).id), end
@@ -143,7 +159,7 @@ for s = 1:nsubjects
             roif = gmrimage(subject(s).roi);
         end
     end
-    
+
     if tROIload
 	    tROI = gmrimage.mri_ReadROI(tmask, roif);
     end
@@ -152,9 +168,9 @@ for s = 1:nsubjects
     end
 
     % --- load bold data
-    
+
 	nfiles = length(subject(s).files);
-	
+
 	img = gmrimage(subject(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
@@ -167,16 +183,16 @@ for s = 1:nsubjects
         end
     end
     if script, fprintf('\n'), end
-    
-    ABCor = img.mri_ComputeABCor(sROI,tROI, method);
-    ABCor = ABCor.unmaskimg; 
-    
+
+    ABCor = img.mri_ComputeABCor(sROI, tROI, method);
+    ABCor = ABCor.unmaskimg;
+
     if indiv
         ifile = [root '_' subject(s).id '_ABCor'];
         if script, fprintf('\n... saving %s\n', ifile); end
         ABCor.mri_saveimage(ifile);
     end
-    
+
     if group
         if script, fprintf('\n... computing group results\n'); end
         gres.data = gres.data + fc_Fisher(ABCor.data);
@@ -184,18 +200,17 @@ for s = 1:nsubjects
             gcnt.data = gcnt.data + tROI.image2D > 0;
         end
     end
-    
+
     if script, fprintf('... done [%.1fs]\n', toc); end
 end
 
-
 if group
     if script, fprintf('\n=======\nSaving group results'), end
-    
+
     if ~tROIload
         gcnt.data = (tROI.image2D > 0) .* nsubjects;
     end
-    
+
     gres.data = gres.data ./ repmat(gcnt.data,1,nframes);
     gres.mri_saveimage([root '_group_ABCor_Fz']);
     gres.data = fc_FisherInv(gres.data);
@@ -219,5 +234,4 @@ if ~ok
 end
 
 end
-    
-    
+

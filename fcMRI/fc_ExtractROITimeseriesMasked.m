@@ -2,56 +2,69 @@ function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, opt
 
 %function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes)
 %
-%	fc_ExtractROITimeseriesMasked
-%
 %	Extracts and saves region timeseries defined by provided roiinfo file
 %
-%	flist   	- conc style list of subject image files or conc files, header row, one subject per line
-%   inmask      - per run mask information, number of frames to skip or a vector of frames to keep (1) and reject (0)
-%               - or a string with definition used to extract event-defined timepoints only
-%	roiinfo	    - file with region names, one region per line in format: "value|group roi values|subject roi values"
-%	tagetf		- the matlab file to save timeseries in
-%   options     - options for alternative output: t - create a tab delimited text file, m - create a matlab file (default)
-%   method      - method for extracting timeseries - mean, pca [mean]
-%   ignore      - do we omit frames to be ignored (
-%               -> no:     do not ignore any additional frames
-%               -> event:  ignore frames as marked in .fidl file
-%               -> other:  the column in *_scrub.txt file that matches bold file to be used for ignore mask
-%               -> usevec: as specified in the use vector
+%   INPUTS
+%	    flist   	- A .list file.
+%	    roiinfo	    - A .names ROI definition file.
+%       inmask      - Per run mask information, number of frames to skip or a vector of frames to keep (1) and reject (0),
+%                     or a string with definition used to extract event-defined timepoints only
+%	    tagetf		- The name for the file to save timeseries in.
+%       options     - A string defining which outputs to create ['m']:
+%                     -> t - create a tab delimited text file,
+%                     -> m - create a matlab file
+%       method      - Method for extracting timeseries - 'mean', 'pca' ['mean'].
+%       ignore      - do we omit frames to be ignored ['no']:
+%                     -> no:     do not ignore any additional frames
+%                     -> event:  ignore frames as marked in .fidl file
+%                     -> other:  the column in *_scrub.txt file that matches bold file to be used for ignore mask
+%                     -> usevec: as specified in the use vector
+%       rcodes      - A list of region codes for which to extract the time-series [].
+%
+%   USE
+%   The function is used to extract ROI timeseries. What frames are extracted
+%   can be further limited by providing an event string that is tham parsed
+%   using g_CreateTaskRegressors and all frames with regressors that have
+%   values above 0 are extracted. The extracted timeseries can be saved either
+%   in a matlab file with structure:
+%
+%   data.roinames   ... cell array of ROI names
+%   data.roicodes1  ... array of group ROI codes
+%   data.roicodes2  ... arrau of subject specific ROI codes
+%   data.subjects   ... cell array of subject codes
+%   data.timeseries ... cell array of extracted timeseries
+%   data.n_roi_vox  ... cell array of number voxels for each ROI
+%
+%   or in a tab separated text file in which data for each frame of each subject
+%   is in its own line, the first column is the subject code and the following
+%   columns are for each of the specified ROI. The ROI are listed in the header.
+%
+%   EXAMPLE USE
+%   Resting state data:
+%   >>>fc_ExtractROITimeseriesMasked('con.list', 'CCNet.names', 0, 'con-ccnet', 'mt', 'mean', 'udvarsme');
+%
+%   Event data:
+%   >>>fc_ExtractROITimeseriesMasked('con.list', 'CCNet.names', 'inc:3:4', 'con-ccnet-inc', 'm', 'pca', 'event');
 %
 %
-% 	Created by Grega Repovš on 2009-06-25.
-%   2008-01-23 - Adjusted for a different file list format and an additional ROI mask
-%   2011-02-11 - Rewritten to use gmrimage objects and ability for event defined masks
-%   2012-07-30 - Added option to omit frames specified to be ignored in the fidl file
-%   2013-12-11 - Added ignore as specified in use vector and rcodes to specify ROI.
-%
-% 	Copyright (c) 2008. All rights reserved.
+%   ---
+% 	Written by Grega Repovš, 2009-06-25.
+%   2008-01-23 Grega Repovs
+%            - Adjusted for a different file list format and an additional ROI mask
+%   2011-02-11 Grega Repovs
+%            - Rewritten to use gmrimage objects and ability for event defined masks
+%   2012-07-30 Grega Repovs
+%            - Added option to omit frames specified to be ignored in the fidl file
+%   2013-12-11 Grega Repovs
+%            - Added ignore as specified in use vector and rcodes to specify ROI.
+%   2017-03-19 Grega Repovs
+%            - Updated documentation
 %
 
-if nargin < 8
-    rcodes = [];
-    if nargin < 7
-        ignore = [];
-        if nargin < 6
-            method = 'mean';
-            if nargin < 5
-                options = 'm';
-            end
-        end
-    end
-end
-
-if isempty(options)
-    options = 'm';
-end
-if isempty(method)
-    method = 'mean';
-end
-
-if isempty(ignore)
-    ignore = 'no';
-end
+if nargin < 8, rcodes = []; end;
+if nargin < 7 || isempty(ignore),  ignore  = 'no';   end
+if nargin < 6 || isempty(metod),   method  = 'mean'; end
+if nargin < 5 || isempty(options), options = 'm';    end
 
 if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
@@ -74,7 +87,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-subject = g_ReadSubjectsList(flist);
+subject = g_ReadFileList(flist);
 nsub = length(subject);
 
 fprintf(' ... done.');
@@ -130,7 +143,7 @@ for n = 1:nsub
                 mask = mask.run;
     	        nmask = [];
                 for r = 1:length(mask)
-                    nmask = [nmask; sum(mask(r).matrix,2)>0];
+                    nmask = [nmask; sum(mask(r).matrix,2) > 0];
                 end
                 mask = nmask;
             end
@@ -157,6 +170,7 @@ for n = 1:nsub
 
 	fprintf('\n     ... extracting timeseries [%d frames]', y.frames);
 
+    data.subjects{n}   = subject(n).id;
     data.timeseries{n} = y.mri_ExtractROI(roi, rcodes, method);
     data.n_roi_vox{n}  = roi.roi.nvox;
 
