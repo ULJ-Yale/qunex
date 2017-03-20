@@ -281,16 +281,6 @@ show_usage() {
 
 gmri_function() {
 
-	if [ -n "$FreeSurferHome" ]; then
-		echo ""
-		echo "Using the following FreeSurfer path:"
-		echo " --> $FreeSurferHome"
-		echo ""
-		FREESURFER_HOME="$FreeSurferHome"
-		. ${FREESURFER_HOME}/SetUpFreeSurfer.sh > /dev/null 2>&1
-		. ${FREESURFER_HOME}/FreeSurferEnv.sh > /dev/null 2>&1
-	fi	
-
 	# Issue the complete gmri originating call
 	echo ""
 	gmri ${gmriinput}
@@ -5377,7 +5367,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Scheduler=`opts_GetOpt "${setflag}scheduler" $@` #Specify the type of scheduler to use 
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` #Clean prior run and starr fresh [yes/no]
 	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` # Specifies whether to run on the cluster or on the local node
-	FreeSurferHome=`opts_GetOpt "${setflag}freesurferhome" $@` # Specifies homefolder for FreeSurfer binary to use
+	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@` # Specifies homefolder for FreeSurfer binary to use
 	
 	# -- create lists input flags
 	ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@` # Which lists to generate
