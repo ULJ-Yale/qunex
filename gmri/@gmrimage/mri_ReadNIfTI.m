@@ -148,14 +148,15 @@ elseif strcmp(img.imageformat, 'CIFTI')
         cver = cver{1};
         if strcmp(cver, '1')
             img.imageformat = 'CIFTI-1';
-            img.dim = img.hdrnifti.dim(6:7)';
+            img.dim = img.hdrnifti.dim(6)';
+            img.frames = img.hdrnifti.dim(7);
         elseif strcmp(cver, '2')
             img.imageformat = 'CIFTI-2';
-            img.dim = img.hdrnifti.dim([7 6])';
+            img.dim = img.hdrnifti.dim([7])';
+            img.frames = img.hdrnifti.dim(6);
         else
             error('\nERROR: Unknown CIFTI version (%s) of the file [%s]!\n', cver, img.filename);
         end
-        img.frames = img.dim(2);
     else
         img.dim    = img.hdrnifti.dim(6);
         img.frames = 1;

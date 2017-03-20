@@ -1,7 +1,8 @@
-# README File for MNAP Matlab Utilities
+# README File for MNAP Matlab Analysis Code
 
 Background
 ==========
+---
 
 Mind & Brain Lab Matlab Utilities, i.e. matlab are neuroimaging
 preprocessing and analysis tools developed in matlab that support multiple 
@@ -27,6 +28,7 @@ University.
 
 Usage and command documentation
 ===============================
+---
 
 The matlab tools usage can be found imbedded in each function by running:
  
@@ -34,19 +36,16 @@ The matlab tools usage can be found imbedded in each function by running:
 
 External dependencies
 =====================
+---
 
-# * Connectome Workbench (v1.0 or above)
-# * FSL (version 5.0.6 or above)
-# * FreeSurfer (5.3 HCP version or later)
-# * MATLAB (version 2012b or above with signal processing and imaging toolbox)
-# * FIX ICA
-# * PALM
-# * Python (version 2.7 or above)
-# * AFNI
-# * Gradunwarp
-# * Human Connectome Pipelines
-# * R Statistical Environment
+* Connectome Workbench (v1.0 or above)
+* MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
 
+Change Log
+============
+---
+
+* 0.1: Initial pre-alpha release with major functionality
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
