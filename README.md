@@ -1,4 +1,4 @@
-# README File for MNAP General Analysis Pipeline
+# README File for MNAP Neuroimaging Utilities Pipeline
 
 Background
 ==========
@@ -37,7 +37,7 @@ The utilities are used through the `gmri` command. The general use form is:
 
 `gmri <command> [option=value] [option=value] ...`
 
-The list of commands and their specific documentation is provided throug `gmri`
+The list of commands and their specific documentation is provided through `gmri`
 command itself using the folowing options:
 
 * `gmri -h` prints general help information,
