@@ -4805,7 +4805,6 @@ qcpreproc() {
 }
 
 show_usage_qcpreproc() {
-
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -5026,6 +5025,19 @@ timestamp() {
    echo "AP.$1.`date "+%Y.%m.%d.%H.%M.%S"`.txt"
 }
 
+#
+# -- DESCRIPTION: 
+#
+#   Checks for version
+#
+
+show_version() {
+ 
+ 	APVer=`cat $TOOLS/MNAP/general/VERSION`
+ 	echo ""
+	echo "Analysis Pipeline Version: v$APVer"
+}
+
 # opts_ShowVersionIfRequested "$@"
 
 # ------------------------------------------------------------------------------
@@ -5034,18 +5046,26 @@ timestamp() {
 
 # -- Check if general help requested in three redundant ways (AP, AP --help or AP help)
 
+if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ]; then
+	show_version
+	exit 0
+fi
+
 if opts_CheckForHelpRequest $@; then
+    show_version
     show_usage
     exit 0
 fi
 
 if [ -z "$1" ]; then
+    show_version
     show_usage
     exit 0
 
 fi
 
 if [ "$1" == "help" ]; then
+    show_version
 	show_usage
 	exit 0
 fi
@@ -5210,7 +5230,6 @@ echo "Scheduler testing..."
 # ------------------------------------------------------------------------------
 #  Check if specific function help requested
 # ------------------------------------------------------------------------------
-
 	
 	# -- get all the functions from the usage calls
 	unset UsageName
@@ -5227,9 +5246,11 @@ echo "Scheduler testing..."
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
+				show_version
 				show_usage
 				exit 0
 			else	
+				show_version
     			show_usage_"$UsageInput"
     		fi
     	exit 0
@@ -5244,9 +5265,11 @@ echo "Scheduler testing..."
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
+				show_version
 				show_usage
 				exit 0
 			else	
+				show_version
     			show_usage_"$UsageInput"
     		fi
     	exit 0
@@ -5262,9 +5285,11 @@ echo "Scheduler testing..."
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
+				show_version
 				show_usage
 				exit 0
 			else	
+			    show_version
     			show_usage_"$UsageInput"
     		fi
     	exit 0
@@ -5278,9 +5303,11 @@ echo "Scheduler testing..."
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
+				show_version
 				show_usage
 				exit 0
 			else	
+				show_version
     			show_usage_"$UsageInput"
     		fi
     	exit 0
@@ -5368,6 +5395,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` #Clean prior run and starr fresh [yes/no]
 	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` # Specifies whether to run on the cluster or on the local node
 	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@` # Specifies homefolder for FreeSurfer binary to use
+	APVersion=`opts_GetOpt "${setflag}version" $@` # Specifies homefolder for FreeSurfer binary to use
 	
 	# -- create lists input flags
 	ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@` # Which lists to generate
