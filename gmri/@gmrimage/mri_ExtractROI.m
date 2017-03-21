@@ -104,6 +104,11 @@ for r = 1:nrois
 
     tmp = target(roi.mri_ROIMask(rcodes(r)), :);
 
+    if isempty(tmp)
+        ts(r, :) = 0;
+        continue
+    end
+
     switch method
 
         case 'mean'

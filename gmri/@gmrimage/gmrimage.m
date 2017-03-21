@@ -23,10 +23,16 @@ classdef gmrimage
 %
 %  mri_ComputeCorrelations - computes correlations with the provided data matrix
 %
-%  Created by Grega Repovš, 2009-10-04
+%  ---
+%  Written by Grega Repovš, 2009-10-04
 %
-%  2011-07-31 - Added importing of existing movement, fstat and scrubbing data
-%  2016-01-16 - Added GetXY and specifying save format with file extension.
+%  2011-07-31 Grega Repovs
+%           - Added importing of existing movement, fstat and scrubbing data
+%  2016-01-16 Grega Repovs
+%           - Added GetXY and specifying save format with file extension.
+%  2017-03-21 Grega Repovs
+%           - horzcat now supports concatenation of empty objects.
+%           - mri_ReadConcFile returns more information
 %
 
     properties
@@ -74,7 +80,7 @@ classdef gmrimage
 
     methods(Static = true)
         %ifh = mri_ReadIFH(file)
-        files = mri_ReadConcFile(file)
+        [files boldn sfolder] = mri_ReadConcFile(file)
         img   = mri_ReadConcImage(file, dtype, frames, verbose)
         roi   = mri_ReadROI(roiinfo, roif2)
         mri_SaveConcFile(file, files)
@@ -476,6 +482,14 @@ classdef gmrimage
         %
 
         function obj = horzcat(obj, add)
+
+            if isempty(obj)
+                obj = add;
+                return
+            elseif isempty(add)
+                return
+            end
+
             obj.data = [obj.image2D add.image2D];
             obj.frames = obj.frames + add.frames;
             obj.runframes = [obj.runframes add.frames];

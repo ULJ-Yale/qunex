@@ -1,6 +1,6 @@
-function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes)
+function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)
 
-%function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes)
+%function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, options, method, ignore, rcodes, mcodes, bmask)
 %
 %	Extracts and saves region timeseries defined by provided roiinfo file
 %
@@ -20,6 +20,9 @@ function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, opt
 %                     -> other:  the column in *_scrub.txt file that matches bold file to be used for ignore mask
 %                     -> usevec: as specified in the use vector
 %       rcodes      - A list of region codes for which to extract the time-series [].
+%       mcodes      - A list of region codes from subject's roi file to use for masking if empty the specification from
+%                     roiinfo will be used.
+%       bmask       - Should a BOLD brain mask be used to further mask the regions used [false].
 %
 %   USE
 %   The function is used to extract ROI timeseries. What frames are extracted
@@ -38,6 +41,18 @@ function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, opt
 %   or in a tab separated text file in which data for each frame of each subject
 %   is in its own line, the first column is the subject code and the following
 %   columns are for each of the specified ROI. The ROI are listed in the header.
+%
+%   *ROI definition*
+%   The basic definition of ROI to use is taken from roiinfo. Additional masking
+%   is done using subject specific ROI files as listed in the .list file. With
+%   large number of regions, masking can time consuming. If the same mask is
+%   used for all the ROI specified in the roiinfo file (e.g. gray matter) then
+%   it is possible to specify the relevant subject specific mask codes using
+%   the mcodes paramater. In this case the subject specific part of the roiinfo
+%   will be ignored and replaced by mcodes.
+%
+%   It is also possible to use
+%
 %
 %   EXAMPLE USE
 %   Resting state data:
@@ -59,11 +74,15 @@ function [] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf, opt
 %            - Added ignore as specified in use vector and rcodes to specify ROI.
 %   2017-03-19 Grega Repovs
 %            - Updated documentation
+%   2017-03-21 Grega Repovs
+%            - Optimized per subject masking of ROI.
 %
 
+if nargin < 10 || isempty(bmask),  bmask   = false;  end
+if nargin < 9, mcodes = []; end;
 if nargin < 8, rcodes = []; end;
 if nargin < 7 || isempty(ignore),  ignore  = 'no';   end
-if nargin < 6 || isempty(metod),   method  = 'mean'; end
+if nargin < 6 || isempty(method),  method  = 'mean'; end
 if nargin < 5 || isempty(options), options = 'm';    end
 
 if ~ischar(ignore)
@@ -78,6 +97,28 @@ if isa(inmask, 'char')
     else
         fignore = 'no';
     end
+end
+
+%   ---- Named region codes
+
+aparc.lcgray = [3 415 417 419 421:422 424 427 429 431 433 435 438 11100:11175 1000:1035 1100:1104 1200:1202 1205:1207 1210:1212 1105:1181];
+aparc.rcgray = [42 416 418 420 423 425:426 428 430 432 434 436 439 12100:12175 2000:2035 2100:2104 2105:2181 2200:2202 2205:2207 2210:2212];
+aparc.cgray  = [aparc.lcgray aparc.rcgray 220 222 225 400:414 437];
+
+aparc.lsubc  = [9:13 17:20 26 27 96 193 195:196 9000:9006 550 552:557];
+aparc.rsubc  = [48:56 58:59 97 197 199:200 9500:9506 500 502:507];
+aparc.subc   = [aparc.lsubc aparc.rsubc 16 170:175 203:209 212 214:218 226 7001:7020 7100:7101 8001:8014];
+
+aparc.lcerc  = [8 601 603 605 608 611 614 617 620 623 626 660:679];
+aparc.rcerc  = [47 602 604 607 610 613 616 619 622 625 628 640:659];
+aparc.cerc   = [aparc.lcerc aparc.rcerc 606 609 612 615 618 621 624 627];
+
+aparc.lgray  = [aparc.lcgray aparc.lsubc aparc.lcerc];
+aparc.rgray  = [aparc.rcgray aparc.rsubc aparc.rcerc];
+aparc.gray   = [aparc.cgray aparc.subc aparc.cerc];
+
+if isa(mcodes, 'char')
+    mcodes = aparc.(mcodes);
 end
 
 fprintf('\n\nStarting ...');
@@ -104,31 +145,19 @@ end
 %   ------------------------------------------------------------------------------------------
 %                                                The main loop ... go through all the subjects
 
+groi = gmrimage.mri_ReadROI(roiinfo);
 
 for n = 1:nsub
 
     fprintf('\n ... processing %s', subject(n).id);
 
-    % ---> reading ROI file
+    % ---> reading image files
 
-	fprintf('\n     ... creating ROI mask');
+    fprintf('\n     ... reading image file(s)');
 
-	if isfield(subject(n), 'roi')
-	    sroifile = subject(n).roi;
-	else
-	    sroifile = [];
-    end
-
-	roi = gmrimage.mri_ReadROI(roiinfo, sroifile);
-
-
-	% ---> reading image files
-
-	fprintf('\n     ... reading image file(s)');
-
-	y = gmrimage(subject(n).files{1});
-	for f = 2:length(subject(n).files)
-	    y = [y gmrimage(subject(n).files{f})];
+    y = gmrimage(subject(n).files{1});
+    for f = 2:length(subject(n).files)
+        y = [y gmrimage(subject(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -166,13 +195,53 @@ for n = 1:nsub
         y = y.mri_Scrub(ignore);
     end
 
+    % ---> creating ROI mask
+
+    fprintf('\n     ... creating ROI mask');
+
+    roi = groi;
+
+    mask = ones(roi.voxels, 1);
+
+    % -- mask with subject's ROI file
+
+    if isfield(subject(n), 'roi')
+        if isempty(mcodes)
+            roi  = gmrimage.mri_ReadROI(roiinfo, subject(n).roi);
+        else
+            sroi = gmrimage.mri_ReadROI(subject(n).roi);
+            mask = mask & sroi.mri_ROIMask(mcodes);
+        end
+    end
+
+    % -- exclude voxels with 0 variance
+
+    istat = y.mri_Stats('var');
+    mask = mask & istat.data;
+
+    % -- exclude voxels outside the BOLD brain mask
+
+    if bmask
+        mask = mask & mri_BOLDBrainMask(subject(n).files);
+    end
+
+    % -- apply mask
+
+    if min(mask) == 0
+        roi.data(mask == 0,:) = 0;
+        for r = 1:length(roi.roi.roicodes)
+            roi.roi.nvox(r) = sum(sum(roi.data==roi.roi.roicodes(r)));
+        end
+    end
+
+
 	% ---> extracting timeseries
 
 	fprintf('\n     ... extracting timeseries [%d frames]', y.frames);
 
-    data.subjects{n}   = subject(n).id;
-    data.timeseries{n} = y.mri_ExtractROI(roi, rcodes, method);
-    data.n_roi_vox{n}  = roi.roi.nvox;
+    data.subjects{n}     = subject(n).id;
+    data.timeseries{n}   = y.mri_ExtractROI(roi, rcodes, method);
+    data.n_roi_vox(n, :) = roi.roi.nvox;
 
     fprintf(' ... done!');
 
@@ -207,10 +276,10 @@ if ismember('t', options)
 
     for is = 1:nsub
         ts = data.timeseries{is};
-        tslen = size(ts,1);
+        tslen = size(ts, 2);
         for it = 1:tslen
             fprintf(fout, '\n%s', data.subjects{is});
-            fprintf(fout, '\t%.5f', ts(it,:));
+            fprintf(fout, '\t%.5f', ts(:,it));
         end
     end
 
@@ -223,4 +292,25 @@ fprintf('\n\n FINISHED!\n\n');
 
 
 
+
+function [bmask] = mri_BOLDBrainMask(conc)
+
+    [files boldn sfolder] = gmrimage.mri_ReadConcFile(conc);
+
+    mask = boldn > 0;
+    for n = 1:length(boldn)
+        if isempty(sfolder{n})
+            mask(n) = false;
+        end
+    end
+
+    boldn   = boldn(mask);
+    sfolder = sfolder(mask);
+    nfiles  = length(boldn);
+
+    bmask = [];
+    for n = 1:nfiles
+        bmask = [bmask gmrimage(sprintf('%s/segmentation/boldmasks/bold%d_frame1_brain_mask.nii.gz', sfolder{n}, boldn(n)))];
+    end
+    bmask = min(bmask.image2D, [], 2) > 0;
 

@@ -118,6 +118,7 @@ if isempty(strfind(roiinfo, '.names'))
         img.roi.roicodes(r) = r;
         img.roi.roicodes1{r} = rcodes(r);
         img.roi.roicodes2{r} = [];
+        img.roi.nvox(r) = sum(img.data == r);
     end
     img.roi.roifile1  = roiinfo;
     img.roi.roifile2  = [];
