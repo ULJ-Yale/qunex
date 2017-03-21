@@ -51,11 +51,11 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
                         bolds.append(v['name'])
         if len(bolds) > 0:
             f = getFileNames(subject, options)
-            print >> bfile, "subject id:%s" % (subject['id'])
-            print >> bfile, "roi:%s" % (os.path.abspath(f['fs_aseg_bold']))
+            print >> bfile, "    subject id:%s" % (subject['id'])
+            print >> bfile, "    roi:%s" % (os.path.abspath(f['fs_aparc_bold']))
             for bold in bolds:
                 f = getBOLDFileNames(subject, boldname=bold, options=options)
-                print >> bfile, "file:%s" % (os.path.abspath(f['bold_final']))
+                print >> bfile, "    file:%s" % (os.path.abspath(f['bold_final']))
 
     bfile.close()
 
@@ -64,6 +64,7 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
     """
     createConcList - documentation not yet available.
     """
+
     bfile = open(os.path.join(options['basefolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 
     concs = options['bppt'].split("|")
@@ -79,15 +80,15 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
                 d = getSubjectFolders(subject, options)
 
                 print >> bfile, "subject id:%s" % (subject['id'])
-                print >> bfile, "roi:%s" % (f['fs_aseg_333'])
+                print >> bfile, "    roi:%s" % (f['fs_aparc_bold'])
 
                 tfidl  = fidls[0].strip().replace(".fidl", "")
 
                 f_conc = os.path.join(d['s_bold_concs'], f['conc_final'])
                 f_fidl = os.path.join(d['s_bold_events'], tfidl + ".fidl")
 
-                print >> bfile, "fidl:%s" % (f_fidl)
-                print >> bfile, "file:%s" % (f_conc)
+                print >> bfile, "    fidl:%s" % (f_fidl)
+                print >> bfile, "    file:%s" % (f_conc)
 
             except:
                 print "ERROR processing subject %s!" % (subject['id'])
