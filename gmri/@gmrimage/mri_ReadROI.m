@@ -83,14 +83,13 @@ function [img] = mri_ReadROI(roiinfo, roi2)
 
 
 %   ---- Named region codes
+rcodes.lcgray = [3 415 417 419 421:422 424 427 429 431 433 435 438 1000:1035 1100:1104 1200:1202 1205:1207 1210:1212 1105:1181 9000:9006 11100:11175];
+rcodes.rcgray = [42 416 418 420 423 425:426 428 430 432 434 436 439 2000:2035 2100:2104 2105:2181 2200:2202 2205:2207 2210:2212 9500:9506 12100:12175 ];
+rcodes.cgray  = [rcodes.lcgray rcodes.rcgray 220 222 225 226 400:414 437 ];
 
-rcodes.lcgray = [3 415 417 419 421:422 424 427 429 431 433 435 438 11100:11175 1000:1035 1100:1104 1200:1202 1205:1207 1210:1212 1105:1181];
-rcodes.rcgray = [42 416 418 420 423 425:426 428 430 432 434 436 439 12100:12175 2000:2035 2100:2104 2105:2181 2200:2202 2205:2207 2210:2212];
-rcodes.cgray  = [rcodes.lcgray rcodes.rcgray 220 222 225 400:414 437];
-
-rcodes.lsubc  = [9:13 17:20 26 27 96 193 195:196 9000:9006 550 552:557];
-rcodes.rsubc  = [48:56 58:59 97 197 199:200 9500:9506 500 502:507];
-rcodes.subc   = [rcodes.lsubc rcodes.rsubc 16 170:175 203:209 212 214:218 226 7001:7020 7100:7101 8001:8014];
+rcodes.lsubc  = [9:13 17:20 26:28 96 136 163 169 193:196 550 552:557];
+rcodes.rsubc  = [48:56 58:60 97 137 164 176 197:200 500 502:507];
+rcodes.subc   = [rcodes.lsubc rcodes.rsubc 16 170:175 203:209 212 214:218 226 7001:7020 7100:7101 8001:8014 ];
 
 rcodes.lcerc  = [8 601 603 605 608 611 614 617 620 623 626 660:679];
 rcodes.rcerc  = [47 602 604 607 610 613 616 619 622 625 628 640:659];
@@ -98,7 +97,23 @@ rcodes.cerc   = [rcodes.lcerc rcodes.rcerc 606 609 612 615 618 621 624 627];
 
 rcodes.lgray  = [rcodes.lcgray rcodes.lsubc rcodes.lcerc];
 rcodes.rgray  = [rcodes.rcgray rcodes.rsubc rcodes.rcerc];
-rcodes.gray   = [rcodes.cgray rcodes.subc rcodes.cerc];
+rcodes.gray   = [rcodes.cgray rcodes.subc rcodes.cerc 702];
+
+% rcodes.lcgray = [3 415 417 419 421:422 424 427 429 431 433 435 438 11100:11175 1000:1035 1100:1104 1200:1202 1205:1207 1210:1212 1105:1181];
+% rcodes.rcgray = [42 416 418 420 423 425:426 428 430 432 434 436 439 12100:12175 2000:2035 2100:2104 2105:2181 2200:2202 2205:2207 2210:2212];
+% rcodes.cgray  = [rcodes.lcgray rcodes.rcgray 220 222 225 400:414 437];
+%
+% rcodes.lsubc  = [9:13 17:20 26 27 96 193 195:196 9000:9006 550 552:557];
+% rcodes.rsubc  = [48:56 58:59 97 197 199:200 9500:9506 500 502:507];
+% rcodes.subc   = [rcodes.lsubc rcodes.rsubc 16 170:175 203:209 212 214:218 226 7001:7020 7100:7101 8001:8014];
+%
+% rcodes.lcerc  = [8 601 603 605 608 611 614 617 620 623 626 660:679];
+% rcodes.rcerc  = [47 602 604 607 610 613 616 619 622 625 628 640:659];
+% rcodes.cerc   = [rcodes.lcerc rcodes.rcerc 606 609 612 615 618 621 624 627];
+%
+% rcodes.lgray  = [rcodes.lcgray rcodes.lsubc rcodes.lcerc];
+% rcodes.rgray  = [rcodes.rcgray rcodes.rsubc rcodes.rcerc];
+% rcodes.gray   = [rcodes.cgray rcodes.subc rcodes.cerc];
 
 
 %   ---- Go on ...
