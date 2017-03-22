@@ -385,7 +385,7 @@ if nargin < 6,  task = [];                                  end
 if nargin < 5 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
 if nargin < 4 || isempty(do),   do = 'shrcl';               end
 if nargin < 3, omit = [];                                   end
-if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!');
+if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!'); end
 
 
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
