@@ -670,6 +670,16 @@ show_usage_createlists() {
 				echo "--parameterfile='no' \ "
 				echo "--append='yes' "
 				echo ""
+				echo "AP --path='<study_folder>' \ "
+				echo "--function='createlists' \ "
+				echo "--subjects='<comma_separarated_list_of_cases>' \ "
+				echo "--listtocreate='analysis' \ "
+				echo "--overwrite='yes' \ "
+				echo "--bolddata='1' \ "	
+				echo "--filetype='dtseries.nii' \ "											
+				echo "--listname='<list_to_generate>' \ "
+				echo "--append='yes' "				
+				echo ""
 				echo "" 
     			echo ""
 }
@@ -5796,7 +5806,6 @@ fi
 if [ "$FunctionToRun" == "createlists" ]; then
 		
 		mkdir "$StudyFolder"/lists &> /dev/null
-		echo "$CASES"
 
 		# Check all the user-defined parameters: 1. Cluster, 2. QUEUE. 3. GROUP. 
 		# 4. ListFunction 5. ListGenerate. 6. BOLDS 7. Append 8. ParameterFile
@@ -5868,8 +5877,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 				fi 
 			fi	
   			  	
-  			for CASE in $CASES; 
-  			do
+  			for CASE in $CASES; do
   				"$FunctionToRun" "$CASE"
   			done
 	  			
@@ -5904,10 +5912,10 @@ if [ "$FunctionToRun" == "createlists" ]; then
   				echo ""
 				rm "$StudyFolder"/lists/subjects.analysis."$ListName".*.list &> /dev/null
   			fi
-  				
-  			  	for CASE in $CASE; do
-  					"$FunctionToRun" "$CASE"
-  				done
+  			
+  			for CASE in $CASES; do
+  				"$FunctionToRun" "$CASE"
+  			done
 		fi	
 		
 		# ----------------
