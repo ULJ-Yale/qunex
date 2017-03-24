@@ -1912,7 +1912,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     --bold_preprocess ... Which bold images (as they are specified in the
                           subjects.txt file) to copy over. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
-                          'WM|Control|rest') or 'all' to copy all [rest].
+                          'WM|Control|rest') or 'all' to copy all [all].
     --boldname        ... The default name of the bold files in the images
                           folder [bold].
 
