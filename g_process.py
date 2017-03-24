@@ -558,7 +558,7 @@ def run(command, args):
 
             if command in sactions:
                 todo = sactions[command]
-                r, status = procResponse(todo(subject, options, overwrite))
+                r, status = procResponse(todo(subjects, options, overwrite))
                 writelog(r)
 
             f = open(logname + '2.log', "w")
@@ -581,7 +581,7 @@ def run(command, args):
 
             if command in sactions:
                 todo = sactions[command]
-                r, status = procResponse(todo(subject, options, overwrite))
+                r, status = procResponse(todo(subjects, options, overwrite))
                 writelog(r)
 
             pool.close()
