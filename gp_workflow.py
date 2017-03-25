@@ -188,6 +188,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nCreating masks for bold runs ..."
+    r += "\nProcessing %s BOLD files." % (", ".join(options['bppt'].split("|")))
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
@@ -195,6 +196,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
             if bnum:
 
                 if (v['task'] not in options['bppt'].split("|")) and (options['bppt'] != 'all'):
+                    r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
                     continue
 
                 boldname = v['name']
@@ -428,6 +430,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nProcessing %s BOLD files." % (", ".join(options['bppt'].split("|")))
     r += "\nComputing bold image statistics ..."
 
     btargets = options['bppt'].split("|")
@@ -493,6 +496,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                     except:
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                         report['boldfail'] += 1
+                else:
+                    r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
 
     r += "\n\nBold statistics computation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d" % (report)
@@ -667,6 +672,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
         r = "\n---------------------------------------------------------"
         r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+        r += "\nProcessing %s BOLD files." % (", ".join(options['bppt'].split("|")))
         r += "\nCreating BOLD Movement and statistics report ..."
 
         btargets = options['bppt'].split("|")
@@ -726,6 +732,8 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                             r += str(errormessage)
                         except:
                             r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+                else:
+                    r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
 
         # run the R script
 
@@ -965,6 +973,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nProcessing %s BOLD files." % (", ".join(options['bppt'].split("|")))
     r += "\nExtracting BOLD nuisance signal ..."
 
     btargets = options['bppt'].split("|")
@@ -1052,6 +1061,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                     except:
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                         report['boldfail'] += 1
+                else:
+                    r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
 
     r += "\n\nBold nuisance signal extraction completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d" % (report)
@@ -1414,7 +1425,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nPreprocessing bold runs ..."
+    r += "\nPreprocessing %s BOLD files." % (", ".join(options['bppt'].split("|")))
     r += "\n%s Preprocessing bold runs ..." % (action("Running", options['run']))
 
     report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
@@ -1527,6 +1538,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                         time.sleep(5)
                         report['failed'].append(boldnum)
+                else:
+                    r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
 
     r += "\n\nBold preprocessing completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     if options['run'] == "run":
