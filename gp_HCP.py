@@ -1938,7 +1938,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nProcessing %s BOLD files." % (", ".join(options['bppt'].split("|")))
+    r += "\nProcessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bppt'].split("|")))
     r += "\nMapping HCP data ..."
 
     # --- file/dir structure
@@ -2108,7 +2108,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                         time.sleep(3)
                 else:
-                    r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
+                    r += "\n\nSkipping %s [%s] (not specified in --bold_preprocess)." % (v['name'], v['task'])
                     report['boldskipped'] += 1
 
     r += "\nHCP data mapping completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
