@@ -183,7 +183,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     """
 
     bsearch = re.compile('bold([0-9]+)')
-    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0}
+    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -197,6 +197,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
                 if (v['task'] not in options['bppt'].split("|")) and (options['bppt'] != 'all'):
                     r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
+                    report['boldskipped'] += 1
                     continue
 
                 boldname = v['name']
@@ -274,7 +275,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                     time.sleep(1)
 
     r += "\n\nBold mask creation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d" % (report)
+    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d" % (report)
 
     print r
     return (r, (sinfo['id'], rstatus))
@@ -426,7 +427,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     """
 
     bsearch = re.compile('bold([0-9]+)')
-    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0}
+    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -498,9 +499,10 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                         report['boldfail'] += 1
                 else:
                     r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
+                    report['boldskipped'] += 1
 
     r += "\n\nBold statistics computation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d" % (report)
+    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d" % (report)
 
     print r
     return (r, (sinfo['id'], rstatus))
@@ -665,7 +667,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
              - Added documentation, added summary reporting.
     """
 
-    preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0}
+    preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0, 'boldskipped': 0}
 
     try:
         bsearch = re.compile('bold([0-9]+)')
@@ -734,6 +736,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                             r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                 else:
                     r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
+                    preport['boldskipped'] += 1
 
         # run the R script
 
@@ -815,7 +818,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     if preport['procok'] == 'ok':
         r += "\n\nBOLD statistics and movement report completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
-    rstatus = "BOLDs ok: %(boldok)2d, missing data: %(boldmissing)2d, processing: %(procok)s" % (preport)
+    rstatus = "BOLDs ok: %(boldok)2d, missing data: %(boldmissing)2d, processing: %(procok)s, skipped: %(boldskipped)s" % (preport)
     if preport['procok'] == 'ok':
         rstatus += ", plots: %(plotdone)s" % (preport)
 
@@ -968,7 +971,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                summary reporting.
     """
 
-    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0}
+    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
     bsearch = re.compile('bold([0-9]+)')
 
     r = "\n---------------------------------------------------------"
@@ -1063,9 +1066,10 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                         report['boldfail'] += 1
                 else:
                     r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
+                    report['boldskipped'] += 1
 
     r += "\n\nBold nuisance signal extraction completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d" % (report)
+    rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, skipped: %(boldskipped)2d, processed: %(boldok)2d" % (report)
 
     print r
     return (r, (sinfo['id'], rstatus))
@@ -1428,7 +1432,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     r += "\nPreprocessing %s BOLD files." % (", ".join(options['bppt'].split("|")))
     r += "\n%s Preprocessing bold runs ..." % (action("Running", options['run']))
 
-    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     btargets = options['bppt'].split("|")
 
@@ -1436,10 +1440,11 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
         if k.isdigit():
             bnum = bsearch.match(v['name'])
             if bnum:
-                if v['task'] in btargets or options['bppt'] == 'all':
 
-                    boldname = v['name']
-                    boldnum = bnum.group(1)
+                boldname = v['name']
+                boldnum = bnum.group(1)
+
+                if v['task'] in btargets or options['bppt'] == 'all':
 
                     r += "\n\nWorking on: " + boldname + " ..."
 
@@ -1540,12 +1545,13 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                         report['failed'].append(boldnum)
                 else:
                     r += "\n\nSkipping %s [%s]." % (v['name'], v['task'])
+                    report['skipped'].append(boldnum)
 
     r += "\n\nBold preprocessing completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     if options['run'] == "run":
-        rstatus = "bolds: %d ready [%s], %d not ready [%s], %d ran ok [%s], %d failed [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']), len(report['done']), " ".join(report['done']), len(report['failed']), " ".join(report['failed']))
+        rstatus = "bolds: %d ready [%s], %d not ready [%s], %d ran ok [%s], %d failed [%s], %d skipped [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']), len(report['done']), " ".join(report['done']), len(report['failed']), " ".join(report['failed']), len(report['skipped']), " ".join(report['skipped']))
     else:
-        rstatus = "bolds: %d ready [%s], %d not ready [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']))
+        rstatus = "bolds: %d ready [%s], %d not ready [%s], %d skipped [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']), len(report['skipped']), " ".join(report['skipped']))
 
     print r
     return (r, (sinfo['id'], rstatus))
