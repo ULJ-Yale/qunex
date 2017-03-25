@@ -1569,7 +1569,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
              - Updated documentation.
     '''
 
-    r = "\n---------------------------------------------------------"
+    r = "\n----------------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Surface registration" % (action("Running", options['run']))
 
@@ -1932,14 +1932,16 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     Changelog
     2016-12-24 - Grega Repovš - Added documentation, fixed copy of volume images.
+    2017-03-25 - Grega Repovš - Added more detailed reporting of progress.
     """
 
     bsearch = re.compile('bold([0-9]+)')
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nProcessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bppt'].split("|")))
-    r += "\nMapping HCP data ..."
+    r += "\nMapping HCP data ... \n"
+    r += "\n   The function will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bold_preprocess parameter defines which BOLD files are mapped based on their\n     specification in subjects.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bppt'].split("|")), options['hcp_cifti_tail'])
+    r += "\n\n---------------------------------------------------------"
 
     # --- file/dir structure
 
@@ -2027,13 +2029,14 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     # ------------------------------------------------------------------------------------------------------------
     #                                                                                          map functional data
 
-    r += "\n\nFunctional data: ... [%s]" % (options['hcp_cifti_tail'])
+    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' cifti tail\n" % (", ".join(options['bppt'].split("|")), options['hcp_cifti_tail'])
 
     btargets = options['bppt'].split("|")
 
     report['boldok'] = 0
     report['boldfail'] = 0
     report['boldskipped'] = 0
+    skipped = []
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
@@ -2108,10 +2111,15 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                         time.sleep(3)
                 else:
-                    r += "\n\nSkipping %s [%s] (not specified in --bold_preprocess)." % (v['name'], v['task'])
+                    skipped.append((v['name'], v['task']))
                     report['boldskipped'] += 1
 
-    r += "\nHCP data mapping completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    if len(skipped) > 0:
+        r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bold_preprocess=\"%s\"':\n" % (options['bppt'])
+        for bname, btask in skipped:
+            r += "\n ... %s [name: '%s']" % (bname, btask)
+
+    r += "\n\nHCP data mapping completed on %s\n---------------------------------------------------------------- \n" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d, bolds skipped: %(boldskipped)d" % (report)
 
     print r
