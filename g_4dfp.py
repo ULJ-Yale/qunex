@@ -1,5 +1,16 @@
 #!/opt/local/bin/python2.7
 # encoding: utf-8
+"""
+This file holds code for running 4dfp NIL preprocessing commands and volume to
+surface mapping. It implements the following commands:
+
+* runNIL        ... Runs NIL preprocessing of a subject.
+* runNILFolder  ... Runs NIL preprocessing of subjects in a folder.
+* map2PALS      ... Maps volume image to PALS Atlas caret image.
+* map2HCP       ... Maps volume image to CIFTI dense scalar image.
+
+Use gmri to run the commands from the terminal.
+"""
 
 import os
 import niutilities

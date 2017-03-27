@@ -1,7 +1,8 @@
-# README File for MNAP Neuroimaging Utilities
+# README File for MNAP Neuroimaging Utilities Pipeline
 
 Background
 ==========
+---
 
 Mind & Brain Lab Neuroimaging Utilities, i.e. niutilities are neuroimaging
 preprocessing and analysis utilities that support multiple tasks through a
@@ -30,12 +31,13 @@ University.
 
 Usage and command documentation
 ===============================
+---
 
 The utilities are used through the `gmri` command. The general use form is:
 
 `gmri <command> [option=value] [option=value] ...`
 
-The list of commands and their specific documentation is provided throug `gmri`
+The list of commands and their specific documentation is provided through `gmri`
 command itself using the folowing options:
 
 * `gmri -h` prints general help information,
@@ -56,22 +58,32 @@ Perusing documentation, please note the following conventions used:
 
 External dependencies
 =====================
+---
 
-# * Connectome Workbench (v1.0 or above)
-# * FSL (version 5.0.6 or above)
-# * FreeSurfer (5.3 HCP version or later)
-# * MATLAB (version 2012b or above with signal processing and imaging toolbox)
-# * FIX ICA
-# * PALM
-# * Python (version 2.7 or above)
-# * AFNI
-# * Gradunwarp
-# * Human Connectome Pipelines
-# * R Statistical Environment
+* Connectome Workbench (v1.0 or above)
+* FSL (version 5.0.6 or above)
+* FreeSurfer (5.3 HCP version or later)
+* MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
+* FIX ICA
+* PALM
+* Python (version 2.7 or above)
+* AFNI
+* Gradunwarp
+* Human Connectome Pipelines
+* R Statistical Environment
+
 
 File formats
 ============
+---
 
+* PENDING
+
+Change Log
+============
+---
+
+* 0.1: Initial pre-alpha release with major functionality
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu

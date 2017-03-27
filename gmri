@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import niutilities
+import niutilities as niu
+import niutilities.g_process as gp
 import sys
-
 
 help = '''
 gmri utility for MRI processing and analysis.
@@ -11,7 +11,9 @@ gmri utility for MRI processing and analysis.
 usage: gmri <command> [option=value] [option=value] ...
        gmri -h         (prints this help)
        gmri -l         (list available commands)
-       gmri -<command> (print help for a given command)
+       gmri -c         (list available processing commands)
+       gmri -o         (list available processing options)
+       gmri ?<command> (print help for a given command)
 
        -------------------------------------------------------------------------
        Note the following conventions used in help and documentation:
@@ -49,7 +51,6 @@ Note the following conventions used in help and documentation:
 
 dicom utilities
 ---------------
-
 listDicom    [folder=.]
 splitDicom   [folder=.]
 sortDicom    [folder=.]
@@ -58,11 +59,15 @@ processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1]
 getDICOMInfo dfile=<dicom_file> [scanner=siemens]
 
 
-Avi pipeline utilities
-----------------------
+WUSTL NIL pipeline utilities
+----------------------------
+runNIL       [folder=.] [overwrite=no] [subjf=subject.txt]
+runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [subjf=subject.txt]
 
-runAvi       [folder=.] [overwrite=no] [subjf=subject.txt]
-runAviFolder [folder=.] [pattern=OP*] [overwrite=no] [subjf=subject.txt]
+
+General image file utilities
+----------------------------
+sliceImage sfile=<source image> tfile=<target image> [frames=1]
 
 
 NIfTI file conversions
@@ -77,23 +82,21 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
-
+getHCPReady    [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [pattern="*"] [mapping=specs/hcpmap.txt]
 setupHCP       [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt]
 setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactive]
-getHCPReady    [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [pattern="*"] [mapping=specs/hcpmap.txt]
 
 
 Fidl file utilities
 -------------------
-
 joinFidl       concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern>
 joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]
 splitFidl      concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
+checkFidl      [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
 
 
 Caret & Workbench surface mapping utilities
 -------------------------------------------
-
 map2PALS volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]
 map2HCP volume=<volume file> [method=trilinear]
 maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
@@ -102,43 +105,92 @@ joinMaps images=<image file list> output=<output file name> [names=<volume names
 
 PALM utilities
 --------------
-
 runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
+
+
+Processing commands
+===================
+In contrast to utilities listed above, processing commands can be submitted to
+run on a computer cluster using either a PBS or LSF scheduling. The commands
+operate on a list of subjects specified in a `subjects.txt` file that provides
+information about each subject and his or her images and other information.
+Options for the processing command can be specified either in the `subjects.txt`
+file or on the command line, the latter having priority if a parameter is
+specified at both levels. No options need to be set for any of the commands
+listed below. The key parameters with their default values are:
+
+    subjects=subjects.txt   ... the path to the subjects.txt file
+    basefolder=.            ... the path to the study base folder
+    overwrite=no            ... whether to overwrite existing results
+    cores=1                 ... how many cores to utilize for those
+                                commands that can be parallelized
+    nprocess=0              ... how many subjects to process (0=all)
+    log=remove              ... whether to remove logs of commands that have
+                                ran and finished successfully
+    run=run                 ... whether to run (run) the listed command or
+                                test (test) if all the data is ready for the
+                                specific command to run successfully
+
+HCP preprocessing commands
+--------------------------
+hcp_PreFS        [preprocessing options] [preprocessing options] ...
+hcp_FS           [preprocessing options] [preprocessing options] ...
+hcp_PostFS       [preprocessing options] [preprocessing options] ...
+hcp_fMRIVolume   [preprocessing options] [preprocessing options] ...
+hcp_fMRISurface  [preprocessing options] [preprocessing options] ...
+hcp_Diffusion    [preprocessing options] [preprocessing options] ...
+hcp_DTIFit       [preprocessing options] [preprocessing options] ...
+hcp_Bedpostx     [preprocessing options] [preprocessing options] ...
+
+
+functional connectivity preprocessing commands
+----------------------------------------------
+mapHCPData              [preprocessing options] [preprocessing options] ...
+createBOLDBrainMasks    [preprocessing options] [preprocessing options] ...
+computeBOLDStats        [preprocessing options] [preprocessing options] ...
+createStatsReport       [preprocessing options] [preprocessing options] ...
+extractNuisanceSignal   [preprocessing options] [preprocessing options] ...
+preprocessBold          [preprocessing options] [preprocessing options] ...
+preprocessConc          [preprocessing options] [preprocessing options] ...
 
 '''
 
-commands = {'listDicom'     : {'com': niutilities.g_dicom.listDicom,        'args': ('folder', )},
-            'splitDicom'    : {'com': niutilities.g_dicom.splitDicom,       'args': ('folder', )},
-            'sortDicom'     : {'com': niutilities.g_dicom.sortDicom,        'args': ('folder', )},
-            'dicom2nii'     : {'com': niutilities.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
-            'processPhilips': {'com': niutilities.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern')},
-            'processInbox'  : {'com': niutilities.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern', 'cores')},
-            'getDICOMInfo'  : {'com': niutilities.g_dicom.getDICOMInfo,     'args': ('dfile', 'scanner')},
-            'runAviFolder'  : {'com': niutilities.g_4dfp.runAviFolder,      'args': ('folder', 'pattern', 'overwite', 'subjf')},
-            'runAvi'        : {'com': niutilities.g_4dfp.runAvi,            'args': ('folder', 'overwite', 'subjf')},
-            'fz2zf'         : {'com': niutilities.g_NIfTI.fz2zf,            'args': ('inf', 'outf')},
-            'reorder'       : {'com': niutilities.g_NIfTI.reorder,          'args': ('inf', 'outf')},
-            'reslice'       : {'com': niutilities.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf')},
-            'nifti24dfp'    : {'com': niutilities.g_NIfTI.nifti24dfp,       'args': ('inf', 'outf')},
-            'setupHCP'      : {'com': niutilities.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf')},
-            'setupHCPFolder': {'com': niutilities.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check')},
-            'getHCPReady'   : {'com': niutilities.g_HCP.getHCPReady,        'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping')},
-            'printniftihdr' : {'com': niutilities.g_img.printniftihdr,      'args': ('filename', )},
-            'modniftihdr'   : {'com': niutilities.g_gimg.modniftihdr,       'args': ('filename', 's')},
-            'joinFidl'      : {'com': niutilities.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot', 'outfolder')},
-            'joinFidlFolder': {'com': niutilities.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
-            'splitFidl'     : {'com': niutilities.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
-            'map2PALS'      : {'com': niutilities.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
-            'map2HCP'       : {'com': niutilities.g_4dfp.map2HCP,           'args': ('volume', 'method')},
-            'maskMap'       : {'com': niutilities.g_palm.maskMap,           'args': ('image', 'masks', 'output', 'minv', 'maxv')},
-            'joinMaps'      : {'com': niutilities.g_palm.joinMaps,          'args': ('images', 'output', 'names', 'originals', 'join')},
-            'runPALM'       : {'com': niutilities.g_palm.runPALM,           'args': ('image', 'design', 'args', 'root', 'cores')}
+commands = {'listDicom'     : {'com': niu.g_dicom.listDicom,        'args': ('folder', )},
+            'splitDicom'    : {'com': niu.g_dicom.splitDicom,       'args': ('folder', )},
+            'sortDicom'     : {'com': niu.g_dicom.sortDicom,        'args': ('folder', )},
+            'dicom2nii'     : {'com': niu.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
+            'processPhilips': {'com': niu.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern')},
+            'processInbox'  : {'com': niu.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern', 'cores')},
+            'getDICOMInfo'  : {'com': niu.g_dicom.getDICOMInfo,     'args': ('dfile', 'scanner')},
+            'runNILFolder'  : {'com': niu.g_4dfp.runNILFolder,      'args': ('folder', 'pattern', 'overwite', 'subjf')},
+            'runNIL'        : {'com': niu.g_4dfp.runNIL,            'args': ('folder', 'overwite', 'subjf')},
+            'fz2zf'         : {'com': niu.g_NIfTI.fz2zf,            'args': ('inf', 'outf')},
+            'reorder'       : {'com': niu.g_NIfTI.reorder,          'args': ('inf', 'outf')},
+            'reslice'       : {'com': niu.g_NIfTI.reslice,          'args': ('inf', 'slices', 'outf')},
+            'sliceImage'    : {'com': niu.g_img.sliceImage,         'args': ('sfile', 'tfile', 'frames')},
+            'nifti24dfp'    : {'com': niu.g_NIfTI.nifti24dfp,       'args': ('inf', 'outf')},
+            'setupHCP'      : {'com': niu.g_HCP.setupHCP,           'args': ('folder', 'tfolder', 'subjf')},
+            'setupHCPFolder': {'com': niu.g_HCP.setupHCPFolder,     'args': ('folder', 'tfolder', 'subjf', 'check')},
+            'getHCPReady'   : {'com': niu.g_HCP.getHCPReady,        'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping')},
+            'printniftihdr' : {'com': niu.g_img.printniftihdr,      'args': ('filename', )},
+            'modniftihdr'   : {'com': niu.g_gimg.modniftihdr,       'args': ('filename', 's')},
+            'joinFidl'      : {'com': niu.g_fidl.joinFidl,          'args': ('concfile', 'fidlroot', 'outfolder')},
+            'joinFidlFolder': {'com': niu.g_fidl.joinFidlFolder,    'args': ('concfolder', 'fidlfolder', 'outfolder')},
+            'splitFidl'     : {'com': niu.g_fidl.splitFidl,         'args': ('concfile', 'fidlfile', 'outfolder')},
+            'checkFidl'     : {'com': niu.g_fidl.checkFidl,         'args': ('fidlfile', 'fidlfolder', 'plotfile', 'allcodes')},
+            'map2PALS'      : {'com': niu.g_4dfp.map2PALS,          'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
+            'map2HCP'       : {'com': niu.g_4dfp.map2HCP,           'args': ('volume', 'method')},
+            'maskMap'       : {'com': niu.g_palm.maskMap,           'args': ('image', 'masks', 'output', 'minv', 'maxv')},
+            'joinMaps'      : {'com': niu.g_palm.joinMaps,          'args': ('images', 'output', 'names', 'originals', 'join')},
+            'runPALM'       : {'com': niu.g_palm.runPALM,           'args': ('image', 'design', 'args', 'root', 'cores')}
             }
 
 
 def runCommand(command, args):
     if command in commands:
         commands[command]['com'](**args)
+    elif command in gp.pactions or command in gp.sactions:
+        gp.run(command, args)
     else:
         print help
         sys.exit(1)
@@ -146,10 +198,77 @@ def runCommand(command, args):
 
 def printHelp(com):
 
+    # --- print list of gmri local commands
     if com == 'l':
         print comlist
+
+    # --- print list of gmri local commands
+    elif com == 'available':
+        # -> gmri commands
+        for c, v in commands.iteritems():
+            print c
+        # -> complex processing commands
+        for l in gp.calist:
+            if len(l):
+                print l[0]
+                print l[1]
+        # -> simple processing commands
+        for l in gp.salist:
+            if len(l):
+                print l[0]
+                print l[1]
+
+    # --- print list of processing options and flags
+    elif com in ['o']:
+        print "================================================================================"
+        print "gmri utility for MRI processing and analysis."
+        print "\nuse: gmri <command> [option=value] [option=value] ..."
+        print "\nList of processing options"
+        for line in gp.arglist:
+            if len(line) == 4:
+                print "  --%-24s %s [%s]" % (line[0], line[3], line[1])
+            elif len(line) > 0:
+                print "\n\n" + line[0] + '\n'
+            else:
+                print
+        print "\nList of processing flags"
+        for line in gp.flaglist:
+            if len(line) == 4:
+                print "  --%-24s %s" % (line[0], line[3])
+            elif len(line) > 0:
+                print "\n\n" + line[0] + '\n'
+            else:
+                print
+        print
+
+    # --- print list of processing options and flags
+    elif com in ['c']:
+        print "================================================================================"
+        print "gmri utility for MRI processing and analysis."
+        print "\nuse: gmri <command> [option=value] [option=value] ..."
+        print "\nList of processing commands \n"
+        for line in gp.calist + [[]] + gp.salist:
+            if len(line) == 4:
+                print "   %-6s %-24s %s" % (line[0], line[1], line[3])
+            elif len(line) > 0:
+                print "\n\n" + line[0] + '\n'
+            else:
+                print
+        print
+
+    # --- print help for gmri local commands
     elif com in commands:
         print "\ngmri", commands[com]['com'].__doc__.strip(), "\n"
+
+    # --- print help for processing paralelised actions
+    elif com in gp.pactions:
+        print "\ngmri", gp.pactions[com].__doc__.strip(), "\n"
+
+    # --- print help for processing serial actions
+    elif com in gp.sactions:
+        print "\ngmri", gp.sactions[com].__doc__.strip(), "\n"
+
+    # --- print general command list
     else:
         print comlist
 
@@ -160,29 +279,38 @@ def main(args=None):
 
     if len(args) == 0:
         print help
-        sys.exit(1)
+        sys.exit(0)
 
     comm = args[0]
     opts = dict()
 
-    if comm[0] == '-':
-        printHelp(comm[1:])
+    if comm[0] in ['?', '-']:
+        try:
+            printHelp(comm[1:])
+        except:
+            print "ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:])
+            print help
         sys.exit(0)
 
     try:
         for n in range(1, len(args)):
             if "=" in args[n]:
-                k, v = args[n].split("=")
+                k, v = args[n].split("=", 1)
+                k = k.strip('-')
                 opts[k] = v
-            else:
+            elif comm in commands:
                 k = commands[comm]['args'][n - 1]
                 opts[k] = args[n]
+            else:
+                k = args[n].strip('-')
+                opts[k] = True
 
         runCommand(comm, opts)
     except ValueError as e:
         print "\n-----------------------\n", e, "\nInstructions on command use:"
         printHelp(comm)
-        print "-----------------------\n"
+        print "-----------------------\n\nHere's the error as caught by python:\n"
+        raise
         sys.exit(1)
     except:
         print "\n-----------------------\n\nOps! Something went wrong. Here is the help for the command you ran:"

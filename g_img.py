@@ -6,14 +6,22 @@ g_img.py
 Some basic functions to be used for work with nifti and 4dfp images.
 
 Created by Grega Repovs on 2011-03-05.
+2011-07-30 - added function for reporting basic information
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
 import struct
 import re
 import gzip
+import os.path
 
 niftiDataTypes = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
+niftiBytesPerVoxel = {1: 1, 2: 1, 4: 2, 8: 4, 16: 4, 32: 8, 64: 8, 128: 3, 256: 1, 512: 2, 768: 4, 1025: 8, 1280: 8, 1536: 16, 2304: 4}
+
+
+class Usage(Exception):
+    def __init__(self, msg):
+        self.msg = msg
 
 
 def sign(x):
@@ -25,30 +33,50 @@ def sign(x):
         return 0
 
 
+def readTextFileToLines(filename):
+    s = file(filename).read()
+    s = s.replace('\r', '\n')
+    s = s.replace('\n\n', '\n')
+    s = s.split('\n')
+    return s
+
+
 def getImgFormat(filename):
     p = filename.split('.')
     if p[-1] == 'nii':
-        return '.nii'
+        if ".".join(p[-2:])  == 'dtseries.nii':
+            return '.dtseries.nii'
+        else:
+            return '.nii'
     elif ".".join(p[-2:]) == '4dfp.img':
         return '.4dfp.img'
     elif ".".join(p[-2:]) == '4dfp.ifh':
         return '.4dfp.img'
-    elif ".".join(p[-2:]) == 'nii.gz':
+    elif ".".join(p[-2:])  == 'nii.gz':
         return '.nii.gz'
     return 'unknown'
 
 
-def readConc(filename):
-    s = file(filename).read()
-    s = s.replace("\r", "\n")
-    s = s.replace("\n\n", "\n")
-    s = s.split("\n")
-    m = re.compile(".*file:(.*?/bold([0-9]+)(/|\.).*)")
+def readConc(filename, boldname=None):
+    s = readTextFileToLines(filename)
+
+    if boldname is None:
+        boldname = 'bold'
+
     f = []
-    for e in s:
-        me = m.match(e)
-        if me:
-            f.append((me.group(1).strip(), me.group(2)))
+    nfiles = int(s[0].split(":")[1])
+    boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles + 1]]
+
+    for boldfile in boldfiles:
+        if not os.path.exists(boldfile):
+            print "===> WARNING: image does not exist! (%s)" % (boldfile)
+
+    m = re.compile(".*?([0-9]+).*")
+
+    for boldfile in boldfiles:
+        bnum = m.match(boldfile.split('/')[-1]).group(1)
+        f.append((boldfile, bnum))
+
     return f
 
 
@@ -61,6 +89,24 @@ def writeConc(filename, conc):
     f.close()
 
 
+def readBasicInfo(filename):
+    if getImgFormat(filename) == '.4dfp.img':
+        ifht = ifhhdr()
+        ifht.readHeader(filename)
+        hdr = ifht.toNIfTI()
+    else:
+        hdr = niftihdr(filename)
+
+    info = {
+            'sizex': hdr.sizex,
+            'sizey': hdr.sizey,
+            'sizez': hdr.sizez,
+            'frames': hdr.frames
+    }
+
+    return info
+
+
 def printniftihdr(filename=None):
     '''
     printniftihdr <image_filename>
@@ -70,6 +116,70 @@ def printniftihdr(filename=None):
 
     hdr = niftihdr(filename)
     print hdr
+
+
+
+class fidl:
+    def __init__(self, filename=False):
+        self.filename = False
+        self.TR = False
+        self.codes = []
+        self.events = []
+
+        if filename:
+            self.read(filename)
+
+    def read(self, filename):
+        self.filename = filename
+        s = readTextFileToLines(filename)
+        hdr         = s[0].split()
+        self.TR     = float(hdr[0])
+        self.codes  = hdr[1:]
+        self.events = [e.split() for e in s[1:]]
+        self.events = [[float(e) for e in l] for l in self.events if len(l) > 1]
+
+    # ---> adjust times for delta
+
+    def adjustTime(self, delta):
+        for event in self.events:
+            event[0] += delta
+
+    # ---> merge data from another fidl file
+
+    def merge(self, other, addcodes=True):
+
+        if self.TR != other.TR:
+            raise Usage("ERROR: TR of the two fidl files does not match!")
+
+        nevents = list(other.events)
+
+        if addcodes:
+            for e in nevents:
+                if e[1] > 0:
+                    e[1] += nevents
+            self.codes += other.codes
+
+        self.events += nevents
+        self.events.sort()
+
+    # ---> save to output fidl
+
+    def save(self, filename=False):
+        if not filename:
+            filename = self.filename
+            if not filename:
+                raise Usage("ERROR: No filename provided to save fidl file")
+
+        fout = open(filename, 'w')
+        print >> fout, "%.2f %s" % (self.TR, " ".join(self.codes))
+
+        for event in self.events:
+            event[1] = int(event[1])
+            print >> fout, "\t".join([str(e) for e in event])
+
+        fout.close()
+
+
 
 
 class ifhhdr:
@@ -129,7 +239,7 @@ class ifhhdr:
         return
 
     def readHeader(self, filename):
-
+        filename = filename.replace('.img', '.ifh')
         s = file(filename).read()
         self.unpackHdr(s)
         self.hdr = s
@@ -137,7 +247,6 @@ class ifhhdr:
         return
 
     def writeHeader(self, filename):
-
         h = open(filename, 'w')
         s = self.packHdr()
         h.write(s)
@@ -147,8 +256,14 @@ class ifhhdr:
 
     def toNIfTI(self):
         nihdr = niftihdr()
-        c  = tuple([float(e) for e in self.ifh["center"].split()])
-        mm = tuple([abs(float(e)) for e in self.ifh["mmppix"].split()])
+        if "center" in self.ifh:
+            c  = tuple([float(e) for e in self.ifh["center"].split()])
+        else:
+            c = (0, 0, 0)
+        if "mmppix" in self.ifh:
+            mm = tuple([abs(float(e)) for e in self.ifh["mmppix"].split()])
+        else:
+            mm = (0, 0, 0)
 
         nihdr.sizex  = int(self.ifh["matrix size [1]"])
         nihdr.sizey  = int(self.ifh["matrix size [2]"])
@@ -199,7 +314,7 @@ class niftihdr:
         self.intention3  = 0.0           # float     - intention 3 parameter
         self.intent_code = 0             # short     - intent code
         self.data_type   = 16            # short     - datatype  [16 = 32bit float]
-        self.bitpix      = 4             # short     - bits per voxel [4 = 4 byte / 32 bit float]
+        self.bitpix      = 32            # short     - bits per voxel [4 = 4 byte / 32 bit float]
         self.slice_start = 0             # short     - First slice index
         self.pixdim_0    = -1.0          # float     - zero dimension size (important for orientation))
         self.pixdim_x    = 3.0           # float     - x dimension size (important for orientation))
@@ -230,11 +345,11 @@ class niftihdr:
         self.qoffset_y   = 84.0          # float     - Quaternion y shift
         self.qoffset_z   = -60.0         # float     - Quaternion z shift
         self.srow_x      = [-1, 0, 0, 0]  # float[4]  - affine transform row x
-        self.srow_y      = [ 0, 1, 0, 0]  # float[4]  - affine transform row y
-        self.srow_z      = [ 0, 0, 1, 0]  # float[4]  - affine transform row z
-        self.intent_name = ""            # char[16]  - intent name
-        self.magic       = "n+1"+chr(0)  # char[4]     - magic word and zero char
-        self.ext         = chr(0)*4      # extension code
+        self.srow_y      =  [0, 1, 0, 0]  # float[4]  - affine transform row y
+        self.srow_z      =  [0, 0, 1, 0]  # float[4]  - affine transform row z
+        self.intent_name = ""             # char[16]  - intent name
+        self.magic       = "n+1" + chr(0)  # char[4]     - magic word and zero char
+        self.ext         = chr(0) * 4      # extension code
 
         self.xyz_unit    = 2             # used units for xyz dimension (0-unspecified, 1-m, 2-mm, 3-micronm)
         self.t_unit      = 8             # used units for t dimension (0-unspecified, 8-seconds, 16-milliseconds, 24-microseconds)
@@ -346,62 +461,62 @@ class niftihdr:
         t = s.read(sh)                                                # short     - unused
         t = s.read(sc)                                                # char      - unused
 
-        self.dim_info,      = struct.unpack(e + "c", s.read(sc))      # char      - MRI slice ordering ---- information not available in IFH
+        self.dim_info,       = struct.unpack(e + "c", s.read(sc))      # char      - MRI slice ordering ---- information not available in IFH
 
-        self.ndimensions,   = struct.unpack(e + "h", s.read(sh))      # short     - number of dimensions used
-        self.sizex,         = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension x
-        self.sizey,         = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension y
-        self.sizez,         = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension z
-        self.frames,        = struct.unpack(e + "h", s.read(sh))      # short     - number of frames (4th dimension))
-        self.size_5,        = struct.unpack(e + "h", s.read(sh))      # short     - size of 5th dimension
-        self.size_6,        = struct.unpack(e + "h", s.read(sh))      # short     - size of 6th dimension
-        self.size_7,        = struct.unpack(e + "h", s.read(sh))      # short     - size of 7th dimension
-        self.intention1,    = struct.unpack(e + "f", s.read(sf))      # float     - intention 1 parameter
-        self.intention2,    = struct.unpack(e + "f", s.read(sf))      # float     - intention 2 parameter
-        self.intention3,    = struct.unpack(e + "f", s.read(sf))      # float     - intention 3 parameter
-        self.intent_code,   = struct.unpack(e + "h", s.read(sh))      # short     - intent code
-        self.data_type,     = struct.unpack(e + "h", s.read(sh))      # short     - datatype
-        self.bitpix,        = struct.unpack(e + "h", s.read(sh))      # short     - bits per voxel
-        self.slice_start,   = struct.unpack(e + "h", s.read(sh))      # short     - First slice index
-        self.pixdim_0,      = struct.unpack(e + "f", s.read(sf))      # float     - zero dimension size (important for orientation))
-        self.pixdim_x,      = struct.unpack(e + "f", s.read(sf))      # float     - x dimension size (important for orientation))
-        self.pixdim_y,      = struct.unpack(e + "f", s.read(sf))      # float     - y dimension size (important for orientation))
-        self.pixdim_z,      = struct.unpack(e + "f", s.read(sf))      # float     - z dimension size (important for orientation))
-        self.pixdim_t,      = struct.unpack(e + "f", s.read(sf))      # float     - t dimension size (important for orientation))
-        self.pixdim_5,      = struct.unpack(e + "f", s.read(sf))      # float     - 5 dimension size (important for orientation))
-        self.pixdim_6,      = struct.unpack(e + "f", s.read(sf))      # float     - 6 dimension size (important for orientation))
-        self.pixdim_7,      = struct.unpack(e + "f", s.read(sf))      # float     - 7 dimension size (important for orientation))
-        self.vox_offset,    = struct.unpack(e + "f", s.read(sf))      # float     - offset of data when within the same file
-        self.scl_slope,     = struct.unpack(e + "f", s.read(sf))      # float     - slope of data scaling
-        self.scl_inter,     = struct.unpack(e + "f", s.read(sf))      # float     - intersect of data scaling
-        self.slice_end,     = struct.unpack(e + "h", s.read(sh))      # short     - Last slice index
-        self.slice_code,    = struct.unpack(e + "b", s.read(sc))      # char      - slice order code
-        self.xyzt_units,    = struct.unpack(e + "b", s.read(sc))      # char      - codes for units used
-        self.cal_max,       = struct.unpack(e + "f", s.read(sf))      # float     - maximum value in the dataset to be displayed (white))
-        self.cal_min,       = struct.unpack(e + "f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
-        self.slice_duration,= struct.unpack(e + "f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
-        self.toffset,       = struct.unpack(e + "f", s.read(sf))      # float     - time offset for first datapoint
+        self.ndimensions,    = struct.unpack(e + "h", s.read(sh))      # short     - number of dimensions used
+        self.sizex,          = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension x
+        self.sizey,          = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension y
+        self.sizez,          = struct.unpack(e + "h", s.read(sh))      # short     - size in dimension z
+        self.frames,         = struct.unpack(e + "h", s.read(sh))      # short     - number of frames (4th dimension))
+        self.size_5,         = struct.unpack(e + "h", s.read(sh))      # short     - size of 5th dimension
+        self.size_6,         = struct.unpack(e + "h", s.read(sh))      # short     - size of 6th dimension
+        self.size_7,         = struct.unpack(e + "h", s.read(sh))      # short     - size of 7th dimension
+        self.intention1,     = struct.unpack(e + "f", s.read(sf))      # float     - intention 1 parameter
+        self.intention2,     = struct.unpack(e + "f", s.read(sf))      # float     - intention 2 parameter
+        self.intention3,     = struct.unpack(e + "f", s.read(sf))      # float     - intention 3 parameter
+        self.intent_code,    = struct.unpack(e + "h", s.read(sh))      # short     - intent code
+        self.data_type,      = struct.unpack(e + "h", s.read(sh))      # short     - datatype
+        self.bitpix,         = struct.unpack(e + "h", s.read(sh))      # short     - bits per voxel
+        self.slice_start,    = struct.unpack(e + "h", s.read(sh))      # short     - First slice index
+        self.pixdim_0,       = struct.unpack(e + "f", s.read(sf))      # float     - zero dimension size (important for orientation))
+        self.pixdim_x,       = struct.unpack(e + "f", s.read(sf))      # float     - x dimension size (important for orientation))
+        self.pixdim_y,       = struct.unpack(e + "f", s.read(sf))      # float     - y dimension size (important for orientation))
+        self.pixdim_z,       = struct.unpack(e + "f", s.read(sf))      # float     - z dimension size (important for orientation))
+        self.pixdim_t,       = struct.unpack(e + "f", s.read(sf))      # float     - t dimension size (important for orientation))
+        self.pixdim_5,       = struct.unpack(e + "f", s.read(sf))      # float     - 5 dimension size (important for orientation))
+        self.pixdim_6,       = struct.unpack(e + "f", s.read(sf))      # float     - 6 dimension size (important for orientation))
+        self.pixdim_7,       = struct.unpack(e + "f", s.read(sf))      # float     - 7 dimension size (important for orientation))
+        self.vox_offset,     = struct.unpack(e + "f", s.read(sf))      # float     - offset of data when within the same file
+        self.scl_slope,      = struct.unpack(e + "f", s.read(sf))      # float     - slope of data scaling
+        self.scl_inter,      = struct.unpack(e + "f", s.read(sf))      # float     - intersect of data scaling
+        self.slice_end,      = struct.unpack(e + "h", s.read(sh))      # short     - Last slice index
+        self.slice_code,     = struct.unpack(e + "b", s.read(sc))      # char      - slice order code
+        self.xyzt_units,     = struct.unpack(e + "b", s.read(sc))      # char      - codes for units used
+        self.cal_max,        = struct.unpack(e + "f", s.read(sf))      # float     - maximum value in the dataset to be displayed (white))
+        self.cal_min,        = struct.unpack(e + "f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
+        self.slice_duration, = struct.unpack(e + "f", s.read(sf))      # float     - minimum value in the dataset to be displayed (black))
+        self.toffset,        = struct.unpack(e + "f", s.read(sf))      # float     - time offset for first datapoint
         t = s.read(si)                                              # int       - unused
         t = s.read(si)                                              # int       - unused
 
-        self.descrip        = s.read(sc * 80)                         # char[80]  - data description
-        self.aux_file       = s.read(sc * 24)                         # char[24]  - auxilary filename
-        self.qform_code,    = struct.unpack(e + "h", s.read(sh))      # short     - niftixform code
-        self.sform_code,    = struct.unpack(e + "h", s.read(sh))      # short     - niftixform code
-        self.quatern_b,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion b param
-        self.quatern_c,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion c param
-        self.quatern_d,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion d param
-        self.qoffset_x,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion x shift
-        self.qoffset_y,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion y shift
-        self.qoffset_z,     = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion z shift
-        self.srow_x         = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row x
-        self.srow_y         = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row y
-        self.srow_z         = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row z
-        self.intent_name    = s.read(sc * 16)                         # char[16]  - intent name
-        self.magic          = s.read(sc * 4)                          # char[4]   - magic word and zero char
-        self.ext            = s.read(sc * 4)                          # char[4]   - extension
+        self.descrip         = s.read(sc * 80)                         # char[80]  - data description
+        self.aux_file        = s.read(sc * 24)                         # char[24]  - auxilary filename
+        self.qform_code,     = struct.unpack(e + "h", s.read(sh))      # short     - niftixform code
+        self.sform_code,     = struct.unpack(e + "h", s.read(sh))      # short     - niftixform code
+        self.quatern_b,      = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion b param
+        self.quatern_c,      = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion c param
+        self.quatern_d,      = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion d param
+        self.qoffset_x,      = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion x shift
+        self.qoffset_y,      = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion y shift
+        self.qoffset_z,      = struct.unpack(e + "f", s.read(sf))      # float     - Quaternion z shift
+        self.srow_x          = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row x
+        self.srow_y          = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row y
+        self.srow_z          = list(struct.unpack(e + "ffff", s.read(sf * 4)))     # float[4]  - affine transform row z
+        self.intent_name     = s.read(sc * 16)                         # char[16]  - intent name
+        self.magic           = s.read(sc * 4)                          # char[4]   - magic word and zero char
+        self.ext             = s.read(sc * 4)                          # char[4]   - extension
 
-        self.dType      = niftiDataTypes[self.data_type]
+        self.dType           = niftiDataTypes[self.data_type]
 
         t = self.xyzt_units
         self.xyz_unit = t % 8
@@ -565,9 +680,9 @@ class niftihdr:
                    "qoffset_x":      float,
                    "qoffset_y":      float,
                    "qoffset_z":      float,
-                   "srow_x":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
-                   "srow_y":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
-                   "srow_z":         lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                   "srow_x": lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                   "srow_y": lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
+                   "srow_z": lambda x: [float(e) for e in x.replace("[", "").replace("]", "").split(',')],
                    "intent_name":    str,
                    "magic":          str,
                    "ext":            str,
@@ -588,6 +703,92 @@ class niftihdr:
                 self.__dict__[k] = decodef[k](v)
             else:
                 print "WARNING: %s not a valid key for NIfTI header" % (k)
+
+
+
+
+def sliceImage(sfile, tfile, frames=1):
+    '''
+    gmri sliceImage sfile=<source image> tfile=<target image> [frames=1]
+
+    Takes the source volume image file, removes all but the first N frames, and
+    saves the resulting image to target volume image file.
+
+    - sfile:   Source volume file (.4dfp, .nii, or .nii.gz)
+    - tfile:   Target volume file of the same format
+    - frames:  Optional number of initial frames to retain [1]
+
+    Example use:
+    gmri sliceImage sfile=bold1.nii.gz tfile=bold1_f10.nii.gz frames=10
+
+    (c) Grega Repovš
+
+    Changelog
+    2016-12-25 - Grega Repovš - Adopted from a selfstanding command in the
+                                dofcMRIp package, added documentation.
+    '''
+    frames = int(frames)
+    if 'nii' in getImgFormat(sfile):
+        sliceNIfTI(sfile, tfile, frames)
+    else:
+        slice4dfp(sfile, tfile, frames)
+
+
+
+def slice4dfp(sfile, tfile, frames=1):
+    hdr = ifhhdr(sfile.replace('.img', '.ifh'))
+    x = int(hdr.ifh['matrix size [1]'])
+    y = int(hdr.ifh['matrix size [2]'])
+    z = int(hdr.ifh['matrix size [3]'])
+    t = int(hdr.ifh['matrix size [4]'])
+    voxels = x * y * z
+
+    hdr.ifh['matrix size [4]'] = str(frames)
+    hdr.writeHeader(tfile.replace('.img', '.ifh'))
+
+    sf = open(sfile, 'r')
+    df = open(tfile, 'w')
+
+    df.write(sf.read(voxels * frames * 4))
+
+    df.flush()
+    os.fsync(df.fileno())
+    sf.close
+    df.close
+
+
+def sliceNIfTI(sfile, tfile, frames=1):
+    sform = getImgFormat(sfile)
+    tform = getImgFormat(tfile)
+
+    if sform == '.nii.gz':
+        sf = gzip.open(sfile, 'r')
+    else:
+        sf = open(sfile, 'r')
+
+    if tform == '.nii.gz':
+        tf = gzip.open(tfile, 'w')
+    else:
+        tf = open(tfile, 'w')
+
+    hdr = niftihdr()
+    hdr.unpackHdr(sf)
+    nvox = hdr.sizex * hdr.sizey * hdr.sizez
+    hdr.frames = frames
+    tocopy = int(hdr.vox_offset - 352 + nvox * (hdr.bitpix / 8) * frames)
+
+    tf.write(hdr.packHdr())
+    tf.write(sf.read(tocopy))
+
+    tf.flush()
+    os.fsync(tf.fileno())
+    tf.close
+    sf.close
+
+
+
+
+
 
 
 def main():

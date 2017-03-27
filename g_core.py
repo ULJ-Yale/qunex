@@ -1,4 +1,10 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python
+# encoding: utf-8
+"""
+This file holds code for core support functions used by other code for
+preprocessing and analysis. The functions are for internal use
+and can not be called externaly.
+"""
 
 import re
 import os.path
@@ -7,7 +13,16 @@ import time
 import multiprocessing
 import datetime
 
+
 def readSubjectData(filename, verbose=False):
+    '''
+    readSubjectData(filename, verbose=False)
+
+    An internal function for reading subjects.txt files. It reads the file and
+    returns a list of subjects with the information on images and the additional
+    parameters specified in the header.
+
+    '''
     s = file(filename).read()
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")
@@ -27,7 +42,7 @@ def readSubjectData(filename, verbose=False):
         for sub in s:
             sub = sub.split('\n')
             sub = [e.strip() for e in sub]
-            sub = [e for e in sub if len(e)>0]
+            sub = [e for e in sub if len(e) > 0]
             sub = [e for e in sub if e[0] != "#"]
 
             dic = {}
@@ -95,18 +110,18 @@ def readSubjectData(filename, verbose=False):
                 if "id" not in dic:
                     if verbose:
                         print "WARNING: There is a record missing an id field and is being omitted from processing."
-                #elif "data" not in dic:
+                # elif "data" not in dic:
                 #    if verbose:
                 #        print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
 
-        	# check paths
+            # check paths
 
-        	for field in ['dicom', 'raw_data', 'data', 'hpc']:
-        		if field in dic:
-        			if not os.path.exists(dic[field]) and verbose:
-        				print "WARNING: subject %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
+            for field in ['dicom', 'raw_data', 'data', 'hpc']:
+                if field in dic:
+                    if not os.path.exists(dic[field]) and verbose:
+                        print "WARNING: subject %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
 
 
     except:

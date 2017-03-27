@@ -1,6 +1,15 @@
 #!/opt/local/bin/python2.7
 # encoding: utf-8
 """
+This file holds code for running PALM second level analyses, CIFTI map masking
+and concatenation. The specific commands implemented here are:
+
+* runPALM  ... for running PALM resampling
+* maskMap  ... for masking results
+* joinMaps ... for joining individual cifti maps into named concatencated maps
+
+The functions are to be run using the gmri terminal command.
+
 Created by Grega Repovs on 2016-08-30.
 Copyright (c) Grega Repovs. All rights reserved.
 """
@@ -19,35 +28,92 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     '''
     runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
 
-    Runs PALM on the provided image using the provided design files. The image can be either
-    a volume NIfTI file or a CIFT .dtseries.nii file. In the latter case the file will be
-    split up into left and right surface and volume files and then stitched back together
-    in a sigle .dtseries file.
+    USE
+    ===
 
-    The design string specifies the design files to use. It should be a pipe separated list of
-    key:value pairs. That specify:
-    - name : the root name of the design files [palm]
-    - d    : the suffix specifying the design file [d]
-    - t    : the suffix specifying the t contrasts file [t]
-    - f    : the suffix specifying the f contrasts file [f]
-    - eb   : the suffix specifying the exchange blocks file [eb]
+    Runs second level analysis using PALM permutation resampling. It provides a
+    simplifed interface, especially when running the analyses on grayordinate,
+    CIFTI images. In this case the .dtseries.nii file will be split up into left
+    and right surface and volume files, PALM will be run on each of them
+    independently and in parallel, and all the resulting images will be then
+    stitched back together in a single .dscalar.nii image file.
 
-    If "none" is given as value, that file is not specified.
 
-    All design files need to be provided with the design name root and appendix:
-    - <design name>_<design d>.csv for the design matrix
-    - <design name>_<design t>.csv for the t contrast file
-    - <design name>_<design f>.csv for the f contrast file (if it does not exist, it will be skipped)
-    - <design name>_<design eb>.csv for the exchangibility block file
+    REQUIREMENTS
+    ============
 
-    args is a string specifying what additional arguments to pass to palm. The format of the string is:
-    "arg1|arg2|arg3:value:value|arg4:value".
+    For the PALM processing to run successfully, the input image and the design
+    files need to be prepared and match. Specifically, the input image file
+    should hold first level results (e.g. GLM beta estimates or functional
+    connectivity seed-maps) for all the subjects and conditions. For activation
+    analyses a simple way to generate such a file is to use g_ExtractGLMVolumes
+    matlab function.
 
-    The default arguments and values are: "n:100|zstats".
+    Design files
+    ------------
 
-    To exclude a default argument, specify "arg:remove".
+    When only a t-test against zero is run across all the volumes in the image,
+    no design files are needed, in all other cases some or all of the design
+    files need to be prepared:
 
-    Relevant arguments to consider:
+    * design matrix file (d)
+    * exchangibility blocks file (eb)
+    * t-contrasts file (t)
+    * f-contrast file (f)
+
+    The files should be named using the following convention. All the files
+    should start with the same root, the design name, followed by an underscore
+    then a tail that specifies the content of the file and the '.csv' extension.
+    The files are expected to be matrices in the comma separated values format.
+
+
+    PARAMETERS
+    ==========
+
+    Design string
+    -------------
+
+    The design name and the specififc tails (if the defaults are not used) are
+    specified by a design string. Design string is a pipe separated list of
+    key:value pairs that specify the following (with the defaults in the
+    brackets):
+
+    * name : the root name of the design files [palm]
+    * d    : the design matrix file tail [d]
+    * t    : the t-contrasts file tail [t]
+    * f    : the f-contrasts file tail [f]
+    * eb   : the exchange blocks file tail [eb]
+
+    If "none" is given as value, that file is not to be specified and used.
+
+    Example design string and files
+    -------------------------------
+
+    design='name:sustained|t:taov'
+
+    In this case the following files would be expected:
+
+    * sustained_d.csv      (design matrix file)
+    * sustained_eb.csv     (exchangebility blocks file)
+    * sustained_taov.csv   (t-contrasts file)
+    * sustained_f.csv      (f-contrasts file)
+
+    Additional arguments to PALM
+    ----------------------------
+
+    Additional arguments to palm can be specified using the arguments string.
+    The arguments string is a pipe separated list of arguments and optional
+    values. The format of the string is:
+
+    "<arg 1>|<arg 2>|<arg 3>:<value 1>:<value 2>|<arg 4>:<value>".
+
+    The default arguments and values are: "n:100|zstats", which specify that
+    100 permutations should be run and the statistics of interest expressed in
+    z values. To exclude a default argument, specify "<arg>:remove", e.g.:
+    "zstats:remove" if the statistics are not to be converted to z values.
+
+    For full list of possible arguments and values, please consult PALM user
+    guide. Some relevant arguments to consider:
 
     accel   : methods to accelerate analysis. Possible values are:
               - noperm  : do not do any permutations (works with fdr correction only)
@@ -56,14 +122,44 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
               - gamma   : computes the moment of permutation distribution and fits a gamma function
               - lowrank : runs as many permutations as needed to complete matrix (fdr, fwer only)
     twotail : run two-tailed test for all the contrasts
+    fonly   : run only f-contrasts and not the individual t-contrasts
     fdr     : compute a fdr correction for multiple comparisons
     T       : Enable TFCE inference
     C <z>   : Enable cluster inference for univariate tests with z cutoff
 
+    Example additional arguments
+    ----------------------------
+
+    args="n:500|accel:tail|T|fonly"
+
+    In this case PALM would run 500 permutations and the p-values would be
+    estimated by a help of the tail estimation acceleration method, TFCE
+    inference would be used, and only f-contrasts would be computed.
+
     Additional optional parameters
-    - root  : optional root name for the result images, design name if not specified
-    - cores : optional number of cores to use in parallel, all available if not specified
+    ------------------------------
+
+    * root  : optional root name for the result images, design name is used if
+              the optional parameter is not specified
+    * cores : number of cores to use in parallel for grayordinate decomposition,
+              all available cores (3 max for left surface, right surface and
+              volume files) will be used if not specified
+
+    Example use
+    -----------
+
+    gmri runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
+         root=sustained_aov
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-02-06 Grega Repovš
+             - Updated documentation.
+
     '''
+
 
     print "\n Running PALM"
     print " --> checking input and environment"
@@ -287,10 +383,36 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
     '''
     maskMap image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]
 
-    Wrapper for wb_command that takes the provided image (e.g. ztstat image from PALM) and masks it using the listes masks.
-    There can be more than one mask, they should be in a comma separated string. The resulting mask will be combination of all the masks.
-    Depending on the join operation (the default is 'OR') the resulting mask will be a union (logical OR) or an intersection (logical AND)
-    of all the individual masks.
+    USE
+    ===
+
+    maskMap is a wb_command wrapper that enables easy masking of CIFTI images
+    (e.g. ztstat image from PALM), using the provided list of mask files (e.g.
+    p-values imaages from PALM) and thresholds. More than one mask can be used
+    in which case they can be combined using a logical OR or AND operator.
+
+    PARAMETERS
+    ==========
+
+    --image   ... The image file to be masked.
+    --masks   ... A comma separated list of masks to be used.
+    --output  ... An optional image name for the resulting masked image, if
+                  none is provided the original image name will be used with
+                  tail "_masked" appended.
+    --minv    ... The minimum threshold value.
+    --maxv    ... The maximum threshold value.
+    --join    ... Whether multiple masks should be joined using logical OR or
+                  logical AND operator. [OR]
+
+    Join operation
+    --------------
+
+    If more than one mask is provided, the final mask used can be either the
+    intersection of all the individual masks (logical AND) or a union of all
+    the individual masks (logical OR).
+
+    Thresholds
+    ----------
 
     At least minv or maxv needs to be specified.
 
@@ -301,7 +423,19 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
     If there is just one minv or maxv value, all the masks will be thresholded using the same value. If more values are
     provided as comma separated list, they should match the number of masks.
 
-    The result will be saved in "output". If none is provided, it will saved as the original image with "masked" appended.
+    EXAMPLE USE
+    ===========
+
+    gmri maskMap image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
+         masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
+         maxv=0.017
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-02-06 Grega Repovš
+             - Updated documentation.
     '''
 
     # --- process the arguments
@@ -372,11 +506,38 @@ def joinMaps(images=None, output=None, names=None, originals=None):
     '''
     joinMaps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]
 
-    Wrapper for wb_command that concatenates the listed cifti images and names the individual volumes if names are provided.
-    Both lists should be comma separated.
+    USE
+    ===
 
-    The result will be saved in "output". If originals is set to remove, the original files will be deleted after successful merge.
-    The default is to keep the originals.
+    joinMaps is a wb_command wrapper that concatenates the listed cifti images
+    and names the individual volumes, if names are provided.
+
+    PARAMETERS
+    ==========
+
+    --images     ... A comma separated list of images to be concatenated
+    --output     ... The name of the resulting file.
+    --names      ... A comma separated list of image names.
+    --originals  ... Whether to keep or remove the original images after the
+                     concatenation. [keep]
+
+    EXAMPLE USE
+    ===========
+
+    gmri joinMaps images="sustained_AvsB.dscalar_p.017.nii, \\
+                          sustained_BvsC.dscalar_p.017.nii, \\
+                          sustained_AvsC.dscalar_p.017.nii, \\
+                          sustained_aov.dscalar_p.017.nii" \\
+                  names="A > B, B > C, A > C, ANOVA" \\
+                  output="sustained_results.dscalar.nii" \\
+                  originals=remove
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-02-06 Grega Repovš
+             - Updated documentation.
     '''
 
     # --- process the arguments
