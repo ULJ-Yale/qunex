@@ -18,7 +18,7 @@ function [obj] = mri_ComputeABCor(obj, smask, tmask, verbose)
 %   from the same timeseries image. The resulting image holds correlations of each target voxel
 %   with each source voxel. Specifically, the first frame of the resulting image will hold
 %   correlations of each target voxel with the first source voxel, the second image will hold
-%   correlations of each target voxels withe the second source voxel and so on.
+%   correlations of each target voxels with the second source voxel and so on.
 %
 %   Each mask can be provided either as a row vector the number of voxels in the image coding the
 %   voxels to use with true or more than 0, or as a gmrimage object with image data specifying
