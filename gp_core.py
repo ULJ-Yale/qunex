@@ -249,7 +249,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     # --- alternative check for 4dfp preprocessing
 
     if f['bold_source'] == '' and options['image_target'] == '4dfp':
-        print "Searching in the atlas folder ..."
+        # print "Searching in the atlas folder ..."
         f['bold_source']        = getExactFile(os.path.join(d['s_source'], 'atlas', '*b' + boldnumber + '_faln_dbnd_xr3d_atl.4dfp.img'))
 
     # --- bold masks
@@ -544,7 +544,7 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
             return (False, "%s%sERROR: %s could not be copied, source file does not exist [%s]! " % (r, prefix, name, source))
 
 
-def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None):
+def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None, logfolder=""):
     """
     runExternalForFile - documentation not yet available.
     """
@@ -556,33 +556,36 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         r = '\n%s' % (description)
 
         logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-        logfile = "tmp_%s%s_%s.log" % (task, thread, logstamp)
-        nf = open(logfile, 'w')
+        tmplogfile = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
+        donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
+        errlogfile = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
+
+        nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
 
-        if not os.path.exists(logfile):
-            r = "\n\nERROR: could not create a temporary log file %s!" % (logfile)
+        if not os.path.exists(tmplogfile):
+            r = "\n\nERROR: could not create a temporary log file %s!" % (tmplogfile)
             raise ExternalFailed(r)
 
         try:
             ret = subprocess.call(run.split(), stdout=nf, stderr=nf)
         except:
             nf.close()
-            shutil.move(logfile, logfile.replace('tmp', 'error'))
+            shutil.move(tmplogfile, errlogfile)
             r = "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information: \n%s\n" % (run)
             raise ExternalFailed(r)
 
         if ret or not os.path.exists(checkfile):
             r = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
             nf.close()
-            shutil.move(logfile, logfile.replace('tmp', 'error'))
+            shutil.move(tmplogfile, errlogfile)
             raise ExternalFailed(r)
 
         nf.close()
         if remove:
-            os.remove(logfile)
+            os.remove(tmplogfile)
         else:
-            shutil.move(logfile, logfile.replace('tmp', 'done'))
+            shutil.move(tmplogfile, donelogfile)
         r += ' --- done'
 
     else:
@@ -594,7 +597,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     return r
 
 
-def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None):
+def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder=""):
     """
     runExternalForFileShell - documentation not yet available.
     """
@@ -607,27 +610,29 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
         # nf = open('/dev/null', 'w')
 
         logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-        logfile = "tmp_%s%s_%s.log" % (task, thread, logstamp)
+        tmplogfile = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
+        donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
+        errlogfile = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
 
-        nf = open(logfile, 'w')
+        nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
 
         ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf, executable='/bin/csh')
         if ret:
             r = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
             nf.close()
-            shutil.move(logfile, logfile.replace('tmp', 'error'))
+            shutil.move(tmplogfile, errlogfile)
             raise ExternalFailed(r)
         elif not os.path.exists(checkfile):
             r += "\n\nWARNING: Expected file [%s] not present after running the external command!\nTry running the command directly for more detailed error information:\n--> %s\n" % (checkfile, run)
             nf.close()
-            shutil.move(logfile, logfile.replace('tmp', 'error'))
+            shutil.move(tmplogfile, errlogfile)
         else:
             nf.close()
             if remove:
-                os.remove(logfile)
+                os.remove(tmplogfile)
             else:
-                shutil.move(logfile, logfile.replace('tmp', 'done'))
+                shutil.move(tmplogfile, donelogfile)
             r += ' --- done'
     else:
         if os.path.getsize(checkfile) < 100:

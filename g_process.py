@@ -131,6 +131,7 @@ def plist(s):
 arglist = [['# ---- Basic settings'],
            ['subjects',           'subjects.txt',                                str,    "The file with subject information."],
            ['basefolder',         '',                                            os.path.abspath, 'The path to base folder.'],
+           ['logfolder',          '',                                            os.path.abspath, 'The path to log folder.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
            ['nprocess',           '0',                                           int,    'How many subjects to process (0 - all).'],
@@ -446,14 +447,19 @@ def run(command, args):
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
     sfilter      = options['filter']
+    logfolder    = options['logfolder']
+    runlogfolder = os.path.join(logfolder, 'runlogs')
+    comlogfolder = os.path.join(logfolder, 'comlogs')
+    options['comlogs'] = comlogfolder
 
     # --------------------------------------------------------------------------
     #                                                          start writing log
 
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
+    for cfolder in [runlogfolder, comlogfolder]:
+        if not os.path.exists(cfolder):
+            os.makedirs(cfolder)
     logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-    logname = "logs/Log-%s-%s.log" % (command, logstamp)
+    logname = os.path.join(runlogfolder, "Log-%s-%s.log") % (command, logstamp)
 
     log   = []
     stati = []

@@ -88,12 +88,13 @@ for (arg in args){
 # ---> creating list of files to process
 
 if (verbose) cat("Starting BOLD Movement and Statistics Report\n")
+if (verbose) cat("Working with data in folder: ", folder, "\n", sep="")
 
 bolds <- strsplit(bolds, "[|]")[[1]]
 nruns <- length(bolds)
 
 if (nruns == 0){
-    print("ERROR: No files to process!")
+    print("ERROR: No BOLD files were specified for processing! Please check the relevant subjects.txt file and createStatsReport log.")
     quit()
 }
 
@@ -112,7 +113,7 @@ if (plotr != "") {
 # ---> opening movement report file
 
 if (mreport != ""){
-    if (verbose) cat("\n---> opening movement report file")
+    if (verbose) cat("\n---> opening movement report file [", mreport, "]", sep="")
     msummary <- TRUE
     if (!file.exists(mreport)){
         header = TRUE
@@ -132,7 +133,7 @@ if (mreport != ""){
 # ---> opening post scrubbing report file
 
 if (preport != ""){
-    if (verbose) cat("\n---> opening post scrubbing report file")
+    if (verbose) cat("\n---> opening post scrubbing report file [", preport, "]", sep="")
     psummary <- TRUE
     if (!file.exists(preport)){
         header = TRUE
@@ -152,7 +153,7 @@ if (preport != ""){
 # ---> opening scrubbing report file
 
 if (sreport != ""){
-    if (verbose) cat("\n---> opening scrubbing report file")
+    if (verbose) cat("\n---> opening scrubbing report file [", sreport, "]", sep="")
     ssummary <- TRUE
     if (!file.exists(sreport)){
         header = TRUE
@@ -171,7 +172,6 @@ if (sreport != ""){
 
 # ---> processing files
 
-
 first <- TRUE
 dvfirst <- TRUE
 nframes <- 0
@@ -187,8 +187,11 @@ for (b in bolds){
     # bstats --- frame  n   m   min max var sd  dvars   dvarsm  dvarsme
 
     t  <- read.table(paste(folder, paste(rname, b, '_mov.dat',   sep=''), sep="/"))
+    if (verbose) cat("\n     ... ", paste(rname, b, '_mov.dat',   sep=''), sep="")
     sc <- read.delim(paste(folder, paste(rname, b, '.scrub',     sep=''), sep="/"), comment.char = "#", sep="")
+    if (verbose) cat("\n     ... ", paste(rname, b, '.scrub',   sep=''), sep="")
     dv <- read.delim(paste(folder, paste(rname, b, '.bstats',    sep=''), sep="/"), comment.char = "#", sep="")
+    if (verbose) cat("\n     ... ", paste(rname, b, '.bstats',   sep=''), sep="")
 
     if (verbose) cat("\n---> processing")
 
@@ -349,7 +352,7 @@ for (b in bolds){
 
     if (fidl != "none"){
 
-        if (verbose) cat("\n---> creating fidl scrubbing file")
+        if (verbose) cat("\n---> creating fidl scrubbing file", paste(rname, b, '_scrub.fidl', sep=''), sep="")
 
         # --- open file and print header
 
