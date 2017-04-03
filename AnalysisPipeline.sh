@@ -5045,7 +5045,7 @@ show_version() {
  
  	APVer=`cat $TOOLS/MNAP/general/VERSION`
  	echo ""
-	echo "Analysis Pipeline Version: v$APVer"
+	reho "Multimodal Neuroimaging Analysis Pipeline (MNAP) Version: v$APVer"
 }
 
 # opts_ShowVersionIfRequested "$@"
@@ -5056,8 +5056,9 @@ show_version() {
 
 # -- Check if general help requested in three redundant ways (AP, AP --help or AP help)
 
-if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ]; then
+if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ]; then
 	show_version
+	echo ""
 	exit 0
 fi
 
