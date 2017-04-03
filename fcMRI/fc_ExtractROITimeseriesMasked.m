@@ -117,7 +117,7 @@ aparc.lgray  = [aparc.lcgray aparc.lsubc aparc.lcerc];
 aparc.rgray  = [aparc.rcgray aparc.rsubc aparc.rcerc];
 aparc.gray   = [aparc.cgray aparc.subc aparc.cerc 702];
 
-if isa(mcodes, 'char')
+if isa(mcodes, 'char')  && ~isempty(mcodes)
     mcodes = aparc.(mcodes);
 end
 
