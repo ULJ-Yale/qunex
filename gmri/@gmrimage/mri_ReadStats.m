@@ -110,7 +110,7 @@ if (~emov) | (~ebstats) | (~esel)
 
     % ---> check if movement folder exists
 
-    filename = strtrim(filename);
+    filename = strtrim(obj.rootfilename);
     [fpath, fname] = fileparts(filename);
     if isempty(fpath) || strcmp(fpath,'.') || strcmp(fpath, '~')
         fpath = pwd;
@@ -209,34 +209,38 @@ mfile = false;
 % ---> split the source
 
 ssplit = regexp(froot,'\.|-|_', 'split');
-
+fbase = regexp(froot, '(^.*?[0-9]+).*', 'tokens');
 
 % ---> get the list of candidate files
-files = dir(fullfile(movfolder, [ ssplit{1} '*' tail]));
+files = dir(fullfile(movfolder, [ fbase{1}{1} '*' tail]));
 if isempty(files)
     if verbose, fprintf('\n---> no match\n', froot, tail); end
     return
 end
 
 % ---> get the one that matches best
-li = length(ssplit);
-nmatch = 0;
-fmatch = 0;
-for f = 1:length(files)
-    tsplit = regexp(files(f).name,'\.|-|_', 'split');
-    ld     = length(tsplit);
-    c      = min(li, ld);
-    tmatch = 0;
-    for n = 1:c
-        if ~strcmp(ssplit{n}, tsplit{n})
-            tmatch = n-1;
-            break
+if length(files) > 1
+    li = length(ssplit);
+    nmatch = 0;
+    fmatch = 0;
+    for f = 1:length(files)
+        tsplit = regexp(files(f).name,'\.|-|_', 'split');
+        ld     = length(tsplit);
+        c      = min(li, ld);
+        tmatch = 0;
+        for n = 1:c
+            if ~strcmp(ssplit{n}, tsplit{n})
+                tmatch = n-1;
+                break
+            end
+        end
+        if tmatch > nmatch
+            nmatch = tmatch;
+            fmatch = f;
         end
     end
-    if tmatch > nmatch
-        nmatch = tmatch;
-        fmatch = f;
-    end
+else
+    fmatch = 1;
 end
 
 if fmatch > 0
