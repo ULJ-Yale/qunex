@@ -12,15 +12,14 @@
 # ## Author(s)
 #
 # * Alan Anticevic, N3 Division, Yale University
-# * Murat Demirtas, N3 Division, Yale University
 #
 # ## Product
 #
-#  Parcellation wrapper for dense connectome DWI data
+#  Wrapper for deducting dense connectome DWI data with seed input
 #
 # ## License
 #
-# * The DWIDenseParcellation.sh = the "Software"
+# * The DWIDenseSeedTractography.sh = the "Software"
 # * This Software is distributed "AS IS" without warranty of any kind, either 
 # * expressed or implied, including, but not limited to, the implied warranties
 # * of merchantability and fitness for a particular purpose.
@@ -29,8 +28,8 @@
 #
 # ## Description 
 #   
-# This script, DWIDenseParcellation.sh, implements parcellation on the DWI dense connectomes 
-# using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
+# This script, DWIDenseSeedTractography.sh, implements reduction on the DWI dense connectomes 
+# using a given 'seed' structure (e.g. thalamus)
 # 
 # ## Prerequisite Installed Software
 #
@@ -38,7 +37,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./DWIDenseParcellation.sh --help
+# See output of usage function: e.g. $./DWIDenseSeedTractography.sh --help
 #
 # ### Expected Previous Processing
 # 
@@ -53,7 +52,7 @@ usage() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
-				echo "This function implements parcellation on the DWI dense connectomes using a whole-brain parcellation (e.g. Glasser parcellation with subcortical labels included)."
+				echo "This function implements reduction on the DWI dense connectomes using a given 'seed' structure (e.g. thalamus)."
 				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
 				echo ""
 				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
@@ -64,8 +63,8 @@ usage() {
  				echo "		--path=<study_folder>				Path to study data folder"
 				echo "		--subject=<list_of_cases>			List of subjects to run"
 				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
-				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
-				echo "		--outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file"
+				echo "		--seedfile=<file_for_seed_reduction>	Specify the absolute path of the seed file you want to use as a seed for dconn reduction (e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz )"
+				echo "		--outname=<name_of_output_dscalar_file>	 Specify the suffix output name of the dscalar file"
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
@@ -73,12 +72,12 @@ usage() {
  				echo ""
  				echo "-- Example:"
 				echo ""
-				echo "DWIDenseParcellation.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "DWIDenseSeedTractography.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
 				echo "--subject='100206' \ "
 				echo "--matrixversion='3' \ "
-				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
 				echo "--overwrite='no' \ "
-				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex'"
+				echo "--outname='THALAMUS'"
 				echo ""	
 }
 
@@ -103,8 +102,8 @@ geho() {
     # StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
     # Subject	  # e.g. 100307
     # MatrixVersion # e.g. 1 or 3
-    # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
-    # OutName  # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
+    # SeedFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
+    # OutName  # e.g. THALAMUS
 
 ########################################## OUTPUTS #########################################
 
@@ -142,7 +141,7 @@ get_options() {
                 ;;
             --version)
                 version_show $@
-                exit 0
+                exit 1
                 ;;
             --path=*)
                 StudyFolder=${argument/*=/""}
@@ -156,8 +155,8 @@ get_options() {
                 MatrixVersion=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-            --parcellationfile=*)
-                ParcellationFile=${argument/*=/""}
+            --seedfile=*)
+                SeedFile=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
             --outname=*)
@@ -199,16 +198,16 @@ get_options() {
         exit 1
     fi
 
-    if [ -z ${ParcellationFile} ]; then
+    if [ -z ${SeedFile} ]; then
         usage
-        reho "ERROR: <file_for_parcellation> not specified>"
+        reho "ERROR: <structure_for_seeding> not specified>"
         echo ""
         exit 1
     fi
 
     if [ -z ${OutName} ]; then
         usage
-        reho "ERROR: <name_of_output_pconn_file> not specified>"
+        reho "ERROR: <name_of_output_dscalar_file> not specified>"
         exit 1
     fi
     
@@ -219,16 +218,21 @@ get_options() {
     echo "   StudyFolder: ${StudyFolder}"
     echo "   Subject: ${CASE}"
     echo "   MatrixVersion: ${MatrixVersion}"
-    echo "   ParcellationFile: ${ParcellationFile}"
+    echo "   SeedFile: ${SeedFile}"
     echo "   OutName: ${OutName}"
     echo "   Overwrite: ${Overwrite}"
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
     geho "------------------------- Start of work --------------------------------"
     echo ""
+
 }
 
 ######################################### DO WORK ##########################################
+
+# wb_command -cifti-restrict-dense-map ${DWIInput} COLUMN ${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii -vol-roi ${SeedFile}
+# wb_command -cifti-average-dense-roi ${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii -cifti ${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii -vol-roi ${SeedFile}
+
 
 main() {
 
@@ -245,15 +249,15 @@ DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$Ma
 DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
 echo "      Dense DWI Connectome Input:              ${DWIInput}"
-echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
+echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
 echo ""
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-	reho "--- Deleting prior runs for $DiffData..."
+	reho "--- Deleting prior runs in $DWIOutput..."
 	echo ""
-	rm -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii > /dev/null 2>&1
-	rm -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii > /dev/null 2>&1
+	rm -f "$DWIOutput"/${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii > /dev/null 2>&1
+	rm -f "$DWIOutput"/${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii > /dev/null 2>&1
 fi
 
 # Check if PreFreeSurfer was completed to use existing inputs and avoid re-running BET
@@ -261,40 +265,50 @@ fi
 reho "--- Checking if parcellation was completed..."
 echo ""
 
-if [ -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii ]; then
-	geho "Parcellation data found: "
+if [ -f "$DWIOutput"/${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii ]; then
+	geho "Dense scalar seed tractography data found: "
 	echo ""
-	echo "      ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
+	echo "      ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
 	echo ""
 	exit 1
 else
-	reho "Parcellation data not found."
+	reho "Dense scalar seed tractography data not found."
 	echo ""
-	geho "Computing parcellation by COLUMN on $DWIInput..."
+	geho "Computing dense DWI connectome restriction by COLUMN on $DWIInput..."
 	echo ""
-	# -- First parcellate by COLUMN and save a *pdconn file
-	wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii
-	geho "Computing parcellation by ROW on ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii..."
+	# -- First restrict by COLUMN and save a *dconn file
+	wb_command -cifti-restrict-dense-map ${DWIInput} COLUMN ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii -vol-roi ${SeedFile}
+	geho "Computing average of the restricted dense connectome across the input structure $SeedFile..."
 	echo ""
-	# -- Next parcellate by ROW and save final *pconn file
-	wb_command -cifti-parcellate "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii "$ParcellationFile" ROW "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii
+	# -- Next average the restricted dense connectome across the input structure and save the dscalar
+	wb_command -cifti-average-dense-roi ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii -cifti ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii -vol-roi ${SeedFile}
 fi	
 
 # Perform completion checks"
 
 	reho "--- Checking outputs..."
 	echo ""
-	if [ -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii ]; then
-		OutFile="$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii
-		geho "Parcellated (pconn) file for Matrix $MatrixVersion:           $OutFile"
+	if [ -f ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii ]; then
+		OutFile=${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii
+		geho "Dense connectivity seed tractography file for Matrix $MatrixVersion:           $OutFile"
 		echo ""
 	else
-		reho "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
+		reho "Dense connectivity seed tractography file for Matrix $MatrixVersion is missing. Something went wrong."
 		echo ""
 		exit 1
 	fi
 	
-	reho "--- DWI Parcellation successfully completed"
+	if [ -f ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii ]; then
+		OutFile=${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii
+		geho "Dense scalar seed tractography file for Matrix $MatrixVersion:           $OutFile"
+		echo ""
+	else
+		reho "Dense scalar seed tractography file for Matrix $MatrixVersion is missing. Something went wrong."
+		echo ""
+		exit 1
+	fi
+	
+	reho "--- DWI seed restriction of dense connectome successfully completed"
 	echo ""
     geho "------------------------- End of work --------------------------------"
     echo ""

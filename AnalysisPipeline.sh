@@ -240,6 +240,7 @@ show_usage() {
   				cyaneho "---------------------------"			
   				echo "boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
   				echo "dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
+  				echo "dwiseedtractography		reduce dense dwi tractography data via user-specified seed structure"
   				echo "printmatrix			extract parcellated matrix for bold data via yeo 17 network solutions"
   				echo "boldmergenifti			merge specified nii bold timeseries"
   				echo "boldmergecifti			merge specified citi bold timeseries"
@@ -3555,7 +3556,7 @@ show_usage_dwidenseparcellation() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subject=<comma_separated_list_of_cases>			List of subjects to run"
+				echo "		--subject=<comma_separated_list_of_cases>	List of subjects to run"
 				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
 				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
 				echo "		--outname=<name_of_output_pconn_file>		Specify the suffix output name of the pconn file"
@@ -3594,6 +3595,135 @@ show_usage_dwidenseparcellation() {
 				echo "-- Example with interactive terminal:"
 				echo ""
 				echo "AP dwidenseparcellation /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
+				echo ""
+}
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  dwiseedtractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the AP wrapper
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+dwiseedtractography() {
+
+		# Requirements for this function
+		# Connectome Workbench (v1.0 or above)
+		
+		########################################## INPUTS ########################################## 
+
+		# The data should be in $DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
+		# Mandatory input parameters:
+    	# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+    	# Subject	  # e.g. 100307
+    	# MatrixVersion # e.g. 1 or 3
+    	# SeedFile  # e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz"
+
+		########################################## OUTPUTS #########################################
+
+		# Outputs will be *pconn.nii files located here:
+		#    DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+
+		
+		# Parse General Parameters
+		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		StudyFolder="$StudyFolder"
+		CASE="$CASE"
+		MatrixVersion="$MatrixVersion"
+		SeedFile="$SeedFile"
+		OutName="$OutName"
+		DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+		mkdir "$DWIOutput"/log > /dev/null 2>&1
+		LogFolder="$DWIOutput"/log
+		Overwrite="$Overwrite"
+		
+		if [ "$Cluster" == 1 ]; then
+		
+		echo "Running locally on `hostname`"
+		echo "Check log file output here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+				
+		DWIDenseSeedTractography.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--matrixversion="${MatrixVersion}" \
+		--seedfile="${SeedFile}" \
+		--outname="${OutName}" \
+		--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+		
+		else
+		
+		# set scheduler for fsl_sub command
+		fslsub="$Scheduler"
+		
+		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" DWIDenseSeedTractography.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--matrixversion="${MatrixVersion}" \
+		--seedfile="${SeedFile}" \
+		--outname="${OutName}" \
+		--overwrite="${Overwrite}"
+
+		echo "--------------------------------------------------------------"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+		fi
+}
+
+show_usage_dwiseedtractography() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function implements reduction on the DWI dense connectomes using a given 'seed' structure (e.g. thalamus)."
+				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
+				echo ""
+				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
+				echo ""
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>			Name of function"
+				echo "		--path=<study_folder>				Path to study data folder"
+				echo "		--subject=<comma_separated_list_of_cases>	List of subjects to run"
+				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
+				echo "		--seedfile=<file_for_seed_reduction>		Specify the absolute path of the seed file you want to use as a seed for dconn reduction"
+				echo "		--outname=<name_of_output_dscalar_file>		Specify the suffix output name of the dscalar file"
+				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "" 
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+ 				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+ 				echo ""
+				echo "-- Example with flagged parameters for a local run:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='dwiseedtractography' \ "
+				echo "--subjects='100206' \ "
+				echo "--matrixversion='3' \ "
+				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='Thalamus_Seed' \ "
+				echo "--runmethod='1'"
+				echo ""	
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='dwiseedtractography' \ "
+				echo "--subjects='100206' \ "
+				echo "--matrixversion='3' \ "
+				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='Thalamus_Seed' \ "
+				echo "--queue='anticevic' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='lsf'"
+				echo ""
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "Interactive terminal run method not supported for this function"
 				echo ""
 }
 
@@ -5449,6 +5579,9 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 	OutName=`opts_GetOpt "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
 	
+	# -- dwiseedtractography input flags
+	SeedFile=`opts_GetOpt "${setflag}seedfile" $@` # --seedfile=<structure_for_seeding>	Specify the absolute path of the seed file you want to use as a seed for dconn reduction
+	
 	# -- fslbedpostxgpu input flags
 	Fibers=`opts_GetOpt "${setflag}fibers" $@`  # <number_of_fibers>		Number of fibres per voxel, default 3
 	Model=`opts_GetOpt "${setflag}model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
@@ -7003,6 +7136,43 @@ if [ "$FunctionToRunInt" == "dwidenseparcellation" ]; then
 		for CASE in $CASES
 			do
   			"$FunctionToRunInt" "$CASE"
+  		done
+fi
+
+# ------------------------------------------------------------------------------
+#  DWIDenseSeedTractography function loop (dwiseedtractography)
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "dwiseedtractography" ]; then
+	
+# Check all the user-defined parameters: 1. MatrixVersion, 2. ParcellationFile, 3. OutName, 4. QUEUE, 5. RunMethod
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
+		if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi
+		if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi		
+		echo ""
+		echo "Running DWIDenseParcellation function with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Matrix version used for input: $MatrixVersion"
+		echo "File to use for seed reduction: $SeedFile"
+		echo "Dense DWI Parcellated Connectome Output Name: $OutName"
+		echo "Overwrite prior run: $Overwrite"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
   		done
 fi
 

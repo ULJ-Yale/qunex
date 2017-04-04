@@ -41,8 +41,8 @@
 #
 # ### Expected Previous Processing
 # 
-# * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP probtrackxgpudense function
-# * These data are stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
+# * The necessary input files are BOLD data from previous processing
+# * These data are stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
@@ -52,7 +52,7 @@ usage() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
-				echo "This function implements parcellation on the BOLD dense files using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)."
+				echo "This function implements parcellation on the BOLD dense files using a whole-brain parcellation (e.g. Glasser parcellation with subcortical labels included)."
 				echo ""
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
