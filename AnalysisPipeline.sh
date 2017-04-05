@@ -228,7 +228,6 @@ show_usage() {
   				echo "fsldtifit 			run fsl dtifit (cluster usable)"
   				echo "fslbedpostxgpu 			run fsl bedpostx w/gpu (cluster usable)"
   				echo "isolatesubcortexrois 		isolate subject-specific subcortical rois for tractography"
-  				echo "isolatethalamusfslnuclei 	isolate fsl thalamic rois for tractography"
   				echo "probtracksubcortex 		run fsl probtrackx across subcortical nuclei (cpu) (deprecated for probtrackxgpudense & dwiseedtractography)"
   				echo "pretractography			generates space for cortical dense connectomes (cluster usable)"
   				echo "pretractographydense		generates space for whole-brain dense connectomes (cluster usable)"
@@ -940,65 +939,6 @@ show_usage_isolatesubcortexrois() {
     			echo "Function for isolating subcortical ROIs based on individual anatomy to be used in probabilistic tractography."
     			echo ""
     			echo "Note: it assumes that there is data inside <$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/ROIs> "
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  isolatethalamusfslnuclei - Find thalamic ROIs needed for subcortical seed-based tractography via FSL
-# ------------------------------------------------------------------------------------------------------
-
-isolatethalamusfslnuclei() {
-
-    echo "FUNCTION UNDER DEVELOPMENT - NOT DEPLOYMENT READY..."
-
-	# isolate FSL-intersecting thalamic voxels 
-	#cp "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz ./
-	# FSL thalamus values and labels
-	#	thalamus_motor (1) SENS
-	#	thalamus_sens (2) SENS
-	#	thalamus_occ (3) SENS
-	#	thalamus_pfc (4) ASSOC
-	#	thalamus_premotor (5) ASSOC
-	#	thalamus_parietal (6) ASSOC
-	#	thalamus_temporal (7) SENS
-	
-	# Isolate individual nuclei from FSL thalamus atlas
-    #3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz  -expr 'equals(a,1)' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-motor.nii.gz # isolate motor-projecting thalamus from FSL atlas file
-    #3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz  -expr 'equals(a,2)' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sens.nii.gz # isolate sensory-projecting thalamus from FSL atlas file
-    #3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz  -expr 'equals(a,3)' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-occ.nii.gz # isolate occipital-projecting thalamus from FSL atlas file
-    #3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz  -expr 'equals(a,4)' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-pfc.nii.gz # isolate pfc-projecting thalamus from FSL atlas file
-    #3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz  -expr 'equals(a,5)' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-premotor.nii.gz # isolate premotor-projecting thalamus from FSL atlas file
-    #3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz  -expr 'equals(a,6)' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-par.nii.gz # isolate motor parietal-projecting from FSL atlas file
-    #3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm.nii.gz  -expr 'equals(a,7)' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-temp.nii.gz # isolate motor temporal-projecting from FSL atlas file
-	
-	# Combine into sensory and associative nuclei
-	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-par.nii.gz -b "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-premotor.nii.gz -c "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-pfc.nii.gz -expr 'a+b+c' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-associative.nii.gz
-	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sens.nii.gz -b "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-motor.nii.gz -c "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-occ.nii.gz -d "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-temp.nii.gz -expr 'a+b+c+d' -prefix "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sensory.nii.gz
-	
-	# Check volumes 
-	#fslstats Thalamus-maxprob-thr0-2mm-sensory.nii.gz -V # 2909 23272.000000 
-	#fslstats Thalamus-maxprob-thr0-2mm-associative.nii.gz -V # 3655 29240.000000 
-
-	#cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs
-	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sensory.nii.gz -b Atlas_thalamus.R.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_sensory.R.nii.gz # isolate right thalamus from FSL mask file
-	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-sensory.nii.gz -b Atlas_thalamus.L.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_sensory.L.nii.gz # isolate right thalamus from FSL mask file
-	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-associative.nii.gz -b Atlas_thalamus.R.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_associative.R.nii.gz # isolate right thalamus from FSL mask file
-	#3dcalc -overwrite -a "$StudyFolder"/../fcMRI/roi/Thalamus/Thalamus-maxprob-thr0-2mm-associative.nii.gz -b Atlas_thalamus.L.nii.gz  -expr 'a*b' -prefix Atlas_thalamus_associative.L.nii.gz # isolate right thalamus from FSL mask file
-	
-	# Get FSL-intersecting thalamus sub-nuclei volumes
-	#thal_sensory_lvol_L=`fslstats Atlas_thalamus_sensory.L.nii.gz -V | cut -d " " -f 1` #70 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 456 / 32492 number of vertices
-	#thal_sensory_lvol_R=`fslstats Atlas_thalamus_sensory.R.nii.gz -V | cut -d " " -f 1` #74 - get # of R thalamic voxels needed to adjust the nsamples flag - 5000 * 483 / 32492 number of vertices
-	#thal_associative_lvol_L=`fslstats Atlas_thalamus_associative.L.nii.gz -V | cut -d " " -f 1` #128 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 832 / 32492 number of vertices
-	#thal_associative_lvol_R=`fslstats Atlas_thalamus_associative.R.nii.gz -V | cut -d " " -f 1` #117 - get # of R thalamic voxels needed to adjust the nsamples flag - 5000 * 765 / 32492 number of vertices
-
-}
-
-show_usage_isolatethalamusfslnuclei() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "UNDER DEVELOPMENT - USAGE INFO PENDING..."
     			echo ""
 }
 	

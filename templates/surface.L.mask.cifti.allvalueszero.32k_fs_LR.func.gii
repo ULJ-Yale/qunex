@@ -10,7 +10,7 @@
       </MD>
       <MD>
          <Name><![CDATA[ParentProvenance]]></Name>
-         <Value><![CDATA[surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii:
+         <Value><![CDATA[/gpfs/project/fas/n3/software//MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii:
 /Applications/workbench/bin_macosx64/../macosx64_apps/wb_command.app/Contents/MacOS/wb_command -cifti-separate structures.allvaluesone.dtseries.nii COLUMN -metric CORTEX_LEFT surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii -metric CORTEX_RIGHT surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii -volume-all volume.mask.cifti.allvaluesone.nii
 
 ]]></Value>
@@ -33,11 +33,11 @@ Operating System: Linux
       </MD>
       <MD>
          <Name><![CDATA[Provenance]]></Name>
-         <Value><![CDATA[/gpfs/project2/fas/n3/software/workbench/bin_rh_linux64/../exe_rh_linux64/wb_command -metric-math a-1 surface.L.mask.cifti.allvalueszero.32k_fs_LR.func.gii -var a surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii]]></Value>
+         <Value><![CDATA[/gpfs/project2/fas/n3/software/workbench/bin_rh_linux64/../exe_rh_linux64/wb_command -metric-math a-1 /gpfs/project/fas/n3/software//MNAP/general/templates/surface.L.mask.cifti.allvalueszero.32k_fs_LR.func.gii -var a /gpfs/project/fas/n3/software//MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii]]></Value>
       </MD>
       <MD>
          <Name><![CDATA[WorkingDirectory]]></Name>
-         <Value><![CDATA[/gpfs/project2/fas/n3/software/MNAP/general/templates]]></Value>
+         <Value><![CDATA[/gpfs/project2/fas/n3/Studies/Anticevic.DP5/subjects/ta9382/hcp/ta9382/MNINonLinear/Results/Tractography/log]]></Value>
       </MD>
    </MetaData>
    <LabelTable>
