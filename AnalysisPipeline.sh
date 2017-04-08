@@ -3939,7 +3939,6 @@ fslbedpostxgpu() {
 			rm -rf "$BedPostXFolder" > /dev/null 2>&1
 		fi
 				
-		echo ""
   		geho "Checking if Bedpostx was completed on $CASE..."
   		  		
   		# Set file depending on model specification
@@ -3956,21 +3955,36 @@ fslbedpostxgpu() {
   		# Set file sizes to check for completion
 		minimumfilesize=20000000
   		actualfilesize=`wc -c < "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1  		
+  		filecount=`ls "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
   		
-  			# Then check if run is complete based on size
+  		fi
+  			
+  			# Then check if run is complete based on file count
+  			if [ "$filecount" == 9 ]; then > /dev/null 2>&1
+  				echo ""
+  				cyaneho " --> $filecount merged samples for $CASE found."  			
+  			# Then check if run is complete based on file size
   			if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
   				echo ""
-  				cyaneho "DONE -- Bedpostx completed for $CASE"
+  				cyaneho " --> Bedpostx outputs found and completed for $CASE"
   				echo ""
   				cyaneho "Check prior output logs here: $LogFolder"
   				echo ""
   				echo "--------------------------------------------------------------"
+  				echo "" 
+  				exit 0
+  			else 
+  				echo ""
+  				reho " --> Bedpostx outputs missing or incomplete for $CASE"
+  				echo ""
+  				reho "--------------------------------------------------------------"
   				echo ""  			
   			fi
+  			fi
   		
-  		else	
-  				geho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
-  				echo ""
+  			echo ""
+  			reho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
+  			echo ""
   				
   				if [ "$Cluster" == 1 ]; then
   				
@@ -4011,7 +4025,6 @@ fslbedpostxgpu() {
 					geho "---------------------------------------------------------------------------------------"
 					echo ""
 				fi
-		fi	
 }
 
 show_usage_fslbedpostxgpu() {
@@ -4373,7 +4386,7 @@ show_usage_pretractographydense() {
 				echo ""
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>	List of subjects to run"
 				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
@@ -4578,7 +4591,7 @@ show_usage_probtrackxgpudense() {
 				echo ""
 				echo "		--function=<function_name>					Name of function"
 				echo "		--path=<study_folder>						Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>					List of subjects to run"
+				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
 				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
 				echo "		--scheduler=<name_of_cluster_scheduler>				Cluster scheduler program: e.g. LSF or PBS"
 				echo "		--overwrite=<clean_prior_run>					Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
@@ -6471,6 +6484,7 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		echo "Running fslbedpostxgpu processing with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
+		echo "Subjects: $CASES"		
 		echo "Number of Fibers: $Fibers"
 		echo "Model Type: $Model"
 		echo "Burnin Period: $Burnin"
@@ -7337,7 +7351,7 @@ if [ "$FunctionToRun" == "pretractographydense" ]; then
 		echo "Running Pretractography Dense processing with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
-		echo "CASES: $CASES"
+		echo "Subjects: $CASES"
 		echo "--------------------------------------------------------------"
 		
 		for CASE in $CASES
