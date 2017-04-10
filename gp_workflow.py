@@ -187,8 +187,21 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nCreating masks for bold runs ..."
-    r += "\nProcessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bppt'].split("|")))
+    r += "\nCreating masks for bold runs ... \n"
+    r += "\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bold_preprocess parameter defines which BOLD files are processed based on their\n     specification in subjects.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed."
+    r += "\n\n........................................................"
+
+    d = getSubjectFolders(sinfo, options)
+
+    if overwrite:
+        ostatus = 'will'
+    else:
+        ostatus = 'will not'
+
+    r += "\n\nWorking on BOLD images in: " + d['s_images']
+    r += "\nResulting masks will be in: " + d['s_boldmasks']
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bppt'].split("|")))
+    r += "\nIf already present, existing masks %s be overwritten (see --overwrite)." % (ostatus)
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
@@ -202,7 +215,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
                 boldname = v['name']
 
-                r += "\n\nWorking on: " + boldname + " ..." + 'overwrite:'
+                r += "\n\nWorking on: " + boldname
 
                 try:
                     # --- filenames
@@ -431,8 +444,23 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nProcessing %s BOLD files as specified in --bold_preprocess.." % (", ".join(options['bppt'].split("|")))
-    r += "\nComputing bold image statistics ..."
+    r += "\n\nComputing BOLD image statistics ..."
+    r += "\n\n    The command will compute per frame statistics for each of the specified BOLD\n    files based on its movement correction parameter file and BOLD image analysis.\n    The results will be saved as *.bstat and *.bscrub files in the images/movement\n    subfolder. Only images specified using --bold_preprocess parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    target format, nifti volume image will be used to compute statistics."
+    r += "\n\n    Using parameters:\n\n    --mov_radius: %(mov_radius)s\n    --mov_fd: %(mov_fd)s\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_after: %(mov_after)s\n    --mov_before: %(mov_before)s\n    --mov_bad: %(mov_bad)s" % (options)
+    r += "\n\n    for computing scrubbing information."
+    r += "\n\n........................................................"
+
+    d = getSubjectFolders(sinfo, options)
+
+    if overwrite:
+        ostatus = 'will'
+    else:
+        ostatus = 'will not'
+
+    r += "\n\nWorking on BOLD images in: " + d['s_bold']
+    r += "\nResulting files will be in: " + d['s_bold_mov']
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bppt'].split("|")))
+    r += "\nIf already present, existing statistics %s be overwritten (see --overwrite)." % (ostatus)
 
     btargets = options['bppt'].split("|")
 
@@ -458,14 +486,14 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
                         # --- check for data availability
 
-                        r += '... checking for data'
+                        r += '\n... checking for data'
                         status = True
 
                         # --- movement
-                        r, status = checkForFile2(r, f['bold_mov'], '\n    ... movement data present', '\n    ... movement data missing', status=status)
+                        r, status = checkForFile2(r, f['bold_mov'], '\n    ... movement data present [%s]' % (os.path.basename(f['bold_mov'])), '\n    ... movement data missing [%s]' % (os.path.basename(f['bold_mov'])), status=status)
 
                         # --- bold
-                        r, status = checkForFile2(r, f['bold'], '\n    ... bold data present', '\n    ... bold data missing', status=status)
+                        r, status = checkForFile2(r, f['bold'], '\n    ... bold data present [%s]' % (os.path.basename(f['bold'])), '\n    ... bold data missing [%s]' % (os.path.basename(f['bold'])), status=status)
 
                         # --- check
                         if not status:
@@ -483,7 +511,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                         if os.path.exists(f['bold_stats']) and not overwrite:
                             report['bolddone'] += 1
                             runit = False
-                        r += runExternalForFileShell(f['bold_stats'], comm, '... running matlab g_ComputeBOLDStats on %s bold %s' % (d['s_bold'], boldnum), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ComputeBOLDStats', logfolder=options['comlogs'])
+                        r += runExternalForFileShell(f['bold_stats'], comm, '... running matlab g_ComputeBOLDStats on %s' % (f['bold']), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ComputeBOLDStats', logfolder=options['comlogs'])
                         r, status = checkForFile(r, f['bold_stats'], 'ERROR: Matlab has failed preprocessing bold using command: %s' % (comm))
 
                         if status and runit:
@@ -674,8 +702,23 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
         r = "\n---------------------------------------------------------"
         r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-        r += "\nProcessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bppt'].split("|")))
-        r += "\nCreating BOLD Movement and statistics report ..."
+        r += "\n\nCreating BOLD Movement and statistics report ..."
+        r += "\n\n    The command will use movement correction parameters and computed BOLD\n    statistics to create per subject plots, fidl snippets and group reports. Only\n    images specified using --bold_preprocess parameter will be processed. Please\n    see documentation for use of other relevant parameters!"
+        r += "\n\n    Using parameters:\n\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_fd: %(mov_fd)s\n    --mov_radius: %(mov_radius)s\n    --mov_fidl: %(mov_fidl)s\n    --mov_post: %(mov_post)s\n    --mov_pref: %(mov_pref)s" % (options)
+        r += "\n\n........................................................"
+
+        d = getSubjectFolders(sinfo, options)
+
+        if overwrite:
+            ostatus = 'will'
+        else:
+            ostatus = 'will not'
+
+        r += "\n\nWorking on BOLD information images in: " + d['s_bold_mov']
+        r += "\nResulting plots will be saved in: " + d['s_bold_mov']
+
+        r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bppt'].split("|")))
+        r += "\nIf already present, existing results %s be overwritten (see --overwrite)." % (ostatus)
 
         btargets = options['bppt'].split("|")
         procbolds = []
@@ -796,6 +839,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot))):
                     os.remove(os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
                 linkOrCopy(os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
+                r += '\n... copying %s to %s' % (os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
 
         if options['mov_fidl'] in ['fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme'] and options['eventfile'] != "" and options['bppt'] != "":
             concf = os.path.join(d['s_bold_concs'], options['bppt'] + '.conc')
@@ -981,8 +1025,23 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nProcessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bppt'].split("|")))
-    r += "\nExtracting BOLD nuisance signal ..."
+    r += "\n\nExtracting BOLD nuisance signal ..."
+    r += "\n\n    The command will extract nuisance signal from each of the specifie BOLD files.\n    The results will be saved as *.nuisance files in the images/movement\n    subfolder. Only images specified using --bold_preprocess parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal."
+    r += "\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sbjroi: %(sbjroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s" % (options)
+    r += "\n\n    when extracting nuisance signal."
+    r += "\n\n........................................................"
+
+    d = getSubjectFolders(sinfo, options)
+
+    if overwrite:
+        ostatus = 'will'
+    else:
+        ostatus = 'will not'
+
+    r += "\n\nWorking on BOLD images in: " + d['s_bold']
+    r += "\nResulting files will be in: " + d['s_bold_mov']
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bppt'].split("|")))
+    r += "\nIf already present, existing nuisance files %s be overwritten (see --overwrite)." % (ostatus)
 
     btargets = options['bppt'].split("|")
 
@@ -1008,16 +1067,16 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
                         # --- check for data availability
 
-                        r += '... checking for data'
+                        r += '\n... checking for data'
                         status = True
 
                         # --- bold mask
-                        r, status = checkForFile2(r, f['bold1_brain_mask'], '\n    ... bold brain mask present', '\n    ... bold brain mask missing', status=status)
+                        r, status = checkForFile2(r, f['bold1_brain_mask'], '\n    ... bold brain mask present', '\n    ... bold brain mask missing [%s]' % (f['bold1_brain_mask']), status=status)
 
                         # --- aseg
-                        r, astat = checkForFile2(r, f['fs_aseg_bold'], '\n    ... freesurfer aseg present', '\n    ... freesurfer aseg missing', status=True)
+                        r, astat = checkForFile2(r, f['fs_aseg_bold'], '\n    ... freesurfer aseg present', '\n    ... freesurfer aseg missing [%s]' % (f['fs_aseg_bold']), status=True)
                         if not astat:
-                            r, astat = checkForFile2(r, f['fs_aparc_bold'], '\n    ... freesurfer aparc present', '\n    ... freesurfer aparc missing', status=True)
+                            r, astat = checkForFile2(r, f['fs_aparc_bold'], '\n    ... freesurfer aparc present', '\n    ... freesurfer aparc missing [%s]' % (f['fs_aparc_bold']), status=True)
                             segfile  = f['fs_aparc_bold']
                         else:
                             segfile  = f['fs_aseg_bold']
@@ -1025,7 +1084,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                         status = status and astat
 
                         # --- bold
-                        r, status = checkForFile2(r, f['bold'], '\n    ... bold data present', '\n    ... bold data missing', status=status)
+                        r, status = checkForFile2(r, f['bold'], '\n    ... bold data present', '\n    ... bold data missing [%s]' % (f['bold']), status=status)
 
                         # --- check
                         if not status:
@@ -1055,7 +1114,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                         if os.path.exists(f['bold_nuisance']):
                             report['bolddone'] += 1
                             runit = False
-                        r += runExternalForFileShell(f['bold_nuisance'], comm, '... running matlab g_ExtractNuisance on %s bold %s' % (d['s_bold'], boldnum), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ExtractNuisance', logfolder=options['comlogs'])
+                        r += runExternalForFileShell(f['bold_nuisance'], comm, '... running matlab g_ExtractNuisance on %s' % (f['bold']), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ExtractNuisance', logfolder=options['comlogs'])
                         r, status = checkForFile(r, f['bold_nuisance'], 'ERROR: Matlab has failed preprocessing bold using command: %s' % (comm))
 
                         if runit and status:
