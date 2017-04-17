@@ -142,6 +142,18 @@ isolatethalamusfslnuclei() {
 	# change mapping to dtseries 
 	wb_command -cifti-change-mapping ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked.dscalar.nii ROW ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked.dtseries.nii -series 1 1
 
+	# -- Construct CIFTI averages for Associative
+ 	# construct new dense scalar file
+ 	wb_command -cifti-create-dense-from-template ${TOOLS}/MNAP/general/templates/structures.allvaluesone.dtseries.nii ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Associative.dscalar.nii -volume-all ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Associative.nii -metric CORTEX_LEFT ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii -metric CORTEX_RIGHT ${TOOLS}/MNAP/general/templates/surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii
+ 	# change mapping to dtseries 
+ 	wb_command -cifti-change-mapping ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Associative.dscalar.nii ROW ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Associative.dtseries.nii -series 1 1
+    
+	# -- Construct CIFTI averages for Associative
+ 	# construct new dense scalar file
+ 	wb_command -cifti-create-dense-from-template ${TOOLS}/MNAP/general/templates/structures.allvaluesone.dtseries.nii ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.dscalar.nii -volume-all ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.nii -metric CORTEX_LEFT ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii -metric CORTEX_RIGHT ${TOOLS}/MNAP/general/templates/surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii
+ 	# change mapping to dtseries 
+ 	wb_command -cifti-change-mapping ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.dscalar.nii ROW ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.dtseries.nii -series 1 1
+
 }
 
 #

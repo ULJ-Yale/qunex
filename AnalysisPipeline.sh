@@ -3972,7 +3972,7 @@ fslbedpostxgpu() {
   				echo ""
   				echo "--------------------------------------------------------------"
   				echo "" 
-  				exit 0
+  				return 1
   			else 
   				echo ""
   				reho " --> Bedpostx outputs missing or incomplete for $CASE"
