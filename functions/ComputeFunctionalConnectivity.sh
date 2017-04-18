@@ -15,11 +15,11 @@
 #
 # ## Product
 #
-#  Parcellation wrapper for dense BOLD data
+#  Parcellation wrapper for dense thickness and myelin data
 #
 # ## License
 #
-# * The BOLDParcellation.sh = the "Software"
+# * The ComputeFunctionalConnectivity.sh = the "Software"
 # * This Software is distributed "AS IS" without warranty of any kind, either 
 # * expressed or implied, including, but not limited to, the implied warranties
 # * of merchantability and fitness for a particular purpose.
@@ -28,8 +28,8 @@
 #
 # ## Description 
 #   
-# This script, BOLDParcellation.sh, implements parcellation on the DWI dense connectomes 
-# using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
+# This script, ComputeFunctionalConnectivity.sh, implements parcellation on the DWI dense connectomes 
+# using a whole-brain parcellation (e.g. Glasser parcellation with subcortical labels included)
 # 
 # ## Prerequisite Installed Software
 #
@@ -37,58 +37,208 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./DWIDenseParcellation.sh --help
+# See output of usage function: e.g. $./ComputeFunctionalConnectivity.sh --help
 #
 # ### Expected Previous Processing
 # 
-# * The necessary input files are BOLD data from previous processing
-# * These data are stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/ 
+# * The necessary input files are BOLD from previous processing
+# * These may be stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
-
 usage() {
-				
+
+# function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
+# INPUT
+# flist   	- A .list file of subject information.
+# roinfo	    - An ROI file.
+# inmask		- An array mask defining which frames to use (1) and which not (0) [0]
+# options		- A string defining which subject files to save ['']:
+# r		- save map of correlations
+# f     - save map of Fisher z values
+# cv	- save map of covariances
+# z		- save map of Z scores
+# tagetf	- The folder to save images in ['.'].
+# method    - Method for extracting timeseries - 'mean' or 'pca' ['mean'].
+# ignore    - Do we omit frames to be ignored ['no']
+#                 -> no:    do not ignore any additional frames
+#                 -> event: ignore frames as marked in .fidl file
+#                 -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
+# cv        - Whether covariances should be computed instead of correlations.
+  
+# function [] =             fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep) 
+# INPUT 
+# flist       - conc-like style list of subject image files or conc files:
+#                 subject id:<subject_id>
+#                 roi:<path to the individual's ROI file>
+#                 file:<path to bold files - one per line>
+#              or a well strucutured string (see g_ReadFileList).
+# command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
+#              mFzp, aFzp, ...
+#              <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
+# mask        - An array mask defining which frames to use (1) and
+#              which not (0). All if empty.
+# verbose     - Report what is going on. [false]
+# target      - Array of ROI codes that define target ROI [default:
+#              FreeSurfer cortex codes]
+# targetf     - Target folder for results.
+# rsmooth     - Radius for smoothing (no smoothing if empty). []
+# rdilate     - Radius for dilating mask (no dilation if empty). []
+# ignore      - The column in *_scrub.txt file that matches bold file to
+#              be used for ignore mask. All if empty. []
+# time        - Whether to print timing information. [false]
+# cv          - Whether to compute covariances instead of correlations.
+#              [false]
+# vstep       - How many voxels to process in a single step. [1200]
+
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
-				echo "This function implements parcellation on the BOLD dense files using a whole-brain parcellation (e.g. Glasser parcellation with subcortical labels included)."
+				echo "This function implements Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) on the dense or parcellated (e.g. Glasser parcellation)."
 				echo ""
 				echo ""
-				echo "-- REQUIRED PARMETERS:"
+				echo "For more detailed documentation run <help fc_ComputeGBC3>, <help gmrimage.mri_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside matlab"
+				echo ""
+				echo ""
+				echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
 				echo ""
  				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--calculation=<type_of_calculation>					Run seed FC or GBC calculation <gbc> or <seed>"
+				echo "		--runtype=<type_of_run>					Run calculation on a group (requires a list) or on individual subjects (requires individual specification) (group or individual)"
+				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
+				echo "		--tagetf=<path_for_output_file>			Specify the absolute path for output folder"
+				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
+				echo "		--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
+				echo ""
+				echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
+				echo ""
 				echo "		--subject=<list_of_cases>				List of subjects to run"
-				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
-				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
-				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)"
-				echo "		--parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
-				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
-				echo "		--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)"
+				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the absolute path of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
+				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. ptseries or dtseries)"
+				echo "		--outname=<name_of_output_file>				Specify the suffix name of the output file name"  
 				echo ""
-				echo "-- OPTIONAL PARMETERS:"
+				echo "-- OPTIONAL GENERAL PARAMETERS: "	
+				echo ""
+			 	echo "		--overwrite=<clean_prior_run>				Delete prior run for a given subject"
+				echo "		--extractdata=<save_out_the_data_as_as_csv>		Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
+				echo "		--covariance=<compute_covariance>			Whether to compute covariances instead of correlations (true / false). Default is [false]"
+				echo ""
+				echo "-- REQUIRED GBC PARMETERS:"
+				echo ""
+				echo "		--target=<which_roi_to_use>				Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]"
+				echo "		--rsmooth=<smoothing_radius>				Radius for smoothing (no smoothing if empty). Default is []"
+				echo "		--rdilate=<dilation_radius>				Radius for dilating mask (no dilation if empty). Default is []"
+				echo "		--command=<type_of_gbc_to_run>				Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
+				echo ""
+				echo "                   	> mFz:t  ... computes mean Fz value across all voxels (over threshold t) "
+				echo "                   	> aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t) "
+				echo "                   	> pFz:t  ... computes mean positive Fz value across all voxels (over threshold t) "
+  				echo "                   	> nFz:t  ... computes mean positive Fz value across all voxels (below threshold t) "
+         		echo "                   	> aD:t   ... computes proportion of voxels with absolute r over t "
+         		echo "                     	> pD:t   ... computes proportion of voxels with positive r over t "
+         		echo "                     	> nD:t   ... computes proportion of voxels with negative r below t "
+         		echo "                     	> mFzp:n ... computes mean Fz value across n proportional ranges "
+         		echo "                     	> aFzp:n ... computes mean absolute Fz value across n proportional ranges "
+         		echo "                     	> mFzs:n ... computes mean Fz value across n strength ranges "
+          		echo "                    	> pFzs:n ... computes mean Fz value across n strength ranges for positive correlations "
+         		echo "                     	> nFzs:n ... computes mean Fz value across n strength ranges for negative correlations "
+         		echo "                     	> mDs:n  ... computes proportion of voxels within n strength ranges of r "
+         		echo "                     	> aDs:n  ... computes proportion of voxels within n strength ranges of absolute r "
+         		echo "                     	> pDs:n  ... computes proportion of voxels within n strength ranges of positive r "
+         		echo "                     	> nDs:n  ... computes proportion of voxels within n strength ranges of negative r "  
+				echo ""
+				echo "-- OPTIONAL GBC PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
- 				echo "		--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no)."
- 				echo "		--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
- 				echo "		--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)"
-				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
- 				echo ""
- 				echo "-- Example:"
+				echo "		--verbose=<print_output_verbosely>			Report what is going on. Default is [false]"
+				echo "		--time=<print_time_needed>				Whether to print timing information. [false]"
+				echo "		--vstep=<how_many_voxels>				How many voxels to process in a single step. Default is [1200]"
 				echo ""
-				echo "BOLDParcellation.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "-- REQUIRED SEED FC PARMETERS:"
+				echo ""
+ 				echo "		--roinfo=<roi_seed_files>				An ROI file for the seed connectivity "
+ 				echo "		--options=<calculations_to_save>			A string defining which subject files to save [''] "
+ 				echo ""
+ 				echo "			> r ... save map of correlations "
+  				echo "			> f ... save map of Fisher z values "
+ 				echo "			> cv ... save map of covariances "
+  				echo "			> z ... save map of Z scores "
+				echo ""
+				echo "-- OPTIONAL SEED FC PARMETERS: "
+			 	echo ""
+ 				echo "		--method=<calculation_to_get_timeseries>		Method for extracting timeseries - 'mean' or 'pca' Default is ['mean'] "
+ 				echo ""
+ 				echo "-- Examples:"
+				echo ""
+				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--calculation='seed' \ "
+				echo "--runtype='individual' \ "
 				echo "--subject='100206' \ "
-				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
+				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
-				echo "--parcellationfile='/gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--extractdata='yes' \ "
-				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
-				echo "--outpath='/images/functional/'"
+				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
+				echo "--ignore='udvarsme' \ "
+				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
+				echo "--options='' \ "
+				echo "--method='' \ "
+				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--mask='5' "
 				echo ""	
+				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--calculation='seed' \ "
+				echo "--runtype='group' \ "
+				echo "--subject='100206' \ "
+				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
+				echo "--inputdatatype='dtseries' \ "
+				echo "--overwrite='no' \ "
+				echo "--extractdata='yes' \ "
+				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
+				echo "--ignore='udvarsme' \ "
+				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
+				echo "--options='' \ "
+				echo "--method='' \ "
+				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--mask='5' "
+				echo ""
+				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--calculation='gbc' \ "
+				echo "--runtype='individual' \ "
+				echo "--subject='100206' \ "
+				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputpath='/images/functional/' \ "
+				echo "--inputdatatype='dtseries' \ "
+				echo "--overwrite='no' \ "
+				echo "--extractdata='yes' \ "
+				echo "--outname='GBC' \ "
+				echo "--ignore='udvarsme' \ "
+#				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
+				echo "--command='' \ "
+#				echo "--method='' \ "
+				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--mask='5' "
+				echo "--target='' "
+				echo "--rsmooth='' "
+				echo "--rdilate='' "
+				echo ""	
+				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--calculation='gbc' \ "
+				echo "--runtype='group' \ "
+				echo "--subject='100206' \ "
+				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
+				echo "--inputdatatype='dtseries' \ "
+				echo "--overwrite='no' \ "
+				echo "--extractdata='yes' \ "
+				echo "--outname='GBC' \ "
+				echo "--ignore='udvarsme' \ "
+#				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
+				echo "--command='' \ "
+#				echo "--method='' \ "
+				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--mask='5' "
+				echo ""
 }
-
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -114,10 +264,6 @@ geho() {
     # InputDataType # e.g.dtseries
     # OutPath # e.g. /images/functional/
     # OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
-    # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
-    # ComputePConn # Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
-    # UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
-    # WeightsFile # Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
     # ExtractData # yes/no
 
 ########################################## OUTPUTS #########################################

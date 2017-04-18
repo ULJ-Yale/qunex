@@ -32,7 +32,7 @@
 ##	--hcp5 --> setup checkpoints
 ##	--hcpd or --hcpdlegacy --> setup checkpoints
 ##	--qcpreproc (DWI, BOLD, T1w, T2w, myelin)
-##	--fixica 
+##	--fixica å
 ##	--postfix 
 ##	--mapHCPData 
 ##	--createBOLDBrainMasks 
@@ -237,6 +237,7 @@ show_usage() {
   				echo ""  				
   				cyaneho "Misc functions and analyses"  	
   				cyaneho "---------------------------"			
+  				echo "structuralparcellation		parcellate myelin or thickness data via user-specified parcellation"
   				echo "boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
   				echo "dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
   				echo "dwiseedtractography		reduce dense dwi tractography data via user-specified seed structure"
@@ -244,9 +245,9 @@ show_usage() {
   				echo "boldmergenifti			merge specified nii bold timeseries"
   				echo "boldmergecifti			merge specified citi bold timeseries"
   				echo "bolddense			compute bold dense connectome (needs >30gb ram per bold)"
-  				echo "nii4dfpconvert		convert nifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "cifti4dfpconvert	convert cifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "ciftismooth		smooth & convert cifti bold data to 4dpf format for fild analyses"
+  				echo "nii4dfpconvert			convert nifti hcp-processed bold data to 4dpf format for fild analyses"
+  				echo "cifti4dfpconvert		convert cifti hcp-processed bold data to 4dpf format for fild analyses"
+  				echo "ciftismooth			smooth & convert cifti bold data to 4dpf format for fild analyses"
   				echo ""  				
   				cyaneho "FIX ICA de-noising"    
   				cyaneho "---------------------------"							
@@ -3675,6 +3676,139 @@ show_usage_dwiseedtractography() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  structuralparcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the AP wrapper
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+structuralparcellation() {
+
+		# Requirements for this function
+		# Connectome Workbench (v1.0 or above)
+		
+		########################################## INPUTS ########################################## 
+
+		# Data should be pre-processed and in CIFTI format
+		# The data should be in the folder relative to the master study folder, specified by the inputfile
+		# Mandatory input parameters:
+   	 	# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+    	# Subject	  # e.g. 100206
+    	# InputDataType # e.g. myelin
+    	# OutName # e.g. LR_Colelab_partitions
+    	# ExtractData # yes/no
+    	# ParcellationFile  # e.g. /gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii"
+
+		########################################## OUTPUTS #########################################
+
+		# Outputs will be *pconn.nii files located in the location specified in the outputpath
+		
+		# Parse General Parameters
+		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		StudyFolder="$StudyFolder"
+		CASE="$CASE"
+		InputDataType="$InputDataType"
+		OutName="$OutName"
+		ParcellationFile="$ParcellationFile"
+		ExtractData="$ExtractData"
+		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/structuralparcellation_log > /dev/null 2>&1
+		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/structuralparcellation_log
+		Overwrite="$Overwrite"
+		
+		if [ "$Cluster" == 1 ]; then
+		
+		echo "Running locally on `hostname`"
+		echo "Check log file output here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+				
+		${TOOLS}/MNAP/general/functions/StructuralParcellation.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--inputdatatype="${InputDataType}" \
+		--parcellationfile="${ParcellationFile}" \
+		--overwrite="${Overwrite}" \
+		--outname="${OutName}" \
+		--extractdata="${ExtractData}" >> "$LogFolder"/StructuralParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+		
+		else
+		
+		# set scheduler for fsl_sub command
+		fslsub="$Scheduler"
+		
+		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" ${TOOLS}/MNAP/general/functions/StructuralParcellation.sh \
+		--path="${StudyFolder}" \
+		--subject="${CASE}" \
+		--inputdatatype="${InputDataType}" \
+		--parcellationfile="${ParcellationFile}" \
+		--overwrite="${Overwrite}" \
+		--outname="${OutName}" \
+		--extractdata="${ExtractData}"
+		
+		echo "--------------------------------------------------------------"
+		echo "Data successfully submitted to $QUEUE" 
+		echo "Check output logs here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+		fi
+}
+
+show_usage_structuralparcellation() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function implements parcellation on the dense cortical thickness OR myelin files using a whole-brain parcellation (e.g. Glasser parcellation with subcortical labels included)."
+				echo ""
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>				Name of function"
+ 				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--subject=<comma_separated_list_of_cases>				List of subjects to run"
+				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. MyelinMap_BC or corrThickness)"
+				echo "		--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder (e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii)"
+				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
+				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "" 
+				echo ""
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+ 				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
+ 				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
+ 				echo ""
+				echo "-- Example with flagged parameters for a local run:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='structuralparcellation' \ "
+				echo "--subjects='100206' \ "
+				echo "--inputdatatype='MyelinMap_BC' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='LR_Colelab_partitions' \ "
+				echo "--extractdata='yes' "
+				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='structuralparcellation' \ "
+				echo "--subjects='100206' \ "
+				echo "--inputdatatype='MyelinMap_BC' \ "
+				echo "--parcellationfile='$TOOLS/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='LR_Colelab_partitions' \ "
+				echo "--extractdata='yes' "
+				echo "--queue='anticevic' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='lsf' "
+				echo "" 
+ 				echo ""
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "AP structuralparcellation /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
+				echo ""
+}
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #  boldparcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the AP wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3699,12 +3833,11 @@ boldparcellation() {
 		# ComputePConn # Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
 		# UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
 		# WeightsFile # Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
-
+		# ExtractData # yes/no
+		
 		########################################## OUTPUTS #########################################
 
-		# Outputs will be *pconn.nii files located in the location specified in the outputpath:
-		#    DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
-
+		# Outputs will be files located in the location specified in the outputpath
 		
 		# Parse General Parameters
 		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
@@ -3720,6 +3853,7 @@ boldparcellation() {
 		WeightsFile="$WeightsFile"
 		ParcellationFile="$ParcellationFile"
 		BOLDOutput="$StudyFolder/$CASE$OutPath"
+		ExtractData="$ExtractData"
 		mkdir "$BOLDOutput"/boldparcellation_log > /dev/null 2>&1
 		LogFolder="$BOLDOutput"boldparcellation_log
 		Overwrite="$Overwrite"
@@ -3742,6 +3876,7 @@ boldparcellation() {
 		--outname="${OutName}" \
 		--outpath="${OutPath}" \
 		--computepconn="${ComputePConn}" \
+		--extractdata="${ExtractData}" \
 		--useweights="${UseWeights}" \
 		--weightsfile="${WeightsFile}" >> "$LogFolder"/BOLDParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 		
@@ -3761,6 +3896,7 @@ boldparcellation() {
 		--outname="${OutName}" \
 		--outpath="${OutPath}" \
 		--computepconn="${ComputePConn}" \
+		--extractdata="${ExtractData}" \
 		--useweights="${UseWeights}" \
 		--weightsfile="${WeightsFile}"
 		
@@ -3802,6 +3938,7 @@ show_usage_boldparcellation() {
  				echo "		--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no)."
  				echo "		--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
  				echo "		--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)"
+ 				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
  				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -3816,6 +3953,7 @@ show_usage_boldparcellation() {
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
 				echo "--computepconn='yes' \ "
+				echo "--extractdata='yes' \ "
 				echo "--useweights='no' \ "
 				echo "--runmethod='1' "
 				echo ""
@@ -3827,11 +3965,12 @@ show_usage_boldparcellation() {
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
-				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='$TOOLS/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
 				echo "--computepconn='yes' \ "
+				echo "--extractdata='yes' \ "
 				echo "--useweights='no' \ "
 				echo "--queue='anticevic' \ "
 				echo "--runmethod='2' \ "
@@ -5529,6 +5668,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` # --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
 	OutPath=`opts_GetOpt "${setflag}outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
 	OutName=`opts_GetOpt "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file
+	ExtractData=`opts_GetOpt "${setflag}extractdata" $@` # --extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file
 	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@` # --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
 	UseWeights=`opts_GetOpt "${setflag}useweights" $@` # --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
 	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` # --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
@@ -6890,6 +7030,52 @@ if [ "$FunctionToRunInt" == "hcpdlegacy" ]; then
 fi
 
 # ------------------------------------------------------------------------------
+#  StructuralParcellation function loop (structuralparcellation)
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "structuralparcellation" ]; then	
+	
+# Check all the user-defined parameters: 1. InputDataType, 2. OutName, 3. ParcellationFile, 4. QUEUE, 5. RunMethod, 6. Scheduler
+# Optional: ComputePConn, UseWeights, WeightsFile
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
+		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi
+		
+		# Parse optional parameters if not specified 
+		if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+		if [ -z "$Overwrite" ]; then Overwrite="no"; fi
+		
+		echo ""
+		echo "Running StructuralParcellation function with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Study Folder: ${StudyFolder}"
+		echo "Subjects: ${CASES}"
+		echo "ParcellationFile: ${ParcellationFile}"
+		echo "Parcellated Data Output Name: ${OutName}"
+		echo "Input Data Type: ${InputDataType}"
+		echo "Extract data in CSV format: ${ExtractData}"		
+		echo "Overwrite prior run: ${Overwrite}"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi
+
+# ------------------------------------------------------------------------------
 #  BOLDParcellation function loop (boldparcellation)
 # ------------------------------------------------------------------------------
 
@@ -6907,7 +7093,7 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
@@ -6918,7 +7104,8 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		if [ -z "$UseWeights" ]; then UseWeights="no"; fi
 		if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
 		if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
-		
+		if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+
 		echo ""
 		echo "Running BOLDParcellation function with the following parameters:"
 		echo ""
@@ -6934,6 +7121,7 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		echo "Compute PConn File: ${ComputePConn}"
 		echo "Weights file specified to omit certain frames: ${UseWeights}"
 		echo "Weights file name: ${WeightsFile}"
+		echo "Extract data in CSV format: ${ExtractData}"		
 		echo "Overwrite prior run: ${Overwrite}"
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
