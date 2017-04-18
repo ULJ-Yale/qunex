@@ -604,7 +604,7 @@ classdef gmrimage
 
             % --- if fmask is a scalar, remove passed number of frames from start of image or each run
 
-            if length(fmask) == 1
+            if length(fmask) == 1 && ~isa(fmask, 'logical')
                 l = fmask;
                 fmask = ones(1, obj.frames);
                 if strcmp(options, 'perrun') && length(obj.runframes > 1)
@@ -621,7 +621,7 @@ classdef gmrimage
 
             % --- if fmask is a vector, apply it as a mask for the whole image or at each run
 
-            elseif length(fmask) > 1
+            elseif length(fmask) > 1 || ~isa(fmask, 'logical')
                 mask = zeros(1, obj.frames);
                 if strcmp(options, 'perrun') && length(obj.runframes > 1)
                     off = 1;

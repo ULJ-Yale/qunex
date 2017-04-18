@@ -105,7 +105,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-[subject, nsub, nfiles, listname] = g_ReadFileList(flist, verbose);
+[subject, nsub, nfiles, listname] = g_ReadFileList(flist);
 
 lname = strrep(listname, '.list', '');
 lname = strrep(lname, '.conc', '');
