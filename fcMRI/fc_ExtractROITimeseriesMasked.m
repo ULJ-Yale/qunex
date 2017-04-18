@@ -5,7 +5,7 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %	Extracts and saves region timeseries defined by provided roiinfo file
 %
 %   INPUTS
-%	    flist   	- A .list file.
+%	    flist   	- A .list file, or a well strucutured string (see g_ReadFileList).
 %	    roiinfo	    - A .names ROI definition file.
 %       inmask      - Per run mask information, number of frames to skip or a vector of frames to keep (1) and reject (0),
 %                     or a string with definition used to extract event-defined timepoints only
@@ -76,6 +76,8 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %            - Updated documentation
 %   2017-03-21 Grega Repovs
 %            - Optimized per subject masking of ROI.
+%   2017-04-18 Grega Repovs
+%            - Adjusted to use updated g_ReadFileList.
 %
 
 if nargin < 10 || isempty(bmask),  bmask   = false;  end
@@ -128,8 +130,7 @@ fprintf('\n\nStarting ...');
 
 fprintf('\n ... listing files to process');
 
-subject = g_ReadFileList(flist);
-nsub = length(subject);
+[subject, nsub, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 fprintf(' ... done.');
 

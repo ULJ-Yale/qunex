@@ -5,7 +5,8 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %	Computes seed based correlations maps for individuals as well as group maps.
 %
 %   INPUT
-%	    flist    - A .list file listing the subjects and their files for which to compute seedmaps.
+%	    flist    - A .list file listing the subjects and their files for which to compute seedmaps,
+%                  or a well strucutured string (see g_ReadFileList).
 %	    roiinfo	 - A names file for the ROI seeds.
 %	    inmask	 - An array mask defining which frames to use (1) and which not (0) or the number of frames to skip at start []
 %	    event	 - A string describing which events to extract timeseries for and the frame offset at start and end
@@ -60,6 +61,7 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %   2011-11-10 Grega Repovš - Changed to make use of gmrimage and allow ignoring of bad frames.
 %   2013-12-28 Grega Repovš - Moved to a more general name, added block event extraction and use of 'use' info.
 %   2017-03-19 Grega Repovs - Cleaned code, updated documentation.
+%   2017-04-18 Grega Repovs - Adjusted to use updated g_ReadFileList.
 %
 
 if nargin < 8 || isempty(cv),      cv      = false;  end
@@ -88,7 +90,7 @@ end
 go = true;
 
 fprintf('\n\nChecking ...\n');
-go = go & g_CheckFile(flist, 'image file list', 'error');
+% go = go & g_CheckFile(flist, 'image file list', 'error');
 go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
 g_CheckFolder(targetf, 'results folder');
 
@@ -96,16 +98,6 @@ if ~go
 	fprintf('ERROR: Some files were not found. Please check the paths and start again!\n\n');
 	return
 end
-
-% ---- list name
-
-[fpathstr, fname, fext] = fileparts(flist);
-
-lname = strrep(fname, '.list', '');
-lname = strrep(lname, '.conc', '');
-lname = strrep(lname, '.4dfp', '');
-lname = strrep(lname, '.img', '');
-
 
 % ---- Start
 
@@ -128,8 +120,12 @@ nana = length(ana);
 
 fprintf('\n ... listing files to process');
 
-subject = g_ReadFileList(flist);
-nsub = length(subject);
+[subject, nsub, nfiles, listname] = g_ReadFileList(flist, verbose);
+
+lname = strrep(listname, '.list', '');
+lname = strrep(lname, '.conc', '');
+lname = strrep(lname, '.4dfp', '');
+lname = strrep(lname, '.img', '');
 
 fprintf(' ... done.');
 

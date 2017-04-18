@@ -6,7 +6,8 @@ function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents,
 %
 %   INPUT
 %	  flist    ... File list with information on .conc, .fidl, and individual
-%                  roi (segmentation) files.
+%                  roi (segmentation) files, or a well strucutured string (see
+%                  g_ReadFileList).
 %	  roif 	   ... Region "names" file that specifies the ROI to extract trial
 %                  timeseries for.
 %     targetf  ... The target matlab file with results.
@@ -67,6 +68,8 @@ function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents,
 %            - adjusted to use the new ROIMask method
 %   2017-03-11 Grega Repovs
 %            - Cleaned code and updated documentation
+%   2017-04-18 Grega Repovs
+%            - Adjusted to use updated g_ReadFileList.
 
 if nargin < 6, scrubvar = []; end
 if nargin < 5, error('ERROR: Five arguments need to be specified for the function to run!'); end
@@ -91,8 +94,7 @@ frames = int16(frames);
 
 fprintf('\n ... listing files to process');
 
-subject = g_ReadFileList(flist);
-nsub = length(subject);
+[subject, nsub, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 fprintf(' ... done.');
 

@@ -7,9 +7,10 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 % INPUT
 %
 %    flist       - conc-like style list of subject image files or conc files:
-%                  subject id:<subject_id>
-%                  roi:<path to the individual's ROI file>
-%                  file:<path to bold files - one per line>
+%                     subject id:<subject_id>
+%                     roi:<path to the individual's ROI file>
+%                     file:<path to bold files - one per line>
+%                  or a well strucutured string (see g_ReadFileList).
 %    command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
 %                  mFzp, aFzp, ...
 %                  <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
@@ -102,9 +103,8 @@ fprintf(' ... done.');
 
 %   --- Get variables ready first
 
-template  = gmrimage(subject(c).files{1}, 'single', 1);
+template  = gmrimage(subject(1).files{1}, 'single', 1);
 nvoxels   = template.voxels;
-nsubjects = length(subject);
 desc      = parseCommand(command);
 nvolumes  = length(desc);
 

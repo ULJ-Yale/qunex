@@ -6,9 +6,10 @@ function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose,
 %
 %   INPUT
 %	    flist   	- conc-like style list of subject image files or conc files:
-%                      subject id:<subject_id>
-%                      roi:<path to the individual's ROI file>
-%                      file:<path to bold files - one per line>
+%                        subject id:<subject_id>
+%                        roi:<path to the individual's ROI file>
+%                        file:<path to bold files - one per line>
+%                     or a well strucutured string (see g_ReadFileList).
 %       command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD, mFzp, aFzp, ...
 %                      <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
 %       roi         - roi names file
@@ -73,6 +74,7 @@ function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose,
 %   2014-01-22 - Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
 %   2014-02-16 - Grega Repovs - forked from fcComputeGBC3 to do distance based bands
 %   2017-03-19 - Grega Repovs - cleaned, updated documentation
+%   2017-04-18 - Modified by Grega Repovš - adopted use of g_ReadFileList.
 %
 
 
@@ -102,36 +104,12 @@ end
 
 commands = regexp(command, '\|', 'split');
 
-[ps, root, ext] = fileparts(flist);
-fout = fopen([targetf '/' root '_GBCd.tab'], 'w');
-fprintf(fout, 'subject\tcommand\troi\tband\tvalue');
-
 %   ------------------------------------------------------------------------------------------
 %   -------------------------------------------------- make a list of all the files to process
 
 fprintf('\n ... listing files to process');
 
-files = fopen(flist);
-c = 0;
-while feof(files) == 0
-    s = fgetl(files);
-    if ~isempty(strfind(s, 'subject id:'))
-        c = c + 1;
-        [t, s] = strtok(s, ':');
-        subject(c).id = s(2:end);
-        nf = 0;
-    elseif ~isempty(strfind(s, 'roi:'))
-        [t, s] = strtok(s, ':');
-        subject(c).roi = s(2:end);
-        checkFile(subject(c).roi);
-    elseif ~isempty(strfind(s, 'file:'))
-        nf = nf + 1;
-        [t, s] = strtok(s, ':');
-        subject(c).files{nf} = s(2:end);
-        checkFile(s(2:end));
-    end
-end
-
+[subject, nsubjects, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 fprintf(' ... done.');
 
@@ -139,9 +117,10 @@ fprintf(' ... done.');
 %   ------------------------------------------------------------------------------------------
 %   -------------------------------------------- The main loop ... go through all the subjects
 
-%   --- Get variables ready first
+fout = fopen([targetf '/' listname '_GBCd.tab'], 'w');
+fprintf(fout, 'subject\tcommand\troi\tband\tvalue');
 
-nsubjects = length(subject);
+%   --- Get variables ready first
 
 for s = 1:nsubjects
 
@@ -208,7 +187,7 @@ data.rcodes   = rcodes;
 data.subjects = subject;
 
 fclose(fout);
-save([targetf '/' root '_GBCd'], data);
+save([targetf '/' listname '_GBCd'], data);
 
 
 
@@ -216,14 +195,6 @@ save([targetf '/' root '_GBCd'], data);
 %
 %   ---- Auxilary functions
 %
-
-function [ok] = checkFile(filename)
-
-ok = exist(filename, 'file');
-if ~ok
-    error('ERROR: File %s does not exists! Aborting processing!', filename);
-end
-
 
 %   ---- Parse the command
 

@@ -6,7 +6,8 @@ function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, 
 %   Uses k-means to group voxels in smask.
 %
 %   INPUTS
-%       flist    - A file list with information on subjects bold runs and segmentation files.
+%       flist    - A file list with information on subjects bold runs and segmentation files,
+%                  or a well strucutured string (see g_ReadFileList).
 %       smask    - .names file for source mask definition.
 %       tmask    - .names file for target mask roi definition.
 %       nc       - List of the number(s) of clusters to compute k-means on.
@@ -53,6 +54,8 @@ function [] = fc_ComputeABCorrKCA(flist, smask, tmask, nc, mask, root, options, 
 %   2017-03-19 Grega Repovs
 %            - Cleaned up the code
 %            - Updated documentation
+%   2017-04-18 Grega Repovs
+%            - Adjusted to use g_ReadFileList
 %
 
 if nargin < 10 || isempty(verbose),  verbose  = 'none';            end
@@ -102,27 +105,11 @@ if script, fprintf('\n\nStarting ...'), end
 
 if script, fprintf('\n ... listing files to process'), end
 
-files = fopen(flist);
-c = 0;
-while feof(files) == 0
-    s = fgetl(files);
-    if ~isempty(strfind(s, 'subject id:'))
-        c = c + 1;
-        [t, s] = strtok(s, ':');
-        subject(c).id = s(2:end);
-        nf = 0;
-    elseif ~isempty(strfind(s, 'roi:'))
-        [t, s] = strtok(s, ':');
-        subject(c).roi = s(2:end);
-        checkFile(subject(c).roi);
-    elseif ~isempty(strfind(s, 'file:'))
-        nf = nf + 1;
-        [t, s] = strtok(s, ':');
-        subject(c).files{nf} = s(2:end);
-        checkFile(s(2:end));
-    end
+[subject, nsubjects, nfiles, listname] = g_ReadFileList(flist, verbose);
+
+if isempty(root)
+    root = listname;
 end
-nsubjects = length(subject);
 
 
 if script, fprintf(' ... done.'), end
@@ -258,19 +245,4 @@ end
 
 
 if script, fprintf('\nDONE!\n\n'), end
-
-end
-
-%
-%   ---- Auxilary functions
-%
-
-function [ok] = checkFile(filename)
-
-ok = exist(filename, 'file');
-if ~ok
-    error('ERROR: File %s does not exists! Aborting processing!', filename);
-end
-
-end
 
