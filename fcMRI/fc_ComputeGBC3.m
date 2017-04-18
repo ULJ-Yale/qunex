@@ -64,7 +64,8 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 % 2010-12-01 - Modified by Grega Repovš - added in smoothing and dilation of images.
 % 2014-01-22 - Modified by Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
 % 2016-02-08 - Modified by Grega Repovš - added an option to specify how many voxels to work with in a single step.
-% 2016-11-26 - Mofidied by Grega Repovš - updated documentation.
+% 2016-11-26 - Modified by Grega Repovš - updated documentation.
+% 2017-04-18 - Modified by Grega Repovš - adopted use of g_ReadFileList.
 %
 
 fprintf('\n\nStarting ...');
@@ -91,27 +92,7 @@ end
 
 fprintf('\n ... listing files to process');
 
-files = fopen(flist);
-c = 0;
-while feof(files) == 0
-    s = fgetl(files);
-    if ~isempty(strfind(s, 'subject id:'))
-        c = c + 1;
-        [t, s] = strtok(s, ':');
-        subject(c).id = s(2:end);
-        nf = 0;
-    elseif ~isempty(strfind(s, 'roi:'))
-        [t, s] = strtok(s, ':');
-        subject(c).roi = s(2:end);
-        checkFile(subject(c).roi);
-    elseif ~isempty(strfind(s, 'file:'))
-        nf = nf + 1;
-        [t, s] = strtok(s, ':');
-        subject(c).files{nf} = s(2:end);
-        checkFile(s(2:end));
-    end
-end
-
+[subject, nsubjects, nfiles, listname] = g_ReadFileList(flist, verbose);
 
 fprintf(' ... done.');
 
@@ -194,23 +175,14 @@ for s = 1:nsubjects
     fprintf(' [%.1fs]\n', toc);
 end
 
-[ps, root, ext] = fileparts(flist);
-
 for c = 1:nvolumes
-    fname = [root '_gbc_' desc{c}];
-    gbc(c).mri_saveimage(fullfile(targetf,fname));
+    fname = [listname '_gbc_' desc{c}];
+    gbc(c).mri_saveimage(fullfile(targetf, fname));
 end
 
 %
 %   ---- Auxilary functions
 %
-
-function [ok] = checkFile(filename)
-
-ok = exist(filename, 'file');
-if ~ok
-    error('ERROR: File %s does not exists! Aborting processing!', filename);
-end
 
 %   ---- Do the scrub
 
