@@ -37,6 +37,14 @@ acq_log <- data.frame(parseDB(event, acq_formname, "all"))
 includeRows <- as.vector(which(!is.na(parseDB(event, acq_formname, scanID_fieldname))[,1], arr.ind = TRUE))
 acq_log <- acq_log[includeRows,]
 colnames(acq_log) <- (1:ncol(acq_log))  
+
+# remove line breaks and commas within each cell (otherwise log will be difficult to parse in bash)
+for (i in 1:nrow(acq_log)){
+  for (j in 1:ncol(acq_log)){
+    acq_log[i,j] <- as.vector(gsub("[','\r\n]", ". ", acq_log[i,j]))
+  }
+}
+
 # save acquisition log in study_folder 
 write.table(acq_log, file = acq_logfile, sep=",", col.names=FALSE, row.names = FALSE)
 
