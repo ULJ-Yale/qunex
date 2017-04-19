@@ -157,7 +157,7 @@ if ismember(saveoption, {'by effect', 'by subject'})
     out.mri_saveimage(outf);
 else
     if verbose, fprintf('\n---> saving data in separate files for each effect'); end
-    for e = estimates(:)'
+    for e = effects(:)'
         if verbose, fprintf('\n     ... %s', e{1}); end
         mask = ismember(effect, e);
         out = glm.zeroframes(sum(mask));
