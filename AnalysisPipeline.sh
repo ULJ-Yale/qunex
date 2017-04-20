@@ -237,6 +237,7 @@ show_usage() {
   				echo ""  				
   				cyaneho "Misc functions and analyses"  	
   				cyaneho "---------------------------"			
+  				echo "computeboldfc				computes seed or gbc BOLD functional connectivity"
   				echo "structuralparcellation		parcellate myelin or thickness data via user-specified parcellation"
   				echo "boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
   				echo "dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
@@ -3397,11 +3398,11 @@ show_usage_hcpdlegacy() {
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='anticevic-gpu' --runmethod='1' --overwrite='yes'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='<name_of_gpu_enabled_queue>' --runmethod='1' --overwrite='yes'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='anticevic-gpu' --runmethod='2' --scheduler='lsf' --overwrite='yes'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='<name_of_gpu_enabled_queue>' --runmethod='2' --scheduler='lsf' --overwrite='yes'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -3529,7 +3530,7 @@ show_usage_dwidenseparcellation() {
 				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='lsf'"
 				echo ""
@@ -3665,7 +3666,7 @@ show_usage_dwiseedtractography() {
 				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='Thalamus_Seed' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='lsf'"
 				echo ""
@@ -3674,6 +3675,335 @@ show_usage_dwiseedtractography() {
 				echo "Interactive terminal run method not supported for this function"
 				echo ""
 }
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  computeboldfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the AP wrapper
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+computeboldfc() {
+
+		# Requirements for this function
+		# Connectome Workbench (v1.0 or above)
+		
+		########################################## INPUTS ########################################## 
+
+		# BOLD data should be pre-processed and in CIFTI or NIFTI format
+		
+		########################################## OUTPUTS #########################################
+
+		# Outputs will be files located in the location specified in the outputpath
+		
+		# -- Parse General Parameters
+		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		StudyFolder="$StudyFolder"
+		CASE="$CASE"
+		InputFile="$InputFile"
+		OutPath="$OutPathFC"
+		OutName="$OutName"
+		ExtractData="$ExtractData"
+		# -- Parse additional parameters
+		Calculation="$Calculation"		# --calculation=	
+		RunType="$RunType"				# --runtype= 		
+		FileList="$FileList"			# --flist=			
+		IgnoreFrames="$IgnoreFrames"	# --ignore=			
+		MaskFrames="$MaskFrames"		# --mask=		
+		Covariance="$Covariance"		# --covariance=		
+		TargetROI="$TargetROI"			# --target=			
+		RadiusSmooth="$RadiusSmooth"	# --rsmooth=		
+		RadiusDilate="$RadiusDilate"	# --rdilate=		
+		GBCCommand="$GBCCommand"		# --command=		
+		Verbose="$Verbose"				# --verbose=		
+		ComputeTime="$ComputeTime"		# --time=			
+		VoxelStep="$VoxelStep"			# --vstep=			
+		ROIInfo="$ROIInfo"				# --roinfo=			
+		FCCommand="$FCCommand"			# --options=		
+		Method="$Method"				# --method=		
+		
+		mkdir "$OutPath"/computeboldfc_log > /dev/null 2>&1
+		LogFolder="$OutPath/computeboldfc_log"
+		Overwrite="$Overwrite"
+
+		if [ ${Calculation} == "seed" ]; then
+			if [ "$Cluster" == 1 ]; then
+				echo "Running locally on `hostname`"
+				echo "Check log file output here: $LogFolder"
+				echo "--------------------------------------------------------------"
+				echo ""
+				ComputeFunctionalConnectivity.sh \
+				--path="${StudyFolder}" \
+				--calculation="${Calculation}" \
+				--runtype="${RunType}" \
+				--subject="${CASE}" \
+				--inputfile="${InputFile}" \
+				--extractdata="${ExtractData}" \
+				--outname="${OutName}" \
+				--overwrite="${Overwrite}" \
+				--ignore="${IgnoreFrames}" \
+				--roinfo="${ROIInfo}" \
+				--options="${FCCommand}" \
+				--method="${Method}" \
+				--targetf="${OutPath}" \
+				--mask="${MaskFrames}" \
+				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$CASE"_"$OutName"_`date +%Y-%m-%d-%H-%M-%S`.log
+			else
+				# set scheduler for fsl_sub command
+				fslsub="$Scheduler"
+				fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" ComputeFunctionalConnectivity.sh \
+				--path="${StudyFolder}" \
+				--calculation="${Calculation}" \
+				--runtype="${RunType}" \
+				--subject="${CASE}" \
+				--inputfile="${InputFile}" \
+				--extractdata="${ExtractData}" \
+				--outname="${OutName}" \
+				--overwrite="${Overwrite}" \
+				--ignore="${IgnoreFrames}" \
+				--roinfo="${ROIInfo}" \
+				--options="${FCCommand}" \
+				--method="${Method}" \
+				--targetf="${OutPath}" \
+				--mask="${MaskFrames}" \
+				--covariance="${Covariance}"
+
+				echo "--------------------------------------------------------------"
+				echo "Data successfully submitted to $QUEUE" 
+				echo "Check output logs here: $LogFolder"
+				echo "--------------------------------------------------------------"
+				echo ""
+			fi
+		fi
+		if [ ${Calculation} == "gbc" ]; then
+			if [ "$Cluster" == 1 ]; then
+				echo "Running locally on `hostname`"
+				echo "Check log file output here: $LogFolder"
+				echo "--------------------------------------------------------------"
+				echo ""
+				ComputeFunctionalConnectivity.sh \
+				--path="${StudyFolder}" \
+				--calculation="${Calculation}" \
+				--runtype="${RunType}" \
+				--subject="${CASE}" \
+				--inputfile="${InputFile}" \
+				--extractdata="${ExtractData}" \
+				--outname="${OutName}" \
+				--overwrite="${Overwrite}" \
+				--ignore="${IgnoreFrames}" \
+				--target="${TargetROI}" \
+				--command="${GBCCommand}" \
+				--targetf="${OutPath}" \
+				--mask="${MaskFrames}" \
+				--rsmooth="${RadiusSmooth}" \
+				--rdilate="${RadiusDilate}" \
+				--verbose="${Verbose}" \
+				--time="${ComputeTime}" \
+				--vstep="${VoxelStep}" \
+				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$CASE"_"$OutName"_`date +%Y-%m-%d-%H-%M-%S`.log
+			else
+				# set scheduler for fsl_sub command
+				fslsub="$Scheduler"
+				fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" ComputeFunctionalConnectivity.sh \
+				--path="${StudyFolder}" \
+				--calculation="${Calculation}" \
+				--runtype="${RunType}" \
+				--subject="${CASE}" \
+				--inputfile="${InputFile}" \
+				--extractdata="${ExtractData}" \
+				--outname="${OutName}" \
+				--overwrite="${Overwrite}" \
+				--ignore="${IgnoreFrames}" \
+				--target="${TargetROI}" \
+				--command="${GBCCommand}" \
+				--targetf="${OutPath}" \
+				--mask="${MaskFrames}" \
+				--rsmooth="${RadiusSmooth}" \
+				--rdilate="${RadiusDilate}" \
+				--verbose="${Verbose}" \
+				--time="${ComputeTime}" \
+				--vstep="${VoxelStep}" \
+				--covariance="${Covariance}"
+				
+				echo "--------------------------------------------------------------"
+				echo "Data successfully submitted to $QUEUE"
+				echo "Check output logs here: $LogFolder"
+				echo "--------------------------------------------------------------"
+				echo ""
+			fi
+		fi
+
+}
+
+show_usage_computeboldfc() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function implements Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) on the dense or parcellated (e.g. Glasser parcellation)."
+				echo ""
+				echo ""
+				echo "For more detailed documentation run <help fc_ComputeGBC3>, <help gmrimage.mri_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside matlab"
+				echo ""
+				echo ""
+				echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
+				echo ""
+ 				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--calculation=<type_of_calculation>					Run <seed> or <gbc> calculation for functional connectivity."
+				echo "		--runtype=<type_of_run>					Run calculation on a group (requires a list) or on individual subjects (requires individual specification) (group or individual)"
+				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
+				echo "		--targetf=<path_for_output_file>			Specify the absolute path for output folder"
+				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
+				echo "		--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
+				echo ""
+				echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
+				echo ""
+				echo "		--subject=<list_of_cases>				List of subjects to run"
+				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the absolute path of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
+				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. ptseries or dtseries)"
+				echo "		--outname=<name_of_output_file>				Specify the suffix name of the output file name"  
+				echo ""
+				echo "-- OPTIONAL GENERAL PARAMETERS: "	
+				echo ""
+			 	echo "		--overwrite=<clean_prior_run>				Delete prior run for a given subject"
+				echo "		--extractdata=<save_out_the_data_as_as_csv>		Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
+				echo "		--covariance=<compute_covariance>			Whether to compute covariances instead of correlations (true / false). Default is [false]"
+				echo ""
+				echo "-- REQUIRED GBC PARMETERS:"
+				echo ""
+				echo "		--target=<which_roi_to_use>				Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]"
+				echo "		--rsmooth=<smoothing_radius>				Radius for smoothing (no smoothing if empty). Default is []"
+				echo "		--rdilate=<dilation_radius>				Radius for dilating mask (no dilation if empty). Default is []"
+				echo "		--command=<type_of_gbc_to_run>				Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
+				echo ""
+				echo "                   	> mFz:t  ... computes mean Fz value across all voxels (over threshold t) "
+				echo "                   	> aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t) "
+				echo "                   	> pFz:t  ... computes mean positive Fz value across all voxels (over threshold t) "
+  				echo "                   	> nFz:t  ... computes mean positive Fz value across all voxels (below threshold t) "
+         		echo "                   	> aD:t   ... computes proportion of voxels with absolute r over t "
+         		echo "                     	> pD:t   ... computes proportion of voxels with positive r over t "
+         		echo "                     	> nD:t   ... computes proportion of voxels with negative r below t "
+         		echo "                     	> mFzp:n ... computes mean Fz value across n proportional ranges "
+         		echo "                     	> aFzp:n ... computes mean absolute Fz value across n proportional ranges "
+         		echo "                     	> mFzs:n ... computes mean Fz value across n strength ranges "
+          		echo "                    	> pFzs:n ... computes mean Fz value across n strength ranges for positive correlations "
+         		echo "                     	> nFzs:n ... computes mean Fz value across n strength ranges for negative correlations "
+         		echo "                     	> mDs:n  ... computes proportion of voxels within n strength ranges of r "
+         		echo "                     	> aDs:n  ... computes proportion of voxels within n strength ranges of absolute r "
+         		echo "                     	> pDs:n  ... computes proportion of voxels within n strength ranges of positive r "
+         		echo "                     	> nDs:n  ... computes proportion of voxels within n strength ranges of negative r "  
+				echo ""
+				echo "-- OPTIONAL GBC PARMETERS:"
+				echo "" 
+				echo "		--verbose=<print_output_verbosely>			Report what is going on. Default is [false]"
+				echo "		--time=<print_time_needed>				Whether to print timing information. [false]"
+				echo "		--vstep=<how_many_voxels>				How many voxels to process in a single step. Default is [1200]"
+				echo ""
+				echo "-- REQUIRED SEED FC PARMETERS:"
+				echo ""
+ 				echo "		--roinfo=<roi_seed_files>				An ROI file for the seed connectivity "
+				echo ""
+				echo "-- OPTIONAL SEED FC PARMETERS: "
+			 	echo ""
+ 				echo "		--method=<method_to_get_timeseries>		Method for extracting timeseries - 'mean' or 'pca' Default is ['mean'] "
+ 				echo "		--options=<calculations_to_save>			A string defining which subject files to save. Default assumes all [''] "
+ 				echo ""
+ 				echo "			> r ... save map of correlations "
+  				echo "			> f ... save map of Fisher z values "
+ 				echo "			> cv ... save map of covariances "
+  				echo "			> z ... save map of Z scores "
+ 				echo ""
+				echo "-- Seed FC Examples with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='computeboldfc' \ "				
+				echo "--calculation='seed' \ "
+				echo "--runtype='individual' \ "
+				echo "--subjects='100206' \ "
+				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--extractdata='yes' \ "
+				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
+				echo "--ignore='udvarsme' \ "
+				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
+				echo "--options='' \ "
+				echo "--method='' \ "
+				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--mask='5' \ "
+				echo "--covariance='false' "
+				echo "--queue='<name_of_queue>' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='lsf' "
+				echo ""
+				echo ""	
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='computeboldfc' \ "
+				echo "--calculation='seed' \ "
+				echo "--runtype='group' \ "
+				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
+				echo "--extractdata='yes' \ "
+				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
+				echo "--ignore='udvarsme' \ "
+				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
+				echo "--options='' \ "
+				echo "--method='' \ "
+				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--mask='5' "
+				echo "--covariance='false' "
+				echo "--queue='<name_of_queue>' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='lsf' "
+				echo ""
+				echo "-- GBC Examples with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='computeboldfc' \ "
+				echo "--calculation='gbc' \ "
+				echo "--runtype='individual' \ "
+				echo "--subjects='100206' \ "
+				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--extractdata='yes' \ "
+				echo "--outname='GBC' \ "
+				echo "--ignore='udvarsme' \ "
+				echo "--command='mFz:' \ "
+				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--mask='5' \ "
+				echo "--target='' \ "
+				echo "--rsmooth='0' \ "
+				echo "--rdilate='0' \ "
+				echo "--verbose='true' \ "
+				echo "--time='true' \ "
+				echo "--vstep='10000'"
+				echo "--covariance='false' "
+				echo "--queue='<name_of_queue>' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='lsf' "
+				echo ""	
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--function='computeboldfc' \ "
+				echo "--calculation='gbc' \ "
+				echo "--runtype='group' \ "
+				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
+				echo "--extractdata='yes' \ "
+				echo "--outname='GBC' \ "
+				echo "--ignore='udvarsme' \ "
+				echo "--command='mFz:' \ "
+				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--mask='5' \ "
+				echo "--target='' \ "
+				echo "--rsmooth='0' \ "
+				echo "--rdilate='0' \ "
+				echo "--verbose='true' \ "
+				echo "--time='true' \ "
+				echo "--vstep='10000'"
+				echo "--covariance='false' "
+				echo "--queue='<name_of_queue>' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='lsf' "
+				echo ""
+ 				echo ""
+				echo "-- Example with interactive terminal:"
+				echo ""
+				echo "Interactive terminal usage is not supported for this function."
+				echo ""
+}
+
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #  structuralparcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the AP wrapper
@@ -3750,6 +4080,7 @@ structuralparcellation() {
 		fi
 }
 
+
 show_usage_structuralparcellation() {
 
 				echo ""
@@ -3797,14 +4128,14 @@ show_usage_structuralparcellation() {
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions' \ "
 				echo "--extractdata='yes' "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='lsf' "
 				echo "" 
  				echo ""
 				echo "-- Example with interactive terminal:"
 				echo ""
-				echo "AP structuralparcellation /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
+				echo "Interactive terminal usage is not supported for this function."
 				echo ""
 }
 
@@ -3855,7 +4186,7 @@ boldparcellation() {
 		BOLDOutput="$StudyFolder/$CASE$OutPath"
 		ExtractData="$ExtractData"
 		mkdir "$BOLDOutput"/boldparcellation_log > /dev/null 2>&1
-		LogFolder="$BOLDOutput"boldparcellation_log
+		LogFolder="$BOLDOutput"/boldparcellation_log
 		Overwrite="$Overwrite"
 		
 		if [ "$Cluster" == 1 ]; then
@@ -3972,14 +4303,14 @@ show_usage_boldparcellation() {
 				echo "--computepconn='yes' \ "
 				echo "--extractdata='yes' \ "
 				echo "--useweights='no' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='lsf' "
 				echo "" 
  				echo ""
 				echo "-- Example with interactive terminal:"
 				echo ""
-				echo "AP boldparcellation /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
+				echo "Interactive terminal usage is not supported for this function."
 				echo ""
 }
 
@@ -4045,7 +4376,7 @@ show_usage_fsldtifit() {
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='fsldtifit' --queue='anticevic-gpu' --runmethod='2' --overwrite='yes'"
+				echo "AP --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='fsldtifit' --queue='<name_of_gpu_enabled_queue>' --runmethod='2' --overwrite='yes'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -4190,7 +4521,7 @@ show_usage_fslbedpostxgpu() {
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='fslbedpostxgpu' --fibers='3' --burnin='3000' --model='3' --queue='anticevic-gpu' --runmethod='2' --overwrite='yes'"
+				echo "AP --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='fslbedpostxgpu' --fibers='3' --burnin='3000' --model='3' --queue='<name_of_gpu_enabled_queue>' --runmethod='2' --overwrite='yes'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -4532,7 +4863,7 @@ show_usage_pretractographydense() {
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta9342' --function='pretractographydense' --queue='anticevic' --runmethod='2' --scheduler='lsf'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta9342' --function='pretractographydense' --queue='<name_of_queue>' --runmethod='2' --scheduler='lsf'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -4752,7 +5083,7 @@ show_usage_probtrackxgpudense() {
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta9776' --function='probtrackxgpudense' --queue='anticevic-gpu' --scheduler='lsf' --omatrix1='yes' --nsamplesmatrix1='10000' --overwrite='no'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta9776' --function='probtrackxgpudense' --queue='<name_of_gpu_enabled_queue>' --scheduler='lsf' --omatrix1='yes' --nsamplesmatrix1='10000' --overwrite='no'"
 				echo ""				
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -5098,7 +5429,7 @@ show_usage_qcpreproc() {
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--scheduler='lsf' "
 				echo "" 			
 				echo "-- Example with interactive terminal:"
@@ -5118,7 +5449,7 @@ show_usage_qcpreproc() {
 				echo "--modality='T1w' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--scheduler='lsf' "
 				echo ""
 				echo "# -- T2 QC"
@@ -5130,7 +5461,7 @@ show_usage_qcpreproc() {
 				echo "--modality='T2w' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--scheduler='lsf' "
 				echo ""
 				echo "# -- Myelin QC"
@@ -5142,7 +5473,7 @@ show_usage_qcpreproc() {
 				echo "--modality='myelin' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--scheduler='lsf' "
 				echo ""
 				echo "# -- DWI QC "
@@ -5157,7 +5488,7 @@ show_usage_qcpreproc() {
 				echo "--dwipath='Diffusion_DWI_dir74_AP_b1000b2500' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--scheduler='lsf' "
 				echo ""
 				echo "# -- BOLD QC"
@@ -5171,7 +5502,7 @@ show_usage_qcpreproc() {
 				echo "--boldsuffix='Atlas' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='anticevic' \ "
+				echo "--queue='<name_of_queue>' \ "
 				echo "--scheduler='lsf' "
 				echo ""
 				echo ""
@@ -5627,87 +5958,106 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	fi
 	
 	# -- general input flags
-	StudyFolder=`opts_GetOpt "${setflag}path" $@` # local folder to work on
-	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
-	QUEUE=`opts_GetOpt "${setflag}queue" $@` # <name_of_cluster_queue>			Cluster queue name	
-	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@` #Option for printing the entire command
-	Scheduler=`opts_GetOpt "${setflag}scheduler" $@` #Specify the type of scheduler to use 
-	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` #Clean prior run and starr fresh [yes/no]
-	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` # Specifies whether to run on the cluster or on the local node
-	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@` # Specifies homefolder for FreeSurfer binary to use
-	APVersion=`opts_GetOpt "${setflag}version" $@` # Specifies homefolder for FreeSurfer binary to use
+	StudyFolder=`opts_GetOpt "${setflag}path" $@` 																			# local folder to work on
+	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` 	# list of input cases; removing comma or pipes
+	QUEUE=`opts_GetOpt "${setflag}queue" $@` 																				# <name_of_cluster_queue>			Cluster queue name	
+	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@` 																			# Option for printing the entire command
+	Scheduler=`opts_GetOpt "${setflag}scheduler" $@` 																		# Specify the type of scheduler to use 
+	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` 																		# Clean prior run and starr fresh [yes/no]
+	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` 																		# Specifies whether to run on the cluster or on the local node
+	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@` 														# Specifies homefolder for FreeSurfer binary to use
+	APVersion=`opts_GetOpt "${setflag}version" $@` 																			# Specifies homefolder for FreeSurfer binary to use
 	
 	# -- create lists input flags
-	ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@` # Which lists to generate
-	Append=`opts_GetOpt "${setflag}append" $@` # Append the list
-	ListName=`opts_GetOpt "${setflag}listname" $@` # Name of the list
-	ParameterFile=`opts_GetOpt "${setflag}parameterfile" $@` # Use parameter file header
-	ListFunction=`opts_GetOpt "${setflag}listfunction" $@` # Which function to use to generate the list
-	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
-	FileType=`opts_GetOpt "${setflag}filetype" $@` # --filetype=<file_extension>
-	BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` # --boldsuffix=<bold_suffix>
-	SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@` # Use subject HCP File for appending the parameter list
+	ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@` 																	# Which lists to generate
+	Append=`opts_GetOpt "${setflag}append" $@` 																				# Append the list
+	ListName=`opts_GetOpt "${setflag}listname" $@` 																			# Name of the list
+	ParameterFile=`opts_GetOpt "${setflag}parameterfile" $@` 																# Use parameter file header
+	ListFunction=`opts_GetOpt "${setflag}listfunction" $@` 																	# Which function to use to generate the list
+	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	FileType=`opts_GetOpt "${setflag}filetype" $@` 																			# --filetype=<file_extension>
+	BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<bold_suffix>
+	SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@` 																# Use subject HCP File for appending the parameter list
 
 	# -- hpcsync input flags
-	NetID=`opts_GetOpt "${setflag}netid" $@` # NetID for cluster rsync command
-	HCPStudyFolder=`opts_GetOpt "${setflag}clusterpath" $@` # cluster study folder for cluster rsync command
-	Direction=`opts_GetOpt "${setflag}dir" $@` # direction of rsync command (1 to cluster; 2 from cluster)
-	ClusterName=`opts_GetOpt "${setflag}cluster" $@` # cluster address [e.g. louise.yale.edu)
+	NetID=`opts_GetOpt "${setflag}netid" $@` 																				# Yale NetID for cluster rsync command
+	HCPStudyFolder=`opts_GetOpt "${setflag}clusterpath" $@` 																# cluster study folder for cluster rsync command
+	Direction=`opts_GetOpt "${setflag}dir" $@` 																				# direction of rsync command (1 to cluster; 2 from cluster)
+	ClusterName=`opts_GetOpt "${setflag}cluster" $@` 																		# cluster address [e.g. louise.yale.edu)
 
 	# -- hcpdlegacy input flags
-	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@` # <echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69
-	PEdir=`opts_GetOpt "${setflag}PEdir" $@` # <phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
-	TE=`opts_GetOpt "${setflag}TE" $@` # <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
-	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@` # <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
-	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@` # <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`																	# <echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69
+	PEdir=`opts_GetOpt "${setflag}PEdir" $@` 																				# <phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
+	TE=`opts_GetOpt "${setflag}TE" $@` 																						# <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
+	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@` 																		# <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
+	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@` 																# <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
 	
 	# -- boldparcellation input flags
-	InputFile=`opts_GetOpt "${setflag}inputfile" $@` # --inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
-	InputPath=`opts_GetOpt "${setflag}inputpath" $@` # --inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
-	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` # --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
-	OutPath=`opts_GetOpt "${setflag}outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
-	OutName=`opts_GetOpt "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file
-	ExtractData=`opts_GetOpt "${setflag}extractdata" $@` # --extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file
-	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@` # --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
-	UseWeights=`opts_GetOpt "${setflag}useweights" $@` # --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
-	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` # --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	InputFile=`opts_GetOpt "${setflag}inputfile" $@` 																		# --inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
+	InputPath=`opts_GetOpt "${setflag}inputpath" $@` 																		# --inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
+	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` 																# --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
+	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
+	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file
+	ExtractData=`opts_GetOpt "${setflag}extractdata" $@` 																	# --extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file
+	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@` 																	# --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
+	UseWeights=`opts_GetOpt "${setflag}useweights" $@` 																		# --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
+	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` 																	# --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
+	# -- computeboldfc input flags
+	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`																			# --targetf=			
+	Calculation=`opts_GetOpt "${setflag}calculation" $@`																	# --calculation=	
+	RunType=`opts_GetOpt "${setflag}runtype" $@`																			# --runtype= 		
+	FileList=`opts_GetOpt "${setflag}flist" $@`																				# --flist=			
+	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																		# --ignore=			
+	MaskFrames=`opts_GetOpt "${setflag}mask" $@`																			# --mask=		
+	Covariance=`opts_GetOpt "${setflag}covariance" $@`																		# --covariance=		
+	TargetROI=`opts_GetOpt "${setflag}target" $@`																			# --target=			
+	RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`																		# --rsmooth=		
+	RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`																		# --rdilate=		
+	GBCCommand=`opts_GetOpt "${setflag}command" $@`																			# --command=		
+	Verbose=`opts_GetOpt "${setflag}verbose" $@`																			# --verbose=		
+	ComputeTime=`opts_GetOpt "${setflag}-time" $@`																			# --time=			
+	VoxelStep=`opts_GetOpt "${setflag}vstep" $@`																			# --vstep=			
+	ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`																				# --roinfo=			
+	FCCommand=`opts_GetOpt "${setflag}options" $@`																			# --options=		
+	Method=`opts_GetOpt "${setflag}method" $@`																				# --method=		
+		
 	# -- dwidenseparcellation input flags
-	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` # --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` # --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
-	OutName=`opts_GetOpt "${setflag}outname" $@` # --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
+	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` 																# --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
 	
 	# -- dwiseedtractography input flags
-	SeedFile=`opts_GetOpt "${setflag}seedfile" $@` # --seedfile=<structure_for_seeding>	Specify the absolute path of the seed file you want to use as a seed for dconn reduction
+	SeedFile=`opts_GetOpt "${setflag}seedfile" $@` 																			# --seedfile=<structure_for_seeding>	Specify the absolute path of the seed file you want to use as a seed for dconn reduction
 	
 	# -- fslbedpostxgpu input flags
-	Fibers=`opts_GetOpt "${setflag}fibers" $@`  # <number_of_fibers>		Number of fibres per voxel, default 3
-	Model=`opts_GetOpt "${setflag}model" $@`    # <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
-	Burnin=`opts_GetOpt "${setflag}burnin" $@`  # <burnin_period_value>		Burnin period, default 1000
-	Jumps=`opts_GetOpt "${setflag}jumps" $@`    # <number_of_jumps>		Number of jumps, default 1250
+	Fibers=`opts_GetOpt "${setflag}fibers" $@` 																				# <number_of_fibers>		Number of fibres per voxel, default 3
+	Model=`opts_GetOpt "${setflag}model" $@`   																				# <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
+	Burnin=`opts_GetOpt "${setflag}burnin" $@` 																				# <burnin_period_value>		Burnin period, default 1000
+	Jumps=`opts_GetOpt "${setflag}jumps" $@`   																				# <number_of_jumps>			Number of jumps, default 1250
 	
 	# -- probtrackxgpudense input flags
-	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`  # <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
-	MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`  # <matrix3_model>		Specify if you wish to run matrix 3 model [yes or omit flag]
-	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`  # <Number_of_Samples_for_Matrix1>		Number of samples - default=5000
-	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`  # <Number_of_Samples_for_Matrix3>>		Number of samples - default=5000
+	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`  																		# <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
+	MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`  																		# <matrix3_model>		Specify if you wish to run matrix 3 model [yes or omit flag]
+	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`  														# <Number_of_Samples_for_Matrix1>		Number of samples - default=5000
+	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`  														# <Number_of_Samples_for_Matrix3>>		Number of samples - default=5000
 	
 	# -- awshcpsync input flags
-	Modality=`opts_GetOpt "${setflag}modality" $@` # <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
-	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`	 # <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
+	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
+	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`	 																			# <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
 	# -- qcpreproc input flags
-	OutPath=`opts_GetOpt "${setflag}outpath" $@` # --outpath=<path_for_output_file>			Specify the output path name of the QC folder
-	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` # --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/general/templates)
-	Modality=`opts_GetOpt "${setflag}modality" $@` # --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
-	DWIPath=`opts_GetOpt "${setflag}dwipath" $@` # --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
-	DWIData=`opts_GetOpt "${setflag}dwidata" $@` # --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
-	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@` # --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
-	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` # --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
-	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` # --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
-	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@` # --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation
+	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>			Specify the output path name of the QC folder
+	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` 																# --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/general/templates)
+	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
+	DWIPath=`opts_GetOpt "${setflag}dwipath" $@` 																			# --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
+	DWIData=`opts_GetOpt "${setflag}dwidata" $@` 																			# --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
+	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@` 																		# --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
+	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
+	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@` 																		# --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation
 	
 	# -- Check if subject input is a parameter file instead of list of cases
 	if [[ ${CASES} == *.txt ]]; then
@@ -7066,6 +7416,105 @@ if [ "$FunctionToRun" == "structuralparcellation" ]; then
 		echo "Input Data Type: ${InputDataType}"
 		echo "Extract data in CSV format: ${ExtractData}"		
 		echo "Overwrite prior run: ${Overwrite}"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		for CASE in $CASES
+		do
+  			"$FunctionToRun" "$CASE"
+  		done
+fi
+
+# ------------------------------------------------------------------------------
+#  ComputeFunctionalConnectivity function loop (computeboldfc)
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "computeboldfc" ]; then	
+	
+# Check all the user-defined parameters: 1. InputFile, 2. InputPath, 3. OutPathFC, 4. OutName, 5. QUEUE, 6. RunMethod, 7. Scheduler, 8. RunType, 9. Calculation
+	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
+		if [ -z "$RunType" ]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
+		if [ -z "$OutPathFC" ]; then reho "Error: Output path value missing"; exit 1; fi
+
+		if [ ${RunType} == "group" ]; then
+   		 		if [ -z "$FileList" ]; then reho "Error: Group file list missing"; exit 1; fi
+    	fi
+		
+		if [ ${RunType} == "individual" ]; then
+			if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+			if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+			if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
+			if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+    	fi
+    	
+    	if [ ${Calculation} == "gbc" ]; then
+    		if [ -z "$TargetROI" ]; then TargetROI="[]"; fi
+			if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
+			if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
+			if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
+			if [ -z "$Verbose" ]; then Verbose="true"; fi
+			if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
+			if [ -z "$VoxelStep" ]; then VoxelStep="5000"; fi
+		fi
+    	if [ ${Calculation} == "seed" ]; then
+    		if [ -z "$ROIInfo" ]; then reho "Error: ROI seed file not specified"; exit 1; fi
+			if [ -z "$FCCommand" ]; then FCCommand=""; fi
+			if [ -z "$Method" ]; then Method="mean"; fi
+		fi		
+    	
+		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
+			Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		fi
+		
+		# Parse optional parameters if not specified 
+		if [ -z "$IgnoreFrames" ]; then IgnoreFrames=""; fi
+		if [ -z "$MaskFrames" ]; then MaskFrames=""; fi
+		if [ -z "$Covariance" ]; then Covariance=""; fi
+		if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+
+		echo ""
+		echo "Running ComputeFunctionalConnectivity function with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		
+		echo "Input File: ${InputFile}"		
+		echo "Output Path: ${OutPath}"
+  		echo "Extract data in CSV format: ${ExtractData}"
+  		echo "Type of fc calculation: ${Calculation}"
+  		echo "Type of run: ${RunType}"
+  		echo "Ignore frames: ${IgnoreFrames}"
+  		echo "Mask out frames: ${MaskFrames}"
+  		echo "Calculate Covariance: ${Covariance}"
+  		
+  		if [ ${RunType} == "group" ]; then
+  		echo "FileList: ${FileList}"
+  		fi
+  		if [ ${RunType} == "individual" ]; then
+  		echo "StudyFolder: ${StudyFolder}"
+  		echo "Subjects: ${CASES}"
+  		echo "Input File: ${InputFile}"
+  		echo "Output Name: ${OutName}"
+  		fi
+  		if [ ${Calculation} == "gbc" ]; then
+  		echo "Target ROI for GBC: ${TargetROI}"
+  		echo "Radius Smooth for GBC: ${RadiusSmooth}"
+  		echo "Radius Dilate for GBC: ${RadiusDilate}"
+  		echo "GBC Commands to run: ${GBCCommand}"
+  		echo "Verbose outout: ${Verbose}"
+  		echo "Print Compute Time: ${ComputeTime}"
+  		echo "Voxel Steps to use: ${VoxelStep}"
+  		fi
+		if [ ${Calculation} == "seed" ]; then
+  		echo "ROI Information for seed fc: ${ROIInfo}"
+  		echo "FC Commands to run: ${FCCommand}"
+  		echo "Method to compute fc: ${Method}"
+  		fi
+		
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
 		

@@ -48,49 +48,53 @@
 
 usage() {
 
-# function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-# INPUT
-# flist   	- A .list file of subject information.
-# roinfo	    - An ROI file.
-# inmask		- An array mask defining which frames to use (1) and which not (0) [0]
-# options		- A string defining which subject files to save ['']:
-# r		- save map of correlations
-# f     - save map of Fisher z values
-# cv	- save map of covariances
-# z		- save map of Z scores
-# tagetf	- The folder to save images in ['.'].
-# method    - Method for extracting timeseries - 'mean' or 'pca' ['mean'].
-# ignore    - Do we omit frames to be ignored ['no']
-#                 -> no:    do not ignore any additional frames
-#                 -> event: ignore frames as marked in .fidl file
-#                 -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
-# cv        - Whether covariances should be computed instead of correlations.
-  
-# function [] =             fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep) 
-# INPUT 
-# flist       - conc-like style list of subject image files or conc files:
-#                 subject id:<subject_id>
-#                 roi:<path to the individual's ROI file>
-#                 file:<path to bold files - one per line>
-#              or a well strucutured string (see g_ReadFileList).
-# command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
-#              mFzp, aFzp, ...
-#              <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
-# mask        - An array mask defining which frames to use (1) and
-#              which not (0). All if empty.
-# verbose     - Report what is going on. [false]
-# target      - Array of ROI codes that define target ROI [default:
-#              FreeSurfer cortex codes]
-# targetf     - Target folder for results.
-# rsmooth     - Radius for smoothing (no smoothing if empty). []
-# rdilate     - Radius for dilating mask (no dilation if empty). []
-# ignore      - The column in *_scrub.txt file that matches bold file to
-#              be used for ignore mask. All if empty. []
-# time        - Whether to print timing information. [false]
-# cv          - Whether to compute covariances instead of correlations.
-#              [false]
-# vstep       - How many voxels to process in a single step. [1200]
-
+# -------------------------------------------------------------------------------------------------------------------
+# EXAMPLE inputs from Matlab into fc_ComputeSeedMapsMultiple and fc_ComputeGBC3:
+# -------------------------------------------------------------------------------------------------------------------
+# 		fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
+# 		INPUT
+# 		flist   	- A .list file of subject information.
+# 		roinfo	    - An ROI file.
+# 		inmask		- An array mask defining which frames to use (1) and which not (0) [0]
+# 		options		- A string defining which subject files to save ['']:
+# 		r		- save map of correlations
+# 		f     - save map of Fisher z values
+# 		cv	- save map of covariances
+# 		z		- save map of Z scores
+# 		targetf	- The folder to save images in ['.'].
+# 		method    - Method for extracting timeseries - 'mean' or 'pca' ['mean'].
+# 		ignore    - Do we omit frames to be ignored ['no']
+# 		                -> no:    do not ignore any additional frames
+# 		                -> event: ignore frames as marked in .fidl file
+# 		                -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
+# 		cv        - Whether covariances should be computed instead of correlations.
+# ------------------------------------------------------------------------------------------------------------------- 		
+# 		fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep) 
+# 		INPUT 
+# 		flist       - conc-like style list of subject image files or conc files:
+# 		                subject id:<subject_id>
+# 		                roi:<path to the individual's ROI file>
+# 		                file:<path to bold files - one per line>
+# 		             or a well strucutured string (see g_ReadFileList).
+# 		command     - the type of gbc to run: mFz, aFz, pFz, nFz, aD, pD, nD,
+# 		             mFzp, aFzp, ...
+# 		             <type of gbc>:<parameter>|<type of gbc>:<parameter> ...
+# 		mask        - An array mask defining which frames to use (1) and
+# 		             which not (0). All if empty.
+# 		verbose     - Report what is going on. [false]
+# 		target      - Array of ROI codes that define target ROI [default:
+# 		             FreeSurfer cortex codes]
+# 		targetf     - Target folder for results.
+# 		rsmooth     - Radius for smoothing (no smoothing if empty). []
+# 		rdilate     - Radius for dilating mask (no dilation if empty). []
+# 		ignore      - The column in *_scrub.txt file that matches bold file to
+# 		             be used for ignore mask. All if empty. []
+# 		time        - Whether to print timing information. [false]
+# 		cv          - Whether to compute covariances instead of correlations.
+# 		             [false]
+# 		vstep       - How many voxels to process in a single step. [1200]
+# -------------------------------------------------------------------------------------------------------------------
+	
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -105,8 +109,8 @@ usage() {
  				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--calculation=<type_of_calculation>					Run <seed> or <gbc> calculation for functional connectivity."
 				echo "		--runtype=<type_of_run>					Run calculation on a group (requires a list) or on individual subjects (requires individual specification) (group or individual)"
-				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
-				echo "		--tagetf=<path_for_output_file>			Specify the absolute path for output folder"
+				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --path, --inputfile, --subject and --outname are omitted"
+				echo "		--targetf=<path_for_output_file>			Specify the absolute path for output folder"
 				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
 				echo "		--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
 				echo ""
@@ -174,14 +178,13 @@ usage() {
 				echo "--runtype='individual' \ "
 				echo "--subject='100206' \ "
 				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
-				echo "--overwrite='no' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
 				echo "--ignore='udvarsme' \ "
 				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
 				echo "--options='' \ "
 				echo "--method='' \ "
-				echo "--tagetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' "
 				echo ""	
@@ -189,14 +192,13 @@ usage() {
 				echo "--calculation='seed' \ "
 				echo "--runtype='group' \ "
 				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
-				echo "--overwrite='no' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
 				echo "--ignore='udvarsme' \ "
 				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
 				echo "--options='' \ "
 				echo "--method='' \ "
-				echo "--tagetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
 				echo "--mask='5' "
 				echo "--covariance='false' "
 				echo ""
@@ -205,12 +207,11 @@ usage() {
 				echo "--runtype='individual' \ "
 				echo "--subject='100206' \ "
 				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
-				echo "--overwrite='no' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='GBC' \ "
 				echo "--ignore='udvarsme' \ "
 				echo "--command='mFz:' \ "
-				echo "--tagetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
 				echo "--mask='5' \ "
 				echo "--target='' \ "
 				echo "--rsmooth='0' \ "
@@ -225,12 +226,11 @@ usage() {
 				echo "--calculation='gbc' \ "
 				echo "--runtype='group' \ "
 				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
-				echo "--overwrite='no' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='GBC' \ "
 				echo "--ignore='udvarsme' \ "
 				echo "--command='mFz:' \ "
-				echo "--tagetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
 				echo "--mask='5' \ "
 				echo "--target='' \ "
 				echo "--rsmooth='0' \ "
@@ -275,9 +275,8 @@ get_options() {
     unset StudyFolder		# --path=				
     unset CASE				# --subject=		
     unset InputFile			# --inputfile=		
-    unset InputDataType		# --inputdatatype=	
     unset OutName			# --outname=		
-    unset OutPath			# --tagetf=			
+    unset OutPath			# --targetf=			
     unset Overwrite			# --overwrite=		
     unset ExtractData		# --extractdata=
     unset Calculation		# --calculation=	
@@ -335,7 +334,7 @@ get_options() {
                 OutName=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-            --tagetf=*)
+            --targetf=*)
                 OutPath=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
