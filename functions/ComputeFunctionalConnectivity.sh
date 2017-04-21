@@ -106,9 +106,8 @@ usage() {
 				echo ""
 				echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
 				echo ""
- 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--calculation=<type_of_calculation>					Run <seed> or <gbc> calculation for functional connectivity."
-				echo "		--runtype=<type_of_run>					Run calculation on a group (requires a list) or on individual subjects (requires individual specification) (group or individual)"
+				echo "		--runtype=<type_of_run>					Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
 				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --path, --inputfile, --subject and --outname are omitted"
 				echo "		--targetf=<path_for_output_file>			Specify the absolute path for output folder"
 				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
@@ -116,9 +115,10 @@ usage() {
 				echo ""
 				echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
 				echo ""
+ 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subject=<list_of_cases>				List of subjects to run"
-				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the absolute path of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
-				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. ptseries or dtseries)"
+				echo "		--inputfiles=<files_to_compute_connectivity_on>		Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
+				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
 				echo "		--outname=<name_of_output_file>				Specify the suffix name of the output file name"  
 				echo ""
 				echo "-- OPTIONAL GENERAL PARAMETERS: "	
@@ -177,7 +177,8 @@ usage() {
 				echo "--calculation='seed' \ "
 				echo "--runtype='individual' \ "
 				echo "--subject='100206' \ "
-				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputpath='/images/functional' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
 				echo "--ignore='udvarsme' \ "
@@ -190,7 +191,7 @@ usage() {
 				echo ""	
 				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
 				echo "--calculation='seed' \ "
-				echo "--runtype='group' \ "
+				echo "--runtype='list' \ "
 				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
@@ -206,7 +207,8 @@ usage() {
 				echo "--calculation='gbc' \ "
 				echo "--runtype='individual' \ "
 				echo "--subject='100206' \ "
-				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputpath='/images/functional' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='GBC' \ "
 				echo "--ignore='udvarsme' \ "
@@ -224,7 +226,7 @@ usage() {
 				echo ""	
 				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
 				echo "--calculation='gbc' \ "
-				echo "--runtype='group' \ "
+				echo "--runtype='list' \ "
 				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='GBC' \ "
@@ -274,7 +276,8 @@ get_options() {
 
     unset StudyFolder		# --path=				
     unset CASE				# --subject=		
-    unset InputFile			# --inputfile=		
+    unset InputFiles		# --inputfile=		
+    unset InputPath			# --inputpath=		
     unset OutName			# --outname=		
     unset OutPath			# --targetf=			
     unset Overwrite			# --overwrite=		
@@ -326,10 +329,14 @@ get_options() {
                 CASE=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
-            --inputfile=*)
-                InputFile=${argument/*=/""}
+            --inputfiles=*)
+                InputFiles=${argument/*=/""}
                 index=$(( index + 1 ))
-                ;;                 
+                ;;
+            --inputpath=*)
+                InputPath=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;                   
             --outname=*)
                 OutName=${argument/*=/""}
                 index=$(( index + 1 ))
@@ -422,12 +429,6 @@ get_options() {
 echo ""
 
     # -- check general required parameters
-
-    if [ -z ${OutName} ]; then
-        usage
-        reho "ERROR: <name_of_output_pconn_file> not specified."
-        exit 1
-    fi
     
     if [ -z ${OutPath} ]; then
         usage
@@ -450,7 +451,7 @@ echo ""
     # -- check run type (group or individual
     		
     # - check options for individual run
-    if [ ${RunType} == "individual" ]; then
+    if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
     	if [ -z ${StudyFolder} ]; then
         	usage
         	reho "ERROR: <study_path> not specified."
@@ -463,16 +464,27 @@ echo ""
         	echo ""
         	exit 1
     	fi
-    	if [ -z ${InputFile} ]; then
+    	if [ -z ${InputFiles} ]; then
         	usage
-        	reho "ERROR: <file_to_compute_connectivity_on> not specified."
+        	reho "ERROR: <file(s)_to_compute_connectivity_on> not specified."
         	echo ""
         	exit 1
+    	fi
+        if [ -z ${InputPath} ]; then
+        	usage
+        	reho "ERROR: <absolute_path_to_data> not specified."
+        	echo ""
+        	exit 1
+    	fi
+    	if [ -z ${OutName} ]; then
+        	usage
+        	reho "ERROR: <name_of_output_file> not specified."
+        exit 1
     	fi
     fi
     
     # - check options for group run
-    if [ ${RunType} == "group" ]; then
+    if [ ${RunType} == "list" ]; then
     	if [ -z ${FileList} ]; then
         	usage
         	reho "ERROR: <group_list_file_to_compute_connectivity_on> not specified."
@@ -572,13 +584,14 @@ echo ""
     echo "	IgnoreFrames: ${IgnoreFrames}"
     echo "	MaskFrames: ${MaskFrames}"
     echo "	Covariance: ${Covariance}"
-    if [ ${RunType} == "group" ]; then
+    if [ ${RunType} == "list" ]; then
     echo "	FileList: ${FileList}"
     fi
-    if [ ${RunType} == "individual" ]; then
+    if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
     echo "	StudyFolder: ${StudyFolder}"
-    echo "	Subject: ${CASE}"
-    echo "	InputFile: ${InputFile}"
+    echo "	Subjects: ${CASE}"
+    echo "	InputFiles: ${InputFiles}"
+    echo "	InputPath: ${StudyFolder}/<subject_id>/${InputPath}"
     echo "	OutName: ${OutName}"
     fi
     if [ ${Calculation} == "gbc" ]; then
@@ -605,50 +618,79 @@ echo ""
 
 main() {
 
-    # Get Command Line Options
-    get_options $@
+# Get Command Line Options
+get_options $@
 
-# -- Define inputs and output
-geho "--- Establishing paths for all input and output folders:"
+# parse all the input cases for an individual or group run
+INPUTCASES=`echo "$CASE" | sed 's/,/ /g'`
 echo ""
+
 # -- Define all inputs and outputs depending on data type input
 
 if [ ${RunType} == "individual" ]; then
-
-	# -- Define input
-	echo "      BOLD Input:              ${InputFile}"
-	echo ""
 	
-	# -- Define output
-	echo "      Seed functional connectivity will be saved here for each specified ROI:       ${OutPath}"
-	echo ""
-	
-	# check if FC seed run is specified
-	if [ ${Calculation} == "seed" ]; then
-		# -- run FC seed command: 
-		# Call to get matlab help --> matlab -nosplash -nodisplay -nojvm -r "help fc_ComputeGBC3,quit()"
-		# Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-		matlab -nosplash -nodisplay -nojvm -r "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
-	fi
-	
-	# check if GBC seed run is specified
-	if [ ${Calculation} == "gbc" ]; then	
-		# -- run GBC seed command: 
-		# Call to get matlab help --> matlab -nosplash -nodisplay -nojvm -r "help fc_ComputeGBC3,quit()"
-		# Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-		matlab -nosplash -nodisplay -nojvm -r "fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
-	fi
-	
+	for INPUTCASE in $INPUTCASES; do
+			# -- Define inputs
+			geho "--- Establishing paths for all input and output folders:"
+			echo ""
+			if [ -z ${OutPath} == "" ]; then
+				OutPath=${StudyFolder}/${INPUTCASE}/${InputPath}
+			fi
+			# parse input from the InputFiles variable
+			InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
+			# cleanup prior tmp lists
+			rm -rf ${StudyFolder}/${INPUTCASE}/${InputPath}/templist > /dev/null 2>&1	
+			# generate output directories
+			mkdir ${StudyFolder}/${INPUTCASE}/${InputPath}/templist > /dev/null 2>&1
+			mkdir ${OutPath} > /dev/null 2>&1
+			# generate the temp list
+			echo "subject id:$INPUTCASE" >> ${StudyFolder}/${INPUTCASE}/${InputPath}/templist/${OutName}.list
+			for InputFile in $InputFiles; do echo "file:$StudyFolder/$INPUTCASE/$InputPath/$InputFile" >> ${StudyFolder}/${INPUTCASE}/${InputPath}/templist/${OutName}.list; done	
+			FinalInput="${StudyFolder}/${INPUTCASE}/${InputPath}/templist/${OutName}.list"
+	done
 fi
 
 if [ ${RunType} == "group" ]; then
+	
+	# generate output directories
+	mkdir ${OutPath} > /dev/null 2>&1
+	# cleanup prior tmp lists
+	rm -rf ${OutPath}/templist > /dev/null 2>&1	
+	mkdir ${OutPath}/templist > /dev/null 2>&1	
+			
+	for INPUTCASE in $INPUTCASES; do
+			# -- Define inputs
+			geho "--- Establishing paths for all input and output folders for $INPUTCASE:"
+			echo ""
+			# parse input from the InputFiles variable
+			InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
+			# generate the temp list
+			echo "subject id:$INPUTCASE" >> ${OutPath}/templist/${OutName}.list
+			for InputFile in $InputFiles; do echo "file:$StudyFolder/$INPUTCASE/$InputPath/$InputFile" >> ${OutPath}/templist/${OutName}.list; done	
+			FinalInput="${OutPath}/templist/${OutName}.list"
+	done
+fi
+	# -- Echo inputs
+	echo ""
+	echo "Seed functional connectivity inputs:"
+	echo ""
+	more $FinalInput
+	echo ""	
+	# -- Echo outputs
+	echo "Seed functional connectivity will be saved here for each specified ROI:"
+	echo "--> ${OutPath}"
 
+if [ ${RunType} == "list" ]; then
+	FinalInput=${FileList}
+fi
+	
 	# check if FC seed run is specified
 	if [ ${Calculation} == "seed" ]; then
 		# -- run FC seed command: 
 		# Call to get matlab help --> matlab -nosplash -nodisplay -nojvm -r "help fc_ComputeGBC3,quit()"
 		# Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-		matlab -nosplash -nodisplay -nojvm -r "fc_ComputeSeedMapsMultiple('$FileList', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+		# Example with string input --> matlab -nosplash -nodisplay -nojvm -r "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+		matlab -nosplash -nodisplay -nojvm -r "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
 	fi
 	
 	# check if GBC seed run is specified
@@ -656,10 +698,9 @@ if [ ${RunType} == "group" ]; then
 		# -- run GBC seed command: 
 		# Call to get matlab help --> matlab -nosplash -nodisplay -nojvm -r "help fc_ComputeGBC3,quit()"
 		# Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-		matlab -nosplash -nodisplay -nojvm -r "fc_ComputeGBC3('$FileList','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+		# Example with string input --> matlab -nosplash -nodisplay -nojvm -r "fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+		matlab -nosplash -nodisplay -nojvm -r "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
 	fi
-
-fi
 
 if [ "$ExtractData" == "yes" ]; then 
 	geho "Saving out the data in a CSV file..."
@@ -678,13 +719,6 @@ if [ "$ExtractData" == "yes" ]; then
 		done
 	fi
 fi
-
-	# Perform completion checks"
-	#geho "--- Printing outputs..."
-	#echo ""
-	#outputfiles=`ls -ltC ${OutPath}/${CASE}-${OutName}*nii`
-	#for outputfile in $outputfiles; do echo "-->		$outputfile"; done
-	#echo ""
 	
 	geho "--- Connectivity calculation successfully completed"
 	echo ""

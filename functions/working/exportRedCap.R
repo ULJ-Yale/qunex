@@ -100,5 +100,5 @@ dfFinal[, dropColumns] <- list(NULL)
 rownames(dfFinal) <- rownames(df2)
 colnames(dfFinal) <- (1:ncol(dfFinal))
 
-# save output to outpath/RedCapExport/
+# save output to outpath
 write.csv(dfFinal, file = fileOutput)

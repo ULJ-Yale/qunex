@@ -1,16 +1,17 @@
 
+# set params
+studyFolder     <- "/gpfs/project/fas/n3/Studies/BlackThorn/subjects/" 
+event           <- "4_blackthorn_arm_1"  
+acqForm         <- "blackthorn_fmri"
+scanField       <- "wmr_scan_bt"
+acqLogFile      <-  paste(studyFolder, "acquisition.log.", acqForm, ".csv", sep="")
+
+
 #### Aqcuisition Logs #############################################################################################################
 # --> write redcap mri forms to acquisition logs for each study
 ###################################################################################################################################
 
-# set params
-study_folder           <- "/gpfs/project/fas/n3/Studies/BlackThorn/subjects/" 
-event                  <- "4_blackthorn_arm_1"  
-acq_formname           <- "blackthorn_fmri"
-acq_logfile            <-  paste(study_folder, "acquisition.log.", acq_formname, ".csv", sep="")
-scanID_fieldname       <- "wmr_scan_bt"
-
-# parseDB function
+# function to parse Organized Database by Event, Form and Field
 parseDB <- function(selectEvent, selectForm, selectField){
   # read RedCapExport_OrganizedDatabase.csv
   input <- "/gpfs/project/fas/n3/Studies/DataDrop/RedCapExport/RedCapExport_OrganizedDatabase.csv"
@@ -32,20 +33,20 @@ parseDB <- function(selectEvent, selectForm, selectField){
 } 
 
 # create acquisiton log for all scanned subjects 
-acq_log <- data.frame(parseDB(event, acq_formname, "all"))
+acqLog <- data.frame(parseDB(event, acqForm, "all"))
 # select only rows with in which a scanID is recorded
-includeRows <- as.vector(which(!is.na(parseDB(event, acq_formname, scanID_fieldname))[,1], arr.ind = TRUE))
-acq_log <- acq_log[includeRows,]
-colnames(acq_log) <- (1:ncol(acq_log))  
+includeRows <- as.vector(which(!is.na(parseDB(event, acqForm, scanField))[,1], arr.ind = TRUE))
+acqLog <- acqLog[includeRows,]
+colnames(acqLog) <- (1:ncol(acqLog))  
 
-# remove line breaks and commas within each cell (otherwise log will be difficult to parse in bash)
-for (i in 1:nrow(acq_log)){
-  for (j in 1:ncol(acq_log)){
-    acq_log[i,j] <- as.vector(gsub("[','\r\n]", ". ", acq_log[i,j]))
+# remove line breaks and commas within each cell (otherwise turnkey.sh will fail)
+for (i in 1:nrow(acqLog)){
+  for (j in 1:ncol(acqLog)){
+    acqLog[i,j] <- as.vector(gsub("[','\r\n]", ". ", acqLog[i,j]))
   }
 }
 
-# save acquisition log in study_folder 
-write.table(acq_log, file = acq_logfile, sep=",", col.names=FALSE, row.names = FALSE)
+# save acquisition log in studyFolder 
+write.table(acqLog, file = acqLogFile, sep=",", col.names=FALSE, row.names = FALSE)
 
 

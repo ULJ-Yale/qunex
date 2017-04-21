@@ -68,7 +68,8 @@ usage() {
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
+ 				echo "		--singleinputfile=<parcellate_single_file>				Parcellate only a single file in any location. Individual flags are not needed (--subject, --path, --inputfile)."
+ 				echo "		--overwrite=<clean_prior_run>						Delete prior run"
  				echo "		--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no)."
  				echo "		--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
  				echo "		--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)"
@@ -112,6 +113,7 @@ geho() {
     # InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
     # InputPath # e.g. /images/functional/
     # InputDataType # e.g.dtseries
+    # SingleInputFile # Input only a single file to parcellate
     # OutPath # e.g. /images/functional/
     # OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
     # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
@@ -135,6 +137,7 @@ get_options() {
     unset StudyFolder
     unset Subject
     unset InputFile
+    unset SingleInputFile
     unset InputPath
     unset InputDataType
     unset ParcellationFile
@@ -181,6 +184,10 @@ get_options() {
                 InputFile=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
+            --singleinputfile=*)
+                SingleInputFile=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;                
             --inputpath=*)
                 InputPath=${argument/*=/""}
                 index=$(( index + 1 ))
@@ -231,39 +238,43 @@ get_options() {
     done
 
     # check required parameters
-    if [ -z ${StudyFolder} ]; then
-        usage
-        reho "ERROR: <study-path> not specified>"
-        echo ""
-        exit 1
-    fi
+    
+    if [ -z ${SingleInputFile} ]; then
 
-    if [ -z ${CASE} ]; then
-        usage
-        reho "ERROR: <subject-id> not specified>"
-        echo ""
-        exit 1
+    		if [ -z ${StudyFolder} ]; then
+    		    usage
+    		    reho "ERROR: <study-path> not specified>"
+    		    echo ""
+    		    exit 1
+    		fi
+		
+    		if [ -z ${CASE} ]; then
+    		    usage
+    		    reho "ERROR: <subject-id> not specified>"
+    		    echo ""
+    		    exit 1
+    		fi
+		
+    		if [ -z ${InputFile} ]; then
+    		    usage
+    		    reho "ERROR: <file_to_compute_parcellation_on> not specified>"
+    		    echo ""
+    		    exit 1
+    		fi
+		
+    		if [ -z ${InputPath} ]; then
+    		    usage
+    		    reho "ERROR: <path_for_input_file> not specified>"
+    		    echo ""
+    		    exit 1
+    		fi
     fi
-
-    if [ -z ${InputFile} ]; then
-        usage
-        reho "ERROR: <file_to_compute_parcellation_on> not specified>"
-        echo ""
-        exit 1
-    fi
-
-    if [ -z ${InputPath} ]; then
-        usage
-        reho "ERROR: <path_for_input_file> not specified>"
-        echo ""
-        exit 1
-    fi
-
+    
     if [ -z ${InputDataType} ]; then
-        usage
-        reho "ERROR: <type_of_dense_data_for_input_file>"
-        echo ""
-        exit 1
+    	usage
+    	reho "ERROR: <type_of_dense_data_for_input_file>"
+    	echo ""
+    	exit 1
     fi
     
     if [ -z ${ParcellationFile} ]; then
@@ -297,6 +308,7 @@ get_options() {
     echo "   StudyFolder: ${StudyFolder}"
     echo "   Subject: ${CASE}"
     echo "   InputFile: ${InputFile}"
+    echo "   SingleInputFile: ${SingleInputFile}"
     echo "   InputPath: ${InputPath}"
     echo "   ParcellationFile: ${ParcellationFile}"
     echo "   OutName: ${OutName}"
@@ -326,17 +338,24 @@ echo ""
 
 # -- Define all inputs and outputs depending on data type input
 
+
 if [ "$InputDataType" == "dtseries" ]; then 
 	echo "       Working with dtseries files..."
 	echo ""
 	# -- Define extension 
 	InputFileExt="dtseries.nii"
 	OutFileExt="ptseries.nii"
-	# -- Define input
-	BOLDInput="$StudyFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
-	# -- Define output
-	BOLDOutput="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}.${OutFileExt}"
-
+	if [ -z "$SingleInputFile" ]; then
+		# -- Define input
+		BOLDInput="$StudyFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
+		# -- Define output
+		BOLDOutput="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
+	else
+		# -- Define input
+		BOLDInput="$InputPath/${SingleInputFile}.${InputFileExt}"
+		# -- Define output
+		BOLDOutput="$OutPath/${SingleInputFile}_${OutName}.${OutFileExt}"
+	fi
 	echo "      Dense BOLD Input:              ${BOLDInput}"
 	echo ""
 	echo "      Parcellated BOLD Output:       ${BOLDOutput}"
@@ -349,17 +368,23 @@ if [ "$InputDataType" == "dscalar" ]; then
 	# -- Define extension 
 	InputFileExt="dscalar.nii"
 	OutFileExt="pscalar.nii"
-	# -- Define input
-	BOLDInput="$StudyFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
-	# -- Define output
-	BOLDOutput="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}.${OutFileExt}"
+	if [ -z "$SingleInputFile" ]; then
+		# -- Define input
+		BOLDInput="$StudyFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
+		# -- Define output
+		BOLDOutput="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
+	else
+		# -- Define input
+		BOLDInput="$InputPath/${SingleInputFile}.${InputFileExt}"
+		# -- Define output
+		BOLDOutput="$OutPath/${SingleInputFile}_${OutName}.${OutFileExt}"
+	fi
 
 	echo "      Dense BOLD Input:              ${BOLDInput}"
 	echo ""
 	echo "      Parcellated BOLD Output:       ${BOLDOutput}"
 	echo ""
 fi
-
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
@@ -389,16 +414,17 @@ else
 	wb_command -cifti-parcellate "$BOLDInput" "$ParcellationFile" COLUMN "$BOLDOutput"
 
 	# -- Check if specified file was a *dtseries and compute a pconn file as well 
-	if [ "$InputDataType" == "dtseries" ]; then
+	if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
 	
 		# Check if pconn calculation is requested
 		if [ "$ComputePConn" == "yes" ]; then
 		
 		# -- Specify pconn file outputs for correlation (r) value and covariance 
 		OutPConnFileExtR="r.pconn.nii"
-		PConnBOLDOutputR="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}_${OutPConnFileExtR}"
 		OutPConnFileExtCov="cov.pconn.nii"
-		PConnBOLDOutputCov="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}_${OutPConnFileExtCov}"
+
+		PConnBOLDOutputR="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
+		PConnBOLDOutputCov="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
 		
 		# - Check if weights file is specified
 		geho "Using weights: $UseWeights"
@@ -440,20 +466,50 @@ else
 fi
 
 if [ "$ExtractData" == "yes" ]; then 
-	geho "Saving out the data in a CSV file..."
-	echo ""
-	# -- Specify pconn file outputs for correlation (r) value and covariance 
-	CSVOutPConnFileExtR="r.csv"
-	CSVPConnBOLDOutputR="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}_${CSVOutPConnFileExtR}"
-	CSVOutPConnFileExtCov="cov.csv"
-	CSVPConnBOLDOutputCov="$StudyFolder/$CASE/$OutPath/${CASE}_${InputFile}_${OutName}_${CSVOutPConnFileExtCov}"
 	
-	rm -f ${CSVPConnBOLDOutputR} > /dev/null 2>&1
-	rm -f ${CSVPConnBOLDOutputCov} > /dev/null 2>&1
+	if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ] && [ "$ComputePConn" == "yes" ]; then
+	
+		geho "Saving out the parcellated dtseries data in a CSV file..."
+		echo ""
+	
+		# -- Specify pconn file outputs for correlation (r) value and covariance 
+	
+		CSVOutPConnFileExtR="r.csv"
+		CSVOutPConnFileExtCov="cov.csv"
+	
+		CSVPConnBOLDOutputR="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtR}"
+		CSVPConnBOLDOutputCov="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtCov}"
+		
+		rm -f ${CSVPConnBOLDOutputR} > /dev/null 2>&1
+		rm -f ${CSVPConnBOLDOutputCov} > /dev/null 2>&1
+	
+		wb_command -nifti-information -print-matrix "$PConnBOLDOutputR" >> "$CSVPConnBOLDOutputR"
+		wb_command -nifti-information -print-matrix "$PConnBOLDOutputCov" >> "$CSVPConnBOLDOutputCov"
+	
+	fi
+	
+	if [ "$InputDataType" == "dscalar" ]; then
 
-	wb_command -nifti-information -print-matrix "$PConnBOLDOutputR" >> "$CSVPConnBOLDOutputR"
-	wb_command -nifti-information -print-matrix "$PConnBOLDOutputCov" >> "$CSVPConnBOLDOutputCov"
-
+		geho "Saving out the parcellated dscalar data in a CSV file..."
+		echo ""
+	
+		if [ -z "$SingleInputFile" ]; then
+			DscalarFileExtCSV=".csv"
+			CSVDPScalarBoldOut="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}_${DscalarFileExtCSV}"
+		else
+			CSVDPScalarBoldOut="$OutPath/${SingleInputFile}_${OutName}_${DscalarFileExtCSV}"
+		fi
+		wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDPScalarBoldOut"
+	fi
+	
+	if [ -v "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ]; then
+		geho "Saving out the parcellated single file dtseries data in a CSV file..."
+		echo ""
+		DscalarFileExtCSV=".csv"
+		CSVDPScalarBoldOut="$OutPath/${SingleInputFile}_${OutName}_${DscalarFileExtCSV}"
+		wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDPScalarBoldOut"
+	fi
+	
 fi	
 
 # Perform completion checks"

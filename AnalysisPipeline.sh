@@ -3697,7 +3697,7 @@ computeboldfc() {
 		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 		StudyFolder="$StudyFolder"
 		CASE="$CASE"
-		InputFile="$InputFile"
+		InputFiles="$InputFiles"
 		OutPath="$OutPathFC"
 		OutName="$OutName"
 		ExtractData="$ExtractData"
@@ -3717,11 +3717,18 @@ computeboldfc() {
 		VoxelStep="$VoxelStep"			# --vstep=			
 		ROIInfo="$ROIInfo"				# --roinfo=			
 		FCCommand="$FCCommand"			# --options=		
-		Method="$Method"				# --method=		
+		Method="$Method"				# --method=
+		InputPath="$InputPath"			# --inputpath		
+		
+		if [ "$OutPath" == "" ]; then
+			OutPath="$StudyFolder/$CASE/$InputPath"
+		fi
 		
 		mkdir "$OutPath"/computeboldfc_log > /dev/null 2>&1
 		LogFolder="$OutPath/computeboldfc_log"
 		Overwrite="$Overwrite"
+		
+		
 
 		if [ ${Calculation} == "seed" ]; then
 			if [ "$Cluster" == 1 ]; then
@@ -3729,14 +3736,16 @@ computeboldfc() {
 				echo "Check log file output here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
-				ComputeFunctionalConnectivity.sh \
+				${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
 				--path="${StudyFolder}" \
 				--calculation="${Calculation}" \
 				--runtype="${RunType}" \
 				--subject="${CASE}" \
-				--inputfile="${InputFile}" \
+				--inputfiles="${InputFiles}" \
+				--inputpath="${InputPath}" \
 				--extractdata="${ExtractData}" \
 				--outname="${OutName}" \
+				--flist="${FileList}" \
 				--overwrite="${Overwrite}" \
 				--ignore="${IgnoreFrames}" \
 				--roinfo="${ROIInfo}" \
@@ -3744,18 +3753,26 @@ computeboldfc() {
 				--method="${Method}" \
 				--targetf="${OutPath}" \
 				--mask="${MaskFrames}" \
-				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$CASE"_"$OutName"_`date +%Y-%m-%d-%H-%M-%S`.log
-			else
+				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
+			else			
+				
+				echo ""
+				reho $OutName
+				echo ""
+				
 				# set scheduler for fsl_sub command
 				fslsub="$Scheduler"
-				fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" ComputeFunctionalConnectivity.sh \
+				${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
+				${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
 				--path="${StudyFolder}" \
 				--calculation="${Calculation}" \
 				--runtype="${RunType}" \
 				--subject="${CASE}" \
-				--inputfile="${InputFile}" \
+				--inputfiles="${InputFiles}" \
+				--inputpath="${InputPath}" \
 				--extractdata="${ExtractData}" \
 				--outname="${OutName}" \
+				--flist="${FileList}" \
 				--overwrite="${Overwrite}" \
 				--ignore="${IgnoreFrames}" \
 				--roinfo="${ROIInfo}" \
@@ -3778,14 +3795,16 @@ computeboldfc() {
 				echo "Check log file output here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
-				ComputeFunctionalConnectivity.sh \
+				${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
 				--path="${StudyFolder}" \
 				--calculation="${Calculation}" \
 				--runtype="${RunType}" \
 				--subject="${CASE}" \
-				--inputfile="${InputFile}" \
+				--inputfiles="${InputFiles}" \
+				--inputpath="${InputPath}" \
 				--extractdata="${ExtractData}" \
 				--outname="${OutName}" \
+				--flist="${FileList}" \
 				--overwrite="${Overwrite}" \
 				--ignore="${IgnoreFrames}" \
 				--target="${TargetROI}" \
@@ -3797,17 +3816,20 @@ computeboldfc() {
 				--verbose="${Verbose}" \
 				--time="${ComputeTime}" \
 				--vstep="${VoxelStep}" \
-				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$CASE"_"$OutName"_`date +%Y-%m-%d-%H-%M-%S`.log
+				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
 			else
 				# set scheduler for fsl_sub command
 				fslsub="$Scheduler"
-				fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" ComputeFunctionalConnectivity.sh \
+				${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
+				${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
 				--path="${StudyFolder}" \
 				--calculation="${Calculation}" \
 				--runtype="${RunType}" \
 				--subject="${CASE}" \
-				--inputfile="${InputFile}" \
+				--inputfiles="${InputFiles}" \
+				--inputpath="${InputPath}" \
 				--extractdata="${ExtractData}" \
+				--flist="${FileList}" \
 				--outname="${OutName}" \
 				--overwrite="${Overwrite}" \
 				--ignore="${IgnoreFrames}" \
@@ -3845,9 +3867,8 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
 				echo ""
- 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--calculation=<type_of_calculation>					Run <seed> or <gbc> calculation for functional connectivity."
-				echo "		--runtype=<type_of_run>					Run calculation on a group (requires a list) or on individual subjects (requires individual specification) (group or individual)"
+				echo "		--runtype=<type_of_run>					Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
 				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
 				echo "		--targetf=<path_for_output_file>			Specify the absolute path for output folder"
 				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
@@ -3855,9 +3876,10 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
 				echo ""
+ 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subject=<list_of_cases>				List of subjects to run"
-				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the absolute path of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
-				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. ptseries or dtseries)"
+				echo "		--inputfiles=<files_to_compute_connectivity_on>		Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
+				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
 				echo "		--outname=<name_of_output_file>				Specify the suffix name of the output file name"  
 				echo ""
 				echo "-- OPTIONAL GENERAL PARAMETERS: "	
@@ -3917,14 +3939,15 @@ show_usage_computeboldfc() {
 				echo "--calculation='seed' \ "
 				echo "--runtype='individual' \ "
 				echo "--subjects='100206' \ "
-				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputpath='/images/functional' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
 				echo "--ignore='udvarsme' \ "
 				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
 				echo "--options='' \ "
 				echo "--method='' \ "
-				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' "
 				echo "--queue='<name_of_queue>' \ "
@@ -3957,7 +3980,8 @@ show_usage_computeboldfc() {
 				echo "--calculation='gbc' \ "
 				echo "--runtype='individual' \ "
 				echo "--subjects='100206' \ "
-				echo "--inputfile='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional/bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
+				echo "--inputpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/100206/images/functional' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='GBC' \ "
 				echo "--ignore='udvarsme' \ "
@@ -4156,6 +4180,7 @@ boldparcellation() {
 		# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
 		# Subject	  # e.g. 100206
 		# InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
+		# SingleInputFile # Input for a specific file
 		# InputPath # e.g. /images/functional/
 		# InputDataType # e.g.dtseries
 		# OutPath # e.g. /images/functional/
@@ -4177,65 +4202,71 @@ boldparcellation() {
 		InputFile="$InputFile"
 		InputPath="$InputPath"
 		InputDataType="$InputDataType"
+		SingleInputFile="$SingleInputFile"
 		OutPath="$OutPath"
 		OutName="$OutName"
 		ComputePConn="$ComputePConn"
 		UseWeights="$UseWeights"
 		WeightsFile="$WeightsFile"
 		ParcellationFile="$ParcellationFile"
-		BOLDOutput="$StudyFolder/$CASE$OutPath"
+		Cluster="$RunMethod"
+		
+		if [ -z "$SingleInputFile" ]; then
+			BOLDOutput="$StudyFolder/$CASE/$OutPath"
+		else
+			BOLDOutput="$OutPath"
+		fi
+	
+		
 		ExtractData="$ExtractData"
 		mkdir "$BOLDOutput"/boldparcellation_log > /dev/null 2>&1
 		LogFolder="$BOLDOutput"/boldparcellation_log
 		Overwrite="$Overwrite"
-		
-		if [ "$Cluster" == 1 ]; then
-		
-		echo "Running locally on `hostname`"
-		echo "Check log file output here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
 				
-		BOLDParcellation.sh \
-		--path="${StudyFolder}" \
-		--subject="${CASE}" \
-		--inputfile="${InputFile}" \
-		--inputpath="${InputPath}" \
-		--inputdatatype="${InputDataType}" \
-		--parcellationfile="${ParcellationFile}" \
-		--overwrite="${Overwrite}" \
-		--outname="${OutName}" \
-		--outpath="${OutPath}" \
-		--computepconn="${ComputePConn}" \
-		--extractdata="${ExtractData}" \
-		--useweights="${UseWeights}" \
-		--weightsfile="${WeightsFile}" >> "$LogFolder"/BOLDParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
-		
+		if [ "$Cluster" == 1 ]; then
+			echo "Running locally on `hostname`"
+			echo "Check log file output here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+			BOLDParcellation.sh \
+			--path="${StudyFolder}" \
+			--subject="${CASE}" \
+			--inputfile="${InputFile}" \
+			--singleinputfile="${SingleInputFile}" \
+			--inputpath="${InputPath}" \
+			--inputdatatype="${InputDataType}" \
+			--parcellationfile="${ParcellationFile}" \
+			--overwrite="${Overwrite}" \
+			--outname="${OutName}" \
+			--outpath="${OutPath}" \
+			--computepconn="${ComputePConn}" \
+			--extractdata="${ExtractData}" \
+			--useweights="${UseWeights}" \
+			--weightsfile="${WeightsFile}" >> "$LogFolder"/BOLDParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 		else
-		
-		# set scheduler for fsl_sub command
-		fslsub="$Scheduler"
-		
-		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" BOLDParcellation.sh \
-		--path="${StudyFolder}" \
-		--subject="${CASE}" \
-		--inputfile="${InputFile}" \
-		--inputpath="${InputPath}" \
-		--inputdatatype="${InputDataType}" \
-		--parcellationfile="${ParcellationFile}" \
-		--overwrite="${Overwrite}" \
-		--outname="${OutName}" \
-		--outpath="${OutPath}" \
-		--computepconn="${ComputePConn}" \
-		--extractdata="${ExtractData}" \
-		--useweights="${UseWeights}" \
-		--weightsfile="${WeightsFile}"
-		
-		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted to $QUEUE" 
-		echo "Check output logs here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
+			# set scheduler for fsl_sub command
+			fslsub="$Scheduler"
+			fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" BOLDParcellation.sh \
+			--path="${StudyFolder}" \
+			--subject="${CASE}" \
+			--inputfile="${InputFile}" \
+			--singleinputfile="${SingleInputFile}" \
+			--inputpath="${InputPath}" \
+			--inputdatatype="${InputDataType}" \
+			--parcellationfile="${ParcellationFile}" \
+			--overwrite="${Overwrite}" \
+			--outname="${OutName}" \
+			--outpath="${OutPath}" \
+			--computepconn="${ComputePConn}" \
+			--extractdata="${ExtractData}" \
+			--useweights="${UseWeights}" \
+			--weightsfile="${WeightsFile}"
+			
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted to $QUEUE" 
+			echo "Check output logs here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
 		fi
 }
 
@@ -4265,7 +4296,8 @@ show_usage_boldparcellation() {
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
+ 				echo "		--singleinputfile=<parcellate_single_file>				Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed (--subject, --path, -inputfile, --inputpath)."
+ 				echo "		--overwrite=<clean_prior_run>						Delete prior run"
  				echo "		--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no)."
  				echo "		--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
  				echo "		--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)"
@@ -5997,6 +6029,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	InputFile=`opts_GetOpt "${setflag}inputfile" $@` 																		# --inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
 	InputPath=`opts_GetOpt "${setflag}inputpath" $@` 																		# --inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
 	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` 																# --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
+	SingleInputFile=`opts_GetOpt "${setflag}singleinputfile" $@` 															# --singleinputfile
 	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
 	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file
 	ExtractData=`opts_GetOpt "${setflag}extractdata" $@` 																	# --extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file
@@ -6006,23 +6039,25 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
 	# -- computeboldfc input flags
-	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`																			# --targetf=			
-	Calculation=`opts_GetOpt "${setflag}calculation" $@`																	# --calculation=	
-	RunType=`opts_GetOpt "${setflag}runtype" $@`																			# --runtype= 		
-	FileList=`opts_GetOpt "${setflag}flist" $@`																				# --flist=			
-	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																		# --ignore=			
-	MaskFrames=`opts_GetOpt "${setflag}mask" $@`																			# --mask=		
-	Covariance=`opts_GetOpt "${setflag}covariance" $@`																		# --covariance=		
-	TargetROI=`opts_GetOpt "${setflag}target" $@`																			# --target=			
-	RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`																		# --rsmooth=		
-	RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`																		# --rdilate=		
-	GBCCommand=`opts_GetOpt "${setflag}command" $@`																			# --command=		
-	Verbose=`opts_GetOpt "${setflag}verbose" $@`																			# --verbose=		
-	ComputeTime=`opts_GetOpt "${setflag}-time" $@`																			# --time=			
-	VoxelStep=`opts_GetOpt "${setflag}vstep" $@`																			# --vstep=			
-	ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`																				# --roinfo=			
-	FCCommand=`opts_GetOpt "${setflag}options" $@`																			# --options=		
-	Method=`opts_GetOpt "${setflag}method" $@`																				# --method=		
+	#InputFiles=`opts_GetOpt "${setflag}inputfiles" "$@" | sed 's/,/ /g;s/|/ /g'`; InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'` 	# --inputfiles=
+	InputFiles=`opts_GetOpt "${setflag}inputfiles" $@` 																						# --inputfiles=
+	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`																							# --targetf=			
+	Calculation=`opts_GetOpt "${setflag}calculation" $@`																					# --calculation=	
+	RunType=`opts_GetOpt "${setflag}runtype" $@`																							# --runtype= 		
+	FileList=`opts_GetOpt "${setflag}flist" $@`																								# --flist=			
+	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																						# --ignore=			
+	MaskFrames=`opts_GetOpt "${setflag}mask" $@`																							# --mask=		
+	Covariance=`opts_GetOpt "${setflag}covariance" $@`																						# --covariance=		
+	TargetROI=`opts_GetOpt "${setflag}target" $@`																							# --target=			
+	RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`																						# --rsmooth=		
+	RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`																						# --rdilate=		
+	GBCCommand=`opts_GetOpt "${setflag}command" $@`																							# --command=		
+	Verbose=`opts_GetOpt "${setflag}verbose" $@`																							# --verbose=		
+	ComputeTime=`opts_GetOpt "${setflag}-time" $@`																							# --time=			
+	VoxelStep=`opts_GetOpt "${setflag}vstep" $@`																							# --vstep=			
+	ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`																								# --roinfo=			
+	FCCommand=`opts_GetOpt "${setflag}options" $@`																							# --options=		
+	Method=`opts_GetOpt "${setflag}method" $@`																								# --method=		
 		
 	# -- dwidenseparcellation input flags
 	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` 																# --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
@@ -7436,17 +7471,23 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
 		if [ -z "$RunType" ]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
-		if [ -z "$OutPathFC" ]; then reho "Error: Output path value missing"; exit 1; fi
 
-		if [ ${RunType} == "group" ]; then
-   		 		if [ -z "$FileList" ]; then reho "Error: Group file list missing"; exit 1; fi
+		if [ ${RunType} == "list" ]; then
+   		 	if [ -z "$FileList" ]; then reho "Error: Group file list missing"; exit 1; fi
     	fi
-		
-		if [ ${RunType} == "individual" ]; then
+    			
+		if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
 			if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 			if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-			if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
+			if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
+			if [ -z "$InputPath" ]; then reho "Error: Input data path value missing"; exit 1; fi
 			if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+			if [ ${RunType} == "individual" ]; then
+				if [ -z "$OutPathFC" ]; then reho "Warrning: Output path value missing. Assuming individual folder structure for output"; fi
+			fi
+			if [ ${RunType} == "group" ]; then
+				if [ -z "$OutPathFC" ]; then reho "Error: Output path value missing and is needed for a group run."; exit 1; fi
+			fi
     	fi
     	
     	if [ ${Calculation} == "gbc" ]; then
@@ -7482,8 +7523,7 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 		echo ""
 		echo "--------------------------------------------------------------"
 		
-		echo "Input File: ${InputFile}"		
-		echo "Output Path: ${OutPath}"
+		echo "Output Path: ${OutPathFC}"
   		echo "Extract data in CSV format: ${ExtractData}"
   		echo "Type of fc calculation: ${Calculation}"
   		echo "Type of run: ${RunType}"
@@ -7491,13 +7531,14 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
   		echo "Mask out frames: ${MaskFrames}"
   		echo "Calculate Covariance: ${Covariance}"
   		
-  		if [ ${RunType} == "group" ]; then
+  		if [ ${RunType} == "list" ]; then
   		echo "FileList: ${FileList}"
   		fi
-  		if [ ${RunType} == "individual" ]; then
+  		if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
   		echo "StudyFolder: ${StudyFolder}"
   		echo "Subjects: ${CASES}"
-  		echo "Input File: ${InputFile}"
+  		echo "Input Files: ${InputFiles}"
+  		echo "Input Path for Data: ${StudyFolder}/<subject_id>/${InputPath}"
   		echo "Output Name: ${OutName}"
   		fi
   		if [ ${Calculation} == "gbc" ]; then
@@ -7518,10 +7559,21 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
 		
-		for CASE in $CASES
-		do
-  			"$FunctionToRun" "$CASE"
-  		done
+		if [ ${RunType} == "individual" ]; then
+			for CASE in $CASES; do
+				"$FunctionToRun" "$CASE"
+			done
+  		fi
+  		
+  		if [ ${RunType} == "group" ]; then
+  			CASE=`echo "$CASES" | sed 's/ /,/g'`
+  			echo $CASE
+			"$FunctionToRun" "$CASE"
+  		fi
+  		
+  		if [ ${RunType} == "list" ]; then
+			"$FunctionToRun"
+  		fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -7534,9 +7586,6 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 # Optional: ComputePConn, UseWeights, WeightsFile
 	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
-		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
-		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
 		if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
 		if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
 		if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
@@ -7554,6 +7603,11 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
 		if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
 		if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+		if [ -z "$SingleInputFile" ]; then SingleInputFile=""; 
+			if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+			if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+			if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
+		fi
 
 		echo ""
 		echo "Running BOLDParcellation function with the following parameters:"
@@ -7563,6 +7617,7 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		echo "Subjects: ${CASES}"
 		echo "Input File: ${InputFile}"
 		echo "Input Path: ${InputPath}"
+		echo "Single Input File: ${SingleInputFile}"
 		echo "ParcellationFile: ${ParcellationFile}"
 		echo "BOLD Parcellated Connectome Output Name: ${OutName}"
 		echo "BOLD Parcellated Connectome Output Path: ${OutPath}"
@@ -7575,10 +7630,11 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
 		
-		for CASE in $CASES
-		do
-  			"$FunctionToRun" "$CASE"
-  		done
+		if [ -z "$SingleInputFile" ]; then SingleInputFile=""; 
+			for CASE in $CASES; do "$FunctionToRun" "$CASE"; done
+		else
+			"$FunctionToRun" "$CASE"
+		fi
 fi
 
 if [ "$FunctionToRunInt" == "boldparcellation" ]; then
@@ -7632,7 +7688,7 @@ if [ "$FunctionToRunInt" == "boldparcellation" ]; then
 			echo ""
 		fi
 		
-		echo "Running DWI legacy processing with the following parameters:"
+		echo "Running BOLDParcellation function with the following parameters:"
 		echo ""
 		echo "-------------------------------------------------------------"
 		echo "Study Folder: ${StudyFolder}"
