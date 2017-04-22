@@ -57,7 +57,7 @@ end
 eoi = find(ismember(obj.glm.effects, effects));
 msk = ismember(obj.glm.effect, eoi);
 if ~isempty(frames)
-    msk = msk & ismember(obj.glm.eindex, frames);
+    msk = msk & ismember(obj.glm.frame, frames);
 end
 
 obj = obj.sliceframes(msk);

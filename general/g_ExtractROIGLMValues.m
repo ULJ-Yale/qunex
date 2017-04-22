@@ -57,12 +57,12 @@ function [data] = g_ExtractROIGLMValues(flist, roif, outf, effects, frames, valu
 %   — additional info (roi xyz, peak value ...)
 %
 
-if nargin < 8, verbose   = false; end
+if nargin < 8, verbose = false; end
 if nargin < 7 || isempty(tformat), tformat = 'wide,long,mat'; end
 if nargin < 6 || isempty(values), values = 'raw'; end
-if nargin < 5, frames    = [];    end
-if nargin < 4, estimates = [];    end
-if nargin < 3, outf      = [];    end
+if nargin < 5, frames  = [];    end
+if nargin < 4, effects = [];    end
+if nargin < 3, outf    = [];    end
 
 if nargin < 2, error('ERROR: No ROI provided for value extraction!');          end
 if nargin < 1, error('ERROR: No files to extract the values from provided!');  end
@@ -121,7 +121,7 @@ for s = 1:nsub
 
     % glm = gmrimage(subjects(s).glm, [], [], verbose);
     glm = gmrimage(subjects(s).glm);
-    glm = glm.mri_ExtractGLMEstimates(estimates, frames);
+    glm = glm.mri_ExtractGLMEstimates(effects, frames);
 
     % ---> update ROI
 

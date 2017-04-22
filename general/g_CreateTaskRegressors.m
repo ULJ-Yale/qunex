@@ -453,6 +453,11 @@ for n = 1:length(a)
 
     % --=> deal with weighting specification
 
+    regressor(n).name             = strjoin(regressor(n).event, '|');
+    regressor(n).weight.column    = [];
+    regressor(n).weight.normalize = [];
+    regressor(n).weight.method    = [];
+
     if length(m) > 1
         c = strtrim(splitby(m{2}, ':'));
         nc = length(c);
@@ -461,11 +466,6 @@ for n = 1:length(a)
         if nc > 1, regressor(n).weight.column    = str2num(c{2}); else regressor(n).weight.normalize = [];       end
         if nc > 2, regressor(n).weight.normalize = c{3}         ; else regressor(n).weight.normalize = 'within'; end
         if nc > 3, regressor(n).weight.method    = c{4}         ; else regressor(n).weight.method    = 'z';      end
-    else
-        regressor(n).name             = strjoin(regressor(n).event, '|');
-        regressor(n).weight.column    = [];
-        regressor(n).weight.normalize = [];
-        regressor(n).weight.method    = [];
     end
 
 end
