@@ -51,7 +51,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile
 %       ignores     - How to deal with the frames marked as not used in filering and regression steps
 %                     specified in a single string, separated with pipes
 %                     hipass  : keep / linear / spline
-%                     regress : keep / ignore
+%                     regress : keep / ignore / mark / linear / spline
 %                     lopass  : keep / linear /spline
 %                     ['hipass:keep|regress:keep|lopass:keep']
 %       options     - Additional options that can be set using the 'key=value|key=value' string:
@@ -189,9 +189,16 @@ function [] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile
 %   Regression options are:
 %
 %   * keep   ... Keep the bad frames and use them in the regression.
-%   * ignore ... Exclude bad frames from regression.
+%   * ignore ... Exclude bad frames from regression and keep the original
+%                values in their place.
+%   * mark   ... Exclude bad frames from regression and mark the bad frames
+%                as NaN.
+%   * linear ... Exclude bad frames from regression and replace them with
+%                linear interpolation after regression.
+%   * spline ... Exclude bad frames from regression and replace them with
+%                spline interpolation after regression.
 %
-%   Please note that when the bad frames are not kept, the original values will
+%   Please note that when the bad frames are ignored, the original values will
 %   be retained in the residual signal. In this case they have to be excluded
 %   or ignored also in all following analyses, otherwise they can be a
 %   significant source of artefacts.
@@ -428,6 +435,9 @@ function [] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile
 %
 %   2017-03-11 Grega Repovs (v0.9.10)
 %              - Updated documentation.
+%
+%   2017-04-22 Grega Repovs (v0.9.11)
+%              - Added the option for interpolation of bad frames after regression.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 16, done = [];                                  end
@@ -447,7 +457,7 @@ if nargin < 4 || isempty(TR), TR = 2.5;                     end
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces conc script v0.9.9 [%s]\n', tail);
+fprintf('\nRunning preproces conc script v0.9.11 [%s]\n', tail);
 
 options
 
@@ -1200,9 +1210,9 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     masks   = {};
     mframes = zeros(1,nbolds);
     nmask   = [];
-    if strcmp(ignore, 'ignore'), fprintf(' ignoring'); end
+    if ~strcmp(ignore, 'keep'), fprintf(' excluding'); end
     for b = 1:nbolds
-        if strcmp(ignore, 'ignore')
+        if ~strcmp(ignore, 'keep')
             fprintf(' %d', sum(img(b).use == 0));
             mask = img(b).use == 1;
         else
@@ -1213,7 +1223,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         mframes(b)   = sum(mask);
         nmask        = [nmask mask];
     end
-    if strcmp(ignore, 'ignore'), fprintf(' frames '); end
+    if ~strcmp(ignore, 'keep'), fprintf(' frames '); end
 
     %   ---> create and fill placeholder image
 
@@ -1274,6 +1284,18 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         fstart = sum(mframes(1:b-1)) + 1;
         fend   = sum(mframes(1:b));
         img(b).data(:,masks{b}) = res.data(:,fstart:fend);
+        if min(masks{b}) == 0
+            if strcmp(ignore, 'mark')
+                fprintf(' marking %d bad frames ', sum(~masks{b}));
+                img(b).data(:, ~masks{b}) = NaN;
+            elseif ismember({ignore}, {'linear', 'spline'})
+                fprintf(' %s interpolating %d bad frames ', ignore, sum(~masks{b}));
+                x  = [1:length(masks{b})]';
+                xi = x;
+                x  = x(masks{b});
+                img(b).data = interp1(x, img(b).data(:, masks{b})', xi, ignore, 'extrap')';
+            end
+        end
     end
 
     coeff = coeff.mri_EmbedMeta(xtable, 64, 'GLM');
