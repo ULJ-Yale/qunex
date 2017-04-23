@@ -6,3 +6,7 @@ LR-Thal.Prefrontal|4|
 LR-Thal.Premotor|5|
 LR-Thal.Parietal|6|
 LR-Thal.Temporal|7|
+LR-Thal.SensoryMotor|1,2|
+LR-Thal.PrefrontalParietal|4,6|
+LR-Thal.Associative|4,5,6,7|
+LR-Thal.SomatomotorSensory.|1,2,3|

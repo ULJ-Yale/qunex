@@ -134,6 +134,19 @@ isolatethalamusfslnuclei() {
 	-expr 'a+b+c+d' \
 	-prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.nii
 
+	# Combine individual thalamic nuclei from the FSL atlas into prefrontal & parietal nuclei
+	3dcalc -overwrite -a ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Parietal.nii \
+	-b ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.nii \
+	-expr 'a+b' \
+	-prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-PrefrontalParietal.nii
+
+	# Combine individual thalamic nuclei from the FSL atlas into associative nuclei
+	3dcalc -overwrite -a ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Motor.nii \
+	-b ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Sensory.nii \
+	-expr 'a+b' \
+	-prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SensoryMotor.nii
+
+
 	# Zero out surface data (saved in MNAP templates) 
 	wb_command -metric-math 'a-1' ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvalueszero.32k_fs_LR.func.gii -var a ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii
 	wb_command -metric-math 'a-1' ${TOOLS}/MNAP/general/templates/surface.R.mask.cifti.allvalueszero.32k_fs_LR.func.gii -var a ${TOOLS}/MNAP/general/templates/surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii
@@ -148,11 +161,23 @@ isolatethalamusfslnuclei() {
  	# change mapping to dtseries 
  	wb_command -cifti-change-mapping ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Associative.dscalar.nii ROW ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Associative.dtseries.nii -series 1 1
     
-	# -- Construct CIFTI averages for Associative
+	# -- Construct CIFTI averages for SomatomotorSensory
  	# construct new dense scalar file
  	wb_command -cifti-create-dense-from-template ${TOOLS}/MNAP/general/templates/structures.allvaluesone.dtseries.nii ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.dscalar.nii -volume-all ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.nii -metric CORTEX_LEFT ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii -metric CORTEX_RIGHT ${TOOLS}/MNAP/general/templates/surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii
  	# change mapping to dtseries 
  	wb_command -cifti-change-mapping ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.dscalar.nii ROW ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.dtseries.nii -series 1 1
+
+	# -- Construct CIFTI averages for SensoryMotor
+ 	# construct new dense scalar file
+ 	wb_command -cifti-create-dense-from-template ${TOOLS}/MNAP/general/templates/structures.allvaluesone.dtseries.nii ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SensoryMotor.dscalar.nii -volume-all ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SensoryMotor.nii -metric CORTEX_LEFT ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii -metric CORTEX_RIGHT ${TOOLS}/MNAP/general/templates/surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii
+ 	# change mapping to dtseries 
+ 	wb_command -cifti-change-mapping ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SensoryMotor.dscalar.nii ROW ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SensoryMotor.dtseries.nii -series 1 1
+
+	# -- Construct CIFTI averages for PrefrontalParietal
+ 	# construct new dense scalar file
+ 	wb_command -cifti-create-dense-from-template ${TOOLS}/MNAP/general/templates/structures.allvaluesone.dtseries.nii ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-PrefrontalParietal.dscalar.nii -volume-all ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-PrefrontalParietal.nii -metric CORTEX_LEFT ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii -metric CORTEX_RIGHT ${TOOLS}/MNAP/general/templates/surface.R.mask.cifti.allvaluesone.32k_fs_LR.func.gii
+ 	# change mapping to dtseries 
+ 	wb_command -cifti-change-mapping ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-PrefrontalParietal.dscalar.nii ROW ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-PrefrontalParietal.dtseries.nii -series 1 1
 
 }
 

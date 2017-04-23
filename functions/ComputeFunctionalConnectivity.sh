@@ -109,16 +109,16 @@ usage() {
 				echo "		--calculation=<type_of_calculation>					Run <seed> or <gbc> calculation for functional connectivity."
 				echo "		--runtype=<type_of_run>					Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
 				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --path, --inputfile, --subject and --outname are omitted"
-				echo "		--targetf=<path_for_output_file>			Specify the absolute path for output folder"
+				echo "		--targetf=<path_for_output_file>			Specify the absolute path for output folder. If using --runtype='individual' and left empty the output will default to --inputpath location for each subject"
 				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
-				echo "		--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
+				echo "		--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped."
 				echo ""
 				echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
 				echo ""
  				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subject=<list_of_cases>				List of subjects to run"
 				echo "		--inputfiles=<files_to_compute_connectivity_on>		Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
-				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
+				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
 				echo "		--outname=<name_of_output_file>				Specify the suffix name of the output file name"  
 				echo ""
 				echo "-- OPTIONAL GENERAL PARAMETERS: "	
@@ -633,20 +633,20 @@ if [ ${RunType} == "individual" ]; then
 			# -- Define inputs
 			geho "--- Establishing paths for all input and output folders:"
 			echo ""
-			if [ -z ${OutPath} == "" ]; then
+			if [ ${OutPath} == "" ]; then
 				OutPath=${StudyFolder}/${INPUTCASE}/${InputPath}
 			fi
 			# parse input from the InputFiles variable
 			InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
 			# cleanup prior tmp lists
-			rm -rf ${StudyFolder}/${INPUTCASE}/${InputPath}/templist > /dev/null 2>&1	
+			rm -rf ${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
 			# generate output directories
-			mkdir ${StudyFolder}/${INPUTCASE}/${InputPath}/templist > /dev/null 2>&1
+			mkdir ${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
 			mkdir ${OutPath} > /dev/null 2>&1
 			# generate the temp list
-			echo "subject id:$INPUTCASE" >> ${StudyFolder}/${INPUTCASE}/${InputPath}/templist/${OutName}.list
-			for InputFile in $InputFiles; do echo "file:$StudyFolder/$INPUTCASE/$InputPath/$InputFile" >> ${StudyFolder}/${INPUTCASE}/${InputPath}/templist/${OutName}.list; done	
-			FinalInput="${StudyFolder}/${INPUTCASE}/${InputPath}/templist/${OutName}.list"
+			echo "subject id:$INPUTCASE" >> ${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
+			for InputFile in $InputFiles; do echo "file:$StudyFolder/$INPUTCASE/$InputPath/$InputFile" >> ${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done	
+			FinalInput="${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
 	done
 fi
 
@@ -655,8 +655,8 @@ if [ ${RunType} == "group" ]; then
 	# generate output directories
 	mkdir ${OutPath} > /dev/null 2>&1
 	# cleanup prior tmp lists
-	rm -rf ${OutPath}/templist > /dev/null 2>&1	
-	mkdir ${OutPath}/templist > /dev/null 2>&1	
+	rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
+	mkdir ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
 			
 	for INPUTCASE in $INPUTCASES; do
 			# -- Define inputs
@@ -665,9 +665,9 @@ if [ ${RunType} == "group" ]; then
 			# parse input from the InputFiles variable
 			InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
 			# generate the temp list
-			echo "subject id:$INPUTCASE" >> ${OutPath}/templist/${OutName}.list
-			for InputFile in $InputFiles; do echo "file:$StudyFolder/$INPUTCASE/$InputPath/$InputFile" >> ${OutPath}/templist/${OutName}.list; done	
-			FinalInput="${OutPath}/templist/${OutName}.list"
+			echo "subject id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
+			for InputFile in $InputFiles; do echo "file:$StudyFolder/$INPUTCASE/$InputPath/$InputFile" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done	
+			FinalInput="${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list"
 	done
 fi
 	# -- Echo inputs
@@ -701,9 +701,16 @@ fi
 		# Example with string input --> matlab -nosplash -nodisplay -nojvm -r "fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
 		matlab -nosplash -nodisplay -nojvm -r "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
 	fi
+	
+	echo ""
+	echo ""
+	echo ""
+	geho "--- Removing temporary list files: ${OutPath}/templist_${Calculation}_${OutName}"
+	echo ""
+	rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
 
 if [ "$ExtractData" == "yes" ]; then 
-	geho "Saving out the data in a CSV file..."
+	geho "--- Saving out the data in a CSV file..."
 	# -- Specify pconn file inputs and outputs
 	PConnBOLDInputs=`ls ${OutPath}/${CASE}-${OutName}*ptseries.nii > /dev/null 2>&1`
 	if [ -z ${PConnBOLDInputs} ]; then

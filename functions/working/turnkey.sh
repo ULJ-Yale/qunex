@@ -1,4 +1,50 @@
 #!/bin/bash
+#
+#~ND~FORMAT~MARKDOWN~
+#~ND~START~
+#
+# ## Copyright Notice
+#
+# Copyright (C)
+#
+# * Yale University
+#
+# ## Author(s)
+#
+# * Charlie Schleifer, N3 Division, Yale University
+# * Alan Anticevic, N3 Division, Yale University
+#
+# ## Product
+#
+#  Turnkey wrapper for MNAP general pipeline
+#
+# ## License
+#
+# * The turnkey.sh = the "Software"
+# * This Software is distributed "AS IS" without warranty of any kind, either 
+# * expressed or implied, including, but not limited to, the implied warranties
+# * of merchantability and fitness for a particular purpose.
+#
+# ### TODO
+#
+# ## Description 
+#   
+# This script, turnkey.sh, implements an automated 'turnkey' processing of multi-modal 
+# imaging data via the MNAP general code
+# 
+# ## Prerequisite Installed Software
+#
+# * MNAP repositories and all their dependencies
+#
+# ## Prerequisite Environment Variables
+#
+# See output of usage function: e.g. $./turnkey.sh --help
+#
+# ### Expected Previous Processing
+# 
+# * The necessary input files are "$StudyFolder/subjects/$CASE/inbox/*dicom
+#
+#~ND~END~
 
 usage() {
 	echo ""

@@ -37,7 +37,7 @@ Operating System: Linux
       </MD>
       <MD>
          <Name><![CDATA[WorkingDirectory]]></Name>
-         <Value><![CDATA[/gpfs/project2/fas/n3/software/MNAP/general/templates/Thalamus_Atlas]]></Value>
+         <Value><![CDATA[/gpfs/home/fas/anticevic/aa353]]></Value>
       </MD>
    </MetaData>
    <LabelTable>
