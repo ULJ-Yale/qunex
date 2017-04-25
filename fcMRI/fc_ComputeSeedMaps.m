@@ -2,16 +2,16 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 
 %function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv)
 %
-%	Computes seed based correlations maps for individuals as well as group maps.
+%   Computes seed based correlations maps for individuals as well as group maps.
 %
 %   INPUT
-%	    flist    - A .list file listing the subjects and their files for which to compute seedmaps,
+%       flist    - A .list file listing the subjects and their files for which to compute seedmaps,
 %                  or a well strucutured string (see g_ReadFileList).
-%	    roiinfo	 - A names file for the ROI seeds.
-%	    inmask	 - An array mask defining which frames to use (1) and which not (0) or the number of frames to skip at start []
-%	    event	 - A string describing which events to extract timeseries for and the frame offset at start and end
+%       roiinfo  - A names file for the ROI seeds.
+%       inmask   - An array mask defining which frames to use (1) and which not (0) or the number of frames to skip at start []
+%       event    - A string describing which events to extract timeseries for and the frame offset at start and end
 %                  in format: ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
-%	    tagetf	 - The folder to save images in ['.'].
+%       tagetf   - The folder to save images in ['.'].
 %       method   - method for extracting timeseries - 'mean', 'pca' ['mean']
 %       ignore   - do we omit frames to be ignored (
 %                  -> no:    do not ignore any additional frames
@@ -21,24 +21,35 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %       cv       - Whether to compute covariances instead of correlations [false].
 %
 %   RESULTS
-%	It saves group files:
+%   It saves group files:
 %
-%   <targetf>/<root>[_<event>]_<roi>_group_r  ... Mean group Pearson correlations (converted from Fz).
-%   <targetf>/<root>[_<event>]_<roi>_group_Fz ... Mean group Fisher Z values.
-%   <targetf>/<root>[_<event>]_<roi>_group_Z  ... Z converted p values testing difference from 0.
-%	<targetf>/<root>[_<event>]_<roi>_all_Fz   ... Fisher Z values for all participants.
+%   <targetf>/<root>[_<title>]_<roi>_group_r  ... Mean group Pearson correlations (converted from Fz).
+%   <targetf>/<root>[_<title>]_<roi>_group_Fz ... Mean group Fisher Z values.
+%   <targetf>/<root>[_<title>]_<roi>_group_Z  ... Z converted p values testing difference from 0.
+%   <targetf>/<root>[_<title>]_<roi>_all_Fz   ... Fisher Z values for all participants.
 %
-%   <targetf>/<root>[_<event>]_<roi>_group_cov ... Mean group covariance.
-%   <targetf>/<root>[_<event>]_<roi>_all_cov   ... Covariances for all participants.
+%   <targetf>/<root>[_<title>]_<roi>_group_cov ... Mean group covariance.
+%   <targetf>/<root>[_<title>]_<roi>_all_cov   ... Covariances for all participants.
 %
 %   <roi> is the name of the ROI for which the seed map was computed for.
 %   <root> is the root name of the flist.
-%   <event> is the title of the event, if event string was specified.
+%   <title> is the title of the extraction event(s), if event string was
+%   specified.
 %
 %   USE
 %   The function computes seed maps for the specified ROI. If an event string is
 %   provided, it uses each subject's .fidl file to extract only the specified
-%   event related frames. The format to specify
+%   event related frames. The string format is:
+%
+%   <title>:<eventlist>:<frame offset1>:<frame offset2>
+%
+%   and multiple extractions can be specified by separating them using the pipe
+%   '|' separator. Specifically, for each extraction, all the events listed in
+%   a comma-separated eventlist will be considered (e.g. 'task1,task2') and for
+%   each event all the frames starting from event start + offset1 to event end
+%   + offset2 will be extracted and concatenated into a single timeseries. Do
+%   note that the extracted frames depend on the length of the event specified
+%   in the .fidl file!
 %
 %   EXAMPLE USE
 %   To compute resting state seed maps using first eigenvariate of each ROI:
@@ -49,12 +60,20 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, '', 'seed-maps', 'mean', 'udvarsme', true);
 %
 %   To compute seed maps for third and fourth frame of incongruent and congruent
-%   trials (listed as inc and con events in fidl files) using mean of each
-%   region and exclude only frames marked for exclusion in fidl files:
-%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'incongruent:inc:3,4|congruent:con:3,4', 'seed-maps', 'mean', 'event');
+%   trials (listed as inc and con events in fidl files with duration 1) using
+%   mean of each region and exclude only frames marked for exclusion in fidl
+%   files:
+%
+%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'incongruent:inc:2,3|congruent:con:2,3', 'seed-maps', 'mean', 'event');
+%
+%   To compute seed maps across all the tasks blocks, starting with the third
+%   frame into the block and taking one additional frame after the end of the
+%   block, use:
+%
+%   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'task:easyblock,hardblock:2,1', 'seed-maps', 'mean', 'event');
 %
 %   ---
-% 	Written by Grega Repovš 2008-02-07.
+%   Written by Grega Repovš 2008-02-07.
 %
 %   Changelog
 %   2008-01-23 Grega Repovš - Adjusted for a different file list format and an additional ROI mask.
@@ -95,8 +114,8 @@ go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
 g_CheckFolder(targetf, 'results folder');
 
 if ~go
-	fprintf('ERROR: Some files were not found. Please check the paths and start again!\n\n');
-	return
+    fprintf('ERROR: Some files were not found. Please check the paths and start again!\n\n');
+    return
 end
 
 % ---- Start
@@ -140,25 +159,25 @@ for n = 1:nsub
 
     % ---> reading ROI file
 
-	fprintf('\n     ... creating ROI mask');
+    fprintf('\n     ... creating ROI mask');
 
-	if isfield(subject(n), 'roi')
-	    sroifile = subject(n).roi;
-	else
-	    sroifile = [];
+    if isfield(subject(n), 'roi')
+        sroifile = subject(n).roi;
+    else
+        sroifile = [];
     end
 
-	roi  = gmrimage.mri_ReadROI(roiinfo, sroifile);
+    roi  = gmrimage.mri_ReadROI(roiinfo, sroifile);
     nroi = length(roi.roi.roinames);
 
 
-	% ---> reading image files
+    % ---> reading image files
 
-	fprintf('\n     ... reading image file(s)');
+    fprintf('\n     ... reading image file(s)');
 
-	y = gmrimage(subject(n).files{1});
-	for f = 2:length(subject(n).files)
-	    y = [y gmrimage(subject(n).files{f})];
+    y = gmrimage(subject(n).files{1});
+    for f = 2:length(subject(n).files)
+        y = [y gmrimage(subject(n).files{f})];
     end
     y = y.correlize;
 
@@ -179,7 +198,7 @@ for n = 1:nsub
 
     % ---> creating timeseries mask
 
-    fprintf('\n     ... computing seed maps ');
+    fprintf('\n     ... computing seed maps [');
 
     for a = 1:nana
 
@@ -214,6 +233,8 @@ for n = 1:nsub
 
         % ---> slice up the timeseries, extract data
 
+        fprintf('%d ', sum(mask));
+
         t  = y.sliceframes(mask);
         ts = t.mri_ExtractROI(roi, [], method);
         pr = t.mri_ComputeCorrelations(ts', [], cv);
@@ -227,9 +248,9 @@ for n = 1:nsub
 
             if n == 1
                 if cv
-                    ana(a).group(r).Fz = roi.zeroframes(nsub);
-                else
                     ana(a).group(r).cv = roi.zeroframes(nsub);
+                else
+                    ana(a).group(r).Fz = roi.zeroframes(nsub);
                 end
                 ana(a).group(r).roi = roi.roi.roinames{r};
             end
@@ -242,8 +263,10 @@ for n = 1:nsub
                 ana(a).group(r).Fz.data(:,n) = fc_Fisher(pr.data(:,r));
             end
 
-	   end
+       end
     end
+
+    fprintf('frames]');
 end
 
 
@@ -262,7 +285,7 @@ for a = 1:nana
 
     for r = 1:nroi
 
-    	fprintf('\n    ... for region %s', ana(a).group(r).roi);
+        fprintf('\n    ... for region %s', ana(a).group(r).roi);
 
         if cv
             [p Z M] = ana(a).group(r).cv.mri_TTestZero();
@@ -271,7 +294,7 @@ for a = 1:nana
             pr = M.mri_FisherInv();
         end
 
-    	fprintf('... saving ...');
+        fprintf('... saving ...');
         if isempty(ana(a).name)
             tname = lname;
         else
@@ -289,7 +312,7 @@ for a = 1:nana
 
         Z.mri_saveimage([targetf '/' tname '_' ana(a).group(r).roi '_group_Z'], extra);                   fprintf(' Z');
 
-    	fprintf(' ... done.');
+        fprintf(' ... done.');
 
     end
 end

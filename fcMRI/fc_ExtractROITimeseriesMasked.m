@@ -8,7 +8,8 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %	    flist   	- A .list file, or a well strucutured string (see g_ReadFileList).
 %	    roiinfo	    - A .names ROI definition file.
 %       inmask      - Per run mask information, number of frames to skip or a vector of frames to keep (1) and reject (0),
-%                     or a string with definition used to extract event-defined timepoints only
+%                     or a string describing which events to extract timeseries for and the frame offset at start and end
+%                     in format: ('title1:event1,event2:2:2|title2:event3,event4:1:2') ['']
 %	    tagetf		- The name for the file to save timeseries in.
 %       options     - A string defining which outputs to create ['m']:
 %                     -> t - create a tab delimited text file,
@@ -26,21 +27,35 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %
 %   USE
 %   The function is used to extract ROI timeseries. What frames are extracted
-%   can be further limited by providing an event string that is tham parsed
-%   using g_CreateTaskRegressors and all frames with regressors that have
-%   values above 0 are extracted. The extracted timeseries can be saved either
+%   can be specified using an event string. If specified, it uses each
+%   subject's .fidl file to extract only the specified event related frames.
+%   The string format is:
+%
+%   <title>:<eventlist>:<frame offset1>:<frame offset2>
+%
+%   and multiple extractions can be specified by separating them using the pipe
+%   '|' separator. Specifically, for each extraction, all the events listed in
+%   a comma-separated eventlist will be considered (e.g. 'task1,task2') and for
+%   each event all the frames starting from event start + offset1 to event end
+%   + offset2 will be extracted and concatenated into a single timeseries. Do
+%   note that the extracted frames depend on the length of the event specified
+%   in the .fidl file!
+%
+%   The extracted timeseries can be saved either
 %   in a matlab file with structure:
 %
 %   data.roinames   ... cell array of ROI names
 %   data.roicodes1  ... array of group ROI codes
-%   data.roicodes2  ... arrau of subject specific ROI codes
+%   data.roicodes2  ... array of subject specific ROI codes
 %   data.subjects   ... cell array of subject codes
-%   data.timeseries ... cell array of extracted timeseries
 %   data.n_roi_vox  ... cell array of number voxels for each ROI
+%   data.datasets   ... cell array of titles for each of the dataset
+%   data.<title>.timeseries ... cell array of extracted timeseries
 %
 %   or in a tab separated text file in which data for each frame of each subject
-%   is in its own line, the first column is the subject code and the following
-%   columns are for each of the specified ROI. The ROI are listed in the header.
+%   is in its own line, the first column is the subject code, the second the
+%   dataset title, the third the frame number and the following columns are for
+%   each of the specified ROI. The ROI are listed in the header.
 %
 %   *ROI definition*
 %   The basic definition of ROI to use is taken from roiinfo. Additional masking
@@ -78,6 +93,9 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %            - Optimized per subject masking of ROI.
 %   2017-04-18 Grega Repovs
 %            - Adjusted to use updated g_ReadFileList.
+%   2017-04-25 Grega Repovs
+%            - Updated to allow multiple extractions using the same event string
+%              as fc_ComputeSeedMaps
 %
 
 if nargin < 10 || isempty(bmask),  bmask   = false;  end
@@ -91,6 +109,7 @@ if ~ischar(ignore)
     error('ERROR: Argument ignore has to be a string specifying whether and what to ignore!');
 end
 
+fignore = 'ignore';
 eventbased = false;
 if isa(inmask, 'char')
     eventbased = true;
@@ -135,12 +154,16 @@ fprintf('\n ... listing files to process');
 fprintf(' ... done.');
 
 %   ------------------------------------------------------------------------------------------
-%                                                         set up datastructure to save results
+%                                                                      parse events if present
 
-for n = 1:nsub
-    data.subjects{n} = subject(n).id;
-    data.timeseries{n} = [];
+if eventbased
+    [ana fstring] = parseEvent(inmask);
+    inmask   = [];
+else
+    ana.name = {'data'};
+    fstring  = '';
 end
+nana = length(ana);
 
 
 %   ------------------------------------------------------------------------------------------
@@ -163,91 +186,99 @@ for n = 1:nsub
 
     fprintf(' ... %d frames read, done.', y.frames);
 
-	% ---> creating timeseries mask
 
-	if eventbased
-	    mask = [];
-	    if isfield(subject(n), 'fidl')
-            if subject(n).fidl
-                mask = g_CreateTaskRegressors(subject(n).fidl, y.runframes, inmask, fignore);
-                mask = mask.run;
-    	        nmask = [];
-                for r = 1:length(mask)
-                    nmask = [nmask; sum(mask(r).matrix,2) > 0];
-                end
-                mask = nmask;
-            end
-        end
-    else
-        mask = inmask;
-    end
 
-    % ---> slicing image
 
-    if length(mask) == 1
-        y = y.sliceframes(mask, 'perrun');
-    else
-        y = y.sliceframes(mask);                % this might need to be changed to allow for per run timeseries masks
-    end
-
-    % ---> remove additional frames to be ignored
-
-    if ~ismember(ignore, {'no', 'fidl'})
-        y = y.mri_Scrub(ignore);
-    end
-
-    % ---> creating ROI mask
-
-    fprintf('\n     ... creating ROI mask');
+    % ---> creating per subject ROI mask
 
     roi = groi;
 
-    mask = ones(roi.voxels, 1);
-
     % -- mask with subject's ROI file
+
+    imask = ones(roi.voxels, 1);
 
     if isfield(subject(n), 'roi')
         if isempty(mcodes)
             roi  = gmrimage.mri_ReadROI(roiinfo, subject(n).roi);
         else
             sroi = gmrimage(subject(n).roi);
-            mask = mask & ismember(sroi.data, mcodes);
+            imask = imask & ismember(sroi.data, mcodes);
         end
+    end
+
+    % -- exclude voxels outside the BOLD brain mask
+
+    if bmask
+        imask = imask & mri_BOLDBrainMask(subject(n).files);
     end
 
     % -- exclude voxels with 0 variance
 
     istat = y.mri_Stats('var');
-    mask = mask & istat.data;
-
-    % -- exclude voxels outside the BOLD brain mask
-
-    if bmask
-        mask = mask & mri_BOLDBrainMask(subject(n).files);
-    end
+    imask = imask & istat.data;
 
     % -- apply mask
 
-    if min(mask) == 0
-        roi.data(mask == 0,:) = 0;
+    if min(imask) == 0
+        roi.data(imask == 0,:) = 0;
         for r = 1:length(roi.roi.roicodes)
             roi.roi.nvox(r) = sum(sum(roi.data==roi.roi.roicodes(r)));
         end
     end
 
 
-	% ---> extracting timeseries
 
-	fprintf('\n     ... extracting timeseries [%d frames]', y.frames);
+
+
+
+    % ---> creating task mask
+
+    if eventbased
+        finfo = g_CreateTaskRegressors(subject(n).fidl, y.runframes, fstring, fignore);
+        finfo = finfo.run;
+        matrix = [];
+        for r = 1:length(finfo)
+            matrix = [matrix; finfo(r).matrix];
+        end
+    else
+        matrix = inmask(:);
+    end
+
+    fprintf('\n     ... extracting timeseries [');
+
+    for a = 1:nana
+
+        % ---> slicing image
+
+        fmask = matrix(:, a)';
+
+        if length(fmask) == 1
+            t = y.sliceframes(fmask, 'perrun');
+        else
+            t = y.sliceframes(fmask);                % this might need to be changed to allow for per run timeseries masks
+        end
+
+        % ---> remove additional frames to be ignored
+
+        if ~ismember(ignore, {'no', 'fidl'})
+            t = t.mri_Scrub(ignore);
+        end
+
+        % ---> extracting timeseries
+
+        fprintf('%d ', t.frames);
+        data.(ana(a).name).timeseries{n}   = t.mri_ExtractROI(roi, rcodes, method);
+
+    end
+
+    fprintf('frames]');
 
     data.subjects{n}     = subject(n).id;
-    data.timeseries{n}   = y.mri_ExtractROI(roi, rcodes, method);
     data.n_roi_vox(n, :) = roi.roi.nvox;
-
-    fprintf(' ... done!');
 
 end
 
+data.datasets  = {ana.name};
 data.roinames  = roi.roi.roinames;
 data.roicodes1 = roi.roi.roicodes1;
 data.roicodes2 = roi.roi.roicodes2;
@@ -268,19 +299,21 @@ if ismember('t', options)
     % ---> open file and print header
 
     [fout message] = fopen([targetf '.txt'],'w');
-    fprintf(fout, 'subject');
+    fprintf(fout, 'subject\tevent\tframe');
     for ir = 1:length(data.roinames)
         fprintf(fout, '\t%s', data.roinames{ir});
     end
 
     % ---> print data
 
-    for is = 1:nsub
-        ts = data.timeseries{is};
-        tslen = size(ts, 2);
-        for it = 1:tslen
-            fprintf(fout, '\n%s', data.subjects{is});
-            fprintf(fout, '\t%.5f', ts(:,it));
+    for a = 1:nana
+        for is = 1:nsub
+            ts = data.(ana(a).name).timeseries{is};
+            tslen = size(ts, 2);
+            for it = 1:tslen
+                fprintf(fout, '\n%s\t%s\t%d', data.subjects{is}, ana(a).name, it);
+                fprintf(fout, '\t%.5f', ts(:,it));
+            end
         end
     end
 
@@ -293,6 +326,8 @@ fprintf('\n\n FINISHED!\n\n');
 
 
 
+%   ------------------------------------------------------------------------------------------
+%                                                                 masking with BOLD brain mask
 
 function [bmask] = mri_BOLDBrainMask(conc)
 
@@ -314,4 +349,21 @@ function [bmask] = mri_BOLDBrainMask(conc)
         bmask = [bmask gmrimage(sprintf('%s/segmentation/boldmasks/bold%d_frame1_brain_mask.nii.gz', sfolder{n}, boldn(n)))];
     end
     bmask = min(bmask.image2D, [], 2) > 0;
+
+
+%   ------------------------------------------------------------------------------------------
+%                                                                         event string parsing
+
+function [ana, fstring] = parseEvent(event)
+
+    smaps   = regexp(event, '\|', 'split');
+    nsmaps  = length(smaps);
+    fstring = '';
+    for m = 1:nsmaps
+        fields = regexp(smaps{m}, ':', 'split');
+        ana(m).name = fields{1};
+        fstring     = [fstring fields{2} ':block:' fields{3} ':' fields{4}];
+        if m < nsmaps, fstring = [fstring '|']; end
+    end
+
 
