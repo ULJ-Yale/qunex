@@ -160,7 +160,7 @@ if eventbased
     [ana fstring] = parseEvent(inmask);
     inmask   = [];
 else
-    ana.name = {'data'};
+    ana.name = 'data';
     fstring  = '';
 end
 nana = length(ana);
@@ -329,27 +329,40 @@ fprintf('\n\n FINISHED!\n\n');
 %   ------------------------------------------------------------------------------------------
 %                                                                 masking with BOLD brain mask
 
-function [bmask] = mri_BOLDBrainMask(conc)
+function [bmask] = mri_BOLDBrainMask(fnames)
 
-    [files boldn sfolder] = gmrimage.mri_ReadConcFile(conc);
+    bmasks = [];
+    for fname = fnames
+        fname = fname{1};
+        if ~isempty(strfind(fname, '.conc'))
+            [files boldn sfolder] = gmrimage.mri_ReadConcFile(fname);
 
-    mask = boldn > 0;
-    for n = 1:length(boldn)
-        if isempty(sfolder{n})
-            mask(n) = false;
+            mask = boldn > 0;
+            for n = 1:length(boldn)
+                if isempty(sfolder{n})
+                    mask(n) = false;
+                end
+            end
+
+            boldn   = boldn(mask);
+            sfolder = sfolder(mask);
+            nfiles  = length(boldn);
+
+            bmask = [];
+            for n = 1:nfiles
+                bmask = [bmask gmrimage(sprintf('%s/segmentation/boldmasks/bold%d_frame1_brain_mask.nii.gz', sfolder{n}, boldn(n)))];
+            end
+            bmask = min(bmask.image2D, [], 2) > 0;
+        else
+            [pathstr name ext] = fileparts(fname);
+            boldn = regexp(name, '^.*?([0-9]+).*', 'tokens');
+            pathstr = strrep(pathstr, 'functional', '');
+            bmask = gmrimage(sprintf('%ssegmentation/boldmasks/bold%s_frame1_brain_mask.nii.gz', pathstr, boldn{1}{1}));
+            bmask = bmask.image2D > 0;
         end
+        bmasks = [bmasks bmask];
     end
-
-    boldn   = boldn(mask);
-    sfolder = sfolder(mask);
-    nfiles  = length(boldn);
-
-    bmask = [];
-    for n = 1:nfiles
-        bmask = [bmask gmrimage(sprintf('%s/segmentation/boldmasks/bold%d_frame1_brain_mask.nii.gz', sfolder{n}, boldn(n)))];
-    end
-    bmask = min(bmask.image2D, [], 2) > 0;
-
+    bmask = min(bmasks, [], 2) > 0;
 
 %   ------------------------------------------------------------------------------------------
 %                                                                         event string parsing
