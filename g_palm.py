@@ -127,6 +127,27 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     T       : Enable TFCE inference
     C <z>   : Enable cluster inference for univariate tests with z cutoff
 
+    TFCE specific additional arguments
+    ----------------------------------
+
+    Sometimes it is desired to specify TFCE parameters that differ from the
+    default values. As the function allows combined surface/volume processing
+    of cifti files, it is useful to be able to set them separately for 2D and
+    3D analysis. runPALM therefore provides two additional optional parameters
+    that are separately expanded to TFCE 2D and 3D settings:
+
+    T2DHEC  : sets H, E and C parameters for 2D part of analysis
+    T3DHEC  : sets H, E and C parameters for 3D part of analysis
+
+    All three values need to be provided when the parameter is specified, for
+    example:
+
+    args="T2HEC:2:0.5:26|T3DHEC:4:1:6"
+
+    If these two parameters are not specified, the default values specified by
+    PALM are used, specifically, H=2, E=1, C=26 for 2D analysis and H=2, E=0.5
+    for 3D analysis (C value is not listed in PALM documentation).
+
     Example additional arguments
     ----------------------------
 
@@ -157,6 +178,8 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     Changelog
     2017-02-06 Grega Repovš
              - Updated documentation.
+    2017-05-01 Grega Repovš
+             - Added custom 2D/3D specification of TFCE parameters
 
     '''
 
@@ -167,6 +190,11 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     if not os.path.exists(image):
         print "ERROR: The image file is missing: %s. Aborting PALM!" % (image)
         exit(1)
+
+    rfolder = os.path.dirname(root)
+    if not os.path.exists(rfolder):
+        print "     ... creating target folder [%s]" % (rfolder)
+        os.makedirs(rfolder)
 
     # missing = []
     # for check in [image, design + '_d.csv', design + '_t.csv', design + '_eb.csv']:
@@ -264,6 +292,25 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                 if os.path.exists(tfile):
                     dargs += ['-' + f, tfile]
 
+
+        # --- check for additional parameters
+
+        # -- custom 2D TFCE settings
+
+        if 'T2DHEC' in arguments:
+            t2hec = arguments.pop('T2DHEC')
+            t2set = "-tfce_H %s -tfce_E %s -tfce_C %s" % (t2hec[0], t2hec[1], t2hec[2])
+        else:
+            t2set = "-tfce2D"
+
+        # -- custom 3D TFCE settings
+
+        if 'T3DHEC' in arguments:
+            t3hec = arguments.pop('T3DHEC')
+            t3set = "-tfce_H %s -tfce_E %s -tfce_C %s" % (t3hec[0], t3hec[1], t3hec[2])
+        else:
+            t3set = None
+
         # --- put together statistics and other related arguments
 
         sargs = []
@@ -290,19 +337,21 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             inargs  = ['-i', root + '_volume.nii', '-m', os.path.join(atlas, 'masks', 'volume.cifti.mask.nii')]
             command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_volume']
             calls.append({'name': 'PALM Volume', 'args': command, 'sout': root + '_volume.log'})
+            if '-T' in command and t3set is not None:
+                command += [t3set]
 
             print "     ... Left Surface"
             inargs  = ['-i', root + '_left.func.gii', '-m', os.path.join(atlas, 'masks', 'surface.cifti.L.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_L']
             if '-T' in command:
-                command += ['-tfce2D']
+                command += [t2set]
             calls.append({'name': 'PALM Left Surface', 'args': command, 'sout': root + '_left_surface.log'})
 
             print "     ... Right Surface"
             inargs  = ['-i', root + '_right.func.gii', '-m', os.path.join(atlas, 'masks', 'surface.cifti.R.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
             command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_R']
             if '-T' in command:
-                command += ['-tfce2D']
+                command += [t2set]
             calls.append({'name': 'PALM Right Surface', 'args': command, 'sout': root + '_right_surface.log'})
 
             print " --> running PALM for CIFTI input"
