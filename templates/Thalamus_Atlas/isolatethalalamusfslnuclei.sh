@@ -119,33 +119,31 @@ isolatethalamusfslnuclei() {
 	3dcalc -overwrite -x ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked.nii -expr 'within(x,5.5,6.5)' -prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Parietal.nii
 	3dcalc -overwrite -x ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked.nii -expr 'within(x,6.5,7.5)' -prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Temporal.nii
 
-	# Combine individual thalamic nuclei from the FSL atlas into associative nuclei
+	# Combine individual thalamic nuclei from the FSL atlas into Associative nuclei
 	3dcalc -overwrite -a ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Parietal.nii \
 	-b ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.nii \
 	-c ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Premotor.nii \
 	-expr 'a+b+c' \
 	-prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Associative.nii
 	
-	# Combine individual thalamic nuclei from the FSL atlas into associative nuclei
+	# Combine individual thalamic nuclei from the FSL atlas into SomatomotorSensory  nuclei
 	3dcalc -overwrite -a ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Motor.nii \
 	-b ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Sensory.nii \
 	-c ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Occipital.nii \
-	-d ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Temporal.nii \
-	-expr 'a+b+c+d' \
+	-expr 'a+b+c' \
 	-prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.nii
 
-	# Combine individual thalamic nuclei from the FSL atlas into prefrontal & parietal nuclei
+	# Combine individual thalamic nuclei from the FSL atlas into Prefrontal & Parietal nuclei
 	3dcalc -overwrite -a ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Parietal.nii \
 	-b ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.nii \
 	-expr 'a+b' \
 	-prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-PrefrontalParietal.nii
 
-	# Combine individual thalamic nuclei from the FSL atlas into associative nuclei
+	# Combine individual thalamic nuclei from the FSL atlas into SensoryMotor nuclei
 	3dcalc -overwrite -a ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Motor.nii \
 	-b ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Sensory.nii \
 	-expr 'a+b' \
 	-prefix ${TOOLS}/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SensoryMotor.nii
-
 
 	# Zero out surface data (saved in MNAP templates) 
 	wb_command -metric-math 'a-1' ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvalueszero.32k_fs_LR.func.gii -var a ${TOOLS}/MNAP/general/templates/surface.L.mask.cifti.allvaluesone.32k_fs_LR.func.gii

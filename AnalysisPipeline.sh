@@ -4440,7 +4440,6 @@ fslbedpostxgpu() {
 		export FSLGECUDAQ
 		export SGE_ROOT=1
 		NJOBS=4
-		module load GPU/Cuda/6.5
 		
 		# Check if overwrite flag was set
 		if [ "$Overwrite" == "yes" ]; then
@@ -4459,6 +4458,19 @@ fslbedpostxgpu() {
   		if [ "$Model" == 3 ]; then
   			CheckFile="mean_Rsamples.nii.gz"
 		fi
+				
+		if [ "$Rician" == "no" ] || [ "$Rician" == "NO" ]; then
+			echo ""
+			geho "Omitting --rician flag"
+			RicianFlag=""
+			echo ""
+		else
+			echo ""
+			geho "Setting --rician flag"
+			RicianFlag="--rician"
+			echo ""			
+		fi
+		
 
   		# Check if the file even exists
   		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/"$CheckFile" ]; then
@@ -4509,9 +4521,9 @@ fslbedpostxgpu() {
 					echo ""
   	  	
 					if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-						bedpostx_gpu "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
+						${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
 					else	
-  						bedpostx_gpu "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
+  						${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
 					fi
 		
 				else
@@ -4525,9 +4537,9 @@ fslbedpostxgpu() {
 					NJOBS=4
 				
 					if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-						bedpostx_gpu "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g --rician
+						${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
 					else	
-  						bedpostx_gpu "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" --rician
+  						${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
 					fi
 				
 					geho "---------------------------------------------------------------------------------------"
@@ -4556,6 +4568,7 @@ show_usage_fslbedpostxgpu() {
 				echo "		--fibers=<number_of_fibers>			Number of fibres per voxel, default 3"
 				echo "		--model=<deconvolution_model>			Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins"
 				echo "		--burnin=<burnin_period_value>			Burnin period, default 1000"
+				echo "		--rician=<set_rician_value>			<YES> or <NO>. Default is YES"
 				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
@@ -6081,6 +6094,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Model=`opts_GetOpt "${setflag}model" $@`   																				# <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
 	Burnin=`opts_GetOpt "${setflag}burnin" $@` 																				# <burnin_period_value>		Burnin period, default 1000
 	Jumps=`opts_GetOpt "${setflag}jumps" $@`   																				# <number_of_jumps>			Number of jumps, default 1250
+	Rician=`opts_GetOpt "${setflag}rician" $@`   																			# <set_rician_value>		Default it YES
 	
 	# -- probtrackxgpudense input flags
 	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`  																		# <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
@@ -7012,7 +7026,10 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 				export FSLGECUDAQ
 				export SGE_ROOT=1
 				NJOBS=4
-		fi				
+		fi	
+		
+		if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
+			
 		
 		echo ""
 		echo "Running fslbedpostxgpu processing with the following parameters:"
@@ -7022,6 +7039,7 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		echo "Number of Fibers: $Fibers"
 		echo "Model Type: $Model"
 		echo "Burnin Period: $Burnin"
+		echo "Rician flag: $Rician"
 		echo "EPI Unwarp Direction: $UnwarpDir"
 		echo "QUEUE Name: $QUEUE"
 		echo "Overwrite prior run: $Overwrite"

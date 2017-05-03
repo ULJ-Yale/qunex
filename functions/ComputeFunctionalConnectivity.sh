@@ -727,7 +727,7 @@ if [ "$ExtractData" == "yes" ]; then
 	fi
 fi
 	
-	geho "--- Connectivity calculation successfully completed"
+	geho "--- Connectivity calculation completed. Check outputs and logs for errors."
 	echo ""
     geho "------------------------- End of work --------------------------------"
     echo ""

@@ -484,7 +484,7 @@ i=3; while [ "${i}" -lt "${indLast}" ]; do (( i = ${i} +1 ))
 		if [ "${#dcmReport}" == "0" ]; then
 			echo "...syncing dicoms for ${scanID}"
 			echo "${dcmPath}/${scanID}/... ---> ${StudyFolder}/${scanID}/inbox/"
-			rsync -WH  ${dcmPath}/${scanID}/*_*/ ${StudyFolder}/${scanID}/inbox/
+			rsync -rWH  ${dcmPath}/${scanID}/*_*/ ${StudyFolder}/${scanID}/inbox/
 			geho "${scanID} sync complete"; echo "" 
 		else
 			geho "${scanID} dicoms already sorted -- not syncing"; echo ""
@@ -500,7 +500,7 @@ i=3; while [ "${i}" -lt "${indLast}" ]; do (( i = ${i} +1 ))
 		echo "${bhvPath}... ---> ${StudyFolder}/${scanID}/bhvavior/"
 		mkdir -p ${StudyFolder}/${scanID}/behavior
 		bhvFile=$(echo $bhvName | sed s/'nnn'/${numID}/g)
-		find ${bhvPath} -maxdepth ${bhvDepth} -type f -name ${bhvFile} -exec rsync -WH {} ${StudyFolder}/${scanID}/behavior/ \;
+		find ${bhvPath} -maxdepth ${bhvDepth} -type f -name ${bhvFile} -exec rsync -rWH {} ${StudyFolder}/${scanID}/behavior/ \;
 		geho "${subjID} behavior sync complete"; echo "" 
 	fi
 	
@@ -510,7 +510,7 @@ i=3; while [ "${i}" -lt "${indLast}" ]; do (( i = ${i} +1 ))
 		echo "${physPath}... ---> ${StudyFolder}/${scanID}/physio/"
 		mkdir -p ${StudyFolder}/${scanID}/physio 
 		physFile=$(echo $physName | sed s/'nnn'/${numID}/g)
-		find ${physPath} -maxdepth ${physDepth} -type f -name ${physFile} -exec rsync -WH {} ${StudyFolder}/${scanID}/physio/ \;
+		find ${physPath} -maxdepth ${physDepth} -type f -name ${physFile} -exec rsync -rWH {} ${StudyFolder}/${scanID}/physio/ \;
 		geho "${subjID} physio sync complete"; echo "" 
 	fi
 	
@@ -520,7 +520,7 @@ i=3; while [ "${i}" -lt "${indLast}" ]; do (( i = ${i} +1 ))
 		echo "${eyePath}... ---> ${StudyFolder}/${scanID}/eyetracking/"
 		mkdir -p ${StudyFolder}/${scanID}/eyetracking
 		eyeFile=$(echo $eyeName | sed s/'nnn'/${numID}/g)
-		find ${eyePath} -maxdepth ${eyeDepth} -type d -name ${eyeFile} -exec rsync -WH {} ${StudyFolder}/${scanID}/eyetracking/ \;
+		find ${eyePath} -maxdepth ${eyeDepth} -type d -name ${eyeFile} -exec rsync -rWH {} ${StudyFolder}/${scanID}/eyetracking/ \;
 		geho "${subjID} eyelink sync complete"; echo ""
 	fi
 			

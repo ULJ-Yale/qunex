@@ -1,4 +1,4 @@
-${TOOLS}/MNAP/general/templates/Thalamus_FSLAtlas/Thalamus-maxprob-thr25-2mm.AtlasMasked.dtseries.nii
+/gpfs/project/fas/n3/software/MNAP/general/templates/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked.dtseries.nii
 LR-Thal.Motor|1|
 LR-Thal.Sensory|2|
 LR-Thal.Occipital|3|
@@ -9,4 +9,5 @@ LR-Thal.Temporal|7|
 LR-Thal.SensoryMotor|1,2|
 LR-Thal.PrefrontalParietal|4,6|
 LR-Thal.Associative|4,5,6,7|
-LR-Thal.SomatomotorSensory.|1,2,3|
+LR-Thal.SomatomotorSensory|1,2,3|
+

@@ -333,14 +333,14 @@ main() {
     get_options $@
 
 # -- Define inputs and output
-reho "--- Establishing paths for all input and output folders:"
+echo "--- Establishing paths for all input and output folders:"
 echo ""
 
 # -- Define all inputs and outputs depending on data type input
 
 
 if [ "$InputDataType" == "dtseries" ]; then 
-	echo "       Working with dtseries files..."
+	echo "      Working with dtseries files..."
 	echo ""
 	# -- Define extension 
 	InputFileExt="dtseries.nii"
@@ -395,7 +395,7 @@ fi
 
 # Check if parcellation was completed
 
-reho "--- Checking if parcellation was completed..."
+echo "--- Checking if parcellation was completed..."
 echo ""
 
 if [ -f "$BOLDOutput" ]; then
@@ -407,7 +407,7 @@ if [ -f "$BOLDOutput" ]; then
 else
 	reho "Parcellation data not found."
 	echo ""
-	geho "Computing parcellation on $BOLDInput..."
+	geho "-- Computing parcellation on $BOLDInput..."
 	echo ""
 	
 	# -- First parcellate by COLUMN and save a parcellated file
@@ -427,7 +427,7 @@ else
 		PConnBOLDOutputCov="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
 		
 		# - Check if weights file is specified
-		geho "Using weights: $UseWeights"
+		geho "-- Using weights: $UseWeights"
 		echo ""
 		
 		if [ "$UseWeights" == "yes" ]; then
@@ -438,12 +438,12 @@ else
 			echo ""
 			
 			# -- Compute pconn using correlation
-			geho "Computing pconn using correlation..."
+			geho "-- Computing pconn using correlation..."
 			echo ""
 			wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -fisher-z -weights "$WeightsFile"
 			
 			# -- Compute pconn using covariance
-			geho "Computing pconn using covariance..."
+			geho "-- Computing pconn using covariance..."
 			echo ""
 			wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance -weights "$WeightsFile"
 		fi
@@ -451,12 +451,12 @@ else
 		if [ "$UseWeights" == "no" ]; then
 		
 			# -- Compute pconn using correlation
-			geho "Computing pconn using correlation..."
+			geho "-- Computing pconn using correlation..."
 			echo ""
 			wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -fisher-z
 			
 			# -- Compute pconn using covariance
-			geho "Computing pconn using covariance..."
+			geho "-- Computing pconn using covariance..."
 			echo ""
 			wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance
 		fi
@@ -466,10 +466,13 @@ else
 fi
 
 if [ "$ExtractData" == "yes" ]; then 
+
+		geho "--- Requested extraction of data in CSV format."
+		echo ""
 	
 	if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ] && [ "$ComputePConn" == "yes" ]; then
 	
-		geho "Saving out the parcellated dtseries data in a CSV file..."
+		geho "--- Saving out the parcellated dtseries data in a CSV file..."
 		echo ""
 	
 		# -- Specify pconn file outputs for correlation (r) value and covariance 
@@ -490,7 +493,7 @@ if [ "$ExtractData" == "yes" ]; then
 	
 	if [ "$InputDataType" == "dscalar" ]; then
 
-		geho "Saving out the parcellated dscalar data in a CSV file..."
+		geho "--- Saving out the parcellated dscalar data in a CSV file..."
 		echo ""
 	
 		if [ -z "$SingleInputFile" ]; then
@@ -499,28 +502,35 @@ if [ "$ExtractData" == "yes" ]; then
 		else
 			CSVDPScalarBoldOut="$OutPath/${SingleInputFile}_${OutName}_${DscalarFileExtCSV}"
 		fi
+		
+		rm -f "$CSVDPScalarBoldOut" /dev/null 2>&1
+		
 		wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDPScalarBoldOut"
 	fi
 	
-	if [ -v "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ]; then
-		geho "Saving out the parcellated single file dtseries data in a CSV file..."
+	if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ]; then
+	
+		geho "--- Saving out the parcellated single file dtseries data in a CSV file..."
 		echo ""
-		DscalarFileExtCSV=".csv"
-		CSVDPScalarBoldOut="$OutPath/${SingleInputFile}_${OutName}_${DscalarFileExtCSV}"
-		wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDPScalarBoldOut"
+		CSVDTseriesFileExtCSV=".csv"
+		CSVDTseriesFileExtCSV="$StudyFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVDTseriesFileExtCSV}"
+		
+		rm -f "$CSVDTseriesFileExtCSV" /dev/null 2>&1
+		
+		wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDTseriesFileExtCSV"
 	fi
 	
 fi	
 
 # Perform completion checks"
 
-	reho "--- Checking outputs..."
+	geho "--- Checking outputs..."
 	echo ""
 	if [ -f "$BOLDOutput" ]; then
 		geho "Parcellated BOLD file:           $BOLDOutput"
 		echo ""
 	else
-		reho "Parcellated BOLD file $BOLDOutput is missing. Something went wrong."
+		reho "--- Parcellated BOLD file $BOLDOutput is missing. Something went wrong."
 		echo ""
 		exit 1
 	fi
@@ -547,7 +557,7 @@ fi
 	
 	fi
 	
-	reho "--- BOLD Parcellation successfully completed"
+	geho "--- BOLD Parcellation completed. Check output log for outputs and errors."
 	echo ""
     geho "------------------------- End of work --------------------------------"
     echo ""
