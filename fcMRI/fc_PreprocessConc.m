@@ -598,7 +598,7 @@ for b = 1:nbolds
 
     %   ----> lets setup nuisances!
 
-    if strfind(do, 'r') && any(ismember({'V', 'WM', 'WB'}, rgss));
+    if strfind(do, 'r') && any(~ismember(rgss, {'1d', 'e', 't', 'm'}));
 
         % ---> signal nuisance
 
@@ -621,7 +621,10 @@ if strfind(do, 'r')
         rmodel = g_CreateTaskRegressors(file(1).fidlfile, frames, eventstring);
         runs   = rmodel.run;
     else
-        rmodel = [];
+        rmodel.fidl.fidl   = 'None';
+        rmodel.description = 'None';
+        rmodel.ignore      = 'None';
+
         for b = 1:nbolds
             runs(b).matrix = [];
         end
@@ -638,12 +641,21 @@ if strfind(do, 'r')
             nuisance(b).ntask = size(task, 2);
         end
 
-        nuisance(b).effects     = {rmodel.regressor.name};
-        nuisance(b).events      = runs(b).matrix;
-        nuisance(b).nevents     = size(nuisance(b).events, 2);
-        nuisance(b).eventnamesr = runs(b).regressors;
-        nuisance(b).eventnames  = rmodel.columns.event;
-        nuisance(b).eventframes = rmodel.columns.frame;
+        if strcmp(rmodel.fidl.fidl, 'None')
+            nuisance(b).effects     = [];
+            nuisance(b).events      = [];
+            nuisance(b).nevents     = [];
+            nuisance(b).eventnamesr = [];
+            nuisance(b).eventnames  = [];
+            nuisance(b).eventframes = [];
+        else
+            nuisance(b).effects     = {rmodel.regressor.name};
+            nuisance(b).events      = runs(b).matrix;
+            nuisance(b).nevents     = size(nuisance(b).events, 2);
+            nuisance(b).eventnamesr = runs(b).regressors;
+            nuisance(b).eventnames  = rmodel.columns.event;
+            nuisance(b).eventframes = rmodel.columns.frame;
+        end
 
         bstart = bstart + nuisance(b).nframes;
     end
