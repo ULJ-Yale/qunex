@@ -2033,19 +2033,21 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
                 # --- find fidl data
 
-                if overwrite or not os.path.exists(f_fidl):
-                    tf = findFile(sinfo, options, tfidl + ".fidl")
-                    if tf:
-                        r += '\n... getting event data from %s' % (tf)
-                        if os.path.exists(f_fidl):
-                            os.remove(f_fidl)
-                        shutil.copy2(tf, f_fidl)
+                if 'e' in [e.strip() for e in options['bold_nuisance'].split(',')]:
+                    if overwrite or not os.path.exists(f_fidl):
+                        tf = findFile(sinfo, options, tfidl + ".fidl")
+                        if tf:
+                            r += '\n... getting event data from %s' % (tf)
+                            if os.path.exists(f_fidl):
+                                os.remove(f_fidl)
+                            shutil.copy2(tf, f_fidl)
+                        else:
+                            r += '\n... ERROR: Event data file (%s) does not exist in the expected locations! Skipping this conc bundle.' % (tfidl)
+                            continue
                     else:
-                        r += '\n... ERROR: Event data file (%s) does not exist in the expected locations! Skipping this conc bundle.' % (tfidl)
-                        continue
+                        r += '\n... event data present'
                 else:
-                    r += '\n... event data present'
-
+                    r += '\n... event data not needed (e not specified in --bold_nuisance)'
 
                 # --- loop through bold files
 
@@ -2078,7 +2080,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
                     # --- check for data availability
 
-                    r += '... checking for data'
+                    # r += '\n    ... checking for data'
                     status = True
 
                     # --- bold
@@ -2096,7 +2098,6 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     # --- bold scrub
                     if any([e in options['pignore'] for e in ['linear', 'spline', 'ignore']]):
                         r, status = checkForFile2(r, f['bold_scrub'], '\n    ... bold scrubbing data present', '\n    ... bold scrubbing data missing [%s]' % (f['bold_scrub']), status=status)
-                        r += '\npignore: ' + options['pignore']
 
                     # --- check for nuisance data files if doing regression
 
