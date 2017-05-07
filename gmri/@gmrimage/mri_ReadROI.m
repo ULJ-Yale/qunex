@@ -141,12 +141,14 @@ if isempty(strfind(roiinfo, '.names'))
 end
 
 roiinfo = strtrim(roiinfo);
-roi2    = strtrim(roi2);
 rois    = fopen(roiinfo);
 roif1   = fgetl(rois);
 
-if strcmp(roi2, 'none')
-    roi2 = [];
+if ~isa(roi2, 'gmrimage')
+    roi2 = strtrim(roi2);
+    if strcmp(roi2, 'none')
+        roi2 = [];
+    end
 end
 
 c = 0;
