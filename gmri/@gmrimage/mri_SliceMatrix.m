@@ -33,8 +33,9 @@ if nargin < 2   sdim   = 3;  end
 
 mask = zeros(1, img.frames);
 mask(1) = 1;
+mask = mask == 1;
 
-img  = img.sliceframes(mask)
+img  = img.sliceframes(mask);
 data = squeeze(img.image4D);
 dim  = size(data);
 x    = dim(1);

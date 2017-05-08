@@ -120,7 +120,7 @@ if ~isempty(nroi)
     [fnroi nomask] = processeROI(nroi);
 
     if verbose, verbose = '\n---> Reading additional nuisance roi [%s]'; end
-    nroi = getImage(nroi, sbjroi, verbose);
+    nroi = getImage(fnroi, sbjroi, verbose);
 
     maskcodes = find(~ismember(nroi.roi.roinames, nomask));
     if ~isempty(maskcodes)
@@ -174,7 +174,7 @@ if ~strcmp(target, 'none')
 
     % --- save stats
 
-    if verbose, fprintf('\n---> saving nuisance signals'); end
+    if verbose, fprintf('\n---> saving nuisance signals [%s]', fullfile(target, [fname '.nuisance'])); end
     g_WriteTable(fullfile(target, [fname '.nuisance']), [[1:size(nuisance,1)]' nuisance], ['frame', hdr], 'mean,sd', '%-16s|%-16d|%-16.10f|%-15s', ' ');
 
 end
@@ -217,10 +217,10 @@ if ~strcmp(ntarget, 'none')
 
     % --- compose PNG
 
-    O  = O.mri_SliceMatrix(O ,3);
-    WB = WB.mri_SliceMatrix(WB,3);
-    V  = V.mri_SliceMatrix(V ,3);
-    WM = WM.mri_SliceMatrix(WM,3);
+    O  = O.mri_SliceMatrix(3);
+    WB = WB.mri_SliceMatrix(3);
+    V  = V.mri_SliceMatrix(3);
+    WM = WM.mri_SliceMatrix(3);
 
     pic(:,:,1) = O;
     pic(:,:,2) = O;
