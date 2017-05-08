@@ -115,11 +115,13 @@ if ~isempty(sbjroi) && ischar(sbjroi)
     end
 end
 
-if verbose, verbose = '\n---> Reading additional nuisance roi [%s]'; end
-nroi = getImage(nroi, sbjroi, verbose);
 
 if ~isempty(nroi)
-    [fnroi nomask] = processeROI(file.nroi);
+    [fnroi nomask] = processeROI(nroi);
+
+    if verbose, verbose = '\n---> Reading additional nuisance roi [%s]'; end
+    nroi = getImage(nroi, sbjroi, verbose);
+
     maskcodes = find(~ismember(nroi.roi.roinames, nomask));
     if ~isempty(maskcodes)
         for mc = maskcodes
