@@ -190,6 +190,10 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
         return
     atlas = os.environ['HCPATLAS']
 
+    # --- check for number of input files
+
+    images  = [e.strip() for e in image.split('|')]
+    nimages = len(images)
 
     # --- parse design options
 
@@ -203,7 +207,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             doptions[k.strip()] = v.strip()
 
     if root is None:
-        root = os.path.join(os.path.dirname(image), doptions['name'])
+        root = os.path.join(os.path.dirname(image[0]), doptions['name'])
 
     # --- parse argument options
 
@@ -225,9 +229,10 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
     print " --> checking input"
 
-    if not os.path.exists(image):
-        print "ERROR: The image file is missing: %s. Aborting PALM!" % (image)
-        exit(1)
+    for image in images:
+        if not os.path.exists(image):
+            print "ERROR: The image file is missing: %s. Aborting PALM!" % (image)
+            exit(1)
 
     rfolder = os.path.dirname(root)
     if not os.path.exists(rfolder):
@@ -247,37 +252,43 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
     toclean   = [];
     cnum = re.compile('.*_c([0-9]+).nii')
+    mnum = re.compile('.*_m([0-9]+)_')
 
     try:
 
         # --- prepare input files and arguments
 
-        if '.nii.gz' in image:
-            simage = root + '_volume.nii'
+        c = 0
+        for image in images:
+            c += 1
+            troot = "%s_i%d" % (root, c)
 
-            print " --> ungzipping %s" % (image)
-            with gzip.open(image, 'rb') as fin, open(simage, 'wb') as fout:
-                shutil.copyfileobj(f_in, f_out)
-            toclean.append(simage)
-            iformat = 'nifti'
+            if '.nii.gz' in image:
+                simage = troot + '_volume.nii'
 
-        elif '.dtseries.nii' in image:
-            print " --> decomposing %s" % (image)
-            command = ['wb_command', '-cifti-separate', image, 'COLUMN',
-                '-volume-all', root + '_volume.nii',                     # , '-roi', 'cifti_volume_mask.nii'
-                '-metric', 'CORTEX_LEFT', root + '_left.func.gii',
-                '-metric', 'CORTEX_RIGHT', root + '_right.func.gii']
+                print " --> ungzipping %s" % (image)
+                with gzip.open(image, 'rb') as fin, open(simage, 'wb') as fout:
+                    shutil.copyfileobj(f_in, f_out)
+                toclean.append(simage)
+                iformat = 'nifti'
 
-            print " --> running:", " ".join(command)
-            if subprocess.call(command):
-                print "ERROR: Command failed: %s" % (" ".join(command))
-                raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
-            toclean += [root + e for e in ['_volume.nii', '_left.func.gii', '_right.func.gii']]
-            iformat = 'cifti'
+            elif '.dtseries.nii' in image:
+                print " --> decomposing %s" % (image)
+                command = ['wb_command', '-cifti-separate', image, 'COLUMN',
+                    '-volume-all', troot + '_volume.nii',                     # , '-roi', 'cifti_volume_mask.nii'
+                    '-metric', 'CORTEX_LEFT', troot + '_left.func.gii',
+                    '-metric', 'CORTEX_RIGHT', troot + '_right.func.gii']
 
-        else:
-            print "ERROR: Unknown format of the input file [%s]!" % (image)
-            return
+                print " --> running:", " ".join(command)
+                if subprocess.call(command):
+                    print "ERROR: Command failed: %s" % (" ".join(command))
+                    raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
+                toclean += [troot + e for e in ['_volume.nii', '_left.func.gii', '_right.func.gii']]
+                iformat = 'cifti'
+
+            else:
+                print "ERROR: Unknown format of the input file [%s]!" % (timage)
+                return
 
         # --- compile PALM command
 
@@ -324,8 +335,9 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
         if iformat == 'nifti':
             print " --> running PALM for NIfTI input"
-            inargs  = ['-i', root + '_volume.nii', '-m', os.path.join(atlas, 'MNITemplates', 'MNI152_T1_2mm_brain_mask_dil.nii')]
-            command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_volume']
+            infiles = setInFiles(root, 'volume.nii', nimages)
+            inargs  = ['-m', os.path.join(atlas, 'MNITemplates', 'MNI152_T1_2mm_brain_mask_dil.nii')]
+            command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
             if subprocess.call(command):
                 print "ERROR: Command failed: %s" % (" ".join(command))
                 raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
@@ -335,22 +347,25 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             calls = []
 
             print "     ... Volume"
-            inargs  = ['-i', root + '_volume.nii', '-m', os.path.join(atlas, 'masks', 'volume.cifti.mask.nii')]
-            command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_volume']
+            infiles = setInFiles(root, 'volume.nii', nimages)
+            inargs  = ['-m', os.path.join(atlas, 'masks', 'volume.cifti.mask.nii')]
+            command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
             calls.append({'name': 'PALM Volume', 'args': command, 'sout': root + '_volume.log'})
             if '-T' in command and t3set is not None:
                 command += [t3set]
 
             print "     ... Left Surface"
-            inargs  = ['-i', root + '_left.func.gii', '-m', os.path.join(atlas, 'masks', 'surface.cifti.L.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
-            command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_L']
+            infiles = setInFiles(root, 'left.func.gii', nimages)
+            inargs  = ['-m', os.path.join(atlas, 'masks', 'surface.cifti.L.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'Q1-Q6_R440.L.midthickness.32k_fs_LR.surf.gii')]
+            command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_L']
             if '-T' in command:
                 command += [t2set]
             calls.append({'name': 'PALM Left Surface', 'args': command, 'sout': root + '_left_surface.log'})
 
             print "     ... Right Surface"
-            inargs  = ['-i', root + '_right.func.gii', '-m', os.path.join(atlas, 'masks', 'surface.cifti.R.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
-            command = ['palm'] + inargs + dargs + sargs + ['-o', root + '_R']
+            infiles = setInFiles(root, 'right.func.gii', nimages)
+            inargs  = ['-m', os.path.join(atlas, 'masks', 'surface.cifti.R.mask.32k_fs_LR.func.gii'), '-s', os.path.join(atlas, 'Q1-Q6_R440.R.midthickness.32k_fs_LR.surf.gii')]
+            command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_R']
             if '-T' in command:
                 command += [t2set]
             calls.append({'name': 'PALM Right Surface', 'args': command, 'sout': root + '_right_surface.log'})
@@ -366,8 +381,8 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
         else:
             print " --> reconstructing results into CIFTI files"
 
-            for pval in ['_fdrp', '_fwep', '_uncp', '']:
-                for stat in ['tstat', 'fstat', 'ztstat', 'zfstat']:
+            for pval in ['_fdrp', '_fwep', '_uncp', '_mfwep', '']:
+                for stat in ['tstat', 'fstat', 'ztstat', 'zfstat', 'zmv_hotellingtsq']:
                     for volumeUnit, surfaceUnit, unitKind in [('vox', 'dpv', 'reg'), ('tfce', 'tfce', 'tfce'), ('clustere', 'clustere', 'clustere'), ('clusterm', 'clusterm', 'clusterm')]:
                         rvolumes       = glob.glob("%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval))
                         rleftsurfaces  = glob.glob("%s_L_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
@@ -389,8 +404,15 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                             else:
                                 C = C.group(1)
 
+                            # --- get the modality number
+                            M = mnum.match(rvolume)
+                            if M is None:
+                                M = ''
+                            else:
+                                M = '_M%s' % (M.group(1))
+
                             # --- compile target name
-                            targetfile     = "%s_%s_%s%s_C%s.dscalar.nii" % (root, unitKind, stat, pval, C)
+                            targetfile     = "%s_%s_%s%s%s_C%s.dscalar.nii" % (root, unitKind, stat, pval, M, C)
                             print "     ... creating", targetfile,
 
                             # --- and func to gii
@@ -427,6 +449,12 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
         if os.path.exists(f):
             os.remove(f)
 
+
+def setInFiles(root, tail, nimages):
+    out = []
+    for n in range(nimages):
+        out += ['-i', "%s_i%d_%s" % (root, n + 1, tail)]
+    return out
 
 
 def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'):
