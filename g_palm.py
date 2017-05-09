@@ -23,7 +23,6 @@ import glob
 import niutilities
 import re
 
-
 def runPALM(image, design=None, args=None, root=None, cores=None):
     '''
     runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
@@ -183,26 +182,8 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
     '''
 
-
     print "\n Running PALM"
-    print " --> checking input and environment"
-
-    if not os.path.exists(image):
-        print "ERROR: The image file is missing: %s. Aborting PALM!" % (image)
-        exit(1)
-
-    rfolder = os.path.dirname(root)
-    if not os.path.exists(rfolder):
-        print "     ... creating target folder [%s]" % (rfolder)
-        os.makedirs(rfolder)
-
-    # missing = []
-    # for check in [image, design + '_d.csv', design + '_t.csv', design + '_eb.csv']:
-    #     if not os.path.exists(check):
-    #         missing.append(check)
-    # if missing:
-    #     print "WARNING: The following design files are missing and will be omitted: %s." % (", ".join(missing))
-    #     return
+    print " --> checking environment"
 
     if not "HCPATLAS" in os.environ:
         print "ERROR: HCPATLAS environment variable not set. Can not find HCP Template files!"
@@ -222,7 +203,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             doptions[k.strip()] = v.strip()
 
     if root is None:
-        root = doptions['name']
+        root = os.path.join(os.path.dirname(image), doptions['name'])
 
     # --- parse argument options
 
@@ -241,6 +222,26 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                     arguments.pop(a[0], None)
                 else:
                     arguments[a[0]] = a[1:]
+
+    print " --> checking input"
+
+    if not os.path.exists(image):
+        print "ERROR: The image file is missing: %s. Aborting PALM!" % (image)
+        exit(1)
+
+    rfolder = os.path.dirname(root)
+    if not os.path.exists(rfolder):
+        print "     ... creating target folder [%s]" % (rfolder)
+        os.makedirs(rfolder)
+
+    # missing = []
+    # for check in [image, design + '_d.csv', design + '_t.csv', design + '_eb.csv']:
+    #     if not os.path.exists(check):
+    #         missing.append(check)
+    # if missing:
+    #     print "WARNING: The following design files are missing and will be omitted: %s." % (", ".join(missing))
+    #     return
+
 
     # --- setup and run
 
