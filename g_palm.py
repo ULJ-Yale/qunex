@@ -25,7 +25,7 @@ import re
 
 def runPALM(image, design=None, args=None, root=None, cores=None):
     '''
-    runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
+    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
 
     USE
     ===
@@ -68,6 +68,22 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
     PARAMETERS
     ==========
+
+    Image file(s)
+    -------------
+
+    One or multiple files can be specified as input. If multiple files are
+    specified, they will be all passed to PALM. If they are cifti files, they
+    will be split into separate structures and run in parallel. To specify
+    multiple files, separate them with pipe ("|") character and take care to
+    put the whole string with files in quotes. Also, if specifying multiple
+    files, do take care, that they are of the same format (nifti, cifti) and
+    do specify the relevant additional parameters (see below) that are relevant
+    for multimodal testing.
+
+    Example string for multiple files:
+
+    image="rs_connectivity.dtseries.nii|task_activation.dtseries.nii"
 
     Design string
     -------------
@@ -179,6 +195,9 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
              - Updated documentation.
     2017-05-01 Grega Repovš
              - Added custom 2D/3D specification of TFCE parameters
+    2017-05-09 Grega Repovš
+             - Added ability to specify multiple image files for multimodal
+               analysis.
 
     '''
 
@@ -207,7 +226,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             doptions[k.strip()] = v.strip()
 
     if root is None:
-        root = os.path.join(os.path.dirname(image[0]), doptions['name'])
+        root = os.path.join(os.path.dirname(images[0]), doptions['name'])
 
     # --- parse argument options
 
@@ -235,7 +254,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             exit(1)
 
     rfolder = os.path.dirname(root)
-    if not os.path.exists(rfolder):
+    if (rfolder != '') and (not os.path.exists(rfolder)):
         print "     ... creating target folder [%s]" % (rfolder)
         os.makedirs(rfolder)
 
