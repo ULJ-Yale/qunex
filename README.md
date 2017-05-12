@@ -79,6 +79,14 @@ Change Log
 ---
 
 * 0.1: Initial pre-alpha release with major functionality
+* 0.1.1: Initial pre-alpha release with added functionality
+* 0.1.2: Initial pre-alpha release with expanded usage
+* 0.1.3: Initial pre-alpha release with expanded usage 
+* 0.2.0: Initial pre-alpha release with added functionality (dwiseedtractography)
+* 0.2.1: Initial pre-alpha release with expanded usage for dwiseedtractography
+* 0.3.0: Initial pre-alpha release with added functionality for thalamic seeding
+* 0.4.0: Initial pre-alpha release with added functionality (computeboldfc)
+* 0.4.1: Initial pre-alpha release with improved usage for computeboldfc
 
 
 [Mind and Brain Lab]: http://mblab.si
