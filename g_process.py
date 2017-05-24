@@ -215,15 +215,21 @@ arglist = [['# ---- Basic settings'],
            ['PBS_options',         '',                                            str,    "'#PBS -l' string ... specification of PBS options"],
            ['PBS_queue',           '',                                            str,    "'#PBS -q' string ... specification of PBS queue"],
            ['PBS_environ',         '',                                            str,    "the path to the script setting up the environment to run the script in"],
-           ['PBS_folder',          '',                                            str,    "the path to run dofcMRIp on the nodes"],
+           ['PBS_folder',          '',                                            str,    "the path to run gmri on the nodes"],
            ['PBS_shell',           '/bin/sh',                                     str,    "the shell to include in the '#!'"],
            ['PBS_sleep',           '1',                                           float,  "time in seconds between submission of individual PBS jobs"],
 
            ['# ---- LSF options'],
            ['LSF_environ',         '',                                            str,    "the path to the script setting up the environment to run the script in"],
-           ['LSF_folder',          '',                                            str,    "the path to run dofcMRIp on the nodes"],
+           ['LSF_folder',          '',                                            str,    "the path to run gmri on the nodes"],
            ['LSF_options',         'cores=8,walltime=24:00,mem=30000,queue=shared',   str,    "String of options for LSF jobs. Has to be constructed as 'option=value,option=value' and specify number of cores to use (cores), walltime in HH:MM, memory reqirement (mem) in MB and the name of the queue."],
            ['LSF_sleep',           '1',                                           float,  "time in seconds between submission of individual LSF jobs"],
+
+           ['# ---- SLURM options'],
+           ['SLURM_environ',       '',                                            str,    "the path to the script setting up the environment to run the script in"],
+           ['SLURM_folder',        '',                                            str,    "the path to run gmri on the nodes"],
+           ['SLURM_options',       'cpus-per-task=8,time=24:00,mem-per-cpu=3000', str,    "String of options for LSF jobs. Has to be constructed as 'option=value,option=value' and specify number of cores to use (cores), walltime in HH:MM, memory reqirement (mem) in MB and the name of the queue."],
+           ['SLURM_sleep',         '1',                                           float,  "time in seconds between submission of individual LSF jobs"],
 
 
            ['# --- HCP options'],
@@ -691,8 +697,8 @@ def run(command, args):
         flog.close()
 
 
-    # -----------------------------------------------------------------------
-    #                                                                 LSF cue
+    # -------------------------------------------------------------------------
+    #                                                                 LSF queue
 
     elif options['scheduler'] == 'LSF':
 
@@ -797,3 +803,103 @@ def run(command, args):
         print >> flog, "\n\n============================= DONE ================================\n"
         flog.close()
 
+    # -------------------------------------------------------------------------
+    #                                                               SLURM queue
+    #
+    #   parameters
+    #   --job-name        -J
+    #   --partition       -p
+    #   --nodes           -N     ... Total number of nodes to run on
+    #   --ntasks          -n     ... Number of tasks
+    #   --cpus-per-task   -c     ... Number of cores per task
+    #   --time            -t     ... Maximum wall time DD-HH:MM:SS
+    #   --constraint      -c     ... Specific node architecture
+    #   --mem-per-cpu            ... Memory requested per CPU in MB
+    #   --mail-user              ... Email address
+    #   --mail-type              ... On what events to send emails
+
+    elif options['scheduler'] == 'SLURM':
+
+        # ---- setup options to pass to each job
+
+        nopt = []
+        for (k, v) in args.iteritems():
+            if k not in ['SLURM_environ', 'SLURM_folder', 'SLURM_options', 'scheduler', 'nprocess']:
+                nopt.append((k, v))
+
+        nopt.append(('scheduler', 'local'))
+        nopt.append(('nprocess', '0'))
+
+        # ---- open log
+
+        flog = open(logname + '.log', "w")
+        print >> flog, "\n\n============================= LOG ================================\n"
+
+        # ---- parse options string
+
+        slurmo = [e.strip().split("=") for e in options['SLURM_options'].split(",")]
+
+        # ---- run jobs
+
+        if options['jobname'] == "":
+            options['jobname'] = "gmri"
+
+        c = 0
+        while subjects:
+
+            c += 1
+
+            cstr  = "#!/bin/bash\n"
+            cstr += "#SBATCH --job-name=%s-%s_#%02d\n" % (options['jobname'], command, c)
+            for key, value in slurmo:
+                cstr += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+
+            if options['LSF_environ'] != '':
+                cstr += "\n# --- Setting up environment\n\n"
+                cstr += file(options['SLURM_environ']).read()
+
+            if options['LSF_folder'] != '':
+                cstr += "\n# --- changing to the right folder\n\n"
+                cstr += "cd %s" % (options['SLURM_folder'])
+
+            # ---- construct the gmri command
+
+            cstr += "\ngmri " + command
+
+            for (k, v) in nopt:
+                if k not in ['subjid', 'scheduler', 'queue']:
+                    cstr += ' --%s="%s"' % (k, v)
+
+            slist = []
+            [slist.append(subjects.pop(0)['subject']) for e in range(cores) if subjects]   # might need to change to id
+
+            cstr += ' --subjid="%s"' % ("|".join(slist))
+            cstr += ' --scheduler="local"'
+            cstr += '\n'
+
+            # ---- pass the command string to qsub
+
+            print "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
+            print cstr
+
+            print >> flog, "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
+
+            slurm = subprocess.Popen("sbatch", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+            slurm.stdin.write(cstr)
+            slurm.stdin.close()
+
+            # ---- storing results
+
+            result = slurm.stdout.read()
+
+            print "\n----------"
+            print result
+
+            print >> flog, "\n----------"
+            print >> flog, result
+
+            time.sleep(options['SLURM_sleep'])
+
+        print "\n\n============================= DONE ================================\n"
+        print >> flog, "\n\n============================= DONE ================================\n"
+        flog.close()
