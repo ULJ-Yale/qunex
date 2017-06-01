@@ -1277,6 +1277,12 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     * keep   ... Keep the bad frames and use them in the regression.
     * ignore ... Exclude bad frames from regression.
+    * mark   ... Exclude bad frames from regression and mark the bad frames
+                 as NaN.
+    * linear ... Replace bad frames with linear interpolated values based on
+                 neighbouring good frames.
+    * spline ... Replace bad frames with spline interpolated values based on
+                 neighouring good frames
 
     Please note that when the bad frames are not kept, the original values will
     be retained in the residual signal. In this case they have to be excluded
@@ -1750,6 +1756,12 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     * keep   ... Keep the bad frames and use them in the regression.
     * ignore ... Exclude bad frames from regression.
+    * mark   ... Exclude bad frames from regression and mark the bad frames
+                 as NaN.
+    * linear ... Replace bad frames with linear interpolated values based on
+                 neighbouring good frames.
+    * spline ... Replace bad frames with spline interpolated values based on
+                 neighouring good frames
 
     Please note that when the bad frames are not kept, the original values will
     be retained in the residual signal. In this case they have to be excluded
