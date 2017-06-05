@@ -286,7 +286,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                 simage = troot + '_volume.nii'
 
                 print " --> ungzipping %s" % (image)
-                with gzip.open(image, 'rb') as fin, open(simage, 'wb') as fout:
+                with gzip.open(image, 'rb') as f_in, open(simage, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
                 toclean.append(simage)
                 iformat = 'nifti'
@@ -304,6 +304,12 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                     raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
                 toclean += [troot + e for e in ['_volume.nii', '_left.func.gii', '_right.func.gii']]
                 iformat = 'cifti'
+
+            elif '.nii' in image:
+                simage = troot + '_volume.nii'
+                shutil.copy(image, simage)
+                toclean.append(simage)
+                iformat = 'nifti'
 
             else:
                 print "ERROR: Unknown format of the input file [%s]!" % (timage)
