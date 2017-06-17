@@ -17,11 +17,11 @@ import os.path
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None):
     '''
-    schedule [command=<command string>] [script=<path to script>] \
-             settings=<settings string> \
-             [replace=<"key:value|key:value" string>] \
-             [workdir=<path to working directory>] \
-             [environment=<path to environment setup script>] \
+    schedule [command=<command string>] [script=<path to script>] \\
+             settings=<settings string> \\
+             [replace=<"key:value|key:value" string>] \\
+             [workdir=<path to working directory>] \\
+             [environment=<path to environment setup script>] \\
              [output=<string specifying how to process output>]
 
     USE
@@ -101,15 +101,78 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     * "stdout:processing.output.log|stderr:processing.error.log"
     * "both:processing.log"
 
+    SCHEDULER SPECIFICS
+    ===================
+
+    Each of the supported scheduler systems has a somewhat different way of
+    specifying job parameters. Please see documentation for each of the
+    supported schedulers to provide the correct settings. Below are the
+    information for each of the schedulers on how to specify --settings.
+
+    PBS settings
+    ------------
+
+    PBS uses various flags to specify parameters. Be careful that the settings
+    string includes only comma separated 'key=value' pairs. Scheduler will then
+    do its best to use the right flags. Specifically:
+
+    Keys: mem, walltime, software, file, procs, pmem, feature, host,
+    naccesspolicy, epilogue, prologue will be submitted using:
+    "#PBS -l <key>=<value>".
+
+    Keys: j, m, i, S, a, A, M, q, t will be submitted using:
+    "#PBS -<key> <value>"
+
+    Key: depend will be submitted using:
+
+    "#PBS -W depend=<value>"
+
+    Key: nodes is a special case. It can have up to three values separated by
+    colon (":"). If there is only one value e.g. "nodes=4" it will submit:
+
+    "#PBS -l nodes=4"
+
+    When there are two values e.g. "nodes=4:2" it will submit:
+
+    "#PBS -l nodes=4:ppn=2"
+
+    When there are three values what is submitted depends on the type of the
+    last value. When it is numeric, e.g. "nodes:8:4:2", it will submit:
+
+    "#PBS -l nodes=8:ppn=4:cpus=2"
+
+    If the last of the three values is a string, e.g. "nodes:8:4:blue", it will
+    submit the last value as a self-standing key:
+
+    "#PBS -l nodes=8:ppn=4:blue"
+
+    LSF settings
+    ------------
+
+    For LSF only the following key/value parameters are passed on:
+
+    * queue    -> "#BSUB -q <queue>"
+    * mem      -> "#BSUB -R 'span[hosts=1] rusage[mem=<mem>]"
+    * walltime -> "#BSUB -W <walltime>"
+    * cores    -> "#BSUB -n <cores>"
+
+    SLURM settings
+    --------------
+
+    For SLURM any provided key/value pair will be passed in the form:
+
+    "#SBATCH --<key>=<value>"
+
+
     EXAMPLE USE
     ===========
 
-    gmri schedule command="bet t1.nii.gz brain.nii.gz" \
+    gmri schedule command="bet t1.nii.gz brain.nii.gz" \\
                   settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
 
-    gmri schedule command="bet {{in}} {{out}}" \
-                  replace="in:t1.nii.gz|out:brain.nii.gz" \
-                  settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \
+    gmri schedule command="bet {{in}} {{out}}" \\
+                  replace="in:t1.nii.gz|out:brain.nii.gz" \\
+                  settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
                   workdir="/studies/WM/Subjects/AP23791/images/structural"
 
     ----------------
