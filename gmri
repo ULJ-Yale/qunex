@@ -108,6 +108,16 @@ PALM utilities
 runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
 
 
+Scheduling utilities
+--------------------
+schedule [command=<command string>] [script=<path to script>] \
+         settings=<settings string> \
+         [replace=<"key:value|key:value" string>] \
+         [workdir=<path to working directory>] \
+         [environment=<path to environment setup script>] \
+         [output=<string specifying how to process output>]
+
+
 Processing commands
 ===================
 In contrast to utilities listed above, processing commands can be submitted to
@@ -182,7 +192,8 @@ commands = {'listDicom'     : {'com': niu.g_dicom.listDicom,        'args': ('fo
             'map2HCP'       : {'com': niu.g_4dfp.map2HCP,           'args': ('volume', 'method')},
             'maskMap'       : {'com': niu.g_palm.maskMap,           'args': ('image', 'masks', 'output', 'minv', 'maxv')},
             'joinMaps'      : {'com': niu.g_palm.joinMaps,          'args': ('images', 'output', 'names', 'originals', 'join')},
-            'runPALM'       : {'com': niu.g_palm.runPALM,           'args': ('image', 'design', 'args', 'root', 'cores')}
+            'runPALM'       : {'com': niu.g_palm.runPALM,           'args': ('image', 'design', 'args', 'root', 'cores')},
+            'schedule'      : {'com': niu.g_scheduler.schedule,     'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')}
             }
 
 
