@@ -1,0 +1,103 @@
+#!/bin/sh
+#set -x
+
+# -------------------------------------------------
+# --- Code for generating analysis list files -----
+# -------------------------------------------------
+
+# -- Hi-pass filtered versions for regular seed connectivity & GBC with SMOOTHING
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.udvarsme.surface.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_g7_hpss_res-mVWMWB1d."$FileType" >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.udvarsme.surface.list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.udvarsme.surface.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_g7_hpss_res-mVWM1d."$FileType" >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.udvarsme.surface.list
+done
+
+# -- Hi-pass filtered versions for regular seed connectivity & GBC w/o SMOOTHING
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.udvarsme.surface.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_hpss_res-mVWMWB1d."$FileType" >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.udvarsme.surface.list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.udvarsme.surface.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_hpss_res-mVWM1d."$FileType" >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.udvarsme.surface.list
+done
+
+# -- Lo-pass filtered versions for GBC w/ SMOOTHING
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".gbc.GSR.lpss.udvarsme.surface.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_g7_hpss_res-mVWMWB1d_lpss."$FileType" >> "$StudyFolder"/lists/subjects.analysis."$ListName".gbc.GSR.lpss.udvarsme.surface.list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".gbc.noGSR.lpss.udvarsme.surface.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_g7_hpss_res-mVWM1d_lpss."$FileType" >> "$StudyFolder"/lists/subjects.analysis."$ListName".gbc.noGSR.lpss.udvarsme.surface.list
+done
+
+# -- Lo-pass filtered versions for GBC w/o SMOOTHING
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".gbc.GSR.nosmooth.lpss.udvarsme.surface.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_hpss_res-mVWMWB1d_lpss."$FileType" >> "$StudyFolder"/lists/subjects.analysis."$ListName".gbc.GSR.nosmooth.lpss.udvarsme.surface.list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".gbc.noGSR.nosmooth.lpss.udvarsme.surface.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_hpss_res-mVWM1d_lpss."$FileType" >> "$StudyFolder"/lists/subjects.analysis."$ListName".gbc.noGSR.nosmooth.lpss.udvarsme.surface.list
+done
+
+# ---------------------------------
+# -- GENERATE PARCELLATED LISTS
+# ---------------------------------
+
+
+if [ -n "$ParcellationFile" ]; then 
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.lpss.udvarsme.surface.pconn.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/Parcellated/BOLD/"$CASE"_bold"$BOLD"_hpss_res-mVWM1d_lpss_LR_"$ParcellationFile".pconn.nii >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.lpss.udvarsme.surface."$ParcellationFile".list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.lpss.udvarsme.surface.pconn.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/Parcellated/BOLD/"$CASE"_bold"$BOLD"_hpss_res-mVWMWB1d_lpss_LR_"$ParcellationFile".pconn.nii >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.lpss.udvarsme.surface."$ParcellationFile".list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.udvarsme.surface.pconn.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/Parcellated/BOLD/"$CASE"_bold"$BOLD"_hpss_res-mVWM1d_LR_"$ParcellationFile".pconn.nii >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.udvarsme.surface."$ParcellationFile".list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.udvarsme.surface.pconn.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/Parcellated/BOLD/"$CASE"_bold"$BOLD"_hpss_res-mVWMWB1d_LR_"$ParcellationFile".pconn.nii >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.udvarsme.surface."$ParcellationFile".list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.lpss.udvarsme.surface.pconn.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/Parcellated/BOLD/"$CASE"_bold"$BOLD"_hpss_res-mVWM1d_lpss_LR_"$ParcellationFile".pconn.nii >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.lpss.udvarsme.surface."$ParcellationFile".list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.lpss.udvarsme.surface.pconn.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/Parcellated/BOLD/"$CASE"_bold"$BOLD"_hpss_res-mVWMWB1d_lpss_LR_"$ParcellationFile".pconn.nii >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.lpss.udvarsme.surface."$ParcellationFile".list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.udvarsme.surface.pconn.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/Parcellated/BOLD/"$CASE"_bold"$BOLD"_hpss_res-mVWM1d_LR_"$ParcellationFile".pconn.nii >> "$StudyFolder"/lists/subjects.analysis."$ListName".noGSR.nosmooth.udvarsme.surface."$ParcellationFile".list
+done
+
+echo subject id:"$CASE" >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.udvarsme.surface.pconn.list
+for BOLD in "$BOLDS"; do
+echo file:"$StudyFolder"/Parcellated/BOLD/"$CASE"_bold"$BOLD"_hpss_res-mVWMWB1d_LR_"$ParcellationFile".pconn.nii >> "$StudyFolder"/lists/subjects.analysis."$ListName".GSR.nosmooth.udvarsme.surface."$ParcellationFile".lists
+done
+
+fi

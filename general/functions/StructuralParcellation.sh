@@ -1,0 +1,329 @@
+#!/bin/sh
+#
+#~ND~FORMAT~MARKDOWN~
+#~ND~START~
+#
+# ## Copyright Notice
+#
+# Copyright (C)
+#
+# * Yale University
+#
+# ## Author(s)
+#
+# * Alan Anticevic, N3 Division, Yale University
+#
+# ## Product
+#
+#  Parcellation wrapper for dense thickness and myelin data
+#
+# ## License
+#
+# * The StructuralParcellation.sh = the "Software"
+# * This Software is distributed "AS IS" without warranty of any kind, either 
+# * expressed or implied, including, but not limited to, the implied warranties
+# * of merchantability and fitness for a particular purpose.
+#
+# ### TODO
+#
+# ## Description 
+#   
+# This script, StructuralParcellation.sh, implements parcellation on the DWI dense connectomes 
+# using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
+# 
+# ## Prerequisite Installed Software
+#
+# * Connectome Workbench (v1.0 or above)
+#
+# ## Prerequisite Environment Variables
+#
+# See output of usage function: e.g. $./StructuralParcellation.sh --help
+#
+# ### Expected Previous Processing
+# 
+# * The necessary input files are thickness or myelin data from previous processing
+# * These data are stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/ 
+#
+#~ND~END~
+
+
+usage() {
+				
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function implements parcellation on the dense cortical thickness OR myelin files using a whole-brain parcellation (e.g. Glasser parcellation with subcortical labels included)."
+				echo ""
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+ 				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--subject=<list_of_cases>				List of subjects to run"
+				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. MyelinMap_BC or corrThickness)"
+				echo "		--parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
+				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
+				echo ""
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+ 				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
+				echo "		--extractdata=<save_out_the_data_as_as_csv>			Specify if you want to save out the matrix as a CSV file"
+ 				echo ""
+ 				echo "-- Example:"
+				echo ""
+				echo "MyelinThicknessParcellation.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "--subject='100206' \ "
+				echo "--inputdatatype='MyelinMap_BC' \ "
+				echo "--parcellationfile='/gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
+				echo "--overwrite='no' \ "
+				echo "--extractdata='yes' \ "
+				echo "--outname='LR_Colelab_partitions' "
+				echo ""	
+}
+
+
+# ------------------------------------------------------------------------------
+#  Setup color outputs
+# ------------------------------------------------------------------------------
+
+reho() {
+    echo -e "\033[31m $1 \033[0m"
+}
+
+geho() {
+    echo -e "\033[32m $1 \033[0m"
+}
+
+########################################## INPUTS ########################################## 
+
+# Data should be pre-processed and in CIFTI format
+# The data should be in the folder relative to the master study folder, specified by the inputfile
+# Mandatory input parameters:
+    # StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+    # Subject	  # e.g. 100206
+    # InputDataType # e.g. myelin
+    # OutName # e.g. LR_Colelab_partitions
+    # ExtractData # yes/no
+    # ParcellationFile  # e.g. /gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii"
+
+########################################## OUTPUTS #########################################
+
+# Outputs will be *pconn.nii files located in the location specified in the outputpath
+
+#  Get the command line options for this script
+#
+
+get_options() {
+    local scriptName=$(basename ${0})
+    local arguments=($@)
+    
+    # initialize global output variables
+    unset StudyFolder
+    unset Subject
+    unset InputDataType
+    unset ParcellationFile
+    unset OutName
+    unset Overwrite
+    unset ExtractData
+    
+    runcmd=""
+
+    # parse arguments
+    local index=0
+    local numArgs=${#arguments[@]}
+    local argument
+
+    while [ ${index} -lt ${numArgs} ]; do
+        argument=${arguments[index]}
+
+        case ${argument} in
+            --help)
+                usage
+                exit 1
+                ;;
+            --version)
+                version_show $@
+                exit 0
+                ;;
+            --path=*)
+                StudyFolder=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
+            --subject=*)
+                CASE=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;                    
+            --inputdatatype=*)
+                InputDataType=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;; 
+            --extractdata=*)
+                ExtractData=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
+            --parcellationfile=*)
+                ParcellationFile=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
+            --outname=*)
+                OutName=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
+            --overwrite=*)
+                Overwrite=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;      
+            *)
+                usage
+                reho "ERROR: Unrecognized Option: ${argument}"
+        		echo ""
+                exit 1
+                ;;
+        esac
+    done
+
+    # check required parameters
+    if [ -z ${StudyFolder} ]; then
+        usage
+        reho "ERROR: <study-path> not specified>"
+        echo ""
+        exit 1
+    fi
+
+    if [ -z ${CASE} ]; then
+        usage
+        reho "ERROR: <subject-id> not specified>"
+        echo ""
+        exit 1
+    fi
+    
+    if [ -z ${InputDataType} ]; then
+        usage
+        reho "ERROR: <type_of_dense_data_for_input_file>"
+        echo ""
+        exit 1
+    fi
+    
+    if [ -z ${ParcellationFile} ]; then
+        usage
+        reho "ERROR: <file_for_parcellation> not specified>"
+        echo ""
+        exit 1
+    fi
+
+    if [ -z ${OutName} ]; then
+        usage
+        reho "ERROR: <name_of_output_pconn_file> not specified>"
+        exit 1
+    fi
+    
+    # report options
+    echo ""
+    echo ""
+    echo "-- ${scriptName}: Specified Command-Line Options - Start --"
+    echo "   StudyFolder: ${StudyFolder}"
+    echo "   Subject: ${CASE}"
+    echo "   InputDataType: ${InputDataType}"
+    echo "   ParcellationFile: ${ParcellationFile}"
+    echo "   OutName: ${OutName}"
+    echo "   Overwrite: ${Overwrite}"
+    echo "   ExtractData: ${ExtractData}"
+    echo "-- ${scriptName}: Specified Command-Line Options - End --"
+    echo ""
+    geho "------------------------- Start of work --------------------------------"
+    echo ""
+}
+
+######################################### DO WORK ##########################################
+
+main() {
+
+    # Get Command Line Options
+    get_options $@
+
+# -- Define inputs and output
+reho "--- Establishing paths for all input and output folders:"
+echo ""
+
+# -- Define all inputs and outputs depending on data type input
+	 
+echo "       Working with $InputDataType dscalar files..."
+echo ""
+# -- Define extension 
+InputFileExt="dscalar.nii"
+OutFileExt="pscalar.nii"
+# -- Define input
+DATAInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR.${InputFileExt}"
+# -- Define output
+DATAOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR_${OutName}.${OutFileExt}"
+
+echo "      Dense $InputDataType Input:              ${DATAInput}"
+echo ""
+echo "      Parcellated $InputDataType Output:       ${DATAOutput}"
+echo ""
+
+
+# -- Delete any existing output sub-directories
+if [ "$Overwrite" == "yes" ]; then
+	reho "--- Deleting prior $DATAOutput..."
+	echo ""
+	rm -f "$DATAOutput" > /dev/null 2>&1
+fi
+
+# Check if parcellation was completed
+
+reho "--- Checking if parcellation was completed..."
+echo ""
+
+if [ -f "$DATAOutput" ]; then
+	geho "Parcellation data found: "
+	echo ""
+	echo "      $DATAOutput"
+	echo ""
+	exit 1
+else
+	reho "Parcellation data not found."
+	echo ""
+	geho "Computing parcellation on $DATAInput..."
+	echo ""
+	
+	# -- First parcellate by COLUMN and save a parcellated file
+	wb_command -cifti-parcellate "$DATAInput" "$ParcellationFile" COLUMN "$DATAOutput"
+	
+	# -- Then check if extraction of data is set to 'yes'
+	
+	if [ "$ExtractData" == "yes" ]; then 
+		geho "Saving out the data in a CSV file..."
+		echo ""
+		DATACSVOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR_${OutName}.csv"
+		rm -f ${DATACSVOutput} > /dev/null 2>&1
+		wb_command -nifti-information -print-matrix "$DATAOutput" >> "$DATACSVOutput"
+	fi
+fi	
+
+# Perform completion checks"
+
+	reho "--- Checking outputs..."
+	echo ""
+	if [ -f "$DATAOutput" ]; then
+		geho "Parcellated file:           $DATAOutput"
+		echo ""
+	else
+		reho "Parcellated file $DATAOutput is missing. Something went wrong."
+		echo ""
+		exit 1
+	fi
+		
+	reho "--- Parcellation successfully completed"
+	echo ""
+    geho "------------------------- End of work --------------------------------"
+    echo ""
+
+exit 1
+
+}	
+
+#
+# Invoke the main function to get things started
+#
+
+main $@
