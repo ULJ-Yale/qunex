@@ -1,8 +1,0 @@
-${TOOLS}/MNAP/general/templates/structures.dtseries.nii
-LR-Accumbens-CIFTI|3,4|
-LR-Amy-CIFTI|5,6|
-LR-Caudate-CIFTI|8,9|
-LR-Hipp-CIFTI|14,15|
-LR-Pallidum-CIFTI|16,17|
-LR-Putamen-CIFTI|18,19|
-LR-Thal-CIFTI|20,21|
