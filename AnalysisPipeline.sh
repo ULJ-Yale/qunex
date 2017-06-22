@@ -362,7 +362,7 @@ setuphcp() {
 
 	cd "$StudyFolder"/"$CASE"
 		
-			echo " ---> running setuphcp for $CASE"
+			echo "--> running setuphcp for $CASE"
 		 	echo ""
 		 	# -- Combine all the calls into a single command
 		 	Com1="cd ${StudyFolder}/${CASE}"
@@ -370,7 +370,6 @@ setuphcp() {
 			ComQUEUE="$Com1; $Com2"
 			
 			if [ "$Cluster" == 1 ]; then
-			
 				echo ""
   				echo "---------------------------------------------------------------------------------"
 				echo "Running setuphcp locally on `hostname`"
@@ -378,11 +377,8 @@ setuphcp() {
 				echo "---------------------------------------------------------------------------------"
 		 		echo ""
 				eval "$ComQUEUE"
-
 			else
-			
 				echo "Job ID:"
-
 				# -- Set the scheduler commands
 				rm -f "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh &> /dev/null
 				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh
@@ -398,7 +394,6 @@ setuphcp() {
 				echo "Check output logs here: $StudyFolder/$CASE/"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
-			
 			fi
 	
 }
@@ -421,14 +416,6 @@ show_usage_setuphcp() {
 				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "" 
     			echo "-- Usage for setuphcp"
-    			echo ""
-				echo "* Example with interactive terminal:"
-				echo "AP setuphcp <study_folder> 'comma_separarated_list_of_cases>'"
-				echo "AP setuphcp <study_folder> '<list of cases>'"
-    			echo ""
-				echo "* Example with flags:"
-				echo "AP --function=setuphcp --path=<study_folder> --subjects='<list of cases>'"
-    			echo ""
     			echo ""
     			echo ""
     			echo "-- Example with flagged parameters for a local run:"
@@ -4111,9 +4098,9 @@ fi
 if [[ "$setflag" =~ .*-.* ]]; then
 
 	echo ""
-	reho "-----------------------------------------------------"
-	reho "------- Running pipeline with flagged inputs --------"
-	reho "-----------------------------------------------------"
+	reho "----------------------------------------"
+	reho "--- Running MNAP with flagged inputs ---"
+	reho "----------------------------------------"
 	echo ""
 	
 	# ------------------------------------------------------------------------------
@@ -4141,17 +4128,22 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	if [ -z "$RunMethod" ]; then
 		RunMethod="1"	
 	fi
-	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@` 																			# Option for printing the entire command
+	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@` 																			# Option for printing the entire command	
 	Scheduler=`opts_GetOpt "${setflag}scheduler" $@` 																		# Specify the type of scheduler to use 
-	# if scheduler flag set then look for scheduler_options flag 
+	
+	# -- if scheduler flag set then look for scheduler_options flag 
 	if [ ! -z "$Scheduler" ]; then
-		SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 													# String of options for scheduler job
-		if [ "$Scheduler" = "SLURM"]; then
-			SchedulerOptions=`opts_GetOpt "${setflag}SLURM_options" $@` 													# String of options for SLURM scheduler job
-		fi
-		SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 													# String of options for PBS scheduler job
-		SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 													# String of options for TORQUE scheduler job
-
+		if [ "$Scheduler" = "SLURM" ]; then
+			SchedulerOptions=`opts_GetOpt "${setflag}SLURM_options" $@` 													# String of options for scheduler job
+		else
+		if [ "$Scheduler" = "PBS" ]; then
+			SchedulerOptions=`opts_GetOpt "${setflag}PBS_options" $@` 														# String of options for scheduler job
+		else
+		if [ "$Scheduler" = "LSF" ]; then
+			SchedulerOptions=`opts_GetOpt "${setflag}LSF_options" $@` 														# String of options for scheduler job
+		else
+			SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
+		fi; fi; fi
 		RunMethod="2"
 	else
 		RunMethod="1"	
@@ -4398,11 +4390,15 @@ if [ "$FunctionToRun" == "setuphcp" ]; then
 				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
-		echo "Ensuring that and correct subjects_hcp.txt files is generated..."
+		echo ""
+		echo "--> Ensuring that and correct subjects_hcp.txt files is generated..."
+		echo ""
 				
 			for CASE in $CASES
 			do
 				if [ -f "$StudyFolder"/"$CASE"/subject_hcp.txt ]; then 
+					echo "--> $StudyFolder/$CASE/subject_hcp.txt found"
+					echo ""
   					"$FunctionToRun" "$CASE"
   				else	
   					echo "--> $StudyFolder/$CASE/subject_hcp.txt is missing - please setup the subject.txt files and re-run function."
