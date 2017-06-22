@@ -4,3 +4,6 @@
 [submodule "niutilities"]
 	path = niutilities
 	url = git@bitbucket.org:mnap/niutilities.git
+[submodule "matlab"]
+	path = matlab
+	url = git@bitbucket.org:mnap/matlab.git
