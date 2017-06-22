@@ -10,3 +10,6 @@
 [submodule "library"]
 	path = library
 	url = git@bitbucket.org:mnap/library.git
+[submodule "hcpmodified"]
+	path = hcpmodified
+	url = git@bitbucket.org:mnap/hcpmodified.git
