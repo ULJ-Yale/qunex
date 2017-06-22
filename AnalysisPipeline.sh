@@ -1,61 +1,6 @@
 #!/bin/sh 
 #set -x
 
-## --> PENDING GENERAL TASKS:
-## ------------------------------------------------------------------------------------------------------------------------------------------
-##
-## --> Make sure to document adjustments to diffusion connectome code for GPU version [e.g. omission of matrixes etc.]
-## --> Integrate log generation for each function and build IF statement to override log generation if nolog flag [In progress]
-## --> Issue w/logging - the exec function effectively double-logs everything for each case and for the whole command
-## --> Finish autoptx function
-## --> Add MYELIN or THICKNESS parcellation functions as with boldparcellation and dwidenseparcellation
-## --> Write function / wrapper for StarCluster deployment
-## --> printmatrix needs to be updated to work with any input parcellation
-## --> isolatethalamusfslnuclei needs to be finished to get atlas-based ROIs
-## --> boldmergecifti & boldmergenifti need to be updated and made more general; perhaps rely on concatenation files?
-## --> boldseparateciftifixica needs to be updated
-##
-## ------------------------------------------------------------------------------------------------------------------------------------------
-## ---->  Full Automation of Preprocessing Effort (work towards turn-key solution)
-## ------------------------------------------------------------------------------------------------------------------------------------------
-##
-##	- Sync to Grace crontab job -- DONE
-## 	- Rsync to subject folder based on acquisition log -- IN PROGRESS (Charlie)
-##	--dicomsort if data complete w/o error -- IN PROGRESS (Charlie)
-##  - Generate subject_hcp.txt -- IF 0 ERR then RUN; ELSE ABORT -- IN PROGRESS
-##	--setuphcp
-##	--createlist to Generate parameter file
-##	--hcp1 --> setup checkpoints
-##	--hcp2 --> setup checkpoints
-##	--hcp3 --> setup checkpoints
-##	--hcp4 --> setup checkpoints
-##	--hcp5 --> setup checkpoints
-##	--hcpd or --hcpdlegacy --> setup checkpoints
-##	--qcpreproc (DWI, BOLD, T1w, T2w, myelin)
-##	--fixica å
-##	--postfix 
-##	--mapHCPData 
-##	--createBOLDBrainMasks 
-##	--computeBOLDStats 
-##	--createStatsReport 
-##	--extractNuisanceSignal 
-##	--preprocessBold 
-##	--preprocessConc 
-##	--fsldtifit 
-##	--fslbedpostxgpu 
-##	--pretractography 
-##	--pretractographydense 
-##	--probtrackxgpudense 
-##	--boldparcellation 
-##	--dwidenseparcellation
-##
-## ------------------------------------------------------------------------------------------------------------------------------------------
-## --> BITBUCKET INFO:
-## ------------------------------------------------------------------------------------------------------------------------------------------
-## GitRepo for MNAP pipelines: https://bitbucket.org/mnap/
-## GitRepo for general pipeline wrapper: https://bitbucket.org/mnap/general
-## ------------------------------------------------------------------------------------------------------------------------------------------
-
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
@@ -108,13 +53,13 @@
 #
 # ### Expected Previous Processing
 # 
-# * The necessary input files for higher-level analyses come from HCP pipelines and/or dofcMRI
+# * The necessary input files for higher-level analyses come from HCP pipelines and/or gmri
 #
 #~ND~END~
 
-# ===============================================================================================================================
-# ================================================== CODE START  ================================================================
-# ===============================================================================================================================
+# ========================================================================================
+# =================================== CODE START  ========================================
+# ========================================================================================
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -159,13 +104,13 @@ weho() {
 
 
 # ------------------------------------------------------------------------------
-#  General usage function
+#  General help usage function
 # ------------------------------------------------------------------------------
 
 show_usage() {
   				echo ""
   				cyaneho "General help for MNAP analysis pipeline"
-  				cyaneho "================================================================================"
+  				cyaneho "================================================================="
   				echo ""
   				echo "* interactive usage:"
   				echo "ap <command> <study_folder> '<list of cases>' [options]"
@@ -197,69 +142,66 @@ show_usage() {
   				echo ""
   				echo ""
   				cyaneho "List of specific supported functions"
-  				cyaneho "================================================================================"
+  				cyaneho "================================================================="
   				echo ""  				
+  				
   				cyaneho "Data organization functions"
   				cyaneho "----------------------------"
   				echo "dicomsort		sort dicoms and setup nifti files from dicoms"
-  				echo "dicom2nii		convert dicoms to nifti files"
   				echo "setuphcp		setup data structure for hcp processing"
   				echo "createlists		setup subject lists for preprocessing or analyses"
   				echo "hpcsync			sync with hpc cluster(s) for preprocessing"
   				echo "awshcpsync		sync hcp data from aws s3 cloud"
   				echo ""  				
   				echo ""
-  				cyaneho "HCP Pipelines original calls directly from HCP code (deprecated in 2017)"
+  				
+  				cyaneho "HCP Pipelines original calls (deprecated in 2017 for hcp1-5 versions)"
   				cyaneho "------------------------------------------------------------------------"
-  				echo "hcp1_orig		prefreesurfer component of the hcp pipeline (cluster usable)"
-  				echo "hcp2_orig		freesurfer component of the hcp pipeline (cluster usable)"
-  				echo "hcp3_orig		postfreesurfer component of the hcp pipeline (cluster usable)"
-  				echo "hcp4_orig		volume component of the hcp pipeline (cluster usable)"
-  				echo "hcp5_orig		surface component of the hcp pipeline (cluster usable)"
-  				echo "hcpd_orig		dwi component of the hcp pipeline (cluster usable)"
+  				echo "hcp1_orig		prefreesurfer component of the hcp pipeline (deprecated for hcp1)"
+  				echo "hcp2_orig		freesurfer component of the hcp pipeline (deprecated for hcp2)"
+  				echo "hcp3_orig		postfreesurfer component of the hcp pipeline (deprecated for hcp3)"
+  				echo "hcp4_orig		volume component of the hcp pipeline (deprecated for hcp4)"
+  				echo "hcp5_orig		surface component of the hcp pipeline (deprecated for hcp5)"
+  				echo "hcpd_orig		dwi component of the hcp pipeline (deprecated for hcpd)"
   				echo ""
+  				
   				cyaneho "QC and Misc processing functions"
   				cyaneho "--------------------------------"
   				echo "qcpreproc		run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
   				echo ""  				
+  				
   				cyaneho "DWI processing, analyses & probabilistic tractography functions"
   				cyaneho "----------------------------------------------------------------"
-  				echo "hcpdlegacy			dwi processing for data with standard fieldmaps (cluster usable)"
+  				echo "hcpdlegacy			dwi processing for data with standard fieldmaps"
   				echo "fsldtifit 			run fsl dtifit (cluster usable)"
-  				echo "fslbedpostxgpu 			run fsl bedpostx w/gpu (cluster usable)"
-  				echo "isolatesubcortexrois 		isolate subject-specific subcortical rois for tractography"
-  				echo "probtracksubcortex 		run fsl probtrackx across subcortical nuclei (cpu) (deprecated for probtrackxgpudense & dwiseedtractography)"
-  				echo "pretractography			generates space for cortical dense connectomes (cluster usable)"
-  				echo "pretractographydense		generates space for whole-brain dense connectomes (cluster usable)"
-  				echo "probtrackxgpucortex		run fsl probtrackx across cortical mesh for dense connectomes w/gpu (cluster usable)"
-  				echo "makedensecortex			generate dense cortical connectomes (cluster usable)"
-  				echo "probtrackxgpudense		run fsl probtrackx for whole brain & generates dense whole-brain connectomes (cluster usable)"
+  				echo "fslbedpostxgpu 			run fsl bedpostx w/gpu"
+  				echo "pretractographydense		generates space for whole-brain dense connectomes"
+  				echo "probtrackxgpudense		run fsl probtrackx for whole brain & generates dense whole-brain connectomes"
   				echo ""  				
+  				
   				cyaneho "Misc functions and analyses"  	
   				cyaneho "---------------------------"			
-  				echo "computeboldfc				computes seed or gbc BOLD functional connectivity"
+  				echo "computeboldfc			computes seed or gbc BOLD functional connectivity"
   				echo "structuralparcellation		parcellate myelin or thickness data via user-specified parcellation"
   				echo "boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
   				echo "dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
   				echo "dwiseedtractography		reduce dense dwi tractography data via user-specified seed structure"
-  				echo "printmatrix			extract parcellated matrix for bold data via yeo 17 network solutions"
-  				echo "boldmergenifti			merge specified nii bold timeseries"
-  				echo "boldmergecifti			merge specified citi bold timeseries"
+  				echo "printmatrix			extract parcellated matrix for dense CIFTI data via via a provided network solution"
   				echo "bolddense			compute bold dense connectome (needs >30gb ram per bold)"
-  				echo "nii4dfpconvert			convert nifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "cifti4dfpconvert		convert cifti hcp-processed bold data to 4dpf format for fild analyses"
-  				echo "ciftismooth			smooth & convert cifti bold data to 4dpf format for fild analyses"
+  				echo "ciftismooth		smooth cifti data"
   				echo ""  				
+  				
   				cyaneho "FIX ICA de-noising"    
   				cyaneho "---------------------------"							
   				echo "fixica				run fix ica de-noising on a given volume"
   				echo "postfix				generates wb_view scene files in each subjects directory for fix ica results"
   				echo "boldhardlinkfixica		setup hard links for single run fix ica results"  				
-  				echo "fixicainsertmean		re-insert mean image back into mapped fix ica data (needed prior to dofcmrip calls)"
+  				echo "fixicainsertmean		re-insert mean image back into mapped fix ica data (needed prior to further preprocessing calls)"
   				echo "fixicaremovemean		remove mean image from mapped fix ica data"
   				echo "boldseparateciftifixica		separate specified bold timeseries (results from fix ica - use if bolds merged)"
   				echo "boldhardlinkfixicamerged	setup hard links for merged fix ica results (use if bolds merged)" 
   				echo ""
+  				
   				cyaneho "GMRI utilities for preprocessing and analyses"
   				cyaneho "---------------------------------------------"							    
   				echo ""
@@ -270,11 +212,9 @@ show_usage() {
   				echo""
 }
 
-###########################################################################################################################
-###########################################################################################################################
-####################################  SPECIFIC ANALYSIS FUNCTIONS START HERE ##############################################
-###########################################################################################################################
-###########################################################################################################################
+# ========================================================================================
+# ===================== SPECIFIC ANALYSIS FUNCTIONS START HERE ===========================
+# ========================================================================================
 
 # ------------------------------------------------------------------------------------------------------
 #  gmri general wrapper - parse inputs into specific gmri functions via AP 
@@ -356,9 +296,9 @@ dicomsort() {
 				
 				echo ""
 				echo "---------------------------------------------------------------------------------"
+				echo "Data successfully submitted" 
 				echo "Scheduler: $Scheduler"
-				echo "QUEUE Name: $QUEUE"
-				echo "Data successfully submitted to $QUEUE" 
+				echo "Scheduler Options: $SchedulerOptions"
 				echo "Check output logs here: $StudyFolder/$CASE/dicom"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
@@ -382,8 +322,8 @@ show_usage_dicomsort() {
 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
 				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
-				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
@@ -408,40 +348,9 @@ show_usage_dicomsort() {
 				echo "--function='dicomsort' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='<name_of_queue>' \ "
-				echo "--scheduler='<name_of_scheduler>' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo "" 
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  dicom2nii - Convert DICOMs to NIFTI files
-# ------------------------------------------------------------------------------------------------------
-
-dicom2nii() {
-
-	cd "$StudyFolder"/"$CASE"
-
-	echo " ---> running dicom2nii"
-	gmri dicom2nii unzip=yes gzip=yes clean=yes	
-	
-}
-
-show_usage_dicom2nii() {
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-  				echo "This function converts DICOMs to NIFTI format for additional processing."
-  				echo ""
-    			echo "-- Usage for dicom2nii"
-    			echo ""
-				echo "* Example with interactive terminal:"
-				echo "AP dicom2nii <study_folder> '<list of cases>'"
-    			echo ""
-				echo "* Example with flags:"
-				echo "AP --function=dicom2nii --path=<study_folder> --subjects='<list of cases>'"
-    			echo ""
-    			echo ""
     			echo ""
 }
 
@@ -453,7 +362,6 @@ setuphcp() {
 
 	cd "$StudyFolder"/"$CASE"
 		
-  				
 			echo " ---> running setuphcp for $CASE"
 		 	echo ""
 		 	# -- Combine all the calls into a single command
@@ -474,20 +382,20 @@ setuphcp() {
 			else
 			
 				echo "Job ID:"
-				fslsub="$Scheduler" # set scheduler for fsl_sub command
+
 				# -- Set the scheduler commands
 				rm -f "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh &> /dev/null
 				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh
-				chmod 770 "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh
+				chmod 770 "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh				
 				# -- Run the scheduler commands
-				fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/" -R 10000 "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh
-				
+				gmri schedule command="${StudyFolder}/${CASE}/${CASE}_setuphcp.sh" settings="${Scheduler},${SchedulerOptions}" 
+			
 				echo ""
 				echo "---------------------------------------------------------------------------------"
-				echo "Scheduler: $Scheduler"
-				echo "QUEUE Name: $QUEUE"
-				echo "Data successfully submitted to $QUEUE" 
-				echo "Check output logs here: $StudyFolder/$CASE/dicom"
+				echo "Data successfully submitted" 
+				echo "Scheduler Name: $Scheduler"
+				echo "$Scheduler Options: $SchedulerOptions"
+				echo "Check output logs here: $StudyFolder/$CASE/"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
 			
@@ -509,8 +417,8 @@ show_usage_setuphcp() {
 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
 				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
-				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "" 
     			echo "-- Usage for setuphcp"
     			echo ""
@@ -536,8 +444,8 @@ show_usage_setuphcp() {
 				echo "--function='setuphcp' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='<name_of_queue>' \ "
-				echo "--scheduler='<name_of_scheduler>' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo "" 
     			echo ""
 }
@@ -688,155 +596,6 @@ show_usage_createlists() {
 
 
 # ------------------------------------------------------------------------------------------------------
-#  nii4dfpconvert - Convert NIFTI files into 4DFP for FIDL GLM analyses
-# ------------------------------------------------------------------------------------------------------
-
-nii4dfpconvert() {
-
-for BOLD in $BOLDS
-do
-	cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"
-	
-	if [ -f "$BOLD".4dfp.img ]; 
-	then
-		echo "NIFTI 4dfp conversion done for $CASE and "$BOLD".nii.gz"
-	else
-		echo "Running NIFTI-->4dfp conversion for $CASE and "$BOLD".nii.gz"
-		gunzip -f "$BOLD".nii.gz
-		nifti_4dfp -4 "$BOLD".nii "$BOLD".4dfp.ifh
-		gzip "$BOLD".nii
-	fi
-	
-	if [ -f "$BOLD"_hp2000_clean.4dfp.img ]; 
-	then
-		echo "NIFTI 4dfp conversion done for $CASE and "$BOLD"_hp2000_clean.nii.gz"
-	else
-		echo "Running NIFTI-->4dfp conversion for $CASE and "$BOLD"_hp2000_clean.nii.gz"
-		gunzip -f "$BOLD"_hp2000_clean.nii.gz
-		nifti_4dfp -4 "$BOLD"_hp2000_clean.nii "$BOLD"_hp2000_clean.4dfp.ifh
-		gzip "$BOLD"_hp2000_clean.nii
-	fi
-
-done
-}
-
-show_usage_nii4dfpconvert() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "This function converts NII files to legacy 4dfp file format used by WashU NIL pipelines."
-    			echo ""
-    			echo "Note: Assumptions are made that there exists _hp2000_clean NIFTI file in the HCP folder structure."
-    			echo ""
-    			echo "Example: AP nii4dfpconvert <absolute_path_to_subjects_folder> 'list_of_cases' "
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  cifti4dfpconvert - Convert CIFTI *dtseries.nii files into 4DFP for FIDL GLM analyses
-# ------------------------------------------------------------------------------------------------------
-
-cifti4dfpconvert() {
-
-for BOLD in $BOLDS
-do
-	cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"
-	
-	if [ -f "$BOLD"_Atlas.dtseries.4dfp.img ];
-	then
-		echo "CIFTI 4dfp conversion done for $CASE and "$BOLD"_Atlas_hp2000_clean.dtseries.nii"
-	else
-		echo "Running CIFTI-->4dfp conversion for $CASE and "$BOLD"_Atlas.dtseries.nii"
-		# first take a given *_Atlas.dtseries.nii BOLD run and convert to NIFTI
-		wb_command -cifti-convert -to-nifti "$BOLD"_Atlas.dtseries.nii "$BOLD"_Atlas.nifti.dtseries.nii
-		# next convert NIFTI file to 4dfp to be used in FIDL
-		nifti_4dfp -4 "$BOLD"_Atlas.nifti.dtseries.nii "$BOLD"_Atlas.dtseries.4dfp.ifh
-	fi
-
-	if [ -f "$BOLD"_Atlas_hp2000_clean.dtseries.4dfp.img ];
-	then
-		echo "CIFTI 4dfp conversion done for $CASE and "$BOLD"_Atlas_hp2000_clean.dtseries.nii"
-	else
-		echo "Running CIFTI-->4dfp conversion for $CASE and "$BOLD"_Atlas_hp2000_clean.dtseries.nii"
-		# first take a given *_Atlas.dtseries.nii BOLD run and convert to NIFTI
-		wb_command -cifti-convert -to-nifti "$BOLD"_Atlas_hp2000_clean.dtseries.nii "$BOLD"_Atlas_hp2000_clean.nifti.dtseries.nii
-		# next convert NIFTI file to 4dfp to be used in FIDL
-		nifti_4dfp -4 "$BOLD"_Atlas_hp2000_clean.nifti.dtseries.nii "$BOLD"_Atlas_hp2000_clean.dtseries.4dfp.ifh
-	fi
-
-done
-}
-
-show_usage_cifti4dfpconvert() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function for converting a CIFTI file to a legacy 4dfp 4dfp file format used by WashU NIL pipelines for a given BOLD file."
-    			echo ""
-    			echo "Note: Assumptions are made that there exists _hp2000_clean CIFTI file in the HCP folder structure."
-    			echo ""
-    			echo "Example: AP cifti4dfpconvert <absolute_path_to_subjects_folder> 'list_of_cases' "
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  ciftismooth - Smooth CIFTI *dtseries.nii for FIDL GLM analyses
-# ------------------------------------------------------------------------------------------------------
-
-ciftismooth() {
-
-for BOLD in $BOLDS
-do
-
-	for KERNEL in $KERNELS
-	do	
-
-	if [ -f "$BOLD"_s"$KERNEL"_Atlas.dtseries.4dfp.img ];
-	then
-		echo "CIFTI Smoothing and 4dfp conversion done for $CASE and $BOLD_s$KERNEL_Atlas.dtseries.nii"
-	else
-		echo "Running CIFTI-->4dfp conversion for $CASE bold# $BOLD and smoothing kernel $KERNEL..."
-		# CIFTI smooth
-		wb_command -cifti-smoothing "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas.dtseries.nii "$KERNEL" "$KERNEL" COLUMN "$BOLD"_s"$KERNEL"_Atlas.dtseries.nii -left-surface "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".L.midthickness.32k_fs_LR.surf.gii -right-surface "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".R.midthickness.32k_fs_LR.surf.gii
-		# first take a given *_Atlas.dtseries.nii BOLD run and convert to NIFTI
-		wb_command -cifti-convert -to-nifti "$BOLD"_s"$KERNEL"_Atlas.dtseries.nii "$BOLD"_s"$KERNEL"_Atlas.nifti.dtseries.nii
-		# next convert NIFTI file to 4dfp to be used in FIDL
-		nifti_4dfp -4 "$BOLD"_s"$KERNEL"_Atlas.nifti.dtseries.nii "$BOLD"_s"$KERNEL"_Atlas.dtseries.4dfp.ifh
-	fi
-	
-	if [ -f "$BOLD"_s"$KERNEL"_Atlas_hp2000_clean.dtseries.4dfp.img ];
-	then
-		echo "CIFTI Smoothing and 4dfp conversion done for $CASE and $BOLD_s$KERNEL_Atlas_hp2000_clean.dtseries.nii"
-	else
-		echo "Running CIFTI-->4dfp conversion for $CASE bold# $BOLD and smoothing kernel $KERNEL..."
-		# CIFTI smooth
-		wb_command -cifti-smoothing "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii "$KERNEL" "$KERNEL" COLUMN "$BOLD"_s"$KERNEL"_Atlas_hp2000_clean.dtseries.nii -left-surface "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".L.midthickness.32k_fs_LR.surf.gii -right-surface "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE".R.midthickness.32k_fs_LR.surf.gii
-		# first take a given *_Atlas.dtseries.nii BOLD run and convert to NIFTI
-		wb_command -cifti-convert -to-nifti "$BOLD"_s"$KERNEL"_Atlas_hp2000_clean.dtseries.nii "$BOLD"_s"$KERNEL"_Atlas_hp2000_clean.nifti.dtseries.nii
-		# next convert NIFTI file to 4dfp to be used in FIDL
-		nifti_4dfp -4 "$BOLD"_s"$KERNEL"_Atlas_hp2000_clean.nifti.dtseries.nii "$BOLD"_s"$KERNEL"_Atlas_hp2000_clean.dtseries.4dfp.ifh
-	fi
-	
-	done
-done
-}
-
-show_usage_ciftismooth() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function for CIFTI smoothing."
-    			echo ""
-    			echo "Note: Assumptions are made that there exists _hp2000_clean NIFTI file in the HCP folder structure."
-    			echo ""
-    			echo "Example: AP ciftismooth <absolute_path_to_subjects_folder> 'list_of_cases' "
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
 #  hpcsync - Sync files to Yale HPC and back to the Yale server after HCP preprocessing
 # ------------------------------------------------------------------------------------------------------
 
@@ -880,244 +639,6 @@ show_usage_hpcsync() {
     			echo ""
     			echo "   --function=<function_name>   Name of function (required)"	
     			echo "   --path=<study_folder>        Path to study data folder (required)"	
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  isolatesubcortexrois - Find subcortical ROIs needed for subcortical seed-based tractography 
-# ------------------------------------------------------------------------------------------------------
-
-isolatesubcortexrois() {
-
-	# This function is designed to isolate subject-specific subcortical ROIs which are used as targets in the function below
-
-	# Isolate thalamus seeds for analyses #THALAMUS_LEFT 10 0 118 14 255 #THALAMUS RIGHT 49 0 118 255
-	cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs
-    3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,10)' -prefix Atlas_thalamus.L.nii.gz # isolate left thalamus from global mask file
-	3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,49)' -prefix Atlas_thalamus.R.nii.gz # isolate right thalamus from global mask file
-	# Get thalamic volumes
-	#thalvol_L=`fslstats Atlas_thalamus.L.nii.gz -V | cut -d " " -f 1` #198 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 1288 / 32492 number of vertices
-	#thalvol_R=`fslstats Atlas_thalamus.R.nii.gz -V | cut -d " " -f 1` #192 - get # of R thalamic voxels needed to adjust the nsamples flag - 5000 * 1248 / 32492 number of vertices
-	
-	# Isolate accumbens seeds for analyses #accumbens_LEFT 26 0 118 14 255 #accumbens RIGHT 58 0 118 255
-	cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs
-    3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,26)' -prefix Atlas_accumbens.L.nii.gz # isolate left accumbens from global mask file
-	3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,58)' -prefix Atlas_accumbens.R.nii.gz # isolate right accumbens from global mask file
-	# Get accumbens volumes
-	#accvol_L=`fslstats Atlas_accumbens.L.nii.gz -V | cut -d " " -f 1` #25 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 135 / 32492 number of vertices
-	#accvol_R=`fslstats Atlas_accumbens.R.nii.gz -V | cut -d " " -f 1` #25 - get # of R thalamic voxels needed to adjust the nsamples flag - 5000 * 140 / 32492 number of vertices
-
-	# Isolate caudate seeds for analyses #caudate_LEFT 11 0 118 14 255 #caudate RIGHT 50 0 118 255
-	cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs
-    3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,11)' -prefix Atlas_caudate.L.nii.gz # isolate left caudate from global mask file
-	3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,50)' -prefix Atlas_caudate.R.nii.gz # isolate right caudate from global mask file
-	# Get caudate volumes
-	#caudvol_L=`fslstats Atlas_caudate.L.nii.gz -V | cut -d " " -f 1` #112 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 728 / 32492 number of vertices
-	#caudvol_R=`fslstats Atlas_caudate.R.nii.gz -V | cut -d " " -f 1` #116 - get # of R thalamic voxels needed to adjust the nsamples flag - 5000 * 755 / 32492 number of vertices
-	
-	# Isolate putamen seeds for analyses #putamen_LEFT 12 0 118 14 255 #putamen RIGHT 51 0 118 255
-	cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs
-    3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,12)' -prefix Atlas_putamen.L.nii.gz # isolate left putamen from global mask file
-	3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,51)' -prefix Atlas_putamen.R.nii.gz # isolate right putamen from global mask file
-	# Get putamen volumes
-	#putvol_L=`fslstats Atlas_putamen.L.nii.gz -V | cut -d " " -f 1` #163 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 1060 / 32492 number of vertices
-	#putvol_R=`fslstats Atlas_putamen.R.nii.gz -V | cut -d " " -f 1` #155 - get # of R thalamic voxels needed to adjust the nsamples flag - 5000 * 1010 / 32492 number of vertices
-
-	# Isolate putamen seeds for analyses #pallidum_LEFT 12 0 118 14 255 #pallidum RIGHT 51 0 118 255
-	cd "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs
-    3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,13)' -prefix Atlas_pallidum.L.nii.gz # isolate left pallidum from global mask file
-	3dcalc -overwrite -a Atlas_ROIs.2.nii.gz  -expr 'equals(a,52)' -prefix Atlas_pallidum.R.nii.gz # isolate right pallidum from global mask file
-	# Get putamen volumes
-	#pallvol_L=`fslstats Atlas_pallidum.L.nii.gz -V | cut -d " " -f 1` #46 - get # of L thalamic voxels needed to adjust the nsamples flag - 5000 * 297 / 32492 number of vertices
-	#pallvol_R=`fslstats Atlas_pallidum.R.nii.gz -V | cut -d " " -f 1` #40 - get # of R thalamic voxels needed to adjust the nsamples flag - 5000 * 260 / 32492 number of vertices
-
-}
-
-show_usage_isolatesubcortexrois() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function for isolating subcortical ROIs based on individual anatomy to be used in probabilistic tractography."
-    			echo ""
-    			echo "Note: it assumes that there is data inside <$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/ROIs> "
-    			echo ""
-}
-	
-
-# ------------------------------------------------------------------------------------------------------
-#  probtracksubcortex - For a given subcortical ROI run probabilistic tractography (CPU version)
-# ------------------------------------------------------------------------------------------------------
-
-probtracksubcortex() {
-
-	# This function is designed to track from uni-lateral sub-cortical nucleus to the cortical surface in MNI space for each subject to standardize the # of voxels within each thalamus
-    
-    for STRUCTURE in $STRUCTURES
-    do
-		#set # of samples for each specific structure
-		if [ "$STRUCTURE" == "pallidum" ]; then
-			nsample=46
-			LABEL="PALLIDUM"
-			rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-			rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-			echo "$LABEL"_LEFT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-			echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-			echo "$LABEL"_RIGHT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-			echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt   
-		else
-			if [ "$STRUCTURE" == "thalamus" ]; then
-				nsample=200
-				LABEL="THALAMUS"
-				rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-				rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-				echo "$LABEL"_LEFT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-				echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-				echo "$LABEL"_RIGHT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-				echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt    
-			else
-				if [ "$STRUCTURE" == "caudate" ]; then
-					nsample=115
-					LABEL="CAUDATE"
-					rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-					rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-					echo "$LABEL"_LEFT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-					echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-					echo "$LABEL"_RIGHT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-					echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt  
-				else
-					if [ "$STRUCTURE" == "accumbens" ]; then
-						nsample=25
-						LABEL="ACCUMBENS"
-						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-						echo "$LABEL"_LEFT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-						echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-						echo "$LABEL"_RIGHT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-						echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt  
-					else
-						if [ "$STRUCTURE" == "putamen" ]; then
-							nsample=165
-							LABEL="ACCUMBENS"
-							rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-							rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-							echo "$LABEL"_LEFT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-							echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-							echo "$LABEL"_RIGHT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-							echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt  
-						else
-							if [ "$STRUCTURE" == "thalamus_sensory" ]; then
-								nsample=75
-								LABEL="THALAMUS"
-								rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-								rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-								echo "$LABEL"_LEFT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-								echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-								echo "$LABEL"_RIGHT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-								echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-							else
-								if [ "$STRUCTURE" == "thalamus_associative" ]; then
-									nsample=75
-									LABEL="THALAMUS"
-									rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-									rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-									echo "$LABEL"_LEFT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-									echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_L.txt
-									echo "$LABEL"_RIGHT >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-									echo 1 1 0 0 1 >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_R.txt
-								else   
-									echo "Undefined Structure - check structure input string"
-								fi	
-							fi	
-						fi
-					fi
-				fi
-			fi
-		fi		
-		
-
-		# For each hemisphere track from surface to "$STRUCTURE"
-		HEMIS="R"
-		for HEMI in $HEMIS
-		do
-			if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/"$CASE"_"$STRUCTURE"2cortex_"$HEMI"_norm.dscalar.nii ];
-			then
-				echo "Tractography done for $CASE and $STRUCTURE. Skipping to next subject..."
-			else
-				echo "Running tractography for $CASE and $STRUCTURE..."
-						rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_dwi_stop_"$HEMI".txt
-				    	echo "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_"$STRUCTURE"."$HEMI".nii.gz >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_dwi_stop_"$HEMI".txt
-    					echo "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE"."$HEMI".pial.32k_fs_LR.surf.gii >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_dwi_stop_"$HEMI".txt
-						
-						probtrackx2 --target2="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_"$STRUCTURE"."$HEMI".nii.gz --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Whole_Brain_Trajectory_"$DWIRes".nii.gz --samples="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged --dir="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI" --forcedir --opd --nsamples="$nsample" --nsteps=2000 --steplength=0.45 --cthr=0 --fibthresh=0.05 --loopcheck --randfib=2 --seed="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE"."$HEMI".white.32k_fs_LR.surf.gii --meshspace=caret --seedref="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_ROIs.2.nii.gz --omatrix2 --invxfm="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/xfms/acpc_dc2standard.nii.gz --xfm="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/xfms/standard2acpc_dc.nii.gz --waypoints="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_"$STRUCTURE"."$HEMI".nii.gz --stop="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_dwi_stop_"$HEMI".txt
-												
-						## COMPLETE probtrackx2 COMMAND GUIDE
-						#probtrackx2 --target2="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_thalamus.L.nii.gz  \ # unilateral thalamic seed to start from
-						#--mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Whole_Brain_Trajectory_1.80.nii.gz \ # space in which to do tractogrphy
-						#--samples="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged \ # diffusion orientation from which to sample from
-						#--dir="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_thalamus_L \ # results dir
-						#--forcedir \ # forces overwrite
-						#--opd \ # streamline count in every brain voxel
-						#--stop="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_thalamus.L.nii.gz \ # halt tractography here
-						#--nsamples=198 \ # how many samples per seed voxel do you send out - #5000 * thalamus voxels / number of vertices
-						#--nsteps=2000 \ # how many samples can you take
-						#--steplength=0.45 \ # distance in mm between samples
-						#--cthr=0 \ # curvature threshold
-						#--fibthresh=0.05 \ # how strong is fiber after the 1st fiber have to be to use it; 5% of the signal
-						#--loopcheck \ # prevent loops
-						#--randfib=2 \ # send seeds in proportion to fibers
-						#--seed="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/ta6361.L.white.32k_fs_LR.surf.gii
-						#--meshspace=caret \
-						#--seedref="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_ROIs.2.nii.gz \
-						#--omatrix2
-						#--xfm=acpc_dc2standard.nii.gz
-						#--invxfm=standard2acpc_dc.nii.gz
-						
-						wb_command -metric-math "var - var +1" "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/AllOnes.func.gii -var var "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/"$CASE"."$HEMI".atlasroi.32k_fs_LR.shape.gii # makes a metric file that can be used by the 2nd command; # this would correspond to the -row-surface flag of wb_command -probtrackx-dot-convert
-						wb_command -volume-label-import "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_"$STRUCTURE"."$HEMI".nii.gz "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/"$CASE"."$STRUCTURE"_label_"$HEMI".txt "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_"$STRUCTURE"."$HEMI".nii.gz
-						wb_command -probtrackx-dot-convert "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/fdt_matrix2.dot  "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/fdt_matrix2.dconn.nii -row-surface "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/AllOnes.func.gii -col-voxels "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/tract_space_coords_for_fdt_matrix2 "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/ROIs/Atlas_"$STRUCTURE"."$HEMI".nii.gz # the 2nd command convert from probtrax sparse to a wm readable format, # for one dim you would use a surface metric for the other dim you would use your "$STRUCTURE" roi
-						wb_command -cifti-transpose "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/fdt_matrix2.dconn.nii "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/fdt_matrix2_trans.dconn.nii #transpose and then sum across all thalamic voxels once the results are done
-						wb_command -cifti-reduce "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/fdt_matrix2_trans.dconn.nii SUM "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/"$CASE"_"$STRUCTURE"2cortex_"$HEMI".dscalar.nii	
-						Waytotal=`cat "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/waytotal` 
-						wb_command -cifti-math "var / "$Waytotal"" "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/"$CASE"_"$STRUCTURE"2cortex_"$HEMI"_norm.dscalar.nii -var var "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/fdt_paths_"$STRUCTURE"_"$HEMI"/"$CASE"_"$STRUCTURE"2cortex_"$HEMI".dscalar.nii
-			fi
-		done
-	done
-
-}
-
-show_usage_probtracksubcortex() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			reho "		*** As of 2017 this function is deprecated and not supported any longer since the dense connectome implementation."
-    			reho "		*** The new usage for dense connectome computation can be found via the following functions:"
-    			echo ""
-  				echo "		probtrackxgpudense		RUN FSL PROBTRACKX FOR WHOLE BRAIN & GENERATEs DENSE WHOLE-BRAIN CONNECTOMES (cluster usable)"
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  printmatrix - Sets hard links for BOLDs into Parcellated folder for modeling use
-# ------------------------------------------------------------------------------------------------------
-
-linkmovement() {
-
-			for BOLD in $BOLDS
-			do
-				echo "Linking scrubbing data - BOLD $BOLD for $CASE..."
-				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD".use
-				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD".use
-			done
-}
-
-show_usage_linkmovement() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function links processed motion data from the HCP folder structure into the appropriate 'Parcellated' folder structure for later use."
     			echo ""
 }
 
@@ -1166,1055 +687,6 @@ show_usage_printmatrix() {
     			echo ""
 }
 
-# ------------------------------------------------------------------------------------------------------
-#  boldmergenifti - Merge NIFTI files across runs *** needs cleanup
-# ------------------------------------------------------------------------------------------------------
-
-boldmergenifti() {
-		
-		if [ "$DatatoMerge" == "1_8_orig" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_8/1_8.nii.gz ]; then
-					echo "Merging done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Merging BOLDs 1 - 8 for Rest and WM cases run 1 for $CASE..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_8 &> /dev/null
-				fslmerge -tr "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_8/1_8.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1/1.nii.gz  \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/2/2.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/3/3.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/4/4.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5/5.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/6/6.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/7/7.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/8/8.nii.gz 0.7
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "10_17_orig" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_17/10_17.nii.gz ]; then
-					echo "Merging done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Merging BOLDs 10 - 17 for Rest and WM cases run 1 for $CASE ..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_17 &> /dev/null
-				fslmerge -tr "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_17/10_17.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10/10.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/11/11.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/12/12.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/13/13.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14/14.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/15/15.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/16/16.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/17/17.nii.gz 0.7
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "1_4_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4.nii.gz ]; then
-					echo "Merging done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Merging BOLDs 1 - 4 for Rest and WM cases run 1 for $CASE..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4 &> /dev/null
-				fslmerge -tr "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1/1.nii.gz  \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/2/2.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/3/3.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/4/4.nii.gz 0.7
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "5_8_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8.nii.gz ]; then
-					echo "Merging done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Merging BOLDs 5 - 8 for Rest and WM cases run 1 for $CASE..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8 &> /dev/null
-				fslmerge -tr "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5/5.nii.gz  \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/6/6.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/7/7.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/8/8.nii.gz 0.7
-		fi
-		fi
-		
-				if [ "$DatatoMerge" == "10_13_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13.nii.gz ]; then
-					echo "Merging done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Merging BOLDs 10 - 13 for Rest and WM cases run 1 for $CASE..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13 &> /dev/null
-				fslmerge -tr "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10/10.nii.gz  \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/11/11.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/12/12.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/13/13.nii.gz 0.7
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "14_17_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17.nii.gz ]; then
-					echo "Merging done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Merging BOLDs 14 - 17 for Rest and WM cases run 1 for $CASE..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17 &> /dev/null
-				fslmerge -tr "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14/14.nii.gz  \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/15/15.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/16/16.nii.gz \
-				"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/17/17.nii.gz 0.7
-		fi
-		fi
-}
-
-show_usage_boldmergenifti() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  boldmergecifti - Merge CIFTI files across runs *** needs cleanup
-# ------------------------------------------------------------------------------------------------------
-
-boldmergecifti() {
-
-		if [ "$DatatoMerge" == "1_4_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 - 4 for Rest and WM cases run 1 for $CASE and $STEP..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4 &> /dev/null
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1/1_"$STEP".dtseries.nii  \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/2/2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/3/3_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/4/4_"$STEP".dtseries.nii 
-			done
-			cat "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/2/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/3/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/4/Movement_Regressors.txt >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/Movement_Regressors.txt
-		fi
-		fi
-
-		if [ "$DatatoMerge" == "5_8_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 5 - 8 for Rest and WM cases run 1 for $CASE and $STEP..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8 &> /dev/null
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5/5_"$STEP".dtseries.nii  \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/6/6_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/7/7_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/8/8_"$STEP".dtseries.nii 
-			done
-			cat "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/6/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/7/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/8/Movement_Regressors.txt >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/Movement_Regressors.txt
-		fi
-		fi
-
-		if [ "$DatatoMerge" == "10_13_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 - 4 for Rest and WM cases run 1 for $CASE and $STEP..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13 &> /dev/null
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10/10_"$STEP".dtseries.nii  \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/11/11_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/12/12_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/13/13_"$STEP".dtseries.nii 
-			done
-			cat "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/11/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/12/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/13/Movement_Regressors.txt >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/Movement_Regressors.txt
-		fi
-		fi
-
-		if [ "$DatatoMerge" == "14_17_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 5 - 8 for Rest and WM cases run 1 for $CASE and $STEP..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17 &> /dev/null
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14/14_"$STEP".dtseries.nii  \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/15/15_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/16/16_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/17/17_"$STEP".dtseries.nii 
-			done
-			cat "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/15/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/16/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/17/Movement_Regressors.txt >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/Movement_Regressors.txt
-		fi
-		fi
-
-		if [ "$DatatoMerge" == "1_8_orig" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_8/1_8_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 - 8 for Rest and WM cases run 1 for $CASE and $STEP..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_8 &> /dev/null
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_8/1_8_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1/1_"$STEP".dtseries.nii  \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/2/2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/3/3_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/4/4_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5/5_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/6/6_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/7/7_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/8/8_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/2/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/3/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/4/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/6/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/7/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/8/Movement_Regressors.txt >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_8/Movement_Regressors.txt
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "10_17_orig" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_17/10_17_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 10 - 17 for Rest and WM cases run 1 for $CASE and $STEP..."
-				mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_17 &> /dev/null
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_17/10_17_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10/10_"$STEP".dtseries.nii  \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/11/11_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/12/12_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/13/13_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14/14_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/15/15_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/16/16_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/17/17_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/11/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/12/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/13/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/15/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/16/Movement_Regressors.txt \
-			"$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/17/Movement_Regressors.txt >> "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_17/Movement_Regressors.txt
-		fi
-		fi
-
-		if [ "$DatatoMerge" == "dp5_dwi" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold1_2_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 & 2 for DWI acquisition for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold1_2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold1_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold2_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold2.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold1_2.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "1_8_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold10_8.dtseries.nii ]; then
-					echo "Merging done for selected raw BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Merging BOLDs 1 - 8 for Rest and WM cases run 1 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold1_8.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold1.dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold2.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold3.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold4.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold5.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold6.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold7.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold8.dtseries.nii
-
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold4.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold5.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold6.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold7.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold8.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold1_8.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/bold1_8.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "10_17_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold10_17.dtseries.nii ]; then
-					echo "Merging done for selected raw BOLD data for $CASE. Skipping to next subject..."
-		else	
-				echo "Merging BOLDs 10 - 17 for Rest & WM cases run 2 for $CASE..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold10_17.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold10.dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold11.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold12.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold13.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold14.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold15.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold16.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold17.dtseries.nii
-
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold10.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold11.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold12.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold13.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold14.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold15.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold16.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold17.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold10_17.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/bold10_17.use
-		fi
-		fi
-		if [ "$DatatoMerge" == "1_8" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold1_8_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected hpss BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 - 8 for Rest and WM cases run 1 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold1_8_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold1_"$STEP".dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold2_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold3_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold4_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold5_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold6_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold7_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold8_"$STEP"e.dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold4.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold5.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold6.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold7.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold8.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold1_8.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/bold1_8.use
-		fi
-		
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold1_8_"$STEP"_lpss.dtseries.nii ]; then
-					echo "Merging done for selected lpss BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 - 8 for Rest and WM cases run 1 with lpss for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold1_8_"$STEP"_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold1_"$STEP"_lpss.dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold2_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold3_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold4_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold5_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold6_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold7_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold8_"$STEP"e_lpss.dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold4.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold5.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold6.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold7.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold8.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold1_8.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/bold1_8.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "10_17" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold10_17_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected hpss BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else	
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 10 - 17 for Rest & WM cases run 2 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold10_17_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold10_"$STEP".dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold11_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold12_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold13_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold14_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold15_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold16_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold17_"$STEP"e.dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold10.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold11.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold12.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold13.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold14.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold15.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold16.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold17.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold10_17.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/bold10_17.use
-		fi
-		
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold10_17_"$STEP"_lpss.dtseries.nii ]; then
-					echo "Merging done for selected lpss BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else	
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 10 - 17 for Rest & WM cases run 2 with lpss for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold10_17_"$STEP"_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold10_"$STEP"_lpss.dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold11_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold12_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold13_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold14_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold15_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold16_"$STEP"e_lpss.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold17_"$STEP"e_lpss.dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold10.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold11.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold12.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold13.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold14.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold15.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold16.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold17.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold10_17.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/bold10_17.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "2_8" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold2_8_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 2 - 8 for WM cases run 1 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold2_8_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold3_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold4_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold5_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold6_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold7_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold8_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold4.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold5.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold6.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold7.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold8.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold2_8.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "11_17" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold11_17_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 11 - 17 for WM cases run 2 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold11_17_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold11_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold12_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold13_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold14_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold15_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold16_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold17_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold11.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold12.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold13.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold14.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold15.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold16.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold17.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold11_17.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "ocd_rest" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold1_3_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 & 3 for OCD study for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold1_3_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold1_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold3_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold3.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold1_3.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "ocd_rest_t1000forHCP" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold1_3_t1000forHCP_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 & 3 for OCD study for HCP for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold1_3_t1000forHCP_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold1_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold3_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold3.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold1_3_t1000forHCP.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "dp5_wm_run1_t1000forHCP" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold2_4_t1000forHCP_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else	
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 2 - 4 for WM cases run 1 matched to HCP (1000 frames) for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold2_4_t1000forHCP_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold3_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold4_"$STEP".dtseries.nii -column 1 -up-to 200
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold4.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold2_4_t1000forHCP.use
-			sed -i -e '1001,1200d' "$StudyFolder"/"$CASE"/images/functional/movement/bold2_4_t1000forHCP.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "dp5_wm_run1_t2470forHCP" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold2_8_t2470forHCP_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 2 - 8 for WM cases run 1 matched to HCP (2470 frames) for  $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold2_8_t2470forHCP_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold3_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold4_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold5_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold6_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold7_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold8_"$STEP".dtseries.nii -column 1 -up-to 70
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold4.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold5.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold6.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold7.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold8.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold2_8_t2470forHCP.use
-		sed -i -e '2471,2800d' "$StudyFolder"/"$CASE"/images/functional/movement/bold2_8_t2470forHCP.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "hcp_rest_t973forYale" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold1_t973forYale_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else
-			for STEP in $STEPS
-    		do
-				echo "Truncating BOLD 1 for HCP cases to match Yale 1000 Frames for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold1_t973forYale_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold1_"$STEP".dtseries.nii -column 1 -up-to 973
-			done
-			cp "$StudyFolder"/"$CASE"/images/functional/movement/bold1.use "$StudyFolder"/"$CASE"/images/functional/movement/bold1_t973forYale.use
-			sed -i -e '974,1200d' "$StudyFolder"/"$CASE"/images/functional/movement/bold1_t973forYale.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "hcp_1_2" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold1_2_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 & 2 for HCP for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/bold1_2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold1_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/bold2_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/bold1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/bold2.use > "$StudyFolder"/"$CASE"/images/functional/movement/bold1_2.use
-		fi
-		fi
-
-		if [ "$DatatoMerge" == "hcp_1_2_fixica" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica1_2.dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else
-				echo "Merging BOLDs 1 & 2 for FIX ICA HCP for $CASE ..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica1_2.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica1.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica2.dtseries.nii
-				cat "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1.use \
-				"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica2.use > "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_2.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "hcp_1_2_fixica_processed" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/bold1_8_"$STEP".dtseries.nii ]; then
-			echo "Merging done for selected BOLD data for $CASE and $STEP. Skipping to next subject..."
-		else
-			for STEP in $STEPS
-    		do
-				echo "Merging BOLDs 1 & 2 for HCP for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica1_2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica1_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica2_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica2.use > "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_2.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "fixica1_8_taskonly" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica1_8_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected boldfixica data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging boldfixicas 1 - 8 for Rest and WM cases run 1 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica1_8_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica1.dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica2_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica3_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica4_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica5_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica6_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica7_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica8_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica4.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica5.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica6.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica7.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica8.use > "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use
-		fi
-		fi
-		
-		
-		if [ "$DatatoMerge" == "fixica10_17_taskonly" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica10_17_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected boldfixica data for $CASE and $STEP. Skipping to next subject..."
-		else	
-			for STEP in $STEPS
-    		do
-				echo "Merging boldfixicas 10 - 17 for Rest & WM cases run 2 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica10_17_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica10.dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica11_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica12_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica13_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica14_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica15_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica16_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica17_"$STEP".dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica11.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica12.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica13.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica14.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica15.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica16.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica17.use > "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use
-		fi
-		fi		
-					
-		if [ "$DatatoMerge" == "fixica1_8_processed" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica1_8_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected boldfixica data for $CASE and $STEP. Skipping to next subject..."
-		else		
-			for STEP in $STEPS
-    		do
-				echo "Merging boldfixicas 1 - 8 for Rest and WM cases run 1 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica1_8_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica1_"$STEP".dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica2_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica3_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica4_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica5_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica6_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica7_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica8_"$STEP"e.dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica4.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica5.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica6.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica7.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica8.use > "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use
-		fi
-		fi
-		
-		
-		if [ "$DatatoMerge" == "fixica10_17_processed" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica10_17_"$STEP".dtseries.nii ]; then
-					echo "Merging done for selected boldfixica data for $CASE and $STEP. Skipping to next subject..."
-		else	
-			for STEP in $STEPS
-    		do
-				echo "Merging boldfixicas 10 - 17 for Rest & WM cases run 2 for $CASE and $STEP..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica10_17_"$STEP".dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica10_"$STEP".dtseries.nii -column 101 -up-to 400 \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica11_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica12_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica13_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica14_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica15_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica16_"$STEP"e.dtseries.nii \
-				-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica17_"$STEP"e.dtseries.nii
-			done
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica11.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica12.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica13.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica14.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica15.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica16.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica17.use > "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use
-		fi
-		fi
-		
-		
-		if [ "$DatatoMerge" == "fixica1_8" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica1_8.dtseries.nii ]; then
-					echo "Merging done for selected boldfixica data for $CASE. Skipping to next subject..."
-		else
-			rm "$StudyFolder"/"$CASE"/images/functional/boldfixica1_8.dtseries.nii  &> /dev/null 		
-
-			echo "Merging boldfixicas 1 - 8 for Rest and WM cases run 1 for $CASE..."
-			wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica1_8.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica1.dtseries.nii -column 101 -up-to 400 \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica2.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica3.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica4.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica5.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica6.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica7.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica8.dtseries.nii
-
-			rm "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use &> /dev/null
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica2.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica3.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica4.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica5.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica6.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica7.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica8.use > "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "fixica10_17" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica10_17.dtseries.nii ]; then
-					echo "Merging done for selected boldfixica data for $CASE. Skipping to next subject..."
-		else
-			rm "$StudyFolder"/"$CASE"/images/functional/boldfixica10_17.dtseries.nii  &> /dev/null 
-
-			echo "Merging boldfixicas 10 - 17 for Rest & WM cases run 2 for $CASE..."
-			wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica10_17.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica10.dtseries.nii -column 101 -up-to 400 \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica11.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica12.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica13.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica14.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica15.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica16.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica17.dtseries.nii
-			
-			rm "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use &> /dev/null
-			cat "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica11.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica12.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica13.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica14.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica15.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica16.use \
-			"$StudyFolder"/"$CASE"/images/functional/movement/boldfixica17.use > "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use
-			sed -i -e '1,100d' "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use
-		fi
-		fi
-
-		if [ "$DatatoMerge" == "fixica1_8_demean" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean1_8.dtseries.nii ]; then
-					echo "Merging done for selected boldfixica data for $CASE. Skipping to next subject..."
-					cp "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica_demean1_8.use &> /dev/null
-		else
-			rm "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean1_8.dtseries.nii  &> /dev/null 		
-
-			echo "Merging boldfixicas 1 - 8 for Rest and WM cases run 1 for $CASE..."
-			wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean1_8.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean1.dtseries.nii -column 101 -up-to 400 \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean2.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean3.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean4.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean5.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean6.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean7.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean8.dtseries.nii
-
-			cp "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica1_8.use "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica_demean1_8.use &> /dev/null
-
-		fi
-		fi
-		
-		if [ "$DatatoMerge" == "fixica10_17_demean" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean1000_17.dtseries.nii ]; then
-					echo "Merging done for selected boldfixica data for $CASE. Skipping to next subject..."
-					cp "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica_demean10_17.use &> /dev/null
-		else
-			rm "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean10_17.dtseries.nii  &> /dev/null 
-
-			echo "Merging boldfixicas 10 - 17 for Rest & WM cases run 2 for $CASE..."
-			wb_command -cifti-merge "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean10_17.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean10.dtseries.nii -column 101 -up-to 400 \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean11.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean12.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean13.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean14.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean15.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean16.dtseries.nii \
-			-cifti "$StudyFolder"/"$CASE"/images/functional/boldfixica_demean17.dtseries.nii
-			
-			cp "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica10_17.use "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica_demean10_17.use &> /dev/null
-
-		fi
-		fi
-
-}
-
-show_usage_boldmergecifti() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  boldseparateciftifixica - Separate CIFTI files across runs *** needs cleanup
-# ------------------------------------------------------------------------------------------------------
-
-
-boldseparateciftifixica() {
-		
-		
-		if [ "$DatatoSeparate" == "1_4_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/4_hp2000_clean.nii.gz ]; then
-					echo "Separating done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Separating CIFTI BOLDs 1 - 4 for $CASE..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_Atlas_hp2000_clean.dtseries.nii -column 1 -up-to 400
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/2_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_Atlas_hp2000_clean.dtseries.nii -column 401 -up-to 800
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/3_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_Atlas_hp2000_clean.dtseries.nii -column 801 -up-to 1200
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/4_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_Atlas_hp2000_clean.dtseries.nii -column 1201 -up-to 1600
-
-				echo "Separating NIFTI BOLDs 1 - 4 for $CASE..."
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_hp2000_clean.nii.gz -subvolume 1 -up-to 400
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/2_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_hp2000_clean.nii.gz -subvolume 401 -up-to 800
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/3_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_hp2000_clean.nii.gz -subvolume 801 -up-to 1200
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/4_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_4_hp2000_clean.nii.gz -subvolume 1201 -up-to 1600
-				
-				echo "Cleaning old hard links for BOLDs 1 - 4 for $CASE..."
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica1.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica2.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica3.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica4.nii &> /dev/null
-	
-				echo "Gzipping BOLDs 1 - 4 for $CASE..."	
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/2_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/3_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/4_hp2000_clean.nii &> /dev/null
-
-				# Setup hard links for separated cleaned images
-				echo "Setting up hard links for BOLDs 1 - 4 for $CASE..."				
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica1.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/2_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica2.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/3_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica3.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/4_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica4.dtseries.nii
-				
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica1.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/2_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica2.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/3_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica3.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/4_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica4.nii.gz
-		fi
-		fi
-		
-		if [ "$DatatoSeparate" == "5_8_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/8_hp2000_clean.nii.gz ]; then
-					echo "Separating done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Separating CIFTI BOLDs 5 - 8 for $CASE..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_Atlas_hp2000_clean.dtseries.nii -column 1 -up-to 400
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/6_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_Atlas_hp2000_clean.dtseries.nii -column 401 -up-to 800
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/7_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_Atlas_hp2000_clean.dtseries.nii -column 801 -up-to 1200
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/8_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_Atlas_hp2000_clean.dtseries.nii -column 1201 -up-to 1600
-
-				echo "Separating NIFTI BOLDs 5 - 8 for $CASE..."
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_hp2000_clean.nii.gz -subvolume 1 -up-to 400
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/6_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_hp2000_clean.nii.gz -subvolume 401 -up-to 800
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/7_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_hp2000_clean.nii.gz -subvolume 801 -up-to 1200
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/8_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_8_hp2000_clean.nii.gz -subvolume 1201 -up-to 1600
-
-				echo "Cleaning old hard links for BOLDs 5 - 8 for $CASE..."
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica5.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica6.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica7.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica8.nii &> /dev/null
-
-				echo "Gzipping BOLDs 5 - 8 for $CASE..."	
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/6_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/7_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/8_hp2000_clean.nii &> /dev/null
-				
-				# Setup hard links for separated cleaned images
-				echo "Setting up hard links for BOLDs 5 - 8 for $CASE..."				
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica5.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/6_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica6.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/7_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica7.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/8_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica8.dtseries.nii
-
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica5.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/6_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica6.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/7_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica7.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/8_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica8.nii.gz
-		fi
-		fi
-		
-		if [ "$DatatoSeparate" == "10_13_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/13_hp2000_clean.nii.gz ]; then
-					echo "Separating done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Separating CIFTI BOLDs 10 - 13 for $CASE..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_Atlas_hp2000_clean.dtseries.nii -column 1 -up-to 400
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/11_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_Atlas_hp2000_clean.dtseries.nii -column 401 -up-to 800
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/12_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_Atlas_hp2000_clean.dtseries.nii -column 801 -up-to 1200
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/13_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_Atlas_hp2000_clean.dtseries.nii -column 1201 -up-to 1600
-
-				echo "Separating NIFTI BOLDs 10 - 13 for $CASE..."
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_hp2000_clean.nii.gz -subvolume 1 -up-to 400
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/11_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_hp2000_clean.nii.gz -subvolume 401 -up-to 800
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/12_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_hp2000_clean.nii.gz -subvolume 801 -up-to 1200
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/13_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_13_hp2000_clean.nii.gz -subvolume 1201 -up-to 1600
-
-				echo "Cleaning old hard links for BOLDs 10 - 13 for $CASE..."
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica10.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica11.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica12.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica13.nii &> /dev/null
-	
-				echo "Gzipping BOLDs 10 - 13 for $CASE..."
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_hp2000_clean.nii &> /dev/null 
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/11_hp2000_clean.nii &> /dev/null 
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/12_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/13_hp2000_clean.nii &> /dev/null
-				
-				# Setup hard links for separated cleaned images
-				echo "Setting up hard links for BOLDs 10 - 13 for $CASE..."
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica10.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/11_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica11.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/12_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica12.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/13_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica13.dtseries.nii
-
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica10.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/11_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica11.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/12_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica12.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/13_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica13.nii.gz
-		fi
-		fi
-		
-		if [ "$DatatoSeparate" == "14_17_raw" ]; then
-		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_hp2000_clean.nii.gz ]; then
-					echo "Separating done for selected BOLD data for $CASE. Skipping to next subject..."
-		else		
-				echo "Separating CIFTI BOLDs 14 - 17 for $CASE..."
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_Atlas_hp2000_clean.dtseries.nii -column 1 -up-to 400
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/15_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_Atlas_hp2000_clean.dtseries.nii -column 401 -up-to 800
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/16_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_Atlas_hp2000_clean.dtseries.nii -column 801 -up-to 1200
-				wb_command -cifti-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_Atlas_hp2000_clean.dtseries.nii -cifti "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_Atlas_hp2000_clean.dtseries.nii -column 1201 -up-to 1600
-
-				echo "Separating NIFTI BOLDs 14 - 17 for $CASE..."
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_hp2000_clean.nii.gz -subvolume 1 -up-to 400
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/15_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_hp2000_clean.nii.gz -subvolume 401 -up-to 800
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/16_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_hp2000_clean.nii.gz -subvolume 801 -up-to 1200
-				wb_command -volume-merge "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_hp2000_clean.nii -volume "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_17_hp2000_clean.nii.gz -subvolume 1201 -up-to 1600
-
-				echo "Cleaning old hard links for BOLDs 14 - 17 for $CASE..."
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica14.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica15.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica16.nii &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica17.nii &> /dev/null
-	
-				echo "Gzipping BOLDs 14 - 17 for $CASE..."
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/15_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/16_hp2000_clean.nii &> /dev/null
-				gzip -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_hp2000_clean.nii &> /dev/null
-				
-				# Setup hard links for separated cleaned images
-				echo "Setting up hard links for BOLDs 14 - 17 for $CASE..."
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica14.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/15_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica15.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/16_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica16.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica17.dtseries.nii
-
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica14.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/15_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica15.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/16_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica16.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica17.nii.gz
-		fi
-		fi
-		
-}
-
-show_usage_boldseparateciftifixica() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "USAGE INFO PENDING..."
-    			echo ""
-}
 
 # ------------------------------------------------------------------------------------------------------
 #  bolddense - Compute the dense connectome file for BOLD timeseries
@@ -2244,6 +716,33 @@ show_usage_bolddense() {
   				echo "-- DESCRIPTION:"
     			echo ""
     			echo "USAGE INFO PENDING..."
+    			echo ""
+}
+
+# ------------------------------------------------------------------------------------------------------
+# ----------------------------------------- FIX ICA CODE -----------------------------------------------
+# ------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------
+#  linkmovement - Sets hard links for BOLDs into Parcellated folder for fixica use
+# ------------------------------------------------------------------------------------------------------
+
+linkmovement() {
+
+			for BOLD in $BOLDS
+			do
+				echo "Linking scrubbing data - BOLD $BOLD for $CASE..."
+				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD".use
+				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD".use
+			done
+}
+
+show_usage_linkmovement() {
+
+  				echo ""
+  				echo "-- DESCRIPTION:"
+    			echo ""
+    			echo "Function links processed motion data from the HCP folder structure into the appropriate 'Parcellated' folder structure for later use."
     			echo ""
 }
 
@@ -2440,77 +939,13 @@ show_usage_fixicaremovemean() {
     			echo "Function for removing the mean of the image after FIX ICA was done for further denoising."
     			echo ""
 }
-
-# ------------------------------------------------------------------------------------------------------
-#  boldhardlinkfixicamerged - Generate links for FIX ICA cleaned BOLDs for functional connectivity (dofcMRI)
-# ------------------------------------------------------------------------------------------------------
-
-
-boldhardlinkfixicamerged() {
-				
-				echo "Setting up hard links for BOLDs 1 - 4, 5 - 8, 10 - 13, 14 - 17 for $CASE..."	
-							
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica1.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/2_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica2.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/3_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica3.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/4_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica4.dtseries.nii
-				
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/1_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica1.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/2_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica2.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/3_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica3.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/1_4/4_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica4.nii.gz
-
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica5.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/6_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica6.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/7_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica7.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/8_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica8.dtseries.nii
-
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/5_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica5.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/6_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica6.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/7_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica7.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/5_8/8_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica8.nii.gz
 	
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica10.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/11_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica11.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/12_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica12.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/13_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica13.dtseries.nii
-
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/10_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica10.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/11_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica11.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/12_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica12.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/10_13/13_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica13.nii.gz
-
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica14.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/15_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica15.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/16_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica16.dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica17.dtseries.nii
-
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/14_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica14.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/15_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica15.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/16_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica16.nii.gz
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/14_17/17_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica17.nii.gz
-
-}	
-
-show_usage_boldhardlinkfixicamerged() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function for hard-linking minimally preprocessed and merged HCP BOLD images after FIX ICA was done for further denoising."
-    			echo ""
-    			echo "NOTE: This function needs cleanup as it was designed for a specific study"
-    			echo ""
-}			
-
-#########################################################################################################################
-#########################################################################################################################
-################################################  HCP Pipeline Wrapper Functions ########################################
-#########################################################################################################################
-#########################################################################################################################
+# ------------------------------------------------------------------------------------------------------
+# -------------------------------- HCP Pipeline Wrapper Functions (deprecated --------------------------
+# ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
-#  hcp1 - Executes the PreFreeSurfer Script
+#  hcp1_orig - Executes the PreFreeSurfer Script
 # ------------------------------------------------------------------------------------------------------
 
 hcp1_orig() {
@@ -2717,7 +1152,7 @@ show_usage_hcp1_orig() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  hcp2 - Executes the FreeSurfer Script
+#  hcp2_orig - Executes the FreeSurfer Script
 # ------------------------------------------------------------------------------------------------------
 
 hcp2_orig() {
@@ -2798,7 +1233,7 @@ show_usage_hcp2_orig() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  hcp3 - Executes the PostFreeSurfer Script
+#  hcp3_orig - Executes the PostFreeSurfer Script
 # ------------------------------------------------------------------------------------------------------
 
 hcp3_orig() {
@@ -2898,7 +1333,7 @@ show_usage_hcp3_orig() {
 
 
 # ------------------------------------------------------------------------------------------------------
-#  hcp4 - Executes the Volume BOLD Script
+#  hcp4_orig - Executes the Volume BOLD Script
 # ------------------------------------------------------------------------------------------------------
 
 hcp4_orig() {
@@ -3056,7 +1491,7 @@ show_usage_hcp4_orig() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  hcp5 - Executes the Surface BOLD Script
+#  hcp5_orig - Executes the Surface BOLD Script
 # ------------------------------------------------------------------------------------------------------
 
 hcp5_orig() {
@@ -3144,7 +1579,7 @@ show_usage_hcp5_orig() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  hcpd - Executes the Diffusion Processing HCP Script using TOPUP implementation
+#  hcpd_orig - Executes the Diffusion Processing HCP Script using TOPUP implementation
 # ------------------------------------------------------------------------------------------------------
 
 hcpd_orig() {
@@ -3355,7 +1790,9 @@ hcpdlegacy() {
 		--overwrite="${Overwrite}"
 
 		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted to $QUEUE" 
+		echo "Data successfully submitted" 
+		echo "Scheduler Name: $Scheduler"
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Check output logs here: $LogFolder"
 		echo "--------------------------------------------------------------"
 		echo ""
@@ -3388,26 +1825,43 @@ show_usage_hcpdlegacy() {
 				echo "		--TE=<delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
 				echo "		--unwarpdir=<epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
 				echo "		--diffdatasuffix=<diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
-				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
  				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
 				echo ""
-				echo "-- Example with flagged parameters for a local run:"
+				echo "-- Example with flagged parameters for a local run (needs GPU-enabled node):"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='<name_of_gpu_enabled_queue>' --runmethod='1' --overwrite='yes'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
+				echo "--subjects='ta6455' \ "
+				echo "--function='hcpdlegacy' \ " 
+				echo "--PEdir='1' \ "
+				echo "--echospacing='0.69' \ "
+				echo "--TE='2.46' \ "
+				echo "--unwarpdir='x-' \ "
+				echo "--diffdatasuffix='DWI_dir91_LR' \ "
+				echo "--runmethod='1' \ "
+				echo "--overwrite='yes'"
 				echo ""
-				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo "-- Example with flagged parameters for submission to the scheduler (needs GPU-enabled queue):"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta6455' --function='hcpdlegacy' --PEdir='1' --echospacing='0.69' --TE='2.46' --unwarpdir='x-' --diffdatasuffix='DWI_dir91_LR' --queue='<name_of_gpu_enabled_queue>' --runmethod='2' --scheduler='lsf' --overwrite='yes'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
+				echo "--subjects='ta6455' \ "
+				echo "--function='hcpdlegacy' \ "
+				echo "--PEdir='1' \ "
+				echo "--echospacing='0.69' \ "
+				echo "--TE='2.46' \ "
+				echo "--unwarpdir='x-' \ "
+				echo "--diffdatasuffix='DWI_dir91_LR' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "				
+				echo "--overwrite='yes' \ "
 				echo ""				
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "AP hcpdlegacy /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
-				echo ""
+
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3476,7 +1930,9 @@ dwidenseparcellation() {
 		--overwrite="${Overwrite}"
 
 		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted to $QUEUE" 
+		echo "Data successfully submitted" 
+		echo "Scheduler Name: $Scheduler"
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Check output logs here: $LogFolder"
 		echo "--------------------------------------------------------------"
 		echo ""
@@ -3502,8 +1958,8 @@ show_usage_dwidenseparcellation() {
 				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
 				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
 				echo "		--outname=<name_of_output_pconn_file>		Specify the suffix output name of the pconn file"
-				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
@@ -3530,13 +1986,10 @@ show_usage_dwidenseparcellation() {
 				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
-				echo "--queue='<name_of_queue>' \ "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='lsf'"
-				echo ""
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "AP dwidenseparcellation /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
 				echo ""
 }
 
@@ -3605,7 +2058,9 @@ dwiseedtractography() {
 		--overwrite="${Overwrite}"
 
 		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted to $QUEUE" 
+		echo "Data successfully submitted" 
+		echo "Scheduler Name: $Scheduler"
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Check output logs here: $LogFolder"
 		echo "--------------------------------------------------------------"
 		echo ""
@@ -3638,8 +2093,8 @@ show_usage_dwiseedtractography() {
 				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
 				echo "		--seedfile=<file_for_seed_reduction>		Specify the absolute path of the seed file you want to use as a seed for dconn reduction"
 				echo "		--outname=<name_of_output_dscalar_file>		Specify the suffix output name of the dscalar file"
-				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
@@ -3666,9 +2121,9 @@ show_usage_dwiseedtractography() {
 				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='Thalamus_Seed' \ "
-				echo "--queue='<name_of_queue>' \ "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' \ "
 				echo "--runmethod='2' \ "
-				echo "--scheduler='lsf'"
 				echo ""
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -3840,7 +2295,9 @@ computeboldfc() {
 				--covariance="${Covariance}"
 				
 				echo "--------------------------------------------------------------"
-				echo "Data successfully submitted to $QUEUE"
+				echo "Data successfully submitted" 
+				echo "Scheduler Name: $Scheduler"
+				echo "Scheduler Options: $SchedulerOptions"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
@@ -3860,6 +2317,13 @@ show_usage_computeboldfc() {
 				echo "For more detailed documentation run <help fc_ComputeGBC3>, <help gmrimage.mri_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside matlab"
 				echo ""
 				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>			Name of function"
+				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [or you can specify name of scheduler before options; e.g. --SLURM_options]"
+				echo "" 
 				echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
 				echo ""
 				echo "		--calculation=<type_of_calculation>					Run <seed> or <gbc> calculation for functional connectivity."
@@ -3949,9 +2413,9 @@ show_usage_computeboldfc() {
 				echo "--targetf='' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' \ "
-				echo "--queue='<name_of_cluster_scheduler>' \ "
 				echo "--runmethod='2' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "- Example for seed calculation for a group of three subjects with the absolute path for a target folder:"
 				echo ""
@@ -3972,9 +2436,9 @@ show_usage_computeboldfc() {
 				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' \ "
-				echo "--queue='<name_of_cluster_scheduler>' \ "
 				echo "--runmethod='2' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "- Example for gbc calculation for each individual subject:"
 				echo ""
@@ -3999,9 +2463,9 @@ show_usage_computeboldfc() {
 				echo "--time='true' \ "
 				echo "--vstep='5000' \ "
 				echo "--covariance='false' \ "
-				echo "--queue='<name_of_cluster_scheduler>' \ "
 				echo "--runmethod='2' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "- Example for gbc calculation for a group of three subjects with the absolute path for a target folder:"
 				echo ""
@@ -4026,9 +2490,9 @@ show_usage_computeboldfc() {
 				echo "--time='true' \ "
 				echo "--vstep='5000' \ "
 				echo "--covariance='false' \ "
-				echo "--queue='<name_of_cluster_scheduler>' \ "
 				echo "--runmethod='2' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "				
 				echo ""
  				echo ""
 				echo "-- Example with interactive terminal:"
@@ -4106,7 +2570,9 @@ structuralparcellation() {
 		--extractdata="${ExtractData}"
 		
 		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted to $QUEUE" 
+		echo "Data successfully submitted" 
+		echo "Scheduler Name: $Scheduler"
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Check output logs here: $LogFolder"
 		echo "--------------------------------------------------------------"
 		echo ""
@@ -4130,8 +2596,8 @@ show_usage_structuralparcellation() {
 				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. MyelinMap_BC or corrThickness)"
 				echo "		--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder (e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii)"
 				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
-				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo ""
@@ -4161,15 +2627,10 @@ show_usage_structuralparcellation() {
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions' \ "
 				echo "--extractdata='yes' "
-				echo "--queue='<name_of_queue>' \ "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo "--runmethod='2' \ "
-				echo "--scheduler='lsf' "
 				echo "" 
- 				echo ""
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "Interactive terminal usage is not supported for this function."
-				echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4272,7 +2733,9 @@ boldparcellation() {
 			--weightsfile="${WeightsFile}"
 			
 			echo "--------------------------------------------------------------"
-			echo "Data successfully submitted to $QUEUE" 
+			echo "Data successfully submitted" 
+			echo "Scheduler Name: $Scheduler"
+			echo "Scheduler Options: $SchedulerOptions"
 			echo "Check output logs here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
@@ -4298,8 +2761,8 @@ show_usage_boldparcellation() {
 				echo "		--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder (e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii)"
 				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
 				echo "		--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)"
-				echo "		--queue=<name_of_cluster_queue>				Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo ""
@@ -4316,7 +2779,7 @@ show_usage_boldparcellation() {
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
 				echo "--function='boldparcellation' \ "
-				echo "--subjects='100206' \ "
+				echo "--subjects='<comma_separated_list_of_cases>' \ "
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
@@ -4344,15 +2807,11 @@ show_usage_boldparcellation() {
 				echo "--computepconn='yes' \ "
 				echo "--extractdata='yes' \ "
 				echo "--useweights='no' \ "
-				echo "--queue='<name_of_queue>' \ "
 				echo "--runmethod='2' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo "" 
  				echo ""
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "Interactive terminal usage is not supported for this function."
-				echo ""
 }
 
 
@@ -4411,18 +2870,22 @@ show_usage_fsldtifit() {
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
-				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='fsldtifit' --queue='<name_of_gpu_enabled_queue>' --runmethod='2' --overwrite='yes'"
+				echo "AP --path='<path_to_study_subjects_folder>' \ "
+				echo "--subjects='<case_id>' \ "
+				echo "--function='fsldtifit' \ "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
+				echo "--runmethod='2' \ "
+				echo "--overwrite='yes'"
 				echo ""				
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "AP fsldtifit <path_to_study_subjects_folder> '<case_id>' "
-				echo ""
+				
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -4543,7 +3006,9 @@ fslbedpostxgpu() {
 					fi
 				
 					geho "---------------------------------------------------------------------------------------"
-					geho "Data successfully submitted to $QUEUE" 
+					geho "Data successfully submitted" 
+					geho "Scheduler Name: $Scheduler"
+					geho "Scheduler Options: $SchedulerOptions"
 					geho "Check output logs here: $LogFolder"
 					geho "---------------------------------------------------------------------------------------"
 					echo ""
@@ -4569,242 +3034,24 @@ show_usage_fslbedpostxgpu() {
 				echo "		--model=<deconvolution_model>			Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins"
 				echo "		--burnin=<burnin_period_value>			Burnin period, default 1000"
 				echo "		--rician=<set_rician_value>			<YES> or <NO>. Default is YES"
-				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='fslbedpostxgpu' --fibers='3' --burnin='3000' --model='3' --queue='<name_of_gpu_enabled_queue>' --runmethod='2' --overwrite='yes'"
+				echo "AP --path='<path_to_study_subjects_folder>' \ "
+				echo "--subjects='<case_id>' --function='fslbedpostxgpu' \ "
+				echo "--fibers='3' \ "
+				echo "--burnin='3000' \ "
+				echo "--model='3' \ "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
+				echo "--runmethod='2' \ "
+				echo "--overwrite='yes'"
 				echo ""				
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "AP fslbedpostxgpu <path_to_study_subjects_folder> '<case_id>' "
-				echo ""
-}
 
-
-# ------------------------------------------------------------------------------------------------------
-#  pretractography - Executes the HCP Pretractography code (Matt's original implementation for cortex)
-# ------------------------------------------------------------------------------------------------------
-
-pretractography() {
-
-		#EnvironmentScript="$StudyFolder/../fcMRI/hcpsetup.sh" #Pipeline environment script
-				
-		mkdir "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null
-		cd "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null
-
-		# Requirements for this function
-		#  installed versions of: FSL5.0.2 or higher , FreeSurfer (version 5.2 or higher) , gradunwarp (python code from MGH)
-		#  environment: FSLDIR , FREESURFER_HOME , HCPPIPEDIR , CARET7DIR , PATH (for gradient_unwarp.py)
-
-		#Set up pipeline environment variables and software
-		#. ${EnvironmentScript}
-
-		# Log the originating call
-		echo "$@"
-
-		########################################## INPUTS ########################################## 
-
-		#Scripts called by this script do assume they run on the results of the HCP minimal preprocesing pipelines from Q2
-
-		######################################### DO WORK ##########################################
-
-		LowResMesh="32" #32 if using HCP minimal preprocessing pipeline outputs
-		Subject="$CASE"
-	
-  		if [ "$Cluster" == 1 ]; then
-    		${HCPPIPEDIR}/DiffusionTractography/PreTractography.sh \
-    		--path="$StudyFolder" \
-    		--subject="$Subject" \
-    		--lowresmesh="$LowResMesh"
-    	else
-    		fsl_sub."$fslsub" -Q "$QUEUE" \
-    	    ${HCPPIPEDIR}/DiffusionTractography/PreTractography.sh \
-    		--path="$StudyFolder" \
-    		--subject="$Subject" \
-    		--lowresmesh="$LowResMesh" 	
-    	fi
-    	
-    	echo "set --path=$StudyFolder \
-    	--subject=$Subject \
-    	--lowresmesh=$LowResMesh"
-}
-
-show_usage_pretractography() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function to generate the cortical dense connectome trajectory space."
-    			echo ""
-    			echo "Note: This function is deprecated as of 01/2017. The maintained function is pretractographydense"
-    			echo "		-- run ap probtrackxgpudense for up-to-date help call of the supported function"
-    			
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  probtrackxgpucortex - Executes the HCP Matrix1 code (Matt's original implementation for cortex)
-# ------------------------------------------------------------------------------------------------------
-
-probtrackxgpucortex() {
-
-		mkdir "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null
-		cd "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null
-		
-		# Requirements for this function
-		#  installed versions of: FSL5.0.6 or higher with probtrackx2_gpu binary
-		#  environment: FSLDIR , FREESURFER_HOME , HCPPIPEDIR , CARET7DIR
-
-  		########################################## INPUTS ########################################## 
-  		
-  		#Scripts called by this script do assume they run on the results of the HCP minimal preprocesing pipelines from Q2
-
-  		GitRepo="$HCPPIPEDIR"
-  		Subject="$CASE"
-  		DownSampleNameI="32"
-  		DiffusionResolution="$DiffusionResolution" #Set to diffusion voxel resolution
-  		Caret7_Command="wb_command"
-  		HemisphereSTRING="$HemisphereSTRING" #L@R or L or R or Whole
-  		NumberOfSamples="5000" #1 sample then 2 and calculate total time required per sample
-  		StepSize="$StepSize" #1/4 diffusion resolution recommended???
-  		Curvature="0" #Inverse cosine of this value is the angle, default 0.2=~78 degrees, 0=90 degrees
-  		DistanceThreshold="0" #Start at zero?
-  		PDSTRING="$PDSTRING" #Set to YES to use --pd flag in probtrackx or NO to not use it
-  		GlobalBinariesDir="${GitRepo}/global/binaries"
-  		
-  		######################################### DO WORK ##########################################
-
-
-  			for Hemisphere in $HemisphereSTRING ; do
-  			  	for PD in $PDSTRING ; do
-  				  		
-  				  		minimumfilesize=50000000 # define file size for checking
-  						
-  						if [ "$PD" == "yes" ]; then
-  							PDPath="pd_"
-  							ResultPD="$StudyFolder"/"$CASE"/T1w/Results/"$Hemisphere"_Trajectory_Matrix1_"$PDPath""$StepSize"
-  						fi
-  						if [ "$PD" == "NO" ]; then
-  							PDPath=""
-  							ResultPD="$StudyFolder"/"$CASE"/T1w/Results/"$Hemisphere"_Trajectory_Matrix1_"$PDPath""$StepSize"
-  						fi
-  						
-  						# Check if result exists and if exceeds min size
-  						echo "Checking Matrix1 for $CASE $Hemisphere hemisphere and distance parameter $PD"
-  						#echo `ls $ResultPD/fdt_matrix1.dot`
-  						if [ -f "$ResultPD"/fdt_matrix1.dot ] && [ $(echo ""$(wc -c <"$ResultPD"/fdt_matrix1.dot)"" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
-  							echo "Data Found: $ResultPD/fdt_matrix1.dot"
-  							echo "Tractography completed for $CASE $Hemisphere hemisphere and distance parameter $PD"
-  						else
-  					  		# Execute calls
-  					  		if [ "$Cluster" == 1 ]; then
-  					  			echo "Running probtrackx2_gpu for $CASE $Hemisphere hemisphere and distance parameter $PD..."
-    							"$GitRepo"/DiffusionTractography/scripts/RunMatrix1Tractography_gpu.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$NumberOfSamples" "$StepSize" "$Curvature" "$DistanceThreshold" "$GlobalBinariesDir" "$PD"
-							else
-								echo "Submitting probtrackx2_gpu job $CASE $HemisphereSTRING hemisphere and distance parameter $PDSTRING to $QUEUE queue..."
-								fsl_sub."$fslsub" -Q "$QUEUE" "$GitRepo"/DiffusionTractography/scripts/RunMatrix1Tractography_gpu.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$NumberOfSamples" "$StepSize" "$Curvature" "$DistanceThreshold" "$GlobalBinariesDir" "$PD"
-							fi
-							echo "set -- $StudyFolder $Subject $DownSampleNameI $DiffusionResolution $Caret7_Command $Hemisphere $NumberOfSamples $StepSize $Curvature $DistanceThreshold $GlobalBinariesDir $PD"
-						fi
-						unset ResultPD # clear directory variable
-						unset PD
-				done
-			done
-}
-
-show_usage_probtrackxgpucortex() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Original implementation of cortical dense connectome."
-    			echo ""
-    			echo "Note: This function is deprecated as of 01/2017. The maintained function is probtrackxgpudense"
-    			echo "		-- run ap probtrackxgpudense for up-to-date help call of the supported function"
-    			echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  makedensecortex - Executes the code for creating dense cortical connectomes (Matt's original code)
-# ------------------------------------------------------------------------------------------------------
-
-makedensecortex() {
-
-		# Requirements for this function
-		#  installed versions of: FSL5.0.6 or higher with probtrackx2_gpu binary
-		#  environment: FSLDIR , FREESURFER_HOME , HCPPIPEDIR , CARET7DIR
-		
-		mkdir "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null
-		cd "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null
-		
-  		########################################## INPUTS ########################################## 
-  		
-  		#Scripts called by this script do assume they run on the results of the HCP minimal preprocesing pipelines from Q2
-
-  		GitRepo="$HCPPIPEDIR"
-  		Subject="$CASE"
-  		DownSampleNameI="32"
-  		DiffusionResolution="$DiffusionResolution" #Set to diffusion voxel resolution
-  		Caret7_Command="wb_command"
-  		HemisphereSTRING="$HemisphereSTRING" #L@R or L or R or Whole
-  		StepSize="$StepSize" #1/4 diffusion resolution recommended???
-  		PDSTRING="$PDSTRING" #Set to YES to use --pd flag in probtrackx or NO to not use it
-  		MatrixNumber="1" #1 or 3
-  		GlobalBinariesDir="${GitRepo}/global/binaries"
-  		
-  		######################################### DO WORK ##########################################
-		  			
-  			for Hemisphere in $HemisphereSTRING ; do
-  			  	for PD in $PDSTRING ; do
-  				  		
-  				  		minimumfilesize=100000000 # define file size for checking
-  					
-  						if [ "$PD" == "yes" ]; then
-  							PDPath="pd_"
-  							ResultPD="$StudyFolder"/"$CASE"/T1w/Results/"$Hemisphere"_Trajectory_Matrix1_"$PDPath""$StepSize"
-  						fi
-  						if [ "$PD" == "NO" ]; then
-  							PDPath=""
-  							ResultPD="$StudyFolder"/"$CASE"/T1w/Results/"$Hemisphere"_Trajectory_Matrix1_"$PDPath""$StepSize"
-  						fi
-  						
-  						# Check if result exists and if exceeds min size
-  						echo "Checking Dense Connectome for $CASE $Hemisphere hemisphere and distance parameter $PD"
-  						#echo `ls $ResultPD/fdt_matrix1.dconn.nii` &> /dev/null
-  						if [ -f "$ResultPD"/fdt_matrix1.dconn.nii ] && [ $(echo ""$(wc -c <"$ResultPD"/fdt_matrix1.dconn.nii)"" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
-  							echo "Data Found: $ResultPD/fdt_matrix1.dconn.nii"
-  							echo "Dense Connectome completed for $CASE $Hemisphere hemisphere and distance parameter $PD"
-  						else
-  					  		# Execute calls
-  					  		if [ "$Cluster" == 1 ]; then
-  					  			echo "Running dense connectome for $CASE $Hemisphere hemisphere and distance parameter $PD..."  				
-      							"$GitRepo"/DiffusionTractography/scripts/MakeTractographyDenseConnectomesNoMatrix2.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$MatrixNumber" "$PD" "$StepSize"
-							else
-								echo "Submitting dense connectome job $CASE $HemisphereSTRING hemisphere and distance parameter $PDSTRING to $QUEUE queue..."
-						    	fsl_sub."$fslsub" -Q "$QUEUE" "$GitRepo"/DiffusionTractography/scripts/MakeTractographyDenseConnectomesNoMatrix2.sh "$StudyFolder" "$Subject" "$DownSampleNameI" "$DiffusionResolution" "$Caret7_Command" "$Hemisphere" "$MatrixNumber" "$PD" "$StepSize"
-							fi
-								echo "set -- $StudyFolder $Subject $DownSampleNameI $DiffusionResolution $Caret7_Command $Hemisphere $MatrixNumber $PD $StepSize"
-						fi
-				
-						unset ResultPD # clear directory variable
-						unset PD
-				
-				done
-			done
-}
-
-show_usage_makedensecortex() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Original implementation of cortical dense connectome final file generation."
-    			echo ""
-    			echo "Note: This function is deprecated as of 01/2017. The maintained function is probtrackxgpudense"
-    			echo "		-- run ap probtrackxgpudense for up-to-date help call of the supported function"
-    			echo ""
 }
 
 
@@ -4840,7 +3087,9 @@ else
 		fsl_sub."$fslsub" -Q "$QUEUE" -j <jid> "$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
 
 		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted to $QUEUE" 
+		echo "Data successfully submitted" 
+		echo "Scheduler Name: $Scheduler"
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Check output logs here: $LogFolder"
 		echo "--------------------------------------------------------------"
 		echo ""
@@ -4884,9 +3133,9 @@ pretractographydense() {
 
 					echo ""
 					echo "--------------------------------------------------------------"
-					echo "Scheduler: $Scheduler"
-					echo "QUEUE Name: $QUEUE"
-					echo "Data successfully submitted to $QUEUE" 
+					echo "Data successfully submitted" 
+					echo "Scheduler Name: $Scheduler"
+					echo "Scheduler Options: $SchedulerOptions"
 					echo "Check output logs here: $LogFolder"
 					echo "--------------------------------------------------------------"
 					echo ""
@@ -4911,18 +3160,22 @@ show_usage_pretractographydense() {
 				echo "		--function=<function_name>			Name of function"
 				echo "		--path=<study_folder>				Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>	List of subjects to run"
-				echo "		--queue=<name_of_cluster_queue>			Cluster queue name"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler>		Cluster scheduler program: e.g. LSF or PBS"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta9342' --function='pretractographydense' --queue='<name_of_queue>' --runmethod='2' --scheduler='lsf'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
+				echo "--subjects='ta9342' \ "
+				echo "--function='pretractographydense' \ "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' \ "
+				echo "--runmethod='2' \ "
+				echo "--scheduler='LSF'"
 				echo ""				
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "AP pretractographydense /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta6455' "
-				echo ""
+
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5010,9 +3263,9 @@ probtrackxgpudense() {
 				echo ""
 				echo ""
 				echo "--------------------------------------------------------------"
-				echo "Scheduler: $Scheduler"
-				echo "QUEUE Name: $QUEUE"
-				echo "Data successfully submitted to $QUEUE" 
+				echo "Data successfully submitted" 
+				echo "Scheduler Name: $Scheduler"
+				echo "Scheduler Options: $SchedulerOptions"
 				echo "Number of samples for Matrix1: $NsamplesMatrixOne"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
@@ -5082,9 +3335,9 @@ probtrackxgpudense() {
 				echo ""
 				echo ""
 				echo "--------------------------------------------------------------"
-				echo "Scheduler: $Scheduler"
-				echo "QUEUE Name: $QUEUE"
-				echo "Data successfully submitted to $QUEUE" 
+				echo "Data successfully submitted" 
+				echo "Scheduler Name: $Scheduler"
+				echo "Scheduler Options: $SchedulerOptions"
 				echo "Number of samples for Matrix3: $NsamplesMatrixThree"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
@@ -5116,8 +3369,8 @@ show_usage_probtrackxgpudense() {
 				echo "		--function=<function_name>					Name of function"
 				echo "		--path=<study_folder>						Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
-				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>				Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "		--overwrite=<clean_prior_run>					Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
 				echo "		--omatrix1=<matrix1_model>					Specify if you wish to run matrix 1 model [yes or omit flag]"
 				echo "		--omatrix3=<matrix3_model>					Specify if you wish to run matrix 3 model [yes or omit flag]"
@@ -5135,14 +3388,17 @@ show_usage_probtrackxgpudense() {
 				echo ""
 				echo "                               --> both are cluster-aware and send the jobs to the GPU-enabled queue. They do not work interactively."
 				echo ""
-				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo "-- Example with flagged parameters for submission to the scheduler (needs to be GPU-enabled):"
 				echo ""
-				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' --subjects='ta9776' --function='probtrackxgpudense' --queue='<name_of_gpu_enabled_queue>' --scheduler='lsf' --omatrix1='yes' --nsamplesmatrix1='10000' --overwrite='no'"
+				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
+				echo "--subjects='ta9776' \ "
+				echo "--function='probtrackxgpudense' \ "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "				
+				echo "--omatrix1='yes' \ " 
+				echo "--nsamplesmatrix1='10000' \ "
+				echo "--overwrite='no'" 
 				echo ""				
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "AP probtrackxgpudense /gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects 'ta9776' "
-				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -5353,9 +3609,9 @@ qcpreproc() {
 				fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
 				echo ""
 				echo "---------------------------------------------------------------------------------"
-				echo "Scheduler: $Scheduler"
-				echo "QUEUE Name: $QUEUE"
-				echo "Data successfully submitted to $QUEUE" 
+				echo "Data successfully submitted" 
+				echo "Scheduler Name: $Scheduler"
+				echo "Scheduler Options: $SchedulerOptions"
 				echo "Check output logs here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
@@ -5416,9 +3672,8 @@ qcpreproc() {
 		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
 		echo ""
 		echo "---------------------------------------------------------------------------------"
-		echo "Scheduler: $Scheduler"
-		echo "QUEUE Name: $QUEUE"
-		echo "Data successfully submitted to $QUEUE" 
+		echo "Data successfully submitted" 
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Check output logs here: $LogFolder"
 		echo "---------------------------------------------------------------------------------"
 		echo ""
@@ -5446,8 +3701,8 @@ show_usage_qcpreproc() {
 				echo "		--subjects=<list_of_cases>					List of subjects to run, separated by commas"
 				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
 				echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
-				echo "		--queue=<name_of_cluster_queue>					Cluster queue name"
-				echo "		--scheduler=<name_of_cluster_scheduler>				Cluster scheduler program: e.g. LSF or PBS"
+				echo "		--scheduler=<name_of_cluster_scheduler>			Cluster scheduler program: e.g. LSF, PBS or SLURM"
+				echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
@@ -5483,8 +3738,8 @@ show_usage_qcpreproc() {
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='<name_of_queue>' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo "" 			
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -5503,8 +3758,8 @@ show_usage_qcpreproc() {
 				echo "--modality='T1w' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='<name_of_queue>' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "# -- T2 QC"
 				echo "AP --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
@@ -5515,8 +3770,8 @@ show_usage_qcpreproc() {
 				echo "--modality='T2w' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='<name_of_queue>' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "# -- Myelin QC"
 				echo "AP --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
@@ -5527,8 +3782,8 @@ show_usage_qcpreproc() {
 				echo "--modality='myelin' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='<name_of_queue>' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "# -- DWI QC "
 				echo "AP --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
@@ -5542,8 +3797,8 @@ show_usage_qcpreproc() {
 				echo "--dwipath='Diffusion_DWI_dir74_AP_b1000b2500' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='<name_of_queue>' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "# -- BOLD QC"
 				echo "AP --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
@@ -5556,15 +3811,15 @@ show_usage_qcpreproc() {
 				echo "--boldsuffix='Atlas' \ "
 				echo "--overwrite='yes' \ "
 				echo "--runmethod='2' \ "
-				echo "--queue='<name_of_queue>' \ "
-				echo "--scheduler='lsf' "
+				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo ""
 }
 
-# ===============================================================================================================================
-# ================================ SOURCE REPOS, SETUP LOG & PARSE COMMAND LINE INPUTS ACROSS FUNCTIONS =========================
-# ===============================================================================================================================
+# ========================================================================================
+# ======= SOURCE REPOS, SETUP LOG & PARSE COMMAND LINE INPUTS ACROSS FUNCTIONS ===========
+# ========================================================================================
 
 # ------------------------------------------------------------------------------
 #  Set exit if error is reported (turn on for debugging)
@@ -5572,7 +3827,7 @@ show_usage_qcpreproc() {
 
 # Setup this script such that if any command exits with a non-zero value, the 
 # script itself exits and does not attempt any further processing.
-#set -e
+# set -e
 
 # ------------------------------------------------------------------------------
 #  Source relevant repositories
@@ -5583,6 +3838,7 @@ show_usage_qcpreproc() {
 	#else
 	#	echo "ERROR: Environment script is missing. Check your user profile paths!"
 	#fi
+	
 # ------------------------------------------------------------------------------
 #  Load relevant libraries for logging and parsing options
 # ------------------------------------------------------------------------------
@@ -5600,16 +3856,10 @@ log_SetToolName "AnalysisPipeline.sh"
 #  Load Core Functions
 # ------------------------------------------------------------------------------
 
-#
-# Description:
-# 
-#   parses the input command line for a specified command line option
-#
+# -- DESCRIPTION: parses the input command line for a specified command line option
 # Input:
-# 
 #   The first parameter is the command line option to look for.
-#   The remaining parameters are the full list of command line arguments
-#
+#   The remaining parameters are the full list of flagged command line arguments
 
 opts_GetOpt() {
     sopt="$1"
@@ -5622,12 +3872,7 @@ opts_GetOpt() {
     done
 }
 
-#
-# -- DESCRIPTION: 
-#
-#   checks command line arguments for "--help" indicating that 
-#   help has been requested
-#
+# -- DESCRIPTION: checks command line arguments for "--help" indicating that help has been requested
    
 opts_CheckForHelpRequest() {
     for fn in "$@" ; do
@@ -5638,22 +3883,14 @@ opts_CheckForHelpRequest() {
     return 1
 }
 
-#
-# -- DESCRIPTION: 
-#
-#   Generates a timestamp for the log exec call
-#
+# -- DESCRIPTION: Generates a timestamp for the log exec call
 
 timestamp() {
  
    echo "AP.$1.`date "+%Y.%m.%d.%H.%M.%S"`.txt"
 }
 
-#
-# -- DESCRIPTION: 
-#
-#   Checks for version
-#
+# -- DESCRIPTION: Checks for version
 
 show_version() {
  
@@ -5737,120 +3974,6 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 	fi
 	fi		
 fi
-
-# ------------------------------------------------------------------------------
-#  LSF scheduler engine -- IN PROGRESS
-# ------------------------------------------------------------------------------
-
-schedulerfunction() {
-
-echo "Scheduler testing..."
-
-#elif options['scheduler'] == 'LSF':
-
-        # ---- setup options to pass to each job
-
-        #nopt = []
-        #for (k, v) in args.iteritems():
-        #    if k not in ['LSF_environ', 'LSF_folder', 'LSF_options', 'scheduler', 'nprocess']:
-         #       nopt.append((k, v))
-
-        #nopt.append(('scheduler', 'local'))
-        #nopt.append(('nprocess', '0'))
-
-        # ---- open log
-
-        #flog = open(logname + '.log', "w")
-        #print >> flog, "\n\n============================= LOG ================================\n"
-
-        # ---- parse options string
-
-        #lsfo = dict([e.strip().split("=") for e in options['LSF_options'].split(",")])
-
-        # ---- run jobs
-
-        #if options['jobname'] == "":
-         #   options['jobname'] = "gmri"
-
-        #c = 0
-        #while subjects:
-
-         #   c += 1
-
-            # ---- construct the bsub input
-            # -M mem_limit in kb
-            # -n min[, max] ... minimal and maximal number of processors to use
-            # -o output file ... %J adds job id
-            # -P project name
-            # -q queue_name   ("shared" for 24 h more on "long")
-            # -R "res_req" ... resource requirement string
-            #              ... select[selection_string] order[order_string] rusage[usage_string [, usage_string][|| usage_string] ...] span[span_string] same[same_string] cu[cu_string]] affinity[affinity_string]
-            # -R 'span[hosts=1]' ... so that all slots are on the same machine
-            # -W hour:minute  runtime limit
-            # -We hour:minute  estimated runtime
-            #  bsub '-M <P>' option specifies the memory limit for each process, while '-R "rusage[mem=<N>]"' specifies the memory to reserve for this job on each node. ... in MB - 5GB default
-
-            #cstr  = "#BSUB -o %s-%s_#%02d_%%J\n" % (options['jobname'], command, c)
-            #cstr += "#BSUB -q %s\n" % (lsfo['queue'])
-            #cstr += "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n" % (lsfo['mem'])
-            #cstr += "#BSUB -W %s\n" % (lsfo['walltime'])
-            #cstr += "#BSUB -n %s\n" % (lsfo['cores'])
-            #if len(options['jobname']) > 0:
-             #   cstr += "#BSUB -P %s-%s\n" % (options['jobname'], command)
-             #   cstr += "#BSUB -J %s-%s_%d\n" % (options['jobname'], command, c)
-
-
-            #if options['LSF_environ'] != '':
-             #   cstr += "\n# --- Setting up environment\n\n"
-             #   cstr += file(options['LSF_environ']).read()
-
-            #if options['LSF_folder'] != '':
-             #   cstr += "\n# --- changing to the right folder\n\n"
-             #   cstr += "cd %s" % (options['LSF_folder'])
-
-            # ---- construct the gmri command
-
-            #cstr += "\ngmri " + command
-
-            #for (k, v) in nopt:
-             #   if k not in ['subjid', 'scheduler', 'queue']:
-             #       cstr += ' --%s="%s"' % (k, v)
-
- 			#slist = []
-            #[slist.append(subjects.pop(0)['subject']) for e in range(cores) if subjects]   # might need to change to id
-
-            #cstr += ' --subjid="%s"' % ("|".join(slist))
-            #cstr += ' --scheduler="local"'
-            #cstr += '\n'
-
-            # ---- pass the command string to qsub
-
-            #print "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
-            #print cstr
-
-            #print >> flog, "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
-
-            #lsf = subprocess.Popen("bsub", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-            #lsf.stdin.write(cstr)
-            #lsf.stdin.close()
-
-            # ---- storing results
-
-            #result = lsf.stdout.read()
-
-            #print "\n----------"
-            #print result
-
-            #print >> flog, "\n----------"
-            #print >> flog, result
-
-            #time.sleep(options['LSF_sleep'])
-
-        #print "\n\n============================= DONE ================================\n"
-        #print >> flog, "\n\n============================= DONE ================================\n"
-        #flog.close()
-
-}
 
 # ------------------------------------------------------------------------------
 #  Check if specific function help requested
@@ -5952,7 +4075,6 @@ log_Msg "Parsing Command Line Options: "
 # ------------------------------------------------------------------------------
 
 # -- Clear variables for new run
-
 unset FunctionToRun
 unset subjects
 unset FunctionToRunInt
@@ -5966,8 +4088,6 @@ unset ClusterName
 unset setflag
 unset doubleflag
 unset singleflag
-
-# -- Check for generic flags
 
 # -- First check if single or double flags are set
 doubleflag=`echo $1 | cut -c1-2`
@@ -6000,11 +4120,11 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	#  List of command line options across all functions
 	# ------------------------------------------------------------------------------
 	
-	# First get function / command input (to harmonize input with gmri)
+	# -- First get function / command input (to harmonize input with gmri)
 	FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
 	CommamndInput=`opts_GetOpt "${setflag}command" "$@"` # function to execute
 	
-	# If input name uses 'command' instead of function set that to $FunctionToRun
+	# -- If input name uses 'command' instead of function set that to $FunctionToRun
 	if [[ -z "$FunctionInput" ]]; then
 		FunctionToRun="$CommamndInput"
 	else
@@ -6014,11 +4134,31 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	# -- general input flags
 	StudyFolder=`opts_GetOpt "${setflag}path" $@` 																			# local folder to work on
 	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` 	# list of input cases; removing comma or pipes
-	QUEUE=`opts_GetOpt "${setflag}queue" $@` 																				# <name_of_cluster_queue>			Cluster queue name	
+	
+	# -- set scheduler flags
+	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` 																		# Specifies whether to run on the cluster or on the local node
+	# set default to 1 if not specified
+	if [ -z "$RunMethod" ]; then
+		RunMethod="1"	
+	fi
 	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@` 																			# Option for printing the entire command
 	Scheduler=`opts_GetOpt "${setflag}scheduler" $@` 																		# Specify the type of scheduler to use 
+	# if scheduler flag set then look for scheduler_options flag 
+	if [ ! -z "$Scheduler" ]; then
+		SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 													# String of options for scheduler job
+		if [ "$Scheduler" = "SLURM"]; then
+			SchedulerOptions=`opts_GetOpt "${setflag}SLURM_options" $@` 													# String of options for SLURM scheduler job
+		fi
+		SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 													# String of options for PBS scheduler job
+		SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 													# String of options for TORQUE scheduler job
+
+		RunMethod="2"
+	else
+		RunMethod="1"	
+	fi
+	
+	
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` 																		# Clean prior run and starr fresh [yes/no]
-	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` 																		# Specifies whether to run on the cluster or on the local node
 	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@` 														# Specifies homefolder for FreeSurfer binary to use
 	APVersion=`opts_GetOpt "${setflag}version" $@` 																			# Specifies homefolder for FreeSurfer binary to use
 	
@@ -6129,15 +4269,14 @@ if [[ "$setflag" =~ .*-.* ]]; then
 else
 
 	# -- If no flags were found the pipeline defaults to 'interactive' mode. 
-	# -- Not all functions are supported in interactive mode
+	# 	 * Note: Not all functions are supported in interactive mode
 	echo ""
 	reho "--------------------------------------------"
 	reho "--- Running pipeline in interactive mode ---"
 	reho "--------------------------------------------"
 	echo ""
-	#
+	
 	# -- Read core interactive command line inputs as default positional variables (i.e. function, path & cases)
-	#
 	FunctionToRunInt="$1"
 	StudyFolder="$2" 
 	CASESInput="$3"
@@ -6147,9 +4286,9 @@ else
 
 fi	
 
-# ===============================================================================================================================
-# ================================ EXECUTE SELECTED FUNCTION AND LOOP THROUGH ALL THE CASES =====================================
-# ===============================================================================================================================
+# ========================================================================================
+# ============ EXECUTE SELECTED FUNCTION AND LOOP THROUGH ALL THE CASES ==================
+# ========================================================================================
 
 # ------------------------------------------------------------------------------
 #  dicomsort function loop
@@ -6157,8 +4296,7 @@ fi
 
 if [ "$FunctionToRun" == "dicomsort" ]; then
 
-		# Check all the user-defined parameters: 1. Cluster, 2. QUEUE.
-	
+		# -- Check all the user-defined parameters:
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -6167,43 +4305,12 @@ if [ "$FunctionToRun" == "dicomsort" ]; then
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
 	for CASE in $CASES; do
   		"$FunctionToRun" "$CASE"
-  	done
-fi
-
-if [ "$FunctionToRunInt" == "dicomsort" ]; then
-	
-	Cluster=1
-	echo "Re-run existing run [yes, no]:"
-	if read answer; then Overwrite=$answer; fi
-	echo ""
-	
-	for CASE in $CASES; do
-  		"$FunctionToRunInt" "$CASE"
-  	done  	
-fi
-
-# ------------------------------------------------------------------------------
-#  dicom2nii function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRun" == "dicom2nii" ]; then
-		
-	for CASE in $CASES
-	do
-  		"$FunctionToRun" "$CASE"
-  	done
-fi
-
-if [ "$FunctionToRunInt" == "dicom2nii" ]; then
-	for CASE in $CASES
-	do
-  		"$FunctionToRunInt" "$CASE"
   	done
 fi
 
@@ -6214,8 +4321,7 @@ fi
 
 if [ "$FunctionToRun" == "qcpreproc" ]; then
 	
-		# Check all the user-defined parameters: 1. Overwrite, 2. OutPath, 3. TemplateFolder, 4. Cluster, 5. QUEUE. 6. Modality. 7. SkipFrames
-	
+		# -- Check all the user-defined parameters:	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -6224,8 +4330,8 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
 		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/MNAP/general/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
@@ -6272,83 +4378,6 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
   		done
 fi
 
-if [ "$FunctionToRunInt" == "qcpreproc" ]; then
-
-	echo "Running qcpreproc processing interactively. First enter the necessary parameters."
-	# Request all the user-defined parameters: 1. Overwrite, 2. OutPath, 3. TemplateFolder, 4. Cluster, 5. QUEUE. 6. Modality
-	echo ""
-	echo "Overwrite existing run [yes, no]:"
-	if read answer; then Overwrite=$answer; fi
-	echo ""
-	echo "Enter modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]:"
-	if read answer; then Modality=$answer; fi
-	echo ""
-	
-	#echo "Enter Output QC folder path [uses defaults if nothing specified]:"
-	#if read answer; then OutPath=$answer; else echo "Using default: ${OutPath}"; fi
-	#echo ""
-	#echo "Enter template scene folder path value [uses defaults if nothing specified]:"
-	#if read answer; then TemplateFolder=$answer; else echo "Using default: ${TemplateFolder}"; fi
-	#echo ""
-	
-	# Set defaults for templates and outputs
-	TemplateFolder="${TOOLS}/MNAP/general/templates"
-	OutPath="${StudyFolder}/QC/${Modality}" 
-	
-	echo "-- Run locally [1] or run on cluster [2]"
-	if read answer; then Cluster=$answer; fi
-	echo ""
-	if [ "$Cluster" == "2" ]; then
-		echo "-- Enter queue name - always submit this job to a GPU-enabled queue [e.g. anticevic-gpu]"
-		if read answer; then QUEUE=$answer; fi
-		echo ""
-	fi
-	
-	if [ "$Modality" = "DWI" ]; then
-			echo "-- Specify the input path for the DWI data [e.g. Diffusion]"
-			if read answer; then DWIPath=$answer; fi
-			echo "-- Specify the input name for the DWI data [e.g. data]"
-			if read answer; then DWIData=$answer; fi
-			echo "-- Specify if DWI data was processed via legacy pipelines [YES or NO]"
-			if read answer; then DWILegacy=$answer; fi
-	fi
-	
-	if [ "$Modality" = "BOLD" ]; then
-			for BOLD in $BOLDS; do rm -f ${OutPath}/TSNR_Report_${BOLD}*.txt &> /dev/null; done
-			echo "-- Specify the input name for the BOLD data [e.g. 1 or rfMRI_REST1_LR]"
-			if read answer; then BOLDS=$answer; fi
-			echo "-- Specify the suffix for the BOLD data [Atlas]"
-			if read answer; then BOLDSuffix=$answer; fi
-			echo "-- Specify the number of initial frames to skip for BOLD QC"
-			if read answer; then SkipFrames=$answer; fi
-	fi
-	
-		echo "Running qcpreproc with the following parameters:"
-		echo ""
-		echo "--------------------------------------------------------------"
-		echo "Study Folder: ${StudyFolder}"
-		echo "Subjects: ${CASES}"
-		echo "QC Modality: ${Modality}"
-		echo "QC Output Path: ${OutPath}"
-		echo "QC Scene Template: ${TemplateFolder}"
-		echo "Overwrite prior run: ${Overwrite}"
-		if [ "$Modality" = "DWI" ]; then
-		echo "DWI input path: ${DWIPath}"
-		echo "DWI input name: ${DWIData}"
-		echo "DWI legacy processing: ${DWILegacy}"
-		fi
-		if [ "$Modality" = "BOLD" ]; then
-		echo "BOLD data input: ${BOLDS}"
-		echo "BOLD suffix: ${BOLDSuffix}"
-		echo "Skip Initial Frames: ${SkipFrames}"
-		fi
-		echo "--------------------------------------------------------------"
-		
-		for CASE in $CASES
-			do
-  			"$FunctionToRunInt" "$CASE"
-  		done
-fi
 
 # ------------------------------------------------------------------------------
 #  setuphcp function loop
@@ -6356,8 +4385,7 @@ fi
 
 if [ "$FunctionToRun" == "setuphcp" ]; then
 	
-		# Check all the user-defined parameters: 1. Cluster, 2. QUEUE.
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -6366,11 +4394,11 @@ if [ "$FunctionToRun" == "setuphcp" ]; then
 		Cluster="$RunMethod"
 		
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
-		echo "Makeing sure that and correct subjects_hcp.txt files is generated..."
+		echo "Ensuring that and correct subjects_hcp.txt files is generated..."
 				
 			for CASE in $CASES
 			do
@@ -6382,25 +4410,9 @@ if [ "$FunctionToRun" == "setuphcp" ]; then
   			done
 fi
 
-if [ "$FunctionToRunInt" == "setuphcp" ]; then
-			
-			# Always run locally if command is interactive
-			Cluster=1
-			
-			for CASE in $CASES
-			do
-				if [ -f "$StudyFolder"/"$CASE"/subject_hcp.txt ]; then 
-  					"$FunctionToRunInt" "$CASE"
-  				else	
-  					echo "--> $StudyFolder/$CASE/subject_hcp.txt is missing - please setup the subject.txt files and re-run function."
-  				fi
-  			done
-fi
-
 # ------------------------------------------------------------------------------
 #  hpcsync function loop
 # ------------------------------------------------------------------------------
-
 
 if [ "$FunctionToRun" == "hpcsync" ]; then
 
@@ -6412,59 +4424,29 @@ if [ "$FunctionToRun" == "hpcsync" ]; then
   		done
 fi
 
-if [ "$FunctionToRunInt" == "hpcsync" ]; then
-	echo "You are about to sync data between the local server and Yale HPC Clusters."
-	echo "Note: Make sure your HPC ssh key is setup on your local NMDA account."
-	echo "Enter exact HPC cluster address [e.g. louise.hpc.yale.edu or omega1.hpc.yale.edu]:"
-		if read answer; then
-			ClusterName=$answer
-			echo "Enter your NetID..."
-			if read answer; then
-				NetID=$answer
-				echo "Enter your HPC cluster folder where data are located... [e.g. /lustre/home/client/fas/anticevic/aa353/scratch/Anticevic.DP5/subjects]"
-				if read answer; then
-					HCPStudyFolder=$answer
-					echo "Enter rsync direction [NMDA-->HPC: 1 or HPC-->NMDA: 2]"
-					if read answer; then
-					Direction=$answer
-						for CASE in $CASES
-							do
-  							"$FunctionToRunInt" "$CASE"
-  						done
-  					fi
-  				fi
-  			fi
-  		else
-  			 echo "Something is wrong with your input. Refer to function usage."
-		fi
-fi
-
-
 # ------------------------------------------------------------------------------
 #  createlists function loop
 # ------------------------------------------------------------------------------
-
 
 if [ "$FunctionToRun" == "createlists" ]; then
 		
 		mkdir "$StudyFolder"/lists &> /dev/null
 
-		# Check all the user-defined parameters: 1. Cluster, 2. QUEUE. 3. GROUP. 
-		# 4. ListFunction 5. ListGenerate. 6. BOLDS 7. Append 8. ParameterFile
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$ListGenerate" ]; then reho "Error: Type of list to generate missing [preprocessing, analysis, snr]"; exit 1; fi
-		# - Check optional parameters
+		
+		# - Check optional parameters:
 		if [ -z "$Append" ]; then Append="no"; reho "Setting --append='no' by default"; fi
 		
 		# -- Omit scheduler commands here
 		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		#Cluster="$RunMethod"
 		#if [ "$Cluster" == "2" ]; then
-		#		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-		#		if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		#		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+		#		if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		#fi
 		
 		# --------------------------
@@ -6499,9 +4481,9 @@ if [ "$FunctionToRun" == "createlists" ]; then
 				echo ""
 			fi
 			
-			# - Check if skipping parameter file header
+			# -- Check if skipping parameter file header
 			if [ "$ParameterFile" != "no" ]; then
-				# - Check if lists exists  
+				# -- Check if lists exists  
 				if [ -s "$StudyFolder"/lists/subjects.preprocessing."$ListName".param ]; then
 					# --> If ParameterFile was set and file exists then exit and report error
 					echo ""
@@ -6582,416 +4564,235 @@ if [ "$FunctionToRun" == "createlists" ]; then
 		fi				
 fi			
 
-if [ "$FunctionToRunInt" == "createlists" ]; then
-	echo "Enter which type of list you want to run?"
-	echo ""
-	echo "	* preprocessing --> Subject parameter list with cases to preprocess"
-  	echo "	* analysis --> List of cases to compute seed connectivity or GBC"
-  	echo "	* SNR --> List of cases to compute signal-to-noise ratio"
-  	echo ""
-		if read answer; then
-			
-			ListGenerate=$answer
-			
-			if [ "$ListGenerate" == "analysis" ]; then
-				echo "Enter name of analysis list script you want to use?"
-				ListFunctions=`ls ${TOOLS}/MNAP/general/functions/analysislist*.sh`
-				echo ""
-				echo "Supported: "
-				echo "$ListFunctions"
-				echo ""
-					if read answer; then
-					ListFunction=$answer 
-						echo "Enter name of group you want to generate a list for [e.g. scz, hcs, ocd... ]:"
-							if read answer; then
-							GROUP=$answer
-								echo "Note: pre-existing lists will now be deleted..."
-								rm "$StudyFolder"/subjects/lists/subjects.analysis."$GROUP".list &> /dev/null
-								for CASE in $CASES
-									do
-  									"$FunctionToRunInt" "$CASE"
-  								done
-  							fi
-  					fi
-  			fi
-  			
-  			if [ "$ListGenerate" == "snr" ]; then
-  				echo "Note: pre-existing snr lists will now be deleted..."
-  				cd "$StudyFolder"/subjects/QC/snr
-				rm *subjects.snr.txt  &> /dev/null
-  				echo "Enter BOLD numbers you want to generate the SNR List for [e.g. 1 2 3]:"
-				if read answer; then
-				BOLDS=$answer 
-  			  		for CASE in $CASES
-						do
-  						"$FunctionToRunInt" "$CASE"
-  					done
-  				fi
-  			fi
-  		
-  			if [ "$ListGenerate" == "preprocessing" ]; then
-				echo "Now enter name of preprocessing list script you want to use?"
-				ListFunctions=`ls ${TOOLS}/MNAP/general/functions/*paramlist*.sh`
-				echo ""
-				echo "Supported: "
-				echo "$ListFunctions"
-				echo ""
-					if read answer; then
-					ListFunction=$answer 
-						echo "Enter name of group you want to generate a list for [e.g. scz, hcs, ocd... ]:"
-							if read answer; then
-							GROUP=$answer
-								echo "Note: pre-existing list will now be deleted..."
-								rm "$StudyFolder"/subjects/lists/subjects.preprocessing."$GROUP".list &> /dev/null
-								for CASE in $CASES
-									do
-  									"$FunctionToRunInt" "$CASE"
-  								done
-  							fi
-  					fi
-  			fi
-  		fi
-fi
-
 # ------------------------------------------------------------------------------
-#  nii4dfpconvert function loop
+#  isolatesubcortexrois function loop - deprecated for the dense version
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "nii4dfpconvert" ]; then
-	echo "Enter BOLD numbers you want to run the conversion on [e.g. 1 2 3]:"
-		if read answer; then
-		BOLDS=$answer 
-			for CASE in $CASES
-				do
-  				"$FunctionToRunInt" "$CASE"
-  			done
-		fi
-fi
+# if [ "$FunctionToRunInt" == "isolatesubcortexrois" ]; then
+# 	echo "Isolating subcortical ROIs for probabilistic tractography based on FreeSurfer segmentation"
+# 	for CASE in $CASES
+# 		do
+#   		"$FunctionToRunInt" "$CASE"
+#   	done
+# fi
 
 # ------------------------------------------------------------------------------
-#  cifti4dfpconvert function loop
+#  probtracksubcortex function loop - deprecated for the dense version
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "cifti4dfpconvert" ]; then
-	echo "Enter BOLD numbers you want to run the conversion on [e.g. 1 2 3]:"
-		if read answer; then
-		BOLDS=$answer 
-			for CASE in $CASES
-				do
-  				"$FunctionToRunInt" "$CASE"
-  			done
-		fi
-fi
+# if [ "$FunctionToRunInt" == "probtracksubcortex" ]; then
+# 	echo "Enter which subcortical structure you want to run probtrackx on"
+# 	echo "supported: thalamus caudate accumbens putamen pallidum thalamus_sensory thalamus_associative"
+# 			if read answer; then
+# 			STRUCTURES=$answer
+# 				echo "Enter DWI resolution [Yale:1.80 or HCP:1.25]"
+# 				if read answer; then
+# 				DWIRes=$answer
+# 					for CASE in $CASES
+# 					do
+#   						"$FunctionToRunInt" "$CASE"
+#   					done
+#   				fi
+#   			fi
+# fi
 
 # ------------------------------------------------------------------------------
-#  ciftismooth function loop
+#  printmatrix function loop -- under development
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "ciftismooth" ]; then
-	echo "Enter BOLD numbers you want to run CIFTI smoothing & 4dfp conversion on [e.g. 1 2 3]:"
-		if read answer; then
-		BOLDS=$answer 
-	echo "Enter smoothing kernel levels [e.g. 1 2 3]:"
-		if read answer; then
-		KERNELS=$answer 
-			for CASE in $CASES
-				do
-  				"$FunctionToRunInt" "$CASE"
-  			done
-		fi
-		fi
-fi
+# if [ "$FunctionToRunInt" == "printmatrix" ]; then
+# 	echo "Enter which type of data you want to print the matrix for [supported: bold]:"
+# 			if read answer; then
+# 			DatatoPrint=$answer
+# 				if [ "$DatatoPrint" == "bold" ]; then
+# 					echo "Enter BOLD numbers you want to run the parcellation on [e.g. 1 2 3 or 1-3 for merged BOLDs]:"
+# 						if read answer; then
+# 						BOLDS=$answer 
+# 						echo "Enter BOLD processing steps you want to run the parcellation on [e.g. g7_hpss_res-mVWM g7_hpss_res-mVWMWB hpss_res-mVWM hpss_res-mVWMWB]:"
+# 							if read answer; then
+# 							STEPS=$answer 
+# 								for CASE in $CASES
+# 									do
+#   									"$FunctionToRunInt" "$CASE"
+#   								done
+#   							fi
+#   						fi
+#   				fi
+# 			fi
+# fi
+
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri #  fixica function loop
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri 
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "fixica" ]; then
+## - FIXICA Code - integrate into gmri 	echo "Note: Expects that minimally processed NIFTI & CIFTI BOLDs"
+## - FIXICA Code - integrate into gmri 	echo ""
+## - FIXICA Code - integrate into gmri 	echo "Overwrite existing run [yes, no]:"
+## - FIXICA Code - integrate into gmri 		if read answer; then
+## - FIXICA Code - integrate into gmri 		Overwrite=$answer
+## - FIXICA Code - integrate into gmri 		fi  
+## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run FIX ICA on - e.g. 1 2 3 or 1_3 for merged BOLDs:"
+## - FIXICA Code - integrate into gmri 		if read answer; then
+## - FIXICA Code - integrate into gmri 		BOLDS=$answer 
+## - FIXICA Code - integrate into gmri 				for CASE in $CASES
+## - FIXICA Code - integrate into gmri 				do
+## - FIXICA Code - integrate into gmri   					"$FunctionToRunInt" "$CASE"
+## - FIXICA Code - integrate into gmri   				done
+## - FIXICA Code - integrate into gmri   		fi	
+## - FIXICA Code - integrate into gmri fi
+
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri #  postfix function loop
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri 
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "postfix" ]; then
+## - FIXICA Code - integrate into gmri 	echo "Note: This function depends on fsl, wb_command and matlab and expects startup.m to point to wb_command and fsl."
+## - FIXICA Code - integrate into gmri 	echo ""
+## - FIXICA Code - integrate into gmri 	echo "Overwrite existing postfix scenes [yes, no]:"
+## - FIXICA Code - integrate into gmri 		if read answer; then
+## - FIXICA Code - integrate into gmri 		Overwrite=$answer
+## - FIXICA Code - integrate into gmri 		fi  
+## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run PostFix.sh on [e.g. 1 2 3]:"
+## - FIXICA Code - integrate into gmri 		if read answer; then
+## - FIXICA Code - integrate into gmri 		BOLDS=$answer 
+## - FIXICA Code - integrate into gmri 			echo "Enter high pass filter used for FIX ICA [e.g. 2000]"
+## - FIXICA Code - integrate into gmri 				if read answer; then
+## - FIXICA Code - integrate into gmri 				HighPass=$answer 
+## - FIXICA Code - integrate into gmri 					for CASE in $CASES
+## - FIXICA Code - integrate into gmri 					do
+## - FIXICA Code - integrate into gmri   						"$FunctionToRunInt" "$CASE"
+## - FIXICA Code - integrate into gmri   					done
+## - FIXICA Code - integrate into gmri   				fi
+## - FIXICA Code - integrate into gmri   		fi	
+## - FIXICA Code - integrate into gmri fi
+
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri #  boldseparateciftifixica function loop
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri 
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldseparateciftifixica" ]; then
+## - FIXICA Code - integrate into gmri 	echo "Enter which study and data you want to separate"
+## - FIXICA Code - integrate into gmri 	echo "supported: 1_4_raw 5_8_raw 10_13_raw 14_17_raw"
+## - FIXICA Code - integrate into gmri 			if read answer; then
+## - FIXICA Code - integrate into gmri 			DatatoSeparate=$answer
+## - FIXICA Code - integrate into gmri 					for CASE in $CASES
+## - FIXICA Code - integrate into gmri 					do
+## - FIXICA Code - integrate into gmri   						"$FunctionToRunInt" "$CASE"
+## - FIXICA Code - integrate into gmri   					done
+## - FIXICA Code - integrate into gmri   			fi
+## - FIXICA Code - integrate into gmri fi
+
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri #  boldhardlinkfixica function loop
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri 
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldhardlinkfixica" ]; then
+## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to generate connectivity hard links for [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
+## - FIXICA Code - integrate into gmri 		if read answer; then
+## - FIXICA Code - integrate into gmri 		BOLDS=$answer 
+## - FIXICA Code - integrate into gmri 			for CASE in $CASES
+## - FIXICA Code - integrate into gmri 				do
+## - FIXICA Code - integrate into gmri   				"$FunctionToRunInt" "$CASE"
+## - FIXICA Code - integrate into gmri   			done
+## - FIXICA Code - integrate into gmri   		fi	
+## - FIXICA Code - integrate into gmri fi
+## - FIXICA Code - integrate into gmri 
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldhardlinkfixicamerged" ]; then
+## - FIXICA Code - integrate into gmri 				for CASE in $CASES
+## - FIXICA Code - integrate into gmri 				do
+## - FIXICA Code - integrate into gmri   					"$FunctionToRunInt" "$CASE"
+## - FIXICA Code - integrate into gmri   				done
+## - FIXICA Code - integrate into gmri fi
+## - FIXICA Code - integrate into gmri 
+
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri #  fixicainsertmean function loop
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri 
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "fixicainsertmean" ]; then
+## - FIXICA Code - integrate into gmri 	echo "Note: This function will insert mean images into FIX ICA files"
+## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run mean insertion on [e.g. 1 2 3]:"
+## - FIXICA Code - integrate into gmri 		if read answer; then
+## - FIXICA Code - integrate into gmri 		BOLDS=$answer 
+## - FIXICA Code - integrate into gmri 				for CASE in $CASES
+## - FIXICA Code - integrate into gmri 				do
+## - FIXICA Code - integrate into gmri   					"$FunctionToRunInt" "$CASE"
+## - FIXICA Code - integrate into gmri   				done
+## - FIXICA Code - integrate into gmri   		fi	
+## - FIXICA Code - integrate into gmri fi
+
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri #  fixicaremovemean function loop
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri 
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "fixicaremovemean" ]; then
+## - FIXICA Code - integrate into gmri 	echo "Note: This function will remove mean from mapped FIX ICA files and save new images"
+## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run mean removal on [e.g. 1 2 3]:"
+## - FIXICA Code - integrate into gmri 		if read answer; then
+## - FIXICA Code - integrate into gmri 		BOLDS=$answer 
+## - FIXICA Code - integrate into gmri 				for CASE in $CASES
+## - FIXICA Code - integrate into gmri 				do
+## - FIXICA Code - integrate into gmri   					"$FunctionToRunInt" "$CASE"
+## - FIXICA Code - integrate into gmri   				done
+## - FIXICA Code - integrate into gmri   		fi	
+## - FIXICA Code - integrate into gmri fi
+
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri #  linkmovement function loop
+## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+## - FIXICA Code - integrate into gmri 
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "linkmovement" ]; then
+## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to link [e.g. 1 2 3 or 1-3 for merged BOLDs]:"
+## - FIXICA Code - integrate into gmri 		if read answer; then
+## - FIXICA Code - integrate into gmri 		BOLDS=$answer 
+## - FIXICA Code - integrate into gmri 			for CASE in $CASES
+## - FIXICA Code - integrate into gmri 			do
+## - FIXICA Code - integrate into gmri   				"$FunctionToRunInt" "$CASE"
+## - FIXICA Code - integrate into gmri   			done
+## - FIXICA Code - integrate into gmri   		fi
+## - FIXICA Code - integrate into gmri fi
 
 # ------------------------------------------------------------------------------
-#  isolatesubcortexrois function loop
+#  bolddense function loop  -- under development
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "isolatesubcortexrois" ]; then
-	echo "Isolating subcortical ROIs for probabilistic tractography based on FreeSurfer segmentation"
-	for CASE in $CASES
-		do
-  		"$FunctionToRunInt" "$CASE"
-  	done
-fi
-
-# ------------------------------------------------------------------------------
-#  probtracksubcortex function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "probtracksubcortex" ]; then
-	echo "Enter which subcortical structure you want to run probtrackx on"
-	echo "supported: thalamus caudate accumbens putamen pallidum thalamus_sensory thalamus_associative"
-			if read answer; then
-			STRUCTURES=$answer
-				echo "Enter DWI resolution [Yale:1.80 or HCP:1.25]"
-				if read answer; then
-				DWIRes=$answer
-					for CASE in $CASES
-					do
-  						"$FunctionToRunInt" "$CASE"
-  					done
-  				fi
-  			fi
-fi
-
-# ------------------------------------------------------------------------------
-#  linkmovement function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "linkmovement" ]; then
-	echo "Enter BOLD numbers you want to link [e.g. 1 2 3 or 1-3 for merged BOLDs]:"
-		if read answer; then
-		BOLDS=$answer 
-			for CASE in $CASES
-			do
-  				"$FunctionToRunInt" "$CASE"
-  			done
-  		fi
-fi
-
-# ------------------------------------------------------------------------------
-#  printmatrix function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "printmatrix" ]; then
-	echo "Enter which type of data you want to print the matrix for [supported: bold]:"
-			if read answer; then
-			DatatoPrint=$answer
-				if [ "$DatatoPrint" == "bold" ]; then
-					echo "Enter BOLD numbers you want to run the parcellation on [e.g. 1 2 3 or 1-3 for merged BOLDs]:"
-						if read answer; then
-						BOLDS=$answer 
-						echo "Enter BOLD processing steps you want to run the parcellation on [e.g. g7_hpss_res-mVWM g7_hpss_res-mVWMWB hpss_res-mVWM hpss_res-mVWMWB]:"
-							if read answer; then
-							STEPS=$answer 
-								for CASE in $CASES
-									do
-  									"$FunctionToRunInt" "$CASE"
-  								done
-  							fi
-  						fi
-  				fi
-			fi
-fi
-
-
-# ------------------------------------------------------------------------------
-#  boldmergecifti function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "boldmergecifti" ]; then
-
- 	echo "Overwrite existing merged run [yes, no]:"
-		if read answer; then
-		Overwrite=$answer
-		fi  
-	echo "Enter which study and data you want to merge"
-	echo ""
-	echo "supported for DP5: 1_8 10_17 fixica1_8 fixica10_17 fixica1_8_processed fixica10_17_processed fixica1_8_taskonly fixica10_17_taskonly 1_4_raw 5_8_raw 10_13_raw 14_17_raw 1_8_raw 10_17_raw 2_8 11_17 dp5_dwi dp5_wm_run1_t1000forHCP dp5_wm_run1_t2470forHCP"
-	echo "supported for OCD: ocd_rest_t1000forHCP"
-	echo "supported for OCD: hcp_1_2 hcp_1_2_fixica hcp_1_2_fixica_processed hcp_rest_t973forYale"
-
-			if read answer; then
-			DatatoMerge=$answer
-			echo "Enter BOLD processing step you want to run the merging on [e.g. Atlas [i.e. raw] g7_hpss_res-mVWM g7_hpss_res-mVWMWB hpss_res-mVWM hpss_res-mVWMWB]:"
-				if read answer; then
-				STEPS=$answer 
-					for CASE in $CASES
-					do
-  						"$FunctionToRunInt" "$CASE"
-  					done
-  				fi
-  			fi
-fi
-
-if [ "$FunctionToRunInt" == "boldmergenifti" ]; then
-
-	echo "Enter which study and data you want to merge"
-	echo "supported: 1_4_raw 5_8_raw 10_13_raw 14_17_raw 1_8_raw 10_17_raw"
-			if read answer; then
-			DatatoMerge=$answer
-					for CASE in $CASES
-					do
-  						"$FunctionToRunInt" "$CASE"
-  					done
-  			fi
-fi
-
-# ------------------------------------------------------------------------------
-#  fixica function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "fixica" ]; then
-	echo "Note: Expects that minimally processed NIFTI & CIFTI BOLDs"
-	echo ""
-	echo "Overwrite existing run [yes, no]:"
-		if read answer; then
-		Overwrite=$answer
-		fi  
-	echo "Enter BOLD numbers you want to run FIX ICA on - e.g. 1 2 3 or 1_3 for merged BOLDs:"
-		if read answer; then
-		BOLDS=$answer 
-				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done
-  		fi	
-fi
-
-# ------------------------------------------------------------------------------
-#  postfix function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "postfix" ]; then
-	echo "Note: This function depends on fsl, wb_command and matlab and expects startup.m to point to wb_command and fsl."
-	echo ""
-	echo "Overwrite existing postfix scenes [yes, no]:"
-		if read answer; then
-		Overwrite=$answer
-		fi  
-	echo "Enter BOLD numbers you want to run PostFix.sh on [e.g. 1 2 3]:"
-		if read answer; then
-		BOLDS=$answer 
-			echo "Enter high pass filter used for FIX ICA [e.g. 2000]"
-				if read answer; then
-				HighPass=$answer 
-					for CASE in $CASES
-					do
-  						"$FunctionToRunInt" "$CASE"
-  					done
-  				fi
-  		fi	
-fi
-
-# ------------------------------------------------------------------------------
-#  boldseparateciftifixica function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "boldseparateciftifixica" ]; then
-	echo "Enter which study and data you want to separate"
-	echo "supported: 1_4_raw 5_8_raw 10_13_raw 14_17_raw"
-			if read answer; then
-			DatatoSeparate=$answer
-					for CASE in $CASES
-					do
-  						"$FunctionToRunInt" "$CASE"
-  					done
-  			fi
-fi
-
-# ------------------------------------------------------------------------------
-#  boldhardlinkfixica function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "boldhardlinkfixica" ]; then
-	echo "Enter BOLD numbers you want to generate connectivity hard links for [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
-		if read answer; then
-		BOLDS=$answer 
-			for CASE in $CASES
-				do
-  				"$FunctionToRunInt" "$CASE"
-  			done
-  		fi	
-fi
-
-if [ "$FunctionToRunInt" == "boldhardlinkfixicamerged" ]; then
-				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done
-fi
-
-
-# ------------------------------------------------------------------------------
-#  fixicainsertmean function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "fixicainsertmean" ]; then
-	echo "Note: This function will insert mean images into FIX ICA files"
-	echo "Enter BOLD numbers you want to run mean insertion on [e.g. 1 2 3]:"
-		if read answer; then
-		BOLDS=$answer 
-				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done
-  		fi	
-fi
-
-# ------------------------------------------------------------------------------
-#  fixicaremovemean function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "fixicaremovemean" ]; then
-	echo "Note: This function will remove mean from mapped FIX ICA files and save new images"
-	echo "Enter BOLD numbers you want to run mean removal on [e.g. 1 2 3]:"
-		if read answer; then
-		BOLDS=$answer 
-				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done
-  		fi	
-fi
-
-# ------------------------------------------------------------------------------
-#  bolddense function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRunInt" == "bolddense" ]; then
-	echo "Enter BOLD numbers you want to run dense connectome on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
-		if read answer; then
-		BOLDS=$answer 
-				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done
-  		fi	
-fi
+#if [ "$FunctionToRun" == "bolddense" ]; then
+#	echo "Enter BOLD numbers you want to run dense connectome on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
+#		if read answer; then
+#		BOLDS=$answer 
+#				for CASE in $CASES
+#				do
+#  					"$FunctionToRunInt" "$CASE"
+#  				done
+#  		fi	
+#fi
 
 # ------------------------------------------------------------------------------
 #  fsldtifit function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRunInt" == "fsldtifit" ]; then
-	echo "Run locally [1] or run on cluster [2]:"
-	if read answer; then
-	Cluster=$answer 
-		if [ "$Cluster" == "2" ]; then
-			echo "Enter queue name to submit jobs to [e.g. general, scavenge, anticevic, anti_gpu]:"
-			if read answer; then
-			QUEUE=$answer 
-				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done
-  			fi
-  		else
-  				for CASE in $CASES
-				do
-  					"$FunctionToRunInt" "$CASE"
-  				done	
-  		fi	
-  	fi
-fi
-
 if [ "$FunctionToRun" == "fsldtifit" ]; then
 	
-		# Check all the user-defined parameters: 1. Overwrite, 2. Cluster, 3. QUEUE
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
+		fi
 				
 		echo ""
 		echo "Running fsldtifit processing with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
-		echo "QUEUE Name: $QUEUE"
+		echo "Data successfully submitted" 
+		echo "Scheduler Name: $Scheduler"
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Overwrite prior run: $Overwrite"
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
@@ -7008,20 +4809,22 @@ fi
 
 if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 	
-		# Check all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
 		if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
 		if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
-		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		
 		if [ "$Cluster" == "2" ]; then
+		
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
+				
 				FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 				export FSLGECUDAQ
 				export SGE_ROOT=1
@@ -7030,7 +4833,6 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		
 		if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
 			
-		
 		echo ""
 		echo "Running fslbedpostxgpu processing with the following parameters:"
 		echo ""
@@ -7041,7 +4843,8 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		echo "Burnin Period: $Burnin"
 		echo "Rician flag: $Rician"
 		echo "EPI Unwarp Direction: $UnwarpDir"
-		echo "QUEUE Name: $QUEUE"
+		echo "Scheduler Name: $Scheduler"
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Overwrite prior run: $Overwrite"
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
@@ -7052,49 +4855,8 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
   		done
 fi
 
-if [ "$FunctionToRunInt" == "fslbedpostxgpu" ]; then
-
-	echo "Running fslbedpostxgpu processing interactively. First enter the necessary parameters."
-	# Request all the user-defined parameters: 1. Overwrite, 2. Fibers, 3. Model, 4. Burnin, 5. Cluster, 6. QUEUE
-	echo ""
-	echo "Overwrite existing run [yes, no]:"
-	if read answer; then Overwrite=$answer; fi
-	echo ""
-	echo "Enter # of fibers per voxel [e.g. 3]:"
-	if read answer; then Fibers=$answer; fi
-	echo ""
-	echo "Enter model for bedpostx [1 for monoexponential, 2 for multiexponential, 3 for multiexponential-deconvolution]:"
-	if read answer; then Model=$answer; fi
-	echo ""
-	echo "Enter burnin period for bedpostx [e.g. 3000; default 1000]:"
-	if read answer; then Burnin=$answer; fi 	
-	echo ""	
-	echo "-- Run locally [1] or run on cluster [2]"
-	if read answer; then Cluster=$answer; fi
-	echo ""
-	if [ "$Cluster" == "2" ]; then
-		echo "-- Enter queue name - always submit this job to a GPU-enabled queue [e.g. anticevic-gpu]"
-		if read answer; then QUEUE=$answer; fi
-		echo ""
-	fi
-		echo "Running fslbedpostxgpu processing with the following parameters:"
-		echo ""
-		echo "-------------------------------------------------------------"
-		echo "Number of Fibers: $Fibers"
-		echo "Model Type: $Model"
-		echo "Burnin Period: $Burnin"
-		echo "EPI Unwarp Direction: $UnwarpDir"
-		echo "QUEUE Name: $QUEUE"
-		echo "Overwrite prior run: $Overwrite"
-		
-		for CASE in $CASES
-			do
-  			"$FunctionToRunInt" "$CASE"
-  		done
-fi
-
 # ------------------------------------------------------------------------------
-#  PreFreesurfer function loop (hcp1_orig)
+#  PreFreesurfer function loop (hcp1_orig) -- deprecated for hcp1
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp1_orig" ]; then
@@ -7133,7 +4895,7 @@ if [ "$FunctionToRunInt" == "hcp1_orig" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Freesurfer function loop (hcp2_orig)
+#  Freesurfer function loop (hcp2_orig) -- deprecated for hcp2
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp2_orig" ]; then
@@ -7176,7 +4938,7 @@ if [ "$FunctionToRunInt" == "hcp2_orig" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  PostFreesurfer function loop (hcp3_orig)
+#  PostFreesurfer function loop (hcp3_orig) -- deprecated for hcp3
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp3_orig" ]; then
@@ -7215,7 +4977,7 @@ if [ "$FunctionToRunInt" == "hcp3_orig" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Volume BOLD processing function loop (hcp4_orig)
+#  Volume BOLD processing function loop (hcp4_orig) -- deprecated for hcp4
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp4_orig" ]; then
@@ -7262,7 +5024,7 @@ if [ "$FunctionToRunInt" == "hcp4_orig" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Surface BOLD processing function loop (hcp5_orig)
+#  Surface BOLD processing function loop (hcp5_orig) -- deprecated for hcp5
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcp5_orig" ]; then
@@ -7305,7 +5067,7 @@ if [ "$FunctionToRunInt" == "hcp5_orig" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Diffusion processing function loop (hcpd_orig)
+#  Diffusion processing function loop (hcpd_orig) -- deprecated for hcpd
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "hcpd_orig" ]; then
@@ -7351,11 +5113,7 @@ fi
 
 if [ "$FunctionToRun" == "hcpdlegacy" ]; then
 	
-	# Check all the user-defined parameters: 1. EchoSpacing, 2. PEdir, 3. TE, 4. UnwarpDir, 5. DiffDataSuffix, 6. QUEUE
-	
-#	if [ "$#" -ne 10 ]; then
-#		reho "Error: Your input parameters are incomplete. Please check usage by running <AP hcpdlegacy>"	
-
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -7364,12 +5122,14 @@ if [ "$FunctionToRun" == "hcpdlegacy" ]; then
 		if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
 		if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
 		if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
-		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-		if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi		
 		fi		
+		
 		echo ""
 		echo "Running DWI legacy processing with the following parameters:"
 		echo ""
@@ -7389,67 +5149,14 @@ if [ "$FunctionToRun" == "hcpdlegacy" ]; then
   		done
 fi
 
-if [ "$FunctionToRunInt" == "hcpdlegacy" ]; then
-
-	echo "Running DWI legacy processing interactively. First enter the necessary parameters."
-	# Request all the user-defined parameters: 1. EchoSpacing, 2. PEdir, 3. TE, 4. UnwarpDir, 5. DiffDataSuffix, 6. QUEUE
-	echo ""
-	echo ""
-	
-		echo "-- EPI Echo Spacing for data [in msec]; e.g. 0.69"
-		if read answer; then EchoSpacing=$answer; fi
-		echo ""
-		echo "-- Phase Encoding Direction - Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
-		if read answer; then PEdir=$answer; fi
-		echo ""
-		echo "-- Enter Delta TE value for fieldmap - This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
-		if read answer; then TE=$answer; fi
-		echo ""
-		echo "-- Epi phase unwarping direction - Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
-		if read answer; then UnwarpDir=$answer; fi
-		echo ""
-		echo "-- Diffusion data suffix name - e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
-		if read answer; then DiffDataSuffix=$answer; fi
-		echo ""
-		echo "Overwrite existing run [yes, no]:"
-		if read answer; then Overwrite=$answer; fi  
-		echo ""
-		echo "-- Run locally [1] or run on cluster [2]"
-		if read answer; then Cluster=$answer; fi
-		echo ""
-		if [ "$Cluster" == "2" ]; then
-			echo "-- Enter queue name - always submit this job to a GPU-enabled queue [e.g. anticevic-gpu]"
-			if read answer; then QUEUE=$answer; fi
-			echo ""
-			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
-			if read answer; then Scheduler=$answer; fi
-			echo ""
-		fi
-		
-		echo "Running DWI legacy processing with the following parameters:"
-		echo ""
-		echo "-------------------------------------------------------------"
-		echo "Echo Spacing: $EchoSpacing"
-		echo "Phase Encoding Direction: $PEdir"
-		echo "TE value for Fieldmap: $TE"
-		echo "EPI Unwarp Direction: $UnwarpDir"
-		echo "Diffusion Data Suffix Name: $DiffDataSuffix"
-		
-		for CASE in $CASES
-			do
-  			"$FunctionToRunInt" "$CASE"
-  		done
-fi
-
 # ------------------------------------------------------------------------------
 #  StructuralParcellation function loop (structuralparcellation)
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "structuralparcellation" ]; then	
 	
-# Check all the user-defined parameters: 1. InputDataType, 2. OutName, 3. ParcellationFile, 4. QUEUE, 5. RunMethod, 6. Scheduler
-# Optional: ComputePConn, UseWeights, WeightsFile
-	
+		# -- Check all the user-defined parameters:	
+		#    Optional: ComputePConn, UseWeights, WeightsFile
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -7457,13 +5164,14 @@ if [ "$FunctionToRun" == "structuralparcellation" ]; then
 		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
+		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
-		# Parse optional parameters if not specified 
+		# -- Parse optional parameters if not specified 
 		if [ -z "$ExtractData" ]; then ExtractData="no"; fi
 		if [ -z "$Overwrite" ]; then Overwrite="no"; fi
 		
@@ -7493,8 +5201,7 @@ fi
 
 if [ "$FunctionToRun" == "computeboldfc" ]; then	
 	
-# Check all the user-defined parameters: 1. InputFile, 2. InputPath, 3. OutPathFC, 4. OutName, 5. QUEUE, 6. RunMethod, 7. Scheduler, 8. RunType, 9. Calculation
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
 		if [ -z "$RunType" ]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
@@ -7535,11 +5242,11 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
 			Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
-		# Parse optional parameters if not specified 
+		# -- Parse optional parameters if not specified 
 		if [ -z "$IgnoreFrames" ]; then IgnoreFrames=""; fi
 		if [ -z "$MaskFrames" ]; then MaskFrames=""; fi
 		if [ -z "$Covariance" ]; then Covariance=""; fi
@@ -7609,9 +5316,7 @@ fi
 
 if [ "$FunctionToRun" == "boldparcellation" ]; then	
 	
-# Check all the user-defined parameters: 1. InputFile, 2. InputPath, 3. InputDataType, 4. OutPath, 5. OutName, 6. ParcellationFile, 7. QUEUE, 8. RunMethod, 9. Scheduler
-# Optional: ComputePConn, UseWeights, WeightsFile
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
 		if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
@@ -7619,13 +5324,14 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
+		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
-		# Parse optional parameters if not specified 
+		# -- Parse optional parameters if not specified 
 		if [ -z "$UseWeights" ]; then UseWeights="no"; fi
 		if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
 		if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
@@ -7664,88 +5370,13 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		fi
 fi
 
-if [ "$FunctionToRunInt" == "boldparcellation" ]; then
-
-	echo "Running BOLDParcellation function interactively. First enter the necessary parameters."
-	# Check all the user-defined parameters: 1. InputFile, 2. InputPath, 3. InputDataType, 4. OutPath, 5. OutName, 6. ParcellationFile, 7. QUEUE, 8. RunMethod, 9. Scheduler
-	# Optional: ComputePConn, UseWeights, WeightsFile	echo ""
-			
-	echo ""
-	
-		echo "-- Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
-		if read answer; then InputFile=$answer; fi
-		echo ""
-		echo "-- Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
-		if read answer; then InputPath=$answer; fi
-		echo ""
-		echo "-- Specify the type of data for the input file (e.g. dscalar or dtseries)"
-		if read answer; then InputDataType=$answer; fi
-		echo ""
-		echo "-- Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
-		if read answer; then ParcellationFile=$answer; fi
-		echo ""
-		echo "-- Specify the suffix output name of the pconn file"
-		if read answer; then OutName=$answer; fi
-		echo ""
-		echo "-- Specify the output path name of the pconn file relative to the master study folder [e.g. /images/functional/]"
-		if read answer; then OutPath=$answer; fi
-		echo ""
-		# Ask for optional parameters
-		echo "-- Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation [e.g. yes; default is set to no]"
-		if read answer; then ComputePConn=$answer; fi
-		echo ""
-		echo "-- If computing a  parcellated connectivity file you can specify which frames to omit [e.g. yes' or no; default is set to no]"
-		if read answer; then UseWeights=$answer; fi
-		echo ""
-		echo "-- Specify the location of the weights file relative to the master study folder [e.g. /images/functional/movement/bold1.use]"
-		if read answer; then WeightsFile=$answer; fi
-		echo ""
-		echo "-- Overwrite existing run [yes, no]:"
-		if read answer; then Overwrite=$answer; fi  
-		echo ""
-		echo "-- Run locally [1] or run on cluster [2]"
-		if read answer; then Cluster=$answer; fi
-		echo ""
-		if [ "$Cluster" == "2" ]; then
-			echo "-- Enter queue name [e.g. anticevic]"
-			if read answer; then QUEUE=$answer; fi
-			echo ""
-			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
-			if read answer; then Scheduler=$answer; fi
-			echo ""
-		fi
-		
-		echo "Running BOLDParcellation function with the following parameters:"
-		echo ""
-		echo "-------------------------------------------------------------"
-		echo "Study Folder: ${StudyFolder}"
-		echo "Subjects: ${CASES}"
-		echo "Input File: ${InputFile}"
-		echo "Input Path: ${InputPath}"
-		echo "ParcellationFile: ${ParcellationFile}"
-		echo "BOLD Parcellated Connectome Output Name: ${OutName}"
-		echo "BOLD Parcellated Connectome Output Path: ${OutPath}"
-		echo "Input Data Type: ${InputDataType}"
-		echo "Compute PConn File: ${ComputePConn}"
-		echo "Weights file specified to omit certain frames: ${UseWeights}"
-		echo "Weights file name: ${WeightsFile}"
-		echo "Overwrite prior run: ${Overwrite}"
-		
-		for CASE in $CASES
-			do
-  			"$FunctionToRunInt" "$CASE"
-  		done
-fi
-
-
 # ------------------------------------------------------------------------------
 #  DWIDenseParcellation function loop (dwidenseparcellation)
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
 	
-# Check all the user-defined parameters: 1. MatrixVersion, 2. ParcellationFile, 3. OutName, 4. QUEUE, 5. RunMethod
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -7753,11 +5384,13 @@ if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
-		fi		
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
+		fi	
+		
 		echo ""
 		echo "Running DWIDenseParcellation function with the following parameters:"
 		echo ""
@@ -7775,59 +5408,13 @@ if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
   		done
 fi
 
-if [ "$FunctionToRunInt" == "dwidenseparcellation" ]; then
-
-	echo "Running DWIDenseParcellation function interactively. First enter the necessary parameters."
-	# Request all the user-defined parameters:  1. MatrixVersion, 2. ParcellationFile, 3. OutName, 4. QUEUE, 5. RunMethod
-	echo ""
-	echo ""
-	
-		echo "-- Specify Matrix Version; e.g. 1 or 3"
-		if read answer; then MatrixVersion=$answer; fi
-		echo ""
-		echo "-- Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
-		if read answer; then ParcellationFile=$answer; fi
-		echo ""
-		echo "-- Specify name of output pconn file"
-		if read answer; then OutName=$answer; fi
-		echo ""
-		echo "-- Overwrite existing run [yes, no]:"
-		if read answer; then Overwrite=$answer; fi  
-		echo ""
-		echo "-- Run locally [1] or run on cluster [2]"
-		if read answer; then Cluster=$answer; fi
-		echo ""
-		if [ "$Cluster" == "2" ]; then
-			echo "-- Enter queue name [e.g. anticevic]"
-			if read answer; then QUEUE=$answer; fi
-			echo ""
-			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
-			if read answer; then Scheduler=$answer; fi
-			echo ""
-		fi
-		
-		echo "Running DWI legacy processing with the following parameters:"
-		echo ""
-		echo "-------------------------------------------------------------"
-		echo "Matrix version used for input: $MatrixVersion"
-		echo "File to use for parcellation: $ParcellationFile"
-		echo "Dense DWI Parcellated Connectome Output Name: $OutName"
-		echo "Overwrite prior run: $Overwrite"
-		
-		for CASE in $CASES
-			do
-  			"$FunctionToRunInt" "$CASE"
-  		done
-fi
-
 # ------------------------------------------------------------------------------
 #  DWIDenseSeedTractography function loop (dwiseedtractography)
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "dwiseedtractography" ]; then
 	
-# Check all the user-defined parameters: 1. MatrixVersion, 2. ParcellationFile, 3. OutName, 4. QUEUE, 5. RunMethod
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -7835,13 +5422,15 @@ if [ "$FunctionToRun" == "dwiseedtractography" ]; then
 		if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
-		fi		
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
+		fi
+			
 		echo ""
-		echo "Running DWIDenseParcellation function with the following parameters:"
+		echo "Running DWIDenseSeedTractography function with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "Matrix version used for input: $MatrixVersion"
@@ -7858,7 +5447,7 @@ if [ "$FunctionToRun" == "dwiseedtractography" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Pretractography processing function loop (Matt's original code)
+#  Pretractography processing function loop (Matt's original code) (deprecated)
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "pretractography" ]; then
@@ -7896,10 +5485,9 @@ if [ "$FunctionToRunInt" == "pretractography" ]; then
   	fi
 fi
 
-
-# ------------------------------------------------------------------------------
-#  Matrix 1 Cortex processing function loop (Matt's original code w/o m2 and m4)
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
+#  Matrix 1 Cortex processing function loop (Matt's original code w/o m2 and m4) (deprecated)
+# --------------------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "probtrackxgpucortex" ]; then
 	
@@ -7969,9 +5557,9 @@ if [ "$FunctionToRunInt" == "probtrackxgpucortex" ]; then
 fi
   
 
-# ------------------------------------------------------------------------------
-#  Dense Connectome Cortex function loop (Matt's original code following GPU)
-# ------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------
+#  Dense Connectome Cortex function loop (Matt's original code following GPU) (deprecated)
+# ----------------------------------------------------------------------------------------
 
 if [ "$FunctionToRunInt" == "makedensecortex" ]; then
 	
@@ -8053,18 +5641,16 @@ fi
 
 if [ "$FunctionToRun" == "pretractographydense" ]; then
 	
-		# Check all the user-defined parameters: 1. RunMethod, 2. QUEUE, 3. Scheduler
-	
+		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
-		
 		if [ "$Cluster" == "2" ]; then
-				if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+				if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi				
 		
 		echo ""
@@ -8080,35 +5666,6 @@ if [ "$FunctionToRun" == "pretractographydense" ]; then
   		done
 fi
 
-if [ "$FunctionToRunInt" == "pretractographydense" ]; then
-
-	echo "Running Pretractography Dense processing interactively. First enter the necessary parameters."
-	# Request all the user-defined parameters: 1. RunMethod, 2. QUEUE, 3. Scheduler
-	echo ""
-	echo "-- Run locally [1] or run on cluster [2]"
-	if read answer; then Cluster=$answer; fi
-	echo ""
-		if [ "$Cluster" == "2" ]; then
-			echo "-- Enter queue name [e.g. anticevic]"
-			if read answer; then QUEUE=$answer; fi
-			echo ""
-			echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
-			if read answer; then Scheduler=$answer; fi
-			echo ""
-		fi
-		
-		echo "Running Pretractography processing with the following parameters:"
-		echo ""
-		echo "-------------------------------------------------------------"
-		echo "CASES: $CASES"
-		echo "--------------------------------------------------------------"
-		
-		for CASE in $CASES
-			do
-  			"$FunctionToRunInt" "$CASE"
-  		done
-fi
-
 # ------------------------------------------------------------------------------
 #  probtrackxgpudense function loop
 # ------------------------------------------------------------------------------
@@ -8119,9 +5676,9 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
-		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$QUEUE" ]; then reho "Error: Queue name missing"; exit 1; fi
-		if [ -z "$Scheduler" ]; then reho "Error: Scheduler option missing for fsl_sub command [e.g. lsf or torque]"; exit 1; fi
+		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi		
+		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification missing [e.g. LSF, PBS, SLURM]"; exit 1; fi
+		if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
 		if [ "$MatrixOne" == "yes" ]; then
 			if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
@@ -8135,7 +5692,8 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "CASES: $CASES"
-		echo "QUEUE: $QUEUE"
+		echo "Scheduler: $Scheduler"
+		echo "Scheduler Options: $SchedulerOptions"
 		echo "Compute Matrix1: $MatrixOne"
 		echo "Compute Matrix3: $MatrixThree"
 		echo "Number of samples for Matrix1: $NsamplesMatrixOne"
@@ -8146,52 +5704,6 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 		for CASE in $CASES
 		do
   			"$FunctionToRun" "$CASE"
-  		done
-fi
-
-if [ "$FunctionToRunInt" == "probtrackxgpudense" ]; then
-
-	echo "Running Pretractography Dense processing interactively. First enter the necessary parameters."
-	# Request all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
-	echo ""
-	echo "-- Enter queue name [e.g. anticevic]"
-	if read answer; then QUEUE=$answer; fi
-	echo ""
-	echo "-- Enter scheduler name for fsl_sub command [e.g. lsf or torque]"
-	if read answer; then Scheduler=$answer; fi
-	echo ""
-	echo "-- Compute Matrix1 [e.g. yes or leave empty]"
-	if read answer; then Matrix1=$answer; fi
-	echo ""
-	echo "-- Compute Matrix3 [e.g. yes or leave empty]"
-	if read answer; then Matrix3=$answer; fi
-	echo ""
-	echo "-- Number of samples for Matrix1 [Default - 10000]"
-	if read answer; then NsamplesMatrixOne=$answer; fi
-	echo ""
-	echo "-- Number of samples for Matrix3 [Default - 3000]"
-	if read answer; then NsamplesMatrixThree=$answer; fi
-	echo ""
-	
-		#Set job limits
-		#JobLimitMatrix1=0
-		#JobLimitMatrix3=0
-		
-		echo "Running Pretractography processing with the following parameters:"
-		echo ""
-		echo "-------------------------------------------------------------"
-		echo "CASES: $CASES"
-		echo "QUEUE: $QUEUE"
-		echo "Compute Matrix1: $MatrixOne"
-		echo "Compute Matrix3: $MatrixThree"
-		echo "Number of samples for Matrix1: $NsamplesMatrixOne"
-		echo "Number of samples for Matrix3: $NsamplesMatrixThree"
-		echo "Overwrite prior run: $Overwrite"
-		echo "--------------------------------------------------------------"
-		
-		for CASE in $CASES
-		do
-  			"$FunctionToRunInt" "$CASE"
   		done
 fi
 
@@ -8226,28 +5738,5 @@ if [ "$FunctionToRun" == "awshcpsync" ]; then
   			"$FunctionToRun" "$CASE"
   		done
 fi		
-		
-if [ "$FunctionToRunInt" == "awshcpsync" ]; then
-	
-	echo "Running AWS S3 Sync... Make sure you configured your AWS credentials"
-	echo "Dry run [1] or real run [2]"
-	
-	if read answer; then
-		RunType=$answer
-	fi
-	echo "Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
-	if read answer; then
-		AwsFolder=$answer
-	fi
-	echo "Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
-	if read answer; then
-		Modality=$answer
-	fi
-
-	for CASE in $CASES
-	do
-  		"$FunctionToRunInt" "$CASE"
-	done
-fi
 
 exit 0

@@ -87,7 +87,8 @@ Change Log
 * 0.3.0: Initial pre-alpha release with added functionality for thalamic seeding
 * 0.4.0: Initial pre-alpha release with added functionality (computeboldfc)
 * 0.4.1: Initial pre-alpha release with improved usage for computeboldfc
-
+* 0.5.1: Initial pre-alpha release. Deprecated functions: isolatesubcortexrois,probtracksubcortex,pretractography,probtrackxgpucortex,makedensecortex,boldmergenifti,boldmergecifti,nii4dfpconvert,cifti4dfpconvert,dicom2nii					
+				    Added updated scheduler functionality 
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
