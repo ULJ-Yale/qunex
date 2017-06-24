@@ -643,6 +643,43 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
     return r
 
 
+def runScriptThroughShell(run, description, thread="0", remove=True, task=None, logfolder=""):
+    """
+    runScriptThroughShell - documentation not yet available.
+    """
+    if task is None:
+        task = ""
+    else:
+        task = task + "_"
+
+    r = '\n\n%s' % (description)
+
+    logstamp    = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    tmplogfile  = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
+    donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
+    errlogfile  = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
+
+    nf = open(tmplogfile, 'w')
+    print >> nf, "\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description)
+
+    ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
+    if ret:
+        r += "\n\nERROR: Failed with error %s\n" % (ret)
+        nf.close()
+        shutil.move(tmplogfile, errlogfile)
+        raise ExternalFailed(r)
+    else:
+        nf.close()
+        if remove:
+            os.remove(tmplogfile)
+        else:
+            shutil.move(tmplogfile, donelogfile)
+        r += ' --- done'
+
+    return r
+
+
+
 def checkForFile(r, checkfile, message, status=True):
     """
     checkForFile - documentation not yet available.

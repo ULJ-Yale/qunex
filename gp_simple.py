@@ -109,3 +109,134 @@ def listSubjectInfo(sinfo, options, overwrite=False, thread=0):
 
     bfile.close()
 
+
+
+def runShellScript(sinfo, options, overwrite=False, thread=0):
+    """
+    runShellScript [... processing options]
+
+    USE
+    ===
+
+    runShellScript runs the specified script on every selected subject from
+    subjects.txt file. It places the specified subject specific information
+    before running the script. The information to be added is to be referenced
+    in the script using double curly braces: {{<key>}}. Specifically, the
+    function loops through all the subject specific information as well as all
+    the processing parameters and places them into the script. If the
+    information is not provided, the {{<key>}} will remain as is.
+
+    EXAMPLE
+    =======
+
+    If subjects.txt contains among others:
+
+    ---
+    id: OP578
+    subject: OP578
+    dicom: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/dicom
+    raw_data: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/nii
+    hcp: /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/hcp
+    group: control
+
+    If script.sh contains among others:
+
+    ls -l {{hcp}}/{{id}}/MNINonLinear
+    if [ "{{group}}" = "control" ]; then
+        mkdir /gpfs/project/fas/n3/Studies/tmp/{{id}}
+        cp {{raw_data}}/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/{{id}}
+    fi
+    echo "{{nothing}}"
+
+    Before running the function will change that part of the script to:
+
+    ls -l /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/hcp/OP578/MNINonLinear
+    if [ "control" = "control" ]; then
+        mkdir /gpfs/project/fas/n3/Studies/tmp/OP578
+        cp /gpfs/project/fas/n3/Studies/MBLab/WM.v3/subjects/OP578/nii/*.nii.gz /gpfs/project/fas/n3/Studies/tmp/OP578
+    fi
+    echo "{{nothing}}"
+
+
+    RELEVANT PARAMETERS
+    ===================
+
+    The relevant processing parameters are:
+
+    --script          ... Tha path to the script to be executed.
+    --subjects        ... The subjects.txt file with all the subject information
+                          [subject.txt].
+    --cores           ... How many cores to utilize [1].
+
+    The parameters can be specified in command call or subject.txt file.
+
+    EXAMPLE USE
+    ===========
+
+    gmri runShellScript subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+         overwrite=no script=fcMRI/processdata.sh
+
+    ----------------
+    Written by Grega Repovš 2017-06-24
+
+    """
+
+    r = "\n---------------------------------------------------------"
+    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nRunning script %s" % (options['script'])
+    r += "\n........................................................\n"
+
+    try:
+        assert (options['script'] is not None), "ERROR: No script was referenced!"
+        assert (os.path.exists(options['script'])), "ERROR: The referenced script does not exist in the path provided!"
+
+        script = file(options['script']).read()
+
+        # --- place subject specific data
+
+        for key, value in sinfo.iteritems():
+            if not key.isdigit():
+                script = script.replace("{{%s}}" % (key), str(value))
+
+        # --- place options
+
+        for key, value in options.iteritems():
+            if not key.isdigit():
+                script = script.replace("{{%s}}" % (key), str(value))
+
+        # --- check for nonplaced
+
+        nonplaced = re.findall("{{.*?}}", script)
+
+        if nonplaced:
+            r += "\nWARNING: the following tags were not filled:"
+            for n in nonplaced:
+                r += "\n ... " + n
+
+        # --- execute script
+
+        description = "runShellScript: %s" % (options['script'])
+        task = "runShellScript-%s" % (options['script'])
+
+        r += runScriptThroughShell(script, description, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
+
+    except AssertionError, message:
+        r += str(message) + "\n---------------------------------------------------------"
+        print r
+        return (r, (sinfo['id'], message))
+
+    except ExternalFailed, errormessage:
+        r += str(errormessage) + "\n---------------------------------------------------------"
+        print r
+        return (r, (sinfo['id'], "Failed: " + str(message)))
+
+    except:
+        message = 'ERROR: Error in parsing or executing script %s' % (options['script'])
+        r += "\n" + message + "\n---------------------------------------------------------"
+        print r
+        raise
+        return (r, (sinfo['id'], message))
+
+    r += "\n\nrunShellScript %s completed on %s\n---------------------------------------------------------" % (options['script'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    print r
+    return (r, (sinfo['id'], "Ran %s without errors" % (options['script'])))

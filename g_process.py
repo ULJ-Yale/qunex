@@ -75,10 +75,26 @@ def procResponse(r):
 def torf(s):
     '''
     torf(s)
-    Checks if s is any of the possible true strings: "True", "true",
+    First checks if string is "None", 'none', or "NONE" and returns
+    None, then Checks if s is any of the possible true strings: "True", "true",
     or "TRUE" and retuns a boolean result of the check.
     '''
-    return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
+    if s in ['None', 'none', 'NONE']:
+        return None
+    else:
+        return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
+
+
+def isNone(s):
+    '''
+    isNone(s)
+    Check if the string is "None", "none" or "NONE" and returns None, otherwise
+    returns the passed string.
+    '''
+    if s in ['None', 'none', 'NONE']:
+        return None
+    else:
+        return s
 
 
 def plist(s):
@@ -138,6 +154,7 @@ arglist = [['# ---- Basic settings'],
            ['datainfo',           'False',                                       torf,   'Whether to print information.'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
+           ['script',             'None',                                        isNone, 'The script to be executed.'],
 
            ['# ---- Preprocessing options'],
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
@@ -361,7 +378,9 @@ calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,         
           [],
           ['hcpd',    'hcp_Diffusion',               gp_HCP.hcpDiffusion,                            "Run HCP DWI pipeline."],
           ['hcpdf',   'hcp_DTIFit',                  gp_HCP.hcpDTIFit,                               "Run FSL DTI fit."],
-          ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."]
+          ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."],
+          [],
+          ['rsc',     'runShellScript',              gp_simple.runShellScript,                       "Runs the specified script."],
           ]
 
 salist = [['cbl',     'createBoldList',              gp_simple.createBoldList,                       'createBoldList'],
