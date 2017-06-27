@@ -285,7 +285,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             serr = subprocess.STDOUT
             sout = open(output.split(':')[1].strip(), 'a')
         else:
-            for k, v in [[f.strip() for f in e.split(":")] for e in s.split("|")]:
+            for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
                 if k == 'stdout':
                     sout = open(v, 'a')
                 elif k == 'stderr':
@@ -308,6 +308,6 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         else:
             if sout is not None:
                 sout.close()
-            if eout is not None:
-                eout.close()
+            if serr is not None:
+                serr.close()
 
