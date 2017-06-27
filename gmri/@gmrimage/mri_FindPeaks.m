@@ -39,9 +39,9 @@ function [roi peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
 %
 %   Changelog
 %   2015-12-19 Grega Repovs,
-%            — A faster flooding implementation.
-%            — Optimised reflooding of small ROI.
-%            — Flipped verbosity.
+%            ??? A faster flooding implementation.
+%            ??? Optimised reflooding of small ROI.
+%            ??? Flipped verbosity.
 %
 %   2016-01-16 Grega Repovs,
 %            - Now uses mri_GetXYZ to get world coordinates of peaks and centroids.
@@ -49,9 +49,13 @@ function [roi peak] = mri_FindPeaks(img, minsize, maxsize, val, t, verbose)
 %   2017-03-04 Grega Repovs
 %            - Updated documentation
 %
+%   2017-06-27 Aleksij Kraljic
+%            - Added functionality for images with multiple frames.
+%            
+%
 %    ToDo
-%    — Clean up code.
-%    — Maxsize optimization.
+%    ??? Clean up code.
+%    ??? Maxsize optimization.
 %
 
 if nargin < 6 || isempty(verbose), verbose = false; end
@@ -73,10 +77,25 @@ end
 
 % --- Set up data
 
-img.data  = img.image4D;
-
-data  = zeros(size(img.data)+2);
-data(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1)) = img.data;
+% check the number of frames in the image
+if img.frames == 1
+    img.data  = img.image4D;
+    data  = zeros(size(img.data)+2);
+    data(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1)) = img.data;
+else
+    % if more than 1 frame, perform mri_FindPeaks() on each frame
+    % recursivelly
+    img_temp = img; img_temp.frames = 1;
+    roi = img;
+    peak = cell(1,img.frames);
+    for fr = 1:1:img.frames
+        img_temp.data = img.data(:,fr);
+        [img_temp, p_temp] = img_temp.mri_FindPeaks(minsize, maxsize, val, t, verbose);
+        roi.data(:,fr)=img_temp.image2D();
+        peak{fr} = p_temp;
+    end
+    return;
+end
 
 % --- Flip to focus on the relevant value(s)
 

@@ -24,7 +24,7 @@ classdef gmrimage
 %  mri_ComputeCorrelations - computes correlations with the provided data matrix
 %
 %  ---
-%  Written by Grega Repovš, 2009-10-04
+%  Written by Grega Repov??, 2009-10-04
 %
 %  2011-07-31 Grega Repovs
 %           - Added importing of existing movement, fstat and scrubbing data
@@ -161,10 +161,10 @@ classdef gmrimage
         %            a two concatenated bold images.
         %
         %   ---
-        %   Written by Grega Repovš
+        %   Written by Grega Repov??
         %
         %   Changelog
-        %       2017-02-11 Grega Repovš - Updated the documentation
+        %       2017-02-11 Grega Repov?? - Updated the documentation
 
 
             if nargin < 4, verbose = false;  end
@@ -206,6 +206,22 @@ classdef gmrimage
                     obj.voxels  = prod(obj.dim(1:3));
                     obj.frames  = size(varone,4);
                     obj.empty   = false;
+                    if (obj.dim(1) == 91 && obj.dim(2) == 109 && obj.dim(3) == 91)
+                        obj.imageformat='NIfTI';
+                        obj.hdrnifti = struct('swap', 0,'swapped', 0, 'data_type', blanks(10),...
+                            'db_name', blanks(18), 'extents', 0, 'session_error', 0,...
+                            'regular', 'r', 'dim_info', ' ', 'dim', [3;91;109;91;1;1;1;1], 'intent_p1', 0,...
+                            'intent_p2', 0, 'intent_p3', 0, 'intent_code', 0,'datatype', 16,...
+                            'bitpix', 32, 'slice_start', 0, 'pixdim', [-1;2;2;2;0;0;0;0], 'vox_offset', 2736,...
+                            'scl_slope', 0, 'scl_inter', 0, 'slice_end', 0, 'slice_code', ' ',...
+                            'xyzt_units', '', 'cal_max', 0, 'cal_min', 0, 'slice_duration', 0,...
+                            'toffset', 0, 'glmax', 0, 'glmin', 0, 'descrip', blanks(80),...
+                            'aux_file', blanks(24), 'qform_code', 1, 'sform_code', 1, 'quatern_b', 0,...
+                            'quatern_c', 1, 'quatern_d', 0, 'qoffset_x', 90, 'qoffset_y', -126,...
+                            'qoffset_z', -72, 'srow_x', [-2;0;0;90], 'srow_y', [0;2;0;-126],...
+                            'srow_z', [0;0;2;-72], 'intent_name', blanks(16), 'magic', 'n+1 ',...
+                            'version', 1, 'unused_str', blanks(24));
+                    end
                 elseif iscell(varone)
                     for n = 1:length(varone);
                         if ischar(varone{n})
