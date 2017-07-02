@@ -12,12 +12,13 @@ function [res] = mri_SaveNIfTI(img, filename, datatype, verbose)
 %   Grega Repovs - 2011-10-13 - Updated to write NIfTI-2
 %   Grega Repovs - 2013-10-19 - Added call for embedding data
 %   Grega Repovs - 2014-06-29 - Update to use MEX function
+%   Grega Repovs - 2017-07-02 - Uses xml templates to embed metadata for standard .dscalar and dtseries
 %
 
 if nargin < 4, verbose = false; end
 if nargin < 3, datatype = []; end
 
-fprintf('\n---> Saving image as %s', filename);
+if verbose, fprintf('\n---> Saving image as %s', filename); end
 
 % ---> embedd extra data if available
 
@@ -69,7 +70,17 @@ switch img.imageformat
 
     case 'CIFTI-2'
         cmeta = find([img.meta.code] == 32);
-        img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
+        if img.voxels == 91282
+            if strcmp(img.filetype, '.dtseries')
+                img.meta(cmeta) = dtseriesXML(img);
+            elseif strcmp(img.filetype, '.dscalar')
+                img.meta(cmeta) = dscalarXML(img);
+            else
+                img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
+            end
+        else
+            img.meta(cmeta) = framesHack(img.meta(cmeta), img.hdrnifti.dim(6), img.frames);
+        end
         if strcmp(img.filetype, '.pconn')
             img.hdrnifti.dim(6:7) = img.dim;
         else
@@ -300,7 +311,7 @@ function [s] = packHeader_nifti2(hdrnifti)
 
 
 
-function [meta] = framesHack(meta, oframes, nframes);
+function [meta] = framesHack(meta, oframes, nframes)
 
     if oframes == nframes
         return;
@@ -322,3 +333,49 @@ function [meta] = framesHack(meta, oframes, nframes);
 
 
 
+function [meta] = dtseriesXML(img)
+
+    mpath = fileparts(mfilename('fullpath'));
+    xml = fileread(fullfile(mpath, 'dtseries-32k.xml'));
+    xml = strrep(xml,'{{ParentProvenance}}', img.filename);
+    xml = strrep(xml,'{{ProgramProvenance}}', 'MNAP matlab');
+    xml = strrep(xml,'{{Provenance}}', 'MNAP matlab');
+    xml = strrep(xml,'{{WorkingDirectory}}', pwd);
+    xml = strrep(xml,'{{Frames}}', num2str(img.frames));
+    xml = strrep(xml,'{{TR}}', num2str(img.TR));
+    xml = cast(xml', 'uint8');
+    meta = string2meta(xml, 32);
+
+function [meta] = dscalarXML(img)
+
+    mpath = fileparts(mfilename('fullpath'));
+    xml = fileread(fullfile(mpath, 'dscalar-32k.xml'));
+    xml = strrep(xml, '{{ParentProvenance}}', img.filename);
+    xml = strrep(xml, '{{ProgramProvenance}}', 'MNAP matlab');
+    xml = strrep(xml, '{{Provenance}}', 'MNAP matlab');
+    xml = strrep(xml, '{{WorkingDirectory}}', pwd);
+
+    if ~isfield(img.cifti, 'maps') || isempty(img.cifti.maps)
+        for n = 1:img.frames
+            img.cifti.maps{end+1} = sprintf('Map %d', n);
+        end
+    end
+    mapString = '';
+    first = true;
+    for map = img.cifti.maps
+        mapString = [mapString '            <NamedMap><MapName>' map{1} '</MapName></NamedMap>'];
+        if ~first
+            mapString = [mapString '\n'];
+        else
+            first = false;
+        end
+    end
+    xml = strrep(xml, '{{NamedMaps}}', mapString);
+    meta = string2meta(xml, 32);
+
+function [meta] = string2meta(string, code)
+    string = cast(string(:), 'uint8');
+    meta.size = ceil((length(string)+8)/16)*16;
+    meta.data = zeros(1, meta.size-8, 'uint8');
+    meta.data(1:length(string)) = string;
+    meta.code = code;
