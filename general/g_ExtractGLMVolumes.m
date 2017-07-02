@@ -1,6 +1,6 @@
-function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, verbose);
+function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, values, verbose);
 
-%function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, verbose);
+%function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, values, verbose);
 %
 %	For subjects specified in the subject list it extracts the GLM estimates of
 %   the effects of interests and saves them in the specified file.
@@ -17,6 +17,7 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, verb
 %       saveoption  - Whether to save the extracted estimates in a single file
 %                     organized 'by subject', 'by effect', or in separate
 %                     files for each effect ('effect files'). ['by subject']
+%       values      - What kind of values to save: 'raw' or 'psc'. ['raw']
 %	    verbose		- Whether to report on the progress or not [false]
 %
 %   USE
@@ -51,10 +52,12 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, verb
 %
 %   Changelog
 %   2017-03-04 Grgega Repovs - updated documentation
+%   2017-07-01 Grega Repovs - Added psc option.
 %
 %
 
-if nargin < 6, verbose   = false; end
+if nargin < 7, verbose   = false; end
+if nargin < 6 || isempty(values),     values     = raw; end
 if nargin < 5 || isempty(saveoption), saveoption = 'by subject'; end
 if nargin < 4, frames    = [];    end
 if nargin < 3, effects   = [];    end
@@ -93,7 +96,7 @@ if verbose, fprintf('\n---> processing subject: %s', subjects(1).id); end
 
 glm = gmrimage(subjects(1).glm);
 sef = glm.glm.effects;
-glm = glm.mri_ExtractGLMEstimates(effects, frames);
+glm = glm.mri_ExtractGLMEstimates(effects, frames, values);
 effect = sef(glm.glm.effect);
 frame  = glm.glm.frame;
 event  = glm.glm.event;
@@ -113,7 +116,7 @@ for s = 2:nsub
 
     glm = gmrimage(subjects(s).glm);
     sef = glm.glm.effects;
-    glm = glm.mri_ExtractGLMEstimates(effects, frames);
+    glm = glm.mri_ExtractGLMEstimates(effects, frames, values);
     nb  = size(glm.image2D,2);
     effect  = [effect sef(glm.glm.effect)];
     frame   = [frame glm.glm.frame];
