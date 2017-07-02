@@ -18,6 +18,7 @@ function [img] = mri_ReadNIfTI(img, filename, dtype, frames, verbose)
 %       Grega Repovs - 2014-05-04 - rewrite to support direct gunzipping
 %       Grega Repovs - 2014-06-29 - rewrite to support mex reading
 %       Grega Repovs - 2017-03-20 - change in reading cifti: not having frame number in dim field
+%       Grega Repovs - 2017-07-02 - extract NamedMaps from .dscalar images and TR from .dtseries
 %
 
 if nargin < 5 verbose = false;  end
@@ -195,6 +196,7 @@ elseif strcmp(img.imageformat, 'CIFTI')
     img.cifti.start      = [1 29697 59413 59548 59688 60003 60335 63807 64535 65290 73999 83143 83849 84561 85325 86120 86417 86677 87737 88747 90035];
     img.cifti.end        = [29696 59412 59547 59687 60002 60334 63806 64534 65289 73998 83142 83848 84560 85324 86119 86416 86676 87736 88746 90034 91282];
     img.cifti.length     = [29696 29716 135 140 315 332 3472 728 755 8709 9144 706 712 764 795 297 260 1060 1010 1288 1248];
+    img.cifti.maps       = {};
 
 end
 
@@ -288,6 +290,17 @@ if mi > 0
                         img.list.(l) = strread(img.list.(l), '%f')';
                     end
                 end
+            end
+        end
+        if img.meta(m).code == 32
+            if strcmp(img.filetype, '.dscalar')
+                t = regexp(char(img.meta(m).data)', '<MapName>(.*?)</MapName>', 'tokens');
+                for e = t
+                    img.cifti.maps(end+1) = e{1};
+                end
+            elseif strcmp(img.filetype, '.dtseries')
+                TR = regexp(char(img.meta(m).data)', 'SeriesStep="(.*?)"', 'tokens');
+                img.TR = str2num(TR{1}{1});
             end
         end
     end

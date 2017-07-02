@@ -24,7 +24,7 @@ classdef gmrimage
 %  mri_ComputeCorrelations - computes correlations with the provided data matrix
 %
 %  ---
-%  Written by Grega Repov??, 2009-10-04
+%  Written by Grega Repovs, 2009-10-04
 %
 %  2011-07-31 Grega Repovs
 %           - Added importing of existing movement, fstat and scrubbing data
@@ -33,6 +33,8 @@ classdef gmrimage
 %  2017-03-21 Grega Repovs
 %           - horzcat now supports concatenation of empty objects.
 %           - mri_ReadConcFile returns more information
+%  2017-07-02 Grega Repovs
+%           - horzcat, zeroframes and sliceframe suport img.cifti.maps
 %
 
     properties
@@ -553,6 +555,17 @@ classdef gmrimage
             else
                 obj.list     = [];
             end
+
+            % --> combine maps data
+            if isfield(obj.cifti, 'maps') && ~isempty(obj.cifti.maps)
+                if isfield(add.cifti, 'maps') && ~isempty(add.cifti.maps)
+                    obj.cifti.maps = [obj.cifti.maps add.cifti.maps];
+                else
+                    for n = 1:add.frames
+                        obj.cifti.maps{end+1} = sprintf('Map %d', n);
+                    end
+                end
+            end
         end
 
         function reply = isempty(obj)
@@ -593,6 +606,12 @@ classdef gmrimage
 
             if length(obj.meta) > 0
                 obj.meta = obj.meta([obj.meta.code] ~= 64);
+            end
+
+            % ---> erase maps info
+
+            if isfield(obj.cifti, 'maps')
+                obj.cifti.maps = {};
             end
 
         end
@@ -707,6 +726,11 @@ classdef gmrimage
                     if isfield(obj.glm, 'A'),      obj.glm.A      = obj.glm.A(:,fmask);     end
                 end
 
+                % ---> mask maps data
+
+                if isfield(obj.cifti, 'maps') && (~isempty(obj.cifti.maps))
+                    obj.cifti.maps = obj.cifti.maps(fmask);
+                end
             end
 
         end
