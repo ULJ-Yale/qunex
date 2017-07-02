@@ -291,9 +291,11 @@ dicomsort() {
 				rm -f "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh &> /dev/null
 				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
 				chmod 770 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
-				# -- Run the scheduler commands
-				fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
 				
+				# -- Run the scheduler commands
+				#fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
+				gmri schedule command="${CASE}_setuphcp.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:dicomsort.output.log|stderr:dicomsort.error.log"  workdir="$StudyFolder/$CASE/dicom" 
+		
 				echo ""
 				echo "---------------------------------------------------------------------------------"
 				echo "Data successfully submitted" 
@@ -961,7 +963,7 @@ hcp1_orig() {
 
 		
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
-		cd "$StudyFolder"/../../../fcMRI/hcp.logs/
+		#cd "$StudyFolder"/../../../fcMRI/hcp.logs/
 
 		# Requirements for this function
 		#  installed versions of: FSL5.0.2 or higher , FreeSurfer (version 5.2 or higher) , gradunwarp (python code from MGH)
@@ -1059,37 +1061,52 @@ hcp1_orig() {
       		--printcom=$PRINTCOM
     	
     	else
+			# -- Deprecated fsl_sub call
+    		#fsl_sub."$fslsub" -Q "$QUEUE" \
+    		
+    		# - Clean prior command 
+    		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcp1_orig.sh &> /dev/null
+    		
+    		# - Echo full command into a script
+    		echo "${HCPPIPEDIR}/PreFreeSurfer/PreFreeSurferPipeline.sh \
+      		--path=${StudyFolder} \
+      		--subject=${Subject} \
+      		--t1=${T1wInputImages} \
+          	--t2=${T2wInputImages} \
+          	--t1template=${T1wTemplate} \
+          	--t1templatebrain=${T1wTemplateBrain} \
+          	--t1template2mm=${T1wTemplate2mm} \
+          	--t2template=${T2wTemplate} \
+          	--t2templatebrain=${T2wTemplateBrain} \
+          	--t2template2mm=${T2wTemplate2mm} \
+          	--templatemask=${TemplateMask} \
+          	--template2mmmask=${Template2mmMask} \
+          	--brainsize=${BrainSize} \
+          	--fnirtconfig=${FNIRTConfig} \
+          	--fmapmag=${MagnitudeInputName} \
+          	--fmapphase=${PhaseInputName} \
+          	--echodiff=${TE} \
+          	--SEPhaseNeg=${SpinEchoPhaseEncodeNegative} \
+          	--SEPhasePos=${SpinEchoPhaseEncodePositive} \
+          	--echospacing=${DwellTime} \
+          	--seunwarpdir=${SEUnwarpDir} \     
+          	--t1samplespacing=${T1wSampleSpacing} \
+          	--t2samplespacing=${T2wSampleSpacing} \
+          	--unwarpdir=${UnwarpDir} \
+          	--gdcoeffs=${GradientDistortionCoeffs} \
+          	--avgrdcmethod=${AvgrdcSTRING} \
+          	--topupconfig=${TopupConfig} \
+          	--printcom=${PRINTCOM}" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcp1_orig.sh
+          	
+          	# - Make script executable 
+          	chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcp1_orig.sh
+    		
+    		# - Send to scheduler 
+    		gmri schedule command="${CASE}_hcp1_orig.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:hcp1_orig.output.log|stderr:hcp1_orig.error.log" \
+    		workdir="${StudyFolder}/${CASE}/hcp/" 
 
-    		fsl_sub."$fslsub" -Q "$QUEUE" \
-     		${HCPPIPEDIR}/PreFreeSurfer/PreFreeSurferPipeline.sh \
-      		--path="$StudyFolder" \
-      		--subject="$Subject" \
-      		--t1="$T1wInputImages" \
-      		--t2="$T2wInputImages" \
-      		--t1template="$T1wTemplate" \
-      		--t1templatebrain="$T1wTemplateBrain" \
-      		--t1template2mm="$T1wTemplate2mm" \
-      		--t2template="$T2wTemplate" \
-      		--t2templatebrain="$T2wTemplateBrain" \
-      		--t2template2mm="$T2wTemplate2mm" \
-      		--templatemask="$TemplateMask" \
-      		--template2mmmask="$Template2mmMask" \
-      		--brainsize="$BrainSize" \
-      		--fnirtconfig="$FNIRTConfig" \
-      		--fmapmag="$MagnitudeInputName" \
-      		--fmapphase="$PhaseInputName" \
-      		--echodiff="$TE" \
-      		--SEPhaseNeg="$SpinEchoPhaseEncodeNegative" \
-      		--SEPhasePos="$SpinEchoPhaseEncodePositive" \
-      		--echospacing="$DwellTime" \
-      		--seunwarpdir="$SEUnwarpDir" \
-      		--t1samplespacing="$T1wSampleSpacing" \
-      		--t2samplespacing="$T2wSampleSpacing" \
-      		--unwarpdir="$UnwarpDir" \
-      		--gdcoeffs="$GradientDistortionCoeffs" \
-      		--avgrdcmethod="$AvgrdcSTRING" \
-      		--topupconfig="$TopupConfig" \
-      		--printcom=$PRINTCOM
     	fi
     	
     	# The following lines are used for interactive debugging to set the positional parameters: $1 $2 $3 ...
@@ -1123,7 +1140,6 @@ hcp1_orig() {
           	--printcom=${PRINTCOM}"
 
   			#echo ". ${EnvironmentScript}"
-  		
 }
 
 show_usage_hcp1_orig() {
@@ -1151,7 +1167,7 @@ hcp2_orig() {
 		fi
 		
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
-		cd "$StudyFolder"/../../../fcMRI/hcp.logs/
+		#cd "$StudyFolder"/../../../fcMRI/hcp.logs/
 
 		# Requirements for this function
 		#  installed versions of: FSL5.0.2 or higher , FreeSurfer (version 5.2 or higher) , gradunwarp (python code from MGH)
@@ -1186,14 +1202,30 @@ hcp2_orig() {
       		--t2="$T2wImage" \
       		--printcom=$PRINTCOM
   		else 
-    		fsl_sub."$fslsub" -T 5000 -Q "$QUEUE" \
-     		${HCPPIPEDIR}/FreeSurfer/FreeSurferPipeline.sh \
-      		--subject="$Subject" \
-      		--subjectDIR="$SubjectDIR" \
-      		--t1="$T1wImage" \
-      		--t1brain="$T1wImageBrain" \
-      		--t2="$T2wImage" \
-      		--printcom=$PRINTCOM
+    		# -- Deprecated fsl_sub call
+    		#fsl_sub."$fslsub" -T 5000 -Q "$QUEUE" \
+    		
+    		# - Clean prior command 
+    		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcp2_orig.sh &> /dev/null
+     		
+     		# - Echo full command into a script
+     		echo "${HCPPIPEDIR}/FreeSurfer/FreeSurferPipeline.sh \
+      		--subject={$Subject} \
+      		--subjectDIR={$SubjectDIR} \
+      		--t1={$T1wImage} \
+      		--t1brain={$T1wImageBrain} \
+      		--t2={$T2wImage} \
+      		--printcom=$PRINTCOM" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcp2_orig.sh
+      		
+      		# - Make script executable 
+          	chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcp2_orig.sh
+    		
+    		# - Send to scheduler 
+    		gmri schedule command="${CASE}_hcp2_orig.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:hcp2_orig.output.log|stderr:hcp2_orig.error.log" \
+    		workdir="${StudyFolder}/${CASE}/hcp/" 
+      		
   		fi
   		 
   		# The following lines are used for interactive debugging to set the positional parameters: $1 $2 $3 ...
@@ -1226,7 +1258,7 @@ show_usage_hcp2_orig() {
 hcp3_orig() {
 		
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
-		cd "$StudyFolder"/../../../fcMRI/hcp.logs/
+		#cd "$StudyFolder"/../../../fcMRI/hcp.logs/
 		rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/* &> /dev/null
 
 		# Requirements for this function
@@ -1272,35 +1304,51 @@ hcp3_orig() {
       		--regname="$RegName" \
       		--printcom=$PRINTCOM
   		else 
-    		fsl_sub."$fslsub" -Q "$QUEUE" \
-     		${HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh \
-      		--path="$StudyFolder" \
-      		--subject="$Subject" \
-      		--surfatlasdir="$SurfaceAtlasDIR" \
-      		--grayordinatesdir="$GrayordinatesSpaceDIR" \
-      		--grayordinatesres="$GrayordinatesResolution" \
-      		--hiresmesh="$HighResMesh" \
-      		--lowresmesh="$LowResMesh" \
-      		--subcortgraylabels="$SubcorticalGrayLabels" \
-      		--freesurferlabels="$FreeSurferLabels" \
-      		--refmyelinmaps="$ReferenceMyelinMaps" \
-      		--regname="$RegName" \
-      		--printcom=$PRINTCOM
+    		# -- Deprecated fsl_sub call
+    		#fsl_sub."$fslsub" -Q "$QUEUE" \
+    		
+    		# - Clean prior command 
+    		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcp3_orig.sh &> /dev/null
+    		
+    		# - Echo full command into a script
+     		echo "${HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh \
+      		--path=${StudyFolder} \
+      		--subject=${Subject} \
+      		--surfatlasdir=${SurfaceAtlasDIR} \
+      		--grayordinatesdir=${GrayordinatesSpaceDIR} \
+      		--grayordinatesres=${GrayordinatesResolution} \
+      		--hiresmesh=${HighResMesh} \
+      		--lowresmesh=${LowResMesh} \
+      		--subcortgraylabels=${SubcorticalGrayLabels} \
+      		--freesurferlabels=${FreeSurferLabels} \
+      		--refmyelinmaps=${ReferenceMyelinMaps} \
+      		--regname=${RegName} \
+      		--printcom=${PRINTCOM}" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcp3_orig.sh
+      		
+      		# - Make script executable 
+          	chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcp3_orig.sh
+          	
+          	# - Send to scheduler 
+    		gmri schedule command="${CASE}_hcp3_orig.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:hcp3_orig.output.log|stderr:hcp3_orig.error.log" \
+    		workdir="${StudyFolder}/${CASE}/hcp/" 
+    		
   		fi
   		
   		  # The following lines are used for interactive debugging to set the positional parameters: $1 $2 $3 ...
-   			echo "set -- --path="$StudyFolder" \
-      		--subject="$Subject" \
-      		--surfatlasdir="$SurfaceAtlasDIR" \
-      		--grayordinatesdir="$GrayordinatesSpaceDIR" \
-      		--grayordinatesres="$GrayordinatesResolution" \
-      		--hiresmesh="$HighResMesh" \
-      		--lowresmesh="$LowResMesh" \
-      		--subcortgraylabels="$SubcorticalGrayLabels" \
-      		--freesurferlabels="$FreeSurferLabels" \
-      		--refmyelinmaps="$ReferenceMyelinMaps" \
-      		--regname="$RegName" \
-      		--printcom=$PRINTCOM"
+   			echo "set -- --path=${StudyFolder} \
+      		--subject=${Subject} \
+      		--surfatlasdir=${SurfaceAtlasDIR} \
+      		--grayordinatesdir=${GrayordinatesSpaceDIR} \
+      		--grayordinatesres=${GrayordinatesResolution} \
+      		--hiresmesh=${HighResMesh} \
+      		--lowresmesh=${LowResMesh} \
+      		--subcortgraylabels=${SubcorticalGrayLabels} \
+      		--freesurferlabels=${FreeSurferLabels} \
+      		--refmyelinmaps=${ReferenceMyelinMaps} \
+      		--regname=${RegName} \
+      		--printcom=${PRINTCOM}"
 
   		#echo ". ${EnvironmentScript}"
   		
@@ -1415,25 +1463,39 @@ hcp4_orig() {
       		--topupconfig="$TopUpConfig" \
       		--printcom="$PRINTCOM"
   		else 
-  		    fsl_sub."$fslsub" -Q "$QUEUE" \
-      		${HCPPIPEDIR}/fMRIVolume/GenericfMRIVolumeProcessingPipeline.sh \
-      		--path="$StudyFolder" \
-      		--subject="$Subject" \
-      		--fmriname="$fMRIName" \
-      		--fmritcs="$fMRITimeSeries" \
-      		--fmriscout="$fMRISBRef" \
-      		--SEPhaseNeg="$SpinEchoPhaseEncodeNegative" \
-      		--SEPhasePos="$SpinEchoPhaseEncodePositive" \
-      		--fmapmag="$MagnitudeInputName" \
-      		--fmapphase="$PhaseInputName" \
-      		--echospacing="$DwellTime" \
-      		--echodiff="$DeltaTE" \
-      		--unwarpdir="$UnwarpDir" \
-      		--fmrires="$FinalFMRIResolution" \
-      		--dcmethod="$DistortionCorrection" \
-      		--gdcoeffs="$GradientDistortionCoeffs" \
-      		--topupconfig="$TopUpConfig" \
-      		--printcom="$PRINTCOM"
+  			# -- Deprecated fsl_sub call
+  		    # fsl_sub."$fslsub" -Q "$QUEUE" \
+  		    
+  		  # - Clean prior command 
+    		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcp4_orig.sh &> /dev/null
+  		    
+      		echo "${HCPPIPEDIR}/fMRIVolume/GenericfMRIVolumeProcessingPipeline.sh \
+      		--path=$StudyFolder \
+      		--subject=$Subject \
+      		--fmriname=$fMRIName \
+      		--fmritcs=$fMRITimeSeries \
+      		--fmriscout=$fMRISBRef \
+      		--SEPhaseNeg=$SpinEchoPhaseEncodeNegative \
+      		--SEPhasePos=$SpinEchoPhaseEncodePositive \
+      		--fmapmag=$MagnitudeInputName \
+      		--fmapphase=$PhaseInputName \
+      		--echospacing=$DwellTime \
+      		--echodiff=$DeltaTE \
+      		--unwarpdir=$UnwarpDir \
+      		--fmrires=$FinalFMRIResolution \
+      		--dcmethod=$DistortionCorrection \
+      		--gdcoeffs=$GradientDistortionCoeffs \
+      		--topupconfig=$TopUpConfig \
+      		--printcom=$PRINTCOM" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcp4_orig.sh
+      		
+      		# - Make script executable 
+          	chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcp4_orig.sh
+          	
+          	# - Send to scheduler 
+    		gmri schedule command="${CASE}_hcp4_orig.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:hcp4_orig.output.log|stderr:hcp4_orig.error.log" \
+    		workdir="${StudyFolder}/${CASE}/hcp/" 
 
   		# The following lines are used for interactive debugging to set the positional parameters: $1 $2 $3 ...
 
@@ -1484,8 +1546,8 @@ show_usage_hcp4_orig() {
 hcp5_orig() {
 
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
-		mkdir "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null 	
-		cd "$StudyFolder"/../../../fcMRI/hcp.logs/
+		#mkdir "$StudyFolder"/../../../fcMRI/hcp.logs/ &> /dev/null 	
+		#cd "$StudyFolder"/../../../fcMRI/hcp.logs/
 
 		# Requirements for this script
 		#  installed versions of: FSL5.0.2 or higher , FreeSurfer (version 5.2 or higher) , gradunwarp (python code from MGH)
@@ -1526,16 +1588,30 @@ hcp5_orig() {
       		--grayordinatesres="$GrayordinatesResolution" \
       		--regname="$RegName"
       	else
-      		fsl_sub."$fslsub" -Q "$QUEUE" \
-      		${HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh \
-      		--path="$StudyFolder" \
-      		--subject="$Subject" \
-      		--fmriname="$fMRIName" \
-      		--lowresmesh="$LowResMesh" \
-      		--fmrires="$FinalfMRIResolution" \
-      		--smoothingFWHM="$SmoothingFWHM" \
-      		--grayordinatesres="$GrayordinatesResolution" \
-      		--regname="$RegName"
+      		# -- Deprecated fsl_sub call
+      		#fsl_sub."$fslsub" -Q "$QUEUE" \
+      		
+      		# - Clean prior command 
+    		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcp5_orig.sh &> /dev/null
+      		
+      		echo "${HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh \
+      		--path=$StudyFolder \
+      		--subject=$Subject \
+      		--fmriname=$fMRIName \
+      		--lowresmesh=$LowResMesh \
+      		--fmrires=$FinalfMRIResolution \
+      		--smoothingFWHM=$SmoothingFWHM \
+      		--grayordinatesres=$GrayordinatesResolution \
+      		--regname=$RegName" > > ${StudyFolder}/${CASE}/hcp/${CASE}_hcp5_orig.sh
+      		
+      		# - Make script executable 
+          	chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcp5_orig.sh
+          	
+          	# - Send to scheduler 
+    		gmri schedule command="${CASE}_hcp5_orig.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:hcp5_orig.output.log|stderr:hcp5_orig.error.log" \
+    		workdir="${StudyFolder}/${CASE}/hcp/" 
       		
   			# The following lines are used for interactive debugging to set the positional parameters: $1 $2 $3 ...
       		echo "set -- --path=$StudyFolder \
@@ -1572,7 +1648,7 @@ show_usage_hcp5_orig() {
 hcpd_orig() {
 
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
-		cd "$StudyFolder"/../../../fcMRI/hcp.logs/
+		#cd "$StudyFolder"/../../../fcMRI/hcp.logs/
 
 		# Requirements for this script
 		#  installed versions of: FSL5.0.2 or higher , FreeSurfer (version 5.2 or higher) , gradunwarp (python code from MGH)
@@ -1630,37 +1706,51 @@ hcpd_orig() {
    		
 		if [ "$Cluster" == 1 ]; then
 		
-		${HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh \
-      	--posData="${PosData}" \
-      	--negData="${NegData}" \
-      	--path="${StudyFolder}" \
-      	--subject="${SubjectID}" \
-      	--echospacing="${EchoSpacing}" \
-      	--PEdir="${PEdir}" \
-      	--gdcoeffs="${Gdcoeffs}" \
-      	--printcom="$PRINTCOM"
+			${HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh \
+      		--posData="${PosData}" \
+      		--negData="${NegData}" \
+      		--path="${StudyFolder}" \
+      		--subject="${SubjectID}" \
+      		--echospacing="${EchoSpacing}" \
+      		--PEdir="${PEdir}" \
+      		--gdcoeffs="${Gdcoeffs}" \
+      		--printcom="$PRINTCOM"
 		
       	else
-      	
-      	fsl_sub."$fslsub" -T 3000 -Q "$QUEUE" \
-		${HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh \
-      	--posData="${PosData}" \
-      	--negData="${NegData}" \
-      	--path="${StudyFolder}" \
-      	--subject="${SubjectID}" \
-      	--echospacing="${EchoSpacing}" \
-      	--PEdir="${PEdir}" \
-      	--gdcoeffs="${Gdcoeffs}" \
-      	--printcom="$PRINTCOM"
-      	
-      	echo "set -- --posData=$PosData \
-      		--negData=$NegData \
-      		--path=$StudyFolder \
-      		--subject=$SubjectID \
-      		--echospacing=$EchoSpacing \
-      		--PEdir=$PEdir \
-      		--gdcoeffs=$Gdcoeffs \
-      		--printcom=$PRINTCOM"
+
+    		# -- Deprecated fsl_sub call      	
+      		#fsl_sub."$fslsub" -T 3000 -Q "$QUEUE" \
+      		
+      		# - Clean prior command 
+    		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_orig.sh &> /dev/null
+			
+			"${HCPPIPEDIR}/DiffusionPreprocessing/DiffPreprocPipeline.sh \
+      		--posData=${PosData} \
+      		--negData=${NegData} \
+      		--path=${StudyFolder} \
+      		--subject=${SubjectID} \
+      		--echospacing=${EchoSpacing} \
+      		--PEdir=${PEdir} \
+      		--gdcoeffs=${Gdcoeffs} \
+      		--printcom=${PRINTCOM}" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_orig.sh
+      		
+      		# - Make script executable 
+        	chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_orig.sh
+        	  	
+        	# - Send to scheduler 
+    		gmri schedule command="${CASE}_hcpd_orig.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:hcpd_orig.output.log|stderr:hcpd_orig.error.log" \
+    		workdir="${StudyFolder}/${CASE}/hcp/" 
+    			
+      		echo "set -- --posData=$PosData \
+      			--negData=$NegData \
+      			--path=$StudyFolder \
+      			--subject=$SubjectID \
+      			--echospacing=$EchoSpacing \
+      			--PEdir=$PEdir \
+      			--gdcoeffs=$Gdcoeffs \
+      			--printcom=$PRINTCOM"
       	fi	
       	
 }
@@ -1738,51 +1828,66 @@ hcpdlegacy() {
 		
 		if [ "$Cluster" == 1 ]; then
 		
-		echo "Running locally on `hostname`"
-		echo "Check log file output here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
-				
-		${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
-		--path="${StudyFolder}" \
-		--subject="${CASE}" \
-		--PEdir="${PEdir}" \
-		--echospacing="${EchoSpacing}" \
-		--TE="${TE}" \
-		--unwarpdir="${UnwarpDir}" \
-		--overwrite="${Overwrite}" \
-		--diffdatasuffix="${DiffDataSuffix}" >> "$LogFolder"/DiffPreprocPipelineLegacy_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
-				
-		# Print log on screen
-		#LogFile=`ls -ltr $LogFolder/DiffPreprocPipelineLegacy_$CASE_*log | tail -n 1 | awk '{ print $9 }'`
-		#echo ""
-		#echo "Log file location:"
-		#echo "$LogFolder/$LogFile"
-		#echo ""
-		#echo `tail -f $LogFolder/$LogFile`
+			echo "Running locally on `hostname`"
+			echo "Check log file output here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+					
+			${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
+			--path="${StudyFolder}" \
+			--subject="${CASE}" \
+			--PEdir="${PEdir}" \
+			--echospacing="${EchoSpacing}" \
+			--TE="${TE}" \
+			--unwarpdir="${UnwarpDir}" \
+			--overwrite="${Overwrite}" \
+			--diffdatasuffix="${DiffDataSuffix}" >> "$LogFolder"/DiffPreprocPipelineLegacy_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+					
+			# Print log on screen
+			#LogFile=`ls -ltr $LogFolder/DiffPreprocPipelineLegacy_$CASE_*log | tail -n 1 | awk '{ print $9 }'`
+			#echo ""
+			#echo "Log file location:"
+			#echo "$LogFolder/$LogFile"
+			#echo ""
+			#echo `tail -f $LogFolder/$LogFile`
 		
 		else
 		
-		# set scheduler for fsl_sub command
-		fslsub="$Scheduler"
+			# -- Deprecated fsl_sub call
+			# set scheduler for fsl_sub command
+			#fslsub="$Scheduler"
+			#fsl_sub."$fslsub" -Q "$CUDAQUEUE" -l "$LogFolder" 
+			
+      		# - Clean prior command 
+    		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_legacy.sh &> /dev/null		
+			
+			echo "${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
+			--path=${StudyFolder} \
+			--subject=${CASE} \
+			--PEdir=${PEdir} \
+			--echospacing=${EchoSpacing} \
+			--TE=${TE} \
+			--unwarpdir=${UnwarpDir} \
+			--diffdatasuffix=${DiffDataSuffix} \
+			--overwrite=${Overwrite}" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_legacy.sh
+			
+			# - Make script executable 
+       		chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_legacy.sh
+       	
+       		# - Send to scheduler 
+    		gmri schedule command="${CASE}_hcpd_legacy.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:hcpd_legacy.output.log|stderr:hcpd_legacy.error.log" \
+    		workdir="${StudyFolder}/${CASE}/hcp/"
+	
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted" 
+			echo "Scheduler Name: $Scheduler"
+			echo "Scheduler Options: $SchedulerOptions"
+			echo "Check output logs here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
 		
-		fsl_sub."$fslsub" -Q "$CUDAQUEUE" -l "$LogFolder" ${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
-		--path="${StudyFolder}" \
-		--subject="${CASE}" \
-		--PEdir="${PEdir}" \
-		--echospacing="${EchoSpacing}" \
-		--TE="${TE}" \
-		--unwarpdir="${UnwarpDir}" \
-		--diffdatasuffix="${DiffDataSuffix}" \
-		--overwrite="${Overwrite}"
-
-		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted" 
-		echo "Scheduler Name: $Scheduler"
-		echo "Scheduler Options: $SchedulerOptions"
-		echo "Check output logs here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
 		fi
 }
 
@@ -1890,39 +1995,54 @@ dwidenseparcellation() {
 		
 		if [ "$Cluster" == 1 ]; then
 		
-		echo "Running locally on `hostname`"
-		echo "Check log file output here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
-				
-		DWIDenseParcellation.sh \
-		--path="${StudyFolder}" \
-		--subject="${CASE}" \
-		--matrixversion="${MatrixVersion}" \
-		--parcellationfile="${ParcellationFile}" \
-		--outname="${OutName}" \
-		--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			echo "Running locally on `hostname`"
+			echo "Check log file output here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+					
+			DWIDenseParcellation.sh \
+			--path="${StudyFolder}" \
+			--subject="${CASE}" \
+			--matrixversion="${MatrixVersion}" \
+			--parcellationfile="${ParcellationFile}" \
+			--outname="${OutName}" \
+			--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 		
 		else
 		
-		# set scheduler for fsl_sub command
-		fslsub="$Scheduler"
-		
-		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" DWIDenseParcellation.sh \
-		--path="${StudyFolder}" \
-		--subject="${CASE}" \
-		--matrixversion="${MatrixVersion}" \
-		--parcellationfile="${ParcellationFile}" \
-		--outname="${OutName}" \
-		--overwrite="${Overwrite}"
-
-		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted" 
-		echo "Scheduler Name: $Scheduler"
-		echo "Scheduler Options: $SchedulerOptions"
-		echo "Check output logs here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
+			# -- Deprecated fsl_sub call
+			# set scheduler for fsl_sub command
+			#fslsub="$Scheduler"
+			#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" 
+			
+			# - Clean prior command 
+    		rm -f "$LogFolder"/DWIDenseParcellation_"$CASE".sh &> /dev/null	
+    		
+			# - Echo full command into a script
+			echo "DWIDenseParcellation.sh \
+			--path=${StudyFolder} \
+			--subject=${CASE} \
+			--matrixversion=${MatrixVersion} \
+			--parcellationfile=${ParcellationFile} \
+			--outname=${OutName} \
+			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseParcellation_"$CASE".sh
+			
+			# - Make script executable 
+       		chmod 770 "$LogFolder"/DWIDenseParcellation_"$CASE".sh
+       	
+       		# - Send to scheduler 
+    		gmri schedule command="DWIDenseParcellation_${CASE}.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:DWIDenseParcellation.output.log|stderr:DWIDenseParcellation.error.log" \
+    		workdir="${LogFolder}"
+	
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted" 
+			echo "Scheduler Name: $Scheduler"
+			echo "Scheduler Options: $SchedulerOptions"
+			echo "Check output logs here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
 		fi
 }
 
@@ -2005,7 +2125,7 @@ dwiseedtractography() {
 
 		
 		# Parse General Parameters
-		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		#QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 		StudyFolder="$StudyFolder"
 		CASE="$CASE"
 		MatrixVersion="$MatrixVersion"
@@ -2018,39 +2138,54 @@ dwiseedtractography() {
 		
 		if [ "$Cluster" == 1 ]; then
 		
-		echo "Running locally on `hostname`"
-		echo "Check log file output here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
-				
-		DWIDenseSeedTractography.sh \
-		--path="${StudyFolder}" \
-		--subject="${CASE}" \
-		--matrixversion="${MatrixVersion}" \
-		--seedfile="${SeedFile}" \
-		--outname="${OutName}" \
-		--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			echo "Running locally on `hostname`"
+			echo "Check log file output here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+					
+			DWIDenseSeedTractography.sh \
+			--path="${StudyFolder}" \
+			--subject="${CASE}" \
+			--matrixversion="${MatrixVersion}" \
+			--seedfile="${SeedFile}" \
+			--outname="${OutName}" \
+			--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseSeedTractography_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 		
 		else
+			# -- Deprecated fsl_sub call
+			# set scheduler for fsl_sub command
+			#fslsub="$Scheduler"
+			#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" 
+			
+			# - Clean prior command 
+    		rm -f "$LogFolder"/DWIDenseSeedTractography_"$CASE".sh &> /dev/null	
+			
+			# - Echo full command into a script
+			echo "DWIDenseSeedTractography.sh \
+			--path=${StudyFolder} \
+			--subject=${CASE} \
+			--matrixversion=${MatrixVersion} \
+			--seedfile=${SeedFile} \
+			--outname=${OutName} \
+			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseSeedTractography_"$CASE".sh
+			
+			# - Make script executable 
+          	chmod 770 "$LogFolder"/DWIDenseSeedTractography_"$CASE".sh
+	
+	        # - Send to scheduler     		
+    		gmri schedule command="DWIDenseSeedTractography_${CASE}.sh" \
+    		settings="${Scheduler},${SchedulerOptions}" \
+    		output="stdout:DWIDenseSeedTractography.output.log|stderr:DWIDenseSeedTractography.error.log" \
+    		workdir="${LogFolder}"
+	
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted" 
+			echo "Scheduler Name: $Scheduler"
+			echo "Scheduler Options: $SchedulerOptions"
+			echo "Check output logs here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
 		
-		# set scheduler for fsl_sub command
-		fslsub="$Scheduler"
-		
-		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" DWIDenseSeedTractography.sh \
-		--path="${StudyFolder}" \
-		--subject="${CASE}" \
-		--matrixversion="${MatrixVersion}" \
-		--seedfile="${SeedFile}" \
-		--outname="${OutName}" \
-		--overwrite="${Overwrite}"
-
-		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted" 
-		echo "Scheduler Name: $Scheduler"
-		echo "Scheduler Options: $SchedulerOptions"
-		echo "Check output logs here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
 		fi
 }
 
@@ -2064,6 +2199,7 @@ show_usage_dwiseedtractography() {
 				echo ""
 				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
 				echo ""
+				echo "	Note: Submit this function to a GPU-enabled queue" 
 				echo ""
 				echo "OUTPUTS: "
 				echo "         <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>.dconn.nii"
@@ -2143,6 +2279,7 @@ computeboldfc() {
 		OutPath="$OutPathFC"
 		OutName="$OutName"
 		ExtractData="$ExtractData"
+		
 		# -- Parse additional parameters
 		Calculation="$Calculation"		# --calculation=	
 		RunType="$RunType"				# --runtype= 		
@@ -2197,35 +2334,54 @@ computeboldfc() {
 				--mask="${MaskFrames}" \
 				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
 			else			
+				# -- Deprecated fsl_sub call
 				# set scheduler for fsl_sub command
-				fslsub="$Scheduler"
-				${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
-				${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
-				--path="${StudyFolder}" \
-				--calculation="${Calculation}" \
-				--runtype="${RunType}" \
-				--subject="${CASE}" \
-				--inputfiles="${InputFiles}" \
-				--inputpath="${InputPath}" \
-				--extractdata="${ExtractData}" \
-				--outname="${OutName}" \
-				--flist="${FileList}" \
-				--overwrite="${Overwrite}" \
-				--ignore="${IgnoreFrames}" \
-				--roinfo="${ROIInfo}" \
-				--options="${FCCommand}" \
-				--method="${Method}" \
-				--targetf="${OutPath}" \
-				--mask="${MaskFrames}" \
-				--covariance="${Covariance}"
+				#fslsub="$Scheduler"
+				#${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
+				
+				# - Clean prior command 
+    			rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh &> /dev/null	
+    		
+    			# - Echo full command into a script
+				echo "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
+				--path=${StudyFolder} \
+				--calculation=${Calculation} \
+				--runtype=${RunType} \
+				--subject=${CASE} \
+				--inputfiles=${InputFiles} \
+				--inputpath=${InputPath} \
+				--extractdata=${ExtractData} \
+				--outname=${OutName} \
+				--flist=${FileList} \
+				--overwrite=${Overwrite} \
+				--ignore=${IgnoreFrames} \
+				--roinfo=${ROIInfo} \
+				--options=${FCCommand} \
+				--method=${Method} \
+				--targetf=${OutPath} \
+				--mask=${MaskFrames} \
+				--covariance=${Covariance" > "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
+				
+				# - Make script executable 
+          		chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
+          		
+          		# - Send to scheduler     		
+    			gmri schedule command="ComputeFunctionalConnectivity_${CASE}.sh" \
+    			settings="${Scheduler},${SchedulerOptions}" \
+    			output="stdout:ComputeFunctionalConnectivity.output.log|stderr:ComputeFunctionalConnectivity.error.log" \
+    			workdir="${LogFolder}"
 
 				echo "--------------------------------------------------------------"
-				echo "Data successfully submitted to $QUEUE" 
+				echo "Data successfully submitted" 
+				echo "Scheduler Name: $Scheduler"
+				echo "Scheduler Options: $SchedulerOptions"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
+			
 			fi
 		fi
+		
 		if [ ${Calculation} == "gbc" ]; then
 			if [ "$Cluster" == 1 ]; then
 				echo "Running locally on `hostname`"
@@ -2255,32 +2411,47 @@ computeboldfc() {
 				--vstep="${VoxelStep}" \
 				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
 			else
+				# -- Deprecated fsl_sub call
 				# set scheduler for fsl_sub command
-				fslsub="$Scheduler"
-				${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
-				${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
-				--path="${StudyFolder}" \
-				--calculation="${Calculation}" \
-				--runtype="${RunType}" \
-				--subject="${CASE}" \
-				--inputfiles="${InputFiles}" \
-				--inputpath="${InputPath}" \
-				--extractdata="${ExtractData}" \
-				--flist="${FileList}" \
-				--outname="${OutName}" \
-				--overwrite="${Overwrite}" \
-				--ignore="${IgnoreFrames}" \
-				--target="${TargetROI}" \
-				--command="${GBCCommand}" \
-				--targetf="${OutPath}" \
-				--mask="${MaskFrames}" \
-				--rsmooth="${RadiusSmooth}" \
-				--rdilate="${RadiusDilate}" \
-				--verbose="${Verbose}" \
-				--time="${ComputeTime}" \
-				--vstep="${VoxelStep}" \
-				--covariance="${Covariance}"
+				#fslsub="$Scheduler"
+				#${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
 				
+				# - Clean prior command 
+    			rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null	
+    			
+    			# - Echo full command into a script
+				echo "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
+				--path=${StudyFolder} \
+				--calculation=${Calculation} \
+				--runtype=${RunType} \
+				--subject=${CASE} \
+				--inputfiles=${InputFiles} \
+				--inputpath=${InputPath} \
+				--extractdata=${ExtractData} \
+				--flist=${FileList} \
+				--outname=${OutName} \
+				--overwrite=${Overwrite} \
+				--ignore=${IgnoreFrames} \
+				--target=${TargetROI} \
+				--command=${GBCCommand} \
+				--targetf=${OutPath} \
+				--mask=${MaskFrames} \
+				--rsmooth=${RadiusSmooth} \
+				--rdilate=${RadiusDilate} \
+				--verbose=${Verbose} \
+				--time=${ComputeTime} \
+				--vstep=${VoxelStep} \
+				--covariance=${Covariance}" > "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null
+
+				# - Make script executable 
+          		chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null
+          		
+          		# - Send to scheduler     		
+    			gmri schedule command="ComputeFunctionalConnectivity_gbc_${CASE}.sh" \
+    			settings="${Scheduler},${SchedulerOptions}" \
+    			output="stdout:ComputeFunctionalConnectivity_gbc.output.log|stderr:ComputeFunctionalConnectivity_gbc.error.log" \
+    			workdir="${LogFolder}"
+          					
 				echo "--------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name: $Scheduler"
@@ -3113,7 +3284,6 @@ pretractographydense() {
 					echo ""
 					"$ScriptsFolder"/PreTractography.sh "$RunFolder" "$CASE" 0 >> "$LogFolder"/PretractographyDense_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 		else
-				
 					echo "Job ID:"
 					fslsub="$Scheduler" # set scheduler for fsl_sub command
 					fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ScriptsFolder"/PreTractography.sh "$RunFolder" "$CASE" 0
@@ -3593,7 +3763,10 @@ qcpreproc() {
 				rm -f "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh &> /dev/null
 				echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
 				chmod 770 "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
-				fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
+				
+				## fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
+				gmri schedule command="${CASE}_ComQUEUE_${BOLD}.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:qcpreproc.output.log|stderr:qcpreproc.error.log"  workdir="${LogFolder}" 
+				
 				echo ""
 				echo "---------------------------------------------------------------------------------"
 				echo "Data successfully submitted" 
@@ -3656,7 +3829,10 @@ qcpreproc() {
 		rm -f "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
 		echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE.sh
 		chmod 700 "$LogFolder"/"$CASE"_ComQUEUE.sh
-		fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
+		
+		## fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
+		gmri schedule command="${CASE}_ComQUEUE.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:qcpreproc.output.log|stderr:qcpreproc.error.log"  workdir="${LogFolder}" 
+		
 		echo ""
 		echo "---------------------------------------------------------------------------------"
 		echo "Data successfully submitted" 
