@@ -738,27 +738,23 @@ fixica() {
 			do
 				if [ "$Overwrite" == "yes" ]; then
 					rm -r "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"*_hp2000*  &> /dev/null
-				fi		
-				
-				
+				fi
 				if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii ]; then
 						echo "FIX ICA Computed for this for $CASE and $BOLD. Skipping to next..."
-				else		
-					    echo "Running FIX ICA on $BOLD data for $CASE... (note: this uses Melodic which is a slow single-threaded process)"
+				else
+						echo "Running FIX ICA on $BOLD data for $CASE... (note: this uses Melodic which is a slow single-threaded process)"
 						rm -r *hp2000* &> /dev/null
 						"$FIXICADIR"/hcp_fix.sh "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz 2000
 				fi
 		done
-
 }
 
 show_usage_fixica() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "USAGE INFO FOR FIX ICA PENDING..."
-    			echo ""
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "USAGE INFO FOR FIX ICA PENDING..."
+				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -783,12 +779,11 @@ postfix() {
 }
 
 show_usage_postfix() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "USAGE INFO PENDING ... "
-    			echo ""
+ 				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "USAGE INFO PENDING ... "
+				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -802,26 +797,20 @@ boldhardlinkfixica() {
 			do	
 				BOLDCount=$((BOLDCount+1))
 				echo "Setting up hard links following FIX ICA for BOLD# $BOLD for $CASE... "
-				
 				# setup folder strucrture if missing
 				mkdir "$StudyFolder"/"$CASE"/images    &> /dev/null
 				mkdir "$StudyFolder"/"$CASE"/images/functional	    &> /dev/null
 				mkdir "$StudyFolder"/"$CASE"/images/functional/movement    &> /dev/null
-				
 				# setup hard links for images						
 				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii     &> /dev/null
 				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".nii.gz     &> /dev/null
-				
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".nii.gz
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".nii.gz
-				
 				#rm "$StudyFolder"/"$CASE"/images/functional/boldfixicarfMRI_REST*     &> /dev/null
 				#rm "$StudyFolder"/"$CASE"/images/functional/boldrfMRI_REST*     &> /dev/null
-				
 				echo "Setting up hard links for movement data for BOLD# $BOLD for $CASE... "
-				
 				# Clean up movement regressor file to match dofcMRIp convention and copy to movement directory
 				export PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH     &> /dev/null
 				rm "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD"_mov.dat     &> /dev/null
@@ -832,17 +821,15 @@ boldhardlinkfixica() {
 				sed -i.bak '1i\#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)' "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"//Movement_Regressors_edit_fin.txt	
 				cp "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD"_mov.dat			
 				rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
-						
-			done		
+			done
 }
 
 show_usage_boldhardlinkfixica() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function for hard-linking minimally preprocessed HCP BOLD images after FIX ICA was done for further denoising."
-    			echo ""
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "Function for hard-linking minimally preprocessed HCP BOLD images after FIX ICA was done for further denoising."
+				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -875,12 +862,11 @@ fixicainsertmean() {
 }
 
 show_usage_fixicainsertmean() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function for imputing mean of the image after FIX ICA was done for further denoising."
-    			echo ""
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "Function for imputing mean of the image after FIX ICA was done for further denoising."
+				echo ""
 }
 
 
@@ -913,12 +899,11 @@ fixicaremovemean() {
 }
 
 show_usage_fixicaremovemean() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Function for removing the mean of the image after FIX ICA was done for further denoising."
-    			echo ""
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "Function for removing the mean of the image after FIX ICA was done for further denoising."
+				echo ""
 }
 	
 # ------------------------------------------------------------------------------------------------------
@@ -952,7 +937,6 @@ hcp1_orig() {
 		#Gradient distortion in standard scanners like the Trio is much less than for the HCP Skyra.
 
 		######################################### DO WORK ##########################################
-
 		
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
 		#cd "$StudyFolder"/../../../fcMRI/hcp.logs/
@@ -978,50 +962,45 @@ hcp1_orig() {
     			i=$(($i+1))
   			done
   
-  			#Detect Number of T2w Images
-  			numT2ws=`ls ${StudyFolder}/${Subject} | grep T2w | wc -l`
-  			T2wInputImages=""
-  			i=1
- 			while [ $i -le $numT2ws ] ; do
-    			T2wInputImages=`echo "${T2wInputImages}${StudyFolder}/${Subject}/T2w/${Subject}_strc_T2w_SPC${i}.nii.gz@"`
-    			i=$(($i+1))
-  			done
-  			
-  			MagnitudeInputName="${StudyFolder}/${Subject}/FieldMap_strc/${Subject}_strc_FieldMap_Magnitude.nii.gz" #Expects 4D magitude volume with two 3D timepoints or "NONE" if not used
-  			PhaseInputName="${StudyFolder}/${Subject}/FieldMap_strc/${Subject}_strc_FieldMap_Phase.nii.gz" #Expects 3D phase difference volume or "NONE" if not used
-  
-  			SpinEchoPhaseEncodeNegative="NONE" #For the spin echo field map volume with a negative phase encoding direction (LR in HCP data), set to NONE if using regular FIELDMAP
-  			SpinEchoPhaseEncodePositive="NONE" #For the spin echo field map volume with a positive phase encoding direction (RL in HCP data), set to NONE if using regular FIELDMAP
-
-  			#Templates -- NOTE: Alan changed to match Yale acquisition
-  			T1wTemplate="${HCPPIPEDIR_Templates}/MNI152_T1_0.8mm.nii.gz" #MNI0.8mm template
-  			T1wTemplateBrain="${HCPPIPEDIR_Templates}/MNI152_T1_0.8mm_brain.nii.gz" #Brain extracted MNI0.8mm template
-  			T1wTemplate2mm="${HCPPIPEDIR_Templates}/MNI152_T1_2mm.nii.gz" #MNI2mm template
-  			T2wTemplate="${HCPPIPEDIR_Templates}/MNI152_T2_0.8mm.nii.gz" #MNI0.8mm T2wTemplate
-  			T2wTemplateBrain="${HCPPIPEDIR_Templates}/MNI152_T2_0.8mm_brain.nii.gz" #Brain extracted MNI0.8mm T2wTemplate
-  			T2wTemplate2mm="${HCPPIPEDIR_Templates}/MNI152_T2_2mm.nii.gz" #MNI2mm T2wTemplate
-  			TemplateMask="${HCPPIPEDIR_Templates}/MNI152_T1_0.8mm_brain_mask.nii.gz" #Brain mask MNI0.8mm template
-  			Template2mmMask="${HCPPIPEDIR_Templates}/MNI152_T1_2mm_brain_mask_dil.nii.gz" #MNI2mm template
-
-  			#Scan Settings -- NOTE: Alan changed to match Yale acquisition
-  			TE="2.46" #delta TE in ms for field map or "NONE" if not used
-  			DwellTime="NONE" #Echo Spacing or Dwelltime of Spin Echo Field Map or "NONE" if not used
-  			SEUnwarpDir="NONE" #x or y (minus or not does not matter) "NONE" if not used 
-  			T1wSampleSpacing="0.0000065" #DICOM field (0019,1018) in s or "NONE" if not used
-  			T2wSampleSpacing="0.0000021" #DICOM field (0019,1018) in s or "NONE" if not used
-  			UnwarpDir="z" #z appears to be best or "NONE" if not used
-  			#GradientDistortionCoeffs="NONE" #Location of Coeffs file or "NONE" to skip
-  			#GradientDistortionCoeffs="${HCPPIPEDIR_Config}/coeff_SC72C_Skyra.grad" #Location of Coeffs file or "NONE" to skip
-  			GradientDistortionCoeffs="${HCPPIPEDIR_Config}/Trio_coeff.grad" #Location of Coeffs file or "NONE" to skip
-
-  			#Config Settings
-  			BrainSize="150" #BrainSize in mm, 150 for humans
-  			FNIRTConfig="${HCPPIPEDIR_Config}/T1_2_MNI152_2mm.cnf" #FNIRT 2mm T1w Config
-  			AvgrdcSTRING="FIELDMAP" #Averaging and readout distortion correction methods: "NONE" = average any repeats with no readout correction "FIELDMAP" = average any repeats and use field map for readout correction "TOPUP" = average and distortion correct at the same time with topup/applytopup only works for 2 images currently
-  			TopupConfig="NONE" #Config for topup or "NONE" if not used
+			#Detect Number of T2w Images
+			numT2ws=`ls ${StudyFolder}/${Subject} | grep T2w | wc -l`
+			T2wInputImages=""
+			i=1
+			while [ $i -le $numT2ws ] ; do
+				T2wInputImages=`echo "${T2wInputImages}${StudyFolder}/${Subject}/T2w/${Subject}_strc_T2w_SPC${i}.nii.gz@"`
+				i=$(($i+1))
+			done
+			
+			MagnitudeInputName="${StudyFolder}/${Subject}/FieldMap_strc/${Subject}_strc_FieldMap_Magnitude.nii.gz" #Expects 4D magitude volume with two 3D timepoints or "NONE" if not used
+			PhaseInputName="${StudyFolder}/${Subject}/FieldMap_strc/${Subject}_strc_FieldMap_Phase.nii.gz" #Expects 3D phase difference volume or "NONE" if not used
+			SpinEchoPhaseEncodeNegative="NONE" #For the spin echo field map volume with a negative phase encoding direction (LR in HCP data), set to NONE if using regular FIELDMAP
+			SpinEchoPhaseEncodePositive="NONE" #For the spin echo field map volume with a positive phase encoding direction (RL in HCP data), set to NONE if using regular FIELDMAP
+			#Templates -- NOTE: Alan changed to match Yale acquisition
+			T1wTemplate="${HCPPIPEDIR_Templates}/MNI152_T1_0.8mm.nii.gz" #MNI0.8mm template
+			T1wTemplateBrain="${HCPPIPEDIR_Templates}/MNI152_T1_0.8mm_brain.nii.gz" #Brain extracted MNI0.8mm template
+			T1wTemplate2mm="${HCPPIPEDIR_Templates}/MNI152_T1_2mm.nii.gz" #MNI2mm template
+			T2wTemplate="${HCPPIPEDIR_Templates}/MNI152_T2_0.8mm.nii.gz" #MNI0.8mm T2wTemplate
+			T2wTemplateBrain="${HCPPIPEDIR_Templates}/MNI152_T2_0.8mm_brain.nii.gz" #Brain extracted MNI0.8mm T2wTemplate
+			T2wTemplate2mm="${HCPPIPEDIR_Templates}/MNI152_T2_2mm.nii.gz" #MNI2mm T2wTemplate
+			TemplateMask="${HCPPIPEDIR_Templates}/MNI152_T1_0.8mm_brain_mask.nii.gz" #Brain mask MNI0.8mm template
+			Template2mmMask="${HCPPIPEDIR_Templates}/MNI152_T1_2mm_brain_mask_dil.nii.gz" #MNI2mm template
+			#Scan Settings -- NOTE: Alan changed to match Yale acquisition
+			TE="2.46" #delta TE in ms for field map or "NONE" if not used
+			DwellTime="NONE" #Echo Spacing or Dwelltime of Spin Echo Field Map or "NONE" if not used
+			SEUnwarpDir="NONE" #x or y (minus or not does not matter) "NONE" if not used 
+			T1wSampleSpacing="0.0000065" #DICOM field (0019,1018) in s or "NONE" if not used
+			T2wSampleSpacing="0.0000021" #DICOM field (0019,1018) in s or "NONE" if not used
+			UnwarpDir="z" #z appears to be best or "NONE" if not used
+			#GradientDistortionCoeffs="NONE" #Location of Coeffs file or "NONE" to skip
+			#GradientDistortionCoeffs="${HCPPIPEDIR_Config}/coeff_SC72C_Skyra.grad" #Location of Coeffs file or "NONE" to skip
+			GradientDistortionCoeffs="${HCPPIPEDIR_Config}/Trio_coeff.grad" #Location of Coeffs file or "NONE" to skip
+			#Config Settings
+			BrainSize="150" #BrainSize in mm, 150 for humans
+			FNIRTConfig="${HCPPIPEDIR_Config}/T1_2_MNI152_2mm.cnf" #FNIRT 2mm T1w Config
+			AvgrdcSTRING="FIELDMAP" #Averaging and readout distortion correction methods: "NONE" = average any repeats with no readout correction "FIELDMAP" = average any repeats and use field map for readout correction "TOPUP" = average and distortion correct at the same time with topup/applytopup only works for 2 images currently
+			TopupConfig="NONE" #Config for topup or "NONE" if not used
 
   		if [ "$Cluster" == 1 ]; then
-  		
      		${HCPPIPEDIR}/PreFreeSurfer/PreFreeSurferPipeline.sh \
       		--path="$StudyFolder" \
       		--subject="$Subject" \
@@ -1051,7 +1030,6 @@ hcp1_orig() {
       		--avgrdcmethod="$AvgrdcSTRING" \
       		--topupconfig="$TopupConfig" \
       		--printcom=$PRINTCOM
-    	
     	else
 			# -- Deprecated fsl_sub call
     		#fsl_sub."$fslsub" -Q "$QUEUE" \
@@ -1153,28 +1131,23 @@ show_usage_hcp1_orig() {
 hcp2_orig() {
 
 		# Cleanup FS run if force flag on
-		
 		if [ "$Overwrite" == "yes" ]; then
 			rm -r "$StudyFolder"/"$CASE"/T1w/"$CASE"   &> /dev/null
 		fi
 		
 		#EnvironmentScript="$StudyFolder/../../../fcMRI/hcpsetup.sh" #Pipeline environment script
 		#cd "$StudyFolder"/../../../fcMRI/hcp.logs/
-
 		# Requirements for this function
 		#  installed versions of: FSL5.0.2 or higher , FreeSurfer (version 5.2 or higher) , gradunwarp (python code from MGH)
 		#  environment: FSLDIR , FREESURFER_HOME , HCPPIPEDIR , CARET7DIR , PATH (for gradient_unwarp.py)
 
 		#Set up pipeline environment variables and software
 		#. ${EnvironmentScript}
-
 		# Log the originating call
 		echo "$@"
 		
 		########################################## INPUTS ########################################## 
-
 		#Scripts called by this function do assume they run on the outputs of the PreFreeSurfer Pipeline
-
 		######################################### DO WORK ##########################################
 
 		#Input Variables
@@ -1196,10 +1169,8 @@ hcp2_orig() {
   		else 
     		# -- Deprecated fsl_sub call
     		#fsl_sub."$fslsub" -T 5000 -Q "$QUEUE" \
-    		
     		# - Clean prior command 
     		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcp2_orig.sh &> /dev/null
-     		
      		# - Echo full command into a script
      		echo "${HCPPIPEDIR}/FreeSurfer/FreeSurferPipeline.sh \
       		--subject={$Subject} \
@@ -1208,10 +1179,8 @@ hcp2_orig() {
       		--t1brain={$T1wImageBrain} \
       		--t2={$T2wImage} \
       		--printcom=$PRINTCOM" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcp2_orig.sh
-      		
       		# - Make script executable 
           	chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcp2_orig.sh
-    		
     		# - Send to scheduler 
     		gmri schedule command="${CASE}_hcp2_orig.sh" \
     		settings="${Scheduler},${SchedulerOptions}" \
@@ -1227,20 +1196,18 @@ hcp2_orig() {
       		--t1brain={$T1wImageBrain} \
       		--t2={$T2wImage} \
       		--printcom=$PRINTCOM"
-
-  		#echo ". ${EnvironmentScript}"
+		#echo ". ${EnvironmentScript}"
 }
 
 show_usage_hcp2_orig() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Original implementation of the FreeSurfer (hcp2) code."
-    			echo ""
-    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp2, called via gmri functions."
-    			echo "		--> run ap ?hcp2 for up-to-date help call of the supported function"
-    			echo ""
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "Original implementation of the FreeSurfer (hcp2) code."
+				echo ""
+				echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp2, called via gmri functions."
+				echo "		--> run ap ?hcp2 for up-to-date help call of the supported function"
+				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1264,22 +1231,19 @@ hcp3_orig() {
 		echo "$@"
 		
 		########################################## INPUTS ########################################## 
-
 		#Scripts called by this script do assume they run on the outputs of the FreeSurfer Pipeline
-
 		######################################### DO WORK ##########################################
-
 		#Input Variables
- 		SurfaceAtlasDIR="${HCPPIPEDIR_Templates}/standard_mesh_atlases" #(Need to rename make surf.gii and add 32k)
-  		GrayordinatesSpaceDIR="${HCPPIPEDIR_Templates}/91282_Greyordinates" #(Need to copy these in)
-  		GrayordinatesResolution="2" #Usually 2mm
-  		HighResMesh="164" #Usually 164k vertices
-  		LowResMesh="32" #Usually 32k vertices
-  		SubcorticalGrayLabels="${HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt"
-  		FreeSurferLabels="${HCPPIPEDIR_Config}/FreeSurferAllLut.txt"
-  		ReferenceMyelinMaps="${HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii"
-  		RegName="FS" #MSMSulc is recommended, if binary is not available use FS (FreeSurfer)
-  		Subject="$CASE"
+		SurfaceAtlasDIR="${HCPPIPEDIR_Templates}/standard_mesh_atlases" #(Need to rename make surf.gii and add 32k)
+		GrayordinatesSpaceDIR="${HCPPIPEDIR_Templates}/91282_Greyordinates" #(Need to copy these in)
+		GrayordinatesResolution="2" #Usually 2mm
+		HighResMesh="164" #Usually 164k vertices
+		LowResMesh="32" #Usually 32k vertices
+		SubcorticalGrayLabels="${HCPPIPEDIR_Config}/FreeSurferSubcorticalLabelTableLut.txt"
+		FreeSurferLabels="${HCPPIPEDIR_Config}/FreeSurferAllLut.txt"
+		ReferenceMyelinMaps="${HCPPIPEDIR_Templates}/standard_mesh_atlases/Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii"
+		RegName="FS" #MSMSulc is recommended, if binary is not available use FS (FreeSurfer)
+		Subject="$CASE"
 
   		if [ "$Cluster" == 1 ]; then
      		${HCPPIPEDIR}/PostFreeSurfer/PostFreeSurferPipeline.sh \
@@ -1347,17 +1311,15 @@ hcp3_orig() {
 }
 
 show_usage_hcp3_orig() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Original implementation of the PostFreeSurfer (hcp3) code."
-    			echo ""
-    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp3, called via gmri functions."
-    			echo "		--> run ap ?hcp3 for up-to-date help call of the supported function"
-    			echo ""
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "Original implementation of the PostFreeSurfer (hcp3) code."
+				echo ""
+				echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp3, called via gmri functions."
+				echo "		--> run ap ?hcp3 for up-to-date help call of the supported function"
+				echo ""
 }
-
 
 # ------------------------------------------------------------------------------------------------------
 #  hcp4_orig - Executes the Volume BOLD Script
@@ -1454,13 +1416,11 @@ hcp4_orig() {
       		--gdcoeffs="$GradientDistortionCoeffs" \
       		--topupconfig="$TopUpConfig" \
       		--printcom="$PRINTCOM"
-  		else 
-  			# -- Deprecated fsl_sub call
-  		    # fsl_sub."$fslsub" -Q "$QUEUE" \
-  		    
-  		  # - Clean prior command 
+		else 
+			# -- Deprecated fsl_sub call
+		    # fsl_sub."$fslsub" -Q "$QUEUE" \
+		  # - Clean prior command 
     		rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcp4_orig.sh &> /dev/null
-  		    
       		echo "${HCPPIPEDIR}/fMRIVolume/GenericfMRIVolumeProcessingPipeline.sh \
       		--path=$StudyFolder \
       		--subject=$Subject \
@@ -1479,10 +1439,8 @@ hcp4_orig() {
       		--gdcoeffs=$GradientDistortionCoeffs \
       		--topupconfig=$TopUpConfig \
       		--printcom=$PRINTCOM" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcp4_orig.sh
-      		
       		# - Make script executable 
           	chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcp4_orig.sh
-          	
           	# - Send to scheduler 
     		gmri schedule command="${CASE}_hcp4_orig.sh" \
     		settings="${Scheduler},${SchedulerOptions}" \
@@ -1490,7 +1448,6 @@ hcp4_orig() {
     		workdir="${StudyFolder}/${CASE}/hcp/" 
 
   		# The following lines are used for interactive debugging to set the positional parameters: $1 $2 $3 ...
-
   		echo "set -- --path=$StudyFolder \
       		--subject=$Subject \
       		--fmriname=$fMRIName \
@@ -1508,27 +1465,22 @@ hcp4_orig() {
       		--gdcoeffs=$GradientDistortionCoeffs \
       		--topupconfig=$TopUpConfig \
       		--printcom=$PRINTCOM"
-
   		#echo ". ${EnvironmentScript}"
-		
 		fi
-		
-    		i=$(($i+1))
-    		
-  		done
+			i=$(($i+1))
+		done
 		
 }
 
 show_usage_hcp4_orig() {
-
-  				echo ""
-  				echo "-- DESCRIPTION:"
-    			echo ""
-    			echo "Original implementation of the HCP Volume Preprocessing (hcp4) code."
-    			echo ""
-    			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp4, called via gmri functions."
-    			echo "		--> run ap ?hcp4 for up-to-date help call of the supported function"
-    			echo ""
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "Original implementation of the HCP Volume Preprocessing (hcp4) code."
+				echo ""
+				echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp4, called via gmri functions."
+				echo "		--> run ap ?hcp4 for up-to-date help call of the supported function"
+				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1733,23 +1685,21 @@ hcpdlegacy() {
 		# Needs CUDA 6.0 libraries to run eddy_cuda (10x faster than on a CPU)
 		
 		########################################## INPUTS ########################################## 
-
 		# DWI Data and T1w data needed in HCP-style format to perform legacy DWI preprocessing
 		# The data should be in $DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion
 		# Also assumes that hcp1 (PreFreeSurfeer) T1 preprocessing has been carried out with results in "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w
 		# Mandatory input parameters:
-    		# StudyFolder
-    		# Subject
-    		# PEdir
-    		# EchoSpacing
-    		# TE
-    		# UnwarpDir
-    		# DiffDataSuffix
-    	# Additional parameters that AP demands:	
-    		# QUEUE
-    		# Cluster
-    		# Scheduler
-		
+		# StudyFolder
+		# Subject
+		# PEdir
+		# EchoSpacing
+		# TE
+		# UnwarpDir
+		# DiffDataSuffix
+		# Additional parameters that AP demands:	
+		# QUEUE
+		# Cluster
+		# Scheduler
 		########################################## OUTPUTS #########################################
 		
 		# DiffFolder=${StudyFolder}/${Subject}/Diffusion
@@ -1771,7 +1721,6 @@ hcpdlegacy() {
 		CUDAQUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 		DwellTime="$EchoSpacing" #same variable as EchoSpacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
 		DwellTimeSec=`echo "scale=6; $DwellTime/1000" | bc` # set the dwell time to seconds:
-
 		# Establish global directory paths
 		T1wFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w
 		DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion
@@ -1866,7 +1815,7 @@ show_usage_hcpdlegacy() {
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
 				echo ""
 				echo "-- Example with flagged parameters for a local run (needs GPU-enabled node):"
 				echo ""
@@ -1881,7 +1830,7 @@ show_usage_hcpdlegacy() {
 				echo "--runmethod='1' \ "
 				echo "--overwrite='yes'"
 				echo ""
-				echo "-- Example with flagged parameters for submission to the scheduler (needs GPU-enabled queue):"
+				echo "-- Example with flagged parameters for submission to the scheduler [ needs GPU-enabled queue ]:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
 				echo "--subjects='ta6455' \ "
@@ -1908,15 +1857,13 @@ dwidenseparcellation() {
 		# Connectome Workbench (v1.0 or above)
 		
 		########################################## INPUTS ########################################## 
-
 		# DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
 		# The data should be in $DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 		# Mandatory input parameters:
-    	# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
-    	# Subject	  # e.g. 100307
-    	# MatrixVersion # e.g. 1 or 3
-    	# ParcellationFile  # e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
-
+		# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+		# Subject	  # e.g. 100307
+		# MatrixVersion # e.g. 1 or 3
+		# ParcellationFile  # e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
 		########################################## OUTPUTS #########################################
 
 		# Outputs will be *pconn.nii files located here:
@@ -1952,7 +1899,7 @@ dwidenseparcellation() {
 			#fslsub="$Scheduler"
 			#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" 
 			# - Clean prior command 
-    		rm -f "$LogFolder"/DWIDenseParcellation_"$CASE".sh &> /dev/null	
+			rm -f "$LogFolder"/DWIDenseParcellation_"$CASE".sh &> /dev/null	
 			# - Echo full command into a script
 			echo "DWIDenseParcellation.sh \
 			--path=${StudyFolder} \
@@ -2003,8 +1950,8 @@ show_usage_dwidenseparcellation() {
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
- 				echo ""
+				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
@@ -2042,14 +1989,12 @@ dwiseedtractography() {
 		# Connectome Workbench (v1.0 or above)
 		
 		########################################## INPUTS ########################################## 
-
 		# The data should be in $DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 		# Mandatory input parameters:
-    	# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
-    	# Subject	  # e.g. 100307
-    	# MatrixVersion # e.g. 1 or 3
-    	# SeedFile  # e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz"
-
+		# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+		# Subject	  # e.g. 100307
+		# MatrixVersion # e.g. 1 or 3
+		# SeedFile  # e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz"
 		########################################## OUTPUTS #########################################
 
 		# Outputs will be *pconn.nii files located here:
@@ -2143,8 +2088,8 @@ show_usage_dwiseedtractography() {
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
- 				echo ""
+				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
@@ -2605,7 +2550,6 @@ structuralparcellation() {
 			echo "Check log file output here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
-					
 			${TOOLS}/MNAP/general/functions/StructuralParcellation.sh \
 			--path="${StudyFolder}" \
 			--subject="${CASE}" \
@@ -2648,7 +2592,7 @@ show_usage_structuralparcellation () {
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "		--function=<function_name>				Name of function"
- 				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subject=<comma_separated_list_of_cases>				List of subjects to run"
 				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file [ e.g. MyelinMap_BC or corrThickness ] "
 				echo "		--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
@@ -2660,9 +2604,9 @@ show_usage_structuralparcellation () {
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
- 				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
- 				echo ""
+				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
+				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
+				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
@@ -2744,7 +2688,6 @@ boldparcellation() {
 		mkdir "$BOLDOutput"/boldparcellation_log > /dev/null 2>&1
 		LogFolder="$BOLDOutput"/boldparcellation_log
 		Overwrite="$Overwrite"
-				
 		if [ "$Cluster" == 1 ]; then
 			echo "Running locally on `hostname`"
 			echo "Check log file output here: $LogFolder"
@@ -2805,7 +2748,7 @@ show_usage_boldparcellation() {
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "		--function=<function_name>				Name of function"
- 				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subject=<comma_separated_list_of_cases>				List of subjects to run"
 				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation [ e.g. bold1_Atlas_MSMAll_hp2000_clean ]"
 				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
@@ -2820,13 +2763,13 @@ show_usage_boldparcellation() {
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--singleinputfile=<parcellate_single_file>				Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, -inputfile, --inputpath ]"
- 				echo "		--overwrite=<clean_prior_run>						Delete prior run"
- 				echo "		--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
- 				echo "		--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit [ e.g. yes' or no; default is set to no ] "
- 				echo "		--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder [ e.g. /images/functional/movement/bold1.use ]"
- 				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
- 				echo ""
+				echo "		--singleinputfile=<parcellate_single_file>				Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, -inputfile, --inputpath ]"
+				echo "		--overwrite=<clean_prior_run>						Delete prior run"
+				echo "		--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
+				echo "		--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit [ e.g. yes' or no; default is set to no ] "
+				echo "		--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder [ e.g. /images/functional/movement/bold1.use ]"
+				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
+				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
@@ -2873,29 +2816,24 @@ fsldtifit() {
 	
 	mkdir "$StudyFolder"/../fcMRI/hcp.logs/ > /dev/null 2>&1
 	cd "$StudyFolder"/../fcMRI/hcp.logs/
-	
-			# Check if overwrite flag was set
+	# Check if overwrite flag was set
 	if [ "$Overwrite" == "yes" ]; then
 		echo ""
 		reho "Removing existing dtifit run for $CASE..."
 		echo ""
 		rm -rf "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_* > /dev/null 2>&1
 	fi
-	
 	minimumfilesize=100000
-	
 	if [ -a "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_FA.nii.gz ]; then 
 		actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/dti_FA.nii.gz)
 	else
 		actualfilesize="0"
 	fi
-	
 	if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
 		echo ""
 		echo "--- DTI Fit completed for $CASE ---"
 		echo ""
 	else
-	
 	if [ "$Cluster" == 1 ]; then
 		dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
 	else
@@ -2952,7 +2890,6 @@ fslbedpostxgpu() {
 		export FSLGECUDAQ
 		export SGE_ROOT=1
 		NJOBS=4
-		
 		# Check if overwrite flag was set
 		if [ "$Overwrite" == "yes" ]; then
 			echo ""
@@ -2960,7 +2897,6 @@ fslbedpostxgpu() {
 			echo ""
 			rm -rf "$BedPostXFolder" > /dev/null 2>&1
 		fi
-				
 		geho "Checking if Bedpostx was completed on $CASE..."
 		  		
 		# Set file depending on model specification
@@ -2970,7 +2906,6 @@ fslbedpostxgpu() {
 		if [ "$Model" == 3 ]; then
 			CheckFile="mean_Rsamples.nii.gz"
 		fi
-				
 		if [ "$Rician" == "no" ] || [ "$Rician" == "NO" ]; then
 			echo ""
 			geho "Omitting --rician flag"
@@ -2982,21 +2917,18 @@ fslbedpostxgpu() {
 			RicianFlag="--rician"
 			echo ""			
 		fi
-		
 		# Check if the file even exists
 		if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/"$CheckFile" ]; then
-		
-		# Set file sizes to check for completion
-		minimumfilesize=20000000
-		actualfilesize=`wc -c < "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1  		
-		filecount=`ls "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
-		
+			# Set file sizes to check for completion
+			minimumfilesize=20000000
+			actualfilesize=`wc -c < "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1  		
+			filecount=`ls "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
 		fi
-			
-			# Then check if run is complete based on file count
-			if [ "$filecount" == 9 ]; then > /dev/null 2>&1
-				echo ""
-				cyaneho " --> $filecount merged samples for $CASE found."  			
+		
+		# Then check if run is complete based on file count
+		if [ "$filecount" == 9 ]; then > /dev/null 2>&1
+			echo ""
+			cyaneho " --> $filecount merged samples for $CASE found."  			
 			# Then check if run is complete based on file size
 			if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
 				echo ""
@@ -3012,50 +2944,48 @@ fslbedpostxgpu() {
 				reho " --> Bedpostx outputs missing or incomplete for $CASE"
 				echo ""
 				reho "--------------------------------------------------------------"
-				echo ""  			
+				echo ""
 			fi
+		fi
+		
+		echo ""
+		reho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
+		echo ""
+		
+		if [ "$Cluster" == 1 ]; then
+			# unset the queue variables
+			unset SGE_ROOT
+			unset FSLGECUDAQ
+			echo "Running bedpostx_gpu locally on `hostname`"
+			echo "Check log file output here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
+				${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
+			else	
+				${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
 			fi
-		
+		else
+			# set scheduler for fsl_sub command
+			fslsub="$Scheduler"
+			# set the queue variables
+			FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+			export FSLGECUDAQ
+			export SGE_ROOT=1
+			NJOBS=4
+			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
+				${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
+			else	
+				${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
+			fi
+			geho "---------------------------------------------------------------------------------------"
+			geho "Data successfully submitted" 
+			geho "Scheduler Name: $Scheduler"
+			geho "Scheduler Options: $SchedulerOptions"
+			geho "Check output logs here: $LogFolder"
+			geho "---------------------------------------------------------------------------------------"
 			echo ""
-			reho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
-			echo ""
-				
-				if [ "$Cluster" == 1 ]; then
-					# unset the queue variables
-					unset SGE_ROOT
-					unset FSLGECUDAQ
-		
-					echo "Running bedpostx_gpu locally on `hostname`"
-					echo "Check log file output here: $LogFolder"
-					echo "--------------------------------------------------------------"
-					echo ""
-					if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-						${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
-					else	
-						${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
-					fi
-				else
-					# set scheduler for fsl_sub command
-					fslsub="$Scheduler"
-					# set the queue variables
-					FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
-					export FSLGECUDAQ
-					export SGE_ROOT=1
-					NJOBS=4
-					if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-						${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
-					else	
-						${FSLGPUBinary}/bedpostx_gpu_lsfModified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
-					fi
-				
-					geho "---------------------------------------------------------------------------------------"
-					geho "Data successfully submitted" 
-					geho "Scheduler Name: $Scheduler"
-					geho "Scheduler Options: $SchedulerOptions"
-					geho "Check output logs here: $LogFolder"
-					geho "---------------------------------------------------------------------------------------"
-					echo ""
-				fi
+		fi
 }
 
 show_usage_fslbedpostxgpu() {
@@ -3101,13 +3031,11 @@ show_usage_fslbedpostxgpu() {
 # -------------------------------------------------------------------------------------------------------------------------------
 
 autoptx() {
-
 	Subject="$CASE"
 	StudyFolder="$StudyFolder"/"$CASE"/hcp/
 	BpxFolder="$BedPostXFolder"
 	QUEUE="$QUEUE"
-
-if [ "$Cluster" == 1 ]; then
+	if [ "$Cluster" == 1 ]; then
 		echo "--------------------------------------------------------------"
 		echo "Running locally on `hostname`"
 		echo "Check log file output here: $LogFolder"
@@ -3116,13 +3044,12 @@ if [ "$Cluster" == 1 ]; then
 		"$AutoPtxFolder"/autoPtx "$StudyFolder" "$Subject" "$BpxFolder"
 		"$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
 		"$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
-else
+	else
 		# set scheduler for fsl_sub command
 		fslsub="$Scheduler"
 		fsl_sub."$fslsub" -Q "$QUEUE" "$AutoPtxFolder"/autoPtx "$StudyFolder" "$Subject" "$BpxFolder"
 		fsl_sub."$fslsub" -Q "$QUEUE" -j <jid> "$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
 		fsl_sub."$fslsub" -Q "$QUEUE" -j <jid> "$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
-
 		echo "--------------------------------------------------------------"
 		echo "Data successfully submitted" 
 		echo "Scheduler Name: $Scheduler"
@@ -3130,11 +3057,10 @@ else
 		echo "Check output logs here: $LogFolder"
 		echo "--------------------------------------------------------------"
 		echo ""
-fi
+	fi
 }
 
 show_usage_autoptx() {
-
 				echo ""
 				echo "-- DESCRIPTION: "
 				echo ""
@@ -3147,31 +3073,30 @@ show_usage_autoptx() {
 # ------------------------------------------------------------------------------------------------------------------
 
 pretractographydense() {
-
 		ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/PreTractography
 		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/log_pretractographydense
 		mkdir "$LogFolder"  &> /dev/null
 		RunFolder="$StudyFolder"/"$CASE"/hcp/
 		if [ "$Cluster" == 1 ]; then
-					echo ""
-					echo "--------------------------------------------------------------"
-					echo "Running Pretractography Dense locally on `hostname`"
-					echo "Check output here: $LogFolder"
-					echo "--------------------------------------------------------------"
-					echo ""
-					"$ScriptsFolder"/PreTractography.sh "$RunFolder" "$CASE" 0 >> "$LogFolder"/PretractographyDense_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			echo ""
+			echo "--------------------------------------------------------------"
+			echo "Running Pretractography Dense locally on `hostname`"
+			echo "Check output here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+			"$ScriptsFolder"/PreTractography.sh "$RunFolder" "$CASE" 0 >> "$LogFolder"/PretractographyDense_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 		else
-					echo "Job ID:"
-					fslsub="$Scheduler" # set scheduler for fsl_sub command
-					fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ScriptsFolder"/PreTractography.sh "$RunFolder" "$CASE" 0
-					echo ""
-					echo "--------------------------------------------------------------"
-					echo "Data successfully submitted" 
-					echo "Scheduler Name: $Scheduler"
-					echo "Scheduler Options: $SchedulerOptions"
-					echo "Check output logs here: $LogFolder"
-					echo "--------------------------------------------------------------"
-					echo ""
+			echo "Job ID:"
+			fslsub="$Scheduler" # set scheduler for fsl_sub command
+			fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ScriptsFolder"/PreTractography.sh "$RunFolder" "$CASE" 0
+			echo ""
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted" 
+			echo "Scheduler Name: $Scheduler"
+			echo "Scheduler Options: $SchedulerOptions"
+			echo "Check output logs here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
 		fi
 }
 
@@ -3213,18 +3138,15 @@ show_usage_pretractographydense() {
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
 probtrackxgpudense() {
-
 		# -- Set parameters
 		ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/Tractography_gpu_scripts
 		ResultsFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 		RunFolder="$StudyFolder"/"$CASE"/hcp/
 		NsamplesMatrixOne="$NsamplesMatrixOne"
 		NsamplesMatrixThree="$NsamplesMatrixThree"
-		
 		# -- Generate the results and log folders
 		mkdir "$ResultsFolder"  &> /dev/null
 		mkdir "$LogFolder"  &> /dev/null
-		
 		# -- Set the CUDA queue 
 		FSLGECUDAQ="$QUEUE"
 		export FSLGECUDAQ="$QUEUE"
@@ -3232,11 +3154,8 @@ probtrackxgpudense() {
 		# -------------------------------------------------
 		# -- Do work for Matrix 1 if --omatrix1 flag set 
 		# -------------------------------------------------
-		
 		if [ "$MatrixOne" == "yes" ]; then
-		
 			LogFolder="$ResultsFolder"/Mat1_logs
-		
 			# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "yes" ]; then
 				echo ""
@@ -3244,19 +3163,15 @@ probtrackxgpudense() {
 				echo ""
 				rm -f "$ResultsFolder"/Conn1.dconn.nii.gz &> /dev/null
 			fi
-			
 			# -- Check for Matrix 1 completion
 			echo ""
 			geho "Checking if ProbtrackX Matrix 1 and dense connectome was completed on $CASE..."
 			echo ""
-			
 			# -- Check if the file even exists
 			if [ -f "$ResultsFolder"/Conn1.dconn.nii.gz ]; then
-		
 				# -- Set file sizes to check for completion
 				minimumfilesize=100000000
 				actualfilesize=`wc -c < "$ResultsFolder"/Conn1.dconn.nii.gz` > /dev/null 2>&1  		
-				
 				# -- Then check if Matrix 1 run is complete based on size
 				if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
 					echo ""
@@ -3265,10 +3180,9 @@ probtrackxgpudense() {
 					cyaneho "Check prior output logs here: $LogFolder"
 					echo ""
 					echo "--------------------------------------------------------------"
-					echo ""  			
+					echo ""
 				fi
-			else 
-				
+			else
 				# -- If run is incomplete perform run for Matrix 1
 				echo ""
 				geho "ProbtrackX Matrix1 solution and dense connectome incomplete for $CASE. Starting run..."
@@ -3282,7 +3196,6 @@ probtrackxgpudense() {
 				echo "Job ID:"
 				echo ""
 				"$ScriptsFolder"/RunMatrix1.sh "$RunFolder" "$CASE" "$NsamplesMatrixOne" "$Scheduler"
-					
 				# -- record output calls
 				echo ""
 				echo "Submitted Matrix 1 job for $CASE"
@@ -3296,7 +3209,7 @@ probtrackxgpudense() {
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
-			fi	
+			fi
 		fi
 		
 		# -------------------------------------------------
@@ -3304,9 +3217,7 @@ probtrackxgpudense() {
 		# -------------------------------------------------
 		
 		if [ "$MatrixThree" == "yes" ]; then
-		
 			LogFolder="$ResultsFolder"/Mat3_logs
-		
 			# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "yes" ]; then
 				echo ""
@@ -3314,19 +3225,15 @@ probtrackxgpudense() {
 				echo ""
 				rm -f "$ResultsFolder"/Conn3.dconn.nii.gz  &> /dev/null
 			fi
-			
 			# -- Check for Matrix 3 completion
 			echo ""
 			geho "Checking if ProbtrackX Matrix 3 and dense connectome was completed on $CASE..."
 			echo ""
-			
 			# -- Check if the file even exists
 			if [ -f "$ResultsFolder"/Conn3.dconn.nii.gz ]; then
-		
 				# -- Set file sizes to check for completion
 				minimumfilesize=100000000
-				actualfilesize=`wc -c < "$ResultsFolder"/Conn3.dconn.nii.gz` > /dev/null 2>&1  		
-				
+				actualfilesize=`wc -c < "$ResultsFolder"/Conn3.dconn.nii.gz` > /dev/null 2>&1
 				# -- Then check if Matrix 3 run is complete based on size
 				if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
 					echo ""
@@ -3335,18 +3242,14 @@ probtrackxgpudense() {
 					cyaneho "Check prior output logs here: $LogFolder"
 					echo ""
 					echo "--------------------------------------------------------------"
-					echo ""  			
+					echo ""
 				fi
-			
 			else 
-			
 				# -- If run is incomplete perform run for Matrix 3
 				geho "ProbtrackX Matrix3 solution and dense connectome incomplete for $CASE. Starting run..."
 				echo ""
-				
 				# -- Set nsamples variable 
 				if [ "$NsamplesMatrixThree" == "" ];then NsamplesMatrixThree=3000; fi
-		
 				# -- submit script
 				# set scheduler for fsl_sub command
 				fslsub="$Scheduler"
@@ -3354,7 +3257,6 @@ probtrackxgpudense() {
 				echo "Job ID:"
 				echo ""
 				"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE" "$NsamplesMatrixThree" "$Scheduler"
-
 				# -- record output calls
 				echo ""
 				echo "Submitted Matrix 3 job for $CASE"
@@ -3368,8 +3270,8 @@ probtrackxgpudense() {
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
-			fi	
-		fi		
+			fi
+		fi
 }
 
 show_usage_probtrackxgpudense() {
@@ -3435,45 +3337,30 @@ awshcpsync() {
 
 mkdir "$StudyFolder"/aws.logs &> /dev/null
 cd "$StudyFolder"/aws.logs
-
 if [ "$RunMethod" == "1" ]; then
-
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
-		
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
-
 	else
-
 		mkdir "$StudyFolder"/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
-
 	fi
-
 fi
-
 if [ "$RunMethod" == "2" ]; then
-
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
-	
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
-
 	else
-
 		mkdir "$StudyFolder"/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
-
 	fi
-
 fi
-	
 }
 
 show_usage_awshcpsync() {
@@ -3510,7 +3397,6 @@ show_usage_awshcpsync() {
 # -------------------------------------------------------------------------------------------------------------------------------
 
 qcpreproc() {
-	
 	# -- Check of overwrite flag was set
 	if [ "$Overwrite" == "yes" ]; then
 		echo ""
@@ -3525,7 +3411,6 @@ qcpreproc() {
 			rm -f "$OutPath"/"$CASE"."$Modality".* &> /dev/null
 		fi	
 	fi
-	
 	# -- Check if a given case exists
 	if [ -f "$OutPath"/"$CASE"."$Modality".QC.png ]; then
 		echo ""
@@ -3534,7 +3419,6 @@ qcpreproc() {
 	else
 		geho " --- Generating ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
-	
 	# -- Check general output folders for QC
 	if [ ! -d "$StudyFolder"/QC ]; then
 		mkdir -p "$StudyFolder"/QC &> /dev/null
@@ -3546,21 +3430,17 @@ qcpreproc() {
 	# -- Define log folder
 	LogFolder="$OutPath"/qclog
 	mkdir "$LogFolder"  &> /dev/null
-		
-	
 	if [ "$Modality" == "BOLD" ]; then
 		for BOLD in $BOLDS; 
 		do
 			# -- Generate QC statistics for a given BOLD
 			geho " --- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
 			echo ""
-			
 			# -- Compute TSNR and log it
 			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii TSNR ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -exclude-outliers 4 4
 			TSNR=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
 			TSNRLog="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
 			printf "${TSNRLog}\n" >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt
-
 			# -- Get values for plotting GS chart & Compute the GS scalar series file
 			# -- Get TR
 			TR=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
@@ -3571,7 +3451,6 @@ qcpreproc() {
 			# -- Regenerate outputs
 			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii MEAN ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
 			wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt
-
 			if [ ${SkipFrames} > 0 ]; then 
 				rm -f ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt &> /dev/null
 				tail -n +${SkipFrames} ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt >> ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt
@@ -3582,39 +3461,31 @@ qcpreproc() {
 				wb_command -cifti-create-scalar-series ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
 				xmax=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
 			fi
-			
 			# -- Get mix/max stats
 			ymax=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`	
 			ymin=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
-	
 			# -- Rsync over template files for a given BOLD
 			Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
 			Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
-	
 			# -- Setup naming conventions before generating scene
 			Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com4="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
 			Com5="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com6="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-
 			Com7="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com8="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com9="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-
 			# -- Set the BOLDSuffix variable
 			if [ "$BOLDSuffix" == "" ]; then
 				Com10="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			else
 				Com10="sed -i -e 's|DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			fi
-						
 			# -- Output image of the scene
 			Com11="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.GSmap.QC.wb.png 1194 539"
 			Com12="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 2 ${OutPath}/${CASE}.${Modality}.${BOLD}.GStimeseries.QC.wb.png 1194 539"
-
 			# -- Clean temp scene
 			Com13="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
-			
 			# -- Combine all the calls into a single command
 			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13"
 			if [ "$Cluster" == 1 ]; then
@@ -3623,7 +3494,7 @@ qcpreproc() {
 				echo "Running QC locally on `hostname`"
 				echo "Check output here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
-		 		echo ""
+				echo ""
 				eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 			else
 				echo "Job ID:"
@@ -3643,7 +3514,7 @@ qcpreproc() {
 				echo ""
 			fi
 		done
-	else	
+	else
 		# -- Generate a QC scene file appropriate for each subject for each modality
 		# -- Rsync over template files for a given modality
 		Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
@@ -3653,7 +3524,6 @@ qcpreproc() {
 		Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
 		Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-		
 		if [ "$Modality" == "DWI" ]; then
 			# -- Setup naming conventions for DWI before generating scene
 			Com6a="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
@@ -3673,7 +3543,6 @@ qcpreproc() {
 		Com9="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
 		# -- Combine all the calls into a single command
 		ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
-		
 		# -- queue a local task or a scheduler job
 		if [ "$Cluster" == 1 ]; then
 			echo ""
@@ -3883,40 +3752,35 @@ log_SetToolName "AnalysisPipeline.sh"
 #   The remaining parameters are the full list of flagged command line arguments
 
 opts_GetOpt() {
-    sopt="$1"
-    shift 1
-    for fn in "$@" ; do
-    if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ] ; then
-        echo $fn | sed "s/^${sopt}=//"
-        return 0
-    fi
-    done
+sopt="$1"
+shift 1
+for fn in "$@" ; do
+	if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ] ; then
+		echo $fn | sed "s/^${sopt}=//"
+		return 0
+	fi
+done
 }
 
 # -- DESCRIPTION: checks command line arguments for "--help" indicating that help has been requested
-   
 opts_CheckForHelpRequest() {
-    for fn in "$@" ; do
-        if [ "$fn" = "--help" ]; then
-            return 0
-        fi
-    done
-    return 1
+for fn in "$@" ; do
+	if [ "$fn" = "--help" ]; then
+		return 0
+	fi
+done
+return 1
 }
 
 # -- DESCRIPTION: Generates a timestamp for the log exec call
-
 timestamp() {
- 
-   echo "AP.$1.`date "+%Y.%m.%d.%H.%M.%S"`.txt"
+	echo "AP.$1.`date "+%Y.%m.%d.%H.%M.%S"`.txt"
 }
 
 # -- DESCRIPTION: Checks for version
-
 show_version() {
- 
- 	APVer=`cat $TOOLS/MNAP/general/VERSION`
- 	echo ""
+	APVer=`cat $TOOLS/MNAP/general/VERSION`
+	echo ""
 	reho "Multimodal Neuroimaging Analysis Pipeline (MNAP) Version: v$APVer"
 }
 
@@ -3927,7 +3791,6 @@ show_version() {
 # ------------------------------------------------------------------------------
 
 # -- Check if general help requested in three redundant ways (AP, AP --help or AP help)
-
 if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ]; then
 	show_version
 	echo ""
@@ -3935,20 +3798,19 @@ if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] ||
 fi
 
 if opts_CheckForHelpRequest $@; then
-    show_version
-    show_usage
-    exit 0
+	show_version
+	show_usage
+	exit 0
 fi
 
 if [ -z "$1" ]; then
-    show_version
-    show_usage
-    exit 0
-
+	show_version
+	show_usage
+	exit 0
 fi
 
 if [ "$1" == "help" ]; then
-    show_version
+	show_version
 	show_usage
 	exit 0
 fi
@@ -3970,13 +3832,13 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 	# -- Print message that command is running via AP wrapper
 	echo ""
 	cyaneho "Running gmri function $GmriFunctionToRunEcho via AP wrapper"
-  	cyaneho "----------------------------------------------------------------------------"
+	cyaneho "----------------------------------------------------------------------------"
 	
 	# -- check for input with question mark
 	if [[ "$GmriFunctionToRun" =~ .*?.* ]] && [ -z "$2" ]; then 
 		# Set UsageInput variable to pass and remove question mark
 		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
-	  	# If no other input is provided print help
+		# If no other input is provided print help
 		show_usage_gmri
 		exit 0
 	else
@@ -3987,13 +3849,13 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 	  	# If no other input is provided print help
 		show_usage_gmri
 		exit 0
-    else
-    	# -- Otherwise pass the function with all inputs from the command line
-    	gmriinput="$@"
+	else
+		# -- Otherwise pass the function with all inputs from the command line
+		gmriinput="$@"
 		gmri_function
 		exit 0
 	fi
-	fi		
+	fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -4005,7 +3867,6 @@ fi
 	unset APFunctions
 	UsageName=`more ${TOOLS}/MNAP/general/AnalysisPipeline.sh | grep show_usage_${1}`
 	APFunctions=`more ${TOOLS}/MNAP/general/AnalysisPipeline.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
-
 	# -- check for input with double flags
 	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
@@ -4020,11 +3881,10 @@ fi
 				exit 0
 			else	
 				show_version
-    			show_usage_"$UsageInput"
-    		fi
-    	exit 0
+				show_usage_"$UsageInput"
+			fi
+		exit 0
 	fi
-		
 	# -- check for input with single flags
 	if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
@@ -4039,15 +3899,14 @@ fi
 				exit 0
 			else	
 				show_version
-    			show_usage_"$UsageInput"
-    		fi
-    	exit 0
+				show_usage_"$UsageInput"
+			fi
+		exit 0
 	fi
-	
 	# -- check for input with question mark
-    HelpInputUsage="$1"	
-    if [[ ${HelpInputUsage:0:1} == "?" ]] && [ -z "$2" ]; then 
-    	Usage="$1"
+	HelpInputUsage="$1"	
+	if [[ ${HelpInputUsage:0:1} == "?" ]] && [ -z "$2" ]; then 
+		Usage="$1"
 		UsageInput=`echo ${Usage} | cut -c 2-`
 			# -- check if input part of function list
 			if [[ "$APFunctions" != *${UsageInput}* ]]; then
@@ -4059,11 +3918,10 @@ fi
 				exit 0
 			else	
 			    show_version
-    			show_usage_"$UsageInput"
-    		fi
-    	exit 0
+				show_usage_"$UsageInput"
+			fi
+		exit 0
 	fi
-			
 	# -- check for input with no flags
 	if [ -z "$2" ]; then
 			UsageInput="$1"
@@ -4077,11 +3935,11 @@ fi
 				exit 0
 			else	
 				show_version
-    			show_usage_"$UsageInput"
-    		fi
-    	exit 0
+				show_usage_"$UsageInput"
+			fi
+		exit 0
 	fi
-		
+
 # ------------------------------------------------------------------------------
 #  Setup log calls
 # ------------------------------------------------------------------------------
@@ -4115,17 +3973,11 @@ doubleflag=`echo $1 | cut -c1-2`
 singleflag=`echo $1 | cut -c1`
 
 if [ "$doubleflag" == "--" ]; then
-
 	setflag="$doubleflag"
-
 else
-
 	if [ "$singleflag" == "-" ]; then
-
 		setflag="$singleflag"
-		
 	fi	
-
 fi
 
 # -- Next check if any flags are set
@@ -4292,7 +4144,6 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	fi
 
 else
-
 	# -- If no flags were found the pipeline defaults to 'interactive' mode. 
 	# 	 * Note: Not all functions are supported in interactive mode
 	echo ""
@@ -4305,10 +4156,8 @@ else
 	FunctionToRunInt="$1"
 	StudyFolder="$2" 
 	CASESInput="$3"
-	
 	# -- Make list of subjects compatible with either space- or comma-delimited input:
 	CASES=`echo ${CASESInput} | sed 's/,/ /g'`
-
 fi	
 
 # ========================================================================================
