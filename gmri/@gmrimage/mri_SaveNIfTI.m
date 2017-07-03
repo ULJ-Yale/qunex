@@ -376,6 +376,7 @@ function [meta] = dscalarXML(img)
 function [meta] = string2meta(string, code)
     string = cast(string(:), 'uint8');
     meta.size = ceil((length(string)+8)/16)*16;
+    meta.code = code;
     meta.data = zeros(1, meta.size-8, 'uint8');
     meta.data(1:length(string)) = string;
-    meta.code = code;
+    
