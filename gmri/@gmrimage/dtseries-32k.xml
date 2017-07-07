@@ -20,7 +20,7 @@
 			 <Value>{{WorkingDirectory}}</Value>
 		 </MD>
 	 </MetaData>
-	 <MatrixIndicesMap AppliesToMatrixDimension="0" IndicesMapToDataType="CIFTI_INDEX_TYPE_SERIES" NumberOfSeriesPoints="{{frames}}" SeriesExponent="0" SeriesStart="0.0000000000" SeriesStep="{{TR}}" SeriesUnit="SECOND"/>
+	 <MatrixIndicesMap AppliesToMatrixDimension="0" IndicesMapToDataType="CIFTI_INDEX_TYPE_SERIES" NumberOfSeriesPoints="{{Frames}}" SeriesExponent="0" SeriesStart="0.0000000000" SeriesStep="{{TR}}" SeriesUnit="SECOND"/>
 	 <MatrixIndicesMap AppliesToMatrixDimension="1" IndicesMapToDataType="CIFTI_INDEX_TYPE_BRAIN_MODELS">
 		 <Volume VolumeDimensions="91,109,91">
 			 <TransformationMatrixVoxelIndicesIJKtoXYZ MeterExponent="-3">
