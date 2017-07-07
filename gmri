@@ -169,6 +169,7 @@ commands = {'listDicom'     : {'com': niu.g_dicom.listDicom,        'args': ('fo
             'splitDicom'    : {'com': niu.g_dicom.splitDicom,       'args': ('folder', )},
             'sortDicom'     : {'com': niu.g_dicom.sortDicom,        'args': ('folder', )},
             'dicom2nii'     : {'com': niu.g_dicom.dicom2nii,        'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
+            'dicom2niix'    : {'com': niu.g_dicom.dicom2niix,       'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
             'processPhilips': {'com': niu.g_dicom.processPhilips,   'args': ('folder', 'check', 'pattern')},
             'processInbox'  : {'com': niu.g_dicom.processInbox,     'args': ('folder', 'check', 'pattern', 'cores')},
             'getDICOMInfo'  : {'com': niu.g_dicom.getDICOMInfo,     'args': ('dfile', 'scanner')},
