@@ -407,7 +407,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             print " --> reconstructing results into CIFTI files"
 
             for pval in ['_fdrp', '_fwep', '_uncp', '_mfwep', '']:
-                for stat in ['tstat', 'fstat', 'ztstat', 'zfstat', 'zmv_hotellingtsq']:
+                for stat in ['tstat', 'fstat', 'ztstat', 'zfstat', 'zmv_hotellingtsq', 'rstat', 'zrstat']:
                     for volumeUnit, surfaceUnit, unitKind in [('vox', 'dpv', 'reg'), ('tfce', 'tfce', 'tfce'), ('clustere', 'clustere', 'clustere'), ('clusterm', 'clusterm', 'clusterm')]:
                         rvolumes       = glob.glob("%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval))
                         rleftsurfaces  = glob.glob("%s_L_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
