@@ -145,7 +145,7 @@ show_usage() {
 				echo ""
 				cyaneho "Data organization functions"
 				cyaneho "----------------------------"
-				echo "dicomsort		sort dicoms and setup nifti files from dicoms"
+				echo "dicomorganize		sort dicoms and setup nifti files from dicoms"
 				echo "setuphcp		setup data structure for hcp processing"
 				echo "createlists		setup subject lists for preprocessing or analyses"
 				echo "hpcsync			sync with hpc cluster(s) for preprocessing"
@@ -236,7 +236,7 @@ show_usage_gmri() {
 #  dicomsort - Sort original DICOMs into sub-folders and then generate NIFTI files
 # ------------------------------------------------------------------------------------------------------
 
-dicomsort() {
+dicomorganize() {
 	  		mkdir ${StudyFolder}/${CASE}/dicom &> /dev/null
 	  		# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "no" ]; then
@@ -256,7 +256,7 @@ dicomsort() {
 			echo " ---> running sortDicom and dicom2nii for $CASE"
 			echo ""
 			Com2="gmri sortDicom"
-			Com3="gmri dicom2nii unzip=yes gzip=yes clean=yes"
+			Com3="gmri dicom2niix unzip=yes gzip=yes clean=yes verbose=true cores=4"
 			ComQUEUE="$Com1; $Com2; $Com3"
 			if [ "$Cluster" == 1 ]; then
 			  	echo ""
@@ -290,7 +290,7 @@ dicomsort() {
 			fi
 }
 
-show_usage_dicomsort() {
+show_usage_dicomorganize() {
   				echo ""
   				echo "-- DESCRIPTION:"
     			echo ""
