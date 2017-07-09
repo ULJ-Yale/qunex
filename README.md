@@ -30,6 +30,7 @@ External dependencies
 * Gradunwarp
 * Human Connectome Pipelines (Modified versions for single-band preprocessing)
 * R Statistical Environment
+* dcm2nii (23-June-2017 release) 
 * MNAP niutilities Repo
 * MNAP matlab Repo
 
@@ -88,8 +89,8 @@ Change Log
 * 0.4.0: Initial pre-alpha release with added functionality (computeboldfc)
 * 0.4.1: Initial pre-alpha release with improved usage for computeboldfc
 * 0.5.1: Initial pre-alpha release. Deprecated functions: isolatesubcortexrois,probtracksubcortex,pretractography,probtrackxgpucortex,makedensecortex,boldmergenifti,boldmergecifti,nii4dfpconvert,cifti4dfpconvert,dicom2nii; Added updated scheduler functionality 
-* 0.5.2: Initial pre-alpha release. Improved scheduler usage
-
+* 0.5.2: Initial pre-alpha release. Improved scheduler usage to include SLURM
+* 0.5.3: Initial pre-alpha release. Updated dcm2nii usage
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
