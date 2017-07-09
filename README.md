@@ -10,7 +10,7 @@ common user interface, designed to simplify multiple steps of neuroimaging
 data preprocessing and analysis from sorting of dicom files to second level
 statistical analysis. They often provide a wrapper for efficiently running
 other tools and software either on a single computer or computer cluster
-by using PBS or LSF scheduling.
+by using PBS, SLURM or LSF scheduling.
 
 The utilities make use of and assume that relevant information and data
 is provided in a number of file formats, further described below. The utilities
@@ -42,6 +42,7 @@ command itself using the folowing options:
 
 * `gmri -h` prints general help information,
 * `gmri -l` lists all the available commands,
+* `gmri -o` lists all the available options,
 * `gmri -<command>` prints specific help for the specified command.
 
 Perusing documentation, please note the following conventions used:
@@ -71,6 +72,7 @@ External dependencies
 * Gradunwarp
 * Human Connectome Pipelines
 * R Statistical Environment
+* dcm2nii (23-June-2017 release) 
 
 
 File formats
@@ -84,6 +86,7 @@ Change Log
 ---
 
 * 0.1: Initial pre-alpha release with major functionality
+* 0.2: Pre-alpha release with added scheduler functionality
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
