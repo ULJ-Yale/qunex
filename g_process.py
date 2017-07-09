@@ -209,8 +209,8 @@ arglist = [['# ---- Basic settings'],
            ['mov_sreport',         'movement_scrubbing_report.txt',               str,    "the name of the scrubbing report file"],
            ['mov_pdf',             'movement_plots',                              str,    "the name of the folder that holds movement stats plots"],
            ['mov_pref',            "",                                            str,    "the prefix for the movement report files"],
-           ['scheduler',           'local',                                       str,    "whether the command is to run localy, through a PBS or an LSF scheduler"],
-           ['queue',               'local',                                       str,    "whether the command is to run localy, through a PBS or an LSF scheduler (deprecated, see scheduler)"],
+#           ['queue',               'local',                                       str,    "whether the command is to run localy, through a PBS, SLURM or an LSF scheduler (deprecated, see scheduler)"],
+           ['scheduler',           'local',                                       str,    "whether the command is to run localy, through a PBS, SLURM or an LSF scheduler"],
            ['jobname',             '',                                            str,    "optional prefix for the submitted job names"],
            ['subjid',              '',                                            plist,  "list of | separated subject ids for which to run the command"],
 
@@ -873,11 +873,11 @@ def run(command, args):
             for key, value in slurmo:
                 cstr += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
 
-            if options['LSF_environ'] != '':
+            if options['SLURM_environ'] != '':
                 cstr += "\n# --- Setting up environment\n\n"
                 cstr += file(options['SLURM_environ']).read()
 
-            if options['LSF_folder'] != '':
+            if options['SLURM_folder'] != '':
                 cstr += "\n# --- changing to the right folder\n\n"
                 cstr += "cd %s" % (options['SLURM_folder'])
 
