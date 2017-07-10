@@ -5,13 +5,19 @@ This file holds the core preprocessing hub functions and information it
 defines the commands that can be run, it specifies the options and their
 default values. It has a few support functions and the key `run` function
 that processes the input, prints some of the help and calls processing
-functions either localy or through PBS or LSF queue systems.
+functions either localy or through supported scheduler systems.
 
 None of the code is run directly from the terminal interface.
 
 Created by Grega Repovs on 2016-12-17.
 Code merge from dofcMRIp gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
+
+---
+Changelog
+2017-07-10 Grega Repovs
+         - Simplified scheduler interface, now uses g_scheduler
+
 """
 
 import sys
@@ -23,6 +29,7 @@ import gp_HCP
 import gp_workflow
 import gp_simple
 import gp_FS
+import g_scheduler
 import os
 import os.path
 from multiprocessing import Pool
@@ -75,10 +82,26 @@ def procResponse(r):
 def torf(s):
     '''
     torf(s)
-    Checks if s is any of the possible true strings: "True", "true",
+    First checks if string is "None", 'none', or "NONE" and returns
+    None, then Checks if s is any of the possible true strings: "True", "true",
     or "TRUE" and retuns a boolean result of the check.
     '''
-    return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
+    if s in ['None', 'none', 'NONE']:
+        return None
+    else:
+        return s in ['True', 'true', 'TRUE', 'yes', 'Yes', 'YES']
+
+
+def isNone(s):
+    '''
+    isNone(s)
+    Check if the string is "None", "none" or "NONE" and returns None, otherwise
+    returns the passed string.
+    '''
+    if s in ['None', 'none', 'NONE']:
+        return None
+    else:
+        return s
 
 
 def plist(s):
@@ -138,6 +161,8 @@ arglist = [['# ---- Basic settings'],
            ['datainfo',           'False',                                       torf,   'Whether to print information.'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
+           ['script',             'None',                                        isNone, 'The script to be executed.'],
+           ['subjid',              '',                                           plist,  "list of | separated subject ids for which to run the command"],
 
            ['# ---- Preprocessing options'],
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
@@ -192,10 +217,6 @@ arglist = [['# ---- Basic settings'],
            ['mov_sreport',         'movement_scrubbing_report.txt',               str,    "the name of the scrubbing report file"],
            ['mov_pdf',             'movement_plots',                              str,    "the name of the folder that holds movement stats plots"],
            ['mov_pref',            "",                                            str,    "the prefix for the movement report files"],
-           ['scheduler',           'local',                                       str,    "whether the command is to run localy, through a PBS or an LSF scheduler"],
-           ['queue',               'local',                                       str,    "whether the command is to run localy, through a PBS or an LSF scheduler (deprecated, see scheduler)"],
-           ['jobname',             '',                                            str,    "optional prefix for the submitted job names"],
-           ['subjid',              '',                                            plist,  "list of | separated subject ids for which to run the command"],
 
            ['# ---- CIFTI related options'],
            ['surface_smooth',      '6.0',                                         float,  "sigma for cifti surface smoothing"],
@@ -211,25 +232,12 @@ arglist = [['# ---- Basic settings'],
            ['print_command',       'no',                                          str,    "whether to print the command run within the preprocessing steps"],
            ['log',                 'remove',                                      str,    "what to do with the job log file, 'remove' or 'keep'"],
 
-           ['# ---- PBS options'],
-           ['PBS_options',         '',                                            str,    "'#PBS -l' string ... specification of PBS options"],
-           ['PBS_queue',           '',                                            str,    "'#PBS -q' string ... specification of PBS queue"],
-           ['PBS_environ',         '',                                            str,    "the path to the script setting up the environment to run the script in"],
-           ['PBS_folder',          '',                                            str,    "the path to run gmri on the nodes"],
-           ['PBS_shell',           '/bin/sh',                                     str,    "the shell to include in the '#!'"],
-           ['PBS_sleep',           '1',                                           float,  "time in seconds between submission of individual PBS jobs"],
 
-           ['# ---- LSF options'],
-           ['LSF_environ',         '',                                            str,    "the path to the script setting up the environment to run the script in"],
-           ['LSF_folder',          '',                                            str,    "the path to run gmri on the nodes"],
-           ['LSF_options',         'cores=8,walltime=24:00,mem=30000,queue=shared',   str,    "String of options for LSF jobs. Has to be constructed as 'option=value,option=value' and specify number of cores to use (cores), walltime in HH:MM, memory reqirement (mem) in MB and the name of the queue."],
-           ['LSF_sleep',           '1',                                           float,  "time in seconds between submission of individual LSF jobs"],
-
-           ['# ---- SLURM options'],
-           ['SLURM_environ',       '',                                            str,    "the path to the script setting up the environment to run the script in"],
-           ['SLURM_folder',        '',                                            str,    "the path to run gmri on the nodes"],
-           ['SLURM_options',       'cpus-per-task=8,time=24:00,mem-per-cpu=3000', str,    "String of options for LSF jobs. Has to be constructed as 'option=value,option=value' and specify number of cores to use (cores), walltime in HH:MM, memory reqirement (mem) in MB and the name of the queue."],
-           ['SLURM_sleep',         '1',                                           float,  "time in seconds between submission of individual LSF jobs"],
+           ['# ---- scheduler options'],
+           ['scheduler',             'local',                                     str,    "the scheduler to use (local|PBS|LSF|SLURM) and any additional settings"],
+           ['scheduler_environment', 'None',                                      isNone, "the path to the script setting up the environment to run the commands in"],
+           ['scheduler_workdir',     'None',                                      isNone, "the path to working directory from which to run jobs on the cluster"],
+           ['scheduler_sleep',       '1',                                         float,  "time in seconds between submission of individual scheduler jobs"],
 
 
            ['# --- HCP options'],
@@ -297,8 +305,7 @@ tomap = {'bold_preprocess': 'bppt',
          'bold_actions':    'bppa',
          'bold_nuisance':   'bppn',
          'event_string':    'eventstring',
-         'event_file':      'eventfile',
-         'queue':           'scheduler'}
+         'event_file':      'eventfile'}
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -361,7 +368,9 @@ calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,         
           [],
           ['hcpd',    'hcp_Diffusion',               gp_HCP.hcpDiffusion,                            "Run HCP DWI pipeline."],
           ['hcpdf',   'hcp_DTIFit',                  gp_HCP.hcpDTIFit,                               "Run FSL DTI fit."],
-          ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."]
+          ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."],
+          [],
+          ['rsc',     'runShellScript',              gp_simple.runShellScript,                       "Runs the specified script."],
           ]
 
 salist = [['cbl',     'createBoldList',              gp_simple.createBoldList,                       'createBoldList'],
@@ -612,15 +621,15 @@ def run(command, args):
 
 
     # -----------------------------------------------------------------------
-    #                                                                 PBS cue
+    #                                                  general scheduler code
 
-    elif options['scheduler'] == 'PBS':
+    else:
 
         # ---- setup options to pass to each job
 
         nopt = []
         for (k, v) in args.iteritems():
-            if k not in ['PBS_options', 'PBS_environ', 'PBS_shell', 'PBS_queue', 'PBS_sleep', 'scheduler', 'nprocess']:
+            if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess']:
                 nopt.append((k, v))
 
         nopt.append(('scheduler', 'local'))
@@ -637,29 +646,13 @@ def run(command, args):
         while subjects:
 
             c += 1
-            # ---- construct the qsub input
-
-            cstr = ""
-            for k, o in [('PBS_shell', '#!'), ('PBS_options', '#PBS -l '), ('PBS_queue', '#PBS -q ')]:
-                if options[k] != '':
-                    cstr += "%s%s\n" % (o, options[k])
-
-            cstr += "#PBS -N %s%s_#%02d" % (options['jobname'], command, c)
-
-            if options['PBS_environ'] != '':
-                cstr += "\n# --- Setting up environment\n\n"
-                cstr += file(options['PBS_environ']).read()
-
-            if options['PBS_folder'] != '':
-                cstr += "\n# --- changing to the right folder\n\n"
-                cstr += "cd %s" % (options['PBS_folder'])
 
             # ---- construct the gmri command
 
-            cstr += "\ngmri " + command
+            cstr = "\ngmri " + command
 
             for (k, v) in nopt:
-                if k not in ['subjid', 'scheduler', 'queue']:
+                if k not in ['subjid', 'scheduler']:
                     cstr += ' --%s="%s"' % (k, v)
 
             slist = []
@@ -669,20 +662,14 @@ def run(command, args):
             cstr += ' --scheduler="local"'
             cstr += '\n'
 
-            # ---- pass the command string to qsub
+            # ---- pass the command string to scheduler
 
             print "\n==============> submitting %s_#%02d\n" % (command, c)
             print cstr
 
             print >> flog, "\n==============> submitting %s_#%02d\n" % (command, c)
 
-            pbs = subprocess.Popen("qsub", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-            pbs.stdin.write(cstr)
-            pbs.stdin.close()
-
-            # ---- storing results
-
-            result = pbs.stdout.read()
+            result = g_scheduler.schedule(command=cstr, settings=options['scheduler'], workdir=options['scheduler_workdir'], environment=options['scheduler_environment'], output='return')
 
             print "\n----------"
             print result
@@ -690,216 +677,9 @@ def run(command, args):
             print >> flog, "\n----------"
             print >> flog, result
 
-            time.sleep(options['PBS_sleep'])
+            time.sleep(options['scheduler_sleep'])
 
         print "\n\n============================= DONE ================================\n"
         print >> flog, "\n\n============================= DONE ================================\n"
         flog.close()
 
-
-    # -------------------------------------------------------------------------
-    #                                                                 LSF queue
-
-    elif options['scheduler'] == 'LSF':
-
-        # ---- setup options to pass to each job
-
-        nopt = []
-        for (k, v) in args.iteritems():
-            if k not in ['LSF_environ', 'LSF_folder', 'LSF_options', 'scheduler', 'nprocess']:
-                nopt.append((k, v))
-
-        nopt.append(('scheduler', 'local'))
-        nopt.append(('nprocess', '0'))
-
-        # ---- open log
-
-        flog = open(logname + '.log', "w")
-        print >> flog, "\n\n============================= LOG ================================\n"
-
-        # ---- parse options string
-
-        lsfo = dict([e.strip().split("=") for e in options['LSF_options'].split(",")])
-
-        # ---- run jobs
-
-        if options['jobname'] == "":
-            options['jobname'] = "gmri"
-
-        c = 0
-        while subjects:
-
-            c += 1
-            # ---- construct the bsub input
-            # -M mem_limit in kb
-            # -n min[, max] ... minimal and maximal number of processors to use
-            # -o output file ... %J adds job id
-            # -P project name
-            # -q queue_name   ("shared" for 24 h more on "long")
-            # -R "res_req" ... resource requirement string
-            #              ... select[selection_string] order[order_string] rusage[usage_string [, usage_string][|| usage_string] ...] span[span_string] same[same_string] cu[cu_string]] affinity[affinity_string]
-            # -R 'span[hosts=1]' ... so that all slots are on the same machine
-            # -W hour:minute  runtime limit
-            # -We hour:minute  estimated runtime
-            #  bsub '-M <P>' option specifies the memory limit for each process, while '-R "rusage[mem=<N>]"' specifies the memory to reserve for this job on each node. ... in MB - 5GB default
-
-            cstr  = "#BSUB -o %s-%s_#%02d_%%J\n" % (options['jobname'], command, c)
-            cstr += "#BSUB -q %s\n" % (lsfo['queue'])
-            cstr += "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n" % (lsfo['mem'])
-            cstr += "#BSUB -W %s\n" % (lsfo['walltime'])
-            cstr += "#BSUB -n %s\n" % (lsfo['cores'])
-            if len(options['jobname']) > 0:
-                cstr += "#BSUB -P %s-%s\n" % (options['jobname'], command)
-                cstr += "#BSUB -J %s-%s_%d\n" % (options['jobname'], command, c)
-
-
-            if options['LSF_environ'] != '':
-                cstr += "\n# --- Setting up environment\n\n"
-                cstr += file(options['LSF_environ']).read()
-
-            if options['LSF_folder'] != '':
-                cstr += "\n# --- changing to the right folder\n\n"
-                cstr += "cd %s" % (options['LSF_folder'])
-
-            # ---- construct the gmri command
-
-            cstr += "\ngmri " + command
-
-            for (k, v) in nopt:
-                if k not in ['subjid', 'scheduler', 'queue']:
-                    cstr += ' --%s="%s"' % (k, v)
-
-            slist = []
-            [slist.append(subjects.pop(0)['subject']) for e in range(cores) if subjects]   # might need to change to id
-
-            cstr += ' --subjid="%s"' % ("|".join(slist))
-            cstr += ' --scheduler="local"'
-            cstr += '\n'
-
-            # ---- pass the command string to qsub
-
-            print "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
-            print cstr
-
-            print >> flog, "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
-
-            lsf = subprocess.Popen("bsub", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-            lsf.stdin.write(cstr)
-            lsf.stdin.close()
-
-            # ---- storing results
-
-            result = lsf.stdout.read()
-
-            print "\n----------"
-            print result
-
-            print >> flog, "\n----------"
-            print >> flog, result
-
-            time.sleep(options['LSF_sleep'])
-
-        print "\n\n============================= DONE ================================\n"
-        print >> flog, "\n\n============================= DONE ================================\n"
-        flog.close()
-
-    # -------------------------------------------------------------------------
-    #                                                               SLURM queue
-    #
-    #   parameters
-    #   --job-name        -J
-    #   --partition       -p
-    #   --nodes           -N     ... Total number of nodes to run on
-    #   --ntasks          -n     ... Number of tasks
-    #   --cpus-per-task   -c     ... Number of cores per task
-    #   --time            -t     ... Maximum wall time DD-HH:MM:SS
-    #   --constraint      -c     ... Specific node architecture
-    #   --mem-per-cpu            ... Memory requested per CPU in MB
-    #   --mail-user              ... Email address
-    #   --mail-type              ... On what events to send emails
-
-    elif options['scheduler'] == 'SLURM':
-
-        # ---- setup options to pass to each job
-
-        nopt = []
-        for (k, v) in args.iteritems():
-            if k not in ['SLURM_environ', 'SLURM_folder', 'SLURM_options', 'scheduler', 'nprocess']:
-                nopt.append((k, v))
-
-        nopt.append(('scheduler', 'local'))
-        nopt.append(('nprocess', '0'))
-
-        # ---- open log
-
-        flog = open(logname + '.log', "w")
-        print >> flog, "\n\n============================= LOG ================================\n"
-
-        # ---- parse options string
-
-        slurmo = [e.strip().split("=") for e in options['SLURM_options'].split(",")]
-
-        # ---- run jobs
-
-        if options['jobname'] == "":
-            options['jobname'] = "gmri"
-
-        c = 0
-        while subjects:
-
-            c += 1
-
-            cstr  = "#!/bin/bash\n"
-            cstr += "#SBATCH --job-name=%s-%s_#%02d\n" % (options['jobname'], command, c)
-            for key, value in slurmo:
-                cstr += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
-
-            if options['LSF_environ'] != '':
-                cstr += "\n# --- Setting up environment\n\n"
-                cstr += file(options['SLURM_environ']).read()
-
-            if options['LSF_folder'] != '':
-                cstr += "\n# --- changing to the right folder\n\n"
-                cstr += "cd %s" % (options['SLURM_folder'])
-
-            # ---- construct the gmri command
-
-            cstr += "\ngmri " + command
-
-            for (k, v) in nopt:
-                if k not in ['subjid', 'scheduler', 'queue']:
-                    cstr += ' --%s="%s"' % (k, v)
-
-            slist = []
-            [slist.append(subjects.pop(0)['subject']) for e in range(cores) if subjects]   # might need to change to id
-
-            cstr += ' --subjid="%s"' % ("|".join(slist))
-            cstr += ' --scheduler="local"'
-            cstr += '\n'
-
-            # ---- pass the command string to qsub
-
-            print "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
-            print cstr
-
-            print >> flog, "\n==============> submitting %s_#%02d\n" % ("-".join(args), c)
-
-            slurm = subprocess.Popen("sbatch", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-            slurm.stdin.write(cstr)
-            slurm.stdin.close()
-
-            # ---- storing results
-
-            result = slurm.stdout.read()
-
-            print "\n----------"
-            print result
-
-            print >> flog, "\n----------"
-            print >> flog, result
-
-            time.sleep(options['SLURM_sleep'])
-
-        print "\n\n============================= DONE ================================\n"
-        print >> flog, "\n\n============================= DONE ================================\n"
-        flog.close()

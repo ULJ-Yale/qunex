@@ -417,6 +417,11 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                         rleftsurfaces.sort()
                         rrightsurfaces.sort()
 
+                        if rvolumes:
+                            if len(rvolumes) != len(rleftsurfaces) or len(rvolumes) != len(rrightsurfaces):
+                                print "     ... WARNING: Nonmatching number of resulting volume and surface files, please check PALM log for errors!"
+                                continue
+
                         while rvolumes:
                             rvolume       = rvolumes.pop(0)
                             rleftsurface  = rleftsurfaces.pop(0)
