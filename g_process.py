@@ -162,7 +162,7 @@ arglist = [['# ---- Basic settings'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
            ['script',             'None',                                        isNone, 'The script to be executed.'],
-           ['subjid',              '',                                            plist,  "list of | separated subject ids for which to run the command"],
+           ['subjid',              '',                                           plist,  "list of | separated subject ids for which to run the command"],
 
            ['# ---- Preprocessing options'],
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
@@ -235,8 +235,8 @@ arglist = [['# ---- Basic settings'],
 
            ['# ---- scheduler options'],
            ['scheduler',             'local',                                     str,    "the scheduler to use (local|PBS|LSF|SLURM) and any additional settings"],
-           ['scheduler_environment', '',                                          str,    "the path to the script setting up the environment to run the commands in"],
-           ['scheduler_workdir',     '',                                          str,    "the path to working directory from which to run jobs on the cluster"],
+           ['scheduler_environment', 'None',                                      isNone, "the path to the script setting up the environment to run the commands in"],
+           ['scheduler_workdir',     'None',                                      isNone, "the path to working directory from which to run jobs on the cluster"],
            ['scheduler_sleep',       '1',                                         float,  "time in seconds between submission of individual scheduler jobs"],
 
 
