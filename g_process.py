@@ -629,7 +629,7 @@ def run(command, args):
 
         nopt = []
         for (k, v) in args.iteritems():
-            if k not in ['scheduler', 'scheduler_environment', 'scheduler_folder', 'scheduler_sleep', 'nprocess']:
+            if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess']:
                 nopt.append((k, v))
 
         nopt.append(('scheduler', 'local'))
@@ -649,7 +649,7 @@ def run(command, args):
 
             # ---- construct the gmri command
 
-            cstr += "\ngmri " + command
+            cstr = "\ngmri " + command
 
             for (k, v) in nopt:
                 if k not in ['subjid', 'scheduler']:
@@ -669,7 +669,7 @@ def run(command, args):
 
             print >> flog, "\n==============> submitting %s_#%02d\n" % (command, c)
 
-            result = g_scheduler.schedule(command=cstr, settings=options['scheduler'], workdir=options['scheduler_folder'], environment=options['scheduler_environment'], output='return')
+            result = g_scheduler.schedule(command=cstr, settings=options['scheduler'], workdir=options['scheduler_workdir'], environment=options['scheduler_environment'], output='return')
 
             print "\n----------"
             print result
