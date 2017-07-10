@@ -1,6 +1,6 @@
-function [correlations, significances] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
+function [correlations, significances, zscores] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
 
-%function [correlations, significances] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
+%function [correlations, significances, zscores] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
 %
 %	For each voxel, computes correlation with the provided (behavioral or other) data.
 %
@@ -13,6 +13,7 @@ function [correlations, significances] = mri_ComputeCorrelations(obj, bdata, ver
 %   OUTPUT
 %   correlations  - a gmrimage object with computed correlations.
 %   significances - a gmrimage of p-values for each of the correlation.
+%   zscores       - a gmrimage of p-values converted to z-scores
 %
 %   USE
 %   The method computes correlations of each voxel with each column of the bdata matrix.
@@ -36,6 +37,7 @@ function [correlations, significances] = mri_ComputeCorrelations(obj, bdata, ver
 %   Change log
 %   2014-09-03 - Grega Repovs - Added covariance option.
 %   2016-11-25 - Grega Repovs - Updated documentation.
+%   2017-07-10 - Grega Repovs - Added Z-scores.
 %
 
 if nargin < 4 || isempty(cv),      cv      = false; end
@@ -93,6 +95,12 @@ if nargout > 1
         significances.data = fc_Fisher(correlations.data);
         significances.data = significances.data/(1/sqrt(obj.frames-3));
     end
+end
+
+if nargout > 2
+    if verbose, fprintf('\n... computing Z-scores'), end
+    Z = obj.zeroframes(1);
+    Z.data = icdf('Normal', (1-(significances.data./2)), 0, 1) .* sign(correlations.data);
 end
 
 if verbose, fprintf('\n... done!'), end
