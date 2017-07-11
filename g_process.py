@@ -557,6 +557,8 @@ def run(command, args):
     #                                                               local cue
 
     if options['scheduler'] == 'local' or options['run'] == 'test':
+
+        print "---- Running local"
         pool = Pool(processes=cores)
         result = []
         c = 0

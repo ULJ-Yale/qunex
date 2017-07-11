@@ -1924,7 +1924,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri mapHCPdata subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri mapHCPData subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
          overwrite=no hcp_cifti_tail=_Atlas bold-preprocess=all
 
     ----------
