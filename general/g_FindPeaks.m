@@ -2,21 +2,22 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 
 %function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, verbose)
 %
-%	Uses mri_FindPeaks method to define peak ROI using a watershed algorithm to grow regions from peaks.
+%	Performs smoothing using mri_Smooth() method and the uses mri_FindPeaks
+%   method to define peak ROI using a watershed algorithm to grow regions from peaks.
 %
 %   INPUT
 %       fin         - input image
 %		fout        - output image
-%       mins        - [minimal size minimal area] of the resulting ROI  [0, 0]
-%       maxs        - [maximum size maximum area] of the resulting ROI  [inf, inf]
+%       mins        - [minimal size, minimal area] of the resulting ROI  [0, 0]
+%       maxs        - [maximum size, maximum area] of the resulting ROI  [inf, inf]
 %       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') [b]
 %       t           - threshold value [0]
 %		presmooth   - data structure containing presmoothing parameters:
-%                     presmooth.fwhm     ... Full Width at Half Maximum in voxels (for volume models)
-%                     presmooth.ftype    ... Type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
+%                     presmooth.fwhm     ... Full Width at Half Maximum in voxels (NIfTI)
+%                     presmooth.ftype    ... Type of smoothing filter, 'gaussian' or 'box' (NIfTI). ['gaussian']
 %                     presmooth.ksize    ... Size of the smoothing kernel:
 %                                            a) for NIfTI: voxels [6]
-%                                            b) for CIFTI: [voxels mm^2] [6 6]
+%                                            b) for CIFTI-2: [voxels mm^2] [6 6]
 %                     presmooth.wb_path  ... path to wb_command
 %                     presmooth.hcpatlas ... path to HCPATLAS folder containing projection surf.gii files
 %                     * the last two fields are not required if they are stored as
@@ -40,7 +41,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   RESULTS
 %   The script saves the resulting ROI file under the specified filename. The report statistics
 %
-%   EXAMPLE USE 1 (CIFTI image)
+%   EXAMPLE USE 1 (CIFTI-2 image)
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
 %   voxels, after applying 1 voxel gaussian smoothing and a smoothing kernel of
@@ -50,7 +51,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   presmooth.ksize = [7 9];
 %   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350], 'b', 3, presmooth, 'midthickness', [], 1);
 %
-%   EXAMPLE USE 2 (CIFTI image)
+%   EXAMPLE USE 2 (CIFTI-2 image)
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
 %   voxels, after applying 3 voxel gaussian smoothing and a smoothing kernel of
@@ -83,11 +84,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %        - Updated documentation.
 %
 %   2017-07-10 Aleksij Kraljic
-%        - Added functionality for CIFTI files
-%
-%   ***TODOs***
-%   - implement multiple frames functionality
-%   - test with different input arguments
+%        - Added functionality for CIFTI-2 files
 %
 
 %  ---- read image and call FindPeaks

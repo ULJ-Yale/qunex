@@ -6,8 +6,8 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %
 %   INPUT
 %       img         - input gmrimage object
-%       mindim      - [minimal size minimal area] of the resulting ROI  [0, 0]
-%       maxdim      - [maximum size maximum area] of the resulting ROI  [inf, inf]
+%       mindim      - [minimal size, minimal area] of the resulting ROI  [0, 0]
+%       maxdim      - [maximum size, maximum area] of the resulting ROI  [inf, inf]
 %       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
 %       t           - threshold value [0]
 %       projection  - type of surface component projection ('midthickness', 'inflated',...) ['midthickness']
@@ -38,7 +38,7 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %   operations by calling mri_FindPeaksVolume on extracted volume components
 %   and mri_FindPeaksSurface on surface components (cortex).
 %
-%   EXAMPLE USE 1
+%   EXAMPLE USE 1 (CIFTI-2 image)
 %   To get a roi image (dscalar) of both positive and negative peak regions
 %   with miminum z value of (-)3 and 72 contiguous voxels in size, but no
 %   larger than 300 voxels, and surface peak regions of areas between
@@ -46,12 +46,19 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %
 %   roi = img.mri_FindPeaks([72 50], [300 250], 'b', 3, 'midthickness');
 %
-%   EXAMPLE USE 2
+%   EXAMPLE USE 2 (CIFTI-2 image)
 %   To perform an operation on a time series (dtseries) image with similar
 %   parameters as in the first example on frames 1, 3, 7 with verbose
 %   output use:
 %
 %   roi = img.mri_FindPeaks([72 50], [300 250], 'b', 3, 'midthickness', [1 3 7], 2);
+%
+%   EXAMPLE USE 3 (NIfTI image)
+%   To get a roi image of both positive and negative peak regions with miminum z
+%   value of (-)1 and 50 contiguous voxels in size, but no larger than 250
+%   voxels use:
+%
+%   roi = img.mri_FindPeaks(50, 250, 'b', 1);
 %
 %   ---
 %   Written by Aleksij Kraljic, June 7, 2017

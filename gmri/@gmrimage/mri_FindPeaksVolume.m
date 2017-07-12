@@ -357,7 +357,7 @@ else
         peak(p).WeightedCentroid = roiinfo.wcxyz(p, end-2:end);
 
         if report, fprintf('\nROI:%3d  label: %3d  value: %5.1f  voxels: %3d  peak indeces: %3d %3d %3d  peak: %5.1f %5.1f %5.1f  centroid: %5.1f %5.1f %5.1f  wcentroid: %4.1f %4.1f %4.1f', p, peak(p).label, peak(p).value, peak(p).size, peak(p).ijk, peak(p).xyz, peak(p).Centroid, peak(p).WeightedCentroid); end
-    end
+     end
 
     if report, fprintf('\n'); end
 end
