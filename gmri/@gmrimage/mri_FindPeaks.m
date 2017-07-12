@@ -12,7 +12,7 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %       t           - threshold value [0]
 %       projection  - type of surface component projection ('midthickness', 'inflated',...) ['midthickness']
 %       frames      - list of frames to perform ROI operation on
-%       verbose     - whether to report the peaks (1) and also be verbose: 
+%       verbose     - whether to report the peaks (1) and also be verbose:
 %                           a) on the first level (2)
 %                           b) on all the levels  (3) [false]
 %
@@ -40,8 +40,8 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %
 %   EXAMPLE USE 1
 %   To get a roi image (dscalar) of both positive and negative peak regions
-%   with miminum z value of (-)3 and 72 contiguous voxels in size, but no 
-%   larger than 300 voxels, and surface peak regions of areas between 
+%   with miminum z value of (-)3 and 72 contiguous voxels in size, but no
+%   larger than 300 voxels, and surface peak regions of areas between
 %   50 mm^2 and 250 mm^2 on a cortex midthickness projection use:
 %
 %   roi = img.mri_FindPeaks([72 50], [300 250], 'b', 3, 'midthickness');
@@ -61,6 +61,25 @@ if nargin < 7 || isempty(frames),     frames = 1:img.frames;     end
 if nargin < 6 || isempty(projection), projection = 'midthickness'; end
 if nargin < 5 || isempty(t),          t       = 0;                 end
 if nargin < 4 || isempty(val),        val     = 'b';               end
+if nargin < 3
+    maxdim = [inf, inf];
+elseif isempty(maxdim)
+    maxdim = [inf, inf];
+elseif isscalar(maxdim)
+    maxdim = [maxdim, inf];
+end
+if nargin < 2
+    mindim = [0, 0];
+elseif isempty(mindim)
+    mindim = [0, 0];
+elseif isscalar(mindim)
+    mindim = [mindim, 0];
+end
+
+minsize = mindim(1);
+minarea = mindim(2);
+maxsize = maxdim(1);
+maxarea = maxdim(2);
 
 % --- Script verbosity
 report = false;
@@ -102,14 +121,6 @@ end
 load('CIFTI_BrainModel.mat')
 
 if strcmpi(img.imageformat, 'CIFTI-2')
-    if nargin < 3 || numel(maxdim) < 2, maxdim = [inf, inf]; end
-    if nargin < 2 || numel(mindim) < 2, mindim = [0, 0];     end
-    
-    minsize = mindim(1);
-    minarea = mindim(2);
-    maxsize = maxdim(1);
-    maxarea = maxdim(2);
-    
     if verbose, fprintf('\nMAIN FIND PEAKS---> extracting volume components'); end
     vol_sections = img.mri_ExtractCIFTIVolume();
     
@@ -122,13 +133,10 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     if verbose, fprintf('\nMAIN FIND PEAKS---> finding peaks for surface components'); end
     for i=1:1:numel(img.cifti.shortnames)
         if strcmp(cifti.(lower(img.cifti.shortnames{i})).type,'Surface')
-            [roi peak] = roi.mri_FindPeaksSurface(lower(img.cifti.shortnames{i}), projection, minarea, maxarea, val, t, 1, verbose_pass);
+            [roi peak.(lower(img.cifti.shortnames{i}))] = roi.mri_FindPeaksSurface(lower(img.cifti.shortnames{i}), projection, minarea, maxarea, val, t, 1, verbose_pass);
         end
     end
 elseif strcmpi(img.imageformat, 'NIFTI')
-    if nargin < 3 || isempty(maxsize), maxsize = inf; end
-    if nargin < 2 || isempty(minsize), minsize = 0;   end
-    
     if verbose, fprintf('\nMAIN FIND PEAKS---> finding peaks for volume components'); end
     [roi vol_peak] = img.mri_FindPeaksVolume(minsize, maxsize, val, t, 1, verbose_pass);
     peak = [];

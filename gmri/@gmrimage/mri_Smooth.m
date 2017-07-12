@@ -1,0 +1,150 @@
+function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path, hcpatlas)
+
+%function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path, hcpatlas)
+%
+%   Does 3D gaussian smoothing of the gmri image.
+%
+%   INPUT
+%       img         ... A gmrimage object with data in volume representation.
+%       fwhm        ... Full Width at Half Maximum in voxels (for volume models)
+%       verbose     ... Whether to report the progress. [false]
+%       ftype       ... Type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
+%       ksize       ... Size of the smoothing kernel:
+%                    a) for NIfTI: voxels [6]
+%                    b) for CIFTI: [voxels mm^2] [6 6]
+%       projection  ... type of surface projection ['midthickness']
+%       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
+%       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
+%
+%   OUTPUT
+%       img         ... Image with data smoothed.
+%
+%   USE
+%   The method enables smoothing of MR data (NIfTI or CIFTI). The smoothing is
+%   specified in voxels for volume structures and mm^2 for surface structures
+%   smoothing. The default smoothing kernel for volume structures is 'gaussian' 
+%   with kernel size 7. For surface structure it is required to specify the
+%   type of the projection ('midthickness', 'inflated',...). If PATH
+%   environment variable is not saved in the system, it is required to pass
+%   the path to the wb_command with the wb_path input argument. The path to
+%   the directory containing surface (surf.gii) files should be stored in
+%   the HCPATLAS environment variable, otherwise, the path to surface files
+%   should be passed with the hcpatlas input argument. In case the file
+%   contains multiple frames, all of the frames undergo smoothing.
+%
+%   EXAMPLE (CIFTI image)
+%   img_smooth = img.mri_Smooth([], false, [], [7 9], 'midthickness');
+%
+%   EXAMPLE (NIfTI image)
+%   img_smooth = img.mri_Smooth(3, true, 'gaussian', 8);
+%
+%   ---
+%   Written by Aleksij Kraljic, July 11, 2017
+
+% input checking
+if nargin < 8 || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS'); end
+if nargin < 7 || isempty(wb_path),    wb_path = '';                    end
+if nargin < 6 || isempty(projection), projection = 'midthickness';   end
+if nargin < 5
+    ksize = [7, 7];
+elseif isempty(ksize)
+    ksize = [7, 7];
+elseif isscalar(ksize)
+    ksize = [ksize, 7];
+end
+if nargin < 4 || isempty(ftype),      ftype = 'gaussian'; end
+if nargin < 3 || isempty(verbose),    verbose = false;    end
+
+% check file type [NIfTI or CIFTI]
+if strcmpi(img.imageformat, 'CIFTI-2')
+    % surface smoothing mm^2
+    opt.surface_smooth = ksize(2);
+    % volume smoothing -> voxels = 2mm / voxels * voxels
+    opt.volume_smooth = ksize(1)*2;
+    opt.framework_path = [];
+    opt.wb_command_path = wb_path;
+    opt.omp_threads = [];
+    
+    % load surface files
+    surfaceFile.lsurf = strcat(hcpatlas,'/Q1-Q6_R440.L.',projection,'.32k_fs_LR.surf.gii');
+    surfaceFile.rsurf = strcat(hcpatlas,'/Q1-Q6_R440.R.',projection,'.32k_fs_LR.surf.gii');
+    
+    % create temporary wb_command input file
+    inFile = strcat('temp_',date,'_inFile.dscalar.nii');
+    mri_SaveNIfTI(img, inFile);
+    
+    % create temporary wb_command output file
+    outFile = strcat('temp_',date,'_outFile.dscalar.nii');
+    
+    % smooth the CIFTI model using wb_command
+    wbSmooth(inFile, outFile, surfaceFile, opt);
+    
+    % save the temporary output file
+    img = gmrimage(outFile);
+    
+    % delete both input and output temporary files
+    delete '*File.dscalar.nii';
+elseif strcmpi(img.imageformat, 'NIFTI')
+    % smooth the entire volume structure with mri_Smooth3D() method
+    img = img.mri_Smooth3D(fwhm, verbose, ftype, ksize(1));
+end
+
+end
+
+% --- SUPPORT FUNCTIONS
+
+function [] = wbSmooth(sfile, tfile, file, options)
+
+% --- convert FWHM to sd
+
+options.surface_smooth = options.surface_smooth / 2.35482004503; % (sqrt(8*log(2)))
+options.volume_smooth  = options.volume_smooth / 2.35482004503;
+
+
+fprintf('\n---> running wb_command -cifti-smoothing');
+
+if ~isempty(options.framework_path)
+    if strcmp(options.framework_path, 'NULL')
+        setenv('LD_LIBRARY_PATH');
+        setenv('DYLD_LIBRARY_PATH');
+        setenv('DYLD_FRAMEWORK_PATH');
+    else
+        if isempty(strfind(s, options.framework_path))
+            fprintf('\n     ... setting DYDL_FRAMEWORK_PATH to %s', options.framework_path);
+            setenv('DYLD_FRAMEWORK_PATH');
+        end
+        if isempty(strfind(sl, options.framework_path))
+            fprintf('\n     ... setting DYLD_LIBRARY_PATH to %s', options.framework_path);
+            setenv('DYLD_LIBRARY_PATH', [options.framework_path ':' sl]);
+        end
+        if isempty(strfind(ll, options.framework_path))
+            fprintf('\n     ... setting LD_LIBRARY_PATH to %s', options.framework_path);
+            setenv('LD_LIBRARY_PATH', [options.framework_path ':' ll]);
+        end
+    end
+end
+
+if ~isempty(options.wb_command_path)
+    s = getenv('PATH');
+    if isempty(strfind(s, options.wb_command_path))
+        fprintf('\n     ... setting PATH to %s', options.wb_command_path);
+        setenv('PATH', [options.wb_command_path ':' s]);
+    end
+end
+
+if options.omp_threads > 0
+    setenv('OMP_NUM_THREADS', num2str(options.omp_threads));
+end
+
+fprintf('\n     ... smoothing');
+comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tfile, file.lsurf, file.rsurf);
+[status out] = system(comm);
+
+if status
+    fprintf('\nERROR: wb_command finished with error!\n       ran: %s\n', comm);
+    fprintf('\n --- wb_command output ---\n%s\n --- end wb_command output ---\n', out);
+    error('\nAborting processing!');
+else
+    fprintf(' ... done!');
+end
+end

@@ -331,10 +331,17 @@ if strcmp(cifti.(lower(img.cifti.shortnames{cmp})).type,'Surface')
         peak = peak([peak.area]>0);
     end
     
+    % -- relable the ROI labels, starting from 1 up to the last ROI
+    for i=1:1:length(peak)
+       v = seg(peak(i).index);
+       seg(seg == v) = i;
+       peak(i).index = i;
+    end
+    
     % --- embed data to ROI image
     data.(lower(img.cifti.shortnames{cmp})) = seg;
     
-    % Remap the data back from global to CIFTI data format for export
+    % -- remap the data back from global to CIFTI data format for export
     roi = img;
     roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
     

@@ -28,10 +28,10 @@ function img = mri_Smooth3D(img, fwhm, verbose, ftype, ksize)
 %   smooth = img.mri_Smooth3D(3, true);
 %
 %   ---
-%   Written by Grega Repovš 2008-7-11
+%   Written by Grega Repov?? 2008-7-11
 %
 %   Changelog
-%   Grega Repovš, 2017-02-10: Adapted to use either smooth3 or smooth3f.
+%   Grega Repov??, 2017-02-10: Adapted to use either smooth3 or smooth3f.
 %
 
 if nargin < 5 || isempty(ksize),   ksize   = 7;          end
