@@ -125,7 +125,7 @@ if img.frames > 1
 end
 
 % --- Load CIFTI brain model data
-load('CIFTI_BrainModel.mat')
+load('CIFTI_BrainModel.mat');
 
 if strcmpi(img.imageformat, 'CIFTI-2')
     if verbose, fprintf('\nMAIN FIND PEAKS---> extracting volume components'); end
