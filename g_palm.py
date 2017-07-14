@@ -697,3 +697,197 @@ def joinMaps(images=None, output=None, names=None, originals=None):
         for image in images:
             os.remove(image)
 
+
+
+#
+def fNuissance(n):
+    '''Support function for createWSPALMDesign function.'''
+    ndummy = n - 1
+    block  = []
+    for e in range(n):
+        if e == 0:
+            block.append([-1 for j in range(ndummy)])
+        else:
+            t = [0 for j in range(ndummy)]
+            t[e - 1] = 1
+            block.append(t)
+    return block
+
+
+def createWSPALMDesign(factors=None, nsubjects=None, root=None):
+    '''
+    createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>
+
+    USE
+    ===
+
+    createWSPALMDesign prepares design file, t-contrasts, f-contrasts and
+    exchangebility block files for a single group within-subject PALM designs.
+    It supports full factorial designs with up to three factors.
+
+    The function assumes the data to be organized by subject and the first
+    specified factor to be the slowest varying one. The factors, their
+    interactions and subject intercepts will be specified in the following
+    order in the design matrix:
+
+    1 factor design:
+    F1, subjects
+
+    2 factor design:
+    F1, F2, F1*F2, subjects
+
+    3 factor design:
+    F1, F2, F3, F1*F2, F1*F3, F2*F3, F1*F2*F3, subjects
+
+    t-tests will be specified in order and f-tests will be specified in the same
+    order as above.
+
+    PARAMETERS
+    ==========
+
+    --factors    ... A comma separated list of number of factor levels.
+    --nsubjects  ... Number of subjects.
+    --root       ... Root name for the created files ['wspalm'].
+
+    EXAMPLE USE
+    ===========
+
+    gmri createWSPALMDesign factors="2,3" nsubjects=33 root=WM.type_by_load
+
+    ----------------
+    Written by Grega Repovš, 2017-07-14'''
+
+    if factors is None:
+        raise ValueError("ERROR: No factors specified when running createWSPALMDesign!")
+    factors = [int(e) for e in factors.split(',')]
+
+    if nsubjects is None:
+        raise ValueError("ERROR: Number of subjects not specified when running createWSPALMDesign!")
+    nsubjects = int(nsubjects)
+
+    if root is None:
+        root = 'wspalm'
+
+    dvars    = [e - 1 for e in factors]
+    nfactors = len(factors)
+    blocks   = []
+    nlevels  = reduce(lambda x, y: x * y, factors)
+
+    for n in factors:
+        blocks.append(fNuissance(n))
+
+    # -------------------------------------------------------------
+    #                                            create design file
+
+    df = open(root + '_d.csv', 'w')
+
+    for s in range(nsubjects):
+        sline = [0 for e in range(nsubjects)]
+        sline[s] = 1
+
+        # ---- 1 factor within design
+
+        if nfactors == 1:
+            for f1l in blocks[0]:
+                line = f1l + sline
+                print >> df, ",".join([str(e) for e in line])
+
+        # ---- 2 factor within design
+
+        if nfactors == 2:
+            for f1l in blocks[0]:
+                for f2l in blocks[1]:
+                    line = f1l + f2l
+
+                    # --- compute and add interactions
+                    i12 = [i * j for i in f1l for j in f2l]
+
+                    line += i12
+
+                    # --- add subject intercepts
+
+                    line += sline
+
+                    # --- print it out
+
+                    print >> df, ",".join([str(e) for e in line])
+
+
+        # ---- 3 factor within design
+
+        elif nfactors == 3:
+
+            for f1l in blocks[0]:
+                for f2l in blocks[1]:
+                    for f3l in blocks[2]:
+
+                        # --- join main effects
+                        line = f1l + f2l + f3l
+
+                        # --- compute and add interactions
+                        i12 = [i * j for i in f1l for j in f2l]
+                        i13 = [i * j for i in f1l for j in f3l]
+                        i23 = [i * j for i in f2l for j in f3l]
+                        i123 = [i * j * k for i in f1l for j in f2l for k in f3l]
+
+                        line += i12 + i13 + i23 + i123
+
+                        # --- add subject intercepts
+
+                        line += sline
+
+                        # --- print it out
+
+                        print >> df, ",".join([str(e) for e in line])
+
+    df.close()
+
+
+    # -------------------------------------------------------------
+    #                              create exchangibility block file
+
+    ebf = open(root + '_eb.csv', 'w')
+    for s in range(nsubjects):
+        for l in range(nlevels):
+            print >> ebf, s + 1
+
+
+    # -------------------------------------------------------------
+    #                                       create t-contrasts file
+
+    # --- calculate number of factor variables
+
+    if nfactors == 1:
+        tlen = dvars
+
+    elif nfactors == 2:
+        tlen = dvars + [dvars[0] * dvars[1]]
+
+    elif nfactors == 3:
+        tlen = dvars + [dvars[0] * dvars[1], dvars[0] * dvars[2], dvars[1] * dvars[2], dvars[0] * dvars[1] * dvars[2]]
+
+    ndvars = sum(tlen)
+
+    # --- open and save t-contralst file
+
+    tf = open(root + '_t.csv', 'w')
+
+    for l in range(ndvars):
+        line = [0 for e in range(ndvars + nsubjects)]
+        line[l] = 1
+        print >> tf, ",".join([str(e) for e in line])
+    tf.close()
+
+    # -------------------------------------------------------------
+    #                                       create f-contrasts file
+
+    fperd = {1: 1, 2: 3, 3: 7}
+    nfac  = fperd[nfactors]
+    code  = {True: 1, False: 0}
+
+    ff = open(root + '_f.csv', 'w')
+    for l in range(nfac):
+        line = [code[l == e] for e in range(nfac) for i in range(tlen[e])]
+        print >> ff, ",".join([str(e) for e in line])
+    ff.close()
+
