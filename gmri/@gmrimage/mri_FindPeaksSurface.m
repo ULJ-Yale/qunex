@@ -8,7 +8,13 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %   INPUT
 %       img              - input gmrimage object
 %       surfaceComponent - brain component of type surface to perform ROI operation on ('cortex_left', 'cortex_right') ['cortex_left']
-%       projection       - type of surface component projection ('midthickness', 'inflated',...) ['midthickness']
+%       projection_type  - type of surface component projection ('midthickness', 'inflated',...)
+%                          or a structure containing the names of the surface files (.surf.gii)
+%                          for both, left and right cortex:
+%                                a) for a default projection: 'midthickness' ['midthickness']
+%                                b) for a specific projection:
+%                                        projection.cortex_left = 'cortex_left_projection.surf.gii'
+%                                        projection.cortex_right = 'cortex_right_projection.surf.gii'
 %       minarea          - minimal size of the resulting ROI  [0]
 %       maxarea          - maximum size of the resulting ROI  [inf]
 %       val              - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
@@ -93,6 +99,17 @@ if img.frames > 1
     return;
 end
 
+% --- Load CIFTI brain model data
+load('CIFTI_BrainModel.mat');
+
+% -- Check the type of projection passed and weather it is a file
+if ~sum(strcmp(projection,{'midthickness','inflated','very_inflated','sphere'}))
+    subject_projection = gifti(projection);
+    projection = 'subject';
+    cifti.(lower(surfaceComponent)).subject.vertices = subject_projection.vertices;
+    cifti.(lower(surfaceComponent)).subject.area_vector = getProjectionArea(subject_projection.vertices, surfaceComponent, cifti);
+end
+
 if strcmp(surfaceComponent, 'cortex_left')
     cmp = 1;
 elseif strcmp(surfaceComponent, 'cortex_right')
@@ -100,9 +117,6 @@ elseif strcmp(surfaceComponent, 'cortex_right')
 else
     error('Wrong component inserted!');
 end
-
-% --- Load CIFTI brain model data
-load('CIFTI_BrainModel.mat')
 
 % --- Create an empty matrix to store the data globally for each hemisphere
 data.(lower(img.cifti.shortnames{cmp})) = zeros(32492,1);
@@ -333,9 +347,9 @@ if strcmp(cifti.(lower(img.cifti.shortnames{cmp})).type,'Surface')
     
     % -- relable the ROI labels, starting from 1 up to the last ROI
     for i=1:1:length(peak)
-       v = seg(peak(i).index);
-       seg(seg == v) = i;
-       peak(i).index = i;
+        v = seg(peak(i).index);
+        seg(seg == v) = i;
+        peak(i).index = i;
     end
     
     % --- embed data to ROI image
@@ -376,5 +390,16 @@ F = ismember(F,region_indices);
 F = sum(F,2);
 % --- calculate the area of the region
 area = (1/3) * sum(area_vector(F > 0));
+
+end
+
+function [projection_area_vector] = getProjectionArea(projection_vertices, surface_component, cifti)
+
+%projection_area_vector = zeros(length(cifti.surface_component.faces),1);
+ab = projection_vertices(cifti.(surface_component).faces(:,2),:) - ...
+    projection_vertices(cifti.(surface_component).faces(:,1),:);
+ac = projection_vertices(cifti.(surface_component).faces(:,3),:) - ...
+    projection_vertices(cifti.(surface_component).faces(:,1),:);
+projection_area_vector = 0.5.*sqrt(sum(cross(ab,ac).^2,2));
 
 end

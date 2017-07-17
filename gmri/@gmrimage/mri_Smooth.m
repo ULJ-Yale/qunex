@@ -5,24 +5,30 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path
 %   Does 3D gaussian smoothing of the gmri image.
 %
 %   INPUT
-%       img         ... A gmrimage object with data in volume representation.
-%       fwhm        ... Full Width at Half Maximum in voxels (for volume models)
-%       verbose     ... Whether to report the progress. [false]
-%       ftype       ... Type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
-%       ksize       ... Size of the smoothing kernel:
+%       img         ... a gmrimage object with data in volume representation.
+%       fwhm        ... full Width at Half Maximum in voxels (for volume models)
+%       verbose     ... whether to report the progress. [false]
+%       ftype       ... type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
+%       ksize       ... size of the smoothing kernel:
 %                    a) for NIfTI: voxels [6]
 %                    b) for CIFTI: [voxels mm^2] [6 6]
-%       projection  ... type of surface projection ['midthickness']
+%       projection  ... type of surface component projection ('midthickness', 'inflated',...)
+%                          or a structure containing the names of the surface files (.surf.gii)
+%                          for both, left and right cortex:
+%                                a) for a default projection: 'midthickness' ['midthickness']
+%                                b) for a specific projection:
+%                                        projection.cortex_left = 'cortex_left_projection.surf.gii'
+%                                        projection.cortex_right = 'cortex_right_projection.surf.gii'
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
 %       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
 %
 %   OUTPUT
-%       img         ... Image with data smoothed.
+%       img         ... image with data smoothed.
 %
 %   USE
 %   The method enables smoothing of MR data (NIfTI or CIFTI). The smoothing is
 %   specified in voxels for volume structures and mm^2 for surface structures
-%   smoothing. The default smoothing kernel for volume structures is 'gaussian' 
+%   smoothing. The default smoothing kernel for volume structures is 'gaussian'
 %   with kernel size 7. For surface structure it is required to specify the
 %   type of the projection ('midthickness', 'inflated',...). If PATH
 %   environment variable is not saved in the system, it is required to pass
@@ -40,6 +46,11 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path
 %
 %   ---
 %   Written by Aleksij Kraljic, July 11, 2017
+%
+%   Changelog
+%	2017-07-17 Aleksij Kraljic
+%        - Added option for passing specific surf.gii projection files
+%
 
 % input checking
 if nargin < 8 || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS'); end
@@ -65,9 +76,15 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     opt.wb_command_path = wb_path;
     opt.omp_threads = [];
     
-    % load surface files
-    surfaceFile.lsurf = strcat(hcpatlas,'/Q1-Q6_R440.L.',projection,'.32k_fs_LR.surf.gii');
-    surfaceFile.rsurf = strcat(hcpatlas,'/Q1-Q6_R440.R.',projection,'.32k_fs_LR.surf.gii');
+    % --- assign proper projection type format
+    if isstruct(projection)
+        surfaceFile.lsurf = projection.cortex_left;
+        surfaceFile.rsurf = projection.cortex_right;
+    else
+        % load surface files
+        surfaceFile.lsurf = strcat(hcpatlas,'/Q1-Q6_R440.L.',projection,'.32k_fs_LR.surf.gii');
+        surfaceFile.rsurf = strcat(hcpatlas,'/Q1-Q6_R440.R.',projection,'.32k_fs_LR.surf.gii');
+    end
     
     % create temporary wb_command input file
     inFile = strcat('temp_',date,'_inFile.dscalar.nii');
