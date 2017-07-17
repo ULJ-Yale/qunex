@@ -1,0 +1,26 @@
+Visual
+1 0 0 255 255
+Visual2
+2 100 0 255 255
+Somatomotor
+3 0 255 255 255
+Cingulo-Opercular
+4 153 0 153 255
+Language
+6 0 155 155 255
+Default
+9 255 0 0 255
+Frontoparietal
+7 255 255 0 255
+Auditory
+8 250 62 251 255
+Posterior Multimodal
+10 177 89 40 255
+Dorsal-attention
+5 0 255 0 255
+Unknown1
+11 255 157 0 255
+Unknown2
+12 65 125 0 168
+Unassigned
+13 0 0 0 255 

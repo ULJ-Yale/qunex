@@ -119,10 +119,10 @@ show_usage() {
 				echo "--subjects='<list of cases>' [options]"
 				echo ""
 				echo "* interactive example (no flags):"
-				echo "ap dicomsort /some/path/to/study/subjects '100001 100002'"
+				echo "ap dicomorganize /some/path/to/study/subjects '100001 100002'"
 				echo ""
 				echo "* flagged example (no interactive terminal input):"
-				echo "ap --function=dicomsort \ "
+				echo "ap --function=dicomorganize \ "
 				echo "--studyfolder=/some/path/to/study/subjects \ "
 				echo "--subjects='100001,100002'"
 				echo ""
@@ -233,60 +233,62 @@ show_usage_gmri() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  dicomsort - Sort original DICOMs into sub-folders and then generate NIFTI files
+#  dicomorganize - Sort original DICOMs into sub-folders and then generate NIFTI files
 # ------------------------------------------------------------------------------------------------------
 
 dicomorganize() {
+			echo "Overwrite set to: $Overwrite"
 	  		mkdir ${StudyFolder}/${CASE}/dicom &> /dev/null
 	  		# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "no" ]; then
-			echo ""
-			reho "===> Checking for presence of ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
-			if (test -f ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt); then
 				echo ""
-				geho "--- Found ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
-				geho "    Note: To re-run set --overwrite='yes'"
-				echo ""
-				geho " ... $CASE ---> dicomsort done"
-				echo ""
+				reho "===> Checking for presence of ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
+					if (test -f ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt); then
+						echo ""
+						geho "--- Found ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
+						geho "    Note: To re-run set --overwrite='yes'"
+						echo ""
+						geho " ... $CASE ---> dicomorganize done"
+						echo ""
+					fi
 			else
-			echo ""
-	  		# -- Combine all the calls into a single command
-		 	Com1="cd ${StudyFolder}/${CASE}"
-			echo " ---> running sortDicom and dicom2nii for $CASE"
-			echo ""
-			Com2="gmri sortDicom"
-			Com3="gmri dicom2niix unzip=yes gzip=yes clean=yes verbose=true cores=4"
-			ComQUEUE="$Com1; $Com2; $Com3"
-			if [ "$Cluster" == 1 ]; then
-			  	echo ""
-  				echo "---------------------------------------------------------------------------------"
-				echo "Running dicomsort locally on `hostname`"
-				echo "Check output here: $StudyFolder/$CASE/dicom "
-				echo "---------------------------------------------------------------------------------"
-		 		echo ""
-		 		eval "$ComQUEUE"
-			else
-				echo "Job ID:"
-				fslsub="$Scheduler" # set scheduler for fsl_sub command
-				# -- Set the scheduler commands
-				rm -f "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh &> /dev/null
-				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
-				chmod 770 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
-				# -- Run the scheduler commands
-				#fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomsort.sh
-				cd "$StudyFolder"/"$CASE"/dicom/
-				gmri schedule command="${StudyFolder}/${CASE}/dicom/${CASE}_setuphcp.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomsort.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomsort.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
 				echo ""
-				echo "---------------------------------------------------------------------------------"
-				echo "Data successfully submitted" 
-				echo "Scheduler: $Scheduler"
-				echo "Scheduler Options: $SchedulerOptions"
-				echo "Check output logs here: $StudyFolder/$CASE/dicom"
-				echo "---------------------------------------------------------------------------------"
+	  			# -- Combine all the calls into a single command
+		 		Com1="cd ${StudyFolder}/${CASE}"
+				echo " ---> running sortDicom and dicom2nii for $CASE"
 				echo ""
-			fi
-			fi
+				Com2="gmri sortDicom"
+				Com3="gmri dicom2niix unzip=yes gzip=yes clean=yes verbose=true cores=4"
+				ComQUEUE="$Com1; $Com2; $Com3"
+				
+				if [ "$Cluster" == 1 ]; then
+				  	echo ""
+  					echo "---------------------------------------------------------------------------------"
+					echo "Running dicomorganize locally on `hostname`"
+					echo "Check output here: $StudyFolder/$CASE/dicom "
+					echo "---------------------------------------------------------------------------------"
+		 			echo ""
+		 			eval "$ComQUEUE"
+				else
+					echo "Job ID:"
+					fslsub="$Scheduler" # set scheduler for fsl_sub command
+					# -- Set the scheduler commands
+					rm -f "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh &> /dev/null
+					echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
+					chmod 770 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
+					# -- Run the scheduler commands
+					#fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
+					cd "$StudyFolder"/"$CASE"/dicom/
+					gmri schedule command="${StudyFolder}/${CASE}/dicom/${CASE}_ComQUEUE_dicomorganize.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
+					echo ""
+					echo "---------------------------------------------------------------------------------"
+					echo "Data successfully submitted" 
+					echo "Scheduler: $Scheduler"
+					echo "Scheduler Options: $SchedulerOptions"
+					echo "Check output logs here: $StudyFolder/$CASE/dicom"
+					echo "---------------------------------------------------------------------------------"
+					echo ""
+				fi
 			fi
 }
 
@@ -309,25 +311,25 @@ show_usage_dicomorganize() {
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
-				echo "		--overwrite=<re-run_dicomsort>				Explicitly force a re-run of dicomsort"
+				echo "		--overwrite=<re-run_dicomorganize>				Explicitly force a re-run of dicomorganize"
 				echo ""
 				echo ""  
-    			echo "-- Usage for dicomsort"
+    			echo "-- Usage for dicomorganize"
     			echo ""
 				echo "* Example with interactive terminal:"
-				echo "AP dicomsort <study_folder> 'comma_separarated_list_of_cases>'"
+				echo "AP dicomorganize <study_folder> 'comma_separarated_list_of_cases>'"
     			echo ""
     			echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "AP --path='<study_folder>' \ "
-				echo "--function='dicomsort' \ "
+				echo "--function='dicomorganize' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--runmethod='1'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "AP --path='<study_folder>' \ "
-				echo "--function='dicomsort' \ "
+				echo "--function='dicomorganize' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler>' \ "
@@ -384,7 +386,7 @@ show_usage_setuphcp() {
   				echo "-- DESCRIPTION:"
     			echo ""
   				echo "This function generates the Human Connectome Project folder structure for preprocessing."
-  				echo "It should be executed after proper dicomsort and subject.txt file has been vetted."
+  				echo "It should be executed after proper dicomorganize and subject.txt file has been vetted."
   				echo ""
   				echo "-- REQUIRED PARMETERS:"
 				echo ""
@@ -4191,10 +4193,10 @@ fi
 # ========================================================================================
 
 # ------------------------------------------------------------------------------
-#  dicomsort function loop
+#  dicomorganize function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "dicomsort" ]; then
+if [ "$FunctionToRun" == "dicomorganize" ]; then
 		# -- Check all the user-defined parameters:
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
