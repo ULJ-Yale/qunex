@@ -2110,7 +2110,7 @@ computeboldfc() {
 
 		# Outputs will be files located in the location specified in the outputpath
 		# -- Parse General Parameters
-		QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		#QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 		StudyFolder="$StudyFolder"
 		CASE="$CASE"
 		InputFiles="$InputFiles"
@@ -2150,25 +2150,24 @@ computeboldfc() {
 				echo "Running locally on `hostname`"
 				echo "Check log file output here: $LogFolder"
 				echo "--------------------------------------------------------------"
-				echo ""
-				${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
-				--path="${StudyFolder}" \
-				--calculation="${Calculation}" \
-				--runtype="${RunType}" \
-				--subject="${CASE}" \
-				--inputfiles="${InputFiles}" \
-				--inputpath="${InputPath}" \
-				--extractdata="${ExtractData}" \
-				--outname="${OutName}" \
-				--flist="${FileList}" \
-				--overwrite="${Overwrite}" \
-				--ignore="${IgnoreFrames}" \
-				--roinfo="${ROIInfo}" \
-				--options="${FCCommand}" \
-				--method="${Method}" \
-				--targetf="${OutPath}" \
-				--mask="${MaskFrames}" \
-				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
+				echo " ${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
+				--path=${StudyFolder} \
+				--calculation=${Calculation} \
+				--runtype=${RunType} \
+				--subject=${CASE} \
+				--inputfiles=${InputFiles} \
+				--inputpath=${InputPath} \
+				--extractdata=${ExtractData} \
+				--outname=${OutName} \
+				--flist=${FileList} \
+				--overwrite=${Overwrite} \
+				--ignore=${IgnoreFrames} \
+				--roinfo=${ROIInfo} \
+				--options=${FCCommand} \
+				--method=${Method} \
+				--targetf=${OutPath} \
+				--mask=${MaskFrames} \
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
 			else			
 				# -- Deprecated fsl_sub call
 				# set scheduler for fsl_sub command
@@ -2194,11 +2193,9 @@ computeboldfc() {
 				--method=${Method} \
 				--targetf=${OutPath} \
 				--mask=${MaskFrames} \
-				--covariance=${Covariance}" > "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
-				
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
 				# - Make script executable 
 				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
-				cd ${LogFolder}
 				# - Send to scheduler     		
 				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_${CASE}.sh" \
 				settings="${Scheduler},${SchedulerOptions}" \
@@ -2219,29 +2216,28 @@ computeboldfc() {
 				echo "Running locally on `hostname`"
 				echo "Check log file output here: $LogFolder"
 				echo "--------------------------------------------------------------"
-				echo ""
-				${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
-				--path="${StudyFolder}" \
-				--calculation="${Calculation}" \
-				--runtype="${RunType}" \
-				--subject="${CASE}" \
-				--inputfiles="${InputFiles}" \
-				--inputpath="${InputPath}" \
-				--extractdata="${ExtractData}" \
-				--outname="${OutName}" \
-				--flist="${FileList}" \
-				--overwrite="${Overwrite}" \
-				--ignore="${IgnoreFrames}" \
-				--target="${TargetROI}" \
-				--command="${GBCCommand}" \
-				--targetf="${OutPath}" \
-				--mask="${MaskFrames}" \
-				--rsmooth="${RadiusSmooth}" \
-				--rdilate="${RadiusDilate}" \
-				--verbose="${Verbose}" \
-				--time="${ComputeTime}" \
-				--vstep="${VoxelStep}" \
-				--covariance="${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
+				echo " ${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
+				--path=${StudyFolder} \
+				--calculation=${Calculation} \
+				--runtype=${RunType} \
+				--subject=${CASE} \
+				--inputfiles=${InputFiles} \
+				--inputpath=${InputPath} \
+				--extractdata=${ExtractData} \
+				--outname=${OutName} \
+				--flist=${FileList} \
+				--overwrite=${Overwrite} \
+				--ignore=${IgnoreFrames} \
+				--target=${TargetROI} \
+				--command=${GBCCommand} \
+				--targetf=${OutPath} \
+				--mask=${MaskFrames} \
+				--rsmooth=${RadiusSmooth} \
+				--rdilate=${RadiusDilate} \
+				--verbose=${Verbose} \
+				--time=${ComputeTime} \
+				--vstep=${VoxelStep} \
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
 			else
 				# -- Deprecated fsl_sub call
 				# set scheduler for fsl_sub command
@@ -2250,6 +2246,10 @@ computeboldfc() {
 				# - Clean prior command 
 				rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null	
 				# - Echo full command into a script
+				echo ""
+				geho "Full Command:"
+				geho "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh --path=${StudyFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --flist=${FileList} --outname=${OutName} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --target=${TargetROI} --command=${GBCCommand} --targetf=${OutPath} --mask=${MaskFrames} --rsmooth=${RadiusSmooth} --rdilate=${RadiusDilate} --verbose=${Verbose} --time=${ComputeTime} --vstep=${VoxelStep} --covariance=${Covariance}"
+				echo ""				
 				echo "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
@@ -2271,12 +2271,10 @@ computeboldfc() {
 				--verbose=${Verbose} \
 				--time=${ComputeTime} \
 				--vstep=${VoxelStep} \
-				--covariance=${Covariance}" > "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh 
 				# - Make script executable 
 				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null
-				cd ${LogFolder}
 				# - Send to scheduler     		
-				cd ${LogFolder}
 				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_gbc_${CASE}.sh" \
 				settings="${Scheduler},${SchedulerOptions}" \
 				output="stdout:${LogFolder}/ComputeFunctionalConnectivity_gbc.output.log|stderr:${LogFolder}/ComputeFunctionalConnectivity_gbc.error.log" \
