@@ -11,12 +11,11 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %       val              - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
 %       t                - threshold value [0]
 %       projection_type  - type of surface component projection ('midthickness', 'inflated',...)
-%                          or a structure containing the names of the surface files (.surf.gii)
-%                          for both, left and right cortex:
-%                                a) for a default projection: 'midthickness' ['midthickness']
+%                          or a string containing the path to the surface files (.surf.gii)
+%                          for both, left and right cortex separated by a pipe:
+%                                a) for a default projection: 'type: midthickness' ['type:midthickness']
 %                                b) for a specific projection:
-%                                        projection.cortex_left = 'cortex_left_projection.surf.gii'
-%                                        projection.cortex_right = 'cortex_right_projection.surf.gii'
+%                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
 %       frames           - list of frames to perform ROI operation on
 %       verbose          - whether to report the peaks (1) and also be verbose:
 %                                a) on the first level (2)
@@ -50,14 +49,14 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %   larger than 300 voxels, and surface peak regions of areas between
 %   50 mm^2 and 250 mm^2 on a cortex midthickness projection use:
 %
-%   roi = img.mri_FindPeaks([72 50], [300 250], 'b', 3, 'midthickness');
+%   roi = img.mri_FindPeaks([72 50], [300 250], 'b', 3, 'type:midthickness');
 %
 %   EXAMPLE USE 2 (CIFTI-2 image)
 %   To perform an operation on a time series (dtseries) image with similar
 %   parameters as in the first example on frames 1, 3, 7 with verbose
 %   output use:
 %
-%   roi = img.mri_FindPeaks([72 50], [300 250], 'b', 3, 'midthickness', [1 3 7], 2);
+%   roi = img.mri_FindPeaks([72 50], [300 250], 'b', 3, 'type:midthickness', [1 3 7], 2);
 %
 %   EXAMPLE USE 3 (NIfTI image)
 %   To get a roi image of both positive and negative peak regions with miminum z
@@ -71,9 +70,8 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
 %   voxels on a projection defined with a specific surface file use:
 %
-%   projection.cortex_left = 'CL_projection.surf.gii';
-%   projection.cortex_right = 'CR_projection.surf.gii';
-%   [roi vol_peaks peaks] = mri_FindPeaks([72 80], [300 350], 'b', 3, projection, [], 1);
+%   [roi vol_peaks peaks] = mri_FindPeaks([72 80], [300 350], 'b', 3,...
+%       'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii', [], 1);
 %
 %   ---
 %   Written by Aleksij Kraljic, June 7, 2017
@@ -83,11 +81,11 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %        - Added option for passing specific surf.gii projection files
 %
 
-if nargin < 8 || isempty(verbose),    verbose = false;             end
-if nargin < 7 || isempty(frames),     frames = 1:img.frames;     end
-if nargin < 6 || isempty(projection_type), projection_type = 'midthickness'; end
-if nargin < 5 || isempty(t),          t       = 0;                 end
-if nargin < 4 || isempty(val),        val     = 'b';               end
+if nargin < 8 || isempty(verbose),    verbose = false;                            end
+if nargin < 7 || isempty(frames),     frames = 1:img.frames;                      end
+if nargin < 6 || isempty(projection_type), projection_type = 'type:midthickness'; end
+if nargin < 5 || isempty(t),          t       = 0;                                end
+if nargin < 4 || isempty(val),        val     = 'b';                              end
 if nargin < 3
     maxdim = [inf, inf];
 elseif isempty(maxdim)
@@ -124,13 +122,15 @@ elseif verbose == 3
     verbose_pass = 2;
 end
 
+projection_raw = projection_type;
+projection_type = g_ParseOptions([],projection_type);
 % --- assign proper projection type format
-if ~isstruct(projection_type)
-    projection.cortex_left = projection_type;
-    projection.cortex_right = projection_type;
-else
+if isfield(projection_type,'cortex_left') && isfield(projection_type,'cortex_right')
     projection.cortex_left = projection_type.cortex_left;
     projection.cortex_right = projection_type.cortex_right;
+else
+    projection.cortex_left = projection_type.type;
+    projection.cortex_right = projection_type.type;
 end
 
 % --- Check for the number of frames in the image
@@ -144,7 +144,7 @@ if img.frames > 1
     for fr = frames
         if verbose, fprintf('\nMAIN FIND PEAKS---> performing ROI ops on frame %d', fr); end
         img_temp.data = img.data(:,fr);
-        [img_temp, p_temp_vol, p_temp] = img_temp.mri_FindPeaks(mindim, maxdim, val, t, projection, 1, verbose);
+        [img_temp, p_temp_vol, p_temp] = img_temp.mri_FindPeaks(mindim, maxdim, val, t, projection_raw, 1, verbose);
         roi.data(:,fr)=img_temp.image2D();
         vol_peak{fr} = p_temp_vol;
         peak{fr} = p_temp;

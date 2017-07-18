@@ -12,24 +12,23 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %       maxs        - [maximum size, maximum area] of the resulting ROI  [inf, inf]
 %       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') [b]
 %       t           - threshold value [0]
-%		presmooth   - data structure containing presmoothing parameters:
-%                     presmooth.fwhm     ... Full Width at Half Maximum in voxels (NIfTI)
-%                     presmooth.ftype    ... Type of smoothing filter, 'gaussian' or 'box' (NIfTI). ['gaussian']
-%                     presmooth.ksize    ... Size of the smoothing kernel:
+%		presmooth   - string containing presmoothing parameters: []
+%                     Format -> 'fwhm:VALUE|ftype:TYPE_NAME|ksize:[VAL1 VAL2]|wb_path:PATH|hcpatlas:PATH'
+%                     fwhm     ... Full Width at Half Maximum in voxels (NIfTI)
+%                     ftype    ... Type of smoothing filter, 'gaussian' or 'box' (NIfTI). ['gaussian']
+%                     ksize    ... Size of the smoothing kernel:
 %                                            a) for NIfTI: voxels [6]
 %                                            b) for CIFTI-2: [voxels mm^2] [6 6]
-%                     presmooth.wb_path  ... path to wb_command
-%                     presmooth.hcpatlas ... path to HCPATLAS folder containing projection surf.gii files
+%                     wb_path  ... path to wb_command
+%                     hcpatlas ... path to HCPATLAS folder containing projection surf.gii files
 %                     * the last two fields are not required if they are stored as
 %                     environment variables (wb_command in $PATH and hcpatlas in $HCPATLAS
-%
 %       projection  - type of surface component projection ('midthickness', 'inflated',...)
-%                          or a structure containing the names of the surface files (.surf.gii)
-%                          for both, left and right cortex:
-%                                a) for a default projection: 'midthickness' ['midthickness']
+%                          or a string containing the path to the surface files (.surf.gii)
+%                          for both, left and right cortex separated by a pipe:
+%                                a) for a default projection: 'type: midthickness' ['midthickness']
 %                                b) for a specific projection:
-%                                        projection.cortex_left = 'cortex_left_projection.surf.gii'
-%                                        projection.cortex_right = 'cortex_right_projection.surf.gii'
+%                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
 %       frames      - list of frames to perform ROI operation on
 %       verbose     - whether to be verbose:
 %                           a) on the first level    (1)
@@ -53,8 +52,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   voxels, after smoothing with a kernel of
 %   size 7 voxels for volume structures and 9 mm^2 for surfaces structures use:
 %
-%   presmooth.ksize = [7 9];
-%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350], 'b', 3, presmooth, 'midthickness', [], 1);
+%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350], 'b', 3, 'ksize:[7 9]', 'midthickness', [], 1);
 %
 %   EXAMPLE USE 2 (CIFTI-2 image)
 %   To get a roi image of both positive and negative peak regions with miminum z
@@ -63,8 +61,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   and 9 mm^2 for surfaces structures,
 %   where only frames 1, 6 and 7 are to be analyzed use:
 %
-%   presmooth.ksize = [7 9];
-%   g_FindPeaks('zscores.dtseries.nii', 'zscores_analyzed.dtseries.nii', [72 80], [300 350], 'b', 1, presmooth, 'inflated', [1 5 7], 1);
+%   g_FindPeaks('zscores.dtseries.nii', 'zscores_analyzed.dtseries.nii', [72 80], [300 350], 'b', 1, 'ksize:[7 9]', 'inflated', [1 5 7], 1);
 %
 %   EXAMPLE USE 3 (NIfTI image)
 %   To get a roi image of both positive and negative peak regions with miminum z
@@ -72,10 +69,9 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   voxels, after applying 3 voxel gaussian smoothing and a smoothing kernel of
 %   size 6 voxels use:
 %
-%   presmooth.fwhm = 3;
-%   presmooth.ksize = 7;
-%   presmooth.ftype = 'gaussian'
-%   g_FindPeaks('zscores.nii.gz', 'zscores_analyzed.nii.gz', 50, 250, 'b', 1, presmooth, [], [], 2);
+%   presmooth = ;
+%   g_FindPeaks('zscores.nii.gz', 'zscores_analyzed.nii.gz', 50, 250, 'b', 1,...
+%               'fwhm:3|ksize:7|ftype:gaussian'presmooth, [], [], 2);
 %
 %   EXAMPLE USE 4 (CIFTI-2 image)
 %   To get a roi image of both positive and negative peak regions with miminum z
@@ -83,10 +79,8 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   voxels, after smoothing with a kernel of
 %   size 6 voxels for volume structures and 7 mm^2 for surfaces structures use:
 %
-%   presmooth.ksize = [6 7];
-%   projection.cortex_left = 'CL_projection.surf.gii';
-%   projection.cortex_right = 'CR_projection.surf.gii';
-%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350], 'b', 3, presmooth, projection, [], 1);
+%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350],...
+%               'b', 3, 'ksize:[6 7]', 'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii', [], 1);
 %
 %   ---
 %   Written by Grega Repovs, 2015-04-11
@@ -110,17 +104,19 @@ img = gmrimage(fin);
 load('CIFTI_BrainModel.mat')
 
 %  ---- initializing
-presmooth.request = true;
+presmooth_request = true;
 if nargin < 10 || isempty(verbose),   verbose   = false    ;       end
 if nargin < 9 || isempty(frames),     frames = 1:img.frames;       end
-if nargin < 8 || isempty(projection), projection = 'midthickness'; end
-if nargin < 7 || isempty(presmooth),  presmooth.request = false;   end
+if nargin < 8 || isempty(projection), projection = 'type: midthickness'; end
+if nargin < 7 || isempty(presmooth),  presmooth_request = false;   end
 if nargin < 6 || isempty(t),          t         = 0    ;           end
 if nargin < 5 || isempty(val),        val       = 'b'  ;           end
 if nargin < 4 || isempty(maxs),       maxs      = inf  ;           end
 if nargin < 3 || isempty(mins),       mins      = 0    ;           end
 if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 
+presmooth = g_ParseOptions([],presmooth);
+if ~isfield(presmooth,'fwhm'),  presmooth.fwhm = []; end
 if ~isfield(presmooth,'ftype'),  presmooth.ftype = []; end
 if ~isfield(presmooth,'ksize'), presmooth.ksize =[]; end
 if ~isfield(presmooth,'wb_path'),  presmooth.wb_path = []; end
@@ -129,7 +125,7 @@ if ~isfield(presmooth,'hcpatlas'), presmooth.hcpatlas =[]; end
 % increment verbose for compatibility with the mri_FindPeaks method 
 verbose = verbose + 1;
 
-if ~isempty(presmooth) && presmooth.request
+if ~isempty(presmooth) && presmooth_request
 	if verbose >= 2, fprintf('\n---> Presmoothing image'); end
     img = img.mri_Smooth(presmooth.fwhm, verbose, presmooth.ftype,...
         presmooth.ksize, projection, presmooth.wb_path, presmooth.hcpatlas);

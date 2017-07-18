@@ -13,12 +13,11 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path
 %                    a) for NIfTI: voxels [6]
 %                    b) for CIFTI: [voxels mm^2] [6 6]
 %       projection  ... type of surface component projection ('midthickness', 'inflated',...)
-%                          or a structure containing the names of the surface files (.surf.gii)
-%                          for both, left and right cortex:
-%                                a) for a default projection: 'midthickness' ['midthickness']
+%                          or a string containing the path to the surface files (.surf.gii)
+%                          for both, left and right cortex separated by a pipe:
+%                                a) for a default projection: 'type: midthickness' ['midthickness']
 %                                b) for a specific projection:
-%                                        projection.cortex_left = 'cortex_left_projection.surf.gii'
-%                                        projection.cortex_right = 'cortex_right_projection.surf.gii'
+%                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
 %       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
 %
@@ -53,9 +52,9 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path
 %
 
 % input checking
-if nargin < 8 || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS'); end
-if nargin < 7 || isempty(wb_path),    wb_path = '';                    end
-if nargin < 6 || isempty(projection), projection = 'midthickness';   end
+if nargin < 8 || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
+if nargin < 7 || isempty(wb_path),    wb_path = '';                     end
+if nargin < 6 || isempty(projection), projection = 'type:midthickness'; end
 if nargin < 5
     ksize = [7, 7];
 elseif isempty(ksize)
@@ -76,14 +75,16 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     opt.wb_command_path = wb_path;
     opt.omp_threads = [];
     
+    
+    projection = g_ParseOptions([],projection);
     % --- assign proper projection type format
-    if isstruct(projection)
+    if isfield(projection,'cortex_left') && isfield(projection,'cortex_right')
         surfaceFile.lsurf = projection.cortex_left;
         surfaceFile.rsurf = projection.cortex_right;
     else
         % load surface files
-        surfaceFile.lsurf = strcat(hcpatlas,'/Q1-Q6_R440.L.',projection,'.32k_fs_LR.surf.gii');
-        surfaceFile.rsurf = strcat(hcpatlas,'/Q1-Q6_R440.R.',projection,'.32k_fs_LR.surf.gii');
+        surfaceFile.lsurf = strcat(hcpatlas,'/Q1-Q6_R440.L.',projection.type,'.32k_fs_LR.surf.gii');
+        surfaceFile.rsurf = strcat(hcpatlas,'/Q1-Q6_R440.R.',projection.type,'.32k_fs_LR.surf.gii');
     end
     
     % create temporary wb_command input file

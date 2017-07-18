@@ -8,13 +8,11 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %   INPUT
 %       img              - input gmrimage object
 %       surfaceComponent - brain component of type surface to perform ROI operation on ('cortex_left', 'cortex_right') ['cortex_left']
-%       projection_type  - type of surface component projection ('midthickness', 'inflated',...)
-%                          or a structure containing the names of the surface files (.surf.gii)
-%                          for both, left and right cortex:
+%       projection       - type of surface component projection ('midthickness', 'inflated',...)
+%                          or a path to the surface file (.surf.gii) of the left or right cortex:
 %                                a) for a default projection: 'midthickness' ['midthickness']
 %                                b) for a specific projection:
-%                                        projection.cortex_left = 'cortex_left_projection.surf.gii'
-%                                        projection.cortex_right = 'cortex_right_projection.surf.gii'
+%                                        'CL_projection.surf.gii'
 %       minarea          - minimal size of the resulting ROI  [0]
 %       maxarea          - maximum size of the resulting ROI  [inf]
 %       val              - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
