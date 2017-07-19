@@ -2136,9 +2136,13 @@ computeboldfc() {
 		Method="$Method"				# --method=
 		InputPath="$InputPath"			# --inputpath		
 		
+		# make sure individual runs default to the original input path location
 		if [ "$OutPath" == "" ]; then
 			OutPath="$StudyFolder/$CASE/$InputPath"
 		fi
+		if [ "$RunType" == "individual" ]; then
+			OutPath="$StudyFolder/$CASE/$InputPath"
+  		fi
 		
 		mkdir "$OutPath" > /dev/null 2>&1
 		mkdir "$OutPath"/computeboldfc_log > /dev/null 2>&1
@@ -2176,6 +2180,10 @@ computeboldfc() {
 				# - Clean prior command 
 				rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh &> /dev/null	
 				# - Echo full command into a script
+				echo ""
+				geho "Full Command:"
+				geho "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh --path=${StudyFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
+				echo ""	
 				echo "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
@@ -2196,7 +2204,8 @@ computeboldfc() {
 				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
 				# - Make script executable 
 				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
-				# - Send to scheduler     		
+				# - Send to scheduler 
+				cd "$LogFolder"  		
 				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_${CASE}.sh" \
 				settings="${Scheduler},${SchedulerOptions}" \
 				output="stdout:${LogFolder}/ComputeFunctionalConnectivity.output.log|stderr:${LogFolder}/ComputeFunctionalConnectivity.error.log" \
@@ -2275,6 +2284,7 @@ computeboldfc() {
 				# - Make script executable 
 				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null
 				# - Send to scheduler     		
+				cd "$LogFolder"  		
 				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_gbc_${CASE}.sh" \
 				settings="${Scheduler},${SchedulerOptions}" \
 				output="stdout:${LogFolder}/ComputeFunctionalConnectivity_gbc.output.log|stderr:${LogFolder}/ComputeFunctionalConnectivity_gbc.error.log" \
@@ -2313,7 +2323,7 @@ show_usage_computeboldfc() {
 				echo "		--calculation=<type_of_calculation>					Run <seed> or <gbc> calculation for functional connectivity."
 				echo "		--runtype=<type_of_run>					Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
 				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
-				echo "		--targetf=<path_for_output_file>			Specify the absolute path for output folder. If using --runtype='individual' and left empty the output will default to --inputpath location for each subject"
+				echo "		--targetf=<path_for_output_file>			Specify the absolute path for group result output folder. If using --runtype='individual' the output will default to --inputpath location for each individual subject"
 				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
 				echo "		--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
 				echo ""
@@ -5064,7 +5074,6 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 				if [ -z "$OutPathFC" ]; then reho "Error: Output path value missing and is needed for a group run."; exit 1; fi
 			fi
     	fi
-    	
     	if [ ${Calculation} == "gbc" ]; then
     		if [ -z "$TargetROI" ]; then TargetROI="[]"; fi
 			if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
@@ -5079,7 +5088,6 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 			if [ -z "$FCCommand" ]; then FCCommand=""; fi
 			if [ -z "$Method" ]; then Method="mean"; fi
 		fi		
-    	
 		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
 			Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -5097,7 +5105,6 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 		echo "Running ComputeFunctionalConnectivity function with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
-		
 		echo "Output Path: ${OutPathFC}"
   		echo "Extract data in CSV format: ${ExtractData}"
   		echo "Type of fc calculation: ${Calculation}"
@@ -5105,7 +5112,6 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
   		echo "Ignore frames: ${IgnoreFrames}"
   		echo "Mask out frames: ${MaskFrames}"
   		echo "Calculate Covariance: ${Covariance}"
-  		
   		if [ ${RunType} == "list" ]; then
   		echo "FileList: ${FileList}"
   		fi
@@ -5130,22 +5136,18 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
   		echo "FC Commands to run: ${FCCommand}"
   		echo "Method to compute fc: ${Method}"
   		fi
-		
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
-		
 		if [ ${RunType} == "individual" ]; then
 			for CASE in $CASES; do
 				"$FunctionToRun" "$CASE"
 			done
   		fi
-  		
   		if [ ${RunType} == "group" ]; then
   			CASE=`echo "$CASES" | sed 's/ /,/g'`
   			echo $CASE
 			"$FunctionToRun" "$CASE"
   		fi
-  		
   		if [ ${RunType} == "list" ]; then
 			"$FunctionToRun"
   		fi
