@@ -1,6 +1,6 @@
-function [correlations, significances, zscores] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
+function [correlations, zscores, pvaues] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
 
-%function [correlations, significances, zscores] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
+%function [correlations, zscores, pvalues] = mri_ComputeCorrelations(obj, bdata, verbose, cv)
 %
 %	For each voxel, computes correlation with the provided (behavioral or other) data.
 %
@@ -12,8 +12,8 @@ function [correlations, significances, zscores] = mri_ComputeCorrelations(obj, b
 %
 %   OUTPUT
 %   correlations  - a gmrimage object with computed correlations.
-%   significances - a gmrimage of p-values for each of the correlation.
-%   zscores       - a gmrimage of p-values converted to z-scores
+%   zscores       - a gmrimage of z-scores reflecting significance of correlations.
+%   pvalues       - a gmrimage of uncorrected p-values.
 %
 %   USE
 %   The method computes correlations of each voxel with each column of the bdata matrix.
@@ -38,6 +38,7 @@ function [correlations, significances, zscores] = mri_ComputeCorrelations(obj, b
 %   2014-09-03 - Grega Repovs - Added covariance option.
 %   2016-11-25 - Grega Repovs - Updated documentation.
 %   2017-07-10 - Grega Repovs - Added Z-scores.
+%   2017-07-19 - Grega Repovs - Fixed significance output.
 %
 
 if nargin < 4 || isempty(cv),      cv      = false; end
@@ -88,19 +89,20 @@ for n = 1:ncorrelations
 end
 
 if nargout > 1
-    significances = zeroframes(obj, ncorrelations);
+    if verbose, fprintf('\n... computing Z-scores'), end
+    zscores = zeroframes(obj, ncorrelations);
     if cv
-        significances.data(:) = 1;
+        zscores.data(:) = 1;
     else
-        significances.data = fc_Fisher(correlations.data);
-        significances.data = significances.data/(1/sqrt(obj.frames-3));
+        zscores.data = fc_Fisher(correlations.data);
+        zscores.data = zscores.data/(1/sqrt(obj.frames-3));
     end
 end
 
 if nargout > 2
-    if verbose, fprintf('\n... computing Z-scores'), end
-    Z = obj.zeroframes(1);
-    Z.data = icdf('Normal', (1-(significances.data./2)), 0, 1) .* sign(correlations.data);
+    if verbose, fprintf('\n... computing p-values'), end
+    pvalues = obj.zeroframes(1);
+    pvalues.data = (1-cdf('Normal', abs(zscores.data), 0, 1)) * 2 .* sign(correlations.data);
 end
 
 if verbose, fprintf('\n... done!'), end
