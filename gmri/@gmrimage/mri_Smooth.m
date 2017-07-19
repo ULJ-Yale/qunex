@@ -15,7 +15,7 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path
 %       projection  ... type of surface component projection ('midthickness', 'inflated',...)
 %                          or a string containing the path to the surface files (.surf.gii)
 %                          for both, left and right cortex separated by a pipe:
-%                                a) for a default projection: 'type: midthickness' ['midthickness']
+%                                a) for a default projection: 'type: midthickness' ['type:midthickness']
 %                                b) for a specific projection:
 %                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']

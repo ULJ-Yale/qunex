@@ -1,4 +1,4 @@
-function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, frames, verbose)
+function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)
 
 %function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, verbose)
 %
@@ -17,7 +17,16 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %       maxarea          - maximum size of the resulting ROI  [inf]
 %       val              - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
 %       t                - threshold value [0]
-%       frames           - list of frames to perform ROI operation on ([1 5 7]) [all frames]
+%       options          - list of options separated with a pipe symbol ("|"):
+%                                a) for the number of frames to be analized:
+%                                           - []                        ... analyze only the first frame
+%                                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
+%                                           - 'frames:all'              ... analyze all the frames
+%                                b) for the type of ROI boundary:
+%                                           - []                        ... boundary left unmodified
+%                                           - 'boundary:remove'         ... remove the boundary regions
+%                                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
+%                                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
 %       verbose          - whether to report the peaks (1) and also be verbose (2) [false]
 %
 %   OUTPUT
@@ -50,7 +59,7 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %   parameters as in the first example on frames 1, 3, 7 with verbose
 %   output use:
 %
-%   roi = img.mri_FindPeaksSurface('cortex_left', 'midthickness', 50, 250, 'b', 3, [1 3 7], 2);
+%   roi = img.mri_FindPeaksSurface('cortex_left', 'midthickness', 50, 250, 'b', 3, 'frames:[1 3 7]', 2);
 %
 %   ---
 %   Written by Aleksij Kraljic, July 5, 2017
@@ -60,7 +69,10 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %
 
 if nargin < 9 || isempty(verbose), verbose = false;       end
-if nargin < 8 || isempty(frames),  frames = 1:img.frames; end
+if nargin < 8 || isempty(options)
+    options.frames = 1;
+    options.boundary = '';
+end
 if nargin < 7 || isempty(t),       t       = 0;           end
 if nargin < 6 || isempty(val),     val     = 'b';         end
 if nargin < 5 || isempty(maxarea), maxarea = inf;         end
@@ -78,6 +90,16 @@ elseif verbose == 2
     verbose = true;
     report  = true;
 end
+
+% --- parse options argument
+options_parsed = g_ParseOptions([],options);
+if ~isfield(options_parsed,'frames')
+    options_parsed.frames = 1;
+elseif ~isfield(options_parsed,'boundary')
+    options_parsed.boundary = '';
+end
+frames = options_parsed.frames;
+boundary = options_parsed.boundary;
 
 % --- Check for the number of frames in the image
 if img.frames > 1
@@ -163,6 +185,7 @@ if strcmp(cifti.(lower(img.cifti.shortnames{cmp})).type,'Surface')
     
     % allocate the global vector to store region ID at indices corresponding to the data
     seg = zeros(size(data.(lower(img.cifti.shortnames{cmp}))));
+    boundaries = zeros(size(data.(lower(img.cifti.shortnames{cmp}))));
     
     % --- First flooding
     if verbose, fprintf('\n---> flooding %d peaks', length(peak)); end
@@ -343,29 +366,55 @@ if strcmp(cifti.(lower(img.cifti.shortnames{cmp})).type,'Surface')
         peak = peak([peak.area]>0);
     end
     
-    % -- relable the ROI labels, starting from 1 up to the last ROI
+    % --- relable the ROI labels, starting from 1 up to the last ROI
     for i=1:1:length(peak)
         v = seg(peak(i).index);
         seg(seg == v) = i;
         peak(i).index = i;
     end
-    
-    % --- embed data to ROI image
-    data.(lower(img.cifti.shortnames{cmp})) = seg;
-    
-    % -- remap the data back from global to CIFTI data format for export
-    roi = img;
-    roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
-    
-    % --- the end
-    if verbose, fprintf('\n===> DONE\n'); end
-    
+
+% --- define borders between ROIs as desired by the user
+boundary_map = zeros(size(seg));
+for n=1:1:numel(seg)
+    cs = seg(n);
+    if cs > 0
+        ni = seg(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours{n});
+        boundary_map(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours{n}(ni~=cs)) = -1;
+    end
+end
+
+% --- remap the data back from global to CIFTI data format for export
+roi = img;
+switch (boundary)
+    case 'remove'
+        seg(boundary_map == -1) = 0;
+        data.(lower(img.cifti.shortnames{cmp})) = seg;
+        % --- embed data to ROI image
+        roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
+    case 'highlight'
+        seg(boundary_map == -1) = -100;
+        data.(lower(img.cifti.shortnames{cmp})) = seg;
+        % --- embed data to ROI image
+        roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
+    case 'wire'
+        data.(lower(img.cifti.shortnames{cmp})) = boundary_map.*(-1);
+        % --- embed data to ROI image
+        roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
+    otherwise
+        data.(lower(img.cifti.shortnames{cmp})) = seg;
+        % --- embed data to ROI image
+        roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
+end
+
+% --- the end
+if verbose, fprintf('\n===> DONE\n'); end
+
 end
 
 if isempty(peak)
     if report, fprintf('\n===> No peaks to report on!\n'); end
 else
-    if report, fprintf('\n===> peak report\n'); end
+    if report, fprintf('\n===> peak report - %s\n',(lower(img.cifti.shortnames{cmp}))); end
     for p = 1:length(peak)
         if report, fprintf('\nROI:%3d  index: %3d  value: %5.1f  size: %3d  area: %3d', p, peak(p).index, peak(p).value, peak(p).size, peak(p).area); end
     end

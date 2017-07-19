@@ -1,4 +1,4 @@
-function [roi peak] = mri_FindPeaksVolume(img, minsize, maxsize, val, t, frames, verbose)
+function [roi peak] = mri_FindPeaksVolume(img, minsize, maxsize, val, t, options, verbose)
 
 %function [roi peak] = mri_FindPeaksVolume(img, minsize, maxsize, val, t, verbose)
 %
@@ -11,7 +11,16 @@ function [roi peak] = mri_FindPeaksVolume(img, minsize, maxsize, val, t, frames,
 %       maxize      - maximum size of the resulting ROI  [inf]
 %       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
 %       t           - threshold value [0]
-%       frames      - list of frames to perform ROI operation on ([1 5 7]) [all frames]
+%       options          - list of options separated with a pipe symbol ("|"):
+%                                a) for the number of frames to be analized:
+%                                           - []                        ... analyze only the first frame
+%                                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
+%                                           - 'frames:all'              ... analyze all the frames
+%                                b) for the type of ROI boundary:
+%                                           - []                        ... boundary left unmodified
+%                                           - 'boundary:remove'         ... remove the boundary regions
+%                                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
+%                                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
 %       verbose     - whether to report the peaks (1) and also be verbose (2) [false]
 %
 %   OUTPUT
@@ -43,7 +52,7 @@ function [roi peak] = mri_FindPeaksVolume(img, minsize, maxsize, val, t, frames,
 %   parameters as in the first example on frames 1, 3, 7 with verbose
 %   output use:
 %
-%   roi = img.mri_FindPeaksVolume([72 50], [300 250], 'b', 3, [1 3 7], 2);
+%   roi = img.mri_FindPeaksVolume([72 50], [300 250], 'b', 3, 'frames:[1 3 7]', 2);
 %
 %   ---
 %   Written by Grega Repovs, 2015-04-11
@@ -70,7 +79,7 @@ function [roi peak] = mri_FindPeaksVolume(img, minsize, maxsize, val, t, frames,
 %
 
 if nargin < 7 || isempty(verbose), verbose = false;            end
-if nargin < 6 || isempty(frames),  frames = 1:img.frames;      end
+if nargin < 6 || isempty(options), options = '';               end
 if nargin < 5 || isempty(t),       t       = 0;                end
 if nargin < 4 || isempty(val),     val     = 'b';              end
 if nargin < 3 || isempty(maxsize), maxsize = inf;              end
@@ -87,8 +96,18 @@ elseif verbose == 2
     report  = true;
 end
 
-% --- Set up data
+% --- parse options argument
+options_parsed = g_ParseOptions([],options);
+if ~isfield(options_parsed,'frames')
+    options_parsed.frames = 1;
+end
+if ~isfield(options_parsed,'boundary')
+    options_parsed.boundary = '';
+end
+frames = options_parsed.frames;
+boundary = options_parsed.boundary;
 
+% --- Set up data
 % check for the number of frames in the image
 if img.frames == 1
     img.data  = img.image4D;
@@ -332,10 +351,42 @@ if ~isempty(peak)
 end
 
 % --- embedd ROI
-
 roi = img.zeroframes(1);
 roi.data = seg(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1));
 
+% --- define borders between ROIs as desired by the user
+nonZseg = find(seg>0)';
+seg_size = size(seg);
+boundary_map = zeros(size(seg));
+for n=nonZseg
+    [x, y, z] = ind2sub(size(seg), n);
+    cs = seg(x,y,z);
+    for l=[-1 1]
+        if (x > 1 && x < seg_size(1))
+            if seg(x+l,y,z) ~= cs, boundary_map(x+l,y,z) = -1; end
+        end
+        if (y > 1 && y < seg_size(2))
+            if seg(x,y+l,z) ~= cs, boundary_map(x,y+l,z) = -1; end
+        end
+        if (z > 1 && z < seg_size(3))
+            if seg(x,y,z+l) ~= cs, boundary_map(x,y,z+l) = -1; end
+        end
+    end
+end
+
+roi_out = img.zeroframes(1);
+switch (boundary)
+    case 'remove'
+        seg(boundary_map == -1) = 0;
+        roi_out.data = seg(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1));
+    case 'highlight'
+        seg(boundary_map == -1) = -100;
+        roi_out.data = seg(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1));
+    case 'wire'
+        roi_out.data = boundary_map(2:(img.dim(1)+1),2:(img.dim(2)+1),2:(img.dim(3)+1)).*(-1);
+    otherwise
+        roi_out.data = roi.data;
+end
 
 % --- gather statistics
 
@@ -347,7 +398,7 @@ else
     roiinfo.ijk = [reshape([peak.label], [],1) reshape([peak.xyz], 3, [])' - 1];
     roiinfo.xyz = roi.mri_GetXYZ(roiinfo.ijk);
 
-    if report, fprintf('\n===> peak report\n'); end
+    if report, fprintf('\n===> peak report - volume structures\n'); end
 
     for p = 1:length(peak)
         peak(p).ijk = peak(p).xyz - 1;
@@ -361,6 +412,8 @@ else
 
     if report, fprintf('\n'); end
 end
+
+roi = roi_out;
 
 % --- the end
 

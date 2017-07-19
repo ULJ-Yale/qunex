@@ -1,4 +1,4 @@
-function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, frames, verbose)
+function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)
 
 %function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, verbose)
 %
@@ -29,7 +29,16 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %                                a) for a default projection: 'type: midthickness' ['midthickness']
 %                                b) for a specific projection:
 %                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
-%       frames      - list of frames to perform ROI operation on
+%       options          - list of options separated with a pipe symbol ("|"):
+%                                a) for the number of frames to be analized:
+%                                           - []                        ... analyze only the first frame
+%                                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
+%                                           - 'frames:all'              ... analyze all the frames
+%                                b) for the type of ROI boundary:
+%                                           - []                        ... boundary left unmodified
+%                                           - 'boundary:remove'         ... remove the boundary regions
+%                                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
+%                                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
 %       verbose     - whether to be verbose:
 %                           a) on the first level    (1)
 %                           b) on all the sub-levels (2) [false]
@@ -61,7 +70,8 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   and 9 mm^2 for surfaces structures,
 %   where only frames 1, 6 and 7 are to be analyzed use:
 %
-%   g_FindPeaks('zscores.dtseries.nii', 'zscores_analyzed.dtseries.nii', [72 80], [300 350], 'b', 1, 'ksize:[7 9]', 'inflated', [1 5 7], 1);
+%   g_FindPeaks('zscores.dtseries.nii', 'zscores_analyzed.dtseries.nii',...
+%               [72 80], [300 350], 'b', 1, 'ksize:[7 9]', 'inflated', 'frames:[1 5 7]', 1);
 %
 %   EXAMPLE USE 3 (NIfTI image)
 %   To get a roi image of both positive and negative peak regions with miminum z
@@ -97,32 +107,32 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %        - Added functionality for CIFTI-2 files
 %
 
-%  ---- read image and call FindPeaks
+% --- read image and call FindPeaks
 img = gmrimage(fin);
 
 % --- load CIFTI brain model data
 load('CIFTI_BrainModel.mat')
 
-%  ---- initializing
+% --- initializing
 presmooth_request = true;
-if nargin < 10 || isempty(verbose),   verbose   = false    ;       end
-if nargin < 9 || isempty(frames),     frames = 1:img.frames;       end
-if nargin < 8 || isempty(projection), projection = 'type: midthickness'; end
-if nargin < 7 || isempty(presmooth),  presmooth_request = false;   end
-if nargin < 6 || isempty(t),          t         = 0    ;           end
-if nargin < 5 || isempty(val),        val       = 'b'  ;           end
-if nargin < 4 || isempty(maxs),       maxs      = inf  ;           end
-if nargin < 3 || isempty(mins),       mins      = 0    ;           end
+if nargin < 10 || isempty(verbose),   verbose   = false    ;                end
+if nargin < 9 || isempty(options),    options = '';                         end
+if nargin < 8 || isempty(projection), projection = 'type: midthickness';    end
+if nargin < 7 || isempty(presmooth),  presmooth_request = false;            end
+if nargin < 6 || isempty(t),          t         = 0    ;                    end
+if nargin < 5 || isempty(val),        val       = 'b'  ;                    end
+if nargin < 4 || isempty(maxs),       maxs      = inf  ;                    end
+if nargin < 3 || isempty(mins),       mins      = 0    ;                    end
 if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 
 presmooth = g_ParseOptions([],presmooth);
-if ~isfield(presmooth,'fwhm'),  presmooth.fwhm = []; end
-if ~isfield(presmooth,'ftype'),  presmooth.ftype = []; end
-if ~isfield(presmooth,'ksize'), presmooth.ksize =[]; end
+if ~isfield(presmooth,'fwhm'),     presmooth.fwhm = [];    end
+if ~isfield(presmooth,'ftype'),    presmooth.ftype = [];   end
+if ~isfield(presmooth,'ksize'),    presmooth.ksize =[];    end
 if ~isfield(presmooth,'wb_path'),  presmooth.wb_path = []; end
 if ~isfield(presmooth,'hcpatlas'), presmooth.hcpatlas =[]; end
 
-% increment verbose for compatibility with the mri_FindPeaks method 
+% --- increment verbose for compatibility with the mri_FindPeaks method 
 verbose = verbose + 1;
 
 if ~isempty(presmooth) && presmooth_request
@@ -131,13 +141,13 @@ if ~isempty(presmooth) && presmooth_request
         presmooth.ksize, projection, presmooth.wb_path, presmooth.hcpatlas);
 end
 
-[roi vol_peak peak] = img.mri_FindPeaks(mins, maxs, val, t, projection, frames, verbose);
+[roi vol_peak peak] = img.mri_FindPeaks(mins, maxs, val, t, projection, options, verbose);
 
-% shift one up to start from 2 (to make fidl happy)
+% --- shift one up to start from 2 (to make fidl happy)
 roi.data = roi.data + 1;
 roi.data(roi.data == 1) = 0;
 
-%  --- print report
+% --- print report
 
 if verbose >= 2, fprintf('\n---> Saving image'); end
 
