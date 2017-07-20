@@ -632,10 +632,10 @@ def joinMaps(images=None, output=None, names=None, originals=None):
     EXAMPLE USE
     ===========
 
-    gmri joinMaps images="sustained_AvsB.dscalar_p.017.nii, \\
-                          sustained_BvsC.dscalar_p.017.nii, \\
-                          sustained_AvsC.dscalar_p.017.nii, \\
-                          sustained_aov.dscalar_p.017.nii" \\
+    gmri joinMaps images="sustained_AvsB_p.017.dscalar.nii, \\
+                          sustained_BvsC_p.017.dscalar.nii, \\
+                          sustained_AvsC_p.017.dscalar.nii, \\
+                          sustained_aov_p.017.dscalar.nii" \\
                   names="A > B, B > C, A > C, ANOVA" \\
                   output="sustained_results.dscalar.nii" \\
                   originals=remove
