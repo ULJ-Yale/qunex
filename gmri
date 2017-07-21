@@ -55,6 +55,7 @@ listDicom    [folder=.]
 splitDicom   [folder=.]
 sortDicom    [folder=.]
 dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
+dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
 processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1]
 getDICOMInfo dfile=<dicom_file> [scanner=siemens]
 
