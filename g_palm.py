@@ -37,6 +37,15 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     independently and in parallel, and all the resulting images will be then
     stitched back together in a single .dscalar.nii image file.
 
+    For volume images a standard MNI brain mask will be used. For CIFTI dtseries
+    images, a standard atlas 32k midthickness will be used for surface data and
+    the appropriate mask for volume data. In case of ptseries no mask or surface
+    will be used. In the latter case no surface or volume based statistics (e.g.
+    TFCE or clustering extent/mass) should be specified.
+
+    For ptseries it might be necessary to specify transposedata in argument
+    string for the data to be interpreted correctly.
+
 
     REQUIREMENTS
     ============
@@ -198,6 +207,8 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     2017-05-09 Grega Repovš
              - Added ability to specify multiple image files for multimodal
                analysis.
+    2017-07-21 Grega Repovš
+             - Added ability to run ptseries CIFTI images.
 
     '''
 
@@ -291,6 +302,12 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                 toclean.append(simage)
                 iformat = 'nifti'
 
+            if '.ptseries.nii' in image:
+                simage = troot + '_cifti.ptseries.nii'
+                shutil.copy(image, simage)
+                toclean.append(simage)
+                iformat = 'ptseries'
+
             elif '.dtseries.nii' in image:
                 print " --> decomposing %s" % (image)
                 command = ['wb_command', '-cifti-separate', image, 'COLUMN',
@@ -303,7 +320,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                     print "ERROR: Command failed: %s" % (" ".join(command))
                     raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
                 toclean += [troot + e for e in ['_volume.nii', '_left.func.gii', '_right.func.gii']]
-                iformat = 'cifti'
+                iformat = 'dtseries'
 
             elif '.nii' in image:
                 simage = troot + '_volume.nii'
@@ -367,8 +384,16 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                 print "ERROR: Command failed: %s" % (" ".join(command))
                 raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
 
+        elif iformat == 'ptseries':
+            print " --> running PALM for ptseries CIFTI input"
+            infiles = setInFiles(root, 'cifti.ptseries.nii', nimages)
+            command = ['palm'] + infiles + dargs + sargs + ['-o', root]
+            if subprocess.call(command):
+                print "ERROR: Command failed: %s" % (" ".join(command))
+                raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
+
         else:
-            print " --> setting up PALM for CIFTI input"
+            print " --> setting up PALM for dtseries CIFTI input"
             calls = []
 
             print "     ... Volume"
@@ -401,7 +426,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
         # --- process output
 
-        if iformat == 'nifti':
+        if iformat in ['nifti', 'ptseries']:
             pass
         else:
             print " --> reconstructing results into CIFTI files"
