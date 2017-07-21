@@ -136,12 +136,18 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
             orient = ""
         if v['name'] == 'T1w':
             nT1w += 1
-            sfile = k + "-o.nii.gz"
+            if os.path.exists(os.path.join(rawf, k + ".nii.gz")):
+                sfile = k + ".nii.gz"
+            else:
+                sfile = k + "-o.nii.gz"
             tfile = sid + "_strc_T1w_MPR%d.nii.gz" % (nT1w)
             tfold = "T1w"
         elif v['name'] == "T2w":
             nT2w += 1
-            sfile = k + "-o.nii.gz"
+            if os.path.exists(os.path.join(rawf, k + ".nii.gz")):
+                sfile = k + ".nii.gz"
+            else:
+                sfile = k + "-o.nii.gz"
             tfile = sid + "_strc_T2w_SPC%d.nii.gz" % (nT2w)
             tfold = "T2w"
         elif v['name'] == "FM-Magnitude":
