@@ -243,28 +243,28 @@ get_options() {
 
     		if [ -z ${StudyFolder} ]; then
     		    usage
-    		    reho "ERROR: <study-path> not specified>"
+    		    reho "ERROR: <study-path> not specified"
     		    echo ""
     		    exit 1
     		fi
 		
     		if [ -z ${CASE} ]; then
     		    usage
-    		    reho "ERROR: <subject-id> not specified>"
+    		    reho "ERROR: <subject-id> not specified"
     		    echo ""
     		    exit 1
     		fi
 		
     		if [ -z ${InputFile} ]; then
     		    usage
-    		    reho "ERROR: <file_to_compute_parcellation_on> not specified>"
+    		    reho "ERROR: <file_to_compute_parcellation_on> not specified"
     		    echo ""
     		    exit 1
     		fi
 		
     		if [ -z ${InputPath} ]; then
     		    usage
-    		    reho "ERROR: <path_for_input_file> not specified>"
+    		    reho "ERROR: <path_for_input_file> not specified"
     		    echo ""
     		    exit 1
     		fi
@@ -272,27 +272,27 @@ get_options() {
     
     if [ -z ${InputDataType} ]; then
     	usage
-    	reho "ERROR: <type_of_dense_data_for_input_file>"
+    	reho "ERROR: <type_of_dense_data_for_input_file"
     	echo ""
     	exit 1
     fi
     
     if [ -z ${ParcellationFile} ]; then
         usage
-        reho "ERROR: <file_for_parcellation> not specified>"
+        reho "ERROR: <file_for_parcellation> not specified"
         echo ""
         exit 1
     fi
 
     if [ -z ${OutName} ]; then
         usage
-        reho "ERROR: <name_of_output_pconn_file> not specified>"
+        reho "ERROR: <name_of_output_pconn_file> not specified"
         exit 1
     fi
     
     if [ -z ${OutPath} ]; then
         usage
-        reho "ERROR: <path_for_output_file> not specified>"
+        reho "ERROR: <path_for_output_file> not specified"
         exit 1
     fi
     

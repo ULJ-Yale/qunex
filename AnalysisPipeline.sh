@@ -2177,8 +2177,15 @@ computeboldfc() {
 				# set scheduler for fsl_sub command
 				#fslsub="$Scheduler"
 				#${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
-				# - Clean prior command 
-				rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh &> /dev/null	
+				# - Clean prior command and setup suffix for group or individual run
+				if [ "$RunType" == "individual" ]; then
+					Suffix="$CASE"
+					rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh &> /dev/null
+				fi
+				if [ "$RunType" == "group" ]; then
+					Suffix="GroupRun"
+					rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh &> /dev/null
+  				fi	
 				# - Echo full command into a script
 				echo ""
 				geho "Full Command:"
@@ -2201,12 +2208,12 @@ computeboldfc() {
 				--method=${Method} \
 				--targetf=${OutPath} \
 				--mask=${MaskFrames} \
-				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"Suffix".sh
 				# - Make script executable 
-				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_"$CASE".sh
+				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh
 				# - Send to scheduler 
 				cd "$LogFolder"  		
-				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_${CASE}.sh" \
+				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_${Suffix}.sh" \
 				settings="${Scheduler},${SchedulerOptions}" \
 				output="stdout:${LogFolder}/ComputeFunctionalConnectivity.output.log|stderr:${LogFolder}/ComputeFunctionalConnectivity.error.log" \
 				workdir="${LogFolder}"
@@ -2252,8 +2259,15 @@ computeboldfc() {
 				# set scheduler for fsl_sub command
 				#fslsub="$Scheduler"
 				#${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
-				# - Clean prior command 
-				rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null	
+				# - Clean prior command and setup suffix for group or individual run
+				if [ "$RunType" == "individual" ]; then
+					Suffix="$CASE"
+					rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh &> /dev/null
+				fi
+				if [ "$RunType" == "group" ]; then
+					Suffix="GroupRun"
+					rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh &> /dev/null
+  				fi	 
 				# - Echo full command into a script
 				echo ""
 				geho "Full Command:"
@@ -2280,12 +2294,12 @@ computeboldfc() {
 				--verbose=${Verbose} \
 				--time=${ComputeTime} \
 				--vstep=${VoxelStep} \
-				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh 
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh 
 				# - Make script executable 
-				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$CASE".sh &> /dev/null
+				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh &> /dev/null
 				# - Send to scheduler     		
 				cd "$LogFolder"  		
-				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_gbc_${CASE}.sh" \
+				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_gbc_${Suffix}.sh" \
 				settings="${Scheduler},${SchedulerOptions}" \
 				output="stdout:${LogFolder}/ComputeFunctionalConnectivity_gbc.output.log|stderr:${LogFolder}/ComputeFunctionalConnectivity_gbc.error.log" \
 				workdir="${LogFolder}"
@@ -2298,7 +2312,6 @@ computeboldfc() {
 				echo ""
 			fi
 		fi
-
 }
 
 show_usage_computeboldfc() {
