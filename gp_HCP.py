@@ -1231,7 +1231,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
 
+        btargets = options['bppt'].split("|")
         bolds = [v for (k, v) in sinfo.iteritems() if k.isdigit()]
+        if "all" not in btargets:
+            bolds = [v for v in bolds if v['task'] in btargets]
         bolds = [(int(e['name'].lower().replace('bold', '')), e) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
         bolds.sort()
 
@@ -1636,7 +1639,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
 
+        btargets = options['bppt'].split("|")
         bolds = [v for (k, v) in sinfo.iteritems() if k.isdigit()]
+        if "all" not in btargets:
+            bolds = [v for v in bolds if v['task'] in btargets]
         bolds = [int(e['name'].lower().replace('bold', '')) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
         bolds.sort()
 
