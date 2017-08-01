@@ -91,6 +91,7 @@ Change Log
 * 0.5.1: Initial pre-alpha release. Deprecated functions: isolatesubcortexrois,probtracksubcortex,pretractography,probtrackxgpucortex,makedensecortex,boldmergenifti,boldmergecifti,nii4dfpconvert,cifti4dfpconvert,dicom2nii; Added updated scheduler functionality 
 * 0.5.2: Initial pre-alpha release. Improved scheduler usage to include SLURM
 * 0.5.3: Initial pre-alpha release. Updated dcm2nii usage
+* 0.5.4: Initial pre-alpha release. Added XNATCloudUpload.sh script to enable automated XNAT ingestion and integration with multi data format support
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
