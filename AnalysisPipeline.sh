@@ -243,6 +243,7 @@ dicomorganize() {
 			if [ "$Overwrite" == "no" ]; then
 				echo ""
 				reho "===> Checking for presence of ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
+				echo ""
 					if (test -f ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt); then
 						echo ""
 						geho "--- Found ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
@@ -250,45 +251,46 @@ dicomorganize() {
 						echo ""
 						geho " ... $CASE ---> dicomorganize done"
 						echo ""
+					else
+						echo "--- Did not find ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
+						echo ""
+	  					# -- Combine all the calls into a single command
+		 				Com1="cd ${StudyFolder}/${CASE}"
+						echo " ---> running sortDicom and dicom2nii for $CASE"
+						echo ""
+						Com2="gmri sortDicom"
+						Com3="gmri dicom2niix unzip=yes gzip=yes clean=yes verbose=true cores=4"
+						ComQUEUE="$Com1; $Com2; $Com3"
+						
+						if [ "$Cluster" == 1 ]; then
+						  	echo ""
+  							echo "---------------------------------------------------------------------------------"
+							echo "Running dicomorganize locally on `hostname`"
+							echo "Check output here: $StudyFolder/$CASE/dicom "
+							echo "---------------------------------------------------------------------------------"
+		 					echo ""
+		 					eval "$ComQUEUE"
+						else
+							echo "Job ID:"
+							# -- Set the scheduler commands
+							rm -f "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh &> /dev/null
+							echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
+							chmod 770 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
+							# -- Run the scheduler commands
+							#fslsub="$Scheduler" # set scheduler for fsl_sub command
+							#fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
+							cd "$StudyFolder"/"$CASE"/dicom/
+							gmri schedule command="${StudyFolder}/${CASE}/dicom/${CASE}_ComQUEUE_dicomorganize.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
+							echo ""
+							echo "---------------------------------------------------------------------------------"
+							echo "Data successfully submitted" 
+							echo "Scheduler: $Scheduler"
+							echo "Scheduler Options: $SchedulerOptions"
+							echo "Check output logs here: $StudyFolder/$CASE/dicom"
+							echo "---------------------------------------------------------------------------------"
+							echo ""
+						fi
 					fi
-			else
-				echo ""
-	  			# -- Combine all the calls into a single command
-		 		Com1="cd ${StudyFolder}/${CASE}"
-				echo " ---> running sortDicom and dicom2nii for $CASE"
-				echo ""
-				Com2="gmri sortDicom"
-				Com3="gmri dicom2niix unzip=yes gzip=yes clean=yes verbose=true cores=4"
-				ComQUEUE="$Com1; $Com2; $Com3"
-				
-				if [ "$Cluster" == 1 ]; then
-				  	echo ""
-  					echo "---------------------------------------------------------------------------------"
-					echo "Running dicomorganize locally on `hostname`"
-					echo "Check output here: $StudyFolder/$CASE/dicom "
-					echo "---------------------------------------------------------------------------------"
-		 			echo ""
-		 			eval "$ComQUEUE"
-				else
-					echo "Job ID:"
-					fslsub="$Scheduler" # set scheduler for fsl_sub command
-					# -- Set the scheduler commands
-					rm -f "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh &> /dev/null
-					echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
-					chmod 770 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
-					# -- Run the scheduler commands
-					#fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
-					cd "$StudyFolder"/"$CASE"/dicom/
-					gmri schedule command="${StudyFolder}/${CASE}/dicom/${CASE}_ComQUEUE_dicomorganize.sh" settings="${Scheduler},${SchedulerOptions}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
-					echo ""
-					echo "---------------------------------------------------------------------------------"
-					echo "Data successfully submitted" 
-					echo "Scheduler: $Scheduler"
-					echo "Scheduler Options: $SchedulerOptions"
-					echo "Check output logs here: $StudyFolder/$CASE/dicom"
-					echo "---------------------------------------------------------------------------------"
-					echo ""
-				fi
 			fi
 }
 
@@ -4070,12 +4072,15 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	if [ ! -z "$Scheduler" ]; then
 		if [ "$Scheduler" = "SLURM" ]; then
 			SchedulerOptions=`opts_GetOpt "${setflag}SLURM_options" $@` 													# String of options for scheduler job
+			SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
 		else
 		if [ "$Scheduler" = "PBS" ]; then
 			SchedulerOptions=`opts_GetOpt "${setflag}PBS_options" $@` 														# String of options for scheduler job
+			SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
 		else
 		if [ "$Scheduler" = "LSF" ]; then
 			SchedulerOptions=`opts_GetOpt "${setflag}LSF_options" $@` 														# String of options for scheduler job
+			SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
 		else
 			SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
 		fi; fi; fi

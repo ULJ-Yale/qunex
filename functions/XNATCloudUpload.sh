@@ -60,10 +60,13 @@ usage() {
 		echo ""
 		echo "-- REQUIRED PARMETERS:"
 		echo ""
- 		echo "		--path=<study_folder>					Path to study data folder"
-		echo "		--subject=<list_of_cases>				List of subjects to run"
-		echo "		--project=<name_of_xnat_project>		Specify the XNAT cloud project name"
-		echo "		--hostname=<xnat_hostname>				Specify the XNAT hostname"
+ 		echo "		--path=<study_folder>						Path to study data folder"
+		echo "		--mastersubjectid=<list_of_cases>			Overall database subject ID within XNAT"
+		echo "		--subject=<list_of_cases>					List of subjects to run that are study-specific (may be unique from --mastersubjectid)"
+		echo "		--project=<name_of_xnat_project>			Specify the XNAT cloud project name"
+		echo "		--hostname=<xnat_hostname>					Specify the XNAT hostname"
+		echo "		--niftiupload=<specify_nifti_upload>		Specify <yes> or <no> for NIFTI upload. Default is [yes]"
+		echo "		--overwrite=<specify_level_of_overwrite>	Specify <yes> or <no> for cleanup of prior upload. Default is [yes]"
 		echo ""
 		echo "-- OPTIONAL PARMETERS:"
 		echo "" 
@@ -101,6 +104,8 @@ ceho() {
 ## -- PROJ="XNAT PROJECT ID to push data to"
 ## -- StudyFolder="Master directory containing folders to push"
 ## -- CASES="List of FOLDERS to push that have a specific subject name
+## -- Overwrite="whether to delete existing XNAT upload prior to upload
+## -- NIFTIUPLOAD="whether to upload NIFTIs
 ## -----------------------------------------------------------------------------
 
 get_options() {
@@ -113,6 +118,9 @@ get_options() {
     unset CRED
     unset PROJ
     unset CASES
+    unset NIFTIUPLOAD
+    unset MASTERSUBID
+    unset Overwrite
 
     # -- parse arguments
     local index=0
@@ -139,6 +147,18 @@ get_options() {
                 CASES=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
+            --mastersubjectid=*)
+                MASTERSUBIDS=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
+            --niftiupload=*)
+                NIFTIUPLOAD=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;
+            --overwrite=*)
+                Overwrite=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;            
             --hostname=*)
                 HOST=${argument/*=/""}
                 index=$(( index + 1 ))
@@ -186,12 +206,31 @@ get_options() {
         exit 1
     fi
     
+    if [ -z ${NIFTIUPLOAD} ]; then
+		NIFTIUPLOAD="yes"
+
+    fi
+    
+    if [ -z ${MASTERSUBIDS} ]; then
+		MASTERSUBIDS=$CASES
+        echo ""
+        reho "Note: --mastersubjectid flag omitted. Assuming --subject flag matches --mastersubjectid in XNAT"
+        echo ""
+    fi
+    
+     if [ -z ${Overwrite} ]; then
+		Overwrite="yes"
+    fi
+    
     # -- report options
     echo ""
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     echo "   StudyFolder: ${StudyFolder}"
     echo "   Subjects to process: ${CASES}"
+    echo "   Master XNAT IDs for subjects (in order): ${MASTERSUBID}"
+    echo "   NIFTI upload: ${NIFTIUPLOAD}"
+    echo "	 Overwrite set to: ${Overwrite}"
     echo "   XNAT Hostname: ${HOST}"
     echo "   XNAT Project ID: ${PROJ}"
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
@@ -208,9 +247,9 @@ main() {
 get_options $@
 
 echo ""
-reho "********************************************"
-reho "****** Setting up XNAT cloud upload ********"
-reho "********************************************"
+ceho "       ********************************************"
+ceho "       ****** Setting up XNAT cloud upload ********"
+ceho "       ********************************************"
 echo ""
 
 # ------------------------------------------------------------------------------
@@ -219,16 +258,16 @@ echo ""
 	
 if [ -f ${HOME}/.xnat ]; then
 	echo ""
-	ceho "XNAT credentials found. Proceeding with upload."
+	ceho "       XNAT credentials found. Proceeding with upload.        "
 	echo ""
 else
-	reho "XNAT credentials NOT found. Please generate them now."
+	reho "-- XNAT credentials NOT found. Please generate them now."
 	echo ""
-	reho "Enter your XNAT HOST username:"
+	reho "--> Enter your XNAT HOST username:"
 	if read -s answer; then
 		XNATUser=$answer
 	fi
-	reho "Enter your XNAT HOST password:"
+	reho "--> Enter your XNAT HOST password:"
 	if read -s answer; then
 		XNATPass=$answer
 	fi
@@ -245,10 +284,10 @@ fi
 TRANSFERNODE=`hostname` 
 if [ $TRANSFERNODE == "transfer-grace.hpc.yale.edu" ]; then 
 	echo ""
-	geho "Transfer node confirmed: $TRANSFERNODE. Proceeding"
+	geho "-- Transfer node confirmed: $TRANSFERNODE. Proceeding"
 	echo ""
 else
-	reho "Transfer to the XNAT server from $TRANSFERNODE is not supported."
+	reho "-- Transfer to the XNAT server from $TRANSFERNODE is not supported."
 	echo ""
 	exit 1
 fi
@@ -263,10 +302,15 @@ START=$(date +"%s")
 CRED=`more ${HOME}/.xnat`
 
 ## -- open JSESSION
-curl -X POST -u "$CRED" "$HOST/data/JSESSION" -i > $ARC-JSESSION.txt
-JSESSION=`grep "JSESSIONID" ./$ARC-JSESSION.txt`
+curl -X POST -u "$CRED" "$HOST/data/JSESSION" -i > ${StudyFolder}/JSESSION.txt
+
+#`date +%Y-%m-%d-%H-%M`
+#JSESSIONLOG=`ls ${StudyFolder}/JSESSION-*.txt`
+
+JSESSION=`grep "JSESSIONID" ${StudyFolder}/JSESSION.txt`
 JSESSION=${JSESSION:23:32}
-echo "JSESSION created: $JSESSION"
+echo ""
+geho "-- JSESSION created: $JSESSION"
 
 COUNTER=1
 
@@ -284,43 +328,117 @@ for CASE in ${CASES}; do
 	geho "-- Working on subject: ${CASE}"
 	cd ${StudyFolder}/${CASE}/dicom/
 	echo ""
-	DICOMSESSIONS=`ls -vd */ | cut -f1 -d'/'`
-	## -- iterate over DICOM sessions
-	for SESSION in $DICOMSESSIONS; do
-		geho "-- Working on SESSION: $SESSION"
+	DICOMSERIES=`ls -vd */ | cut -f1 -d'/'`
+	#DICOMSERIES="1"
+
+	## -- iterate over DICOM SERIES
+	DICOMCOUNTER=0
+	for SERIES in $DICOMSERIES; do
+		DICOMCOUNTER=$((DICOMCOUNTER+1))
+		geho "-- Working on SERIES: $SERIES"
 		echo ""
-		mkdir ${StudyFolder}/xnatupload/temp/working &> /dev/null
+		mkdir ${StudyFolder}/xnatupload/temp/working/ &> /dev/null
 		## -- unzip files for upload
-		geho "-- Unzipping DICOMs into temp location --> ${StudyFolder}/xnatupload/temp/working/"
+		geho "-- Unzipping DICOMs and linking into temp location --> ${StudyFolder}/xnatupload/temp/working/"
 		echo ""
-		gunzip -f ${StudyFolder}/${CASE}/dicom/${SESSION}/*.gz
-		ln ${StudyFolder}/${CASE}/dicom/${SESSION}/*dcm ${StudyFolder}/xnatupload/temp/working/
-		geho "Uploading DICOMs"
-		echo ""
-			UPLOADDICOMS=`ls ${StudyFolder}/xnatupload/temp/working/* | cut -f2 -d'/'`
+		gunzip -f ${StudyFolder}/${CASE}/dicom/${SERIES}/*.gz &> /dev/null
+		geho "-- Uploading individual DICOMs ... "
+			cd ${StudyFolder}/${CASE}/dicom/${SERIES}/
+			UPLOADDICOMS=`ls ./*dcm | cut -f2 -d'/'`
+			echo ""
+			echo "--------------------- DICOMs Staged for XNAT Upload: -------------------"
+			echo ""
+			echo $UPLOADDICOMS
+			echo ""
+			echo "------------------------------------------------------------------------"
+			echo ""
 			for DCM in $UPLOADDICOMS; do
-				if [ -d "$DCM" ]; then
-					echo "ERROR: Unexpected directory ${StudyFolder}/${CASE}/dicom/${SESSION}/$DCM"
+				cd ${StudyFolder}/xnatupload/temp/working/
+				ln ${StudyFolder}/${CASE}/dicom/${SERIES}/${DCM} ${StudyFolder}/xnatupload/temp/working/
+				if [ -d "${StudyFolder}/xnatupload/temp/working/${DCM}" ]; then
+					reho "--> ERROR: Unexpected directory ${StudyFolder}/${CASE}/dicom/${SERIES}/${DCM}"
 					exit 1
 				fi
 				## -- upload individual dicom files
-				echo curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&inbody=true&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$SESSION" --data-binary "@$DCM"
-				PREARCPATH=$(curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&inbody=true&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$SESSION" --data-binary "@$DCM")
+				echo curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&inbody=true&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$CASE" --data-binary "@${DCM}"
+				PREARCPATH=$(curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&inbody=true&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$CASE" --data-binary "@${DCM}")
 			done	
-		TIMESTAMP=${PREARCPATH:31:18}
-		PREARCPATH="/data/prearchive/projects/$PROJ/$TIMESTAMP/$SESSION"
-		echo "PREARCHIVE PATH: '$PREARCPATH'"
+				
+		echo ""
+		geho "-- PREARCHIVE XNAT PATH: ${PREARCPATH}"				
+		echo ""
+		
+		## -- Check timestamp format matches the inputs
+		TIMESTAMP=$(echo ${PREARCPATH} | cut -d'/' -f 6 | tr -d '/')
+		PATTERN="[0-9]_[0-9]"
+		if [[ ${TIMESTAMP} =~ ${PATTERN} ]]; then
+     		PREARCPATHFINAL="/data/prearchive/projects/${PROJ}/${TIMESTAMP}/${CASE}"
+     		geho "-- Debug PAF is ${PREARCPATHFINAL}"
+		else
+      		reho `date` "- Debug TS doesn't pass! ${TIMESTAMP}"
+		fi
+		
 		## - clean up and gzip data
 		rm -rf ${StudyFolder}/xnatupload/temp/working/ &> /dev/null
-		gzip ${StudyFolder}/${CASE}/dicom/${SESSION}/* &> /dev/null
+		gzip ${StudyFolder}/${CASE}/dicom/${SERIES}/* &> /dev/null
+		clear UPLOADDICOMS
+		echo ""
+		geho "-- DICOM SERIES $SERIES upload completed"
+		geho "------------------------------------------"
+		echo ""
 	done
  
 	## -- commit session (builds prearchive xml)
-	curl -b "JSESSIONID=$JSESSION" -X POST "${HOST}${PREARCPATH}?action=build"
+	geho "-- Committing XNAT session to prearchive..."
+	echo ""
+	curl -b "JSESSIONID=$JSESSION" -X POST "${HOST}${PREARCPATHFINAL}?action=build" &> /dev/null
+	
 	## -- archive session
-	curl -b "JSESSIONID=$JSESSION" -X POST -H "Content-Type: application/x-www-form-urlencoded"  "${HOST}/data/services/archive?src=${PREARCPATH}" &
+	curl -b "JSESSIONID=$JSESSION" -X POST -H "Content-Type: application/x-www-form-urlencoded" "${HOST}/data/services/archive?src=${PREARCPATHFINAL}&overwrite=delete"
+	echo ""
 
-	## --> Add more code for uploading extra directories, such as NIFTI, HCP ect.
+	echo ""
+	geho "-- DICOM archiving completed completed for a total of $DICOMCOUNTER series"
+	geho "--------------------------------------------------------------------------------"
+	echo ""
+	
+	## ------------------------------------------------------------------
+	## -- code for uploading extra directories, such as NIFTI, HCP ect.
+	## ------------------------------------------------------------------
+		
+	if [ "$NIFTIUPLOAD" == "yes" ]; then
+		geho "-- Uploading individual NIFTIs ... "
+		echo ""
+		cd ${StudyFolder}/${CASE}/nii/
+		NIFTISERIES=`ls | cut -f1 -d"." | uniq`
+		#NIFTISERIES="01"
+		
+		## -- iterate over individual nifti files
+		SCANCOUNTER=0
+		for NIFTIFILE in $NIFTISERIES; do
+			SCANCOUNTER=$((SCANCOUNTER+1))
+			MULTIFILES=`ls ./$NIFTIFILE.*`
+			FILESTOUPLOAD=`echo $MULTIFILES | sed -e 's,./,,g'`
+			for NIFTIFILEUPLOAD in $FILESTOUPLOAD; do
+				geho "-- Uploading NIFTI $NIFTIFILEUPLOAD"
+				echo ""
+				## -- clean existing nii session if requested
+				if [ "$Overwrite" == "yes" ]; then
+					curl -b "JSESSIONID=$JSESSION" -X DELETE "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii"
+				fi
+				## -- create a folder for nii scans
+				curl -b "JSESSIONID=$JSESSION" -X PUT "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii"
+				## -- upload a specific nii session
+				curl -b "JSESSIONID=$JSESSION" -X POST "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii/files/${NIFTIFILEUPLOAD}?inbody=true&overwrite=delete" --data-binary "@${NIFTIFILEUPLOAD}"
+			done
+			geho "-- NIFTI series $NIFTIFILE upload completed"
+		done
+		
+		echo ""
+		geho "-- NIFTI upload completed with a total of $SCANCOUNTER scans"
+		geho "--------------------------------------------------------------------------------"
+		echo ""	
+	fi
 done
 	
 ## -- close JSESSION	
@@ -328,6 +446,7 @@ curl -X DELETE -b "JSESSIONID=${JSESSION}" "$HOST/data/JSESSION"
 
 ## -- Log completion message
 
+echo ""
 geho "--- XNAT upload completed. Check output log for outputs and errors."
 echo ""
 geho "------------------------- End of work --------------------------------"
