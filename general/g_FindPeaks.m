@@ -1,6 +1,6 @@
 function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)
 
-%function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, verbose)
+%function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)
 %
 %	Performs smoothing using mri_Smooth() method and the uses mri_FindPeaks
 %   method to define peak ROI using a watershed algorithm to grow regions from peaks.
@@ -17,8 +17,8 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %                     fwhm     ... Full Width at Half Maximum in voxels (NIfTI)
 %                     ftype    ... Type of smoothing filter, 'gaussian' or 'box' (NIfTI). ['gaussian']
 %                     ksize    ... Size of the smoothing kernel:
-%                                            a) for NIfTI: voxels [6]
-%                                            b) for CIFTI-2: [voxels mm^2] [6 6]
+%                                            a) for NIfTI: voxels [0]
+%                                            b) for CIFTI-2: [voxels mm^2] [0 0]
 %                     wb_path  ... path to wb_command
 %                     hcpatlas ... path to HCPATLAS folder containing projection surf.gii files
 %                     * the last two fields are not required if they are stored as
@@ -105,6 +105,9 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %
 %   2017-07-10 Aleksij Kraljic
 %        - Added functionality for CIFTI-2 files
+%
+%   2017-08-02 Aleksij Kraljic
+%        - Fixed mistakes in the help menu and set default values for smoothing to 0
 %
 
 % --- read image and call FindPeaks

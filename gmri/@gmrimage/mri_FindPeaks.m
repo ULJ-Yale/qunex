@@ -85,6 +85,34 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %       'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii',...
 %       'boundary:remove', 1);
 %
+%   COMPLETE FLOW EXAMPLE
+%   %% import dscalar CIFTI-2 image
+%   img = gmrimage('example_image.dscalar.nii');
+%   
+%   %% FindPeaks input arguments
+%   % mindim: [min. size of the vol. ROIs (voxels), min. area of the surf. ROIs (mm^2)]
+%   mindim = [30 30];
+%   % maxdim: [max. size of the vol. ROIs (voxels), max. area of the surf. ROIs (mm^2)]
+%   maxdim = [300 300];
+%   % val: find both positive and negative peaks
+%   val = 'b';
+%   % t: threshold value
+%   t = 3;
+%   % projection: type of the projection (required for the max/min surface area arguments)
+%   projection = 'midthickness';
+%   % frames: which frames to consider [1 5 7,...] (can be [] for dscalar)
+%   frames = [];
+%   % verbose: - whether to report the peaks (1) and also be verbose: 
+%   %                  a) on the first level (2)
+%   %                  b) on all the levels  (3)
+%   verbose = 2;
+%   
+%   %% perform ROI operation
+%   [roi vol_peak peak] = img.mri_FindPeaks(mindim, maxdim, val, t, projection, frames, verbose);
+%   
+%   %% export the modified image
+%   mri_SaveNIfTI(roi,'example_image_ROI.dscalar.nii');
+%
 %   ---
 %   Written by Aleksij Kraljic, June 7, 2017
 %
