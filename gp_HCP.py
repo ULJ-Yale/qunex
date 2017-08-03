@@ -1233,9 +1233,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         btargets = options['bppt'].split("|")
         bolds = [v for (k, v) in sinfo.iteritems() if k.isdigit()]
-        if "all" not in btargets:
-            bolds = [v for v in bolds if v['task'] in btargets]
         bolds = [(int(e['name'].lower().replace('bold', '')), e) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
+        if "all" not in btargets:
+            bolds = [(n, v) for n, v in bolds if v['task'] in btargets]
         bolds.sort()
 
         # --- Loop through bolds
@@ -1446,13 +1446,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     if options['run'] == "run":
                         r += "\n     ... ERROR: images or data parameters missing, skipping this BOLD!"
                     else:
-                        r += "\n     ... ERROR: images or data parameters missing, this bold would be skipped BOLD!"
+                        r += "\n     ... ERROR: images or data parameters missing, this BOLD would be skipped!"
                 else:
                     report['not ready'].append(str(bold))
                     if options['run'] == "run":
                         r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
                     else:
-                        r += "\n     ... ERROR: No hcp info for subject, this bold would be skipped BOLD!"
+                        r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
 
             except (ExternalFailed, NoSourceFolder), errormessage:
                 r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
@@ -1641,14 +1641,15 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         btargets = options['bppt'].split("|")
         bolds = [v for (k, v) in sinfo.iteritems() if k.isdigit()]
+        bolds = [(int(e['name'].lower().replace('bold', '')), e) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
         if "all" not in btargets:
-            bolds = [v for v in bolds if v['task'] in btargets]
-        bolds = [int(e['name'].lower().replace('bold', '')) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
+            bolds = [(n, v) for n, v in bolds if v['task'] in btargets]
         bolds.sort()
+
 
         # --- Loop through bolds
 
-        for bold in bolds:
+        for bold, boldinfo in bolds:
 
             try:
                 r += "\n---> Processing BOLD %d" % (bold)
@@ -1703,13 +1704,13 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                     if options['run'] == "run":
                         r += "\n     ... ERROR: images missing, skipping this BOLD!"
                     else:
-                        r += "\n     ... ERROR: images missing, this bold would be skipped BOLD!"
+                        r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
                 else:
                     report['not ready'].append(str(bold))
                     if options['run'] == "run":
                         r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
                     else:
-                        r += "\n     ... ERROR: No hcp info for subject, this bold would be skipped BOLD!"
+                        r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
 
             except (ExternalFailed, NoSourceFolder), errormessage:
                 r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
