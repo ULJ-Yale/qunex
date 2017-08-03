@@ -210,20 +210,37 @@ end
 load('CIFTI_BrainModel.mat');
 
 if strcmpi(img.imageformat, 'CIFTI-2')
+    % --- Extract volume components
     if verbose, fprintf('\nMAIN FIND PEAKS---> extracting volume components'); end
     vol_sections = img.mri_ExtractCIFTIVolume();
     
+    % --- Find peaks for volume components
     if verbose, fprintf('\nMAIN FIND PEAKS---> finding peaks for volume components'); end
     [vol_roi vol_peak] = vol_sections.mri_FindPeaksVolume(minsize, maxsize, val, t, options, verbose_pass);
     
+    % --- Embed volume components
     if verbose, fprintf('\nMAIN FIND PEAKS---> embedding volume components'); end
     roi = img.mri_EmbedCIFTIVolume(vol_roi);
     
+    % --- Find peaks for surface components
     if verbose, fprintf('\nMAIN FIND PEAKS---> finding peaks for surface components'); end
     for i=1:1:numel(img.cifti.shortnames)
         if strcmp(cifti.(lower(img.cifti.shortnames{i})).type,'Surface')
             [roi peak.(lower(img.cifti.shortnames{i}))] = roi.mri_FindPeaksSurface(lower(img.cifti.shortnames{i}),...
                 projection.(lower(img.cifti.shortnames{i})), minarea, maxarea, val, t, options, verbose_pass);
+        end
+    end
+    % --- Relable the peaks to have unique IDs
+    offsetID = vol_peak(end).label;
+    for i=1:1:numel(img.cifti.shortnames)
+        if strcmp(cifti.(lower(img.cifti.shortnames{i})).type,'Surface')
+            t_data = roi.data(img.cifti.start(i):img.cifti.end(i));
+            for j=1:1:length(peak.(lower(img.cifti.shortnames{i})))
+                peak.(lower(img.cifti.shortnames{i}))(j).index = offsetID + j;
+            end
+            t_data(t_data ~= 0) = t_data(t_data ~= 0) + offsetID;
+            roi.data(img.cifti.start(i):img.cifti.end(i)) = t_data;
+            offsetID = peak.(lower(img.cifti.shortnames{i}))(end).index;
         end
     end
 elseif strcmpi(img.imageformat, 'NIFTI')

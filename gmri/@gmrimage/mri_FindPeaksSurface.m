@@ -69,10 +69,7 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %
 
 if nargin < 9 || isempty(verbose), verbose = false;       end
-if nargin < 8 || isempty(options)
-    options.frames = 1;
-    options.boundary = '';
-end
+if nargin < 8 || isempty(options), options = '';          end
 if nargin < 7 || isempty(t),       t       = 0;           end
 if nargin < 6 || isempty(val),     val     = 'b';         end
 if nargin < 5 || isempty(maxarea), maxarea = inf;         end
@@ -95,7 +92,8 @@ end
 options_parsed = g_ParseOptions([],options);
 if ~isfield(options_parsed,'frames')
     options_parsed.frames = 1;
-elseif ~isfield(options_parsed,'boundary')
+end
+if ~isfield(options_parsed,'boundary')
     options_parsed.boundary = '';
 end
 frames = options_parsed.frames;

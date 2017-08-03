@@ -175,7 +175,7 @@ if img.frames == 1
     fprintf(repf, '\n\nVolume Structures ROI Report:\n');
     fprintf(repf, '\n#label\tvalue\tvoxels\tpeak_x\tpeak_y\tpeak_z\tcentroid_x\tcentroid_y\tcentroid_z\twcentroid_x\twcentroid_y\twcentroid_z');
     for p = 1:length(vol_peak)
-        fprintf(repf, '\n%d\t%.1f\t%d', vol_peak(p).label+1, vol_peak(p).value, vol_peak(p).size);
+        fprintf(repf, '\n%d\t%.1f\t%d', vol_peak(p).label, vol_peak(p).value, vol_peak(p).size);
         fprintf(repf, '\t%5.1f', [vol_peak(p).xyz, vol_peak(p).Centroid, vol_peak(p).WeightedCentroid]);
         if strcmp(img.imageformat, '4dfp')
             roi.hdr4dfp.key{end+1}   = 'region names';
