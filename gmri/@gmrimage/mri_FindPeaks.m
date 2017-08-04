@@ -244,7 +244,11 @@ if strcmpi(img.imageformat, 'CIFTI-2')
             end
             t_data(t_data ~= 0) = t_data(t_data ~= 0) + offsetID;
             roi.data(img.cifti.start(i):img.cifti.end(i)) = t_data;
-            offsetID = peak.(lower(img.cifti.shortnames{i}))(end).index;
+            if ~isempty(peak.(lower(img.cifti.shortnames{i})))
+                offsetID = peak.(lower(img.cifti.shortnames{i}))(end).index;
+            else
+                offsetID = 0;
+            end
         end
     end
 elseif strcmpi(img.imageformat, 'NIFTI')
