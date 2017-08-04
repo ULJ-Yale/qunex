@@ -231,7 +231,11 @@ if strcmpi(img.imageformat, 'CIFTI-2')
         end
     end
     % --- Relable the peaks to have unique IDs
-    offsetID = vol_peak(end).label;
+    if ~isempty(vol_peak)
+        offsetID = vol_peak(end).label;
+    else
+        offsetID = 0;
+    end
     for i=1:1:numel(img.cifti.shortnames)
         if strcmp(cifti.(lower(img.cifti.shortnames{i})).type,'Surface')
             t_data = roi.data(img.cifti.start(i):img.cifti.end(i));
