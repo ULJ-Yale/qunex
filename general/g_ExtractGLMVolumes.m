@@ -57,7 +57,7 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %
 
 if nargin < 7, verbose   = false; end
-if nargin < 6 || isempty(values),     values     = raw; end
+if nargin < 6 || isempty(values),     values     = 'raw'; end
 if nargin < 5 || isempty(saveoption), saveoption = 'by subject'; end
 if nargin < 4, frames    = [];    end
 if nargin < 3, effects   = [];    end
