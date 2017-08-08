@@ -16,9 +16,9 @@ Auditory
 8 250 62 251 255
 Posterior Multimodal
 10 177 89 40 255
-Dorsal-attention
+Dorsal Attention
 5 0 255 0 255
-Unknown
+Ventral Multimodal
 11 255 157 0 255
 Orbito-Affective
 12 65 125 0 168

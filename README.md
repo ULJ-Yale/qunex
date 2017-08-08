@@ -14,25 +14,30 @@ The AP code is developed and maintained by Alan Anticevic, [Anticevic Lab], Yale
 University of Ljubljana in collaboration with Grega Repovs [Mind and Brain Lab], 
 University of Ljubljana.
 
-
-External dependencies
-=====================
+Installation
+===============================
 ---
 
-* Connectome Workbench (v1.0 or above)
-* FSL (version 5.0.6 or above with CUDA libraries)
-* FreeSurfer (5.3 HCP version or later)
-* MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
-* FIX ICA
-* PALM
-* Python (version 2.7 or above)
-* AFNI
-* Gradunwarp
-* Human Connectome Pipelines (Modified versions for single-band preprocessing)
-* R Statistical Environment
-* dcm2nii (23-June-2017 release) 
-* MNAP niutilities Repo
-* MNAP matlab Repo
+Once cloned, the MNAP pipelines are installed as follows:
+
+Step 1. Install all necessary dependencies. 
+-------
+
+Step 2. Configure `niutilities`. 
+-------
+
+	* Add `MNAP/niutilities` folder to `$PATH`
+	* Add `MNAP/niutilities` folder to `$PYTHONPATH`
+	* Make `MNAP/niutilities/gmri` executable
+	* Install latest version of numpy (e.g. `pip install numpy`)
+	* Install pydicom (e.g. `easy_install pydicom`)
+
+Step 3. Configure the environment script by adding the following lines to your .bash_profile.
+-------
+
+	`TOOLS=/PATH_TO_MNAP_FOLDER/`
+	`export TOOLS`
+	`source $TOOLS/library/environment/mnap_environment.sh`
 
 
 Usage and command documentation
@@ -62,6 +67,27 @@ Perusing documentation, please note the following conventions used:
 * Commands, arguments, and option names are either in small or "camel" case.
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).
+
+
+External dependencies
+=====================
+---
+
+* Connectome Workbench (v1.0 or above)
+* FSL (version 5.0.6 or above with CUDA libraries)
+* FreeSurfer (5.3 HCP version or later)
+* MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
+* FIX ICA
+* PALM
+* Python (version 2.7 or above with numpy)
+* AFNI
+* Gradunwarp
+* Human Connectome Pipelines (Modified versions for single-band preprocessing)
+* R Statistical Environment with ggplot
+* pydicom
+* dcm2nii (23-June-2017 release) 
+* MNAP niutilities Repo
+* MNAP matlab Repo
 
 
 References
