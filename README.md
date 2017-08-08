@@ -20,11 +20,9 @@ Installation
 
 Once cloned, the MNAP pipelines are installed as follows:
 
-Step 1. Install all necessary dependencies. 
--------
+### Step 1. Install all necessary dependencies. 
 
-Step 2. Configure `niutilities`. 
--------
+### Step 2. Configure `niutilities`. 
 
 * Add `MNAP/niutilities` folder to `$PATH`
 * Add `MNAP/niutilities` folder to `$PYTHONPATH`
@@ -32,8 +30,7 @@ Step 2. Configure `niutilities`.
 * Install latest version of numpy (e.g. `pip install numpy`)
 * Install pydicom (e.g. `easy_install pydicom`)
 
-Step 3. Configure the environment script by adding the following lines to your .bash_profile.
--------
+### Step 3. Configure the environment script by adding the following lines to your .bash_profile.
 
 	TOOLS=/PATH_TO_MNAP_FOLDER/`
 	export TOOLS`
