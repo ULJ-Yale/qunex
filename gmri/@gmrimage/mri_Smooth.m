@@ -1,6 +1,6 @@
-function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path, hcpatlas)
+function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas)
 
-%function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path, hcpatlas)
+%function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas)
 %
 %   Does 3D gaussian smoothing of the gmri image.
 %
@@ -18,6 +18,7 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path
 %                                a) for a default projection: 'type: midthickness' ['type:midthickness']
 %                                b) for a specific projection:
 %                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
+%       mask        ... specify the cifti mask to select areas on which to perform smoothing
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
 %       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
 %
@@ -52,8 +53,9 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path
 %
 
 % input checking
-if nargin < 8 || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
-if nargin < 7 || isempty(wb_path),    wb_path = '';                     end
+if nargin < 9 || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
+if nargin < 8 || isempty(wb_path),    wb_path = '';                     end
+if nargin < 7 || isempty(mask),       mask = '';                        end
 if nargin < 6 || isempty(projection), projection = 'type:midthickness'; end
 if nargin < 5
     ksize = [7, 7];
@@ -95,7 +97,7 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     outFile = strcat('temp_',date,'_outFile.dscalar.nii');
     
     % smooth the CIFTI model using wb_command
-    wbSmooth(inFile, outFile, surfaceFile, opt);
+    wbSmooth(inFile, outFile, surfaceFile, mask, opt);
     
     % save the temporary output file
     img = gmrimage(outFile);
@@ -111,7 +113,7 @@ end
 
 % --- SUPPORT FUNCTIONS
 
-function [] = wbSmooth(sfile, tfile, file, options)
+function [] = wbSmooth(sfile, tfile, file, mask, options)
 
 % --- convert FWHM to sd
 
@@ -154,8 +156,13 @@ if options.omp_threads > 0
     setenv('OMP_NUM_THREADS', num2str(options.omp_threads));
 end
 
+roi_smooth = '';
+if ~isempty(mask)
+    roi_smooth = ['-cifti-roi ' mask];
+end
+
 fprintf('\n     ... smoothing');
-comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s', sfile, options.surface_smooth, options.volume_smooth, tfile, file.lsurf, file.rsurf);
+comm = sprintf('wb_command -cifti-smoothing %s %f %f COLUMN %s -left-surface %s -right-surface %s %s', sfile, options.surface_smooth, options.volume_smooth, tfile, file.lsurf, file.rsurf, roi_smooth);
 [status out] = system(comm);
 
 if status

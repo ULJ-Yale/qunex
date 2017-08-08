@@ -19,6 +19,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %                     ksize    ... Size of the smoothing kernel:
 %                                            a) for NIfTI: voxels [0]
 %                                            b) for CIFTI-2: [voxels mm^2] [0 0]
+%                     mask     ... specify the cifti mask to select areas on which to perform smoothing
 %                     wb_path  ... path to wb_command
 %                     hcpatlas ... path to HCPATLAS folder containing projection surf.gii files
 %                     * the last two fields are not required if they are stored as
@@ -132,6 +133,7 @@ presmooth = g_ParseOptions([],presmooth);
 if ~isfield(presmooth,'fwhm'),     presmooth.fwhm = [];    end
 if ~isfield(presmooth,'ftype'),    presmooth.ftype = [];   end
 if ~isfield(presmooth,'ksize'),    presmooth.ksize =[];    end
+if ~isfield(presmooth,'mask'),     presmooth.mask =[];     end
 if ~isfield(presmooth,'wb_path'),  presmooth.wb_path = []; end
 if ~isfield(presmooth,'hcpatlas'), presmooth.hcpatlas =[]; end
 
@@ -141,7 +143,7 @@ verbose = verbose + 1;
 if ~isempty(presmooth) && presmooth_request
 	if verbose >= 2, fprintf('\n---> Presmoothing image'); end
     img = img.mri_Smooth(presmooth.fwhm, verbose, presmooth.ftype,...
-        presmooth.ksize, projection, presmooth.wb_path, presmooth.hcpatlas);
+        presmooth.ksize, projection, presmooth.mask, presmooth.wb_path, presmooth.hcpatlas);
 end
 
 [roi vol_peak peak] = img.mri_FindPeaks(mins, maxs, val, t, projection, options, verbose);

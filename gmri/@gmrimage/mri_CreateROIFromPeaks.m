@@ -12,8 +12,8 @@ function [img] = mri_CreateROIFrompeaksIn(img, peaksIn)
 %                           xN, yN, zN, radiusN, valueN]
 %                  b) string with N x 5 data, where rows are separated by
 %                     a semicolon:
-%                          'x1, y1, z1, radius1, value1 \n
-%                           x2, y2, z2, radius2, value2 \n
+%                          'x1, y1, z1, radius1, value1;
+%                           x2, y2, z2, radius2, value2;
 %                           xN, yN, zN, radiusN, valueN'
 %                  c) name of the file containing the data formated as
 %                     described in part b).
