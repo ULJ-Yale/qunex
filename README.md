@@ -32,9 +32,9 @@ Once cloned, the MNAP pipelines are installed as follows:
 
 ### Step 3. Configure the environment script by adding the following lines to your .bash_profile.
 
-	TOOLS=/PATH_TO_MNAP_FOLDER/`
-	export TOOLS`
-	source $TOOLS/library/environment/mnap_environment.sh`
+	TOOLS=/PATH_TO_MNAP_FOLDER/
+	export TOOLS
+	source $TOOLS/library/environment/mnap_environment.sh
 
 
 Usage and command documentation
