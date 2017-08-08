@@ -28,6 +28,18 @@ The utilites are developed and maintained by Grega Repovš, [Mind and Brain
 Lab], University of Ljubljana in collaboration with the [Anticevic Lab], Yale
 University.
 
+Installation
+===============================
+---
+
+Once cloned, the utilities are installed in two steps:
+
+* Add `MNAP/niutilities` folder to `$PATH`
+* Add `MNAP/niutilities` folder to `$PYTHONPATH`
+* Make `MNAP/niutilities/gmri` executable
+* Install latest version of numpy (e.g. `pip install numpy`)
+* Install pydicom (e.g. `easy_install pydicom`)
+
 
 Usage and command documentation
 ===============================
@@ -67,11 +79,12 @@ External dependencies
 * MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
 * FIX ICA
 * PALM
-* Python (version 2.7 or above)
+* Python (version 2.7 or above with numpy)
 * AFNI
 * Gradunwarp
 * Human Connectome Pipelines
-* R Statistical Environment
+* R Statistical Environment with ggplot
+* pydicom
 * dcm2nii (23-June-2017 release) 
 
 
