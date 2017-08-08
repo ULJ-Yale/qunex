@@ -93,11 +93,13 @@ classdef gmrimage
     methods
         output = mri_Smooth3D(obj, fwhm, verbose, ftype, ksize)
         output = mri_Smooth3DMasked(obj, mask, fwhm, limit, verbose)
-        output = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, wb_path, hcpatlas)
+        output = mri_Smooth(obj, fwhm,  verbose, ftype, ksize, projection, wb_path, hcpatlas)
         output = mri_Stats(obj, do, exclude)
         output = mri_StatsDiff(obj, obj2, do, exclude)
         output = mri_ComputeScrub(obj, do)
         output = mri_GetXYZ(obj, ijk)
+        output = mri_GetIJK(obj, xyz)
+        output = mri_CreateROIFrompeaksIn(obj, peaksIn)
     end
 
     methods

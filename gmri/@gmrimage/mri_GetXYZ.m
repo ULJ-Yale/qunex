@@ -96,7 +96,7 @@ elseif isa(ijk, 'gmrimage') || (length(size(ijk)) == 3)
 
 % --> is ijk a 2D matrix
 
-elseif size(ijk, 2) > 3
+elseif size(ijk, 2) >= 3
     xyz = getXYZ(img, ijk);
 
 % --> nothing matches
