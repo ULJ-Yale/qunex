@@ -1180,6 +1180,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                           [no].
     --boldname        ... The default name of the bold files in the images
                           folder [bold].
+    --image_target    ... The target format to work with, one of 4dfp, nifti,
+                          dtseries or ptseries [nifti].
 
     specific parameters
     -------------------
@@ -1493,6 +1495,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     Changelog
     2017-02-11 Grega Repovš
              - Added additional documentation.
+    2017-08-11 Grega Repovš
+             - Added ability to process ptseries images.
     """
 
     bsearch = re.compile('bold([0-9]+)')
@@ -1523,9 +1527,12 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                         # --- filenames
                         f = getFileNames(sinfo, options)
                         f.update(getBOLDFileNames(sinfo, boldname, options))
-                        if options['image_target'] == 'cifti':
+                        if options['image_target'] in ['cifti', 'dtseries']:
                             f['bold'] = f['bold_dts']
                             f['bold_final'] = f['bold_dts_final']
+                        elif options['image_target'] in ['ptseries']:
+                            f['bold'] = f['bold_pts']
+                            f['bold_final'] = f['bold_pts_final']
 
                         d = getSubjectFolders(sinfo, options)
 
@@ -1670,6 +1677,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                           [no].
     --boldname        ... The default name of the bold files in the images
                           folder [bold].
+    --image_target    ... The target format to work with, one of 4dfp, nifti,
+                          dtseries or ptseries [nifti].
 
     specific parameters
     -------------------
@@ -1999,6 +2008,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
              - Added initial documentation.
     2017-01-07 Grega Repovš
              - Added additional documentation.
+    2017-08-11 Grega Repovš
+             - Added ability to work with ptseries images.
     """
 
     r = "\n---------------------------------------------------------"
@@ -2086,9 +2097,12 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     f = getFileNames(sinfo, options)
                     f.update(getBOLDFileNames(sinfo, boldname, options))
 
-                    if options['image_target'] == 'cifti':
+                    if options['image_target'] in ['cifti', 'dtseries']:
                         f['bold'] = f['bold_dts']
                         f['bold_final'] = f['bold_dts_final']
+                    elif options['image_target'] == 'ptseries':
+                        f['bold'] = f['bold_pts']
+                        f['bold_final'] = f['bold_pts_final']
 
                     # --- check for data availability
 

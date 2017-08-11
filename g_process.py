@@ -192,7 +192,7 @@ arglist = [['# ---- Basic settings'],
            ['path_mov',           'movement/*_b[N]_faln_dbnd_xr3d.dat',          str,    "the mask to use for searching for movement files"],
            ['path_t1',            'atlas/*_mpr_n*_111_t88.4dfp.img',             str,    "the mask to use for searching for T1 file"],
            ['image_source',       '4dfp',                                        str,    "what is the target source file format / structure (4dfp, hcp)"],
-           ['image_target',       '4dfp',                                        str,    "what is the target file format"],
+           ['image_target',       '4dfp',                                        str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        '711',                                         str,    "what is the target atlas (711, cifti)"],
 
            ['# ---- GLM related options'],

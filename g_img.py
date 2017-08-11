@@ -46,6 +46,8 @@ def getImgFormat(filename):
     if p[-1] == 'nii':
         if ".".join(p[-2:])  == 'dtseries.nii':
             return '.dtseries.nii'
+        elif ".".join(p[-2:])  == 'ptseries.nii':
+            return '.ptseries.nii'
         else:
             return '.nii'
     elif ".".join(p[-2:]) == '4dfp.img':
