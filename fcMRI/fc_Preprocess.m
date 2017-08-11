@@ -586,6 +586,8 @@ for current = do
                 if strcmp(tail, '.dtseries.nii')
                     wbSmooth(sfile, tfile, file, options);
                     img = gmrimage();
+                elseif strcmp(tail, '.ptseries.nii')
+                    fprintf(' WARNING: No spatial smoothing will be performed on ptseries images!');
                 else
                     img = readIfEmpty(img, sfile, omit);
                     img.data = img.image2D;

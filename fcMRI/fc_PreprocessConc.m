@@ -498,7 +498,9 @@ case '.nii'
 case '.nii.gz'
     fformat = 'nifti';
 case '.dtseries.nii'
-    fformat = 'cifti';
+    fformat = 'dtseries';
+case '.ptseries.nii'
+    fformat = 'ptseries';
 end
 
 
@@ -771,8 +773,9 @@ for current = do
                         if strcmp(tail, '.dtseries.nii')
                             wbSmooth(file(b).sfile, file(b).tfile, file(b), options);
                             img(b) = gmrimage();
+                        elseif strcmp(tail, '.ptseries.nii')
+                            fprintf(' WARNING: No spatial smoothing will be performed on ptseries images!')
                         else
-
                             img(b) = readIfEmpty(img(b), file(b).sfile, omit);
                             img(b).data = img(b).image2D;
                             if strcmp(options.smooth_mask, 'false')
