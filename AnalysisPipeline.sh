@@ -249,10 +249,14 @@ show_usage_gmri() {
 # ------------------------------------------------------------------------------------------------------
 
 dicomorganize() {
-			echo "Overwrite set to: $Overwrite"
+				  		
 	  		mkdir ${StudyFolder}/${CASE}/dicom &> /dev/null
-	  		# -- Check of overwrite flag was set
-			if [ "$Overwrite" == "no" ]; then
+	  		
+	  		if [ "$Overwrite" == "yes" ]; then
+				reho "===> Removing prior DICOM run"
+				rm -f ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
+	  		fi
+
 				echo ""
 				reho "===> Checking for presence of ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
 				echo ""
@@ -285,14 +289,18 @@ dicomorganize() {
 						else
 							echo "Job ID:"
 							# -- Set the scheduler commands
-							rm -f "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh &> /dev/null
-							echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
-							chmod 770 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
+							TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+							Suffix="$CASE_$TimeStamp"
+							rm -f "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh &> /dev/null
+							echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh
+							chmod 770 "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh
 							# -- Run the scheduler commands
 							#fslsub="$Scheduler" # set scheduler for fsl_sub command
 							#fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
 							cd "$StudyFolder"/"$CASE"/dicom/
-							gmri schedule command="${StudyFolder}/${CASE}/dicom/${CASE}_ComQUEUE_dicomorganize.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
+							TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+							Suffix="$CASE_$TimeStamp"
+							gmri schedule command="${StudyFolder}/${CASE}/dicom/ComQUEUE_dicomorganize_${Suffix}.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
 							echo ""
 							echo "---------------------------------------------------------------------------------"
 							echo "Data successfully submitted" 
@@ -303,7 +311,6 @@ dicomorganize() {
 							echo ""
 						fi
 					fi
-			fi
 }
 
 show_usage_dicomorganize() {
@@ -319,7 +326,7 @@ show_usage_dicomorganize() {
 				echo "		--function=<function_name>				Name of function"
 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
-				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
@@ -340,14 +347,14 @@ show_usage_dicomorganize() {
 				echo "AP --path='<study_folder>' \ "
 				echo "--function='dicomorganize' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
-				echo "--runmethod='1'"
+				#echo "--runmethod='1'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "AP --path='<study_folder>' \ "
 				echo "--function='dicomorganize' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo "" 
@@ -409,7 +416,7 @@ show_usage_setuphcp() {
 				echo "		--function=<function_name>				Name of function"
 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
-				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
@@ -423,14 +430,14 @@ show_usage_setuphcp() {
 				echo "AP --path='<study_folder>' \ "
 				echo "--function='setuphcp' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
-				echo "--runmethod='1'"
+				#echo "--runmethod='1'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "AP --path='<study_folder>' \ "
 				echo "--function='setuphcp' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_cluster_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo "" 
@@ -1805,7 +1812,7 @@ show_usage_hcpdlegacy() {
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
@@ -1821,7 +1828,7 @@ show_usage_hcpdlegacy() {
 				echo "--TE='2.46' \ "
 				echo "--unwarpdir='x-' \ "
 				echo "--diffdatasuffix='DWI_dir91_LR' \ "
-				echo "--runmethod='1' \ "
+				#echo "--runmethod='1' \ "
 				echo "--overwrite='yes'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler [ needs GPU-enabled queue ]:"
@@ -1834,7 +1841,7 @@ show_usage_hcpdlegacy() {
 				echo "--TE='2.46' \ "
 				echo "--unwarpdir='x-' \ "
 				echo "--diffdatasuffix='DWI_dir91_LR' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo "--overwrite='yes' \ "
@@ -1943,7 +1950,7 @@ show_usage_dwidenseparcellation() {
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
@@ -1958,7 +1965,7 @@ show_usage_dwidenseparcellation() {
 				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
-				echo "--runmethod='1'"
+				#echo "--runmethod='1'"
 				echo ""	
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -1971,7 +1978,7 @@ show_usage_dwidenseparcellation() {
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='lsf'"
 				echo ""
 }
@@ -2083,7 +2090,7 @@ show_usage_dwiseedtractography() {
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
@@ -2098,7 +2105,7 @@ show_usage_dwiseedtractography() {
 				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='Thalamus_Seed' \ "
-				echo "--runmethod='1'"
+				#echo "--runmethod='1'"
 				echo ""	
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -2111,7 +2118,7 @@ show_usage_dwiseedtractography() {
 				echo "--outname='Thalamus_Seed' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo ""
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -2355,7 +2362,7 @@ show_usage_computeboldfc() {
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "		--function=<function_name>					Name of function"
-				echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
@@ -2450,7 +2457,7 @@ show_usage_computeboldfc() {
 				echo "--targetf='' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -2473,7 +2480,7 @@ show_usage_computeboldfc() {
 				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -2500,7 +2507,7 @@ show_usage_computeboldfc() {
 				echo "--time='true' \ "
 				echo "--vstep='5000' \ "
 				echo "--covariance='false' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -2527,7 +2534,7 @@ show_usage_computeboldfc() {
 				echo "--time='true' \ "
 				echo "--vstep='5000' \ "
 				echo "--covariance='false' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -2634,7 +2641,7 @@ show_usage_structuralparcellation () {
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [ If local/interactive then log will be continuously generated in different format ]"
+				#echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [ If local/interactive then log will be continuously generated in different format ]"
 				echo "" 
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
@@ -2665,7 +2672,7 @@ show_usage_structuralparcellation () {
 				echo "--extractdata='yes' "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "" 
 }
 
@@ -2805,7 +2812,7 @@ show_usage_boldparcellation() {
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [ If local/interactive then log will be continuously generated in different format ]"
+				#echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [ If local/interactive then log will be continuously generated in different format ]"
 				echo "" 
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
@@ -2832,7 +2839,7 @@ show_usage_boldparcellation() {
 				echo "--computepconn='yes' \ "
 				echo "--extractdata='yes' \ "
 				echo "--useweights='no' \ "
-				echo "--runmethod='1' "
+				#echo "--runmethod='1' "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -2849,7 +2856,7 @@ show_usage_boldparcellation() {
 				echo "--computepconn='yes' \ "
 				echo "--extractdata='yes' \ "
 				echo "--useweights='no' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
  				echo ""
@@ -2924,7 +2931,7 @@ show_usage_fsldtifit() {
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
@@ -2934,7 +2941,7 @@ show_usage_fsldtifit() {
 				echo "--function='fsldtifit' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--overwrite='yes'"
 				echo ""
 }
@@ -3078,7 +3085,7 @@ show_usage_fslbedpostxgpu() {
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
@@ -3090,7 +3097,7 @@ show_usage_fslbedpostxgpu() {
 				echo "--model='3' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--overwrite='yes'"
 				echo ""
 }
@@ -3203,7 +3210,7 @@ show_usage_pretractographydense() {
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3212,7 +3219,7 @@ show_usage_pretractographydense() {
 				echo "--function='pretractographydense' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='LSF'"
 				echo ""
 }
@@ -3465,7 +3472,7 @@ show_usage_awshcpsync() {
 				echo "		--subjects=<comma_separated_list_of_cases>	List of subjects to run"
 				echo "		--modality=<modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
 				echo "		--awsuri=<aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
-				echo "		--runmethod=<type_of_run>			Perform a dry test run [1] or real run [2]"
+				#echo "		--runmethod=<type_of_run>			Perform a dry test run [1] or real run [2]"
 				echo "" 
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
@@ -3679,7 +3686,7 @@ show_usage_qcpreproc() {
 				echo "		--subjects=<comma_separated_list_of_cases>					List of subjects to run"
 				echo "		--subjects=<list_of_cases>					List of subjects to run, separated by commas"
 				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
-				echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				#echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
@@ -3707,7 +3714,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='$TOOLS/MNAP/general/templates' \ "
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
-				echo "--runmethod='1'"
+				#echo "--runmethod='1'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3718,7 +3725,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='$TOOLS/MNAP/general/templates' \ "
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo "" 			
@@ -3738,7 +3745,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
 				echo "--modality='T1w' \ "
 				echo "--overwrite='yes' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -3750,7 +3757,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
 				echo "--modality='T2w' \ "
 				echo "--overwrite='yes' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -3762,7 +3769,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
 				echo "--modality='myelin' \ "
 				echo "--overwrite='yes' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -3777,7 +3784,7 @@ show_usage_qcpreproc() {
 				echo "--dwidata='DWI_dir74_AP_b1000b2500_data_brain' \ "
 				echo "--dwipath='Diffusion_DWI_dir74_AP_b1000b2500' \ "
 				echo "--overwrite='yes' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -3791,7 +3798,7 @@ show_usage_qcpreproc() {
 				echo "--bolddata='1' \ "
 				echo "--boldsuffix='Atlas' \ "
 				echo "--overwrite='yes' \ "
-				echo "--runmethod='2' \ "
+				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
@@ -4101,17 +4108,20 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` 																		# Clean prior run and starr fresh [yes/no]
 
 	# -- set scheduler flags
-	RunMethod=`opts_GetOpt "${setflag}runmethod" $@` 																		# Specifies whether to run on the cluster or on the local node
+	
+	# -- RunMethod is DEPRECATED
+	#RunMethod=`opts_GetOpt "${setflag}runmethod" $@` 																		# Specifies whether to run on the cluster or on the local node
 	# -- set default to 1 if not specified
-	if [ -z "$RunMethod" ]; then
-		RunMethod="1"	
-	fi
+	#if [ -z "$RunMethod" ]; then
+	#	RunMethod="1"	
+	#fi
+	
 	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@` 																			# Option for printing the entire command	
 	Scheduler=`opts_GetOpt "${setflag}scheduler" $@` 																		# Specify the type of scheduler to use 
-	
 	# -- if scheduler flag set then set RunMethod variable
 	if [ ! -z "$Scheduler" ]; then
-		# -- if scheduler flag set then look for scheduler_options flag -- DEPRECATED
+		# -- SchedulerOptions is DEPRECATED
+		# -- if scheduler flag set then look for scheduler_options flag
 		#if [ "$Scheduler" = "SLURM" ]; then
 		#	SchedulerOptions=`opts_GetOpt "${setflag}SLURM_options" $@` 													# String of options for scheduler job
 		#	SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
@@ -4269,7 +4279,7 @@ if [ "$FunctionToRun" == "dicomorganize" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		if [ -z "$Overwrite" ]; then Overwrite="no"; fi
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -4291,7 +4301,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
@@ -4348,7 +4358,7 @@ if [ "$FunctionToRun" == "setuphcp" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		
@@ -4695,7 +4705,7 @@ if [ "$FunctionToRun" == "fsldtifit" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -4733,7 +4743,7 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
 		if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
 		if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		
@@ -5037,7 +5047,7 @@ if [ "$FunctionToRun" == "hcpdlegacy" ]; then
 		if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
 		if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
 		if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -5077,7 +5087,7 @@ if [ "$FunctionToRun" == "structuralparcellation" ]; then
 		if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
+		#if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -5148,7 +5158,7 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 			if [ -z "$FCCommand" ]; then FCCommand=""; fi
 			if [ -z "$Method" ]; then Method="mean"; fi
 		fi		
-		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
+		#if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
 			Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
@@ -5226,7 +5236,7 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
+		#if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -5285,7 +5295,7 @@ if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
 		if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -5322,7 +5332,7 @@ if [ "$FunctionToRun" == "dwiseedtractography" ]; then
 		if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
 		if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -5364,7 +5374,7 @@ if [ "$FunctionToRun" == "pretractographydense" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -5432,7 +5442,7 @@ if [ "$FunctionToRun" == "awshcpsync" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Dry Run; 2=Real Run] missing"; exit 1; fi
+		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Dry Run; 2=Real Run] missing"; exit 1; fi
 		if [ -z "$Modality" ]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
 		if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
 		echo ""
