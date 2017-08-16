@@ -200,6 +200,15 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,          'ar
             }
 
 
+
+class CommandError(exceptions.Exception):
+    def __init__(self, value="Got lost :-("):
+        self.parameter = value
+
+    def __str__(self):
+        return self.parameter  # repr(self.parameter)
+
+
 def runCommand(command, args):
     if command in commands:
         commands[command]['com'](**args)
@@ -326,6 +335,10 @@ def main(args=None):
         printHelp(comm)
         print "-----------------------\n\nHere's the error as caught by python:\n"
         raise
+        sys.exit(1)
+    except CommandError as e:
+        print "\n-----------------------\nERROR: Execution of gmri command %s failed!" % (comm)
+        print e
         sys.exit(1)
     except SystemExit as e:
         sys.exit(e)

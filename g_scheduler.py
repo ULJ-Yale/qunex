@@ -195,13 +195,13 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     # --- check inputs
 
     if command is None and script is None:
-        raise ValueError("ERROR: Either command or script need to be provided to run scheduler!")
+        raise CommandError("       Either command or script need to be provided to run scheduler!")
 
     if command is not None and script is not None:
-        raise ValueError("ERROR: Only command or script need to be provided to run scheduler!")
+        raise CommandError("       Only command or script need to be provided to run scheduler!")
 
     if settings is None:
-        raise ValueError("ERROR: Settings need to be provided to run scheduler!")
+        raise CommandError("       Settings need to be provided to run scheduler!")
 
     # --- parse settings
 
@@ -213,27 +213,27 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         comname   = setDict.pop('comname', "C")
         jobnum    = setDict.pop('jobnum', "1")
     except:
-        raise ValueError("ERROR: Scheduler failed! Could not parse the settings string: \"%s\".\n       Please check the documentation for correct scheduler settings string format (gmri ?schedule)." % settings)
+        raise CommandError("       Could not parse the settings string: \"%s\".\n       Please check the documentation for correct scheduler settings string format (gmri ?schedule)." % settings)
 
     if scheduler not in ['PBS', 'LSF', 'SLURM']:
-        raise ValueError("ERROR: First value in the settings file has to specify one of PBS, LSF, SLURM!")
+        raise CommandError("       First value in the settings file has to specify one of PBS, LSF, SLURM!")
 
 
     # --- compile command to pass
 
     if command is None:
         if not os.path.exists(script):
-            raise ValueError("ERROR: The referenced script does not exist!")
+            raise CommandError("       The referenced script does not exist!")
         command = file(script).read()
 
     if workdir is not None:
         if not os.path.exists(workdir):
-            raise ValueError("ERROR: The referenced working directory does not exist!")
+            raise CommandError("       The referenced working directory does not exist!")
         command = "cd %s\n" % (workdir) + command
 
     if environment is not None:
         if not os.path.exists(environment):
-            raise ValueError("ERROR: The referenced environment script does not exist!")
+            raise CommandError("       The referenced environment script does not exist!")
         command = file(environment).read() + "\n" + command
 
     # --- do search replace
