@@ -11,7 +11,7 @@
       <MD>
          <Name><![CDATA[ParentProvenance]]></Name>
          <Value><![CDATA[/gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/L.modified_partition_v2.label.gii:
-/home/usr/local/workbench/bin_rh_linux64/../exe_rh_linux64/wb_command -metric-label-import L.modified_partition_v2.func.gii labelfile_modified.txt L.modified_partition_v2.label.gii
+/gpfs/project2/fas/n3/software/workbench/bin_rh_linux64/../exe_rh_linux64/wb_command -metric-label-import /gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/L.modified_partition_v2.label.gii /gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/labelfile_modified.txt /gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/L.modified_partition_v2.label.gii
 
 ]]></Value>
       </MD>
@@ -37,7 +37,7 @@ Operating System: Linux
       </MD>
       <MD>
          <Name><![CDATA[WorkingDirectory]]></Name>
-         <Value><![CDATA[/gpfs/project2/fas/n3/Studies/Connectome/SubcorticalNetworkAssignment]]></Value>
+         <Value><![CDATA[/gpfs/project2/fas/n3/Studies/Connectome/subjects/100206/images/functional]]></Value>
       </MD>
    </MetaData>
    <LabelTable>
@@ -46,7 +46,7 @@ Operating System: Linux
       <Label Key="2" Red="0.392157" Green="0" Blue="1" Alpha="1"><![CDATA[Visual2]]></Label>
       <Label Key="3" Red="0" Green="1" Blue="1" Alpha="1"><![CDATA[Somatomotor]]></Label>
       <Label Key="4" Red="0.6" Green="0" Blue="0.6" Alpha="1"><![CDATA[Cingulo-Opercular]]></Label>
-      <Label Key="5" Red="0" Green="1" Blue="0" Alpha="1"><![CDATA[Dorsal-attention]]></Label>
+      <Label Key="5" Red="0" Green="1" Blue="0" Alpha="1"><![CDATA[Dorsal Attention]]></Label>
       <Label Key="6" Red="0" Green="0.607843" Blue="0.607843" Alpha="1"><![CDATA[Language]]></Label>
       <Label Key="7" Red="1" Green="1" Blue="0" Alpha="1"><![CDATA[Frontoparietal]]></Label>
       <Label Key="8" Red="0.980392" Green="0.243137" Blue="0.984314" Alpha="1"><![CDATA[Auditory]]></Label>
