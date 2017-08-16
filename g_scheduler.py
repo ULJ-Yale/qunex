@@ -205,12 +205,16 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     # --- parse settings
 
-    setList   = [e.strip() for e in settings.split(",")]
-    scheduler = setList.pop(0)
-    setDict   = dict([e.strip().split("=") for e in setList])
-    jobname   = setDict.pop('jobname', "schedule")
-    comname   = setDict.pop('comname', "C")
-    jobnum    = setDict.pop('jobnum', "1")
+    try:
+        setList   = [e.strip() for e in settings.split(",")]
+        scheduler = setList.pop(0)
+        setDict   = dict([e.strip().split("=") for e in setList])
+        jobname   = setDict.pop('jobname', "schedule")
+        comname   = setDict.pop('comname', "C")
+        jobnum    = setDict.pop('jobnum', "1")
+    except:
+        print "ERROR: Scheduler failed! Could not parse the settings string: \"%s\".\n       Please check the documentation for correct scheduler settings string format (gmri ?schedule)."
+        exit(1)
 
     if scheduler not in ['PBS', 'LSF', 'SLURM']:
         raise ValueError("ERROR: First value in the settings file has to specify one of PBS, LSF, SLURM!")
