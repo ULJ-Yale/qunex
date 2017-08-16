@@ -174,6 +174,9 @@ if strcmp(cifti.(lower(img.cifti.shortnames{cmp})).type,'Surface')
             ctn_peaks = ctn_peaks + 1;
             peak(ctn_peaks).index = i;
             peak(ctn_peaks).value = data.(lower(img.cifti.shortnames{cmp}))(i);
+            peak(ctn_peaks).x = cifti.(lower(img.cifti.shortnames{cmp})).(projection).vertices(i,1);
+            peak(ctn_peaks).y = cifti.(lower(img.cifti.shortnames{cmp})).(projection).vertices(i,2);
+            peak(ctn_peaks).z = cifti.(lower(img.cifti.shortnames{cmp})).(projection).vertices(i,3);
         end
     end
     

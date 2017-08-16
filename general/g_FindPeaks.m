@@ -237,11 +237,12 @@ elseif img.frames > 1
                 for c = 1:length(img.cifti.shortnames)
                     if strcmp(cifti.(lower(img.cifti.shortnames{c})).type,'Surface')
                         fprintf(repf, '\n\n%0.0f) %s\n', c, lower(img.cifti.shortnames{c}));
-                        fprintf(repf, '\n#index\tvalue\tsize\tarea');
+                        fprintf(repf, '\n#index\tvalue\tsize\tarea\tx\ty\tz');
                         for p = 1:length(peak{j}.(lower(img.cifti.shortnames{c})))
-                            fprintf(repf, '\n%d\t%.1f\t%d\t%f', peak{j}.(lower(img.cifti.shortnames{c}))(p).index,...
+                            fprintf(repf, '\n%d\t%.1f\t%d\t%f\t%f\t%f\t%f', peak{j}.(lower(img.cifti.shortnames{c}))(p).index,...
                                 peak{j}.(lower(img.cifti.shortnames{c}))(p).value, peak{j}.(lower(img.cifti.shortnames{c}))(p).size,...
-                                peak{j}.(lower(img.cifti.shortnames{c}))(p).area);
+                                peak{j}.(lower(img.cifti.shortnames{c}))(p).area,peak{j}.(lower(img.cifti.shortnames{c}))(p).x,...
+                                peak{j}.(lower(img.cifti.shortnames{c}))(p).y,peak{j}.(lower(img.cifti.shortnames{c}))(p).z);
                         end
                     end
                 end

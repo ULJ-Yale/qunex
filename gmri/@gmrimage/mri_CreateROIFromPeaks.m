@@ -57,8 +57,8 @@ val = peaksIn(:,5);
 % --- if img is CIFTI-2 extract volume components to a NIFTI format
 embedBack = false;
 if strcmpi(img.imageformat, 'CIFTI-2')
-    surf_img = img;
-    img = surf_img.mri_ExtractCIFTIVolume();
+    surfaceImage = img;
+    img = surfaceImage.mri_ExtractCIFTIVolume();
     embedBack = true;
 end
 
@@ -88,18 +88,20 @@ for p = 1:num_pk
         for J = j1:j2
             for K = k1:k2
                 xyz = img.mri_GetXYZ([I,J,K]);
-                dist = sqrt((xyz(1)-X(p))^2+(xyz(2)-Y(p))^2+(xyz(3)-Z(p))^2);
+                distance = sqrt((xyz(1)-X(p))^2+(xyz(2)-Y(p))^2+(xyz(3)-Z(p))^2);
+                % -> round voxel coordinates
+                I_int = round(I); J_int = round(J); K_int = round(K);
                 % -> empty field: assign ROI value
-                if dist <= R(p) && img.data(I,J,K) == 0
-                    img.data(I,J,K) = val(p);
+                if distance <= R(p) && img.data(I_int,J_int,K_int) == 0
+                    img.data(I_int,J_int,K_int) = val(p);
                 % -> not empty field: handle by assigining ROI value of the closest one
-                elseif dist <= R(p) && img.data(I,J,K) ~= 0
-                   nInd = find(peaksIn(:,5) == img.data(I,J,K));
+                elseif distance <= R(p) && img.data(I_int,J_int,K_int) ~= 0
+                   nInd = find(peaksIn(:,5) == img.data(I_int,J_int,K_int));
                    nX = peaksIn(nInd,1); nY = peaksIn(nInd,2); nZ = peaksIn(nInd,3);
                    cXYZ = img.mri_GetXYZ([I, J, K]);
                    nDist = sqrt((nX-cXYZ(1))^2+(nY-cXYZ(2))^2+(nZ-cXYZ(3))^2);
-                   if nDist > dist
-                       img.data(I,J,K) = val(p);
+                   if nDist > distance
+                       img.data(I_int,J_int,K_int) = val(p);
                    end
                 end
             end
@@ -109,8 +111,8 @@ end
 
 % --- if the input image is CIFTI-2 embed the modified data back
 if embedBack
-    surf_img = surf_img.mri_EmbedCIFTIVolume(img);
-    img = surf_img;
+    surfaceImage = surfaceImage.mri_EmbedCIFTIVolume(img);
+    img = surfaceImage;
 end
 
 end
