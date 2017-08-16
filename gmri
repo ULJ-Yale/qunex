@@ -200,15 +200,6 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,          'ar
             }
 
 
-
-class CommandError(exceptions.Exception):
-    def __init__(self, value="Got lost :-("):
-        self.parameter = value
-
-    def __str__(self):
-        return self.parameter  # repr(self.parameter)
-
-
 def runCommand(command, args):
     if command in commands:
         commands[command]['com'](**args)
@@ -331,23 +322,20 @@ def main(args=None):
 
         runCommand(comm, opts)
     except ValueError as e:
-        print "\n-----------------------\n", e, "\nInstructions on command use:"
-        printHelp(comm)
-        print "-----------------------\n\nHere's the error as caught by python:\n"
-        raise
-        sys.exit(1)
-    except CommandError as e:
-        print "\n-----------------------\nERROR: Execution of gmri command %s failed!" % (comm)
+        print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)
         print e
+        print "\nThe call received was: \n\ngmri %s " % (" \\\n    ".join(args))
+        print "--------------------------------------------------------------"
         sys.exit(1)
     except SystemExit as e:
         sys.exit(e)
     except:
-        print "\n-----------------------\n\nOps! Something went wrong. Here is the help for the command you ran:"
-        printHelp(comm)
-        print "-----------------------\n\nHere's the error as caught by python:\n"
+        print "\n--------------------==== gmri failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
+        print "       Please check documentation for the command (`gmri ?%s`)!" % (comm)
+        print "\nThe call received was: \n\ngmri %s " % (" \\\n    ".join(args))
+        print "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
         raise
-        print "\n-----------------------\n"
+        print "\n--------------------------------------------------------------\n"
         sys.exit(1)
 
 if __name__ == "__main__":
