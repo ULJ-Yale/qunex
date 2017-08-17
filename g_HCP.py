@@ -103,6 +103,9 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     Changelog
     2017-02-07 Grega Repovš
              - Updated documentation
+    2017-08-17 Grega Repovš
+             - Added mapping of GE Field Map images
+
     '''
 
     inf = niutilities.g_core.readSubjectData(os.path.join(folder, sbjf))[0][0]

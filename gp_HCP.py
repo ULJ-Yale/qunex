@@ -208,7 +208,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     --hcp_suffix           ... Specifies a suffix to the subject id if multiple
                                variants are run, empty otherwise [].
-    --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction.
     --hcp_t2               ... NONE if no T2w image is available and the
                                preprocessing should be run without them,
                                anything else otherwise [t2].
@@ -216,19 +215,13 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                default and seems to be a good choice, HCP uses
                                150, which can lead to problems with larger heads
                                [150].
-    --hcp_echodiff         ... Difference in TE times if a fieldmap image is
-                               used, set to NONE if not used [NONE].
-    --hcp_dwelltime        ... Echo Spacing or Dwelltime of Spin Echo Field Map
-                               or "NONE" if not used [NONE].
-    --hcp_seunwarpdir      ... Phase encoding direction of the spin echo field
-                               map (x, y or NONE) [NONE].
     --hcp_t1samplespacing  ... T1 image sample spacing, NONE if not used [NONE].
     --hcp_t2samplespacing  ... T2 image sample spacing, NONE if not used [NONE].
-    --hcp_unwarpdir        ... Readout direction of the T1w and T2w images (x,
-                               y, z or NONE); used with either a regular field
-                               map or a spin echo field map [NONE].
     --hcp_gdcoeffs         ... Path to a file containing gradient distortion
                                coefficients, set to "NONE", if not used [NONE].
+    --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction in PreFS
+                               step (YES or NONE) [NONE].
+    --hcp_bfsigma          ... Bias Field Smoothing Sigma (optional) [].
     --hcp_avgrdcmethod     ... Averaging and readout distortion correction
                                method. Can take the following values:
                                NONE
@@ -246,11 +239,18 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                ... average any repeats and use spin echo field
                                    map for readout correction.
                                [NONE]
+    --hcp_unwarpdir        ... Readout direction of the T1w and T2w images (x,
+                               y, z or NONE); used with either a regular field
+                               map or a spin echo field map [NONE].
+    --hcp_echodiff         ... Difference in TE times if a fieldmap image is
+                               used, set to NONE if not used [NONE].
+    --hcp_dwelltime        ... Echo Spacing or Dwelltime of Spin Echo Field Map
+                               or "NONE" if not used [NONE].
+    --hcp_seunwarpdir      ... Phase encoding direction of the Spin Echo Field
+                               Map (x, y or NONE) [NONE].
     --hcp_topupconfig      ... Path to a configuration file for TOPUP method
                                or "NONE" if not used [NONE].
-    --hcp_bfsigma          ... Bias Field Smoothing Sigma (optional) [].
-    --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction in PreFS
-                               step (YES or NONE) [NONE].
+
 
     EXAMPLE USE
     ===========
@@ -267,6 +267,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     Changelog
     2017-01-08 Grega Repovš
              - Updated documentation.
+    2017-08-17 Grega Repovš
+             - Added checking for field map images.
     '''
 
     r = "\n---------------------------------------------------------"
