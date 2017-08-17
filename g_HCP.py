@@ -53,23 +53,25 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     appropriate image type in the source.txt file. The following file types
     are recognized and will be mapped correctly:
 
-    T1w            ... T1 weighted high resolution structural image
-    T2w            ... T2 weighted high resolution structural image
-    FM-Magnitude   ... Field mapping magnitude image used for distortion
-                       correction
-    FM-Phase       ... Field mapping phase image used for distortion
-                       correction
-    boldref[N]     ... Reference image for the following BOLD image
-    bold[N]        ... BOLD image
-    SE-FM-AP       ... Spin-echo fieldmap image recorded using the A-to-P
-                       frequency readout direction
-    SE-FM-PA       ... Spin-echo fieldmap image recorded using the P-to-A
-                       frequency readout direction
-    SE-FM-LR       ... Spin-echo fieldmap image recorded using the L-to-R
-                       frequency readout direction
-    SE-FM-RL       ... Spin-echo fieldmap image recorded using the R-to-L
-                       frequency readout direction
-    DWI            ... Diffusion weighted image
+    T1w             ... T1 weighted high resolution structural image
+    T2w             ... T2 weighted high resolution structural image
+    FM-GE           ... Gradient echo field map image used for distortion
+                        correction
+    FM-Magnitude    ... Field mapping magnitude image used for distortion
+                        correction
+    FM-Phase        ... Field mapping phase image used for distortion
+                        correction
+    boldref[N]      ... Reference image for the following BOLD image
+    bold[N]         ... BOLD image
+    SE-FM-AP        ... Spin-echo fieldmap image recorded using the A-to-P
+                        frequency readout direction
+    SE-FM-PA        ... Spin-echo fieldmap image recorded using the P-to-A
+                        frequency readout direction
+    SE-FM-LR        ... Spin-echo fieldmap image recorded using the L-to-R
+                        frequency readout direction
+    SE-FM-RL        ... Spin-echo fieldmap image recorded using the R-to-L
+                        frequency readout direction
+    DWI             ... Diffusion weighted image
 
     Example definition
     ------------------
@@ -150,6 +152,10 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
                 sfile = k + "-o.nii.gz"
             tfile = sid + "_strc_T2w_SPC%d.nii.gz" % (nT2w)
             tfold = "T2w"
+        elif v['name'] == "FM-GE":
+            sfile = k + ".nii.gz"
+            tfile = sid + "_strc_FieldMap_GE.nii.gz"
+            tfold = "FieldMap_strc"
         elif v['name'] == "FM-Magnitude":
             sfile = k + ".nii.gz"
             tfile = sid + "_strc_FieldMap_Magnitude.nii.gz"
