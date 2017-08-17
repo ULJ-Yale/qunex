@@ -208,7 +208,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     --hcp_suffix           ... Specifies a suffix to the subject id if multiple
                                variants are run, empty otherwise [].
-    --hcp_biascorrect_t1w      ... Whether to run T1w image bias correction.
+    --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction.
     --hcp_t2               ... NONE if no T2w image is available and the
                                preprocessing should be run without them,
                                anything else otherwise [t2].
@@ -337,6 +337,25 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             except:
                 r += "\n---> ERROR: Could not find files for TOPUP processing of subject %s." % (sinfo['id'])
                 # raise
+                run = False
+
+        elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap':
+            if os.path.exists(hcp['fmapge']):
+                r += "\n---> Gradient Echo Field Map file present."
+            else:
+                r += "\n---> ERROR: Could not find Gradient Echo Field Map file for subject %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapge'])
+                run = False
+
+        elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap']:
+            if os.path.exists(hcp['fmapmag']):
+                r += "\n---> Magnitude Field Map file present."
+            else:
+                r += "\n---> ERROR: Could not find Magnitude Field Map file for subject %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapmag'])
+                run = False
+            if os.path.exists(hcp['fmapphase']):
+                r += "\n---> Phase Field Map file present."
+            else:
+                r += "\n---> ERROR: Could not find Phase Field Map file for subject %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapphase'])
                 run = False
 
         # --- lookup gdcoeffs file if needed
