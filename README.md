@@ -18,24 +18,23 @@ Installation
 ===============================
 ---
 
-Once cloned, the MNAP pipelines are installed as follows:
+### Step 1. Clone all MNAP repos (git clone git@bitbucket.org:mnap/mnaptools.git).
 
-### Step 1. Install all necessary dependencies. 
+### Step 2. Install all necessary dependencies (see below). 
 
-### Step 2. Configure `niutilities`. 
+### Step 3. Configure `niutilities` repository. 
 
 * Add `MNAP/niutilities` folder to `$PATH`
 * Add `MNAP/niutilities` folder to `$PYTHONPATH`
 * Make `MNAP/niutilities/gmri` executable
-* Install latest version of numpy (e.g. `pip install numpy`)
-* Install pydicom (e.g. `easy_install pydicom`)
+* Install latest version of numpy, pydicom, scipy & nibabel  
+* 			(e.g. `pip install numpy pydicom scipy nibabel `)
 
 ### Step 3. Configure the environment script by adding the following lines to your .bash_profile.
 
 	TOOLS=/PATH_TO_MNAP_FOLDER/
 	export TOOLS
 	source $TOOLS/library/environment/mnap_environment.sh
-
 
 Usage and command documentation
 ===============================
@@ -70,21 +69,20 @@ External dependencies
 =====================
 ---
 
+* All MNAP repositories (git clone git@bitbucket.org:mnap/mnaptools.git)
 * Connectome Workbench (v1.0 or above)
-* FSL (version 5.0.6 or above with CUDA libraries)
-* FreeSurfer (5.3 HCP version or later)
+* FSL (version 5.0.9 or above with GPU-enabled DWI tools)
+* FreeSurfer (5.3 HCP version for HCP-compatible data)
+* FreeSurfer (6.0 version for all other data)
 * MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
 * FIX ICA
 * PALM
-* Python (version 2.7 or above with numpy)
+* Python (version 2.7 or above with numpy, pydicom, scipy & nibabel)
 * AFNI
-* Gradunwarp
-* Human Connectome Pipelines (Modified versions for single-band preprocessing)
+* Gradunwarp (https://github.com/ksubramz/gradunwarp)
+* Human Connectome Pipelines for modified MNAP (https://bitbucket.org/mnap/hcpmodified)
 * R Statistical Environment with ggplot
-* pydicom
 * dcm2nii (23-June-2017 release) 
-* MNAP niutilities Repo
-* MNAP matlab Repo
 
 
 References
@@ -115,6 +113,7 @@ Change Log
 * 0.5.2: Initial pre-alpha release. Improved scheduler usage to include SLURM
 * 0.5.3: Initial pre-alpha release. Updated dcm2nii usage
 * 0.5.4: Initial pre-alpha release. Added XNATCloudUpload.sh script to enable automated XNAT ingestion and integration with multi data format support
+* 0.5.5: Initial pre-alpha release. Upgraded high-performance cluster scheduler functionality
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu

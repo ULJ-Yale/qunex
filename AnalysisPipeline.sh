@@ -31,21 +31,22 @@
 #
 # * This is a general lab pipeline developed as for front-end organization prior to HCP pipelines, for running HCP pipelines functions, and back-end analysis following dofcMRI
 #
-# ### Installed Software (Prerequisites) - these are sourced in $TOOLS/hcpsetup.sh 
+# ### Installed Software (Prerequisites) - these are sourced in ~MNAP/library/environment/mnap_environment.sh
 #
-# * Connectome Workbench (v1.0 or above)
-# * FSL (version 5.0.6 or above)
-# * MATLAB (version 2012b or above)
-# * FIX ICA
-# * MNAP (all repositories)
-# * PALM
-# * Python (version 2.7 or above)
-# * AFNI
-# * Gradunwarp
-# * HCP Pipelines modified code for legacy BOLD data
-# * R Software library
-#
-# ### Expected Environment Variables
+# * * All MNAP repositories (git clone git@bitbucket.org:mnap/mnaptools.git)
+# * * Connectome Workbench (v1.0 or above)
+# * * FSL (version 5.0.9 or above with GPU-enabled DWI tools)
+# * * FreeSurfer (5.3 HCP version for HCP-compatible data)
+# * * FreeSurfer (6.0 version for all other data)
+# * * MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
+# * * FIX ICA
+# * * PALM
+# * * Python (version 2.7 or above with numpy, pydicom, scipy & nibabel)
+# * * AFNI
+# * * Gradunwarp (https://github.com/ksubramz/gradunwarp)
+# * * Human Connectome Pipelines for modified MNAP (https://bitbucket.org/mnap/hcpmodified)
+# * * R Statistical Environment with ggplot
+# * * dcm2nii (23-June-2017 release) # Expected Environment Variables
 #
 # * HCPPIPEDIR
 # * CARET7DIR
