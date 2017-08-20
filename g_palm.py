@@ -302,7 +302,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                 toclean.append(simage)
                 iformat = 'nifti'
 
-            if '.ptseries.nii' in image:
+            elif '.ptseries.nii' in image:
                 simage = troot + '_cifti.ptseries.nii'
                 shutil.copy(image, simage)
                 toclean.append(simage)
@@ -329,7 +329,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                 iformat = 'nifti'
 
             else:
-                print "ERROR: Unknown format of the input file [%s]!" % (timage)
+                print "ERROR: Unknown format of the input file [%s]!" % (image)
                 return
 
         # --- compile PALM command
