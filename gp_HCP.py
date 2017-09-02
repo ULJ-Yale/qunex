@@ -1153,6 +1153,11 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     affects the previous motion correction target setting. If independent
     spin-echo pairs are used, then the first BOLD image after a new spin-echo
     pair serves as a new starting motion-correction reference.
+      If there is no spin-echo image pair and TOPUP correction was requested, an
+    error will be reported and processing aborted. If there is no preceeding
+    spin-echo pair, but there is at least one following the BOLD image in
+    question, the first following spin-echo pair will be used and no error will
+    be reported. The spin-echo pair used is reported in the log.
       When BOLD images are registered to the first BOLD in the series, due to
     larger movement between BOLD images it might be advantageous to use also
     nonlinear alignment to the first bold reference image (--hcp_bold_refreg).
@@ -1177,6 +1182,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     Changelog
     2017-02-06 Grega Repovš
              - Updated documentation.
+    2017-09-02 Grega Repovs
+             - Changed looking for relevant SE images
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1244,6 +1251,34 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: Could not find PostFS processing results."
             run = False
 
+        # -> Check for SE images
+
+        sepresent = []
+        sepairs = {}
+        r += "\n---> Looking for spin echo fieldmap set images."
+
+        for bold in range(50):
+            spinok = False
+
+            if os.path.exists(os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_AP_SB_SE.nii.gz" % (sinfo['id']))):
+                spinok  = True
+                r += "\n     ... Found an AP SE preceeding bold %d." % (bold)
+                spinOne = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_AP_SB_SE.nii.gz" % (sinfo['id']))
+                spinTwo = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_PA_SB_SE.nii.gz" % (sinfo['id']))
+                r, spinok = checkForFile2(r, spinTwo, '\n         PA spin echo fildmap pair image present', '\n         ERROR: PA spin echo fildmap pair image missing!', status=spinok)
+
+            elif os.path.exists(os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_LR_SB_SE.nii.gz" % (sinfo['id']))):
+                spinok  = True
+                r += "\n     ... Found a LR SE preceeding bold %d." % (bold)
+                spinOne = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_LR_SB_SE.nii.gz" % (sinfo['id']))
+                spinTwo = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_RL_SB_SE.nii.gz" % (sinfo['id']))
+                r, spinok = checkForFile2(r, spinTwo, '\n         RL spin echo fildmap pair image present', '\n         ERROR: RL spin echo fildmap pair image missing!', status=spinok)
+
+            if spinok:
+                sepresent.append(bold)
+                sepairs[bold] = {'spinOne': spinOne, 'spinTwo': spinTwo}
+
+
         # --- Process unwarp direction
 
         unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
@@ -1266,6 +1301,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         spinTwo   = "NONE"  # PA or RL
         refimg    = "NONE"
         futureref = "NONE"
+
+        r += "\n"
 
         for bold, boldinfo in bolds:
 
@@ -1315,30 +1352,26 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 # --- check for spin-echo-fieldmap image
 
                 if options['hcp_bold_correct'].lower() == 'topup':
-                    if spinN > 0 and (not os.path.exists(os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold))) or options['hcp_bold_seimg'] == 'first'):
-                        r += "\n     ... using spin echo fieldmap set %d" % (spinN)
+                    if not sepresent:
+                        r += '\n     ... ERROR: No spin echo fieldmap set images present!'
+                        boldok = False
+
+                    elif options['hcp_bold_seimg'] == 'first':
+                        spinN = sepresent[0]
+                        spinOne = sepairs[spinN]['spinOne']
+                        spinTwo = sepairs[spinN]['spinTwo']
+                        r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
+
                     else:
-                        if spinN > 0:
-                            r += '\n     ... found new spin echo fieldmap set [%d]' % (bold)
-
-                        fmriref = "NONE"
-                        # need to turn this off for multiband LR/RL
-                        if options['hcp_bold_movref'] == 'first':
-                            futureref = "%s%d" % (options['hcp_bold_prefix'], bold)
-
-                        if os.path.exists(os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_AP_SB_SE.nii.gz" % (sinfo['id']))):
-                            spinOne = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_AP_SB_SE.nii.gz" % (sinfo['id']))
-                            spinTwo = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_PA_SB_SE.nii.gz" % (sinfo['id']))
-                        elif os.path.exists(os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_LR_SB_SE.nii.gz" % (sinfo['id']))):
-                            spinOne = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_LR_SB_SE.nii.gz" % (sinfo['id']))
-                            spinTwo = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_RL_SB_SE.nii.gz" % (sinfo['id']))
-
-                        spinok = True
-                        r, spinok = checkForFile2(r, spinOne, '\n     ... spin echo fildmap AP/LR image present', '\n     ... ERROR: spin echo fildmap AP/LR image missing!', status=spinok)
-                        r, spinok = checkForFile2(r, spinTwo, '\n     ... spin echo fildmap PA/RL image present', '\n     ... ERROR: spin echo fildmap PA/RL image missing!', status=spinok)
-                        if spinok:
-                            spinN = bold
-                        boldok = boldok and spinok
+                        spinN = False
+                        for sen in sepresent:
+                            if sen <= bold:
+                                spinN = sen
+                            elif not spinN:
+                                spinN = sen
+                        spinOne = sepairs[spinN]['spinOne']
+                        spinTwo = sepairs[spinN]['spinTwo']
+                        r += "\n     ... using spin echo fieldmap set %d" % (spinN)
 
                 # --- check for Siemens double TE-fieldmap image
 
