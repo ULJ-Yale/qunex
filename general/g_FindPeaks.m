@@ -149,8 +149,8 @@ end
 [roi vol_peak peak] = img.mri_FindPeaks(mins, maxs, val, t, projection, options, verbose);
 
 % --- shift one up to start from 2 (to make fidl happy)
-roi.data = roi.data + 1;
-roi.data(roi.data == 1) = 0;
+% roi.data = roi.data + 1;
+% roi.data(roi.data == 1) = 0;
 
 % --- print report
 
