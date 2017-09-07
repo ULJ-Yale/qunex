@@ -69,6 +69,7 @@ end
 
 nsubjects = 0;
 nfiles    = 0;
+nf        = -9;
 
 for s = files(:)'
     s = s{1};
@@ -78,6 +79,10 @@ for s = files(:)'
         [t, s] = strtok(s, ':');
         subject(nsubjects).id = strtrim(s(2:end));
         if verbose, fprintf('%s \n', subject(nsubjects).id); end
+        continue
+    end
+    if nf < 0
+        continue
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');
         if g_CheckFile(strtrim(s(2:end)), 'ROI image', report);
@@ -106,6 +111,11 @@ for s = files(:)'
             subject(nsubjects).folder = strtrim(s(2:end));
         end
     end
+end
+
+if nsubjects == 0
+    fprintf('\n\nERROR: No subject id information present in file list: %s! Please check file format!\n\n', flist);
+    error('ERROR: Could not read the provided filelist.');
 end
 
 if verbose, fprintf(' done.\n'); end
