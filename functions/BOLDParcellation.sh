@@ -37,7 +37,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./DWIDenseParcellation.sh --help
+# See output of usage function: e.g. $./BOLDParcellation.sh --help
 #
 # ### Expected Previous Processing
 # 

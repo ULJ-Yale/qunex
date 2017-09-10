@@ -188,6 +188,7 @@ show_usage() {
 				echo "printmatrix			extract parcellated matrix for dense CIFTI data via via a provided network solution"
 				echo "bolddense			compute bold dense connectome (needs >30gb ram per bold)"
 				echo "ciftismooth			smooth cifti data"
+				echo "roiextract			extract data from pre-specified ROIs in CIFTI or NIFTI"
 				echo ""
 				cyaneho "FIX ICA de-noising"
 				cyaneho "---------------------------"
@@ -279,6 +280,9 @@ dicomorganize() {
 						Com3="gmri dicom2niix unzip=yes gzip=yes clean=yes verbose=true cores=4"
 						ComQUEUE="$Com1; $Com2; $Com3"
 						
+						TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+						Suffix="$CASE_$TimeStamp"
+							
 						if [ "$Cluster" == 1 ]; then
 						  	echo ""
   							echo "---------------------------------------------------------------------------------"
@@ -290,23 +294,16 @@ dicomorganize() {
 						else
 							echo "Job ID:"
 							# -- Set the scheduler commands
-							TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
-							Suffix="$CASE_$TimeStamp"
 							rm -f "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh &> /dev/null
 							echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh
 							chmod 770 "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh
 							# -- Run the scheduler commands
-							#fslsub="$Scheduler" # set scheduler for fsl_sub command
-							#fsl_sub."$fslsub" -Q "$QUEUE" -l "$StudyFolder/$CASE/dicom" -R 10000 "$StudyFolder"/"$CASE"/dicom/"$CASE"_ComQUEUE_dicomorganize.sh
 							cd "$StudyFolder"/"$CASE"/dicom/
-							TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
-							Suffix="$CASE_$TimeStamp"
 							gmri schedule command="${StudyFolder}/${CASE}/dicom/ComQUEUE_dicomorganize_${Suffix}.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
 							echo ""
 							echo "---------------------------------------------------------------------------------"
 							echo "Data successfully submitted" 
 							echo "Scheduler: $Scheduler"
-							#echo "Scheduler Options: $SchedulerOptions"
 							echo "Check output logs here: $StudyFolder/$CASE/dicom"
 							echo "---------------------------------------------------------------------------------"
 							echo ""
@@ -377,6 +374,10 @@ setuphcp() {
 			Com2="gmri setupHCP"
 			ComQUEUE="$Com1; $Com2"
 			
+			# Generate timestamp for logs and scripts
+			TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+			Suffix="$CASE_$TimeStamp"
+			
 			if [ "$Cluster" == 1 ]; then
 				echo ""
   				echo "---------------------------------------------------------------------------------"
@@ -388,17 +389,16 @@ setuphcp() {
 			else
 				echo "Job ID:"
 				# -- Set the scheduler commands
-				rm -f "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh &> /dev/null
-				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh
-				chmod 770 "$StudyFolder"/"$CASE"/"$CASE"_setuphcp.sh				
+				rm -f "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh &> /dev/null
+				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh
+				chmod 770 "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh				
 				# -- Run the scheduler commands
 				cd "$StudyFolder"/"$CASE"/
-				gmri schedule command="${StudyFolder}/${CASE}/${CASE}_setuphcp.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/setuphcp.output.log|stderr:${StudyFolder}/${CASE}/setuphcp.error.log"  workdir="${StudyFolder}/${CASE}"  
+				gmri schedule command="${StudyFolder}/${CASE}/setuphcp_${Suffix}.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/setuphcp.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/setuphcp.${Suffix}.error.log"  workdir="${StudyFolder}/${CASE}"  
 				echo ""
 				echo "---------------------------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name and Options: $Scheduler"
-				#echo "$Scheduler Options: $SchedulerOptions"
 				echo "Check output logs here: $StudyFolder/$CASE/"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
@@ -417,11 +417,9 @@ show_usage_setuphcp() {
 				echo "		--function=<function_name>				Name of function"
 				echo "		--path=<study_folder>					Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
-				#echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "" 
     			echo "-- Usage for setuphcp"
     			echo ""
@@ -431,16 +429,13 @@ show_usage_setuphcp() {
 				echo "AP --path='<study_folder>' \ "
 				echo "--function='setuphcp' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
-				#echo "--runmethod='1'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "AP --path='<study_folder>' \ "
 				echo "--function='setuphcp' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_cluster_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo "" 
     			echo ""
 }
@@ -1728,6 +1723,10 @@ hcpdlegacy() {
 		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion/log
 		Overwrite="$Overwrite"
 		
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="$CASE_$TimeStamp"
+		
 		if [ "$Cluster" == 1 ]; then
 			echo "Running locally on `hostname`"
 			echo "Check log file output here: $LogFolder"
@@ -1741,22 +1740,9 @@ hcpdlegacy() {
 			--TE="${TE}" \
 			--unwarpdir="${UnwarpDir}" \
 			--overwrite="${Overwrite}" \
-			--diffdatasuffix="${DiffDataSuffix}" >> "$LogFolder"/DiffPreprocPipelineLegacy_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
-			
-			# -- Print log on screen
-			#LogFile=`ls -ltr $LogFolder/DiffPreprocPipelineLegacy_$CASE_*log | tail -n 1 | awk '{ print $9 }'`
-			#echo ""
-			#echo "Log file location:"
-			#echo "$LogFolder/$LogFile"
-			#echo ""
-			#echo `tail -f $LogFolder/$LogFile`
+			--diffdatasuffix="${DiffDataSuffix}" >> "$LogFolder"/DiffPreprocPipelineLegacy_"$Suffix".log
 		else
-			# -- Deprecated fsl_sub call
-			# set scheduler for fsl_sub command
-			#fslsub="$Scheduler"
-			#fsl_sub."$fslsub" -Q "$CUDAQUEUE" -l "$LogFolder" 
-			# - Clean prior command 
-			rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_legacy.sh &> /dev/null		
+			rm -f ${StudyFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh &> /dev/null		
 			echo "${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
 			--path=${StudyFolder} \
 			--subject=${CASE} \
@@ -1765,19 +1751,18 @@ hcpdlegacy() {
 			--TE=${TE} \
 			--unwarpdir=${UnwarpDir} \
 			--diffdatasuffix=${DiffDataSuffix} \
-			--overwrite=${Overwrite}" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_legacy.sh
+			--overwrite=${Overwrite}" > ${StudyFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh
 			# - Make script executable 
-			chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_legacy.sh
+			chmod 770 ${StudyFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh
 			cd ${StudyFolder}/${CASE}/hcp/
 			# - Send to scheduler 
-			gmri schedule command="${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_legacy.sh" \
+			gmri schedule command="${StudyFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh" \
 			settings="${Scheduler}" \
-			output="stdout:${StudyFolder}/${CASE}/hcp/hcpd_legacy.output.log|stderr:${StudyFolder}/${CASE}/hcp/hcpd_legacy.error.log" \
+			output="stdout:${StudyFolder}/${CASE}/hcp/hcpd_legacy.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/hcp/hcpd_legacy.${Suffix}.error.log" \
 			workdir="${StudyFolder}/${CASE}/hcp/"
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted" 
 			echo "Scheduler Name and Options: $Scheduler"
-			#echo "Scheduler Options: $SchedulerOptions"
 			echo "Check output logs here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
@@ -1883,6 +1868,10 @@ dwidenseparcellation() {
 		LogFolder="$DWIOutput"/log
 		Overwrite="$Overwrite"
 		
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="$CASE_$TimeStamp"
+			
 		if [ "$Cluster" == 1 ]; then
 			echo "Running locally on `hostname`"
 			echo "Check log file output here: $LogFolder"
@@ -1894,14 +1883,10 @@ dwidenseparcellation() {
 			--matrixversion="${MatrixVersion}" \
 			--parcellationfile="${ParcellationFile}" \
 			--outname="${OutName}" \
-			--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$Suffix".log
 		else
-			# -- Deprecated fsl_sub call
-			# set scheduler for fsl_sub command
-			#fslsub="$Scheduler"
-			#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" 
 			# - Clean prior command 
-			rm -f "$LogFolder"/DWIDenseParcellation_"$CASE".sh &> /dev/null	
+			rm -f "$LogFolder"/DWIDenseParcellation_"$Suffix".sh &> /dev/null	
 			# - Echo full command into a script
 			echo "DWIDenseParcellation.sh \
 			--path=${StudyFolder} \
@@ -1909,19 +1894,18 @@ dwidenseparcellation() {
 			--matrixversion=${MatrixVersion} \
 			--parcellationfile=${ParcellationFile} \
 			--outname=${OutName} \
-			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseParcellation_"$CASE".sh
+			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseParcellation_"$Suffix".sh
 			# - Make script executable 
-			chmod 770 "$LogFolder"/DWIDenseParcellation_"$CASE".sh
+			chmod 770 "$LogFolder"/DWIDenseParcellation_"$Suffix".sh
 			cd ${LogFolder}
 			# - Send to scheduler 
-			gmri schedule command="${LogFolder}/DWIDenseParcellation_${CASE}.sh" \
+			gmri schedule command="${LogFolder}/DWIDenseParcellation_${Suffix}.sh" \
 			settings="${Scheduler}" \
-			output="stdout:${LogFolder}/DWIDenseParcellation.output.log|stderr:${LogFolder}/DWIDenseParcellation.error.log" \
+			output="stdout:${LogFolder}/DWIDenseParcellation.${Suffix}.output.log|stderr:${LogFolder}/DWIDenseParcellation.${Suffix}.error.log" \
 			workdir="${LogFolder}"
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted" 
 			echo "Scheduler Name and Options: $Scheduler"
-			#echo "Scheduler Options: $SchedulerOptions"
 			echo "Check output logs here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
@@ -1950,8 +1934,6 @@ show_usage_dwidenseparcellation() {
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
@@ -1966,7 +1948,6 @@ show_usage_dwidenseparcellation() {
 				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
-				#echo "--runmethod='1'"
 				echo ""	
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -1978,8 +1959,6 @@ show_usage_dwidenseparcellation() {
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='lsf'"
 				echo ""
 }
@@ -2016,6 +1995,10 @@ dwiseedtractography() {
 		LogFolder="$DWIOutput"/log
 		Overwrite="$Overwrite"
 		
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="$CASE_$TimeStamp"
+			
 		if [ "$Cluster" == 1 ]; then
 			echo "Running locally on `hostname`"
 			echo "Check log file output here: $LogFolder"
@@ -2027,14 +2010,10 @@ dwiseedtractography() {
 			--matrixversion="${MatrixVersion}" \
 			--seedfile="${SeedFile}" \
 			--outname="${OutName}" \
-			--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseSeedTractography_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseSeedTractography_"$Suffix".log
 		else
-			# -- Deprecated fsl_sub call
-			# set scheduler for fsl_sub command
-			#fslsub="$Scheduler"
-			#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" 
 			# - Clean prior command 
-			rm -f "$LogFolder"/DWIDenseSeedTractography_"$CASE".sh &> /dev/null	
+			rm -f "$LogFolder"/DWIDenseSeedTractography_"$Suffix".sh &> /dev/null	
 			# - Echo full command into a script
 			echo "DWIDenseSeedTractography.sh \
 			--path=${StudyFolder} \
@@ -2042,19 +2021,18 @@ dwiseedtractography() {
 			--matrixversion=${MatrixVersion} \
 			--seedfile=${SeedFile} \
 			--outname=${OutName} \
-			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseSeedTractography_"$CASE".sh
+			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseSeedTractography_"$Suffix".sh
 			# - Make script executable 
-			chmod 770 "$LogFolder"/DWIDenseSeedTractography_"$CASE".sh
+			chmod 770 "$LogFolder"/DWIDenseSeedTractography_"$Suffix".sh
 			cd ${LogFolder}
 			# - Send to scheduler
-			gmri schedule command="${LogFolder}/DWIDenseSeedTractography_${CASE}.sh" \
+			gmri schedule command="${LogFolder}/DWIDenseSeedTractography_${Suffix}.sh" \
 			settings="${Scheduler}" \
-			output="stdout:${LogFolder}/DWIDenseSeedTractography.output.log|stderr:${LogFolder}/DWIDenseSeedTractography.error.log" \
+			output="stdout:${LogFolder}/DWIDenseSeedTractography.${Suffix}.output.log|stderr:${LogFolder}/DWIDenseSeedTractography.${Suffix}.error.log" \
 			workdir="${LogFolder}"
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted" 
 			echo "Scheduler Name and Options: $Scheduler"
-			#echo "Scheduler Options: $SchedulerOptions"
 			echo "Check output logs here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
@@ -2070,7 +2048,6 @@ show_usage_dwiseedtractography() {
 				echo ""
 				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
 				echo ""
-				echo "	Note: Submit this function to a GPU-enabled queue" 
 				echo ""
 				echo "OUTPUTS: "
 				echo "			<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>.dconn.nii"
@@ -2090,8 +2067,6 @@ show_usage_dwiseedtractography() {
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
@@ -2106,7 +2081,6 @@ show_usage_dwiseedtractography() {
 				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='Thalamus_Seed' \ "
-				#echo "--runmethod='1'"
 				echo ""	
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -2118,8 +2092,6 @@ show_usage_dwiseedtractography() {
 				echo "--overwrite='no' \ "
 				echo "--outname='Thalamus_Seed' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' \ "
-				#echo "--runmethod='2' \ "
 				echo ""
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -2141,14 +2113,15 @@ computeboldfc() {
 		########################################## OUTPUTS #########################################
 
 		# Outputs will be files located in the location specified in the outputpath
+
 		# -- Parse General Parameters
-		#QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 		StudyFolder="$StudyFolder"
 		CASE="$CASE"
 		InputFiles="$InputFiles"
 		OutPath="$OutPathFC"
 		OutName="$OutName"
 		ExtractData="$ExtractData"
+
 		# -- Parse additional parameters
 		Calculation="$Calculation"		# --calculation=	
 		RunType="$RunType"				# --runtype= 		
@@ -2168,20 +2141,31 @@ computeboldfc() {
 		Method="$Method"				# --method=
 		InputPath="$InputPath"			# --inputpath		
 		
-		# make sure individual runs default to the original input path location
+		# -- make sure individual runs default to the original input path location
 		if [ "$OutPath" == "" ]; then
 			OutPath="$StudyFolder/$CASE/$InputPath"
 		fi
+		
 		if [ "$RunType" == "individual" ]; then
 			OutPath="$StudyFolder/$CASE/$InputPath"
-  		fi
+			TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+			Suffix="${CASE}_${TimeStamp}"
+		fi
 		
+		if [ "$RunType" == "group" ]; then
+			TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+			Suffix="GroupRun_${TimeStamp}"
+  		fi
+  	
+			
 		mkdir "$OutPath" > /dev/null 2>&1
 		mkdir "$OutPath"/computeboldfc_log > /dev/null 2>&1
+		
 		LogFolder="$OutPath/computeboldfc_log"
 		Overwrite="$Overwrite"
-		
+
 		if [ ${Calculation} == "seed" ]; then
+			rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh &> /dev/null
 			if [ "$Cluster" == 1 ]; then
 				echo "Running locally on `hostname`"
 				echo "Check log file output here: $LogFolder"
@@ -2203,23 +2187,8 @@ computeboldfc() {
 				--method=${Method} \
 				--targetf=${OutPath} \
 				--mask=${MaskFrames} \
-				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".log
 			else			
-				# -- Deprecated fsl_sub call
-				# set scheduler for fsl_sub command
-				#fslsub="$Scheduler"
-				#${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
-				# - Clean prior command and setup suffix for group or individual run
-				if [ "$RunType" == "individual" ]; then
-					TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
-					Suffix="$CASE_$TimeStamp"
-					rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh &> /dev/null
-				fi
-				if [ "$RunType" == "group" ]; then
-					TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
-					Suffix="GroupRun_$TimeStamp"
-					rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh &> /dev/null
-  				fi	
 				# - Echo full command into a script
 				echo ""
 				geho "Full Command:"
@@ -2242,7 +2211,7 @@ computeboldfc() {
 				--method=${Method} \
 				--targetf=${OutPath} \
 				--mask=${MaskFrames} \
-				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"Suffix".sh
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh
 				# - Make script executable 
 				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh
 				# - Send to scheduler 
@@ -2254,14 +2223,14 @@ computeboldfc() {
 				echo "--------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name and Options: $Scheduler"
-				#echo "Scheduler Options: $SchedulerOptions"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
 			fi
 		fi
-		
-		if [ ${Calculation} == "gbc" ]; then
+
+		if [ ${Calculation} == "gbc" ]; then		
+			rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh &> /dev/null
 			if [ "$Cluster" == 1 ]; then
 				echo "Running locally on `hostname`"
 				echo "Check log file output here: $LogFolder"
@@ -2287,23 +2256,8 @@ computeboldfc() {
 				--verbose=${Verbose} \
 				--time=${ComputeTime} \
 				--vstep=${VoxelStep} \
-				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_`date +%Y-%m-%d-%H-%M-%S`.log
-			else
-				# -- Deprecated fsl_sub call
-				# set scheduler for fsl_sub command
-				#fslsub="$Scheduler"
-				#${FSLDIR}/bin/fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" \
-				# - Clean prior command and setup suffix for group or individual run
-				if [ "$RunType" == "individual" ]; then
-					TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
-					Suffix="$CASE_$TimeStamp"
-					rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh &> /dev/null
-				fi
-				if [ "$RunType" == "group" ]; then
-					TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
-					Suffix="GroupRun_$TimeStamp"
-					rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh &> /dev/null
-  				fi	 
+				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".log
+			else 
 				# - Echo full command into a script
 				echo ""
 				geho "Full Command:"
@@ -2342,12 +2296,12 @@ computeboldfc() {
 				echo "--------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name and Options: $Scheduler"
-				#echo "Scheduler Options: $SchedulerOptions"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
 				echo ""
 			fi
 		fi
+		
 }
 
 show_usage_computeboldfc() {
@@ -2363,11 +2317,9 @@ show_usage_computeboldfc() {
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "		--function=<function_name>					Name of function"
-				#echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [or you can specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "" 
 				echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
 				echo ""
@@ -2458,9 +2410,7 @@ show_usage_computeboldfc() {
 				echo "--targetf='' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "- Example for seed calculation for a group of three subjects with the absolute path for a target folder:"
 				echo ""
@@ -2481,9 +2431,7 @@ show_usage_computeboldfc() {
 				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "- Example for gbc calculation for each individual subject:"
 				echo ""
@@ -2535,14 +2483,8 @@ show_usage_computeboldfc() {
 				echo "--time='true' \ "
 				echo "--vstep='5000' \ "
 				echo "--covariance='false' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
-				#echo "-- Example with interactive terminal:"
-				#echo ""
-				#echo "Interactive terminal usage is not supported for this function."
-				#echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2579,6 +2521,10 @@ structuralparcellation() {
 		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/fsaverage_LR32k/structuralparcellation_log
 		Overwrite="$Overwrite"
 		
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="$OutName_$TimeStamp"
+		
 		if [ "$Cluster" == 1 ]; then
 			echo "Running locally on `hostname`"
 			echo "Check log file output here: $LogFolder"
@@ -2591,12 +2537,8 @@ structuralparcellation() {
 			--parcellationfile="${ParcellationFile}" \
 			--overwrite="${Overwrite}" \
 			--outname="${OutName}" \
-			--extractdata="${ExtractData}" >> "$LogFolder"/StructuralParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			--extractdata="${ExtractData}" >> "$LogFolder"/StructuralParcellation_"$Suffix".log
 		else
-			# -- Deprecated fsl_sub call
-			# set scheduler for fsl_sub command
-			#fslsub="$Scheduler"
-			#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" 
 			echo "${TOOLS}/MNAP/general/functions/StructuralParcellation.sh \
 			--path=${StudyFolder} \
 			--subject=${CASE} \
@@ -2604,19 +2546,18 @@ structuralparcellation() {
 			--parcellationfile=${ParcellationFile} \
 			--overwrite=${Overwrite} \
 			--outname=${OutName} \
-			--extractdata=${ExtractData}" > "$LogFolder"/StructuralParcellation_"$CASE".sh &> /dev/null
+			--extractdata=${ExtractData}" > "$LogFolder"/StructuralParcellation_"$Suffix".sh &> /dev/null
 			# - Make script executable 
-			chmod 770 "$LogFolder"/StructuralParcellation_"$CASE".sh &> /dev/null
+			chmod 770 "$LogFolder"/StructuralParcellation_"$Suffix".sh &> /dev/null
 			cd ${LogFolder}     		
 			# - Send to scheduler
-			gmri schedule command="${LogFolder}/StructuralParcellation_${CASE}.sh" \
+			gmri schedule command="${LogFolder}/StructuralParcellation_${Suffix}.sh" \
 			settings="${Scheduler}" \
-			output="stdout:${LogFolder}/StructuralParcellation.output.log|stderr:${LogFolder}/StructuralParcellation.error.log" \
+			output="stdout:${LogFolder}/StructuralParcellation.${Suffix}.output.log|stderr:${LogFolder}/StructuralParcellation.${Suffix}.error.log" \
 			workdir="${LogFolder}"
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted" 
 			echo "Scheduler Name and Options: $Scheduler"
-			#echo "Scheduler Options: $SchedulerOptions"
 			echo "Check output logs here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
@@ -2731,6 +2672,11 @@ boldparcellation() {
 		mkdir "$BOLDOutput"/boldparcellation_log > /dev/null 2>&1
 		LogFolder="$BOLDOutput"/boldparcellation_log
 		Overwrite="$Overwrite"
+		
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="$CASE_$TimeStamp"
+		
 		if [ "$Cluster" == 1 ]; then
 			echo "Running locally on `hostname`"
 			echo "Check log file output here: $LogFolder"
@@ -2750,13 +2696,8 @@ boldparcellation() {
 			--computepconn="${ComputePConn}" \
 			--extractdata="${ExtractData}" \
 			--useweights="${UseWeights}" \
-			--weightsfile="${WeightsFile}" >> "$LogFolder"/BOLDParcellation_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			--weightsfile="${WeightsFile}" >> "$LogFolder"/BOLDParcellation_"$Suffix".log
 		else
-			# -- Deprecated fsl_sub call
-			# set scheduler for fsl_sub command
-			#fslsub="$Scheduler"
-			#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" 
-			# - Echo full command into a script
 			echo "BOLDParcellation.sh \
 			--path=${StudyFolder} \
 			--subject=${CASE} \
@@ -2771,19 +2712,18 @@ boldparcellation() {
 			--computepconn=${ComputePConn} \
 			--extractdata=${ExtractData} \
 			--useweights=${UseWeights} \
-			--weightsfile=${WeightsFile}" > "$LogFolder"/BOLDParcellation_"$CASE".sh &> /dev/null
+			--weightsfile=${WeightsFile}" > "$LogFolder"/BOLDParcellation_"$Suffix".sh &> /dev/null
 			# - Make script executable 
-			chmod 770 "$LogFolder"/BOLDParcellation_"$CASE".sh &> /dev/null
+			chmod 770 "$LogFolder"/BOLDParcellation_"$Suffix".sh &> /dev/null
 			cd ${LogFolder}
 			# - Send to scheduler     		
-			gmri schedule command="${LogFolder}/BOLDParcellation_${CASE}.sh" \
+			gmri schedule command="${LogFolder}/BOLDParcellation_${Suffix}.sh" \
 			settings="${Scheduler}" \
-			output="stdout:${LogFolder}/BOLDParcellation.output.log|stderr:${LogFolder}/BOLDParcellation.error.log" \
+			output="stdout:${LogFolder}/BOLDParcellation.${Suffix}.output.log|stderr:${LogFolder}/BOLDParcellation.${Suffix}.error.log" \
 			workdir="${LogFolder}"
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted "
-			echo "Scheduler Name: $Scheduler "
-			echo "Scheduler Options: $SchedulerOptions "
+			echo "Scheduler Options: $Scheduler "
 			echo "Check output logs here: $LogFolder "
 			echo "--------------------------------------------------------------"
 			echo ""
@@ -2863,13 +2803,152 @@ show_usage_boldparcellation() {
  				echo ""
 }
 
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  ROIExtract - Executes the ROI Extraction Script (extract_ROIs.sh) via the AP wrapper
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+roiextract() {
+
+		# Requirements for this function
+		########################################## INPUTS ########################################## 
+		# BOLD data should in CIFTI or NIFTI format
+		# Mandatory input parameters:
+		# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+		# Subject	  # e.g. 100206
+		# InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
+		# SingleInputFile # Input for a specific file
+		# InputPath # e.g. /images/functional/
+		# OutPath # e.g. /images/functional/
+		# OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
+		# ROIFile  # e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+		########################################## OUTPUTS #########################################
+		
+		# Outputs will be files located in the location specified in the outputpath
+		# Parse General Parameters
+		InputFile="$InputFile"
+		OutPath="$OutPath"
+		OutName="$OutName"
+		ROIFile="$ROIInputFile"
+		StudyFolder="$StudyFolder"
+		CASE="$CASE"
+		ROIFileSubjectSpecific="$ROIFileSubjectSpecific"
+		SingleInputFile="$SingleInputFile"
+		Cluster="$RunMethod"
+		
+		if [ -z "$SingleInputFile" ]; then
+			OutPath="$StudyFolder/$CASE/$OutPath"
+		else
+			OutPath="$OutPath"
+			InputFile="$SingleInputFile"
+		fi
+		
+		if [ "$ROIFileSubjectSpecific" == "no" ]; then
+			ROIFile="$ROIFile"
+		else
+			ROIFile="$StudyFolder/$CASE/$ROIFile"
+		fi
+		
+		ExtractData="$ExtractData"
+		mkdir "$OutPath"/roiextraction_log > /dev/null 2>&1
+		LogFolder="$OutPath"/roiextraction_log
+		Overwrite="$Overwrite"
+		
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="$OutName_$TimeStamp"
+		
+		if [ "$Cluster" == 1 ]; then
+			echo "Running locally on `hostname`"
+			echo "Check log file output here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+			/$TOOLS/MNAP/general/functions/ROIExtract.sh \
+			--roifile="${ROIFile}" \
+			--inputfile="${InputFile}" \
+			--outdir="${OutPath}" \
+			--outname="${OutName}" >> "$LogFolder"/extract_ROIs_"$Suffix".log
+		else
+			echo "/$TOOLS/MNAP/general/functions/ROIExtract.sh \
+			--roifile='${ROIFile}' \
+			--inputfile='${InputFile}' \
+			--outdir='${OutPath}' \		
+			--outname='${OutName}'" > "$LogFolder"/extract_ROIs_"$Suffix".sh &> /dev/null
+			# - Make script executable 
+			chmod 770 "$LogFolder"/extract_ROIs_"$Suffix".sh &> /dev/null
+			cd ${LogFolder}
+			# - Send to scheduler     		
+			gmri schedule command="${LogFolder}/extract_ROIs_${Suffix}.sh" \
+			settings="${Scheduler}" \
+			output="stdout:${LogFolder}/extract_ROIs.${Suffix}.output.log|stderr:${LogFolder}/extract_ROIs.${Suffix}.error.log" \
+			workdir="${LogFolder}"
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted "
+			echo "Scheduler Options: $Scheduler "
+			echo "Check output logs here: $LogFolder "
+			echo "--------------------------------------------------------------"
+			echo ""
+		fi
+}
+
+show_usage_roiextract() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo " This function calls ROIExtract.sh and extracts data from an input file for every ROI in a given template file."
+				echo " The function needs a matching file type for the ROI input and the data input (i.e. both NIFTI or CIFTI)."
+				echo " It assumes that the template ROI file indicates each ROI in a single volume via unique scalar values."
+				echo ""
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "		--function=<function_name>				Name of function"
+				echo "		--path=<study_folder>					Path to study data folder"
+				echo "		--subject=<comma_separated_list_of_cases>		List of subjects to run"
+				echo "		--inputfile=<filepath>					Path to input file to be read that is of the same type as --roifile (i.e. CIFTI or NIFTI)"
+				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
+				echo "		--roifile=<file_for_parcellation>			Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
+				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
+				echo "		--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
+				echo "		--scheduler=<name_of_cluster_scheduler_and_options>	A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "									e.g. for SLURM the string would look like this: "
+				echo "									--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "-- OUTPUT FORMAT:"
+				echo ""
+				echo "<output_name>_ROI#.csv		-- Value for each voxel or gray-ordinate in the ROI."
+				echo "<output_name>_ROI#_mean.csv	-- Average across the entire ROI."
+				echo "Note: if the data have multiple volumes / frames (e.g. >1 subject or >1 time point)"
+				echo "		then each subsequent volume is written as a column in the csv files."
+				echo ""
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+				echo "		--singleinputfile=<run_extraction_on_single_file>	Use only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, --inputfile]"
+				echo "		--overwrite=<clean_prior_run>				Delete prior run"
+				echo "		--subjectroifile=<use_a_subject_specific_roi_file>	Specify if you want to use a subject-specific ROI file [Default is NO]. If YES then provide a relative input path for each subject (e.g. /path_to_file_inside_subject_folder/filename.nii.gz "
+				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler:"
+				echo ""
+				echo "AP --path='<path_to_study_folder>' \ "
+				echo "--function='roiextract' \ "
+				echo "--subjects='<comma_separated_list_of_cases>' \ "
+				echo "--inputfile='<path_to_inputfile>' \ "
+				echo "--roifile='<path_to_roifile>' \ "
+				echo "--overwrite='no' \ "
+				echo "--outname='<output_name>' \ "
+				echo "--outpath='<output_path>' \ "
+				echo "--scheduler='<name_of_scheduler_and_options>' \ "
+ 				echo ""
+}
+
 # ------------------------------------------------------------------------------------------------------
 #  fsldtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
 fsldtifit() {
-	mkdir "$StudyFolder"/../fcMRI/hcp.logs/ > /dev/null 2>&1
-	cd "$StudyFolder"/../fcMRI/hcp.logs/
+
+	mkdir ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dtifit_log > /dev/null 2>&1
+	LogFolder=${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dtifit_log
+		
 	# -- Check if overwrite flag was set
 	if [ "$Overwrite" == "yes" ]; then
 		echo ""
@@ -2883,34 +2962,42 @@ fsldtifit() {
 	else
 		actualfilesize="0"
 	fi
+	
 	if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
 		echo ""
 		echo "--- DTI Fit completed for $CASE ---"
 		echo ""
 	else
-	if [ "$Cluster" == 1 ]; then
-		dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
-	else
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="$CASE_$TimeStamp"	
+		rm "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
 		DtiFitCommand="dtifit --data=${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./data --out=${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./dti --mask=${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./nodif_brain_mask --bvecs=${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvecs --bvals=${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvals"
-		
-		# -- Deprecated fsl_sub call
-		# fslsub="$Scheduler"
-		# fsl_sub."$fslsub" -Q "$QUEUE" dtifit --data="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./data --out="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./dti --mask="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./nodif_brain_mask --bvecs="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvecs --bvals="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion/./bvals
-		
-		# -- Send to scheduler 
-		cd ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/
-		gmri schedule command="${DtiFitCommand}" \
-		settings="${Scheduler}" \
-		output="stdout:${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/fsldtifit.output.log|stderr:${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/fsldtifit.error.log" \
-		workdir="${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
-		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted" 
-		echo "Scheduler Name and Options: $Scheduler"
-		#echo "Scheduler Options: $SchedulerOptions"
-		echo "Check output logs here: $LogFolder"
-		echo "--------------------------------------------------------------"
+		geho "Running the following command"
+		geho "${DtiFitCommand}"
 		echo ""
-	fi
+		echo "${DtiFitCommand}" >> "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
+		# - Make script executable 
+		chmod 770 "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
+		
+		if [ "$Cluster" == 1 ]; then
+			eval ${DtiFitCommand} >> "$LogFolder"/fsldtifit_${Suffix}.log
+		fi
+		if [ "$Cluster" == 2 ]; then
+			# -- Send to scheduler 
+			cd ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/
+			gmri schedule command="${DtiFitCommand}" \
+			settings="${Scheduler}" \
+			output="stdout:${LogFolder}/fsldtifit.${Suffix}.output.log|stderr:${LogFolder}/fsldtifit.${Suffix}.error.log" \
+			workdir="${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
+			
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted" 
+			echo "Scheduler Name and Options: $Scheduler"
+			echo "Check output logs here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+		fi
 	fi
 }
 
@@ -2931,8 +3018,6 @@ show_usage_fsldtifit() {
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
@@ -2941,8 +3026,6 @@ show_usage_fsldtifit() {
 				echo "--subjects='<case_id>' \ "
 				echo "--function='fsldtifit' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
-				#echo "--runmethod='2' \ "
 				echo "--overwrite='yes'"
 				echo ""
 }
@@ -3137,7 +3220,6 @@ autoptx() {
 		echo "--------------------------------------------------------------"
 		echo "Data successfully submitted" 
 		echo "Scheduler Name and Options: $Scheduler"
-		#echo "Scheduler Options: $SchedulerOptions"
 		echo "Check output logs here: $LogFolder"
 		echo "--------------------------------------------------------------"
 		echo ""
@@ -3171,8 +3253,6 @@ pretractographydense() {
 			"$ScriptsFolder"/PreTractography.sh "$RunFolder" "$CASE" 0 >> "$LogFolder"/PretractographyDense_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
 		else
 			echo "Job ID:"
-			#fslsub="$Scheduler" # set scheduler for fsl_sub command
-			#fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$ScriptsFolder"/PreTractography.sh "$RunFolder" "$CASE" 0
 			PreTracCommand="${ScriptsFolder}/PreTractography.sh ${RunFolder} ${CASE} 0 "
 			# - Send to scheduler     		
 			cd ${LogFolder}
@@ -3184,7 +3264,6 @@ pretractographydense() {
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted" 
 			echo "Scheduler Name and Options: $Scheduler"
-			#echo "Scheduler Options: $SchedulerOptions"
 			echo "Check output logs here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
@@ -3230,18 +3309,26 @@ show_usage_pretractographydense() {
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
 probtrackxgpudense() {
-		# -- Set parameters
+		
+		# -- Set general parameters
 		ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/Tractography_gpu_scripts
 		ResultsFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 		RunFolder="$StudyFolder"/"$CASE"/hcp/
 		NsamplesMatrixOne="$NsamplesMatrixOne"
 		NsamplesMatrixThree="$NsamplesMatrixThree"
+		
+		# -- Establish scheduler type
+		if [[ `echo $Scheduler | grep "SLURM"` = *"SLURM"* ]]; then SchedulerType="SLURM"; echo "Scheduler type set to $SchedulerType"; fi
+		if [[ `echo $Scheduler | grep "SLURM"` = *"LSF"* ]]; then SchedulerType="LSF"; echo "Scheduler type set to $SchedulerType"; fi
+		if [[ `echo $Scheduler | grep "SLURM"` = *"PBS"* ]]; then SchedulerType="PBS"; echo "Scheduler type set to $SchedulerType"; fi
+		
 		# -- Generate the results and log folders
 		mkdir "$ResultsFolder"  &> /dev/null
 		mkdir "$LogFolder"  &> /dev/null
+		
 		# -- Set the CUDA queue 
-		FSLGECUDAQ="$QUEUE"
-		export FSLGECUDAQ="$QUEUE"
+		#FSLGECUDAQ="$QUEUE"
+		#export FSLGECUDAQ="$QUEUE"
 		
 		# -------------------------------------------------
 		# -- Do work for Matrix 1 if --omatrix1 flag set 
@@ -3282,12 +3369,10 @@ probtrackxgpudense() {
 				# -- Set nsamples variable 
 				if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
 				# -- submit script
-				# set scheduler for fsl_sub command
-				fslsub="$Scheduler"
 				echo ""
 				echo "Job ID:"
 				echo ""
-				"$ScriptsFolder"/RunMatrix1.sh "$RunFolder" "$CASE" "$NsamplesMatrixOne" "$Scheduler"
+				"$ScriptsFolder"/RunMatrix1.sh "$RunFolder" "$CASE" "$NsamplesMatrixOne" "$SchedulerType"
 				# -- record output calls
 				echo ""
 				echo "Submitted Matrix 1 job for $CASE"
@@ -3296,7 +3381,6 @@ probtrackxgpudense() {
 				echo "--------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name and Options: $Scheduler"
-				#echo "Scheduler Options: $SchedulerOptions"
 				echo "Number of samples for Matrix1: $NsamplesMatrixOne"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
@@ -3343,12 +3427,10 @@ probtrackxgpudense() {
 				# -- Set nsamples variable 
 				if [ "$NsamplesMatrixThree" == "" ];then NsamplesMatrixThree=3000; fi
 				# -- submit script
-				# set scheduler for fsl_sub command
-				fslsub="$Scheduler"
 				echo ""
 				echo "Job ID:"
 				echo ""
-				"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE" "$NsamplesMatrixThree" "$Scheduler"
+				"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE" "$NsamplesMatrixThree" "$SchedulerType"
 				# -- record output calls
 				echo ""
 				echo "Submitted Matrix 3 job for $CASE"
@@ -3357,7 +3439,6 @@ probtrackxgpudense() {
 				echo "--------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name and Options: $Scheduler"
-				#echo "Scheduler Options: $SchedulerOptions"
 				echo "Number of samples for Matrix3: $NsamplesMatrixThree"
 				echo "Check output logs here: $LogFolder"
 				echo "--------------------------------------------------------------"
@@ -3389,10 +3470,7 @@ show_usage_probtrackxgpudense() {
 				echo "		--function=<function_name>					Name of function"
 				echo "		--path=<study_folder>						Path to study data folder"
 				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
+				echo "		--scheduler=<name_of_cluster_scheduler>			A string for the cluster scheduler (e.g. LSF, PBS or SLURM) without any options (they are hard coded in the sub-script calls)"
 				echo "		--overwrite=<clean_prior_run>					Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
 				echo "		--omatrix1=<matrix1_model>					Specify if you wish to run matrix 1 model [yes or omit flag]"
 				echo "		--omatrix3=<matrix3_model>					Specify if you wish to run matrix 3 model [yes or omit flag]"
@@ -3415,8 +3493,7 @@ show_usage_probtrackxgpudense() {
 				echo "AP --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
 				echo "--subjects='ta9776' \ "
 				echo "--function='probtrackxgpudense' \ "
-				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "				
+				echo "--scheduler='<name_of_scheduler>' \ "
 				echo "--omatrix1='yes' \ " 
 				echo "--nsamplesmatrix1='10000' \ "
 				echo "--overwrite='no'" 
@@ -4184,6 +4261,10 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` 																	# --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
+	# -- roiextract input flags
+	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@` 																			# --roifile=<filepath>		Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
+	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@` 																# --subjectroifile=<use_a_subject_specific_roi_file>				Specify if you want to use a subject-specific ROI file"
+	
 	# -- computeboldfc input flags
 	#InputFiles=`opts_GetOpt "${setflag}inputfiles" "$@" | sed 's/,/ /g;s/|/ /g'`; InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'` 	# --inputfiles=
 	InputFiles=`opts_GetOpt "${setflag}inputfiles" $@` 																						# --inputfiles=
@@ -5209,16 +5290,19 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
   		fi
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
+		
 		if [ ${RunType} == "individual" ]; then
 			for CASE in $CASES; do
 				"$FunctionToRun" "$CASE"
 			done
   		fi
+  		
   		if [ ${RunType} == "group" ]; then
   			CASE=`echo "$CASES" | sed 's/ /,/g'`
   			echo $CASE
 			"$FunctionToRun" "$CASE"
   		fi
+  		
   		if [ ${RunType} == "list" ]; then
 			"$FunctionToRun"
   		fi
@@ -5318,6 +5402,54 @@ if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
 		do
 			"$FunctionToRun" "$CASE"
 		done
+fi
+
+# ------------------------------------------------------------------------------
+#  ROIExtract function loop (roiextract)
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "roiextract" ]; then	
+	
+		# -- Check all the user-defined parameters:
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
+		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+		if [ -z "$ROIInputFile" ]; then reho "Error: File to use for ROI extraction missing"; exit 1; fi
+		
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+		fi
+		
+		# -- Parse optional parameters if not specified 
+		if [ -z "$ROIFileSubjectSpecific" ]; then ROIFileSubjectSpecific="no"; fi
+		if [ -z "$Overwrite" ]; then Overwrite="no"; fi
+		if [ -z "$SingleInputFile" ]; then SingleInputFile=""; 
+			if [ -z "$InputFile" ]; then reho "Error: Input file path value missing"; exit 1; fi
+			if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+			if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+		fi
+		
+		echo ""
+		echo "Running ROIExtract function with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Study Folder: ${StudyFolder}"
+		echo "Subjects: ${CASES}"
+		echo "Input File: ${InputFile}"
+		echo "Output File Name: ${OutName}"
+		echo "Single Input File: ${SingleInputFile}"
+		echo "ROI File: ${ROIInputFile}"
+		echo "Subject specific ROI file set: ${ROIFileSubjectSpecific}"		
+		echo "Overwrite prior run: ${Overwrite}"
+		echo "--------------------------------------------------------------"
+		echo "Job ID:"
+		
+		if [ -z "$SingleInputFile" ]; then SingleInputFile=""; 
+			for CASE in $CASES; do "$FunctionToRun" "$CASE"; done
+		else
+			"$FunctionToRun"
+		fi
 fi
 
 # ------------------------------------------------------------------------------

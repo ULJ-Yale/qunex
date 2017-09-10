@@ -1,5 +1,5 @@
 #### Database User Functions ######################################################################################################
-# --> create function 'pasreDB' to select subset of database columns by event, form, and field (optional)
+# --> create function 'parseDB' to select subset of database columns by event, form, and field (optional)
 ###################################################################################################################################
 
 args = commandArgs(trailingOnly=TRUE)

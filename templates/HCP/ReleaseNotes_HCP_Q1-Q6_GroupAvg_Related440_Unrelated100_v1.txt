@@ -1,0 +1,34 @@
+Release notes for HCP_Q1-Q6_GroupAvg_Related440_Unrelated100_v1.zip 
+5 June 2014
+This open access dataset has been made freely available to the research community by the WU-Minn HCP consortium (http://www.humanconnectome.org/).  This document contains a brief overview plus links to additional information.
+
+1) Open Access Data Use Terms:  Before using this dataset you must agree to the HCP Open Access Data Use Terms at http://humanconnectome.org/data/data-use-terms/DataUseTerms-HCP-Open-Access-26Apr2013.pdf 
+
+2) What's in the dataset:   This dataset includes group-average data acquired from 440 subjects, many of whom are related (the 'related' 440, or R440) and 100 unrelated (U100) subjects collected as part of HCP Q1-Q6 and released as part of the 500 Subjects Release.  It includes R440 structural scans (T1w, T2w), R440 group-average cortical surfaces, myelin maps for R440 and U100, and R440 and U100 group-average Task-fMRI results for 7 tasks and many task contrasts.  This dataset includes files in CIFTI-2 file format that are compatible with Workbench Beta v0.85 (see below).  
+
+3) How to view the data:  The dataset is customized for viewing in Connectome Workbench Beta 0.85 (http://www.humanconnectome.org/connectome/get-connectome-workbench.html), but most of the files are in standard NIFTI and GIFTI format and can also be viewed using other brain-mapping software platforms.  Some files, including the Task-fMRI files, are in a relatively new CIFTI-2 file format (http://www.nitrc.org/projects/cifti/) that can incorporate surface vertices (both hemispheres) plus subcortical gray-matter voxels into a single file format. Other CIFTI-2 files include maps of data from both the left and right cerebral  hemispheres in a single file (but without any subcortical voxels).  For example, myelin maps for both hemispheres are contained in a single *.dscalar.nii file type; cortical parcellations for both hemispheres are contained in a single *.dlabel.nii file.  The scene file uses these CIFTI files, but the downloaded datasets also include conventional hemisphere-specific GIFTI files (*.shape.gii; *.label.gii).  
+
+4) An associated tutorial:  Guidance on how to view the data is available in the "Connectome Workbench Tutorial for HCP Q1-Q6 Group-Average Related 440 and Unrelated 100 Data v1" (available as a PDF in this zip archive and at http://www.humanconnectome.org/documentation/tutorials/).  This includes a set of 5 'scenes' that enable quick visualization of cortical myelin maps, exemplar tfMRI task contrasts, and functional connectivity data through remote connection to ConnectomeDB.
+
+5) More about the Task-fMRI data:  For each group, there is a tfMRI data file for all tasks in CIFTI format:
+HCP_Q1-Q6_R440_tfMRI_ALLTASKS_level3_zstat_hp200_s2.dscalar.nii
+HCP_Q1-Q6_U100_tfMRI_ALLTASKS_level3_zstat_hp200_s2.dscalar.nii
+
+For both tfMRI files, spatial smoothing (2mm FWHM) was constrained to 'grayordinates' (cortical surface vertices and subcortical voxels).  Additionally, cross subject averaging was done in the grayordinates space, which is more accurately aligned than standard volume space.  By avoiding spatial blurring across anatomical compartments (gray matter vs white matter and CSF) and across sulcal banks, this provides the highest spatial fidelity attainable using these data.
+ 
+6) Access to R468 group-average functional connectivity maps in Connectome Workbench.  An analysis of complete resting-state fMRI (rfMRI) data from R468 'related' subjects has yielded two versions of a group-average functional connectivity matrix ('dense functional connectome') for this group.  These dense connectomes are available by interactive remote access to the ConnectomeDB database see "Connectome Workbench Tutorial for HCP Q1-Q6 Group-Average Related 440 and Unrelated 100 Data v1" (available as a PDF in this zip archive and at http://www.humanconnectome.org/documentation/tutorials/).
+
+HCP_Q1-Q6_R468_rfMRI_groupPCA_d4500.dconn.nii is a full correlation matrix
+HCP_Q1-Q6_R468_rfMRI_groupPCA_d4500_MGTR.dconn.nii includes regression of the mean gray-matter time course. 
+
+Interactive access to both kinds of datasets is provided because each may be useful for different purposes.  
+
+7) Download of group-average functional connectivity matrix files. The group-average "dense" functional connectome files for the R468 group is also available for download as a separate package (due to their large size, 33GB per file) on the ConnectomeDB splash page (https://db.humanconnectome.org). 
+
+8) Download of group-PCA eigenmaps available to generate dense connectomes locally using wb_command (command line software that is part of the Workbench package). Group-PCA eigenmaps (3 GB unzipped for both files combined: HCP_rfMRI_MIGP-GroupPCA_Eigenmaps_468related.zip) can also be downloaded from the ConnectomeDB splash page (https://db.humanconnectome.org).  To create the dense connectomes locally, simply run wb_command -cifti–correlation <PCA Series> <dense connectome> -fisher-z.  If you have less than ~35GB of RAM, use the -mem-limit option to limit the RAM usage.   
+
+9) How to find out more about data acquisition and analysis: Details on the data acquisition and analysis methods for this data are available in the HCP 500 Subjects Data Release Reference Manual (http://www.humanconnectome.org/documentation/S500) and in two articles in a special issue of NeuroImage (Barch et al., 2013 and Glasser et al., 2013, available at http://www.sciencedirect.com/science/article/pii/S1053811913005272 and http://www.sciencedirect.com/science/article/pii/S1053811913005053, respectively). 
+ 
+10) Acknowledge the funding source. If you make use of these data in a publication or public presentation, you should include the following acknowledgment: "Data were provided [in part] by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University."
+
+11) Cite relevant publications.  See http://www.humanconnectome.org/documentation/citations.html for additional information on how to cite HCP publications if you have used data provided by the WU-Minn HCP consortium.
