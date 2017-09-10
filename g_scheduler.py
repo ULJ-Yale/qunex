@@ -216,7 +216,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         raise ValueError("       Could not parse the settings string: \"%s\".\n       Please check the documentation for correct scheduler settings string format (gmri ?schedule)." % settings)
 
     if scheduler not in ['PBS', 'LSF', 'SLURM']:
-        raise ValueError("       First value in the settings file has to specify one of PBS, LSF, SLURM!")
+        raise ValueError("       First value in the settings string has to specify one of PBS, LSF, SLURM!\n       The settings string submitted was: '%s'.\n       Please check the documentation for correct scheduler settings string format (gmri ?schedule)." % (settings))
 
 
     # --- compile command to pass
