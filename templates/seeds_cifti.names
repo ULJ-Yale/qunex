@@ -1,4 +1,4 @@
-${TOOLS}/MNAP/general/templates/structures.dtseries.nii
+/gpfs/project/fas/n3/software/MNAP/general/templates/structures.dtseries.nii
 LR-Accumbens-CIFTI|3,4|
 LR-Amy-CIFTI|5,6|
 LR-Caudate-CIFTI|8,9|
