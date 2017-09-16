@@ -15,7 +15,7 @@ Changelog
 """
 
 
-
+import subprocess
 
 
 # ==============================================================================
@@ -67,7 +67,7 @@ functionList.sort()
 def help(command):
     '''Prints help for the command using Matlab.'''
 
-    print "\nDisplaying help for Matlab function %s\n--------------------------------------------------------------------------------\n"
+    print "\nDisplaying help for Matlab function %s\n--------------------------------------------------------------------------------\n" % (command)
     com = 'matlab -nojvm -nodisplay -nosplash -r "help %s; exit"' % (command)
     subprocess.call(com, shell=True)
     print "\n--------------------------------------------------------------------------------\n"
@@ -89,7 +89,7 @@ def run(command, args):
             args[arg] = ''
 
         if form == 'string':
-            if args[arg][0] in ['[', '{']:
+            if len(args[arg]) > 1 and args[arg][0] in ['[', '{']:
                 arglist.append("%s" % (args[arg]))
             else:
                 arglist.append("'%s'" % (args[arg]))
@@ -112,7 +112,7 @@ def run(command, args):
     # -- compose command string
 
     mcom = "%s(%s)" % (command, ", ".join(arglist))
-    com = 'matlab -nojvm -nodisplay -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcomm)
+    com = 'matlab -nojvm -nodisplay -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcom)
 
 
     # --- parse output options

@@ -176,7 +176,6 @@ processed with default values. Take care to embed vectors in square brackets
 (e.g. "[1 8 6 12]") and cell arrays in curly braces (e.g. "{'DLPFC', 'ACC',
 'FEF'}"). In addition, 'saveOutput' argument can be specified to redirect Matlab
 output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
-
 '''
 
 for mcom in gm.functionList:
@@ -303,7 +302,7 @@ def printHelp(com):
 
     # --- print help for matlab functions
     elif com in gm.functions:
-        gm.help(command)
+        gm.help(com)
 
     # --- print general command list
     else:
@@ -327,6 +326,7 @@ def main(args=None):
         except:
             print "ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:])
             print help
+            raise
         sys.exit(0)
 
     try:
