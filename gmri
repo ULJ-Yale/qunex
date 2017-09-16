@@ -3,6 +3,7 @@
 
 import niutilities as niu
 import niutilities.g_process as gp
+import niutilities.g_matlab as gm
 import sys
 
 help = '''
@@ -154,7 +155,7 @@ hcp_DTIFit       [preprocessing options] [preprocessing options] ...
 hcp_Bedpostx     [preprocessing options] [preprocessing options] ...
 
 
-functional connectivity preprocessing commands
+Functional connectivity preprocessing commands
 ----------------------------------------------
 mapHCPData              [preprocessing options] [preprocessing options] ...
 createBOLDBrainMasks    [preprocessing options] [preprocessing options] ...
@@ -164,7 +165,22 @@ extractNuisanceSignal   [preprocessing options] [preprocessing options] ...
 preprocessBold          [preprocessing options] [preprocessing options] ...
 preprocessConc          [preprocessing options] [preprocessing options] ...
 
+
+Matlab functions
+================
+A number of Matlab functions provided as part of MNAP/matlab package can be run.
+A list of functions available is provided below. For more information on each
+function run `gmri ?<function name>`. Arguments can be specified in any order.
+Arguments that are not provided will be passed as empty strings / vectors to be
+processed with default values. Take care to embed vectors in square brackets
+(e.g. "[1 8 6 12]") and cell arrays in curly braces (e.g. "{'DLPFC', 'ACC',
+'FEF'}"). In addition, 'saveOutput' argument can be specified to redirect Matlab
+output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
+
 '''
+
+for mcom in gm.functionList:
+    comlist += "\n" + mcom
 
 commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,          'args': ('folder', )},
             'splitDicom'           : {'com': niu.g_dicom.splitDicom,         'args': ('folder', )},
@@ -205,6 +221,8 @@ def runCommand(command, args):
         commands[command]['com'](**args)
     elif command in gp.pactions or command in gp.sactions:
         gp.run(command, args)
+    elif command in gm.functions:
+        gm.run(command, args)
     else:
         print "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands." % (command)
         # print help
@@ -282,6 +300,10 @@ def printHelp(com):
     # --- print help for processing serial actions
     elif com in gp.sactions:
         print "\ngmri", gp.sactions[com].__doc__.strip(), "\n"
+
+    # --- print help for matlab functions
+    elif com in gm.functions:
+        gm.help(command)
 
     # --- print general command list
     else:
