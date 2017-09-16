@@ -167,7 +167,7 @@ def runExternalParallel(calls, cores=None, prepend=''):
         if len(running) < cores:
             if calls:
                 call = calls.pop(0)
-                sout = open(call['sout'], 'w', 1)
+                sout = open(call['sout'], 'a', 1)
                 print >> sout, "Starting log for %s at %s\nThe command being run: \n>> %s\n" % (call['name'], str(datetime.datetime.now()).split('.')[0], " ".join(call['args']))
                 running.append({'call': call, 'sout': sout, 'p': subprocess.Popen(call['args'], stdout=sout, stderr=sout, bufsize=0)})
                 print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.datetime.now()).split('.')[0], call['sout'])

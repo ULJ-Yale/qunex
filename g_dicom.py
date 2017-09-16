@@ -787,7 +787,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, c
         niinum = c
         try:
             if d.Manufacturer == 'Philips Medical Systems':
-                niinum = (d.SeriesNumber - 1) / 100
+                # niinum = (d.SeriesNumber - 1) / 100
+                niinum = d.SeriesNumber
         except:
             pass
 
@@ -1420,9 +1421,12 @@ def processInbox(folder=None, check=None, pattern=None, cores=1):
 
         # --- move package to archive
 
-        print "... moving %s to archive" % (os.path.basename(p))
-        shutil.move(p, afolder)
-        print "     -> done!"
+        if os.path.exists(os.path.join(afolder, os.path.basename(p))):
+            print "... WARNING: %s already exists in archive and it will not be moved!" % (os.path.basename(p))
+        else:
+            print "... moving %s to archive" % (os.path.basename(p))
+            shutil.move(p, afolder)
+            print "     -> done!"
 
         # --- run sort dicom
 
