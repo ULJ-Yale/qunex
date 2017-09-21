@@ -13,3 +13,6 @@
 [submodule "hcpmodified"]
 	path = hcpmodified
 	url = git@bitbucket.org:mnap/hcpmodified.git
+[submodule "connector"]
+	path = connector
+	url = git@bitbucket.org:mnap/connector.git
