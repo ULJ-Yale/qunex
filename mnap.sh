@@ -2865,7 +2865,7 @@ roiextract() {
 			/$TOOLS/MNAP/general/functions/ROIExtract.sh \
 			--roifile="${ROIFile}" \
 			--inputfile="${InputFile}" \
-			--outdir="${OutPath}" \
+			--outpath="${OutPath}" \
 			--outname="${OutName}" >> "$LogFolder"/extract_ROIs_"$Suffix".log
 		else
 			echo "/$TOOLS/MNAP/general/functions/ROIExtract.sh \
@@ -3508,7 +3508,8 @@ awshcpsync() {
 
 mkdir "$StudyFolder"/aws.logs &> /dev/null
 cd "$StudyFolder"/aws.logs
-if [ "$RunMethod" == "1" ]; then
+if [ "$RunMethod" == "2" ]; then
+	echo "Dry run"
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
@@ -3520,7 +3521,8 @@ if [ "$RunMethod" == "1" ]; then
 		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	fi
 fi
-if [ "$RunMethod" == "2" ]; then
+if [ "$RunMethod" == "1" ]; then
+	echo "Syncing"
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
@@ -3529,6 +3531,7 @@ if [ "$RunMethod" == "2" ]; then
 		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
+		echo "$Awsuri"/"$CASE"/"$Modality"
 		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	fi
 fi

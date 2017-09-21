@@ -60,7 +60,7 @@ usage() {
 	echo ""
 	echo "    --roifile=<filepath>		Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
 	echo "    --inputfile=<filepath>	Path to input file to be read that is of the same type as --roifile (i.e. CIFTI or NIFTI)"
-	echo "    --outdir=<path>			New or existing directory to save outputs in"
+	echo "    --outpath=<path>			New or existing directory to save outputs in"
 	echo "    --outname=<basename>		Output file base-name (to be appended with 'ROIn')"
 	echo ""
 	echo "-- OUTPUT FORMAT:"
@@ -93,7 +93,7 @@ get_options() {
     # initialize global output variables
     unset roifile
 	unset inputfile
-	unset outdir
+	unset outpath
 	unset outname
 	runcmd=""
 
@@ -115,8 +115,8 @@ get_options() {
             --inputfile=*)
                 inputfile=${argument/*=/""}; index=$(( index + 1 ))
                 ;;
-			--outdir=*)
-				outdir=${argument/*=/""};    index=$(( index + 1 ))
+			--outpath=*)
+				outpath=${argument/*=/""};    index=$(( index + 1 ))
                 ;;
 			--outname=*)
 				outname=${argument/*=/""};   index=$(( index + 1 ))
@@ -137,7 +137,7 @@ get_options() {
 		usage; echo ""; reho "ERROR: --inputfile=<path to file to be extracted> not specified>"; echo ""
         exit 1
 	fi
-	if [ -z ${outdir} ]; then
+	if [ -z ${outpath} ]; then
 		usage; echo ""; reho "ERROR: --outdir=<path to output directory> not specified>"; echo ""
         exit 1
 	fi
@@ -153,7 +153,7 @@ get_options() {
     echo ""
     echo "   roifile: ${roifile}"
     echo "   inputfile: ${inputfile}"
-    echo "   outdir: ${outdir}"
+    echo "   outpath: ${outpath}"
     echo "   outname: ${outname}"
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
@@ -177,7 +177,7 @@ get_options $@
 #matlab -nodisplay -nojvm -r "try; addpath(genpath('$TOOLS/MNAP/matlab')); mri_ROIExtract('$roifile','$inputfile','$outdir','$outname'); catch; end; quit"
 
 
-matlab -nodisplay -nojvm -r "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outdir','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
+matlab -nodisplay -nojvm -r "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
 
 
 }

@@ -1,11 +1,11 @@
-# README File for MNAP General Analysis Pipeline
+# README File for MNAP Connector Pipeline
 
 
 Background
 ==========
 ---
 
-This is a general purpose Analysis Pipeline (AP) as part of the MNAP package that handles 
+This is is the code base for the connector pipeline as part of the MNAP package that handles 
 flexible directory inputs and subject lists. The pipeline supports data organization, QC, 
 preprocessing, various analyses etc. The pipeline is flexible and can be updated by adding 
 functions developed around other tools. 
@@ -42,16 +42,16 @@ Usage and command documentation
 
 List of functions can be obtained by running the following command from the terminal: 
 
-* `ap -help` prints the general help call
+* `mnap -help` prints the general help call
 
-The utilities are used through the `ap` command. The general use form is:
+The utilities are used through the `mnap` command. The general use form is:
 
-`ap --function="<command>" --option="<value>" --option="<value>" ...`
+`mnap --function="<command>" --option="<value>" --option="<value>" ...`
 
 The list of commands and their specific documentation is provided through `ap`
 command itself using the folowing options:
 
-* `ap ?<command>` prints specific help for the specified command.
+* `mnap ?<command>` prints specific help for the specified command.
 
 Perusing documentation, please note the following conventions used:
 
@@ -114,6 +114,7 @@ Change Log
 * 0.5.3: Initial pre-alpha release. Updated dcm2nii usage
 * 0.5.4: Initial pre-alpha release. Added XNATCloudUpload.sh script to enable automated XNAT ingestion and integration with multi data format support
 * 0.5.5: Initial pre-alpha release. Upgraded high-performance cluster scheduler functionality
+* 0.5.6: Initial pre-alpha release. Edited naming grammar of connector pipeline to 'mnap' 
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
