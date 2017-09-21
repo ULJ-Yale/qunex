@@ -255,6 +255,9 @@ def printHelp(com):
             if len(l):
                 print l[0]
                 print l[1]
+        # -> matlab wrapped commands
+        for l in gm.functions.keys():
+            print l
 
     # --- print list of processing options and flags
     elif com in ['o']:
