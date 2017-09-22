@@ -21,11 +21,17 @@ Installation
 ### Step 1. Clone all MNAP repos and initiate submodules.
 
 * Clone and initiate submodules
+
 `git clone git@bitbucket.org:mnap/mnaptools.git` 
+
 `git submodule init`
+
 * Pull and update all submodules
+
 `git pull --recurse-submodules && git submodule update --recursive`
+
 * Update submodules to latest commit on origin
+
 `git submodule foreach git pull origin master`
 
 ### Step 2. Install all necessary dependencies for full functionality (see below). 
