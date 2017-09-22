@@ -230,8 +230,6 @@ arglist = [['# ---- Basic settings'],
            ['framework_path',      '',                                            str,    "the path to framework libraries on mac system"],
            ['wb_command_path',     '',                                            str,    "the path to wb_command"],
            ['print_command',       'no',                                          str,    "whether to print the command run within the preprocessing steps"],
-           ['log',                 'remove',                                      str,    "what to do with the job log file, 'remove' or 'keep'"],
-
 
            ['# ---- scheduler options'],
            ['scheduler',             'local',                                     str,    "the scheduler to use (local|PBS|LSF|SLURM) and any additional settings"],
