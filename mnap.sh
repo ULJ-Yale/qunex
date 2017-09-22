@@ -25,7 +25,7 @@
 #
 # ## License
 #
-# See the [LICENSE](https://bitbucket.org/mnap/general/LICENSE.md) file
+# See the [LICENSE](https://bitbucket.org/mnap/connector/LICENSE.md) file
 #
 # ## Description:
 #
@@ -538,17 +538,17 @@ show_usage_createlists() {
 				echo ""
 				echo "		* Default:"
 				echo ""
-				echo "`ls ${TOOLS}/MNAP/general/functions/subjectparamlist_header_multiband.txt`"
+				echo "`ls ${TOOLS}/MNAP/connector/functions/subjectparamlist_header_multiband.txt`"
 				echo ""
 				echo "		* Supported: "
 				echo ""
-				echo "`ls ${TOOLS}/MNAP/general/functions/subjectparamlist_header*` "
+				echo "`ls ${TOOLS}/MNAP/connector/functions/subjectparamlist_header*` "
 				echo ""
 				echo "		* Note: If --parameterfile set to <no> then function will not add a header"
 				echo ""								
 				echo "      --listfunction=<function_used_to_create_list>   	Point to external function to use"
 				echo "      --bolddata=<comma_separated_list_of_bolds>   	List of BOLD files to append to analysis or snr lists"
-				echo "      --parcellationfile=<file_for_parcellation>	Specify the absolute file path for parcellation in $MNAPPATH/general/templates/Parcellations/ "
+				echo "      --parcellationfile=<file_for_parcellation>	Specify the absolute file path for parcellation in $MNAPPATH/connector/templates/Parcellations/ "
 				echo "      --filetype=<file_extension>			Extension for BOLDs in the analysis (e.g. _Atlas). Default empty []"
 				echo "      --boldsuffix=<comma_separated_bold_suffix>	List of BOLDs to iterate over in the analysis list"
 #    			echo "		--subjecthcpfile=<yes/no>		Use individual subject_hcp.txt file for for appending the parameter list"
@@ -1850,7 +1850,7 @@ dwidenseparcellation() {
 		# StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
 		# Subject	  # e.g. 100307
 		# MatrixVersion # e.g. 1 or 3
-		# ParcellationFile  # e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+		# ParcellationFile  # e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
 		########################################## OUTPUTS #########################################
 
 		# Outputs will be *pconn.nii files located here:
@@ -1945,7 +1945,7 @@ show_usage_dwidenseparcellation() {
 				echo "--function='dwidenseparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
-				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo ""	
@@ -1955,7 +1955,7 @@ show_usage_dwidenseparcellation() {
 				echo "--function='dwidenseparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
-				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
@@ -2170,7 +2170,7 @@ computeboldfc() {
 				echo "Running locally on `hostname`"
 				echo "Check log file output here: $LogFolder"
 				echo "--------------------------------------------------------------"
-				echo " ${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
+				echo " ${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
 				--runtype=${RunType} \
@@ -2192,9 +2192,9 @@ computeboldfc() {
 				# - Echo full command into a script
 				echo ""
 				geho "Full Command:"
-				geho "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh --path=${StudyFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
+				geho "${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh --path=${StudyFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
 				echo ""	
-				echo "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
+				echo "${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
 				--runtype=${RunType} \
@@ -2235,7 +2235,7 @@ computeboldfc() {
 				echo "Running locally on `hostname`"
 				echo "Check log file output here: $LogFolder"
 				echo "--------------------------------------------------------------"
-				echo " ${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
+				echo " ${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
 				--runtype=${RunType} \
@@ -2261,9 +2261,9 @@ computeboldfc() {
 				# - Echo full command into a script
 				echo ""
 				geho "Full Command:"
-				geho "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh --path=${StudyFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --flist=${FileList} --outname=${OutName} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --target=${TargetROI} --command=${GBCCommand} --targetf=${OutPath} --mask=${MaskFrames} --rsmooth=${RadiusSmooth} --rdilate=${RadiusDilate} --verbose=${Verbose} --time=${ComputeTime} --vstep=${VoxelStep} --covariance=${Covariance}"
+				geho "${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh --path=${StudyFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --flist=${FileList} --outname=${OutName} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --target=${TargetROI} --command=${GBCCommand} --targetf=${OutPath} --mask=${MaskFrames} --rsmooth=${RadiusSmooth} --rdilate=${RadiusDilate} --verbose=${Verbose} --time=${ComputeTime} --vstep=${VoxelStep} --covariance=${Covariance}"
 				echo ""				
-				echo "${TOOLS}/MNAP/general/functions/ComputeFunctionalConnectivity.sh \
+				echo "${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
 				--runtype=${RunType} \
@@ -2505,7 +2505,7 @@ structuralparcellation() {
 		# InputDataType # e.g. myelin
 		# OutName # e.g. LR_Colelab_partitions
 		# ExtractData # yes/no
-		# ParcellationFile  # e.g. /gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii"
+		# ParcellationFile  # e.g. /gpfs/project/fas/n3/software/MNAP/connector/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii"
 		########################################## OUTPUTS #########################################
 
 		# Outputs will be *pconn.nii files located in the location specified in the outputpath
@@ -2530,7 +2530,7 @@ structuralparcellation() {
 			echo "Check log file output here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
-			${TOOLS}/MNAP/general/functions/StructuralParcellation.sh \
+			${TOOLS}/MNAP/connector/functions/StructuralParcellation.sh \
 			--path="${StudyFolder}" \
 			--subject="${CASE}" \
 			--inputdatatype="${InputDataType}" \
@@ -2539,7 +2539,7 @@ structuralparcellation() {
 			--outname="${OutName}" \
 			--extractdata="${ExtractData}" >> "$LogFolder"/StructuralParcellation_"$Suffix".log
 		else
-			echo "${TOOLS}/MNAP/general/functions/StructuralParcellation.sh \
+			echo "${TOOLS}/MNAP/connector/functions/StructuralParcellation.sh \
 			--path=${StudyFolder} \
 			--subject=${CASE} \
 			--inputdatatype=${InputDataType} \
@@ -2597,7 +2597,7 @@ show_usage_structuralparcellation () {
 				echo "--function='structuralparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--inputdatatype='MyelinMap_BC' \ "
-				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions' \ "
 				echo "--extractdata='yes' "
@@ -2608,7 +2608,7 @@ show_usage_structuralparcellation () {
 				echo "--function='structuralparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--inputdatatype='MyelinMap_BC' \ "
-				echo "--parcellationfile='$TOOLS/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
+				echo "--parcellationfile='$TOOLS/MNAP/connector/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions' \ "
 				echo "--extractdata='yes' "
@@ -2638,7 +2638,7 @@ boldparcellation() {
 		# InputDataType # e.g.dtseries
 		# OutPath # e.g. /images/functional/
 		# OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
-		# ParcellationFile  # e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+		# ParcellationFile  # e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
 		# ComputePConn # Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
 		# UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
 		# WeightsFile # Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
@@ -2773,7 +2773,7 @@ show_usage_boldparcellation() {
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
-				echo "--parcellationfile='{$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='{$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
@@ -2790,7 +2790,7 @@ show_usage_boldparcellation() {
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
 				echo "--inputdatatype='dtseries' \ "
-				echo "--parcellationfile='$TOOLS/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
+				echo "--parcellationfile='$TOOLS/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--outpath='/images/functional/' \ "
@@ -2820,7 +2820,7 @@ roiextract() {
 		# InputPath # e.g. /images/functional/
 		# OutPath # e.g. /images/functional/
 		# OutName # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
-		# ROIFile  # e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
+		# ROIFile  # e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
 		########################################## OUTPUTS #########################################
 		
 		# Outputs will be files located in the location specified in the outputpath
@@ -2862,13 +2862,13 @@ roiextract() {
 			echo "Check log file output here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
-			/$TOOLS/MNAP/general/functions/ROIExtract.sh \
+			/$TOOLS/MNAP/connector/functions/ROIExtract.sh \
 			--roifile="${ROIFile}" \
 			--inputfile="${InputFile}" \
 			--outpath="${OutPath}" \
 			--outname="${OutName}" >> "$LogFolder"/extract_ROIs_"$Suffix".log
 		else
-			echo "/$TOOLS/MNAP/general/functions/ROIExtract.sh \
+			echo "/$TOOLS/MNAP/connector/functions/ROIExtract.sh \
 			--roifile='${ROIFile}' \
 			--inputfile='${InputFile}' \
 			--outdir='${OutPath}' \		
@@ -3776,7 +3776,7 @@ show_usage_qcpreproc() {
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
 				echo "		--overwrite=<clean_prior_run>					Delete prior QC run"
-				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/MNAP/general/templates)"
+				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/MNAP/connector/templates)"
 				echo "		--outpath=<path_for_output_file>				Specify the output path name of the QC folder"
 				echo "		--dwipath=<path_for_dwi_data>					Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
 				echo "		--dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
@@ -3792,7 +3792,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='100206,100207' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/QC/T1w' \ "
-				echo "--templatefolder='$TOOLS/MNAP/general/templates' \ "
+				echo "--templatefolder='$TOOLS/MNAP/connector/templates' \ "
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
 				#echo "--runmethod='1'"
@@ -3803,7 +3803,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='100206,100207' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/QC/T1w' \ "
-				echo "--templatefolder='$TOOLS/MNAP/general/templates' \ "
+				echo "--templatefolder='$TOOLS/MNAP/connector/templates' \ "
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
 				#echo "--runmethod='2' \ "
@@ -3823,7 +3823,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/T1w' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
 				echo "--modality='T1w' \ "
 				echo "--overwrite='yes' \ "
 				#echo "--runmethod='2' \ "
@@ -3835,7 +3835,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/T2w' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
 				echo "--modality='T2w' \ "
 				echo "--overwrite='yes' \ "
 				#echo "--runmethod='2' \ "
@@ -3847,7 +3847,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/myelin' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
 				echo "--modality='myelin' \ "
 				echo "--overwrite='yes' \ "
 				#echo "--runmethod='2' \ "
@@ -3858,7 +3858,7 @@ show_usage_qcpreproc() {
 				echo "AP --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
 				echo "--modality='DWI' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/DWI_1k25k' \ "
 				echo "--dwilegacy='yes' \ "
@@ -3874,7 +3874,7 @@ show_usage_qcpreproc() {
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
 				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/BOLD' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/general/templates' \ "
+				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
 				echo "--modality='BOLD' \ "
 				echo "--bolddata='1' \ "
 				echo "--boldsuffix='Atlas' \ "
@@ -3958,7 +3958,7 @@ timestamp() {
 
 # -- DESCRIPTION: Checks for version
 show_version() {
-	APVer=`cat $TOOLS/MNAP/general/VERSION`
+	APVer=`cat $TOOLS/MNAP/connector/VERSION`
 	echo ""
 	reho "Multimodal Neuroimaging Analysis Pipeline (MNAP) Version: v$APVer"
 }
@@ -4044,8 +4044,8 @@ fi
 	# -- get all the functions from the usage calls
 	unset UsageName
 	unset APFunctions
-	UsageName=`more ${TOOLS}/MNAP/general/AnalysisPipeline.sh | grep show_usage_${1}`
-	APFunctions=`more ${TOOLS}/MNAP/general/AnalysisPipeline.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
+	UsageName=`more ${TOOLS}/MNAP/connector/AnalysisPipeline.sh | grep show_usage_${1}`
+	APFunctions=`more ${TOOLS}/MNAP/connector/AnalysisPipeline.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
 	# -- check for input with double flags
 	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
@@ -4233,7 +4233,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ParameterFile=`opts_GetOpt "${setflag}parameterfile" $@` 																# Use parameter file header
 	ListFunction=`opts_GetOpt "${setflag}listfunction" $@` 																	# Which function to use to generate the list
 	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 	FileType=`opts_GetOpt "${setflag}filetype" $@` 																			# --filetype=<file_extension>
 	BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<bold_suffix>
 	SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@` 																# Use subject HCP File for appending the parameter list
@@ -4262,7 +4262,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@` 																	# --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
 	UseWeights=`opts_GetOpt "${setflag}useweights" $@` 																		# --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
 	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` 																	# --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
 	# -- roiextract input flags
 	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@` 																			# --roifile=<filepath>		Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
@@ -4291,7 +4291,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		
 	# -- dwidenseparcellation input flags
 	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` 																# --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/general/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
 	
 	# -- dwiseedtractography input flags
@@ -4316,7 +4316,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		
 	# -- qcpreproc input flags
 	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>			Specify the output path name of the QC folder
-	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` 																# --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/general/templates)
+	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` 																# --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/connector/templates)
 	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
 	DWIPath=`opts_GetOpt "${setflag}dwipath" $@` 																			# --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
 	DWIData=`opts_GetOpt "${setflag}dwidata" $@` 																			# --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
@@ -4392,7 +4392,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
-		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/MNAP/general/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
+		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/MNAP/connector/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
 		if [ -z "$OutPath" ]; then OutPath="${StudyFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
 		if [ "$Modality" = "DWI" ]; then
 			if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
@@ -4517,7 +4517,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 		
 			if [ -z "$ListFunction" ]; then 
 				reho "List function not set. Using default function."
-				ListFunction="${TOOLS}/MNAP/general/functions/subjectsparamlist.sh"
+				ListFunction="${TOOLS}/MNAP/connector/functions/subjectsparamlist.sh"
 				echo ""
 				reho "$ListFunction"
 				echo ""
@@ -4528,7 +4528,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 			if [ -z "$ParameterFile" ]; then 
 				echo ""
 				echo "No parameter header file set - Using defaults: "
-				ParameterFile="${TOOLS}/MNAP/general/functions/subjectparamlist_header_multiband.txt"
+				ParameterFile="${TOOLS}/MNAP/connector/functions/subjectparamlist_header_multiband.txt"
 				echo "--> $ParameterFile"
 				echo ""
 			fi
@@ -4567,7 +4567,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 		if [ "$ListGenerate" == "analysis" ]; then		
 			if [ -z "$ListFunction" ]; then 
 			reho "List function not set. Using default function."
-				ListFunction="${TOOLS}/MNAP/general/functions/analysislist.sh"
+				ListFunction="${TOOLS}/MNAP/connector/functions/analysislist.sh"
 				echo ""
 				reho "$ListFunction"
 				echo ""
