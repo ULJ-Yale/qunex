@@ -20,12 +20,12 @@ Installation
 
 ### Step 1. Clone all MNAP repos and initiate submodules.
 
-Clone and initiate submodules:
+Clone and initiate submodules
 	* `git clone git@bitbucket.org:mnap/mnaptools.git` 
 	* `git submodule init`
-Pull and update all submodules:
+Pull and update all submodules
 	* `git pull --recurse-submodules && git submodule update --recursive`
-Update submodules to latest commit on origin:
+Update submodules to latest commit on origin
 	* `git submodule foreach git pull origin master`
 
 ### Step 2. Install all necessary dependencies for full functionality (see below). 
@@ -40,10 +40,10 @@ Update submodules to latest commit on origin:
 
 ### Step 3. Configure the environment script by adding the following lines to your .bash_profile.
 
-	```TOOLS=~/mnaptools
+	TOOLS=~/mnaptools
 	export TOOLS
 	source $TOOLS/library/environment/mnap_environment.sh
-	```
+
 
 Usage and command documentation
 ===============================
