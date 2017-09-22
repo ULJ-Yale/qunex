@@ -18,7 +18,12 @@ Installation
 ===============================
 ---
 
-### Step 1. Clone all MNAP repos (git clone git@bitbucket.org:mnap/mnaptools.git).
+### Step 1. Clone all MNAP repos and initiate submodules.
+
+* `git clone git@bitbucket.org:mnap/mnaptools.git` 
+* `git submodule init`
+* `git pull --recurse-submodules  && git submodule update --recursive`
+* `git submodule foreach git pull origin master`
 
 ### Step 2. Install all necessary dependencies for full functionality (see below). 
 
@@ -32,9 +37,10 @@ Installation
 
 ### Step 3. Configure the environment script by adding the following lines to your .bash_profile.
 
-	TOOLS=/PATH_TO_MNAP_FOLDER/
+	```TOOLS=~/mnaptools
 	export TOOLS
 	source $TOOLS/library/environment/mnap_environment.sh
+	```
 
 Usage and command documentation
 ===============================
@@ -42,16 +48,16 @@ Usage and command documentation
 
 List of functions can be obtained by running the following command from the terminal: 
 
-* `ap --help` prints the general help call
+* `mnap --help` prints the general help call
 
 The utilities are used through the `ap` command. The general use form is:
 
-`ap --function="<command>" --option="<value>" --option="<value>" ...`
+* `mnap --function="<command>" --option="<value>" --option="<value>" ...`
 
 The list of commands and their specific documentation is provided through `ap`
 command itself using the folowing options:
 
-* `ap ?<command>` prints specific help for the specified command.
+* `mnap ?<command>` prints specific help for the specified command.
 
 Perusing documentation, please note the following conventions used:
 
