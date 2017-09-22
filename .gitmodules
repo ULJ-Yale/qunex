@@ -1,6 +1,3 @@
-[submodule "general"]
-	path = general
-	url = git@bitbucket.org:mnap/general.git
 [submodule "niutilities"]
 	path = niutilities
 	url = git@bitbucket.org:mnap/niutilities.git
