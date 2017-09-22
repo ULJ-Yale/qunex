@@ -1,8 +1,8 @@
-# Multimodal Neuroimaging Analyses Pipelines (MNAP) General Pipeline
+# Multimodal Neuroimaging Analyses Pipelines (MNAP) Software Suite
 
 ## License
 
-MNAP General Pipeline = THIS SOFTWARE
+MNAP Suite = THIS SOFTWARE
 
 Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
 & Alan Anticevic, [AnticevicLab], Yale University
