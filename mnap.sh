@@ -3037,14 +3037,11 @@ show_usage_fsldtifit() {
 fslbedpostxgpu() {
 
 		# -- Establish global directory paths
-		FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 		T1wDiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion
 		BedPostXFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX
 		LogFolder="$BedPostXFolder"/logs
 		Overwrite="$Overwrite"
-		export FSLGECUDAQ
-		export SGE_ROOT=1
-		NJOBS=4
+		
 		# Check if overwrite flag was set
 		if [ "$Overwrite" == "yes" ]; then
 			echo ""
@@ -3103,7 +3100,6 @@ fslbedpostxgpu() {
 			fi
 		fi
 		
-		echo ""
 		reho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
 		echo ""
 		
@@ -3111,34 +3107,42 @@ fslbedpostxgpu() {
 			# unset the queue variables
 			unset SGE_ROOT
 			unset FSLGECUDAQ
+			
 			echo "Running bedpostx_gpu locally on `hostname`"
 			echo "Check log file output here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
 			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_modified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
 			else	
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_modified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
 			fi
-		else
-			# -- Deprecated fsl_sub call
-			# set scheduler for fsl_sub command
-			#fslsub="$Scheduler"
-			# set the queue variables
-			#FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
-			#export FSLGECUDAQ
-
+		fi
+		
+		if [ "$Cluster" == 2 ]; then
+			# reset the queue variables
+			unset SchedulerQueue
+			unset SchedulerName
+			SchedulerName=`echo $Scheduler | awk -F, '{ print $1 }'`
+			if [ $SchedulerName == "SLURM" ]; then
+				SchedulerQueue=`echo $Scheduler | awk -Fpartition= '{ print $2 }' | awk -F, '{ print $1 }'`
+			else
+				SchedulerQueue=`echo $Scheduler | awk -q= '{ print $2 }' | awk -F, '{ print $1 }'`
+			fi
+			
+			FSLGECUDAQ="$SchedulerQueue" # Cluster queue name with GPU nodes
+			export FSLGECUDAQ
 			export SGE_ROOT=1
 			NJOBS=4
+						
 			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_modified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" -scheduler "$Scheduler"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" -Q "$FSLGECUDAQ" -scheduler "$SchedulerName"
 			else	
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_modified "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" -scheduler "$Scheduler"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" -Q "$FSLGECUDAQ" -scheduler "$SchedulerName"
 			fi
 			
 			geho "---------------------------------------------------------------------------------------"
 			geho "Data successfully submitted" 
-			geho "Scheduler Name: $Scheduler"
 			geho "Scheduler Options: Scheduler options are specified in the bedpostx_gpu binary to ensure compatibility"
 			geho "Check output logs here: $LogFolder"
 			geho "---------------------------------------------------------------------------------------"
@@ -3919,7 +3923,7 @@ source $HCPPIPEDIR/global/scripts/opts.shlib # Command line option functions
 #  Establish tool name for logging
 # ------------------------------------------------------------------------------
 
-log_SetToolName "AnalysisPipeline.sh"
+log_SetToolName "mnap.sh"
 
 # ------------------------------------------------------------------------------
 #  Load Core Functions
@@ -4044,8 +4048,8 @@ fi
 	# -- get all the functions from the usage calls
 	unset UsageName
 	unset APFunctions
-	UsageName=`more ${TOOLS}/MNAP/connector/AnalysisPipeline.sh | grep show_usage_${1}`
-	APFunctions=`more ${TOOLS}/MNAP/connector/AnalysisPipeline.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
+	UsageName=`more ${TOOLS}/MNAP/connector/mnap.sh | grep show_usage_${1}`
+	APFunctions=`more ${TOOLS}/MNAP/connector/mnap.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
 	# -- check for input with double flags
 	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
@@ -4222,7 +4226,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		RunMethod="1"	
 	fi
 	
-	# -- path options for FreeSurfer or AnalysisPipeline
+	# -- path options for FreeSurfer or MNAP
 	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@` 														# Specifies homefolder for FreeSurfer binary to use
 	APVersion=`opts_GetOpt "${setflag}version" $@` 																			# Specifies homefolder for FreeSurfer binary to use
 	
@@ -4502,6 +4506,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 		#		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 		#		#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		#fi
+		
 		# --------------------------
 		# --- preprocessing loop ---
 		# --------------------------
@@ -4827,23 +4832,9 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
 		if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
-		if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
-		
-		Cluster="$RunMethod"
-		
-		if [ "$Cluster" == "2" ]; then
-		
-				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
-				
-				FSLGECUDAQ="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
-				export FSLGECUDAQ
-				export SGE_ROOT=1
-				NJOBS=4
-		fi	
-		
+		if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi		
 		if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
+		Cluster=$RunMethod
 			
 		echo ""
 		echo "Running fslbedpostxgpu processing with the following parameters:"
@@ -4856,7 +4847,6 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		echo "Rician flag: $Rician"
 		echo "EPI Unwarp Direction: $UnwarpDir"
 		echo "Scheduler Name and Options: $Scheduler"
-		#echo "Scheduler Options: $SchedulerOptions"
 		echo "Overwrite prior run: $Overwrite"
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
