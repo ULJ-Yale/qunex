@@ -764,6 +764,9 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
     3 factor design:
     F1, F2, F3, F1*F2, F1*F3, F2*F3, F1*F2*F3, subjects
 
+    4 factor design:
+    F1, F2, F3, F4, F1*F2, F1*F3, F1*F4, F2*F3, F2*F4, F3*F4, F1*F2*F3, F1*F2*F4, F2*F3*F4, F1*F2*F3*F4, subjects
+
     t-tests will be specified in order and f-tests will be specified in the same
     order as above.
 
@@ -865,6 +868,45 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
 
                         print >> df, ",".join([str(e) for e in line])
 
+
+        # ---- 4 factor within design
+
+        elif nfactors == 4:
+
+            for f1l in blocks[0]:
+                for f2l in blocks[1]:
+                    for f3l in blocks[2]:
+                        for f4l in blocks[3]:
+
+                            # --- join main effects
+                            line = f1l + f2l + f3l + f4l
+
+                            # --- compute and add interactions
+                            i12 = [i * j for i in f1l for j in f2l]
+                            i13 = [i * j for i in f1l for j in f3l]
+                            i14 = [i * j for i in f1l for j in f4l]
+
+                            i23 = [i * j for i in f2l for j in f3l]
+                            i24 = [i * j for i in f2l for j in f4l]
+
+                            i34 = [i * j for i in f3l for j in f4l]
+
+                            i123 = [i * j * k for i in f1l for j in f2l for k in f3l]
+                            i124 = [i * j * k for i in f1l for j in f2l for k in f4l]
+                            i234 = [i * j * k for i in f2l for j in f3l for k in f4l]
+
+                            i1234 = [i * j * k * l for i in f1l for j in f2l for k in f3l for l in f3l]
+
+                            line += i12 + i13 + i14 + i23 + i24 + i34 + i123 + i124 + i234 + i1234
+
+                            # --- add subject intercepts
+
+                            line += sline
+
+                            # --- print it out
+
+                            print >> df, ",".join([str(e) for e in line])
+
     df.close()
 
 
@@ -891,6 +933,11 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
     elif nfactors == 3:
         tlen = dvars + [dvars[0] * dvars[1], dvars[0] * dvars[2], dvars[1] * dvars[2], dvars[0] * dvars[1] * dvars[2]]
 
+    elif nfactors == 4:
+        tlen = dvars + [dvars[0] * dvars[1], dvars[0] * dvars[2], dvars[0] * dvars[3], dvars[1] * dvars[2], dvars[1] * dvars[3], dvars[2] * dvars[3],
+                        dvars[0] * dvars[1] * dvars[2], dvars[0] * dvars[1] * dvars[3], dvars[1] * dvars[2] * dvars[2],
+                        dvars[0] * dvars[1] * dvars[2] * dvars[3]]
+
     ndvars = sum(tlen)
 
     # --- open and save t-contralst file
@@ -906,7 +953,7 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
     # -------------------------------------------------------------
     #                                       create f-contrasts file
 
-    fperd = {1: 1, 2: 3, 3: 7}
+    fperd = {1: 1, 2: 3, 3: 7, 4: 14}
     nfac  = fperd[nfactors]
     code  = {True: 1, False: 0}
 
