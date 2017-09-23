@@ -54,7 +54,7 @@ The utilities are used through the `mnap` command. The general use form is:
 
 * `mnap --function="<command>" --option="<value>" --option="<value>" ...`
 
-The list of commands and their specific documentation is provided through `ap`
+The list of commands and their specific documentation is provided through `mnap`
 command itself using the folowing options:
 
 * `mnap ?<command>` prints specific help for the specified command.
