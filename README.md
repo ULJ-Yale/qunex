@@ -50,7 +50,7 @@ List of functions can be obtained by running the following command from the term
 
 * `mnap --help` prints the general help call
 
-The utilities are used through the `ap` command. The general use form is:
+The utilities are used through the `mnap` command. The general use form is:
 
 * `mnap --function="<command>" --option="<value>" --option="<value>" ...`
 
