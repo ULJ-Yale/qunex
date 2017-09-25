@@ -69,10 +69,7 @@ Specific Example Usage
 * Here is a specific example usage based on an MNAP call for sorting incoming DICOMs:
 
 
-	mnap --path='<study_folder>' \ 
-	--function='dicomorganize' \ 
-	--subjects='<comma_separarated_list_of_cases>' \ 
-	--scheduler='<name_of_scheduler_and_options>'
+	`mnap --path='<study_folder>' --function='dicomorganize' --subjects='<comma_separarated_list_of_cases>' --scheduler='<name_of_scheduler_and_options>'`
 	
 
 External dependencies
