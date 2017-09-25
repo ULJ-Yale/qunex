@@ -219,7 +219,7 @@ show_usage() {
 				echo "Alternatively the 'ap' wrapper parses all functions from 'gmri' package as standard input."
 				echo ""
 				echo ""
-				echo "	--> Example to pass command: 				mnap <command> [options]"
+				echo "	--> Example to pass command: 			mnap <command> [options]"
 				echo "	--> Example to request help for command : 	mnap ?<command>"
 				echo ""
 				echo ""
@@ -230,12 +230,63 @@ show_usage() {
 				echo "`gmri`"
 				echo "`gmri -l`"
 				echo ""
-				echo""
+				echo ""
+				echo "=================================================================="
+				echo "==== All Supported MNAP Independent Matlab Analyses Utilities ===="
+				echo "=================================================================="
+				echo ""
+				echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
+				echo ""
+				ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				echo ""
+				echo "-- MNAP Matlab Analyses Utilities --- General functions:"
+				echo ""
+				ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				echo ""
+				echo "-- MNAP Matlab Analyses Utilities --- gmrimage functions:"
+				echo ""
+				ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				echo ""
+				echo "-- MNAP Matlab Analyses Utilities --- Functional connectivity functions:"
+				echo ""
+				ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				echo ""
+				echo ""
 }
 
 # ========================================================================================
 # ===================== SPECIFIC ANALYSIS FUNCTIONS START HERE ===========================
 # ========================================================================================
+
+matlabhelp() {
+		echo ""
+}
+
+show_usage_matlabhelp() {
+
+		echo ""
+		echo "=================================================================="
+		echo "==== All Supported MNAP Independent Matlab Analyses Utilities ===="
+		echo "=================================================================="
+		echo ""
+		echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
+		echo ""
+		ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		echo ""
+		echo "-- MNAP Matlab Analyses Utilities --- General functions:"
+		echo ""
+		ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		echo ""
+		echo "-- MNAP Matlab Analyses Utilities --- gmrimage functions:"
+		echo ""
+		ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		echo ""
+		echo "-- MNAP Matlab Analyses Utilities --- Functional connectivity functions:"
+		echo ""
+		ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		echo ""
+		echo ""
+}
 
 # ------------------------------------------------------------------------------------------------------
 #  gmri general wrapper - parse inputs into specific gmri functions via AP 
@@ -4346,6 +4397,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	fi
 
 else
+
 	# -- If no flags were found the pipeline defaults to 'interactive' mode. 
 	# 	 * Note: Not all functions are supported in interactive mode
 	echo ""
@@ -4365,6 +4417,14 @@ fi
 # ========================================================================================
 # ============ EXECUTE SELECTED FUNCTION AND LOOP THROUGH ALL THE CASES ==================
 # ========================================================================================
+
+# ------------------------------------------------------------------------------
+#  matlabhelp function
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "matlabhelp" ]; then
+  		"$FunctionToRun"
+fi
 
 # ------------------------------------------------------------------------------
 #  dicomorganize function loop
