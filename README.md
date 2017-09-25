@@ -56,7 +56,7 @@ Usage and command documentation
 
 The utilities are by-defult called through the `mnap` command:
 
-`mnap <command> [option=value] [option=value]`
+`mnap <command> [option=value] [option=value] ...`
 
 
 The utilities can also be called specifically through the `gmri` command. 
