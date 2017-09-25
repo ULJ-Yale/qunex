@@ -43,8 +43,14 @@ in curly braces (e.g. "{'DLPFC', 'ACC','FEF'}").
 In addition, 'saveOutput' argument can be specified to redirect Matlab
 output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 2. 
-Also the MNAP Matlab  Analysis Utilities usage can be found imbedded in each 
-function by running `help <command>` via the matlab terminal. 
+Directly from inside Matlab by calling each function directly.  
+
+To obtain a list of all supported `matlab` functions run:
+
+`mnap -help matlab`
+
+The function-specific help and usage is imbedded in the help call for each function.
+You can acces this by running `help <command>` via the matlab terminal. 
 
 External dependencies
 =====================
