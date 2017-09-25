@@ -45,9 +45,9 @@ output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 2. 
 Directly from inside Matlab by calling each function directly.  
 
-To obtain a list of all supported `matlab` functions run:
+To obtain a list of all supported `MNAP matlab` functions run:
 
-`mnap -help matlab`
+`mnap matlabhelp`
 
 The function-specific help and usage is imbedded in the help call for each function.
 You can acces this by running `help <command>` via the matlab terminal. 
