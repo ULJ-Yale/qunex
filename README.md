@@ -5,12 +5,9 @@ Background
 ==========
 ---
 
-This is is the code base for the connector pipeline as part of the MNAP package that handles 
-flexible directory inputs and subject lists. The pipeline supports data organization, QC, 
-preprocessing, various analyses etc. The pipeline is flexible and can be updated by adding 
-functions developed around other tools. 
+The `Connector` pipeline as part of the MNAP package serves as the overall wrapper for the suite. It handles flexible directory inputs and subject lists. The `Connector` supports all functionality across the MNAP suite, including data organization, QC, preprocessing, various analyses etc. The wrapper code is flexible and can be updated by adding functions developed around other tools (e.g. `gmri` or `matlab` MNAP packages). 
 
-The AP code is developed and maintained by Alan Anticevic, [Anticevic Lab], Yale 
+The MNAP code is developed and maintained by Alan Anticevic, [Anticevic Lab], Yale 
 University of Ljubljana in collaboration with Grega Repovs [Mind and Brain Lab], 
 University of Ljubljana.
 
@@ -64,6 +61,19 @@ Perusing documentation, please note the following conventions used:
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).
 
+
+Specific Example Usage
+===============================
+---
+
+* Here is a specific example usage based on an MNAP call for sorting incoming DICOMs:
+
+
+	mnap --path='<study_folder>' \ 
+	--function='dicomorganize' \ 
+	--subjects='<comma_separarated_list_of_cases>' \ 
+	--scheduler='<name_of_scheduler_and_options>'
+	
 
 External dependencies
 =====================
