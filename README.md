@@ -35,16 +35,13 @@ various MNAP tools but can be run independently in two ways:
 1. 
 A number of Matlab functions provided as part of MNAP/matlab package can be 
 run directly through the `mnap` connector wrapper. 
-For more information on each function run `mnap ?<function name>`.
-
+For more information on each function run `mnap ?<function name>`. 
 Arguments can be specified in any order. Arguments that are not provided will 
 be passed as empty strings / vectors to be processed with default values. 
 Take care to embed vectors in square brackets (e.g. "[1 8 6 12]") and cell arrays 
 in curly braces (e.g. "{'DLPFC', 'ACC','FEF'}"). 
-
 In addition, 'saveOutput' argument can be specified to redirect Matlab
 output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
-
 2. 
 Also the MNAP Matlab  Analysis Utilities usage can be found imbedded in each 
 function by running `help <command>` via the matlab terminal. 
