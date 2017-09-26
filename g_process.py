@@ -154,7 +154,7 @@ def plist(s):
 arglist = [['# ---- Basic settings'],
            ['subjects',           'subjects.txt',                                str,    "The file with subject information."],
            ['basefolder',         '',                                            os.path.abspath, 'The path to base folder.'],
-           ['logfolder',          '',                                            os.path.abspath, 'The path to log folder.'],
+           ['logfolder',          'None',                                        isNone,    'The path to log folder.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
            ['nprocess',           '0',                                           int,    'How many subjects to process (0 - all).'],
@@ -460,10 +460,19 @@ def run(command, args):
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
     sfilter      = options['filter']
+
     logfolder    = options['logfolder']
+    if logfolder is None:
+        logfolder = os.path.abs(".")
+        if not any([os.path.join(basefolder, e) in logfolder for e in ['fcMRI', 'fcmri', 'analysis', 'Analysis', 'processing', 'Processing']]):
+            logfolder = os.path.join(basefolder, 'processing', 'logs')
+
     runlogfolder = os.path.join(logfolder, 'runlogs')
     comlogfolder = os.path.join(logfolder, 'comlogs')
-    options['comlogs'] = comlogfolder
+
+    options['runlogs']   = runlogfolder
+    options['comlogs']   = comlogfolder
+    options['logfolder'] = logfolder
 
     # --------------------------------------------------------------------------
     #                                                          start writing log
