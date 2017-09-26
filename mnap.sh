@@ -3702,16 +3702,17 @@ qcpreproc() {
 			ymax=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`	
 			ymin=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
 			# -- Rsync over template files for a given BOLD
-			Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
-			Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
+			Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null"
+			Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"		
 			# -- Setup naming conventions before generating scene
-			Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com3="cp ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com4="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
 			Com5="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com6="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com7="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com8="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com9="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			
 			# -- Set the BOLDSuffix variable
 			if [ "$BOLDSuffix" == "" ]; then
 				Com10="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
@@ -3725,6 +3726,7 @@ qcpreproc() {
 			Com13="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
 			# -- Combine all the calls into a single command
 			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13"
+			
 			if [ "$Cluster" == 1 ]; then
 				echo ""
 				echo "---------------------------------------------------------------------------------"
@@ -3754,10 +3756,10 @@ qcpreproc() {
 		done
 	else
 		# -- Generate a QC scene file appropriate for each subject for each modality
-		# -- Rsync over template files for a given modality
-		Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
-		Com2="rsync -aWH ${TemplateFolder}/MNI* ${OutPath}/ &> /dev/null"
-		Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+		# -- Rsync over template files for a given modality		
+		Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null"
+		Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"
+		Com3="rsync -aWH ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
 		# -- Setup naming conventions before generating scene
 		Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
@@ -3803,7 +3805,6 @@ qcpreproc() {
 			echo ""
 			echo "---------------------------------------------------------------------------------"
 			echo "Data successfully submitted" 
-			#echo "Scheduler Options: $SchedulerOptions"
 			echo "Check output logs here: $LogFolder"
 			echo "---------------------------------------------------------------------------------"
 			echo ""
@@ -3829,16 +3830,14 @@ show_usage_qcpreproc() {
 				echo "		--subjects=<comma_separated_list_of_cases>					List of subjects to run"
 				echo "		--subjects=<list_of_cases>					List of subjects to run, separated by commas"
 				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
-				#echo "		--runmethod=<type_of_run>					Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
 				echo "		--overwrite=<clean_prior_run>					Delete prior QC run"
-				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/MNAP/connector/templates)"
+				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/MNAP/library/data/templates)"
 				echo "		--outpath=<path_for_output_file>				Specify the output path name of the QC folder"
 				echo "		--dwipath=<path_for_dwi_data>					Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
 				echo "		--dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
@@ -3857,7 +3856,6 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='$TOOLS/MNAP/connector/templates' \ "
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
-				#echo "--runmethod='1'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3868,9 +3866,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='$TOOLS/MNAP/connector/templates' \ "
 				echo "--modality='T1w'"
 				echo "--overwrite='no' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo "" 			
 				echo "-- Example with interactive terminal:"
 				echo ""
@@ -3888,9 +3884,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
 				echo "--modality='T1w' \ "
 				echo "--overwrite='yes' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "# -- T2 QC"
 				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
@@ -3900,9 +3894,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
 				echo "--modality='T2w' \ "
 				echo "--overwrite='yes' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "# -- Myelin QC"
 				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
@@ -3912,9 +3904,7 @@ show_usage_qcpreproc() {
 				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
 				echo "--modality='myelin' \ "
 				echo "--overwrite='yes' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "# -- DWI QC "
 				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
@@ -3927,9 +3917,7 @@ show_usage_qcpreproc() {
 				echo "--dwidata='DWI_dir74_AP_b1000b2500_data_brain' \ "
 				echo "--dwipath='Diffusion_DWI_dir74_AP_b1000b2500' \ "
 				echo "--overwrite='yes' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "# -- BOLD QC"
 				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
@@ -3941,9 +3929,7 @@ show_usage_qcpreproc() {
 				echo "--bolddata='1' \ "
 				echo "--boldsuffix='Atlas' \ "
 				echo "--overwrite='yes' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo ""
 }
@@ -4463,7 +4449,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
-		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/MNAP/connector/templates"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
+		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/MNAP/library/data/"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
 		if [ -z "$OutPath" ]; then OutPath="${StudyFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
 		if [ "$Modality" = "DWI" ]; then
 			if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
