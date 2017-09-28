@@ -110,6 +110,10 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
     If "none" is given as value, that file is not to be specified and used.
 
+    Do take into account that the design files are looked for from the location
+    in which you are running the command from. If they are in a different
+    location, then "name" has to specify the full path!
+
     Example design string and files
     -------------------------------
 
@@ -121,6 +125,16 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     * sustained_eb.csv     (exchangebility blocks file)
     * sustained_taov.csv   (t-contrasts file)
     * sustained_f.csv      (f-contrasts file)
+
+    design='name:designs/transient|t:faov|f:fmain'
+
+    In this case the following files would be expected:
+
+    * designs/transient_d.csv      (design matrix file)
+    * designs/transient_eb.csv     (exchangebility blocks file)
+    * designs/transient_taov.csv   (t-contrasts file)
+    * designs/transient_fmain.csv  (f-contrasts file)
+
 
     Additional arguments to PALM
     ----------------------------
@@ -209,6 +223,8 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                analysis.
     2017-07-21 Grega Repovš
              - Added ability to run ptseries CIFTI images.
+    2017-09-28 Grega Repovš
+             - Updated documentation regarding location of design files.
 
     '''
 
@@ -237,7 +253,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             doptions[k.strip()] = v.strip()
 
     if root is None:
-        root = os.path.join(os.path.dirname(images[0]), doptions['name'])
+        root = doptions['name']
 
     # --- parse argument options
 
@@ -345,6 +361,9 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                 tfile = "%s_%s.csv" % (doptions['name'], doptions[f])
                 if os.path.exists(tfile):
                     dargs += ['-' + f, tfile]
+                    print "     ... %s file set to %s" % (f, tfile)
+                else:
+                    print "     ... %s file not found and won't be used [%s]" % (f, os.path.abs(tfile))
 
 
         # --- check for additional parameters

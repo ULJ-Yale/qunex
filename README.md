@@ -1,10 +1,10 @@
-# README File for MNAP Neuroimaging Utilities Pipeline
+# README File for MNAP General Neuroimaging Utilities Pipeline
 
 Background
 ==========
 ---
 
-Mind & Brain Lab Neuroimaging Utilities, i.e. niutilities are neuroimaging
+MNAP General Neuroimaging Utilities (gMRI) are neuroimaging
 preprocessing and analysis utilities that support multiple tasks through a
 common user interface, designed to simplify multiple steps of neuroimaging
 data preprocessing and analysis from sorting of dicom files to second level
@@ -54,9 +54,19 @@ Usage and command documentation
 ===============================
 ---
 
-The utilities are used through the `gmri` command. The general use form is:
+The utilities are by-defult called through the `mnap` command:
+
+`mnap <command> [option=value] [option=value] ...`
+
+
+The utilities can also be called specifically through the `gmri` command. 
+
+This bypasses the `mnap` wrapper and directly calles the python engine. 
+
+The general use form is:
 
 `gmri <command> [option=value] [option=value] ...`
+
 
 The list of commands and their specific documentation is provided through `gmri`
 command itself using the folowing options:
