@@ -237,7 +237,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
             doptions[k.strip()] = v.strip()
 
     if root is None:
-        root = os.path.join(os.path.dirname(images[0]), doptions['name'])
+        root = doptions['name']
 
     # --- parse argument options
 
@@ -345,6 +345,9 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                 tfile = "%s_%s.csv" % (doptions['name'], doptions[f])
                 if os.path.exists(tfile):
                     dargs += ['-' + f, tfile]
+                    print "     ... %s file set to %s" % (f, tfile)
+                else:
+                    print "     ... %s file not found and won't be used [%s]" % (f, tfile)
 
 
         # --- check for additional parameters
