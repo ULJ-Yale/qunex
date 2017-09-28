@@ -363,7 +363,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
                     dargs += ['-' + f, tfile]
                     print "     ... %s file set to %s" % (f, tfile)
                 else:
-                    print "     ... %s file not found and won't be used [%s]" % (f, os.path.abs(tfile))
+                    print "     ... %s file not found and won't be used [%s]" % (f, os.path.abspath(tfile))
 
 
         # --- check for additional parameters
