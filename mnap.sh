@@ -589,6 +589,8 @@ show_usage_createlists() {
 				echo ""
 				echo "		--overwrite=<yes/no>					Explicitly delete any prior lists"
 				echo "		--append=<yes>						Explicitly append the existing list"
+				echo "		--listpath=<absolute_path_to_list_folder>	Explicitly set path where you want the lists generated"
+				echo "											Default: <study_folder>/processing/lists "
 				echo ""
 				echo "		* Note: If --append set to <yes> then function will append new cases to the end"
 				echo ""								
@@ -2931,9 +2933,11 @@ roiextract() {
 			--inputfile='${InputFile}' \
 			--outdir='${OutPath}' \		
 			--outname='${OutName}'" > "$LogFolder"/extract_ROIs_"$Suffix".sh &> /dev/null
+			
 			# - Make script executable 
 			chmod 770 "$LogFolder"/extract_ROIs_"$Suffix".sh &> /dev/null
 			cd ${LogFolder}
+			
 			# - Send to scheduler     		
 			gmri schedule command="${LogFolder}/extract_ROIs_${Suffix}.sh" \
 			settings="${Scheduler}" \
@@ -4285,6 +4289,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	FileType=`opts_GetOpt "${setflag}filetype" $@` 																			# --filetype=<file_extension>
 	BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<bold_suffix>
 	SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@` 																# Use subject HCP File for appending the parameter list
+	ListPath=`opts_GetOpt "${setflag}listpath" $@` 																			# Path of list to generate
 
 	# -- hpcsync input flags
 	NetID=`opts_GetOpt "${setflag}netid" $@` 																				# Yale NetID for cluster rsync command
@@ -4542,7 +4547,9 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "createlists" ]; then
-		mkdir "$StudyFolder"/lists &> /dev/null
+		
+
+		
 		# -- Check all the user-defined parameters:
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
@@ -4551,6 +4558,15 @@ if [ "$FunctionToRun" == "createlists" ]; then
 		
 		# - Check optional parameters:
 		if [ -z "$Append" ]; then Append="no"; reho "Setting --append='no' by default"; fi
+		# - Set list path if not set by user
+		if [ -z "$ListPath" ]; then 
+			unset ListPath
+			mkdir "$StudyFolder"/../processing/lists &> /dev/null
+			cd ${StudyFolder}/../processing/lists
+			ListPath=`pwd`
+			reho "Setting default path for list folder --> $ListPath"
+			export ListPath
+		fi
 		
 		# -- Omit scheduler commands here
 		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
@@ -4570,12 +4586,12 @@ if [ "$FunctionToRun" == "createlists" ]; then
 				echo ""
 				reho "===> Deleting prior processing lists"
 				echo ""
-				rm "$StudyFolder"/lists/subjects.preprocessing."$ListName".param &> /dev/null
+				rm "$ListPath"/subjects.preprocessing."$ListName".param &> /dev/null
 			fi
 		
 			if [ -z "$ListFunction" ]; then 
 				reho "List function not set. Using default function."
-				ListFunction="${TOOLS}/MNAP/connector/functions/subjectsparamlist.sh"
+				ListFunction="${TOOLS}/MNAP/connector/functions/SubjectsParamList.sh"
 				echo ""
 				reho "$ListFunction"
 				echo ""
@@ -4606,7 +4622,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 					echo ""
 					echo "-- Adding Parameter Header: "
 					echo "--> ${ParameterFile}"
-					cat ${ParameterFile} >> ${StudyFolder}/lists/subjects.preprocessing.${ListName}.param
+					cat ${ParameterFile} >> ${ListPath}/subjects.preprocessing.${ListName}.param
 				fi 
 			fi	
 			for CASE in $CASES; do
@@ -4615,7 +4631,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 			echo ""
 			geho "-------------------------------------------------------------------------------------------"
 			geho "--> Check output:"
-			geho "  `ls ${StudyFolder}/lists/subjects.preprocessing.${ListName}.param `"
+			geho "  `ls ${ListPath}/subjects.preprocessing.${ListName}.param `"
 			geho "-------------------------------------------------------------------------------------------"
 			echo ""
 		fi
@@ -4625,7 +4641,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 		if [ "$ListGenerate" == "analysis" ]; then		
 			if [ -z "$ListFunction" ]; then 
 			reho "List function not set. Using default function."
-				ListFunction="${TOOLS}/MNAP/connector/functions/analysislist.sh"
+				ListFunction="${TOOLS}/MNAP/connector/functions/AnalysisList.sh"
 				echo ""
 				reho "$ListFunction"
 				echo ""
@@ -4637,7 +4653,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 				echo ""
 				reho "===> Deleting prior analysis lists"
 				echo ""
-				rm "$StudyFolder"/lists/subjects.analysis."$ListName".*.list &> /dev/null
+				rm ${ListPath}/subjects.analysis."$ListName".*.list &> /dev/null
 			fi
 			
 			for CASE in $CASES; do
