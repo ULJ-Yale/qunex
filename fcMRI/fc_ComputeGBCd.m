@@ -70,11 +70,11 @@ function [] = fc_ComputeGBCd(flist, command, roi, rcodes, nbands, mask, verbose,
 % 	2009-11-04 - Created by Grega Repovš
 % 	2010-11-16 - Grega Repovš
 % 	2010-11-22 - Grega Repovs
-% 	2010-12-01 - Grega Repovs - added in script for smoothing and dilation
-%   2014-01-22 - Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
-%   2014-02-16 - Grega Repovs - forked from fcComputeGBC3 to do distance based bands
-%   2017-03-19 - Grega Repovs - cleaned, updated documentation
-%   2017-04-18 - Modified by Grega Repovš - adopted use of g_ReadFileList.
+%	2010-12-01 - Grega Repovs - added in script for smoothing and dilation
+%	2014-01-22 - Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
+%	2014-02-16 - Grega Repovs - forked from fcComputeGBC3 to do distance based bands
+%	2017-03-19 - Grega Repovs - cleaned, updated documentation
+%	2017-04-18 - Modified by Grega Repovš - adopted use of g_ReadFileList.
 %
 
 
