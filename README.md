@@ -122,6 +122,7 @@ Change Log
 * 0.5.4: Initial pre-alpha release. Added XNATCloudUpload.sh script to enable automated XNAT ingestion and integration with multi data format support
 * 0.5.5: Initial pre-alpha release. Upgraded high-performance cluster scheduler functionality
 * 0.5.6: Initial pre-alpha release. Edited naming grammar of connector pipeline to 'mnap' 
+* 0.6.0: Initial pre-alpha release. Added `eddyqc` function to the mnap wrapper for diffusion MRI quality control
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
