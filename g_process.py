@@ -463,9 +463,9 @@ def run(command, args):
 
     logfolder    = options['logfolder']
     if logfolder is None:
-        logfolder = os.path.abs(".")
+        logfolder = os.path.abspath(".")
         if not any([os.path.join(basefolder, e) in logfolder for e in ['fcMRI', 'fcmri', 'analysis', 'Analysis', 'processing', 'Processing']]):
-            logfolder = os.path.join(basefolder, 'processing', 'logs')
+            logfolder = os.path.join(os.path.dirname(basefolder), 'processing', 'logs')
 
     runlogfolder = os.path.join(logfolder, 'runlogs')
     comlogfolder = os.path.join(logfolder, 'comlogs')
