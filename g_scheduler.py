@@ -120,7 +120,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     naccesspolicy, epilogue, prologue will be submitted using:
     "#PBS -l <key>=<value>".
 
-    Keys: j, m, i, S, a, A, M, q, t will be submitted using:
+    Keys: j, m, o, S, a, A, M, q, t, e will be submitted using:
     "#PBS -<key> <value>"
 
     Key: depend will be submitted using:
@@ -149,12 +149,17 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     LSF settings
     ------------
 
-    For LSF only the following key/value parameters are passed on:
+    For LSF the following key/value parameters are parsed as:
 
     * queue    -> "#BSUB -q <queue>"
     * mem      -> "#BSUB -R 'span[hosts=1] rusage[mem=<mem>]"
     * walltime -> "#BSUB -W <walltime>"
     * cores    -> "#BSUB -n <cores>"
+
+    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo
+    will be submitted using:
+
+    "#BSUB -<key> <value>"
 
     SLURM settings
     --------------
@@ -190,6 +195,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     ----------------
     Written by Grega Repovš, 2017-06-17
 
+    Changelog
+    2017-09-30 - Grega Repovs
+                 Added additional options to scheduling LSF jobs.
     '''
 
     # --- check inputs
@@ -253,7 +261,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue'):
                 sCommand += "#PBS -l %s=%s" % (k, v)
-            elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't'):
+            elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e'):
                 sCommand += "#PBS -%s %s" % (k, v)
             elif k == 'depend':
                 sCommand += "#PBS -W depend=%s" % (v)
@@ -275,6 +283,9 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in [('queue', '#BSUB -q %s\n'), ('mem', "#BSUB -R 'span[hosts=1] rusage[mem=%s]'\n"), ('walltime', '#BSUB -W %s\n'), ('cores', '#BSUB -n %s\n')]:
             if k in setDict:
                 sCommand += v % (setDict[k])
+        for k, v in setDict.items():
+            if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
+                sCommand += "#BSUB -%s %s" % (k, v)
         sCommand += "#BSUB -P %s-%s\n" % (jobname, comname)
         sCommand += "#BSUB -J %s-%s_%d\n" % (jobname, comname, jobnum)
         com = 'bsub'
