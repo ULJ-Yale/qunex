@@ -91,15 +91,32 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     ==================
 
     If no output is specified, the job's standard output and error (stdout,
-    stderr) are left as is and processed by the scheduler. If --output is set
-    to "return", then both the standard output and error are captured and
-    returned as a string (to be used when the function is called from python).
-    The ouput can be also redirected and appended to specifed file(s) by listing
-    them as key/value pairs in a string specifying stdout, stderr or both:
+    stderr) are left as is and processed by the scheduler, and the result of
+    submitting the job is printed to standard output. Output string can specify
+    four different directives provided by "<key>:<value>" strings separated by
+    pipe:
+
+    * stdout - specifies a path to a log file that should store standard output
+               of the submitted job
+    * stderr - specified a path to a log file that should store error output
+               of the submitted job
+    * both   - specifies a path to a log file that should store joint standard
+               and error outputs of the submitted job
+    * return - specifies whether standard output ('stdout'), error outpout
+               ('stderr'), both ('both') or none ('none') should be returned as
+               a string from the job submission call.
+
+    Specify "return" value only when schedule is used as a function called from
+    another python script or function to process the result.
+
+    Examples:
 
     * "stdout:processing.log"
     * "stdout:processing.output.log|stderr:processing.error.log"
-    * "both:processing.log"
+    * "both:processing.log|return:true"
+
+    Do not specify error and standard outputs both using --output parameter and
+    scheduler specific options within settings string.
 
     SCHEDULER SPECIFICS
     ===================
@@ -198,6 +215,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     Changelog
     2017-09-30 - Grega Repovs
                  Added additional options to scheduling LSF jobs.
+    2017-09-30 - Grega Repovs
+                 Added options to redirect job output to log files.
     '''
 
     # --- check inputs
@@ -218,7 +237,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         scheduler = setList.pop(0)
         setDict   = dict([e.strip().split("=") for e in setList])
         jobname   = setDict.pop('jobname', "schedule")
-        comname   = setDict.pop('comname', "C")
+        comname   = setDict.pop('comname', "")
         jobnum    = setDict.pop('jobnum', "1")
     except:
         raise ValueError("       Could not parse the settings string: \"%s\".\n       Please check the documentation for correct scheduler settings string format (gmri ?schedule)." % settings)
@@ -253,6 +272,18 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
             command.replace("{{%s}}" % (key), value)
 
 
+    # --- parse output
+
+    outputs = {'stdout': None, 'stderr': None, 'both': None, 'return': None}
+
+    if output is not None:
+        for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
+            outputs[k] = v
+
+    if outputs['both'] is not None:
+        outputs['stderr'] = outputs['both']
+        outputs['stdout'] = outputs['both']
+
     # --- build scheduler commands
 
     sCommand = ""
@@ -260,11 +291,11 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     if scheduler == "PBS":
         for k, v in setDict.items():
             if k in ('mem', 'walltime', 'software', 'file', 'procs', 'pmem', 'feature', 'host', 'naccesspolicy', 'epilogue', 'prologue'):
-                sCommand += "#PBS -l %s=%s" % (k, v)
+                sCommand += "#PBS -l %s=%s\n" % (k, v)
             elif k in ('j', 'm', 'o', 'S', 'a', 'A', 'M', 'q', 't', 'e'):
-                sCommand += "#PBS -%s %s" % (k, v)
+                sCommand += "#PBS -%s %s\n" % (k, v)
             elif k == 'depend':
-                sCommand += "#PBS -W depend=%s" % (v)
+                sCommand += "#PBS -W depend=%s\n" % (v)
             elif k == 'nodes':
                 v = v.split(':')
                 res = 'nodes=%s' % (v.pop(0))
@@ -275,7 +306,13 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                         res += ":gpus=%s" % (v.pop(0))
                     else:
                         res += ":" + v.pop(0)
-        sCommand += "#PBS -N %s%s_#%s" % (jobname, comname, jobnum)
+        sCommand += "#PBS -N %s-%s#%s\n" % (jobname, comname, jobnum)
+        if outputs['stdout'] is not None:
+            sCommand += "#PBS -o %s\n" % (outputs['stdout'])
+        if outputs['stderr'] is not None:
+            sCommand += "#PBS -e %s\n" % (outputs['stderr'])
+        if outputs['both']:
+            sCommand += "#PBS -j oe\n"
         com = 'qsub'
 
     elif scheduler == "LSF":
@@ -285,55 +322,53 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 sCommand += v % (setDict[k])
         for k, v in setDict.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
-                sCommand += "#BSUB -%s %s" % (k, v)
+                sCommand += "#BSUB -%s %s\n" % (k, v)
         sCommand += "#BSUB -P %s-%s\n" % (jobname, comname)
-        sCommand += "#BSUB -J %s-%s_%d\n" % (jobname, comname, jobnum)
+        sCommand += "#BSUB -J %s-%s#%d\n" % (jobname, comname, jobnum)
+        if outputs['stdout'] is not None:
+            sCommand += "#BSUB -o %s\n" % (outputs['stdout'])
+        if outputs['stderr'] is not None:
+            sCommand += "#BSUB -e %s\n" % (outputs['stderr'])
         com = 'bsub'
 
     elif scheduler == "SLURM":
         sCommand += "#!/bin/sh\n"
-        sCommand += "#SBATCH --job-name=%s-%s_#%s\n" % (jobname, comname, jobnum)
+        sCommand += "#SBATCH --job-name=%s-%s#%s\n" % (jobname, comname, jobnum)
         for key, value in setDict.items():
             sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+        if outputs['stdout'] is not None:
+            sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
+        if outputs['stderr'] is not None:
+            sCommand += "#SBATCH -e %s\n" % (outputs['stderr'])
         com = 'sbatch'
 
+    # --- run scheduler
 
-    # --- parse output
+    print "Submitting:\n------------------------------\n", sCommand + command
 
-    sout = None
-    serr = None
-
-    if output is not None:
-        if 'return' in output:
-            serr = subprocess.STDOUT
-            sout = subprocess.PIPE
-        elif 'both' in output:
-            serr = subprocess.STDOUT
-            sout = open(output.split(':')[1].strip(), 'a')
-        else:
-            for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
-                if k == 'stdout':
-                    sout = open(v, 'a')
-                elif k == 'stderr':
-                    serr = open(v, 'a')
-
-    print "Running\n", sCommand + command
+    if outputs['return'] is None:
+        serr = None
+        sout = None
+    elif outputs['return'] == 'both':
+        serr = subprocess.STDOUT
+        sout = subprocess.PIPE
+    elif outputs['return'] == 'stderr':
+        serr = subprocess.PIPE
+        sout = None
+    elif outputs['return'] == 'stdout':
+        serr = None
+        sout = subprocess.PIPE
 
     run = subprocess.Popen(com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True)
     run.stdin.write(sCommand + command)
     run.stdin.close()
 
-    # ---- storing results
+    # ---- returning results
 
-    if output is not None:
-        if 'return' in output:
-            result = run.stdout.read()
-            return result
-        elif 'both' in output:
-            sout.close()
-        else:
-            if sout is not None:
-                sout.close()
-            if serr is not None:
-                serr.close()
+    if outputs['return'] in ['both', 'stdout']:
+        result = run.stdout.read()
+        return result
+    elif outputs['return'] in ['stderr']:
+        result = run.stderr.read()
+        return result
 

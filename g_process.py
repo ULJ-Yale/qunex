@@ -464,7 +464,7 @@ def run(command, args):
     logfolder    = options['logfolder']
     if logfolder is None:
         logfolder = os.path.abspath(".")
-        if not any([os.path.join(basefolder, e) in logfolder for e in ['fcMRI', 'fcmri', 'analysis', 'Analysis', 'processing', 'Processing']]):
+        if not any([os.path.abspath(os.path.join(os.path.dirname(basefolder), e)) in logfolder for e in ['fcMRI', 'fcmri', 'analysis', 'Analysis', 'processing', 'Processing']]):
             logfolder = os.path.join(os.path.dirname(basefolder), 'processing', 'logs')
 
     runlogfolder = os.path.join(logfolder, 'runlogs')
@@ -651,7 +651,13 @@ def run(command, args):
 
         # ---- run jobs
 
-        c = 0
+        soptions  = options['scheduler'].split(',')
+        scheduler = soptions.pop(0).strip()
+        c         = 0
+        batchlogf = os.path.join(logfolder, 'batchlogs')
+        if not os.path.exists(batchlogf):
+            os.makedirs(batchlogf)
+
         while subjects:
 
             c += 1
@@ -673,12 +679,18 @@ def run(command, args):
 
             # ---- pass the command string to scheduler
 
+
+            addInfo   = ',jobname=%s,jobnum=%d,' % (command, c)
+            settings  = scheduler + addInfo + ",".join(soptions)
+            exectime  = datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
+            logfile   = os.path.join(batchlogf, "%s_%s_job%02d.%s.log" % (scheduler, command, c, exectime))
+
             print "\n==============> submitting %s_#%02d\n" % (command, c)
             print cstr
 
             print >> flog, "\n==============> submitting %s_#%02d\n" % (command, c)
 
-            result = g_scheduler.schedule(command=cstr, settings=options['scheduler'], workdir=options['scheduler_workdir'], environment=options['scheduler_environment'], output='return')
+            result = g_scheduler.schedule(command=cstr, settings=settings, workdir=options['scheduler_workdir'], environment=options['scheduler_environment'], output="both:%s|return:both" % (logfile))
 
             print "\n----------"
             print result
