@@ -21,7 +21,7 @@
 #
 # ## Product
 #
-# * Analysis Pipelines for the general neuroimaging workflow and bash wrapper for MNAP
+# * MNAP Connector Wrapper for the general neuroimaging workflow
 #
 # ## License
 #
@@ -29,7 +29,7 @@
 #
 # ## Description:
 #
-# * This is a general lab pipeline developed as for front-end organization prior to HCP pipelines, for running HCP pipelines functions, and back-end analysis following dofcMRI
+# * This is a MNAP connector wrapper developed as for front-end bash integration for MNAP
 #
 # ### Installed Software (Prerequisites) - these are sourced in ~MNAP/library/environment/mnap_environment.sh
 #
@@ -173,6 +173,7 @@ show_usage() {
 				echo ""
 				echo "QC and Misc processing functions"
 				echo "--------------------------------"
+				echo "eddyqc		run quality control on diffusion datasets following eddy outputs"
 				echo "qcpreproc		run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
 				echo ""  				
 				echo ""
@@ -1812,9 +1813,11 @@ hcpdlegacy() {
 			--unwarpdir=${UnwarpDir} \
 			--diffdatasuffix=${DiffDataSuffix} \
 			--overwrite=${Overwrite}" > ${StudyFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh
+			
 			# - Make script executable 
 			chmod 770 ${StudyFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh
 			cd ${StudyFolder}/${CASE}/hcp/
+			
 			# - Send to scheduler 
 			gmri schedule command="${StudyFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh" \
 			settings="${Scheduler}" \
@@ -1857,8 +1860,6 @@ show_usage_hcpdlegacy() {
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
@@ -1874,7 +1875,6 @@ show_usage_hcpdlegacy() {
 				echo "--TE='2.46' \ "
 				echo "--unwarpdir='x-' \ "
 				echo "--diffdatasuffix='DWI_dir91_LR' \ "
-				#echo "--runmethod='1' \ "
 				echo "--overwrite='yes'"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler [ needs GPU-enabled queue ]:"
@@ -1887,15 +1887,173 @@ show_usage_hcpdlegacy() {
 				echo "--TE='2.46' \ "
 				echo "--unwarpdir='x-' \ "
 				echo "--diffdatasuffix='DWI_dir91_LR' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo "--overwrite='yes' \ "
 				echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  dwidenseparcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the AP wrapper
+#  eddyqc - Executes the DWI EddyQ C (DWIEddyQC.sh) via the MNAP connector wrapper
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+eddyqc() {
+
+		################# CHECK eddy_squad and eddy_squad INSTALL ################################
+		
+		# -- Check if eddy_squad and eddy_quad exist in user path
+		EddySquadCheck=`which eddy_squad`
+		EddyQuadCheck=`which eddy_quad`
+		
+		if [ -z ${EddySquadCheck} ] || [ -z ${EddySquadCheck} ]; then
+			echo ""
+		    reho " -- ERROR: EDDY QC does not seem to be installed on this system."
+		    echo ""
+		    exit 1
+		fi
+		    
+		########################################## INPUTS ########################################## 
+		
+		# eddy-cleaned DWI Data
+		
+		########################################## OUTPUTS #########################################
+		
+		# Outputs will be located in <eddyBase>.qc per EDDY QC specification
+		
+		LogFolder="${EddyPath}/log_eddyqc"
+		mkdir ${LogFolder} > /dev/null 2>&1
+		
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="$CASE_$TimeStamp"
+			
+		if [ "$Cluster" == 1 ]; then
+			echo "Running locally on `hostname`"
+			echo "Check log file output here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+			DWIeddyQC.sh \
+			--path=${StudyFolder} \
+			--subject=${CASE} \
+			--eddybase=${EddyBase} \
+			--report=${Report} \
+			--bvalsfile=${BvalsFile} \
+			--mask=${Mask} \
+			--eddyidx=${EddyIdx} \
+			--eddyparams=${EddyParams} \
+			--bvecsfile=${BvecsFile} \
+			--overwrite=${Overwrite} >> "$LogFolder"/DWIEddyQC_"$Suffix".log
+		else
+			# - Clean prior command 
+			rm -f "$LogFolder"/DWIEddyQC_"$Suffix".sh &> /dev/null	
+			# - Echo full command into a script
+			echo "DWIeddyQC.sh \
+			--path='${StudyFolder}' \
+			--subject='${CASE}' \
+			--eddybase='${EddyBase}' \s
+			--report='${Report}' \
+			--bvalsfile='${BvalsFile}' \
+			--mask='${Mask}' \
+			--eddyidx='${EddyIdx}' \
+			--eddyparams='${EddyParams}' \
+			--bvecsfile='${BvecsFile}' \
+			--overwrite='${Overweite}'" > "$LogFolder"/DWIEddyQC_"$Suffix".sh
+			
+			# - Make script executable 
+			chmod 770 "$LogFolder"/DWIEddyQC_"$Suffix".sh
+			cd ${LogFolder}
+			
+			# - Send to scheduler 
+			gmri schedule command="${LogFolder}/DWIEddyQC_${Suffix}.sh" \
+			settings="${Scheduler}" \
+			output="stdout:${LogFolder}/DWIEddyQC.${Suffix}.output.log|stderr:${LogFolder}/DWIEddyQC.${Suffix}.error.log" \
+			workdir="${LogFolder}"
+			
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted" 
+			echo "Scheduler Name and Options: $Scheduler"
+			echo "Check output logs here: $LogFolder"
+			echo "--------------------------------------------------------------"
+			echo ""
+		fi
+}
+
+show_usage_eddyqc() {
+
+				echo ""
+				echo "-- DESCRIPTION:"
+				echo ""
+				echo "This function is based on FSL's eddy to perform quality control on diffusion mri (dMRI) datasets."
+				echo "It explicitly assumes the that eddy has been run and that EDDY QC by Matteo Bastiani, FMRIB has been installed. "
+				echo "For full documentation of the EDDY QC please examine the README file."
+				echo ""
+				echo "   <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ ---> DWI eddy outputs would be here"
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "   --function=<function_name>			Name of function --> eddyqc "
+ 				echo "   --path=<study_folder>   Path to study data folder"
+				echo "   --subject=<subj_id>   Subjects ID to run EDDY QC on"
+ 				echo "   --eddybase=<eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
+ 				echo "   --eddyidx=<eddy_index_file>   EDDY index file"
+ 				echo "   --eddyparams=<eddy_param_file>   EDDY parameters file"
+ 				echo "   --mask=<mask_file>   Binary mask file (most qc measures will be averaged across voxels labeled in the mask)"
+ 				echo "   --bvalsfile=<bvals_file>   bvals input file"
+ 				echo "   --report=<run_group_or_individual_report>   If you want to generate a group report [individual or group  Default: individual]"
+ 				echo ""
+ 				echo "    *IF* --report='group' *THEN* this argument needs to be specificed: "
+ 				echo ""
+ 				echo "   --list=<group_list_input>   Text file containing a list of qc.json files obtained from SQUAD"
+				echo ""
+				echo ""
+    			echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+ 				echo "   --overwrite=<clean_prior_run>   Delete prior run for a given subject"
+				echo "   --eddypath=<eddy_folder_relative_to_subject_folder>   Specify the relative path of the eddy folder you want to use for inputs"
+				echo "                                                         --> Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
+				echo "   --bvecsfile=<bvecs_file>   If specified, the tool will create a bvals_no_outliers.txt "
+				echo "                              & a bvecs_no_outliers.txt file that contain the bvals and bvecs of the non outlier volumes, based on the MSR estimates)"
+				echo "   --scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "																e.g. for SLURM the string would look like this: "
+				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo ""
+    			echo "-- EXTRA OPTIONAL PARMETERS IF --report='group' "
+    			echo ""
+				echo "   --groupvar=<extra_grouping_variable>   Text file containing extra grouping variable"
+				echo "   --outputdir=<name_of_cleaned_eddy_output>   Output directory - default = '<eddyBase>.qc' "
+				echo "   --update=<setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single subject qc reports "
+				echo ""
+ 				echo ""
+ 				echo "-- EXAMPLE:"
+				echo ""
+				echo "mnap --path='<path_to_study_folder_with_subject_directories>' \ "
+				echo "--function='eddyqc' \ "
+				echo "--subject='<subj_id>' \ "
+				echo "--eddybase='<eddy_base_name>' \ "
+				echo "--report='individual'"
+				echo "--bvalsfile='<bvals_file>' \ "
+				echo "--mask='<mask_file>' \ "
+				echo "--eddyidx='<eddy_index_file>' \ "
+				echo "--eddyparams='<eddy_param_file>' \ "
+				echo "--bvecsfile='<bvecs_file>' \ "
+				echo "--overwrite='yes' "
+				echo "--scheduler='<name_of_scheduler_and_options>' "
+				echo ""	
+				echo "-- OUTPUTS FOR INDIVIDUAL RUN: "
+				echo "" 
+   				echo " - qc.pdf: single subject QC report "
+				echo " - qc.json: single subject QC and data info"
+    			echo " - vols_no_outliers.txt: text file that contains the list of the non-outlier volumes (based on eddy residuals)"
+				echo ""
+				echo "-- OUTPUTS FOR GROUP RUN: "
+				echo "" 
+   				echo " - group_qc.pdf: single subject QC report "
+				echo " - group_qc.db: database"  
+				echo ""
+				echo ""  
+}
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  dwidenseparcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 dwidenseparcellation() {
@@ -1955,9 +2113,11 @@ dwidenseparcellation() {
 			--parcellationfile=${ParcellationFile} \
 			--outname=${OutName} \
 			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseParcellation_"$Suffix".sh
+			
 			# - Make script executable 
 			chmod 770 "$LogFolder"/DWIDenseParcellation_"$Suffix".sh
 			cd ${LogFolder}
+			
 			# - Send to scheduler 
 			gmri schedule command="${LogFolder}/DWIDenseParcellation_${Suffix}.sh" \
 			settings="${Scheduler}" \
@@ -2019,12 +2179,11 @@ show_usage_dwidenseparcellation() {
 				echo "--overwrite='no' \ "
 				echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				echo "--scheduler='lsf'"
 				echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  dwiseedtractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the AP wrapper
+#  dwiseedtractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 dwiseedtractography() {
@@ -2160,7 +2319,7 @@ show_usage_dwiseedtractography() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  computeboldfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the AP wrapper
+#  computeboldfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 computeboldfc() {
@@ -2548,7 +2707,7 @@ show_usage_computeboldfc() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  structuralparcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the AP wrapper
+#  structuralparcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 structuralparcellation() {
@@ -2679,7 +2838,7 @@ show_usage_structuralparcellation () {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  boldparcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the AP wrapper
+#  boldparcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 boldparcellation() {
@@ -2864,7 +3023,7 @@ show_usage_boldparcellation() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  ROIExtract - Executes the ROI Extraction Script (extract_ROIs.sh) via the AP wrapper
+#  ROIExtract - Executes the ROI Extraction Script (extract_ROIs.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 roiextract() {
@@ -4318,8 +4477,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
 	# -- roiextract input flags
-	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@` 																			# --roifile=<filepath>		Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
-	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@` 																# --subjectroifile=<use_a_subject_specific_roi_file>				Specify if you want to use a subject-specific ROI file"
+	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@` 																		# --roifile=<filepath>		Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
+	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@` 														# --subjectroifile=<use_a_subject_specific_roi_file>				Specify if you want to use a subject-specific ROI file"
 	
 	# -- computeboldfc input flags
 	#InputFiles=`opts_GetOpt "${setflag}inputfiles" "$@" | sed 's/,/ /g;s/|/ /g'`; InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'` 	# --inputfiles=
@@ -4350,6 +4509,20 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	# -- dwiseedtractography input flags
 	SeedFile=`opts_GetOpt "${setflag}seedfile" $@` 																			# --seedfile=<structure_for_seeding>	Specify the absolute path of the seed file you want to use as a seed for dconn reduction
 	
+	# -- eddyqc input flags
+	EddyBase=`opts_GetOpt "${setflag}eddybase" $@` 																			# <eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)
+	EddyPath=`opts_GetOpt "${setflag}eddypath" $@` 																			# <eddy_folder_relative_to_subject_folder>   Specify the relative path of the eddy folder you want to use for inputs 
+	Report=`opts_GetOpt "${setflag}report" $@`   																			# <run_group_or_individual_report>   If you want to generate a group report [individual or group  Default: individual
+	BvalsFile=`opts_GetOpt "${setflag}bvalsfile" $@` 																		# <bvals_file>   bvals input file
+	BvecsFile=`opts_GetOpt "${setflag}bvecsfile" $@` 																		# <bvecs_file>   bvecs input file
+	EddyIdx=`opts_GetOpt "${setflag}eddyidx" $@`   																			# <eddy_index_file>   EDDY index file
+	EddyParams=`opts_GetOpt "${setflag}eddyparams" $@`   																	# <eddy_param_file>   EDDY parameters file
+	List=`opts_GetOpt "${setflag}list" $@`   																				# <group_list_input>   Text file containing a list of qc.json files obtained from SQUAD 
+	Mask=`opts_GetOpt "${setflag}mask" $@`   																				# <mask_file>   Binary mask file (most qc measures will be averaged across voxels labeled in the mask)
+	GroupBar=`opts_GetOpt "${setflag}groupvar" $@`   																		# <extra_grouping_variable>   Text file containing extra grouping variable
+	OutputDir=`opts_GetOpt "${setflag}outputdir" $@`   																		# <name_of_cleaned_eddy_output>   Output directory - default = '<eddyBase>.qc'
+	Update=`opts_GetOpt "${setflag}update" $@`   																			# <setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single subject qc reports
+				
 	# -- fslbedpostxgpu input flags
 	Fibers=`opts_GetOpt "${setflag}fibers" $@` 																				# <number_of_fibers>		Number of fibres per voxel, default 3
 	Model=`opts_GetOpt "${setflag}model" $@`   																				# <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
@@ -4491,6 +4664,86 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		
 		for CASE in $CASES
 		do
+			"$FunctionToRun" "$CASE"
+		done
+fi
+
+# ------------------------------------------------------------------------------
+#  Eddy QC function loop - eddyqc - uses EDDY QC by Matteo Bastiani, FMRIB
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "eddyqc" ]; then
+		# -- Check all the user-defined parameters:	
+		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+		if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
+		# -- perform checks for individual run
+		if [ "$Report" == "individual" ]; then
+			if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+			if [ -z "$EddyBase" ]; then reho "Eddy base input name missing"; exit 1; fi
+			if [ -z "$BvalsFile" ]; then reho "BVALS file missing"; exit 1; fi
+			if [ -z "$EddyIdx" ]; then reho "Eddy index missing"; exit 1; fi
+			if [ -z "$EddyParams" ]; then reho "Eddy parameters missing"; exit 1; fi
+			if [ -z "$Mask" ]; then reho "Error: Mask missing"; exit 1; fi
+			if [ -z "$BvecsFile" ]; then BvecsFile=""; fi
+		fi
+		# -- perform checks for group run
+		if [ "$Report" == "group" ]; then
+			if [ -z "$List" ]; then reho "Error: List of subjects missing"; exit 1; fi
+			if [ -z "$Update" ]; then Update="false"; fi
+			if [ -z "$GroupVar" ]; then GroupVar=""; fi
+		fi
+		# -- check if cluster options are set
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+		fi
+		
+		# -- loop through cases
+		for CASE in $CASES
+		do
+			# -- check in/out paths
+			if [ -z ${EddyPath} ]; then
+				reho "Eddy path not set. Assuming defaults."
+        		EddyPath="${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+    		fi
+    	
+	    	if [ -z ${OutputDir} ]; then
+	    		reho "Output folder not set. Assuming defaults."
+    		    OutputDir="${EddyPath}/${EddyBase}.qc"
+    		fi
+    	
+    		# -- report parameters
+    		echo ""
+			echo "Running eddyqc with the following parameters:"
+			echo ""
+			echo "--------------------------------------------------------------"
+  			echo "   StudyFolder: ${StudyFolder}"
+  			echo "   Subjects: ${CASES}"
+  			echo "   Report Type: ${Report}"
+  			echo "   Eddy QC Input Path: ${EddyPath}"
+  			echo "   Eddy QC Output Path: ${OutputDir}"
+  			# report group parameters
+  			if [ ${Report} == "group" ]; then
+  			echo "   List: ${List}"
+  			echo "   Grouping Variable: ${GroupVar}"
+  			echo "   Update single subjects: ${Update}"
+			echo ""
+			fi
+			# report individual parameters
+			if [ ${Report} == "individual" ]; then
+  			echo "   Eddy Inputs Base Name: ${EddyBase}"
+  			echo "   Mask: ${EddyPath}/${Mask}"
+  			echo "   BVALS file: ${EddyPath}/${BvalsFile}"
+  			echo "   Eddy Index file: ${EddyPath}/${EddyIdx}"
+  			echo "   Eddy parameter file: ${EddyPath}/${EddyParams}"
+			fi
+			# report optional parameters
+  			echo "   BvecsFile: ${EddyPath}/${BvecsFile}"
+  			echo "   Overwrite: ${EddyPath}/${Overwrite}"
+			echo "--------------------------------------------------------------"
+    	
+			# -- execute function
 			"$FunctionToRun" "$CASE"
 		done
 fi
