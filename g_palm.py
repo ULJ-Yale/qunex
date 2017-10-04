@@ -23,9 +23,9 @@ import glob
 import niutilities
 import re
 
-def runPALM(image, design=None, args=None, root=None, cores=None):
+def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'):
     '''
-    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
+    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]  [overwite=no]
 
     USE
     ===
@@ -198,11 +198,14 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
     Additional optional parameters
     ------------------------------
 
-    * root  : optional root name for the result images, design name is used if
-              the optional parameter is not specified
-    * cores : number of cores to use in parallel for grayordinate decomposition,
-              all available cores (3 max for left surface, right surface and
-              volume files) will be used if not specified
+    * root      : optional root name for the result images, design name is used
+                  if the optional parameter is not specified
+    * cores     : number of cores to use in parallel for grayordinate
+                  decomposition, all available cores (3 max for left surface,
+                  right surface and volume files) will be used if not specified
+    * overwrite : whether to remove preexisting image files, if they exists, the
+                  command will exit with a warning if there are preexiting files
+                  and overwrite is set to 'no' (the default)
 
     Example use
     -----------
@@ -225,7 +228,8 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
              - Added ability to run ptseries CIFTI images.
     2017-09-28 Grega Repovš
              - Updated documentation regarding location of design files.
-
+    2017-10-204 Grega Repovš
+             - Added cleaning of preexisting image files.
     '''
 
     print "\n Running PALM"
@@ -254,6 +258,19 @@ def runPALM(image, design=None, args=None, root=None, cores=None):
 
     if root is None:
         root = doptions['name']
+
+    # --- check for preexisting files
+
+    files = glob.glob(root + '*.nii') + glob.glob(root + '*.nii.gz')
+    if len(files) > 0:
+        if overwrite == 'yes':
+            print " --> cleaning up preexisiting image files"
+            for file in files:
+                print "     ... removing %s" % file
+                os.remove(file)
+        else:
+            print "ERROR: There are preexisting image files with the specified root.\n       Please inspect and remove them to prevent conflicts or specify 'overwrite=yes'!"
+            return
 
     # --- parse argument options
 

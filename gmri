@@ -112,7 +112,7 @@ joinMaps images=<image file list> output=<output file name> [names=<volume names
 
 PALM utilities
 --------------
-runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]
+runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>] [overwrite=no]
 
 
 Scheduling utilities
@@ -215,7 +215,7 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'map2HCP'              : {'com': niu.g_4dfp.map2HCP,                 'args': ('volume', 'method')},
             'maskMap'              : {'com': niu.g_palm.maskMap,                 'args': ('image', 'masks', 'output', 'minv', 'maxv')},
             'joinMaps'             : {'com': niu.g_palm.joinMaps,                'args': ('images', 'output', 'names', 'originals', 'join')},
-            'runPALM'              : {'com': niu.g_palm.runPALM,                 'args': ('image', 'design', 'args', 'root', 'cores')},
+            'runPALM'              : {'com': niu.g_palm.runPALM,                 'args': ('image', 'design', 'args', 'root', 'cores', 'overwrite')},
             'createWSPALMDesign'   : {'com': niu.g_palm.createWSPALMDesign,      'args': ('factors', 'nsubjects', 'root')},
             'schedule'             : {'com': niu.g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')}
             }
