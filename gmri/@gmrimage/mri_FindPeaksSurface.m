@@ -1,6 +1,6 @@
 function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, options, verbose)
 
-%function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, verbose)
+%function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, minarea, maxarea, val, t, fp_param.verbose)
 %
 %       Find peaks and uses watershed algorithm to grow regions from them on the brain
 %       model components constructed with surface elements (ex. left and right cortex).
@@ -27,7 +27,7 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %                                           - 'boundary:remove'         ... remove the boundary regions
 %                                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
 %                                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
-%       verbose          - whether to report the peaks (1) and also be verbose (2) [false]
+%       fp_param.verbose          - whether to report the peaks (1) and also be fp_param.verbose (2) [false]
 %
 %   OUTPUT
 %       roi              - A gmrimage with the created ROI.
@@ -56,7 +56,7 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %
 %   EXAMPLE USE 2
 %   To perform an operation on a time series (dtseries) image with similar
-%   parameters as in the first example on frames 1, 3, 7 with verbose
+%   parameters as in the first example on frames 1, 3, 7 with fp_param.verbose
 %   output use:
 %
 %   roi = img.mri_FindPeaksSurface('cortex_left', 'midthickness', 50, 250, 'b', 3, 'frames:[1 3 7]', 2);
@@ -68,7 +68,8 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %   - add statistics calculations for the peak data structure
 %
 
-if nargin < 9 || isempty(verbose), verbose = false;       end
+%% - I - import section
+if nargin < 9 || isempty(verbose), fp_param.verbose = false;       end
 if nargin < 8 || isempty(options), options = '';          end
 if nargin < 7 || isempty(t),       t       = 0;           end
 if nargin < 6 || isempty(val),     val     = 'b';         end
@@ -76,6 +77,14 @@ if nargin < 5 || isempty(maxarea), maxarea = inf;         end
 if nargin < 4 || isempty(minarea), minarea = 1;           end
 if nargin < 3 || isempty(projection), projection = 'midthickness';            end
 if nargin < 2 || isempty(surfaceComponent), surfaceComponent = 'cortex_left'; end
+
+% --- Find Peaks Parameters
+fp_param.surfaceComponent = surfaceComponent;
+fp_param.projection = projection;
+fp_param.val = val;
+fp_param.threshold = t;
+fp_param.minarea = minarea;
+fp_param.maxarea = maxarea;
 
 % --- Script verbosity
 verbose_pass = verbose;
@@ -87,6 +96,8 @@ elseif verbose == 2
     verbose = true;
     report  = true;
 end
+fp_param.verbose = verbose;
+fp_param.report = report;
 
 % --- parse options argument
 options_parsed = g_ParseOptions([],options);
@@ -98,19 +109,21 @@ if ~isfield(options_parsed,'boundary')
 end
 frames = options_parsed.frames;
 boundary = options_parsed.boundary;
+fp_param.frames = frames;
+fp_param.boundary = boundary;
 
-% --- Check for the number of frames in the image
+% --- If multiple frame image, perform FindPeaks recursevely for each frame
 if img.frames > 1
-    if verbose, fprintf('\n---> more than 1 frame detected'); end
+    if fp_param.fp_param.verbose, fprintf('\n---> more than 1 frame detected'); end
     % if more than 1 frame, perform mri_FindPeaks() on each frame recursivelly
     img_temp = img; img_temp.frames = 1;
     roi = img;
     peak = cell(1,img.frames);
-    for fr = frames
-        if verbose, fprintf('\n---> performing ROI on frame %d', fr); end
+    for fr = fp_param.frames
+        if fp_param.fp_param.verbose, fprintf('\n---> performing ROI on frame %d', fr); end
         img_temp.data = img.data(:,fr);
         [img_temp, p_temp] = ...
-            img_temp.mri_FindPeaksSurface(surfaceComponent, projection, minarea, maxarea, val, t, 1, verbose_pass);
+            img_temp.mri_FindPeaksSurface(surfaceComponent, projection, minarea, maxarea, val, t, 1, fp_param.verbose_pass);
         roi.data(:,fr)=img_temp.image2D();
         peak{fr} = p_temp;
     end
@@ -118,269 +131,56 @@ if img.frames > 1
 end
 
 % --- Load CIFTI brain model data
+cifti = [];
 load('CIFTI_BrainModel.mat');
+fp_param.cifti = cifti;
 
 % -- Check the type of projection passed and weather it is a file
-if ~sum(strcmp(projection,{'midthickness','inflated','very_inflated','sphere'}))
-    subject_projection = gifti(projection);
-    projection = 'subject';
-    cifti.(lower(surfaceComponent)).subject.vertices = subject_projection.vertices;
-    cifti.(lower(surfaceComponent)).subject.area_vector = getProjectionArea(subject_projection.vertices, surfaceComponent, cifti);
-end
-
-if strcmp(surfaceComponent, 'cortex_left')
-    cmp = 1;
-elseif strcmp(surfaceComponent, 'cortex_right')
-    cmp = 2;
-else
-    error('Wrong component inserted!');
-end
+fp_param = determineSurfaceProjection(fp_param);
 
 % --- Create an empty matrix to store the data globally for each hemisphere
-data.(lower(img.cifti.shortnames{cmp})) = zeros(32492,1);
-if strcmp(cifti.(lower(img.cifti.shortnames{cmp})).type,'Surface')
-    data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask) = img.data(img.cifti.start(cmp):img.cifti.end(cmp));
-end
+roiData = zeros(32492,1);
+fp_param.brainStructure = lower(img.cifti.shortnames{fp_param.cmp});
+roiData(cifti.(fp_param.brainStructure).mask) = img.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp));
 
 % --- Flip to focus on the relevant value(s)
-if strcmp(cifti.(lower(img.cifti.shortnames{cmp})).type,'Surface')
-    if strcmp(val, 'b')
-        data.(lower(img.cifti.shortnames{cmp})) = abs(data.(lower(img.cifti.shortnames{cmp})));
-    elseif strcmp(val, 'p')
-        data.(lower(img.cifti.shortnames{cmp}))(data.(lower(img.cifti.shortnames{cmp})) < 0) = 0;
-    elseif strcmp(val, 'n')
-        data.(lower(img.cifti.shortnames{cmp}))(data.(lower(img.cifti.shortnames{cmp})) > 0) = 0;
-        data.(lower(img.cifti.shortnames{cmp})) = data.(lower(img.cifti.shortnames{cmp})) * -1;
-    else
-        error('No value specified!');
-    end
-    
-    data.(lower(img.cifti.shortnames{cmp}))(data.(lower(img.cifti.shortnames{cmp})) < t) = 0;
+roiData = thresholdData(roiData, fp_param);
+
+% --- Preallocate peak structure
+peak = [];
+
+% --- preallocate the global vector to store region ID at indices corresponding to the data
+indexedData = zeros(size(roiData));
+
+%% - II - flooding - initial flooding
+[roiData peak indexedData] = performInitialFlooding(roiData, peak, indexedData, fp_param);
+
+%% - III - flooding - remove the smallest ROIs
+[roiData peak indexedData] = removeTooSmallROIs(roiData, peak, indexedData, fp_param);
+
+%% - IV - flooding - remove the biggest ROIs
+[roiData peak indexedData] = removeTooLargeROIs(roiData, peak, indexedData, fp_param);
+
+%% - V - export section
+% --- remove empty peaks
+if ~isempty(peak)
+    peak = peak([peak.area]>0);
 end
 
-% --- perform ROI opearions
-if strcmp(cifti.(lower(img.cifti.shortnames{cmp})).type,'Surface')
-    
-    % --- Find all the relevant maxima
-    if verbose, fprintf('\n---> identifying intial set of peaks'); end
-    
-    % --- Find peaks in the regions
-    p = 0;
-    peak = [];
-    ctn_peaks = 0;
-    for i=1:1:numel(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours)
-        if (data.(lower(img.cifti.shortnames{cmp}))(i)) > 0 &&...
-                (data.(lower(img.cifti.shortnames{cmp}))(i) >= max(data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours{i})))
-            ctn_peaks = ctn_peaks + 1;
-            peak(ctn_peaks).index = i;
-            peak(ctn_peaks).value = data.(lower(img.cifti.shortnames{cmp}))(i);
-            peak(ctn_peaks).x = cifti.(lower(img.cifti.shortnames{cmp})).(projection).vertices(i,1);
-            peak(ctn_peaks).y = cifti.(lower(img.cifti.shortnames{cmp})).(projection).vertices(i,2);
-            peak(ctn_peaks).z = cifti.(lower(img.cifti.shortnames{cmp})).(projection).vertices(i,3);
-        end
-    end
-    
-    % --- Preapare the data to store the non-zero data to vval and corresponding sorted indices to s
-    [vind, ~, vval] = find(data.(lower(img.cifti.shortnames{cmp})));
-    [~, s] = sort(vval, 1, 'descend');
-    
-    % allocate the global vector to store region ID at indices corresponding to the data
-    seg = zeros(size(data.(lower(img.cifti.shortnames{cmp}))));
-    boundaries = zeros(size(data.(lower(img.cifti.shortnames{cmp}))));
-    
-    % --- First flooding
-    if verbose, fprintf('\n---> flooding %d peaks', length(peak)); end
-    
-    % assign IDs to the peaks in the seg variable
-    for n = 1:length(peak)
-        seg(peak(n).index) = n;
-        peak(n).size = 1;
-        peak(n).area = 0;
-    end
-    
-    % flood the data starting from the highest value.
-    for n = 1:numel(vval)
-        % if not a peak check around which peak the vertex or ROI lies next to
-        if ~any(seg(vind(s(n))) == 1:length(peak))
-            % assign vertex neighbour seg ids to id
-            [~, ~, id] = find(seg(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours{vind(s(n))}));
-            % remove duplicate ids
-            u_id = unique(id);
-            if isscalar(u_id)
-                % if only one neighbour belongs to a ROI assign it to that one
-                seg(vind(s(n))) = u_id;
-                peak(u_id).size = peak(u_id).size + 1;
-            elseif numel(u_id) > 1
-                % if some neighbours belong to other ROIs, assign it to the largest ROI
-                [~, ~, nROIs] = mode(id);
-                nROIs = nROIs{1};
-                if numel(nROIs) > 1
-                    % if the same number of neighbours belong to multiple ROIs assign it to the one with the higher peak
-                    seg(vind(s(n))) = nROIs(1);
-                    maxVal = data.(lower(img.cifti.shortnames{cmp}))(peak(nROIs(1)).index);
-                    maxID = nROIs(1);
-                    for m=2:numel(nROIs)
-                        if data.(lower(img.cifti.shortnames{cmp}))(peak(nROIs(m)).index) >= maxVal
-                            maxVal = data.(lower(img.cifti.shortnames{cmp}))(peak(nROIs(m)).index);
-                            maxID = nROIs(m);
-                        end
-                    end
-                else
-                    maxID = nROIs;
-                end
-                seg(vind(s(n))) = maxID;
-                peak(maxID).size = peak(maxID).size + 1;
-            end
-        end
-    end
-    
-    % --- Calculate areas of regions
-    for i=1:1:length(peak)
-        peak(i).area = getRegionArea(i, seg,...
-            cifti.(lower(img.cifti.shortnames{cmp})).faces,...
-            cifti.(lower(img.cifti.shortnames{cmp})).(lower(projection)).area_vector);
-    end
-    
-    % --- Combine ROIs smaller then the min with the neighbouring ones
-    if ~isempty(peak)
-        small = peak([peak.area] < minarea);
-    else
-        small = [];
-    end
-    
-    % loop until the small array is not empty
-    while ~isempty(small)
-        
-        % size of the smallest region
-        rsize = min([small.area]);
-        % indices of the smallest region
-        rtgts = find([peak.area]==rsize);
-        
-        if verbose, fprintf('\n---> %d regions too small, refilling %d regions of size %d', length(small), length(rtgts), rsize); end
-        
-        % loop through the smallest regions and refill them up to first contact with another region and combine them
-        for rtgt = rtgts(:)'
-            [vind, ~, vval] = find(seg(:) == rtgt);
-            [~, s]    = sort(vval, 1, 'descend');
-            % flood the data
-            done = false;
-            for n = 1:numel(vval)
-                % assign vertex neighbour seg ids to id
-                [~, ~, id] = find(seg(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours{vind(n)}));
-                id = id(id ~= rtgt);
-                % remove duplicate ids
-                u_id = unique(id);
-                newId = u_id;
-                if isscalar(u_id)
-                    % if only one neighbour belongs to another ROI assign it to that one
-                    seg(seg == rtgt) = u_id;
-                    peak(u_id).size = peak(rtgt).size + peak(u_id).size;
-                    done = true;
-                    break;
-                elseif numel(u_id) > 1
-                    % if some neighbours belong to other ROIs, assign it to the largest ROI
-                    [~, ~, nROIs] = mode(id);
-                    nROIs = nROIs{1};
-                    if numel(nROIs) > 1
-                        % if the same number of neighbours belong to multiple ROIs assign it to the one with the higher peak
-                        seg(vind(s(n))) = nROIs(1);
-                        maxVal = data.(lower(img.cifti.shortnames{cmp}))(peak(nROIs(1)).index);
-                        maxID = nROIs(1);
-                        for m=2:numel(nROIs)
-                            if data.(lower(img.cifti.shortnames{cmp}))(peak(nROIs(m)).index) >= maxVal
-                                maxVal = data.(lower(img.cifti.shortnames{cmp}))(peak(nROIs(m)).index);
-                                maxID = nROIs(m);
-                            end
-                        end
-                    else
-                        maxID = nROIs;
-                    end
-                    seg(seg == rtgt) = maxID;
-                    peak(maxID).size = peak(rtgt).size + peak(maxID).size;
-                    done = true;
-                    newId = maxID;
-                    break;
-                end
-            end
-            if ~done
-                seg(seg == rtgt) = 0;
-            end
-            peak(rtgt).size = 0;
-            peak(rtgt).area = 0;
-        end
-        % --- Calculate areas of regions
-        if ~isempty(newId)
-            peak(newId).area = getRegionArea(newId, seg,...
-                cifti.(lower(img.cifti.shortnames{cmp})).faces,...
-                cifti.(lower(img.cifti.shortnames{cmp})).(lower(projection)).area_vector);
-        end
-        % remove the smallest region for the small array
-        small = peak([peak.area] > rsize & [peak.area] < minarea);
-    end
-    
-    % --- Trim regions that are too large
-    if ~isempty(peak)
-        big = find([peak.area] > maxarea);
-    else
-        big = [];
-    end
-    
-    if ~isempty(big) && verbose, fprintf('\n\n---> found %d ROI that are too large', length(big)); end
-    
-    for b  = big(:)'
-        
-        % store the non-zero data to vval and corresponding sorted indices to s
-        bigROI_data = data.(lower(img.cifti.shortnames{cmp}));
-        bigROI_data(seg ~= b) = 0;
-        [vind, ~, vval] = find(bigROI_data);
-        [~, s] = sort(vval, 1, 'descend');
-        
-        seg(seg==(b)) = -1;
-        
-        if verbose, fprintf('\n---> reflooding region %d', b); end
-        
-        peak(b).size = 1;
-        peak(b).area = 0;
-        
-        seg(vind(s(1))) = b;
-        
-        % refill the region around the peak by checking if every consecutive value in the sorted values list neighbours the primary region
-        for n=2:1:numel(vval)
-            if any(seg(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours{vind(s(n))}) == b)
-                seg(vind(s(n))) = b;
-                peak(b).size = peak(b).size + 1;
-                % --- Calculate areas of regions
-                peak(b).area = getRegionArea(b, seg,...
-                    cifti.(lower(img.cifti.shortnames{cmp})).faces,...
-                    cifti.(lower(img.cifti.shortnames{cmp})).(lower(projection)).area_vector);
-            end
-            if peak(b).area >= maxarea
-                break;
-            end
-        end
-        
-    end
-    seg(seg<1) = 0;
-    
-    % --- remove empty peaks
-    if ~isempty(peak)
-        peak = peak([peak.area]>0);
-    end
-    
-    % --- relable the ROI labels, starting from 1 up to the last ROI
-    for i=1:1:length(peak)
-        v = seg(peak(i).index);
-        seg(seg == v) = i;
-        peak(i).index = i;
-    end
+% --- relable the ROI labels, starting from 1 up to the last ROI
+for i=1:1:length(peak)
+    v = indexedData(peak(i).index);
+    indexedData(indexedData == v) = i;
+    peak(i).index = i;
+end
 
 % --- define borders between ROIs as desired by the user
-boundary_map = zeros(size(seg));
-for n=1:1:numel(seg)
-    cs = seg(n);
+boundary_map = zeros(size(indexedData));
+for n=1:1:numel(indexedData)
+    cs = indexedData(n);
     if cs > 0
-        ni = seg(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours{n});
-        boundary_map(cifti.(lower(img.cifti.shortnames{cmp})).adj_list.neighbours{n}(ni~=cs)) = -1;
+        ni = indexedData(cifti.(fp_param.brainStructure).adj_list.neighbours{n});
+        boundary_map(cifti.(fp_param.brainStructure).adj_list.neighbours{n}(ni~=cs)) = -1;
     end
 end
 
@@ -388,34 +188,32 @@ end
 roi = img;
 switch (boundary)
     case 'remove'
-        seg(boundary_map == -1) = 0;
-        data.(lower(img.cifti.shortnames{cmp})) = seg;
+        indexedData(boundary_map == -1) = 0;
+        roiData = indexedData;
         % --- embed data to ROI image
-        roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
+        roi.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp)) = roiData(cifti.(fp_param.brainStructure).mask);
     case 'highlight'
-        seg(boundary_map == -1) = -100;
-        data.(lower(img.cifti.shortnames{cmp})) = seg;
+        indexedData(boundary_map == -1) = -100;
+        roiData = indexedData;
         % --- embed data to ROI image
-        roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
+        roi.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp)) = roiData(cifti.(fp_param.brainStructure).mask);
     case 'wire'
-        data.(lower(img.cifti.shortnames{cmp})) = boundary_map.*(-1);
+        roiData = boundary_map.*(-1);
         % --- embed data to ROI image
-        roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
+        roi.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp)) = roiData(cifti.(fp_param.brainStructure).mask);
     otherwise
-        data.(lower(img.cifti.shortnames{cmp})) = seg;
+        roiData = indexedData;
         % --- embed data to ROI image
-        roi.data(img.cifti.start(cmp):img.cifti.end(cmp)) = data.(lower(img.cifti.shortnames{cmp}))(cifti.(lower(img.cifti.shortnames{cmp})).mask);
+        roi.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp)) = roiData(cifti.(fp_param.brainStructure).mask);
 end
 
 % --- the end
-if verbose, fprintf('\n===> DONE\n'); end
-
-end
+if fp_param.verbose, fprintf('\n===> DONE\n'); end
 
 if isempty(peak)
     if report, fprintf('\n===> No peaks to report on!\n'); end
 else
-    if report, fprintf('\n===> peak report - %s\n',(lower(img.cifti.shortnames{cmp}))); end
+    if report, fprintf('\n===> peak report - %s\n',(fp_param.brainStructure)); end
     for p = 1:length(peak)
         if report, fprintf('\nROI:%3d  index: %3d  value: %5.1f  size: %3d  area: %3d', p, peak(p).index, peak(p).value, peak(p).size, peak(p).area); end
     end
@@ -424,14 +222,19 @@ end
 
 end
 
-% --- SUPPORT FUNCTIONS
 
-function [area] = getRegionArea(i, seg, face_matrix, area_vector)
+
+
+
+
+%% VI - SUPPORT FUNCTIONS
+
+function [area] = getRegionArea(i, indexedData, face_matrix, area_vector)
 
 % --- modify faces matrix to find the corresponding faces
 F = face_matrix;
 % --- calculate vertex indices of the region
-region_indices = find(seg == i);
+region_indices = find(indexedData == i);
 % --- compute the logical array of the faces that contain existing vertices
 F = ismember(F,region_indices);
 % --- sum the rows of the logical faces matrix in order to see which face consists of all existing 3 vertices
@@ -441,13 +244,247 @@ area = (1/3) * sum(area_vector(F > 0));
 
 end
 
-function [projection_area_vector] = getProjectionArea(projection_vertices, surface_component, cifti)
+function [projection_area_vector] = getProjectionArea(projection_vertices, fp_param)
 
-%projection_area_vector = zeros(length(cifti.surface_component.faces),1);
-ab = projection_vertices(cifti.(surface_component).faces(:,2),:) - ...
-    projection_vertices(cifti.(surface_component).faces(:,1),:);
-ac = projection_vertices(cifti.(surface_component).faces(:,3),:) - ...
-    projection_vertices(cifti.(surface_component).faces(:,1),:);
+ab = projection_vertices(fp_param.cifti.(fp_param.surface_component).faces(:,2),:) - ...
+    projection_vertices(fp_param.cifti.(fp_param.surface_component).faces(:,1),:);
+ac = projection_vertices(fp_param.cifti.(fp_param.surface_component).faces(:,3),:) - ...
+    projection_vertices(fp_param.cifti.(fp_param.surface_component).faces(:,1),:);
 projection_area_vector = 0.5.*sqrt(sum(cross(ab,ac).^2,2));
 
+end
+
+function [fp_param] = determineSurfaceProjection(fp_param)
+if ~sum(strcmp(fp_param.projection,{'midthickness','inflated','very_inflated','sphere'}))
+    subject_projection = gifti(fp_param.projection);
+    fp_param.projection = 'subject';
+    fp_param.cifti.(lower(surfaceComponent)).subject.vertices = subject_projection.vertices;
+    fp_param.cifti.(lower(surfaceComponent)).subject.area_vector = getProjectionArea(subject_projection.vertices, fp_param);
+end
+
+if strcmp(fp_param.surfaceComponent, 'cortex_left')
+    fp_param.cmp = 1;
+elseif strcmp(fp_param.surfaceComponent, 'cortex_right')
+    fp_param.cmp = 2;
+else
+    error('Wrong component inserted!');
+end
+end
+
+function [roiData] = thresholdData(roiData, fp_param)
+if strcmp(fp_param.val, 'b')
+    roiData = abs(roiData);
+elseif strcmp(fp_param.val, 'p')
+    roiData(roiData < 0) = 0;
+elseif strcmp(fp_param.val, 'n')
+    roiData(roiData > 0) = 0;
+    roiData = roiData * -1;
+else
+    error('No value specified!');
+end
+
+roiData(roiData < fp_param.threshold) = 0;
+end
+
+function [roiData, peak, indexedData] = performInitialFlooding(roiData, peak, indexedData, fp_param)
+% --- Find all the relevant maxima
+if fp_param.verbose, fprintf('\n---> identifying intial set of peaks'); end
+
+% --- Find peaks in the regions
+p = 0;
+ctn_peaks = 0;
+for i=1:1:numel(fp_param.cifti.(fp_param.brainStructure).adj_list.neighbours)
+    if (roiData(i)) > 0 &&...
+            (roiData(i) >= max(roiData(fp_param.cifti.(fp_param.brainStructure).adj_list.neighbours{i})))
+        ctn_peaks = ctn_peaks + 1;
+        peak(ctn_peaks).index = i;
+        peak(ctn_peaks).value = roiData(i);
+        peak(ctn_peaks).x = fp_param.cifti.(fp_param.brainStructure).(fp_param.projection).vertices(i,1);
+        peak(ctn_peaks).y = fp_param.cifti.(fp_param.brainStructure).(fp_param.projection).vertices(i,2);
+        peak(ctn_peaks).z = fp_param.cifti.(fp_param.brainStructure).(fp_param.projection).vertices(i,3);
+    end
+end
+
+% --- Preapare the data to store the non-zero data to vval and corresponding sorted indices to s
+[vind, ~, vval] = find(roiData);
+[~, s] = sort(vval, 1, 'descend');
+
+%boundaries = zeros(size(roiData));
+
+% --- First flooding
+if fp_param.verbose, fprintf('\n---> flooding %d peaks', length(peak)); end
+
+% assign IDs to the peaks in the indexedData variable
+for n = 1:length(peak)
+    indexedData(peak(n).index) = n;
+    peak(n).size = 1;
+    peak(n).area = 0;
+end
+
+% flood the data starting from the highest value.
+for n = 1:numel(vval)
+    % if not a peak check around which peak the vertex or ROI lies next to
+    if ~any(indexedData(vind(s(n))) == 1:length(peak))
+        % assign vertex neighbour indexedData ids to id
+        [~, ~, id] = find(indexedData(fp_param.cifti.(fp_param.brainStructure).adj_list.neighbours{vind(s(n))}));
+        % remove duplicate ids
+        u_id = unique(id);
+        if isscalar(u_id)
+            % if only one neighbour belongs to a ROI assign it to that one
+            indexedData(vind(s(n))) = u_id;
+            peak(u_id).size = peak(u_id).size + 1;
+        elseif numel(u_id) > 1
+            % if some neighbours belong to other ROIs, assign it to the largest ROI
+            [~, ~, nROIs] = mode(id);
+            nROIs = nROIs{1};
+            if numel(nROIs) > 1
+                % if the same number of neighbours belong to multiple ROIs assign it to the one with the higher peak
+                indexedData(vind(s(n))) = nROIs(1);
+                maxVal = roiData(peak(nROIs(1)).index);
+                maxID = nROIs(1);
+                for m=2:numel(nROIs)
+                    if roiData(peak(nROIs(m)).index) >= maxVal
+                        maxVal = roiData(peak(nROIs(m)).index);
+                        maxID = nROIs(m);
+                    end
+                end
+            else
+                maxID = nROIs;
+            end
+            indexedData(vind(s(n))) = maxID;
+            peak(maxID).size = peak(maxID).size + 1;
+        end
+    end
+end
+
+% --- Calculate areas of regions
+for i=1:1:length(peak)
+    peak(i).area = getRegionArea(i, indexedData,...
+        fp_param.cifti.(fp_param.brainStructure).faces,...
+        fp_param.cifti.(fp_param.brainStructure).(lower(fp_param.projection)).area_vector);
+end
+end
+
+function [roiData peak indexedData] = removeTooSmallROIs(roiData, peak, indexedData, fp_param);
+% --- Combine ROIs smaller then the min with the neighbouring ones
+if ~isempty(peak)
+    small = peak([peak.area] < fp_param.minarea);
+else
+    small = [];
+end
+
+% loop until the small array is not empty
+while ~isempty(small)
+    
+    % size of the smallest region
+    rsize = min([small.area]);
+    % indices of the smallest region
+    rtgts = find([peak.area]==rsize);
+    
+    if fp_param.verbose, fprintf('\n---> %d regions too small, refilling %d regions of size %d', length(small), length(rtgts), rsize); end
+    
+    % loop through the smallest regions and refill them up to first contact with another region and combine them
+    for rtgt = rtgts(:)'
+        [vind, ~, vval] = find(indexedData(:) == rtgt);
+        [~, s]    = sort(vval, 1, 'descend');
+        % flood the data
+        done = false;
+        for n = 1:numel(vval)
+            % assign vertex neighbour indexedData ids to id
+            [~, ~, id] = find(indexedData(fp_param.cifti.(fp_param.brainStructure).adj_list.neighbours{vind(n)}));
+            id = id(id ~= rtgt);
+            % remove duplicate ids
+            u_id = unique(id);
+            newId = u_id;
+            if isscalar(u_id)
+                % if only one neighbour belongs to another ROI assign it to that one
+                indexedData(indexedData == rtgt) = u_id;
+                peak(u_id).size = peak(rtgt).size + peak(u_id).size;
+                done = true;
+                break;
+            elseif numel(u_id) > 1
+                % if some neighbours belong to other ROIs, assign it to the largest ROI
+                [~, ~, nROIs] = mode(id);
+                nROIs = nROIs{1};
+                if numel(nROIs) > 1
+                    % if the same number of neighbours belong to multiple ROIs assign it to the one with the higher peak
+                    indexedData(vind(s(n))) = nROIs(1);
+                    maxVal = roiData(peak(nROIs(1)).index);
+                    maxID = nROIs(1);
+                    for m=2:numel(nROIs)
+                        if roiData(peak(nROIs(m)).index) >= maxVal
+                            maxVal = roiData(peak(nROIs(m)).index);
+                            maxID = nROIs(m);
+                        end
+                    end
+                else
+                    maxID = nROIs;
+                end
+                indexedData(indexedData == rtgt) = maxID;
+                peak(maxID).size = peak(rtgt).size + peak(maxID).size;
+                done = true;
+                newId = maxID;
+                break;
+            end
+        end
+        if ~done
+            indexedData(indexedData == rtgt) = 0;
+        end
+        peak(rtgt).size = 0;
+        peak(rtgt).area = 0;
+    end
+    % --- Calculate areas of regions
+    if ~isempty(newId)
+        peak(newId).area = getRegionArea(newId, indexedData,...
+            fp_param.cifti.(fp_param.brainStructure).faces,...
+            fp_param.cifti.(fp_param.brainStructure).(lower(fp_param.projection)).area_vector);
+    end
+    % remove the smallest region for the small array
+    small = peak([peak.area] > rsize & [peak.area] < fp_param.minarea);
+end
+end
+
+function [roiData peak indexedData] = removeTooLargeROIs(roiData, peak, indexedData, fp_param)
+% --- Trim regions that are too large
+if ~isempty(peak)
+    big = find([peak.area] > fp_param.maxarea);
+else
+    big = [];
+end
+
+if ~isempty(big) && fp_param.verbose, fprintf('\n\n---> found %d ROI that are too large', length(big)); end
+
+for b  = big(:)'
+    % --- store the non-zero data to vval and corresponding sorted indices to s
+    bigROI_data = roiData;
+    bigROI_data(indexedData ~= b) = 0;
+    
+    indexedData(indexedData == b) = 0;
+    
+    [vind, ~, vval] = find(bigROI_data);
+    [~, s] = sort(vval, 1, 'descend');
+    
+    if fp_param.verbose, fprintf('\n---> reflooding region %d', b); end
+    
+    peak(b).size = 1;
+    peak(b).area = 0;
+    
+    indexedData(vind(s(1))) = b;
+    % flood the data starting from the highest value.
+    for n = 2:numel(vval)
+        % assign vertex neighbour indexedData ids to id
+        [~, ~, id] = find(indexedData(fp_param.cifti.(fp_param.brainStructure).adj_list.neighbours{vind(s(n))}));
+        u_id = unique(id);
+        if any(u_id == b)
+            indexedData(vind(s(n))) = b;
+            peak(b).size = peak(b).size + 1;
+            peak(b).area = getRegionArea(b, bigROI_data,...
+                fp_param.cifti.(fp_param.brainStructure).faces,...
+                fp_param.cifti.(fp_param.brainStructure).(lower(fp_param.projection)).area_vector);
+            if peak(b).area >= fp_param.maxarea
+                break;
+            end
+        end
+    end
+end
 end
