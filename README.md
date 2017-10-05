@@ -1,10 +1,10 @@
-# README File for MNAP Matlab Analysis Code
+# README File for MNAP Matlab Analysis Utilities
 
 Background
 ==========
 ---
 
-Mind & Brain Lab Matlab Utilities, i.e. matlab are neuroimaging
+MNAP Matlab Analysis Utilities, (i.e. `matlab`) are neuroimaging
 preprocessing and analysis tools developed in matlab that support multiple 
 tasks through a common code base, designed to simplify multiple steps of 
 neuroimaging data preprocessing and analysis.
@@ -29,10 +29,28 @@ University.
 Usage and command documentation
 ===============================
 ---
+The MNAP Matlab Analysis Utilities are generally used as core functions across 
+various MNAP tools but can be run independently in two ways:
 
-The matlab tools usage can be found imbedded in each function by running:
- 
-`help <command>` via the matlab terminal. 
+1. 
+A number of Matlab functions provided as part of MNAP/matlab package can be 
+run directly through the `mnap` connector wrapper. 
+For more information on each function run `mnap ?<function name>`. 
+Arguments can be specified in any order. Arguments that are not provided will 
+be passed as empty strings / vectors to be processed with default values. 
+Take care to embed vectors in square brackets (e.g. "[1 8 6 12]") and cell arrays 
+in curly braces (e.g. "{'DLPFC', 'ACC','FEF'}"). 
+In addition, 'saveOutput' argument can be specified to redirect Matlab
+output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
+2. 
+Directly from inside Matlab by calling each function directly.  
+
+To obtain a list of all supported `MNAP matlab` functions run:
+
+`mnap matlabhelp`
+
+The function-specific help and usage is imbedded in the help call for each function.
+You can acces this by running `help <command>` via the matlab terminal. 
 
 External dependencies
 =====================
@@ -40,6 +58,7 @@ External dependencies
 
 * Connectome Workbench (v1.0 or above)
 * MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
+* MNAP suite (recommended for seamless functionality) 
 
 Change Log
 ============

@@ -50,16 +50,21 @@ function [img] = mri_ReadROI(roiinfo, roi2)
 %   ACC|3,4|cgray
 %
 %   This file specifies three cognitive cotrol regions. The original ROI file
-%   is referenced by the first line of the .names file. The following lines
-%   specify the ROI to be generated with a pipe (|) separated columns. The first
-%   column specifies the name of the ROI. The second column specifies the
-%   integer codes that represent the desired region. There can be more than one
-%   code used and the ROI will be a union of all the specified, comma separated
-%   codes. The third column specifies the codes to be used to mask the ROI
-%   generated from the original file. If either the third or the second column
-%   is empty, the specified ROI from the original or secondary image file will
-%   be used. If the first line is set to none, only the third column will be
-%   used to generate ROI.
+%   is referenced by the first line of the .names file. If the path starts with
+%   a forward slash ('/'), it is assumed to be an absolute path, otherwise it is
+%   assumed to be a path relative to the location of the roiinfo '.names' file.
+%   If the line is empty or references "none", it is assumed that all the ROI
+%   are defined by the roi2 codes only.
+%
+%   The following lines specify the ROI to be generated with a pipe (|)
+%   separated columns. The first column specifies the name of the ROI. The
+%   second column specifies the integer codes that represent the desired region.
+%   There can be more than one code used and the ROI will be a union of all the
+%   specified, comma separated codes. The third column specifies the codes to be
+%   used to mask the ROI generated from the original file. If either the third
+%   or the second column is empty, the specified ROI from the original or
+%   secondary image file will be used. Again, If the first line is empty or set
+%   to none, only the third column will be used to generate ROI.
 %
 %   In the case when the generated ROI would overlap, a multivolume file is
 %   generated with each volume specifying one ROI.
@@ -80,6 +85,7 @@ function [img] = mri_ReadROI(roiinfo, roi2)
 %   2013-07-24 Grega Repovs - adjusted to create either single or multiple volume ROI
 %   2015-12-08 Grega Repovs - added option for named region codes
 %   2017-03-04 Grega Repovs - updated documentatio
+%   2017-09-29 Grega Repovs - enabled relative paths to roi image
 
 
 %   ---- Named region codes
@@ -173,9 +179,12 @@ fclose(rois);
 
 % ----> Read the first ROI file
 
-if strcmp('none',roif1)
+if strcmp('none', roif1) || isempty(roif1)
     roi1 = [];
 else
+    if roif1(1) ~= '/';
+        roif1 = fullfile(fileparts(roinfo), roif1);
+    end
     roi1 = gmrimage(roif1);
     roi1.data = roi1.image2D;
 end
