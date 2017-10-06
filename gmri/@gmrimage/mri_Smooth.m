@@ -114,7 +114,9 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     
     % smooth the CIFTI model using wb_command
     wbSmooth(inFile, outFile, surfaceFile, mask, opt);
-    delete('mask_tmp.dscalar.nii');
+    if ~isempty(mask)
+        delete('mask_tmp.dscalar.nii');
+    end
     
     % save the temporary output file
     img = gmrimage(outFile);

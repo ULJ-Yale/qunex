@@ -170,6 +170,9 @@ end
 % --- relable the ROI labels, starting from 1 up to the last ROI
 for i=1:1:length(peak)
     v = indexedData(peak(i).index);
+    if v==0
+        error('Labeling messed up!');
+    end
     indexedData(indexedData == v) = i;
     peak(i).index = i;
 end
@@ -387,6 +390,7 @@ while ~isempty(small)
     for rtgt = rtgts(:)'
         [vind, ~, vval] = find(indexedData(:) == rtgt);
         [~, s]    = sort(vval, 1, 'descend');
+        
         % flood the data
         done = false;
         for n = 1:numel(vval)
@@ -464,12 +468,17 @@ for b  = big(:)'
     [vind, ~, vval] = find(bigROI_data);
     [~, s] = sort(vval, 1, 'descend');
     
+    if roiData(peak(b).index) ~= vval(s(1))
+        peak(b).index = vind(s(1));
+    end
+    
     if fp_param.verbose, fprintf('\n---> reflooding region %d', b); end
     
     peak(b).size = 1;
     peak(b).area = 0;
     
     indexedData(vind(s(1))) = b;
+    
     % flood the data starting from the highest value.
     for n = 2:numel(vval)
         % assign vertex neighbour indexedData ids to id
@@ -478,7 +487,7 @@ for b  = big(:)'
         if any(u_id == b)
             indexedData(vind(s(n))) = b;
             peak(b).size = peak(b).size + 1;
-            peak(b).area = getRegionArea(b, bigROI_data,...
+            peak(b).area = getRegionArea(b, indexedData,...
                 fp_param.cifti.(fp_param.brainStructure).faces,...
                 fp_param.cifti.(fp_param.brainStructure).(lower(fp_param.projection)).area_vector);
             if peak(b).area >= fp_param.maxarea
