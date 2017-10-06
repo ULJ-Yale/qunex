@@ -19,7 +19,8 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %                                b) for a specific projection:
 %                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
 %       mask        ... specify the cifti mask to select areas on which to
-%       perform smoothing, if you don't want to use the mask -> mask = 'no', otherwise the default mask is the same as the input file
+%       perform smoothing, if you don't want to use the mask -> mask =
+%       'no', otherwise the default mask is h
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
 %       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
 %
@@ -69,17 +70,17 @@ if nargin < 4 || isempty(ftype),      ftype = 'gaussian'; end
 if nargin < 3 || isempty(verbose),    verbose = false;    end
 
 % take the absolute value of the mask, if it was passed
-if  isempty(mask)
-    mask_img = img;
+if  ~isempty(mask) && ~strcmp(lower(mask),'no')
+    mask_img = gmrimage(mask);
     mask_img.data = abs(mask_img.data);
     mri_SaveNIfTI(mask_img,'mask_tmp.dscalar.nii');
     mask = 'mask_tmp.dscalar.nii';
 elseif strcmp(lower(mask),'no')
     mask = '';
 else
-    mask_img = gmrimage(mask);
+    mask_img = img;
     mask_img.data = abs(mask_img.data);
-    mri_SaveNIfTI(mask_img,'mask_tmp.dscalar.nii');
+    mri_SaveNIfTI(img,'mask_tmp.dscalar.nii');
     mask = 'mask_tmp.dscalar.nii';
 end
 
