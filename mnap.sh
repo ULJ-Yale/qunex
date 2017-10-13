@@ -236,6 +236,8 @@ show_usage() {
 				echo "==== All Supported MNAP Independent Matlab Analyses Utilities ===="
 				echo "=================================================================="
 				echo ""
+				echo "==> Matlab tools are located in: $TOOLS/$REPO/matlab"
+				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
 				echo ""
 				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
@@ -269,6 +271,8 @@ show_usage_matlabhelp() {
 		echo "=================================================================="
 		echo "==== All Supported MNAP Independent Matlab Analyses Utilities ===="
 		echo "=================================================================="
+		echo ""
+		echo "==> Matlab tools are located in: $TOOLS/$REPO/matlab"
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
 		echo ""
