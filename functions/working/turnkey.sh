@@ -491,7 +491,7 @@ i=3; while [ "${i}" -lt "${indLast}" ]; do (( i = ${i} +1 ))
 		fi
 	else
 		reho "ERROR ${dcmPath}/${scanID} not found"; echo ""
-		continue  
+		#continue  
 	fi 
 	
 	# sync behavior

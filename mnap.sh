@@ -3233,13 +3233,13 @@ show_usage_fsldtifit() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>			Name of function"
-				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
+				echo "		--function=<function_name>                           Name of function"
+				echo "		--path=<study_folder>                                Path to study data folder"
+				echo "		--subjects=<comma_separated_list_of_cases>           List of subjects to run"
+				echo "		--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                                    ==> e.g. for SLURM the string would look like this: "
+				echo "                                                                        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "		--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3262,6 +3262,9 @@ fslbedpostxgpu() {
 		BedPostXFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX
 		LogFolder="$BedPostXFolder"/logs
 		Overwrite="$Overwrite"
+		
+		# -- hard-coded cuda call for HPC clusters
+		module load GPU/Cuda/6.5 > /dev/null 2>&1 
 		
 		# Check if overwrite flag was set
 		if [ "$Overwrite" == "yes" ]; then
@@ -3334,9 +3337,9 @@ fslbedpostxgpu() {
 			echo "--------------------------------------------------------------"
 			echo ""
 			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-				${FSLGPUBinary}/bedpostx_gpu_scheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
 			else	
-				${FSLGPUBinary}/bedpostx_gpu_scheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
 			fi
 		fi
 		
@@ -3357,9 +3360,9 @@ fslbedpostxgpu() {
 			NJOBS=4
 						
 			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-				${FSLGPUBinary}/bedpostx_gpu_scheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" -Q "$FSLGECUDAQ" -scheduler "$SchedulerName"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" -Q "$FSLGECUDAQ" -scheduler "$SchedulerName"
 			else	
-				${FSLGPUBinary}/bedpostx_gpu_scheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" -Q "$FSLGECUDAQ" -scheduler "$SchedulerName"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" -Q "$FSLGECUDAQ" -scheduler "$SchedulerName"
 			fi
 			
 			geho "---------------------------------------------------------------------------------------"
@@ -3393,8 +3396,6 @@ show_usage_fslbedpostxgpu() {
 				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
 				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
@@ -3405,8 +3406,6 @@ show_usage_fslbedpostxgpu() {
 				echo "--burnin='3000' \ "
 				echo "--model='3' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
-				#echo "--runmethod='2' \ "
 				echo "--overwrite='yes'"
 				echo ""
 }
@@ -3817,7 +3816,7 @@ qcpreproc() {
 		echo ""
 	else
 		echo ""
-		geho " --- Generating ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+		geho "--- Generating ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 	# -- Check general output folders for QC
 	if [ ! -d "$StudyFolder"/QC ]; then
@@ -3830,24 +3829,30 @@ qcpreproc() {
 	# -- Define log folder
 	LogFolder="$OutPath"/qclog
 	mkdir "$LogFolder"  &> /dev/null
+	
+	# -- Check if modality is BOLD
 	if [ "$Modality" == "BOLD" ]; then
 		for BOLD in $BOLDS; 
 		do
 			# -- Generate QC statistics for a given BOLD
-			geho " --- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
+			geho "--- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
 			echo ""
+			
 			# -- Compute TSNR and log it
 			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii TSNR ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -exclude-outliers 4 4
 			TSNR=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
 			TSNRLog="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
 			printf "${TSNRLog}\n" >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt
+			
 			# -- Get values for plotting GS chart & Compute the GS scalar series file
 			# -- Get TR
 			TR=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
+			
 			# -- Clean preexisting outputs
 			rm -f ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt &> /dev/null
 			rm -f ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii &> /dev/null
 			rm -f ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii &> /dev/null
+			
 			# -- Regenerate outputs
 			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii MEAN ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
 			wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt
@@ -3861,12 +3866,15 @@ qcpreproc() {
 				wb_command -cifti-create-scalar-series ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.txt ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
 				xmax=`fslval ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
 			fi
+			
 			# -- Get mix/max stats
 			ymax=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`	
 			ymin=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
+			
 			# -- Rsync over template files for a given BOLD
 			Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null"
 			Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"		
+			
 			# -- Setup naming conventions before generating scene
 			Com3="cp ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			Com4="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
@@ -3911,41 +3919,167 @@ qcpreproc() {
 				echo "---------------------------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name and Options: $Scheduler"
-				#echo "Scheduler Options: $SchedulerOptions"
 				echo "Check output logs here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
 			fi
 		done
+	
 	else
+	
 		# -- Generate a QC scene file appropriate for each subject for each modality
+		
 		# -- Rsync over template files for a given modality		
 		Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null"
 		Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"
 		Com3="rsync -aWH ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+		
 		# -- Setup naming conventions before generating scene
 		Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
 		Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+		
+		# -- Check if modality is DWI
 		if [ "$Modality" == "DWI" ]; then
+			
+			# -- Split the data and setup 1st and 2nd volumes for visualization
+			Com6a="fslsplit ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}.nii.gz ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split -t"
+			Com6b="fslmaths ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0000.nii.gz -mul ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz ${DWIData}_split1_brain"
+			Com6c="fslmaths ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0001.nii.gz -mul ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz ${DWIData}_split2_brain"
+			
+			# -- Clean split volumes
+			Com6d="rm -f ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0*  &> /dev/null"
+			
 			# -- Setup naming conventions for DWI before generating scene
-			Com6a="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-				if [ "$DWILegacy" == "yes" ]; then
-					unset "$DWIDataLegacy" >/dev/null 2>&1
-					DWIDataLegacy="${CASE}_${DWIData}"
-					Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			Com6e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			# -- Check if legacy setting is YES
+			if [ "$DWILegacy" == "yes" ]; then
+				unset "$DWIDataLegacy" >/dev/null 2>&1
+				DWIDataLegacy="${CASE}_${DWIData}"
+				Com6f="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			else
+				Com6f="sed -i -e 's|DUMMYDWIDATA|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+			fi
+			
+			Com6="$Com6; $Com6a; $Com6b; $Com6c; $Com6d; $Com6e; $Com6f"
+
+			# --------------------------------------------------
+			# -- Check if DTIFIT and BEDPOSTX flags are set
+			# --------------------------------------------------
+			
+			# -- if dtifit qc is selected then generate dtifit scene
+			if [ "$DtiFitQC" == "yes" ]; then
+				echo ""
+				geho "--- QC for FSL dtifit requested. Checking if dtifit was completed..."
+				echo ""
+				
+				# -- check if dtifit is done
+				minimumfilesize=100000
+				if [ -a "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/${DWIPath}/dti_FA.nii.gz ]; then 
+					actualfilesize=$(wc -c <"$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/${DWIPath}/dti_FA.nii.gz)
 				else
-					Com6b="sed -i -e 's|DUMMYDWIDATA|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+					actualfilesize="0"
 				fi
-			Com6="$Com6; $Com6a; $Com6b"
+				
+				if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
+					echo ""
+					geho "    --> FSL dtifit results found here: ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/"
+					echo ""
+					
+					# -- replace DWI scene specifications with the dtifit results
+					Com6g1="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+					Com6g2="sed -i -e 's|1st Frame|dti_FA|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+					Com6g3="sed -i -e 's|2nd Frame|dti_L3|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+					Com6g4="sed -i -e 's|data_split1_brain.nii.gz|dti_FA.nii.gz|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+					Com6g5="sed -i -e 's|data_split2_brain.nii.gz|dti_L3.nii.gz|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+					# -- combine dtifit commands
+					Com6g="$Com6g1; $Com6g2; $Com6g3; $Com6g4; $Com6g5"
+					# -- Combine DWI commands
+					Com6="$Com6; $Com6g"
+				else
+					reho "    --> FSL dtifit not found for $CASE. Skipping dtifit QC request. Check dtifit results. "
+				fi
+			fi
+				
+			# -- if bedpostx qc is selected then generate bedpostx scene
+			if [ "$BedpostXQC" == "yes" ]; then
+				echo ""
+				geho "--- QC for FSL BedpostX requested. Checking if BedpostX was completed..."
+				echo ""
+				
+				# -- Check if the file even exists
+				if [ -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz ]; then
+					# -- Set file sizes to check for completion
+					minimumfilesize=20000000
+					actualfilesize=`wc -c < "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1  		
+					filecount=`ls "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
+				fi
+				
+				# -- Then check if run is complete based on file count
+				if [ "$filecount" == 9 ]; then
+					# -- Then check if run is complete based on file size
+					if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
+						echo ""
+						geho "    --> BedpostX outputs found and completed here: ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
+						echo ""
+						# -- replace DWI scene specifications with the dtifit results
+						Com6h1="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+						Com6h2="sed -i -e 's|1st Frame|mean d diffusivity|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+						Com6h3="sed -i -e 's|2nd Frame|mean f anisotropy|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+						Com6h4="sed -i -e 's|$DWIPath/data_split1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+						Com6h5="sed -i -e 's|$DWIPath/data_split2_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+						# -- combine dtifit commands
+						Com6h="$Com6h1; $Com6h2; $Com6h3; $Com6h4; $Com6h5"
+						# -- Combine DWI commands
+						Com6="$Com6; $Com6h"
+					else 
+						echo ""
+						reho "--- BedpostX outputs missing or incomplete for $CASE. Skipping BedpostX QC request. Check BedpostX results."
+						echo ""
+					fi
+				fi
+			fi
+		
+			# -- if eddy qc is selected then create hard link to eddy qc pdf
+			if [ "$EddyQCPDF" == "yes" ]; then
+				echo ""
+				geho "--- QC for FSL EDDY requested. Checking if EDDY QC was completed..."
+				echo ""
+				# -- Then check if eddy qc is completed
+				if [ -f ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
+					echo ""
+					geho "    --> EDDY QC outputs found and completed here: ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"
+					echo ""
+					ln ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASE}.${Modality}.eddy.QC.pdf
+				else
+					echo ""
+					reho "--- EDDY QC outputs missing or incomplete for $CASE. Skipping EDDY QC request. Check EDDY results."
+					echo ""
+				fi
+			fi
 		fi
+				
 		# -- Output image of the scene
 		Com7="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
-		# -- Clean templates for next subject
+		
+		# -- Check if dtifit and bedpostx QC is requested
+		if [ "$DtiFitQC" == "yes" ]; then
+			Com7a="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.dtifit.QC.png 1194 539"
+			Com7="$Com7; $Com7a"
+		fi
+		if [ "$BedpostXQC" == "yes" ]; then
+				Com7b="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.bedpostx.QC.png 1194 539"
+				Com7="$Com7; $Com7b"
+		fi
+				
+		# -- Clean templates and files for next subject
 		Com8="rm ${OutPath}/${CASE}.${Modality}.QC.wb.scene-e &> /dev/null"
 		Com9="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
+		Com10="rm -f ${OutPath}/data_split*"
+		
 		# -- Combine all the calls into a single command
-		ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9"
+		ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10"
+				
 		# -- queue a local task or a scheduler job
 		if [ "$Cluster" == 1 ]; then
 			echo ""
@@ -3954,17 +4088,21 @@ qcpreproc() {
 			echo "Check output here: $LogFolder"
 			echo "---------------------------------------------------------------------------------"
 			echo ""
-			eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log
+			eval "$ComQUEUE" &> "$LogFolder"/QC_"$CASE"_`date +%Y-%m-%d-%H-%M-%S`.log	
 		fi
+		
 		if [ "$Cluster" == 2 ]; then
+			# -- prep scheduler script
 			echo "Job Information:"
 			rm -f "$LogFolder"/"$CASE"_ComQUEUE.sh &> /dev/null
 			echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE.sh
 			chmod 700 "$LogFolder"/"$CASE"_ComQUEUE.sh
-			# fslsub="$Scheduler" # set scheduler for fsl_sub command
-			# fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE.sh
 			cd ${LogFolder}
-			gmri schedule command="${LogFolder}/${CASE}_ComQUEUE.sh" settings="${Scheduler}" output="stdout:${LogFolder}/qcpreproc.output.log|stderr:${LogFolder}/qcpreproc.error.log"  workdir="${LogFolder}" 
+			# -- scheduler command
+			gmri schedule command="${LogFolder}/${CASE}_ComQUEUE.sh" settings="${Scheduler}" \
+			output="stdout:${LogFolder}/qcpreproc.output.log|stderr:${LogFolder}/qcpreproc.error.log" \
+			workdir="${LogFolder}" 
+			# -- echo command details
 			echo ""
 			echo "---------------------------------------------------------------------------------"
 			echo "Data successfully submitted" 
@@ -3988,26 +4126,29 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>					Name of function"
-				echo "		--path=<study_folder>						Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>					List of subjects to run"
-				echo "		--subjects=<list_of_cases>					List of subjects to run, separated by commas"
-				echo "		--modality=<input_modality_for_qc>				Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "		--function=<function_name>                  Name of function"
+				echo "		--path=<study_folder>                       Path to study data folder"
+				echo "		--subjects=<comma_separated_list_of_cases>  List of subjects to run"
+				echo "		--subjects=<list_of_cases>                  List of subjects to run, separated by commas"
+				echo "		--modality=<input_modality_for_qc>          Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
+				echo "		--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                                    e.g. for SLURM the string would look like this: "
+				echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "		--overwrite=<clean_prior_run>					Delete prior QC run"
-				echo "		--templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: $TOOLS/MNAP/library/data/templates)"
-				echo "		--outpath=<path_for_output_file>				Specify the output path name of the QC folder"
-				echo "		--dwipath=<path_for_dwi_data>					Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
-				echo "		--dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
-				echo "		--dwilegacy=<dwi_data_processed_via_legacy_pipeline>		Specify is DWI data was processed via legacy pipelines [e.g. YES or NO]"
-				echo "		--bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
-				echo "		--boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
-				echo "		--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
+				echo "		--overwrite=<clean_prior_run>                    Delete prior QC run"
+				echo "		--templatefolder=<path_for_the_template_folder>  Specify the output path name of the template folder (default: $TOOLS/MNAP/library/data/templates)"
+				echo "		--outpath=<path_for_output_file>                 Specify the output path name of the QC folder"
+				echo "		--dwipath=<path_for_dwi_data>                    Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
+				echo "		--dwidata=<file_name_for_dwi_data>               Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
+				echo "		--dtifitqc=<visual_qc_for_dtifit>                Specify if dtifit visual QC should be completed [e.g. yes or no]"
+				echo "		--bedpostxqc=<visual_qc_for_bedpostx>            Specify if BedpostX visual QC should be completed [e.g. yes or no]"
+				echo "		--eddyqcpdf=<pdf_qc_for_eddy>                    Specify if EDDY PDF QC should be linked into QC folder [e.g. yes or no]"
+				echo "		--dwilegacy=<dwi_data_processed_via_legacy_pipeline>     Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
+				echo "		--bolddata=<file_names_for_bold_data>                    Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
+				echo "		--boldsuffix=<file_name_for_bold_data>                   Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
+				echo "		--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
 				echo ""
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
@@ -4546,6 +4687,9 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
 	DWIPath=`opts_GetOpt "${setflag}dwipath" $@` 																			# --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
 	DWIData=`opts_GetOpt "${setflag}dwidata" $@` 																			# --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
+	DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@` 																			# --dtifitqc=<visual_qc_for_dtifit>				Specify if dtifit visual QC should be completed [e.g. YES or NO]
+	BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@` 																		# --bedpostxqc=<visual_qc_for_bedpostx>			Specify if BedpostX visual QC should be completed [e.g. YES or NO]
+	EddyQCPDF=`opts_GetOpt "${setflag}eddyqcpdf" $@` 																		# --eddyqcpdf=<pdf_qc_for_eddy>                    Specify if EDDY PDF QC should be linked into QC folder [e.g. yes or no]
 	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@` 																		# --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
 	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
 	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
@@ -4621,18 +4765,22 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
+
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
+		
 		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/MNAP/library/data/"; echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; fi
 		if [ -z "$OutPath" ]; then OutPath="${StudyFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
+		
 		if [ "$Modality" = "DWI" ]; then
 			if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
 			if [ -z "$DWIData" ]; then DWIData="data"; echo "DWI data name not explicitly specified. Using default: ${DWIData}"; fi
-			if [ -z "$DWILegacy" ]; then DWILegacy="NO"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; fi
+			if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; fi
+			if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; fi
+			if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; fi
+			if [ -z "$EddyQCPDF" ]; then EddyQCPDF="no"; echo "DWI EDDY not specified. Using default: ${EddyQCPDF}"; fi		
 		fi
 		if [ "$Modality" = "BOLD" ]; then
 			for BOLD in $BOLDS; do rm -f ${OutPath}/TSNR_Report_${BOLD}*.txt &> /dev/null; done
@@ -4640,6 +4788,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 			if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "BOLD suffix not specified. Assuming no suffix"; fi
 			if [ -z "$SkipFrames" ]; then SkipFrames="0"; fi
 		fi
+		
 		echo ""
 		echo "Running qcpreproc with the following parameters:"
 		echo ""
@@ -4654,6 +4803,9 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		echo "DWI input path: ${DWIPath}"
 		echo "DWI input name: ${DWIData}"
 		echo "DWI legacy processing: ${DWILegacy}"
+		echo "DWI dtifit QC requested: ${DtiFitQC}"
+		echo "DWI bedpostX QC requested: ${BedpostXQC}"
+		echo "DWI EDDY QC PDF requested: ${EddyQCPDF}"
 		fi
 		if [ "$Modality" = "BOLD" ]; then
 		echo "BOLD data input: ${BOLDS}"
@@ -4673,6 +4825,7 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "eddyqc" ]; then
+		unset EddyPath
 		# -- Check all the user-defined parameters:	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
@@ -4699,53 +4852,62 @@ if [ "$FunctionToRun" == "eddyqc" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 		fi
 		
-		# -- loop through cases
-		for CASE in $CASES
-		do
-			# -- check in/out paths
-			if [ -z ${EddyPath} ]; then
-				reho "Eddy path not set. Assuming defaults."
-        		EddyPath="${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
-    		fi
-    	
-	    	if [ -z ${OutputDir} ]; then
-	    		reho "Output folder not set. Assuming defaults."
-    		    OutputDir="${EddyPath}/${EddyBase}.qc"
-    		fi
-    	
-    		# -- report parameters
-    		echo ""
-			echo "Running eddyqc with the following parameters:"
-			echo ""
-			echo "--------------------------------------------------------------"
-  			echo "   StudyFolder: ${StudyFolder}"
-  			echo "   Subjects: ${CASES}"
-  			echo "   Report Type: ${Report}"
-  			echo "   Eddy QC Input Path: ${EddyPath}"
-  			echo "   Eddy QC Output Path: ${OutputDir}"
-  			# report group parameters
-  			if [ ${Report} == "group" ]; then
-  			echo "   List: ${List}"
-  			echo "   Grouping Variable: ${GroupVar}"
-  			echo "   Update single subjects: ${Update}"
-			echo ""
-			fi
-			# report individual parameters
-			if [ ${Report} == "individual" ]; then
-  			echo "   Eddy Inputs Base Name: ${EddyBase}"
-  			echo "   Mask: ${EddyPath}/${Mask}"
-  			echo "   BVALS file: ${EddyPath}/${BvalsFile}"
-  			echo "   Eddy Index file: ${EddyPath}/${EddyIdx}"
-  			echo "   Eddy parameter file: ${EddyPath}/${EddyParams}"
-			fi
-			# report optional parameters
-  			echo "   BvecsFile: ${EddyPath}/${BvecsFile}"
-  			echo "   Overwrite: ${EddyPath}/${Overwrite}"
-			echo "--------------------------------------------------------------"
-    	
-			# -- execute function
-			"$FunctionToRun" "$CASE"
-		done
+		# -- loop through cases for an individual run call
+		if [ ${Report} == "individual" ]; then
+			for CASE in ${CASES}
+			do
+				# -- check in/out paths
+				if [ -z ${EddyPath} ]; then
+					reho "Eddy path not set. Assuming defaults."
+        			EddyPath="${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+    			fi
+	    		if [ -z ${OutputDir} ]; then
+	    			reho "Output folder not set. Assuming defaults."
+    			    OutputDir="${EddyPath}/${EddyBase}.qc"
+    			fi
+    			# -- report individual parameters
+    			echo ""
+				echo "Running individual eddyqc with the following parameters:"
+				echo ""
+				echo "--------------------------------------------------------------"
+  				echo "   StudyFolder: ${StudyFolder}"
+  				echo "   Subject: ${CASE}"
+  				echo "   Report Type: ${Report}"
+  				echo "   Eddy QC Input Path: ${EddyPath}"
+  				echo "   Eddy QC Output Path: ${OutputDir}"
+  				echo "   Eddy Inputs Base Name: ${EddyBase}"
+  				echo "   Mask: ${EddyPath}/${Mask}"
+  				echo "   BVALS file: ${EddyPath}/${BvalsFile}"
+  				echo "   Eddy Index file: ${EddyPath}/${EddyIdx}"
+  				echo "   Eddy parameter file: ${EddyPath}/${EddyParams}"
+				# report optional parameters
+  				echo "   BvecsFile: ${EddyPath}/${BvecsFile}"
+  				echo "   Overwrite: ${EddyPath}/${Overwrite}"
+				echo "--------------------------------------------------------------"
+				# -- execute function
+				"$FunctionToRun" "$CASE"
+			done
+		fi
+		
+		# -- group call
+		if [ ${Report} == "group" ]; then
+		    	# -- report group parameters
+    			echo ""
+				echo "Running group eddyqc with the following parameters:"
+				echo ""
+				echo "--------------------------------------------------------------"
+  				echo "   StudyFolder: ${StudyFolder}"
+  				echo "   Report Type: ${Report}"
+  				echo "   Eddy QC Input Path: ${EddyPath}"
+  				echo "   Eddy QC Output Path: ${OutputDir}"
+  				echo "   List: ${List}"
+  				echo "   Grouping Variable: ${GroupVar}"
+  				echo "   Update single subjects: ${Update}"
+  				echo "   Overwrite: ${EddyPath}/${Overwrite}"
+				echo "--------------------------------------------------------------"
+				
+				# ---> Add function all here 
+		fi    		
 fi
 
 # ------------------------------------------------------------------------------
