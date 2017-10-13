@@ -238,19 +238,19 @@ show_usage() {
 				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
 				echo ""
-				ls ${MNAPPATH}/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- General functions:"
 				echo ""
-				ls ${MNAPPATH}/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- gmrimage functions:"
 				echo ""
-				ls ${MNAPPATH}/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- Functional connectivity functions:"
 				echo ""
-				ls ${MNAPPATH}/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 				echo ""
 				echo ""
 }
@@ -272,19 +272,19 @@ show_usage_matlabhelp() {
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
 		echo ""
-		ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- General functions:"
 		echo ""
-		ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- gmrimage functions:"
 		echo ""
-		ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- Functional connectivity functions:"
 		echo ""
-		ls $TOOLS/MNAP/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 		echo ""
 		echo ""
 }
