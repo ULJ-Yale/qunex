@@ -236,23 +236,23 @@ show_usage() {
 				echo "==== All Supported MNAP Independent Matlab Analyses Utilities ===="
 				echo "=================================================================="
 				echo ""
-				echo "==> Matlab tools are located in: $TOOLS/$REPO/matlab"
+				echo "==> Matlab tools are located in: $TOOLS/$MNAPREPO/matlab"
 				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
 				echo ""
-				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- General functions:"
 				echo ""
-				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- gmrimage functions:"
 				echo ""
-				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 				echo ""
 				echo "-- MNAP Matlab Analyses Utilities --- Functional connectivity functions:"
 				echo ""
-				ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+				ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 				echo ""
 				echo ""
 }
@@ -272,23 +272,23 @@ show_usage_matlabhelp() {
 		echo "==== All Supported MNAP Independent Matlab Analyses Utilities ===="
 		echo "=================================================================="
 		echo ""
-		echo "==> Matlab tools are located in: $TOOLS/$REPO/matlab"
+		echo "==> Matlab tools are located in: $TOOLS/$MNAPREPO/matlab"
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
 		echo ""
-		ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- General functions:"
 		echo ""
-		ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- gmrimage functions:"
 		echo ""
-		ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 		echo ""
 		echo "-- MNAP Matlab Analyses Utilities --- Functional connectivity functions:"
 		echo ""
-		ls $MNAPPATH/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+		ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
 		echo ""
 		echo ""
 }
