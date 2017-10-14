@@ -76,31 +76,31 @@ CYAN_F="\033[36m"; CYAN_B="\033[46m"
 WHITE_F="\033[37m"; WHITE_B="\033[47m"
 
 reho() {
-    echo -e "$RED_F $1 \033[0m"
+    echo -e "$RED_F$1 \033[0m"
 }
 
 geho() {
-    echo -e "$GREEN_F $1 \033[0m"
+    echo -e "$GREEN_F$1 \033[0m"
 }
 
 yeho() {
-    echo -e "$YELLOW_F $1 \033[0m"
+    echo -e "$YELLOW_F$1 \033[0m"
 }
 
 beho() {
-    echo -e "$BLUE_F $1 \033[0m"
+    echo -e "$BLUE_F$1 \033[0m"
 }
 
 mageho() {
-    echo -e "$MAGENTA_F $1 \033[0m"
+    echo -e "$MAGENTA_F$1 \033[0m"
 }
 
 cyaneho() {
-    echo -e "$CYAN_F $1 \033[0m"
+    echo -e "$CYAN_F$1 \033[0m"
 }
 
 weho() {
-    echo -e "$WHITE_F $1 \033[0m"
+    echo -e "$WHITE_F$1 \033[0m"
 }
 
 # ------------------------------------------------------------------------------
@@ -108,153 +108,165 @@ weho() {
 # ------------------------------------------------------------------------------
 
 show_usage() {
-				reho "...................................................................."
-				echo ""
-				reho "             ███╗   ███╗███╗   ██╗ █████╗ ██████╗                   " 
-				reho "             ████╗ ████║████╗  ██║██╔══██╗██╔══██╗                  " 
-				reho "             ██╔████╔██║██╔██╗ ██║███████║██████╔╝                  "
- 				reho "             ██║╚██╔╝██║██║╚██╗██║██╔══██║██╔═══╝                   "
- 				reho "             ██║ ╚═╝ ██║██║ ╚████║██║  ██║██║                       "  
- 				reho "             ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝                       "
-				reho "...................................................................."
-				echo ""
-				echo ""
-				echo "================================================================="
-				echo "================= GENERAL HELP FOR MNAP SUITE ==================="
-				echo "================================================================="
-				echo ""
-				echo "* usage:"
-				echo "	mnap --function=<command> --studyfolder=<study_folder> \ "
-				echo "	--subjects='<list of cases>' [options]"
-				echo ""
-				echo "* example:"
-				echo "	mnap --function=dicomorganize \ "
-				echo "	--studyfolder=/some/path/to/study/subjects \ "
-				echo "	--subjects='100001,100002'"
-				echo ""
-				echo "* specific help and usage for a function:"
-				echo "	mnap -<command>   OR   ap ?<command>   OR   ap <command>"
-				echo ""
-				echo "---------------------------------------------------------------------"
-				echo ""
-				echo "Note the following conventions used in help and documentation:"
-				echo ""
-				echo "* Square brackets []: Specify a value that is optional."
-				echo "			Note: Value within brackets is the default value."
-				echo "* Angle brackets <>: Contents describe what should go there."
-				echo "* Dashes or flags -- : Define input variables."
-				echo "* All descriptions use regular case and all options use CAPS"
-				echo ""
-				echo "Note: All gmri functions are supported and take the list of arguments."
-				echo ""
-				echo "---------------------------------------------------------------------"
-				echo ""
-				echo "	List of supported functionality"
-				echo "===================================================================="
-				echo ""
-				echo "Data organization functions"
-				echo "------------------------------"
-				echo "dicomorganize		sort dicoms and setup nifti files from dicoms"
-				echo "setuphcp		setup data structure for hcp processing"
-				echo "createlists		setup subject lists for preprocessing or analyses"
-				echo "hpcsync			sync with hpc cluster(s) for preprocessing"
-				echo "awshcpsync		sync hcp data from aws s3 cloud"
-				echo ""
-				echo ""
-				echo "HCP Pipelines original calls (deprecated in 2017 for hcp1-5 versions)"
-				echo "------------------------------------------------------------------------"
-				echo "hcp1_orig		prefreesurfer component of the hcp pipeline (deprecated for hcp1)"
-				echo "hcp2_orig		freesurfer component of the hcp pipeline (deprecated for hcp2)"
-				echo "hcp3_orig		postfreesurfer component of the hcp pipeline (deprecated for hcp3)"
-				echo "hcp4_orig		volume component of the hcp pipeline (deprecated for hcp4)"
-				echo "hcp5_orig		surface component of the hcp pipeline (deprecated for hcp5)"
-				echo "hcpd_orig		dwi component of the hcp pipeline (deprecated for hcpd)"
-				echo ""
-				echo ""
-				echo "QC and Misc processing functions"
-				echo "--------------------------------"
-				echo "eddyqc		run quality control on diffusion datasets following eddy outputs"
-				echo "qcpreproc		run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
-				echo ""  				
-				echo ""
-				echo "DWI processing, analyses & probabilistic tractography functions"
-				echo "----------------------------------------------------------------"
-				echo "hcpdlegacy			dwi processing for data with standard fieldmaps"
-				echo "fsldtifit 			run fsl dtifit (cluster usable)"
-				echo "fslbedpostxgpu 			run fsl bedpostx w/gpu"
-				echo "pretractographydense		generates space for whole-brain dense connectomes"
-				echo "probtrackxgpudense		run fsl probtrackx for whole brain & generates dense whole-brain connectomes"
-				echo ""
-				echo ""
-				echo "Misc functions and analyses"
-				echo "---------------------------"
-				echo "computeboldfc			computes seed or gbc BOLD functional connectivity"
-				echo "structuralparcellation		parcellate myelin or thickness data via user-specified parcellation"
-				echo "boldparcellation		parcellate bold data and generate pconn files via user-specified parcellation"
-				echo "dwidenseparcellation		parcellate dense dwi tractography data via user-specified parcellation"
-				echo "dwiseedtractography		reduce dense dwi tractography data via user-specified seed structure"
-				echo "printmatrix			extract parcellated matrix for dense CIFTI data via via a provided network solution"
-				echo "bolddense			compute bold dense connectome (needs >30gb ram per bold)"
-				echo "ciftismooth			smooth cifti data"
-				echo "roiextract			extract data from pre-specified ROIs in CIFTI or NIFTI"
-				echo ""
-				echo ""
-				echo "FIX ICA de-noising"
-				echo "---------------------------"
-				echo "fixica				run fix ica de-noising on a given volume"
-				echo "postfix				generates wb_view scene files in each subjects directory for fix ica results"
-				echo "boldhardlinkfixica		setup hard links for single run fix ica results"
-				echo "fixicainsertmean		re-insert mean image back into mapped fix ica data (needed prior to further preprocessing calls)"
-				echo "fixicaremovemean		remove mean image from mapped fix ica data"
-				echo "boldseparateciftifixica		separate specified bold timeseries (results from fix ica - use if bolds merged)"
-				echo "boldhardlinkfixicamerged	setup hard links for merged fix ica results (use if bolds merged)" 
-				echo ""
-				echo ""
-				echo ""
-				echo "=================================================================================="
-				echo "== General neuroimaging utilities for preprocessing and analyses (gmri package) =="
-				echo "=================================================================================="
-				echo ""
-				echo "The MNAP pipelines contain additional python-based utilities."
-				echo "These are accessed either directly via 'gmri' command from the terminal."
-				echo "Alternatively the 'ap' wrapper parses all functions from 'gmri' package as standard input."
-				echo ""
-				echo ""
-				echo "	--> Example to pass command: 			mnap <command> [options]"
-				echo "	--> Example to request help for command : 	mnap ?<command>"
-				echo ""
-				echo ""
-				echo "--------------------------------------------------------------------"
-				echo "---- Full help output for 'gmri' utilities is provided below: ------"
-				echo "--------------------------------------------------------------------"
-				echo ""
-				echo "`gmri`"
-				echo "`gmri -l`"
-				echo ""
-				echo ""
-				echo "=================================================================="
-				echo "==== All Supported MNAP Independent Matlab Analyses Utilities ===="
-				echo "=================================================================="
-				echo ""
-				echo "==> Matlab tools are located in: $TOOLS/$MNAPREPO/matlab"
-				echo ""
-				echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
-				echo ""
-				ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
-				echo ""
-				echo "-- MNAP Matlab Analyses Utilities --- General functions:"
-				echo ""
-				ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
-				echo ""
-				echo "-- MNAP Matlab Analyses Utilities --- gmrimage functions:"
-				echo ""
-				ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
-				echo ""
-				echo "-- MNAP Matlab Analyses Utilities --- Functional connectivity functions:"
-				echo ""
-				ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
-				echo ""
-				echo ""
+
+geho ""
+geho "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+geho "................. ███╗   ███╗███╗   ██╗ █████╗ ██████╗ ......................" 
+geho "................. ████╗ ████║████╗  ██║██╔══██╗██╔══██╗ ....................." 
+geho "................. ██╔████╔██║██╔██╗ ██║███████║██████╔╝ ....................."
+geho "................. ██║╚██╔╝██║██║╚██╗██║██╔══██║██╔═══╝ ......................"
+geho "................. ██║ ╚═╝ ██║██║ ╚████║██║  ██║██║ .........................."  
+geho "................. ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝ .........................."
+geho "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+geho "                     Software Licence Disclaimer:                            "
+geho "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+geho " Use of this software is subject to the terms and conditions defined by the  "
+geho " Yale University Copyright Policies:                                         "
+geho "    http://ocr.yale.edu/faculty/policies/yale-university-copyright-policy    "
+geho " and the terms and conditions defined in the file 'LICENSE.txt' which is     "
+geho " a part of this source code package.                                         "
+geho "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+echo ""
+echo "-----------------------------------------------------------------------------"
+echo "---------------------------  General Usage  ---------------------------------"
+echo "-----------------------------------------------------------------------------"
+echo ""
+echo "Usage:"
+echo ""
+echo "    mnap --function=<command> --studyfolder=<study_folder> \ "
+echo "    --subjects='<list_of_cases>' [options]"
+echo ""
+echo "Example:"
+echo ""
+echo "    mnap --function=dicomorganize \ "
+echo "    --studyfolder=/some/path/to/study/subjects \ "
+echo "    --subjects='<case_id1>,<case_id2>'"
+echo ""
+echo "Specific function help:"
+echo ""
+echo "    mnap -<command>   OR   mnap ?<command>   OR   mnap <command>"
+echo ""
+echo "............................................................................"
+echo ""
+echo "Note the following conventions used in help and documentation:"
+echo ""
+echo "    * Square brackets []: Specify a value that is optional."
+echo "			Note: Value within brackets is the default value."
+echo ""
+echo "    * Angle brackets <>: Contents describe what should go there."
+echo ""
+echo "    * Dashes or flags -- : Define input variables."
+echo ""
+echo "    * All descriptions use regular case and all options use CAPS"
+echo ""
+echo "---------------------------------------------------------------------------"
+echo "------------------------ MNAP Specific Functions --------------------------"
+echo "---------------------------------------------------------------------------"
+echo ""
+echo "Data organization functions"
+echo "----------------------------"
+echo "dicomorganize ...... sort dicoms and setup nifti files from dicoms"
+echo "setuphcp ...... setup data structure for hcp processing"
+echo "createlists ...... setup subject lists for preprocessing or analyses"
+echo "hpcsync ...... sync with hpc cluster(s) for preprocessing"
+echo "awshcpsync ...... sync hcp data from aws s3 cloud"
+echo ""
+echo ""
+echo "HCP Pipelines original calls (deprecated in 2017 for hcp1-5 versions)"
+echo "---------------------------------------------------------------------"
+echo "hcp1_orig ...... prefreesurfer component of the hcp pipeline (deprecated for hcp1)"
+echo "hcp2_orig ...... freesurfer component of the hcp pipeline (deprecated for hcp2)"
+echo "hcp3_orig ...... postfreesurfer component of the hcp pipeline (deprecated for hcp3)"
+echo "hcp4_orig ...... volume component of the hcp pipeline (deprecated for hcp4)"
+echo "hcp5_orig ...... surface component of the hcp pipeline (deprecated for hcp5)"
+echo "hcpd_orig ...... dwi component of the hcp pipeline (deprecated for hcpd)"
+echo ""
+echo ""
+echo "QC functions"
+echo "------------"
+echo "eddyqc ...... run quality control on diffusion datasets following eddy outputs"
+echo "qcpreproc ...... run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
+echo ""  				
+echo ""
+echo "DWI processing, analyses & probabilistic tractography functions"
+echo "----------------------------------------------------------------"
+echo "hcpdlegacy ...... dwi processing for data with standard fieldmaps"
+echo "fsldtifit ...... run fsl dtifit (cluster usable)"
+echo "fslbedpostxgpu ...... run fsl bedpostx w/gpu"
+echo "pretractographydense ...... generates space for whole-brain dense connectomes"
+echo "probtrackxgpudense ...... run fsl probtrackx for whole brain & generates dense "
+echo "                          whole-brain connectomes"
+echo ""
+echo ""
+echo "Misc. functions and analyses"
+echo "---------------------------"
+echo "computeboldfc ...... computes seed or gbc BOLD functional connectivity"
+echo "structuralparcellation ...... parcellate myelin or thickness"
+echo "boldparcellation ...... parcellate bold data and generate pconn files"
+echo "dwidenseparcellation ...... parcellate dense dwi tractography data"
+echo "dwiseedtractography ...... reduce dense dwi tractography data using a seed structure"
+echo "printmatrix ...... extract parcellated matrix for dense CIFTI data using a network solution"
+echo "bolddense ...... compute bold dense connectome (needs >30gb ram per bold)"
+echo "ciftismooth ...... smooth cifti data"
+echo "roiextract ...... extract data from pre-specified ROIs in CIFTI or NIFTI"
+echo ""
+echo ""
+echo "FIX ICA de-noising functions"
+echo "---------------------------"
+echo "fixica ...... run fix ica de-noising on a given volume"
+echo "postfix ...... generates workbench scenes for each subject directory"
+echo "boldhardlinkfixica ...... setup hard links for single run fix ica results"
+echo "fixicainsertmean ...... re-insert mean image back into mapped fix ica data"
+echo "fixicaremovemean ...... remove mean image from mapped fix ica data"
+echo "boldseparateciftifixica ...... separate specified bold timeseries (use if bolds merged)"
+echo "boldhardlinkfixicamerged ...... setup sym links for merged fix ica results (use if bolds merged)" 
+echo ""
+echo ""
+echo "---------------------------------------------------------------------------"
+echo "------- General MRI (gmri) utilities for preprocessing and analyses -------"
+echo "---------------------------------------------------------------------------"
+echo ""
+echo "The MNAP pipelines contain additional python-based gmri utilities."
+echo "These are accessed either directly via 'gmri' command from the terminal."
+echo "Alternatively the 'mnap' connector wrapper parses all functions from "
+echo "'gmri' package as standard input."
+echo ""
+echo ""
+echo "	--> Example to pass command:    mnap <command> [options]"
+echo "	--> Example to request help for command:    mnap ?<command>"
+echo ""
+echo "`gmri`"
+echo "`gmri -l`"
+echo ""
+echo ""
+echo "---------------------------------------------------------------------------"
+echo "------------- All Supported MNAP Stand-alone Matlab Tools -----------------"
+echo "---------------------------------------------------------------------------"
+echo ""
+echo "==> MNAP Matlab tools are located in: $TOOLS/$MNAPREPO/matlab"
+echo ""
+echo "The MNAP package contain additional matlab-based stand-alone tools."
+echo "These tools are used across various MNAP packages, but can be accessed"
+echo "as stand-alone functions within Matlab. Help and documentation is"
+echo "embedded within each stand-alone tool via standard Matlab help call." 
+echo ""
+echo "-- MNAP Matlab Analyses Utilities --- Statistical functions:"
+echo ""
+ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+echo ""
+echo "-- MNAP Matlab Analyses Utilities --- General functions:"
+echo ""
+ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+echo ""
+echo "-- MNAP Matlab Analyses Utilities --- gmrimage functions:"
+echo ""
+ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+echo ""
+echo "-- MNAP Matlab Analyses Utilities --- Functional connectivity functions:"
+echo ""
+ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -o 'stats.*' | cut -f2- -d/
+echo ""
+echo ""
 }
 
 # ========================================================================================
@@ -368,9 +380,11 @@ dicomorganize() {
 							rm -f "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh &> /dev/null
 							echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh
 							chmod 770 "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh
+							
 							# -- Run the scheduler commands
 							cd "$StudyFolder"/"$CASE"/dicom/
 							gmri schedule command="${StudyFolder}/${CASE}/dicom/ComQUEUE_dicomorganize_${Suffix}.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
+							
 							echo ""
 							echo "---------------------------------------------------------------------------------"
 							echo "Data successfully submitted" 
@@ -392,32 +406,30 @@ show_usage_dicomorganize() {
   				echo ""
   				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>				Name of function"
-				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>	A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "									e.g. for SLURM the string would look like this: "
-				echo "									--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--function=<function_name>                             Name of function"
+				echo "--path=<study_folder>                                  Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                       e.g. for SLURM the string would look like this: "
+				echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
-				echo "		--overwrite=<re-run_dicomorganize>				Explicitly force a re-run of dicomorganize"
+				echo "--overwrite=<re-run_dicomorganize>                     Explicitly force a re-run of dicomorganize"
 				echo ""
-				echo ""  
-    			echo "-- Usage for dicomorganize"
     			echo ""
     			echo "-- Example with flagged parameters for a local run:"
 				echo ""
-				echo "	mnap --path='<study_folder>' \ "
-				echo "	--function='dicomorganize' \ "
-				echo "	--subjects='<comma_separarated_list_of_cases>' "
+				echo "mnap --path='<study_folder>' \ "
+				echo "--function='dicomorganize' \ "
+				echo "--subjects='<comma_separarated_list_of_cases>' "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "	mnap --path='<study_folder>' \ "
-				echo "	--function='dicomorganize' \ "
-				echo "	--subjects='<comma_separarated_list_of_cases>' \ "
-				echo "	--scheduler='<name_of_scheduler_and_options>'"
+				echo "mnap --path='<study_folder>' \ "
+				echo "--function='dicomorganize' \ "
+				echo "--subjects='<comma_separarated_list_of_cases>' \ "
+				echo "--scheduler='<name_of_scheduler_and_options>'"
 				echo "" 
     			echo ""
 }
@@ -451,13 +463,16 @@ setuphcp() {
 				eval "$ComQUEUE"
 			else
 				echo "Job ID:"
+				
 				# -- Set the scheduler commands
 				rm -f "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh &> /dev/null
 				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh
 				chmod 770 "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh				
+				
 				# -- Run the scheduler commands
 				cd "$StudyFolder"/"$CASE"/
 				gmri schedule command="${StudyFolder}/${CASE}/setuphcp_${Suffix}.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/setuphcp.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/setuphcp.${Suffix}.error.log"  workdir="${StudyFolder}/${CASE}"  
+				
 				echo ""
 				echo "---------------------------------------------------------------------------------"
 				echo "Data successfully submitted" 
@@ -477,15 +492,12 @@ show_usage_setuphcp() {
   				echo ""
   				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>				Name of function"
-				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				echo "" 
-    			echo "-- Usage for setuphcp"
-    			echo ""
+				echo "--function=<function_name>                             Name of function"
+				echo "--path=<study_folder>                                  Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                       e.g. for SLURM the string would look like this: "
+				echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
     			echo ""
     			echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -577,35 +589,35 @@ show_usage_createlists() {
   				echo ""
   				echo "Supported lists:"
   				echo ""
-  				echo "	* preprocessing --> Subject parameter list with cases to preprocess"
-  				echo "	* analysis --> List of cases to compute seed connectivity or GBC"
-  				echo "	* snr --> List of cases to compute signal-to-noise ratio"
+  				echo "    * preprocessing --> Subject parameter list with cases to preprocess"
+  				echo "    * analysis --> List of cases to compute seed connectivity or GBC"
+  				echo "    * snr --> List of cases to compute signal-to-noise ratio"
   				echo ""
   				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>				Name of function"
-				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>		List of subjects to run"
-				echo "		--listtocreate=<type_of_list_to_generate>		Type of list to generate (e.g. preprocessing). "
-				echo "		--listname=<output_name_of_the_list>			Output name of the list to generate. "
-				echo "	 	* Supported: preprocessing, analysis, snr"
+				echo "--function=<function_name>				Name of function"
+				echo "--path=<study_folder>					Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>		List of subjects to run"
+				echo "--listtocreate=<type_of_list_to_generate>		Type of list to generate (e.g. preprocessing). "
+				echo "--listname=<output_name_of_the_list>			Output name of the list to generate. "
+				echo "    * Supported: preprocessing, analysis, snr "
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
-				echo "		--overwrite=<yes/no>					Explicitly delete any prior lists"
-				echo "		--append=<yes>						Explicitly append the existing list"
-				echo "		--listpath=<absolute_path_to_list_folder>	Explicitly set path where you want the lists generated"
+				echo "--overwrite=<yes/no>					Explicitly delete any prior lists"
+				echo "--append=<yes>						Explicitly append the existing list"
+				echo "--listpath=<absolute_path_to_list_folder>	Explicitly set path where you want the lists generated"
 				echo "											Default: <study_folder>/processing/lists "
 				echo ""
-				echo "		* Note: If --append set to <yes> then function will append new cases to the end"
+				echo "    * Note: If --append set to <yes> then function will append new cases to the end"
 				echo ""								
-				echo "		--parameterfile=<header_file_for_processing_list>	Set header for the processing list."
+				echo "--parameterfile=<header_file_for_processing_list>	Set header for the processing list."
 				echo ""
-				echo "		* Default:"
+				echo "    * Default:"
 				echo ""
 				echo "`ls ${TOOLS}/MNAP/connector/functions/subjectparamlist_header_multiband.txt`"
 				echo ""
-				echo "		* Supported: "
+				echo "    * Supported: "
 				echo ""
 				echo "`ls ${TOOLS}/MNAP/connector/functions/subjectparamlist_header*` "
 				echo ""
@@ -616,7 +628,7 @@ show_usage_createlists() {
 				echo "      --parcellationfile=<file_for_parcellation>	Specify the absolute file path for parcellation in $MNAPPATH/connector/templates/Parcellations/ "
 				echo "      --filetype=<file_extension>			Extension for BOLDs in the analysis (e.g. _Atlas). Default empty []"
 				echo "      --boldsuffix=<comma_separated_bold_suffix>	List of BOLDs to iterate over in the analysis list"
-#    			echo "		--subjecthcpfile=<yes/no>		Use individual subject_hcp.txt file for for appending the parameter list"
+#    			echo "--subjecthcpfile=<yes/no>		Use individual subject_hcp.txt file for for appending the parameter list"
     			echo ""
     			echo "-- Usage for createsubjectlists"
     			echo ""
@@ -673,6 +685,7 @@ hpcsync() {
 }
 
 show_usage_hpcsync() {
+
   				echo ""
   				echo "-- DESCRIPTION:"
     			echo ""
@@ -692,8 +705,8 @@ show_usage_hpcsync() {
     			echo ""
   				echo "-- OPTIONS:"
     			echo ""
-    			echo "   --function=<function_name>   Name of function (required)"	
-    			echo "   --path=<study_folder>        Path to study data folder (required)"	
+    			echo "--function=<function_name>   Name of function (required)"	
+    			echo "--path=<study_folder>        Path to study data folder (required)"	
     			echo ""
 }
 
@@ -728,7 +741,6 @@ printmatrix() {
 			fi
 
 }
-
 
 show_usage_printmatrix() {
 
@@ -1183,7 +1195,7 @@ show_usage_hcp1_orig() {
     			echo "Original implementation of the PreFreeSurfer (hcp1) code."
     			echo ""
     			echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp1, called via gmri functions."
-    			echo "		--> run ap ?hcp1 for up-to-date help call of the supported function"
+    			echo "--> run ap ?hcp1 for up-to-date help call of the supported function"
     			echo ""
 }
 
@@ -1268,7 +1280,7 @@ show_usage_hcp2_orig() {
 				echo "Original implementation of the FreeSurfer (hcp2) code."
 				echo ""
 				echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp2, called via gmri functions."
-				echo "		--> run ap ?hcp2 for up-to-date help call of the supported function"
+				echo "--> run ap ?hcp2 for up-to-date help call of the supported function"
 				echo ""
 }
 
@@ -1374,7 +1386,7 @@ show_usage_hcp3_orig() {
 				echo "Original implementation of the PostFreeSurfer (hcp3) code."
 				echo ""
 				echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp3, called via gmri functions."
-				echo "		--> run ap ?hcp3 for up-to-date help call of the supported function"
+				echo "--> run ap ?hcp3 for up-to-date help call of the supported function"
 				echo ""
 }
 
@@ -1535,7 +1547,7 @@ show_usage_hcp4_orig() {
 				echo "Original implementation of the HCP Volume Preprocessing (hcp4) code."
 				echo ""
 				echo "Note: This function is deprecated as of 01/2017. The maintained function is hcp4, called via gmri functions."
-				echo "		--> run ap ?hcp4 for up-to-date help call of the supported function"
+				echo "--> run ap ?hcp4 for up-to-date help call of the supported function"
 				echo ""
 }
 
@@ -1581,6 +1593,7 @@ hcp5_orig() {
 		else
 			# -- Deprecated fsl_sub call
 			#fsl_sub."$fslsub" -Q "$QUEUE" \
+			
 			# - Clean prior command 
 			rm -f ${StudyFolder}/${CASE}/hcp/${CASE}_hcp5_orig.sh &> /dev/null
 			echo "${HCPPIPEDIR}/fMRISurface/GenericfMRISurfaceProcessingPipeline.sh \
@@ -1592,14 +1605,17 @@ hcp5_orig() {
 			--smoothingFWHM=$SmoothingFWHM \
 			--grayordinatesres=$GrayordinatesResolution \
 			--regname=$RegName" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcp5_orig.sh
+			
 			# - Make script executable 
 			chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcp5_orig.sh
 			cd ${StudyFolder}/${CASE}/hcp/
+			
 			# - Send to scheduler 
 			gmri schedule command="${StudyFolder}/${CASE}/hcp/${CASE}_hcp5_orig.sh" \
 			settings="${Scheduler}" \
 			output="stdout:${StudyFolder}/${CASE}/hcp/hcp5_orig.output.log|stderr:${StudyFolder}/${CASE}/hcp/hcp5_orig.error.log" \
 			workdir="${StudyFolder}/${CASE}/hcp/" 
+			
 			# The following lines are used for interactive debugging to set the positional parameters: $1 $2 $3 ...
 			echo "set -- --path=$StudyFolder \
 			--subject=$Subject \
@@ -1702,9 +1718,11 @@ hcpd_orig() {
 		--PEdir=${PEdir} \
 		--gdcoeffs=${Gdcoeffs} \
 		--printcom=${PRINTCOM}" > ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_orig.sh
+		
 		# - Make script executable 
 		chmod 770 ${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_orig.sh
 		cd ${StudyFolder}/${CASE}/hcp/
+		
 		# - Send to scheduler 
 		gmri schedule command="${StudyFolder}/${CASE}/hcp/${CASE}_hcpd_orig.sh" \
 		settings="${Scheduler}" \
@@ -1728,7 +1746,7 @@ show_usage_hcpd_orig() {
 				echo "Original implementation of the HCP Diffusion Preprocessing (hcpd) code."
 				echo ""
 				echo "Note: This function is deprecated as of 01/2017. The maintained function is hcpd, called via gmri functions."
-				echo "		--> run ap ?hcpd for up-to-date help call of the supported function"
+				echo "--> run ap ?hcpd for up-to-date help call of the supported function"
 				echo ""
 }
 
@@ -1780,6 +1798,7 @@ hcpdlegacy() {
 		CUDAQUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 		DwellTime="$EchoSpacing" #same variable as EchoSpacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
 		DwellTimeSec=`echo "scale=6; $DwellTime/1000" | bc` # set the dwell time to seconds:
+		
 		# -- Establish global directory paths
 		T1wFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w
 		DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/Diffusion
@@ -1827,6 +1846,7 @@ hcpdlegacy() {
 			settings="${Scheduler}" \
 			output="stdout:${StudyFolder}/${CASE}/hcp/hcpd_legacy.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/hcp/hcpd_legacy.${Suffix}.error.log" \
 			workdir="${StudyFolder}/${CASE}/hcp/"
+			
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted" 
 			echo "Scheduler Name and Options: $Scheduler"
@@ -1853,21 +1873,21 @@ show_usage_hcpdlegacy() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>			Name of function"
-				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
-				echo "		--echospacing=<echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69"
-				echo "		--PEdir=<phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
-				echo "		--TE=<delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
-				echo "		--unwarpdir=<epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
-				echo "		--diffdatasuffix=<diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "--function=<function_name>			Name of function"
+				echo "--path=<study_folder>				Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>			List of subjects to run"
+				echo "--echospacing=<echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69"
+				echo "--PEdir=<phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
+				echo "--TE=<delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
+				echo "--unwarpdir=<epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
+				echo "--diffdatasuffix=<diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "--overwrite=<clean_prior_run>		Delete prior run for a given subject"
 				echo ""
 				echo "-- Example with flagged parameters for a local run (needs GPU-enabled node):"
 				echo ""
@@ -2127,6 +2147,7 @@ dwidenseparcellation() {
 			settings="${Scheduler}" \
 			output="stdout:${LogFolder}/DWIDenseParcellation.${Suffix}.output.log|stderr:${LogFolder}/DWIDenseParcellation.${Suffix}.error.log" \
 			workdir="${LogFolder}"
+			
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted" 
 			echo "Scheduler Name and Options: $Scheduler"
@@ -2149,23 +2170,23 @@ show_usage_dwidenseparcellation() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>			Name of function"
-				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subject=<comma_separated_list_of_cases>	List of subjects to run"
-				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
-				echo "		--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
-				echo "		--outname=<name_of_output_pconn_file>		Specify the suffix output name of the pconn file"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "--function=<function_name>			Name of function"
+				echo "--path=<study_folder>				Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases>	List of subjects to run"
+				echo "--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
+				echo "--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
+				echo "--outname=<name_of_output_pconn_file>		Specify the suffix output name of the pconn file"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "--overwrite=<clean_prior_run>		Delete prior run for a given subject"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='dwidenseparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
@@ -2175,7 +2196,7 @@ show_usage_dwidenseparcellation() {
 				echo ""	
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='dwidenseparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
@@ -2205,9 +2226,10 @@ dwiseedtractography() {
 		########################################## OUTPUTS #########################################
 
 		# Outputs will be *pconn.nii files located here:
-		#    DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+		# DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 		# Parse General Parameters
-		#QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		# QUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
+		
 		StudyFolder="$StudyFolder"
 		CASE="$CASE"
 		MatrixVersion="$MatrixVersion"
@@ -2227,6 +2249,7 @@ dwiseedtractography() {
 			echo "Check log file output here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
+			
 			DWIDenseSeedTractography.sh \
 			--path="${StudyFolder}" \
 			--subject="${CASE}" \
@@ -2245,14 +2268,17 @@ dwiseedtractography() {
 			--seedfile=${SeedFile} \
 			--outname=${OutName} \
 			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseSeedTractography_"$Suffix".sh
+			
 			# - Make script executable 
 			chmod 770 "$LogFolder"/DWIDenseSeedTractography_"$Suffix".sh
 			cd ${LogFolder}
+			
 			# - Send to scheduler
 			gmri schedule command="${LogFolder}/DWIDenseSeedTractography_${Suffix}.sh" \
 			settings="${Scheduler}" \
 			output="stdout:${LogFolder}/DWIDenseSeedTractography.${Suffix}.output.log|stderr:${LogFolder}/DWIDenseSeedTractography.${Suffix}.error.log" \
 			workdir="${LogFolder}"
+			
 			echo "--------------------------------------------------------------"
 			echo "Data successfully submitted" 
 			echo "Scheduler Name and Options: $Scheduler"
@@ -2281,23 +2307,23 @@ show_usage_dwiseedtractography() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>			Name of function"
-				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subject=<comma_separated_list_of_cases>	List of subjects to run"
-				echo "		--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
-				echo "		--seedfile=<file_for_seed_reduction>		Specify the absolute path of the seed file you want to use as a seed for dconn reduction"
-				echo "		--outname=<name_of_output_dscalar_file>		Specify the suffix output name of the dscalar file"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "--function=<function_name>			Name of function"
+				echo "--path=<study_folder>				Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases>	List of subjects to run"
+				echo "--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
+				echo "--seedfile=<file_for_seed_reduction>		Specify the absolute path of the seed file you want to use as a seed for dconn reduction"
+				echo "--outname=<name_of_output_dscalar_file>		Specify the suffix output name of the dscalar file"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "--overwrite=<clean_prior_run>		Delete prior run for a given subject"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='dwiseedtractography' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
@@ -2307,7 +2333,7 @@ show_usage_dwiseedtractography() {
 				echo ""	
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='dwiseedtractography' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
@@ -2417,6 +2443,7 @@ computeboldfc() {
 				geho "Full Command:"
 				geho "${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh --path=${StudyFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
 				echo ""	
+				
 				echo "${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
@@ -2435,14 +2462,17 @@ computeboldfc() {
 				--targetf=${OutPath} \
 				--mask=${MaskFrames} \
 				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh
+				
 				# - Make script executable 
 				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh
+				
 				# - Send to scheduler 
 				cd "$LogFolder"  		
 				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_${Suffix}.sh" \
 				settings="${Scheduler}" \
 				output="stdout:${LogFolder}/ComputeFunctionalConnectivity.${Suffix}.output.log|stderr:${LogFolder}/ComputeFunctionalConnectivity.${Suffix}.error.log" \
 				workdir="${LogFolder}"
+				
 				echo "--------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name and Options: $Scheduler"
@@ -2458,6 +2488,7 @@ computeboldfc() {
 				echo "Running locally on `hostname`"
 				echo "Check log file output here: $LogFolder"
 				echo "--------------------------------------------------------------"
+				
 				echo " ${TOOLS}/MNAP/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
@@ -2508,14 +2539,17 @@ computeboldfc() {
 				--time=${ComputeTime} \
 				--vstep=${VoxelStep} \
 				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh 
+				
 				# - Make script executable 
 				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh &> /dev/null
+				
 				# - Send to scheduler     		
 				cd "$LogFolder"  		
 				gmri schedule command="${LogFolder}/ComputeFunctionalConnectivity_gbc_${Suffix}.sh" \
 				settings="${Scheduler}" \
 				output="stdout:${LogFolder}/ComputeFunctionalConnectivity_gbc.${Suffix}.output.log|stderr:${LogFolder}/ComputeFunctionalConnectivity_gbc.${Suffix}.error.log" \
 				workdir="${LogFolder}"
+				
 				echo "--------------------------------------------------------------"
 				echo "Data successfully submitted" 
 				echo "Scheduler Name and Options: $Scheduler"
@@ -2539,40 +2573,40 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>					Name of function"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "--function=<function_name>					Name of function"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
 				echo ""
-				echo "		--calculation=<type_of_calculation>			Run <seed> or <gbc> calculation for functional connectivity."
-				echo "		--runtype=<type_of_run>					Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
-				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
-				echo "		--targetf=<path_for_output_file>			Specify the absolute path for group result output folder. If using --runtype='individual' the output will default to --inputpath location for each individual subject"
-				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
-				echo "		--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
+				echo "--calculation=<type_of_calculation>			Run <seed> or <gbc> calculation for functional connectivity."
+				echo "--runtype=<type_of_run>					Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
+				echo "--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
+				echo "--targetf=<path_for_output_file>			Specify the absolute path for group result output folder. If using --runtype='individual' the output will default to --inputpath location for each individual subject"
+				echo "--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
+				echo "--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
 				echo ""
 				echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
 				echo ""
-				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subject=<list_of_cases>				List of subjects to run"
-				echo "		--inputfiles=<files_to_compute_connectivity_on>		Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
-				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
-				echo "		--outname=<name_of_output_file>				Specify the suffix name of the output file name"  
+				echo "--path=<study_folder>					Path to study data folder"
+				echo "--subject=<list_of_cases>				List of subjects to run"
+				echo "--inputfiles=<files_to_compute_connectivity_on>		Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
+				echo "--inputpath=<path_for_input_file>			Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
+				echo "--outname=<name_of_output_file>				Specify the suffix name of the output file name"  
 				echo ""
 				echo "-- OPTIONAL GENERAL PARAMETERS: "	
 				echo ""
-				echo "		--overwrite=<clean_prior_run>				Delete prior run for a given subject"
-				echo "		--extractdata=<save_out_the_data_as_as_csv>		Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
-				echo "		--covariance=<compute_covariance>			Whether to compute covariances instead of correlations (true / false). Default is [false]"
+				echo "--overwrite=<clean_prior_run>				Delete prior run for a given subject"
+				echo "--extractdata=<save_out_the_data_as_as_csv>		Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
+				echo "--covariance=<compute_covariance>			Whether to compute covariances instead of correlations (true / false). Default is [false]"
 				echo ""
 				echo "-- REQUIRED GBC PARMETERS:"
 				echo ""
-				echo "		--target=<which_roi_to_use>				Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]"
-				echo "		--rsmooth=<smoothing_radius>				Radius for smoothing (no smoothing if empty). Default is []"
-				echo "		--rdilate=<dilation_radius>				Radius for dilating mask (no dilation if empty). Default is []"
-				echo "		--command=<type_of_gbc_to_run>				Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
+				echo "--target=<which_roi_to_use>				Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]"
+				echo "--rsmooth=<smoothing_radius>				Radius for smoothing (no smoothing if empty). Default is []"
+				echo "--rdilate=<dilation_radius>				Radius for dilating mask (no dilation if empty). Default is []"
+				echo "--command=<type_of_gbc_to_run>				Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
 				echo ""
 				echo "                   	> mFz:t  ... computes mean Fz value across all voxels (over threshold t) "
 				echo "                   	> aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t) "
@@ -2593,18 +2627,18 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "-- OPTIONAL GBC PARMETERS:"
 				echo "" 
-				echo "		--verbose=<print_output_verbosely>			Report what is going on. Default is [false]"
-				echo "		--time=<print_time_needed>				Whether to print timing information. [false]"
-				echo "		--vstep=<how_many_voxels>				How many voxels to process in a single step. Default is [1200]"
+				echo "--verbose=<print_output_verbosely>			Report what is going on. Default is [false]"
+				echo "--time=<print_time_needed>				Whether to print timing information. [false]"
+				echo "--vstep=<how_many_voxels>				How many voxels to process in a single step. Default is [1200]"
 				echo ""
 				echo "-- REQUIRED SEED FC PARMETERS:"
 				echo ""
-				echo "		--roinfo=<roi_seed_files>				An ROI file for the seed connectivity "
+				echo "--roinfo=<roi_seed_files>				An ROI file for the seed connectivity "
 				echo ""
 				echo "-- OPTIONAL SEED FC PARMETERS: "
 				echo ""
-				echo "		--method=<method_to_get_timeseries>		Method for extracting timeseries - 'mean' or 'pca' Default is ['mean'] "
-				echo "		--options=<calculations_to_save>			A string defining which subject files to save. Default assumes all [''] "
+				echo "--method=<method_to_get_timeseries>		Method for extracting timeseries - 'mean' or 'pca' Default is ['mean'] "
+				echo "--options=<calculations_to_save>			A string defining which subject files to save. Default assumes all [''] "
 				echo ""
 				echo "			> r ... save map of correlations "
 				echo "			> f ... save map of Fisher z values "
@@ -2616,7 +2650,7 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "- Example for seed calculation for each individual subject:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='computeboldfc' \ "
 				echo "--calculation='seed' \ "
 				echo "--runtype='individual' \ "
@@ -2637,7 +2671,7 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "- Example for seed calculation for a group of three subjects with the absolute path for a target folder:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='computeboldfc' \ "
 				echo "--calculation='seed' \ "
 				echo "--runtype='group' \ "
@@ -2658,7 +2692,7 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "- Example for gbc calculation for each individual subject:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='computeboldfc' \ "
 				echo "--calculation='gbc' \ "
 				echo "--runtype='individual' \ "
@@ -2679,13 +2713,11 @@ show_usage_computeboldfc() {
 				echo "--time='true' \ "
 				echo "--vstep='5000' \ "
 				echo "--covariance='false' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
 				echo ""
 				echo "- Example for gbc calculation for a group of three subjects with the absolute path for a target folder:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='computeboldfc' \ "
 				echo "--calculation='gbc' \ "
 				echo "--runtype='group' \ "
@@ -2796,27 +2828,25 @@ show_usage_structuralparcellation () {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>				Name of function"
-				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subject=<comma_separated_list_of_cases>				List of subjects to run"
-				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file [ e.g. MyelinMap_BC or corrThickness ] "
-				echo "		--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
-				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "--function=<function_name>				Name of function"
+				echo "--path=<study_folder>					Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases>				List of subjects to run"
+				echo "--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file [ e.g. MyelinMap_BC or corrThickness ] "
+				echo "--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
+				echo "--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				#echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [ If local/interactive then log will be continuously generated in different format ]"
 				echo "" 
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
-				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
+				echo "--overwrite=<clean_prior_run>						Delete prior run for a given subject"
+				echo "--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='structuralparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--inputdatatype='MyelinMap_BC' \ "
@@ -2827,7 +2857,7 @@ show_usage_structuralparcellation () {
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='structuralparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--inputdatatype='MyelinMap_BC' \ "
@@ -2836,8 +2866,6 @@ show_usage_structuralparcellation () {
 				echo "--outname='LR_Colelab_partitions' \ "
 				echo "--extractdata='yes' "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
-				#echo "--runmethod='2' \ "
 				echo "" 
 }
 
@@ -2963,34 +2991,32 @@ show_usage_boldparcellation() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>				Name of function"
-				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subject=<comma_separated_list_of_cases>				List of subjects to run"
-				echo "		--inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation [ e.g. bold1_Atlas_MSMAll_hp2000_clean ]"
-				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
-				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file [ e.g. dscalar or dtseries ]"
-				echo "		--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
-				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
-				echo "		--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "--function=<function_name>				Name of function"
+				echo "--path=<study_folder>					Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases>				List of subjects to run"
+				echo "--inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation [ e.g. bold1_Atlas_MSMAll_hp2000_clean ]"
+				echo "--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
+				echo "--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file [ e.g. dscalar or dtseries ]"
+				echo "--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
+				echo "--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
+				echo "--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "																e.g. for SLURM the string would look like this: "
 				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				#echo "		--runmethod=<type_of_run>				Perform Local Interactive Run [1] or Send to scheduler [2] [ If local/interactive then log will be continuously generated in different format ]"
 				echo "" 
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "		--singleinputfile=<parcellate_single_file>				Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, -inputfile, --inputpath ]"
-				echo "		--overwrite=<clean_prior_run>						Delete prior run"
-				echo "		--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
-				echo "		--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit [ e.g. yes' or no; default is set to no ] "
-				echo "		--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder [ e.g. /images/functional/movement/bold1.use ]"
-				echo "		--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
+				echo "--singleinputfile=<parcellate_single_file>				Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, -inputfile, --inputpath ]"
+				echo "--overwrite=<clean_prior_run>						Delete prior run"
+				echo "--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
+				echo "--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit [ e.g. yes' or no; default is set to no ] "
+				echo "--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder [ e.g. /images/functional/movement/bold1.use ]"
+				echo "--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='boldparcellation' \ "
 				echo "--subjects='<comma_separated_list_of_cases>' \ "
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
@@ -3003,11 +3029,10 @@ show_usage_boldparcellation() {
 				echo "--computepconn='yes' \ "
 				echo "--extractdata='yes' \ "
 				echo "--useweights='no' \ "
-				#echo "--runmethod='1' "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<study_folder>' \ "
 				echo "--function='boldparcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
@@ -3020,9 +3045,7 @@ show_usage_boldparcellation() {
 				echo "--computepconn='yes' \ "
 				echo "--extractdata='yes' \ "
 				echo "--useweights='no' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' "
  				echo ""
 }
 
@@ -3127,29 +3150,30 @@ show_usage_roiextract() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>				Name of function"
-				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subject=<comma_separated_list_of_cases>		List of subjects to run"
-				echo "		--inputfile=<filepath>					Path to input file to be read that is of the same type as --roifile (i.e. CIFTI or NIFTI)"
-				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
-				echo "		--roifile=<file_for_parcellation>			Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
-				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
-				echo "		--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>	A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "									e.g. for SLURM the string would look like this: "
-				echo "									--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--function=<function_name>                Name of function"
+				echo "--path=<study_folder>                     Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases> List of subjects to run"
+				echo "--inputfile=<filepath>                    Path to input file to be read that is of the same type as --roifile (i.e. CIFTI or NIFTI)"
+				echo "--inputpath=<path_for_input_file>         Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
+				echo "--roifile=<file_for_parcellation>         Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
+				echo "--outname=<name_of_output_pconn_file>     Specify the suffix output name of the pconn file"
+				echo "--outpath=<path_for_output_file>          Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options> A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                    ==> e.g. for SLURM the string would look like this: "
+				echo "                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "-- OUTPUT FORMAT:"
 				echo ""
-				echo "<output_name>_ROI#.csv		-- Value for each voxel or gray-ordinate in the ROI."
-				echo "<output_name>_ROI#_mean.csv	-- Average across the entire ROI."
+				echo "<output_name>_ROI#.csv        -- Value for each voxel or gray-ordinate in the ROI."
+				echo "<output_name>_ROI#_mean.csv   -- Average across the entire ROI."
+				echo ""
 				echo "Note: if the data have multiple volumes / frames (e.g. >1 subject or >1 time point)"
 				echo "		then each subsequent volume is written as a column in the csv files."
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "		--singleinputfile=<run_extraction_on_single_file>	Use only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, --inputfile]"
-				echo "		--overwrite=<clean_prior_run>				Delete prior run"
-				echo "		--subjectroifile=<use_a_subject_specific_roi_file>	Specify if you want to use a subject-specific ROI file [Default is NO]. If YES then provide a relative input path for each subject (e.g. /path_to_file_inside_subject_folder/filename.nii.gz "
+				echo "--singleinputfile=<run_extraction_on_single_file>	     Use only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, --inputfile]"
+				echo "--overwrite=<clean_prior_run>                          Delete prior run"
+				echo "--subjectroifile=<use_a_subject_specific_roi_file>     Specify if you want to use a subject-specific ROI file [Default is NO]. If YES then provide a relative input path for each subject (e.g. /path_to_file_inside_subject_folder/filename.nii.gz "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3237,13 +3261,13 @@ show_usage_fsldtifit() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>                           Name of function"
-				echo "		--path=<study_folder>                                Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>           List of subjects to run"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "--function=<function_name>                           Name of function"
+				echo "--path=<study_folder>                                Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>           List of subjects to run"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "                                                                    ==> e.g. for SLURM the string would look like this: "
 				echo "                                                                        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				echo "		--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
+				echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3390,22 +3414,23 @@ show_usage_fslbedpostxgpu() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>			Name of function"
-				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
-				echo "		--fibers=<number_of_fibers>			Number of fibres per voxel, default 3"
-				echo "		--model=<deconvolution_model>			Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities <default>, 3: with zeppelins"
-				echo "		--burnin=<burnin_period_value>			Burnin period, default 1000"
-				echo "		--rician=<set_rician_value>			<YES> or <NO>. Default is YES"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				echo "		--overwrite=<clean_prior_run>			Delete prior run for a given subject"
+				echo "--function=<function_name>                               Name of function"
+				echo "--path=<study_folder>                                    Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>               List of subjects to run"
+				echo "--fibers=<number_of_fibers>                              Number of fibres per voxel, default 3"
+				echo "--model=<deconvolution_model>                            Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities <default>, 3: with zeppelins"
+				echo "--burnin=<burnin_period_value>                           Burnin period, default 1000"
+				echo "--rician=<set_rician_value>                              <yes> or <no>. Default is yes"
+				echo "--overwrite=<clean_prior_run>                            Delete prior run for a given subject"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>      A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                               e.g. for SLURM the string would look like this: "
+				echo "                                                               --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--subjects='<case_id>' --function='fslbedpostxgpu' \ "
+				echo "--function='fslbedpostxgpu' \ "
+				echo "--subjects='<case_id>' \ "
 				echo "--fibers='3' \ "
 				echo "--burnin='3000' \ "
 				echo "--model='3' \ "
@@ -3511,23 +3536,19 @@ show_usage_pretractographydense() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>			Name of function"
-				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>	List of subjects to run"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				#echo "		--scheduler_options=<scheduler_options>			String of options for specific scheduler job [specify name of scheduler before options; e.g. --SLURM_options]"
-				#echo "		--runmethod=<type_of_run>			Perform Local Interactive Run [1] or Send to scheduler [2] [If local/interactive then log will be continuously generated in different format]"
+				echo "--function=<function_name>                                 Name of function"
+				echo "--path=<study_folder>                                      Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>                 List of subjects to run"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                           e.g. for SLURM the string would look like this: "
+				echo "                                                           --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
-				echo "--subjects='ta9342' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
+				echo "--subjects='<case_id>' \ "
 				echo "--function='pretractographydense' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				#echo "--scheduler_options='<scheduler_options>' \ "
-				#echo "--runmethod='2' \ "
 				echo "--scheduler='LSF'"
 				echo ""
 }
@@ -3695,31 +3716,31 @@ show_usage_probtrackxgpudense() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>					Name of function"
-				echo "		--path=<study_folder>						Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>			List of subjects to run"
-				echo "		--scheduler=<name_of_cluster_scheduler>			A string for the cluster scheduler (e.g. LSF, PBS or SLURM) without any options (they are hard coded in the sub-script calls)"
-				echo "		--overwrite=<clean_prior_run>					Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
-				echo "		--omatrix1=<matrix1_model>					Specify if you wish to run matrix 1 model [yes or omit flag]"
-				echo "		--omatrix3=<matrix3_model>					Specify if you wish to run matrix 3 model [yes or omit flag]"
-				echo "		--nsamplesmatrix1=<Number_of_Samples_for_Matrix1>		Number of samples - default=10000" 
-				echo "		--nsamplesmatrix3=<Number_of_Samples_for_Matrix3>		Number of samples - default=3000" 
+				echo "--function=<function_name>                            Name of function"
+				echo "--path=<study_folder>                                 Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>            List of subjects to run"
+				echo "--scheduler=<name_of_cluster_scheduler>               A string for the cluster scheduler (e.g. LSF, PBS or SLURM) without any options (they are hard coded in the sub-script calls)"
+				echo "--overwrite=<clean_prior_run>                         Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
+				echo "--omatrix1=<matrix1_model>                            Specify if you wish to run matrix 1 model [yes or omit flag]"
+				echo "--omatrix3=<matrix3_model>                            Specify if you wish to run matrix 3 model [yes or omit flag]"
+				echo "--nsamplesmatrix1=<Number_of_Samples_for_Matrix1>		Number of samples - default=10000" 
+				echo "--nsamplesmatrix3=<Number_of_Samples_for_Matrix3>		Number of samples - default=3000" 
 				echo "" 
 				echo "-- GENERIC PARMETERS SET BY DEFAULT:"
 				echo ""
-				echo "       --loopcheck --forcedir --fibthresh=0.01 -c 0.2 --sampvox=2 --randfib=1 -S 2000 --steplength=0.5"
+				echo "--loopcheck --forcedir --fibthresh=0.01 -c 0.2 --sampvox=2 --randfib=1 -S 2000 --steplength=0.5"
 				echo ""
-				echo "       ** The function calls either of these based on the --omatrix1 and --omatrix3 flags: "
+				echo "** The function calls either of these based on the --omatrix1 and --omatrix3 flags: "
 				echo ""
-				echo "                               $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix1.sh"
-				echo "                               $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix3.sh"
+				echo "    $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix1.sh"
+				echo "    $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix3.sh"
 				echo ""
-				echo "                               --> both are cluster-aware and send the jobs to the GPU-enabled queue. They do not work interactively."
+				echo "    --> both are cluster-aware and send the jobs to the GPU-enabled queue. They do not work interactively."
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler (needs to be GPU-enabled):"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
-				echo "--subjects='ta9776' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
+				echo "--subjects='<case_id>' \ "
 				echo "--function='probtrackxgpudense' \ "
 				echo "--scheduler='<name_of_scheduler>' \ "
 				echo "--omatrix1='yes' \ " 
@@ -3776,21 +3797,16 @@ show_usage_awshcpsync() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>			Name of function"
-				echo "		--path=<study_folder>				Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>	List of subjects to run"
-				echo "		--modality=<modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
-				echo "		--awsuri=<aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
-				#echo "		--runmethod=<type_of_run>			Perform a dry test run [1] or real run [2]"
-				echo "" 
+				echo "--function=<function_name>                    Name of function"
+				echo "--path=<study_folder>                         Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>    List of subjects to run"
+				echo "--modality=<modality_to_sync>                 Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
+				echo "--awsuri=<aws_uri_location>                   Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='/Volumes/syn5science/Studies/Connectome/subjects' --subjects='173536' --function='awshcpsync' --modality='T1w' --awsuri='/hcp-openaccess/HCP_900' --runmethod='2'"
+				echo "mnap --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='awshcpsync' --modality='T1w' --awsuri='/hcp-openaccess/HCP_900'"
 				echo ""				
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "mnap awshcpsync /Volumes/syn5science/Studies/Connectome/subjects '173536' "
 				echo ""
 }
 
@@ -3915,9 +3931,8 @@ qcpreproc() {
 				rm -f "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh &> /dev/null
 				echo "$ComQUEUE" >> "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
 				chmod 770 "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
-				# fslsub="$Scheduler" # set scheduler for fsl_sub command
-				# fsl_sub."$fslsub" -Q "$QUEUE" -l "$LogFolder" -R 10000 "$LogFolder"/"$CASE"_ComQUEUE_"$BOLD".sh
 				cd ${LogFolder}
+				
 				gmri schedule command="${LogFolder}/${CASE}_ComQUEUE_${BOLD}.sh" settings="${Scheduler}" output="stdout:${LogFolder}/qcpreproc.output.log|stderr:${LogFolder}/qcpreproc.error.log" workdir="${LogFolder}" 
 				echo ""
 				echo "---------------------------------------------------------------------------------"
@@ -4130,109 +4145,104 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "		--function=<function_name>                  Name of function"
-				echo "		--path=<study_folder>                       Path to study data folder"
-				echo "		--subjects=<comma_separated_list_of_cases>  List of subjects to run"
-				echo "		--subjects=<list_of_cases>                  List of subjects to run, separated by commas"
-				echo "		--modality=<input_modality_for_qc>          Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
-				echo "		--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "                                                                    e.g. for SLURM the string would look like this: "
+				echo "--function=<function_name>                  Name of function"
+				echo "--path=<study_folder>                       Path to study data folder"
+				echo "--subjects=<list_of_cases>                  List of subjects to run, separated by commas"
+				echo "--modality=<input_modality_for_qc>          Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                               e.g. for SLURM the string would look like this: "
 				echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "		--overwrite=<clean_prior_run>                    Delete prior QC run"
-				echo "		--templatefolder=<path_for_the_template_folder>  Specify the output path name of the template folder (default: $TOOLS/MNAP/library/data/templates)"
-				echo "		--outpath=<path_for_output_file>                 Specify the output path name of the QC folder"
-				echo "		--dwipath=<path_for_dwi_data>                    Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
-				echo "		--dwidata=<file_name_for_dwi_data>               Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
-				echo "		--dtifitqc=<visual_qc_for_dtifit>                Specify if dtifit visual QC should be completed [e.g. yes or no]"
-				echo "		--bedpostxqc=<visual_qc_for_bedpostx>            Specify if BedpostX visual QC should be completed [e.g. yes or no]"
-				echo "		--eddyqcpdf=<pdf_qc_for_eddy>                    Specify if EDDY PDF QC should be linked into QC folder [e.g. yes or no]"
-				echo "		--dwilegacy=<dwi_data_processed_via_legacy_pipeline>     Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
-				echo "		--bolddata=<file_names_for_bold_data>                    Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
-				echo "		--boldsuffix=<file_name_for_bold_data>                   Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
-				echo "		--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
+				echo "--overwrite=<clean_prior_run>                    Delete prior QC run"
+				echo "--templatefolder=<path_for_the_template_folder>  Specify the output path name of the template folder (default: $TOOLS/MNAP/library/data/templates)"
+				echo "--outpath=<path_for_output_file>                 Specify the output path name of the QC folder"
+				echo "--dwipath=<path_for_dwi_data>                    Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
+				echo "--dwidata=<file_name_for_dwi_data>               Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
+				echo "--dtifitqc=<visual_qc_for_dtifit>                Specify if dtifit visual QC should be completed [e.g. yes or no]"
+				echo "--bedpostxqc=<visual_qc_for_bedpostx>            Specify if BedpostX visual QC should be completed [e.g. yes or no]"
+				echo "--eddyqcpdf=<pdf_qc_for_eddy>                    Specify if EDDY PDF QC should be linked into QC folder [e.g. yes or no]"
+				echo "--dwilegacy=<dwi_data_processed_via_legacy_pipeline>     Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
+				echo "--bolddata=<file_names_for_bold_data>                    Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
+				echo "--boldsuffix=<file_name_for_bold_data>                   Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
+				echo "--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
 				echo ""
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--function='qcpreproc' \ "
-				echo "--subjects='100206,100207' \ "
-				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/QC/T1w' \ "
-				echo "--templatefolder='$TOOLS/MNAP/connector/templates' \ "
-				echo "--modality='T1w'"
+				echo "--subjects='<list_of_cases>' \ "
+				echo "--outpath='<path_for_output_file> \ "
+				echo "--templatefolder='<path_for_the_template_folder>' \ "
+				echo "--modality='<input_modality_for_qc>'"
 				echo "--overwrite='no' \ "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--function='qcpreproc' \ "
-				echo "--subjects='100206,100207' \ "
-				echo "--outpath='/gpfs/project/fas/n3/Studies/Connectome/subjects/QC/T1w' \ "
-				echo "--templatefolder='$TOOLS/MNAP/connector/templates' \ "
-				echo "--modality='T1w'"
+				echo "--subjects='<list_of_cases>' \ "
+				echo "--outpath='<path_for_output_file> \ "
+				echo "--templatefolder='<path_for_the_template_folder>' \ "
+				echo "--modality='<input_modality_for_qc>'"
 				echo "--overwrite='no' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				echo "" 			
-				echo "-- Example with interactive terminal:"
-				echo ""
-				echo "mnap qcpreproc /gpfs/project/fas/n3/Studies/Connectome/subjects '100206' "
-				echo ""
 				echo ""
 				echo "-- Complete examples for each supported modality:"
 				echo ""
 				echo ""
 				echo "# -- T1 QC"
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--function='qcpreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
-				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/T1w' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
+				echo "--outpath='<path_for_output_file> \ "
+				echo "--templatefolder='<path_for_the_template_folder>' \ "
 				echo "--modality='T1w' \ "
 				echo "--overwrite='yes' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				echo ""
 				echo "# -- T2 QC"
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--function='qcpreproc' \ "
-				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
-				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/T2w' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
+				echo "--subjects='<list_of_cases>' \ "
+				echo "--outpath='<path_for_output_file> \ "
+				echo "--templatefolder='<path_for_the_template_folder>' \ "
 				echo "--modality='T2w' \ "
 				echo "--overwrite='yes' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				echo ""
 				echo "# -- Myelin QC"
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--function='qcpreproc' \ "
-				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
-				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/myelin' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
+				echo "--subjects='<list_of_cases>' \ "
+				echo "--outpath='<path_for_output_file> \ "
+				echo "--templatefolder='<path_for_the_template_folder>' \ "
 				echo "--modality='myelin' \ "
 				echo "--overwrite='yes' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				echo ""
 				echo "# -- DWI QC "
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--function='qcpreproc' \ "
-				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
+				echo "--subjects='<list_of_cases>' \ "
+				echo "--templatefolder='<path_for_the_template_folder>' \ "
 				echo "--modality='DWI' \ "
-				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/DWI_1k25k' \ "
+				echo "--outpath='<path_for_output_file> \ "
 				echo "--dwilegacy='yes' \ "
-				echo "--dwidata='DWI_dir74_AP_b1000b2500_data_brain' \ "
-				echo "--dwipath='Diffusion_DWI_dir74_AP_b1000b2500' \ "
+				echo "--dwidata='<file_name_for_dwi_data>' \ "
+				echo "--dwipath='<path_for_dwi_data>' \ "
 				echo "--overwrite='yes' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				echo ""
 				echo "# -- BOLD QC"
-				echo "mnap --path='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized' \ "
+				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--function='qcpreproc' \ "
-				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
-				echo "--outpath='/gpfs/project/fas/n3/Studies/NAPLS3/subjects_organized/QC/BOLD' \ "
-				echo "--templatefolder='${TOOLS}/MNAP/connector/templates' \ "
+				echo "--subjects='<list_of_cases>' \ "
+				echo "--outpath='<path_for_output_file> \ "
+				echo "--templatefolder='<path_for_the_template_folder>' \ "
 				echo "--modality='BOLD' \ "
 				echo "--bolddata='1' \ "
 				echo "--boldsuffix='Atlas' \ "
@@ -4543,36 +4553,11 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	StudyFolder=`opts_GetOpt "${setflag}path" $@` 																			# local folder to work on
 	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` 	# list of input cases; removing comma or pipes
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` 																		# Clean prior run and starr fresh [yes/no]
-
-	# -- set scheduler flags
-	
-	# -- RunMethod is DEPRECATED
-	#RunMethod=`opts_GetOpt "${setflag}runmethod" $@` 																		# Specifies whether to run on the cluster or on the local node
-	# -- set default to 1 if not specified
-	#if [ -z "$RunMethod" ]; then
-	#	RunMethod="1"	
-	#fi
 	
 	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@` 																			# Option for printing the entire command	
 	Scheduler=`opts_GetOpt "${setflag}scheduler" $@` 																		# Specify the type of scheduler to use 
 	# -- if scheduler flag set then set RunMethod variable
 	if [ ! -z "$Scheduler" ]; then
-		# -- SchedulerOptions is DEPRECATED
-		# -- if scheduler flag set then look for scheduler_options flag
-		#if [ "$Scheduler" = "SLURM" ]; then
-		#	SchedulerOptions=`opts_GetOpt "${setflag}SLURM_options" $@` 													# String of options for scheduler job
-		#	SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
-		#else
-		#if [ "$Scheduler" = "PBS" ]; then
-		#	SchedulerOptions=`opts_GetOpt "${setflag}PBS_options" $@` 														# String of options for scheduler job
-		#	SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
-		#else
-		#if [ "$Scheduler" = "LSF" ]; then
-		#	SchedulerOptions=`opts_GetOpt "${setflag}LSF_options" $@` 														# String of options for scheduler job
-		#	SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
-		#else
-		#	SchedulerOptions=`opts_GetOpt "${setflag}scheduler_options" $@` 												# String of options for scheduler job
-		#fi; fi; fi
 		RunMethod="2"
 	else
 		RunMethod="1"	
@@ -4627,24 +4612,24 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	
 	# -- computeboldfc input flags
 	#InputFiles=`opts_GetOpt "${setflag}inputfiles" "$@" | sed 's/,/ /g;s/|/ /g'`; InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'` 	# --inputfiles=
-	InputFiles=`opts_GetOpt "${setflag}inputfiles" $@` 																						# --inputfiles=
-	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`																							# --targetf=			
-	Calculation=`opts_GetOpt "${setflag}calculation" $@`																					# --calculation=	
-	RunType=`opts_GetOpt "${setflag}runtype" $@`																							# --runtype= 		
-	FileList=`opts_GetOpt "${setflag}flist" $@`																								# --flist=			
-	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																						# --ignore=			
-	MaskFrames=`opts_GetOpt "${setflag}mask" $@`																							# --mask=		
-	Covariance=`opts_GetOpt "${setflag}covariance" $@`																						# --covariance=		
-	TargetROI=`opts_GetOpt "${setflag}target" $@`																							# --target=			
-	RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`																						# --rsmooth=		
-	RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`																						# --rdilate=		
-	GBCCommand=`opts_GetOpt "${setflag}command" $@`																							# --command=		
-	Verbose=`opts_GetOpt "${setflag}verbose" $@`																							# --verbose=		
-	ComputeTime=`opts_GetOpt "${setflag}-time" $@`																							# --time=			
-	VoxelStep=`opts_GetOpt "${setflag}vstep" $@`																							# --vstep=			
-	ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`																								# --roinfo=			
-	FCCommand=`opts_GetOpt "${setflag}options" $@`																							# --options=		
-	Method=`opts_GetOpt "${setflag}method" $@`																								# --method=		
+	InputFiles=`opts_GetOpt "${setflag}inputfiles" $@` 																		# --inputfiles=
+	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`																			# --targetf=			
+	Calculation=`opts_GetOpt "${setflag}calculation" $@`																	# --calculation=	
+	RunType=`opts_GetOpt "${setflag}runtype" $@`																			# --runtype= 		
+	FileList=`opts_GetOpt "${setflag}flist" $@`																				# --flist=			
+	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																		# --ignore=			
+	MaskFrames=`opts_GetOpt "${setflag}mask" $@`																			# --mask=		
+	Covariance=`opts_GetOpt "${setflag}covariance" $@`																		# --covariance=		
+	TargetROI=`opts_GetOpt "${setflag}target" $@`																			# --target=			
+	RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`																		# --rsmooth=		
+	RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`																		# --rdilate=		
+	GBCCommand=`opts_GetOpt "${setflag}command" $@`																			# --command=		
+	Verbose=`opts_GetOpt "${setflag}verbose" $@`																			# --verbose=		
+	ComputeTime=`opts_GetOpt "${setflag}-time" $@`																			# --time=			
+	VoxelStep=`opts_GetOpt "${setflag}vstep" $@`																			# --vstep=			
+	ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`																				# --roinfo=			
+	FCCommand=`opts_GetOpt "${setflag}options" $@`																			# --options=		
+	Method=`opts_GetOpt "${setflag}method" $@`																				# --method=		
 		
 	# -- dwidenseparcellation input flags
 	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` 																# --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
@@ -4747,12 +4732,10 @@ if [ "$FunctionToRun" == "dicomorganize" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		if [ -z "$Overwrite" ]; then Overwrite="no"; fi
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 	for CASE in $CASES; do
   		"$FunctionToRun" "$CASE"
@@ -4924,13 +4907,11 @@ if [ "$FunctionToRun" == "setuphcp" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		echo ""
 		echo "--> Ensuring that and correct subjects_hcp.txt files is generated..."
@@ -5283,12 +5264,10 @@ if [ "$FunctionToRun" == "fsldtifit" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
-		
+
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 				
 		echo ""
@@ -5610,12 +5589,10 @@ if [ "$FunctionToRun" == "hcpdlegacy" ]; then
 		if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
 		if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
 		if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi		
 		fi
 		echo ""
 		echo "Running DWI legacy processing with the following parameters:"
@@ -5650,12 +5627,10 @@ if [ "$FunctionToRun" == "structuralparcellation" ]; then
 		if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
 		# -- Parse optional parameters if not specified 
@@ -5721,11 +5696,10 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 			if [ -z "$FCCommand" ]; then FCCommand=""; fi
 			if [ -z "$Method" ]; then Method="mean"; fi
 		fi		
-		#if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
-			Cluster="$RunMethod"
+		
+		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
 		# -- Parse optional parameters if not specified 
@@ -5802,12 +5776,10 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 		if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Run Method option missing. Assuming local run. [1=Run Locally on Node; 2=Send to Cluster]"; RunMethod="1"; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		
 		# -- Parse optional parameters if not specified 
@@ -5861,12 +5833,10 @@ if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
 		if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
 		if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi	
 		echo ""
 		echo "Running DWIDenseParcellation function with the following parameters:"
@@ -5946,12 +5916,10 @@ if [ "$FunctionToRun" == "dwiseedtractography" ]; then
 		if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
 		if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 			
 		echo ""
@@ -5988,12 +5956,10 @@ if [ "$FunctionToRun" == "pretractographydense" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Run Locally on Node; 2=Send to Cluster] missing"; exit 1; fi
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-				#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		fi
 		echo ""
 		echo "Running Pretractography Dense processing with the following parameters:"
@@ -6019,7 +5985,6 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi		
 		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-		#if [ -z "$SchedulerOptions" ]; then reho "Error: Scheduler options missing "; exit 1; fi
 		if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
 		if [ "$MatrixOne" == "yes" ]; then
 			if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
@@ -6027,13 +5992,13 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 		if [ "$MatrixThree" == "yes" ]; then
 			if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
 		fi
+		
 		echo ""
 		echo "Running Pretractography Dense processing with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "CASES: $CASES"
 		echo "Scheduler: $Scheduler"
-		#echo "Scheduler Options: $SchedulerOptions"
 		echo "Compute Matrix1: $MatrixOne"
 		echo "Compute Matrix3: $MatrixThree"
 		echo "Number of samples for Matrix1: $NsamplesMatrixOne"
@@ -6056,7 +6021,6 @@ if [ "$FunctionToRun" == "awshcpsync" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		#if [ -z "$RunMethod" ]; then reho "Error: Run Method option [1=Dry Run; 2=Real Run] missing"; exit 1; fi
 		if [ -z "$Modality" ]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
 		if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
 		echo ""
