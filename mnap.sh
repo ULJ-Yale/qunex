@@ -595,19 +595,19 @@ show_usage_createlists() {
   				echo ""
   				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>				Name of function"
-				echo "--path=<study_folder>					Path to study data folder"
-				echo "--subjects=<comma_separated_list_of_cases>		List of subjects to run"
-				echo "--listtocreate=<type_of_list_to_generate>		Type of list to generate (e.g. preprocessing). "
-				echo "--listname=<output_name_of_the_list>			Output name of the list to generate. "
-				echo "    * Supported: preprocessing, analysis, snr "
+				echo "--function=<function_name>                  Name of function"
+				echo "--path=<study_folder>                       Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>  List of subjects to run"
+				echo "--listtocreate=<type_of_list_to_generate>   Type of list to generate (e.g. preprocessing). "
+				echo "--listname=<output_name_of_the_list>        Output name of the list to generate. "
+				echo "                                            Supported: preprocessing, analysis, snr "
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
-				echo "--overwrite=<yes/no>					Explicitly delete any prior lists"
-				echo "--append=<yes>						Explicitly append the existing list"
-				echo "--listpath=<absolute_path_to_list_folder>	Explicitly set path where you want the lists generated"
-				echo "											Default: <study_folder>/processing/lists "
+				echo "--overwrite=<yes/no>                        Explicitly delete any prior lists"
+				echo "--append=<yes>                              Explicitly append the existing list"
+				echo "--listpath=<absolute_path_to_list_folder>   Explicitly set path where you want the lists generated"
+				echo "                                            Default: <study_folder>/processing/lists "
 				echo ""
 				echo "    * Note: If --append set to <yes> then function will append new cases to the end"
 				echo ""								
@@ -621,20 +621,14 @@ show_usage_createlists() {
 				echo ""
 				echo "`ls ${TOOLS}/MNAP/connector/functions/subjectparamlist_header*` "
 				echo ""
-				echo "		* Note: If --parameterfile set to <no> then function will not add a header"
+				echo "    * Note: If --parameterfile set to <no> then function will not add a header"
 				echo ""								
-				echo "      --listfunction=<function_used_to_create_list>   	Point to external function to use"
-				echo "      --bolddata=<comma_separated_list_of_bolds>   	List of BOLD files to append to analysis or snr lists"
-				echo "      --parcellationfile=<file_for_parcellation>	Specify the absolute file path for parcellation in $MNAPPATH/connector/templates/Parcellations/ "
-				echo "      --filetype=<file_extension>			Extension for BOLDs in the analysis (e.g. _Atlas). Default empty []"
-				echo "      --boldsuffix=<comma_separated_bold_suffix>	List of BOLDs to iterate over in the analysis list"
-#    			echo "--subjecthcpfile=<yes/no>		Use individual subject_hcp.txt file for for appending the parameter list"
-    			echo ""
-    			echo "-- Usage for createsubjectlists"
-    			echo ""
-				echo "* Example with interactive terminal:"
-				echo ""
-				echo "mnap createlists <study_folder> 'comma_separarated_list_of_cases>'"
+				echo "--listfunction=<function_used_to_create_list>   Point to external function to use"
+				echo "--bolddata=<comma_separated_list_of_bolds>      List of BOLD files to append to analysis or snr lists"
+				echo "--parcellationfile=<file_for_parcellation>      Specify the absolute file path for parcellation in $MNAPPATH/connector/templates/Parcellations/ "
+				echo "--filetype=<file_extension>                     Extension for BOLDs in the analysis (e.g. _Atlas). Default empty []"
+				echo "--boldsuffix=<comma_separated_bold_suffix>      List of BOLDs to iterate over in the analysis list"
+#    			echo "--subjecthcpfile=<yes/no>                       Use individual subject_hcp.txt file for for appending the parameter list"
     			echo ""
     			echo "-- Example with flagged parameters:"
 				echo ""
@@ -656,8 +650,6 @@ show_usage_createlists() {
 				echo "--filetype='dtseries.nii' \ "											
 				echo "--listname='<list_to_generate>' \ "
 				echo "--append='yes' "				
-				echo ""
-				echo "" 
     			echo ""
 }
 
@@ -1873,21 +1865,21 @@ show_usage_hcpdlegacy() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>			Name of function"
-				echo "--path=<study_folder>				Path to study data folder"
-				echo "--subjects=<comma_separated_list_of_cases>			List of subjects to run"
-				echo "--echospacing=<echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69"
-				echo "--PEdir=<phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
-				echo "--TE=<delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
-				echo "--unwarpdir=<epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
-				echo "--diffdatasuffix=<diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--function=<function_name>                   Name of function"
+				echo "--path=<study_folder>                        Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>   List of subjects to run"
+				echo "--echospacing=<echo_spacing_value>           EPI Echo Spacing for data [in msec]; e.g. 0.69"
+				echo "--PEdir=<phase_encoding_direction>           Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
+				echo "--TE=<delta_te_value_for_fieldmap>           This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
+				echo "--unwarpdir=<epi_phase_unwarping_direction>  Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
+				echo "--diffdatasuffix=<diffusion_data_name>       Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                            e.g. for SLURM the string would look like this: "
+				echo "                                                            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "--overwrite=<clean_prior_run>                Delete prior run for a given subject"
 				echo ""
 				echo "-- Example with flagged parameters for a local run (needs GPU-enabled node):"
 				echo ""
@@ -2014,37 +2006,37 @@ show_usage_eddyqc() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "   --function=<function_name>			Name of function --> eddyqc "
- 				echo "   --path=<study_folder>   Path to study data folder"
-				echo "   --subject=<subj_id>   Subjects ID to run EDDY QC on"
- 				echo "   --eddybase=<eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
- 				echo "   --eddyidx=<eddy_index_file>   EDDY index file"
- 				echo "   --eddyparams=<eddy_param_file>   EDDY parameters file"
- 				echo "   --mask=<mask_file>   Binary mask file (most qc measures will be averaged across voxels labeled in the mask)"
- 				echo "   --bvalsfile=<bvals_file>   bvals input file"
- 				echo "   --report=<run_group_or_individual_report>   If you want to generate a group report [individual or group  Default: individual]"
+				echo "--function=<function_name>                 Name of function --> eddyqc "
+ 				echo "--path=<study_folder>                      Path to study data folder"
+				echo "--subject=<subj_id>                        Subjects ID to run EDDY QC on"
+ 				echo "--eddybase=<eddy_input_base_name>          This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
+ 				echo "--eddyidx=<eddy_index_file>                EDDY index file"
+ 				echo "--eddyparams=<eddy_param_file>             EDDY parameters file"
+ 				echo "--mask=<mask_file>                         Binary mask file (most qc measures will be averaged across voxels labeled in the mask)"
+ 				echo "--bvalsfile=<bvals_file>                   bvals input file"
+ 				echo "--report=<run_group_or_individual_report>  If you want to generate a group report [individual or group  Default: individual]"
  				echo ""
  				echo "    *IF* --report='group' *THEN* this argument needs to be specificed: "
  				echo ""
- 				echo "   --list=<group_list_input>   Text file containing a list of qc.json files obtained from SQUAD"
+ 				echo "--list=<group_list_input>                  Text file containing a list of qc.json files obtained from SQUAD"
 				echo ""
 				echo ""
     			echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "   --overwrite=<clean_prior_run>   Delete prior run for a given subject"
-				echo "   --eddypath=<eddy_folder_relative_to_subject_folder>   Specify the relative path of the eddy folder you want to use for inputs"
-				echo "                                                         --> Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
-				echo "   --bvecsfile=<bvecs_file>   If specified, the tool will create a bvals_no_outliers.txt "
-				echo "                              & a bvecs_no_outliers.txt file that contain the bvals and bvecs of the non outlier volumes, based on the MSR estimates)"
-				echo "   --scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+ 				echo "--overwrite=<clean_prior_run>                          Delete prior run for a given subject"
+				echo "--eddypath=<eddy_folder_relative_to_subject_folder>    Specify the relative path of the eddy folder you want to use for inputs"
+				echo "                                                       Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
+				echo "--bvecsfile=<bvecs_file>                               If specified, the tool will create a bvals_no_outliers.txt "
+				echo "                                                        & a bvecs_no_outliers.txt file that contain the bvals and bvecs of the non outlier volumes, based on the MSR estimates)"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                       e.g. for SLURM the string would look like this: "
+				echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo ""
     			echo "-- EXTRA OPTIONAL PARMETERS IF --report='group' "
     			echo ""
-				echo "   --groupvar=<extra_grouping_variable>   Text file containing extra grouping variable"
-				echo "   --outputdir=<name_of_cleaned_eddy_output>   Output directory - default = '<eddyBase>.qc' "
-				echo "   --update=<setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single subject qc reports "
+				echo "--groupvar=<extra_grouping_variable>           Text file containing extra grouping variable"
+				echo "--outputdir=<name_of_cleaned_eddy_output>      Output directory - default = '<eddyBase>.qc' "
+				echo "--update=<setting_to_update_subj_reports>      Applies only if --report='group' - set to <true> to update existing single subject qc reports "
 				echo ""
  				echo ""
  				echo "-- EXAMPLE:"
@@ -2170,19 +2162,18 @@ show_usage_dwidenseparcellation() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>			Name of function"
-				echo "--path=<study_folder>				Path to study data folder"
-				echo "--subject=<comma_separated_list_of_cases>	List of subjects to run"
-				echo "--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
-				echo "--parcellationfile=<file_for_parcellation>	Specify the absolute path of the file you want to use for parcellation"
-				echo "--outname=<name_of_output_pconn_file>		Specify the suffix output name of the pconn file"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				echo "" 
+				echo "--function=<function_name>                            Name of function"
+				echo "--path=<study_folder>                                 Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases>             List of subjects to run"
+				echo "--matrixversion=<matrix_version_value>                Matrix solution verion to run parcellation on; e.g. 1 or 3"
+				echo "--parcellationfile=<file_for_parcellation>            Specify the absolute path of the file you want to use for parcellation"
+				echo "--outname=<name_of_output_pconn_file>                 Specify the suffix output name of the pconn file"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>   A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                      e.g. for SLURM the string would look like this: "
+				echo "                                                      --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -2307,19 +2298,19 @@ show_usage_dwiseedtractography() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>			Name of function"
-				echo "--path=<study_folder>				Path to study data folder"
-				echo "--subject=<comma_separated_list_of_cases>	List of subjects to run"
-				echo "--matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3"
-				echo "--seedfile=<file_for_seed_reduction>		Specify the absolute path of the seed file you want to use as a seed for dconn reduction"
-				echo "--outname=<name_of_output_dscalar_file>		Specify the suffix output name of the dscalar file"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--function=<function_name>                           Name of function"
+				echo "--path=<study_folder>                                Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases>            List of subjects to run"
+				echo "--matrixversion=<matrix_version_value>               Matrix solution verion to run parcellation on; e.g. 1 or 3"
+				echo "--seedfile=<file_for_seed_reduction>                 Specify the absolute path of the seed file you want to use as a seed for dconn reduction"
+				echo "--outname=<name_of_output_dscalar_file>              Specify the suffix output name of the dscalar file"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                     e.g. for SLURM the string would look like this: "
+				echo "                                                     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -2573,40 +2564,40 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>					Name of function"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--function=<function_name>                            Name of function"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>   A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                      e.g. for SLURM the string would look like this: "
+				echo "                                                      --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
 				echo ""
-				echo "--calculation=<type_of_calculation>			Run <seed> or <gbc> calculation for functional connectivity."
-				echo "--runtype=<type_of_run>					Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
-				echo "--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
-				echo "--targetf=<path_for_output_file>			Specify the absolute path for group result output folder. If using --runtype='individual' the output will default to --inputpath location for each individual subject"
-				echo "--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
-				echo "--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
+				echo "--calculation=<type_of_calculation>           Run <seed> or <gbc> calculation for functional connectivity."
+				echo "--runtype=<type_of_run>                       Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
+				echo "--flist=<subject_list_file>                   Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
+				echo "--targetf=<path_for_output_file>              Specify the absolute path for group result output folder. If using --runtype='individual' the output will default to --inputpath location for each individual subject"
+				echo "--ignore=<frames_to_ignore>                   The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
+				echo "--mask=<which_frames_to_use>                  An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
 				echo ""
 				echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
 				echo ""
-				echo "--path=<study_folder>					Path to study data folder"
-				echo "--subject=<list_of_cases>				List of subjects to run"
-				echo "--inputfiles=<files_to_compute_connectivity_on>		Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
-				echo "--inputpath=<path_for_input_file>			Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
-				echo "--outname=<name_of_output_file>				Specify the suffix name of the output file name"  
+				echo "--path=<study_folder>                              Path to study data folder"
+				echo "--subject=<list_of_cases>                          List of subjects to run"
+				echo "--inputfiles=<files_to_compute_connectivity_on>    Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
+				echo "--inputpath=<path_for_input_file>                  Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
+				echo "--outname=<name_of_output_file>                    Specify the suffix name of the output file name"  
 				echo ""
 				echo "-- OPTIONAL GENERAL PARAMETERS: "	
 				echo ""
-				echo "--overwrite=<clean_prior_run>				Delete prior run for a given subject"
-				echo "--extractdata=<save_out_the_data_as_as_csv>		Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
-				echo "--covariance=<compute_covariance>			Whether to compute covariances instead of correlations (true / false). Default is [false]"
+				echo "--overwrite=<clean_prior_run>                      Delete prior run for a given subject"
+				echo "--extractdata=<save_out_the_data_as_as_csv>        Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
+				echo "--covariance=<compute_covariance>                  Whether to compute covariances instead of correlations (true / false). Default is [false]"
 				echo ""
 				echo "-- REQUIRED GBC PARMETERS:"
 				echo ""
-				echo "--target=<which_roi_to_use>				Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]"
-				echo "--rsmooth=<smoothing_radius>				Radius for smoothing (no smoothing if empty). Default is []"
-				echo "--rdilate=<dilation_radius>				Radius for dilating mask (no dilation if empty). Default is []"
-				echo "--command=<type_of_gbc_to_run>				Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
+				echo "--target=<which_roi_to_use>                        Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]"
+				echo "--rsmooth=<smoothing_radius>                       Radius for smoothing (no smoothing if empty). Default is []"
+				echo "--rdilate=<dilation_radius>                        Radius for dilating mask (no dilation if empty). Default is []"
+				echo "--command=<type_of_gbc_to_run>                     Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
 				echo ""
 				echo "                   	> mFz:t  ... computes mean Fz value across all voxels (over threshold t) "
 				echo "                   	> aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t) "
@@ -2627,18 +2618,18 @@ show_usage_computeboldfc() {
 				echo ""
 				echo "-- OPTIONAL GBC PARMETERS:"
 				echo "" 
-				echo "--verbose=<print_output_verbosely>			Report what is going on. Default is [false]"
-				echo "--time=<print_time_needed>				Whether to print timing information. [false]"
-				echo "--vstep=<how_many_voxels>				How many voxels to process in a single step. Default is [1200]"
+				echo "--verbose=<print_output_verbosely>                Report what is going on. Default is [false]"
+				echo "--time=<print_time_needed>                        Whether to print timing information. [false]"
+				echo "--vstep=<how_many_voxels>                         How many voxels to process in a single step. Default is [1200]"
 				echo ""
 				echo "-- REQUIRED SEED FC PARMETERS:"
 				echo ""
-				echo "--roinfo=<roi_seed_files>				An ROI file for the seed connectivity "
+				echo "--roinfo=<roi_seed_files>                         An ROI file for the seed connectivity "
 				echo ""
 				echo "-- OPTIONAL SEED FC PARMETERS: "
 				echo ""
-				echo "--method=<method_to_get_timeseries>		Method for extracting timeseries - 'mean' or 'pca' Default is ['mean'] "
-				echo "--options=<calculations_to_save>			A string defining which subject files to save. Default assumes all [''] "
+				echo "--method=<method_to_get_timeseries>               Method for extracting timeseries - 'mean' or 'pca' Default is ['mean'] "
+				echo "--options=<calculations_to_save>                  A string defining which subject files to save. Default assumes all [''] "
 				echo ""
 				echo "			> r ... save map of correlations "
 				echo "			> f ... save map of Fisher z values "
@@ -2828,21 +2819,20 @@ show_usage_structuralparcellation () {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>				Name of function"
-				echo "--path=<study_folder>					Path to study data folder"
-				echo "--subject=<comma_separated_list_of_cases>				List of subjects to run"
-				echo "--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file [ e.g. MyelinMap_BC or corrThickness ] "
-				echo "--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
-				echo "--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--function=<function_name>                             Name of function"
+				echo "--path=<study_folder>                                  Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases>              List of subjects to run"
+				echo "--inputdatatype=<type_of_dense_data_for_input_file>    Specify the type of data for the input file [ e.g. MyelinMap_BC or corrThickness ] "
+				echo "--parcellationfile=<file_for_parcellation>             Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
+				echo "--outname=<name_of_output_pconn_file>                  Specify the suffix output name of the pconn file"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                         e.g. for SLURM the string would look like this: "
+				echo "                                                         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
-				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "--overwrite=<clean_prior_run>						Delete prior run for a given subject"
-				echo "--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
+				echo "--overwrite=<clean_prior_run>                          Delete prior run for a given subject"
+				echo "--extractdata=<save_out_the_data_as_as_csv>            Specify if you want to save out the matrix as a CSV file"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -2991,28 +2981,27 @@ show_usage_boldparcellation() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>				Name of function"
-				echo "--path=<study_folder>					Path to study data folder"
-				echo "--subject=<comma_separated_list_of_cases>				List of subjects to run"
-				echo "--inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation [ e.g. bold1_Atlas_MSMAll_hp2000_clean ]"
-				echo "--inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
-				echo "--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file [ e.g. dscalar or dtseries ]"
-				echo "--parcellationfile=<file_for_parcellation>		Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
-				echo "--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
-				echo "--outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>		A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "																e.g. for SLURM the string would look like this: "
-				echo "																--scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				echo "" 
+				echo "--function=<function_name>                             Name of function"
+				echo "--path=<study_folder>                                  Path to study data folder"
+				echo "--subject=<comma_separated_list_of_cases>              List of subjects to run"
+				echo "--inputfile=<file_to_compute_parcellation_on>          Specify the name of the file you want to use for parcellation [ e.g. bold1_Atlas_MSMAll_hp2000_clean ]"
+				echo "--inputpath=<path_for_input_file>                      Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
+				echo "--inputdatatype=<type_of_dense_data_for_input_file>    Specify the type of data for the input file [ e.g. dscalar or dtseries ]"
+				echo "--parcellationfile=<file_for_parcellation>             Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
+				echo "--outname=<name_of_output_pconn_file>                  Specify the suffix output name of the pconn file"
+				echo "--outpath=<path_for_output_file>                       Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                       e.g. for SLURM the string would look like this: "
+				echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
-				echo "--singleinputfile=<parcellate_single_file>				Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, -inputfile, --inputpath ]"
-				echo "--overwrite=<clean_prior_run>						Delete prior run"
-				echo "--computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
-				echo "--useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit [ e.g. yes' or no; default is set to no ] "
-				echo "--weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder [ e.g. /images/functional/movement/bold1.use ]"
-				echo "--extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file"
+				echo "--singleinputfile=<parcellate_single_file>                     Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --path, -inputfile, --inputpath ]"
+				echo "--overwrite=<clean_prior_run>                                  Delete prior run"
+				echo "--computepconn=<specify_parcellated_connectivity_calculation>	 Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
+				echo "--useweights=<clean_prior_run>                                 If computing a  parcellated connectivity file you can specify which frames to omit [ e.g. yes' or no; default is set to no ] "
+				echo "--weightsfile=<location_and_name_of_weights_file>              Specify the location of the weights file relative to the master study folder [ e.g. /images/functional/movement/bold1.use ]"
+				echo "--extractdata=<save_out_the_data_as_as_csv>                    Specify if you want to save out the matrix as a CSV file"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -3163,8 +3152,8 @@ show_usage_roiextract() {
 				echo "                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "-- OUTPUT FORMAT:"
 				echo ""
-				echo "<output_name>_ROI#.csv        -- Value for each voxel or gray-ordinate in the ROI."
-				echo "<output_name>_ROI#_mean.csv   -- Average across the entire ROI."
+				echo "  <output_name>_ROI#.csv        --> Value for each voxel or gray-ordinate in the ROI."
+				echo "  <output_name>_ROI#_mean.csv   --> Average across the entire ROI."
 				echo ""
 				echo "Note: if the data have multiple volumes / frames (e.g. >1 subject or >1 time point)"
 				echo "		then each subsequent volume is written as a column in the csv files."
@@ -3264,10 +3253,10 @@ show_usage_fsldtifit() {
 				echo "--function=<function_name>                           Name of function"
 				echo "--path=<study_folder>                                Path to study data folder"
 				echo "--subjects=<comma_separated_list_of_cases>           List of subjects to run"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "                                                                    ==> e.g. for SLURM the string would look like this: "
-				echo "                                                                        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                     e.g. for SLURM the string would look like this: "
+				echo "                                                     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3414,17 +3403,17 @@ show_usage_fslbedpostxgpu() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>                               Name of function"
-				echo "--path=<study_folder>                                    Path to study data folder"
-				echo "--subjects=<comma_separated_list_of_cases>               List of subjects to run"
-				echo "--fibers=<number_of_fibers>                              Number of fibres per voxel, default 3"
-				echo "--model=<deconvolution_model>                            Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities <default>, 3: with zeppelins"
-				echo "--burnin=<burnin_period_value>                           Burnin period, default 1000"
-				echo "--rician=<set_rician_value>                              <yes> or <no>. Default is yes"
-				echo "--overwrite=<clean_prior_run>                            Delete prior run for a given subject"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>      A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "                                                               e.g. for SLURM the string would look like this: "
-				echo "                                                               --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--function=<function_name>                            Name of function"
+				echo "--path=<study_folder>                                 Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>            List of subjects to run"
+				echo "--fibers=<number_of_fibers>                           Number of fibres per voxel, default 3"
+				echo "--model=<deconvolution_model>                         Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities <default>, 3: with zeppelins"
+				echo "--burnin=<burnin_period_value>                        Burnin period, default 1000"
+				echo "--rician=<set_rician_value>                           <yes> or <no>. Default is yes"
+				echo "--overwrite=<clean_prior_run>                         Delete prior run for a given subject"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>   A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                        e.g. for SLURM the string would look like this: "
+				echo "                                                         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3536,12 +3525,12 @@ show_usage_pretractographydense() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>                                 Name of function"
-				echo "--path=<study_folder>                                      Path to study data folder"
-				echo "--subjects=<comma_separated_list_of_cases>                 List of subjects to run"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>        A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "                                                           e.g. for SLURM the string would look like this: "
-				echo "                                                           --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--function=<function_name>                              Name of function"
+				echo "--path=<study_folder>                                   Path to study data folder"
+				echo "--subjects=<comma_separated_list_of_cases>              List of subjects to run"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                        e.g. for SLURM the string would look like this: "
+				echo "                                                        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3723,8 +3712,8 @@ show_usage_probtrackxgpudense() {
 				echo "--overwrite=<clean_prior_run>                         Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
 				echo "--omatrix1=<matrix1_model>                            Specify if you wish to run matrix 1 model [yes or omit flag]"
 				echo "--omatrix3=<matrix3_model>                            Specify if you wish to run matrix 3 model [yes or omit flag]"
-				echo "--nsamplesmatrix1=<Number_of_Samples_for_Matrix1>		Number of samples - default=10000" 
-				echo "--nsamplesmatrix3=<Number_of_Samples_for_Matrix3>		Number of samples - default=3000" 
+				echo "--nsamplesmatrix1=<Number_of_Samples_for_Matrix1>     Number of samples - default=10000" 
+				echo "--nsamplesmatrix3=<Number_of_Samples_for_Matrix3>     Number of samples - default=3000" 
 				echo "" 
 				echo "-- GENERIC PARMETERS SET BY DEFAULT:"
 				echo ""
@@ -4573,8 +4562,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ListName=`opts_GetOpt "${setflag}listname" $@` 																			# Name of the list
 	ParameterFile=`opts_GetOpt "${setflag}parameterfile" $@` 																# Use parameter file header
 	ListFunction=`opts_GetOpt "${setflag}listfunction" $@` 																	# Which function to use to generate the list
-	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>   Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>   Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 	FileType=`opts_GetOpt "${setflag}filetype" $@` 																			# --filetype=<file_extension>
 	BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<bold_suffix>
 	SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@` 																# Use subject HCP File for appending the parameter list
@@ -4587,37 +4576,37 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ClusterName=`opts_GetOpt "${setflag}cluster" $@` 																		# cluster address [e.g. louise.yale.edu)
 
 	# -- hcpdlegacy input flags
-	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`																	# <echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69
-	PEdir=`opts_GetOpt "${setflag}PEdir" $@` 																				# <phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
-	TE=`opts_GetOpt "${setflag}TE" $@` 																						# <delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
-	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@` 																		# <epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
-	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@` 																# <diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`																	# <echo_spacing_value>   EPI Echo Spacing for data [in msec]; e.g. 0.69
+	PEdir=`opts_GetOpt "${setflag}PEdir" $@` 																				# <phase_encoding_direction>   Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
+	TE=`opts_GetOpt "${setflag}TE" $@` 																						# <delta_te_value_for_fieldmap>   This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
+	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@` 																		# <epi_phase_unwarping_direction>   Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
+	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@` 																# <diffusion_data_name>   Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
 	
 	# -- boldparcellation input flags
-	InputFile=`opts_GetOpt "${setflag}inputfile" $@` 																		# --inputfile=<file_to_compute_parcellation_on>		Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
-	InputPath=`opts_GetOpt "${setflag}inputpath" $@` 																		# --inputpath=<path_for_input_file>			Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
-	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` 																# --inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. dscalar or dtseries)
+	InputFile=`opts_GetOpt "${setflag}inputfile" $@` 																		# --inputfile=<file_to_compute_parcellation_on>   Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
+	InputPath=`opts_GetOpt "${setflag}inputpath" $@` 																		# --inputpath=<path_for_input_file>   Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
+	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` 																# --inputdatatype=<type_of_dense_data_for_input_file>   Specify the type of data for the input file (e.g. dscalar or dtseries)
 	SingleInputFile=`opts_GetOpt "${setflag}singleinputfile" $@` 															# --singleinputfile
-	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>			Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
-	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file
-	ExtractData=`opts_GetOpt "${setflag}extractdata" $@` 																	# --extractdata=<save_out_the_data_as_as_csv>				Specify if you want to save out the matrix as a CSV file
-	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@` 																	# --computepconn=<specify_parcellated_connectivity_calculation>		Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
-	UseWeights=`opts_GetOpt "${setflag}useweights" $@` 																		# --useweights=<clean_prior_run>						If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
-	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` 																	# --weightsfile=<location_and_name_of_weights_file>			Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>   Specify the output path name of the pconn file relative to the master study folder (e.g. /images/functional/)
+	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>   Specify the suffix output name of the pconn file
+	ExtractData=`opts_GetOpt "${setflag}extractdata" $@` 																	# --extractdata=<save_out_the_data_as_as_csv>   Specify if you want to save out the matrix as a CSV file
+	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@` 																	# --computepconn=<specify_parcellated_connectivity_calculation>   Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
+	UseWeights=`opts_GetOpt "${setflag}useweights" $@` 																		# --useweights=<clean_prior_run>   If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) 
+	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` 																	# --weightsfile=<location_and_name_of_weights_file>   Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>   Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
 	# -- roiextract input flags
-	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@` 																		# --roifile=<filepath>		Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
-	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@` 														# --subjectroifile=<use_a_subject_specific_roi_file>				Specify if you want to use a subject-specific ROI file"
+	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@` 																		# --roifile=<filepath>   Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
+	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@` 														# --subjectroifile=<use_a_subject_specific_roi_file>   Specify if you want to use a subject-specific ROI file"
 	
 	# -- computeboldfc input flags
 	#InputFiles=`opts_GetOpt "${setflag}inputfiles" "$@" | sed 's/,/ /g;s/|/ /g'`; InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'` 	# --inputfiles=
 	InputFiles=`opts_GetOpt "${setflag}inputfiles" $@` 																		# --inputfiles=
 	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`																			# --targetf=			
 	Calculation=`opts_GetOpt "${setflag}calculation" $@`																	# --calculation=	
-	RunType=`opts_GetOpt "${setflag}runtype" $@`																			# --runtype= 		
-	FileList=`opts_GetOpt "${setflag}flist" $@`																				# --flist=			
-	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																		# --ignore=			
+	RunType=`opts_GetOpt "${setflag}runtype" $@`																			# --runtype=   
+	FileList=`opts_GetOpt "${setflag}flist" $@`																				# --flist=   
+	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																		# --ignore=   
 	MaskFrames=`opts_GetOpt "${setflag}mask" $@`																			# --mask=		
 	Covariance=`opts_GetOpt "${setflag}covariance" $@`																		# --covariance=		
 	TargetROI=`opts_GetOpt "${setflag}target" $@`																			# --target=			
@@ -4632,12 +4621,12 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Method=`opts_GetOpt "${setflag}method" $@`																				# --method=		
 		
 	# -- dwidenseparcellation input flags
-	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` 																# --matrixversion=<matrix_version_value>		matrix solution verion to run parcellation on; e.g. 1 or 3
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
-	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>	Specify the suffix output name of the pconn file
+	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` 																# --matrixversion=<matrix_version_value>   matrix solution verion to run parcellation on; e.g. 1 or 3
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>   Specify the absolute path of the file you want to use for parcellation (e.g. {$TOOLS}/MNAP/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
+	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>   Specify the suffix output name of the pconn file
 	
 	# -- dwiseedtractography input flags
-	SeedFile=`opts_GetOpt "${setflag}seedfile" $@` 																			# --seedfile=<structure_for_seeding>	Specify the absolute path of the seed file you want to use as a seed for dconn reduction
+	SeedFile=`opts_GetOpt "${setflag}seedfile" $@` 																			# --seedfile=<structure_for_seeding>   Specify the absolute path of the seed file you want to use as a seed for dconn reduction
 	
 	# -- eddyqc input flags
 	EddyBase=`opts_GetOpt "${setflag}eddybase" $@` 																			# <eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)
@@ -4654,35 +4643,35 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Update=`opts_GetOpt "${setflag}update" $@`   																			# <setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single subject qc reports
 				
 	# -- fslbedpostxgpu input flags
-	Fibers=`opts_GetOpt "${setflag}fibers" $@` 																				# <number_of_fibers>		Number of fibres per voxel, default 3
-	Model=`opts_GetOpt "${setflag}model" $@`   																				# <deconvolution_model>		Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
-	Burnin=`opts_GetOpt "${setflag}burnin" $@` 																				# <burnin_period_value>		Burnin period, default 1000
-	Jumps=`opts_GetOpt "${setflag}jumps" $@`   																				# <number_of_jumps>			Number of jumps, default 1250
-	Rician=`opts_GetOpt "${setflag}rician" $@`   																			# <set_rician_value>		Default it YES
+	Fibers=`opts_GetOpt "${setflag}fibers" $@` 																				# <number_of_fibers>   Number of fibres per voxel, default 3
+	Model=`opts_GetOpt "${setflag}model" $@`   																				# <deconvolution_model>   Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
+	Burnin=`opts_GetOpt "${setflag}burnin" $@` 																				# <burnin_period_value>   Burnin period, default 1000
+	Jumps=`opts_GetOpt "${setflag}jumps" $@`   																				# <number_of_jumps>   Number of jumps, default 1250
+	Rician=`opts_GetOpt "${setflag}rician" $@`   																			# <set_rician_value>   Default it YES
 	
 	# -- probtrackxgpudense input flags
-	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`  																		# <matrix1_model>		Specify if you wish to run matrix 1 model [yes or omit flag]
-	MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`  																		# <matrix3_model>		Specify if you wish to run matrix 3 model [yes or omit flag]
-	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`  														# <Number_of_Samples_for_Matrix1>		Number of samples - default=5000
-	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`  														# <Number_of_Samples_for_Matrix3>>		Number of samples - default=5000
+	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`  																		# <matrix1_model>   Specify if you wish to run matrix 1 model [yes or omit flag]
+	MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`  																		# <matrix3_model>   Specify if you wish to run matrix 3 model [yes or omit flag]
+	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`  														# <Number_of_Samples_for_Matrix1>   Number of samples - default=5000
+	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`  														# <Number_of_Samples_for_Matrix3>>   Number of samples - default=5000
 	
 	# -- awshcpsync input flags
-	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# <modality_to_sync>			Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
-	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`	 																			# <aws_uri_location>			Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
+	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# <modality_to_sync>   Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
+	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`	 																			# <aws_uri_location>   Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
 	# -- qcpreproc input flags
-	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>			Specify the output path name of the QC folder
-	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` 																# --templatefolder=<path_for_the_template_folder>			Specify the output path name of the template folder (default: "$TOOLS"/MNAP/connector/templates)
-	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# --modality=<input_modality_for_qc>			Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
-	DWIPath=`opts_GetOpt "${setflag}dwipath" $@` 																			# --dwipath=<path_for_dwi_data>				Specify the input path for the DWI data (may differ across studies)
-	DWIData=`opts_GetOpt "${setflag}dwidata" $@` 																			# --dwidata=<file_name_for_dwi_data>				Specify the file name for DWI data (may differ across studies)
-	DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@` 																			# --dtifitqc=<visual_qc_for_dtifit>				Specify if dtifit visual QC should be completed [e.g. YES or NO]
-	BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@` 																		# --bedpostxqc=<visual_qc_for_bedpostx>			Specify if BedpostX visual QC should be completed [e.g. YES or NO]
-	EddyQCPDF=`opts_GetOpt "${setflag}eddyqcpdf" $@` 																		# --eddyqcpdf=<pdf_qc_for_eddy>                    Specify if EDDY PDF QC should be linked into QC folder [e.g. yes or no]
-	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@` 																		# --dwilegacy=<dwi_data_processed_via_legacy_pipeline>				Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
-	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>				Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
-	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<file_name_for_bold_data>				Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
-	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@` 																		# --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>				Specify the number of initial frames you wish to exclude from the BOLD QC calculation
+	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>   Specify the output path name of the QC folder
+	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` 																# --templatefolder=<path_for_the_template_folder>   Specify the output path name of the template folder (default: "$TOOLS"/MNAP/connector/templates)
+	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# --modality=<input_modality_for_qc>   Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
+	DWIPath=`opts_GetOpt "${setflag}dwipath" $@` 																			# --dwipath=<path_for_dwi_data>   Specify the input path for the DWI data (may differ across studies)
+	DWIData=`opts_GetOpt "${setflag}dwidata" $@` 																			# --dwidata=<file_name_for_dwi_data>   Specify the file name for DWI data (may differ across studies)
+	DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@` 																			# --dtifitqc=<visual_qc_for_dtifit>   Specify if dtifit visual QC should be completed [e.g. YES or NO]
+	BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@` 																		# --bedpostxqc=<visual_qc_for_bedpostx>   Specify if BedpostX visual QC should be completed [e.g. YES or NO]
+	EddyQCPDF=`opts_GetOpt "${setflag}eddyqcpdf" $@` 																		# --eddyqcpdf=<pdf_qc_for_eddy>   Specify if EDDY PDF QC should be linked into QC folder [e.g. yes or no]
+	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@` 																		# --dwilegacy=<dwi_data_processed_via_legacy_pipeline>   Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
+	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>   Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
+	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<file_name_for_bold_data>   Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
+	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@` 																		# --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation
 	
 	# -- Check if subject input is a parameter file instead of list of cases
 	if [[ ${CASES} == *.txt ]]; then
