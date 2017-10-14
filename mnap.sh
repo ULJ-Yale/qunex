@@ -3344,49 +3344,52 @@ fslbedpostxgpu() {
 		reho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
 		echo ""
 		
+		# Generate log folder
+		mkdir ${BedPostXFolder} > /dev/null 2>&1
+		mkdir ${LogFolder} > /dev/null 2>&1
+		
+		# Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="${CASE}_${TimeStamp}"
+		
 		if [ "$Cluster" == 1 ]; then
-			# unset the queue variables
-			unset SGE_ROOT
-			unset FSLGECUDAQ
-			
 			echo "Running bedpostx_gpu locally on `hostname`"
 			echo "Check log file output here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
 			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" >> "$LogFolder"/bedpostX_"$Suffix".log
 			else	
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag"
+				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" >> "$LogFolder"/bedpostX_"$Suffix".log
 			fi
 		fi
 		
 		if [ "$Cluster" == 2 ]; then
-			# reset the queue variables
-			unset SchedulerQueue
-			unset SchedulerName
-			SchedulerName=`echo $Scheduler | awk -F, '{ print $1 }'`
-			if [ $SchedulerName == "SLURM" ]; then
-				SchedulerQueue=`echo $Scheduler | awk -Fpartition= '{ print $2 }' | awk -F, '{ print $1 }'`
-			else
-				SchedulerQueue=`echo $Scheduler | awk -q= '{ print $2 }' | awk -F, '{ print $1 }'`
-			fi
+			# - Clean prior command 
+			rm -f "$LogFolder"/bedpostX_"$Suffix".sh &> /dev/null	
 			
-			FSLGECUDAQ="$SchedulerQueue" # Cluster queue name with GPU nodes
-			export FSLGECUDAQ
-			export SGE_ROOT=1
-			NJOBS=4
-						
+			# - Echo full command into a script
 			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" -Q "$FSLGECUDAQ" -scheduler "$SchedulerName"
-			else	
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" -Q "$FSLGECUDAQ" -scheduler "$SchedulerName"
+				echo "${FSLGPUBinary}/bedpostx_gpu_scheduler_clean ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}" > "$LogFolder"/bedpostX_"$Suffix".sh
+			else
+				echo "${FSLGPUBinary}/bedpostx_gpu_scheduler_clean ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}" > "$LogFolder"/bedpostX_"$Suffix".sh
 			fi
 			
-			geho "---------------------------------------------------------------------------------------"
-			geho "Data successfully submitted" 
-			geho "Scheduler Options: Scheduler options are specified in the bedpostx_gpu binary to ensure compatibility"
-			geho "Check output logs here: $LogFolder"
-			geho "---------------------------------------------------------------------------------------"
+			# - Make script executable 
+			chmod 770 "$LogFolder"/bedpostX_"$Suffix".sh
+			cd ${LogFolder}
+			
+			# - Send to scheduler 
+			gmri schedule command="${LogFolder}/bedpostX_${Suffix}.sh" \
+			settings="${Scheduler}" \
+			output="stdout:${LogFolder}/bedpostX.${Suffix}.output.log|stderr:${LogFolder}/bedpostX.${Suffix}.error.log" \
+			workdir="${LogFolder}"			
+			
+			echo "--------------------------------------------------------------"
+			echo "Data successfully submitted" 
+			echo "Scheduler Name and Options: $Scheduler"
+			echo "Check output logs here: $LogFolder"
+			echo "--------------------------------------------------------------"
 			echo ""
 		fi
 }
@@ -3396,7 +3399,7 @@ show_usage_fslbedpostxgpu() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
-				echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled node."
+				echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled node or via a GPU-enabled queue if using the scheduler option."
 				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
 				echo ""
 				echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
@@ -3414,6 +3417,7 @@ show_usage_fslbedpostxgpu() {
 				echo "--scheduler=<name_of_cluster_scheduler_and_options>   A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "                                                        e.g. for SLURM the string would look like this: "
 				echo "                                                         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "														* Note: You need to specify a GPU-enabled queue or partition"
 				echo "" 
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
@@ -3952,8 +3956,8 @@ qcpreproc() {
 			
 			# -- Split the data and setup 1st and 2nd volumes for visualization
 			Com6a="fslsplit ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}.nii.gz ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split -t"
-			Com6b="fslmaths ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0000.nii.gz -mul ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz ${DWIData}_split1_brain"
-			Com6c="fslmaths ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0001.nii.gz -mul ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz ${DWIData}_split2_brain"
+			Com6b="fslmaths ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0000.nii.gz -mul ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split1_brain"
+			Com6c="fslmaths ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0001.nii.gz -mul ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split2_brain"
 			
 			# -- Clean split volumes
 			Com6d="rm -f ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0*  &> /dev/null"
@@ -4021,30 +4025,31 @@ qcpreproc() {
 					minimumfilesize=20000000
 					actualfilesize=`wc -c < "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1  		
 					filecount=`ls "$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
-				fi
 				
-				# -- Then check if run is complete based on file count
-				if [ "$filecount" == 9 ]; then
-					# -- Then check if run is complete based on file size
-					if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
-						echo ""
-						geho "    --> BedpostX outputs found and completed here: ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
-						echo ""
-						# -- replace DWI scene specifications with the dtifit results
-						Com6h1="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						Com6h2="sed -i -e 's|1st Frame|mean d diffusivity|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						Com6h3="sed -i -e 's|2nd Frame|mean f anisotropy|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						Com6h4="sed -i -e 's|$DWIPath/data_split1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						Com6h5="sed -i -e 's|$DWIPath/data_split2_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						# -- combine dtifit commands
-						Com6h="$Com6h1; $Com6h2; $Com6h3; $Com6h4; $Com6h5"
-						# -- Combine DWI commands
-						Com6="$Com6; $Com6h"
-					else 
-						echo ""
-						reho "--- BedpostX outputs missing or incomplete for $CASE. Skipping BedpostX QC request. Check BedpostX results."
-						echo ""
+					# -- Then check if run is complete based on file count
+					if [ "$filecount" == 9 ]; then
+						# -- Then check if run is complete based on file size
+						if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
+							echo ""
+							geho "    --> BedpostX outputs found and completed here: ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
+							echo ""
+							# -- replace DWI scene specifications with the dtifit results
+							Com6h1="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+							Com6h2="sed -i -e 's|1st Frame|mean d diffusivity|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+							Com6h3="sed -i -e 's|2nd Frame|mean f anisotropy|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+							Com6h4="sed -i -e 's|$DWIPath/data_split1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+							Com6h5="sed -i -e 's|$DWIPath/data_split2_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+							# -- combine dtifit commands
+							Com6h="$Com6h1; $Com6h2; $Com6h3; $Com6h4; $Com6h5"
+							# -- Combine DWI commands
+							Com6="$Com6; $Com6h"
+						fi
 					fi
+				else 
+					echo ""
+					reho "    --> FSLBedpostX outputs missing or incomplete for $CASE. Skipping BedpostX QC request. Check BedpostX results."
+					echo ""
+					BedpostXQC="no"
 				fi
 			fi
 		
