@@ -3358,9 +3358,9 @@ fslbedpostxgpu() {
 			echo "--------------------------------------------------------------"
 			echo ""
 			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" >> "$LogFolder"/bedpostX_"$Suffix".log
+				${FSLGPUBinary}/bedpostx_gpu_noscheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" >> "$LogFolder"/bedpostX_"$Suffix".log
 			else	
-				${FSLGPUBinary}/bedpostx_gpu_scheduler_clean "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" >> "$LogFolder"/bedpostX_"$Suffix".log
+				${FSLGPUBinary}/bedpostx_gpu_noscheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" >> "$LogFolder"/bedpostX_"$Suffix".log
 			fi
 		fi
 		
@@ -3370,9 +3370,9 @@ fslbedpostxgpu() {
 			
 			# - Echo full command into a script
 			if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-				echo "${FSLGPUBinary}/bedpostx_gpu_scheduler_clean ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}" > "$LogFolder"/bedpostX_"$Suffix".sh
+				echo "${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}" > "$LogFolder"/bedpostX_"$Suffix".sh
 			else
-				echo "${FSLGPUBinary}/bedpostx_gpu_scheduler_clean ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}" > "$LogFolder"/bedpostX_"$Suffix".sh
+				echo "${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}" > "$LogFolder"/bedpostX_"$Suffix".sh
 			fi
 			
 			# - Make script executable 
@@ -3558,135 +3558,118 @@ probtrackxgpudense() {
 		RunFolder="$StudyFolder"/"$CASE"/hcp/
 		NsamplesMatrixOne="$NsamplesMatrixOne"
 		NsamplesMatrixThree="$NsamplesMatrixThree"
-		
-		# -- Establish scheduler type
-		if [[ `echo $Scheduler | grep "SLURM"` = *"SLURM"* ]]; then SchedulerType="SLURM"; echo "Scheduler type set to $SchedulerType"; fi
-		if [[ `echo $Scheduler | grep "SLURM"` = *"LSF"* ]]; then SchedulerType="LSF"; echo "Scheduler type set to $SchedulerType"; fi
-		if [[ `echo $Scheduler | grep "SLURM"` = *"PBS"* ]]; then SchedulerType="PBS"; echo "Scheduler type set to $SchedulerType"; fi
+		minimumfilesize=100000000
 		
 		# -- Generate the results and log folders
 		mkdir "$ResultsFolder"  &> /dev/null
-		mkdir "$LogFolder"  &> /dev/null
 		
-		# -- Set the CUDA queue 
-		#FSLGECUDAQ="$QUEUE"
-		#export FSLGECUDAQ="$QUEUE"
+		# -- Generate timestamp for logs and scripts
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		Suffix="${CASE}_${TimeStamp}"
 		
 		# -------------------------------------------------
-		# -- Do work for Matrix 1 if --omatrix1 flag set 
+		# -- Check if Matrix 1 or 3 flag set 
 		# -------------------------------------------------
+		
 		if [ "$MatrixOne" == "yes" ]; then
-			LogFolder="$ResultsFolder"/Mat1_logs
-			# -- Check of overwrite flag was set
-			if [ "$Overwrite" == "yes" ]; then
-				echo ""
-				reho " --- Removing existing Probtrackxgpu Matrix1 dense run for $CASE..."
-				echo ""
-				rm -f "$ResultsFolder"/Conn1.dconn.nii.gz &> /dev/null
-			fi
-			# -- Check for Matrix 1 completion
-			echo ""
-			geho "Checking if ProbtrackX Matrix 1 and dense connectome was completed on $CASE..."
-			echo ""
-			# -- Check if the file even exists
-			if [ -f "$ResultsFolder"/Conn1.dconn.nii.gz ]; then
-				# -- Set file sizes to check for completion
-				minimumfilesize=100000000
-				actualfilesize=`wc -c < "$ResultsFolder"/Conn1.dconn.nii.gz` > /dev/null 2>&1  		
-				# -- Then check if Matrix 1 run is complete based on size
-				if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
-					echo ""
-					cyaneho "DONE -- ProbtrackX Matrix1 solution and dense connectome was completed for $CASE"
-					cyaneho "To re-run set overwrite flag to 'yes'"
-					cyaneho "Check prior output logs here: $LogFolder"
-					echo ""
-					echo "--------------------------------------------------------------"
-					echo ""
-				fi
-			else
-				# -- If run is incomplete perform run for Matrix 1
-				echo ""
-				geho "ProbtrackX Matrix1 solution and dense connectome incomplete for $CASE. Starting run..."
-				echo ""
-				# -- Set nsamples variable 
-				if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
-				# -- submit script
-				echo ""
-				echo "Job ID:"
-				echo ""
-				"$ScriptsFolder"/RunMatrix1.sh "$RunFolder" "$CASE" "$NsamplesMatrixOne" "$SchedulerType"
-				# -- record output calls
-				echo ""
-				echo "Submitted Matrix 1 job for $CASE"
-				echo ""
-				echo ""
-				echo "--------------------------------------------------------------"
-				echo "Data successfully submitted" 
-				echo "Scheduler Name and Options: $Scheduler"
-				echo "Number of samples for Matrix1: $NsamplesMatrixOne"
-				echo "Check output logs here: $LogFolder"
-				echo "--------------------------------------------------------------"
-				echo ""
-			fi
+			MNumber="1"
+			if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
 		fi
-		
-		# -------------------------------------------------
-		# -- Do work for Matrix 3 if --omatrix3 flag set 
-		# -------------------------------------------------
 		
 		if [ "$MatrixThree" == "yes" ]; then
-			LogFolder="$ResultsFolder"/Mat3_logs
+			MNumber="3"
+			if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixThree=3000; fi
+		fi
+		
+		if [ "$MatrixOne" == "yes" ] && [ "$MatrixThree" == "yes" ]; then
+			MNumber="1 3"
+		fi
+		
+		# -------------------------------------------------
+		# -- Do work for Matrix 1 or 3
+		# -------------------------------------------------
+			
+		for MNum in $MNumber; do
+			
+			if [ "$MNum" == "1" ]; then NSamples="$NsamplesMatrixOne"; fi
+			if [ "$MNum" == "3" ]; then NSamples="$NsamplesMatrixThree"; fi
+			
+			LogFolder="$ResultsFolder"/Mat${MNum}_logs
+			mkdir "$LogFolder"  &> /dev/null
+		
 			# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "yes" ]; then
 				echo ""
-				reho " --- Removing existing Probtrackxgpu Matrix3 dense run for $CASE..."
+				reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
 				echo ""
-				rm -f "$ResultsFolder"/Conn3.dconn.nii.gz  &> /dev/null
+				rm -f "$ResultsFolder"/Conn${MNum}.dconn.nii.gz &> /dev/null
 			fi
-			# -- Check for Matrix 3 completion
+			
+			# -- Check for Matrix completion
 			echo ""
-			geho "Checking if ProbtrackX Matrix 3 and dense connectome was completed on $CASE..."
+			geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
 			echo ""
+			
 			# -- Check if the file even exists
-			if [ -f "$ResultsFolder"/Conn3.dconn.nii.gz ]; then
+			if [ -f "$ResultsFolder"/Conn${MNum}.dconn.nii.gz ]; then
+				
 				# -- Set file sizes to check for completion
-				minimumfilesize=100000000
-				actualfilesize=`wc -c < "$ResultsFolder"/Conn3.dconn.nii.gz` > /dev/null 2>&1
-				# -- Then check if Matrix 3 run is complete based on size
+				actualfilesize=`wc -c < "$ResultsFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1  		
+				
+				# -- Then check if Matrix run is complete based on size
 				if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
 					echo ""
-					cyaneho "DONE -- ProbtrackX Matrix3 solution and dense connectome was completed for $CASE"
+					cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for $CASE"
 					cyaneho "To re-run set overwrite flag to 'yes'"
 					cyaneho "Check prior output logs here: $LogFolder"
 					echo ""
 					echo "--------------------------------------------------------------"
 					echo ""
 				fi
-			else 
-				# -- If run is incomplete perform run for Matrix 3
-				geho "ProbtrackX Matrix3 solution and dense connectome incomplete for $CASE. Starting run..."
+			
+			else
+				
+				# -- If run is incomplete perform run for Matrix
 				echo ""
-				# -- Set nsamples variable 
-				if [ "$NsamplesMatrixThree" == "" ];then NsamplesMatrixThree=3000; fi
-				# -- submit script
+				geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
 				echo ""
-				echo "Job ID:"
-				echo ""
-				"$ScriptsFolder"/RunMatrix3.sh "$RunFolder" "$CASE" "$NsamplesMatrixThree" "$SchedulerType"
-				# -- record output calls
-				echo ""
-				echo "Submitted Matrix 3 job for $CASE"
-				echo ""
-				echo ""
-				echo "--------------------------------------------------------------"
-				echo "Data successfully submitted" 
-				echo "Scheduler Name and Options: $Scheduler"
-				echo "Number of samples for Matrix3: $NsamplesMatrixThree"
-				echo "Check output logs here: $LogFolder"
-				echo "--------------------------------------------------------------"
-				echo ""
+		
+				# -- submit script locally
+				if [ "$Cluster" == 1 ]; then
+					echo "Running probtrackxgpudense locally on `hostname`"
+					echo "Check log file output here: $LogFolder"
+					echo "--------------------------------------------------------------"
+					echo ""
+					"$ScriptsFolder"/RunMatrix${MNum}_NoScheduler.sh "$RunFolder" "$CASE" "$Nsamples" "$SchedulerType" >> "$LogFolder"/Matrix${MNum}_"$Suffix".log
+				fi
+				
+				if [ "$Cluster" == 2 ]; then
+					# -- Clean prior command 
+					rm -f "$LogFolder"/Matrix${MNum}_"$Suffix".sh &> /dev/null	
+					
+					# -- Echo full command into a script
+					echo "${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}" > "$LogFolder"/Matrix${MNum}_"$Suffix".sh
+			
+					# -- Make script executable 
+					chmod 770 "$LogFolder"/Matrix${MNum}_"$Suffix".sh
+					cd ${LogFolder}
+					
+					# -- Send to scheduler 
+					gmri schedule command="${LogFolder}/Matrix${MNum}_${Suffix}.sh" \
+					settings="${Scheduler}" \
+					output="stdout:${LogFolder}/Matrix${MNum}.${Suffix}.output.log|stderr:${LogFolder}/Matrix${MNum}.${Suffix}.error.log" \
+					workdir="${LogFolder}"			
+					
+					echo "--------------------------------------------------------------"
+					echo "Data successfully submitted" 
+					echo "Scheduler Name and Options: $Scheduler"
+					echo "Check output logs here: $LogFolder"
+					echo "--------------------------------------------------------------"
+					echo ""
+				fi
 			fi
-		fi
+		done
+			
 }
 
 show_usage_probtrackxgpudense() {
@@ -5295,6 +5278,7 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
 		if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi		
 		if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
+		
 		Cluster=$RunMethod
 			
 		echo ""
@@ -5978,13 +5962,17 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi		
-		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 		if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
 		if [ "$MatrixOne" == "yes" ]; then
 			if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
 		fi
 		if [ "$MatrixThree" == "yes" ]; then
 			if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
+		fi
+		
+		Cluster="$RunMethod"
+		if [ "$Cluster" == "2" ]; then
+				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 		fi
 		
 		echo ""
