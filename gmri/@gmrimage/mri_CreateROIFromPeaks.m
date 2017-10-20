@@ -19,7 +19,7 @@ function [img] = mri_CreateROIFrompeaksIn(img, peaksIn)
 %                     described in part b).
 %
 %                  Where: x, y, z are coordinated of each peak,
-%                         radius is the radious of the peak in mm,
+%                         radius is the radius of the peak in mm,
 %                         value is the value of the peak (ID, z value,...).
 %
 %   USE EXAMPLE

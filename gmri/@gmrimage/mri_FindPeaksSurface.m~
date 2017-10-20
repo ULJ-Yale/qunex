@@ -532,7 +532,8 @@ for b  = big(:)'
             end
         end
         
-        % flood the nodes that border the primary region around the peak or became connected after further flooding
+        % flood the nodes that border the primary region around the peak or
+        % became connected after further flooding
         isolatedInd = find(indexedData == -2);
         isolatedVal = bigROI_data(isolatedInd);
         [~, sortingVector] = sort(isolatedVal, 1, 'ascend');
@@ -559,8 +560,7 @@ for b  = big(:)'
                 AdjacencyMatrix = updateEdges(fp_param, indexedData, s, b, numel(s), true);
             end
         end
-        
-        % exit the loop if regions area converged below the maxarea
+           
         newArea = peak(b).area;
         loop_ctn = loop_ctn + 1;
         if ((loop_ctn > 5) && (previousArea == newArea))
@@ -574,7 +574,6 @@ end
 end
 
 function AdjacencyMatrix = updateEdges(fp_param, indexedData, s, b, n, finalCheck)
-% finalCheck does not connect regions that were labeled isolated and border the region around the peak
 AdjacencyMatrix = zeros(n,n);
 if finalCheck
     for i=1:1:n
@@ -627,7 +626,7 @@ if ~isempty(find(v == find(s == destination)))
 end
 end
 
-% --- Functions intended for debugging
+% --- Functions used for debugging
 function [] = plotRegionAreas(peak, fp_param)
 figure();
 j = 1;
