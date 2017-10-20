@@ -451,7 +451,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 # print "---> Running HCP Pre FS"
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP PreFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpPreFS')
+                r += runExternalForFileShell(tfile, comm, '... running HCP PreFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpPreFS', logfolder=options['comlogs'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP PreFS failed running command: %s' % (comm))
                 # print "---> Done with Pre FS"
                 report = "Pre FS Done" if status else "Pre FS Failed"
@@ -697,7 +697,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
                         if os.path.lexists(os.path.join(hcp['T1w_folder'], toremove)):
                             os.remove(os.path.join(hcp['T1w_folder'], toremove))
-                r += runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpFS')
+                r += runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpFS', logfolder=options['comlogs'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP FS failed running command: %s' % (comm))
                 report = "FS Done" if status else "FS Failed"
             else:
@@ -894,7 +894,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP PostFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpPostFS')
+                r += runExternalForFileShell(tfile, comm, '... running HCP PostFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpPostFS', logfolder=options['comlogs'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP PostFS failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
@@ -991,7 +991,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP Diffusion Preprocessing', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpDWI')
+                r += runExternalForFileShell(tfile, comm, '... running HCP Diffusion Preprocessing', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpDWI', logfolder=options['comlogs'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP Diffusion Preprocessing failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
@@ -1482,7 +1482,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     if options['run'] == "run":
                         if overwrite and os.path.exists(tfile):
                             os.remove(tfile)
-                        r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRIVolume', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpfMRIVolume_B%d' % (bold))
+                        r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRIVolume', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpfMRIVolume_B%d' % (bold), logfolder=options['comlogs'])
                         r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRIVolume failed running command: %s' % (comm))
                         if status:
                             report['done'].append(str(bold))
@@ -1740,7 +1740,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                     if options['run'] == "run":
                         if overwrite and os.path.exists(tfile):
                             os.remove(tfile)
-                        r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRISurface', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpfMRISurface_B%d' % (bold))
+                        r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRISurface', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpfMRISurface_B%d' % (bold), logfolder=options['comlogs'])
                         r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRISurface failed running command: %s' % (comm))
                         if status:
                             report['done'].append(str(bold))
@@ -1838,7 +1838,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP DTI Fit', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpDTIFix')
+                r += runExternalForFileShell(tfile, comm, '... running HCP DTI Fit', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpDTIFix', logfolder=options['comlogs'])
                 r, status = checkForFile(r, tfile, 'ERROR: DTI Fit failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
@@ -1910,7 +1910,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP BedpostX', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpBedpostx')
+                r += runExternalForFileShell(tfile, comm, '... running HCP BedpostX', overwrite, sinfo['id'], remove=options['log'] == 'remove', task='hcpBedpostx', logfolder=options['comlog'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP BedpostX failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
