@@ -535,7 +535,7 @@ for b  = big(:)'
         % flood the nodes that border the primary region around the peak or became connected after further flooding
         isolatedInd = find(indexedData == -2);
         isolatedVal = bigROI_data(isolatedInd);
-        [~, sortingVector] = sort(isolatedVal, 1, 'ascend');
+        [~, sortingVector] = sort(isolatedVal, 1, 'descend');
         isolatedSorted = isolatedInd(sortingVector);
         for i=1:1:numel(isolatedSorted)
             m = isolatedSorted(i);
@@ -620,11 +620,27 @@ end
 
 function PE = pathExists(AdjacencyMatrix, s, source, destination)
 PE = false;
-G = graph(AdjacencyMatrix);
-v = dfsearch(G,find(s == source));
+v = dfs(AdjacencyMatrix, find(s == source), zeros(length(AdjacencyMatrix),1));
 if ~isempty(find(v == find(s == destination)))
     PE = true;
 end
+end
+
+function [connected, visited] = dfs(A, v, visited, connected)
+if nargin < 4, connected = v; end
+visited(v) = 1;
+adjNodes = adjacentNodes(A, v);
+for i=1:1:length(adjNodes)
+    w = adjNodes(i);
+    if (visited(w) == 0)
+        connected = [connected w];
+        [connected, visited] = dfs(A,w, visited, connected);
+    end
+end
+end
+
+function [adjNodes] = adjacentNodes(A, u)
+adjNodes = find(A(u,:) == 1);
 end
 
 % --- Functions intended for debugging
