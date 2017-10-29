@@ -261,7 +261,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
 
     # --- check for preexisting files
 
-    files = glob.glob(root + '*.nii') + glob.glob(root + '*.nii.gz')
+    files = glob.glob(root + '*.nii') + glob.glob(root + '*.nii.gz') + glob.glob(root + '*.gii')
     if len(files) > 0:
         if overwrite == 'yes':
             print " --> cleaning up preexisiting image files"
