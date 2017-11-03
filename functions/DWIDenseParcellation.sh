@@ -70,6 +70,7 @@ usage() {
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
  				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+				echo "		--waytotal=<use_waytotal_normalized_data>   Use the waytotal normalized version of the DWI dense connectome. Default: [no]"
  				echo ""
  				echo "-- Example:"
 				echo ""
@@ -125,6 +126,9 @@ get_options() {
     unset ParcellationFile
     unset OutName
     unset Overwrite
+    unset WayTotal
+    unset DWIOutFilePconn
+    unset DWIOutFilePDconn
     runcmd=""
 
     # parse arguments
@@ -164,6 +168,10 @@ get_options() {
                 OutName=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
+            --waytotal=*)
+                WayTotal=${argument/*=/""}
+                index=$(( index + 1 ))
+                ;;                
             --overwrite=*)
                 Overwrite=${argument/*=/""}
                 index=$(( index + 1 ))
@@ -206,6 +214,11 @@ get_options() {
         exit 1
     fi
 
+    if [ -z ${WayTotal} ]; then
+        reho "No <use_waytotal_normalized_data> specified. Assuming default [no]"
+        echo ""
+    fi
+    
     if [ -z ${OutName} ]; then
         usage
         reho "ERROR: <name_of_output_pconn_file> not specified>"
@@ -220,6 +233,7 @@ get_options() {
     echo "   Subject: ${CASE}"
     echo "   MatrixVersion: ${MatrixVersion}"
     echo "   ParcellationFile: ${ParcellationFile}"
+    echo "   Waytotal normalization: ${WayTotal}"
     echo "   OutName: ${OutName}"
     echo "   Overwrite: ${Overwrite}"
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
@@ -230,63 +244,76 @@ get_options() {
 
 ######################################### DO WORK ##########################################
 
+#gzip $ResultsFolder/${OutFileName} --fast
+#gzip $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
+
 main() {
 
-    # Get Command Line Options
-    get_options $@
+# -- Get Command Line Options
+get_options $@
 
 # -- Define inputs and output
 reho "--- Establishing paths for all input and output folders:"
 echo ""
 
-# -- Define input
-DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii.gz"
+# -- Define input and check if WayTotal normalization is selected
+
+if [ "$WayTotal" == "yes" ]; then
+	echo "--- Using waytotal normalized dconn file"
+	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"
+	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pconn.nii"
+	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pdconn.nii"
+else
+	echo "--- Using dconn file without waytotal normalization"
+	DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"
+	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
+	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
+fi
+
 # -- Define output
 DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
 echo "      Dense DWI Connectome Input:              ${DWIInput}"
-echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
+echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${DWIOutFilePconn}"
 echo ""
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
 	reho "--- Deleting prior runs for $DiffData..."
 	echo ""
-	rm -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii > /dev/null 2>&1
-	rm -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii > /dev/null 2>&1
+	rm -f "$DWIOutput"/"$DWIOutFilePDconn" > /dev/null 2>&1
+	rm -f "$DWIOutput"/"$DWIOutFilePconn" > /dev/null 2>&1
 fi
 
-# Check if PreFreeSurfer was completed to use existing inputs and avoid re-running BET
-
+# -- Check if parcellation was completed
 reho "--- Checking if parcellation was completed..."
 echo ""
 
-if [ -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii ]; then
-	geho "Parcellation data found: "
+if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
+	geho "--- Parcellation data found: "
 	echo ""
-	echo "      ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
+	echo "    ${DWIOutput}/${DWIOutFilePconn}"
 	echo ""
 	exit 1
 else
-	reho "Parcellation data not found."
+	reho "--- Parcellation data not found."
 	echo ""
-	geho "Computing parcellation by COLUMN on $DWIInput..."
+	geho "--- Computing parcellation by COLUMN on $DWIInput..."
 	echo ""
 	# -- First parcellate by COLUMN and save a *pdconn file
-	wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii
-	geho "Computing parcellation by ROW on ${DWIOutput}/${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii..."
+	wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePDconn"
+	geho "--- Computing parcellation by ROW on ${DWIOutput}/${DWIOutFilePDconn} ..."
 	echo ""
 	# -- Next parcellate by ROW and save final *pconn file
-	wb_command -cifti-parcellate "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pdconn.nii "$ParcellationFile" ROW "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii
+	wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFilePDconn" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFilePconn"
 fi	
 
 # Perform completion checks"
 
 	reho "--- Checking outputs..."
 	echo ""
-	if [ -f "$DWIOutput"/"$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii ]; then
-		OutFile="$CASE"_Conn"$MatrixVersion"_"$OutName".pconn.nii
-		geho "Parcellated (pconn) file for Matrix $MatrixVersion:           $OutFile"
+	if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
+		geho "Parcellated (pconn) file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFilePconn}"
 		echo ""
 	else
 		reho "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
@@ -303,8 +330,9 @@ exit 1
 
 }	
 
-#
-# Invoke the main function to get things started
-#
+# ---------------------------------------------------------
+# -- Invoke the main function to get things started -------
+# ---------------------------------------------------------
+
 
 main $@

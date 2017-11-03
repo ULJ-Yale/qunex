@@ -4,7 +4,7 @@
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# # AnalysisPipeline.sh
+# # mnap.sh
 #
 # ## Copyright Notice
 #
@@ -58,9 +58,9 @@
 #
 #~ND~END~
 
-# ========================================================================================
-# =================================== CODE START  ========================================
-# ========================================================================================
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -383,7 +383,9 @@ dicomorganize() {
 							
 							# -- Run the scheduler commands
 							cd "$StudyFolder"/"$CASE"/dicom/
-							gmri schedule command="${StudyFolder}/${CASE}/dicom/ComQUEUE_dicomorganize_${Suffix}.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.error.log" workdir="${StudyFolder}/${CASE}/dicom" 
+							gmri schedule command="${StudyFolder}/${CASE}/dicom/ComQUEUE_dicomorganize_${Suffix}.sh" \
+							settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.error.log" \
+							workdir="${StudyFolder}/${CASE}/dicom" 
 							
 							echo ""
 							echo "---------------------------------------------------------------------------------"
@@ -471,7 +473,10 @@ setuphcp() {
 				
 				# -- Run the scheduler commands
 				cd "$StudyFolder"/"$CASE"/
-				gmri schedule command="${StudyFolder}/${CASE}/setuphcp_${Suffix}.sh" settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/setuphcp.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/setuphcp.${Suffix}.error.log"  workdir="${StudyFolder}/${CASE}"  
+				gmri schedule command="${StudyFolder}/${CASE}/setuphcp_${Suffix}.sh" \
+				settings="${Scheduler}" \
+				output="stdout:${StudyFolder}/${CASE}/setuphcp.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/setuphcp.${Suffix}.error.log"  \
+				workdir="${StudyFolder}/${CASE}"  
 				
 				echo ""
 				echo "---------------------------------------------------------------------------------"
@@ -761,7 +766,7 @@ bolddense() {
 							echo "Dense Connectome Computed for this for $CASE and $STEP. Skipping to next..."
 						else		
 					    	echo "Running Dense Connectome on BOLD data for $CASE... (need ~30GB free RAM at any one time per subject)"
-							# Dense connectome command - use in isolation due to RAM limits (need ~30GB free at any one time per subject)
+							# -- Dense connectome command - use in isolation due to RAM limits (need ~30GB free at any one time per subject)
 							wb_command -cifti-correlation "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dtseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dconn.nii -fisher-z -weights "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use
 							ln -f "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD"_"$STEP".dconn.nii "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD"_"$STEP".dconn.nii
 						fi
@@ -875,11 +880,13 @@ boldhardlinkfixica() {
 			do	
 				BOLDCount=$((BOLDCount+1))
 				echo "Setting up hard links following FIX ICA for BOLD# $BOLD for $CASE... "
-				# setup folder strucrture if missing
+				
+				# -- setup folder strucrture if missing
 				mkdir "$StudyFolder"/"$CASE"/images    &> /dev/null
 				mkdir "$StudyFolder"/"$CASE"/images/functional	    &> /dev/null
 				mkdir "$StudyFolder"/"$CASE"/images/functional/movement    &> /dev/null
-				# setup hard links for images						
+				
+				# -- setup hard links for images						
 				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii     &> /dev/null
 				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".nii.gz     &> /dev/null
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii
@@ -888,8 +895,10 @@ boldhardlinkfixica() {
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".nii.gz
 				#rm "$StudyFolder"/"$CASE"/images/functional/boldfixicarfMRI_REST*     &> /dev/null
 				#rm "$StudyFolder"/"$CASE"/images/functional/boldrfMRI_REST*     &> /dev/null
+				
 				echo "Setting up hard links for movement data for BOLD# $BOLD for $CASE... "
-				# Clean up movement regressor file to match dofcMRIp convention and copy to movement directory
+				
+				# -- Clean up movement regressor file to match dofcMRIp convention and copy to movement directory
 				export PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH     &> /dev/null
 				rm "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD"_mov.dat     &> /dev/null
 				rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
@@ -919,17 +928,18 @@ fixicainsertmean() {
 		for BOLD in $BOLDS
 			do		
 					cd "$StudyFolder"/"$CASE"/images/functional/
-					# First check if the boldfixica file has the mean inserted
+					
+					# -- First check if the boldfixica file has the mean inserted
 					3dBrickStat -mean -non-zero boldfixica"$BOLD".nii.gz[1] >> boldfixica"$BOLD"_mean.txt
 					ImgMean=`cat boldfixica"$BOLD"_mean.txt`
 					if [ $(echo " $ImgMean > 1000" | bc) -eq 1 ]; then
 					echo "1st frame mean=$ImgMean Mean inserted OK for subject $CASE and bold# $BOLD. Skipping to next..."
 						else
-						# Next check if the boldfixica file has the mean inserted twice by accident
+						# -- Next check if the boldfixica file has the mean inserted twice by accident
 						if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
 						echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."	
 							else
-							# Command that inserts mean image back to the boldfixica file using g_InsertMean matlab function
+							# -- Command that inserts mean image back to the boldfixica file using g_InsertMean matlab function
 							echo "Re-inserting mean image on the mapped $BOLD data for $CASE... "
 							matlab -nosplash -nodisplay -nojvm -r "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldfixica' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldfixica' num2str($BOLD) '.nii.gz']),quit()"
 
@@ -2116,6 +2126,7 @@ dwidenseparcellation() {
 			--subject="${CASE}" \
 			--matrixversion="${MatrixVersion}" \
 			--parcellationfile="${ParcellationFile}" \
+			--waytotal="${WayTotal}" \
 			--outname="${OutName}" \
 			--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$Suffix".log
 		else
@@ -2127,6 +2138,7 @@ dwidenseparcellation() {
 			--subject=${CASE} \
 			--matrixversion=${MatrixVersion} \
 			--parcellationfile=${ParcellationFile} \
+			--waytotal=${WayTotal} \
 			--outname=${OutName} \
 			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseParcellation_"$Suffix".sh
 			
@@ -2174,6 +2186,7 @@ show_usage_dwidenseparcellation() {
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
 				echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
+				echo "--waytotal=<use_waytotal_normalized_data>            Use the waytotal normalized version of the DWI dense connectome. Default: [no]"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -2246,6 +2259,7 @@ dwiseedtractography() {
 			--subject="${CASE}" \
 			--matrixversion="${MatrixVersion}" \
 			--seedfile="${SeedFile}" \
+			--waytotal="${WayTotal}" \
 			--outname="${OutName}" \
 			--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseSeedTractography_"$Suffix".log
 		else
@@ -2257,6 +2271,7 @@ dwiseedtractography() {
 			--subject=${CASE} \
 			--matrixversion=${MatrixVersion} \
 			--seedfile=${SeedFile} \
+			--waytotal=${WayTotal} \
 			--outname=${OutName} \
 			--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseSeedTractography_"$Suffix".sh
 			
@@ -2311,6 +2326,7 @@ show_usage_dwiseedtractography() {
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
 				echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
+				echo "--waytotal=<use_waytotal_normalized_data>            Use the waytotal normalized version of the DWI dense connectome. Default: [no]"
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
@@ -4612,6 +4628,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` 																# --matrixversion=<matrix_version_value>   matrix solution verion to run parcellation on; e.g. 1 or 3
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>   Specify the absolute path of the file you want to use for parcellation (e.g. ${TOOLS}/${MNAPREPO}/library/data/parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>   Specify the suffix output name of the pconn file
+	WayTotal=`opts_GetOpt "${setflag}waytotal" $@`																			# --waytotal=<use_waytotal_normalized_data>   Use the waytotal normalized version of the DWI dense connectome. Default: [no] 	
 	
 	# -- dwiseedtractography input flags
 	SeedFile=`opts_GetOpt "${setflag}seedfile" $@` 																			# --seedfile=<structure_for_seeding>   Specify the absolute path of the seed file you want to use as a seed for dconn reduction
@@ -5816,6 +5833,9 @@ if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 		fi	
+
+		if [ -z "$WayTotal" ]; then reho "--waytotal normalized data not specified. Assuming default [no]"; fi
+
 		echo ""
 		echo "Running DWIDenseParcellation function with the following parameters:"
 		echo ""
@@ -5823,6 +5843,7 @@ if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
 		echo "Matrix version used for input: $MatrixVersion"
 		echo "File to use for parcellation: $ParcellationFile"
 		echo "Dense DWI Parcellated Connectome Output Name: $OutName"
+		echo "Waytotal normalization: ${WayTotal}"
 		echo "Overwrite prior run: $Overwrite"
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
@@ -5899,6 +5920,8 @@ if [ "$FunctionToRun" == "dwiseedtractography" ]; then
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 		fi
+
+		if [ -z "$WayTotal" ]; then WayTotal="no"; reho "--waytotal normalized data not specified. Assuming default [no]"; fi
 			
 		echo ""
 		echo "Running DWIDenseSeedTractography function with the following parameters:"
@@ -5907,6 +5930,7 @@ if [ "$FunctionToRun" == "dwiseedtractography" ]; then
 		echo "Matrix version used for input: $MatrixVersion"
 		echo "File to use for seed reduction: $SeedFile"
 		echo "Dense DWI Parcellated Connectome Output Name: $OutName"
+		echo "Waytotal normalization: ${WayTotal}"
 		echo "Overwrite prior run: $Overwrite"
 		echo "--------------------------------------------------------------"
 		echo "Job ID:"
