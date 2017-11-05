@@ -1039,8 +1039,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                 end
             end
         end
-        xS = xS+nM;
         if joinn
+            xS = xS+nM;
             for mi = 1:nM
                 ts = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
                 hdr{end+1}  = ts;
@@ -1072,18 +1072,18 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                 eindex(end+1) = b;
             end
         end
-        if joinn
-            for mi = 1:nS
-                ts = nuisance(1).signal_hdr{mi};
-                hdr{end+1}  = ts;
-                hdre{end+1} = ts;
-                hdrf(end+1) = 1;
-                effect(end+1) = find(ismember(effects, ts));
-                eindex(end+1) = 1;
-            end
+    end
+    if joinn
+        xS = xS+nS;
+        for mi = 1:nS
+            ts = nuisance(1).signal_hdr{mi};
+            hdr{end+1}  = ts;
+            hdre{end+1} = ts;
+            hdrf(end+1) = 1;
+            effect(end+1) = find(ismember(effects, ts));
+            eindex(end+1) = 1;
         end
     end
-    xS = xS+nS;
 
 
     %   ----> movement & signal derivatives
@@ -1112,8 +1112,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                     end
                 end
             end
-            xS = xS+nM;
             if joinn
+                xS = xS+nM;
                 for mi = 1:nM
                     ts = sprintf('mov_%s_d1', nuisance(1).mov_hdr{mi});
                     hdr{end+1}  = ts;
@@ -1146,8 +1146,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                 end
             end
         end
-        xS = xS+nS;
         if joinn
+            xS = xS+nS;
             for mi = 1:nS
                 ts = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
                 hdr{end+1}  = sprintf('%s_d1', nuisance(1).signal_hdr{mi});
@@ -1184,13 +1184,15 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                 end
             end
         end
-        xS = xS+nE;
-        for mi = 1:nE
-            hdr{end+1}  = sprintf('%s', nuisance(1).eventnamesr{mi});
-            hdre{end+1} = sprintf('%s', nuisance(1).eventnames{mi});
-            hdrf(end+1) = nuisance(1).eventframes(mi);
-            effect(end+1) = find(ismember(effects, nuisance(b).eventnames{mi}));
-            eindex(end+1) = 1;
+        if joine
+            xS = xS+nE;
+            for mi = 1:nE
+                hdr{end+1}  = sprintf('%s', nuisance(1).eventnamesr{mi});
+                hdre{end+1} = sprintf('%s', nuisance(1).eventnames{mi});
+                hdrf(end+1) = nuisance(1).eventframes(mi);
+                effect(end+1) = find(ismember(effects, nuisance(b).eventnames{mi}));
+                eindex(end+1) = 1;
+            end
         end
     end
 
@@ -1314,7 +1316,6 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     end
 
     coeff = coeff.mri_EmbedMeta(xtable, 64, 'GLM');
-
 
 return
 
