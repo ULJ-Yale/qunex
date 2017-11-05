@@ -152,6 +152,31 @@ switch class(img.data)
         error('\nERROR: Uknown datatype or datatype I can not handle! [%s]', class(img.data));
 end
 
+
+% ---> prepare metadata
+
+if isstruct(img.list)
+    lists = fields(img.list)';
+    s = '';
+    for fname = lists
+        fname = fname{1};
+        if strcmp(fname, 'meta')
+            metaname = img.list.meta;
+        else
+            if length(img.list.(fname)) ~= img.frames
+                error('\nERROR: list %s length (%d) does not match number of image frames (%d)! Aborting mri_saveimage!', fname, length(img.list.(fname)), img.frames);
+            end
+            if isnumeric(img.list.(fname))
+                s = [s sprintf('# %s: %s\n', fname, num2str(img.list.(fname)))];
+            elseif iscell(img.list.(fname))
+                s = [s sprintf('# %s: %s\n', fname, strjoin(img.list.(fname)))];
+            end
+        end
+    end
+    img = img.mri_EmbedMeta(s, [], metaname);
+end
+
+
 % ---> pack metadata
 
 if img.hdrnifti.swap
@@ -379,4 +404,3 @@ function [meta] = string2meta(string, code)
     meta.code = code;
     meta.data = zeros(1, meta.size-8, 'uint8');
     meta.data(1:length(string)) = string;
-    

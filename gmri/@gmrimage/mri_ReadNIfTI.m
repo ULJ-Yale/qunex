@@ -250,12 +250,14 @@ end
 % ---- Process metadata
 
 if mi > 0
+    keepmeta = true(1, mi);
     for m = 1:mi
         if img.meta(m).code == 64
             ms = cast(img.meta(m).data, 'char');
             [mdata, mhdr, mmeta] = g_ReadTable(ms);
 
             if strcmp(mmeta.meta, 'GLM')
+                keepmeta(m)     = false;
                 img.glm         = mmeta;
                 img.glm.event   = textscan(img.glm.event, '%s'); img.glm.event = img.glm.event{1}';
                 img.glm.effects = textscan(img.glm.effects, '%s'); img.glm.effects = img.glm.effects{1}';
@@ -266,6 +268,12 @@ if mi > 0
                 img.glm.A       = mdata;
                 img.glm.hdr     = mhdr;
                 [img.glm.Nrow, img.glm.Mcol] = size(mdata);
+
+                ltest = [img.frames img.glm.Mcol length(img.glm.effect) length(img.glm.eindex) length(img.glm.event) length(img.glm.hdr)];
+
+                if sum(abs(diff(ltest)))
+                    error('\nERROR: Corrupt GLM file! Number of frames (%d), matrix columns (%d), effects (%d), effect indeces (%d), events (%d), and header items (%d) does not match!\n', ltest);
+                end
 
                 % --- copy out grand mean and sd images
                 img.data = img.image2D;
@@ -279,9 +287,11 @@ if mi > 0
                 end
 
             elseif strcmp(mmeta.meta, 'list')
-                img.list = mmeta;
-                lists    = fields(img.list);
-                lists    = lists(~ismember(lists, 'meta'));
+                keepmeta(m) = false;
+                img.list    = mmeta;
+                lists       = fields(img.list);
+                lists       = lists(~ismember(lists, 'meta'));
+                ltest       = [img.frames];
                 for l = lists(:)'
                     l = l{1};
                     if max(isstrprop(strrep(img.list.(l), 'e', ''), 'alpha'))
@@ -289,6 +299,10 @@ if mi > 0
                     else
                         img.list.(l) = strread(img.list.(l), '%f')';
                     end
+                    ltest = [ltest length(img.list.(l))];
+                end
+                if sum(abs(diff(ltest)))
+                    error('\nERROR: Corrupt list file! Number of frames (%d) and list items ([%s]) does not match!\n', img.frames, num2str(ltest(2:end)));
                 end
             end
         end
@@ -304,6 +318,7 @@ if mi > 0
             end
         end
     end
+    img.meta = img.meta(keepmeta);
 end
 
 
