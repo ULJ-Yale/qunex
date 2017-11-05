@@ -1296,11 +1296,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         # --- Loop through bolds
 
+        spinP     = 0
         spinN     = 0
         spinOne   = "NONE"  # AP or LR
         spinTwo   = "NONE"  # PA or RL
         refimg    = "NONE"
         futureref = "NONE"
+        dciNew    = True
 
         r += "\n"
 
@@ -1327,11 +1329,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> %s BOLD %d" % (action("Processing", options['run']), bold)
                 boldok = True
 
-                fmriref = futureref
-                if options['hcp_bold_movref'] == 'first':
-                    if futureref == "NONE":
-                        futureref = "%s%d" % (options['hcp_bold_prefix'], bold)
-
                 # --- check for bold image
 
                 boldimg = os.path.join(hcp['base'], "BOLD_%d%s_fncb" % (bold, orient), "%s_fncb_BOLD_%d%s.nii.gz" % (sinfo['id'], bold, orient))
@@ -1342,12 +1339,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 if options['hcp_bold_ref'].lower() == 'use':
                     refimg = os.path.join(hcp['base'], "BOLD_%d%s_SBRef_fncb" % (bold, orient), "%s_fncb_BOLD_%d%s_SBRef.nii.gz" % (sinfo['id'], bold, orient))
                     r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
-
-                # --- are we using previous reference
-
-                if fmriref is not "NONE":
-                    r += '\n     ... using %s as movement correction reference' % (fmriref)
-
 
                 # --- check for spin-echo-fieldmap image
 
@@ -1372,6 +1363,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                         spinOne = sepairs[spinN]['spinOne']
                         spinTwo = sepairs[spinN]['spinTwo']
                         r += "\n     ... using spin echo fieldmap set %d" % (spinN)
+
+                    # -- are we using a new SE image?
+
+                    if spinN != spinP:
+                        spinP = spinN
+                        futureref = "NONE"
+
 
                 # --- check for Siemens double TE-fieldmap image
 
@@ -1404,6 +1402,19 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 else:
                     r += '\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!' % (options['hcp_bold_correct'])
                     boldok = False
+
+
+                # --- set movement reference image
+
+                fmriref = futureref
+                if options['hcp_bold_movref'] == 'first':
+                    if futureref == "NONE":
+                        futureref = "%s%d" % (options['hcp_bold_prefix'], bold)
+
+                # --- are we using previous reference
+
+                if fmriref is not "NONE":
+                    r += '\n     ... using %s as movement correction reference' % (fmriref)
 
 
                 # --- process additional parameters
