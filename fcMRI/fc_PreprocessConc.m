@@ -956,6 +956,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         nuisance(b).signal  = nuisance(b).signal(:,smask);
         nuisance(b).signal  = zscore(nuisance(b).signal);
         nuisance(b).nsignal = sum(smask);
+        nuisance(b).signal_hdr = nuisance(b).signal_hdr(smask);
     end
 
     % ---> X size and init
