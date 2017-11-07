@@ -70,7 +70,7 @@ usage() {
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
  				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
-				echo "		--waytotal=<use_waytotal_normalized_data>   Use the waytotal normalized version of the DWI dense connectome. Default: [no]"
+				echo "		--waytotal=<none,standard,log>   Use the waytotal normalized or log-transformed waytotal version of the DWI dense connectome. Default: [none]"
  				echo ""
  				echo "-- Example:"
 				echo ""
@@ -215,7 +215,7 @@ get_options() {
     fi
 
     if [ -z ${WayTotal} ]; then
-        reho "No <use_waytotal_normalized_data> specified. Assuming default [no]"
+        reho "No <use_waytotal_normalized_data> specified. Assuming default [none]"
         echo ""
     fi
     
@@ -258,16 +258,23 @@ echo ""
 
 # -- Define input and check if WayTotal normalization is selected
 
-if [ "$WayTotal" == "yes" ]; then
-	echo "--- Using waytotal normalized dconn file"
-	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"
-	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pconn.nii"
-	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pdconn.nii"
-else
+if [ "$WayTotal" == "none" ]; then
 	echo "--- Using dconn file without waytotal normalization"
 	DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
+fi
+if [ "$WayTotal" == "standard" ]; then
+	echo "--- Using waytotal normalized dconn file"
+	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"
+	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pconn.nii"
+	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pdconn.nii"
+fi
+if [ "$WayTotal" == "log" ]; then
+	echo "--- Using log-transformed waytotal normalized dconn file"
+	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"
+	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pconn.nii"
+	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pdconn.nii"
 fi
 
 # -- Define output
