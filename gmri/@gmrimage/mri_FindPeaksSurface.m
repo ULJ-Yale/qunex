@@ -620,7 +620,14 @@ end
 
 function PE = pathExists(AdjacencyMatrix, s, source, destination)
 PE = false;
-v = dfs(AdjacencyMatrix, find(s == source), zeros(length(AdjacencyMatrix),1));
+
+if exist('graph','class')
+    G = graph(AdjacencyMatrix);
+    v = dfsearch(G, find(s == source));
+else
+    v = dfs(AdjacencyMatrix, find(s == source), zeros(length(AdjacencyMatrix),1));
+end
+
 if ~isempty(find(v == find(s == destination)))
     PE = true;
 end
@@ -629,7 +636,7 @@ end
 function [connected, visited] = dfs(A, v, visited, connected)
 if nargin < 4, connected = v; end
 visited(v) = 1;
-adjNodes = adjacentNodes(A, v);
+adjNodes = find(A(v,:) == 1);
 for i=1:1:length(adjNodes)
     w = adjNodes(i);
     if (visited(w) == 0)
@@ -637,10 +644,6 @@ for i=1:1:length(adjNodes)
         [connected, visited] = dfs(A,w, visited, connected);
     end
 end
-end
-
-function [adjNodes] = adjacentNodes(A, u)
-adjNodes = find(A(u,:) == 1);
 end
 
 % --- Functions intended for debugging
