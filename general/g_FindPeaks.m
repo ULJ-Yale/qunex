@@ -181,7 +181,7 @@ if img.frames == 1
         fprintf(repf, '\t%5.1f', [vol_peak(p).xyz, vol_peak(p).Centroid, vol_peak(p).WeightedCentroid]);
         if strcmp(img.imageformat, '4dfp')
             roi.hdr4dfp.key{end+1}   = 'region names';
-            roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', vol_peak(p).label-1, sprintf('%.1f_%.1f_%.1f', vol_peak(p).xyz), vol_peak(p).size);
+            roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', vol_peak(p).label, sprintf('%.1f_%.1f_%.1f', vol_peak(p).xyz), vol_peak(p).size);
         end
     end
     
@@ -224,11 +224,11 @@ elseif img.frames > 1
             fprintf(repf, '\nVolume Structures ROI Report:\n');
             fprintf(repf, '\n#label\tvalue\tvoxels\tpeak_x\tpeak_y\tpeak_z\tcentroid_x\tcentroid_y\tcentroid_z\twcentroid_x\twcentroid_y\twcentroid_z');
             for p = 1:length(vol_peak{j})
-                fprintf(repf, '\n%d\t%.1f\t%d', vol_peak{j}(p).label+1, vol_peak{j}(p).value, vol_peak{j}(p).size);
+                fprintf(repf, '\n%d\t%.1f\t%d', vol_peak{j}(p).label, vol_peak{j}(p).value, vol_peak{j}(p).size);
                 fprintf(repf, '\t%5.1f', [vol_peak{j}(p).xyz, vol_peak{j}(p).Centroid, vol_peak{j}(p).WeightedCentroid]);
                 if strcmp(img.imageformat, '4dfp')
                     roi.hdr4dfp.key{end+1}   = 'region names';
-                    roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', vol_peak{j}(p).label-1, sprintf('%.1f_%.1f_%.1f', vol_peak{j}(p).xyz), vol_peak{j}(p).size);
+                    roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', vol_peak{j}(p).label, sprintf('%.1f_%.1f_%.1f', vol_peak{j}(p).xyz), vol_peak{j}(p).size);
                 end
             end
             
