@@ -76,7 +76,7 @@ usage() {
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
  				echo "		--overwrite=<clean_prior_run>               Delete prior run for a given subject"
-				echo "		--waytotal=<use_waytotal_normalized_data>   Use the waytotal normalized version of the DWI dense connectome. Default: [no]"
+				echo "		--waytotal=<none,standard,log>   Use the waytotal normalized or log-transformed waytotal normalized version of the DWI dense connectome. Default: [none]"
  				echo ""
  				echo "-- Example:"
 				echo ""
@@ -215,7 +215,7 @@ get_options() {
     fi
 
     if [ -z ${WayTotal} ]; then
-        reho "No <use_waytotal_normalized_data> specified. Assuming default [no]"
+        reho "No <use_waytotal_normalized_data> specified. Assuming default [none]"
         echo ""
     fi
 
@@ -262,16 +262,23 @@ reho "--- Establishing paths for all input and output folders:"
 echo ""
 
 # -- Define input and check if WayTotal normalization is selected
-if [ ${WayTotal} == "yes" ]; then
-	echo "--- Using waytotal normalized dconn file"
-	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"
-	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}_Avg.dscalar.nii"
-	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dconn.nii"
-else
+if [ ${WayTotal} == "none" ]; then
 	echo "--- Using dconn file without waytotal normalization"
 	DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii"
+fi
+if [ ${WayTotal} == "standard" ]; then
+	echo "--- Using waytotal normalized dconn file"
+	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"
+	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}_Avg.dscalar.nii"
+	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dconn.nii"
+fi
+if [ ${WayTotal} == "log" ]; then
+	echo "--- Using log-transformed waytotal normalized dconn file"
+	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"
+	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}_Avg.dscalar.nii"
+	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.dconn.nii"
 fi
 
 # -- Define output directory
