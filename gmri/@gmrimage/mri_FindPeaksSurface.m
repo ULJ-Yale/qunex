@@ -621,30 +621,70 @@ end
 function PE = pathExists(AdjacencyMatrix, s, source, destination)
 PE = false;
 
-if exist('graph','class')
-    G = graph(AdjacencyMatrix);
-    v = dfsearch(G, find(s == source));
-else
-    v = dfs(AdjacencyMatrix, find(s == source), zeros(length(AdjacencyMatrix),1));
-end
+v = dfs(AdjacencyMatrix,find(s == source));
 
 if ~isempty(find(v == find(s == destination)))
     PE = true;
 end
 end
 
-function [connected, visited] = dfs(A, v, visited, connected)
-if nargin < 4, connected = v; end
-visited(v) = 1;
-adjNodes = find(A(v,:) == 1);
-for i=1:1:length(adjNodes)
-    w = adjNodes(i);
-    if (visited(w) == 0)
-        connected = [connected w];
-        [connected, visited] = dfs(A,w, visited, connected);
+function [d] = dfs(A,u)
+
+full = 0;
+target = 0;
+
+% [rp, ci]=sparse_matrix(A);
+
+n = size(A,1); nz = nnz(A);
+[nzi, nzj] = find(A);
+ci = zeros(nz,1);
+rp = zeros(n+1,1);
+for i=1:nz
+    rp(nzi(i)+1)=rp(nzi(i)+1)+1;
+end
+rp=cumsum(rp);
+for i=1:nz
+    ci(rp(nzi(i))+1)=nzj(i);
+    rp(nzi(i))=rp(nzi(i))+1;
+end
+for i=n:-1:1
+    rp(i+1)=rp(i);
+end
+rp(1)=0;
+rp=rp+1;
+
+n=length(rp)-1;
+d=-1*ones(n,1); dt=-1*ones(n,1); ft=-1*ones(n,1); pred=zeros(1,n);
+rs=zeros(2*n,1); rss=0; % recursion stack holds two nums (v,ri)
+
+% start dfs at u
+t=0; targethit=0;
+for i=1:n
+    if i==1, v=u;
+    else v=mod(u+i-1,n)+1; if d(v)>0, continue; end, end
+    d(v)=0; dt(v)=t; t=t+1; ri=rp(v);
+    rss=rss+1; rs(2*rss-1)=v; rs(2*rss)=ri; % add v to the stack
+    while rss>0
+        v=rs(2*rss-1); ri=rs(2*rss); rss=rss-1; % pop v from the stack
+        if v==target || targethit
+            ri=rp(v+1); targethit=1; % end the algorithm if v is the target
+        end
+        while ri<rp(v+1)
+            w=ci(ri); ri=ri+1;
+            if d(w)<0
+                d(w)=d(v)+1; pred(w)=v;
+                rss=rss+1; rs(2*rss-1)=v; rs(2*rss)=ri; % add v to the stack
+                v=w; ri=rp(w);
+                dt(v)=t; t=t+1; continue; % discover a new vertex!
+            end
+        end
+        ft(v)=t; t=t+1; % finish with v
     end
+    if ~full, break; end
 end
+d = find(d >= 0);
 end
+
 
 % --- Functions intended for debugging
 function [] = plotRegionAreas(peak, fp_param)
