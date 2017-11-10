@@ -1,6 +1,6 @@
-function [] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
+function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 
-%function [] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
+%function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, overwrite, tail, scrub, ignores, options, done)
 %
 %   Function for fcMRI preprocessing and GLM analysis a set of BOLD files.
 %
@@ -538,9 +538,9 @@ end
 %                       ----> are we doing coefficients?
 
 docoeff = false;
-if strfind(do, 'c')
+if strfind(doIt, 'c')
     docoeff = true;
-    do = strrep(do, 'c', '');
+    doIt = strrep(doIt, 'c', '');
 end
 
 
@@ -573,7 +573,7 @@ for b = 1:nbolds
 
     %   ----> do scrubbing anew if needed!
 
-    if strfind(do, 'm')
+    if strfind(doIt, 'm')
         [nuisance(b).fstats nuisance(b).fstats_hdr] = g_ReadTable(file(b).bstats);
 
         timg = gmrimage;
@@ -600,7 +600,7 @@ for b = 1:nbolds
 
     %   ----> lets setup nuisances!
 
-    if strfind(do, 'r') && any(~ismember(rgss, {'1d', 'e', 't', 'm'}));
+    if strfind(doIt, 'r') && any(~ismember(rgss, {'1d', 'e', 't', 'm'}));
 
         % ---> signal nuisance
 
@@ -617,7 +617,7 @@ end
 
 %   ----> task and event nuisance
 
-if strfind(do, 'r')
+if strfind(doIt, 'r')
 
     if ~isempty(eventstring)
         rmodel = g_CreateTaskRegressors(file(1).fidlfile, frames, eventstring);
@@ -664,8 +664,8 @@ if strfind(do, 'r')
 
     % ---> regression type
 
-    if strfind(do, 'r1'), rtype = 1; end
-    if strfind(do, 'r2'), rtype = 2; end
+    if strfind(doIt, 'r1'), rtype = 1; end
+    if strfind(doIt, 'r2'), rtype = 2; end
 end
 
 
@@ -684,7 +684,7 @@ if overwrite
     ext   = '';
     first = true;
 
-    for current = do
+    for current = doIt
 
         c = ismember(tasklist, current);
 
@@ -732,7 +732,7 @@ end
 
 dor      = true;
 
-for current = do
+for current = doIt
 
     saveconc = true;
 

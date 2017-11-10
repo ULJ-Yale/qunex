@@ -17,10 +17,10 @@ function [out] = fc_ComputeSeedCorrelationMap(eventf, concf, roif, roic, events,
 fprintf('\nStarting analysis\n... reading event data\n');
 
 fevents = fc_ReadEventFile(eventf);
-do = ismember(fevents.event, events);
-fevents.event = fevents.event(do);
-fevents.elength = fevents.elength(do);
-fevents.frame = fevents.frame(do) + 1;
+doIt = ismember(fevents.event, events);
+fevents.event = fevents.event(doIt);
+fevents.elength = fevents.elength(doIt);
+fevents.frame = fevents.frame(doIt) + 1;
 fevents.events = fevents.events(events+1);
 
 % ======================================================

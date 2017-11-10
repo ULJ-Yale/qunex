@@ -28,22 +28,22 @@ er = [];
 
 % --- generate timeseries
 
-do   = true;
+doIt   = true;
 nVar = size(r, 1);
 c    = 0;
 
-while do 
+while doIt 
     c    = c+1;
     ts   = randn(len, nVar);
     C    = chol(r);
     ts   = ts * C;
-    do   = false;
+    doIt   = false;
     
     if ~isempty(md)
         er = corr(ts);
         dr = max(abs(changeform(er) - changeform(r)));
         if dr > md;
-            do = true;
+            doIt = true;
             if c > 10000
                 error('ERROR: Could not generate timeseries even after 10000 atempts. Consider increasing acceptability threshold.');
             end

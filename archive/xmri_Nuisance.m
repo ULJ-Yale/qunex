@@ -1,6 +1,6 @@
-function [out, done] = mri_Nuisance(img, do, mask)
+function [out, done] = mri_Nuisance(img, doIt, mask)
 
-%function [out, done] = mri_Nuisance(img, do, mask)
+%function [out, done] = mri_Nuisance(img, doIt, mask)
 %
 %	Computes the specified statistics across voxels specified in mask
 %
@@ -35,16 +35,16 @@ function [out, done] = mri_Nuisance(img, do, mask)
 if nargin < 3
     mask = [];
     if nargin < 2
-        do = [];
+        doIt = [];
     end
 end
 
-if isempty(do)
-    do = {'n', 'm', 'me', 'max', 'min', 'sum', 'sd', 'var', 'dvars'};
+if isempty(doIt)
+    doIt = {'n', 'm', 'me', 'max', 'min', 'sum', 'sd', 'var', 'dvars'};
 end
 
-if ~iscell(do)
-    do = {do};
+if ~iscell(doIt)
+    doIt = {doIt};
 end
 
 % --- mask image
@@ -59,7 +59,7 @@ img.data = img.image2D;
 
 % --- prepare output timeseries
 
-nstats = length(do);
+nstats = length(doIt);
 
 % --- run the stats loop
 
@@ -75,7 +75,7 @@ dv  = [];
 done = {};
 
 c = 0;
-for d = do
+for d = doIt
     c = c + 1;
 
     switch char(d)

@@ -1,6 +1,6 @@
-function [r, do] = g_QAConcFile(file, do, target)
+function [r, doIt] = g_QAConcFile(file, doIt, target)
 
-%function [r, do] = g_QAConcFile(file, do, target)
+%function [r, doIt] = g_QAConcFile(file, doIt, target)
 %
 %	Computes the specified statistics on images specified in the conc file and
 %   saves them to the target file.
@@ -18,7 +18,7 @@ function [r, do] = g_QAConcFile(file, do, target)
 %       do     ... A cell array of statistics done.
 %
 %   USE
-%   The function reads the conc file and then runs mri_Stats(do) on each of the
+%   The function reads the conc file and then runs mri_Stats(doIt) on each of the
 %   files. It saves the results for each of the statistics in a separate file
 %   named <target>.<stat>.<relevant extension>. If no target is specified no
 %   files will be saved.
@@ -36,15 +36,15 @@ function [r, do] = g_QAConcFile(file, do, target)
 %
 
 if nargin < 3 || isempty(target), target = ''    ; end
-if nargin < 2 || isempty(do),     do = {'m','sd'}; end
+if nargin < 2 || isempty(doIt),     doIt = {'m','sd'}; end
 
-if ~iscell(do)
-    do = strtrim(regexp(do, ',', 'split'));
+if ~iscell(doIt)
+    doIt = strtrim(regexp(doIt, ',', 'split'));
 end
 
 files = g_ReadConcFile(file);
 nfiles = length(files);
-nstats = length(do);
+nstats = length(doIt);
 
 t = gmrimage(files{1}, [], 1);
 for nr = 1:nstats
@@ -53,7 +53,7 @@ end
 
 for n = 1:nfiles
     d = gmrimage(files{n});
-    d = d.mri_Stats(do);
+    d = d.mri_Stats(doIt);
     d.data = d.image2D;
     for nr = 1:nstats
         r(nr).data(:,n) = d.data(:,nr);
@@ -62,6 +62,6 @@ end
 
 if ~isempty(target)
     for nr = 1:nstats
-        r(nr).mri_saveimage([target '.' do{nr}]);
+        r(nr).mri_saveimage([target '.' doIt{nr}]);
     end
 end

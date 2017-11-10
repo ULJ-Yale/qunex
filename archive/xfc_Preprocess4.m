@@ -1,4 +1,4 @@
-function [TS] = fc_Preprocess4(subjectf, bold, omit, do, regress, task, efile, TR, eventstring)
+function [TS] = fc_Preprocess4(subjectf, bold, omit, doIt, regress, task, efile, TR, eventstring)
 
 %	Written by Grega Repovš, 2007-10-29
 %
@@ -72,7 +72,7 @@ img =[];
 % ======================================================
 % 	----> smooth images
 
-if strfind(do, 's')
+if strfind(doIt, 's')
     fprintf('... Running g_Smooth3D on %s ', tfile);
     img = g_Read4DFP(tfile, 'single');
     img = g_Smooth3D(img, 2);
@@ -86,7 +86,7 @@ end
 % ======================================================
 % 	----> highpass filter images
 
-if strfind(do, 'h')
+if strfind(doIt, 'h')
     hpsigma = ((1/TR)/0.009)/2;
     fprintf('... Running highpass filtering with %s ', tfile);   
     if isempty(img)
@@ -105,7 +105,7 @@ end
 % 	----> do GLM removal of nuisance regressors
 %
 
-if strfind(do, 'r')
+if strfind(doIt, 'r')
 
 	fprintf('\nRunning nuisance signal removal (%s)\n', tfile);
 
@@ -288,7 +288,7 @@ if strfind(do, 'r')
 	xKXs   = spm_sp('Set', X); 			fprintf(', space');
 	xKXs.X = full(xKXs.X);
 	
-	if strfind(do, 'c')
+	if strfind(doIt, 'c')
 		pKX   = spm_sp('x-',xKXs); 		fprintf(', inverted');
 		coeff  = pKX*yY; 				fprintf(', coeff');
 	end
@@ -300,7 +300,7 @@ if strfind(do, 'r')
 	%    ----> Save results
 	
 	
-    if strfind(do, 'c')
+    if strfind(doIt, 'c')
 	    cfile = strrep(tfile, '.4dfp.img', strcat('_coeff-', regress, '.4dfp.img'));
 		g_Save4DFP(cfile, coeff');
 	end
@@ -314,7 +314,7 @@ end
 % 	----> lowpass filter images
 
 
-if strfind(do, 'l')
+if strfind(doIt, 'l')
 
     fprintf('... Running lowpass filtering with %s ', tfile);
     lpsigma = ((1/TR)/0.08)/2;

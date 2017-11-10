@@ -1,6 +1,6 @@
-function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
+function [TS] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
 
-%function [TS] = fc_PreprocessConc(subjectf, bolds, do, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
+%function [TS] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efile, eventstring, variant, wbmask, sbjroi, overwrite, tail, nroi, ignores)
 %   (c) Copyright Grega Repovš, 2011-01-24
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -176,9 +176,9 @@ glm.eventstring = eventstring;
 %   ----> are we doing coefficients?
 
 docoeff = false;
-if strfind(do, 'c')
+if strfind(doIt, 'c')
     docoeff = true;
-    do = strrep(do, 'c', '');
+    doIt = strrep(doIt, 'c', '');
 end
 
 
@@ -194,7 +194,7 @@ for b = 1:nbolds
     img(b) = gmrimage();
 end
 
-for current = do
+for current = doIt
 
     % --- set the source and target filenames
 

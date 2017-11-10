@@ -1,4 +1,4 @@
-function [TS] = fc_Preprocess5(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite, tail)
+function [TS] = fc_Preprocess5(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, wbmask, sbjroi, overwrite, tail)
 
 %	Written by Grega Repovš, 2007-10-29
 %
@@ -99,9 +99,9 @@ glm.eventstring = eventstring;
 % 	----> are we doing coefficients?
 
 docoeff = false;
-if strfind(do, 'c')
+if strfind(doIt, 'c')
     docoeff = true;
-    do = strrep(do, 'c', '');
+    doIt = strrep(doIt, 'c', '');
 end
 
 
@@ -116,7 +116,7 @@ ext  = '';
 
 img = gmrimage();
 
-for current = do
+for current = doIt
 
     % --- set the source and target filename
     

@@ -50,11 +50,11 @@ fevents = fc_ReadEventFile(eventf);
 temp = fevents.frame(:,1) + 1;
 bframes = [temp; 999999];
 for n = 1:nass
-	do = ismember(fevents.event, ass(n).events);
-	ass(n).fevents.event = fevents.event(do);
-	ass(n).fevents.elength = fevents.elength(do);
-	ass(n).fevents.beh = fevents.beh(do,:);
-	ass(n).fevents.frame = fevents.frame(do) + 1;
+	doIt = ismember(fevents.event, ass(n).events);
+	ass(n).fevents.event = fevents.event(doIt);
+	ass(n).fevents.elength = fevents.elength(doIt);
+	ass(n).fevents.beh = fevents.beh(doIt,:);
+	ass(n).fevents.frame = fevents.frame(doIt) + 1;
 	ass(n).fevents.events = fevents.events(ass(n).events+1);
 	
 	ass(n).nevents = length(ass(n).fevents.event);

@@ -1,6 +1,6 @@
-function [out, do] = mri_StatsDiff(img1, img2, do, exclude)
+function [out, doIt] = mri_StatsDiff(img1, img2, doIt, exclude)
 
-%function [out, do] = mri_StatsDiff(img1, img2, do, exclude)
+%function [out, doIt] = mri_StatsDiff(img1, img2, doIt, exclude)
 %
 %	Compares the specified statistics for each voxel across frames for the two
 %   specified images and/or computes a statistical test of differences.
@@ -59,10 +59,10 @@ function [out, do] = mri_StatsDiff(img1, img2, do, exclude)
 %            - renamed to mri_StatsDiff
 
 if nargin < 4,  exclude = []; end
-if nargin < 3 || isempty(do), do = 'dm'; end
+if nargin < 3 || isempty(doIt), doIt = 'dm'; end
 
-if ~iscell(do)
-    do = strtrim(regexp(do, ',', 'split'));
+if ~iscell(doIt)
+    doIt = strtrim(regexp(doIt, ',', 'split'));
 end
 
 % --- NaN the exclude values
@@ -81,7 +81,7 @@ end
 
 % --- prepare output image
 
-nstats = length(do);
+nstats = length(doIt);
 out = img1.zeroframes(nstats);
 
 % --- run the stats loop
@@ -115,7 +115,7 @@ fz  = [];
 
 
 c = 0;
-for d = do(:)'
+for d = doIt(:)'
     c = c + 1;
 
     switch char(d)

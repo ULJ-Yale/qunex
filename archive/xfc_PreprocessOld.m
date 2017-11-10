@@ -1,4 +1,4 @@
-function [TS] = fc_Preprocess(conc, ftarget, ctarget, omit, do, regress, task, efile, TR)
+function [TS] = fc_Preprocess(conc, ftarget, ctarget, omit, doIt, regress, task, efile, TR)
 
 %	Written by Grega Repovš, 29.10.2007
 %
@@ -80,7 +80,7 @@ lconcname = strrep(rconcname, '.conc', '_bpss.conc');
 % ======================================================
 % 	----> smooth images
 
-if strfind(do, 's')
+if strfind(doIt, 's')
 	for n = 1:length(ofiles)
 	    fprintf('... Running g_Smooth3D on %s ', char(ofiles{n}));
 	    img = g_Read4DFP(char(ofiles{n}), 'single');
@@ -96,7 +96,7 @@ end
 % ======================================================
 % 	----> highpass filter images
 
-if strfind(do, 'h')
+if strfind(doIt, 'h')
 	for n = 1:length(sfiles)
 	    fprintf('... Running highpass bandpass_4dfp with %s ', char(sfiles{n}));
 		[status result] = system(['bandpass_4dfp ' char(sfiles{n}) ' ' TR ' -bl.009 -n' num2str(omit) ' -ol4 -E -thpss ']);
@@ -125,7 +125,7 @@ end
 % 	----> do GLM removal of nuisance regressors
 %
 
-if strfind(do, 'r')
+if strfind(doIt, 'r')
 
 	fprintf('\nRunning nuisance signal removal (%s)\n', hconcname);
 
@@ -145,7 +145,7 @@ if strfind(do, 'r')
 		% 	----> Extract nuisance timeseries
 
 		if (~isempty(strfind(regress, 'v')) | ~isempty(strfind(regress, 'wm')) | ~isempty(strfind(regress, 'wb')))
-			if strfind(do, 'p')
+			if strfind(doIt, 'p')
 				TS = fc_ExtractNuisanceTS(Y, char(ofiles{ni}), ftarget, regress);		fprintf(', nuisance timeseries extracted');
 			else
 				TS = fc_ExtractNuisanceTS(Y, char(ofiles{ni}), false, regress);		fprintf(', nuisance timeseries extracted');
@@ -225,7 +225,7 @@ if strfind(do, 'r')
 		xKXs   = spm_sp('Set', X); 			fprintf(', space');
 		xKXs.X = full(xKXs.X);
 		
-		if strfind(do, 'c')
+		if strfind(doIt, 'c')
 			pKX   = spm_sp('x-',xKXs); 		fprintf(', inverted');
 			coeff  = pKX*yY; 					fprintf(', coeff');
 		end
@@ -233,14 +233,14 @@ if strfind(do, 'r')
 		res = spm_sp('r', xKXs, yY)';		fprintf(', residuals');
 		Y(:,omit+1:nf) = res;
 		
-		if strfind(do, 'c')
+		if strfind(doIt, 'c')
 			g_Save4DFP(char(cfiles{ni}), coeff');
 		end
 		g_Save4DFP(char(rfiles{ni}), Y);	fprintf(', saved\n');
 	
 	end
 	
-	if strfind(do, 'c')
+	if strfind(doIt, 'c')
 		g_SaveConcFile(strcat(ctarget,cconcname), cfiles);
 	end
 	g_SaveConcFile(strcat(ctarget,rconcname), rfiles);
@@ -249,7 +249,7 @@ end
 % ======================================================
 % 	----> lowpass filter images
 
-if strfind(do, 'l')
+if strfind(doIt, 'l')
 	for n = 1:length(sfiles)
 	    fprintf('... Running lowpass bandpass_4dfp with %s ', char(rfiles{n}));
 		[status result] = system(['bandpass_4dfp ' char(rfiles{n}) ' ' TR ' -bh.08 -n' num2str(omit) ' -oh2 -E -tbpss ']);

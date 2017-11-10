@@ -1,6 +1,6 @@
-function [out, do] = mri_Stats(img, do, exclude)
+function [out, doIt] = mri_Stats(img, doIt, exclude)
 
-%function [out, do] = mri_Stats(img, do, exclude)
+%function [out, doIt] = mri_Stats(img, doIt, exclude)
 %
 %	Computes the specified statistics across frames excluding values specified in exclude
 %
@@ -44,10 +44,10 @@ function [out, do] = mri_Stats(img, do, exclude)
 
 
 if nargin < 3, exclude = [];            end
-if nargin < 2 || isempty(do), do = 'm'; end
+if nargin < 2 || isempty(doIt), doIt = 'm'; end
 
-if ~iscell(do)
-    do = strtrim(regexp(do, ',', 'split'));
+if ~iscell(doIt)
+    doIt = strtrim(regexp(doIt, ',', 'split'));
 end
 
 % --- NaN the exclude values
@@ -60,7 +60,7 @@ end
 
 % --- prepare output image
 
-nstats = length(do);
+nstats = length(doIt);
 out = img.zeroframes(nstats);
 
 % --- run the stats loop
@@ -75,7 +75,7 @@ p  = [];
 z  = [];
 
 c = 0;
-for d = do(:)'
+for d = doIt(:)'
     c = c + 1;
 
     switch char(d)
