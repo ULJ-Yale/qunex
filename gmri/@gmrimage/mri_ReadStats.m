@@ -31,8 +31,7 @@ function [obj] = mri_ReadStats(obj, verbose)
 %   2017-03-11 Grega Repovs - Updated documentation and simplified arguments.
 %
 
-if nargin < 3, verbose = false; end
-if nargin < 2, frames = []; end
+if nargin < 2, verbose = false; end
 
 filename = obj.filename;
 frames   = obj.frames;
@@ -229,8 +228,9 @@ if length(files) > 1
         c      = min(li, ld);
         tmatch = 0;
         for n = 1:c
-            if ~strcmp(ssplit{n}, tsplit{n})
-                tmatch = n-1;
+            if strcmp(ssplit{n}, tsplit{n})
+                tmatch = n;
+            else
                 break
             end
         end
