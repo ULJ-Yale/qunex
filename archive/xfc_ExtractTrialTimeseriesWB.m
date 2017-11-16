@@ -46,9 +46,9 @@ fevents = fc_ReadEventFile2(eventf);
 temp = fevents.frame(:,1) + 1;
 bframes = [temp; 999999];
 for n = 1:nniz
-	do = ismember(fevents.event, events{n});					%--- get a mask of events to process
-	niz(n).fevents.event = fevents.event(do);					%--- get a list of events we are processing
-	niz(n).fevents.frame = fevents.frame(do) + 1;				%--- get the start frames of events we are processing
+	doIt = ismember(fevents.event, events{n});					%--- get a mask of events to process
+	niz(n).fevents.event = fevents.event(doIt);					%--- get a list of events we are processing
+	niz(n).fevents.frame = fevents.frame(doIt) + 1;				%--- get the start frames of events we are processing
 	niz(n).fevents.events = fevents.events(events{n}+1);		%--- get list of events names we included
 	
 	niz(n).nevents = length(niz(n).fevents.event);				%--- get a number of events we are processing

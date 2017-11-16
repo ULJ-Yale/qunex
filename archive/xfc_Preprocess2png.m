@@ -1,4 +1,4 @@
-function [TS] = fc_Preprocess2(subjectf, bold, omit, do, regress, task, efile, TR)
+function [TS] = fc_Preprocess2(subjectf, bold, omit, doIt, regress, task, efile, TR)
 
 %	Written by Grega Repovš, 29.10.2007
 %
@@ -63,7 +63,7 @@ movdata = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '_m
 % 	----> do GLM removal of nuisance regressors
 %
 
-if strfind(do, 'r')
+if strfind(doIt, 'r')
 
 	fprintf('\nRunning nuisance signal removal (%s)\n', hfile);
 

@@ -1,4 +1,4 @@
-function [TS] = fc_Preprocess2(subjectf, bold, omit, do, regress, task, efile, TR)
+function [TS] = fc_Preprocess2(subjectf, bold, omit, doIt, regress, task, efile, TR)
 
 %	Written by Grega Repovš, 29.10.2007
 %
@@ -62,7 +62,7 @@ movdata = strcat(subjectf, ['/images/functional/movement/bold' int2str(bold) '_m
 % ======================================================
 % 	----> smooth images
 
-if strfind(do, 's')
+if strfind(doIt, 's')
     fprintf('... Running g_Smooth3D on %s ', ofile);
     img = g_Read4DFP(ofile, 'single');
     img = g_Smooth3D(img, 2);
@@ -75,10 +75,10 @@ end
 % ======================================================
 % 	----> highpass filter images
 
-if strfind(do, 'h')
+if strfind(doIt, 'h')
     hpsigma = ((1/TR)/0.009)/2;
     fprintf('... Running highpass filtering with %s ', sfile);   
-    if ~strfind(do, 's') 
+    if ~strfind(doIt, 's') 
         img = g_Read4DFP(sfile, 'single');
     end
     img = reshape(img, 48*48*64, []);
@@ -93,7 +93,7 @@ end
 % 	----> do GLM removal of nuisance regressors
 %
 
-if strfind(do, 'r')
+if strfind(doIt, 'r')
 
 	fprintf('\nRunning nuisance signal removal (%s)\n', hfile);
 
@@ -104,7 +104,7 @@ if strfind(do, 'r')
 
 	% 	----> read image file
 
-    if ~strfind(do, 'h') 
+    if ~strfind(doIt, 'h') 
         img = [];
 	    Y = g_Read4DFPn(hfile, nf);			fprintf('read');
 	else
@@ -206,7 +206,7 @@ if strfind(do, 'r')
 	xKXs   = spm_sp('Set', X); 			fprintf(', space');
 	xKXs.X = full(xKXs.X);
 	
-	if strfind(do, 'c')
+	if strfind(doIt, 'c')
 		pKX   = spm_sp('x-',xKXs); 		fprintf(', inverted');
 		coeff  = pKX*yY; 				fprintf(', coeff');
 	end
@@ -214,7 +214,7 @@ if strfind(do, 'r')
 	res = spm_sp('r', xKXs, yY)';		fprintf(', residuals');
 	Y(:,omit+1:nf) = res;
 	
-	if strfind(do, 'c')
+	if strfind(doIt, 'c')
 		g_Save4DFP(cfile, coeff');
 	end
 	g_Save4DFP(rfile, Y);	            fprintf(', saved\n');
@@ -226,12 +226,12 @@ end
 % 	----> lowpass filter images
 
 
-if strfind(do, 'l')
+if strfind(doIt, 'l')
 
     fprintf('... Running lowpass filtering with %s ', rfile);
     lpsigma = ((1/TR)/0.08)/2;
     
-    if ~strfind(do, 'r') 
+    if ~strfind(doIt, 'r') 
 	    img = g_Read4DFP(rfile, 'single');			fprintf('read');
 	else
 	    img = Y;

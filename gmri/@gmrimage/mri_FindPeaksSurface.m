@@ -560,7 +560,7 @@ for b  = big(:)'
             end
         end
         
-        % exit the loop if regions area converged below the maxarea
+        % exit the loop if regions areas converged before reaching the maxarea
         newArea = peak(b).area;
         loop_ctn = loop_ctn + 1;
         if ((loop_ctn > 5) && (previousArea == newArea))

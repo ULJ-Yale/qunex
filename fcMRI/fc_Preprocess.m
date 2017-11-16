@@ -1,6 +1,6 @@
-function [] = fc_Preprocess(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
+function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 
-%function [] = fc_Preprocess(subjectf, bold, omit, do, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
+%function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, eventstring, variant, overwrite, tail, scrub, ignores, options)
 %
 %  A function for running single BOLD file based functional connectivity preprocessing.
 %
@@ -393,7 +393,7 @@ if nargin < 8 || isempty(TR), TR = 2.5;                     end
 if nargin < 7,  efile = '';                                 end
 if nargin < 6,  task = [];                                  end
 if nargin < 5 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
-if nargin < 4 || isempty(do),   do = 'shrcl';               end
+if nargin < 4 || isempty(doIt),   doIt = 'shrcl';               end
 if nargin < 3, omit = [];                                   end
 if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!'); end
 
@@ -446,9 +446,9 @@ file.rsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.m
 %   ----> are we doing coefficients?
 
 docoeff = false;
-if strfind(do, 'c')
+if strfind(doIt, 'c')
     docoeff = true;
-    do = strrep(do, 'c', '');
+    doIt = strrep(doIt, 'c', '');
 end
 
 
@@ -472,7 +472,7 @@ nuisance.nmov    = size(nuisance.mov,2);
 
 %   ----> do scrubbing anew if needed!
 
-if strfind(do, 'm')
+if strfind(doIt, 'm')
     timg = gmrimage;
     timg.fstats     = nuisance.fstats;
     timg.fstats_hdr = nuisance.fstats_hdr;
@@ -493,7 +493,7 @@ nuisance.use = nuisance.scrub(:,ismember(nuisance.scrub_hdr, {'use'}))';
 
 %   ----> lets setup nuisances!
 
-if strfind(do, 'r')
+if strfind(doIt, 'r')
 
     % ---> signal nuisance
 
@@ -533,7 +533,7 @@ if overwrite
     ext  = '';
     first = true;
 
-    for current = do
+    for current = doIt
         c = ismember(task, current);
         sfile = [froot ext tail];
         if isempty(ext)
@@ -558,7 +558,7 @@ ext  = '';
 img = gmrimage();
 
 
-for current = do
+for current = doIt
 
     % --- set the source and target filename
 

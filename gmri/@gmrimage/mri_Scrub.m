@@ -47,13 +47,13 @@ if length(com) < 3
         mask = img.scrub(:, ismember(img.scrub_hdr, com));
     end
     if length(com) == 2
-        do = com{2};
+        doIt = com{2};
     else
-        do = 'RM';
+        doIt = 'RM';
     end
 else
     stype = com{1};
-    do    = com{2};
+    doIt    = com{2};
     if isempty(img.fstats), error('ERROR: mri_Scrub(), missing .bstats data file!'); end
 
     if stype(1) == 'i' or stype(1) == 'u'
@@ -86,7 +86,7 @@ else
     end
 end
 
-if strcmp(do, 'NA')
+if strcmp(doIt, 'NA')
     img.data = img.image2D;
     img.data(:, mask==1) = NaN;
 else
