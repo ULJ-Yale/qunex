@@ -2,16 +2,19 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 
 %function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas)
 %
-%   Does 3D gaussian smoothing of the gmri image.
+%   Does geodesic gaussian kernel smoothing of the gmri image.
 %
 %   INPUT
 %       img         ... a gmrimage object with data in volume representation.
-%       fwhm        ... full Width at Half Maximum in voxels (for volume models)
+%       fwhm        ... full Width at Half Maximum in mm formatted as:
+%                                a) [fwhm for volume structure] for NIfTI [6]
+%                                b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [6, 6] 
+%                                       *(if only 1 element is passed, it takes that value for both, volume and surface structures)
 %       verbose     ... whether to report the progress. [false]
-%       ftype       ... type of smoothing filter, 'gaussian' or 'box'. ['gaussian']
-%       ksize       ... size of the smoothing kernel:
-%                    a) for NIfTI: voxels [6]
-%                    b) for CIFTI: [voxels mm^2] [6 6]
+%       ftype       ... type of smoothing filter:
+%                                a) 'gaussian' or 'box' for NIfTI files ['gaussian']
+%                                b) '' (empty argument) for CIFTI files, since geodesic gaussian smoothing is the only option
+%       ksize       ... size of the smoothing kernel in voxels for NIfTI files, [] (empty) for CIFTI files [6]
 %       projection  ... type of surface component projection ('midthickness', 'inflated',...)
 %                          or a string containing the path to the surface files (.surf.gii)
 %                          for both, left and right cortex separated by a pipe:
@@ -40,7 +43,7 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %   contains multiple frames, all of the frames undergo smoothing.
 %
 %   EXAMPLE (CIFTI image)
-%   img_smooth = img.mri_Smooth([], false, [], [7 9], 'midthickness');
+%   img_smooth = img.mri_Smooth([7 9], false, [], [], 'midthickness');
 %
 %   EXAMPLE (NIfTI image)
 %   img_smooth = img.mri_Smooth(3, true, 'gaussian', 8);
@@ -58,15 +61,10 @@ if nargin < 9 || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
 if nargin < 8 || isempty(wb_path),    wb_path = '';                     end
 if nargin < 7 || isempty(mask),       mask = '';                        end
 if nargin < 6 || isempty(projection), projection = 'type:midthickness'; end
-if nargin < 5
-    ksize = [7, 7];
-elseif isempty(ksize)
-    ksize = [7, 7];
-elseif isscalar(ksize)
-    ksize = [ksize, 7];
-end
-if nargin < 4 || isempty(ftype),      ftype = 'gaussian'; end
-if nargin < 3 || isempty(verbose),    verbose = false;    end
+if nargin < 5 || isempty(ksize),      ksize = 6;                        end
+if nargin < 4 || isempty(ftype),      ftype = 'gaussian';               end
+if nargin < 3 || isempty(verbose),    verbose = false;                  end
+if numel(fwhm) == 1,                  fwhm = [fwhm, fwhm];              end
 
 % take the absolute value of the mask, if it was passed
 if  isempty(mask)
@@ -85,10 +83,7 @@ end
 
 % check file type [NIfTI or CIFTI]
 if strcmpi(img.imageformat, 'CIFTI-2')
-    % surface smoothing mm^2
-    opt.surface_smooth = ksize(2);
-    % volume smoothing -> voxels = 2mm / voxels * voxels
-    opt.volume_smooth = ksize(1)*2;
+    opt.fwhm = fwhm;
     opt.framework_path = [];
     opt.wb_command_path = wb_path;
     opt.omp_threads = [];
@@ -125,7 +120,7 @@ if strcmpi(img.imageformat, 'CIFTI-2')
     delete '*File.dscalar.nii';
 elseif strcmpi(img.imageformat, 'NIFTI')
     % smooth the entire volume structure with mri_Smooth3D() method
-    img = img.mri_Smooth3D(fwhm, verbose, ftype, ksize(1));
+    img = img.mri_Smooth3D(fwhm(1), verbose, ftype, ksize);
 end
 
 end
@@ -136,9 +131,8 @@ function [] = wbSmooth(sfile, tfile, file, mask, options)
 
 % --- convert FWHM to sd
 
-options.surface_smooth = options.surface_smooth / 2.35482004503; % (sqrt(8*log(2)))
-options.volume_smooth  = options.volume_smooth / 2.35482004503;
-
+options.surface_smooth  = options.fwhm(2) / (2*sqrt(2*log(2)));
+options.volume_smooth  = options.fwhm(1) / (2*sqrt(2*log(2)));
 
 fprintf('\n---> running wb_command -cifti-smoothing');
 
@@ -189,6 +183,6 @@ if status
     fprintf('\n --- wb_command output ---\n%s\n --- end wb_command output ---\n', out);
     error('\nAborting processing!');
 else
-    fprintf(' ... done!');
+    fprintf(' ... done!\n');
 end
 end
