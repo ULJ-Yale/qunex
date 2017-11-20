@@ -264,19 +264,34 @@ echo ""
 # -- Define input and check if WayTotal normalization is selected
 if [ ${WayTotal} == "none" ]; then
 	echo "--- Using dconn file without waytotal normalization"
-	DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"
+	DWIInput=`ls $StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii*`
+	if [ -e `echo $DWIInput | grep gz` ]; then
+		DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii.gz"
+	else
+		DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"	
+	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii"
 fi
 if [ ${WayTotal} == "standard" ]; then
 	echo "--- Using waytotal normalized dconn file"
-	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"
+	DWIInput=`ls ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii*`
+	if [ -e `echo $DWIInput | grep gz` ]; then
+		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
+	else
+		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.nii"	
+	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dconn.nii"
 fi
 if [ ${WayTotal} == "log" ]; then
 	echo "--- Using log-transformed waytotal normalized dconn file"
-	DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"
+	DWIInput=`ls ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii*`
+	if [ -e `echo $DWIInput | grep gz` ]; then
+		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
+	else
+		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.nii"	
+	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.dconn.nii"
 fi
