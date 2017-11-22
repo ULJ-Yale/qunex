@@ -1265,8 +1265,8 @@ def processInbox(folder=None, check=None, pattern=None, cores=1):
     subject's DICOM files all the way to, and including, generation of NIfTI
     files.
 
-    The command first looks into inbox directory within the study folder
-    (folder) and finds any zip files that match the specified regex pattern
+    The command first looks into provided inbox folder (folder; by default
+    `inbox/MR`) and finds any zip files that match the specified regex pattern
     (pattern). The pattern has to be prepared to return as the first group
     found the subject id. Once all the zip files have been found, it lists them
     along with the extracted subject ids. If the check parameter is set to
@@ -1276,8 +1276,8 @@ def processInbox(folder=None, check=None, pattern=None, cores=1):
     For each found package, the command will generate a new subject folder, its
     name set to the subject id extracted. It will then uzip all the files in the
     packet into an inbox folder created within the subject folder. Once all the
-    files are extracted, the packet is then moved to the Archive subfolder of
-    the study folder. If the Archive folder does not yet exist, it is created.
+    files are extracted, the packet is then moved to the `study/subjects/archive/MR`
+    folder. If the archive folder does not yet exist, it is created.
 
     After the files have been extracted to the inbox folder, a sortDicom command
     is run on that folder and all the DICOM files are sorted and moved to the
@@ -1316,7 +1316,7 @@ def processInbox(folder=None, check=None, pattern=None, cores=1):
 
     if folder is None:
         folder = "."
-    inbox = os.path.join(folder, 'inbox')
+    inbox = os.path.join(folder, 'inbox', 'MR')
 
     if pattern is None:
         pattern = r".*?(OP[0-9.-]+).*\.zip"
@@ -1360,7 +1360,7 @@ def processInbox(folder=None, check=None, pattern=None, cores=1):
 
     # ---- Ok, now loop through the packets
 
-    afolder = os.path.join(folder, "Archive")
+    afolder = os.path.join(folder, "archive", "MR")
     if not os.path.exists(afolder):
         os.makedirs(afolder)
         print "---> Created Archive folder for processed packages."
