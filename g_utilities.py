@@ -41,6 +41,9 @@ def createStudy(studyFolder=None):
         ├── specs
         └── QC
 
+    Do note that the command will create all the missing subfolders in which the
+    specified study is to reside!
+
     Example:
 
     gmri createStudy studyFolder=/Volumes/data/studies/WM.v4
@@ -49,15 +52,19 @@ def createStudy(studyFolder=None):
     if studyFolder is None:
         raise ValueError("ERROR: studyFolder parameter has to be provided!")
 
-    folders = [['analysis'], ['analysis', 'scripts'], 'processing', ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
+    folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
                ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
                ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'events'], ['subjects', 'archive'], ['subjects', 'specs'], ['subjects', 'QC']]
 
     print "\nCreating study folder structure:"
     for folder in folders:
-        tfolder = os.path.join([studyFolder] + folder)
-        print " ...", tfolder
-        os.makedirs(tfolder)
+        tfolder = os.path.join(*[studyFolder] + folder)
+
+        if os.path.exists(tfolder):
+            print " ... folder exists:", tfolder
+        else:
+            print " ... creating:", tfolder
+            os.makedirs(tfolder)
 
     print "\nDone.\n"
 
