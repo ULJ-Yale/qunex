@@ -8,8 +8,58 @@ Copyright (c) Grega Repovs. All rights reserved.
 """
 
 import os.path
+import os
 import glob
 import datetime
+
+
+def createStudy(studyFolder=None):
+    '''
+    createStudy studyFolder=<path to study base folder>
+
+    Creates the base folder at the provided path location and the key standard
+    study subfolders. Specifically:
+
+    <study>
+    ├── analysis
+    │   └── scripts
+    ├── processing
+    │   ├── logs
+    │   ├── lists
+    │   └── scripts
+    ├── info
+    │   ├── demographics
+    │   ├── tasks
+    │   └── stimuli
+    └── subjects
+        ├── inbox
+        │   ├── MR
+        │   ├── EEG
+        │   ├── behavior
+        │   └── events
+        ├── archive
+        ├── specs
+        └── QC
+
+    Example:
+
+    gmri createStudy studyFolder=/Volumes/data/studies/WM.v4
+    '''
+
+    if studyFolder is None:
+        raise ValueError("ERROR: studyFolder parameter has to be provided!")
+
+    folders = [['analysis'], ['analysis', 'scripts'], 'processing', ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
+               ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
+               ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'events'], ['subjects', 'archive'], ['subjects', 'specs'], ['subjects', 'QC']]
+
+    print "\nCreating study folder structure:"
+    for folder in folders:
+        tfolder = os.path.join([studyFolder] + folder)
+        print " ...", tfolder
+        os.makedirs(tfolder)
+
+    print "\nDone.\n"
 
 
 def compileSubjectsTxt(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=None, overwrite="ask"):

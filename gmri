@@ -91,6 +91,7 @@ setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactiv
 
 Miscellaneous file utilities
 ----------------------------
+createStudy        studyFolder=<path to study base folder>
 compileSubjectsTxt [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/subjects.txt] [overwrite=ask]
 
 
@@ -112,6 +113,7 @@ joinMaps images=<image file list> output=<output file name> [names=<volume names
 
 PALM utilities
 --------------
+createWSPALMDesign factors=<factor string> nsubjects=<number of subjects> root=<design root name>
 runPALM image=<image file> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>] [overwrite=no]
 
 
@@ -207,6 +209,7 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'printniftihdr'        : {'com': niu.g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': niu.g_gimg.modniftihdr,             'args': ('filename', 's')},
             'compileSubjectsTxt'   : {'com': niu.g_utilities.compileSubjectsTxt, 'args': ('subjectsFolder', 'sourceFiles', 'targetFile', 'overwrite')},
+            'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyFolder', )},
             'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder')},
             'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder')},
             'splitFidl'            : {'com': niu.g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},
