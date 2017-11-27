@@ -467,8 +467,11 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
         else:
             print " --> reconstructing results into CIFTI files"
 
-            for pval in ['_fdrp', '_fwep', '_uncp', '_mfwep', '']:
-                for stat in ['tstat', 'fstat', 'ztstat', 'zfstat', 'zmv_hotellingtsq', 'rstat', 'zrstat']:
+            for pval in ['_fdrp', '_cfdrp', '_mfdrp', '_mcfdrp', '_fwep', '_uncp', '_mfwep', '_cfwep', '_mcfwep', 'uncparap', 'fdrparap', '']:
+                for stat in ['tstat', 'fstat', 'vstat', 'gstat', 'rstat', 'rsqstat',
+                             'mv_tstat', 'mv_fstat', 'mv_vstat', 'mv_gstat', 'mv_rstat', 'mv_rsqstat', 'mv_tsqstat', 'mv_hotellingtsq'
+                             'ztstat', 'zfstat', 'zvstat', 'zgstat', 'zrstat', 'zrsqstat',
+                             'zmv_tstat', 'zmv_fstat', 'zmv_vstat', 'zmv_gstat', 'zmv_rstat', 'zmv_rsqstat', 'zmv_tsqstat', 'zmv_hotellingtsq']:
                     for volumeUnit, surfaceUnit, unitKind in [('vox', 'dpv', 'reg'), ('tfce', 'tfce', 'tfce'), ('clustere', 'clustere', 'clustere'), ('clusterm', 'clusterm', 'clusterm')]:
                         rvolumes       = glob.glob("%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval))
                         rleftsurfaces  = glob.glob("%s_L_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
