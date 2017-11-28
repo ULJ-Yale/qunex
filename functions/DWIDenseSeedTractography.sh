@@ -265,7 +265,7 @@ echo ""
 if [ ${WayTotal} == "none" ]; then
 	echo "--- Using dconn file without waytotal normalization"
 	DWIInput=`ls $StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii*`
-	if [ -n `echo $DWIInput | grep gz` ]; then
+	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
 		DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii.gz"
 	else
 		DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"	
@@ -276,7 +276,7 @@ fi
 if [ ${WayTotal} == "standard" ]; then
 	echo "--- Using waytotal normalized dconn file"
 	DWIInput=`ls ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii*`
-	if [ -n `echo $DWIInput | grep gz` ]; then
+	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
 		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
 	else
 		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"	
@@ -287,7 +287,7 @@ fi
 if [ ${WayTotal} == "log" ]; then
 	echo "--- Using log-transformed waytotal normalized dconn file"
 	DWIInput=`ls ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii*`
-	if [ -n `echo $DWIInput | grep gz` ]; then
+	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
 		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
 	else
 		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"	
