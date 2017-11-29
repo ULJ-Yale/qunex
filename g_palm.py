@@ -270,7 +270,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
                 os.remove(file)
         else:
             print "ERROR: There are preexisting image files with the specified root.\n       Please inspect and remove them to prevent conflicts or specify 'overwrite=yes'!"
-            return
+                return
 
     # --- parse argument options
 
@@ -469,13 +469,14 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
 
             for pval in ['_fdrp', '_cfdrp', '_mfdrp', '_mcfdrp', '_fwep', '_uncp', '_mfwep', '_cfwep', '_mcfwep', 'uncparap', 'fdrparap', '']:
                 for stat in ['tstat', 'fstat', 'vstat', 'gstat', 'rstat', 'rsqstat',
-                             'mv_tstat', 'mv_fstat', 'mv_vstat', 'mv_gstat', 'mv_rstat', 'mv_rsqstat', 'mv_tsqstat', 'mv_hotellingtsq'
+                             'mv_tstat', 'mv_fstat', 'mv_vstat', 'mv_gstat', 'mv_rstat', 'mv_rsqstat', 'mv_tsqstat', 'mv_hotellingtsq',
                              'ztstat', 'zfstat', 'zvstat', 'zgstat', 'zrstat', 'zrsqstat',
                              'zmv_tstat', 'zmv_fstat', 'zmv_vstat', 'zmv_gstat', 'zmv_rstat', 'zmv_rsqstat', 'zmv_tsqstat', 'zmv_hotellingtsq']:
                     for volumeUnit, surfaceUnit, unitKind in [('vox', 'dpv', 'reg'), ('tfce', 'tfce', 'tfce'), ('clustere', 'clustere', 'clustere'), ('clusterm', 'clusterm', 'clusterm')]:
                         rvolumes       = glob.glob("%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval))
                         rleftsurfaces  = glob.glob("%s_L_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
                         rrightsurfaces = glob.glob("%s_R_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
+                        print " ... testing for: ", "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval), "found:", len(rvolumes)
 
                         rvolumes.sort()
                         rleftsurfaces.sort()
