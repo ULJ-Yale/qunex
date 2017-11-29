@@ -270,7 +270,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
                 os.remove(file)
         else:
             print "ERROR: There are preexisting image files with the specified root.\n       Please inspect and remove them to prevent conflicts or specify 'overwrite=yes'!"
-                return
+            return
 
     # --- parse argument options
 
