@@ -393,7 +393,7 @@ if nargin < 8 || isempty(TR), TR = 2.5;                     end
 if nargin < 7,  efile = '';                                 end
 if nargin < 6,  task = [];                                  end
 if nargin < 5 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
-if nargin < 4 || isempty(doIt),   doIt = 'shrcl';               end
+if nargin < 4 || isempty(doIt),   doIt = 'shrcl';           end
 if nargin < 3, omit = [];                                   end
 if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!'); end
 
@@ -474,6 +474,7 @@ nuisance.nmov    = size(nuisance.mov,2);
 
 if strfind(doIt, 'm')
     timg = gmrimage;
+    timg.frames     = size(nuisance.mov,1);
     timg.fstats     = nuisance.fstats;
     timg.fstats_hdr = nuisance.fstats_hdr;
     timg.mov        = nuisance.mov;
@@ -483,6 +484,9 @@ if strfind(doIt, 'm')
 
     nuisance.scrub     = timg.scrub;
     nuisance.scrub_hdr = timg.scrub_hdr;
+
+    nuisance.scrub_hdr{end+1} = 'use';
+    nuisance.scrub(:, end+1)  = timg.use';
 
     g_WriteTable(file.tscrub, [timg.scrub timg.use'], [timg.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
 end

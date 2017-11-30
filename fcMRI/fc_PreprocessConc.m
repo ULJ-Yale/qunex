@@ -577,15 +577,19 @@ for b = 1:nbolds
         [nuisance(b).fstats nuisance(b).fstats_hdr] = g_ReadTable(file(b).bstats);
 
         timg = gmrimage;
-        timg.fstats     = nuisance.fstats;
-        timg.fstats_hdr = nuisance.fstats_hdr;
-        timg.mov        = nuisance.mov;
-        timg.mov_hdr    = nuisance.mov_hdr;
+        timg.frames     = size(nuisance(b).mov, 1);
+        timg.fstats     = nuisance(b).fstats;
+        timg.fstats_hdr = nuisance(b).fstats_hdr;
+        timg.mov        = nuisance(b).mov;
+        timg.mov_hdr    = nuisance(b).mov_hdr;
 
         timg = timg.mri_ComputeScrub(scrub);
 
         nuisance(b).scrub     = timg.scrub;
         nuisance(b).scrub_hdr = timg.scrub_hdr;
+
+        nuisance(b).scrub_hdr{end+1} = 'use';
+        nuisance(b).scrub(:, end+1)  = timg.use';
 
         g_WriteTable(file(b).tscrub, [timg.scrub timg.use'], [timg.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
     end
