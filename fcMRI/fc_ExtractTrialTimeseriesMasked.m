@@ -84,7 +84,7 @@ end
 
 fprintf('\n\nStarting ...');
 
-nniz = length(events);							% --- number of separate sets we will be extracting
+nniz = length(tevents);							% --- number of separate sets we will be extracting
 [t1, fbase, t2] = fileparts(roif);			    % --- details about the filename
 tlength = frames(2) - frames(1) + 1;			% --- number of timepoints in the timeseries
 frames = int16(frames);
@@ -181,7 +181,7 @@ for s = 1:nsub
     	doIt = ismember(fevents.event, tevents{n});					% --- get a mask of events to process
     	niz(n).fevents.event = fevents.event(doIt);					% --- get a list of events we are processing
     	niz(n).fevents.frame = fevents.frame(doIt) + 1;				% --- get the start frames of events we are processing
-    	niz(n).fevents.events = fevents.events(events{n}+1);		% --- get list of events names we included
+    	niz(n).fevents.events = fevents.events(tevents{n}+1);		% --- get list of events names we included
 
     	niz(n).nevents = length(niz(n).fevents.event);				% --- get a number of events we are processing
     	niz(n).frames = int16([niz(n).fevents.frame; 999999]);		% --- get a list of frames we are processing plus an extra large nonexistent frame
