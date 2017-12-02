@@ -320,11 +320,8 @@ gmri_function() {
 
 }
 
-show_usage_gmri() {
-  				
-  	gmri
-  	cyaneho " Help for ${UsageInput}"
-  	cyaneho "----------------------------------------------------------------------------"
+show_usage_gmri() {  				
+  	echo ""
   	gmri ?${UsageInput}
   	echo ""
 }
@@ -4365,29 +4362,27 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 
 	# -- If yes then set the gmri function variable
 	GmriFunctionToRun="$1"
-	GmriFunctionToRunEcho=`echo ${GmriFunctionToRun} | cut -c 2-`
-	
-	# -- Print message that command is running via AP wrapper
-	echo ""
-	cyaneho "Running gmri function $GmriFunctionToRunEcho via AP wrapper"
-	cyaneho "----------------------------------------------------------------------------"
 	
 	# -- check for input with question mark
-	if [[ "$GmriFunctionToRun" =~ .*?.* ]] && [ -z "$2" ]; then 
+	if [[ "$GmriFunctionToRun" =~ .*"?".* ]] && [ -z "$2" ]; then 
 		# Set UsageInput variable to pass and remove question mark
 		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
 		# If no other input is provided print help
+		echo ""
+		show_version
 		show_usage_gmri
 		exit 0
-	else
-	# -- check for input with flag
-	if [[ "$GmriFunctionToRun" =~ .*-.* ]] && [ -z "$2" ]; then 
+	else		
+	# -- check for input is function name with no other arguments
+	if [[ "$GmriFunctionToRun" != *"-"* ]] && [ -z "$2" ]; then 	
 		# Set UsageInput variable to pass and remove flag	
-		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
+		UsageInput="$GmriFunctionToRun"
 	  	# If no other input is provided print help
+		echo ""
+		show_version
 		show_usage_gmri
 		exit 0
-	else
+	else	
 		# -- Otherwise pass the function with all inputs from the command line
 		gmriinput="$@"
 		gmri_function
