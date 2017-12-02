@@ -27,7 +27,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %       projection  - type of surface component projection ('midthickness', 'inflated',...)
 %                          or a string containing the path to the surface files (.surf.gii)
 %                          for both, left and right cortex separated by a pipe:
-%                                a) for a default projection: 'type: midthickness' ['midthickness']
+%                                a) for a default projection: 'type: midthickness' ['type: midthickness']
 %                                b) for a specific projection:
 %                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
 %       options          - list of options separated with a pipe symbol ("|"):
@@ -67,7 +67,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   EXAMPLE USE 2 (CIFTI-2 image)
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
-%   voxels, after smoothing with kernel of size 7 voxels for volume structures 
+%   voxels, after smoothing with kernel of size 7 voxels for volume structures
 %   and 9 mm^2 for surfaces structures,
 %   where only frames 1, 6 and 7 are to be analyzed use:
 %
@@ -137,7 +137,7 @@ if ~isfield(presmooth,'mask'),     presmooth.mask =[];     end
 if ~isfield(presmooth,'wb_path'),  presmooth.wb_path = []; end
 if ~isfield(presmooth,'hcpatlas'), presmooth.hcpatlas =[]; end
 
-% --- increment verbose for compatibility with the mri_FindPeaks method 
+% --- increment verbose for compatibility with the mri_FindPeaks method
 verbose = verbose + 1;
 
 if ~isempty(presmooth) && presmooth_request
@@ -162,7 +162,7 @@ if img.frames == 1
     rep = strrep(rep, '.img', '');
     rep = strrep(rep, '.nii', '');
     rep = strrep(rep, '.gz', '');
-    
+
     repf = fopen([rep '.txt'], 'w');
     fprintf(repf, '#source: %s', fin);
     fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
@@ -173,7 +173,7 @@ if img.frames == 1
         fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize voxels: %.1f, presmooth.ksize mm^2: %.1f',...
             presmooth.fwhm, presmooth.ftype, presmooth.ksize(1), presmooth.ksize(2));
     end
-    
+
     fprintf(repf, '\n\nVolume Structures ROI Report:\n');
     fprintf(repf, '\n#label\tvalue\tvoxels\tpeak_x\tpeak_y\tpeak_z\tcentroid_x\tcentroid_y\tcentroid_z\twcentroid_x\twcentroid_y\twcentroid_z');
     for p = 1:length(vol_peak)
@@ -184,7 +184,7 @@ if img.frames == 1
             roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', vol_peak(p).label, sprintf('%.1f_%.1f_%.1f', vol_peak(p).xyz), vol_peak(p).size);
         end
     end
-    
+
     if strcmp(img.imageformat, 'CIFTI-2')
         fprintf(repf, '\n\nSurface Structures ROI Report:');
         for c = 1:length(img.cifti.shortnames)
@@ -199,14 +199,14 @@ if img.frames == 1
         end
     end
     fclose(repf);
-    
+
 elseif img.frames > 1
     rep = strrep(fout, '.4dfp', '');
     rep = strrep(rep, '.ifh', '');
     rep = strrep(rep, '.img', '');
     rep = strrep(rep, '.nii', '');
     rep = strrep(rep, '.gz', '');
-    
+
     repf = fopen([rep '.txt'], 'w');
     fprintf(repf, '#source: %s', fin);
     fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
@@ -217,7 +217,7 @@ elseif img.frames > 1
         fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize voxels: %.1f, presmooth.ksize mm^2: %.1f',...
             presmooth.fwhm, presmooth.ftype, presmooth.ksize(1), presmooth.ksize(2));
     end
-    
+
     for j=1:img.frames
         if ~isempty(peak{j}) && ~isempty(vol_peak{j})
             fprintf(repf, '\n\nFrame #%d:\n', j);
@@ -231,7 +231,7 @@ elseif img.frames > 1
                     roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', vol_peak{j}(p).label, sprintf('%.1f_%.1f_%.1f', vol_peak{j}(p).xyz), vol_peak{j}(p).size);
                 end
             end
-            
+
             if strcmp(img.imageformat, 'CIFTI-2')
                 fprintf(repf, '\n\nSurface Structures ROI Report:');
                 for c = 1:length(img.cifti.shortnames)
@@ -248,7 +248,7 @@ elseif img.frames > 1
                 end
             end
         end
-        
+
     end
     fclose(repf);
 end
