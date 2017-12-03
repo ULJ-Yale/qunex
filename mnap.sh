@@ -3052,7 +3052,7 @@ show_usage_boldparcellation() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  ROIExtract - Executes the ROI Extraction Script (extract_ROIs.sh) via the MNAP connector wrapper
+#  roiextract - Executes the ROI Extraction Script (ROIExtract.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 roiextract() {
@@ -3157,7 +3157,7 @@ show_usage_roiextract() {
 				echo "--subject=<comma_separated_list_of_cases> List of subjects to run"
 				echo "--inputfile=<filepath>                    Path to input file to be read that is of the same type as --roifile (i.e. CIFTI or NIFTI)"
 				echo "--inputpath=<path_for_input_file>         Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
-				echo "--roifile=<file_for_parcellation>         Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
+				echo "--roifile=<file_for_parcellation>         Specify path of the file you want to use for ROI template file (either a NIFTI or a CIFTI with distinct scalar values per ROI) [e.g. /gpfs/project/fas/n3/software/MNAP/library/data/parcellations/GlasserParcellation/Q1-Q6_RelatedParcellation210.LR.CorticalAreas_dil_Colors.32k_fs_LR_subcortexfilled.dlabel.nii]"
 				echo "--outname=<name_of_output_pconn_file>     Specify the suffix output name of the pconn file"
 				echo "--outpath=<path_for_output_file>          Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
 				echo "--scheduler=<name_of_cluster_scheduler_and_options> A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
@@ -3165,11 +3165,7 @@ show_usage_roiextract() {
 				echo "                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "-- OUTPUT FORMAT:"
 				echo ""
-				echo "  <output_name>_ROI#.csv        --> Value for each voxel or gray-ordinate in the ROI."
-				echo "  <output_name>_ROI#_mean.csv   --> Average across the entire ROI."
-				echo ""
-				echo "Note: if the data have multiple volumes / frames (e.g. >1 subject or >1 time point)"
-				echo "		then each subsequent volume is written as a column in the csv files."
+				echo "<output_name>.csv		-- matrix with one ROI per row and one column per frame in singleinputfile "
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 

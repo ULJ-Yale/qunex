@@ -65,10 +65,7 @@ usage() {
 	echo ""
 	echo "-- OUTPUT FORMAT:"
 	echo ""
-	echo "<output_name>_ROI#.csv		-- Value for each voxel or gray-ordinate in the ROI."
-	echo "<output_name>_ROI#_mean.csv	-- Average across the entire ROI."
-	echo "Note: if the data have multiple volumes / frames (e.g. >1 subject or >1 time point)"
-	echo "		then each subsequent volume is written as a column in the csv files."
+	echo "<output_name>.csv		-- matrix with one ROI per row and one column per frame in singleinputfile "
 	echo ""
 	echo " -- Example:"
 	echo ""
@@ -172,13 +169,9 @@ main() {
 # Get Command Line Options
 get_options $@
 
-# run ROIExtract.m
-
-#matlab -nodisplay -nojvm -r "try; addpath(genpath('$TOOLS/MNAP/matlab')); mri_ROIExtract('$roifile','$inputfile','$outdir','$outname'); catch; end; quit"
-
+# run mri_ExtractROI.m --> mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 
 matlab -nodisplay -nojvm -r "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
-
 
 }
 main $@
