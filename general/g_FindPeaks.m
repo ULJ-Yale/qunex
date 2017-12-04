@@ -12,13 +12,16 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %       maxs        - [maximum size, maximum area] of the resulting ROI  [inf, inf]
 %       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') [b]
 %       t           - threshold value [0]
-%		presmooth   - string containing presmoothing parameters: []
-%                     Format -> 'fwhm:VALUE|ftype:TYPE_NAME|ksize:[VAL1 VAL2]|wb_path:PATH|hcpatlas:PATH'
-%                     fwhm     ... Full Width at Half Maximum in voxels (NIfTI)
-%                     ftype    ... Type of smoothing filter, 'gaussian' or 'box' (NIfTI). ['gaussian']
-%                     ksize    ... Size of the smoothing kernel:
-%                                            a) for NIfTI: voxels [0]
-%                                            b) for CIFTI-2: [voxels mm^2] [0 0]
+%       presmooth   - string containing presmoothing parameters: []
+%                     Format -> 'fwhm:[VAL1 VAL2]|ftype:TYPE_NAME|ksize:[]|wb_path:PATH|hcpatlas:PATH'
+%                     fwhm        ... full Width at Half Maximum in mm formatted as:
+%                                   a) [fwhm for volume structure] for NIfTI [6]
+%                                   b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [6, 6] 
+%                                       *(if only 1 element is passed, it takes that value for both, volume and surface structures)
+%                     ftype    ... type of smoothing filter:
+%                                   a) 'gaussian' or 'box' for NIfTI files ['gaussian']
+%                                   b) '' (empty argument) for CIFTI files, since geodesic gaussian smoothing is the only option
+%                     ksize    ... size of the smoothing kernel in voxels for NIfTI files, [] (empty) for CIFTI files [6]
 %                     mask     ... specify the cifti mask to select areas on which to perform smoothing
 %                     wb_path  ... path to wb_command
 %                     hcpatlas ... path to HCPATLAS folder containing projection surf.gii files
@@ -59,39 +62,38 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %   EXAMPLE USE 1 (CIFTI-2 image)
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
-%   voxels, after smoothing with a kernel of
-%   size 7 voxels for volume structures and 9 mm^2 for surfaces structures use:
+%   voxels, after smoothing with a kernel of fwhm 2 and kernel size 7 voxels use:
 %
-%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350], 'b', 3, 'ksize:[7 9]', 'midthickness', [], 1);
+%   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350], 'b', 3, 'fwhm:2|ksize:7', '', [], 1);
 %
 %   EXAMPLE USE 2 (CIFTI-2 image)
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
-%   voxels, after smoothing with kernel of size 7 voxels for volume structures
-%   and 9 mm^2 for surfaces structures,
+%   voxels, after smoothing with a kernel of fwhm 3 for volume and
+%   surfaces structures,
 %   where only frames 1, 6 and 7 are to be analyzed use:
 %
 %   g_FindPeaks('zscores.dtseries.nii', 'zscores_analyzed.dtseries.nii',...
-%               [72 80], [300 350], 'b', 1, 'ksize:[7 9]', 'inflated', 'frames:[1 5 7]', 1);
+%               [72 80], [300 350], 'b', 1, 'fwhm:3', 'inflated', 'frames:[1 5 7]', 1);
 %
 %   EXAMPLE USE 3 (NIfTI image)
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)1 and 50 contiguous voxels in size, but no larger than 250
-%   voxels, after applying 3 voxel gaussian smoothing and a smoothing kernel of
+%   voxels, after applying fwhm 3 gaussian smoothing and a smoothing kernel of
 %   size 6 voxels use:
 %
 %   presmooth = ;
 %   g_FindPeaks('zscores.nii.gz', 'zscores_analyzed.nii.gz', 50, 250, 'b', 1,...
-%               'fwhm:3|ksize:7|ftype:gaussian'presmooth, [], [], 2);
+%               'fwhm:3|ksize:6|ftype:gaussian', [], [], 2);
 %
 %   EXAMPLE USE 4 (CIFTI-2 image)
 %   To get a roi image of both positive and negative peak regions with miminum z
 %   value of (-)3 and 72 contiguous voxels in size, but no larger than 300
 %   voxels, after smoothing with a kernel of
-%   size 6 voxels for volume structures and 7 mm^2 for surfaces structures use:
+%   fwhm 1:
 %
 %   g_FindPeaks('zscores.nii.gz', 'zscores_peaks_3_72_300.nii.gz', [72 80], [300 350],...
-%               'b', 3, 'ksize:[6 7]', 'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii', [], 1);
+%               'b', 3, 'fwhm:1', 'cortex_left:CL_projection.surf.gii|cortex_right:CR_projection.surf.gii', [], 1);
 %
 %   ---
 %   Written by Grega Repovs, 2015-04-11
