@@ -15,8 +15,8 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %       presmooth   - string containing presmoothing parameters: []
 %                     Format -> 'fwhm:[VAL1 VAL2]|ftype:TYPE_NAME|ksize:[]|wb_path:PATH|hcpatlas:PATH'
 %                     fwhm        ... full Width at Half Maximum in mm formatted as:
-%                                   a) [fwhm for volume structure] for NIfTI [6]
-%                                   b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [6, 6] 
+%                                   a) [fwhm for volume structure] for NIfTI [2]
+%                                   b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2] 
 %                                       *(if only 1 element is passed, it takes that value for both, volume and surface structures)
 %                     ftype    ... type of smoothing filter:
 %                                   a) 'gaussian' or 'box' for NIfTI files ['gaussian']
@@ -120,30 +120,30 @@ img = gmrimage(fin);
 load('CIFTI_BrainModel.mat')
 
 % --- initializing
-presmooth_request = true;
+%presmooth_request = true;
 if nargin < 10 || isempty(verbose),   verbose   = false    ;                end
 if nargin < 9 || isempty(options),    options = '';                         end
 if nargin < 8 || isempty(projection), projection = 'type: midthickness';    end
-if nargin < 7 || isempty(presmooth),  presmooth_request = false;            end
+if nargin < 7 || isempty(presmooth),  presmooth = [];                       end
 if nargin < 6 || isempty(t),          t         = 0    ;                    end
 if nargin < 5 || isempty(val),        val       = 'b'  ;                    end
 if nargin < 4 || isempty(maxs),       maxs      = inf  ;                    end
 if nargin < 3 || isempty(mins),       mins      = 0    ;                    end
 if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 
-presmooth = g_ParseOptions([],presmooth);
-if ~isfield(presmooth,'fwhm'),     presmooth.fwhm = [];    end
-if ~isfield(presmooth,'ftype'),    presmooth.ftype = [];   end
-if ~isfield(presmooth,'ksize'),    presmooth.ksize =[];    end
-if ~isfield(presmooth,'mask'),     presmooth.mask =[];     end
-if ~isfield(presmooth,'wb_path'),  presmooth.wb_path = []; end
-if ~isfield(presmooth,'hcpatlas'), presmooth.hcpatlas =[]; end
-
 % --- increment verbose for compatibility with the mri_FindPeaks method
 verbose = verbose + 1;
 
-if ~isempty(presmooth) && presmooth_request
-	if verbose >= 2, fprintf('\n---> Presmoothing image'); end
+%if ~isempty(presmooth) && presmooth_request
+if ~isempty(presmooth)
+    presmooth = g_ParseOptions([],presmooth);
+    if ~isfield(presmooth,'fwhm'),     presmooth.fwhm = [];    end
+    if ~isfield(presmooth,'ftype'),    presmooth.ftype = [];   end
+    if ~isfield(presmooth,'ksize'),    presmooth.ksize =[];    end
+    if ~isfield(presmooth,'mask'),     presmooth.mask =[];     end
+    if ~isfield(presmooth,'wb_path'),  presmooth.wb_path = []; end
+    if ~isfield(presmooth,'hcpatlas'), presmooth.hcpatlas =[]; end
+    if verbose >= 2, fprintf('\n---> Presmoothing image'); end
     img = img.mri_Smooth(presmooth.fwhm, verbose, presmooth.ftype,...
         presmooth.ksize, projection, presmooth.mask, presmooth.wb_path, presmooth.hcpatlas);
 end
@@ -168,12 +168,12 @@ if img.frames == 1
     repf = fopen([rep '.txt'], 'w');
     fprintf(repf, '#source: %s', fin);
     fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
-    if numel(presmooth.ksize) == 1
-        fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize(1): %.1f',...
-            presmooth.fwhm, presmooth.ftype, presmooth.ksize(1));
-    elseif numel(presmooth.ksize) == 2
-        fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize voxels: %.1f, presmooth.ksize mm^2: %.1f',...
-            presmooth.fwhm, presmooth.ftype, presmooth.ksize(1), presmooth.ksize(2));
+    if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
+        fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize: %.1f',...
+            presmooth.fwhm, presmooth.ftype, presmooth.ksize);
+    elseif ~isempty(presmooth) && numel(presmooth.fwhm) == 2
+        fprintf(repf, '\npresmooth.fwhm: [%.1f, %.1f], presmooth.ftype: %s, presmooth.ksize voxels: %.1f',...
+            presmooth.fwhm(1), presmooth.fwhm(2), presmooth.ftype, presmooth.ksize);
     end
 
     fprintf(repf, '\n\nVolume Structures ROI Report:\n');
@@ -192,10 +192,12 @@ if img.frames == 1
         for c = 1:length(img.cifti.shortnames)
             if strcmp(cifti.(lower(img.cifti.shortnames{c})).type,'Surface')
                 fprintf(repf, '\n\n%0.0f) %s\n', c, lower(img.cifti.shortnames{c}));
-                fprintf(repf, '\n#index\tvalue\tsize\tarea');
+                fprintf(repf, '\n#index\tvalue\tsize\tarea\tpeak_x\tpeak_y\tpeak_z');
                 for p = 1:length(peak.(lower(img.cifti.shortnames{c})))
-                    fprintf(repf, '\n%d\t%.1f\t%d\t%f', peak.(lower(img.cifti.shortnames{c}))(p).index,...
-                        peak.(lower(img.cifti.shortnames{c}))(p).value, peak.(lower(img.cifti.shortnames{c}))(p).size, peak.(lower(img.cifti.shortnames{c}))(p).area);
+                    fprintf(repf, '\n%d\t%.1f\t%d\t%.3f\t%.3f\t%.3f\t%.3f', peak.(lower(img.cifti.shortnames{c}))(p).index,...
+                        peak.(lower(img.cifti.shortnames{c}))(p).value, peak.(lower(img.cifti.shortnames{c}))(p).size,...
+                        peak.(lower(img.cifti.shortnames{c}))(p).area, peak.(lower(img.cifti.shortnames{c}))(p).x,...
+                        peak.(lower(img.cifti.shortnames{c}))(p).y, peak.(lower(img.cifti.shortnames{c}))(p).z);
                 end
             end
         end
@@ -212,12 +214,12 @@ elseif img.frames > 1
     repf = fopen([rep '.txt'], 'w');
     fprintf(repf, '#source: %s', fin);
     fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
-    if numel(presmooth.ksize) == 1
-        fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize(1): %.1f',...
+    if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
+        fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize: %.1f',...
             presmooth.fwhm, presmooth.ftype, presmooth.ksize(1));
-    elseif numel(presmooth.ksize) == 2
-        fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize voxels: %.1f, presmooth.ksize mm^2: %.1f',...
-            presmooth.fwhm, presmooth.ftype, presmooth.ksize(1), presmooth.ksize(2));
+    elseif ~isempty(presmooth) && numel(presmooth.fwhm) == 2
+        fprintf(repf, '\npresmooth.fwhm: [%.1f, %.1f], presmooth.ftype: %s, presmooth.ksize voxels: %.1f',...
+            presmooth.fwhm(1), presmooth.fwhm(2), presmooth.ftype, presmooth.ksize);
     end
 
     for j=1:img.frames
@@ -239,9 +241,9 @@ elseif img.frames > 1
                 for c = 1:length(img.cifti.shortnames)
                     if strcmp(cifti.(lower(img.cifti.shortnames{c})).type,'Surface')
                         fprintf(repf, '\n\n%0.0f) %s\n', c, lower(img.cifti.shortnames{c}));
-                        fprintf(repf, '\n#index\tvalue\tsize\tarea\tx\ty\tz');
+                        fprintf(repf, '\n#index\tvalue\tsize\tarea\tpeak_x\tpeak_y\tpeak_z');
                         for p = 1:length(peak{j}.(lower(img.cifti.shortnames{c})))
-                            fprintf(repf, '\n%d\t%.1f\t%d\t%f\t%f\t%f\t%f', peak{j}.(lower(img.cifti.shortnames{c}))(p).index,...
+                            fprintf(repf, '\n%d\t%.1f\t%d\t%.3f\t%.3f\t%.3f\t%.3f', peak{j}.(lower(img.cifti.shortnames{c}))(p).index,...
                                 peak{j}.(lower(img.cifti.shortnames{c}))(p).value, peak{j}.(lower(img.cifti.shortnames{c}))(p).size,...
                                 peak{j}.(lower(img.cifti.shortnames{c}))(p).area,peak{j}.(lower(img.cifti.shortnames{c}))(p).x,...
                                 peak{j}.(lower(img.cifti.shortnames{c}))(p).y,peak{j}.(lower(img.cifti.shortnames{c}))(p).z);

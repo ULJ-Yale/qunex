@@ -7,8 +7,8 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %   INPUT
 %       img         ... a gmrimage object with data in volume representation.
 %       fwhm        ... full Width at Half Maximum in mm formatted as:
-%                                a) [fwhm for volume structure] for NIfTI [6]
-%                                b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [6, 6] 
+%                                a) [fwhm for volume structure] for NIfTI [2]
+%                                b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2] 
 %                                       *(if only 1 element is passed, it takes that value for both, volume and surface structures)
 %       verbose     ... whether to report the progress. [false]
 %       ftype       ... type of smoothing filter:
@@ -64,6 +64,7 @@ if nargin < 6 || isempty(projection), projection = 'type:midthickness'; end
 if nargin < 5 || isempty(ksize),      ksize = 6;                        end
 if nargin < 4 || isempty(ftype),      ftype = 'gaussian';               end
 if nargin < 3 || isempty(verbose),    verbose = false;                  end
+if nargin < 2 || isempty(fwhm),       fwhm = 2;                         end
 if numel(fwhm) == 1,                  fwhm = [fwhm, fwhm];              end
 
 % take the absolute value of the mask, if it was passed
