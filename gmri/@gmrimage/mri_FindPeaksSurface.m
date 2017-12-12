@@ -171,6 +171,8 @@ peak = removeEmptyPeaks(peak);
 
 [peak, indexedData] = relableROIs(peak, indexedData);
 
+peak = getRegionAverage(peak,roiData,indexedData);
+
 % --- define borders between ROIs as desired by the user
 boundary_map = zeros(size(indexedData));
 for n=1:1:numel(indexedData)
@@ -701,6 +703,14 @@ for i = 1:1:length(peak)
 end
 line([0 j],[fp_param.minarea fp_param.minarea]);
 line([0 j],[fp_param.maxarea fp_param.maxarea]);
+end
+
+function peakOut = getRegionAverage(peak,roiData,indexedData)
+peakOut = peak;
+for i=1:1:length(peak)
+    regionValues = roiData(indexedData == peak(i).index);
+    peakOut(i).averageValue = mean(regionValues);
+end
 end
 
 function [] = plotDebugBrain(fp_param, indexedData, peak, b)
