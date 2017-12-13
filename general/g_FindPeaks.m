@@ -217,7 +217,7 @@ elseif img.frames > 1
     fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
     if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
         fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize: %.1f',...
-            presmooth.fwhm, presmooth.ftype, presmooth.ksize(1));
+            presmooth.fwhm, presmooth.ftype, presmooth.ksize);
     elseif ~isempty(presmooth) && numel(presmooth.fwhm) == 2
         fprintf(repf, '\npresmooth.fwhm: [%.1f, %.1f], presmooth.ftype: %s, presmooth.ksize voxels: %.1f',...
             presmooth.fwhm(1), presmooth.fwhm(2), presmooth.ftype, presmooth.ksize);
