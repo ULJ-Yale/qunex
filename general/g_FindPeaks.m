@@ -16,7 +16,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %                     Format -> 'fwhm:[VAL1 VAL2]|ftype:TYPE_NAME|ksize:[]|wb_path:PATH|hcpatlas:PATH'
 %                     fwhm        ... full Width at Half Maximum in mm formatted as:
 %                                   a) [fwhm for volume structure] for NIfTI [2]
-%                                   b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2] 
+%                                   b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2]
 %                                       *(if only 1 element is passed, it takes that value for both, volume and surface structures)
 %                     ftype    ... type of smoothing filter:
 %                                   a) 'gaussian' or 'box' for NIfTI files ['gaussian']
@@ -164,7 +164,7 @@ if img.frames == 1
     rep = strrep(rep, '.img', '');
     rep = strrep(rep, '.nii', '');
     rep = strrep(rep, '.gz', '');
-
+    
     repf = fopen([rep '.txt'], 'w');
     fprintf(repf, '#source: %s', fin);
     fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
@@ -175,7 +175,7 @@ if img.frames == 1
         fprintf(repf, '\npresmooth.fwhm: [%.1f, %.1f], presmooth.ftype: %s, presmooth.ksize voxels: %.1f',...
             presmooth.fwhm(1), presmooth.fwhm(2), presmooth.ftype, presmooth.ksize);
     end
-
+    
     fprintf(repf, '\n\nVolume Structures ROI Report:\n');
     fprintf(repf, '\n#label\tvalue\tvoxels\tpeak_x\tpeak_y\tpeak_z\tcentroid_x\tcentroid_y\tcentroid_z\twcentroid_x\twcentroid_y\twcentroid_z');
     for p = 1:length(vol_peak)
@@ -186,7 +186,7 @@ if img.frames == 1
             roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', vol_peak(p).label, sprintf('%.1f_%.1f_%.1f', vol_peak(p).xyz), vol_peak(p).size);
         end
     end
-
+    
     if strcmp(img.imageformat, 'CIFTI-2')
         fprintf(repf, '\n\nSurface Structures ROI Report:');
         for c = 1:length(img.cifti.shortnames)
@@ -204,14 +204,14 @@ if img.frames == 1
         end
     end
     fclose(repf);
-
+    
 elseif img.frames > 1
     rep = strrep(fout, '.4dfp', '');
     rep = strrep(rep, '.ifh', '');
     rep = strrep(rep, '.img', '');
     rep = strrep(rep, '.nii', '');
     rep = strrep(rep, '.gz', '');
-
+    
     repf = fopen([rep '.txt'], 'w');
     fprintf(repf, '#source: %s', fin);
     fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
@@ -222,10 +222,14 @@ elseif img.frames > 1
         fprintf(repf, '\npresmooth.fwhm: [%.1f, %.1f], presmooth.ftype: %s, presmooth.ksize voxels: %.1f',...
             presmooth.fwhm(1), presmooth.fwhm(2), presmooth.ftype, presmooth.ksize);
     end
-
+    
     for j=1:img.frames
-        if ~isempty(peak{j}) && ~isempty(vol_peak{j})
+        
+        if ~isempty(peak{j}) || ~isempty(vol_peak{j})
             fprintf(repf, '\n\nFrame #%d:\n', j);
+        end
+        
+        if ~isempty(vol_peak{j})
             fprintf(repf, '\nVolume Structures ROI Report:\n');
             fprintf(repf, '\n#label\tvalue\tvoxels\tpeak_x\tpeak_y\tpeak_z\tcentroid_x\tcentroid_y\tcentroid_z\twcentroid_x\twcentroid_y\twcentroid_z');
             for p = 1:length(vol_peak{j})
@@ -236,7 +240,9 @@ elseif img.frames > 1
                     roi.hdr4dfp.value{end+1} = sprintf('%3d   %14s  %4d', vol_peak{j}(p).label, sprintf('%.1f_%.1f_%.1f', vol_peak{j}(p).xyz), vol_peak{j}(p).size);
                 end
             end
-
+        end
+        
+        if ~isempty(peak{j})
             if strcmp(img.imageformat, 'CIFTI-2')
                 fprintf(repf, '\n\nSurface Structures ROI Report:');
                 for c = 1:length(img.cifti.shortnames)
@@ -254,7 +260,7 @@ elseif img.frames > 1
                 end
             end
         end
-
+        
     end
     fclose(repf);
 end
