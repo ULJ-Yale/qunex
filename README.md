@@ -102,27 +102,5 @@ signal in schizophrenia. Proc Natl Acad Sci U S A. 2014 May 20;111(20):7438-43.
 doi: 10.1073/pnas.1405289111. PubMed PMID: 24799682; PubMed Central PMCID:
 PMC4034208.
 
-
-Change Log
-============
----
-
-* 0.1: Initial pre-alpha release with major functionality
-* 0.1.1: Initial pre-alpha release with added functionality
-* 0.1.2: Initial pre-alpha release with expanded usage
-* 0.1.3: Initial pre-alpha release with expanded usage 
-* 0.2.0: Initial pre-alpha release with added functionality (dwiseedtractography)
-* 0.2.1: Initial pre-alpha release with expanded usage for dwiseedtractography
-* 0.3.0: Initial pre-alpha release with added functionality for thalamic seeding
-* 0.4.0: Initial pre-alpha release with added functionality (computeboldfc)
-* 0.4.1: Initial pre-alpha release with improved usage for computeboldfc
-* 0.5.1: Initial pre-alpha release. Deprecated functions: isolatesubcortexrois,probtracksubcortex,pretractography,probtrackxgpucortex,makedensecortex,boldmergenifti,boldmergecifti,nii4dfpconvert,cifti4dfpconvert,dicom2nii; Added updated scheduler functionality 
-* 0.5.2: Initial pre-alpha release. Improved scheduler usage to include SLURM
-* 0.5.3: Initial pre-alpha release. Updated dcm2nii usage
-* 0.5.4: Initial pre-alpha release. Added XNATCloudUpload.sh script to enable automated XNAT ingestion and integration with multi data format support
-* 0.5.5: Initial pre-alpha release. Upgraded high-performance cluster scheduler functionality
-* 0.5.6: Initial pre-alpha release. Edited naming grammar of connector pipeline to 'mnap' 
-* 0.6.0: Initial pre-alpha release. Added `eddyqc` function to the mnap wrapper for diffusion MRI quality control
-
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
