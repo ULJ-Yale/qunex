@@ -183,6 +183,13 @@ processed with default values. Take care to embed vectors in square brackets
 (e.g. "[1 8 6 12]") and cell arrays in curly braces (e.g. "{'DLPFC', 'ACC',
 'FEF'}"). In addition, 'saveOutput' argument can be specified to redirect Matlab
 output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
+
+An example call of a Matlab function:
+
+gmri g_FindPeaks fin='map_zstat.dscalar.nii' fout='map_peaks.dscalar.nii' \\
+     mins="[50 50]" maxs="[300 350]" val=n t=3.5 projection=midthickness
+
+List of available functions:
 '''
 
 for mcom in gm.functionList:
