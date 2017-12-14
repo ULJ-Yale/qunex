@@ -107,19 +107,5 @@ External dependencies
 * R Statistical Environment with ggplot
 * dcm2nii (23-June-2017 release) 
 
-
-File formats
-============
----
-
-* PENDING
-
-Change Log
-============
----
-
-* 0.1: Initial pre-alpha release with major functionality
-* 0.2: Pre-alpha release with added scheduler functionality
-
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu

@@ -112,7 +112,7 @@ def run(command, args):
     # -- compose command string
 
     mcom = "%s(%s)" % (command, ", ".join(arglist))
-    com = 'matlab -nojvm -nodisplay -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcom)
+    com = 'matlab -nojvm -nodisplay -nosplash -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcom)
 
 
     # --- parse output options
