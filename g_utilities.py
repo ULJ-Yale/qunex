@@ -73,9 +73,9 @@ def createStudy(studyFolder=None):
     print "\nDone.\n"
 
 
-def compileSubjectsTxt(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=None, overwrite="ask"):
+def compileSubjectsTxt(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=None, overwrite="ask", paramFile=None):
     '''
-    compileSubjectsTxt [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/subjects.txt]
+    compileSubjectsTxt [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/subjects.txt] [overwrite=ask] [paramFile=<subjectsFolder>/specs/parameters.txt]
 
     Combines all the sourceFiles in all subject folders in subjectsFolder to
     generate a joint subjects.txt file and save it as targetFile.
@@ -89,6 +89,10 @@ def compileSubjectsTxt(subjectsFolder=".", sourceFiles="subject_hcp.txt", target
     - ask: ask interactively
     - yes: overwrite the existing file
     - no:  abort creating the file
+
+    The command will also look for a parameter file. If it exists, it will
+    prepend its content at the beginning of the subjects.txt file. If it does
+    not exist it will print a warning and continue.
 
     Example:
 
@@ -127,6 +131,20 @@ def compileSubjectsTxt(subjectsFolder=".", sourceFiles="subject_hcp.txt", target
     print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
     print >> jfile, "# Subjects folder: %s" % (os.path.abspath(subjectsFolder))
     print >> jfile, "# Source files: %s" % (sourceFiles)
+
+    # --- check for param file
+
+    if paramFile is None:
+        paramFile = os.path.join(subjectsFolder, 'specs', 'parameters.txt')
+
+    if os.path.exists(paramFile):
+        print "---> appending parameter file [%s]." % (paramFile)
+        print >> jfile, "# Parameter file: %s" % (paramFile)
+        with open(paramFile) as f:
+            for line in f:
+                print >> jfile, line,
+    else:
+        print "---> parameter files does not exist, skipping [%s]." % (paramFile)
 
     # --- loop trough subject files
 

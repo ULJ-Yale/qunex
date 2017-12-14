@@ -115,8 +115,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     USE
     ===
 
-    The command is used to converts MR images from DICOM to NIfTI format. It
-    searches for images within the a dicom subfolder within the provided
+    The command is used to convert MR images from DICOM to NIfTI format. It
+    searches for images within the dicom subfolder within the provided
     subject folder (folder). It expects to find each image within a separate
     subfolder. It then converts the images to NIfTI format and places them
     in the nii folder within the subject folder. To reduce the space use it
@@ -147,7 +147,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                 leave them ungzipped (no) or ask interactively (ask). [ask]
     --verbose   Whether to be report on the progress (True) or not (False). [True]
     --cores     How many parallel processes to run dcm2nii conversion with. The
-                number is one by defaults, if specified as 'all', the number of
+                number is one by default, if specified as 'all', the number of
                 available cores is utilized.
 
     RESULTS
