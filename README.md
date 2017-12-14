@@ -60,11 +60,5 @@ External dependencies
 * MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
 * MNAP suite (recommended for seamless functionality) 
 
-Change Log
-============
----
-
-* 0.1: Initial pre-alpha release with major functionality
-
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
