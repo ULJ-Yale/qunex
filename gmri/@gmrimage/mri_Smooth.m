@@ -25,6 +25,11 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %       perform smoothing, if you don't want to use the mask -> mask = 'no', otherwise the default mask is the same as the input file
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
 %       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
+%       ****************************************************************************************************
+%       Smoothing time series images with thresholded data should be performed for each frame separatelly,
+%       otherwise the smoothing will use the first frame as a smoothing mask for all the frames.
+%       (this issue will be solved in the future)
+%       ****************************************************************************************************
 %
 %   OUTPUT
 %       img         ... image with data smoothed.

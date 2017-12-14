@@ -139,12 +139,12 @@ fp_param.cifti = cifti;
 fp_param = determineSurfaceProjection(fp_param);
 
 % --- Create an empty matrix to store the data globally for each hemisphere
-roiData = zeros(32492,1);
+roiDataRaw = zeros(32492,1);
 %fp_param.surfaceComponent = lower(img.cifti.shortnames{fp_param.cmp});
-roiData(fp_param.cifti.(fp_param.surfaceComponent).mask) = img.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp));
+roiDataRaw(fp_param.cifti.(fp_param.surfaceComponent).mask) = img.data(img.cifti.start(fp_param.cmp):img.cifti.end(fp_param.cmp));
 
 % --- Flip to focus on the relevant value(s)
-roiData = thresholdData(roiData, fp_param);
+roiData = thresholdData(roiDataRaw, fp_param);
 
 % --- Preallocate peak structure
 peak = [];
@@ -157,7 +157,7 @@ fp_param.start = img.cifti.start(fp_param.cmp);
 fp_param.end = img.cifti.end(fp_param.cmp);
 
 %% - II - flooding - initial flooding
-[peak, indexedData] = performInitialFlooding(roiData, peak, indexedData, fp_param);
+[peak, indexedData] = performInitialFlooding(roiData, roiDataRaw, peak, indexedData, fp_param);
 
 %% - III - flooding - remove the smallest ROIs
 [peak, indexedData] = removeTooSmallROIs(roiData, peak, indexedData, fp_param);
@@ -171,7 +171,7 @@ peak = removeEmptyPeaks(peak);
 
 [peak, indexedData] = relableROIs(peak, indexedData);
 
-peak = getRegionAverage(peak,roiData,indexedData);
+peak = getRegionAverage(peak,roiDataRaw,indexedData);
 
 % --- define borders between ROIs as desired by the user
 boundary_map = zeros(size(indexedData));
@@ -307,7 +307,7 @@ for i=1:1:length(peak)
 end
 end
 
-function [peak, indexedData] = performInitialFlooding(roiData, peak, indexedData, fp_param)
+function [peak, indexedData] = performInitialFlooding(roiData, roiDataRaw, peak, indexedData, fp_param)
 % --- Find all the relevant maxima
 if fp_param.verbose, fprintf('\n---> identifying intial set of peaks'); end
 
@@ -319,7 +319,7 @@ for i=1:1:numel(fp_param.cifti.(fp_param.surfaceComponent).adj_list.neighbours)
             (roiData(i) >= max(roiData(fp_param.cifti.(fp_param.surfaceComponent).adj_list.neighbours{i})))
         ctn_peaks = ctn_peaks + 1;
         peak(ctn_peaks).index = i;
-        peak(ctn_peaks).value = roiData(i);
+        peak(ctn_peaks).value = roiDataRaw(i);
         peak(ctn_peaks).x = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(i,1);
         peak(ctn_peaks).y = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(i,2);
         peak(ctn_peaks).z = fp_param.cifti.(fp_param.surfaceComponent).(fp_param.projection).vertices(i,3);

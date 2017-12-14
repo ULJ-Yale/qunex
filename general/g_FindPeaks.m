@@ -27,6 +27,11 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %                     hcpatlas ... path to HCPATLAS folder containing projection surf.gii files
 %                     * the last two fields are not required if they are stored as
 %                     environment variables (wb_command in $PATH and hcpatlas in $HCPATLAS
+%                     ****************************************************************************************************
+%                     Smoothing time series images with thresholded data should be performed for each frame separatelly,
+%                     otherwise the smoothing will use the first frame as a smoothing mask for all the frames.
+%                     (this issue will be solved in the future)
+%                     ****************************************************************************************************
 %       projection  - type of surface component projection ('midthickness', 'inflated',...)
 %                          or a string containing the path to the surface files (.surf.gii)
 %                          for both, left and right cortex separated by a pipe:
@@ -167,7 +172,15 @@ if img.frames == 1
     
     repf = fopen([rep '.txt'], 'w');
     fprintf(repf, '#source: %s', fin);
-    fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
+    if numel(mins) == 1 && numel(maxs) == 1
+        fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
+    elseif numel(mins) == 2 && numel(maxs) == 2
+        fprintf(repf, '\n#mins: [%d %d], maxs: [%d %d], val: ''%s'', t: %.1f', mins(1), mins(2), maxs(1), maxs(2), val, t);
+    elseif numel(mins) == 1 && numel(maxs) == 2
+        fprintf(repf, '\n#mins: %d, maxs: [%d %d], val: ''%s'', t: %.1f', mins, maxs(1), maxs(2), val, t);
+    elseif numel(mins) == 2 && numel(maxs) == 1
+        fprintf(repf, '\n#mins: [%d %d], maxs: %d, val: ''%s'', t: %.1f', mins(1), mins(2), maxs, val, t);
+    end
     if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
         fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize: %.1f',...
             presmooth.fwhm, presmooth.ftype, presmooth.ksize);
@@ -214,7 +227,15 @@ elseif img.frames > 1
     
     repf = fopen([rep '.txt'], 'w');
     fprintf(repf, '#source: %s', fin);
-    fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
+    if numel(mins) == 1 && numel(maxs) == 1
+        fprintf(repf, '\n#mins: %d, maxs: %d, val: ''%s'', t: %.1f', mins, maxs, val, t);
+    elseif numel(mins) == 2 && numel(maxs) == 2
+        fprintf(repf, '\n#mins: [%d %d], maxs: [%d %d], val: ''%s'', t: %.1f', mins(1), mins(2), maxs(1), maxs(2), val, t);
+    elseif numel(mins) == 1 && numel(maxs) == 2
+        fprintf(repf, '\n#mins: %d, maxs: [%d %d], val: ''%s'', t: %.1f', mins, maxs(1), maxs(2), val, t);
+    elseif numel(mins) == 2 && numel(maxs) == 1
+        fprintf(repf, '\n#mins: [%d %d], maxs: %d, val: ''%s'', t: %.1f', mins(1), mins(2), maxs, val, t);
+    end
     if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
         fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize: %.1f',...
             presmooth.fwhm, presmooth.ftype, presmooth.ksize);
