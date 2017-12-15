@@ -4305,9 +4305,9 @@ timestamp() {
 
 # -- DESCRIPTION: Checks for version
 show_version() {
-	APVer=`cat ${TOOLS}/${MNAPREPO}/connector/VERSION`
+	MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
 	echo ""
-	reho "Multimodal Neuroimaging Analysis Pipeline (MNAP) Version: v$APVer"
+	reho "Multimodal Neuroimaging Analysis Pipeline (MNAP) Version: v${MNAPVer}"
 }
 
 # opts_ShowVersionIfRequested "$@"
