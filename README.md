@@ -90,6 +90,28 @@ External dependencies
 * R Statistical Environment with ggplot
 * dcm2nii (23-June-2017 release) 
 
+Change Log
+============
+---
+
+* 0.1 Initial pre-alpha release.
+* 0.1.1 [mnaptools] Added high performance computing scheduler functionality
+* 0.1.2 [mnaptools] Expanded usage and bug fixes
+* 0.1.3 [mnaptools] Expanded usage and bug fixes
+* 0.2.0 [connector] Added functionality for `dwiseedtractography`
+* 0.2.1 [connector] Expanded usage for `dwiseedtractography`
+* 0.3.0 [connector] Added functionality for thalamic seeding
+* 0.4.0 [connector] Added functionality for `computeboldfc`
+* 0.4.1 [connector] Improved usage for `computeboldfc`
+* 0.5.0 [connector] Deprecated functions and added updated scheduler functionality 
+* 0.5.2 [niutilities, connector] Improved scheduler usage to include SLURM
+* 0.5.3 [connector] Updated `dicomorganize` usage
+* 0.5.4 [connector] Added XNATCloudUpload.sh script to enable automated XNAT ingestion and integration with multi data format support
+* 0.5.5 [niutilities,connector] Upgraded high-performance cluster scheduler functionality
+* 0.5.6 [connector] Edited naming grammar of connector pipeline to 'mnap' 
+* 0.6.0 [connector] Added `eddyqc` function to the mnap wrapper for diffusion MRI quality control
+* 0.6.1 [niutilities] Added paramFile option to `compileSubjectsTxt` command
+
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
