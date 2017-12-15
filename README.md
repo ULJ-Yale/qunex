@@ -112,6 +112,5 @@ Change Log
 * 0.6.0 [connector] Added `eddyqc` function to the mnap wrapper for diffusion MRI quality control
 * 0.6.1 [niutilities] Added paramFile option to `compileSubjectsTxt` command
 
-
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
