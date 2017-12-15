@@ -202,7 +202,7 @@ elseif numel(mins) == 2 && numel(maxs) == 1
     fprintf(repf, '\n#mins: [%d %d], maxs: %d, val: ''%s'', t: %.1f', mins(1), mins(2), maxs, val, t);
 end
 
-if ~isempty(presmooth) && isempty(presmooth.ftype)
+if isempty(presmooth.ftype)
     if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
         fprintf(repf, '\npresmooth.fwhm: %.1f',...
             presmooth.fwhm, presmooth.ftype, presmooth.ksize);
@@ -210,7 +210,7 @@ if ~isempty(presmooth) && isempty(presmooth.ftype)
         fprintf(repf, '\npresmooth.fwhm: [%.1f, %.1f]',...
             presmooth.fwhm(1), presmooth.fwhm(2), presmooth.ftype, presmooth.ksize);
     end
-elseif ~isempty(presmooth)
+else
     if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
         fprintf(repf, '\npresmooth.fwhm: %.1f, presmooth.ftype: %s, presmooth.ksize: %.1f',...
             presmooth.fwhm, presmooth.ftype, presmooth.ksize);
