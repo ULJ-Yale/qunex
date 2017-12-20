@@ -14,24 +14,22 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %       t           - threshold value [0]
 %       presmooth   - string containing presmoothing parameters: []
 %                     Format -> 'fwhm:[VAL1 VAL2]|ftype:TYPE_NAME|ksize:[]|wb_path:PATH|hcpatlas:PATH'
-%                     fwhm        ... full Width at Half Maximum in mm formatted as:
-%                                   a) [fwhm for volume structure] for NIfTI [2]
-%                                   b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2]
-%                                       *(if only 1 element is passed, it takes that value for both, volume and surface structures)
-%                     ftype    ... type of smoothing filter:
-%                                   a) 'gaussian' or 'box' for NIfTI files ['gaussian']
-%                                   b) '' (empty argument) for CIFTI files, since geodesic gaussian smoothing is the only option
-%                     ksize    ... size of the smoothing kernel in voxels for NIfTI files, [] (empty) for CIFTI files [6]
-%                     mask     ... specify the cifti mask to select areas on which to perform smoothing
-%                     wb_path  ... path to wb_command
-%                     hcpatlas ... path to HCPATLAS folder containing projection surf.gii files
-%                     * the last two fields are not required if they are stored as
-%                     environment variables (wb_command in $PATH and hcpatlas in $HCPATLAS
-%                     ****************************************************************************************************
-%                     Smoothing time series images with thresholded data should be performed for each frame separatelly,
-%                     otherwise the smoothing will use the first frame as a smoothing mask for all the frames.
-%                     (this issue will be solved in the future)
-%                     ****************************************************************************************************
+%                     fwhm       ... full Width at Half Maximum in mm formatted as:
+%                                     a) [fwhm for volume structure] for NIfTI [2]
+%                                     b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2]
+%                                         *(if only 1 element is passed, it takes that value for both, volume and surface structures)
+%                     ftype      ... type of smoothing filter:
+%                                     a) 'gaussian' or 'box' for NIfTI files ['gaussian']
+%                                     b) '' (empty argument) for CIFTI files, since geodesic gaussian smoothing is the only option
+%                     ksize      ... size of the smoothing kernel in voxels for NIfTI files, [] (empty) for CIFTI files [6]
+%                     mask       ... specify the cifti mask to select areas on which to perform smoothing
+%                     wb_path    ... path to wb_command
+%                     hcpatlas   ... path to HCPATLAS folder containing projection surf.gii files
+%                     timeSeries ... boolean to indicate whether a thresholded timeseries image should use each frame as a mask for the
+%                                     corresponding frame. By default [false], the first frame is taken a mask for all the frames
+%                     frames     ... list of frames to perform smoothing on [default = options:frames]
+%                     * wb_path and hcpatlas are not required if they are stored as 
+%                       environment variables (wb_command in $PATH and hcpatlas in $HCPATLAS *
 %       projection  - type of surface component projection ('midthickness', 'inflated',...)
 %                          or a string containing the path to the surface files (.surf.gii)
 %                          for both, left and right cortex separated by a pipe:
@@ -138,17 +136,30 @@ if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 % --- increment verbose for compatibility with the mri_FindPeaks method
 verbose = verbose + 1;
 
+
+if ~isempty(options)
+    opt = g_ParseOptions([],options);
+    if ~isfield(opt,'frames')
+        frames = [];
+    else
+        frames = opt.frames;
+    end
+end
+   
 if ~isempty(presmooth)
     presmooth = g_ParseOptions([],presmooth);
-    if ~isfield(presmooth,'fwhm'),     presmooth.fwhm = [];    end
-    if ~isfield(presmooth,'ftype'),    presmooth.ftype = [];   end
-    if ~isfield(presmooth,'ksize'),    presmooth.ksize =[];    end
-    if ~isfield(presmooth,'mask'),     presmooth.mask =[];     end
-    if ~isfield(presmooth,'wb_path'),  presmooth.wb_path = []; end
-    if ~isfield(presmooth,'hcpatlas'), presmooth.hcpatlas =[]; end
+    if ~isfield(presmooth,'fwhm'),       presmooth.fwhm = [];        end
+    if ~isfield(presmooth,'ftype'),      presmooth.ftype = [];       end
+    if ~isfield(presmooth,'ksize'),      presmooth.ksize =[];        end
+    if ~isfield(presmooth,'mask'),       presmooth.mask =[];         end
+    if ~isfield(presmooth,'wb_path'),    presmooth.wb_path = [];     end
+    if ~isfield(presmooth,'hcpatlas'),   presmooth.hcpatlas =[];     end
+    if ~isfield(presmooth,'timeSeries'), presmooth.timeSeries =[];   end
+    if ~isfield(presmooth,'frames'),     presmooth.frames = frames;  end
     if verbose >= 2, fprintf('\n---> Presmoothing image'); end
     img = img.mri_Smooth(presmooth.fwhm, verbose, presmooth.ftype,...
-        presmooth.ksize, projection, presmooth.mask, presmooth.wb_path, presmooth.hcpatlas);
+        presmooth.ksize, projection, presmooth.mask, presmooth.wb_path,...
+        presmooth.hcpatlas, presmooth.timeSeries, presmooth.frames);
 end
 
 [roi, vol_peak, peak] = img.mri_FindPeaks(mins, maxs, val, t, projection, options, verbose);
@@ -205,10 +216,10 @@ end
 if ~isempty(presmooth) && isempty(presmooth.ftype)
     if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
         fprintf(repf, '\npresmooth.fwhm: %.1f',...
-            presmooth.fwhm, presmooth.ftype, presmooth.ksize);
+            presmooth.fwhm);
     elseif ~isempty(presmooth) && numel(presmooth.fwhm) == 2
         fprintf(repf, '\npresmooth.fwhm: [%.1f, %.1f]',...
-            presmooth.fwhm(1), presmooth.fwhm(2), presmooth.ftype, presmooth.ksize);
+            presmooth.fwhm(1), presmooth.fwhm(2));
     end
 elseif ~isempty(presmooth)
     if ~isempty(presmooth) && numel(presmooth.fwhm) == 1
@@ -232,10 +243,11 @@ for j=1:img.frames
     
     if img.frames > 1 && (~isempty(peakCell{j}) || ~isempty(vol_peakCell{j}))
         fprintf(repf, '\n\nFrame #%d:\n', j);
+        fprintf(repf,...
+        ['\nComponent\tLabel\tPeak_value\tAvg_value\tSize\tArea_mm2\tPeak_x',...
+        '\tPeak_y\tPeak_z\tCentroid_x\tCentroid_y\tCentroid_z\tWcentroid_x',...
+        '\tWcentroid_y\tWcentroid_z']);
     end
-    
-    fprintf(repf,...
-        '\nComponent\tLabel\tPeak_value\tAvg_value\tSize\tArea_mm2\tPeak_x\tPeak_y\tPeak_z\tCentroid_x\tCentroid_y\tCentroid_z\tWcentroid_x\tWcentroid_y\tWcentroid_z');
     
     if ~isempty(vol_peakCell{j})
         for p = 1:length(vol_peakCell{j})

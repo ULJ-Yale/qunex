@@ -1,4 +1,4 @@
-function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries)
+function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)
 
 %function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries)
 %
@@ -26,7 +26,8 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
 %       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
 %       timeSeries  ... boolean to indicate whether a thresholded timeseries image should use each frame as a mask for the
-%                           corresponding frame. By default [false], the first frame is taken a mask for all the frames.
+%                           corresponding frame. By default [false], the first frame is taken a mask for all the frames
+%       frames      ... list of frames to perform smoothing on [all]
 %       ****************************************************************************************************
 %       Smoothing time series images with thresholded data should be performed for each frame separatelly,
 %       otherwise the smoothing will use the first frame as a smoothing mask for all the frames.
@@ -65,6 +66,7 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %        - Added option for smoothing thresholded multiple-frame images
 
 % input checking
+if nargin < 11 || isempty(frames),     frames = 1:1:img.frames;          end
 if nargin < 10 || isempty(timeSeries), timeSeries = false;               end
 if nargin < 9  || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
 if nargin < 8  || isempty(wb_path),    wb_path = '';                     end
@@ -82,7 +84,7 @@ if img.frames > 1 && timeSeries == true
     img_temp = img;
     img_temp.data = zeros(size(img_temp.data));
     img_smooth = img;
-    for fr = 1:1:img.frames;
+    for fr = frames;
         img_temp.data(:,1) = img.data(:,fr);
         img_temp.data(:,fr) = img.data(:,fr);
         fprintf('-> Smoothing Frame #%d\n',fr);
