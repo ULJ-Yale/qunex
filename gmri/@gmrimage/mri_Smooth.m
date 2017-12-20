@@ -1,6 +1,6 @@
-function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas)
+function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries)
 
-%function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas)
+%function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries)
 %
 %   Does geodesic gaussian kernel smoothing of the gmri image.
 %
@@ -8,7 +8,7 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %       img         ... a gmrimage object with data in volume representation.
 %       fwhm        ... full Width at Half Maximum in mm formatted as:
 %                                a) [fwhm for volume structure] for NIfTI [2]
-%                                b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2] 
+%                                b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2]
 %                                       *(if only 1 element is passed, it takes that value for both, volume and surface structures)
 %       verbose     ... whether to report the progress. [false]
 %       ftype       ... type of smoothing filter:
@@ -25,6 +25,8 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %       perform smoothing, if you don't want to use the mask -> mask = 'no', otherwise the default mask is the same as the input file
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
 %       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
+%       timeSeries  ... boolean to indicate whether a thresholded timeseries image should use each frame as a mask for the
+%                           corresponding frame. By default [false], the first frame is taken a mask for all the frames.
 %       ****************************************************************************************************
 %       Smoothing time series images with thresholded data should be performed for each frame separatelly,
 %       otherwise the smoothing will use the first frame as a smoothing mask for all the frames.
@@ -59,18 +61,38 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %   Changelog
 %	2017-07-17 Aleksij Kraljic
 %        - Added option for passing specific surf.gii projection files
-%
+%   2017-12-20 Aleksij Kraljic
+%        - Added option for smoothing thresholded multiple-frame images
 
 % input checking
-if nargin < 9 || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
-if nargin < 8 || isempty(wb_path),    wb_path = '';                     end
-if nargin < 7 || isempty(mask),       mask = '';                        end
-if nargin < 6 || isempty(projection), projection = 'type:midthickness'; end
-if nargin < 5 || isempty(ksize),      ksize = 6;                        end
-if nargin < 4 || isempty(ftype),      ftype = 'gaussian';               end
-if nargin < 3 || isempty(verbose),    verbose = false;                  end
-if nargin < 2 || isempty(fwhm),       fwhm = 2;                         end
-if numel(fwhm) == 1,                  fwhm = [fwhm, fwhm];              end
+if nargin < 10 || isempty(timeSeries), timeSeries = false;               end
+if nargin < 9  || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
+if nargin < 8  || isempty(wb_path),    wb_path = '';                     end
+if nargin < 7  || isempty(mask),       mask = '';                        end
+if nargin < 6  || isempty(projection), projection = 'type:midthickness'; end
+if nargin < 5  || isempty(ksize),      ksize = 6;                        end
+if nargin < 4  || isempty(ftype),      ftype = 'gaussian';               end
+if nargin < 3  || isempty(verbose),    verbose = false;                  end
+if nargin < 2  || isempty(fwhm),       fwhm = 2;                         end
+if numel(fwhm) == 1,                   fwhm = [fwhm, fwhm];              end
+
+if img.frames > 1 && timeSeries == true
+    % if more than 1 frame, perform mri_Smooth() on each frame recursivelly
+    fprintf('\nMore than 1 frame detected!\n');
+    img_temp = img;
+    img_temp.data = zeros(size(img_temp.data));
+    img_smooth = img;
+    for fr = 1:1:img.frames;
+        img_temp.data(:,1) = img.data(:,fr);
+        img_temp.data(:,fr) = img.data(:,fr);
+        fprintf('-> Smoothing Frame #%d\n',fr);
+        img_temp = ...
+            img_temp.mri_Smooth(fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, false);
+        img_smooth.data(:,fr) = img_temp.data(:,fr);
+    end
+    img = img_smooth;
+    return;
+end
 
 % take the absolute value of the mask, if it was passed
 if  isempty(mask)
