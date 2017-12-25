@@ -18,7 +18,7 @@ def readSubjectData(filename, verbose=False):
     '''
     readSubjectData(filename, verbose=False)
 
-    An internal function for reading subjects.txt files. It reads the file and
+    An internal function for reading batch.txt files. It reads the file and
     returns a list of subjects with the information on images and the additional
     parameters specified in the header.
 
@@ -125,7 +125,7 @@ def readSubjectData(filename, verbose=False):
 
 
     except:
-        print "\n\n=====================================================\nERROR: There was an error with the subjects.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
+        print "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
         raise
 
     return slist, gpref

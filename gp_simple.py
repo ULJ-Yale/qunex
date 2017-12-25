@@ -6,7 +6,7 @@ It consists of functions:
 
 * createBoldList   ... creates a list with paths to each subject's BOLD files
 * createConcList   ... creates a list with paths to each subject's conc files
-* listSubjectInfo  ... lists subjects data stored in subjects.txt file
+* listSubjectInfo  ... lists subjects data stored in batch.txt file
 
 All the functions are part of the processing suite. They should be called
 from the command line using `gmri` command. Help is available through:
@@ -119,7 +119,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     ===
 
     runShellScript runs the specified script on every selected subject from
-    subjects.txt file. It places the specified subject specific information
+    batch.txt file. It places the specified subject specific information
     before running the script. The information to be added is to be referenced
     in the script using double curly braces: {{<key>}}. Specifically, the
     function loops through all the subject specific information as well as all
@@ -129,7 +129,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     EXAMPLE
     =======
 
-    If subjects.txt contains among others:
+    If batch.txt contains among others:
 
     ---
     id: OP578
@@ -164,11 +164,11 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     The relevant processing parameters are:
 
     --script          ... Tha path to the script to be executed.
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --cores           ... How many cores to utilize [1].
 
-    The parameters can be specified in command call or subject.txt file.
+    The parameters can be specified in command call or batch.txt file.
 
     EXAMPLE USE
     ===========

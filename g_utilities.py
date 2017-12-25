@@ -73,14 +73,14 @@ def createStudy(studyFolder=None):
     print "\nDone.\n"
 
 
-def compileSubjectsTxt(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=None, overwrite="ask", paramFile=None):
+def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=None, overwrite="ask", paramFile=None):
     '''
-    compileSubjectsTxt [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/subjects.txt] [overwrite=ask] [paramFile=<subjectsFolder>/specs/parameters.txt]
+    compileBatch [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/batch.txt] [overwrite=ask] [paramFile=<subjectsFolder>/specs/parameters.txt]
 
     Combines all the sourceFiles in all subject folders in subjectsFolder to
-    generate a joint subjects.txt file and save it as targetFile.
+    generate a joint batch file and save it as targetFile.
 
-    If no targetFile is specified, it will save the file as subjects.txt in a
+    If no targetFile is specified, it will save the file as group.txt in a
     processing folder parallel to the subjectsFolder. If the folder does not yet
     exist, it will create it.
 
@@ -91,18 +91,18 @@ def compileSubjectsTxt(subjectsFolder=".", sourceFiles="subject_hcp.txt", target
     - no:  abort creating the file
 
     The command will also look for a parameter file. If it exists, it will
-    prepend its content at the beginning of the subjects.txt file. If it does
+    prepend its content at the beginning of the batch.txt file. If it does
     not exist it will print a warning and continue.
 
     Example:
 
-    gmri compileSubjectsTxt sourceFiles="subject.txt" targetFile="fcMRI/subjects_fcMRI.txt"
+    gmri compileBatch sourceFiles="subject.txt" targetFile="fcMRI/subjects_fcMRI.txt"
     '''
 
     # --- prepare target file name and folder
 
     if targetFile is None:
-        targetFile = os.path.join(os.path.dirname(os.path.abspath(subjectsFolder)), 'processing', 'subjects.txt')
+        targetFile = os.path.join(os.path.dirname(os.path.abspath(subjectsFolder)), 'processing', 'batch.txt')
 
     if os.path.exists(targetFile):
         print "WARNING: target file %s already exists!" % (os.path.abspath(targetFile))

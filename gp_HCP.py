@@ -192,8 +192,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
@@ -289,7 +289,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         # --- checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in subjects.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -524,8 +524,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
@@ -591,7 +591,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # --- run checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in subjects.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -767,8 +767,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
@@ -824,7 +824,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
         # --- run checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in subjects.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -937,7 +937,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
-            r += "---> ERROR: There is no hcp info for subject %s in subjects.txt" % (sinfo['id'])
+            r += "---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- set up data
@@ -1057,8 +1057,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
@@ -1205,7 +1205,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # --- run checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in subjects.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -1584,8 +1584,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
@@ -1656,7 +1656,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         # --- run checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in subjects.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -1822,7 +1822,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
-            r += "---> ERROR: There is no hcp info for subject %s in subjects.txt" % (sinfo['id'])
+            r += "---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
             run = False
 
         for tfile in ['bvals', 'bvecs', 'data.nii.gz', 'nodif_brain_mask.nii.gz']:
@@ -1892,7 +1892,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
-            r += "---> ERROR: There is no hcp info for subject %s in subjects.txt" % (sinfo['id'])
+            r += "---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
             run = False
 
         for tfile in ['bvals', 'bvecs', 'data.nii.gz', 'nodif_brain_mask.nii.gz']:
@@ -1973,8 +1973,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     The relevant processing parameters are:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
@@ -1983,7 +1983,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     --hcp_cifti_tail  ... The tail (see above) that specifies, which version of
                           the cifti files to copy over [].
     --bold_preprocess ... Which bold images (as they are specified in the
-                          subjects.txt file) to copy over. It can be a single
+                          batch.txt file) to copy over. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
                           'WM|Control|rest') or 'all' to copy all [all].
     --boldname        ... The default name of the bold files in the images
@@ -2012,7 +2012,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
-    r += "\n   The command will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bold_preprocess parameter defines which BOLD files are mapped based on their\n     specification in subjects.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bppt'].split("|")), options['hcp_cifti_tail'])
+    r += "\n   The command will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bold_preprocess parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bppt'].split("|")), options['hcp_cifti_tail'])
     r += "\n\n........................................................"
 
     # --- file/dir structure

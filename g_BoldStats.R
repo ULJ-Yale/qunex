@@ -94,7 +94,7 @@ bolds <- strsplit(bolds, "[|]")[[1]]
 nruns <- length(bolds)
 
 if (nruns == 0){
-    print("ERROR: No BOLD files were specified for processing! Please check the relevant subjects.txt file and createStatsReport log.")
+    print("ERROR: No BOLD files were specified for processing! Please check the relevant batch.txt file and createStatsReport log.")
     quit()
 }
 
