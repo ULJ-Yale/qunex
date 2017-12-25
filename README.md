@@ -111,7 +111,8 @@ Change Log
 * 0.5.6 [connector] Edited naming grammar of connector pipeline to 'mnap' 
 * 0.6.0 [connector] Added `eddyqc` function to the mnap wrapper for diffusion MRI quality control
 * 0.6.1 [niutilities] Added paramFile option to `compileSubjectsTxt` command
-* 0.6.2 [niutilities] added timeSeries smoothing functionality to g_FindPeaks and corrected a few report generation mistakes
+* 0.6.2 [niutilities] Added timeSeries smoothing functionality to g_FindPeaks and corrected a few report generation mistakes
+* 0.6.3 [niutilities] Added support for arbitrary inbox folder for processInbox
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
