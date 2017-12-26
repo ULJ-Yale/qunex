@@ -8,7 +8,9 @@ function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, target
 %	    flist   	- A .list file of subject information,
 %                     or a well strucutured string (see g_ReadFileList).
 %	    roinfo	    - An ROI file.
-%	    inmask		- An array mask defining which frames to use (1) and which not (0) [0]
+%	    inmask		- Either an array mask defining which frames to use (1) and
+%                     which not (0) or an event string specifying the events and
+%                     frames to extract [0]
 %	    options		- A string defining which subject files to save ['']:
 %	    	r		- save map of correlations
 %           f       - save map of Fisher z values
