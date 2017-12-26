@@ -476,7 +476,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
                         rvolumes       = glob.glob("%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval))
                         rleftsurfaces  = glob.glob("%s_L_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
                         rrightsurfaces = glob.glob("%s_R_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval))
-                        print " ... testing for: ", "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval), "found:", len(rvolumes)
+                        # print " ... testing for: ", "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval), "found:", len(rvolumes)
 
                         rvolumes.sort()
                         rleftsurfaces.sort()
