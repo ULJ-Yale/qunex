@@ -170,7 +170,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri createBOLDBrainMasks subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
-         overwrite=no hcp_cifti_tail=_Atlas bold-preprocess=all
+         overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all
 
     ----------------
     Written by Grega Repovš
@@ -422,12 +422,12 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     Using the defaults:
 
     $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
-         overwrite=no bold-preprocess=all
+         overwrite=no bold_preprocess=all
 
     Specifying additional parameters for identification of bad frames:
 
     $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
-         overwrite=no bold-preprocess=all mov_fd=0.9 mov_dvarsme=1.6 \\
+         overwrite=no bold_preprocess=all mov_fd=0.9 mov_dvarsme=1.6 \\
          mov_before=1 mov_after= 2
 
     ----------------
@@ -679,13 +679,13 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
-         overwrite=no bold-preprocess=all cores=1
+         overwrite=no bold_preprocess=all cores=1
 
     gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
-         overwrite=no bold-preprocess=all cores=10
+         overwrite=no bold_preprocess=all cores=10
 
     gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
-         overwrite=no bold-preprocess=all cores=1 mov_plot=""
+         overwrite=no bold_preprocess=all cores=1 mov_plot=""
 
     ----------------
     Written by Grega Repovš

@@ -1997,7 +1997,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri mapHCPData subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
-         overwrite=no hcp_cifti_tail=_Atlas bold-preprocess=all
+         overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all
 
     ----------
     Written by Grega Repovš
