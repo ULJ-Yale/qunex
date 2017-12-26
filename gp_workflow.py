@@ -150,15 +150,15 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     The relevant processing parameters are:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --bold_preprocess ... Which bold images (as they are specified in the
-                          subjects.txt file) to copy over. It can be a single
+                          batch.txt file) to copy over. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
                           'WM|Control|rest') or 'all' to copy all [rest].
     --boldname        ... The default name of the bold files in the images
@@ -188,7 +188,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nCreating masks for bold runs ... \n"
-    r += "\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bold_preprocess parameter defines which BOLD files are processed based on their\n     specification in subjects.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed."
+    r += "\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bold_preprocess parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed."
     r += "\n\n........................................................"
 
     d = getSubjectFolders(sinfo, options)
@@ -367,15 +367,15 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --bold_preprocess ... Which bold images (as they are specified in the
-                          subjects.txt file) to copy over. It can be a single
+                          batch.txt file) to copy over. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
                           'WM|Control|rest') or 'all' to copy all [rest].
     --boldname        ... The default name of the bold files in the images
@@ -594,15 +594,15 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --bold_preprocess ... Which bold images (as they are specified in the
-                          subjects.txt file) to copy over. It can be a single
+                          batch.txt file) to copy over. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
                           'WM|Control|rest') or 'all' to copy all [rest].
     --boldname        ... The default name of the bold files in the images
@@ -957,15 +957,15 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --bold_preprocess ... Which bold images (as they are specified in the
-                          subjects.txt file) to copy over. It can be a single
+                          batch.txt file) to copy over. It can be a single
                           type (e.g. 'task'), a pipe separated list (e.g.
                           'WM|Control|rest') or 'all' to copy all [rest].
     --boldname        ... The default name of the bold files in the images
@@ -1171,8 +1171,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     The function takes the usual general processing parameters:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
@@ -1195,8 +1195,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                           to perform [shrcl]
 
     List of bold files specify, which types of bold files are to be processed,
-    as they are specified in the subjects.txt file. An example of a list of
-    bolds in subjects.txt would be:
+    as they are specified in the batch.txt file. An example of a list of
+    bolds in batch.txt would be:
 
     07: bold1:blink       :BOLD blink 3mm 48 2.5s
     08: bold2:flanker     :BOLD flanker 3mm 48 2.5s
@@ -1668,8 +1668,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     The function takes the usual general processing parameters:
 
-    --subjects        ... The subjects.txt file with all the subject information
-                          [subject.txt].
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
     --basefolder      ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].

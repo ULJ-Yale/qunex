@@ -501,7 +501,7 @@ def readSubjectData(filename):
                     slist.append(dic)
 
     except:
-        print "\n\n=====================================================\nERROR: There was an error with the subjects.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
+        print "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
         raise
 
     return slist, gpref

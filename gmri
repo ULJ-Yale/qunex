@@ -91,8 +91,8 @@ setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactiv
 
 Miscellaneous file utilities
 ----------------------------
-createStudy        studyFolder=<path to study base folder>
-compileSubjectsTxt [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/subjects.txt] [overwrite=ask]
+createStudy  studyFolder=<path to study base folder>
+compileBatch [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/batch.txt] [overwrite=ask]
 
 
 Fidl file utilities
@@ -131,24 +131,24 @@ Processing commands
 ===================
 In contrast to utilities listed above, processing commands can be submitted to
 run on a computer cluster using either a PBS or LSF scheduling. The commands
-operate on a list of subjects specified in a `subjects.txt` file that provides
+operate on a list of subjects specified in a `batch.txt` file that provides
 information about each subject and his or her images and other information.
-Options for the processing command can be specified either in the `subjects.txt`
+Options for the processing command can be specified either in the `batch.txt`
 file or on the command line, the latter having priority if a parameter is
 specified at both levels. No options need to be set for any of the commands
 listed below. The key parameters with their default values are:
 
-    subjects=subjects.txt   ... the path to the subjects.txt file
-    basefolder=.            ... the path to the study base folder
-    overwrite=no            ... whether to overwrite existing results
-    cores=1                 ... how many cores to utilize for those
-                                commands that can be parallelized
-    nprocess=0              ... how many subjects to process (0=all)
-    log=remove              ... whether to remove logs of commands that have
-                                ran and finished successfully
-    run=run                 ... whether to run (run) the listed command or
-                                test (test) if all the data is ready for the
-                                specific command to run successfully
+    subjects=batch.txt   ... the path to the batch.txt file
+    basefolder=.         ... the path to the study base folder
+    overwrite=no         ... whether to overwrite existing results
+    cores=1              ... how many cores to utilize for those
+                             commands that can be parallelized
+    nprocess=0           ... how many subjects to process (0=all)
+    log=remove           ... whether to remove logs of commands that have
+                             ran and finished successfully
+    run=run              ... whether to run (run) the listed command or
+                             test (test) if all the data is ready for the
+                             specific command to run successfully
 
 HCP preprocessing commands
 --------------------------
@@ -201,7 +201,7 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'dicom2nii'            : {'com': niu.g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
             'dicom2niix'           : {'com': niu.g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
             'processPhilips'       : {'com': niu.g_dicom.processPhilips,         'args': ('folder', 'check', 'pattern')},
-            'processInbox'         : {'com': niu.g_dicom.processInbox,           'args': ('folder', 'check', 'pattern', 'cores')},
+            'processInbox'         : {'com': niu.g_dicom.processInbox,           'args': ('folder', 'inbox', 'check', 'pattern', 'cores')},
             'getDICOMInfo'         : {'com': niu.g_dicom.getDICOMInfo,           'args': ('dfile', 'scanner')},
             'runNILFolder'         : {'com': niu.g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'subjf')},
             'runNIL'               : {'com': niu.g_4dfp.runNIL,                  'args': ('folder', 'overwite', 'subjf')},
@@ -215,7 +215,7 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'getHCPReady'          : {'com': niu.g_HCP.getHCPReady,              'args': ('folder', 'sfile', 'tfile', 'pattern', 'mapping')},
             'printniftihdr'        : {'com': niu.g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': niu.g_gimg.modniftihdr,             'args': ('filename', 's')},
-            'compileSubjectsTxt'   : {'com': niu.g_utilities.compileSubjectsTxt, 'args': ('subjectsFolder', 'sourceFiles', 'targetFile', 'overwrite', 'paramFile')},
+            'compileBatch'         : {'com': niu.g_utilities.compileBatch,       'args': ('subjectsFolder', 'sourceFiles', 'targetFile', 'overwrite', 'paramFile')},
             'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyFolder', )},
             'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder')},
             'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder')},
@@ -378,6 +378,7 @@ def main(args=None):
         raise
         print "\n--------------------------------------------------------------\n"
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

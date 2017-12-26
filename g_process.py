@@ -128,13 +128,13 @@ def plist(s):
 #
 #  1/ the name of the parameter
 #     ... This is the name that will be used to identify the parameter in
-#         the command line and/or the subjects.txt file. It is also the
+#         the command line and/or the batch.txt file. It is also the
 #         name under which the parameter value will be accessible in the
 #         options dictionary.
 #  2/ the default value
 #     ... This is the default value that will be used if the parameter is
 #         not explicity specified in either the command line or in
-#         subjects.txt file.
+#         batch.txt file.
 #  3/ the convert function
 #     ... This is the convert function used to transform the string input
 #         into the value needed. Most commonly used functions are str
@@ -152,7 +152,7 @@ def plist(s):
 
 
 arglist = [['# ---- Basic settings'],
-           ['subjects',           'subjects.txt',                                str,    "The file with subject information."],
+           ['subjects',           'batch.txt',                                   str,    "The file with subject information."],
            ['basefolder',         '',                                            os.path.abspath, 'The path to base folder.'],
            ['logfolder',          'None',                                        isNone,    'The path to log folder.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
@@ -420,7 +420,7 @@ def run(command, args):
         if len(line) == 4:
             options[line[0]] = line[1]
 
-    # --- read options from subjects.txt
+    # --- read options from batch.txt
 
     if 'subjects' in args:
         options['subjects'] = args['subjects']

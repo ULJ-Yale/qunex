@@ -1254,9 +1254,9 @@ def processPhilips(folder=None, check=None, pattern=None):
     return
 
 
-def processInbox(folder=None, check=None, pattern=None, cores=1):
+def processInbox(folder=None, inbox=None, check=None, pattern=None, cores=1):
     '''
-    processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1]
+    processInbox [folder=.] [inbox=<folder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1]
 
     USE
     ===
@@ -1293,6 +1293,9 @@ def processInbox(folder=None, check=None, pattern=None, cores=1):
 
     --folder   The base study subjects folder (e.g. WM44/subjects) where the
                inbox and individual subject folders are. [.]
+    --inbox    The inbox folder with packages to process. By default inbox is
+               in base study folder: inbox/MR. If the packages are elsewhere
+               the location can be specified here. [<folder>/inbox/MR]
     --check    Whether to ask for confirmation to proceed once zip packages in
                inbox are identified and listed. [yes]
     --pattern  The pattern to use to extract subject codes.
@@ -1307,6 +1310,8 @@ def processInbox(folder=None, check=None, pattern=None, cores=1):
     Changelog
     2017-02-08 Grega Repovš
              - Updated documentation
+    2017-12-25 Grega Repovš
+             - Added the option for arbitrary inbox folder
     '''
 
     if check == 'no':
@@ -1316,7 +1321,9 @@ def processInbox(folder=None, check=None, pattern=None, cores=1):
 
     if folder is None:
         folder = "."
-    inbox = os.path.join(folder, 'inbox', 'MR')
+
+    if inbox is None:
+        inbox = os.path.join(folder, 'inbox', 'MR')
 
     if pattern is None:
         pattern = r".*?(OP[0-9.-]+).*\.zip"
