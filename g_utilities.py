@@ -79,12 +79,12 @@ def createStudy(studyFolder=None):
             print " ... creating:", tfolder
             os.makedirs(tfolder)
 
-    tools = os.environ['TOOLS']
+    TemplateFolder = os.environ['TemplateFolder']
     print "\nCopying template files:"
     print " ... parameters.txt"
-    shutil.copyfile(os.path.join(tools, 'library', 'data', 'templates', 'batch_parameters.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'parameters.txt'))
+    shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'batch_parameters.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'parameters.txt'))
     print " ... hcpmap.txt"
-    shutil.copyfile(os.path.join(tools, 'library', 'data', 'templates', 'hcp_mapping.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'hcpmap.txt'))
+    shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'hcpmap.txt'))
 
     print "\nDone.\n"
 
