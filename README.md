@@ -114,6 +114,7 @@ Change Log
 * 0.6.2 [niutilities] Added timeSeries smoothing functionality to g_FindPeaks and corrected a few report generation mistakes
 * 0.6.3 [niutilities] Added support for arbitrary inbox folder for processInbox
 * 0.6.4 [niutilities] Changed subjects.txt to batch.txt throughout and compileSubjectsTxt to compileBatch
+* 0.6.5 [niutilities, library] Added parameters.txt and hcpmap.txt templates, which are now added automatically to subjects/specs in createStudy
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
