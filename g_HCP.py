@@ -401,8 +401,8 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
     The mapping file specifies what source text is to be replaced with what
     target text. There are no limits to the number of mappings. Mappings that
     are not found in the source file will not be used. All lines not matching
-    the pattern are ignored.Each mapping is to be specified in a single line in
-    a simple form:
+    the pattern are ignored, as well as lines that start with #. Each mapping
+    is to be specified in a single line in a form:
 
     "<source text> => <replacement text>"
 
@@ -430,6 +430,8 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
     Changelog
     2017-02-07 Grega Repovš
              - Updated documentation.
+    2017-12-26 Grega Repovš
+             - Set to ignore lines that start with # in mapping file.
     '''
 
     if pattern is None:
@@ -445,7 +447,7 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
 
     print " ... Reading HCP mapping from %s" % (mapping)
 
-    mapping = [line.strip() for line in open(mapping)]
+    mapping = [line.strip() for line in open(mapping) if line[0] != "#"]
     mapping = [e.split('=>') for e in mapping]
     mapping = [[f.strip() for f in e] for e in mapping if len(e) == 2]
     mapping = dict(mapping)

@@ -11,6 +11,7 @@ import os.path
 import os
 import glob
 import datetime
+import shutil
 
 
 def createStudy(studyFolder=None):
@@ -20,7 +21,7 @@ def createStudy(studyFolder=None):
     Creates the base folder at the provided path location and the key standard
     study subfolders. Specifically:
 
-    <study>
+    <studyFolder>
     ├── analysis
     │   └── scripts
     ├── processing
@@ -45,11 +46,19 @@ def createStudy(studyFolder=None):
         └── QC
 
     Do note that the command will create all the missing subfolders in which the
-    specified study is to reside!
+    specified study is to reside! The command also prepares template parameters.txt
+    and hcpmap.txt files in <studyFolder>/subjects/specs folder.
 
     Example:
 
     gmri createStudy studyFolder=/Volumes/data/studies/WM.v4
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-12-26 Grega Repovš
+             - Added copying of parameters and hcpmap templates.
     '''
 
     if studyFolder is None:
@@ -69,6 +78,13 @@ def createStudy(studyFolder=None):
         else:
             print " ... creating:", tfolder
             os.makedirs(tfolder)
+
+    tools = os.environ['TOOLS']
+    print "\nCopying template files:"
+    print " ... parameters.txt"
+    shutil.copyfile(os.path.join(tools, 'library', 'data', 'templates', 'batch_parameters.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'parameters.txt'))
+    print " ... hcpmap.txt"
+    shutil.copyfile(os.path.join(tools, 'library', 'data', 'templates', 'hcp_mapping.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'hcpmap.txt'))
 
     print "\nDone.\n"
 
@@ -97,6 +113,13 @@ def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=N
     Example:
 
     gmri compileBatch sourceFiles="subject.txt" targetFile="fcMRI/subjects_fcMRI.txt"
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2017-12-26 Grega Repovš
+             - Renamed to compileBatch and batch.txt.
     '''
 
     # --- prepare target file name and folder
