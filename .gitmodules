@@ -1,15 +1,15 @@
 [submodule "niutilities"]
 	path = niutilities
-	url = git@bitbucket.org:mnap/niutilities.git
+	url = git@bitbucket.org:hidradev/niutilities.git
 [submodule "matlab"]
 	path = matlab
-	url = git@bitbucket.org:mnap/matlab.git
+	url = git@bitbucket.org:hidradev/matlab.git
 [submodule "library"]
 	path = library
-	url = git@bitbucket.org:mnap/library.git
+	url = git@bitbucket.org:hidradev/library.git
 [submodule "hcpmodified"]
 	path = hcpmodified
-	url = git@bitbucket.org:mnap/hcpmodified.git
+	url = git@bitbucket.org:hidradev/hcpmodified.git
 [submodule "connector"]
 	path = connector
-	url = git@bitbucket.org:mnap/connector.git
+	url = git@bitbucket.org:hidradev/connector.git
