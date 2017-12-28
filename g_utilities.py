@@ -46,8 +46,8 @@ def createStudy(studyFolder=None):
         └── QC
 
     Do note that the command will create all the missing subfolders in which the
-    specified study is to reside! The command also prepares template parameters.txt
-    and hcpmap.txt files in <studyFolder>/subjects/specs folder.
+    specified study is to reside. The command also prepares template batch_parameters.txt
+    and hcp_mapping.txt files in <studyFolder>/subjects/specs folder.
 
     Example:
 
@@ -82,16 +82,16 @@ def createStudy(studyFolder=None):
     TemplateFolder = os.environ['TemplateFolder']
     print "\nCopying template files:"
     print " ... parameters.txt"
-    shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'batch_parameters.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'parameters.txt'))
+    shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'batch_parameters.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'batch_parameters.txt'))
     print " ... hcpmap.txt"
-    shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'hcpmap.txt'))
+    shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'hcp_mapping.txt'))
 
     print "\nDone.\n"
 
 
 def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=None, overwrite="ask", paramFile=None):
     '''
-    compileBatch [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/batch.txt] [overwrite=ask] [paramFile=<subjectsFolder>/specs/parameters.txt]
+    compileBatch [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/batch.txt] [overwrite=ask] [paramFile=<subjectsFolder>/specs/batch_parameters.txt]
 
     Combines all the sourceFiles in all subject folders in subjectsFolder to
     generate a joint batch file and save it as targetFile.
@@ -158,7 +158,7 @@ def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=N
     # --- check for param file
 
     if paramFile is None:
-        paramFile = os.path.join(subjectsFolder, 'specs', 'parameters.txt')
+        paramFile = os.path.join(subjectsFolder, 'specs', 'batch_parameters.txt')
 
     if os.path.exists(paramFile):
         print "---> appending parameter file [%s]." % (paramFile)

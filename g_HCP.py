@@ -370,7 +370,7 @@ def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject_hcp.txt", check="int
 
 def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", pattern=None, mapping=None):
     '''
-    getHCPReady [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [pattern="*"] [mapping=specs/hcpmap.txt]
+    getHCPReady [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [pattern="*"] [mapping=specs/hcp_mapping.txt]
 
     USE
     ===
@@ -393,7 +393,7 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
     --sfile    the "source" subject.txt file [subject.txt]
     --tfile    the "target' subject.txt file [subject_hcp.txt]
     --pattern  glob pattern to use in identifying subject folders ["*"]
-    --mapping  the path to the text file describing the mapping [specs/hcpmap.txt]
+    --mapping  the path to the text file describing the mapping [specs/hcp_mapping.txt]
 
     Mapping specification
     ---------------------
@@ -422,7 +422,7 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
     EXAMPLE USE
     ===========
 
-    gmri getHCPReady folder=subjects pattern="OP*" mapping=subjects/maphcp.txt
+    gmri getHCPReady folder=subjects pattern="OP*" mapping=subjects/hcp_mapping.txt
 
     ----------------
     Written by Grega Repovš
@@ -437,7 +437,7 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
     if pattern is None:
         pattern = "*"
     if mapping is None:
-        mapping = os.path.join(folder, 'specs', 'hcpmap.txt')
+        mapping = os.path.join(folder, 'specs', 'hcp_mapping.txt')
 
     # -- get mapping ready
 
