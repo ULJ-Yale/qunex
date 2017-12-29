@@ -62,6 +62,16 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
+MNAPFunctions=(matlabhelp gmri_function dicomorganize setuphcp createlists hpcsync printmatrix bolddense linkmovement fixica postfix boldhardlinkfixica fixicainsertmean fixicaremovemean hcpdlegacy eddyqc dwidenseparcellation dwiseedtractography computeboldfc structuralparcellation boldparcellation roiextract fsldtifit fslbedpostxgpu autoptx pretractographydense probtrackxgpudense awshcpsync qcpreproc timestamp show_version)
+
+isMNAPFunction () {
+    local e
+        echo "Checking $e"
+    for e in "${MNAPFunctions[@]}"; do [[ "$e" == "$1" ]] && return 1; done
+    return 0
+}
+
+
 # ------------------------------------------------------------------------------
 #  Setup color outputs
 # ------------------------------------------------------------------------------
@@ -3612,13 +3622,15 @@ fi
 	unset UsageName
 	unset MNAPFunctions
 	UsageName=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep show_usage_${1}`
-	MNAPFunctions=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
+	#MNAPFunctions=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
+	
 	# -- check for input with double flags
 	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
 		UsageInput=`echo ${Usage:2}`
 			# -- check if input part of function list
-			if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
+			if [[ $(isMNAPFunction  *${UsageInput}*) == "0" ]]; then
+			#if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
@@ -3636,7 +3648,8 @@ fi
 		Usage="$1"
 		UsageInput=`echo ${Usage:1}`
 			# -- check if input part of function list
-			if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
+			if [[ $(isMNAPFunction  *${UsageInput}*) == "0" ]]; then
+			#if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
@@ -3655,7 +3668,8 @@ fi
 		Usage="$1"
 		UsageInput=`echo ${Usage} | cut -c 2-`
 			# -- check if input part of function list
-			if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
+			if [[ $(isMNAPFunction  *${UsageInput}*) == "0" ]]; then
+			#if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
@@ -3672,7 +3686,8 @@ fi
 	if [ -z "$2" ]; then
 			UsageInput="$1"
 			# -- check if input part of function list
-			if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
+			if [[ $(isMNAPFunction  *${UsageInput}*) == "0" ]]; then
+			#if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
