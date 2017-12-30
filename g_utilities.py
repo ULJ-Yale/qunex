@@ -123,7 +123,7 @@ def createStudy(studyFolder=None):
 
     paramFile = os.path.join(studyFolder, 'subjects', 'specs', 'batch_parameters.txt')
     if not os.path.exists(paramFile):
-        print " ... parameters.txt"
+        print " ... batch_parameters.txt"
         pfile = open(paramFile, 'w')
         print >> pfile, parameterTemplateHeader
         for line in gp.arglist:
@@ -133,7 +133,7 @@ def createStudy(studyFolder=None):
                 print >> pfile, "#\n# " + line[0] + '\n#'
         pfile.close()
     else:
-        print " ... parameters.txt file already exists"
+        print " ... batch_parameters.txt file already exists"
 
     mapFile = os.path.join(studyFolder, 'subjects', 'specs', 'hcp_mapping.txt')
     if os.path.exists(mapFile):
@@ -165,9 +165,9 @@ def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=N
     The command will also look for a parameter file. If it exists, it will
     prepend its content at the beginning of the batch.txt file. If no paramFile
     is specified and the default template does not exist, the command will print
-    a warning and create an empty template with all available parameters. Do
-    note that this file will need to be edited with correct parameter values for
-    your study.
+    a warning and create an empty template (subjects/spec/batch_parameters.txt)
+    with all available parameters. Do note that this file will need to be edited
+    with correct parameter values for your study.
 
     Alternatively, if you don't have a parameter file prepared, you can use or
     copy and modify one of the following templates:
