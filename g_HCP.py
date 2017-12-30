@@ -415,11 +415,15 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
     the desired HCP labels. There are no limits to the number of mappings
     specified. Each mapping is to be specified in a single line in a form:
 
-    "<source text> => <replacement text>"
+    <original_sequence_name>  => <user_specified_label>
+
+    or
+
+    <sequence number> => <user_specified_label>
 
     BOLD files should be given a compound label after the => separator:
 
-    <original_sequence_name>  => bold:<user_speficied_label>
+    <original_sequence_name>  => bold:<user_specified_label>
 
     as this allows for flexible labeling of distinct BOLD runs based on their
     content. Here the 'bold' part denotes that it is a bold file and the
@@ -429,7 +433,8 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
     Any empty lines, lines starting with #, and lines without the "map to" =>
     characters in the mapping file will be ingored. In the target file, images
     with names that do not match any of the specified mappings will be given
-    empty labels.
+    empty labels. When both sequence number and sequence name match, sequence
+    number will have priority
 
     Example
     -------
@@ -447,6 +452,8 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
     RSBOLD 3mm 48 2.5s  => bold:rest
     BOLD 3mm 48 2.5s    => bold:WM
 
+    5 => bold:sleep
+
     Example lines in a source subject.txt file:
 
     01: Scout
@@ -461,7 +468,7 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
     02: T1w              :T1w 0.7mm N1
     03: T2w              :T2w 0.7mm N1
     04: bold1:rest       :RSBOLD 3mm 48 2.5s
-    05: bold2:rest       :RSBOLD 3mm 48 2.5s
+    05: bold2:sleep      :RSBOLD 3mm 48 2.5s
 
     Note, that the old sequence names are perserved.
 
@@ -484,6 +491,7 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
     2017-12-30 Grega Repovš
              - Added the option to explicitly specify the subjects to process.
              - Adjusted and expanded help string.
+             - Added the option to map sequence names.
     '''
 
     if mapping is None:
@@ -500,7 +508,8 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
     mapping = [line.strip() for line in open(mapping) if line[0] != "#"]
     mapping = [e.split('=>') for e in mapping]
     mapping = [[f.strip() for f in e] for e in mapping if len(e) == 2]
-    mapping = dict(mapping)
+    mappingNumber = dict([[int(e[0]), e[1]] for e in mapping if e[0].isdigit()])
+    mappingName   = dict([e for e in mapping if not e[0].isdigit()])
 
     # -- get list of subject folders
 
@@ -520,7 +529,8 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
         if not os.path.exists(ssfile):
             continue
         print " ... Processing folder %s" % (sfolder)
-        if os.path.exists(stfile) and overwrite is not "yes":
+
+        if os.path.exists(stfile) and overwrite != "yes":
             print "     ... Target file already exists, skipping! [%s]" % (stfile)
             continue
 
@@ -541,9 +551,12 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
                         nlines.append('hcpready: true')
                         images = True
 
+                    onum = int(e[0].strip())
                     oimg = e[1].strip()
+                    if onum in mappingNumber:
+                        repl  = mappingNumber[onum]
                     if oimg in mapping:
-                        repl  = mapping[oimg]
+                        repl  = mappingName[oimg]
                     else:
                         repl  = " "
 
