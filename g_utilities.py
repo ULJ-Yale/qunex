@@ -12,6 +12,45 @@ import os
 import glob
 import datetime
 import shutil
+import niutilities.g_process as gp
+
+
+parameterTemplateHeader = '''#  Batch parameters file
+#  =====================
+#
+#  This file is used to specify the default parameters used by various MNAP commands for
+#  HCP minimal preprocessing pipeline, additional bold preprocessing commands,
+#  and other analytic functions. The content of this file should be prepended to the list
+#  that contains all the subjects that is passed to the commands. It can added manually or
+#  automatically when making use of the compileLists MNAP command.
+#
+#  This template file should be edited to include the parameters relevant for
+#  a given study/analysis and provide the appropriate values. For detailed description of
+#  parameters and their valid values, please consult the MNAP documentation
+*  (e.g. Running HCP minimal preprocessing pipelines, Additional BOLD
+#  preprocessing) and online help for the relevant MNAP commands.
+#
+#
+#  File format
+#  -----------
+#
+#  Each parameter is specified in a separate line as a
+#  "_<parameter_key>: <parameter_value>" pair. For example:
+#
+#  _hcp_brainsize:  170
+#
+#  Empty lines and lines that start with a hash (#) are ignored.
+#
+#
+#  Parameters
+#  ==========
+#
+#  The following is a list of parameters organized by the commands they relate
+#  to. To specify parameters, uncomment the line (it should start with the
+#  underscore before the parameter name) and provide the desired value. In some
+#  cases default values are provided. Do take care to remove the descriptors
+#  (... <description>) after the values for the parameters to be used.'''
+
 
 
 def createStudy(studyFolder=None):
@@ -80,11 +119,28 @@ def createStudy(studyFolder=None):
             os.makedirs(tfolder)
 
     TemplateFolder = os.environ['TemplateFolder']
-    print "\nCopying template files:"
-    print " ... parameters.txt"
-    shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'batch_parameters.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'batch_parameters.txt'))
-    print " ... hcpmap.txt"
-    shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping.txt'), os.path.join(studyFolder, 'subjects', 'specs', 'hcp_mapping.txt'))
+    print "\nPreparing template files:"
+
+    paramFile = os.path.join(studyFolder, 'subjects', 'specs', 'batch_parameters.txt')
+    if not os.path.exists(paramFile):
+        print " ... parameters.txt"
+        pfile = open(paramFile, 'w')
+        print >> pfile, parameterTemplateHeader
+        for line in gp.arglist:
+            if len(line) == 4:
+                print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
+            elif len(line) > 0:
+                print >> pfile, "#\n# " + line[0] + '\n#'
+        pfile.close()
+    else:
+        print " ... parameters.txt file already exists"
+
+    mapFile = os.path.join(studyFolder, 'subjects', 'specs', 'hcp_mapping.txt')
+    if os.path.exists(mapFile):
+        print " ... hcp_mapping.txt file already exists"
+    else:
+        print " ... hcp_mapping.txt"
+        shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping.txt'), mapFile)
 
     print "\nDone.\n"
 
@@ -107,8 +163,17 @@ def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=N
     - no:  abort creating the file
 
     The command will also look for a parameter file. If it exists, it will
-    prepend its content at the beginning of the batch.txt file. If it does
-    not exist it will print a warning and continue.
+    prepend its content at the beginning of the batch.txt file. If no paramFile
+    is specified and the default template does not exist, the command will print
+    a warning and create an empty template with all available parameters. Do
+    note that this file will need to be edited with correct parameter values for
+    your study.
+
+    Alternatively, if you don't have a parameter file prepared, you can use or
+    copy and modify one of the following templates:
+
+    legacy data template: $TemplateFolder/templates/batch_legacy_parameters.txt
+    multiband data template: $TemplateFolder/templates/batch_multiband_parameters.txt
 
     Example:
 
@@ -159,10 +224,20 @@ def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=N
 
     if paramFile is None:
         paramFile = os.path.join(subjectsFolder, 'specs', 'batch_parameters.txt')
+        if not os.path.exists(paramFile):
+            print "---> WARNING: Creating empty parameter file!"
+            pfile = open(paramFile, 'w')
+            print >> pfile, parameterTemplateHeader
+            for line in gp.arglist:
+                if len(line) == 4:
+                    print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
+                elif len(line) > 0:
+                    print >> pfile, "#\n# " + line[0] + '\n#'
+            pfile.close()
 
     if os.path.exists(paramFile):
         print "---> appending parameter file [%s]." % (paramFile)
-        print >> jfile, "# Parameter file: %s" % (paramFile)
+        print >> jfile, "# Parameter file: %s\n#" % (paramFile)
         with open(paramFile) as f:
             for line in f:
                 print >> jfile, line,
@@ -184,4 +259,3 @@ def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=N
 
     print "===> Done"
     jfile.close()
-
