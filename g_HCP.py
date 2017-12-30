@@ -26,7 +26,7 @@ import g_core
 
 def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     '''
-    setupHCP [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt]
+    setupHCP [folder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
 
     USE
     ===
@@ -34,7 +34,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     The command maps images from the subject's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP
     minimal preprocessing workflow. For the mapping to be correct, the
-    command expects the source subject.txt file (sbjf) to hold the relevant
+    command expects the source subject.txt file (sfile) to hold the relevant
     information on images. To save space, the images are not copied into the new
     folder structure but rather hard-links are created if possible.
 
@@ -45,7 +45,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
                subject.txt file. [.]
     --tfolder  The folder (within the base folder) to which the data is to be
                mapped. [hcp]
-    --sbjf     The name of the source subject.txt file. [subject_hcp.txt]
+    --sfile    The name of the source subject.txt file. [subject_hcp.txt]
 
     IMAGE DEFINITION
     ================
@@ -96,7 +96,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     EXAMPLE USE
     ===========
 
-    gmri setupHCP folder=OP316 sbjf=subject.txt
+    gmri setupHCP folder=OP316 sfile=subject.txt
 
     ----------------
     Written by Grega Repovš
@@ -109,7 +109,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
 
     '''
 
-    inf = niutilities.g_core.readSubjectData(os.path.join(folder, sbjf))[0][0]
+    inf = niutilities.g_core.readSubjectData(os.path.join(folder, sfile))[0][0]
 
     basef    = os.path.join(folder, tfolder, inf['id'])
     rawf     = inf['raw_data']
@@ -261,9 +261,9 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
 
 
 
-def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject_hcp.txt", check="interactive"):
+def setupHCPFolder(folder=".", tfolder="hcp", sfile="subject_hcp.txt", check="interactive"):
     '''
-    setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactive]
+    setupHCPFolder [folder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=interactive]
 
     USE
     ===
@@ -272,7 +272,7 @@ def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject_hcp.txt", check="int
     structure for all the subject folders it finds within the specified
     origin folder (folder).
 
-    Specifically, the command looks for source subject.txt files (sbjf) in all
+    Specifically, the command looks for source subject.txt files (sfile) in all
     the subfolders of the origin folder (folder). For each found source
     subject.txt file it checks whether the file is hcp ready and if the target
     folder (tfolder) exists. If the file is ready and if the target folder
@@ -292,7 +292,7 @@ def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject_hcp.txt", check="int
                "subjects"). [.]
     --tfolder  The target HCP folder in which to set up data for HCP
                preprocessing (usually "hcp"). [hcp]
-    --sbjf     The source subject.txt file to use for mapping to a target HCP
+    --sfile    The source subject.txt file to use for mapping to a target HCP
                folder. [subject_hcp.txt]
     --check    Whether to check if the subject is safe to run (yes), run in any
                case (no) or ask the user (interactive) if in doubt.
@@ -312,6 +312,7 @@ def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject_hcp.txt", check="int
 
     # list all possible sbjfiles and check them
 
+    sbjf   = sfile
     sfiles = glob.glob(os.path.join(folder, "*", sbjf))
     flist  = []
 
