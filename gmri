@@ -84,7 +84,7 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
-getHCPReady    subjects [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [subjectFilter=None]
+getHCPReady    subjects=<subjects specification> [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [subjectFilter=None] [overwrite=no]
 setupHCP       [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt]
 setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactive]
 

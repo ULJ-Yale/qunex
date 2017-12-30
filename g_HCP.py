@@ -21,6 +21,7 @@ import niutilities
 import collections
 import niutilities.g_gimg as g
 import os.path
+import g_core
 
 
 def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
@@ -368,9 +369,9 @@ def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject_hcp.txt", check="int
     print "\n\n===> done processing %s\n" % (folder)
 
 
-def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, subjectFilter=None):
+def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, subjectFilter=None, overwrite="no"):
     '''
-    getHCPReady subjects [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [subjectFilter=None]
+    getHCPReady subjects=<subjects specification> [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [subjectFilter=None] [overwrite=no]
 
     USE
     ===
@@ -391,17 +392,18 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
 
     --subjects       Either an explicit list (space, comma or pipe separated) of
                      subjects to process or the path to a batch or list file with
-                     subjects to process
-    --folder         The directory that holds subjects' folders [.]
-    --sfile          The "source" subject.txt file [subject.txt]
-    --tfile          The "target" subject.txt file [subject_hcp.txt]
-    --mapping        The path to the text file describing the mapping
+                     subjects to process.
+    --folder         The directory that holds subjects' folders. [.]
+    --sfile          The "source" subject.txt file. [subject.txt]
+    --tfile          The "target" subject.txt file. [subject_hcp.txt]
+    --mapping        The path to the text file describing the mapping.
                      [specs/hcp_mapping.txt]
-
     --subjectFilter  An optional "key:value|key:value" string used as a filter
                      if a batch file is used. Only subjects for which all the
                      key:value pairs are true will be processed. All the
                      subjects will be processed if no filter is provided.
+    --overwrite      Whether to overwrite target files that already exist (yes)
+                     or not (no). [no]
 
     If an explicit list is provided, each element is treated as a glob pattern
     and the command will process all matching subject ids.
@@ -502,7 +504,7 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
 
     # -- get list of subject folders
 
-    subjects, gopts = gp_core.getSubjectList(subjects, subjectFilter=subjectFilter, verbose=False)
+    subjects, gopts = g_core.getSubjectList(subjects, subjectFilter=subjectFilter, verbose=False)
 
     sfolders = []
     for subject in subjects:
@@ -518,7 +520,9 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
         if not os.path.exists(ssfile):
             continue
         print " ... Processing folder %s" % (sfolder)
-
+        if os.path.exists(stfile) and overwrite is not "yes":
+            print "     ... Target file already exists, skipping! [%s]" % (stfile)
+            continue
 
         lines = [line.strip() for line in open(ssfile)]
 

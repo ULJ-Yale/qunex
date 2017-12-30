@@ -193,16 +193,16 @@ def getSubjectList(listString, subjectFilter=None, subjid=None, verbose=False):
         slist = readList(listString, verbose=verbose)
 
     else:
-        slist = [{'id': e} for e in re.split('\W+|,|\|', listString)]
+        slist = [{'id': e} for e in re.split(' +|,|\|', listString)]
 
     if subjid is not None and subjid.strip() is not "":
-        subjid = re.split('\W+|,|\|', subjid)
+        subjid = re.split(' +|,|\|', subjid)
         slist = [e for e in slist if e['id'] in subjid]
 
     if subjectFilter is not None and subjectFilter.strip() is not "":
         try:
             filters = [[f.strip() for f in e.split(':')] for e in subjectFilter.split("|")]
-        else:
+        except:
             raise ValueError("ERROR: The provided filter parameter is invalid [%s]!" % subjectFilter)
 
         for key, value in filters:
