@@ -555,7 +555,7 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
                     oimg = e[1].strip()
                     if onum in mappingNumber:
                         repl  = mappingNumber[onum]
-                    if oimg in mapping:
+                    elif oimg in mappingName:
                         repl  = mappingName[oimg]
                     else:
                         repl  = " "
