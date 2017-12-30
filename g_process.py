@@ -162,7 +162,7 @@ arglist = [['# ---- Basic settings'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
            ['script',             'None',                                        isNone, 'The script to be executed.'],
-           ['subjid',              '',                                           plist,  "list of | separated subject ids for which to run the command"],
+           ['subjid',              '',                                           str,  "list of | separated subject ids for which to run the command"],
 
            ['# ---- Preprocessing options'],
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
@@ -425,7 +425,7 @@ def run(command, args):
     if 'subjects' in args:
         options['subjects'] = args['subjects']
 
-    subjects, gpref = gp_core.readSubjectData(options['subjects'])
+    subjects, gpref = gp_core.getSubjectList(options['subjects'], subjectFilter=options['filter'], subjid=options['subjid'], verbose=False)
 
     for (k, v) in gpref.iteritems():
         options[k] = v
@@ -519,35 +519,6 @@ def run(command, args):
     if printinfo:
         print subjects
 
-
-    # -----------------------------------------------------------------------
-    #                                                     filter subject list
-
-    if len(options['subjid']) > 0:
-        osubjects = subjects
-        subjects  = []
-
-        for osubject in osubjects:
-            if osubject['subject'] in options['subjid']:    # might need to change to id
-                subjects.append(osubject)
-
-    if sfilter:
-        osubjects = subjects
-        subjects = []
-
-        cond = sfilter.split('|')
-        cond = [e.split(':') for e in cond]
-        print cond
-        for osubject in osubjects:
-            ok = True
-            for c in cond:
-                if c[0].strip() in osubject:
-                    if osubject[c[0].strip()] != c[1].strip():
-                        ok = False
-                else:
-                    ok = False
-            if ok:
-                subjects.append(osubject)
 
     # =======================================================================
     #                                               RUN BY SUBJECT PROCESSING
