@@ -368,9 +368,9 @@ def setupHCPFolder(folder=".", tfolder="hcp", sbjf="subject_hcp.txt", check="int
     print "\n\n===> done processing %s\n" % (folder)
 
 
-def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", pattern=None, mapping=None):
+def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, subjectFilter=None):
     '''
-    getHCPReady [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [pattern="*"] [mapping=specs/hcp_mapping.txt]
+    getHCPReady subjects [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [subjectFilter=None]
 
     USE
     ===
@@ -379,32 +379,58 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
     information necessary for correct mapping to a fodler structure supporting
     HCP preprocessing.
 
-    The command checks all the directories in the folder that match the pattern,
-    looking for the presence of specified source file (sfile). If the source
-    file is found, each sequence name is checked against the source specified in
-    the mapping file (mapping), and replaced with the provided text. The results
-    are then saved to the specified target file (tfile). The resulting files will
-    have "hcpready: true" key-value pair added.
+    For all the subjects specified, the command checks for the presence of
+    specified source file (sfile). If the source file is found, each sequence
+    name is checked against the source specified in the mapping file (mapping),
+    and the specified label is aded. The results are then saved to the specified
+    target file (tfile). The resulting subject infomation files will have
+    "hcpready: true" key-value pair added.
 
     PARAMETERS
     ==========
 
-    --folder   the directory that holds subjects' folders (usually "subjects") [.]
-    --sfile    the "source" subject.txt file [subject.txt]
-    --tfile    the "target' subject.txt file [subject_hcp.txt]
-    --pattern  glob pattern to use in identifying subject folders ["*"]
-    --mapping  the path to the text file describing the mapping [specs/hcp_mapping.txt]
+    --subjects       Either an explicit list (space, comma or pipe separated) of
+                     subjects to process or the path to a batch or list file with
+                     subjects to process
+    --folder         The directory that holds subjects' folders [.]
+    --sfile          The "source" subject.txt file [subject.txt]
+    --tfile          The "target" subject.txt file [subject_hcp.txt]
+    --mapping        The path to the text file describing the mapping
+                     [specs/hcp_mapping.txt]
+
+    --subjectFilter  An optional "key:value|key:value" string used as a filter
+                     if a batch file is used. Only subjects for which all the
+                     key:value pairs are true will be processed. All the
+                     subjects will be processed if no filter is provided.
+
+    If an explicit list is provided, each element is treated as a glob pattern
+    and the command will process all matching subject ids.
 
     Mapping specification
     ---------------------
 
-    The mapping file specifies what source text is to be replaced with what
-    target text. There are no limits to the number of mappings. Mappings that
-    are not found in the source file will not be used. All lines not matching
-    the pattern are ignored, as well as lines that start with #. Each mapping
-    is to be specified in a single line in a form:
+    The mapping file specifies the mapping between original sequence names and
+    the desired HCP labels. There are no limits to the number of mappings
+    specified. Each mapping is to be specified in a single line in a form:
 
     "<source text> => <replacement text>"
+
+    BOLD files should be given a compound label after the => separator:
+
+    <original_sequence_name>  => bold:<user_speficied_label>
+
+    as this allows for flexible labeling of distinct BOLD runs based on their
+    content. Here the 'bold' part denotes that it is a bold file and the
+    <user_speficied_label> allows for flexibility in naming. getHCPReady will
+    automatically number bold images in a sequential order, starting with 1.
+
+    Any empty lines, lines starting with #, and lines without the "map to" =>
+    characters in the mapping file will be ingored. In the target file, images
+    with names that do not match any of the specified mappings will be given
+    empty labels.
+
+    Example
+    -------
 
     Example lines in a mapping file:
 
@@ -419,10 +445,31 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
     RSBOLD 3mm 48 2.5s  => bold:rest
     BOLD 3mm 48 2.5s    => bold:WM
 
+    Example lines in a source subject.txt file:
+
+    01: Scout
+    02: T1w 0.7mm N1
+    03: T2w 0.7mm N1
+    04: RSBOLD 3mm 48 2.5s
+    05: RSBOLD 3mm 48 2.5s
+
+    Resulting lines in target subject_hcp.txt file:
+
+    01:                  :Scout
+    02: T1w              :T1w 0.7mm N1
+    03: T2w              :T2w 0.7mm N1
+    04: bold1:rest       :RSBOLD 3mm 48 2.5s
+    05: bold2:rest       :RSBOLD 3mm 48 2.5s
+
+    Note, that the old sequence names are perserved.
+
+
     EXAMPLE USE
     ===========
 
-    gmri getHCPReady folder=subjects pattern="OP*" mapping=subjects/hcp_mapping.txt
+    gmri getHCPReady subjects="OP*|AP*" folder=subjects mapping=subjects/hcp_mapping.txt
+
+    gmri getHCPReady subjects="processing/batch_new.txt" folder=subjects mapping=subjects/hcp_mapping.txt
 
     ----------------
     Written by Grega Repovš
@@ -432,10 +479,11 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
              - Updated documentation.
     2017-12-26 Grega Repovš
              - Set to ignore lines that start with # in mapping file.
+    2017-12-30 Grega Repovš
+             - Added the option to explicitly specify the subjects to process.
+             - Adjusted and expanded help string.
     '''
 
-    if pattern is None:
-        pattern = "*"
     if mapping is None:
         mapping = os.path.join(folder, 'specs', 'hcp_mapping.txt')
 
@@ -454,7 +502,11 @@ def getHCPReady(folder=".", sfile="subject.txt", tfile="subject_hcp.txt", patter
 
     # -- get list of subject folders
 
-    sfolders = glob.glob(os.path.join(folder, pattern))
+    subjects, gopts = gp_core.getSubjectList(subjects, subjectFilter=subjectFilter, verbose=False)
+
+    sfolders = []
+    for subject in subjects:
+        sfolders += glob.glob(os.path.join(folder, subject['id']))
 
     # -- loop through subject folders
 
