@@ -42,8 +42,8 @@ def readSubjectData(filename, verbose=False):
         for sub in s:
             sub = sub.split('\n')
             sub = [e.strip() for e in sub]
+            sub = [e.split("#")[0].strip() for e in sub]
             sub = [e for e in sub if len(e) > 0]
-            sub = [e for e in sub if e[0] != "#"]
 
             dic = {}
             images = {}
@@ -129,6 +129,87 @@ def readSubjectData(filename, verbose=False):
         raise
 
     return slist, gpref
+
+
+
+def readList(filename, verbose=False):
+    '''
+    readList(filename, verbose=False)
+
+    An internal function for reading list files. It reads the file and
+    returns a list of subjects each with the provided list of files.'''
+
+    slist   = []
+    subject = None
+
+    with open(filename) as f:
+        for line in f:
+            line = [e.strip() for e in line.split(":")]
+
+            if len(line) == 2:
+
+                if line[0] == "subject id":
+                    if subject is not None:
+                        slist.append(subject)
+                    subject = {'id': line[1]}
+
+                else:
+                    if line[0] in subject:
+                        subject[line[0]].append(line[1])
+                    else:
+                        subject[line[0]] = [line[1]]
+
+    return slist
+
+
+def getSubjectList(listString, subjectFilter=None, subjid=None, verbose=False):
+    '''
+    getSubjectList(listString, subjectFilter=None, subjid=None)
+
+    An internal function for getting a list of subjects as an array of dictionaries in
+    the form: [{'id': <subject id>, [... other keys]}, {'id': <subject id>, [... other keys]}].
+
+    The provided listString can be:
+
+    * a comma, space or pipe separated list of subject id codes,
+    * a path to a batch file (identified by .txt extension),
+    * a path to a *.list file (identified by .list extension).
+
+    In the first cases, the dictionary will include only subject ids, in the second all the
+    other information present in the batch file, in the third lists of specified files, e.g.:
+    [{'id': <subject id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
+
+    If subjectFilter is provided (not None), only subjects that match the filter will be returned.
+    If subjid is provided (not None), only subjects with matching id will be returned.'''
+
+    gpref = None
+
+    listString = listString.strip()
+
+    if re.match(".*\.txt$", listString):
+        slist, gpref = readSubjectData(listString, verbose=verbose)
+
+    elif re.match(".*\.list$", listString):
+        slist = readList(listString, verbose=verbose)
+
+    else:
+        slist = [{'id': e} for e in re.split('\W+|,|\|', listString)]
+
+    if subjid is not None and subjid.strip() is not "":
+        subjid = re.split('\W+|,|\|', subjid)
+        slist = [e for e in slist if e['id'] in subjid]
+
+    if subjectFilter is not None and subjectFilter.strip() is not "":
+        try:
+            filters = [[f.strip() for f in e.split(':')] for e in subjectFilter.split("|")]
+        else:
+            raise ValueError("ERROR: The provided filter parameter is invalid [%s]!" % subjectFilter)
+
+        for key, value in filters:
+            slist = [e for e in slist if key in e and e[key] == value]
+
+    return slist, gpref
+
 
 
 
