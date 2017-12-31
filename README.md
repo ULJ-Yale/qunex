@@ -116,6 +116,7 @@ Change Log
 * 0.6.4 [niutilities] Changed subjects.txt to batch.txt throughout and compileSubjectsTxt to compileBatch
 * 0.6.5 [niutilities, library] Added parameters.txt and hcpmap.txt templates, which are now added automatically to subjects/specs in createStudy
 * 0.6.6 [connector, library] Deprecated original connector hcp functions, improved parameter file documentation
+* 0.6.7 [connector, niutilities, library] Updated front-end data organization functionality
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
