@@ -62,7 +62,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions=(matlabhelp gmri_function dicomorganize setuphcp createlists hpcsync printmatrix bolddense linkmovement fixica postfix boldhardlinkfixica fixicainsertmean fixicaremovemean hcpdlegacy eddyqc dwidenseparcellation dwiseedtractography computeboldfc structuralparcellation boldparcellation roiextract fsldtifit fslbedpostxgpu autoptx pretractographydense probtrackxgpudense awshcpsync qcpreproc timestamp show_version)
+MNAPFunctions=(matlabhelp gmri_function dicomorganize setuphcp createlists hpcsync printmatrix bolddense linkmovement fixica postfix boldhardlinkfixica fixicainsertmean fixicaremovemean hcpdlegacy eddyqc dwidenseparcellation dwiseedtractography computeboldfc structuralparcellation boldparcellation roiextract fsldtifit fslbedpostxgpu autoptx pretractographydense probtrackxgpudense awshcpSync qcpreproc timestamp show_version)
 
 isMNAPFunction () {
     local e
@@ -148,7 +148,7 @@ echo "    --subjects='<list_of_cases>' [options]"
 echo ""
 echo "Example:"
 echo ""
-echo "    mnap --function=dicomorganize \ "
+echo "    mnap --function=dicomOrganize \ "
 echo "    --studyfolder=/some/path/to/study/subjects \ "
 echo "    --subjects='<case_id1>,<case_id2>'"
 echo ""
@@ -175,11 +175,11 @@ echo "--------------------------------------------------------------------------
 echo ""
 echo "Data organization functions"
 echo "----------------------------"
-echo "dicomorganize ...... sort dicoms and setup nifti files from dicoms"
-echo "setuphcp ...... setup data structure for hcp processing"
-echo "createlists ...... setup subject lists for preprocessing or analyses"
-echo "hpcsync ...... sync with hpc cluster(s) for preprocessing"
-echo "awshcpsync ...... sync hcp data from aws s3 cloud"
+echo "dicomOrganize ...... sort dicoms and setup nifti files from dicoms"
+echo "setupHCP ...... setup data structure for hcp processing"
+echo "createLists ...... setup subject lists for preprocessing or analyses"
+echo "hpcSync ...... sync with hpc cluster(s) for preprocessing"
+echo "awshcpSync ...... sync hcp data from aws s3 cloud"
 echo ""
 echo ""
 echo "QC functions"
@@ -330,7 +330,7 @@ show_usage_gmri() {
 #  dicomorganize - Sort original DICOMs into sub-folders and then generate NIFTI files
 # ------------------------------------------------------------------------------------------------------
 
-dicomorganize() {
+dicomOrganize() {
 				  		
 	  		mkdir ${StudyFolder}/${CASE}/dicom &> /dev/null
 	  		
@@ -518,10 +518,10 @@ show_usage_setuphcp() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  createlists - Generate processing & analysis lists for fcMRI
+#  createLists - Generate processing & analysis lists for fcMRI
 # ------------------------------------------------------------------------------------------------------
 
-createlists() {
+createLists() {
 
 	if [ "$ListGenerate" == "preprocessing" ]; then
 			
@@ -582,7 +582,7 @@ createlists() {
 	fi
 }
 
-show_usage_createlists() {
+show_usage_createLists() {
   				echo ""
   				echo "-- DESCRIPTION:"
     			echo ""
@@ -635,7 +635,7 @@ show_usage_createlists() {
     			echo "-- Example with flagged parameters:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='createlists' \ "
+				echo "--function='createLists' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--listtocreate='preprocessing' \ "
 				echo "--overwrite='yes' \ "
@@ -644,7 +644,7 @@ show_usage_createlists() {
 				echo "--append='yes' "
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='createlists' \ "
+				echo "--function='createLists' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--listtocreate='analysis' \ "
 				echo "--overwrite='yes' \ "
@@ -661,7 +661,7 @@ show_usage_createlists() {
 # ------------------------------------------------------------------------------------------------------
 
 
-hpcsync() {
+hpcSync() {
 
 	if [ "$Direction" == 1 ]; then
 		echo "Syncing data to $ClusterName for $CASE ..."
@@ -678,7 +678,7 @@ hpcsync() {
 	fi
 }
 
-show_usage_hpcsync() {
+show_usage_hpcSync() {
 
   				echo ""
   				echo "-- DESCRIPTION:"
@@ -687,20 +687,12 @@ show_usage_hpcsync() {
   				echo "It explicitly preserves the Human Connectome Project folder structure for preprocessing:"
   				echo "    <study_folder>/<case>/hcp/<case>"
   				echo ""
-    			echo "-- Usage for hpcsync"
-    			echo ""
-				echo "* Example with interactive terminal:"
-				echo "mnap hpcsync <study_folder> '<list of cases>'"
+    			echo "-- Usage for hpcSync"
     			echo ""
     			echo ""
 				echo "* Example with flags:"
-				echo "mnap --function=hpcsync --path=<study_folder> --subjects='<list of cases>'--cluster=<cluster_address> --dir=<rsync_direction> --netid=<Yale_NetID> --clusterpath=<cluster_study_folder>"
+				echo "mnap --function=hpcSync --path=<study_folder> --subjects='<list of cases>'--cluster=<cluster_address> --dir=<rsync_direction> --netid=<Yale_NetID> --clusterpath=<cluster_study_folder>"
     			echo ""
-    			echo ""
-  				echo "-- OPTIONS:"
-    			echo ""
-    			echo "--function=<function_name>   Name of function (required)"	
-    			echo "--path=<study_folder>        Path to study data folder (required)"	
     			echo ""
 }
 
@@ -2975,7 +2967,7 @@ show_usage_probtrackxgpudense() {
 #  Sync data from AWS buckets - customized for HCP
 # -------------------------------------------------------------------------------------------------------------------------------
 
-awshcpsync() {
+awshcpSync() {
 
 mkdir "$StudyFolder"/aws.logs &> /dev/null
 cd "$StudyFolder"/aws.logs
@@ -2983,32 +2975,32 @@ if [ "$RunMethod" == "2" ]; then
 	echo "Dry run"
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
-		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	else
 		mkdir "$StudyFolder"/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
-		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	fi
 fi
 if [ "$RunMethod" == "1" ]; then
 	echo "Syncing"
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
-		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	else
 		mkdir "$StudyFolder"/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 		echo "$Awsuri"/"$CASE"/"$Modality"
-		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpsync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	fi
 fi
 }
 
-show_usage_awshcpsync() {
+show_usage_awshcpSync() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
@@ -3027,7 +3019,7 @@ show_usage_awshcpsync() {
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='awshcpsync' --modality='T1w' --awsuri='/hcp-openaccess/HCP_900'"
+				echo "mnap --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='awshcpSync' --modality='T1w' --awsuri='/hcp-openaccess/HCP_900'"
 				echo ""				
 				echo ""
 }
@@ -3796,7 +3788,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@` 																# Use subject HCP File for appending the parameter list
 	ListPath=`opts_GetOpt "${setflag}listpath" $@` 																			# Path of list to generate
 
-	# -- hpcsync input flags
+	# -- hpcSync input flags
 	NetID=`opts_GetOpt "${setflag}netid" $@` 																				# Yale NetID for cluster rsync command
 	HCPStudyFolder=`opts_GetOpt "${setflag}clusterpath" $@` 																# cluster study folder for cluster rsync command
 	Direction=`opts_GetOpt "${setflag}dir" $@` 																				# direction of rsync command (1 to cluster; 2 from cluster)
@@ -3883,7 +3875,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`  														# <Number_of_Samples_for_Matrix1>   Number of samples - default=5000
 	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`  														# <Number_of_Samples_for_Matrix3>>   Number of samples - default=5000
 	
-	# -- awshcpsync input flags
+	# -- awshcpSync input flags
 	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# <modality_to_sync>   Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
 	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`	 																			# <aws_uri_location>   Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
@@ -4147,10 +4139,10 @@ if [ "$FunctionToRun" == "setuphcp" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  hpcsync function loop
+#  hpcSync function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "hpcsync" ]; then
+if [ "$FunctionToRun" == "hpcSync" ]; then
 	echo "Syncing data between the local server and Yale HPC Clusters."
 	echo ""
 		for CASE in $CASES
@@ -4160,10 +4152,10 @@ if [ "$FunctionToRun" == "hpcsync" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  createlists function loop
+#  createLists function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "createlists" ]; then
+if [ "$FunctionToRun" == "createLists" ]; then
 		
 
 		
@@ -4189,18 +4181,19 @@ if [ "$FunctionToRun" == "createlists" ]; then
 		# --- preprocessing loop ---
 		# --------------------------
 		if [ "$ListGenerate" == "preprocessing" ]; then
+			ListPath=${StudyFolder}/../processing
 			# -- Check of overwrite flag was set
 			if [ "$Overwrite" == "yes" ]; then
 				
 				echo ""
 				reho "===> Deleting prior processing lists"
 				echo ""
-				rm "$ListPath"/subjects.preprocessing."$ListName".param &> /dev/null
+				rm "$ListPath"/batch."$ListName".txt &> /dev/null
 			fi
 		
 			if [ -z "$ListFunction" ]; then 
 				reho "List function not set. Using default function."
-				ListFunction="${TOOLS}/${MNAPREPO}/connector/functions/SubjectsParamList.sh"
+				ListFunction="${TOOLS}/${MNAPREPO}/connector/functions/SubjectsBatch.sh"
 				echo ""
 				reho "$ListFunction"
 				echo ""
@@ -4211,14 +4204,14 @@ if [ "$FunctionToRun" == "createlists" ]; then
 			if [ -z "$ParameterFile" ]; then 
 				echo ""
 				echo "No parameter header file set - Using defaults: "
-				ParameterFile="${TOOLS}/${MNAPREPO}/connector/functions/subjectparamlist_header_multiband.txt"
+				ParameterFile="${TemplateFolder}/templates/batch_multiband_parameters.txt"
 				echo "--> $ParameterFile"
 				echo ""
 			fi
 			# -- Check if skipping parameter file header
 			if [ "$ParameterFile" != "no" ]; then
 				# -- Check if lists exists  
-				if [ -s "$StudyFolder"/lists/subjects.preprocessing."$ListName".param ]; then
+				if [ -s ${ListPath}/batch."$ListName".txt ]; then
 					# --> If ParameterFile was set and file exists then exit and report error
 					echo ""
 					reho "---------------------------------------------------------------------"
@@ -4231,7 +4224,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 					echo ""
 					echo "-- Adding Parameter Header: "
 					echo "--> ${ParameterFile}"
-					cat ${ParameterFile} >> ${ListPath}/subjects.preprocessing.${ListName}.param
+					cat ${ParameterFile} >> ${ListPath}/batch."$ListName".txt
 				fi 
 			fi	
 			for CASE in $CASES; do
@@ -4262,7 +4255,7 @@ if [ "$FunctionToRun" == "createlists" ]; then
 				echo ""
 				reho "===> Deleting prior analysis lists"
 				echo ""
-				rm ${ListPath}/subjects.analysis."$ListName".*.list &> /dev/null
+				rm ${ListPath}/analysis."$ListName".*.list &> /dev/null
 			fi
 			
 			for CASE in $CASES; do
@@ -4984,10 +4977,10 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  awshcpsync - AWS S3 Sync command wrapper
+#  awshcpSync - AWS S3 Sync command wrapper
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "awshcpsync" ]; then
+if [ "$FunctionToRun" == "awshcpSync" ]; then
 		# Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi

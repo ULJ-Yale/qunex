@@ -15,11 +15,11 @@
 #
 # ## Product
 #
-#  Subjects parameter list generation script
+#  Subjects batch parameter file generation script
 #
 # ## License
 #
-# * The SubjectsParamList.sh = the "Software"
+# * The SubjectsBatch.sh = the "Software"
 # * This Software is distributed "AS IS" without warranty of any kind, either 
 # * expressed or implied, including, but not limited to, the implied warranties
 # * of merchantability and fitness for a particular purpose.
@@ -45,14 +45,14 @@
 	
 	if [ -z "$ListPath" ]; then 
 		unset ListPath
-		mkdir "$StudyFolder"/../processing/lists &> /dev/null
-		cd ${StudyFolder}/../processing/lists
+		mkdir "$StudyFolder"/processing/ &> /dev/null
+		cd ${StudyFolder}/processing/
 		ListPath=`pwd`
 		reho "Setting default path for list folder --> $ListPath"
 	fi
 
 # -------------------------------------------------
-# --- Code for generating parameter files ---------
+# --- Code for generating batch files -------------
 # -------------------------------------------------
 		
 	# -- test if subject_hcp.txt is absent
@@ -72,17 +72,17 @@
 		fi
 	fi
 	
-	echo "---" >> ${ListPath}/subjects.preprocessing.${ListName}.param
-	cat ${StudyFolder}/${CASE}/subject_hcp.txt >> ${ListPath}/subjects.preprocessing.${ListName}.param
-	echo "" >> ${ListPath}/subjects.preprocessing.${ListName}.param
+	echo "---" >> ${ListPath}/batch."$ListName".txt
+	cat ${StudyFolder}/${CASE}/subject_hcp.txt >> ${ListPath}/batch."$ListName".txt
+	echo "" >> ${ListPath}/batch."$ListName".txt
 	
 	# -- Fix paths stale or outdated paths
 	DATATYPES="dicom 4dfp hcp nii"
   	for DATATYPE in $DATATYPES; do
   		CorrectPath="${StudyFolder}/${CASE}/${DATATYPE}"
   		GrepInput="/${CASE}/${DATATYPE}"		
-  		ReplacePath=`more ${ListPath}/subjects.preprocessing.${ListName}.param | grep "$GrepInput" | awk '{print $2}'`
-		sed -i "s@$ReplacePath@$CorrectPath@" ${ListPath}/subjects.preprocessing.${ListName}.param
+  		ReplacePath=`more ${ListPath}/batch.${ListName}.txt | grep "$GrepInput" | awk '{print $2}'`
+		sed -i "s@$ReplacePath@$CorrectPath@" ${ListPath}/batch.${ListName}.txt
 	done
 	
 	echo " --> Appending $CASE Done"
