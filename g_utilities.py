@@ -247,11 +247,11 @@ def compileBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjec
         print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
         print >> jfile, "# Subjects folder: %s" % (os.path.abspath(subjectsfolder))
         print >> jfile, "# Source files: %s" % (sfile)
-        subjects   = []
+        slist   = []
 
     elif overwrite == 'append':
-        subjects, parameters = gc.getSubjectList(tfile)
-        subjects = [e['id'] for e in subjects]
+        slist, parameters = gc.getSubjectList(tfile)
+        slist = [e['id'] for e in slist]
         print "---> Appending to file %s" % (os.path.basename(tfile))
         jfile = open(tfile, 'a')
 
@@ -283,7 +283,7 @@ def compileBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjec
     # -- get list of subject folders
 
     if subjects is not None:
-        subjects, gopts = g_core.getSubjectList(subjects, sfilter=sfilter, verbose=False)
+        subjects, gopts = gc.getSubjectList(subjects, sfilter=sfilter, verbose=False)
         files = []
         for subject in subjects:
             files += glob.glob(os.path.join(subjectsfolder, subject['id'], sfile))
@@ -295,7 +295,7 @@ def compileBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjec
     files.sort()
     for file in files:
         subjectid = os.path.basename(os.path.dirname(file))
-        if subjectid in subjects:
+        if subjectid in slist:
             print "---> Skipping: %s" % (subjectid)
         else:
             print "---> Adding: %s" % (subjectid)

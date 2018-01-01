@@ -164,9 +164,9 @@ def readList(filename, verbose=False):
     return slist
 
 
-def getSubjectList(listString, subjectFilter=None, subjid=None, verbose=False):
+def getSubjectList(listString, sfilter=None, subjid=None, verbose=False):
     '''
-    getSubjectList(listString, subjectFilter=None, subjid=None)
+    getSubjectList(listString, sfilter=None, subjid=None)
 
     An internal function for getting a list of subjects as an array of dictionaries in
     the form: [{'id': <subject id>, [... other keys]}, {'id': <subject id>, [... other keys]}].
@@ -181,7 +181,7 @@ def getSubjectList(listString, subjectFilter=None, subjid=None, verbose=False):
     other information present in the batch file, in the third lists of specified files, e.g.:
     [{'id': <subject id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
 
-    If subjectFilter is provided (not None), only subjects that match the filter will be returned.
+    If sfilter is provided (not None), only subjects that match the filter will be returned.
     If subjid is provided (not None), only subjects with matching id will be returned.'''
 
     gpref = None
@@ -201,11 +201,11 @@ def getSubjectList(listString, subjectFilter=None, subjid=None, verbose=False):
         subjid = re.split(' +|,|\|', subjid)
         slist = [e for e in slist if e['id'] in subjid]
 
-    if subjectFilter is not None and subjectFilter.strip() is not "":
+    if sfilter is not None and sfilter.strip() is not "":
         try:
-            filters = [[f.strip() for f in e.split(':')] for e in subjectFilter.split("|")]
+            filters = [[f.strip() for f in e.split(':')] for e in sfilter.split("|")]
         except:
-            raise ValueError("ERROR: The provided filter parameter is invalid [%s]!" % subjectFilter)
+            raise ValueError("ERROR: The provided filter parameter is invalid [%s]!" % sfilter)
 
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
