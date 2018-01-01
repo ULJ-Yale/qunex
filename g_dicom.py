@@ -1356,6 +1356,8 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
 
     igz = re.compile(r'.*\.gz')
 
+    print "===> Starting processInbox"
+
     # ---- check acquisition log if present:
 
     sessions = None
@@ -1374,7 +1376,7 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
             return
 
         if os.path.exists(log['path']):
-            print "\n---> Reading acquisition log [%s]." % (log['path'])
+            print "---> Reading acquisition log [%s]." % (log['path'])
             sessions = {}
             with open(log['path']) as f:
                 if log['path'].split('.')[-1] == 'csv':
@@ -1389,7 +1391,7 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
 
     # ---- get file list
 
-    print "\n---> Checking for packets in %s ... using pattern '%s'" % (inbox, pattern)
+    print "---> Checking for packets in %s ... using pattern '%s'" % (inbox, pattern)
 
     files = glob.glob(os.path.join(inbox, '*'))
     getop = re.compile(pattern)
@@ -1397,23 +1399,39 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     okpackets  = []
     nmpackets  = []
     badpackets = []
+    expackets  = []
     for file in files:
         m = getop.search(os.path.basename(file))
         if m:
             if m.groups():
+                sid = m.group(1)
                 if sessions is not None:
-                    if m.group(1) in sessions:
-                        okpackets.append((file, sessions[m.group(1)], m.group(1)))
+                    if sid in sessions:
+                        if os.path.exists(os.path.join(subjectsfolder, sessions[sid])):
+                            expackets.append((file, sessions[sid], sid))
+                        else:
+                            okpackets.append((file, sessions[sid], sid))
                     else:
-                        nmpackets.append((file, m.group(1)))
+                        nmpackets.append((file, sid))
                 else:
-                    okpackets.append((file, m.group(1), m.group(1)))
+                    if os.path.exists(os.path.join(subjectsfolder, sessions[sid])):
+                        expackets.append((file, sid, sid))
+                    else:
+                        okpackets.append((file, sid, sid))
             else:
                 badpackets.append(file)
 
-    print "---> Found the following packets to process (subjectid <= session id : packet)"
-    for p, o, t in okpackets:
-        print "     %s <= %s : %s" % (o, t, os.path.basename(p))
+    if len(okpackets):
+        print "---> Found the following packets to process (subjectid <= session id : packet):"
+        for p, o, t in okpackets:
+            print "     %s <= %s : %s" % (o, t, os.path.basename(p))
+    else:
+        print "---> No packets to process were found!"
+
+    if len(expackets) and verbose:
+        print "---> These packets were already processed (subjectid <= session id : packet):"
+        for p, o, t in expackets:
+            print "     %s <= %s : %s" % (o, t, os.path.basename(p))
 
     if len(nmpackets) and verbose:
         print "---> These packets do not match with the log and they won't be processed:"
@@ -1425,13 +1443,16 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
         for p in badpackets:
             print "     %s" % (os.path.basename(p))
 
-    if check:
-        s = raw_input("\n===> Should I proceeed with processing the listed packages [y/n]: ")
-        if s != "y":
-            print "---> Aborting operation!\n"
-            return
-
-    print "---> Starting to process %d packets ..." % (len(okpackets))
+    if len(okpackets):
+        if check:
+            s = raw_input("\n===> Should I proceeed with processing the listed packages [y/n]: ")
+            if s != "y":
+                print "---> Aborting operation!\n"
+                return
+        print "---> Starting to process %d packets ..." % (len(okpackets))
+    else:
+        print "---> DONE"
+        return
 
 
     # ---- Ok, now loop through the packets
