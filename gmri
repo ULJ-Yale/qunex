@@ -56,8 +56,8 @@ listDicom    [folder=.]
 splitDicom   [folder=.]
 sortDicom    [folder=.]
 dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
-dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
-processInbox [folder=.] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1]
+dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1]
+processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1] [logfile=""] [archive=move] [verbose=yes]
 getDICOMInfo dfile=<dicom_file> [scanner=siemens]
 
 
@@ -199,9 +199,9 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'splitDicom'           : {'com': niu.g_dicom.splitDicom,             'args': ('folder', )},
             'sortDicom'            : {'com': niu.g_dicom.sortDicom,              'args': ('folder', )},
             'dicom2nii'            : {'com': niu.g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
-            'dicom2niix'           : {'com': niu.g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores')},
+            'dicom2niix'           : {'com': niu.g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'subjectid', 'verbose', 'cores')},
             'processPhilips'       : {'com': niu.g_dicom.processPhilips,         'args': ('folder', 'check', 'pattern')},
-            'processInbox'         : {'com': niu.g_dicom.processInbox,           'args': ('folder', 'inbox', 'check', 'pattern', 'cores')},
+            'processInbox'         : {'com': niu.g_dicom.processInbox,           'args': ('subjectsfolder', 'inbox', 'check', 'pattern', 'cores', 'logfile', 'archive', 'verbose')},
             'getDICOMInfo'         : {'com': niu.g_dicom.getDICOMInfo,           'args': ('dfile', 'scanner')},
             'runNILFolder'         : {'com': niu.g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'subjf')},
             'runNIL'               : {'com': niu.g_4dfp.runNIL,                  'args': ('folder', 'overwite', 'subjf')},
@@ -216,7 +216,7 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'printniftihdr'        : {'com': niu.g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': niu.g_gimg.modniftihdr,             'args': ('filename', 's')},
             'compileBatch'         : {'com': niu.g_utilities.compileBatch,       'args': ('subjectsFolder', 'sourceFiles', 'targetFile', 'overwrite', 'paramFile')},
-            'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyFolder', )},
+            'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyfolder', )},
             'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder')},
             'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder')},
             'splitFidl'            : {'com': niu.g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},
