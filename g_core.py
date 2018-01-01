@@ -51,6 +51,8 @@ def readSubjectData(filename, verbose=False):
                 c += 1
                 line = line.split(':')
                 line = [e.strip() for e in line]
+                if len(line) < 2:
+                    continue
 
                 # --- read global preferences / settings
 
