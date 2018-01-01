@@ -24,9 +24,9 @@ import os.path
 import g_core
 
 
-def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
+def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
     '''
-    setupHCP [folder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
+    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
 
     USE
     ===
@@ -41,7 +41,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     PARAMETERS
     ==========
 
-    --folder   The base subject folder that contains the nifti images and
+    --sfolder  The base subject folder that contains the nifti images and
                subject.txt file. [.]
     --tfolder  The folder (within the base folder) to which the data is to be
                mapped. [hcp]
@@ -96,7 +96,7 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
     EXAMPLE USE
     ===========
 
-    gmri setupHCP folder=OP316 sfile=subject.txt
+    gmri setupHCP sfolder=OP316 sfile=subject.txt
 
     ----------------
     Written by Grega Repovš
@@ -106,12 +106,13 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
              - Updated documentation
     2017-08-17 Grega Repovš
              - Added mapping of GE Field Map images
-
+    2018-01-01 Grega Repovš
+             - Changed parameter names
     '''
 
-    inf = niutilities.g_core.readSubjectData(os.path.join(folder, sfile))[0][0]
+    inf = niutilities.g_core.readSubjectData(os.path.join(sfolder, sfile))[0][0]
 
-    basef    = os.path.join(folder, tfolder, inf['id'])
+    basef    = os.path.join(sfolder, tfolder, inf['id'])
     rawf     = inf['raw_data']
     sid      = inf['id']
     bolds    = collections.defaultdict(dict)
@@ -261,19 +262,19 @@ def setupHCP(folder=".", tfolder="hcp", sbjf="subject_hcp.txt"):
 
 
 
-def setupHCPFolder(folder=".", tfolder="hcp", sfile="subject_hcp.txt", check="interactive"):
+def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="interactive"):
     '''
-    setupHCPFolder [folder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=interactive]
+    setupHCPFolder [subjectsfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=interactive]
 
     USE
     ===
 
     The command is used to map MR images into a HCP prepocessing folder
     structure for all the subject folders it finds within the specified
-    origin folder (folder).
+    origin folder (subjectsfolder).
 
     Specifically, the command looks for source subject.txt files (sfile) in all
-    the subfolders of the origin folder (folder). For each found source
+    the subfolders of the origin folder (subjectsfolder). For each found source
     subject.txt file it checks whether the file is hcp ready and if the target
     folder (tfolder) exists. If the file is ready and if the target folder
     does not yet exists, it runs setupHCP command mapping the files to the
@@ -288,19 +289,19 @@ def setupHCPFolder(folder=".", tfolder="hcp", sfile="subject_hcp.txt", check="in
     PARAMETERS
     ==========
 
-    --folder   The origin folder that holds the subjects' folders (usually
-               "subjects"). [.]
-    --tfolder  The target HCP folder in which to set up data for HCP
-               preprocessing (usually "hcp"). [hcp]
-    --sfile    The source subject.txt file to use for mapping to a target HCP
-               folder. [subject_hcp.txt]
-    --check    Whether to check if the subject is safe to run (yes), run in any
-               case (no) or ask the user (interactive) if in doubt.
+    --subjectsfolder  The origin folder that holds the subjects' folders (usually
+                      "subjects"). [.]
+    --tfolder         The target HCP folder in which to set up data for HCP
+                      preprocessing (usually "hcp"). [hcp]
+    --sfile           The source subject.txt file to use for mapping to a target
+                      HCP folder. [subject_hcp.txt]
+    --check           Whether to check if the subject is safe to run (yes), run
+                      in any case (no) or ask the user (interactive) if in doubt.
 
     EXAMPLE USE
     ===========
 
-    gmri setupHCPFolder folder=subjects check=no
+    gmri setupHCPFolder subjectsfolder=subjects check=no
 
     ----------------
     Written by Grega Repovš
@@ -308,15 +309,17 @@ def setupHCPFolder(folder=".", tfolder="hcp", sfile="subject_hcp.txt", check="in
     Changelog
     2017-02-07 Grega Repovš
              - Updated documentation.
+    2018-01-01 Grega Repovš
+             - Changed input parameters
     '''
 
     # list all possible sbjfiles and check them
 
     sbjf   = sfile
-    sfiles = glob.glob(os.path.join(folder, "*", sbjf))
+    sfiles = glob.glob(os.path.join(subjectsfolder, "*", sbjf))
     flist  = []
 
-    print "---> checking %s files and %s folders in %s" % (sbjf, tfolder, folder)
+    print "---> checking %s files and %s folders in %s" % (sbjf, tfolder, subjectsfolder)
 
     for sfile in sfiles:
 
@@ -365,14 +368,14 @@ def setupHCPFolder(folder=".", tfolder="hcp", sfile="subject_hcp.txt", check="in
 
     for sfile, ready, fex, ok, process in flist:
         if process:
-            setupHCP(folder=os.path.dirname(sfile), tfolder=tfolder, sbjf=sbjf)
+            setupHCP(sfolder=os.path.dirname(sfile), tfolder=tfolder, sfile=sbjf)
 
     print "\n\n===> done processing %s\n" % (folder)
 
 
-def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, subjectFilter=None, overwrite="no"):
+def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, sfilter=None, overwrite="no"):
     '''
-    getHCPReady subjects=<subjects specification> [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [subjectFilter=None] [overwrite=no]
+    getHCPReady subjects=<subjects specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
 
     USE
     ===
@@ -394,12 +397,12 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
     --subjects       Either an explicit list (space, comma or pipe separated) of
                      subjects to process or the path to a batch or list file with
                      subjects to process.
-    --folder         The directory that holds subjects' folders. [.]
+    --subjectsfolder The directory that holds subjects' folders. [.]
     --sfile          The "source" subject.txt file. [subject.txt]
     --tfile          The "target" subject.txt file. [subject_hcp.txt]
     --mapping        The path to the text file describing the mapping.
                      [specs/hcp_mapping.txt]
-    --subjectFilter  An optional "key:value|key:value" string used as a filter
+    --sfilter        An optional "key:value|key:value" string used as a filter
                      if a batch file is used. Only subjects for which all the
                      key:value pairs are true will be processed. All the
                      subjects will be processed if no filter is provided.
@@ -477,9 +480,9 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
     EXAMPLE USE
     ===========
 
-    gmri getHCPReady subjects="OP*|AP*" folder=subjects mapping=subjects/hcp_mapping.txt
+    gmri getHCPReady subjects="OP*|AP*" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
 
-    gmri getHCPReady subjects="processing/batch_new.txt" folder=subjects mapping=subjects/hcp_mapping.txt
+    gmri getHCPReady subjects="processing/batch_new.txt" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
 
     ----------------
     Written by Grega Repovš
@@ -514,11 +517,11 @@ def getHCPReady(subjects, folder=".", sfile="subject.txt", tfile="subject_hcp.tx
 
     # -- get list of subject folders
 
-    subjects, gopts = g_core.getSubjectList(subjects, subjectFilter=subjectFilter, verbose=False)
+    subjects, gopts = g_core.getSubjectList(subjects, sfilter=sfilter, verbose=False)
 
     sfolders = []
     for subject in subjects:
-        sfolders += glob.glob(os.path.join(folder, subject['id']))
+        sfolders += glob.glob(os.path.join(subjectsfolder, subject['id']))
 
     # -- loop through subject folders
 

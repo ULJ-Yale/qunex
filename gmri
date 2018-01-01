@@ -58,18 +58,18 @@ sortDicom    [folder=.]
 dicom2nii    [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [verbose=True] [cores=1]
 dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1]
 processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1] [logfile=""] [archive=move] [verbose=yes]
-getDICOMInfo dfile=<dicom_file> [scanner=siemens]
+getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
 
 WUSTL NIL pipeline utilities
 ----------------------------
-runNIL       [folder=.] [overwrite=no] [subjf=subject.txt]
-runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [subjf=subject.txt]
+runNIL       [folder=.] [overwrite=no] [sfile=subject.txt]
+runNILFolder [folder=.] [pattern=OP*] [overwrite=no] [sfile=subject.txt]
 
 
 General image file utilities
 ----------------------------
-sliceImage sfile=<source image> tfile=<target image> [frames=1]
+sliceImage    sfile=<source image> tfile=<target image> [frames=1]
 
 
 NIfTI file conversions
@@ -84,15 +84,15 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
-getHCPReady    subjects=<subjects specification> [folder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [subjectFilter=None] [overwrite=no]
-setupHCP       [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt]
-setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactive]
+getHCPReady    subjects=<subjects specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
+setupHCP       [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
+setupHCPFolder [subjectsfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=interactive]
 
 
 Miscellaneous file utilities
 ----------------------------
 createStudy  studyfolder=<path to study base folder>
-compileBatch [subjectsfolder=.] [sourcefile=subject_hcp.txt] [targetfile=processing/batch.txt] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+compileBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 
 
 Fidl file utilities
@@ -202,20 +202,20 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'dicom2niix'           : {'com': niu.g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'subjectid', 'verbose', 'cores')},
             'processPhilips'       : {'com': niu.g_dicom.processPhilips,         'args': ('folder', 'check', 'pattern')},
             'processInbox'         : {'com': niu.g_dicom.processInbox,           'args': ('subjectsfolder', 'inbox', 'check', 'pattern', 'cores', 'logfile', 'archive', 'verbose')},
-            'getDICOMInfo'         : {'com': niu.g_dicom.getDICOMInfo,           'args': ('dfile', 'scanner')},
-            'runNILFolder'         : {'com': niu.g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'subjf')},
-            'runNIL'               : {'com': niu.g_4dfp.runNIL,                  'args': ('folder', 'overwite', 'subjf')},
+            'getDICOMInfo'         : {'com': niu.g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
+            'runNILFolder'         : {'com': niu.g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'sfile')},
+            'runNIL'               : {'com': niu.g_4dfp.runNIL,                  'args': ('folder', 'overwite', 'sfile')},
             'fz2zf'                : {'com': niu.g_NIfTI.fz2zf,                  'args': ('inf', 'outf')},
             'reorder'              : {'com': niu.g_NIfTI.reorder,                'args': ('inf', 'outf')},
             'reslice'              : {'com': niu.g_NIfTI.reslice,                'args': ('inf', 'slices', 'outf')},
             'sliceImage'           : {'com': niu.g_img.sliceImage,               'args': ('sfile', 'tfile', 'frames')},
             'nifti24dfp'           : {'com': niu.g_NIfTI.nifti24dfp,             'args': ('inf', 'outf')},
-            'setupHCP'             : {'com': niu.g_HCP.setupHCP,                 'args': ('folder', 'tfolder', 'sfile')},
-            'setupHCPFolder'       : {'com': niu.g_HCP.setupHCPFolder,           'args': ('folder', 'tfolder', 'sfile', 'check')},
-            'getHCPReady'          : {'com': niu.g_HCP.getHCPReady,              'args': ('subject', 'folder', 'sfile', 'tfile', 'mapping', 'subjectFilter', 'overwrite')},
+            'setupHCP'             : {'com': niu.g_HCP.setupHCP,                 'args': ('sfolder', 'tfolder', 'sfile')},
+            'setupHCPFolder'       : {'com': niu.g_HCP.setupHCPFolder,           'args': ('subjectsfolder', 'tfolder', 'sfile', 'check')},
+            'getHCPReady'          : {'com': niu.g_HCP.getHCPReady,              'args': ('subjects', 'subjectsfolder', 'sfile', 'tfile', 'mapping', 'sfilter', 'overwrite')},
             'printniftihdr'        : {'com': niu.g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': niu.g_gimg.modniftihdr,             'args': ('filename', 's')},
-            'compileBatch'         : {'com': niu.g_utilities.compileBatch,       'args': ('subjectsFolder', 'sourceFiles', 'targetFile', 'overwrite', 'paramFile')},
+            'compileBatch'         : {'com': niu.g_utilities.compileBatch,       'args': ('subjectsfolder', 'sfile', 'tfile', 'subjects', 'sfilter', 'overwrite', 'paramfile')},
             'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyfolder', )},
             'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder')},
             'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder')},

@@ -146,18 +146,22 @@ def createStudy(studyfolder=None):
     print "\nDone.\n"
 
 
-def compileBatch(subjectsfolder=".", sourcefile="subject_hcp.txt", targetfile=None, overwrite="ask", paramfile=None):
+def compileBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
     '''
-    compileBatch [subjectsfolder=.] [sourcefile=subject_hcp.txt] [targetfile=processing/batch.txt] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+    compileBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 
-    Combines all the sourcefile in all subject folders in subjectsfolder to
-    generate a joint batch file and save it as targetfile.
+    Combines all the sfile in all subject folders in subjectsfolder to
+    generate a joint batch file and save it as tfile. If only specific subjects
+    are to be added or appended, "subjects" parameter can be used. This can be
+    a pipe, comma or space separated list of subject ids, another batch file or
+    a list file. If a string is provided, grob patterns can be used (e.g.
+    subjects="AP*|OR*") and all matching subjects will be processed.
 
-    If no targetfile is specified, it will save the file as group.txt in a
+    If no tfile is specified, it will save the file as batch.txt in a
     processing folder parallel to the subjectsfolder. If the folder does not yet
     exist, it will create it.
 
-    If targetfile already exists, depending on "overwrite" parameter it will:
+    If tfile already exists, depending on "overwrite" parameter it will:
 
     - ask:    ask interactively
     - yes:    overwrite the existing file
@@ -165,7 +169,8 @@ def compileBatch(subjectsfolder=".", sourcefile="subject_hcp.txt", targetfile=No
     - append: append subjects to the existing file
 
     If overwrite is set to "append", the parameters will not be changed, however,
-    any subjects that are not present in the batch file will be added.
+    any subjects that are not yet present in the batch file will be appended at
+    the end of the batch file.
 
     The command will also look for a parameter file. If it exists, it will
     prepend its content at the beginning of the batch.txt file. If no paramfile
@@ -182,7 +187,7 @@ def compileBatch(subjectsfolder=".", sourcefile="subject_hcp.txt", targetfile=No
 
     Example:
 
-    gmri compileBatch sourcefile="subject.txt" targetfile="fcMRI/subjects_fcMRI.txt"
+    gmri compileBatch sfile="subject.txt" tfile="fcMRI/subjects_fcMRI.txt"
 
     ----------------
     Written by Grega Repovš
@@ -192,15 +197,22 @@ def compileBatch(subjectsfolder=".", sourcefile="subject_hcp.txt", targetfile=No
              - Renamed to compileBatch and batch.txt.
     2018-01-01 Grega Repovš
              - Added append option and changed parameter names.
+             - Added the option to specify subjects to add explicitly.
     '''
+
+    if subjects in ['None', 'none', 'NONE']:
+        subjects = None
+
+    if sfilter in ['None', 'none', 'NONE']:
+        sfilter = None
 
     # --- prepare target file name and folder
 
-    if targetfile is None:
-        targetfile = os.path.join(os.path.dirname(os.path.abspath(subjectsfolder)), 'processing', 'batch.txt')
+    if tfile is None:
+        tfile = os.path.join(os.path.dirname(os.path.abspath(subjectsfolder)), 'processing', 'batch.txt')
 
-    if os.path.exists(targetfile):
-        print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
+    if os.path.exists(tfile):
+        print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
         if overwrite == 'ask':
             s = raw_input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
             if s == 'o':
@@ -222,7 +234,7 @@ def compileBatch(subjectsfolder=".", sourcefile="subject_hcp.txt", targetfile=No
     else:
         overwrite = 'yes'
 
-    targetFolder = os.path.dirname(targetfile)
+    targetFolder = os.path.dirname(tfile)
     if not os.path.exists(targetFolder):
         print "---> Creating target folder %s" % (targetFolder)
         os.makedirs(targetFolder)
@@ -230,18 +242,18 @@ def compileBatch(subjectsfolder=".", sourcefile="subject_hcp.txt", targetfile=No
     # --- open target file
 
     if overwrite == 'yes':
-        print "---> Creating file %s" % (os.path.basename(targetfile))
-        jfile = open(targetfile, 'w')
+        print "---> Creating file %s" % (os.path.basename(tfile))
+        jfile = open(tfile, 'w')
         print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
         print >> jfile, "# Subjects folder: %s" % (os.path.abspath(subjectsfolder))
-        print >> jfile, "# Source files: %s" % (sourcefile)
+        print >> jfile, "# Source files: %s" % (sfile)
         subjects   = []
 
     elif overwrite == 'append':
-        subjects, parameters = gc.getSubjectList(targetfile)
+        subjects, parameters = gc.getSubjectList(tfile)
         subjects = [e['id'] for e in subjects]
-        print "---> Appending to file %s" % (os.path.basename(targetfile))
-        jfile = open(targetfile, 'a')
+        print "---> Appending to file %s" % (os.path.basename(tfile))
+        jfile = open(tfile, 'a')
 
     # --- check for param file
 
@@ -268,9 +280,18 @@ def compileBatch(subjectsfolder=".", sourcefile="subject_hcp.txt", targetfile=No
             else:
                 print "---> parameter files does not exist, skipping [%s]." % (paramfile)
 
+    # -- get list of subject folders
+
+    if subjects is not None:
+        subjects, gopts = g_core.getSubjectList(subjects, sfilter=sfilter, verbose=False)
+        files = []
+        for subject in subjects:
+            files += glob.glob(os.path.join(subjectsfolder, subject['id'], sfile))
+    else:
+        files = glob.glob(os.path.join(os.path.abspath(subjectsfolder), '*', sfile))
+
     # --- loop trough subject files
 
-    files = glob.glob(os.path.join(os.path.abspath(subjectsfolder), '*', sourcefile))
     files.sort()
     for file in files:
         subjectid = os.path.basename(os.path.dirname(file))

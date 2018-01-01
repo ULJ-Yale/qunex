@@ -1572,16 +1572,16 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     return
 
 
-def getDICOMInfo(dfile=None, scanner='siemens'):
+def getDICOMInfo(dicomfile=None, scanner='siemens'):
     '''
-    getDICOMInfo dfile=<dicom_file> [scanner=siemens]
+    getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
     USE
     ===
 
-    The command inspects the specified DICOM file (dfile) for information that
-    is relevant for HCP preprocessing and prints out the report. Specifically
-    it looks for and reports the following information:
+    The command inspects the specified DICOM file (dicomfile) for information
+    that is relevant for HCP preprocessing and prints out the report.
+    Specifically it looks for and reports the following information:
 
     * Institution
     * Scanner
@@ -1601,14 +1601,14 @@ def getDICOMInfo(dfile=None, scanner='siemens'):
     PARAMETERS
     ==========
 
-    --dfile:   The path to the DICOM file to be inspected.
-    --scanner: The scanner on which the data was acquired, currently only
-               "siemens" is supported. [siemens]
+    --dicomfile:  The path to the DICOM file to be inspected.
+    --scanner:    The scanner on which the data was acquired, currently only
+                  "siemens" is supported. [siemens]
 
     EXAMPLE USE
     ===========
 
-    gmri getDICOMInfo dfile=ap308e727bxehd2.372.2342.42566.dcm
+    gmri getDICOMInfo dicomfile=ap308e727bxehd2.372.2342.42566.dcm
 
     ----------------
     Written by Grega Repovš
@@ -1616,24 +1616,26 @@ def getDICOMInfo(dfile=None, scanner='siemens'):
     Changelog
     2017-02-08 Grega Repovš
              - Updated documentation
+    2018-01-01 Grega Repovš
+             - changed dfile to dicomfile
     '''
 
-    if dfile is None:
+    if dicomfile is None:
         print "\nERROR: No path to the dicom file is provided!"
         return
 
-    if not os.path.exists(dfile):
-        print "\nERROR: Could not find the requested dicom file! [%s]" % (dfile)
+    if not os.path.exists(dicomfile):
+        print "\nERROR: Could not find the requested dicom file! [%s]" % (dicomfile)
         return
 
     if scanner not in ['siemens']:
         print "\nERROR: The provided scanner is not supported! [%s]" % (scanner)
         return
 
-    d = readDICOMBase(dfile)
+    d = readDICOMBase(dicomfile)
     ok = True
 
-    print "\nHCP relevant information\n(dicom %s)\n" % (dfile)
+    print "\nHCP relevant information\n(dicom %s)\n" % (dicomfile)
 
     try:
         print "            Institution:", d[0x0008, 0x0080].value
