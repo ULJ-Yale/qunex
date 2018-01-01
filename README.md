@@ -121,6 +121,7 @@ Change Log
 * 0.6.9 [niutilities] Added append option to compileBatch and changed parameter names, made batch.txt reading more robust
 * 0.7.0 [niutilities] Extended processInbox to work with directory packets and acquisition logs
 * 0.7.1 [niutilities] Added earlier identification and more detailed reporting of packages already processed
+* 0.7.2 [niutilities] Harmonized parameter names and extended compileBatch to take explicit subjects to add
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
