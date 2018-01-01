@@ -13,6 +13,7 @@ import glob
 import datetime
 import shutil
 import niutilities.g_process as gp
+import niutilities.g_core as gc
 
 
 parameterTemplateHeader = '''#  Batch parameters file
@@ -53,14 +54,14 @@ parameterTemplateHeader = '''#  Batch parameters file
 
 
 
-def createStudy(studyFolder=None):
+def createStudy(studyfolder=None):
     '''
-    createStudy studyFolder=<path to study base folder>
+    createStudy studyfolder=<path to study base folder>
 
     Creates the base folder at the provided path location and the key standard
     study subfolders. Specifically:
 
-    <studyFolder>
+    <studyfolder>
     ├── analysis
     │   └── scripts
     ├── processing
@@ -86,11 +87,11 @@ def createStudy(studyFolder=None):
 
     Do note that the command will create all the missing subfolders in which the
     specified study is to reside. The command also prepares template batch_parameters.txt
-    and hcp_mapping.txt files in <studyFolder>/subjects/specs folder.
+    and hcp_mapping.txt files in <studyfolder>/subjects/specs folder.
 
     Example:
 
-    gmri createStudy studyFolder=/Volumes/data/studies/WM.v4
+    gmri createStudy studyfolder=/Volumes/data/studies/WM.v4
 
     ----------------
     Written by Grega Repovš
@@ -100,8 +101,8 @@ def createStudy(studyFolder=None):
              - Added copying of parameters and hcpmap templates.
     '''
 
-    if studyFolder is None:
-        raise ValueError("ERROR: studyFolder parameter has to be provided!")
+    if studyfolder is None:
+        raise ValueError("ERROR: studyfolder parameter has to be provided!")
 
     folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
                ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
@@ -110,7 +111,7 @@ def createStudy(studyFolder=None):
 
     print "\nCreating study folder structure:"
     for folder in folders:
-        tfolder = os.path.join(*[studyFolder] + folder)
+        tfolder = os.path.join(*[studyfolder] + folder)
 
         if os.path.exists(tfolder):
             print " ... folder exists:", tfolder
@@ -121,7 +122,7 @@ def createStudy(studyFolder=None):
     TemplateFolder = os.environ['TemplateFolder']
     print "\nPreparing template files:"
 
-    paramFile = os.path.join(studyFolder, 'subjects', 'specs', 'batch_parameters.txt')
+    paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters.txt')
     if not os.path.exists(paramFile):
         print " ... batch_parameters.txt"
         pfile = open(paramFile, 'w')
@@ -135,7 +136,7 @@ def createStudy(studyFolder=None):
     else:
         print " ... batch_parameters.txt file already exists"
 
-    mapFile = os.path.join(studyFolder, 'subjects', 'specs', 'hcp_mapping.txt')
+    mapFile = os.path.join(studyfolder, 'subjects', 'specs', 'hcp_mapping.txt')
     if os.path.exists(mapFile):
         print " ... hcp_mapping.txt file already exists"
     else:
@@ -145,25 +146,29 @@ def createStudy(studyFolder=None):
     print "\nDone.\n"
 
 
-def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=None, overwrite="ask", paramFile=None):
+def compileBatch(subjectsfolder=".", sourcefile="subject_hcp.txt", targetfile=None, overwrite="ask", paramfile=None):
     '''
-    compileBatch [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/batch.txt] [overwrite=ask] [paramFile=<subjectsFolder>/specs/batch_parameters.txt]
+    compileBatch [subjectsfolder=.] [sourcefile=subject_hcp.txt] [targetfile=processing/batch.txt] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 
-    Combines all the sourceFiles in all subject folders in subjectsFolder to
-    generate a joint batch file and save it as targetFile.
+    Combines all the sourcefile in all subject folders in subjectsfolder to
+    generate a joint batch file and save it as targetfile.
 
-    If no targetFile is specified, it will save the file as group.txt in a
-    processing folder parallel to the subjectsFolder. If the folder does not yet
+    If no targetfile is specified, it will save the file as group.txt in a
+    processing folder parallel to the subjectsfolder. If the folder does not yet
     exist, it will create it.
 
-    If targetFile already exists, depending on "overwrite" parameter it will:
+    If targetfile already exists, depending on "overwrite" parameter it will:
 
-    - ask: ask interactively
-    - yes: overwrite the existing file
-    - no:  abort creating the file
+    - ask:    ask interactively
+    - yes:    overwrite the existing file
+    - no:     abort creating the file
+    - append: append subjects to the existing file
+
+    If overwrite is set to "append", the parameters will not be changed, however,
+    any subjects that are not present in the batch file will be added.
 
     The command will also look for a parameter file. If it exists, it will
-    prepend its content at the beginning of the batch.txt file. If no paramFile
+    prepend its content at the beginning of the batch.txt file. If no paramfile
     is specified and the default template does not exist, the command will print
     a warning and create an empty template (subjects/spec/batch_parameters.txt)
     with all available parameters. Do note that this file will need to be edited
@@ -177,7 +182,7 @@ def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=N
 
     Example:
 
-    gmri compileBatch sourceFiles="subject.txt" targetFile="fcMRI/subjects_fcMRI.txt"
+    gmri compileBatch sourcefile="subject.txt" targetfile="fcMRI/subjects_fcMRI.txt"
 
     ----------------
     Written by Grega Repovš
@@ -185,75 +190,98 @@ def compileBatch(subjectsFolder=".", sourceFiles="subject_hcp.txt", targetFile=N
     Changelog
     2017-12-26 Grega Repovš
              - Renamed to compileBatch and batch.txt.
+    2018-01-01 Grega Repovš
+             - Added append option and changed parameter names.
     '''
 
     # --- prepare target file name and folder
 
-    if targetFile is None:
-        targetFile = os.path.join(os.path.dirname(os.path.abspath(subjectsFolder)), 'processing', 'batch.txt')
+    if targetfile is None:
+        targetfile = os.path.join(os.path.dirname(os.path.abspath(subjectsfolder)), 'processing', 'batch.txt')
 
-    if os.path.exists(targetFile):
-        print "WARNING: target file %s already exists!" % (os.path.abspath(targetFile))
+    if os.path.exists(targetfile):
+        print "WARNING: target file %s already exists!" % (os.path.abspath(targetfile))
         if overwrite == 'ask':
-            s = raw_input("         Do you want to overwrite it? [y/n]: ")
-            if s == 'y':
+            s = raw_input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
+            if s == 'o':
                 print "         Overwriting exisiting file."
+                overwrite = 'yes'
+            elif s == 'a':
+                print "         Appending to exisiting file."
+                overwrite = 'append'
             else:
                 print "         Aborting."
                 return
         elif overwrite == 'yes':
             print "         Overwriting exisiting file."
+        elif overwrite == 'append':
+            print "         Appending to exisiting file."
         elif overwrite == 'no':
             print "         Aborting."
             return
+    else:
+        overwrite = 'yes'
 
-    targetFolder = os.path.dirname(targetFile)
+    targetFolder = os.path.dirname(targetfile)
     if not os.path.exists(targetFolder):
         print "---> Creating target folder %s" % (targetFolder)
         os.makedirs(targetFolder)
 
     # --- open target file
 
-    print "---> Creating file %s" % (os.path.basename(targetFile))
-    jfile = open(targetFile, 'w')
-    print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
-    print >> jfile, "# Subjects folder: %s" % (os.path.abspath(subjectsFolder))
-    print >> jfile, "# Source files: %s" % (sourceFiles)
+    if overwrite == 'yes':
+        print "---> Creating file %s" % (os.path.basename(targetfile))
+        jfile = open(targetfile, 'w')
+        print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
+        print >> jfile, "# Subjects folder: %s" % (os.path.abspath(subjectsfolder))
+        print >> jfile, "# Source files: %s" % (sourcefile)
+        subjects   = []
+
+    elif overwrite == 'append':
+        subjects, parameters = gc.getSubjectList(targetfile)
+        subjects = [e['id'] for e in subjects]
+        print "---> Appending to file %s" % (os.path.basename(targetfile))
+        jfile = open(targetfile, 'a')
 
     # --- check for param file
 
-    if paramFile is None:
-        paramFile = os.path.join(subjectsFolder, 'specs', 'batch_parameters.txt')
-        if not os.path.exists(paramFile):
-            print "---> WARNING: Creating empty parameter file!"
-            pfile = open(paramFile, 'w')
-            print >> pfile, parameterTemplateHeader
-            for line in gp.arglist:
-                if len(line) == 4:
-                    print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
-                elif len(line) > 0:
-                    print >> pfile, "#\n# " + line[0] + '\n#'
-            pfile.close()
+    if overwrite == 'yes':
+        if paramfile is None:
+            paramfile = os.path.join(subjectsfolder, 'specs', 'batch_parameters.txt')
+            if not os.path.exists(paramfile):
+                print "---> WARNING: Creating empty parameter file!"
+                pfile = open(paramfile, 'w')
+                print >> pfile, parameterTemplateHeader
+                for line in gp.arglist:
+                    if len(line) == 4:
+                        print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
+                    elif len(line) > 0:
+                        print >> pfile, "#\n# " + line[0] + '\n#'
+                pfile.close()
 
-    if os.path.exists(paramFile):
-        print "---> appending parameter file [%s]." % (paramFile)
-        print >> jfile, "# Parameter file: %s\n#" % (paramFile)
-        with open(paramFile) as f:
-            for line in f:
-                print >> jfile, line,
-    else:
-        print "---> parameter files does not exist, skipping [%s]." % (paramFile)
+            if os.path.exists(paramfile):
+                print "---> appending parameter file [%s]." % (paramfile)
+                print >> jfile, "# Parameter file: %s\n#" % (paramfile)
+                with open(paramfile) as f:
+                    for line in f:
+                        print >> jfile, line,
+            else:
+                print "---> parameter files does not exist, skipping [%s]." % (paramfile)
 
     # --- loop trough subject files
 
-    files = glob.glob(os.path.join(os.path.abspath(subjectsFolder), '*', sourceFiles))
+    files = glob.glob(os.path.join(os.path.abspath(subjectsfolder), '*', sourcefile))
     files.sort()
     for file in files:
-        print "---> Adding: %s" % (os.path.basename(os.path.dirname(file)))
-        print >> jfile, "\n---"
-        with open(file) as f:
-            for line in f:
-                print >> jfile, line,
+        subjectid = os.path.basename(os.path.dirname(file))
+        if subjectid in subjects:
+            print "---> Skipping: %s" % (subjectid)
+        else:
+            print "---> Adding: %s" % (subjectid)
+            print >> jfile, "\n---"
+            with open(file) as f:
+                for line in f:
+                    print >> jfile, line,
 
     # --- close file
 

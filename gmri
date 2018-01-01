@@ -91,8 +91,8 @@ setupHCPFolder [folder=.] [tfolder=hcp] [sbjf=subject_hcp.txt] [check=interactiv
 
 Miscellaneous file utilities
 ----------------------------
-createStudy  studyFolder=<path to study base folder>
-compileBatch [subjectsFolder=.] [sourceFiles=subject_hcp.txt] [targetFile=processing/batch.txt] [overwrite=ask]
+createStudy  studyfolder=<path to study base folder>
+compileBatch [subjectsfolder=.] [sourcefile=subject_hcp.txt] [targetfile=processing/batch.txt] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 
 
 Fidl file utilities
