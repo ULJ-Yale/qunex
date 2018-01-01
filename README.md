@@ -118,6 +118,7 @@ Change Log
 * 0.6.6 [connector, library] Deprecated original connector hcp functions, improved parameter file documentation
 * 0.6.7 [connector, niutilities, library] Updated front-end data organization functionality
 * 0.6.8 [connector, library] Moved the batch parameter templates to library
+* 0.6.9 [niutilities] Added append option to compileBatch and changed parameter names, made batch.txt reading more robust
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
