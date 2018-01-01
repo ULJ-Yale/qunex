@@ -120,6 +120,7 @@ Change Log
 * 0.6.8 [connector, library] Moved the batch parameter templates to library
 * 0.6.9 [niutilities] Added append option to compileBatch and changed parameter names, made batch.txt reading more robust
 * 0.7.0 [niutilities] Extended processInbox to work with directory packets and acquisition logs
+* 0.7.1 [niutilities] Added earlier identification and more detailed reporting of packages already processed
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
