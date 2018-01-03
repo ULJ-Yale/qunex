@@ -3602,6 +3602,7 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 		# -- Otherwise pass the function with all inputs from the command line
 		gmriinput="$@"
 		showVersion
+		gmriFunction
 		exit 0
 	fi
 	fi
