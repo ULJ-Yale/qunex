@@ -62,7 +62,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions=(matlabhelp gmri_function dicomorganize setuphcp createlists hpcsync printmatrix bolddense linkmovement fixica postfix boldhardlinkfixica fixicainsertmean fixicaremovemean hcpdlegacy eddyqc dwidenseparcellation dwiseedtractography computeboldfc structuralparcellation boldparcellation roiextract fsldtifit fslbedpostxgpu autoptx pretractographydense probtrackxgpudense awshcpSync qcpreproc timestamp show_version)
+MNAPFunctions=(matlabHelp gmriFunction organizeDicom mapHCP createLists hpcSync printMatrix BOLDDense linkmovement FIXICA postFIXICA BOLDHardLinkFIXICA FIXICAInsertMean FIXICARemoveMean hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc timeStamp showVersion)
 
 isMNAPFunction () {
     local e
@@ -148,7 +148,7 @@ echo "    --subjects='<list_of_cases>' [options]"
 echo ""
 echo "Example:"
 echo ""
-echo "    mnap --function=dicomOrganize \ "
+echo "    mnap --function=organizeDicom \ "
 echo "    --studyfolder=/some/path/to/study/subjects \ "
 echo "    --subjects='<case_id1>,<case_id2>'"
 echo ""
@@ -175,51 +175,51 @@ echo "--------------------------------------------------------------------------
 echo ""
 echo "Data organization functions"
 echo "----------------------------"
-echo "dicomOrganize ...... sort dicoms and setup nifti files from dicoms"
-echo "setupHCP ...... setup data structure for hcp processing"
+echo "organizeDicom ...... sort DICOMs and setup nifti files from DICOMs"
+echo "mapHCP ...... setup data structure for hcp processing"
 echo "createLists ...... setup subject lists for preprocessing or analyses"
 echo "hpcSync ...... sync with hpc cluster(s) for preprocessing"
-echo "awshcpSync ...... sync hcp data from aws s3 cloud"
+echo "AWSHCPSync ...... sync hcp data from aws s3 cloud"
 echo ""
 echo ""
 echo "QC functions"
 echo "------------"
-echo "eddyqc ...... run quality control on diffusion datasets following eddy outputs"
-echo "qcpreproc ...... run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
+echo "eddyQC ...... run quality control on diffusion datasets following eddy outputs"
+echo "QCPreproc ...... run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
 echo ""  				
 echo ""
 echo "DWI processing, analyses & probabilistic tractography functions"
 echo "----------------------------------------------------------------"
-echo "hcpdlegacy ...... dwi processing for data with standard fieldmaps"
-echo "fsldtifit ...... run fsl dtifit (cluster usable)"
-echo "fslbedpostxgpu ...... run fsl bedpostx w/gpu"
-echo "pretractographydense ...... generates space for whole-brain dense connectomes"
-echo "probtrackxgpudense ...... run fsl probtrackx for whole brain & generates dense "
-echo "                          whole-brain connectomes"
+echo "hcpdLegacy ...... diffusion image processing for data with standard fieldmaps"
+echo "FSLDtifit ...... run FSL's dtifit tool (cluster usable)"
+echo "FSLBedpostxGPU ...... run fsl bedpostx w/gpu"
+echo "pretractographyDense ...... generates space for whole-brain dense connectomes"
+echo "probtrackxGPUDense ...... run FSL's probtrackx for whole brain & generates dense "
+echo "                          whole brain connectomes"
 echo ""
 echo ""
 echo "Misc. functions and analyses"
 echo "---------------------------"
-echo "computeboldfc ...... computes seed or gbc BOLD functional connectivity"
-echo "structuralparcellation ...... parcellate myelin or thickness"
-echo "boldparcellation ...... parcellate bold data and generate pconn files"
-echo "dwidenseparcellation ...... parcellate dense dwi tractography data"
-echo "dwiseedtractography ...... reduce dense dwi tractography data using a seed structure"
-echo "printmatrix ...... extract parcellated matrix for dense CIFTI data using a network solution"
-echo "bolddense ...... compute bold dense connectome (needs >30gb ram per bold)"
-echo "ciftismooth ...... smooth cifti data"
-echo "roiextract ...... extract data from pre-specified ROIs in CIFTI or NIFTI"
+echo "computeBOLDfc ...... computes seed or GBC BOLD functional connectivity"
+echo "structuralParcellation ...... parcellate myelin or thickness"
+echo "BOLDParcellation ...... parcellate BOLD data and generate pconn files"
+echo "DWIDenseParcellation ...... parcellate dense dwi tractography data"
+echo "DWISeedTractography ...... reduce dense DWI tractography data using a seed structure"
+echo "printMatrix ...... extract parcellated matrix for dense CIFTI data using a network solution"
+echo "BOLDDense ...... compute bold dense connectome (needs >30gb ram per bold)"
+echo "CIFTISmooth ...... smooth CIFTI data"
+echo "ROIExtract ...... extract data from pre-specified ROIs in CIFTI or NIFTI"
 echo ""
 echo ""
 echo "FIX ICA de-noising functions"
 echo "---------------------------"
-echo "fixica ...... run fix ica de-noising on a given volume"
-echo "postfix ...... generates workbench scenes for each subject directory"
-echo "boldhardlinkfixica ...... setup hard links for single run fix ica results"
-echo "fixicainsertmean ...... re-insert mean image back into mapped fix ica data"
-echo "fixicaremovemean ...... remove mean image from mapped fix ica data"
-echo "boldseparateciftifixica ...... separate specified bold timeseries (use if bolds merged)"
-echo "boldhardlinkfixicamerged ...... setup sym links for merged fix ica results (use if bolds merged)" 
+echo "FIXICA ...... run FIX ICA de-noising on a given volume"
+echo "postFIXICA ...... generates Workbench scenes for each subject directory"
+echo "BOLDHardLinkFIXICA ...... setup hard links for single run FIX ICA results"
+echo "FIXICAInsertMean ...... re-insert mean image back into mapped FIX ICA data"
+echo "FIXICARemoveMean ...... remove mean image from mapped FIX ICA data"
+echo "BOLDSeparateCIFTIFIXICA ...... separate specified bold timeseries (use if BOLDs merged)"
+echo "BOLDHardLinkFIXICAMerged ...... setup sym links for merged FIX ICA results (use if BOLDs merged)" 
 echo ""
 echo ""
 echo "---------------------------------------------------------------------------"
@@ -273,11 +273,11 @@ echo ""
 # ===================== SPECIFIC ANALYSIS FUNCTIONS START HERE ===========================
 # ========================================================================================
 
-matlabhelp() {
+matlabHelp() {
 		echo ""
 }
 
-show_usage_matlabhelp() {
+show_usage_matlabHelp() {
 
 		echo ""
 		echo "=================================================================="
@@ -310,7 +310,7 @@ show_usage_matlabhelp() {
 # ------------------------------------------------------------------------------------------------------
 
 
-gmri_function() {
+gmriFunction() {
 
 	# Issue the complete gmri originating call
 	echo ""
@@ -327,10 +327,10 @@ show_usage_gmri() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  dicomorganize - Sort original DICOMs into sub-folders and then generate NIFTI files
+#  organizeDicom - Sort original DICOMs into sub-folders and then generate NIFTI files
 # ------------------------------------------------------------------------------------------------------
 
-dicomOrganize() {
+organizeDicom() {
 				  		
 	  		mkdir ${StudyFolder}/${CASE}/dicom &> /dev/null
 	  		
@@ -347,7 +347,7 @@ dicomOrganize() {
 						geho "--- Found ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
 						geho "    Note: To re-run set --overwrite='yes'"
 						echo ""
-						geho " ... $CASE ---> dicomorganize done"
+						geho " ... $CASE ---> organizeDicom done"
 						echo ""
 					else
 						echo "--- Did not find ${StudyFolder}/${CASE}/dicom/DICOM-Report.txt"
@@ -366,7 +366,7 @@ dicomOrganize() {
 						if [ "$Cluster" == 1 ]; then
 						  	echo ""
   							echo "---------------------------------------------------------------------------------"
-							echo "Running dicomorganize locally on `hostname`"
+							echo "Running organizeDicom locally on `hostname`"
 							echo "Check output here: $StudyFolder/$CASE/dicom "
 							echo "---------------------------------------------------------------------------------"
 		 					echo ""
@@ -374,14 +374,14 @@ dicomOrganize() {
 						else
 							echo "Job ID:"
 							# -- Set the scheduler commands
-							rm -f "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh &> /dev/null
-							echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh
-							chmod 770 "$StudyFolder"/"$CASE"/dicom/ComQUEUE_dicomorganize_"$Suffix".sh
+							rm -f "$StudyFolder"/"$CASE"/dicom/ComQUEUE_organizeDicom_"$Suffix".sh &> /dev/null
+							echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
+							chmod 770 "$StudyFolder"/"$CASE"/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
 							
 							# -- Run the scheduler commands
 							cd "$StudyFolder"/"$CASE"/dicom/
-							gmri schedule command="${StudyFolder}/${CASE}/dicom/ComQUEUE_dicomorganize_${Suffix}.sh" \
-							settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/dicom/dicomorganize.${Suffix}.error.log" \
+							gmri schedule command="${StudyFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_${Suffix}.sh" \
+							settings="${Scheduler}" output="stdout:${StudyFolder}/${CASE}/dicom/organizeDicom.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/dicom/organizeDicom.${Suffix}.error.log" \
 							workdir="${StudyFolder}/${CASE}/dicom" 
 							
 							echo ""
@@ -395,7 +395,7 @@ dicomOrganize() {
 					fi
 }
 
-show_usage_dicomorganize() {
+show_usage_organizeDicom() {
   				echo ""
   				echo "-- DESCRIPTION:"
     			echo ""
@@ -414,19 +414,19 @@ show_usage_dicomorganize() {
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
-				echo "--overwrite=<re-run_dicomorganize>                     Explicitly force a re-run of dicomorganize"
+				echo "--overwrite=<re-run_organizeDicom>                     Explicitly force a re-run of organizeDicom"
 				echo ""
     			echo ""
     			echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='dicomorganize' \ "
+				echo "--function='organizeDicom' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='dicomorganize' \ "
+				echo "--function='organizeDicom' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>'"
 				echo "" 
@@ -434,14 +434,14 @@ show_usage_dicomorganize() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  setuphcp - Setup the HCP File Structure to be fed to the Yale HCP
+#  mapHCP - Setup the HCP File Structure to be fed to the Yale HCP
 # ------------------------------------------------------------------------------------------------------
 
-setuphcp() {
+mapHCP() {
 
 	cd "$StudyFolder"/"$CASE"
 		
-			echo "--> running setuphcp for $CASE"
+			echo "--> running mapHCP for $CASE"
 		 	echo ""
 		 	# -- Combine all the calls into a single command
 		 	Com1="cd ${StudyFolder}/${CASE}"
@@ -455,7 +455,7 @@ setuphcp() {
 			if [ "$Cluster" == 1 ]; then
 				echo ""
   				echo "---------------------------------------------------------------------------------"
-				echo "Running setuphcp locally on `hostname`"
+				echo "Running mapHCP locally on `hostname`"
 				echo "Check output here: $StudyFolder/$CASE/hcp "
 				echo "---------------------------------------------------------------------------------"
 		 		echo ""
@@ -464,15 +464,15 @@ setuphcp() {
 				echo "Job ID:"
 				
 				# -- Set the scheduler commands
-				rm -f "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh &> /dev/null
-				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh
-				chmod 770 "$StudyFolder"/"$CASE"/setuphcp_${Suffix}.sh				
+				rm -f "$StudyFolder"/"$CASE"/mapHCP_${Suffix}.sh &> /dev/null
+				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/mapHCP_${Suffix}.sh
+				chmod 770 "$StudyFolder"/"$CASE"/mapHCP_${Suffix}.sh				
 				
 				# -- Run the scheduler commands
 				cd "$StudyFolder"/"$CASE"/
-				gmri schedule command="${StudyFolder}/${CASE}/setuphcp_${Suffix}.sh" \
+				gmri schedule command="${StudyFolder}/${CASE}/mapHCP_${Suffix}.sh" \
 				settings="${Scheduler}" \
-				output="stdout:${StudyFolder}/${CASE}/setuphcp.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/setuphcp.${Suffix}.error.log"  \
+				output="stdout:${StudyFolder}/${CASE}/mapHCP.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/mapHCP.${Suffix}.error.log"  \
 				workdir="${StudyFolder}/${CASE}"  
 				
 				echo ""
@@ -485,12 +485,13 @@ setuphcp() {
 			fi
 }
 
-show_usage_setuphcp() {
+show_usage_mapHCP() {
   				echo ""
   				echo "-- DESCRIPTION:"
     			echo ""
-  				echo "This function generates the Human Connectome Project folder structure for preprocessing."
-  				echo "It should be executed after proper dicomorganize and subject.txt file has been vetted."
+  				echo "This function maps the Human Connectome Project folder structure for preprocessing."
+  				echo "It should be executed after proper organizeDicom and subject.txt file has been vetted"
+  				echo "and the subject_hcp.txt file was generated."
   				echo ""
   				echo "-- REQUIRED PARMETERS:"
 				echo ""
@@ -504,13 +505,13 @@ show_usage_setuphcp() {
     			echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='setuphcp' \ "
+				echo "--function='mapHCP' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='setuphcp' \ "
+				echo "--function='mapHCP' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--scheduler='<name_of_cluster_scheduler_and_options>' \ "
 				echo "" 
@@ -657,7 +658,7 @@ show_usage_createLists() {
 
 
 # ------------------------------------------------------------------------------------------------------
-#  hpcsync - Sync files to Yale HPC and back to the Yale server after HCP preprocessing
+#  hpcSync - Sync files to Yale HPC and back to the Yale server after HCP preprocessing
 # ------------------------------------------------------------------------------------------------------
 
 
@@ -697,10 +698,10 @@ show_usage_hpcSync() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  printmatrix - Extract matrix data from parcellated files (BOLD)
+#  printMatrix - Extract matrix data from parcellated files (BOLD)
 # ------------------------------------------------------------------------------------------------------
 
-printmatrix() {
+printMatrix() {
 
 			##################################################
 		 	##################  BOLD  ########################
@@ -728,7 +729,7 @@ printmatrix() {
 
 }
 
-show_usage_printmatrix() {
+show_usage_printMatrix() {
 
   				echo ""
   				echo "-- DESCRIPTION:"
@@ -742,10 +743,10 @@ show_usage_printmatrix() {
 
 
 # ------------------------------------------------------------------------------------------------------
-#  bolddense - Compute the dense connectome file for BOLD timeseries
+#  BOLDDense - Compute the dense connectome file for BOLD timeseries
 # ------------------------------------------------------------------------------------------------------
 
-bolddense() {
+BOLDDense() {
 
  		for STEP in $STEPS
     		do
@@ -763,7 +764,7 @@ bolddense() {
 			done
 }
 
-show_usage_bolddense() {
+show_usage_BOLDDense() {
 
   				echo ""
   				echo "-- DESCRIPTION:"
@@ -777,20 +778,20 @@ show_usage_bolddense() {
 # ------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------
-#  linkmovement - Sets hard links for BOLDs into Parcellated folder for fixica use
+#  linkMovement - Sets hard links for BOLDs into Parcellated folder for FIXICA use
 # ------------------------------------------------------------------------------------------------------
 
-linkmovement() {
+linkMovement() {
 
 			for BOLD in $BOLDS
 			do
 				echo "Linking scrubbing data - BOLD $BOLD for $CASE..."
 				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/bold"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_bold"$BOLD".use
-				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldfixica"$BOLD".use
+				ln -f "$StudyFolder"/"$CASE"/images/functional/movement/boldFIXICA"$BOLD".use "$StudyFolder"/../Parcellated/BOLD/"$CASE"_boldFIXICA"$BOLD".use
 			done
 }
 
-show_usage_linkmovement() {
+show_usage_linkMovement() {
 
   				echo ""
   				echo "-- DESCRIPTION:"
@@ -801,10 +802,10 @@ show_usage_linkmovement() {
 
 
 # ------------------------------------------------------------------------------------------------------
-#  fixica - Compute FIX ICA cleanup on BOLD timeseries following hcp pipelines 
+#  FIXICA - Compute FIX ICA cleanup on BOLD timeseries following hcp pipelines 
 # ------------------------------------------------------------------------------------------------------
 
-fixica() {
+FIXICA() {
 
 		for BOLD in $BOLDS
 			do
@@ -821,7 +822,7 @@ fixica() {
 		done
 }
 
-show_usage_fixica() {
+show_usage_FIXICA() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -830,10 +831,10 @@ show_usage_fixica() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  postfix - Compute PostFix code on FIX ICA cleaned BOLD timeseries to generate scene files
+#  postFIXICA - Compute PostFix code on FIX ICA cleaned BOLD timeseries to generate scene files
 # ------------------------------------------------------------------------------------------------------
 
-postfix() {
+postFIXICA() {
 
 		for BOLD in $BOLDS
 			do
@@ -850,7 +851,7 @@ postfix() {
 			done
 }
 
-show_usage_postfix() {
+show_usage_postFIXICA() {
  				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -859,10 +860,10 @@ show_usage_postfix() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  boldhardlinkfixica - Generate links for FIX ICA cleaned BOLDs for functional connectivity (dofcMRI)
+#  BOLDHardLinkFIXICA - Generate links for FIX ICA cleaned BOLDs for functional connectivity (dofcMRI)
 # ------------------------------------------------------------------------------------------------------
 
-boldhardlinkfixica() {
+BOLDHardLinkFIXICA() {
 		
 		BOLDCount=0
 		for BOLD in $BOLDS
@@ -876,31 +877,31 @@ boldhardlinkfixica() {
 				mkdir "$StudyFolder"/"$CASE"/images/functional/movement    &> /dev/null
 				
 				# -- setup hard links for images						
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii     &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".nii.gz     &> /dev/null
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".dtseries.nii
-				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldfixica"$BOLD".nii.gz
+				rm "$StudyFolder"/"$CASE"/images/functional/boldFIXICA"$BOLD".dtseries.nii     &> /dev/null
+				rm "$StudyFolder"/"$CASE"/images/functional/boldFIXICA"$BOLD".nii.gz     &> /dev/null
+				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/boldFIXICA"$BOLD".dtseries.nii
+				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_hp2000_clean.nii.gz "$StudyFolder"/"$CASE"/images/functional/boldFIXICA"$BOLD".nii.gz
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas.dtseries.nii "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".dtseries.nii
 				ln -f "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz "$StudyFolder"/"$CASE"/images/functional/bold"$BOLD".nii.gz
-				#rm "$StudyFolder"/"$CASE"/images/functional/boldfixicarfMRI_REST*     &> /dev/null
+				#rm "$StudyFolder"/"$CASE"/images/functional/boldFIXICArfMRI_REST*     &> /dev/null
 				#rm "$StudyFolder"/"$CASE"/images/functional/boldrfMRI_REST*     &> /dev/null
 				
 				echo "Setting up hard links for movement data for BOLD# $BOLD for $CASE... "
 				
 				# -- Clean up movement regressor file to match dofcMRIp convention and copy to movement directory
 				export PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH     &> /dev/null
-				rm "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD"_mov.dat     &> /dev/null
+				rm "$StudyFolder"/"$CASE"/images/functional/movement/boldFIXICA"$BOLD"_mov.dat     &> /dev/null
 				rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
 				cp "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors.txt "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt 		
 				sed -i.bak -E 's/.{67}$//' "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt 		
 				nl "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt > "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt	
 				sed -i.bak '1i\#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)' "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"//Movement_Regressors_edit_fin.txt	
-				cp "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt "$StudyFolder"/"$CASE"/images/functional/movement/boldfixica"$BOLD"_mov.dat			
+				cp "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt "$StudyFolder"/"$CASE"/images/functional/movement/boldFIXICA"$BOLD"_mov.dat			
 				rm "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
 			done
 }
 
-show_usage_boldhardlinkfixica() {
+show_usage_BOLDHardLinkFIXICA() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -909,36 +910,36 @@ show_usage_boldhardlinkfixica() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  fixicainsertmean - Re-insert means into FIX ICA cleaned BOLDs for connectivity preprocessing (dofcMRI)
+#  FIXICAInsertMean - Re-insert means into FIX ICA cleaned BOLDs for connectivity preprocessing (dofcMRI)
 # ------------------------------------------------------------------------------------------------------
 
-fixicainsertmean() {
+FIXICAInsertMean() {
 
 		for BOLD in $BOLDS
 			do		
 					cd "$StudyFolder"/"$CASE"/images/functional/
 					
-					# -- First check if the boldfixica file has the mean inserted
-					3dBrickStat -mean -non-zero boldfixica"$BOLD".nii.gz[1] >> boldfixica"$BOLD"_mean.txt
-					ImgMean=`cat boldfixica"$BOLD"_mean.txt`
+					# -- First check if the boldFIXICA file has the mean inserted
+					3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
+					ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
 					if [ $(echo " $ImgMean > 1000" | bc) -eq 1 ]; then
 					echo "1st frame mean=$ImgMean Mean inserted OK for subject $CASE and bold# $BOLD. Skipping to next..."
 						else
-						# -- Next check if the boldfixica file has the mean inserted twice by accident
+						# -- Next check if the boldFIXICA file has the mean inserted twice by accident
 						if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
 						echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."	
 							else
-							# -- Command that inserts mean image back to the boldfixica file using g_InsertMean matlab function
+							# -- Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
 							echo "Re-inserting mean image on the mapped $BOLD data for $CASE... "
-							matlab -nosplash -nodisplay -nojvm -r "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldfixica' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldfixica' num2str($BOLD) '.nii.gz']),quit()"
+							matlab -nosplash -nodisplay -nojvm -r "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldFIXICA' num2str($BOLD) '.nii.gz']),quit()"
 
 						fi
 					fi
-					rm boldfixica"$BOLD"_mean.txt &> /dev/null
+					rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
 			done
 }
 
-show_usage_fixicainsertmean() {
+show_usage_FIXICAInsertMean() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -948,34 +949,34 @@ show_usage_fixicainsertmean() {
 
 
 # ------------------------------------------------------------------------------------------------------
-#  fixicaremovemean - Remove means from FIX ICA cleaned BOLDs for functional connectivity analysis
+#  FIXICARemoveMean - Remove means from FIX ICA cleaned BOLDs for functional connectivity analysis
 # ------------------------------------------------------------------------------------------------------
 
-fixicaremovemean() {
+FIXICARemoveMean() {
 
 		for BOLD in $BOLDS
 			do		
 					cd "$StudyFolder"/"$CASE"/images/functional/
-					# First check if the boldfixica file has the mean inserted
-					#3dBrickStat -mean -non-zero boldfixica"$BOLD".nii.gz[1] >> boldfixica"$BOLD"_mean.txt
-					#ImgMean=`cat boldfixica"$BOLD"_mean.txt`
+					# First check if the boldFIXICA file has the mean inserted
+					#3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
+					#ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
 					#if [ $(echo " $ImgMean < 1000" | bc) -eq 1 ]; then
 					#echo "1st frame mean=$ImgMean Mean removed OK for subject $CASE and bold# $BOLD. Skipping to next..."
 					#	else
-						# Next check if the boldfixica file has the mean inserted twice by accident
+						# Next check if the boldFIXICA file has the mean inserted twice by accident
 					#	if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
 					#	echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."	
 					#		else
-							# Command that inserts mean image back to the boldfixica file using g_InsertMean matlab function
+							# Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
 							echo "Removing mean image on the mapped CIFTI FIX ICA $BOLD data for $CASE... "
-							matlab -nosplash -nodisplay -nojvm -r "g_RemoveMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldfixica' num2str($BOLD) '.dtseries.nii'], ['boldfixica_demean' num2str($BOLD) '.dtseries.nii']),quit()"
+							matlab -nosplash -nodisplay -nojvm -r "g_RemoveMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA_demean' num2str($BOLD) '.dtseries.nii']),quit()"
 						#fi
 					#fi
-					#rm boldfixica"$BOLD"_mean.txt &> /dev/null
+					#rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
 			done
 }
 
-show_usage_fixicaremovemean() {
+show_usage_FIXICARemoveMean() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -984,10 +985,10 @@ show_usage_fixicaremovemean() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  hcpdlegacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+#  hcpdLegacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-hcpdlegacy() {
+hcpdLegacy() {
 
 		# Requirements for this function
 		# installed versions of: FSL5.0.9 or higher
@@ -1089,7 +1090,7 @@ hcpdlegacy() {
 		fi
 }
 
-show_usage_hcpdlegacy() {
+show_usage_hcpdLegacy() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -1126,7 +1127,7 @@ show_usage_hcpdlegacy() {
 				echo ""
 				echo "mnap --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
 				echo "--subjects='ta6455' \ "
-				echo "--function='hcpdlegacy' \ " 
+				echo "--function='hcpdLegacy' \ " 
 				echo "--PEdir='1' \ "
 				echo "--echospacing='0.69' \ "
 				echo "--TE='2.46' \ "
@@ -1138,7 +1139,7 @@ show_usage_hcpdlegacy() {
 				echo ""
 				echo "mnap --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
 				echo "--subjects='ta6455' \ "
-				echo "--function='hcpdlegacy' \ "
+				echo "--function='hcpdLegacy' \ "
 				echo "--PEdir='1' \ "
 				echo "--echospacing='0.69' \ "
 				echo "--TE='2.46' \ "
@@ -1150,10 +1151,10 @@ show_usage_hcpdlegacy() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  eddyqc - Executes the DWI EddyQ C (DWIEddyQC.sh) via the MNAP connector wrapper
+#  eddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-eddyqc() {
+eddyQC() {
 
 		################# CHECK eddy_squad and eddy_squad INSTALL ################################
 		
@@ -1234,7 +1235,7 @@ eddyqc() {
 		fi
 }
 
-show_usage_eddyqc() {
+show_usage_eddyQC() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
@@ -1283,7 +1284,7 @@ show_usage_eddyqc() {
  				echo "-- EXAMPLE:"
 				echo ""
 				echo "mnap --path='<path_to_study_folder_with_subject_directories>' \ "
-				echo "--function='eddyqc' \ "
+				echo "--function='eddyQC' \ "
 				echo "--subject='<subj_id>' \ "
 				echo "--eddybase='<eddy_base_name>' \ "
 				echo "--report='individual'"
@@ -1310,10 +1311,10 @@ show_usage_eddyqc() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  dwidenseparcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the MNAP connector wrapper
+#  DWIDenseParcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-dwidenseparcellation() {
+DWIDenseParcellation() {
 
 		# Requirements for this function
 		# Connectome Workbench (v1.0 or above)
@@ -1392,7 +1393,7 @@ dwidenseparcellation() {
 		fi
 }
 
-show_usage_dwidenseparcellation() {
+show_usage_DWIDenseParcellation() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
@@ -1422,7 +1423,7 @@ show_usage_dwidenseparcellation() {
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='dwidenseparcellation' \ "
+				echo "--function='DWIDenseParcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
 				echo "--parcellationfile='{$TOOLS}/${MNAPREPO}/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
@@ -1432,7 +1433,7 @@ show_usage_dwidenseparcellation() {
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='dwidenseparcellation' \ "
+				echo "--function='DWIDenseParcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
 				echo "--parcellationfile='{$TOOLS}/${MNAPREPO}/connector/templates/Parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii' \ "
@@ -1443,10 +1444,10 @@ show_usage_dwidenseparcellation() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  dwiseedtractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the MNAP connector wrapper
+#  DWISeedTractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-dwiseedtractography() {
+DWISeedTractography() {
 
 		# Requirements for this function
 		# Connectome Workbench (v1.0 or above)
@@ -1525,7 +1526,7 @@ dwiseedtractography() {
 		fi
 }
 
-show_usage_dwiseedtractography() {
+show_usage_DWISeedTractography() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -1562,7 +1563,7 @@ show_usage_dwiseedtractography() {
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='dwiseedtractography' \ "
+				echo "--function='DWISeedTractography' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
 				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
@@ -1572,7 +1573,7 @@ show_usage_dwiseedtractography() {
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='dwiseedtractography' \ "
+				echo "--function='DWISeedTractography' \ "
 				echo "--subjects='100206' \ "
 				echo "--matrixversion='3' \ "
 				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
@@ -1587,10 +1588,10 @@ show_usage_dwiseedtractography() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  computeboldfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the MNAP connector wrapper
+#  computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-computeboldfc() {
+computeBOLDfc() {
 
 		# Requirements for this function
 		# Connectome Workbench (v1.0 or above)
@@ -1799,7 +1800,7 @@ computeboldfc() {
 		
 }
 
-show_usage_computeboldfc() {
+show_usage_computeBOLDfc() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -1889,7 +1890,7 @@ show_usage_computeboldfc() {
 				echo "- Example for seed calculation for each individual subject:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='computeboldfc' \ "
+				echo "--function='computeBOLDfc' \ "
 				echo "--calculation='seed' \ "
 				echo "--runtype='individual' \ "
 				echo "--subjects='100206,100610,101006' \ "
@@ -1910,7 +1911,7 @@ show_usage_computeboldfc() {
 				echo "- Example for seed calculation for a group of three subjects with the absolute path for a target folder:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='computeboldfc' \ "
+				echo "--function='computeBOLDfc' \ "
 				echo "--calculation='seed' \ "
 				echo "--runtype='group' \ "
 				echo "--subjects='100206,100610,101006' \ "
@@ -1931,7 +1932,7 @@ show_usage_computeboldfc() {
 				echo "- Example for gbc calculation for each individual subject:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='computeboldfc' \ "
+				echo "--function='computeBOLDfc' \ "
 				echo "--calculation='gbc' \ "
 				echo "--runtype='individual' \ "
 				echo "--subjects='100206,100610,101006' \ "
@@ -1956,7 +1957,7 @@ show_usage_computeboldfc() {
 				echo "- Example for gbc calculation for a group of three subjects with the absolute path for a target folder:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='computeboldfc' \ "
+				echo "--function='computeBOLDfc' \ "
 				echo "--calculation='gbc' \ "
 				echo "--runtype='group' \ "
 				echo "--subjects='100206,100610,101006' \ "
@@ -1981,10 +1982,10 @@ show_usage_computeboldfc() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  structuralparcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the MNAP connector wrapper
+#  structuralParcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-structuralparcellation() {
+structuralParcellation() {
 
 		# Requirements for this function
 		# Connectome Workbench (v1.0 or above)
@@ -2057,7 +2058,7 @@ structuralparcellation() {
 		fi
 }
 
-show_usage_structuralparcellation () {
+show_usage_structuralParcellation() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -2084,7 +2085,7 @@ show_usage_structuralparcellation () {
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='structuralparcellation' \ "
+				echo "--function='structuralParcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--inputdatatype='MyelinMap_BC' \ "
 				echo "--parcellationfile='{$TOOLS}/${MNAPREPO}/connector/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
@@ -2095,7 +2096,7 @@ show_usage_structuralparcellation () {
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='structuralparcellation' \ "
+				echo "--function='structuralParcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--inputdatatype='MyelinMap_BC' \ "
 				echo "--parcellationfile='$TOOLS/${MNAPREPO}/connector/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
@@ -2107,10 +2108,10 @@ show_usage_structuralparcellation () {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  boldparcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the MNAP connector wrapper
+#  BOLDParcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-boldparcellation() {
+BOLDParcellation() {
 
 		# Requirements for this function
 		# Connectome Workbench (v1.0 or above)
@@ -2218,7 +2219,7 @@ boldparcellation() {
 		fi
 }
 
-show_usage_boldparcellation() {
+show_usage_BOLDParcellation() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
@@ -2253,7 +2254,7 @@ show_usage_boldparcellation() {
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='boldparcellation' \ "
+				echo "--function='BOLDParcellation' \ "
 				echo "--subjects='<comma_separated_list_of_cases>' \ "
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
@@ -2269,7 +2270,7 @@ show_usage_boldparcellation() {
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='boldparcellation' \ "
+				echo "--function='BOLDParcellation' \ "
 				echo "--subjects='100206' \ "
 				echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
 				echo "--inputpath='/images/functional/' \ "
@@ -2286,10 +2287,10 @@ show_usage_boldparcellation() {
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  roiextract - Executes the ROI Extraction Script (ROIExtract.sh) via the MNAP connector wrapper
+#  ROIExtract - Executes the ROI Extraction Script (ROIExtract.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-roiextract() {
+ROIExtract() {
 
 		# Requirements for this function
 		########################################## INPUTS ########################################## 
@@ -2374,7 +2375,7 @@ roiextract() {
 		fi
 }
 
-show_usage_roiextract() {
+show_usage_ROIExtract() {
 
 				echo ""
 				echo "DESCRIPTION:"
@@ -2407,7 +2408,7 @@ show_usage_roiextract() {
 				echo "Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<path_to_study_folder>' \ "
-				echo "--function='roiextract' \ "
+				echo "--function='ROIExtract' \ "
 				echo "--singleinputfile='<path_to_inputfile>' \ "
 				echo "--roifile='<path_to_roifile>' \ "
 				echo "--outpath='<output_path>' \ "
@@ -2417,10 +2418,10 @@ show_usage_roiextract() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  fsldtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
+#  FSLDtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-fsldtifit() {
+FSLDtifit() {
 
 	mkdir ${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dtifit_log > /dev/null 2>&1
 	LogFolder=${StudyFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dtifit_log
@@ -2477,7 +2478,7 @@ fsldtifit() {
 	fi
 }
 
-show_usage_fsldtifit() {
+show_usage_FSLDtifit() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -2500,17 +2501,17 @@ show_usage_fsldtifit() {
 				echo ""
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--subjects='<case_id>' \ "
-				echo "--function='fsldtifit' \ "
+				echo "--function='FSLDtifit' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				echo "--overwrite='yes'"
 				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  fslbedpostxgpu - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
+#  FSLBedpostxGPU - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
-fslbedpostxgpu() {
+FSLBedpostxGPU() {
 
 		# -- Establish global directory paths
 		T1wDiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Diffusion
@@ -2632,7 +2633,7 @@ fslbedpostxgpu() {
 		fi
 }
 
-show_usage_fslbedpostxgpu() {
+show_usage_FSLBedpostxGPU() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
@@ -2660,7 +2661,7 @@ show_usage_fslbedpostxgpu() {
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--function='fslbedpostxgpu' \ "
+				echo "--function='FSLBedpostxGPU' \ "
 				echo "--subjects='<case_id>' \ "
 				echo "--fibers='3' \ "
 				echo "--burnin='3000' \ "
@@ -2671,10 +2672,10 @@ show_usage_fslbedpostxgpu() {
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
-#  autoptx - Executes the autoptx script from FSL (needed for probabilistic estimation of large-scale fiber bundles / tracts)
+#  autoPtx - Executes the autoptx script from FSL (needed for probabilistic estimation of large-scale fiber bundles / tracts)
 # -------------------------------------------------------------------------------------------------------------------------------
 
-autoptx() {
+autoPtx() {
 	Subject="$CASE"
 	StudyFolder="$StudyFolder"/"$CASE"/hcp/
 	BpxFolder="$BedPostXFolder"
@@ -2685,7 +2686,7 @@ autoptx() {
 		echo "Check log file output here: $LogFolder"
 		echo "--------------------------------------------------------------"
 		echo ""
-		"$AutoPtxFolder"/autoPtx "$StudyFolder" "$Subject" "$BpxFolder"
+		"$AutoPtxFolder"/autoptx "$StudyFolder" "$Subject" "$BpxFolder"
 		"$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
 		"$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
 	else
@@ -2710,7 +2711,7 @@ autoptx() {
 	fi
 }
 
-show_usage_autoptx() {
+show_usage_autoPtx() {
 				echo ""
 				echo "-- DESCRIPTION: "
 				echo ""
@@ -2719,10 +2720,10 @@ show_usage_autoptx() {
 }
 
 # -------------------------------------------------------------------------------------------------------------------
-#  pretractographydense - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
+#  pretractographyDense - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
 # ------------------------------------------------------------------------------------------------------------------
 
-pretractographydense() {
+pretractographyDense() {
 		ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/PreTractography
 		LogFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w/Results/log_pretractographydense
 		mkdir "$LogFolder"  &> /dev/null
@@ -2754,7 +2755,7 @@ pretractographydense() {
 		fi
 }
 
-show_usage_pretractographydense() {
+show_usage_pretractographyDense() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -2778,17 +2779,17 @@ show_usage_pretractographydense() {
 				echo ""
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--subjects='<case_id>' \ "
-				echo "--function='pretractographydense' \ "
+				echo "--function='pretractographyDense' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				echo "--scheduler='LSF'"
 				echo ""
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
-#  probtrackxgpudense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
+#  probtrackxGPUDense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
-probtrackxgpudense() {
+probtrackxGPUDense() {
 		
 		# -- Set general parameters
 		ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/Tractography_gpu_scripts
@@ -2910,14 +2911,14 @@ probtrackxgpudense() {
 			
 }
 
-show_usage_probtrackxgpudense() {
+show_usage_probtrackxGPUDense() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the probtrackxgpu dense whole-brain connectome generation by calling $ScriptsFolder/RunMatrix1.sh or $ScriptsFolder/RunMatrix3.sh"
 				echo "Note that this function needs to send work to a GPU-enabled queue. It is cluster-enabled by default."
-				echo "It explicitly assumes the Human Connectome Project folder structure and completed fslbedpostxgpu and pretractographydense functions processing:"
+				echo "It explicitly assumes the Human Connectome Project folder structure and completed FSLBedpostxGPU and pretractographyDense functions processing:"
 				echo ""
 				echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion            ---> Processed DWI data needs to be here"
 				echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX   ---> BedpostX output data needs to be here"
@@ -2955,7 +2956,7 @@ show_usage_probtrackxgpudense() {
 				echo ""
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
 				echo "--subjects='<case_id>' \ "
-				echo "--function='probtrackxgpudense' \ "
+				echo "--function='probtrackxGPUDense' \ "
 				echo "--scheduler='<name_of_scheduler>' \ "
 				echo "--omatrix1='yes' \ " 
 				echo "--nsamplesmatrix1='10000' \ "
@@ -2967,7 +2968,7 @@ show_usage_probtrackxgpudense() {
 #  Sync data from AWS buckets - customized for HCP
 # -------------------------------------------------------------------------------------------------------------------------------
 
-awshcpSync() {
+AWSHCPSync() {
 
 mkdir "$StudyFolder"/aws.logs &> /dev/null
 cd "$StudyFolder"/aws.logs
@@ -2975,32 +2976,32 @@ if [ "$RunMethod" == "2" ]; then
 	echo "Dry run"
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
-		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> AWSHCPSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	else
 		mkdir "$StudyFolder"/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
-		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+		time aws s3 sync --dryrun s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> AWSHCPSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	fi
 fi
 if [ "$RunMethod" == "1" ]; then
 	echo "Syncing"
 	if [ -d "$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear ]; then
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
-		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> AWSHCPSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	else
 		mkdir "$StudyFolder"/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE" &> /dev/null
 		mkdir "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality" &> /dev/null
 		echo "$Awsuri"/"$CASE"/"$Modality"
-		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> awshcpSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
+		time aws s3 sync s3:/"$Awsuri"/"$CASE"/"$Modality" "$StudyFolder"/"$CASE"/hcp/"$CASE"/"$Modality"/ >> AWSHCPSync_"$CASE"_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log 
 	fi
 fi
 }
 
-show_usage_awshcpSync() {
+show_usage_AWSHCPSync() {
 
 				echo ""
 				echo "-- DESCRIPTION:"
@@ -3019,16 +3020,16 @@ show_usage_awshcpSync() {
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
-				echo "mnap --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='awshcpSync' --modality='T1w' --awsuri='/hcp-openaccess/HCP_900'"
+				echo "mnap --path='<path_to_study_subjects_folder>' --subjects='<case_id>' --function='AWSHCPSync' --modality='T1w' --awsuri='/hcp-openaccess/HCP_900'"
 				echo ""				
 				echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
-#  Structural QC - customized for HCP - qcpreproc
+#  Structural QC - customized for HCP - QCPreproc
 # -------------------------------------------------------------------------------------------------------------------------------
 
-qcpreproc() {
+QCPreproc() {
 	# -- Check of overwrite flag was set
 	if [ "$Overwrite" == "yes" ]; then
 		echo ""
@@ -3348,7 +3349,7 @@ qcpreproc() {
 	fi
 }
 
-show_usage_qcpreproc() {
+show_usage_QCPreproc() {
 				echo ""
 				echo "-- DESCRIPTION:"
 				echo ""
@@ -3387,7 +3388,7 @@ show_usage_qcpreproc() {
 				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--function='qcpreproc' \ "
+				echo "--function='QCPreproc' \ "
 				echo "--subjects='<list_of_cases>' \ "
 				echo "--outpath='<path_for_output_file> \ "
 				echo "--templatefolder='<path_for_the_template_folder>' \ "
@@ -3397,7 +3398,7 @@ show_usage_qcpreproc() {
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--function='qcpreproc' \ "
+				echo "--function='QCPreproc' \ "
 				echo "--subjects='<list_of_cases>' \ "
 				echo "--outpath='<path_for_output_file> \ "
 				echo "--templatefolder='<path_for_the_template_folder>' \ "
@@ -3411,7 +3412,7 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "# -- T1 QC"
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--function='qcpreproc' \ "
+				echo "--function='QCPreproc' \ "
 				echo "--subjects='01_S0301_00_2015-02-23,01_S0301_00_2015-02-24' \ "
 				echo "--outpath='<path_for_output_file> \ "
 				echo "--templatefolder='<path_for_the_template_folder>' \ "
@@ -3421,7 +3422,7 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "# -- T2 QC"
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--function='qcpreproc' \ "
+				echo "--function='QCPreproc' \ "
 				echo "--subjects='<list_of_cases>' \ "
 				echo "--outpath='<path_for_output_file> \ "
 				echo "--templatefolder='<path_for_the_template_folder>' \ "
@@ -3431,7 +3432,7 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "# -- Myelin QC"
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--function='qcpreproc' \ "
+				echo "--function='QCPreproc' \ "
 				echo "--subjects='<list_of_cases>' \ "
 				echo "--outpath='<path_for_output_file> \ "
 				echo "--templatefolder='<path_for_the_template_folder>' \ "
@@ -3441,7 +3442,7 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "# -- DWI QC "
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--function='qcpreproc' \ "
+				echo "--function='QCPreproc' \ "
 				echo "--subjects='<list_of_cases>' \ "
 				echo "--templatefolder='<path_for_the_template_folder>' \ "
 				echo "--modality='DWI' \ "
@@ -3454,7 +3455,7 @@ show_usage_qcpreproc() {
 				echo ""
 				echo "# -- BOLD QC"
 				echo "mnap --path='<path_to_study_subjects_folder>' \ "
-				echo "--function='qcpreproc' \ "
+				echo "--function='QCPreproc' \ "
 				echo "--subjects='<list_of_cases>' \ "
 				echo "--outpath='<path_for_output_file> \ "
 				echo "--templatefolder='<path_for_the_template_folder>' \ "
@@ -3523,12 +3524,12 @@ return 1
 }
 
 # -- DESCRIPTION: Generates a timestamp for the log exec call
-timestamp() {
+timeStamp() {
 	echo "mnap.$1.`date "+%Y.%m.%d.%H.%M.%S"`.txt"
 }
 
 # -- DESCRIPTION: Checks for version
-show_version() {
+showVersion() {
 	MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
 	echo ""
 	reho "Multimodal Neuroimaging Analysis Pipeline (MNAP) Version: v${MNAPVer}"
@@ -3542,25 +3543,25 @@ show_version() {
 
 # -- Check if general help requested in three redundant ways (AP, AP --help or AP help)
 if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ]; then
-	show_version
+	showVersion
 	echo ""
 	exit 0
 fi
 
 if opts_CheckForHelpRequest $@; then
-	show_version
+	showVersion
 	show_usage
 	exit 0
 fi
 
 if [ -z "$1" ]; then
-	show_version
+	showVersion
 	show_usage
 	exit 0
 fi
 
 if [ "$1" == "help" ]; then
-	show_version
+	showVersion
 	show_usage
 	exit 0
 fi
@@ -3584,7 +3585,7 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
 		# If no other input is provided print help
 		echo ""
-		show_version
+		showVersion
 		show_usage_gmri
 		exit 0
 	else		
@@ -3594,13 +3595,13 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 		UsageInput="$GmriFunctionToRun"
 	  	# If no other input is provided print help
 		echo ""
-		show_version
+		showVersion
 		show_usage_gmri
 		exit 0
 	else	
 		# -- Otherwise pass the function with all inputs from the command line
 		gmriinput="$@"
-		gmri_function
+		showVersion
 		exit 0
 	fi
 	fi
@@ -3626,11 +3627,11 @@ fi
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
-				show_version
+				showVersion
 				show_usage
 				exit 0
 			else	
-				show_version
+				showVersion
 				show_usage_"$UsageInput"
 			fi
 		exit 0
@@ -3645,11 +3646,11 @@ fi
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
-				show_version
+				showVersion
 				show_usage
 				exit 0
 			else	
-				show_version
+				showVersion
 				show_usage_"$UsageInput"
 			fi
 		exit 0
@@ -3665,11 +3666,11 @@ fi
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
-				show_version
+				showVersion
 				show_usage
 				exit 0
 			else	
-			    show_version
+			    showVersion
 				show_usage_"$UsageInput"
 			fi
 		exit 0
@@ -3683,11 +3684,11 @@ fi
 				echo ""
 				reho "Function $UsageInput does not exist! Refer to general usage below: "
 				echo ""
-				show_version
+				showVersion
 				show_usage
 				exit 0
 			else	
-				show_version
+				showVersion
 				show_usage_"$UsageInput"
 			fi
 		exit 0
@@ -3794,14 +3795,14 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	Direction=`opts_GetOpt "${setflag}dir" $@` 																				# direction of rsync command (1 to cluster; 2 from cluster)
 	ClusterName=`opts_GetOpt "${setflag}cluster" $@` 																		# cluster address [e.g. louise.yale.edu)
 
-	# -- hcpdlegacy input flags
+	# -- hcpdLegacy input flags
 	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`																	# <echo_spacing_value>   EPI Echo Spacing for data [in msec]; e.g. 0.69
 	PEdir=`opts_GetOpt "${setflag}PEdir" $@` 																				# <phase_encoding_direction>   Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
 	TE=`opts_GetOpt "${setflag}TE" $@` 																						# <delta_te_value_for_fieldmap>   This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
 	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@` 																		# <epi_phase_unwarping_direction>   Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
 	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@` 																# <diffusion_data_name>   Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
 	
-	# -- boldparcellation input flags
+	# -- BOLDParcellation input flags
 	InputFile=`opts_GetOpt "${setflag}inputfile" $@` 																		# --inputfile=<file_to_compute_parcellation_on>   Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
 	InputPath=`opts_GetOpt "${setflag}inputpath" $@` 																		# --inputpath=<path_for_input_file>   Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)
 	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@` 																# --inputdatatype=<type_of_dense_data_for_input_file>   Specify the type of data for the input file (e.g. dscalar or dtseries)
@@ -3814,11 +3815,11 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	WeightsFile=`opts_GetOpt "${setflag}useweights" $@` 																	# --weightsfile=<location_and_name_of_weights_file>   Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>   Specify the absolute path of the file you want to use for parcellation (e.g. ${TOOLS}/${MNAPREPO}/library/data/parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 
-	# -- roiextract input flags
+	# -- ROIExtract input flags
 	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@` 																		# --roifile=<filepath>   Path ROI file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
 	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@` 														# --subjectroifile=<use_a_subject_specific_roi_file>   Specify if you want to use a subject-specific ROI file"
 	
-	# -- computeboldfc input flags
+	# -- computeBOLDfc input flags
 	#InputFiles=`opts_GetOpt "${setflag}inputfiles" "$@" | sed 's/,/ /g;s/|/ /g'`; InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'` 	# --inputfiles=
 	InputFiles=`opts_GetOpt "${setflag}inputfiles" $@` 																		# --inputfiles=
 	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`																			# --targetf=			
@@ -3839,16 +3840,16 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	FCCommand=`opts_GetOpt "${setflag}options" $@`																			# --options=		
 	Method=`opts_GetOpt "${setflag}method" $@`																				# --method=		
 		
-	# -- dwidenseparcellation input flags
+	# -- DWIDenseParcellation input flags
 	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@` 																# --matrixversion=<matrix_version_value>   matrix solution verion to run parcellation on; e.g. 1 or 3
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@` 															# --parcellationfile=<file_for_parcellation>   Specify the absolute path of the file you want to use for parcellation (e.g. ${TOOLS}/${MNAPREPO}/library/data/parcellations/Cole_GlasserParcellation_Beta/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)
 	OutName=`opts_GetOpt "${setflag}outname" $@` 																			# --outname=<name_of_output_pconn_file>   Specify the suffix output name of the pconn file
 	WayTotal=`opts_GetOpt "${setflag}waytotal" $@`																			# --waytotal=<use_waytotal_normalized_data>   Use the waytotal normalized version of the DWI dense connectome. Default: [no] 	
 	
-	# -- dwiseedtractography input flags
+	# -- DWISeedTractography input flags
 	SeedFile=`opts_GetOpt "${setflag}seedfile" $@` 																			# --seedfile=<structure_for_seeding>   Specify the absolute path of the seed file you want to use as a seed for dconn reduction
 	
-	# -- eddyqc input flags
+	# -- eddyQC input flags
 	EddyBase=`opts_GetOpt "${setflag}eddybase" $@` 																			# <eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)
 	EddyPath=`opts_GetOpt "${setflag}eddypath" $@` 																			# <eddy_folder_relative_to_subject_folder>   Specify the relative path of the eddy folder you want to use for inputs 
 	Report=`opts_GetOpt "${setflag}report" $@`   																			# <run_group_or_individual_report>   If you want to generate a group report [individual or group  Default: individual
@@ -3862,24 +3863,24 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	OutputDir=`opts_GetOpt "${setflag}outputdir" $@`   																		# <name_of_cleaned_eddy_output>   Output directory - default = '<eddyBase>.qc'
 	Update=`opts_GetOpt "${setflag}update" $@`   																			# <setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single subject qc reports
 				
-	# -- fslbedpostxgpu input flags
+	# -- FSLBedpostxGPU input flags
 	Fibers=`opts_GetOpt "${setflag}fibers" $@` 																				# <number_of_fibers>   Number of fibres per voxel, default 3
 	Model=`opts_GetOpt "${setflag}model" $@`   																				# <deconvolution_model>   Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins
 	Burnin=`opts_GetOpt "${setflag}burnin" $@` 																				# <burnin_period_value>   Burnin period, default 1000
 	Jumps=`opts_GetOpt "${setflag}jumps" $@`   																				# <number_of_jumps>   Number of jumps, default 1250
 	Rician=`opts_GetOpt "${setflag}rician" $@`   																			# <set_rician_value>   Default it YES
 	
-	# -- probtrackxgpudense input flags
+	# -- probtrackxGPUDense input flags
 	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`  																		# <matrix1_model>   Specify if you wish to run matrix 1 model [yes or omit flag]
 	MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`  																		# <matrix3_model>   Specify if you wish to run matrix 3 model [yes or omit flag]
 	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`  														# <Number_of_Samples_for_Matrix1>   Number of samples - default=5000
 	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`  														# <Number_of_Samples_for_Matrix3>>   Number of samples - default=5000
 	
-	# -- awshcpSync input flags
+	# -- AWSHCPSync input flags
 	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# <modality_to_sync>   Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
 	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`	 																			# <aws_uri_location>   Enter the AWS URI [e.g. /hcp-openaccess/HCP_900]"
 		
-	# -- qcpreproc input flags
+	# -- QCPreproc input flags
 	OutPath=`opts_GetOpt "${setflag}outpath" $@` 																			# --outpath=<path_for_output_file>   Specify the output path name of the QC folder
 	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@` 																# --templatefolder=<path_for_the_template_folder>   Specify the output path name of the template folder (default: ${TOOLS}/${MNAPREPO}/library/data/scenes/qc)
 	Modality=`opts_GetOpt "${setflag}modality" $@` 																			# --modality=<input_modality_for_qc>   Specify the modality to perform QC on (Supported: T1w, T2w, myelin, BOLD, DWI)
@@ -3925,18 +3926,18 @@ fi
 # ========================================================================================
 
 # ------------------------------------------------------------------------------
-#  matlabhelp function
+#  matlabHelp function
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "matlabhelp" ]; then
+if [ "$FunctionToRun" == "matlabHelp" ]; then
   		"$FunctionToRun"
 fi
 
 # ------------------------------------------------------------------------------
-#  dicomorganize function loop
+#  organizeDicom function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "dicomorganize" ]; then
+if [ "$FunctionToRun" == "organizeDicom" ]; then
 		# -- Check all the user-defined parameters:
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
@@ -3946,16 +3947,27 @@ if [ "$FunctionToRun" == "dicomorganize" ]; then
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 		fi
+
+		echo ""
+		echo "Running organizeDicom with the following parameters:"
+		echo ""
+		echo "--------------------------------------------------------------"
+		echo "Study Folder: ${StudyFolder}"
+		echo "Subjects: ${CASES}"
+		echo "Overwrite prior run: ${Overwrite}"
+		fi
+		echo "--------------------------------------------------------------"
+
 	for CASE in $CASES; do
   		"$FunctionToRun" "$CASE"
   	done
 fi
 
 # ------------------------------------------------------------------------------
-#  Visual QC Images function loop - qcpreproc - wb_command based
+#  Visual QC Images function loop - QCPreproc - wb_command based
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "qcpreproc" ]; then
+if [ "$FunctionToRun" == "QCPreproc" ]; then
 		# -- Check all the user-defined parameters:	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
@@ -3986,7 +3998,7 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 		fi
 		
 		echo ""
-		echo "Running qcpreproc with the following parameters:"
+		echo "Running QCPreproc with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "Study Folder: ${StudyFolder}"
@@ -4017,10 +4029,10 @@ if [ "$FunctionToRun" == "qcpreproc" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Eddy QC function loop - eddyqc - uses EDDY QC by Matteo Bastiani, FMRIB
+#  eddyQC function loop - eddyqc - uses EDDY QC by Matteo Bastiani, FMRIB
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "eddyqc" ]; then
+if [ "$FunctionToRun" == "eddyQC" ]; then
 		unset EddyPath
 		# -- Check all the user-defined parameters:	
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4107,10 +4119,10 @@ if [ "$FunctionToRun" == "eddyqc" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  setuphcp function loop
+#  mapHCP function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "setuphcp" ]; then
+if [ "$FunctionToRun" == "mapHCP" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4285,10 +4297,10 @@ if [ "$FunctionToRun" == "createLists" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  printmatrix function loop -- under development
+#  printMatrix function loop -- under development
 # ------------------------------------------------------------------------------
 
-# if [ "$FunctionToRunInt" == "printmatrix" ]; then
+# if [ "$FunctionToRunInt" == "printMatrix" ]; then
 #	echo "Enter which type of data you want to print the matrix for [supported: bold]:"
 #			if read answer; then
 #			DatatoPrint=$answer
@@ -4310,10 +4322,10 @@ fi
 # fi
 
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## - FIXICA Code - integrate into gmri #  fixica function loop
+## - FIXICA Code - integrate into gmri #  FIXICA function loop
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
 ## - FIXICA Code - integrate into gmri 
-## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "fixica" ]; then
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "FIXICA" ]; then
 ## - FIXICA Code - integrate into gmri 	echo "Note: Expects that minimally processed NIFTI & CIFTI BOLDs"
 ## - FIXICA Code - integrate into gmri 	echo ""
 ## - FIXICA Code - integrate into gmri 	echo "Overwrite existing run [yes, no]:"
@@ -4331,13 +4343,13 @@ fi
 ## - FIXICA Code - integrate into gmri fi
 
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## - FIXICA Code - integrate into gmri #  postfix function loop
+## - FIXICA Code - integrate into gmri #  postFIXICA function loop
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
 ## - FIXICA Code - integrate into gmri 
-## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "postfix" ]; then
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "postFIXICA" ]; then
 ## - FIXICA Code - integrate into gmri 	echo "Note: This function depends on fsl, wb_command and matlab and expects startup.m to point to wb_command and fsl."
 ## - FIXICA Code - integrate into gmri 	echo ""
-## - FIXICA Code - integrate into gmri 	echo "Overwrite existing postfix scenes [yes, no]:"
+## - FIXICA Code - integrate into gmri 	echo "Overwrite existing postFIXICA scenes [yes, no]:"
 ## - FIXICA Code - integrate into gmri 		if read answer; then
 ## - FIXICA Code - integrate into gmri 		Overwrite=$answer
 ## - FIXICA Code - integrate into gmri 		fi  
@@ -4356,10 +4368,10 @@ fi
 ## - FIXICA Code - integrate into gmri fi
 
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## - FIXICA Code - integrate into gmri #  boldseparateciftifixica function loop
+## - FIXICA Code - integrate into gmri #  boldseparateciftiFIXICA function loop
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
 ## - FIXICA Code - integrate into gmri 
-## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldseparateciftifixica" ]; then
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldseparateciftiFIXICA" ]; then
 ## - FIXICA Code - integrate into gmri 	echo "Enter which study and data you want to separate"
 ## - FIXICA Code - integrate into gmri 	echo "supported: 1_4_raw 5_8_raw 10_13_raw 14_17_raw"
 ## - FIXICA Code - integrate into gmri 			if read answer; then
@@ -4372,10 +4384,10 @@ fi
 ## - FIXICA Code - integrate into gmri fi
 
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## - FIXICA Code - integrate into gmri #  boldhardlinkfixica function loop
+## - FIXICA Code - integrate into gmri #  BOLDHardLinkFIXICA function loop
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
 ## - FIXICA Code - integrate into gmri 
-## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldhardlinkfixica" ]; then
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "BOLDHardLinkFIXICA" ]; then
 ## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to generate connectivity hard links for [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
 ## - FIXICA Code - integrate into gmri 		if read answer; then
 ## - FIXICA Code - integrate into gmri 		BOLDS=$answer 
@@ -4386,7 +4398,7 @@ fi
 ## - FIXICA Code - integrate into gmri   		fi	
 ## - FIXICA Code - integrate into gmri fi
 ## - FIXICA Code - integrate into gmri 
-## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldhardlinkfixicamerged" ]; then
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldhardlinkFIXICAmerged" ]; then
 ## - FIXICA Code - integrate into gmri 				for CASE in $CASES
 ## - FIXICA Code - integrate into gmri 				do
 ## - FIXICA Code - integrate into gmri   					"$FunctionToRunInt" "$CASE"
@@ -4395,10 +4407,10 @@ fi
 ## - FIXICA Code - integrate into gmri 
 
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## - FIXICA Code - integrate into gmri #  fixicainsertmean function loop
+## - FIXICA Code - integrate into gmri #  FIXICAInsertMean function loop
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
 ## - FIXICA Code - integrate into gmri 
-## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "fixicainsertmean" ]; then
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "FIXICAInsertMean" ]; then
 ## - FIXICA Code - integrate into gmri 	echo "Note: This function will insert mean images into FIX ICA files"
 ## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run mean insertion on [e.g. 1 2 3]:"
 ## - FIXICA Code - integrate into gmri 		if read answer; then
@@ -4411,10 +4423,10 @@ fi
 ## - FIXICA Code - integrate into gmri fi
 
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## - FIXICA Code - integrate into gmri #  fixicaremovemean function loop
+## - FIXICA Code - integrate into gmri #  FIXICARemoveMean function loop
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
 ## - FIXICA Code - integrate into gmri 
-## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "fixicaremovemean" ]; then
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "FIXICARemoveMean" ]; then
 ## - FIXICA Code - integrate into gmri 	echo "Note: This function will remove mean from mapped FIX ICA files and save new images"
 ## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run mean removal on [e.g. 1 2 3]:"
 ## - FIXICA Code - integrate into gmri 		if read answer; then
@@ -4427,10 +4439,10 @@ fi
 ## - FIXICA Code - integrate into gmri fi
 
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## - FIXICA Code - integrate into gmri #  linkmovement function loop
+## - FIXICA Code - integrate into gmri #  linkMovement function loop
 ## - FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
 ## - FIXICA Code - integrate into gmri 
-## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "linkmovement" ]; then
+## - FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "linkMovement" ]; then
 ## - FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to link [e.g. 1 2 3 or 1-3 for merged BOLDs]:"
 ## - FIXICA Code - integrate into gmri 		if read answer; then
 ## - FIXICA Code - integrate into gmri 		BOLDS=$answer 
@@ -4442,10 +4454,10 @@ fi
 ## - FIXICA Code - integrate into gmri fi
 
 # ------------------------------------------------------------------------------
-#  bolddense function loop  -- under development
+#  BOLDDense function loop  -- under development
 # ------------------------------------------------------------------------------
 
-#if [ "$FunctionToRun" == "bolddense" ]; then
+#if [ "$FunctionToRun" == "BOLDDense" ]; then
 #	echo "Enter BOLD numbers you want to run dense connectome on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
 #		if read answer; then
 #		BOLDS=$answer 
@@ -4457,10 +4469,10 @@ fi
 #fi
 
 # ------------------------------------------------------------------------------
-#  fsldtifit function loop
+#  FSLDtifit function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "fsldtifit" ]; then
+if [ "$FunctionToRun" == "FSLDtifit" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4490,10 +4502,10 @@ if [ "$FunctionToRun" == "fsldtifit" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  fslbedpostxgpu function loop
+#  FSLBedpostxGPU function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
+if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4507,7 +4519,7 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 		Cluster=$RunMethod
 			
 		echo ""
-		echo "Running fslbedpostxgpu processing with the following parameters:"
+		echo "Running FSLBedpostxGPU processing with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "Subjects: $CASES"		
@@ -4528,10 +4540,10 @@ if [ "$FunctionToRun" == "fslbedpostxgpu" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Diffusion legacy processing function loop (hcpdlegacy)
+#  Diffusion legacy processing function loop (hcpdLegacy)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "hcpdlegacy" ]; then
+if [ "$FunctionToRun" == "hcpdLegacy" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4567,10 +4579,10 @@ if [ "$FunctionToRun" == "hcpdlegacy" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  StructuralParcellation function loop (structuralparcellation)
+#  structuralParcellation function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "structuralparcellation" ]; then
+if [ "$FunctionToRun" == "structuralParcellation" ]; then
 	
 		# -- Check all the user-defined parameters:
 		#    Optional: ComputePConn, UseWeights, WeightsFile
@@ -4591,7 +4603,7 @@ if [ "$FunctionToRun" == "structuralparcellation" ]; then
 		if [ -z "$Overwrite" ]; then Overwrite="no"; fi
 		
 		echo ""
-		echo "Running StructuralParcellation function with the following parameters:"
+		echo "Running structuralParcellation function with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "Study Folder: ${StudyFolder}"
@@ -4611,10 +4623,10 @@ if [ "$FunctionToRun" == "structuralparcellation" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  ComputeFunctionalConnectivity function loop (computeboldfc)
+#  computeBOLDfc function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "computeboldfc" ]; then	
+if [ "$FunctionToRun" == "computeBOLDfc" ]; then	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
@@ -4717,10 +4729,10 @@ if [ "$FunctionToRun" == "computeboldfc" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  BOLDParcellation function loop (boldparcellation)
+#  BOLDParcellation function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "boldparcellation" ]; then	
+if [ "$FunctionToRun" == "BOLDParcellation" ]; then	
 	
 		# -- Check all the user-defined parameters:
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4774,10 +4786,10 @@ if [ "$FunctionToRun" == "boldparcellation" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIDenseParcellation function loop (dwidenseparcellation)
+#  DWIDenseParcellation function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
+if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4813,10 +4825,10 @@ if [ "$FunctionToRun" == "dwidenseparcellation" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  ROIExtract function loop (roiextract)
+#  ROIExtract function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "roiextract" ]; then	
+if [ "$FunctionToRun" == "ROIExtract" ]; then	
 	
 		# -- Check all the user-defined parameters:
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4861,10 +4873,10 @@ if [ "$FunctionToRun" == "roiextract" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIDenseSeedTractography function loop (dwiseedtractography)
+#  DWISeedTractography function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "dwiseedtractography" ]; then
+if [ "$FunctionToRun" == "DWISeedTractography" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4882,7 +4894,7 @@ if [ "$FunctionToRun" == "dwiseedtractography" ]; then
 		if [ -z "$WayTotal" ]; then WayTotal="no"; reho "--waytotal normalized data not specified. Assuming default [no]"; fi
 			
 		echo ""
-		echo "Running DWIDenseSeedTractography function with the following parameters:"
+		echo "Running DWISeedTractography function with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "Matrix version used for input: $MatrixVersion"
@@ -4901,16 +4913,16 @@ fi
 
 
 # ------------------------------------------------------------------------------
-#  autoptx function loop
+#  autoPtx function loop
 # ------------------------------------------------------------------------------
 
 ## -- NEED TO CODE
 
 # ------------------------------------------------------------------------------
-#  pretractographydense function loop
+#  pretractographyDense function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "pretractographydense" ]; then
+if [ "$FunctionToRun" == "pretractographyDense" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4935,10 +4947,10 @@ if [ "$FunctionToRun" == "pretractographydense" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  probtrackxgpudense function loop
+#  probtrackxGPUDense function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
+if [ "$FunctionToRun" == "probtrackxGPUDense" ]; then
 	
 		# Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4958,7 +4970,7 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 		fi
 		
 		echo ""
-		echo "Running Pretractography Dense processing with the following parameters:"
+		echo "Running probtrackxGPUDense processing with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "CASES: $CASES"
@@ -4977,10 +4989,10 @@ if [ "$FunctionToRun" == "probtrackxgpudense" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  awshcpSync - AWS S3 Sync command wrapper
+#  AWSHCPSync - AWS S3 Sync command wrapper
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "awshcpSync" ]; then
+if [ "$FunctionToRun" == "AWSHCPSync" ]; then
 		# Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
@@ -4988,7 +5000,7 @@ if [ "$FunctionToRun" == "awshcpSync" ]; then
 		if [ -z "$Modality" ]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
 		if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
 		echo ""
-		echo "Running sync for HCP data from Amazon AWS S3 with the following parameters:"
+		echo "Running ${FunctionToRun}: sync for HCP data from Amazon AWS S3 with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo "CASES: $CASES"
