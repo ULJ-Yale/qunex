@@ -3955,7 +3955,6 @@ if [ "$FunctionToRun" == "organizeDicom" ]; then
 		echo "Study Folder: ${StudyFolder}"
 		echo "Subjects: ${CASES}"
 		echo "Overwrite prior run: ${Overwrite}"
-		fi
 		echo "--------------------------------------------------------------"
 
 	for CASE in $CASES; do
