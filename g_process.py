@@ -25,6 +25,7 @@ import time
 import getopt
 import subprocess
 import gp_core
+import g_core
 import gp_HCP
 import gp_workflow
 import gp_simple
@@ -425,7 +426,7 @@ def run(command, args):
     if 'subjects' in args:
         options['subjects'] = args['subjects']
 
-    subjects, gpref = gp_core.getSubjectList(options['subjects'], subjectFilter=options['filter'], subjid=options['subjid'], verbose=False)
+    subjects, gpref = g_core.getSubjectList(options['subjects'], sfilter=options['filter'], subjid=options['subjid'], verbose=False)
 
     for (k, v) in gpref.iteritems():
         options[k] = v
