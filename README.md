@@ -122,6 +122,7 @@ Change Log
 * 0.7.0 [niutilities] Extended processInbox to work with directory packets and acquisition logs
 * 0.7.1 [niutilities] Added earlier identification and more detailed reporting of packages already processed
 * 0.7.2 [niutilities] Harmonized parameter names and extended compileBatch to take explicit subjects to add
+* 0.7.3 [niutilities] Made processing of subjects parameter more robust to different file names
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
