@@ -184,11 +184,14 @@ def getSubjectList(listString, sfilter=None, subjid=None, verbose=False):
     If sfilter is provided (not None), only subjects that match the filter will be returned.
     If subjid is provided (not None), only subjects with matching id will be returned.'''
 
-    gpref = None
+    gpref = {}
 
     listString = listString.strip()
 
-    if re.match(".*\.txt$", listString):
+    if re.match(".*\.list$", listString):
+        slist = readList(listString, verbose=verbose)
+
+    elif os.path.exists(listString):
         slist, gpref = readSubjectData(listString, verbose=verbose)
 
     elif re.match(".*\.list$", listString):

@@ -425,6 +425,10 @@ def run(command, args):
 
     if 'subjects' in args:
         options['subjects'] = args['subjects']
+    if 'subjid' in args:
+        options['subjid'] = args['subjid']
+    if 'filter' in args:
+        options['filter'] = args['filter']
 
     subjects, gpref = g_core.getSubjectList(options['subjects'], sfilter=options['filter'], subjid=options['subjid'], verbose=False)
 
