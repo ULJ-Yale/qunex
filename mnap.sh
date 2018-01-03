@@ -62,7 +62,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions=(matlabHelp gmriFunction organizeDicom mapHCP createLists hpcSync printMatrix BOLDDense linkmovement FIXICA postFIXICA BOLDHardLinkFIXICA FIXICAInsertMean FIXICARemoveMean hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc timeStamp showVersion)
+MNAPFunctions=(matlabHelp gmriFunction organizeDicom mapHCPFiles createLists hpcSync printMatrix BOLDDense linkmovement FIXICA postFIXICA BOLDHardLinkFIXICA FIXICAInsertMean FIXICARemoveMean hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc timeStamp showVersion)
 
 isMNAPFunction () {
     local e
@@ -176,7 +176,7 @@ echo ""
 echo "Data organization functions"
 echo "----------------------------"
 echo "organizeDicom ...... sort DICOMs and setup nifti files from DICOMs"
-echo "mapHCP ...... setup data structure for hcp processing"
+echo "mapHCPFiles ...... setup data structure for hcp processing"
 echo "createLists ...... setup subject lists for preprocessing or analyses"
 echo "hpcSync ...... sync with hpc cluster(s) for preprocessing"
 echo "AWSHCPSync ...... sync hcp data from aws s3 cloud"
@@ -434,14 +434,14 @@ show_usage_organizeDicom() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  mapHCP - Setup the HCP File Structure to be fed to the Yale HCP
+#  mapHCPFiles - Setup the HCP File Structure to be fed to the Yale HCP
 # ------------------------------------------------------------------------------------------------------
 
-mapHCP() {
+mapHCPFiles() {
 
 	cd "$StudyFolder"/"$CASE"
 		
-			echo "--> running mapHCP for $CASE"
+			echo "--> running mapHCPFiles for $CASE"
 		 	echo ""
 		 	# -- Combine all the calls into a single command
 		 	Com1="cd ${StudyFolder}/${CASE}"
@@ -455,7 +455,7 @@ mapHCP() {
 			if [ "$Cluster" == 1 ]; then
 				echo ""
   				echo "---------------------------------------------------------------------------------"
-				echo "Running mapHCP locally on `hostname`"
+				echo "Running mapHCPFiles locally on `hostname`"
 				echo "Check output here: $StudyFolder/$CASE/hcp "
 				echo "---------------------------------------------------------------------------------"
 		 		echo ""
@@ -464,15 +464,15 @@ mapHCP() {
 				echo "Job ID:"
 				
 				# -- Set the scheduler commands
-				rm -f "$StudyFolder"/"$CASE"/mapHCP_${Suffix}.sh &> /dev/null
-				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/mapHCP_${Suffix}.sh
-				chmod 770 "$StudyFolder"/"$CASE"/mapHCP_${Suffix}.sh				
+				rm -f "$StudyFolder"/"$CASE"/mapHCPFiles_${Suffix}.sh &> /dev/null
+				echo "$ComQUEUE" >> "$StudyFolder"/"$CASE"/mapHCPFiles_${Suffix}.sh
+				chmod 770 "$StudyFolder"/"$CASE"/mapHCPFiles_${Suffix}.sh				
 				
 				# -- Run the scheduler commands
 				cd "$StudyFolder"/"$CASE"/
-				gmri schedule command="${StudyFolder}/${CASE}/mapHCP_${Suffix}.sh" \
+				gmri schedule command="${StudyFolder}/${CASE}/mapHCPFiles_${Suffix}.sh" \
 				settings="${Scheduler}" \
-				output="stdout:${StudyFolder}/${CASE}/mapHCP.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/mapHCP.${Suffix}.error.log"  \
+				output="stdout:${StudyFolder}/${CASE}/mapHCPFiles.${Suffix}.output.log|stderr:${StudyFolder}/${CASE}/mapHCPFiles.${Suffix}.error.log"  \
 				workdir="${StudyFolder}/${CASE}"  
 				
 				echo ""
@@ -485,7 +485,7 @@ mapHCP() {
 			fi
 }
 
-show_usage_mapHCP() {
+show_usage_mapHCPFiles() {
   				echo ""
   				echo "-- DESCRIPTION:"
     			echo ""
@@ -505,13 +505,13 @@ show_usage_mapHCP() {
     			echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='mapHCP' \ "
+				echo "--function='mapHCPFiles' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo ""
 				echo "-- Example with flagged parameters for submission to the scheduler:"
 				echo ""
 				echo "mnap --path='<study_folder>' \ "
-				echo "--function='mapHCP' \ "
+				echo "--function='mapHCPFiles' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--scheduler='<name_of_cluster_scheduler_and_options>' \ "
 				echo "" 
@@ -4119,10 +4119,10 @@ if [ "$FunctionToRun" == "eddyQC" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  mapHCP function loop
+#  mapHCPFiles function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "mapHCP" ]; then
+if [ "$FunctionToRun" == "mapHCPFiles" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
