@@ -27,7 +27,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %                     hcpatlas   ... path to HCPATLAS folder containing projection surf.gii files
 %                     timeSeries ... boolean to indicate whether a thresholded timeseries image should use each frame as a mask for the
 %                                     corresponding frame. By default [false], the first frame is taken a mask for all the frames
-%                     frames     ... list of frames to perform smoothing on [default = options:frames]
+%                     frames     ... list of frames to perform smoothing on [default = options.frames]
 %                     * wb_path and hcpatlas are not required if they are stored as 
 %                       environment variables (wb_command in $PATH and hcpatlas in $HCPATLAS *
 %       projection  - type of surface component projection ('midthickness', 'inflated',...)
@@ -136,12 +136,10 @@ if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 % --- increment verbose for compatibility with the mri_FindPeaks method
 verbose = verbose + 1;
 
-
+frames = [];
 if ~isempty(options)
     opt = g_ParseOptions([],options);
-    if ~isfield(opt,'frames')
-        frames = [];
-    else
+    if isfield(opt,'frames')
         frames = opt.frames;
     end
 end
