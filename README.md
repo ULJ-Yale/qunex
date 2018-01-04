@@ -123,6 +123,7 @@ Change Log
 * 0.7.1 [niutilities] Added earlier identification and more detailed reporting of packages already processed
 * 0.7.2 [niutilities] Harmonized parameter names and extended compileBatch to take explicit subjects to add
 * 0.7.3 [niutilities] Made processing of subjects parameter more robust to different file names
+* 0.7.4 [matlab] Fixed a bug in g_FindPeaks when presmoothing images with multiple frames and changed the default value if frames is not passed
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
