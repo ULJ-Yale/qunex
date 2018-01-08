@@ -210,6 +210,12 @@ mfile = false;
 ssplit = regexp(froot,'\.|-|_', 'split');
 fbase = regexp(froot, '(^.*?[0-9]+).*', 'tokens');
 
+% ---> abort if no tokens
+if isempty(fbase)
+    if verbose, fprintf('\n---> no match\n', froot, tail); end
+    return
+end
+
 % ---> get the list of candidate files
 files = dir(fullfile(movfolder, [ fbase{1}{1} '*' tail]));
 if isempty(files)
