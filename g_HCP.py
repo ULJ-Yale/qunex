@@ -521,7 +521,10 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
 
     sfolders = []
     for subject in subjects:
-        sfolders += glob.glob(os.path.join(subjectsfolder, subject['id']))
+        newSet = glob.glob(os.path.join(subjectsfolder, subject['id']))
+        if not newSet:
+            print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(subjectsfolder, subject['id']))
+        sfolders += newSet
 
     # -- loop through subject folders
 
