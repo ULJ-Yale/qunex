@@ -111,19 +111,21 @@ Change Log
 * 0.5.6 [connector] Edited naming grammar of connector pipeline to 'mnap' 
 * 0.6.0 [connector] Added `eddyqc` function to the mnap wrapper for diffusion MRI quality control
 * 0.6.1 [niutilities] Added paramFile option to `compileSubjectsTxt` command
-* 0.6.2 [niutilities] Added timeSeries smoothing functionality to g_FindPeaks and corrected a few report generation mistakes
+* 0.6.2 [niutilities] Added timeSeries smoothing functionality to `g_FindPeaks` and corrected a few report generation mistakes
 * 0.6.3 [niutilities] Added support for arbitrary inbox folder for processInbox
-* 0.6.4 [niutilities] Changed subjects.txt to batch.txt throughout and compileSubjectsTxt to compileBatch
-* 0.6.5 [niutilities, library] Added parameters.txt and hcpmap.txt templates, which are now added automatically to subjects/specs in createStudy
+* 0.6.4 [niutilities] Changed subjects.txt to batch.txt throughout and `compileSubjectsTxt` to `compileBatch`
+* 0.6.5 [niutilities, library] Added parameters.txt and hcpmap.txt templates, which are now added automatically to subjects/specs in `createStudy`
 * 0.6.6 [connector, library] Deprecated original connector hcp functions, improved parameter file documentation
 * 0.6.7 [connector, niutilities, library] Updated front-end data organization functionality
 * 0.6.8 [connector, library] Moved the batch parameter templates to library
-* 0.6.9 [niutilities] Added append option to compileBatch and changed parameter names, made batch.txt reading more robust
-* 0.7.0 [niutilities] Extended processInbox to work with directory packets and acquisition logs
+* 0.6.9 [niutilities] Added append option to `compileBatch` and changed parameter names, made batch.txt reading more robust
+* 0.7.0 [niutilities] Extended `processInbox` to work with directory packets and acquisition logs
 * 0.7.1 [niutilities] Added earlier identification and more detailed reporting of packages already processed
-* 0.7.2 [niutilities] Harmonized parameter names and extended compileBatch to take explicit subjects to add
+* 0.7.2 [niutilities] Harmonized parameter names and extended `compileBatch` to take explicit subjects to add
 * 0.7.3 [niutilities] Made processing of subjects parameter more robust to different file names
-* 0.7.4 [matlab] Fixed a bug in g_FindPeaks when presmoothing images with multiple frames and changed the default value if frames is not passed
-* 0.7.5 [niutilities, matlab] Added warning to getHCPReady when no matching files found, and fixed bug when no stat file found when reading image
+* 0.7.4 [matlab] Fixed a bug in `g_FindPeaks` when presmoothing images with multiple frames and changed the default value if frames is not passed
+* 0.7.5 [niutilities, matlab] Added warning to `getHCPReady` when no matching files found, and fixed bug when no stat file found when reading image
+* 0.7.6 [connector] Expanded default functionality for `QCPreproc` for BOLD modality to check for presence of subject_hcp.txt file if no BOLDs are specified
+
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
