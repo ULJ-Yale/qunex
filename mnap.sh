@@ -3075,7 +3075,7 @@ QCPreproc() {
 				COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${StudyFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
 				BOLDS=`more ${StudyFolder}/${CASE}/BOLDNumberTmp.txt`
 				rm ${StudyFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
-				geho "--- ${StudyFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo "${BOLDS}"; echo ""
+				geho "--- Information file ${StudyFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
 			 else
 			 	reho "--- ERROR: ${StudyFolder}/${CASE}/subject_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
 			 	exit 1
