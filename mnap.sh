@@ -1655,10 +1655,10 @@ computeBOLDfc() {
 		if [ ${Calculation} == "seed" ]; then
 			rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh &> /dev/null
 			if [ "$Cluster" == 1 ]; then
-				echo "Running locally on `hostname`"
-				echo "Check log file output here: $LogFolder"
+				echo "Running function locally on `hostname`"
+				echo "Check log file output here when finished: $LogFolder"
 				echo "--------------------------------------------------------------"
-				echo " ${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+				eval "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
 				--runtype=${RunType} \
@@ -1724,11 +1724,11 @@ computeBOLDfc() {
 		if [ ${Calculation} == "gbc" ]; then		
 			rm -f "$LogFolder"/ComputeFunctionalConnectivity_gbc_"$Suffix".sh &> /dev/null
 			if [ "$Cluster" == 1 ]; then
-				echo "Running locally on `hostname`"
-				echo "Check log file output here: $LogFolder"
+				echo "Running function locally on `hostname`"
+				echo "Check log file output here when finished: $LogFolder"
 				echo "--------------------------------------------------------------"
 				
-				echo " ${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+				eval " ${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
 				--runtype=${RunType} \
