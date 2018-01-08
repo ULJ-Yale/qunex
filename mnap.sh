@@ -3067,7 +3067,21 @@ QCPreproc() {
 	
 	# -- Check if modality is BOLD
 	if [ "$Modality" == "BOLD" ]; then
-		for BOLD in $BOLDS; 
+		if [ "$BOLDS" == "subject_hcp.txt"]; then
+			geho "--- No BOLD parameter specified. Checking if subject_hcp.txt exists to run QC on all BOLDs..."; echo ""
+			 if [ -f ${StudyFolder}/${CASE}/subject_hcp.txt ]; then
+			 	BOLDCount=`more ${StudyFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
+				rm ${StudyFolder}/${CASE}/BOLDNumberTmp.txt
+				COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${StudyFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
+				BOLDS=`more ${StudyFolder}/${CASE}/BOLDNumberTmp.txt`
+				rm ${StudyFolder}/${CASE}/BOLDNumberTmp.txt
+				geho "--- ${StudyFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs: ${BOLDS}..."; echo ""
+			 else
+			 	reho "--- ERROR: ${StudyFolder}/${CASE}/subject_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
+			 	exit 1
+			 fi
+		fi
+		for BOLD in $BOLDS;
 		do
 			# -- Generate QC statistics for a given BOLD
 			geho "--- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
@@ -3992,7 +4006,7 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 		fi
 		if [ "$Modality" = "BOLD" ]; then
 			for BOLD in $BOLDS; do rm -f ${OutPath}/TSNR_Report_${BOLD}*.txt &> /dev/null; done
-			if [ -z "$BOLDS" ]; then reho "Error: BOLD input names missing"; exit 1; fi
+			if [ -z "$BOLDS" ]; then reho "BOLD paramerer not specified. Relying subject_hcp.txt individual information files."; BOLDS="subject_hcp.txt"; fi
 			if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "BOLD suffix not specified. Assuming no suffix"; fi
 			if [ -z "$SkipFrames" ]; then SkipFrames="0"; fi
 		fi
