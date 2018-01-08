@@ -27,7 +27,7 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %       hcpatlas    ... path to HCPATLAS folder containing projection surf.gii files
 %       timeSeries  ... boolean to indicate whether a thresholded timeseries image should use each frame as a mask for the
 %                           corresponding frame. By default [false], the first frame is taken a mask for all the frames
-%       frames      ... list of frames to perform smoothing on [all]
+%       frames      ... list of frames to perform smoothing on [1]
 %       ****************************************************************************************************
 %       Smoothing time series images with thresholded data should be performed for each frame separatelly,
 %       otherwise the smoothing will use the first frame as a smoothing mask for all the frames.
@@ -66,7 +66,7 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %        - Added option for smoothing thresholded multiple-frame images
 
 % input checking
-if nargin < 11 || isempty(frames),     frames = 1:1:img.frames;          end
+if nargin < 11 || isempty(frames),     frames = 1;                       end
 if nargin < 10 || isempty(timeSeries), timeSeries = false;               end
 if nargin < 9  || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
 if nargin < 8  || isempty(wb_path),    wb_path = '';                     end
