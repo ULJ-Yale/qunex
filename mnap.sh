@@ -3071,11 +3071,11 @@ QCPreproc() {
 			geho "--- No BOLD parameter specified. Checking if subject_hcp.txt exists to run QC on all BOLDs..."; echo ""
 			 if [ -f ${StudyFolder}/${CASE}/subject_hcp.txt ]; then
 			 	BOLDCount=`more ${StudyFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
-				rm ${StudyFolder}/${CASE}/BOLDNumberTmp.txt
+				rm ${StudyFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
 				COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${StudyFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
 				BOLDS=`more ${StudyFolder}/${CASE}/BOLDNumberTmp.txt`
-				rm ${StudyFolder}/${CASE}/BOLDNumberTmp.txt
-				geho "--- ${StudyFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs: ${BOLDS}..."; echo ""
+				rm ${StudyFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
+				geho "--- ${StudyFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo "${BOLDS}"; echo ""
 			 else
 			 	reho "--- ERROR: ${StudyFolder}/${CASE}/subject_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
 			 	exit 1
