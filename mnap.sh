@@ -3067,7 +3067,7 @@ QCPreproc() {
 	
 	# -- Check if modality is BOLD
 	if [ "$Modality" == "BOLD" ]; then
-		if [ "$BOLDS" == "subject_hcp.txt"]; then
+		if [ "$BOLDS" == "subject_hcp.txt" ]; then
 			geho "--- No BOLD parameter specified. Checking if subject_hcp.txt exists to run QC on all BOLDs..."; echo ""
 			 if [ -f ${StudyFolder}/${CASE}/subject_hcp.txt ]; then
 			 	BOLDCount=`more ${StudyFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
