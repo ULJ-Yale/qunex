@@ -546,6 +546,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     --hcp_expert_file          ... Path to the read-in expert options file for
                                    FreeSurfer if one is prepared and should be used
                                    empty otherwise [].
+    --hcp_control_points       ... Specify YES to use manual control points or
+                                   empty otherwise [].                                   
     --hcp_freesurfer_home      ... Path for FreeSurfer home folder can be manually
                                    specified to override default environment variable
                                    to ensure backwards compatiblity and hcp2 customization
@@ -633,6 +635,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             --subject="%(subject)s" \
             --subjectDIR="%(subjectDIR)s" \
             --ExpertFile="%(ExpertFile)s" \
+            --ControlPoints="%(ControlPoints)s" \
             --FreeSurferHome="%(FreeSurferHome)s" \
             --FSLoadHPCModule="%(FSLoadHPCModule)s" \
             --t1="%(t1)s" \
@@ -644,6 +647,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 'FreeSurferHome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
                 'FSLoadHPCModule'    : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
                 'ExpertFile'        : options['hcp_expert_file'],
+                'ControlPoints'     : options['hcp_control_points'],
                 't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                 't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
                 't2'                : t2w}
