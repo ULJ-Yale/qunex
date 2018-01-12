@@ -404,7 +404,7 @@ EddyQCIn="$EddyPath"
 EddyQCOut="$OutputDir"
 
 echo "   DWI Eddy QC Input Path:              ${EddyQCIn}"
-echo "   DWI Eddy QC Input Path:              ${EddyQCOut}"
+echo "   DWI Eddy QC Output Path:              ${EddyQCOut}"
 echo ""
 
 # -- Delete any existing output sub-directories
@@ -438,6 +438,7 @@ else
 		echo ""
 		eval $EddyCommand
 		echo ""
+		more ${EddyQCOut}/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${EddyQCOut}/${CASE}_qc_mot_abs.txt
 	fi
 	echo ""
 
@@ -463,6 +464,16 @@ if [ -f ${EddyQCOut}/qc.json ]; then
 	echo ""
 else
 	reho "QC output file ${EddyQCOut}/qc.json missing. Something went wrong."
+	echo ""
+	exit 1
+fi
+
+if [ -f ${EddyQCOut}/${CASE}_qc_mot_abs.txt ]; then
+	OutFile="${EddyQCOut}/${CASE}_qc_mot_abs.txt"
+	geho "QC absolute motion value file found:           $OutFile"
+	echo ""
+else
+	reho "QC absolute motion value file ${EddyQCOut}/${CASE}_qc_mot_abs.txt is missing. Something went wrong."
 	echo ""
 	exit 1
 fi

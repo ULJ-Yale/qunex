@@ -190,7 +190,7 @@ echo ""
 echo ""
 echo "DWI processing, analyses & probabilistic tractography functions"
 echo "----------------------------------------------------------------"
-echo "hcpdLegacy ...... diffusion image processing for data with standard fieldmaps"
+echo "hcpdLegacy ...... diffusion image processing for data with or without standard fieldmaps"
 echo "FSLDtifit ...... run FSL's dtifit tool (cluster usable)"
 echo "FSLBedpostxGPU ...... run fsl bedpostx w/gpu"
 echo "pretractographyDense ...... generates space for whole-brain dense connectomes"
@@ -1032,6 +1032,8 @@ hcpdLegacy() {
 		CUDAQUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
 		DwellTime="$EchoSpacing" #same variable as EchoSpacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
 		DwellTimeSec=`echo "scale=6; $DwellTime/1000" | bc` # set the dwell time to seconds:
+		Scanner="$Scanner" #Scanner manufacturer (siemens or ge)
+		UseFieldmap="$UseFieldmap" #Whether or not to use standard fieldmap (yes/no)
 		
 		# -- Establish global directory paths
 		T1wFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/T1w
@@ -1053,6 +1055,8 @@ hcpdLegacy() {
 			${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
 			--path="${StudyFolder}" \
 			--subject="${CASE}" \
+			--scanner="${Scanner}" \
+			--usefieldmap="${UseFieldmap}" \
 			--PEdir="${PEdir}" \
 			--echospacing="${EchoSpacing}" \
 			--TE="${TE}" \
@@ -1064,6 +1068,8 @@ hcpdLegacy() {
 			echo "${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
 			--path=${StudyFolder} \
 			--subject=${CASE} \
+			--scanner=${Scanner} \
+			--usefieldmap=${UseFieldmap} \
 			--PEdir=${PEdir} \
 			--echospacing=${EchoSpacing} \
 			--TE=${TE} \
@@ -1095,7 +1101,7 @@ show_usage_hcpdLegacy() {
 				echo "-- DESCRIPTION:"
 				echo ""
 				echo "This function runs the DWI preprocessing using the FUGUE method for legacy data that are not TOPUP compatible"
-				echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing: "
+				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
 				echo ""
 				echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
 				echo " <study_folder>/<case>/hcp/<case>/T1w       ---> T1w data needs to be here"
@@ -1107,23 +1113,25 @@ show_usage_hcpdLegacy() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
-				echo "--function=<function_name>                   Name of function"
-				echo "--path=<study_folder>                        Path to study data folder"
-				echo "--subjects=<comma_separated_list_of_cases>   List of subjects to run"
-				echo "--echospacing=<echo_spacing_value>           EPI Echo Spacing for data [in msec]; e.g. 0.69"
-				echo "--PEdir=<phase_encoding_direction>           Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
-				echo "--TE=<delta_te_value_for_fieldmap>           This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
-				echo "--unwarpdir=<epi_phase_unwarping_direction>  Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
-				echo "--diffdatasuffix=<diffusion_data_name>       Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>         A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "                                                            e.g. for SLURM the string would look like this: "
-				echo "                                                            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				echo "" 
+ 				echo "		--path=<study_folder>				Path to study data folder"
+				echo "		--subject=<list_of_cases>			List of subjects to run"
+				echo "		--scanner=<scanner_manufacturer>	Name of scanner manufacturer (siemens or ge supported) "
+				echo "		--usefieldmap=<yes/no>					Whether to use the standard field map. If set to <yes> then the following parameters become mandatory:"
+				echo " "
 				echo "-- OPTIONAL PARMETERS:"
-				echo "" 
-				echo "--overwrite=<clean_prior_run>                Delete prior run for a given subject"
 				echo ""
-				echo "-- Example with flagged parameters for a local run (needs GPU-enabled node):"
+				echo "		FIELDMAP-SPECFIC PARAMETERS (these become mandatory if --usefieldmap=yes):"
+				echo ""
+				echo "		--echospacing=<echo_spacing_value>		EPI Echo Spacing for data [in msec]; e.g. 0.69"
+				echo "		--PEdir=<phase_encoding_direction>		Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
+				echo "		--TE=<delta_te_value_for_fieldmap>		This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
+				echo "		--unwarpdir=<epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
+				echo ""
+				echo "		--diffdatasuffix=<diffusion_data_name>		Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
+ 				echo "		--overwrite=<clean_prior_run>		Delete prior run for a given subject"
+ 				echo "" 				
+ 				echo ""
+				echo "-- Example with flagged parameters for a local run using Siemens FieldMap (needs GPU-enabled node):"
 				echo ""
 				echo "mnap --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
 				echo "--subjects='ta6455' \ "
@@ -1133,9 +1141,11 @@ show_usage_hcpdLegacy() {
 				echo "--TE='2.46' \ "
 				echo "--unwarpdir='x-' \ "
 				echo "--diffdatasuffix='DWI_dir91_LR' \ "
+				echo "--usefieldmap='yes' \ "
+				echo "--scanner='siemens' \ "
 				echo "--overwrite='yes'"
 				echo ""
-				echo "-- Example with flagged parameters for submission to the scheduler [ needs GPU-enabled queue ]:"
+				echo "-- Example with flagged parameters for submission to the scheduler using Siemens FieldMap [ needs GPU-enabled queue ]:"
 				echo ""
 				echo "mnap --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
 				echo "--subjects='ta6455' \ "
@@ -1146,6 +1156,19 @@ show_usage_hcpdLegacy() {
 				echo "--unwarpdir='x-' \ "
 				echo "--diffdatasuffix='DWI_dir91_LR' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
+				echo "--usefieldmap='yes' \ "
+				echo "--scanner='siemens' \ "
+				echo "--overwrite='yes' \ "
+				echo ""
+				echo "-- Example with flagged parameters for submission to the scheduler using GE data w/out FieldMap [ needs GPU-enabled queue ]:"
+				echo ""
+				echo "mnap --path='/gpfs/project/fas/n3/Studies/Anticevic.DP5/subjects' \ "
+				echo "--subjects='ta6455' \ "
+				echo "--function='hcpdLegacy' \ "
+				echo "--diffdatasuffix='DWI_dir91_LR' \ "
+				echo "--scheduler='<name_of_scheduler_and_options>' \ "
+				echo "--usefieldmap='no' \ "
+				echo "--scanner='ge' \ "
 				echo "--overwrite='yes' \ "
 				echo ""
 }
@@ -1189,7 +1212,7 @@ eddyQC() {
 			echo "Check log file output here: $LogFolder"
 			echo "--------------------------------------------------------------"
 			echo ""
-			DWIeddyQC.sh \
+			eval "DWIeddyQC.sh \
 			--path=${StudyFolder} \
 			--subject=${CASE} \
 			--eddybase=${EddyBase} \
@@ -1199,7 +1222,7 @@ eddyQC() {
 			--eddyidx=${EddyIdx} \
 			--eddyparams=${EddyParams} \
 			--bvecsfile=${BvecsFile} \
-			--overwrite=${Overwrite} >> "$LogFolder"/DWIEddyQC_"$Suffix".log
+			--overwrite=${Overwrite}" >> "$LogFolder"/DWIEddyQC_"$Suffix".log
 		else
 			# - Clean prior command 
 			rm -f "$LogFolder"/DWIEddyQC_"$Suffix".sh &> /dev/null	
@@ -1214,7 +1237,7 @@ eddyQC() {
 			--eddyidx='${EddyIdx}' \
 			--eddyparams='${EddyParams}' \
 			--bvecsfile='${BvecsFile}' \
-			--overwrite='${Overweite}'" > "$LogFolder"/DWIEddyQC_"$Suffix".sh
+			--overwrite='${Overwrite}'" > "$LogFolder"/DWIEddyQC_"$Suffix".sh
 			
 			# - Make script executable 
 			chmod 770 "$LogFolder"/DWIEddyQC_"$Suffix".sh
@@ -1727,7 +1750,6 @@ computeBOLDfc() {
 				echo "Running function locally on `hostname`"
 				echo "Check log file output here when finished: $LogFolder"
 				echo "--------------------------------------------------------------"
-				
 				eval " ${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
 				--path=${StudyFolder} \
 				--calculation=${Calculation} \
@@ -3082,7 +3104,9 @@ QCPreproc() {
 			 fi
 		fi
 		for BOLD in $BOLDS;
+		
 		do
+		
 			# -- Generate QC statistics for a given BOLD
 			geho "--- Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
 			echo ""
@@ -3091,7 +3115,15 @@ QCPreproc() {
 			wb_command -cifti-reduce ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}.dtseries.nii TSNR ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -exclude-outliers 4 4
 			TSNR=`wb_command -cifti-stats ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
 			TSNRLog="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
-			printf "${TSNRLog}\n" >> ${OutPath}/TSNR_Report_${BOLD}_`date +%Y-%m-%d`.txt
+			TSNRReport="${OutPath}/TSNR_Report_${BOLD}_${TimeStampQCPreproc}.txt"
+			printf "${TSNRLog}\n" >> ${TSNRReport}
+			geho "--- Completed SNR calculations for ${TSNRLog}. Final report can be found here: ${TSNRReport}"; echo ""
+			
+			if [ SNROnly == "yes" ]; then 
+				echo ""
+				geho "--- Completed only SNR calculations for ${TSNRLog}. Final report can be found here: ${TSNRReport}"; echo ""
+				exit 1; 
+			fi
 			
 			# -- Get values for plotting GS chart & Compute the GS scalar series file
 			# -- Get TR
@@ -3289,17 +3321,30 @@ QCPreproc() {
 				fi
 			fi
 		
-			# -- if eddy qc is selected then create hard link to eddy qc pdf
-			if [ "$EddyQCPDF" == "yes" ]; then
+			# -- if eddy qc is selected then create hard link to eddy qc pdf and print the qc_mot_abs for each subjec to a report
+			if [ "$EddyQCStats" == "yes" ]; then
 				echo ""
-				geho "--- QC for FSL EDDY requested. Checking if EDDY QC was completed..."
+				geho "--- QC Stats for FSL EDDY requested. Checking if EDDY QC was completed..."
 				echo ""
 				# -- Then check if eddy qc is completed
 				if [ -f ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
+					geho "    --> EDDY QC outputs found and completed here: "; echo ""
+						# -- regenerate the qc_mot_abs if missing
+						if [ -f ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt ]; then
+								echo "        ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt"
+						else
+							echo "        ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt not found. Regenerating... "
+							more ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt
+						fi
 					echo ""
-					geho "    --> EDDY QC outputs found and completed here: ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"
+					echo "        ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"
 					echo ""
+					# --run links and printing to reports
 					ln ${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASE}.${Modality}.eddy.QC.pdf
+					printf "${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt\n" >> ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampQCPreproc}.txt
+					
+					geho "--- Completed EDDY QC stats for ${CASE}"
+					geho "    Final report can be found here: ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampQCPreproc}.txt"; echo ""
 				else
 					echo ""
 					reho "--- EDDY QC outputs missing or incomplete for $CASE. Skipping EDDY QC request. Check EDDY results."
@@ -3392,11 +3437,12 @@ show_usage_QCPreproc() {
 				echo "--dwidata=<file_name_for_dwi_data>               Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
 				echo "--dtifitqc=<visual_qc_for_dtifit>                Specify if dtifit visual QC should be completed [e.g. yes or no]"
 				echo "--bedpostxqc=<visual_qc_for_bedpostx>            Specify if BedpostX visual QC should be completed [e.g. yes or no]"
-				echo "--eddyqcpdf=<pdf_qc_for_eddy>                    Specify if EDDY PDF QC should be linked into QC folder [e.g. yes or no]"
+				echo "--eddyqcstats=<qc_stats_for_eddy>                    Specify if EDDY QC stats should be linked into QC folder and motion report generated [e.g. yes or no]"
 				echo "--dwilegacy=<dwi_data_processed_via_legacy_pipeline>     Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
 				echo "--bolddata=<file_names_for_bold_data>                    Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
 				echo "--boldsuffix=<file_name_for_bold_data>                   Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
 				echo "--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
+				echo "--snronly=<compute_snr_only_for_bold>                            Specify if you wish to compute only SNR BOLD QC calculation and skip image generation"
 				echo ""
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
@@ -3816,6 +3862,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	TE=`opts_GetOpt "${setflag}TE" $@` 																						# <delta_te_value_for_fieldmap>   This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS
 	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@` 																		# <epi_phase_unwarping_direction>   Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations
 	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@` 																# <diffusion_data_name>   Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
+	Scanner=`opts_GetOpt "${setflag}scanner" $@`																			# <scanner_manufacturer>	Type of scanner; e.g. 'siemens' or 'ge' 
+	UseFieldmap=`opts_GetOpt "${setflag}usefieldmap" $@`																	# <fieldmap_yes_no>	Whether or not to use the standard fieldmap image (yes/no)
 	
 	# -- BOLDParcellation input flags
 	InputFile=`opts_GetOpt "${setflag}inputfile" $@` 																		# --inputfile=<file_to_compute_parcellation_on>   Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)
@@ -3903,11 +3951,12 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	DWIData=`opts_GetOpt "${setflag}dwidata" $@` 																			# --dwidata=<file_name_for_dwi_data>   Specify the file name for DWI data (may differ across studies)
 	DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@` 																			# --dtifitqc=<visual_qc_for_dtifit>   Specify if dtifit visual QC should be completed [e.g. YES or NO]
 	BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@` 																		# --bedpostxqc=<visual_qc_for_bedpostx>   Specify if BedpostX visual QC should be completed [e.g. YES or NO]
-	EddyQCPDF=`opts_GetOpt "${setflag}eddyqcpdf" $@` 																		# --eddyqcpdf=<pdf_qc_for_eddy>   Specify if EDDY PDF QC should be linked into QC folder [e.g. yes or no]
+	EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@` 																	# --eddyqcstats=<qc_stats_for_eddy>                    Specify if EDDY QC stats should be linked into QC folder and motion report generated [e.g. yes or no]
 	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@` 																		# --dwilegacy=<dwi_data_processed_via_legacy_pipeline>   Specify is DWI data was processed via legacy pipelines [e.g. YES; default NO]
 	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'` 	# --bolddata=<file_names_for_bold_data>   Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]
 	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@` 																		# --boldsuffix=<file_name_for_bold_data>   Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]
 	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@` 																		# --skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation
+	SNROnly=`opts_GetOpt "${setflag}snronly" $@` 																			# --snronly=<compute_snr_only_for_bold>   Specify if you wish to compute only SNR BOLD QC calculation and skip image generation
 	
 	# -- Check if subject input is a parameter file instead of list of cases
 	if [[ ${CASES} == *.txt ]]; then
@@ -3983,6 +4032,7 @@ fi
 
 if [ "$FunctionToRun" == "QCPreproc" ]; then
 		# -- Check all the user-defined parameters:	
+		TimeStampQCPreproc=`date +%Y-%m-%d-%H-%M-%S`
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -4002,13 +4052,14 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 			if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; fi
 			if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; fi
 			if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; fi
-			if [ -z "$EddyQCPDF" ]; then EddyQCPDF="no"; echo "DWI EDDY not specified. Using default: ${EddyQCPDF}"; fi		
+			if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; fi		
 		fi
 		if [ "$Modality" = "BOLD" ]; then
 			for BOLD in $BOLDS; do rm -f ${OutPath}/TSNR_Report_${BOLD}*.txt &> /dev/null; done
 			if [ -z "$BOLDS" ]; then reho "BOLD paramerer not specified. Relying subject_hcp.txt individual information files."; BOLDS="subject_hcp.txt"; fi
 			if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "BOLD suffix not specified. Assuming no suffix"; fi
 			if [ -z "$SkipFrames" ]; then SkipFrames="0"; fi
+			if [ -z "$SNROnly" ]; then SNROnly="no"; fi
 		fi
 		
 		echo ""
@@ -4027,12 +4078,14 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 		echo "DWI legacy processing: ${DWILegacy}"
 		echo "DWI dtifit QC requested: ${DtiFitQC}"
 		echo "DWI bedpostX QC requested: ${BedpostXQC}"
-		echo "DWI EDDY QC PDF requested: ${EddyQCPDF}"
+		echo "DWI EDDY QC Stats requested: ${EddyQCStats}"
 		fi
 		if [ "$Modality" = "BOLD" ]; then
 		echo "BOLD data input: ${BOLDS}"
 		echo "BOLD suffix: ${BOLDSuffix}"
 		echo "Skip Initial Frames: ${SkipFrames}"
+		echo "Compute SNR Only: ${SNROnly}"
+		if [ "$SNROnly" == "yes" ]; then echo ""; echo "BOLD SNR only specified. Will skip QC images"; echo ""; fi
 		fi
 		echo "--------------------------------------------------------------"
 		
@@ -4561,13 +4614,20 @@ if [ "$FunctionToRun" == "hcpdLegacy" ]; then
 	
 		# -- Check all the user-defined parameters:		
 		if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+		if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
+		if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$EchoSpacing" ]; then reho "Error: Echo Spacing value missing"; exit 1; fi
-		if [ -z "$PEdir" ]; then reho "Error: Phase Encoding Direction value missing"; exit 1; fi
-		if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
-		if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
 		if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
+		#if [ -z "$EchoSpacing" ]; then reho "Error: Echo Spacing value missing"; exit 1; fi
+		#if [ -z "$PEdir" ]; then reho "Error: Phase Encoding Direction value missing"; exit 1; fi
+		#if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
+		#if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
+		if [ -z "$EchoSpacing" ]; then reho "Warning: Echo Spacing value missing"; fi
+		if [ -z "$PEdir" ]; then reho "Warning: Phase Encoding Direction value missing"; fi
+		if [ -z "$TE" ]; then reho "Warning: TE value for Fieldmap missing"; fi
+		if [ -z "$UnwarpDir" ]; then reho "Warning: EPI Unwarp Direction value missing"; fi
+		
 		
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
@@ -4577,6 +4637,8 @@ if [ "$FunctionToRun" == "hcpdLegacy" ]; then
 		echo "Running DWI legacy processing with the following parameters:"
 		echo ""
 		echo "--------------------------------------------------------------"
+		echo "Scanner: $Scanner"
+		echo "Using FieldMap: $UseFieldmap"
 		echo "Echo Spacing: $EchoSpacing"
 		echo "Phase Encoding Direction: $PEdir"
 		echo "TE value for Fieldmap: $TE"
