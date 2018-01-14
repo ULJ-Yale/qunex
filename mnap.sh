@@ -628,7 +628,7 @@ show_usage_createLists() {
 				echo ""								
 				echo "--listfunction=<function_used_to_create_list>   Point to external function to use"
 				echo "--bolddata=<comma_separated_list_of_bolds>      List of BOLD files to append to analysis or snr lists"
-				echo "--parcellationfile=<file_for_parcellation>      Specify the absolute file path for parcellation in $MNAPPATH/connector/templates/Parcellations/ "
+				echo "--parcellationfile=<file_for_parcellation>      Specify the absolute file path for parcellation in $TOOLS/$MNAPREPO/connector/templates/Parcellations/ "
 				echo "--filetype=<file_extension>                     Extension for BOLDs in the analysis (e.g. _Atlas). Default empty []"
 				echo "--boldsuffix=<comma_separated_bold_suffix>      List of BOLDs to iterate over in the analysis list"
 #    			echo "--subjecthcpfile=<yes/no>                       Use individual subject_hcp.txt file for for appending the parameter list"
@@ -1652,15 +1652,18 @@ computeBOLDfc() {
 		Method="$Method"				# --method=
 		InputPath="$InputPath"			# --inputpath		
 		
-		# -- make sure individual runs default to the original input path location
-		if [ "$OutPath" == "" ]; then
-			OutPath="$StudyFolder/$CASE/$InputPath"
-		fi
-		
 		if [ "$RunType" == "individual" ]; then
 			OutPath="$StudyFolder/$CASE/$InputPath"
 			TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
 			Suffix="${CASE}_${TimeStamp}"
+			# -- make sure individual runs default to the original input path location (/images/functional)
+		    if [ "$InputPath" == "" ]; then
+				InputPath="$StudyFolder/$CASE/images/functional"
+			fi
+			# -- make sure individual runs default to the original input path location (/images/functional)
+			if [ "$OutPath" == "" ]; then
+				OutPath="$StudyFolder/$CASE/$InputPath"
+			fi
 		fi
 		
 		if [ "$RunType" == "group" ]; then
@@ -1852,14 +1855,18 @@ show_usage_computeBOLDfc() {
 				echo ""
 				echo "--path=<study_folder>                              Path to study data folder"
 				echo "--subject=<list_of_cases>                          List of subjects to run"
-				echo "--inputfiles=<files_to_compute_connectivity_on>    Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
-				echo "--inputpath=<path_for_input_file>                  Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
+				echo "--inputfiles=<files_to_compute_connectivity_on>    Specify the comma separated file names you want to use (e.g. 'bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii')"
 				echo "--outname=<name_of_output_file>                    Specify the suffix name of the output file name"  
+				echo ""
+				echo "-- OPTIONAL PARAMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
+				echo "--inputpath=<path_for_input_file>                  Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/). Default [<study_folder>/subjects/<subject_id>/images/functional]"
+				echo "--targetf=<path_for_output_file>                   Specify the absolute path for result output folder. If using --runtype='individual' the output will default to --inputpath location for each individual subject unless otherwise specified."
+				echo ""
 				echo ""
 				echo "-- OPTIONAL GENERAL PARAMETERS: "	
 				echo ""
-				echo "--overwrite=<clean_prior_run>                      Delete prior run for a given subject"
-				echo "--extractdata=<save_out_the_data_as_as_csv>        Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
+				echo "--overwrite=<clean_prior_run>                      Delete prior run for a given subject <yes/no>. Default is [no]"
+				echo "--extractdata=<save_out_the_data_as_as_csv>        Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) <yes/no>. Default is [no]"
 				echo "--covariance=<compute_covariance>                  Whether to compute covariances instead of correlations (true / false). Default is [false]"
 				echo ""
 				echo "-- REQUIRED GBC PARMETERS:"
@@ -1894,7 +1901,9 @@ show_usage_computeBOLDfc() {
 				echo ""
 				echo "-- REQUIRED SEED FC PARMETERS:"
 				echo ""
-				echo "--roinfo=<roi_seed_files>                         An ROI file for the seed connectivity "
+				echo "--roinfo=<roi_seed_names_file>                         Region of interest (ROI) specification names file (*.names)"
+				echo "                                                       For an example see: $TOOLS/$MNAPREPO/library/data/roi/seeds_cifti.names"
+				echo "                                                       For detailed use specification see: https://bitbucket.org/hidradev/mnaptools/wiki/Overview/FileFormats.md"
 				echo ""
 				echo "-- OPTIONAL SEED FC PARMETERS: "
 				echo ""
@@ -4714,10 +4723,10 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 			if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 			if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 			if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
-			if [ -z "$InputPath" ]; then reho "Error: Input data path value missing"; exit 1; fi
 			if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 			if [ ${RunType} == "individual" ]; then
-				if [ -z "$OutPathFC" ]; then reho "Warrning: Output path value missing. Assuming individual folder structure for output"; fi
+			    if [ -z "$InputPath" ]; then reho "Warrning: Input path value missing. Assuming individual folder structure for output: $StudyFolder/$CASE/images/functional"; InputPath="$StudyFolder/$CASE/images/functional"; fi
+				if [ -z "$OutPathFC" ]; then reho "Warrning: Output path value missing. Assuming individual folder structure for output: $StudyFolder/$CASE/images/functional"; OutPathFC="$StudyFolder/$CASE/images/functional"; fi
 			fi
 			if [ ${RunType} == "group" ]; then
 				if [ -z "$OutPathFC" ]; then reho "Error: Output path value missing and is needed for a group run."; exit 1; fi
