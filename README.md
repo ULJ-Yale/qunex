@@ -130,6 +130,7 @@ Change Log
 * 0.7.8 [niutilities, hcpmodified] Added option to run FreeSurfer with manual control points
 * 0.7.9 [library] Added template Workbench scene and associated files for CIFTI visualization
 * 0.7.10 [niutilities] Deprecated old ambiguous parameter names and added a warning when still used
+* 0.7.11 [connector, niutilities] Updated inline documentation for `computeBOLDfc` and `hcpd`
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
