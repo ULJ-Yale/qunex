@@ -296,12 +296,12 @@ arglist = [['# ---- Basic settings'],
 #   parameters need to be mapped to a parameter with another name. The "tomap"
 #   dictionary specifies what is mapped to what.
 
-tomap = {'bppt',        'bold_preprocess',
-         'bppa',        'bold_actions',
-         'bppn',        'bold_nuisance',
-         'eventstring', 'event_string',
-         'eventfile',   'event_file',
-         'basefolder',  'subjectsfolder'}
+tomap = {'bppt':        'bold_preprocess',
+         'bppa':        'bold_actions',
+         'bppn':        'bold_nuisance',
+         'eventstring': 'event_string',
+         'eventfile':   'event_file',
+         'basefolder':  'subjectsfolder'}
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -448,16 +448,16 @@ def run(command, args):
 
     # ---- Take care of mapping
 
-    for line in arglist:
-        mapwarn = False
-        if line[0] in tomap:
+    mapwarn = False
+    for k, v in args.iteritems():
+        if k in tomap:
             if not mapwarn:
                 print "\nERROR: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
                 mapwarn = True
-            print"       ... %s is now %s!" (line[0], tomap[line[0]])
-        if mapwarn:
-            print "       Please correct the listed parameter names are run the command again!"
-            exit()
+            print"       ... %s is now %s!" % (k, tomap[k])
+    if mapwarn:
+        print "       Please correct the listed parameter names in command line or batch file and run the command again!"
+        exit()
 
     # ---- Set key parameters
 
