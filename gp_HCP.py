@@ -194,7 +194,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -255,10 +255,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_PreFS subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp_PreFS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_brainsize=170
 
-    gmri hcp1 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp1 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
 
     ----------------
@@ -526,7 +526,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -547,7 +547,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                    FreeSurfer if one is prepared and should be used
                                    empty otherwise [].
     --hcp_control_points       ... Specify YES to use manual control points or
-                                   empty otherwise [].                                   
+                                   empty otherwise [].
     --hcp_freesurfer_home      ... Path for FreeSurfer home folder can be manually
                                    specified to override default environment variable
                                    to ensure backwards compatiblity and hcp2 customization
@@ -557,13 +557,13 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_FS subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp_FS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri hcp2 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp2 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
 
-    gmri hcp2 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp2 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE \\
          hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
          hcp_freesurfer_module=YES
@@ -773,7 +773,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -801,10 +801,10 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_PostFS subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp_PostFS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri hcp3 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp3 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
 
     ----------------
@@ -1063,7 +1063,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -1173,10 +1173,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_fMRIVolume subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp_fMRIVolume subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri hcp4 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp4 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
          hcp_bold_refreg=nonlinear hcp_bold_usemask=DILATED
 
@@ -1204,7 +1204,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
-        # btargets = options['bppt'].split("|")
+        # btargets = options['bold_preprocess'].split("|")
 
         # --- run checks
 
@@ -1291,7 +1291,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
 
-        btargets = options['bppt'].split("|")
+        btargets = options['bold_preprocess'].split("|")
         bolds = [v for (k, v) in sinfo.iteritems() if k.isdigit()]
         bolds = [(int(e['name'].lower().replace('bold', '')), e) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
         if "all" not in btargets:
@@ -1590,7 +1590,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -1627,10 +1627,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_fMRISurface subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp_fMRISurface subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri hcp5 subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri hcp5 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
     ----------------
@@ -1655,7 +1655,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
-        # btargets = options['bppt'].split("|")
+        # btargets = options['bold_preprocess'].split("|")
 
         # --- run checks
 
@@ -1708,7 +1708,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
 
-        btargets = options['bppt'].split("|")
+        btargets = options['bold_preprocess'].split("|")
         bolds = [v for (k, v) in sinfo.iteritems() if k.isdigit()]
         bolds = [(int(e['name'].lower().replace('bold', '')), e) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
         if "all" not in btargets:
@@ -1960,7 +1960,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     ===
 
     mapHCPData maps the results of the HCP preprocessing (in MNINonLinear) to
-    the <basefolder>/<subject id>/images folder structure. Specifically, it
+    the <subjectsfolder>/<subject id>/images folder structure. Specifically, it
     copies the files and folders:
 
     * T1w.nii.gz                  -> images/structural/T1w.nii.gz
@@ -1979,7 +1979,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -2000,7 +2000,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri mapHCPData subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri mapHCPData subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all
 
     ----------
@@ -2016,7 +2016,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
-    r += "\n   The command will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bold_preprocess parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bppt'].split("|")), options['hcp_cifti_tail'])
+    r += "\n   The command will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bold_preprocess parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bold_preprocess'].split("|")), options['hcp_cifti_tail'])
     r += "\n\n........................................................"
 
     # --- file/dir structure
@@ -2108,9 +2108,9 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     # ------------------------------------------------------------------------------------------------------------
     #                                                                                          map functional data
 
-    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' cifti tail\n" % (", ".join(options['bppt'].split("|")), options['hcp_cifti_tail'])
+    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' cifti tail\n" % (", ".join(options['bold_preprocess'].split("|")), options['hcp_cifti_tail'])
 
-    btargets = options['bppt'].split("|")
+    btargets = options['bold_preprocess'].split("|")
 
     report['boldok'] = 0
     report['boldfail'] = 0
@@ -2121,7 +2121,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         if k.isdigit():
             bnum = bsearch.match(v['name'])
             if bnum:
-                if v['task'] in btargets or options['bppt'] == 'all':
+                if v['task'] in btargets or options['bold_preprocess'] == 'all':
 
                     boldname = v['name']
                     r += "\n ... " + boldname
@@ -2194,7 +2194,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                     report['boldskipped'] += 1
 
     if len(skipped) > 0:
-        r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bold_preprocess=\"%s\"':\n" % (options['bppt'])
+        r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bold_preprocess=\"%s\"':\n" % (options['bold_preprocess'])
         for bname, btask in skipped:
             r += "\n ... %s [name: '%s']" % (bname, btask)
 

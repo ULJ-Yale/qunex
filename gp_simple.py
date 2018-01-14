@@ -38,7 +38,7 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
     """
     createBoldList - documentation not yet available.
     """
-    bfile = open(os.path.join(options['basefolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
+    bfile = open(os.path.join(options['subjectsfolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
     bsearch = re.compile('bold([0-9]+)')
 
     for subject in sinfo:
@@ -47,7 +47,7 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
             if k.isdigit():
                 bnum = bsearch.match(v['name'])
                 if bnum:
-                    if v['task'] in options['bppt'].split("|"):
+                    if v['task'] in options['bold_preprocess'].split("|"):
                         bolds.append(v['name'])
         if len(bolds) > 0:
             f = getFileNames(subject, options)
@@ -65,10 +65,10 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
     createConcList - documentation not yet available.
     """
 
-    bfile = open(os.path.join(options['basefolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
+    bfile = open(os.path.join(options['subjectsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 
-    concs = options['bppt'].split("|")
-    fidls = options['eventfile'].split("|")
+    concs = options['bold_preprocess'].split("|")
+    fidls = options['event_file'].split("|")
 
     if len(concs) != len(fidls):
         print "\nWARNING: Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls))
@@ -102,7 +102,7 @@ def listSubjectInfo(sinfo, options, overwrite=False, thread=0):
     """
     listSubjectInfo - documentation not yet available.
     """
-    bfile = open(os.path.join(options['basefolder'], 'SubjectInfo.txt'), 'w')
+    bfile = open(os.path.join(options['subjectsfolder'], 'SubjectInfo.txt'), 'w')
 
     for subject in sinfo:
         print >> bfile, "subject: %s, group: %s" % (subject['id'], subject['group'])
@@ -173,7 +173,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri runShellScript subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri runShellScript subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no script=fcMRI/processdata.sh
 
     ----------------

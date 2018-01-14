@@ -112,7 +112,7 @@ def getFileNames(sinfo, options):
 
     d = getSubjectFolders(sinfo, options)
 
-    rgss = options['bppn']
+    rgss = options['bold_nuisance']
     rgss = rgss.translate(None, ' ,;|')
 
     concroot = options['boldname'] + '_'
@@ -140,10 +140,10 @@ def getFileNames(sinfo, options):
 
     f['fs_lhpial']          = os.path.join(d['s_fs_surf'], 'lh.pial')
 
-    f['conc']               = os.path.join(d['s_bold_concs'], concroot + fformat + options['eventfile'] + '.conc')
-    f['conc_final']         = os.path.join(d['s_bold_concs'], concroot + fformat + options['eventfile'] + options['bold_prefix'] + '.conc')
+    f['conc']               = os.path.join(d['s_bold_concs'], concroot + fformat + options['event_file'] + '.conc')
+    f['conc_final']         = os.path.join(d['s_bold_concs'], concroot + fformat + options['event_file'] + options['bold_prefix'] + '.conc')
 
-    for ch in options['bppa']:
+    for ch in options['bold_actions']:
         if ch == 's':
             f['conc_final'] = f['conc_final'].replace('.conc', '_g7.conc')
         elif ch == 'h':
@@ -237,7 +237,7 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # print "root", root, "--- options boldname", options['boldname'], '--- boldname', boldname, '--- ext', ext
 
-    rgss = options['bppn']
+    rgss = options['bold_nuisance']
     rgss = rgss.translate(None, ' ,;|')
 
     if 'path_' + boldname in options:
@@ -279,10 +279,10 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # --- event files
 
-    if 'e' in options['bppn']:
-        f['bold_event_o']       = os.path.join(d['s_source'], boldname + options['eventfile'])
-        f['bold_event_a']       = os.path.join(options['basefolder'], 'inbox', sinfo['id'] + "_" + boldname + options['eventfile'])
-        f['bold_event']         = os.path.join(d['s_bold_events'], boldname + options['eventfile'])
+    if 'e' in options['bold_nuisance']:
+        f['bold_event_o']       = os.path.join(d['s_source'], boldname + options['event_file'])
+        f['bold_event_a']       = os.path.join(options['subjectsfolder'], 'inbox', sinfo['id'] + "_" + boldname + options['event_file'])
+        f['bold_event']         = os.path.join(d['s_bold_events'], boldname + options['event_file'])
 
     # --- bold preprocessed files
 
@@ -299,7 +299,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     f['bold_nuisance']          = os.path.join(d['s_bold_mov'], boldname + '.nuisance')
     f['bold_scrub']             = os.path.join(d['s_bold_mov'], boldname + '.scrub')
 
-    for ch in options['bppa']:
+    for ch in options['bold_actions']:
         if ch == 's':
             f['bold_final'] = f['bold_final'].replace(ext, '_g7' + ext)
             f['bold_dts_final'] = f['bold_dts_final'].replace('.dtseries.nii', '_g7' + '.dtseries.nii')
@@ -359,7 +359,7 @@ def getSubjectFolders(sinfo, options):
     if "hcp" in sinfo:
         d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'])
 
-    d['s_base']             = os.path.join(options['basefolder'], sinfo['id'])
+    d['s_base']             = os.path.join(options['subjectsfolder'], sinfo['id'])
     d['s_images']           = os.path.join(d['s_base'], 'images')
     d['s_struc']            = os.path.join(d['s_images'], 'structural')
     d['s_seg']              = os.path.join(d['s_images'], 'segmentation')
@@ -377,9 +377,9 @@ def getSubjectFolders(sinfo, options):
     d['s_fs_mri']           = os.path.join(d['s_fs'], 'mri')
     d['s_fs_orig']          = os.path.join(d['s_fs'], 'mri/orig')
     d['s_fs_surf']          = os.path.join(d['s_fs'], 'surf')
-    d['inbox']              = os.path.join(options['basefolder'], 'inbox')
+    d['inbox']              = os.path.join(options['subjectsfolder'], 'inbox')
 
-    d['qc']                 = os.path.join(options['basefolder'], 'QC')
+    d['qc']                 = os.path.join(options['subjectsfolder'], 'QC')
     d['qc_mov']             = os.path.join(d['qc'], 'movement')
 
     if not os.path.exists(d['s_source']) and options['source_folder']:

@@ -90,7 +90,7 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
     except:
         r += '\n... ERROR getting the data! Please check paths and files!'
 
-    btargets = options['bppt'].split("|")
+    btargets = options['bold_preprocess'].split("|")
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
@@ -152,7 +152,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -169,7 +169,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri createBOLDBrainMasks subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri createBOLDBrainMasks subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all
 
     ----------------
@@ -200,7 +200,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nWorking on BOLD images in: " + d['s_images']
     r += "\nResulting masks will be in: " + d['s_boldmasks']
-    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bppt'].split("|")))
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bold_preprocess'].split("|")))
     r += "\nIf already present, existing masks %s be overwritten (see --overwrite)." % (ostatus)
 
     for (k, v) in sinfo.iteritems():
@@ -208,7 +208,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
             bnum = bsearch.match(v['name'])
             if bnum:
 
-                if (v['task'] not in options['bppt'].split("|")) and (options['bppt'] != 'all'):
+                if (v['task'] not in options['bold_preprocess'].split("|")) and (options['bold_preprocess'] != 'all'):
                     r += "\n\nSkipping %s [%s] (not specified in --bold_preprocess)." % (v['name'], v['task'])
                     report['boldskipped'] += 1
                     continue
@@ -369,7 +369,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -421,12 +421,12 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     Using the defaults:
 
-    $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bold_preprocess=all
 
     Specifying additional parameters for identification of bad frames:
 
-    $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bold_preprocess=all mov_fd=0.9 mov_dvarsme=1.6 \\
          mov_before=1 mov_after= 2
 
@@ -459,16 +459,16 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nWorking on BOLD images in: " + d['s_bold']
     r += "\nResulting files will be in: " + d['s_bold_mov']
-    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bppt'].split("|")))
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bold_preprocess'].split("|")))
     r += "\nIf already present, existing statistics %s be overwritten (see --overwrite)." % (ostatus)
 
-    btargets = options['bppt'].split("|")
+    btargets = options['bold_preprocess'].split("|")
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
             bnum = bsearch.match(v['name'])
             if bnum:
-                if v['task'] in btargets or options['bppt'] == 'all':
+                if v['task'] in btargets or options['bold_preprocess'] == 'all':
 
                     boldname = v['name']
                     boldnum = bnum.group(1)
@@ -563,7 +563,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                                       analysis.
 
     For the group level it creates three report files that are stored in the
-    <basefolder>/QC/movement folder. These files are:
+    <subjectsfolder>/QC/movement folder. These files are:
 
     * <mov_mreport> (bold_movement_report.txt by default)
       This file lists for each subject and bold file mean, sd, range, max, min,
@@ -596,7 +596,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -678,13 +678,13 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bold_preprocess=all cores=1
 
-    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bold_preprocess=all cores=10
 
-    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri createStatsReport subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bold_preprocess=all cores=1 mov_plot=""
 
     ----------------
@@ -717,10 +717,10 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\n\nWorking on BOLD information images in: " + d['s_bold_mov']
         r += "\nResulting plots will be saved in: " + d['s_bold_mov']
 
-        r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bppt'].split("|")))
+        r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bold_preprocess'].split("|")))
         r += "\nIf already present, existing results %s be overwritten (see --overwrite)." % (ostatus)
 
-        btargets = options['bppt'].split("|")
+        btargets = options['bold_preprocess'].split("|")
         procbolds = []
         d = getSubjectFolders(sinfo, options)
 
@@ -744,7 +744,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
             if k.isdigit():
                 bnum = bsearch.match(v['name'])
                 if bnum:
-                    if v['task'] in btargets or options['bppt'] == 'all':
+                    if v['task'] in btargets or options['bold_preprocess'] == 'all':
 
                         boldname = v['name']
                         boldnum = bnum.group(1)
@@ -841,9 +841,9 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                 linkOrCopy(os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
                 r += '\n... copying %s to %s' % (os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
 
-        if options['mov_fidl'] in ['fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme'] and options['eventfile'] != "" and options['bppt'] != "":
-            concf = os.path.join(d['s_bold_concs'], options['bppt'] + '.conc')
-            fidlf = os.path.join(d['s_bold_events'], options['eventfile'] + '.fidl')
+        if options['mov_fidl'] in ['fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme'] and options['event_file'] != "" and options['bold_preprocess'] != "":
+            concf = os.path.join(d['s_bold_concs'], options['bold_preprocess'] + '.conc')
+            fidlf = os.path.join(d['s_bold_events'], options['event_file'] + '.fidl')
             ipatt = "_%s_scrub.fidl" % (options['mov_fidl'])
 
             if os.path.exists(concf) and os.path.exists(fidlf):
@@ -959,7 +959,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -1008,7 +1008,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri extractNuisanceSignal subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri extractNuisanceSignal subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bold_preprocess=all cores=10
 
     ----------------
@@ -1040,16 +1040,16 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nWorking on BOLD images in: " + d['s_bold']
     r += "\nResulting files will be in: " + d['s_bold_mov']
-    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bppt'].split("|")))
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bold_preprocess'].split("|")))
     r += "\nIf already present, existing nuisance files %s be overwritten (see --overwrite)." % (ostatus)
 
-    btargets = options['bppt'].split("|")
+    btargets = options['bold_preprocess'].split("|")
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
             bnum = bsearch.match(v['name'])
             if bnum:
-                if v['task'] in btargets or options['bppt'] == 'all':
+                if v['task'] in btargets or options['bold_preprocess'] == 'all':
 
                     boldname = v['name']
                     boldnum = bnum.group(1)
@@ -1173,7 +1173,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -1190,7 +1190,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     relevant for all or most of the actions:
 
     --bold_preprocess ... A pipe ('|') separated list of bold files to process.
-    --eventfile       ... The name of the fidl file to be used with each bold.
+    --event_file      ... The name of the fidl file to be used with each bold.
     --bold_actions    ... A string specifying which actions, and in what sequence
                           to perform [shrcl]
 
@@ -1213,7 +1213,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     [<subject id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual subject's folders, they are
-    searched for in the <basefolder>/inbox folder. In that case the
+    searched for in the <subjectsfolder>/inbox folder. In that case the
     "<subject id>_" is not optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
@@ -1483,7 +1483,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri preprocessBold subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri preprocessBold subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bold_preprocess=rest bold_actions=shrcl \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
@@ -1503,12 +1503,12 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nPreprocessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bppt'].split("|")))
+    r += "\nPreprocessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bold_preprocess'].split("|")))
     r += "\n%s Preprocessing bold runs ..." % (action("Running", options['run']))
 
     report = {'done': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
-    btargets = options['bppt'].split("|")
+    btargets = options['bold_preprocess'].split("|")
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
@@ -1518,7 +1518,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                 boldname = v['name']
                 boldnum = bnum.group(1)
 
-                if v['task'] in btargets or options['bppt'] == 'all':
+                if v['task'] in btargets or options['bold_preprocess'] == 'all':
 
                     r += "\n\nWorking on: " + boldname + " ..."
 
@@ -1553,13 +1553,13 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
                         # --- check for files if doing regression
 
-                        if 'r' in options['bppa']:
+                        if 'r' in options['bold_actions']:
 
                             # --- nuisance data
                             r, status = checkForFile2(r, f['bold_nuisance'], '\n    ... bold nuisance signal data present', '\n    ... bold nuisance signal data missing [%s]' % (f['bold_nuisance']), status=status)
 
                             # --- event
-                            if 'e' in options['bppn']:
+                            if 'e' in options['bold_nuisance']:
                                 r, status = checkForFile2(r, f['bold_event'], '\n    ... event data present', '\n    ... even data missing [%s]' % (f['bold_event']), status=status)
 
                         # --- bold
@@ -1588,12 +1588,12 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                             d['s_base'],                        # --- subject folder
                             boldnum,                            # --- number of bold file to process
                             options['omit'],                    # --- number of frames to skip at the start of each run
-                            options['bppa'],                    # --- which steps to perform (s, h, r, c, p, p)
-                            options['bppn'],                    # --- what to regress (m, v, wm, wb, d, t, e, 1b)
+                            options['bold_actions'],            # --- which steps to perform (s, h, r, c, p, p)
+                            options['bold_nuisance'],           # --- what to regress (m, v, wm, wb, d, t, e, 1b)
                             '[]',                               # --- matrix of task regressors
-                            options['eventfile'],               # --- fidl file to be used
+                            options['event_file'],              # --- fidl file to be used
                             float(options['TR']),               # --- TR of the data
-                            options['eventstring'],             # --- eventstring specifying what and how of the task to regress
+                            options['event_string'],            # --- event string specifying what and how of the task to regress
                             options['bold_prefix'],             # --- prefix to the bold files
                             boldow,                             # --- whether to overwrite the existing files
                             getImgFormat(f['bold_final']),      # --- what file extension to expect and use (e.g. '.nii', .'.4dfp.img')
@@ -1670,7 +1670,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     --subjects        ... The batch.txt file with all the subject information
                           [batch.txt].
-    --basefolder      ... The path to the study/subjects folder, where the
+    --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
@@ -1687,7 +1687,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     relevant for all or most of the actions:
 
     --bold_preprocess ... A pipe ('|') separated list of conc names to process.
-    --eventfile       ... A pipe ('|') separated list of fidl names to use, that
+    --event_file      ... A pipe ('|') separated list of fidl names to use, that
                           matches the conc list.
     --bold_actions    ... A string specifying which actions, and in what sequence
                           to perform [shrcl]
@@ -1699,7 +1699,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     [<subject id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual subject's folders, they are
-    searched for in the <basefolder>/inbox folder. In that case the
+    searched for in the <subjectsfolder>/inbox folder. In that case the
     "<subject id>_" is not optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
@@ -1984,7 +1984,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     Activation analysis
 
-    gmri preprocessConc subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri preprocessConc subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bold_preprocess=SRT event_file=SRT glm_name=-M1 \\
          bold_actions=src bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
@@ -1993,7 +1993,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     Functional connectivity preprocessing
 
-    gmri preprocessConc subjects=fcMRI/subjects.hcp.txt basefolder=subjects \\
+    gmri preprocessConc subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bold_preprocess=SRT event_file=SRT glm_name=-FC \\
          bold_actions=shrcl bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\
@@ -2016,8 +2016,8 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s Preprocessing conc bundles ..." % (action("Running", options['run']))
 
-    concs = options['bppt'].split("|")
-    fidls = options['eventfile'].split("|")
+    concs = options['bold_preprocess'].split("|")
+    fidls = options['event_file'].split("|")
 
     concroot = options['boldname'] + '_' + options['image_target'] + '_'
     report = ''
@@ -2114,11 +2114,11 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     nconc.append((f['bold'], boldnum))
 
                     # --- movement
-                    if 'r' in options['bppa'] and ('m' in options['bppn'] or 'm' in options['bppa']):
+                    if 'r' in options['bold_actions'] and ('m' in options['bold_nuisance'] or 'm' in options['bold_actions']):
                         r, status = checkForFile2(r, f['bold_mov'], '\n    ... movement data present', '\n    ... movement data missing [%s]' % (f['bold_mov']), status=status)
 
                     # --- bold stats
-                    if 'm' in options['bppa']:
+                    if 'm' in options['bold_actions']:
                         r, status = checkForFile2(r, f['bold_stats'], '\n    ... bold statistics data present', '\n    ... bold statistics data missing [%s]' % (f['bold_stats']), status=status)
 
                     # --- bold scrub
@@ -2127,7 +2127,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
                     # --- check for nuisance data files if doing regression
 
-                    if 'r' in options['bppa'] and any([e in options['bppn'] for e in ['V', 'WM', 'WB']]):
+                    if 'r' in options['bold_actions'] and any([e in options['bold_nuisance'] for e in ['V', 'WM', 'WB']]):
                         r, status = checkForFile2(r, f['bold_nuisance'], '\n    ... bold nuisance signal data present', '\n    ... bold nuisance signal data missing [%s]' % (f['bold_nuisance']), status=status)
 
                     # --- check
@@ -2174,12 +2174,12 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- subject folder
                     " ".join(bolds),                    # --- vector of bold runs in the order of the conc file
-                    options['bppa'],                    # --- which steps to perform in what order (s, h, r0/r1/r2, c, p, l)
+                    options['bold_actions'],            # --- which steps to perform in what order (s, h, r0/r1/r2, c, p, l)
                     options['TR'],                      # --- TR
                     options['omit'],                    # --- the number of frames to omit at the start of each run
-                    options['bppn'],                    # --- nuisance regressors (m, v, wm, wb, d, t, e)
+                    options['bold_nuisance'],           # --- nuisance regressors (m, v, wm, wb, d, t, e)
                     tfidl,                              # --- event file to be used for task regression (w/o .fidl)
-                    options['eventstring'],             # --- event string specifying what and how of task to regress
+                    options['event_string'],            # --- event string specifying what and how of task to regress
                     options['bold_prefix'],             # --- optional prefix to the resulting bolds
                     boldow,                             # --- whether to overwrite existing files
                     getImgFormat(f['bold_final']),      # --- the format of the images (.nii vs. .4dfp.img)

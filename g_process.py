@@ -154,7 +154,7 @@ def plist(s):
 
 arglist = [['# ---- Basic settings'],
            ['subjects',           'batch.txt',                                   str,    "The file with subject information."],
-           ['basefolder',         '',                                            os.path.abspath, 'The path to base folder.'],
+           ['subjectsfolder',     '',                                            os.path.abspath, 'The path to study subjects folder.'],
            ['logfolder',          'None',                                        isNone,    'The path to log folder.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
@@ -171,17 +171,12 @@ arglist = [['# ---- Basic settings'],
            ['betboldmask',        '-R -m',                                       str,    "options to be passed to BET when creating bold brain masks"],
            ['TR',                 '2.5',                                         float,  "TR of the bold data"],
            ['omit',               '5',                                           int,    "how many frames to omit at the start of each bold run"],
-           ['bppa',               'shrcl',                                       str,    "what processing steps to include in bold preprocessing"],
            ['bold_actions',       'shrcl',                                       str,    "what processing steps to include in bold preprocessing"],
-           ['bppn',               'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
            ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
-           ['bppt',               'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
            ['bold_preprocess',    'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
            ['boldname',           'bold',                                        str,    "the default name for the bold files"],
            ['pignore',            '',                                            str,    "what to do with frames marked as bad"],
-           ['eventfile',          '',                                            str,    "the root name of the fidl event file for task regression"],
            ['event_file',         '',                                            str,    "the root name of the fidl event file for task regression"],
-           ['eventstring',        '' ,                                           str,    "string specifying what and how of task to regress out"],
            ['event_string',       '' ,                                           str,    "string specifying what and how of task to regress out"],
            ['source_folder',      'True',                                        torf,   "hould we check for source folder (yes/no)"],
            ['bold_prefix',        '',                                            str,    "what prefix to add at the start of the generated files"],
@@ -301,11 +296,12 @@ arglist = [['# ---- Basic settings'],
 #   parameters need to be mapped to a parameter with another name. The "tomap"
 #   dictionary specifies what is mapped to what.
 
-tomap = {'bold_preprocess': 'bppt',
-         'bold_actions':    'bppa',
-         'bold_nuisance':   'bppn',
-         'event_string':    'eventstring',
-         'event_file':      'eventfile'}
+tomap = {'bppt',        'bold_preprocess',
+         'bppa',        'bold_actions',
+         'bppn',        'bold_nuisance',
+         'eventstring', 'event_string',
+         'eventfile',   'event_file',
+         'basefolder',  'subjectsfolder'}
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -453,13 +449,19 @@ def run(command, args):
     # ---- Take care of mapping
 
     for line in arglist:
+        mapwarn = False
         if line[0] in tomap:
-            options[tomap[line[0]]] = options[line[0]]
-
+            if not mapwarn:
+                print "\nERROR: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
+                mapwarn = True
+            print"       ... %s is now %s!" (line[0], tomap[line[0]])
+        if mapwarn:
+            print "       Please correct the listed parameter names are run the command again!"
+            exit()
 
     # ---- Set key parameters
 
-    basefolder   = options['basefolder']
+    basefolder   = options['subjectsfolder']
     overwrite    = options['overwrite']
     cores        = options['cores']
     nprocess     = options['nprocess']
@@ -529,8 +531,8 @@ def run(command, args):
     # =======================================================================
     #                                               RUN BY SUBJECT PROCESSING
 
-    if not os.path.exists(options['basefolder']):
-        os.mkdir(options['basefolder'])
+    if not os.path.exists(options['subjectsfolder']):
+        os.mkdir(options['subjectsfolder'])
 
     if nprocess > 0:
         nsubjects = [subjects.pop(0) for e in range(nprocess) if subjects]

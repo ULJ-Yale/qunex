@@ -139,7 +139,7 @@ specified at both levels. No options need to be set for any of the commands
 listed below. The key parameters with their default values are:
 
     subjects=batch.txt   ... the path to the batch.txt file
-    basefolder=.         ... the path to the study base folder
+    subjectsfolder=.     ... the path to the study subjects folder
     overwrite=no         ... whether to overwrite existing results
     cores=1              ... how many cores to utilize for those
                              commands that can be parallelized
