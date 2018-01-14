@@ -927,7 +927,101 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
 def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     """
-    hcpDiffusion - documentation not yet available.
+    hcp_Diffusion [... processing options]
+    hcpd [... processing options]
+
+    USE
+    ===
+
+    Runs the Diffusion step of HCP Pipeline. It preprocesses diffusion weighted 
+    images (DWI). Specifically, after b0 intensity normalization, the b0 images 
+    of both phase encoding directions are used to calculate the susceptibility-induced 
+    B0 field deviations.The full timeseries from both phase encoding directions is 
+    used in the “eddy” tool for modeling of eddy current distortions and subject motion.
+    Gradient distortion is corrected and the b0 image is registered to the T1w image 
+    using BBR. The diffusion data output from eddy are then resampled into 1.25mm 
+    native structural space and masked.Diffusion directions and the gradient deviation 
+    estimates are also appropriately rotated and registered into structural space. 
+    The function enables the use of a number of parameters to customize the specific 
+    preprocessing steps. A short name 'hcpd' can be used for this command.
+
+    REQUIREMENTS
+    ============
+
+    The code expects the first HCP preprocessing step (hcp_PreFS) to have been run 
+    and finished successfully. It expects the DWI data to have been acquired in
+    phase encoding reversed pairs, which should be present in the Diffusion folder 
+    in the subject's root hcp folder.
+
+    RESULTS
+    =======
+
+    The results of this step will be present in the Diffusion folder in the
+    subject's root hcp folder.
+
+    RELEVANT PARAMETERS
+    ===================
+
+    general parameters
+    ------------------
+
+    When running the command, the following *general* processing parameters are
+    taken into account:
+
+    --subjects        ... The batch.txt file with all the subject information
+                          [batch.txt].
+    --subjectsfolder  ... The path to the study/subjects folder, where the
+                          imaging  data is supposed to go [.].
+    --cores           ... How many cores to utilize [1].
+    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
+                          [no].
+
+    In addition a number of *specific* parameters can be used to guide the
+    processing in this step:
+
+    image acquisition details
+    -------------------------
+
+    --hcp_dwi_dwelltime      ... Echo Spacing or Dwelltime of DWI images.
+                                 [0.00035]
+
+    distortion correction details
+    -----------------------------
+    
+    --hcp_dwi_PEdir          ... The direction of unwarping. Use 1 for LR/RL
+                                 Use 2 for AP/PA. Default is [2]
+    --hcp_dwi_gdcoeffs       ... Gradient distortion correction coefficients
+                                 or NONE. [NONE]
+
+    EXAMPLE USE
+    ===========
+    
+    Example run from the base study folder with test flag
+    --------------------------------------
+
+     mnap hcp_Diffusion \ 
+     --subjects="processing/batch.hcp.txt" \    # the location of the batch file
+     --subjectsfolder="subjects" \              # the location of the subjects folder
+     --cores="10" \                             # how many subjects to run concurrently
+     --overwrite="no"                           # whether to overwrite previous results
+     --test                                     # execute a test run
+
+    run using absolute paths with scheduler
+    ---------------------------------------
+
+    mnap hcpd \ 
+    --subjects="<path_to_study_folder>/processing/batch.hcp.txt" \       # the location of the batch file
+    --subjectsfolder="<path_to_study_folder>/subjects" \                 # the location of the subjects folder
+    --cores="4" \                                                        # how many subjects to run concurrently    
+    --overwrite="yes" \                                                  # whether to overwrite previous results
+    --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
+
+    ----------------
+    Written by Alan Anticevic
+
+    Changelog
+    2018-01-14 Alan Anticevic wrote inline documentation
+
     """
 
     r = "\n---------------------------------------------------------"
