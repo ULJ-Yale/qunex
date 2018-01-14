@@ -176,7 +176,7 @@ def compileBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjec
     prepend its content at the beginning of the batch.txt file. If no paramfile
     is specified and the default template does not exist, the command will print
     a warning and create an empty template (subjects/spec/batch_parameters.txt)
-    with all available parameters. Do note that this file will need to be edited
+    with all the available parameters. Do note that this file will need to be edited
     with correct parameter values for your study.
 
     Alternatively, if you don't have a parameter file prepared, you can use or
