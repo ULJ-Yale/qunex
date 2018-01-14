@@ -1607,7 +1607,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                         if options['run'] == "run":
                             if options['print_command'] == "yes":
                                 r += '\n\nRunning\n' + comm + '\n'
-                            r += runExternalForFileShell(f['bold_final'], comm, 'running matlab Preprocess7 on %s bold %s' % (d['s_bold'], boldnum), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='Preprocess7', logfolder=options['comlogs'])
+                            r += runExternalForFileShell(f['bold_final'], comm, 'running matlab fc_Preprocess on %s bold %s' % (d['s_bold'], boldnum), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='Preprocess7', logfolder=options['comlogs'])
                             r, status = checkForFile(r, f['bold_final'], 'ERROR: Matlab has failed preprocessing bold using command: \n--> %s\n' % (mcomm))
                             if status:
                                 report['done'].append(boldnum)
@@ -2194,7 +2194,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 if options['print_command'] == "yes":
                     r += '\n' + comm + '\n'
                 if options['run'] == "run":
-                    r += runExternalForFileShell(done, comm, 'running matlab conc preprocessing on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PreprocessConc2', logfolder=options['comlogs'])
+                    r += runExternalForFileShell(done, comm, 'running matlab fc_PreprocessConc on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PreprocessConc2', logfolder=options['comlogs'])
                     r, status = checkForFile(r, done, 'ERROR: Matlab has failed preprocessing bold using command: \n--> %s\n' % (mcomm))
                     if os.path.exists(done):
                         os.remove(done)

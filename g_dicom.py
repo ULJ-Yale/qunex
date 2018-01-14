@@ -1270,12 +1270,12 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     USE
     ===
 
-    The command is used to automagically process zipped packets with individual
+    The command is used to automatically process packets with individual
     subject's DICOM files all the way to, and including, generation of NIfTI
     files. Packet can be either a zip file or a folder that contains DICOM
     files.
 
-    The command first looks into provided inbox folder (inox; by default
+    The command first looks into provided inbox folder (inbox; by default
     `inbox/MR`) and finds any packets that match the specified regex pattern
     (pattern). The pattern has to be prepared to return as the first group
     found the subject id. Once all the packets have been found, it lists them
@@ -1288,11 +1288,11 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     files in the packet into an inbox folder created within the subject folder.
     Once all the files are extracted or copied, depending on the archive
     parameter, the packet is then either moved or copied to the
-    `study/subjects/archive/MR` folder, left as is, or deleter. If the archive
+    `study/subjects/archive/MR` folder, left as is, or deleted. If the archive
     folder does not yet exist, it is created.
 
-    After the files have been copied or extracted to the inbox folder, a s
-    ortDicom command is run on that folder and all the DICOM files are sorted
+    After the files have been copied or extracted to the inbox folder, a
+    sortDicom command is run on that folder and all the DICOM files are sorted
     and moved to the dicom folder. After that is done, a dicom2nii command is
     run to convert the DICOM images to the NIfTI format and move them to the nii
     folder. The DICOM files are preserved and gzipped to save space. To speed up
