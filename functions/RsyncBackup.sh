@@ -1,8 +1,9 @@
 #!/bin/bash
+#
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# # setup_acls_n3_user.sh
+# # RsyncBackup.sh
 #
 # ## Copyright Notice
 #
@@ -16,7 +17,7 @@
 #
 # ## Product
 #
-# * Wrapper for backup of studies on HPC clusters to N3 servers
+# * RsyncBackup wrapper for backup of studies on HPC clusters to servers
 #
 # ## License
 #
@@ -24,7 +25,7 @@
 #
 # ## Description:
 #
-# * This is a HPCBackup.sh wrapper developed for backup from a cluster to local
+# * This is a RsyncBackup.sh wrapper developed for backup from a cluster to local
 #   storage
 #
 # ### Installed Software (Prerequisites):
@@ -48,9 +49,9 @@ echo "--------------------------------------------------------------------------
 echo "------------ General Usage for Backing up HPC Studies ---------------------"
 echo "---------------------------------------------------------------------------"
 echo ""
-echo "  This code runs rsync across the entire N3 folder structure based on user and"
+echo "  This code runs rsync across the entire folder structure based on user and"
 echo "  group specifications. If no flags are specified it will use hard-coded settings"
-echo "  that are in the code."
+echo "  that are in the code, which are optimized for Yale Grace HPC Cluster."
 echo ""
 echo "  If using flags to explicitly specify user/folder then usage is as follows for terminal input: "
 echo ""
