@@ -4628,16 +4628,15 @@ if [ "$FunctionToRun" == "hcpdLegacy" ]; then
 		if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
-		#if [ -z "$EchoSpacing" ]; then reho "Error: Echo Spacing value missing"; exit 1; fi
-		#if [ -z "$PEdir" ]; then reho "Error: Phase Encoding Direction value missing"; exit 1; fi
-		#if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
-		#if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
-		if [ -z "$EchoSpacing" ]; then reho "Warning: Echo Spacing value missing"; fi
-		if [ -z "$PEdir" ]; then reho "Warning: Phase Encoding Direction value missing"; fi
-		if [ -z "$TE" ]; then reho "Warning: TE value for Fieldmap missing"; fi
-		if [ -z "$UnwarpDir" ]; then reho "Warning: EPI Unwarp Direction value missing"; fi
-		
-		
+		if [ ${UseFieldmap} == "yes" ]; then
+			if [ -z "$EchoSpacing" ]; then reho "Error: Echo Spacing value missing"; exit 1; fi
+			if [ -z "$PEdir" ]; then reho "Error: Phase Encoding Direction value missing"; exit 1; fi
+			if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
+			if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
+		elif [ ${UseFieldmap} == "no" ]; then
+			reho "Note: Processing without FieldMap (EchoSpacing, PEdir, TE, and UnwarpDir not needed)"	
+		fi
+			
 		Cluster="$RunMethod"
 		if [ "$Cluster" == "2" ]; then
 				if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
