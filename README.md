@@ -131,6 +131,8 @@ Change Log
 * 0.7.9 [library] Added template Workbench scene and associated files for CIFTI visualization
 * 0.7.10 [niutilities] Deprecated old ambiguous parameter names and added a warning when still used
 * 0.7.11 [connector, niutilities] Updated inline documentation for `computeBOLDfc` and `hcpd`
+* 0.7.12 [connector] Updated hcpdLegacy function loop to check if FieldMap is being used, and check subsequent params accordingly
+* 0.8.0 [connector] Added `RsyncBackup` generic function to connector function for server-to-server backups of studies
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
