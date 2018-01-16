@@ -3751,9 +3751,6 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		FunctionToRun="$FunctionInput"
 	fi
 	
-	# -- Exit if function is not supported
-	isMNAPFunction $FunctionToRun
-	
 	# -- general input flags
 	StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`       # study folder to work on
 	StudyFolderPath=`opts_GetOpt "${setflag}path" $@`          # local folder to work on
