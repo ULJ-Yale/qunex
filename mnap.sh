@@ -3548,7 +3548,6 @@ for fn in "$@" ; do
 		return 0
 	fi
 done
-return 0
 }
 
 # -- Generates a timestamp for the log exec call
@@ -3574,7 +3573,7 @@ if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] ||
 	exit 0
 fi
 
-if opts_CheckForHelpRequest $@; then
+if [ $(opts_CheckForHelpRequest $@) ]; then
 	showVersion
 	show_usage
 	exit 0
@@ -3762,23 +3761,22 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	fi
 	
 	## -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure	
-	#if [ -z "$SubjectsFolder" ]; then
-	#	if [ -z "$StudyFolder" ]; then
-	#		echo "TESTING"
-	#	else
-	#		SubjectsFolder="$StudyFolder/subjects"
-	#	fi
-	#fi
+	if [ -z "$SubjectsFolder" ]; then
+		if [ -z "$StudyFolder" ]; then
+			echo "TESTING"
+		else
+			SubjectsFolder="$StudyFolder/subjects"
+		fi
+	fi
 	## -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure	
-	#if [ -z "$StudyFolder" ]; then
-	#	if [ -z "$SubjectsFolder" ]; then
-	#		echo "TESTING"
-	#	else
-	#		cd $SubjectsFolder/../ &> /dev/null
-	#		StudyFolder=`pwd` &> /dev/null
-	#	fi
-	#fi
-	#
+	if [ -z "$StudyFolder" ]; then
+		if [ -z "$SubjectsFolder" ]; then
+			echo "TESTING"
+		else
+			cd $SubjectsFolder/../ &> /dev/null
+			StudyFolder=`pwd` &> /dev/null
+		fi
+	fi
 	
 	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` 	# list of input cases; removing comma or pipes
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` 																		# Clean prior run and starr fresh [yes/no]
