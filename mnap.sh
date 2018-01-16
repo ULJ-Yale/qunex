@@ -4942,14 +4942,14 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "pretractographyDense" ]; then
-	# -- Check all the user-defined parameters:		
+	# -- Check all the user-defined parameters:
 	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	Cluster="$RunMethod"
 	if [ "$Cluster" == "2" ]; then
-		f [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 	fi
 	echo ""
 	echo "Running $FunctionToRun with the following parameters:"
