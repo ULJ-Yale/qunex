@@ -3648,8 +3648,6 @@ isMNAPFunction() {
 # -- get all the functions from the usage calls
 unset UsageName
 UsageName=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep show_usage_${1}`
-# unset MNAPFunctions
-# MNAPFunctions=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
 
 # -- check for input with double flags
 if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
@@ -3766,17 +3764,15 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	# -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure	
 	if [ -z "$SubjectsFolder" ]; then
 		if [ -z "$StudyFolder" ]; then
-			return 0
+			echo "TESTING"
 		else
 			SubjectsFolder="$StudyFolder/subjects"
 		fi
-	else
-		return 0
 	fi
 	# -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure	
 	if [ -z "$StudyFolder" ]; then
 		if [ -z "$SubjectsFolder" ]; then
-			return 0
+			echo "TESTING"
 		else
 			cd $SubjectsFolder/../ &> /dev/null
 			StudyFolder=`pwd` &> /dev/null
