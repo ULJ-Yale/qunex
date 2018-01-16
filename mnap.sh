@@ -2559,7 +2559,7 @@ FSLBedpostxGPU() {
 				echo ""
 				echo "--------------------------------------------------------------"
 				echo "" 
-				return 1
+				return 0
 			else 
 				echo ""
 				reho " --> Bedpostx outputs missing or incomplete for $CASE"
@@ -3548,7 +3548,7 @@ for fn in "$@" ; do
 		return 0
 	fi
 done
-return 1
+return 0
 }
 
 # -- Generates a timestamp for the log exec call
