@@ -62,15 +62,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions=(matlabHelp gmriFunction organizeDicom mapHCPFiles createLists hpcSync printMatrix BOLDDense linkmovement FIXICA postFIXICA BOLDHardLinkFIXICA FIXICAInsertMean FIXICARemoveMean hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc timeStamp showVersion)
-
-isMNAPFunction () {
-    local e
-        echo "Checking $e"
-    for e in "${MNAPFunctions[@]}"; do [[ "$e" == "$1" ]] && return 1; done
-    return 0
-}
-
+MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists hpcSync printMatrix BOLDDense linkmovement FIXICA postFIXICA BOLDHardLinkFIXICA FIXICAInsertMean FIXICARemoveMean hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc timeStamp showVersion"
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -3658,71 +3650,64 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 		show_usage_gmri
 		exit 0
 	else		
-	# -- check for input is function name with no other arguments
-	if [[ "$GmriFunctionToRun" != *"-"* ]] && [ -z "$2" ]; then 	
-		# Set UsageInput variable to pass and remove flag	
-		UsageInput="$GmriFunctionToRun"
-	  	# If no other input is provided print help
-		echo ""
-		showVersion
-		show_usage_gmri
-		exit 0
-	else	
-		# -- Otherwise pass the function with all inputs from the command line
-		gmriinput="$@"
-		showVersion
-		gmriFunction
-		exit 0
-	fi
+		# -- check for input is function name with no other arguments
+		if [[ "$GmriFunctionToRun" != *"-"* ]] && [ -z "$2" ]; then 	
+			# Set UsageInput variable to pass and remove flag	
+			UsageInput="$GmriFunctionToRun"
+		  	# If no other input is provided print help
+			echo ""
+			showVersion
+			show_usage_gmri
+			exit 0
+		else	
+			# -- Otherwise pass the function with all inputs from the command line
+			gmriinput="$@"
+			showVersion
+			gmriFunction
+			exit 0
+		fi
 	fi
 fi
 
 # ------------------------------------------------------------------------------
 #  Check if specific function help requested
 # ------------------------------------------------------------------------------
-	
+
+isMNAPFunction() {
+	if [ -z "${MNAPFunctions##*$1*}" ]; then
+		return 0
+	else
+		echo ""
+		reho "ERROR: $1 -- Requested function does not exist or not supported! Refer to general usage."
+		echo ""
+		exit 0
+	fi
+}
+
 	# -- get all the functions from the usage calls
 	unset UsageName
-	unset MNAPFunctions
 	UsageName=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep show_usage_${1}`
-	#MNAPFunctions=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
+	# unset MNAPFunctions
+	# MNAPFunctions=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep "() {" | grep -v "usage" | grep -v "eho" | grep -v "opts_" | sed "s/() {//g" | sed ':a;N;$!ba;s/\n/ /g'`
 	
 	# -- check for input with double flags
 	if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
 		UsageInput=`echo ${Usage:2}`
-			# -- check if input part of function list
-			if [[ $(isMNAPFunction  *${UsageInput}*) == "0" ]]; then
-			#if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
-				echo ""
-				reho "Function $UsageInput does not exist! Refer to general usage below: "
-				echo ""
-				showVersion
-				show_usage
-				exit 0
-			else	
-				showVersion
-				show_usage_"$UsageInput"
-			fi
+		# -- check if input part of function list
+		isMNAPFunction $UsageInput
+		showVersion
+		show_usage_"$UsageInput"
 		exit 0
 	fi
 	# -- check for input with single flags
 	if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then 
 		Usage="$1"
 		UsageInput=`echo ${Usage:1}`
-			# -- check if input part of function list
-			if [[ $(isMNAPFunction  *${UsageInput}*) == "0" ]]; then
-			#if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
-				echo ""
-				reho "Function $UsageInput does not exist! Refer to general usage below: "
-				echo ""
-				showVersion
-				show_usage
-				exit 0
-			else	
-				showVersion
-				show_usage_"$UsageInput"
-			fi
+		# -- check if input part of function list
+		isMNAPFunction $UsageInput
+		showVersion
+		show_usage_"$UsageInput"
 		exit 0
 	fi
 	# -- check for input with question mark
@@ -3730,37 +3715,19 @@ fi
 	if [[ ${HelpInputUsage:0:1} == "?" ]] && [ -z "$2" ]; then 
 		Usage="$1"
 		UsageInput=`echo ${Usage} | cut -c 2-`
-			# -- check if input part of function list
-			if [[ $(isMNAPFunction  *${UsageInput}*) == "0" ]]; then
-			#if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
-				echo ""
-				reho "Function $UsageInput does not exist! Refer to general usage below: "
-				echo ""
-				showVersion
-				show_usage
-				exit 0
-			else	
-			    showVersion
-				show_usage_"$UsageInput"
-			fi
+		# -- check if input part of function list
+		isMNAPFunction $UsageInput
+		showVersion
+		show_usage_"$UsageInput"
 		exit 0
 	fi
 	# -- check for input with no flags
 	if [ -z "$2" ]; then
-			UsageInput="$1"
-			# -- check if input part of function list
-			if [[ $(isMNAPFunction  *${UsageInput}*) == "0" ]]; then
-			#if [[ "$MNAPFunctions" != *${UsageInput}* ]]; then
-				echo ""
-				reho "Function $UsageInput does not exist! Refer to general usage below: "
-				echo ""
-				showVersion
-				show_usage
-				exit 0
-			else	
-				showVersion
-				show_usage_"$UsageInput"
-			fi
+		UsageInput="$1"
+		# -- check if input part of function list
+		isMNAPFunction $UsageInput
+		showVersion
+		show_usage_"$UsageInput"
 		exit 0
 	fi
 
@@ -3808,9 +3775,7 @@ fi
 if [[ "$setflag" =~ .*-.* ]]; then
 
 	echo ""
-	reho "----------------------------------------"
-	reho "--- Running MNAP with flagged inputs ---"
-	reho "----------------------------------------"
+	echo "---  Parsing MNAP flag inputs...  "
 	echo ""
 	
 	# ------------------------------------------------------------------------------
@@ -3827,6 +3792,9 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	else
 		FunctionToRun="$FunctionInput"		
 	fi
+	
+	# -- Exit if function is not supported
+	isMNAPFunction $FunctionToRun
 	
 	# -- general input flags
 	StudyFolder=`opts_GetOpt "${setflag}path" $@` 																			# local folder to work on
@@ -3975,24 +3943,22 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		echo ""
 		CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
 	fi
-
-else
+fi
 
 	# -- If no flags were found the pipeline defaults to 'interactive' mode. 
 	# 	 * Note: Not all functions are supported in interactive mode
-	echo ""
-	reho "--------------------------------------------"
-	reho "--- Running pipeline in interactive mode ---"
-	reho "--------------------------------------------"
-	echo ""
+	# echo ""
+	# reho "--------------------------------------------"
+	# reho "--- Running pipeline in interactive mode ---"
+	# reho "--------------------------------------------"
+	# echo ""
 	
 	# -- Read core interactive command line inputs as default positional variables (i.e. function, path & cases)
-	FunctionToRunInt="$1"
-	StudyFolder="$2" 
-	CASESInput="$3"
+	# FunctionToRunInt="$1"
+	# StudyFolder="$2" 
+	# CASESInput="$3"
 	# -- Make list of subjects compatible with either space- or comma-delimited input:
-	CASES=`echo ${CASESInput} | sed 's/,/ /g'`
-fi	
+	# CASES=`echo ${CASESInput} | sed 's/,/ /g'`
 
 # ========================================================================================
 # ============ EXECUTE SELECTED FUNCTION AND LOOP THROUGH ALL THE CASES ==================
