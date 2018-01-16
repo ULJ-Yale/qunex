@@ -3763,7 +3763,6 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	## -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure	
 	if [ -z "$SubjectsFolder" ]; then
 		if [ -z "$StudyFolder" ]; then
-			echo "TESTING"
 		else
 			SubjectsFolder="$StudyFolder/subjects"
 		fi
@@ -3771,7 +3770,6 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	## -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure	
 	if [ -z "$StudyFolder" ]; then
 		if [ -z "$SubjectsFolder" ]; then
-			echo "TESTING"
 		else
 			cd $SubjectsFolder/../ &> /dev/null
 			StudyFolder=`pwd` &> /dev/null
@@ -3962,7 +3960,7 @@ if [ "$FunctionToRun" == "organizeDicom" ]; then
 	echo ""
 	echo "--------------------------------------------------------------"
 	echo "Study Folder: ${StudyFolder}"
-	echo "Subject Folder: ${SubjectFolder}"
+	echo "Subject Folder: ${SubjectsFolder}"
 	echo "Subjects: ${CASES}"
 	echo "Overwrite prior run: ${Overwrite}"
 	echo "--------------------------------------------------------------"
@@ -4007,7 +4005,7 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 	echo ""
 	echo "--------------------------------------------------------------"
 	echo "Study Folder: ${StudyFolder}"
-	echo "Subject Folder: ${SubjectFolder}"
+	echo "Subject Folder: ${SubjectsFolder}"
 	echo "Subjects: ${CASES}"
 	echo "QC Modality: ${Modality}"
 	echo "QC Output Path: ${OutPath}"
