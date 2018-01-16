@@ -3761,23 +3761,24 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		StudyFolder="$StudyFolder"
 	fi
 	
-	# -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure	
-	if [ -z "$SubjectsFolder" ]; then
-		if [ -z "$StudyFolder" ]; then
-			echo "TESTING"
-		else
-			SubjectsFolder="$StudyFolder/subjects"
-		fi
-	fi
-	# -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure	
-	if [ -z "$StudyFolder" ]; then
-		if [ -z "$SubjectsFolder" ]; then
-			echo "TESTING"
-		else
-			cd $SubjectsFolder/../ &> /dev/null
-			StudyFolder=`pwd` &> /dev/null
-		fi
-	fi
+	## -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure	
+	#if [ -z "$SubjectsFolder" ]; then
+	#	if [ -z "$StudyFolder" ]; then
+	#		echo "TESTING"
+	#	else
+	#		SubjectsFolder="$StudyFolder/subjects"
+	#	fi
+	#fi
+	## -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure	
+	#if [ -z "$StudyFolder" ]; then
+	#	if [ -z "$SubjectsFolder" ]; then
+	#		echo "TESTING"
+	#	else
+	#		cd $SubjectsFolder/../ &> /dev/null
+	#		StudyFolder=`pwd` &> /dev/null
+	#	fi
+	#fi
+	#
 	
 	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` 	# list of input cases; removing comma or pipes
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@` 																		# Clean prior run and starr fresh [yes/no]
@@ -3933,6 +3934,7 @@ fi
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 
+echo "$FunctionToRun"
 
 # ------------------------------------------------------------------------------
 #  matlabHelp function
