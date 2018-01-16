@@ -3745,7 +3745,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	CommamndInput=`opts_GetOpt "${setflag}command" "$@"`  # function to execute
 	
 	# -- If input name uses 'command' instead of function set that to $FunctionToRun
-	if [[ -z "$FunctionInput" ]]; then
+	if [ -z "$FunctionInput" ]; then
 		FunctionToRun="$CommamndInput"
 	else
 		FunctionToRun="$FunctionInput"
@@ -3760,22 +3760,25 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	SubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@` # subjects folder to work on
 	
 	# -- If input name uses 'command' instead of function set that to $FunctionToRun
-	if [[ -z "$StudyFolder" ]]; then
+	if [ -z "$StudyFolder" ]; then
 		StudyFolder="$StudyFolderPath"
 	else
 		StudyFolder="$StudyFolder"
 	fi
+	
 	# -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure	
-	if [[ -z "$SubjectsFolder" ]]; then
-		if [[ -z "$StudyFolder" ]]; then
+	if [ -z "$SubjectsFolder" ]; then
+		if [ -z "$StudyFolder" ]; then
 			return 1
 		else
 			SubjectsFolder="$StudyFolder/subjects"
 		fi
+	else
+		return 1
 	fi
 	# -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure	
-	if [[ -z "$StudyFolder" ]]; then
-		if [[ -z "$SubjectsFolder" ]]; then
+	if [ -z "$StudyFolder" ]; then
+		if [ -z "$SubjectsFolder" ]; then
 			return 1
 		else
 			cd $SubjectsFolder/../ &> /dev/null
