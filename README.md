@@ -133,7 +133,8 @@ Change Log
 * 0.7.11 [connector, niutilities] Updated inline documentation for `computeBOLDfc` and `hcpd`
 * 0.7.12 [connector] Updated hcpdLegacy function loop to check if FieldMap is being used, and check subsequent params accordingly
 * 0.8.0 [connector] Added `RsyncBackup` generic function to connector function for server-to-server backups of studies
-* 0.8.1 [connector] Improved function parsing to report of function not supported
+* 0.8.1 [connector] Improved function parsing to report if function not supported
+* 0.8.2 [connector] Aligned general input flags to conform across the MNAP suite
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
