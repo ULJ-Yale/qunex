@@ -3763,13 +3763,16 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	## -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure	
 	if [ -z "$SubjectsFolder" ]; then
 		if [ -z "$StudyFolder" ]; then
+		return 0
 		else
 			SubjectsFolder="$StudyFolder/subjects"
 		fi
 	fi
+	
 	## -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure	
 	if [ -z "$StudyFolder" ]; then
 		if [ -z "$SubjectsFolder" ]; then
+		return 0
 		else
 			cd $SubjectsFolder/../ &> /dev/null
 			StudyFolder=`pwd` &> /dev/null
