@@ -135,6 +135,8 @@ Change Log
 * 0.8.0 [connector] Added `RsyncBackup` generic function to connector function for server-to-server backups of studies
 * 0.8.1 [connector] Improved function parsing to report if function not supported
 * 0.8.2 [connector] Aligned general input flags to conform across the MNAP suite
+* 0.8.3 [connector] Updated hcpdLegacy to use correct options when running without fieldmap (needs PEdir, unwarpdir, and echospacing)
+
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
