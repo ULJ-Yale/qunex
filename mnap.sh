@@ -1075,15 +1075,15 @@ show_usage_hcpdLegacy() {
 				echo "		--subject=<list_of_cases>            List of subjects to run"
 				echo "		--scanner=<scanner_manufacturer>     Name of scanner manufacturer (siemens or ge supported) "
 				echo "		--usefieldmap=<yes/no>               Whether to use the standard field map. If set to <yes> then the following parameters become mandatory:"
+				echo "		--echospacing=<echo_spacing_value>      EPI Echo Spacing for data [in msec]; e.g. 0.69"
+				echo "		--PEdir=<phase_encoding_direction>      Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
+				echo "		--unwarpdir=<epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
 				echo " "
 				echo "-- OPTIONAL PARMETERS:"
 				echo ""
 				echo "		FIELDMAP-SPECFIC PARAMETERS (these become mandatory if --usefieldmap=yes):"
 				echo ""
-				echo "		--echospacing=<echo_spacing_value>      EPI Echo Spacing for data [in msec]; e.g. 0.69"
-				echo "		--PEdir=<phase_encoding_direction>      Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
 				echo "		--TE=<delta_te_value_for_fieldmap>      This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
-				echo "		--unwarpdir=<epi_phase_unwarping_direction>	Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
 				echo ""
 				echo "		--diffdatasuffix=<diffusion_data_name>  Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
  				echo "		--overwrite=<clean_prior_run>           Delete prior run for a given subject"
@@ -4587,12 +4587,9 @@ if [ "$FunctionToRun" == "hcpdLegacy" ]; then
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
 	if [ ${UseFieldmap} == "yes" ]; then
-		if [ -z "$EchoSpacing" ]; then reho "Error: Echo Spacing value missing"; exit 1; fi
-		if [ -z "$PEdir" ]; then reho "Error: Phase Encoding Direction value missing"; exit 1; fi
 		if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
-		if [ -z "$UnwarpDir" ]; then reho "Error: EPI Unwarp Direction value missing"; exit 1; fi
 	elif [ ${UseFieldmap} == "no" ]; then
-		reho "Note: Processing without FieldMap (EchoSpacing, PEdir, TE, and UnwarpDir not needed)"	
+		reho "Note: Processing without FieldMap (TE option not needed)"	
 	fi
 	Cluster="$RunMethod"
 	if [ "$Cluster" == "2" ]; then
