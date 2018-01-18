@@ -136,7 +136,7 @@ Change Log
 * 0.8.1 [connector] Improved function parsing to report if function not supported
 * 0.8.2 [connector] Aligned general input flags to conform across the MNAP suite
 * 0.8.3 [connector] Updated hcpdLegacy to use correct options when running without fieldmap (needs PEdir, unwarpdir, and echospacing)
-
+* 0.8.4 [connector] Fixed hcpdLegacy usage function
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
