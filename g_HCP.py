@@ -203,7 +203,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
             tfile = [tbase + e for e in ['.nii.gz', '.bval', '.bvec']]
             tfold = "Diffusion"
         else:
-            print " ... skipping %s %s" % (v['ima'], v['name'])
+            print " ... skipping %s %s [unknown sequence label, please check]" % (v['ima'], v['name'])
             continue
 
         if type(sfile) is not list:
