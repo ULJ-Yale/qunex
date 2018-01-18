@@ -14,9 +14,11 @@ Changelog
 
 """
 
-
+import os
 import subprocess
 
+
+mcommand = os.environ['MNAPMCOMMAND']
 
 # ==============================================================================
 #                                                                      FUNCTIONS
@@ -68,7 +70,7 @@ def help(command):
     '''Prints help for the command using Matlab.'''
 
     print "\nDisplaying help for Matlab function %s\n--------------------------------------------------------------------------------\n" % (command)
-    com = 'matlab -nojvm -nodisplay -nosplash -r "help %s; exit"' % (command)
+    com = '%s "help %s; exit"' % (mcommand, command)
     subprocess.call(com, shell=True)
     print "\n--------------------------------------------------------------------------------\n"
 
@@ -112,7 +114,7 @@ def run(command, args):
     # -- compose command string
 
     mcom = "%s(%s)" % (command, ", ".join(arglist))
-    com = 'matlab -nojvm -nodisplay -nosplash -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcom)
+    com = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcommand, mcom)
 
 
     # --- parse output options

@@ -37,6 +37,9 @@ from datetime import datetime
 import time
 
 
+mcommand = os.environ['MNAPMCOMMAND']
+
+
 def getBOLDData(sinfo, options, overwrite=False, thread=0):
     """
     getBOLDData - documentation not yet available.
@@ -504,7 +507,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                         # --- running the stats
 
                         scrub = "radius:%d|fdt:%.2f|dvarsmt:%.2f|dvarsme:%.2f|after:%d|before:%d|reject:%s" % (options['mov_radius'], options['mov_fd'], options['mov_dvars'], options['mov_dvarsme'], options['mov_after'], options['mov_before'], options['mov_bad'])
-                        comm = "matlab -nojvm -nodisplay -r \"try g_ComputeBOLDStats('%s', '', '%s', 'same', '%s', true), catch fprintf('\\nMatlab error! Processing failed!\\n'), end; exit\"" % (f['bold'], d['s_bold_mov'], scrub)
+                        comm = "%s \"try g_ComputeBOLDStats('%s', '', '%s', 'same', '%s', true), catch fprintf('\\nMatlab error! Processing failed!\\n'), end; exit\"" % (mcommand, f['bold'], d['s_bold_mov'], scrub)
                         if options['print_command'] == "yes":
                             r += '\n\nRunning\n' + comm + '\n'
                         runit = True
@@ -1095,7 +1098,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                         # --- running nuisance extraction
 
 
-                        comm = "matlab -nojvm -nodisplay -r \"try g_ExtractNuisance('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s), catch fprintf('\\nMatlab error! Processing failed!\\n'), end; exit\"" % (
+                        comm = "%s \"try g_ExtractNuisance('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s), catch fprintf('\\nMatlab error! Processing failed!\\n'), end; exit\"" % (
+                            mcommand                    # --- matlab command to run
                             f['bold'],                  # --- bold file to process
                             segfile,                    # --- aseg or aparc file
                             f['bold1_brain_mask'],      # --- bold brain mask
@@ -1601,7 +1605,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                             options['pignore'],                 # --- how to deal with bad frames ('hipass:keep/linear/spline|regress:keep/ignore|lopass:keep/linear/spline')
                             opts)                               # --- additional options
 
-                        comm = 'matlab -nojvm -nodisplay -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit"' % (mcomm)
+                        comm = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit"' % (mcommand, mcomm)
 
                         # r += '\n ... running: %s' % (comm)
                         if options['run'] == "run":
@@ -2188,7 +2192,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     opts,                               # --- additional options
                     done)                               # --- file to save when done
 
-                comm = 'matlab -nojvm -nodisplay -r "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit;"' % (mcomm)
+                comm = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit;"' % (mcommand, mcomm)
 
                 r += '\n\n%s nuisance and task removal' % (action("Running", options['run']))
                 if options['print_command'] == "yes":
