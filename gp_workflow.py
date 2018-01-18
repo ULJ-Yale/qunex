@@ -1099,7 +1099,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
 
                         comm = "%s \"try g_ExtractNuisance('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s), catch fprintf('\\nMatlab error! Processing failed!\\n'), end; exit\"" % (
-                            mcommand                    # --- matlab command to run
+                            mcommand,                   # --- matlab command to run
                             f['bold'],                  # --- bold file to process
                             segfile,                    # --- aseg or aparc file
                             f['bold1_brain_mask'],      # --- bold brain mask
