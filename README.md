@@ -137,6 +137,7 @@ Change Log
 * 0.8.2 [connector] Aligned general input flags to conform across the MNAP suite
 * 0.8.3 [connector] Updated hcpdLegacy to use correct options when running without fieldmap (needs PEdir, unwarpdir, and echospacing)
 * 0.8.4 [connector] Fixed hcpdLegacy usage function
+* 0.9.0 [niutilities] Added option to run Matlab code through arbitrary Matlab or Octave command through system MNAPMCOMMAND setting
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
