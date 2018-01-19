@@ -3926,7 +3926,7 @@ echo ${FunctionToRun}
 #  matlabHelp function
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "matlabHelp" ]; then
+if [ "$FunctionToRun" == "matlabHelp" ]; then
 	${FunctionToRun}
 fi
 
@@ -3934,7 +3934,7 @@ fi
 #  organizeDicom function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "organizeDicom" ]; then
+if [ "$FunctionToRun" == "organizeDicom" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -3961,7 +3961,7 @@ fi
 #  Visual QC Images function loop - QCPreproc - wb_command based
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "QCPreproc" ]; then
+if [ "$FunctionToRun" == "QCPreproc" ]; then
 	# -- Check all the user-defined parameters:	
 	TimeStampQCPreproc=`date +%Y-%m-%d-%H-%M-%S`
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4024,7 +4024,7 @@ fi
 #  eddyQC function loop - eddyqc - uses EDDY QC by Matteo Bastiani, FMRIB
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "eddyQC" ]; then
+if [ "$FunctionToRun" == "eddyQC" ]; then
 	unset EddyPath
 	# -- Check all the user-defined parameters:	
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
@@ -4115,7 +4115,7 @@ fi
 #  mapHCPFiles function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "mapHCPFiles" ]; then
+if [ "$FunctionToRun" == "mapHCPFiles" ]; then
 	# -- Check all the user-defined parameters:		
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4154,7 +4154,7 @@ fi
 #  hpcSync function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "hpcSync" ]; then
+if [ "$FunctionToRun" == "hpcSync" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4177,7 +4177,7 @@ fi
 #  createLists function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "createLists" ]; then
+if [ "$FunctionToRun" == "createLists" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4487,7 +4487,7 @@ fi
 #  BOLDDense function loop  -- under development
 # ------------------------------------------------------------------------------
 
-#if [ ${FunctionToRun} == "BOLDDense" ]; then
+#if [ "$FunctionToRun" == "BOLDDense" ]; then
 #	echo "Enter BOLD numbers you want to run dense connectome on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
 #		if read answer; then
 #		BOLDS=$answer 
@@ -4502,7 +4502,7 @@ fi
 #  FSLDtifit function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "FSLDtifit" ]; then
+if [ "$FunctionToRun" == "FSLDtifit" ]; then
 	# -- Check all the user-defined parameters:		
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4531,7 +4531,7 @@ fi
 #  FSLBedpostxGPU function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "FSLBedpostxGPU" ]; then
+if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study Folder missing"; exit 1; fi
@@ -4564,7 +4564,7 @@ fi
 #  Diffusion legacy processing function loop (hcpdLegacy)
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "hcpdLegacy" ]; then
+if [ "$FunctionToRun" == "hcpdLegacy" ]; then
 	# -- Check all the user-defined parameters:		
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
@@ -4606,7 +4606,7 @@ fi
 #  structuralParcellation function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "structuralParcellation" ]; then
+if [ "$FunctionToRun" == "structuralParcellation" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4643,7 +4643,7 @@ fi
 #  computeBOLDfc function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "computeBOLDfc" ]; then
+if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
@@ -4745,7 +4745,7 @@ fi
 #  BOLDParcellation function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "BOLDParcellation" ]; then	
+if [ "$FunctionToRun" == "BOLDParcellation" ]; then	
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
@@ -4800,7 +4800,7 @@ fi
 #  DWIDenseParcellation function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "DWIDenseParcellation" ]; then
+if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4835,7 +4835,7 @@ fi
 #  ROIExtract function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "ROIExtract" ]; then
+if [ "$FunctionToRun" == "ROIExtract" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
@@ -4880,7 +4880,7 @@ fi
 #  DWISeedTractography function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "DWISeedTractography" ]; then
+if [ "$FunctionToRun" == "DWISeedTractography" ]; then
 	# -- Check all the user-defined parameters:		
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4922,7 +4922,7 @@ fi
 #  pretractographyDense function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "pretractographyDense" ]; then
+if [ "$FunctionToRun" == "pretractographyDense" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4948,7 +4948,7 @@ fi
 #  probtrackxGPUDense function loop
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "probtrackxGPUDense" ]; then
+if [ "$FunctionToRun" == "probtrackxGPUDense" ]; then
 	# Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -4987,7 +4987,7 @@ fi
 #  AWSHCPSync - AWS S3 Sync command wrapper
 # ------------------------------------------------------------------------------
 
-if [ ${FunctionToRun} == "AWSHCPSync" ]; then
+if [ "$FunctionToRun" == "AWSHCPSync" ]; then
 	# Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
 	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
