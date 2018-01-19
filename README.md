@@ -139,6 +139,7 @@ Change Log
 * 0.8.4 [connector] Fixed hcpdLegacy usage function
 * 0.9.0 [niutilities] Added option to run Matlab code through arbitrary Matlab or Octave command through system MNAPMCOMMAND setting
 * 0.9.1 [niutilities] Added warning when no subject is identified to be processed and added Matlab as default when MNAPMCOMMAND is not set
+* 0.9.2 [connector] Unified how functions are read such that 1st argument passed is read as a function if no flags are provided
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
