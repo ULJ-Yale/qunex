@@ -3656,7 +3656,7 @@ if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then
 	exit 0
 fi
 # -- check for input with question mark
-HelpInputUsage="$1"	
+HelpInputUsage="$1"
 if [[ ${HelpInputUsage:0:1} == "?" ]] && [ -z "$2" ]; then 
 	Usage="$1"
 	UsageInput=`echo ${Usage} | cut -c 2-`
@@ -3703,45 +3703,68 @@ unset setflag
 unset doubleflag
 unset singleflag
 
-# -- First check if single or double flags are set
-doubleflag=`echo $1 | cut -c1-2`
-singleflag=`echo $1 | cut -c1`
-
-if [ "$doubleflag" == "--" ]; then
-	setflag="$doubleflag"
+# -- Check if first parameter is missing flags and parse it as FunctionToRun
+if [ -z `echo "$1" | grep '-'` ]; then
+	FunctionToRun="$1"
+	# -- Check if single or double flags are set
+	doubleflagparameter=`echo $2 | cut -c1-2`
+	singleflagparameter=`echo $2 | cut -c1`
+	if [ "$doubleflagparameter" == "--" ]; then
+		setflag="$doubleflagparameter"
+	else
+		if [ "$singleflagparameter" == "-" ]; then
+			setflag="$singleflagparameter"
+		fi
+	fi
 else
-	if [ "$singleflag" == "-" ]; then
-		setflag="$singleflag"
-	fi	
+	# -- Check if single or double flags are set
+	doubleflag=`echo $1 | cut -c1-2`
+	singleflag=`echo $1 | cut -c1`
+	if [ "$doubleflag" == "--" ]; then
+		setflag="$doubleflag"
+	else
+		if [ "$singleflag" == "-" ]; then
+			setflag="$singleflag"
+		fi	
+	fi
 fi
 
-# -- Next check if any flags are set
+# -- Next check if any additional flags are set
 if [[ "$setflag" =~ .*-.* ]]; then
 	echo ""
 	echo "---  Parsing MNAP flag inputs...  "
 	echo ""
+	
 	# ------------------------------------------------------------------------------
 	#  List of command line options across all functions
 	# ------------------------------------------------------------------------------
 	
 	# -- First get function / command input (to harmonize input with gmri)
-	FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
-	CommamndInput=`opts_GetOpt "${setflag}command" "$@"`  # function to execute
-	
-	# -- If input name uses 'command' instead of function set that to $FunctionToRun
-	if [ -z "$FunctionInput" ]; then
-		FunctionToRun="$CommamndInput"
-	else
-		FunctionToRun="$FunctionInput"
+	if [ -z "$FunctionToRun" ]; then
+		FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
+		CommandInput=`opts_GetOpt "${setflag}command" "$@"`  # function to execute
+		# -- If input name uses 'command' instead of function set that to $FunctionToRun
+		if [ -z "$FunctionInput" ]; then
+			FunctionToRun="$CommandInput"
+		else
+			FunctionToRun="$FunctionInput"
+		fi
 	fi
 	
-	# -- general input flags
+	# -- SubjectsFolder and StudyFolder input flags
 	StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`       # study folder to work on
 	StudyFolderPath=`opts_GetOpt "${setflag}path" $@`          # local folder to work on
 	SubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@` # subjects folder to work on
+	SubjectFolder=`opts_GetOpt "${setflag}subjectfolder"  $@` # subjects folder to work on
+	# -- Check if SubjectFolder was set (i.e. missing 's') and correct variable
+	if [ -z "$SubjectFolder" ]; then
+		echo "" &> /dev/null
+	else
+		SubjectsFolder="$SubjectFolder"
+	fi
 	
 	# -- If input name uses 'command' instead of function set that to $FunctionToRun
-	if [ -z ${StudyFolder} ]; then
+	if [ -z "$StudyFolder" ]; then
 		StudyFolder="$StudyFolderPath"
 	else
 		StudyFolder="$StudyFolder"
@@ -3749,17 +3772,17 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	
 	## -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure	
 	if [ -z "$SubjectsFolder" ]; then
-		if [ -z ${StudyFolder} ]; then
-		return 0
+		if [ -z "$StudyFolder" ]; then
+		echo "" &> /dev/null
 		else
 			SubjectsFolder="$StudyFolder/subjects"
 		fi
 	fi
 	
 	## -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure	
-	if [ -z ${StudyFolder} ]; then
+	if [ -z "$StudyFolder" ]; then
 		if [ -z "$SubjectsFolder" ]; then
-		return 0
+		echo "" &> /dev/null
 		else
 			cd $SubjectsFolder/../ &> /dev/null
 			StudyFolder=`pwd` &> /dev/null
@@ -3781,7 +3804,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	
 	# -- path options for FreeSurfer or MNAP
 	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@` 														# Specifies homefolder for FreeSurfer binary to use
-	APVersion=`opts_GetOpt "${setflag}version" $@` 																			# Specifies homefolder for FreeSurfer binary to use
+	MNAPVersion=`opts_GetOpt "${setflag}version" $@` 																	    # Specifies the MNAP version variable
 	
 	# -- create lists input flags
 	ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@` 																	# Which lists to generate
@@ -3829,13 +3852,12 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@` 														# --subjectroifile=<use_a_subject_specific_roi_file>   Specify if you want to use a subject-specific ROI file"
 	
 	# -- computeBOLDfc input flags
-	#InputFiles=`opts_GetOpt "${setflag}inputfiles" "$@" | sed 's/,/ /g;s/|/ /g'`; InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'` 	# --inputfiles=
 	InputFiles=`opts_GetOpt "${setflag}inputfiles" $@` 																		# --inputfiles=
 	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`																			# --targetf=			
 	Calculation=`opts_GetOpt "${setflag}calculation" $@`																	# --calculation=	
 	RunType=`opts_GetOpt "${setflag}runtype" $@`																			# --runtype=   
-	FileList=`opts_GetOpt "${setflag}flist" $@`																				# --flist=   
-	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																		# --ignore=   
+	FileList=`opts_GetOpt "${setflag}flist" $@`																				# --flist=
+	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`																		# --ignore=
 	MaskFrames=`opts_GetOpt "${setflag}mask" $@`																			# --mask=		
 	Covariance=`opts_GetOpt "${setflag}covariance" $@`																		# --covariance=		
 	TargetROI=`opts_GetOpt "${setflag}target" $@`																			# --target=			
@@ -3936,8 +3958,8 @@ fi
 
 if [ "$FunctionToRun" == "organizeDicom" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$Overwrite" ]; then Overwrite="no"; fi
@@ -3964,8 +3986,8 @@ fi
 if [ "$FunctionToRun" == "QCPreproc" ]; then
 	# -- Check all the user-defined parameters:	
 	TimeStampQCPreproc=`date +%Y-%m-%d-%H-%M-%S`
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
@@ -4027,8 +4049,8 @@ fi
 if [ "$FunctionToRun" == "eddyQC" ]; then
 	unset EddyPath
 	# -- Check all the user-defined parameters:	
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
 	# -- perform checks for individual run
@@ -4117,8 +4139,8 @@ fi
 
 if [ "$FunctionToRun" == "mapHCPFiles" ]; then
 	# -- Check all the user-defined parameters:		
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	Cluster="$RunMethod"
@@ -4156,8 +4178,8 @@ fi
 
 if [ "$FunctionToRun" == "hpcSync" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	
@@ -4179,8 +4201,8 @@ fi
 
 if [ "$FunctionToRun" == "createLists" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$ListGenerate" ]; then reho "Error: Type of list to generate missing [preprocessing, analysis, snr]"; exit 1; fi
@@ -4487,16 +4509,16 @@ fi
 #  BOLDDense function loop  -- under development
 # ------------------------------------------------------------------------------
 
-#if [ "$FunctionToRun" == "BOLDDense" ]; then
-#	echo "Enter BOLD numbers you want to run dense connectome on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
-#		if read answer; then
-#		BOLDS=$answer 
-#				for CASE in $CASES
-#				do
-#  					"$FunctionToRunInt" ${CASE}
-#  				done
-#  		fi	
-#fi
+#	if [ "$FunctionToRun" == "BOLDDense" ]; then
+#		echo "Enter BOLD numbers you want to run dense connectome on [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
+#			if read answer; then
+#			BOLDS=$answer 
+#					for CASE in $CASES
+#					do
+#	  					"$FunctionToRunInt" ${CASE}
+#	  				done
+#	  		fi	
+#	fi
 
 # ------------------------------------------------------------------------------
 #  FSLDtifit function loop
@@ -4504,8 +4526,8 @@ fi
 
 if [ "$FunctionToRun" == "FSLDtifit" ]; then
 	# -- Check all the user-defined parameters:		
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 
@@ -4533,8 +4555,8 @@ fi
 
 if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study Folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
 	if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
@@ -4566,10 +4588,10 @@ fi
 
 if [ "$FunctionToRun" == "hcpdLegacy" ]; then
 	# -- Check all the user-defined parameters:		
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
 	if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
@@ -4608,8 +4630,8 @@ fi
 
 if [ "$FunctionToRun" == "structuralParcellation" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
@@ -4645,14 +4667,14 @@ fi
 
 if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
 	if [ -z "$RunType" ]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
 	if [ ${RunType} == "list" ]; then
 		if [ -z "$FileList" ]; then reho "Error: Group file list missing"; exit 1; fi
 	fi
 	if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
-		if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 		if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
@@ -4747,7 +4769,7 @@ fi
 
 if [ "$FunctionToRun" == "BOLDParcellation" ]; then	
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
 	if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
 	if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
@@ -4763,7 +4785,7 @@ if [ "$FunctionToRun" == "BOLDParcellation" ]; then
 	if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
 	if [ -z "$ExtractData" ]; then ExtractData="no"; fi
 	if [ -z "$SingleInputFile" ]; then SingleInputFile="";
-		if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 		if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
@@ -4802,8 +4824,8 @@ fi
 
 if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
@@ -4837,7 +4859,7 @@ fi
 
 if [ "$FunctionToRun" == "ROIExtract" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
 	if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
 	if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
 	if [ -z "$ROIInputFile" ]; then reho "Error: File to use for ROI extraction missing"; exit 1; fi
@@ -4850,7 +4872,7 @@ if [ "$FunctionToRun" == "ROIExtract" ]; then
 	if [ -z "$Overwrite" ]; then Overwrite="no"; fi
 	if [ -z "$SingleInputFile" ]; then SingleInputFile=""; 
 		if [ -z "$InputFile" ]; then reho "Error: Input file path value missing"; exit 1; fi
-		if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+		if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 		if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	fi
@@ -4882,8 +4904,8 @@ fi
 
 if [ "$FunctionToRun" == "DWISeedTractography" ]; then
 	# -- Check all the user-defined parameters:		
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
@@ -4924,8 +4946,8 @@ fi
 
 if [ "$FunctionToRun" == "pretractographyDense" ]; then
 	# -- Check all the user-defined parameters:
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	Cluster="$RunMethod"
@@ -4950,8 +4972,8 @@ fi
 
 if [ "$FunctionToRun" == "probtrackxGPUDense" ]; then
 	# Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi		
 	if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
@@ -4989,8 +5011,8 @@ fi
 
 if [ "$FunctionToRun" == "AWSHCPSync" ]; then
 	# Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
-	if [ -z ${FunctionToRun} ]; then reho "Error: Name of function to run missing"; exit 1; fi
-	if [ -z ${StudyFolder} ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$FunctionToRun" ]; then reho "Error: Name of function to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$Modality" ]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
