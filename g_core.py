@@ -23,6 +23,11 @@ def readSubjectData(filename, verbose=False):
     parameters specified in the header.
 
     '''
+
+    if not os.path.exists(filename):
+        print "\n\n=====================================================\nERROR: Batch file does not exist [%s]" % (filename)
+        raise ValueError("ERROR: Batch file not found: %s" % (filename))
+
     s = file(filename).read()
     s = s.replace("\r", "\n")
     s = s.replace("\n\n", "\n")

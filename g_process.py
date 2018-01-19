@@ -502,8 +502,17 @@ def run(command, args):
 
     sout += "=================================================================\n"
 
-    if options['run'] == 'run':
+    # --- check if there are no subjects
+
+    if not subjects:
+        sout += "\nERROR: No subjects specified to process. Please check your batch file, filtering options or subjid parameter!"
+        print sout
+        writelog(sout)
+        exit()
+
+    elif options['run'] == 'run':
         sout += "\nStarting multiprocessing subjects in %s with a pool of %d concurrent processes\n" % (options['subjects'], cores)
+
     else:
         sout += "\nRunning test on %s ...\n" % (options['subjects'])
 
