@@ -42,7 +42,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are thickness or myelin data from previous processing
-# * These data are stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/ 
+# * These data are stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/ 
 #
 #~ND~END~
 
@@ -57,26 +57,26 @@ usage() {
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
- 				echo "		--path=<study_folder>					Path to study data folder"
-				echo "		--subject=<list_of_cases>				List of subjects to run"
-				echo "		--inputdatatype=<type_of_dense_data_for_input_file>	Specify the type of data for the input file (e.g. MyelinMap_BC or corrThickness)"
-				echo "		--parcellationfile=<file_for_parcellation>		Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
-				echo "		--outname=<name_of_output_pconn_file>			Specify the suffix output name of the pconn file"
+ 				echo "    --subjectsfolder=<folder_with_subjects>               Path to study data folder"
+				echo "    --subject=<list_of_cases>                             List of subjects to run"
+				echo "    --inputdatatype=<type_of_dense_data_for_input_file>   Specify the type of data for the input file (e.g. MyelinMap_BC or corrThickness)"
+				echo "    --parcellationfile=<dlabel_file_for_parcellation>     Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
+				echo "    --outname=<name_of_output_pconn_file>                 Specify the suffix output name of the pconn file"
 				echo ""
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
- 				echo "		--overwrite=<clean_prior_run>						Delete prior run for a given subject"
-				echo "		--extractdata=<save_out_the_data_as_as_csv>			Specify if you want to save out the matrix as a CSV file"
+ 				echo "    --overwrite=<clean_prior_run>                         Delete prior run for a given subject"
+				echo "    --extractdata=<save_out_the_data_as_as_csv>           Specify if you want to save out the matrix as a CSV file"
  				echo ""
  				echo "-- Example:"
 				echo ""
-				echo "MyelinThicknessParcellation.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
-				echo "--subject='100206' \ "
+				echo "MyelinThicknessParcellation.sh --subjectsfolder='<folder_with_subjects>' \ "
+				echo "--subject='<case_id>' \ "
 				echo "--inputdatatype='MyelinMap_BC' \ "
-				echo "--parcellationfile='/gpfs/project/fas/n3/software/MNAP/general/templates/Parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_FIXICA_noGSR_reassigned.dlabel.nii' \ "
+				echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
 				echo "--overwrite='no' \ "
 				echo "--extractdata='yes' \ "
-				echo "--outname='LR_Colelab_partitions' "
+				echo "--outname='<name_of_output_pconn_file>' "
 				echo ""	
 }
 
@@ -98,7 +98,7 @@ geho() {
 # Data should be pre-processed and in CIFTI format
 # The data should be in the folder relative to the master study folder, specified by the inputfile
 # Mandatory input parameters:
-    # StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+    # SubjectsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
     # Subject	  # e.g. 100206
     # InputDataType # e.g. myelin
     # OutName # e.g. LR_Colelab_partitions
@@ -117,7 +117,7 @@ get_options() {
     local arguments=($@)
     
     # initialize global output variables
-    unset StudyFolder
+    unset SubjectsFolder
     unset Subject
     unset InputDataType
     unset ParcellationFile
@@ -144,8 +144,8 @@ get_options() {
                 version_show $@
                 exit 0
                 ;;
-            --path=*)
-                StudyFolder=${argument/*=/""}
+            --subjectsfolder=*)
+                SubjectsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
             --subject=*)
@@ -182,9 +182,9 @@ get_options() {
     done
 
     # check required parameters
-    if [ -z ${StudyFolder} ]; then
+    if [ -z ${SubjectsFolder} ]; then
         usage
-        reho "ERROR: <study-path> not specified>"
+        reho "ERROR: <subjects-folder-path> not specified>"
         echo ""
         exit 1
     fi
@@ -215,12 +215,16 @@ get_options() {
         reho "ERROR: <name_of_output_pconn_file> not specified>"
         exit 1
     fi
+
+	# set StudyFolder
+	cd $SubjectsFolder/../ &> /dev/null
+	StudyFolder=`pwd` &> /dev/null
     
     # report options
     echo ""
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    echo "   StudyFolder: ${StudyFolder}"
+    echo "   SubjectsFolder: ${SubjectsFolder}"
     echo "   Subject: ${CASE}"
     echo "   InputDataType: ${InputDataType}"
     echo "   ParcellationFile: ${ParcellationFile}"
@@ -252,9 +256,9 @@ echo ""
 InputFileExt="dscalar.nii"
 OutFileExt="pscalar.nii"
 # -- Define input
-DATAInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR.${InputFileExt}"
+DATAInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR.${InputFileExt}"
 # -- Define output
-DATAOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR_${OutName}.${OutFileExt}"
+DATAOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR_${OutName}.${OutFileExt}"
 
 echo "      Dense $InputDataType Input:              ${DATAInput}"
 echo ""
@@ -294,7 +298,7 @@ else
 	if [ "$ExtractData" == "yes" ]; then 
 		geho "Saving out the data in a CSV file..."
 		echo ""
-		DATACSVOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR_${OutName}.csv"
+		DATACSVOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/fsaverage_LR32k/$CASE.${InputDataType}.32k_fs_LR_${OutName}.csv"
 		rm -f ${DATACSVOutput} > /dev/null 2>&1
 		wb_command -nifti-information -print-matrix "$DATAOutput" >> "$DATACSVOutput"
 	fi

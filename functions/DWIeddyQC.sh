@@ -44,7 +44,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are results following eddy. For instance:
-# * For instance, following HCP pipelines: "$StudyFolder/subjects/$CASE/hcp/$CASE/Diffusion/eddy/ 
+# * For instance, following HCP pipelines: "$SubjectsFolder/$CASE/hcp/$CASE/Diffusion/eddy/ 
 #
 #~ND~END~
 
@@ -57,11 +57,11 @@ usage() {
 				echo "It explicitly assumes the that eddy has been run and that EDDY QC by Matteo Bastiani, FMRIB has been installed. "
 				echo "For full documentation of the EDDY QC please examine the README file."
 				echo ""
-				echo "   <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ ---> DWI eddy outputs would be here"
+				echo "   <folder_with_subjects>/<case>/hcp/<case>/Diffusion/eddy/ ---> DWI eddy outputs would be here"
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
- 				echo "   --path=<study_folder>   Path to study data folder"
+ 				echo "   --subjectsfolder=<folder_with_subjects>   Path to study subjects folder"
 				echo "   --subject=<subj_id>   Subjects ID to run EDDY QC on"
  				echo "   --eddybase=<eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
  				echo "   --eddyidx=<eddy_index_file>   EDDY index file"
@@ -92,7 +92,7 @@ usage() {
  				echo ""
  				echo "-- EXAMPLE:"
 				echo ""
-				echo "DWIEddyQC.sh --path='<path_to_study_folder_with_subject_directories>' \ "
+				echo "DWIEddyQC.sh --subjectsfolder='<path_to_study_folder_with_subject_directories>' \ "
 				echo "--subject='<subj_id>' \ "
 				echo "--eddybase='<eddy_base_name>' \ "
 				echo "--report='individual'"
@@ -159,7 +159,7 @@ get_options() {
     local arguments=($@)
     
     # initialize global output variables
-    unset StudyFolder
+    unset SubjectsFolder
     unset Subject
     unset Report
     unset EddyBase
@@ -196,8 +196,8 @@ get_options() {
                 version_show $@
                 exit 0
                 ;;
-            --path=*)
-                StudyFolder=${argument/*=/""}
+            --subjectsfolder=*)
+                SubjectsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
             --subject=*)
@@ -266,9 +266,9 @@ get_options() {
     done
 
     # check required parameters
-    if [ -z ${StudyFolder} ]; then
+    if [ -z ${SubjectsFolder} ]; then
         usage
-        reho "ERROR: <study-path> not specified>"
+        reho "ERROR: <subjects-folder-path> not specified>"
         echo ""
         exit 1
     fi
@@ -335,7 +335,7 @@ get_options() {
     fi
     
 	if [ -z ${EddyPath} ]; then
-        EddyPath="${StudyFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+        EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
     fi
     
     if [ -z ${GroupVar} ]; then
@@ -353,12 +353,16 @@ get_options() {
     if [ -z ${BvecsFile} ]; then
         BvecsFile=""
     fi
+
+ 	# set StudyFolder
+	cd $SubjectsFolder/../ &> /dev/null
+	StudyFolder=`pwd` &> /dev/null
     
     # report parameters
     echo ""
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    echo "   StudyFolder: ${StudyFolder}"
+    echo "   SubjectsFolder: ${SubjectsFolder}"
     echo "   Subject: ${CASE}"
     echo "   Report Type: ${Report}"
     echo "   Eddy QC Input Path: ${EddyPath}"

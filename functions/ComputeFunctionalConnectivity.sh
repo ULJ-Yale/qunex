@@ -42,7 +42,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are BOLD from previous processing
-# * These may be stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/ 
+# * These may be stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
@@ -108,14 +108,14 @@ usage() {
 				echo ""
 				echo "		--calculation=<type_of_calculation>					Run <seed> or <gbc> calculation for functional connectivity."
 				echo "		--runtype=<type_of_run>					Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
-				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --path, --inputfile, --subject and --outname are omitted"
+				echo "		--flist=<subject_list_file>				Specify *.list file of subject information. If specified then --subjectsfolder, --inputfile, --subject and --outname are omitted"
 				echo "		--targetf=<path_for_output_file>			Specify the absolute path for output folder. If using --runtype='individual' and left empty the output will default to --inputpath location for each subject"
 				echo "		--ignore=<frames_to_ignore>				The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
 				echo "		--mask=<which_frames_to_use>				An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped."
 				echo ""
 				echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
 				echo ""
- 				echo "		--path=<study_folder>					Path to study data folder"
+ 				echo "		--subjectsfolder=<folder_with_subjects>					Path to study subjects folder"
 				echo "		--subject=<list_of_cases>				List of subjects to run"
 				echo "		--inputfiles=<files_to_compute_connectivity_on>		Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
 				echo "		--inputpath=<path_for_input_file>			Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
@@ -134,22 +134,22 @@ usage() {
 				echo "		--rdilate=<dilation_radius>				Radius for dilating mask (no dilation if empty). Default is []"
 				echo "		--command=<type_of_gbc_to_run>				Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
 				echo ""
-				echo "                   	> mFz:t  ... computes mean Fz value across all voxels (over threshold t) "
-				echo "                   	> aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t) "
-				echo "                   	> pFz:t  ... computes mean positive Fz value across all voxels (over threshold t) "
-  				echo "                   	> nFz:t  ... computes mean positive Fz value across all voxels (below threshold t) "
-         		echo "                   	> aD:t   ... computes proportion of voxels with absolute r over t "
-         		echo "                     	> pD:t   ... computes proportion of voxels with positive r over t "
-         		echo "                     	> nD:t   ... computes proportion of voxels with negative r below t "
-         		echo "                     	> mFzp:n ... computes mean Fz value across n proportional ranges "
-         		echo "                     	> aFzp:n ... computes mean absolute Fz value across n proportional ranges "
-         		echo "                     	> mFzs:n ... computes mean Fz value across n strength ranges "
-          		echo "                    	> pFzs:n ... computes mean Fz value across n strength ranges for positive correlations "
-         		echo "                     	> nFzs:n ... computes mean Fz value across n strength ranges for negative correlations "
-         		echo "                     	> mDs:n  ... computes proportion of voxels within n strength ranges of r "
-         		echo "                     	> aDs:n  ... computes proportion of voxels within n strength ranges of absolute r "
-         		echo "                     	> pDs:n  ... computes proportion of voxels within n strength ranges of positive r "
-         		echo "                     	> nDs:n  ... computes proportion of voxels within n strength ranges of negative r "  
+				echo "                   > mFz:t  ... computes mean Fz value across all voxels (over threshold t) "
+				echo "                   > aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t) "
+				echo "                   > pFz:t  ... computes mean positive Fz value across all voxels (over threshold t) "
+				echo "                   > nFz:t  ... computes mean positive Fz value across all voxels (below threshold t) "
+				echo "                   > aD:t   ... computes proportion of voxels with absolute r over t "
+				echo "                   > pD:t   ... computes proportion of voxels with positive r over t "
+				echo "                   > nD:t   ... computes proportion of voxels with negative r below t "
+				echo "                   > mFzp:n ... computes mean Fz value across n proportional ranges "
+				echo "                   > aFzp:n ... computes mean absolute Fz value across n proportional ranges "
+				echo "                   > mFzs:n ... computes mean Fz value across n strength ranges "
+				echo "                   > pFzs:n ... computes mean Fz value across n strength ranges for positive correlations "
+				echo "                   > nFzs:n ... computes mean Fz value across n strength ranges for negative correlations "
+				echo "                   > mDs:n  ... computes proportion of voxels within n strength ranges of r "
+				echo "                   > aDs:n  ... computes proportion of våoxels within n strength ranges of absolute r "
+				echo "                   > pDs:n  ... computes proportion of voxels within n strength ranges of positive r "
+				echo "                   > nDs:n  ... computes proportion of voxels within n strength ranges of negative r "  
 				echo ""
 				echo "-- OPTIONAL GBC PARMETERS:"
 				echo "" 
@@ -173,37 +173,39 @@ usage() {
  				echo ""
  				echo "-- Examples:"
 				echo ""
-				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "ComputeFunctionalConnectivity.sh \ "
+				echo "--subjectsfolder='<folder_with_subjects>' \ "
 				echo "--calculation='seed' \ "
 				echo "--runtype='individual' \ "
-				echo "--subject='100206' \ "
+				echo "--subject='<case_id>' \ "
 				echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
 				echo "--inputpath='/images/functional' \ "
 				echo "--extractdata='yes' \ "
-				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
+				echo "--extractdata='yes' \ "
 				echo "--ignore='udvarsme' \ "
-				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
+				echo "--roinfo='ROI_Names_File.names' \ "
 				echo "--options='' \ "
 				echo "--method='' \ "
-				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='<path_for_output_file>' \ "
 				echo "--mask='5' \ "
 				echo "--covariance='false' "
 				echo ""	
-				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
-				echo "--calculation='seed' \ "
+				echo "ComputeFunctionalConnectivity.sh \ "
+				echo "--subjectsfolder='<folder_with_subjects>' \ "
 				echo "--runtype='list' \ "
-				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
+				echo "--flist='subjects.list' \ "
 				echo "--extractdata='yes' \ "
-				echo "--outname='Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory' \ "
+				echo "--outname='<name_of_output_file>' \ "
 				echo "--ignore='udvarsme' \ "
-				echo "--roinfo='/gpfs/project/fas/n3/Studies/BSNIP/fcMRI/roi/Thal.FSL.MNI152.CIFTI.Atlas.SomatomotorSensory.names' \ "
+				echo "--roinfo='ROI_Names_File.names' \ "
 				echo "--options='' \ "
 				echo "--method='' \ "
-				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='<path_for_output_file>' \ "
 				echo "--mask='5' "
 				echo "--covariance='false' "
 				echo ""
-				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "ComputeFunctionalConnectivity.sh \ "
+				echo "--subjectsfolder='<folder_with_subjects>' \ "
 				echo "--calculation='gbc' \ "
 				echo "--runtype='individual' \ "
 				echo "--subject='100206' \ "
@@ -213,7 +215,7 @@ usage() {
 				echo "--outname='GBC' \ "
 				echo "--ignore='udvarsme' \ "
 				echo "--command='mFz:' \ "
-				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='<path_for_output_file>' \ "
 				echo "--mask='5' \ "
 				echo "--target='' \ "
 				echo "--rsmooth='0' \ "
@@ -224,15 +226,16 @@ usage() {
 				echo "--covariance='false' "
 				echo ""
 				echo ""	
-				echo "ComputeFunctionalConnectivity.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
+				echo "ComputeFunctionalConnectivity.sh \ "
+				echo "--subjectsfolder='<folder_with_subjects>' \ "
 				echo "--calculation='gbc' \ "
 				echo "--runtype='list' \ "
-				echo "--flist='/gpfs/project/fas/n3/Studies/Connectome/subjects/lists/subjects.list' \ "
+				echo "--flist='subjects.list' \ "
 				echo "--extractdata='yes' \ "
 				echo "--outname='GBC' \ "
 				echo "--ignore='udvarsme' \ "
 				echo "--command='mFz:' \ "
-				echo "--targetf='/gpfs/project/fas/n3/Studies/Connectome/fcMRI/results_udvarsme_surface_testing' \ "
+				echo "--targetf='<path_for_output_file>' \ "
 				echo "--mask='5' \ "
 				echo "--target='' \ "
 				echo "--rsmooth='0' \ "
@@ -274,7 +277,7 @@ get_options() {
     
     # initialize global output variables
 
-    unset StudyFolder		# --path=				
+    unset SubjectsFolder	# --subjectsfolder=				
     unset CASE				# --subject=		
     unset InputFiles		# --inputfile=		
     unset InputPath			# --inputpath=		
@@ -321,8 +324,8 @@ get_options() {
                 version_show $@
                 exit 0
                 ;;
-            --path=*)
-                StudyFolder=${argument/*=/""}
+            --subjectsfolder=*)
+                SubjectsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
             --subject=*)
@@ -452,9 +455,9 @@ echo ""
     		
     # - check options for individual run
     if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
-    	if [ -z ${StudyFolder} ]; then
+    	if [ -z ${SubjectsFolder} ]; then
         	usage
-        	reho "ERROR: <study_path> not specified."
+            reho "ERROR: <subjects-folder-path> not specified>"
         	echo ""
         	exit 1
     	fi
@@ -572,7 +575,11 @@ echo ""
     	    echo ""
     	fi
     fi
-    
+
+	# set StudyFolder
+	cd $SubjectsFolder/../ &> /dev/null
+	StudyFolder=`pwd` &> /dev/null
+			    
     # report options
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
@@ -588,10 +595,10 @@ echo ""
     echo "	FileList: ${FileList}"
     fi
     if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
-    echo "	StudyFolder: ${StudyFolder}"
+    echo "	SubjectsFolder: ${SubjectsFolder}"
     echo "	Subjects: ${CASE}"
     echo "	InputFiles: ${InputFiles}"
-    echo "	InputPath: ${StudyFolder}/<subject_id>/${InputPath}"
+    echo "	InputPath: ${SubjectsFolder}/<subject_id>/${InputPath}"
     echo "	OutName: ${OutName}"
     fi
     if [ ${Calculation} == "gbc" ]; then
@@ -634,19 +641,19 @@ if [ ${RunType} == "individual" ]; then
 			geho "--- Establishing paths for all input and output folders:"
 			echo ""
 			if [ ${OutPath} == "" ]; then
-				OutPath=${StudyFolder}/${INPUTCASE}/${InputPath}
+				OutPath=${SubjectsFolder}/${INPUTCASE}/${InputPath}
 			fi
 			# parse input from the InputFiles variable
 			InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
 			# cleanup prior tmp lists
-			rm -rf ${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
+			rm -rf ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
 			# generate output directories
-			mkdir ${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
+			mkdir ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
 			mkdir ${OutPath} > /dev/null 2>&1
 			# generate the temp list
-			echo "subject id:$INPUTCASE" >> ${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
-			for InputFile in $InputFiles; do echo "file:$StudyFolder/$INPUTCASE/$InputPath/$InputFile" >> ${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done	
-			FinalInput="${StudyFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
+			echo "subject id:$INPUTCASE" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
+			for InputFile in $InputFiles; do echo "file:$SubjectsFolder/$INPUTCASE/$InputPath/$InputFile" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done	
+			FinalInput="${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
 	done
 fi
 
@@ -666,7 +673,7 @@ if [ ${RunType} == "group" ]; then
 			InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
 			# generate the temp list
 			echo "subject id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
-			for InputFile in $InputFiles; do echo "file:$StudyFolder/$INPUTCASE/$InputPath/$InputFile" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done	
+			for InputFile in $InputFiles; do echo "file:$SubjectsFolder/$INPUTCASE/$InputPath/$InputFile" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done	
 			FinalInput="${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list"
 	done
 fi

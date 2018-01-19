@@ -42,7 +42,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP probtrackxgpudense function
-# * These data are stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
+# * These data are stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
 #
 #~ND~END~
 
@@ -55,19 +55,19 @@ usage() {
 				echo "This function implements reduction on the DWI dense connectomes using a given 'seed' structure (e.g. thalamus)."
 				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
 				echo ""
-				echo "INPUTS: <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
+				echo "INPUTS: <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
 				echo ""
 				echo ""
 				echo "OUTPUTS: "
-				echo "         <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>.dconn.nii"
+				echo "         <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>.dconn.nii"
 				echo "         --> Dense connectivity seed tractography file"
 				echo ""
-				echo "         <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>_Avg.dscalar.nii"
+				echo "         <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>_Avg.dscalar.nii"
 				echo "         --> Dense scalar seed tractography file"
 				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
- 				echo "		--path=<study_folder>                       Path to study data folder"
+ 				echo "		--subjectsfolder=<folder_with_subjects>                       Path to study data folder"
 				echo "		--subject=<list_of_cases>                   List of subjects to run"
 				echo "		--matrixversion=<matrix_version_value>      Matrix solution verion to run parcellation on; e.g. 1 or 3"
 				echo "		--seedfile=<file_for_seed_reduction>        Specify the absolute path of the seed file you want to use as a seed for dconn reduction (e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz )"
@@ -80,10 +80,10 @@ usage() {
  				echo ""
  				echo "-- Example:"
 				echo ""
-				echo "DWIDenseSeedTractography.sh --path='/gpfs/project/fas/n3/Studies/Connectome/subjects' \ "
-				echo "--subject='100206' \ "
+				echo "DWIDenseSeedTractography.sh --subjectsfolder='<folder_with_subjects>' \ "
+				echo "--subject='<case_id>' \ "
 				echo "--matrixversion='3' \ "
-				echo "--seedfile='<study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
+				echo "--seedfile='<folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
 				echo "--overwrite='no' \ "
 				echo "--outname='THALAMUS'"
 				echo ""	
@@ -105,9 +105,9 @@ geho() {
 ########################################## INPUTS ########################################## 
 
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
-# The data should be in $DiffFolder="$StudyFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
+# The data should be in $DiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
-    # StudyFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
+    # SubjectsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome/subjects
     # Subject	  # e.g. 100307
     # MatrixVersion # e.g. 1 or 3
     # SeedFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
@@ -116,7 +116,7 @@ geho() {
 ########################################## OUTPUTS #########################################
 
 # Outputs will be *pconn.nii files located here:
-#    DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+#    DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
 #  Get the command line options for this script
 #
@@ -126,7 +126,7 @@ get_options() {
     local arguments=($@)
     
     # initialize global output variables
-    unset StudyFolder
+    unset SubjectsFolder
     unset Subject
     unset MatrixVersion
     unset ParcellationFile
@@ -155,8 +155,8 @@ get_options() {
                 version_show $@
                 exit 1
                 ;;
-            --path=*)
-                StudyFolder=${argument/*=/""}
+            --subjectsfolder=*)
+                SubjectsFolder=${argument/*=/""}
                 index=$(( index + 1 ))
                 ;;
             --subject=*)
@@ -193,9 +193,9 @@ get_options() {
     done
 
     # check required parameters
-    if [ -z ${StudyFolder} ]; then
+    if [ -z ${SubjectsFolder} ]; then
         usage
-        reho "ERROR: <study-path> not specified"
+        reho "ERROR: <subjects-folder-path> not specified>"
         echo ""
         exit 1
     fi
@@ -231,12 +231,16 @@ get_options() {
         reho "ERROR: <name_of_output_dscalar_file> not specified"
         exit 1
     fi
-    
+
+	# set StudyFolder
+	cd $SubjectsFolder/../ &> /dev/null
+	StudyFolder=`pwd` &> /dev/null
+	    
     # report options
     echo ""
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    echo "   StudyFolder: ${StudyFolder}"
+    echo "   SubjectsFolder: ${SubjectsFolder}"
     echo "   Subject: ${CASE}"
     echo "   MatrixVersion: ${MatrixVersion}"
     echo "   SeedFile: ${SeedFile}"
@@ -264,40 +268,40 @@ echo ""
 # -- Define input and check if WayTotal normalization is selected
 if [ ${WayTotal} == "none" ]; then
 	echo "--- Using dconn file without waytotal normalization"
-	DWIInput=`ls $StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii*`
+	DWIInput=`ls $SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii*`
 	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
-		DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii.gz"
+		DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii.gz"
 	else
-		DWIInput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"	
+		DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"	
 	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii"
 fi
 if [ ${WayTotal} == "standard" ]; then
 	echo "--- Using waytotal normalized dconn file"
-	DWIInput=`ls ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii*`
+	DWIInput=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii*`
 	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
-		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
+		DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
 	else
-		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"	
+		DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"	
 	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dconn.nii"
 fi
 if [ ${WayTotal} == "log" ]; then
 	echo "--- Using log-transformed waytotal normalized dconn file"
-	DWIInput=`ls ${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii*`
+	DWIInput=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii*`
 	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
-		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
+		DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
 	else
-		DWIInput="${StudyFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"	
+		DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"	
 	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.dconn.nii"
 fi
 
 # -- Define output directory
-DWIOutput="$StudyFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
 echo "--- Dense DWI Connectome Input:          ${DWIInput}"
 echo "--- Parcellated DWI Connectome Output:   ${DWIOutput}/${DWIOutFileDscalar}"
