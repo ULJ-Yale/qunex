@@ -18,7 +18,11 @@ import os
 import subprocess
 
 
-mcommand = os.environ['MNAPMCOMMAND']
+if "MNAPMCOMMAND" not in os.environ:
+    print "WARNING: MNAPMCOMMAND environment variable not set. Matlab will be run by default!"
+    mcommand = "matlab -nojvm -nodisplay -nosplash -r"
+else:
+    mcommand = os.environ['MNAPMCOMMAND']
 
 # ==============================================================================
 #                                                                      FUNCTIONS
