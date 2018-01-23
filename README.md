@@ -141,7 +141,7 @@ Change Log
 * 0.9.1 [niutilities] Added warning when no subject is identified to be processed and added Matlab as default when MNAPMCOMMAND is not set
 * 0.9.2 [connector] Unified how functions are read such that 1st argument passed is read as a function if no flags are provided
 * 0.9.3 [matlab] Added documentation to PlotBold functions.
-
+* 0.9.4 [connector][hcpmodified] Fixed hcpdLegacy arguments (changed path to subjectsfolder)
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
