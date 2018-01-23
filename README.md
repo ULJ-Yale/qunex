@@ -142,6 +142,7 @@ Change Log
 * 0.9.2 [connector] Unified how functions are read such that 1st argument passed is read as a function if no flags are provided
 * 0.9.3 [matlab] Added documentation to PlotBold functions.
 * 0.9.4 [connector][hcpmodified] Fixed hcpdLegacy arguments (changed path to subjectsfolder)
+* 0.9.5 [hcpmodified] Updated hcpdLegacy DWI to T1w registration to work w/out fieldmaps
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
