@@ -2821,7 +2821,7 @@ QCPreproc() {
 		echo ""
 	else # -- Start of generating QC
 		echo ""
-		geho "--- Generating ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+		geho " --- Generating ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
 		# -- Check general output folders for QC
 		if [ ! -d ${SubjectsFolder}/QC ]; then
@@ -2953,24 +2953,23 @@ QCPreproc() {
 			Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			# -- Check if modality is DWI
 			if [ "$Modality" == "DWI" ]; then
-				# -- Split the data and setup 1st and 2nd volumes for visualization
-				Com6a="fslsplit ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split -t"
-				Com6b="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0000.nii.gz -mul ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split1_brain"
-				Com6c="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0001.nii.gz -mul ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split2_brain"
-				# -- Clean split volumes
-				Com6d="rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0*  &> /dev/null"
-				# -- Setup naming conventions for DWI before generating scene
-				Com6e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 				# -- Check if legacy setting is YES
 				if [ "$DWILegacy" == "yes" ]; then
-					unset "$DWIDataLegacy" >/dev/null 2>&1
-					DWIDataLegacy="${CASE}_${DWIData}"
-					Com6f="sed -i -e 's|DUMMYDWIDATA|$DWIDataLegacy|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+					unset "$DWIData" >/dev/null 2>&1
+					DWIData="${CASE}_${DWIData}"
+					NoDiffBrainMask=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/*T1w_brain_mask_downsampled2diff*` &> /dev/null
 				else
-					Com6f="sed -i -e 's|DUMMYDWIDATA|$DWIData|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+					NoDiffBrainMask="${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz"
 				fi
-				Com6="$Com6; $Com6a; $Com6b; $Com6c; $Com6d; $Com6e; $Com6f"
-	
+				# -- Split the data and setup 1st and 2nd volumes for visualization
+				Com6a="fslsplit ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split -t"
+				Com6b="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0000.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_split1_brain"
+				Com6c="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0001.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_split2_brain"
+				# -- Clean split volumes
+				Com6d="rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split* &> /dev/null"
+				# -- Setup naming conventions for DWI before generating scene
+				Com6e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+				Com6="$Com6; $Com6a; $Com6b; $Com6c; $Com6d; $Com6e"
 				# --------------------------------------------------
 				# -- Check if DTIFIT and BEDPOSTX flags are set
 				# --------------------------------------------------
