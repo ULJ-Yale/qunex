@@ -143,6 +143,7 @@ Change Log
 * 0.9.3 [matlab] Added documentation to PlotBold functions.
 * 0.9.4 [connector, hcpmodified] Fixed `hcpdLegacy` arguments (changed path to subjectsfolder)
 * 0.9.5 [hcpmodified] Updated `hcpdLegacy` DWI to T1w registration to work w/out fieldmaps
+* 0.9.6 [connector] Fixed hcpdLegacy issue with legacy naming conventions
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
