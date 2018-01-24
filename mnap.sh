@@ -2953,20 +2953,21 @@ QCPreproc() {
 			Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			# -- Check if modality is DWI
 			if [ "$Modality" == "DWI" ]; then
+				unset "$DWIName" >/dev/null 2>&1
 				# -- Check if legacy setting is YES
 				if [ "$DWILegacy" == "yes" ]; then
-					unset "$DWIData" >/dev/null 2>&1
-					DWIData="${CASE}_${DWIData}"
+					DWIName="${CASE}_${DWIData}"
 					NoDiffBrainMask=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/*T1w_brain_mask_downsampled2diff*` &> /dev/null
 				else
+					DWIName="${DWIData}"
 					NoDiffBrainMask="${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz"
 				fi
 				# -- Split the data and setup 1st and 2nd volumes for visualization
-				Com6a="fslsplit ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split -t"
-				Com6b="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0000.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_split1_brain"
-				Com6c="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split0001.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_split2_brain"
+				Com6a="fslsplit ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split -t"
+				Com6b="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split0000.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_split1_brain"
+				Com6c="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split0001.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_split2_brain"
 				# -- Clean split volumes
-				Com6d="rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIData}_split* &> /dev/null"
+				Com6d="rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split* &> /dev/null"
 				# -- Setup naming conventions for DWI before generating scene
 				Com6e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 				Com6="$Com6; $Com6a; $Com6b; $Com6c; $Com6d; $Com6e"
