@@ -35,6 +35,8 @@
 # -------------------------------------------
 # EDDY QC by Matteo Bastiani, FMRIB
 # Python library that contains tools based on FSL's eddy to perform quality control on diffusion mri (dMRI) datasets.
+# On HPC environment if missing sudo privileges then install the python code using:
+#     python setup.py install --prefix=/path_to_location
 # -------------------------------------------
 #
 # ## Prerequisite Environment Variables
@@ -47,7 +49,6 @@
 # * For instance, following HCP pipelines: "$SubjectsFolder/$CASE/hcp/$CASE/Diffusion/eddy/ 
 #
 #~ND~END~
-
 
 usage() {
 				echo ""
@@ -436,7 +437,7 @@ else
 	# -- Check if individual run was selected
 	if [ ${Report} == "individual" ]; then
 		geho "Computing individual QC run on ${EddyQCIn} "
-		EddyCommand="eddy_squad ${EddyQCIn}/${EddyBase} -idx ${EddyQCIn}/${EddyIdx} -par ${EddyQCIn}/${EddyParams} -m ${EddyQCIn}/${Mask} -b ${EddyQCIn}/${BvalsFile} -g ${EddyQCIn}/${BvecsFile} -o ${EddyQCOut}"
+		EddyCommand="eddy_quad ${EddyQCIn}/${EddyBase} -idx ${EddyQCIn}/${EddyIdx} -par ${EddyQCIn}/${EddyParams} -m ${EddyQCIn}/${Mask} -b ${EddyQCIn}/${BvalsFile} -g ${EddyQCIn}/${BvecsFile} -o ${EddyQCOut}"
 		echo ""
 		echo $EddyCommand
 		echo ""
@@ -449,7 +450,7 @@ else
 	# -- Check if group run was selected
 	if [ ${Report} == "group" ]; then
 		geho "Computing group QC run on ${EddyQCIn} "
-		EddyCommand="eddy_quad ${EddyQCIn}/${EddyBase} -list ${List} -var ${GroupVar} -upd ${Update} -o {$EddyQCOut}"
+		EddyCommand="eddy_squad ${EddyQCIn}/${EddyBase} -list ${List} -var ${GroupVar} -upd ${Update} -o {$EddyQCOut}"
 		echo ""
 		echo $EddyCommand
 		echo ""

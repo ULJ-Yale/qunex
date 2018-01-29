@@ -3399,8 +3399,7 @@ isMNAPFunction() {
 }
 
 # -- Get all the functions from the usage calls
-unset UsageName
-UsageName=`more ${TOOLS}/${MNAPREPO}/connector/mnap.sh | grep show_usage_${1}`
+
 # -- Check for input with double flags
 if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then
 	Usage="$1"
