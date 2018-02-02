@@ -2921,7 +2921,7 @@ QCPreproc() {
 				if [ "$Cluster" == 1 ]; then
 					echo ""
 					echo "---------------------------------------------------------------------------------"
-					echo "Running QC locally on `hostname`"
+					echo "Running BOLD QC locally on `hostname`"
 					echo "Check output here: $LogFolder"
 					echo "---------------------------------------------------------------------------------"
 					echo ""
@@ -3096,11 +3096,12 @@ QCPreproc() {
 			Com10="rm -f ${OutPath}/data_split*"
 			# -- Combine all the calls into a single command
 			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10"
+			echo $ComQUEUE
 			# -- Queue a local task or a scheduler job
 			if [ "$Cluster" == 1 ]; then
 				echo ""
 				echo "---------------------------------------------------------------------------------"
-				echo "Running QC locally on `hostname`"
+				echo "Running $Modality QC locally on `hostname`"
 				echo "Check output here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
