@@ -2944,7 +2944,7 @@ QCPreproc() {
 			done
 		fi
 		
-		if [ "$Modality" != "BOLD" ]; then
+		if [ "$Modality" == "myelin" ]; then
 		
 			echo "$Modality Debugging..."
 			
