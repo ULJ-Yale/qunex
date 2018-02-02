@@ -2819,6 +2819,7 @@ QCPreproc() {
 		echo ""
 		geho " --- ${Modality} QC scene completed: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 		echo ""
+		return 1
 	else # -- Start of generating QC
 		echo ""
 		geho " --- Generating ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
@@ -2942,12 +2943,11 @@ QCPreproc() {
 					echo ""
 				fi
 			done
+			return 1
 		fi
 		
 		if [ "$Modality" == "myelin" ]; then
-		
 			echo "$Modality Debugging..."
-			
 			# -- Generate a QC scene file appropriate for each subject for each modality
 			# -- Rsync over template files for a given modality		
 			Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null"
@@ -2957,7 +2957,6 @@ QCPreproc() {
 			Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 			Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
 			Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-		
 		fi	
 			# -- Check if modality is DWI
 			if [ "$Modality" == "DWI" ]; then
@@ -3127,8 +3126,6 @@ QCPreproc() {
 				echo "---------------------------------------------------------------------------------"
 				echo ""
 			fi
-		fi
-	fi # -- End of generating QC
 }
 
 show_usage_QCPreproc() {
