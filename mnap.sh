@@ -3095,7 +3095,7 @@ QCPreproc() {
 			# -- Combine all the calls into a single command
 			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10"
 			
-			echo ""; echo $ComQUEUE; echo ""
+			#echo ""; echo $ComQUEUE; echo ""
 			
 			# -- Queue a local task or a scheduler job
 			if [ "$Cluster" == 1 ]; then
@@ -3105,7 +3105,8 @@ QCPreproc() {
 				echo "Check output here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
-				eval ${ComQUEUE} >> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log	
+				#eval ${ComQUEUE} >> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log
+				eval ${ComQUEUE}
 			fi
 			if [ "$Cluster" == 2 ]; then
 				# -- Prep scheduler script
