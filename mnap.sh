@@ -2925,7 +2925,7 @@ QCPreproc() {
 					echo "Check output here: $LogFolder"
 					echo "---------------------------------------------------------------------------------"
 					echo ""
-					eval "$ComQUEUE" &> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log
+					eval "$ComQUEUE" >> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log
 				else
 					echo "Job Information:"
 					rm -f "$LogFolder"/${CASE}_ComQUEUE_"$BOLD".sh &> /dev/null
@@ -2945,8 +2945,6 @@ QCPreproc() {
 			done
 			return 1
 		fi
-		
-		echo "$Modality Debugging..."
 		# -- Generate a QC scene file appropriate for each subject for each modality
 		# -- Rsync over template files for a given modality		
 		Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null"
@@ -3096,7 +3094,9 @@ QCPreproc() {
 			Com10="rm -f ${OutPath}/data_split*"
 			# -- Combine all the calls into a single command
 			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10"
-			echo $ComQUEUE
+			
+			echo ""; echo $ComQUEUE; echo ""
+			
 			# -- Queue a local task or a scheduler job
 			if [ "$Cluster" == 1 ]; then
 				echo ""
@@ -3105,7 +3105,7 @@ QCPreproc() {
 				echo "Check output here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
-				eval "$ComQUEUE" &> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log	
+				eval "$ComQUEUE" >> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log	
 			fi
 			if [ "$Cluster" == 2 ]; then
 				# -- Prep scheduler script
