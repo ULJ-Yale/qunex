@@ -3105,8 +3105,7 @@ QCPreproc() {
 				echo "Check output here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
-				#eval ${ComQUEUE} >> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log
-				eval ${ComQUEUE}
+				eval ${ComQUEUE} >> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log
 			fi
 			if [ "$Cluster" == 2 ]; then
 				# -- Prep scheduler script
