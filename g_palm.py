@@ -145,10 +145,10 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
 
     "<arg 1>|<arg 2>|<arg 3>:<value 1>:<value 2>|<arg 4>:<value>".
 
-    The default arguments and values are: "n:100|zstats", which specify that
+    The default arguments and values are: "n:100|zstat", which specify that
     100 permutations should be run and the statistics of interest expressed in
     z values. To exclude a default argument, specify "<arg>:remove", e.g.:
-    "zstats:remove" if the statistics are not to be converted to z values.
+    "zstat:remove" if the statistics are not to be converted to z values.
 
     For full list of possible arguments and values, please consult PALM user
     guide. Some relevant arguments to consider:
@@ -228,8 +228,10 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
              - Added ability to run ptseries CIFTI images.
     2017-09-28 Grega Repovš
              - Updated documentation regarding location of design files.
-    2017-10-204 Grega Repovš
+    2017-10-20 Grega Repovš
              - Added cleaning of preexisting image files.
+    2018-03-06 Grega Repovš
+            - Correction to documentation
     '''
 
     print "\n Running PALM"
