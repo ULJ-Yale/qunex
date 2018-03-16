@@ -1,6 +1,6 @@
-function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv)
+function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv, verbose)
 
-%function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv)
+%function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method, ignore, cv, verbose)
 %
 %   Computes seed based correlations maps for individuals as well as group maps.
 %
@@ -19,6 +19,7 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %                  -> event: ignore frames as marked in .fidl file
 %                  -> other: the column in *_scrub.txt file that matches bold file to be used for ignore mask
 %       cv       - Whether to compute covariances instead of correlations [false].
+%       verbose  - Whether to be verbose when running the analysis [false].
 %
 %   RESULTS
 %   It saves group files:
@@ -81,8 +82,10 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %   2013-12-28 Grega Repovš - Moved to a more general name, added block event extraction and use of 'use' info.
 %   2017-03-19 Grega Repovs - Cleaned code, updated documentation.
 %   2017-04-18 Grega Repovs - Adjusted to use updated g_ReadFileList.
+%   2018-03-16 Grega Repovs - Added verbose to the parameter list
 %
 
+if nargin < 9 || isempty(verbose), verbose = false;  end
 if nargin < 8 || isempty(cv),      cv      = false;  end
 if nargin < 7 || isempty(ignore),  ignore  = 'use';  end
 if nargin < 6 || isempty(method),  method  = 'mean'; end
