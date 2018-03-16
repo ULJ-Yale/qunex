@@ -145,6 +145,7 @@ Change Log
 * 0.9.5 [hcpmodified] Updated `hcpdLegacy` DWI to T1w registration to work w/out fieldmaps
 * 0.9.6 [connector] Fixed hcpdLegacy issue with legacy naming conventions
 * 0.9.7 [niutilities] Minor correction to runPALM function documentation
+* 0.9.8 [matlab] Added verbose argument to fc_ComputeSeedMaps to fix a bug
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
