@@ -146,6 +146,7 @@ Change Log
 * 0.9.6 [connector] Fixed hcpdLegacy issue with legacy naming conventions
 * 0.9.7 [niutilities] Minor correction to runPALM function documentation
 * 0.9.8 [matlab] Added verbose argument to fc_ComputeSeedMaps to fix a bug
+* 0.9.9 [matlab] gmrimage now supports creation of dtseries and dscalar standard CIFTI images from numeric data
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
