@@ -35,6 +35,9 @@ classdef gmrimage
 %           - mri_ReadConcFile returns more information
 %  2017-07-02 Grega Repovs
 %           - horzcat, zeroframes and sliceframe suport img.cifti.maps
+%  2018-03-17 Grega Repovs
+%           - gmrimage now supports creation of dtseries and dscalar standard CIFTI images
+%             from numeric data
 %
 
     properties
@@ -111,15 +114,21 @@ classdef gmrimage
         %   generates an empty image object.
         %
         %   Input
-        %       - varone ... A number of possible argument types:
-        %                    * string       ... File(s) will be read into a gmrimage object.
-        %                    * data matrix  ... F gmrimage object will be generated with data
-        %                                       from the data matrix.
-        %                    * cell array   ... An array of grimage objects will be generated
-        %                                       each item dependent on the type of the cell type.
-        %                    * gmrimage     ... The image will be copied.
-        %       - dtype  ... The datatype to store the data in. ['single']
-        %       - frames ... The number of frames to read from the image.
+        %       - varone  ... A number of possible argument types:
+        %                     * string       ... File(s) will be read into a gmrimage object.
+        %                     * data matrix  ... F gmrimage object will be generated with data
+        %                                        from the data matrix.
+        %                     * cell array   ... An array of grimage objects will be generated
+        %                                        each item dependent on the type of the cell type.
+        %                     * gmrimage     ... The image will be copied.
+        %       - dtype   ... The datatype to store the data in. ['single']
+        %                     In case of numeric data that matches a standard CIFTI image, this
+        %                     variable is interpreted as the type of CIFTI image, one of 'dtseries'
+        %                     or 'dscalar' ['dtseries']
+        %       - frames  ... The number of frames to read from the image, all by default.
+        %                     In case of numeric data and 'dscalar' dtype, this variable is
+        %                     interpreted as a list of map names, if not provided, maps will be
+        %                     named 'Map 1', 'Map 2', ...
         %       - verbose ... Whether to be talkative
         %
         %   Output
@@ -155,6 +164,8 @@ classdef gmrimage
         %   img4 = gmrimage('bold1.nii.gz|bold2.nii.gz|bold3.nii.gz');
         %   img5 = gmrimahe('boldlist.conc;bold1.nii.gz;bold2.nii.gz|bold3.nii.gz');
         %   img6 = gmrimage(randn(91,191,91));
+        %   img7 = gmrimage(randn(91282,5));
+        %   img8 = gmrimage(randn(91282,5), 'dscalar', {'A', 'B', 'C', 'D', 'E'});
         %
         %   The results will be:
         %   img1 ... An empty gmrimage object.
@@ -164,12 +175,16 @@ classdef gmrimage
         %   img5 ... A vector of three image objects, img5(1) a concatenated set of images
         %            as specified in 'boldlist.conc', img5(2) a single bold run, and img5(3)
         %            a two concatenated bold images.
+        %   img6 ... A volume nifti image with a single frame, assuming standard 2mm MNI atlas.
+        %   img7 ... A dense timeseries CIFTI image with 5 frames.
+        %   img8 ... A dense scalar image with 5 maps named A to E.
         %
         %   ---
-        %   Written by Grega Repov??
+        %   Written by Grega Repovs
         %
         %   Changelog
-        %       2017-02-11 Grega Repov?? - Updated the documentation
+        %       2017-02-11 Grega Repovs - Updated the documentation
+        %       2018-03-17 Grega Repovs - Added the ability to create standard cifti files
 
 
             if nargin < 4, verbose = false;  end
@@ -211,7 +226,7 @@ classdef gmrimage
                     obj.voxels  = prod(obj.dim(1:3));
                     obj.frames  = size(varone,4);
                     obj.empty   = false;
-                    if (obj.dim(1) == 91 && obj.dim(2) == 109 && obj.dim(3) == 91)
+                    if (obj.dim(1) == 91 && obj.dim(2) == 109 && obj.dim(3) == 91)  % assuming it is a MNI Atlas NIfTI image
                         obj.imageformat='NIfTI';
                         obj.hdrnifti = struct('swap', 0,'swapped', 0, 'data_type', blanks(10),...
                             'db_name', blanks(18), 'extents', 0, 'session_error', 0,...
@@ -224,8 +239,50 @@ classdef gmrimage
                             'aux_file', blanks(24), 'qform_code', 1, 'sform_code', 1, 'quatern_b', 0,...
                             'quatern_c', 1, 'quatern_d', 0, 'qoffset_x', 90, 'qoffset_y', -126,...
                             'qoffset_z', -72, 'srow_x', [-2;0;0;90], 'srow_y', [0;2;0;-126],...
-                            'srow_z', [0;0;2;-72], 'intent_name', blanks(16), 'magic', 'n+1 ',...
+                            'srow_z', [0;0;2;-72], 'intent_name', blanks(16), 'magic', cast([110 43 49 0], 'char'),...
                             'version', 1, 'unused_str', blanks(24));
+                    elseif (obj.dim(1) == 91282)  % assuming it is a CIFTI file
+                        obj.filename = '';
+                        obj.imageformat = 'CIFTI-2';
+                        obj.hdrnifti = struct('swap', 0, 'swapped', 0, 'magic', cast([110   43   50    0   13   10   26   10], 'char'), 'datatype', 16, 'bitpix', 32, ...
+                            'dim', [6 1 1 1 1 obj.dim(2) 91282 1]', 'intent_p1', 0, 'intent_p2', 0, 'intent_p3', 0, ...
+                            'pixdim', [1 1 1 1 1 1 1 1]', ...
+                            'vox_offset', 0, 'scl_slope', 1, 'scl_inter', 0, 'cal_max', 0, 'cal_min', 0, 'slice_duration', 0, ...
+                            'toffset', 0, 'slice_start', 0, 'slice_end', 0, 'descrip', blanks(80), 'aux_file', blanks(24), ...
+                            'qform_code', 0, 'sform_code', 0, 'quatern_b', 0, 'quatern_c', 0, 'quatern_d', 0, ...
+                            'qoffset_x', 0, 'qoffset_y', 0, 'qoffset_z', 0, 'srow_x', [0;0;0;0], 'srow_y', [0;0;0;0], 'srow_z', [0;0;0;0], ...
+                            'slice_code', 0, 'xyzt_units', 10, 'intent_code', 3006, 'intent_name', blanks(16), 'dim_info', ' ', ...
+                            'unused_str', blanks(15), 'version', 2, 'data_type', blanks(10), 'db_name', blanks(18), 'extents', 0, ...
+                            'session_error', 0, 'regular', ' ', 'glmax', 0, 'glmin', 0);
+                        obj.cifti.longnames  = {'CIFTI_STRUCTURE_CORTEX_LEFT', 'CIFTI_STRUCTURE_CORTEX_RIGHT', 'CIFTI_STRUCTURE_ACCUMBENS_LEFT', 'CIFTI_STRUCTURE_ACCUMBENS_RIGHT', 'CIFTI_STRUCTURE_AMYGDALA_LEFT', 'CIFTI_STRUCTURE_AMYGDALA_RIGHT', 'CIFTI_STRUCTURE_BRAIN_STEM', 'CIFTI_STRUCTURE_CAUDATE_LEFT', 'CIFTI_STRUCTURE_CAUDATE_RIGHT', 'CIFTI_STRUCTURE_CEREBELLUM_LEFT', 'CIFTI_STRUCTURE_CEREBELLUM_RIGHT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_LEFT', 'CIFTI_STRUCTURE_DIENCEPHALON_VENTRAL_RIGHT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_LEFT', 'CIFTI_STRUCTURE_HIPPOCAMPUS_RIGHT', 'CIFTI_STRUCTURE_PALLIDUM_LEFT', 'CIFTI_STRUCTURE_PALLIDUM_RIGHT', 'CIFTI_STRUCTURE_PUTAMEN_LEFT', 'CIFTI_STRUCTURE_PUTAMEN_RIGHT', 'CIFTI_STRUCTURE_THALAMUS_LEFT', 'CIFTI_STRUCTURE_THALAMUS_RIGHT'};
+                        obj.cifti.shortnames = {'CORTEX_LEFT', 'CORTEX_RIGHT', 'ACCUMBENS_LEFT', 'ACCUMBENS_RIGHT', 'AMYGDALA_LEFT', 'AMYGDALA_RIGHT', 'BRAIN_STEM', 'CAUDATE_LEFT', 'CAUDATE_RIGHT', 'CEREBELLUM_LEFT', 'CEREBELLUM_RIGHT', 'DIENCEPHALON_VENTRAL_LEFT', 'DIENCEPHALON_VENTRAL_RIGHT', 'HIPPOCAMPUS_LEFT', 'HIPPOCAMPUS_RIGHT', 'PALLIDUM_LEFT', 'PALLIDUM_RIGHT', 'PUTAMEN_LEFT', 'PUTAMEN_RIGHT', 'THALAMUS_LEFT', 'THALAMUS_RIGHT'};
+                        obj.cifti.start      = [1 29697 59413 59548 59688 60003 60335 63807 64535 65290 73999 83143 83849 84561 85325 86120 86417 86677 87737 88747 90035];
+                        obj.cifti.end        = [29696 59412 59547 59687 60002 60334 63806 64534 65289 73998 83142 83848 84560 85324 86119 86416 86676 87736 88746 90034 91282];
+                        obj.cifti.length     = [29696 29716 135 140 315 332 3472 728 755 8709 9144 706 712 764 795 297 260 1060 1010 1288 1248];
+                        obj.cifti.maps       = {};
+                        obj.frames = size(varone, 2);
+                        obj.dim    = 91282;
+                        obj.voxels = 91282;
+                        switch dtype
+                            case {'single', 'dtseries'}
+                                obj.filetype = '.dtseries';
+                                obj.TR = 1;
+                                obj.hdrnifti.intent_code = 3002;
+                                obj.hdrnifti.intent_name = 'ConnDenseSeries ';
+                                obj.meta = obj.dtseriesXML();
+                            case 'dscalar'
+                                obj.filetype = '.dtseries';
+                                obj.hdrnifti.intent_code = 3006;
+                                obj.hdrnifti.intent_name = 'ConnDenseScalar ';
+                                if isa(frames, 'cell')
+                                    if length(frames) == obj.frames
+                                        obj.cifti.maps = frames;
+                                    end
+                                end
+                                obj.meta = obj.dscalarXML();
+                            otherwise
+                                error('ERROR: Unknown file type, could not generate gmrimage object! [%s]', dtype);
+                        end
                     end
                 elseif iscell(varone)
                     for n = 1:length(varone);
@@ -248,6 +305,53 @@ classdef gmrimage
                     error('ERROR: Could not parse images!');
                 end
             end
+        end
+
+        function [meta] = dtseriesXML(img)
+        %
+        %   Creates meta data for dtseries image
+        %
+
+            mpath = fileparts(mfilename('fullpath'));
+            xml = fileread(fullfile(mpath, 'dtseries-32k.xml'));
+            xml = strrep(xml,'{{ParentProvenance}}', img.filename);
+            xml = strrep(xml,'{{ProgramProvenance}}', 'MNAP matlab');
+            xml = strrep(xml,'{{Provenance}}', 'MNAP matlab');
+            xml = strrep(xml,'{{WorkingDirectory}}', pwd);
+            xml = strrep(xml,'{{Frames}}', num2str(img.frames));
+            xml = strrep(xml,'{{TR}}', num2str(img.TR));
+            xml = cast(xml', 'uint8');
+            meta = gmrimage.string2meta(xml, 32);
+        end
+
+        function [meta] = dscalarXML(img)
+        %
+        %   Creates meta data for dscalar image
+        %
+            mpath = fileparts(mfilename('fullpath'));
+            xml = fileread(fullfile(mpath, 'dscalar-32k.xml'));
+            xml = strrep(xml, '{{ParentProvenance}}', img.filename);
+            xml = strrep(xml, '{{ProgramProvenance}}', 'MNAP matlab');
+            xml = strrep(xml, '{{Provenance}}', 'MNAP matlab');
+            xml = strrep(xml, '{{WorkingDirectory}}', pwd);
+
+            if ~isfield(img.cifti, 'maps') || isempty(img.cifti.maps)
+                for n = 1:img.frames
+                    img.cifti.maps{end+1} = sprintf('Map %d', n);
+                end
+            end
+            mapString = '';
+            first = true;
+            for map = img.cifti.maps
+                mapString = [mapString '            <NamedMap><MapName>' map{1} '</MapName></NamedMap>'];
+                if ~first
+                    mapString = [mapString '\n'];
+                else
+                    first = false;
+                end
+            end
+            xml = strrep(xml, '{{NamedMaps}}', mapString);
+            meta = gmrimage.string2meta(xml, 32);
         end
 
         function obj = mri_readimage(obj, filename, dtype, frames, verbose)
@@ -738,6 +842,20 @@ classdef gmrimage
 
         end
 
+    end
+
+    methods (Static)
+
+        function [meta] = string2meta(string, code)
+        %
+        %   coverts string to proper meta structure
+        %
+            string = cast(string(:), 'uint8');
+            meta.size = ceil((length(string)+8)/16)*16;
+            meta.code = code;
+            meta.data = zeros(1, meta.size-8, 'uint8');
+            meta.data(1:length(string)) = string;
+        end
     end
 
 end
