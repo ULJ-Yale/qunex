@@ -1291,14 +1291,18 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     `study/subjects/archive/MR` folder, left as is, or deleted. If the archive
     folder does not yet exist, it is created.
 
+    If a subject folder already exists, the related packet will not be processed
+    so that existing data is not changed. Either remove or rename the exisiting
+    folder(s) and rerun the command to process those packet(s) as well.
+
     After the files have been copied or extracted to the inbox folder, a
     sortDicom command is run on that folder and all the DICOM files are sorted
     and moved to the dicom folder. After that is done, a dicom2nii command is
     run to convert the DICOM images to the NIfTI format and move them to the nii
     folder. The DICOM files are preserved and gzipped to save space. To speed up
-    the conversion the cores parameter is passed to the dicom2nii command.
+    the conversion the cores parameter is passed to the dicom2niix command.
     subject.txt and DICOM-Report.txt files are created as well. Please, check
-    the help for sortDicom and dicom2nii commands for the specifics.
+    the help for sortDicom and dicom2niix commands for the specifics.
 
     PARAMETERS
     ==========
@@ -1336,6 +1340,9 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
              - Updated documentation
     2017-12-25 Grega Repovš
              - Added the option for arbitrary inbox folder
+    2018-03-18 Grega Repovš
+             - Added more detailed informaton on existing subject folders in
+               documentation
     '''
 
     verbose = verbose == 'yes'
@@ -1429,9 +1436,10 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
         print "---> No packets to process were found!"
 
     if len(expackets) and verbose:
-        print "---> These packets were already processed (subjectid <= session id : packet):"
+        print "---> For these packets, subject folders already exist and they will be skipped (subjectid <= session id : packet):"
         for p, o, t in expackets:
             print "     %s <= %s : %s" % (o, t, os.path.basename(p))
+        print "     ... To process them, remove or rename the exisiting subject folders"
 
     if len(nmpackets) and verbose:
         print "---> These packets do not match with the log and they won't be processed:"
@@ -1531,7 +1539,7 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
 
         # ===> run dicom to nii
 
-        print "\n\n===> running dicom2nii"
+        print "\n\n===> running dicom2niix"
         dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, cores=cores, verbose=True)
 
         # ===> archive
