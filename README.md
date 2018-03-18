@@ -148,6 +148,7 @@ Change Log
 * 0.9.8 [matlab] Added verbose argument to fc_ComputeSeedMaps to fix a bug
 * 0.9.9 [matlab] gmrimage now supports creation of dtseries and dscalar standard CIFTI images from numeric data
 * 0.9.10 [matlab] Added median as a roi extraction method. 
+* 0.9.11 [niutilities] Minor chages to documentation and information on matlab callable functions
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
