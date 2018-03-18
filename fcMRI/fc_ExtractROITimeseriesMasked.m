@@ -14,7 +14,7 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %       options     - A string defining which outputs to create ['m']:
 %                     -> t - create a tab delimited text file,
 %                     -> m - create a matlab file
-%       method      - Method for extracting timeseries - 'mean', 'pca' ['mean'].
+%       method      - Method for extracting timeseries - 'mean', 'median', 'pca' ['mean'].
 %       ignore      - do we omit frames to be ignored ['no']:
 %                     -> no:     do not ignore any additional frames
 %                     -> event:  ignore frames as marked in .fidl file
