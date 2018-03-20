@@ -302,7 +302,11 @@ organizeDicom() {
 						
 						TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
 						Suffix="$CASE_$TimeStamp"
-							
+						# -- Set the scheduler commands
+						rm -f ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh &> /dev/null
+						echo "$ComQUEUE" >> ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
+						chmod 770 ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
+
 						if [ "$Cluster" == 1 ]; then
 						  	echo ""
 							echo "---------------------------------------------------------------------------------"
@@ -310,20 +314,14 @@ organizeDicom() {
 							echo "Check output here: ${SubjectsFolder}/${CASE}/dicom "
 							echo "---------------------------------------------------------------------------------"
 							echo ""
-							eval "$ComQUEUE"
+							${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh |& tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.log
 						else
 							echo "Job ID:"
-							# -- Set the scheduler commands
-							rm -f ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh &> /dev/null
-							echo "$ComQUEUE" >> ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
-							chmod 770 ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
-							
 							# -- Run the scheduler commands
 							cd ${SubjectsFolder}/${CASE}/dicom/
 							gmri schedule command="${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_${Suffix}.sh" \
 							settings="${Scheduler}" output="stdout:${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.output.log|stderr:${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.error.log" \
 							workdir="${SubjectsFolder}/${CASE}/dicom" 
-							
 							echo ""
 							echo "---------------------------------------------------------------------------------"
 							echo "Data successfully submitted" 
@@ -391,6 +389,10 @@ mapHCPFiles() {
 			# -- Generate timestamp for logs and scripts
 			TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
 			Suffix="$CASE_$TimeStamp"
+			# -- Set the scheduler commands
+			rm -f ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh &> /dev/null
+			echo "$ComQUEUE" >> ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh
+			chmod 770 ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh		
 			
 			if [ "$Cluster" == 1 ]; then
 				echo ""
@@ -399,15 +401,9 @@ mapHCPFiles() {
 				echo "Check output here: ${SubjectsFolder}/${CASE}/hcp "
 				echo "---------------------------------------------------------------------------------"
 		 		echo ""
-				eval "$ComQUEUE"
+				${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh |& tee -a ${SubjectsFolder}/${CASE}/mapHCPFiles.${Suffix}.log
 			else
 				echo "Job ID:"
-				
-				# -- Set the scheduler commands
-				rm -f ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh &> /dev/null
-				echo "$ComQUEUE" >> ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh
-				chmod 770 ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh				
-				
 				# -- Run the scheduler commands
 				cd ${SubjectsFolder}/${CASE}/
 				gmri schedule command="${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh" \
@@ -2259,9 +2255,8 @@ FSLDtifit() {
 		echo "${DtiFitCommand}" >> "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
 		# -- Make script executable 
 		chmod 770 "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
-		
 		if [ "$Cluster" == 1 ]; then
-			eval ${DtiFitCommand} >> "$LogFolder"/fsldtifit_${Suffix}.log
+			"$LogFolder"/fsldtifit_${Suffix}.sh |& tee -a "$LogFolder"/fsldtifit_${Suffix}.log
 		fi
 		if [ "$Cluster" == 2 ]; then
 			# -- Send to scheduler 
