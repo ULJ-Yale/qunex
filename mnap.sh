@@ -2930,7 +2930,7 @@ QCPreproc() {
 					echo "Check output here: $LogFolder"
 					echo "---------------------------------------------------------------------------------"
 					echo ""
-					"$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh > "$LogFolder"/QC_${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.log
+					"$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh >> "$LogFolder"/QC_${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.log
 				else
 					echo "Job Information:"
 					cd ${LogFolder}
@@ -3108,7 +3108,7 @@ QCPreproc() {
 				echo "Check output here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
-				"$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh > "$LogFolder"/QC_${CASE}_ComQUEUE_${Modality}_${TimeStamp}.log
+				"$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh >> "$LogFolder"/QC_${CASE}_ComQUEUE_${Modality}_${TimeStamp}.log
 			fi
 			if [ "$Cluster" == 2 ]; then
 				# -- Prep scheduler script
