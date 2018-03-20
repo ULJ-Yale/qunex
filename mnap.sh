@@ -2917,6 +2917,11 @@ QCPreproc() {
 				Com13="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
 				# -- Combine all the calls into a single command
 				ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13"
+				# -- Generate timestamp for logs and scripts
+				TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+				rm -f "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
+				echo "$ComQUEUE" >> "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
+				chmod 770 "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
 				# -- Execute locally on cluster
 				if [ "$Cluster" == 1 ]; then
 					echo ""
@@ -2925,15 +2930,11 @@ QCPreproc() {
 					echo "Check output here: $LogFolder"
 					echo "---------------------------------------------------------------------------------"
 					echo ""
-					eval ${ComQUEUE} >> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log
+					eval "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh >> "$LogFolder"/QC_${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.log
 				else
 					echo "Job Information:"
-					rm -f "$LogFolder"/${CASE}_ComQUEUE_"$BOLD".sh &> /dev/null
-					echo "$ComQUEUE" >> "$LogFolder"/${CASE}_ComQUEUE_"$BOLD".sh
-					chmod 770 "$LogFolder"/${CASE}_ComQUEUE_"$BOLD".sh
 					cd ${LogFolder}
-					
-					gmri schedule command="${LogFolder}/${CASE}_ComQUEUE_${BOLD}.sh" settings="${Scheduler}" output="stdout:${LogFolder}/qcpreproc.output.log|stderr:${LogFolder}/qcpreproc.error.log" workdir="${LogFolder}" 
+					gmri schedule command="${LogFolder}/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh" settings="${Scheduler}" output="stdout:${LogFolder}/qcpreproc_${Modality}_${BOLD}_${TimeStamp}.output.log|stderr:${LogFolder}/qcpreproc_${Modality}_${BOLD}_${TimeStamp}.error.log" workdir="${LogFolder}" 
 					echo ""
 					echo "---------------------------------------------------------------------------------"
 					echo "Data successfully submitted" 
@@ -3094,9 +3095,11 @@ QCPreproc() {
 			Com10="rm -f ${OutPath}/data_split*"
 			# -- Combine all the calls into a single command
 			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10"
-			
-			#echo ""; echo $ComQUEUE; echo ""
-			
+			# -- Generate timestamp for logs and scripts
+				TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+				rm -f "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
+				echo "$ComQUEUE" >> "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh
+				chmod 770 "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh	
 			# -- Queue a local task or a scheduler job
 			if [ "$Cluster" == 1 ]; then
 				echo ""
@@ -3105,18 +3108,15 @@ QCPreproc() {
 				echo "Check output here: $LogFolder"
 				echo "---------------------------------------------------------------------------------"
 				echo ""
-				eval ${ComQUEUE} >> "$LogFolder"/QC_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log
+				eval "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh >> "$LogFolder"/QC_${CASE}_ComQUEUE_${Modality}_${TimeStamp}.log
 			fi
 			if [ "$Cluster" == 2 ]; then
 				# -- Prep scheduler script
 				echo "Job Information:"
-				rm -f "$LogFolder"/${CASE}_ComQUEUE.sh &> /dev/null
-				echo "$ComQUEUE" >> "$LogFolder"/${CASE}_ComQUEUE.sh
-				chmod 700 "$LogFolder"/${CASE}_ComQUEUE.sh
 				cd ${LogFolder}
 				# -- Scheduler command
-				gmri schedule command="${LogFolder}/${CASE}_ComQUEUE.sh" settings="${Scheduler}" \
-				output="stdout:${LogFolder}/qcpreproc.output.log|stderr:${LogFolder}/qcpreproc.error.log" \
+				gmri schedule command="${LogFolder}/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh" settings="${Scheduler}" \
+				output="stdout:${LogFolder}/qcpreproc_${Modality}_${TimeStamp}.output.log|stderr:${LogFolder}/qcpreproc_${Modality}_${TimeStamp}.error.log" \
 				workdir="${LogFolder}" 
 				# -- Echo command details
 				echo ""
