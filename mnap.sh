@@ -2898,7 +2898,7 @@ QCPreproc() {
 				Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"		
 				# -- Setup naming conventions before generating scene
 				Com3="cp ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-				Com4="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
+				Com4="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
 				Com5="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 				Com6="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 				Com7="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
@@ -2952,7 +2952,7 @@ QCPreproc() {
 		Com3="rsync -aWH ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
 		# -- Setup naming conventions before generating scene
 		Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-		Com5="sed -i -e 's|DUMMYPATH|$StudyFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
+		Com5="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
 		Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 
 			# -- Check if modality is DWI
