@@ -1421,7 +1421,7 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
                     else:
                         nmpackets.append((file, sid))
                 else:
-                    if os.path.exists(os.path.join(subjectsfolder, sessions[sid])):
+                    if os.path.exists(os.path.join(subjectsfolder, sid)):
                         expackets.append((file, sid, sid))
                     else:
                         okpackets.append((file, sid, sid))
