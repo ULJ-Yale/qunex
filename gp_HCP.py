@@ -548,6 +548,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                    empty otherwise [].
     --hcp_control_points       ... Specify YES to use manual control points or
                                    empty otherwise [].
+    --hcp_wm_edits             ... Specify YES to use manually edited WM mask or
+                                   empty otherwise [].
     --hcp_freesurfer_home      ... Path for FreeSurfer home folder can be manually
                                    specified to override default environment variable
                                    to ensure backwards compatiblity and hcp2 customization
@@ -636,6 +638,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             --subjectDIR="%(subjectDIR)s" \
             --ExpertFile="%(ExpertFile)s" \
             --ControlPoints="%(ControlPoints)s" \
+            --WMEdits="%(WMEdits)s" \
             --FreeSurferHome="%(FreeSurferHome)s" \
             --FSLoadHPCModule="%(FSLoadHPCModule)s" \
             --t1="%(t1)s" \
@@ -645,9 +648,10 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'subjectDIR'        : hcp['T1w_folder'],
                 'FreeSurferHome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
-                'FSLoadHPCModule'    : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
+                'FSLoadHPCModule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
                 'ExpertFile'        : options['hcp_expert_file'],
                 'ControlPoints'     : options['hcp_control_points'],
+                'WMEdits'           : options['hcp_wm_edits'],
                 't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                 't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
                 't2'                : t2w}
