@@ -2005,24 +2005,24 @@ BOLDParcellation() {
 			--weightsfile="${WeightsFile}" >> "$LogFolder"/BOLDParcellation_"$Suffix".log
 		else
 			echo "BOLDParcellation.sh \
-			--subjectsfolder=${SubjectsFolder} \
-			--subject=${CASE} \
-			--inputfile=${InputFile} \
-			--singleinputfile=${SingleInputFile} \
-			--inputpath=${InputPath} \
-			--inputdatatype=${InputDataType} \
-			--parcellationfile=${ParcellationFile} \
-			--overwrite=${Overwrite} \
-			--outname=${OutName} \
-			--outpath=${OutPath} \
-			--computepconn=${ComputePConn} \
-			--extractdata=${ExtractData} \
-			--useweights=${UseWeights} \
-			--weightsfile=${WeightsFile}" > "$LogFolder"/BOLDParcellation_"$Suffix".sh &> /dev/null
+			--subjectsfolder='${SubjectsFolder}' \
+			--subject='${CASE}' \
+			--inputfile='${InputFile}' \
+			--singleinputfile='${SingleInputFile}' \
+			--inputpath='${InputPath}' \
+			--inputdatatype='${InputDataType}' \
+			--parcellationfile='${ParcellationFile}' \
+			--overwrite='${Overwrite}' \
+			--outname='${OutName}' \
+			--outpath='${OutPath}' \
+			--computepconn='${ComputePConn}' \
+			--extractdata='${ExtractData}' \
+			--useweights='${UseWeights}' \
+			--weightsfile='${WeightsFile}'" > "$LogFolder"/BOLDParcellation_"$Suffix".sh
 			# -- Make script executable 
 			chmod 770 "$LogFolder"/BOLDParcellation_"$Suffix".sh &> /dev/null
 			cd ${LogFolder}
-			# -- Send to scheduler     		
+			# -- Send to scheduler
 			gmri schedule command="${LogFolder}/BOLDParcellation_${Suffix}.sh" \
 			settings="${Scheduler}" \
 			output="stdout:${LogFolder}/BOLDParcellation.${Suffix}.output.log|stderr:${LogFolder}/BOLDParcellation.${Suffix}.error.log" \
