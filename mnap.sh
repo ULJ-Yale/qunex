@@ -3965,7 +3965,7 @@ if [ "$FunctionToRun" == "createLists" ]; then
 	# --- preprocessing loop ---
 	# --------------------------
 	if [ "$ListGenerate" == "preprocessing" ]; then
-		ListPath=${StudyFolder}/../processing
+		ListPath=${StudyFolder}/processing/lists
 		# -- Check of overwrite flag was set
 		if [ "$Overwrite" == "yes" ]; then
 			echo ""
@@ -3975,7 +3975,7 @@ if [ "$FunctionToRun" == "createLists" ]; then
 		fi
 		if [ -z "$ListFunction" ]; then 
 			reho "List function not set. Using default function."
-			ListFunction="${TOOLS}/${MNAPREPO}/connector/functions/SubjectsBatch.sh"
+			ListFunction="${TOOLS}/${MNAPREPO}/connector/functions/SubjectsParamList.sh"
 			echo ""
 			reho "$ListFunction"
 			echo ""
@@ -4025,7 +4025,7 @@ if [ "$FunctionToRun" == "createLists" ]; then
 		echo ""
 		geho "-------------------------------------------------------------------------------------------"
 		geho "--> Check output:"
-		geho "  `ls ${ListPath}/subjects.preprocessing.${ListName}.param `"
+		geho "  `ls ${ListPath}/batch.${ListName}.txt `"
 		geho "-------------------------------------------------------------------------------------------"
 		echo ""
 	fi

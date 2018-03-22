@@ -45,8 +45,8 @@
 	
 	if [ -z "$ListPath" ]; then 
 		unset ListPath
-		mkdir "$StudyFolder"/processing/ &> /dev/null
-		cd ${StudyFolder}/processing/
+		mkdir -p "$StudyFolder"/processing/lists &> /dev/null
+		cd ${StudyFolder}/processing/lists
 		ListPath=`pwd`
 		reho "Setting default path for list folder --> $ListPath"
 	fi
@@ -56,15 +56,15 @@
 # -------------------------------------------------
 		
 	# -- test if subject_hcp.txt is absent
-	if (test ! -f ${StudyFolder}/${CASE}/subject_hcp.txt); then
+	if (test ! -f ${SubjectsFolder}/${CASE}/subject_hcp.txt); then
 		# -- test if subject_hcp.txt is present		
-		if (test -f ${StudyFolder}/${CASE}/subject.txt); then
+		if (test -f ${SubjectsFolder}/${CASE}/subject.txt); then
 			# -- if yes then copy it to subject_hcp.txt
-			cp ${StudyFolder}/${CASE}/subject.txt ${StudyFolder}/${CASE}/subject_hcp.txt
+			cp ${SubjectsFolder}/${CASE}/subject.txt ${SubjectsFolder}/${CASE}/subject_hcp.txt
 		else
 			# -- report error and exit
 			echo ""
-			reho "${StudyFolder}/${CASE}/subject_hcp.txt and subject.txt is missing."
+			reho "${SubjectsFolder}/${CASE}/subject_hcp.txt and subject.txt is missing."
 			reho "Make sure you have sorted the dicoms and setup subject-specific files."
 			reho "Note: These files are used to populate the subjects.preprocessing.${ListName}.list"
 			echo ""
@@ -72,14 +72,16 @@
 		fi
 	fi
 	
+	echo "List path is currently set to $ListPath"
+	
 	echo "---" >> ${ListPath}/batch."$ListName".txt
-	cat ${StudyFolder}/${CASE}/subject_hcp.txt >> ${ListPath}/batch."$ListName".txt
+	cat ${SubjectsFolder}/${CASE}/subject_hcp.txt >> ${ListPath}/batch."$ListName".txt
 	echo "" >> ${ListPath}/batch."$ListName".txt
 	
 	# -- Fix paths stale or outdated paths
 	DATATYPES="dicom 4dfp hcp nii"
   	for DATATYPE in $DATATYPES; do
-  		CorrectPath="${StudyFolder}/${CASE}/${DATATYPE}"
+  		CorrectPath="${SubjectsFolder}/${CASE}/${DATATYPE}"
   		GrepInput="/${CASE}/${DATATYPE}"		
   		ReplacePath=`more ${ListPath}/batch.${ListName}.txt | grep "$GrepInput" | awk '{print $2}'`
 		sed -i "s@$ReplacePath@$CorrectPath@" ${ListPath}/batch.${ListName}.txt
