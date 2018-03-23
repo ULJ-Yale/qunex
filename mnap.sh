@@ -1104,6 +1104,7 @@ eddyQC() {
 			--subjectsfolder=${SubjectsFolder} \
 			--subject=${CASE} \
 			--eddybase=${EddyBase} \
+			--eddypath=${EddyPath} \
 			--report=${Report} \
 			--bvalsfile=${BvalsFile} \
 			--mask=${Mask} \
@@ -1118,7 +1119,8 @@ eddyQC() {
 			echo "DWIeddyQC.sh \
 			--subjectsfolder='${SubjectsFolder}' \
 			--subject='${CASE}' \
-			--eddybase='${EddyBase}' \s
+			--eddybase='${EddyBase}' \
+			--eddypath=${EddyPath} \
 			--report='${Report}' \
 			--bvalsfile='${BvalsFile}' \
 			--mask='${Mask}' \
@@ -3795,7 +3797,7 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "eddyQC" ]; then
-	unset EddyPath
+	#unset EddyPath
 	# -- Check all the user-defined parameters:	
 	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
 	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -3829,6 +3831,9 @@ if [ "$FunctionToRun" == "eddyQC" ]; then
 			if [ -z ${EddyPath} ]; then
 				reho "Eddy path not set. Assuming defaults."
 				EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+			else
+				EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/$EddyPath"
+				echo $EddyPath
 			fi
 			if [ -z ${OutputDir} ]; then
 				reho "Output folder not set. Assuming defaults."

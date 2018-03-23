@@ -337,6 +337,7 @@ get_options() {
     
 	if [ -z ${EddyPath} ]; then
         EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+        echo $EddyPath
     fi
     
     if [ -z ${GroupVar} ]; then
