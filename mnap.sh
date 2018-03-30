@@ -2966,8 +2966,8 @@ QCPreproc() {
 				fi
 				# -- Split the data and setup 1st and 2nd volumes for visualization
 				Com6a="fslsplit ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split -t"
-				Com6b="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split0000.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_split1_brain"
-				Com6c="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split0001.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_split2_brain"
+				Com6b="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split0000.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_frame1_brain"
+				Com6c="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split0010.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_frame10_brain"
 				# -- Clean split volumes
 				Com6d="rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split* &> /dev/null"
 				# -- Setup naming conventions for DWI before generating scene
@@ -2995,9 +2995,9 @@ QCPreproc() {
 						# -- Replace DWI scene specifications with the dtifit results
 						Com6g1="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
 						Com6g2="sed -i -e 's|1st Frame|dti_FA|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-						Com6g3="sed -i -e 's|2nd Frame|dti_L3|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-						Com6g4="sed -i -e 's|data_split1_brain.nii.gz|dti_FA.nii.gz|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-						Com6g5="sed -i -e 's|data_split2_brain.nii.gz|dti_L3.nii.gz|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+						Com6g3="sed -i -e 's|10th Frame|dti_L3|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+						Com6g4="sed -i -e 's|data_frame1_brain.nii.gz|dti_FA.nii.gz|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+						Com6g5="sed -i -e 's|data_frame10_brain.nii.gz|dti_L3.nii.gz|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
 						# -- Combine dtifit commands
 						Com6g="$Com6g1; $Com6g2; $Com6g3; $Com6g4; $Com6g5"
 						# -- Combine DWI commands
@@ -3027,9 +3027,9 @@ QCPreproc() {
 								# -- Replace DWI scene specifications with the dtifit results
 								Com6h1="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
 								Com6h2="sed -i -e 's|1st Frame|mean d diffusivity|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-								Com6h3="sed -i -e 's|2nd Frame|mean f anisotropy|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-								Com6h4="sed -i -e 's|$DWIPath/data_split1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-								Com6h5="sed -i -e 's|$DWIPath/data_split2_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+								Com6h3="sed -i -e 's|10th Frame|mean f anisotropy|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+								Com6h4="sed -i -e 's|$DWIPath/data_frame1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+								Com6h5="sed -i -e 's|$DWIPath/data_frame10_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
 								# -- combine dtifit commands
 								Com6h="$Com6h1; $Com6h2; $Com6h3; $Com6h4; $Com6h5"
 								# -- Combine DWI commands
