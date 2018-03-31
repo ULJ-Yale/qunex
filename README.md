@@ -151,6 +151,7 @@ Change Log
 * 0.9.11 [niutilities] Minor chages to documentation and information on matlab callable functions
 * 0.9.12 [niutilities] Fixed a bug in importInbox
 * 0.9.13 [connector] Fixed a bug in QCPreproc for DWI frame cleanup
+* 0.9.14 [niutilities] Fixed a bug in getHCPReady
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
