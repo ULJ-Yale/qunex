@@ -499,7 +499,7 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
     '''
 
     if mapping is None:
-        mapping = os.path.join(folder, 'specs', 'hcp_mapping.txt')
+        mapping = os.path.join(subjectsfolder, 'specs', 'hcp_mapping.txt')
 
     # -- get mapping ready
 
