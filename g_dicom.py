@@ -214,6 +214,29 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     that holds the output of the dcm2nii command that was run to convert the
     DICOM files to a NIfTI image.
 
+    MULTIPLE SUBJECTS AND SCHEDULING
+    ================================
+
+    The command can be run for multiple subjects by specifying `subjects` and
+    optionally `subjectsfolder` and `cores` parameters. In this case the command
+    will be run for each of the specified subjects in the subjectsfolder
+    (current directory by default). Optional `filter` and `subjid` parameters
+    can be used to filter subjects or limit them to just specified id codes.
+    (for more information see online documentation). `sfolder` will be filled in
+    automatically as each subject's folder. Commands will run in parallel by
+    utilizing the specified number of cores (1 by default).
+
+    If `scheduler` parameter is set, the command will be run using the specified
+    scheduler settings (see `mnap ?schedule` for more information). If set in
+    combination with `subjects` parameter, subjects will be processed over
+    multiple nodes, `core` parameter specifying how many subjects to run per
+    node. Optional `scheduler_environment`, `scheduler_workdir`,
+    `scheduler_sleep`, and `nprocess` parameters can be set.
+
+    Set optional `logfolder` parameter to specify where the processing logs
+    should be stored. Otherwise the processor will make best guess, where the
+    logs should go.
+
     EXAMPLE USE
     ===========
 
@@ -225,6 +248,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     Changelog
     2017-02-08 Grega Repovš
              - Updated documentation
+    2018-04-01 Grega Repovš
+             - Updated documentation with information on running for multiple
+               subjects and scheduling
     '''
 
     # debug = True
@@ -535,6 +561,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     if verbose:
         print "Finished!\n"
 
+    return "completed ok"
+
 
 def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None, verbose=True, cores=1, debug=False):
     '''
@@ -645,6 +673,29 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     that holds the output of the dcm2nii command that was run to convert the
     DICOM files to a NIfTI image.
 
+    MULTIPLE SUBJECTS AND SCHEDULING
+    ================================
+
+    The command can be run for multiple subjects by specifying `subjects` and
+    optionally `subjectsfolder` and `cores` parameters. In this case the command
+    will be run for each of the specified subjects in the subjectsfolder
+    (current directory by default). Optional `filter` and `subjid` parameters
+    can be used to filter subjects or limit them to just specified id codes.
+    (for more information see online documentation). `sfolder` will be filled in
+    automatically as each subject's folder. Commands will run in parallel by
+    utilizing the specified number of cores (1 by default).
+
+    If `scheduler` parameter is set, the command will be run using the specified
+    scheduler settings (see `mnap ?schedule` for more information). If set in
+    combination with `subjects` parameter, subjects will be processed over
+    multiple nodes, `core` parameter specifying how many subjects to run per
+    node. Optional `scheduler_environment`, `scheduler_workdir`,
+    `scheduler_sleep`, and `nprocess` parameters can be set.
+
+    Set optional `logfolder` parameter to specify where the processing logs
+    should be stored. Otherwise the processor will make best guess, where the
+    logs should go.
+
     EXAMPLE USE
     ===========
 
@@ -660,6 +711,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
              - Modified from dicom2nii to use dcm2niix
     2018-01-01 Grega Repovš
              - Added optional specification of subjectid
+    2018-04-01 Grega Repovš
+             - Updated documentation with information on running for multiple
+               subjects and scheduling
     '''
 
     if subjectid in ['none', 'None', 'NONE']:
@@ -698,8 +752,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
         if unzip == "yes":
             if verbose:
                 print "\nUnzipping files (this might take a while)"
+            calls = []
             for g in gzipped:
-                subprocess.call("gunzip " + g, shell=True)  # , stdout=null, stderr=null)
+                calls.append({'name': 'gunzip: ' + g, 'args': ['gunzip', g], 'sout': None})
+            niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
         else:
             print "\nCan not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.\nAborting processing of DICOM files!\n"
             return
@@ -818,7 +874,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
         files.append([niinum, folder, nframes, nslices])
         # subprocess.call(call, shell=True, stdout=null, stderr=null)
 
-    done = niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
+    niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 
     for niinum, folder, nframes, nslices in files:
 
@@ -912,14 +968,15 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     if gzip == "yes":
         if verbose:
             print "\nCompressing dicom files in folders:"
+        calls = []
         for folder in folders:
-            if verbose:
-                print "--->", folder
-            subprocess.call("gzip " + os.path.join(folder, "*.dcm"), shell=True, stdout=null, stderr=null)
+            calls.append({'name': 'gzip: ' + folder, 'args': ['gzip'] + glob.glob(os.path.join(os.path.abspath(folder), "*.dcm")), 'sout': None})
+        niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
 
     if verbose:
         print "Finished!\n"
 
+    return "completed ok"
 
 
 def sortDicom(folder=".", **kwargs):
@@ -941,6 +998,29 @@ def sortDicom(folder=".", **kwargs):
     --folder: The base subject folder that contains the inbox subfolder with
               the unsorted DICOM files.
 
+    MULTIPLE SUBJECTS AND SCHEDULING
+    ================================
+
+    The command can be run for multiple subjects by specifying `subjects` and
+    optionally `subjectsfolder` and `cores` parameters. In this case the command
+    will be run for each of the specified subjects in the subjectsfolder
+    (current directory by default). Optional `filter` and `subjid` parameters
+    can be used to filter subjects or limit them to just specified id codes.
+    (for more information see online documentation). `sfolder` will be filled in
+    automatically as each subject's folder. Commands will run in parallel by
+    utilizing the specified number of cores (1 by default).
+
+    If `scheduler` parameter is set, the command will be run using the specified
+    scheduler settings (see `mnap ?schedule` for more information). If set in
+    combination with `subjects` parameter, subjects will be processed over
+    multiple nodes, `core` parameter specifying how many subjects to run per
+    node. Optional `scheduler_environment`, `scheduler_workdir`,
+    `scheduler_sleep`, and `nprocess` parameters can be set.
+
+    Set optional `logfolder` parameter to specify where the processing logs
+    should be stored. Otherwise the processor will make best guess, where the
+    logs should go.
+
     EXAMPLE USE
     ===========
 
@@ -952,6 +1032,9 @@ def sortDicom(folder=".", **kwargs):
     Changelog
     2017-02-08 Grega Repovš
              - Updated documentation
+    2018-04-01 Grega Repovš
+             - Updated documentation with information on running for multiple
+               subjects and scheduling
     '''
 
     from shutil import copy
@@ -959,7 +1042,7 @@ def sortDicom(folder=".", **kwargs):
     files = kwargs.get('files', None)
     if files is None:
         inbox = os.path.join(folder, 'inbox')
-        print "============================================\n\nProcessing files from %s\n" % (inbox)
+        print "\nProcessing files from %s\n" % (inbox)
         files = glob.glob(os.path.join(inbox, "*"))
         files = files + glob.glob(os.path.join(inbox, "*/*"))
         files = files + glob.glob(os.path.join(inbox, "*/*/*"))
@@ -1030,6 +1113,7 @@ def sortDicom(folder=".", **kwargs):
             os.rename(dcm, tgf)
 
     print "\nDone!\n\n"
+    return "completed ok"
 
 
 def listDicom(folder=None):
@@ -1088,6 +1172,8 @@ def listDicom(folder=None):
                 print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, getID(d), d.SeriesNumber, d.ProtocolName, time)
         except:
             pass
+
+    return "completed ok"
 
 
 def splitDicom(folder=None):
@@ -1148,6 +1234,8 @@ def splitDicom(folder=None):
             os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
         except:
             pass
+
+    return "completed ok"
 
 
 def processPhilips(folder=None, check=None, pattern=None):
