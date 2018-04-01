@@ -5,7 +5,7 @@ Background
 ==========
 ---
 
-The Multimodal Neuroimaging Analysis Pipeline (MNAP) suite of tools integrates several 
+The Multimodal Neuroimaging Analysis Platform (MNAP) suite of tools integrates several 
 packages that support a flexible and extensible framework for data organization, preprocessing, 
 quality assurance, and various analyses across neuroimaging modalities. The MNAP suite is 
 flexible and can be updated by adding functions developed around its component tools.
@@ -85,10 +85,10 @@ External dependencies
 * PALM
 * Python (version 2.7 or above with numpy, pydicom, scipy & nibabel)
 * AFNI
-* Gradunwarp (https://github.com/ksubramz/gradunwarp)
-* Human Connectome Pipelines for modified MNAP (https://bitbucket.org/mnap/hcpmodified)
+* Human Connectome Pipelines modified for MNAP (https://bitbucket.org/mnap/hcpmodified)
+* Gradunwarp for HCP workflow (https://github.com/ksubramz/gradunwarp)
 * R Statistical Environment with ggplot
-* dcm2nii (23-June-2017 release) 
+* dcm2nii (23-June-2017 release)
 
 Change Log
 ============
