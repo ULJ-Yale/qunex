@@ -14,6 +14,7 @@ import datetime
 import shutil
 import niutilities.g_process as gp
 import niutilities.g_core as gc
+import getpass
 
 
 parameterTemplateHeader = '''#  Batch parameters file
@@ -87,7 +88,8 @@ def createStudy(studyfolder=None):
 
     Do note that the command will create all the missing subfolders in which the
     specified study is to reside. The command also prepares template batch_parameters.txt
-    and hcp_mapping.txt files in <studyfolder>/subjects/specs folder.
+    and hcp_mapping.txt files in <studyfolder>/subjects/specs folder. Finally, it
+    creates a .mnapstudy file in the <studyfolder> to identify it as a study basefolder.
 
     Example:
 
@@ -99,6 +101,8 @@ def createStudy(studyfolder=None):
     Changelog
     2017-12-26 Grega Repovš
              - Added copying of parameters and hcpmap templates.
+    2018-03-31 Grega Repovs
+             - Added creation of .mnapstudy file.
     '''
 
     if studyfolder is None:
@@ -142,6 +146,18 @@ def createStudy(studyfolder=None):
     else:
         print " ... hcp_mapping.txt"
         shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping.txt'), mapFile)
+
+    markFile = os.path.join(studyfolder, '.mnapstudy')
+    if os.path.exists(markFile):
+        print " ... .mnapstudy file already exists"
+    else:
+        mark = open(markFile, 'w')
+        try:
+            username = getpass.getuser()
+        except:
+            username = "unknown user"
+        print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
+        mark.close()
 
     print "\nDone.\n"
 
