@@ -13,6 +13,8 @@ import sys
 import subprocess
 import os
 import os.path
+import datetime
+import time
 
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None):
@@ -371,4 +373,117 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     elif outputs['return'] in ['stderr']:
         result = run.stderr.read()
         return result
+
+
+
+# -----------------------------------------------------------------------
+#                                                  general scheduler code
+
+def runThroughScheduler(command, subjects=None, args=[], cores=1, logfolder=None, logname=None):
+
+    # ---- setup options to pass to each job
+
+    nopt = []
+    for (k, v) in args.iteritems():
+        if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess']:
+            nopt.append((k, v))
+
+    # ---- open log
+
+    if logname:
+        flog = open(logname, "w")
+    else:
+        flog = None
+
+    print "===> Running scheduler for command %s" % (command)
+    if flog:
+        print >> flog, "===> Running scheduler for command %s" % (command)
+
+    # ---- set up scheduler options
+
+    settings    = args['scheduler']
+    workdir     = args.get('scheduler_workdir', None)
+    environment = args.get('scheduler_environment', None)
+    sleeptime   = args.get('scheduler_sleep', 0)
+
+    # --- set logfolder
+
+    if logfolder is None:
+        logfolder = os.path.abspath(".")
+    else:
+        if not os.path.exists(logfolder):
+            os.makedirs(logfolder)
+
+    # ---- construct gmri command
+
+    cBase = "\ngmri " + command
+
+    for (k, v) in nopt:
+        if k not in ['subjid', 'scheduler']:
+            cBase += ' --%s="%s"' % (k, v)
+
+    # ---- if subjects is None
+
+    if subjects is None:
+        print "\n---> submitting %s" % (command)
+        print cBase
+        if flog:
+            print >> flog, "\n---> submitting %s" % (command)
+            print >> flog, cBase
+        scheduler = settings.split(',')[0].strip()
+        exectime  = datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
+        logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
+        result    = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
+
+    # ---- if subject list is present
+
+    else:
+        settings  = settings.split(',')
+        scheduler = settings.pop(0).strip()
+        settings  = dict([[f.strip() for f in e.split('=')] for e in settings])
+        settings['jobname'] = settings.get('jobname', command)
+
+        c = 0
+
+        while subjects:
+
+            c += 1
+
+            # ---- get subjects subset
+
+            slist = []
+            [slist.append(subjects.pop(0)['id']) for e in range(cores) if subjects]   # might need to change to id
+
+            cStr = cBase + ' --subjid="%s"' % ("|".join(slist))
+
+            # ---- set sheduler settings
+
+            settings['jobnum'] = str(c)
+            sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
+            exectime = datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
+            logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, c, exectime))
+
+            print "\n---> submitting %s_#%02d" % (command, c)
+            print cStr
+            if flog:
+                print >> flog, "\n---> submitting %s_#%02d" % (command, c)
+                print >> flog, cStr
+
+            result = schedule(command=cStr, settings=sString, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
+
+            print "...\n", result
+            if flog:
+                print >> flog, "...\n", result
+
+            time.sleep(sleeptime)
+
+        print "\n===> DONE\n"
+        if flog:
+            print >> flog, "\n===> DONE\n"
+
+
+    # --- close log if specified
+
+    if flog:
+        flog.close()
 
