@@ -12,6 +12,9 @@ import subprocess
 import time
 import multiprocessing
 import datetime
+import glob
+import sys
+import traceback
 
 
 def readSubjectData(filename, verbose=False):
@@ -22,6 +25,8 @@ def readSubjectData(filename, verbose=False):
     returns a list of subjects with the information on images and the additional
     parameters specified in the header.
 
+    ---
+    Written by Grega Repovš.
     '''
 
     if not os.path.exists(filename):
@@ -144,7 +149,10 @@ def readList(filename, verbose=False):
     readList(filename, verbose=False)
 
     An internal function for reading list files. It reads the file and
-    returns a list of subjects each with the provided list of files.'''
+    returns a list of subjects each with the provided list of files.
+
+    ---
+    Written by Grega Repovš.'''
 
     slist   = []
     subject = None
@@ -169,9 +177,9 @@ def readList(filename, verbose=False):
     return slist
 
 
-def getSubjectList(listString, sfilter=None, subjid=None, verbose=False):
+def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, verbose=False):
     '''
-    getSubjectList(listString, sfilter=None, subjid=None)
+    getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, verbose=False)
 
     An internal function for getting a list of subjects as an array of dictionaries in
     the form: [{'id': <subject id>, [... other keys]}, {'id': <subject id>, [... other keys]}].
@@ -187,7 +195,14 @@ def getSubjectList(listString, sfilter=None, subjid=None, verbose=False):
     [{'id': <subject id>, 'file': [<first file>, <second file>], 'roi': [<first file>], ...}, ...]
 
     If sfilter is provided (not None), only subjects that match the filter will be returned.
-    If subjid is provided (not None), only subjects with matching id will be returned.'''
+    If subjid is provided (not None), only subjects with matching id will be returned.
+    If subjectsfolder is provided (not None), subjects from a listString will be treated as
+    glob patterns and all folders that match the pattern in the subjectsfolder will be returned
+    as subject ids.
+
+    ---
+    Written by Grega Repovš.
+    '''
 
     gpref = {}
 
@@ -199,11 +214,17 @@ def getSubjectList(listString, sfilter=None, subjid=None, verbose=False):
     elif os.path.exists(listString):
         slist, gpref = readSubjectData(listString, verbose=verbose)
 
-    elif re.match(".*\.list$", listString):
-        slist = readList(listString, verbose=verbose)
-
     else:
-        slist = [{'id': e} for e in re.split(' +|,|\|', listString)]
+        slist = [e.strip() for e in re.split(' +|,|\|', listString)]
+
+        if subjectsfolder is None:
+            slist = [{'id': e} for e in slist]
+
+        else:
+            nlist = []
+            for s in slist:
+                nlist += glob.glob(os.path.join(subjectsfolder, s))
+            slist = [{'id': os.path.basename(e)} for e in nlist]
 
     if subjid is not None and subjid.strip() is not "":
         subjid = re.split(' +|,|\|', subjid)
@@ -221,6 +242,40 @@ def getSubjectList(listString, sfilter=None, subjid=None, verbose=False):
     return slist, gpref
 
 
+def deduceFolders(args):
+    '''
+    deduceFolders(args)
+
+    Tries to deduce the location of study specific folders based on the provided
+    arguments. For internal use only.
+
+    ---
+    Written by Grega Repovš, 2018-03-31
+    '''
+
+    logfolder  = args.get('logfolder')
+    basefolder = args.get('basefolder')
+    subjectsfolder = args.get('subjectsfolder')
+
+    if basefolder is None:
+        if subjectsfolder:
+            basefolder = os.path.dirname(subjectsfolder)
+        else:
+            for f in [os.path.abspath(e) for e in [logfolder, "."] if e]:
+                if f and not basefolder:
+                    while os.path.dirname(f):
+                        f = os.path.dirname(f)
+                        if os.path.exists(os.path.join(f, '.mnapstudy')):
+                            basefolder = f
+                            break
+
+    if logfolder is None:
+        logfolder = os.path.abspath(".")
+        if basefolder:
+            if not any([os.path.abspath(os.path.join(os.path.dirname(basefolder), e)) in logfolder for e in ['fcMRI', 'fcmri', 'analysis', 'Analysis', 'processing', 'Processing']]):
+                logfolder = os.path.join(basefolder, 'processing', 'logs')
+
+    return {'basefolder': basefolder, 'subjectsfolder': subjectsfolder, 'logfolder': logfolder}
 
 
 def runExternalParallel(calls, cores=None, prepend=''):
@@ -239,6 +294,9 @@ def runExternalParallel(calls, cores=None, prepend=''):
 
     Example call:
     runExternalParallel({'name': 'List all zip files', 'args': ['ls' '-l' '*.zip'], 'sout': 'zips.log'}, cores=1, prepend=' ... ')
+
+    ---
+    Written by Grega Repovš.
     '''
 
     if cores is None or cores in ['all', 'All', 'ALL']:
@@ -258,10 +316,16 @@ def runExternalParallel(calls, cores=None, prepend=''):
         if len(running) < cores:
             if calls:
                 call = calls.pop(0)
-                sout = open(call['sout'], 'a', 1)
+                if call['sout']:
+                    sout = open(call['sout'], 'a', 1)
+                else:
+                    sout = open(os.devnull, 'w')
                 print >> sout, "Starting log for %s at %s\nThe command being run: \n>> %s\n" % (call['name'], str(datetime.datetime.now()).split('.')[0], " ".join(call['args']))
                 running.append({'call': call, 'sout': sout, 'p': subprocess.Popen(call['args'], stdout=sout, stderr=sout, bufsize=0)})
-                print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.datetime.now()).split('.')[0], call['sout'])
+                if call['sout']:
+                    print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.datetime.now()).split('.')[0], call['sout'])
+                else:
+                    print prepend + "started running %s at %s" % (call['name'], str(datetime.datetime.now()).split('.')[0])
                 continue
 
         # --- check if a process finished
@@ -271,7 +335,10 @@ def runExternalParallel(calls, cores=None, prepend=''):
 
             if running[n]['p'].poll() is not None:
                 running[n]['sout'].close()
-                print prepend + "finished running %s (exit code: %d), log in %s" % (running[n]['call']['name'], running[n]['p'].poll(), running[n]['call']['sout'])
+                if running[n]['call']['sout']:
+                    print prepend + "finished running %s (exit code: %d), log in %s" % (running[n]['call']['name'], running[n]['p'].poll(), running[n]['call']['sout'])
+                else:
+                    print prepend + "finished running %s (exit code: %d)" % (running[n]['call']['name'], running[n]['p'].poll())
                 completed.append({'exit': running[n]['p'].poll(), 'name': running[n]['call']['name'], 'log': running[n]['call']['sout'], 'args': running[n]['call']['args']})
                 done.append(n)
         if done:
@@ -290,11 +357,144 @@ def runExternalParallel(calls, cores=None, prepend=''):
     return completed
 
 
+results = []
+lock    = multiprocessing.Lock()
+
+def record(response):
+    '''
+    record(response)
+
+    Appends response from a completed function.
+
+    For internal use only.
+
+    ---
+    Written by Grega Repovš, 2018-03-31
+    '''
+
+    global results
+
+    results.append(response)
+
+    with lock:
+        name, result, targetLog, prepend = response
+        if targetLog:
+            see = " [log: %s]." % (targetLog)
+        else:
+            see = "."
+
+        if result:
+            print "%s%s finished successfully%s" % (prepend, name, see)
+        else:
+            print "%s%s failed%s" % (prepend, name, see)
 
 
 
+def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
+    '''
+    runWithLog(function, args=None, logfile=None, name=None)
+    Runs a function with the arguments by redirecting standard output and
+    standard error to the specified log file.
+
+    For internal use only.
+
+    ---
+    Written by Grega Repovš, 2018-03-31
+    '''
+
+    if name is None:
+        name = function.__name__
+
+    if logfile:
+        logFolder, logName = os.path.split(logfile)
+        logNameBase, logNameExt = os.path.splitext(logName)
+        logName  = logNameBase + datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f") + logNameExt
+        tlogfile = os.path.join(logFolder, 'running_' + logName)
+
+        if not os.path.exists(logFolder):
+            os.makedirs(logFolder)
+        with lock:
+            print prepend + "started running %s at %s, track progress in %s" % (name, str(datetime.datetime.now()).split('.')[0], tlogfile)
+
+        sysstdout = sys.stdout
+        sysstderr = sys.stderr
+        sys.stdout = open(tlogfile, 'w', 1)
+        sys.stderr = sys.stdout
+    else:
+        with lock:
+            print prepend + "started running %s at %s" % (name, str(datetime.datetime.now()).split('.')[0])
+
+    with lock:
+        print "Started running %s at %s\ncall: gmri %s %s\n-----------------------------------------" % (name, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), function.__name__, " ".join(['%s="%s"' % (k, v) for (k, v) in args.items()]))
+
+    try:
+        result = function(**args)
+    except:
+        with lock:
+            print "\n\nERROR"
+            print traceback.format_exc()
+        result = False
+
+    with lock:
+        print "\n-----------------------------------------\nFinished at %s" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+    if logfile:
+        sys.stdout.close()
+        sys.stdout = sysstdout
+        sys.stderr = sysstderr
+
+        if result:
+            targetLog = os.path.join(logFolder, 'done_' + logName)
+        else:
+            targetLog = os.path.join(logFolder, 'error_' + logName)
+        os.rename(os.path.join(logFolder, 'running_' + logName), targetLog)
+    else:
+        targetLog = None
+
+    return name, result, targetLog, prepend
 
 
 
+def runInParallel(calls, cores=None, prepend=""):
+    '''
+    runInParallel(calls, cores=None, prepend="")
 
+    Runs functions specified in 'calls' in parallel utilizing all the available or the number of cores specified in 'cores'.
+    Parameters:
+
+    calls   : A list of dictionaries that specifies the commands to run. It should consists of:
+              - name     : The name of the command to run.
+              - function : The function to be run.
+              - args     : The arguments to be passed to the function.
+              - logfile  : The path to the log file to which to direct the standard output from the command ran.
+    cores   : The number of cores to utilize. If specified as None or 'all', all available cores will be utilised.
+    prepend : The string to prepend to each line of progress report.
+
+    Example call:
+    runInParallel({'name': 'Sort dicom files', 'function': niu.g_dicom.sortDicom, 'args': {'folder': '.'}, 'sout': 'sortDicom.log'}, cores=1, prepend=' ... ')
+
+    ---
+    Written by Grega Repovš, 2018-03-31
+    '''
+
+    global results
+
+    if cores is None or cores in ['all', 'All', 'ALL']:
+        cores = multiprocessing.cpu_count()
+    else:
+        try:
+            cores = int(cores)
+        except:
+            cores = 1
+
+    pool    = multiprocessing.Pool(processes=cores)
+    results = []
+
+    for call in calls:
+        pool.apply_async(runWithLog, (call['function'], call['args'], call['logfile'], call['name'], prepend), callback=record)
+
+    pool.close()
+    pool.join()
+
+    return results
 
