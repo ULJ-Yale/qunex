@@ -12,17 +12,17 @@ statistical analysis. They often provide a wrapper for efficiently running
 other tools and software either on a single computer or computer cluster
 by using PBS, SLURM or LSF scheduling.
 
-The utilities make use of and assume that relevant information and data
+The `gmri` utilities make use of and assume that relevant information and data
 is provided in a number of file formats, further described below. The utilities
 assume and help maintain a specific folder structure, further described below.
 A number of utilities depend on external dependencies and make use of data and
 data templates provided in a separate library.
 
-The utilities can be used as a self standing toolset, they were, however,
-developed to efficiently integrate with a set of Matlab functions, methods and
-utilities, and a modified version of HCP (Human Connectome Project)
-preprocessing tools. They are best utilized as a part of MNAP (Multimodal
-Neuroimaging Analysis Pipeline).
+The utilities can be used as a stand-alone toolset. However, the `gmri` utilities
+were developed to efficiently integrate with the MNAP suite, as well as with a 
+set of native Matlab functions, methods and utilities, and a modified version 
+of HCP (Human Connectome Project) preprocessing tools. They are best utilized as 
+a part of MNAP (Multimodal Neuroimaging Analysis Platform).
 
 The utilites are developed and maintained by Grega Repovš, [Mind and Brain
 Lab], University of Ljubljana in collaboration with the [Anticevic Lab], Yale
@@ -92,7 +92,7 @@ External dependencies
 =====================
 ---
 
-* All MNAP repositories (git clone git@bitbucket.org:mnap/mnaptools.git)
+* All MNAP repositories for optimal functionality (git clone git@bitbucket.org:mnap/mnaptools.git)
 * Connectome Workbench (v1.0 or above)
 * FSL (version 5.0.9 or above with GPU-enabled DWI tools)
 * FreeSurfer (5.3 HCP version for HCP-compatible data)
@@ -102,10 +102,11 @@ External dependencies
 * PALM
 * Python (version 2.7 or above with numpy, pydicom, scipy & nibabel)
 * AFNI
-* Gradunwarp (https://github.com/ksubramz/gradunwarp)
-* Human Connectome Pipelines for modified MNAP (https://bitbucket.org/mnap/hcpmodified)
+* Human Connectome Pipelines modified for MNAP (https://bitbucket.org/mnap/hcpmodified)
+* Gradunwarp for HCP workflow (https://github.com/ksubramz/gradunwarp)
 * R Statistical Environment with ggplot
-* dcm2nii (23-June-2017 release) 
+* dcm2nii (23-June-2017 release)
+
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
