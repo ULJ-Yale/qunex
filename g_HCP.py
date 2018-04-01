@@ -17,6 +17,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import glob
+import shutil
 import niutilities
 import collections
 import niutilities.g_gimg as g
@@ -24,9 +25,9 @@ import os.path
 import g_core
 
 
-def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
+def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add"):
     '''
-    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
+    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add]
 
     USE
     ===
@@ -41,11 +42,17 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
     PARAMETERS
     ==========
 
-    --sfolder  The base subject folder that contains the nifti images and
-               subject.txt file. [.]
-    --tfolder  The folder (within the base folder) to which the data is to be
-               mapped. [hcp]
-    --sfile    The name of the source subject.txt file. [subject_hcp.txt]
+    --sfolder   The base subject folder that contains the nifti images and
+                subject.txt file. [.]
+    --tfolder   The folder (within the base folder) to which the data is to be
+                mapped. [hcp]
+    --sfile     The name of the source subject.txt file. [subject_hcp.txt]
+    --check     Whether to check if subject is marked ready for setting up
+                hcp folder [yes].
+    --existing  What to do if the hcp folder already exists? Options are:
+                abort -> abort setting up hcp folder
+                add   -> leave existing files and add new ones (default)
+                clear -> remove any exisiting files and redo hcp mapping
 
     IMAGE DEFINITION
     ================
@@ -93,6 +100,31 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
     13: bold7:rest      :RSBOLD 3mm 48 2.5s
     14: bold8:rest      :RSBOLD 3mm 48 2.5s
 
+
+    MULTIPLE SUBJECTS AND SCHEDULING
+    ================================
+
+    The command can be run for multiple subjects by specifying `subjects` and
+    optionally `subjectsfolder` and `cores` parameters. In this case the command
+    will be run for each of the specified subjects in the subjectsfolder
+    (current directory by default). Optional `filter` and `subjid` parameters
+    can be used to filter subjects or limit them to just specified id codes.
+    (for more information see online documentation). `sfolder` will be filled in
+    automatically as each subject's folder. Commands will run in parallel by
+    utilizing the specified number of cores (1 by default).
+
+    If `scheduler` parameter is set, the command will be run using the specified
+    scheduler settings (see `mnap ?schedule` for more information). If set in
+    combination with `subjects` parameter, subjects will be processed over
+    multiple nodes, `core` parameter specifying how many subjects to run per
+    node. Optional `scheduler_environment`, `scheduler_workdir`,
+    `scheduler_sleep`, and `nprocess` parameters can be set.
+
+    Set optional `logfolder` parameter to specify where the processing logs
+    should be stored. Otherwise the processor will make best guess, where the
+    logs should go.
+
+
     EXAMPLE USE
     ===========
 
@@ -108,16 +140,31 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
              - Added mapping of GE Field Map images
     2018-01-01 Grega Repovš
              - Changed parameter names
+    2018-04-01 Grega Repovš
+             - Added options for checking whether the subject is
+               hcp ready and what to do with existing files
     '''
 
-    inf = niutilities.g_core.readSubjectData(os.path.join(sfolder, sfile))[0][0]
+    inf   = niutilities.g_core.readSubjectData(os.path.join(sfolder, sfile))[0][0]
+    basef = os.path.join(sfolder, tfolder, inf['id'])
+    rawf  = inf['raw_data']
+    sid   = inf['id']
+    bolds = collections.defaultdict(dict)
+    nT1w  = 0
+    nT2w  = 0
 
-    basef    = os.path.join(sfolder, tfolder, inf['id'])
-    rawf     = inf['raw_data']
-    sid      = inf['id']
-    bolds    = collections.defaultdict(dict)
-    nT1w     = 0
-    nT2w     = 0
+    # --- Check subject
+
+    # -> is it HCP ready
+
+    if inf.get('hcpready', 'no') != 'true':
+        if check == 'yes':
+            print "ERROR: Subject %s is not marked ready for HCP. Please check or run with check=no! Aborting setupHCP.\n" % (sid)
+            return
+        else:
+            print "WARNING: Subject %s is not marked ready for HCP. Processing anyway." % (sid)
+
+    # -> does raw data exist
 
     if not os.path.exists(rawf):
         print "ERROR: raw_data folder for %s does not exist! Check your paths [%s]! Aborting setupHCP.\n" % (sid, rawf)
@@ -125,11 +172,21 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
 
     print " ---===== Setting up HCP folder structure for %s =====---\n" % (sid)
 
-    if not os.path.exists(basef):
+    # -> does hcp folder already exist?
+
+    if os.path.exists(basef):
+        if existing == 'clear':
+            print " ---> Base folder %s already exist! Clearing existing files and folders! " % (basef)
+            shutil.rmtree(basef)
+            os.makedirs(basef)
+        elif existing == 'add':
+            print " ---> Base folder %s already exist! Adding any new files specified! " % (basef)
+        else:
+            print "ERROR: Base folder %s already exist! Please check or run with exisiting=add or exisiting=clear! Aborting setupHCP.\n" % (basef)
+            return
+    else:
         print " ---> Creating base folder %s " % (basef)
         os.makedirs(basef)
-    else:
-        print " ...  Base folder %s already exists " % (basef)
 
     i = [k for k, v in inf.iteritems() if k.isdigit()]
     i.sort(key=int, reverse=True)
@@ -203,7 +260,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
             tfile = [tbase + e for e in ['.nii.gz', '.bval', '.bvec']]
             tfold = "Diffusion"
         else:
-            print " ... skipping %s %s [unknown sequence label, please check]" % (v['ima'], v['name'])
+            print "  ... skipping %s %s [unknown sequence label, please check]" % (v['ima'], v['name'])
             continue
 
         if type(sfile) is not list:
@@ -220,46 +277,19 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt"):
                 print " ---> creating subfolder", tfold
                 os.makedirs(os.path.join(basef, tfold))
             else:
-                print " ...  %s subfolder already exists", (tfold)
+                print "  ... %s subfolder already exists" % (tfold)
 
             if not os.path.exists(os.path.join(basef, tfold, tfile)):
                 print " ---> linking %s to %s" % (sfile, tfile)
                 os.link(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))
             else:
-                print " ---> %s already exists" % (tfile)
+                print "  ... %s already exists" % (tfile)
                 # print " ---> %s already exists, replacing it with %s " % (tfile, sfile)
                 # os.remove(os.path.join(basef,tfold,tfile))
                 # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
 
-    # --- checking if all bolds have refs
-
-    # for k, v in bolds.iteritems():
-    #     if "ref" not in v:
-    #         tfold = "BOLD_"+k+"_SBRef_fncb"
-    #         tfile = sid + "_fncb_BOLD_"+boldn+"_SBRef.nii.gz"
-    #
-    #         if not os.path.exists(os.path.join(rawf, v["bold"])):
-    #             print " ---> WARNING: Can not locate %s - skipping extraction of first frame" % (os.path.join(rawf, v["bold"]))
-    #             continue
-    #
-    #         if not os.path.exists(os.path.join(basef,tfold)):
-    #             print " ---> creating subfolder", tfold
-    #             os.makedirs(os.path.join(basef,tfold))
-    #         else:
-    #             print " ...  %s subfolder already exists", tfold
-    #
-    #         if not os.path.exists(os.path.join(basef,tfold,tfile)):
-    #             print " ---> extracting first frame of %s to %s" % (v["bold"], tfile)
-    #             img = g.gimg(os.path.join(rawf, v["bold"]), 1)
-    #             img.saveimage(os.path.join(basef,tfold,tfile))
-    #
-    #         else:
-    #             print " ...  %s already exists" % (tfile)
-
-
     print "\n ---=====         DONE          =====---\n"
-
-
+    return "completed ok"
 
 
 def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="interactive"):
@@ -370,7 +400,7 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
         if process:
             setupHCP(sfolder=os.path.dirname(sfile), tfolder=tfolder, sfile=sbjf)
 
-    print "\n\n===> done processing %s\n" % (folder)
+    print "\n\n===> done processing %s\n" % (subjectsfolder)
 
 
 def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, sfilter=None, overwrite="no"):
