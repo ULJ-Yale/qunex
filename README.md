@@ -1,11 +1,15 @@
-# README File for MNAP Connector Pipeline
+# README File for MNAP connector tools
 
 
 Background
 ==========
 ---
 
-The `Connector` pipeline as part of the MNAP package serves as the overall wrapper for the suite. It handles flexible directory inputs and subject lists. The `Connector` supports all functionality across the MNAP suite, including data organization, QC, preprocessing, various analyses etc. The wrapper code is flexible and can be updated by adding functions developed around other tools (e.g. `gmri` or `matlab` MNAP packages). 
+The `connector` pipeline as part of the MNAP package serves as the overall wrapper for the suite. 
+It handles flexible directory inputs and subject lists. The `connector` supports all functionality 
+across the MNAP suite, including data organization, QC, preprocessing, various analyses etc. 
+The wrapper code is flexible and can be updated by adding functions developed around 
+other MNAP suite tools (e.g. `gmri` or `matlab` MNAP packages). 
 
 The MNAP code is developed and maintained by Alan Anticevic, [Anticevic Lab], Yale 
 University of Ljubljana in collaboration with Grega Repovs [Mind and Brain Lab], 
@@ -76,7 +80,7 @@ External dependencies
 =====================
 ---
 
-* All MNAP repositories (git clone git@bitbucket.org:mnap/mnaptools.git)
+* All MNAP repositories for optimal functionality (git clone git@bitbucket.org:mnap/mnaptools.git)
 * Connectome Workbench (v1.0 or above)
 * FSL (version 5.0.9 or above with GPU-enabled DWI tools)
 * FreeSurfer (5.3 HCP version for HCP-compatible data)
@@ -86,10 +90,10 @@ External dependencies
 * PALM
 * Python (version 2.7 or above with numpy, pydicom, scipy & nibabel)
 * AFNI
-* Gradunwarp (https://github.com/ksubramz/gradunwarp)
-* Human Connectome Pipelines for modified MNAP (https://bitbucket.org/mnap/hcpmodified)
+* Human Connectome Pipelines modified for MNAP (https://bitbucket.org/mnap/hcpmodified)
+* Gradunwarp for HCP workflow (https://github.com/ksubramz/gradunwarp)
 * R Statistical Environment with ggplot
-* dcm2nii (23-June-2017 release) 
+* dcm2nii (23-June-2017 release)
 
 
 References
