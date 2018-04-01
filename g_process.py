@@ -462,19 +462,13 @@ def run(command, args):
 
     # ---- Set key parameters
 
-    basefolder   = options['subjectsfolder']
     overwrite    = options['overwrite']
     cores        = options['cores']
     nprocess     = options['nprocess']
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
-    sfilter      = options['filter']
 
-    logfolder    = options['logfolder']
-    if logfolder is None:
-        logfolder = os.path.abspath(".")
-        if not any([os.path.abspath(os.path.join(os.path.dirname(basefolder), e)) in logfolder for e in ['fcMRI', 'fcmri', 'analysis', 'Analysis', 'processing', 'Processing']]):
-            logfolder = os.path.join(os.path.dirname(basefolder), 'processing', 'logs')
+    logfolder    = g_core.deduceFolders(options)['logfolder']
 
     runlogfolder = os.path.join(logfolder, 'runlogs')
     comlogfolder = os.path.join(logfolder, 'comlogs')
@@ -622,74 +616,5 @@ def run(command, args):
     #                                                  general scheduler code
 
     else:
-
-        # ---- setup options to pass to each job
-
-        nopt = []
-        for (k, v) in args.iteritems():
-            if k not in ['scheduler', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess']:
-                nopt.append((k, v))
-
-        nopt.append(('scheduler', 'local'))
-        nopt.append(('nprocess', '0'))
-
-        # ---- open log
-
-        flog = open(logname + '.log', "w")
-        print >> flog, "\n\n============================= LOG ================================\n"
-
-        # ---- run jobs
-
-        soptions  = options['scheduler'].split(',')
-        scheduler = soptions.pop(0).strip()
-        c         = 0
-        batchlogf = os.path.join(logfolder, 'batchlogs')
-        if not os.path.exists(batchlogf):
-            os.makedirs(batchlogf)
-
-        while subjects:
-
-            c += 1
-
-            # ---- construct the gmri command
-
-            cstr = "\ngmri " + command
-
-            for (k, v) in nopt:
-                if k not in ['subjid', 'scheduler']:
-                    cstr += ' --%s="%s"' % (k, v)
-
-            slist = []
-            [slist.append(subjects.pop(0)['subject']) for e in range(cores) if subjects]   # might need to change to id
-
-            cstr += ' --subjid="%s"' % ("|".join(slist))
-            cstr += ' --scheduler="local"'
-            cstr += '\n'
-
-            # ---- pass the command string to scheduler
-
-
-            addInfo   = ',jobname=%s,jobnum=%d,' % (command, c)
-            settings  = scheduler + addInfo + ",".join(soptions)
-            exectime  = datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
-            logfile   = os.path.join(batchlogf, "%s_%s_job%02d.%s.log" % (scheduler, command, c, exectime))
-
-            print "\n==============> submitting %s_#%02d\n" % (command, c)
-            print cstr
-
-            print >> flog, "\n==============> submitting %s_#%02d\n" % (command, c)
-
-            result = g_scheduler.schedule(command=cstr, settings=settings, workdir=options['scheduler_workdir'], environment=options['scheduler_environment'], output="both:%s|return:both" % (logfile))
-
-            print "\n----------"
-            print result
-
-            print >> flog, "\n----------"
-            print >> flog, result
-
-            time.sleep(options['scheduler_sleep'])
-
-        print "\n\n============================= DONE ================================\n"
-        print >> flog, "\n\n============================= DONE ================================\n"
-        flog.close()
+        g_scheduler.runThroughScheduler(command, subjects=subjects, args=options, cores=cores, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
 
