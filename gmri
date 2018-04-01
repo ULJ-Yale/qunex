@@ -4,7 +4,11 @@
 import niutilities as niu
 import niutilities.g_process as gp
 import niutilities.g_matlab as gm
+import niutilities.g_core as gc
+import glob
+import os.path
 import sys
+import datetime
 
 help = '''
 gmri utility for MRI processing and analysis.
@@ -232,16 +236,100 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
 
 
 def runCommand(command, args):
+
+    folders = gc.deduceFolders(args)
+
+    # --- sort commands by type
+
     if command in commands:
-        commands[command]['com'](**args)
+        pass
     elif command in gp.pactions or command in gp.sactions:
         gp.run(command, args)
+        return
     elif command in gm.functions:
-        gm.run(command, args)
+        if 'scheduler' in args:
+            niu.g_scheduler.runThroughScheduler(command, subjects=None, args=args, cores=1, logfolder=folders['logfolder'])
+        else:
+            gm.run(command, args)
+        return
     else:
         print "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands." % (command)
-        # print help
         sys.exit(1)
+
+    # --- process commands
+
+    # -- sort arguments
+
+    bargs = {}
+    eargs = {}
+    for k, v in args.items():
+        if k in commands[command]['args']:
+            bargs[k] = v
+        else:
+            eargs[k] = v
+
+    # -- check extra arguments
+
+    if eargs:
+        argsok = True
+        for k, v in eargs.items():
+            if k not in ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder']:
+                print "ERROR: Extra argument %s is not valid! Please check your command!" % (k)
+                argsok = False
+        if not argsok:
+            sys.exit(1)
+
+    # -- process extra arguments
+
+    subjects = None
+    if 'subjects' in eargs:
+        if not any([e in commands[command]['args'] for e in ['sfolder', 'folder']]):
+            print "ERROR: Command %s can not be run on multiple subjects!" % (command)
+            sys.exit(1)
+        if folders['subjectsfolder'] is None:
+            folders['subjectsfolder'] = "."
+        subjects, gopts = gc.getSubjectList(eargs['subjects'], sfilter=eargs.get('filter'), subjid=eargs.get('subjid'), subjectsfolder=folders['subjectsfolder'], verbose=False)
+
+    logname = eargs.get('logname')
+
+    cores = int(eargs.get('cores', '1'))
+
+    # -- are we using a scheduler
+
+    if 'scheduler' in eargs:
+        niu.g_scheduler.runThroughScheduler(command, subjects=subjects, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+
+    # -- a basic call
+
+    elif subjects is None:
+        commands[command]['com'](**args)
+
+    # -- subjects loop
+
+    else:
+        print "\n===> Running %s through a list of subjects using %d cores" % (command, cores)
+
+        calls = []
+        for subject in subjects:
+            targs   = dict(bargs)
+            name    = command + ": " + subject['id']
+            sfolder = os.path.join(folders['subjectsfolder'], subject['id'])
+            if folders['logfolder']:
+                logfile = os.path.join(folders['logfolder'], 'comlogs', "%s_%s.log" % (command, subject['id']))
+            for targ in ['sfolder', 'folder']:
+                if targ in commands[command]['args']:
+                    targs[targ] = sfolder
+            calls.append({'name': name, 'function': commands[command]['com'], 'args': targs, 'logfile': logfile})
+
+        results = gc.runInParallel(calls, cores=cores, prepend="     ... ")
+
+        print "\n===> Summary Report"
+        results.sort(key=lambda x: x[0])
+        for name, result, targetLog, prepend in results:
+            if not result:
+                result = 'failed'
+            print "%s %s %s [log: %s]" % (prepend, name, result, targetLog)
+
 
 
 def printHelp(com):
