@@ -263,7 +263,7 @@ def deduceFolders(args):
         else:
             for f in [os.path.abspath(e) for e in [logfolder, "."] if e]:
                 if f and not basefolder:
-                    while os.path.dirname(f):
+                    while os.path.dirname(f) and os.path.dirname(f) != '/':
                         f = os.path.dirname(f)
                         if os.path.exists(os.path.join(f, '.mnapstudy')):
                             basefolder = f
