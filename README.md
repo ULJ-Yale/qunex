@@ -153,6 +153,7 @@ Change Log
 * 0.9.13 [connector] Fixed a bug in QCPreproc for DWI frame cleanup
 * 0.9.14 [niutilities] Fixed a bug in getHCPReady
 * 0.10.0 [niutilities] Enabled automatic paralellization and scheduling of commands
+* 0.10.1 [niutilities] Made deduceFolders more robust
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
