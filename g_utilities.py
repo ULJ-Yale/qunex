@@ -156,7 +156,7 @@ def createStudy(studyfolder=None):
             username = getpass.getuser()
         except:
             username = "unknown user"
-        print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
+        print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
         mark.close()
 
     print "\nDone.\n"
