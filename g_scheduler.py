@@ -431,7 +431,7 @@ def runThroughScheduler(command, subjects=None, args=[], cores=1, logfolder=None
             print >> flog, "\n---> submitting %s" % (command)
             print >> flog, cBase
         scheduler = settings.split(',')[0].strip()
-        exectime  = datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
+        exectime  = datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
         logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
         result    = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
 
@@ -460,7 +460,7 @@ def runThroughScheduler(command, subjects=None, args=[], cores=1, logfolder=None
 
             settings['jobnum'] = str(c)
             sString  = scheduler + ',' + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
-            exectime = datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
+            exectime = datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
             logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, c, exectime))
 
             print "\n---> submitting %s_#%02d" % (command, c)
