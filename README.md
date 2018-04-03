@@ -154,7 +154,7 @@ Change Log
 * 0.9.14 [niutilities] Fixed a bug in getHCPReady
 * 0.10.0 [niutilities] Enabled automatic paralellization and scheduling of commands
 * 0.10.1 [niutilities] Made deduceFolders more robust
-* 0.10.2 [niutilities] Fixed a bug in runThroughScheduler
+* 0.10.2 [niutilities] Fixed a datetime bug in runThroughScheduler and createStudy
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
