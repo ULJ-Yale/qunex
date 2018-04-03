@@ -684,7 +684,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             else:
                 r += "\n --> FreeSurfer recon-all.log NOT found! Assuming 'legacy' v5.3.0-HCP was used"
                 tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
-                r +=  "n\---> FreeSurfer version: 5.3"
+                r +=  "\n---> FreeSurfer version: 5.3"
 
             # --------------------------------------------------------------
             # -- End of code for FreeSurfer 6.0 completion check
@@ -937,24 +937,24 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs the Diffusion step of HCP Pipeline. It preprocesses diffusion weighted 
-    images (DWI). Specifically, after b0 intensity normalization, the b0 images 
-    of both phase encoding directions are used to calculate the susceptibility-induced 
-    B0 field deviations.The full timeseries from both phase encoding directions is 
+    Runs the Diffusion step of HCP Pipeline. It preprocesses diffusion weighted
+    images (DWI). Specifically, after b0 intensity normalization, the b0 images
+    of both phase encoding directions are used to calculate the susceptibility-induced
+    B0 field deviations.The full timeseries from both phase encoding directions is
     used in the “eddy” tool for modeling of eddy current distortions and subject motion.
-    Gradient distortion is corrected and the b0 image is registered to the T1w image 
-    using BBR. The diffusion data output from eddy are then resampled into 1.25mm 
-    native structural space and masked.Diffusion directions and the gradient deviation 
-    estimates are also appropriately rotated and registered into structural space. 
-    The function enables the use of a number of parameters to customize the specific 
+    Gradient distortion is corrected and the b0 image is registered to the T1w image
+    using BBR. The diffusion data output from eddy are then resampled into 1.25mm
+    native structural space and masked.Diffusion directions and the gradient deviation
+    estimates are also appropriately rotated and registered into structural space.
+    The function enables the use of a number of parameters to customize the specific
     preprocessing steps. A short name 'hcpd' can be used for this command.
 
     REQUIREMENTS
     ============
 
-    The code expects the first HCP preprocessing step (hcp_PreFS) to have been run 
+    The code expects the first HCP preprocessing step (hcp_PreFS) to have been run
     and finished successfully. It expects the DWI data to have been acquired in
-    phase encoding reversed pairs, which should be present in the Diffusion folder 
+    phase encoding reversed pairs, which should be present in the Diffusion folder
     in the subject's root hcp folder.
 
     RESULTS
@@ -991,7 +991,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     distortion correction details
     -----------------------------
-    
+
     --hcp_dwi_PEdir          ... The direction of unwarping. Use 1 for LR/RL
                                  Use 2 for AP/PA. Default is [2]
     --hcp_dwi_gdcoeffs       ... Gradient distortion correction coefficients
@@ -999,11 +999,11 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     EXAMPLE USE
     ===========
-    
+
     Example run from the base study folder with test flag
     --------------------------------------
 
-     mnap hcp_Diffusion \ 
+     mnap hcp_Diffusion \
      --subjects="processing/batch.hcp.txt" \    # the location of the batch file
      --subjectsfolder="subjects" \              # the location of the subjects folder
      --cores="10" \                             # how many subjects to run concurrently
@@ -1013,10 +1013,10 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     run using absolute paths with scheduler
     ---------------------------------------
 
-    mnap hcpd \ 
+    mnap hcpd \
     --subjects="<path_to_study_folder>/processing/batch.hcp.txt" \       # the location of the batch file
     --subjectsfolder="<path_to_study_folder>/subjects" \                 # the location of the subjects folder
-    --cores="4" \                                                        # how many subjects to run concurrently    
+    --cores="4" \                                                        # how many subjects to run concurrently
     --overwrite="yes" \                                                  # whether to overwrite previous results
     --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
 
