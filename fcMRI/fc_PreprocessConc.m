@@ -947,7 +947,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     effect      = [];
     eindex      = [];
 
-    % ---> bold starts, frames
+    % ---> bold starts, ends, frames, selection of nuisance
 
     st = 1;
     smask = ismember(nuisance(1).signal_hdr, rgss);
@@ -975,8 +975,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
 
     switch rtype
         case 0
-            joinn = false;
-            joine = true;
+            joinn = false;          % joinn - whether to have the same nuisance regressors across bolds
+            joine = true;           % joine - whether to have the same event regressors across bolds
         case 1
             joinn = false;
             joine = false;
@@ -1039,6 +1039,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
                     ts = sprintf('mov_%s', nuisance(1).mov_hdr{mi});
                     hdr{end+1}  = sprintf('%s_b%d', ts, b);
                     hdre{end+1} = sprintf('%s.b%d', ts, b);
+                    hdrf(end+1) = 1;
                     effect(end+1) = find(ismember(effects, ts));
                     eindex(end+1) = b;
                 end
