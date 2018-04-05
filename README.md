@@ -155,6 +155,7 @@ Change Log
 * 0.10.0 [niutilities] Enabled automatic paralellization and scheduling of commands
 * 0.10.1 [niutilities] Made deduceFolders more robust
 * 0.10.2 [niutilities] Fixed a datetime bug in runThroughScheduler and createStudy
+* 0.10.3 [matlab] Fixed a bug in reporting frames in glm description
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
