@@ -156,6 +156,7 @@ Change Log
 * 0.10.1 [niutilities] Made deduceFolders more robust
 * 0.10.2 [niutilities] Fixed a datetime bug in runThroughScheduler and createStudy
 * 0.10.3 [matlab] Fixed a bug in reporting frames in glm description
+* 0.10.4 [hcpmodified] Edited DistortionCorrectionAndEPIToT1wReg_FLIRTBBRAndFreeSurferBBRbased to allow 12 DOF transform for Scout
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
