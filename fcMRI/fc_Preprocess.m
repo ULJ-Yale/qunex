@@ -869,3 +869,4 @@ function [] = wbSmooth(sfile, tfile, file, options)
         fprintf(' ... done!');
     end
 
+

@@ -9,7 +9,8 @@ function ts = mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 %   roi    - roi image file
 %   rcodes - roi values to use [all but 0]
 %   method - method name [mean]
-%	   'mean'       - average value of the ROI
+%      'mean'       - average value of the ROI
+%	   'median'     - median value across the ROI
 %      'pca'        - first eigenvariate of the ROI
 %      'threshold'  - average of all voxels above threshold
 %      'maxn'       - average of highest n voxels
@@ -23,6 +24,7 @@ function ts = mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 %   ---- Changelog ----
 %
 %   Grega Repovs, 2013-07-24 ... Adjusted to use multivolume ROI objects
+%   Grega Repovs, 2018-03-18 ... Added 'median' as an option for extraction method
 
 if nargin < 6; criterium = [];  end
 if nargin < 5; weights = [];    end
@@ -35,7 +37,7 @@ method = lower(method);
 
 % ---- check method
 
-if ~ismember(method, {'mean', 'pca', 'threshold', 'maxn', 'weighted'})
+if ~ismember(method, {'mean', 'pca', 'threshold', 'maxn', 'weighted', 'median'})
     error('ERROR: Unrecognized method of computing ROI mean!')
 end
 
@@ -113,6 +115,9 @@ for r = 1:nrois
 
         case 'mean'
             ts(r, :) = mean(tmp, 1);
+
+        case 'median'
+            ts(r, :) = median(tmp, 1);
 
         case 'weighted'
             tmpw = weights(roi.mri_ROIMask(rcodes(r)), :);

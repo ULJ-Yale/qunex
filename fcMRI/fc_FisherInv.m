@@ -19,4 +19,3 @@ function [r] = fc_FisherInv(fz)
 t = exp(fz*2);
 r = (t-1)./(t+1);
 
-
