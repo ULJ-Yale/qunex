@@ -13,22 +13,22 @@ function [roi vol_peak peak] = mri_FindPeaks(img, mindim, maxdim, val, t, projec
 %       projection_type  - type of surface component projection ('midthickness', 'inflated',...)
 %                          or a string containing the path to the surface files (.surf.gii)
 %                          for both, left and right cortex separated by a pipe:
-%                                a) for a default projection: 'type: midthickness' ['type:midthickness']
-%                                b) for a specific projection:
-%                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
+%                        a) for a default projection: 'type: midthickness' ['type:midthickness']
+%                        b) for a specific projection:
+%                           'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
 %       options          - list of options separated with a pipe symbol ("|"):
-%                                a) for the number of frames to be analized:
-%                                           - []                        ... analyze only the first frame
-%                                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
-%                                           - 'frames:all'              ... analyze all the frames
-%                                b) for the type of ROI boundary:
-%                                           - []                        ... boundary left unmodified
-%                                           - 'boundary:remove'         ... remove the boundary regions
-%                                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
-%                                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
+%                        a) for the number of frames to be analized:
+%                           - []                        ... analyze only the first frame
+%                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
+%                           - 'frames:all'              ... analyze all the frames
+%                        b) for the type of ROI boundary:
+%                           - []                        ... boundary left unmodified
+%                           - 'boundary:remove'         ... remove the boundary regions
+%                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
+%                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
 %       verbose          - whether to report the peaks (1) and also be verbose:
-%                                a) on the first level (2)
-%                                b) on all the levels  (3) [false]
+%                        a) on the first level (2)
+%                        b) on all the levels  (3) [false]
 %
 %   OUTPUT
 %       roi              - A gmrimage with the created ROI.
@@ -177,6 +177,11 @@ end
 options_parsed = g_ParseOptions([],options);
 if ~isfield(options_parsed,'frames')
     options_parsed.frames = 1;
+    if img.frames > 1
+        warning(['mri_FindPeaks(): image contains multiple frames and ',...
+            'options->frames was not specified. As a result, only the ',...
+            'first frame will be processed.']);
+    end
 end
 if ~isfield(options_parsed,'boundary')
     options_parsed.boundary = '';

@@ -239,8 +239,12 @@ end
 
 for j=1:img.frames
     
-    if img.frames > 1 && (~isempty(peakCell{j}) || ~isempty(vol_peakCell{j}))
-        fprintf(repf, '\n\nFrame #%d:\n', j);
+    if ~isempty(peakCell{j}) || ~isempty(vol_peakCell{j})
+        if img.frames > 1
+            fprintf(repf, '\n\nFrame #%d:\n', j);
+        else
+            fprintf(repf, '\n');
+        end
         fprintf(repf,...
         ['\nComponent\tLabel\tPeak_value\tAvg_value\tSize\tArea_mm2\tPeak_x',...
         '\tPeak_y\tPeak_z\tCentroid_x\tCentroid_y\tCentroid_z\tWcentroid_x',...

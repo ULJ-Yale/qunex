@@ -7,20 +7,20 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %   INPUT
 %       img         ... a gmrimage object with data in volume representation.
 %       fwhm        ... full Width at Half Maximum in mm formatted as:
-%                                a) [fwhm for volume structure] for NIfTI [2]
-%                                b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2]
-%                                       *(if only 1 element is passed, it takes that value for both, volume and surface structures)
+%                       a) [fwhm for volume structure] for NIfTI [2]
+%                       b) [fwhm for volume structure, fwhm for surface structures] for CIFTI [2]
+%                          *(if only 1 element is passed, it takes that value for both, volume and surface structures)
 %       verbose     ... whether to report the progress. [false]
 %       ftype       ... type of smoothing filter:
-%                                a) 'gaussian' or 'box' for NIfTI files ['gaussian']
-%                                b) '' (empty argument) for CIFTI files, since geodesic gaussian smoothing is the only option
+%                       a) 'gaussian' or 'box' for NIfTI files ['gaussian']
+%                       b) '' (empty argument) for CIFTI files, since geodesic gaussian smoothing is the only option
 %       ksize       ... size of the smoothing kernel in voxels for NIfTI files, [] (empty) for CIFTI files [6]
 %       projection  ... type of surface component projection ('midthickness', 'inflated',...)
 %                          or a string containing the path to the surface files (.surf.gii)
 %                          for both, left and right cortex separated by a pipe:
-%                                a) for a default projection: 'type: midthickness' ['type:midthickness']
-%                                b) for a specific projection:
-%                                        'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
+%                       a) for a default projection: 'type: midthickness' ['type:midthickness']
+%                       b) for a specific projection:
+%                          'cortex_left: CL_projection.surf.gii|cortex_right: CR_projection.surf.gii'
 %       mask        ... specify the cifti mask to select areas on which to
 %       perform smoothing, if you don't want to use the mask -> mask = 'no', otherwise the default mask is the same as the input file
 %       wb_path     ... path to wb_command ['/Applications/workbench/bin_macosx64']
@@ -66,7 +66,7 @@ function img = mri_Smooth(img, fwhm,  verbose, ftype, ksize, projection, mask, w
 %        - Added option for smoothing thresholded multiple-frame images
 
 % input checking
-if nargin < 11 || isempty(frames),     frames = 1;                       end
+if nargin < 11 || isempty(frames),     frames = 1; warn = 1;             end
 if nargin < 10 || isempty(timeSeries), timeSeries = false;               end
 if nargin < 9  || isempty(hcpatlas),   hcpatlas = getenv('HCPATLAS');    end
 if nargin < 8  || isempty(wb_path),    wb_path = '';                     end
@@ -79,12 +79,17 @@ if nargin < 2  || isempty(fwhm),       fwhm = 2;                         end
 if numel(fwhm) == 1,                   fwhm = [fwhm, fwhm];              end
 
 if img.frames > 1 && timeSeries == true
+    if warn
+        warning(['mri_Smooth(): image contains multiple frames and ',...
+            'options->frames was not specified. As a result, only the ',...
+            'first frame will be processed.']);
+    end
     % if more than 1 frame, perform mri_Smooth() on each frame recursivelly
     fprintf('\nMore than 1 frame detected!\n');
     img_temp = img;
     img_temp.data = zeros(size(img_temp.data));
     img_smooth = img;
-    for fr = frames;
+    for fr = frames
         img_temp.data(:,1) = img.data(:,fr);
         img_temp.data(:,fr) = img.data(:,fr);
         fprintf('-> Smoothing Frame #%d\n',fr);

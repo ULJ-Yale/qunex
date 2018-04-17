@@ -10,23 +10,23 @@ function [roi peak] = mri_FindPeaksSurface(img, surfaceComponent, projection, mi
 %       surfaceComponent - brain component of type surface to perform ROI operation on ('cortex_left', 'cortex_right') ['cortex_left']
 %       projection       - type of surface component projection ('midthickness', 'inflated',...)
 %                          or a path to the surface file (.surf.gii) of the left or right cortex:
-%                                a) for a default projection: 'midthickness' ['midthickness']
-%                                b) for a specific projection:
-%                                        'CL_projection.surf.gii'
+%                        a) for a default projection: 'midthickness' ['midthickness']
+%                        b) for a specific projection:
+%                           'CL_projection.surf.gii'
 %       minarea          - minimal size of the resulting ROI  [0]
 %       maxarea          - maximum size of the resulting ROI  [inf]
 %       val              - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
 %       t                - threshold value [0]
 %       options          - list of options separated with a pipe symbol ("|"):
-%                                a) for the number of frames to be analized:
-%                                           - []                        ... analyze only the first frame
-%                                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
-%                                           - 'frames:all'              ... analyze all the frames
-%                                b) for the type of ROI boundary:
-%                                           - []                        ... boundary left unmodified
-%                                           - 'boundary:remove'         ... remove the boundary regions
-%                                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
-%                                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
+%                        a) for the number of frames to be analized:
+%                           - []                        ... analyze only the first frame
+%                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
+%                           - 'frames:all'              ... analyze all the frames
+%                        b) for the type of ROI boundary:
+%                           - []                        ... boundary left unmodified
+%                           - 'boundary:remove'         ... remove the boundary regions
+%                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
+%                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
 %       fp_param.verbose          - whether to report the peaks (1) and also be fp_param.verbose (2) [false]
 %
 %   OUTPUT

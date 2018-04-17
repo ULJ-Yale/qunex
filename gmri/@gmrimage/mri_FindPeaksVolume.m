@@ -11,16 +11,16 @@ function [roi peak] = mri_FindPeaksVolume(img, minsize, maxsize, val, t, options
 %       maxize      - maximum size of the resulting ROI  [inf]
 %       val         - whether to find positive, negative or both peaks ('n', 'p', 'b') ['b']
 %       t           - threshold value [0]
-%       options          - list of options separated with a pipe symbol ("|"):
-%                                a) for the number of frames to be analized:
-%                                           - []                        ... analyze only the first frame
-%                                           - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
-%                                           - 'frames:all'              ... analyze all the frames
-%                                b) for the type of ROI boundary:
-%                                           - []                        ... boundary left unmodified
-%                                           - 'boundary:remove'         ... remove the boundary regions
-%                                           - 'boundary:highlight'      ... highlight boundaries with a value of -100
-%                                           - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
+%       options     - list of options separated with a pipe symbol ("|"):
+%                   a) for the number of frames to be analized:
+%                      - []                        ... analyze only the first frame
+%                      - 'frames:[LIST OF FRAMES]' ... analyze the list of frames
+%                      - 'frames:all'              ... analyze all the frames
+%                   b) for the type of ROI boundary:
+%                      - []                        ... boundary left unmodified
+%                      - 'boundary:remove'         ... remove the boundary regions
+%                      - 'boundary:highlight'      ... highlight boundaries with a value of -100
+%                      - 'boundary:wire'           ... remove ROI data and return only ROI boundaries
 %       verbose     - whether to report the peaks (1) and also be verbose (2) [false]
 %
 %   OUTPUT
