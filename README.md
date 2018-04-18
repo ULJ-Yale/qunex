@@ -159,6 +159,7 @@ Change Log
 * 0.10.4 [hcpmodified] Edited DistortionCorrectionAndEPIToT1wReg_FLIRTBBRAndFreeSurferBBRbased to allow 12 DOF transform for Scout
 * 0.10.5 [matlab] Fixed a bug in g_FindPeaks that did not print headers in the peaks report
 * 0.10.6 [hcpmodified] Added fslreorient2std step to GenericfMRIVolumeProcessingPipeline to exhibit more robust handling of legacy EPI data
+* 0.10.7 [niutilities, hcpextended] Added support for HCPe PreFreeSurferPipeline
 
 =======
 [Mind and Brain Lab]: http://mblab.si
