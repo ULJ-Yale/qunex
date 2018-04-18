@@ -272,12 +272,31 @@ geho() {
 #
 
 get_options() {
-    local scriptName=$(basename ${0})
-    local arguments=($@)
-    
-    # initialize global output variables
 
-    unset SubjectsFolder	# --subjectsfolder=				
+	#opts_GetOpt() {
+	#sopt="$1"
+	#shift 1
+	#for fn in "$@" ; do
+	#	if [ `echo "$fn" | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
+	#		echo "$@" | grep -o -P 'mask.{0,20000}' | sed "s/mask=//" | sed 's/-.*//'
+	#		MaskVariable=`echo "$@" | grep -o -P 'mask.{0,20000}' | sed "s/mask=//" | sed 's/-.*//'`
+	#		MaskVariable="--mask=${MaskVariable}"
+	#		#echo $MaskVariable
+	#		return 0
+	#	fi
+	#done
+	#}
+	#
+	#MaskFrames=`opts_GetOpt "--mask" "$@"`
+	#
+	#reho "${MaskFrames}"
+
+    local scriptName=$(basename ${0})
+    local arguments=("$@")
+    
+    # -- initialize global output variables
+
+    unset SubjectsFolder	# --subjectsfolder=
     unset CASE				# --subject=		
     unset InputFiles		# --inputfile=		
     unset InputPath			# --inputpath=		
@@ -307,14 +326,13 @@ get_options() {
     
     runcmd=""
 
-    # parse arguments
+    # -- parse arguments
     local index=0
     local numArgs=${#arguments[@]}
     local argument
 
     while [ ${index} -lt ${numArgs} ]; do
         argument=${arguments[index]}
-
         case ${argument} in
             --help)
                 usage
@@ -373,9 +391,9 @@ get_options() {
                 index=$(( index + 1 ))
                 ;;
             --mask=*)
-                MaskFrames=${argument/*=/""}
+                 MaskFrames=${argument/*=/""}
                 index=$(( index + 1 ))
-                ;;             
+                ;;
             --covariance=*)
                 Covariance=${argument/*=/""}
                 index=$(( index + 1 ))
@@ -421,14 +439,13 @@ get_options() {
                 index=$(( index + 1 ))
                 ;;                                 
             *)
-                usage
-                reho "ERROR: Unrecognized Option: ${argument}"
-        		echo ""
-                exit 1
-                ;;
+                  usage
+                  reho "ERROR: Unrecognized Option: ${argument}"
+                  echo ""
+                  exit 1
+                 ;;
         esac
     done
-
 echo ""
 
     # -- check general required parameters
@@ -626,7 +643,7 @@ echo ""
 main() {
 
 # Get Command Line Options
-get_options $@
+get_options "$@"
 
 # parse all the input cases for an individual or group run
 INPUTCASES=`echo "$CASE" | sed 's/,/ /g'`
@@ -701,7 +718,7 @@ fi
 	fi
 	
 	# check if GBC seed run is specified
-	if [ ${Calculation} == "gbc" ]; then	
+	if [ ${Calculation} == "gbc" ]; then
 		# -- run GBC seed command: 
 		# Call to get matlab help --> matlab -nosplash -nodisplay -nojvm -r "help fc_ComputeGBC3,quit()"
 		# Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)

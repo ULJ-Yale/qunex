@@ -1517,8 +1517,13 @@ computeBOLDfc() {
 			rm -f "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh &> /dev/null
 			if [ "$Cluster" == 1 ]; then
 				echo "Running function locally on `hostname`"
+				echo ""
+				geho "Full Command:"
+				geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
+				echo ""	
 				echo "Check log file output here when finished: $LogFolder"
 				echo "--------------------------------------------------------------"
+				echo ""
 				eval "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
 				--subjectsfolder=${SubjectsFolder} \
 				--calculation=${Calculation} \
@@ -1535,9 +1540,9 @@ computeBOLDfc() {
 				--options=${FCCommand} \
 				--method=${Method} \
 				--targetf=${OutPath} \
-				--mask=${MaskFrames} \
+				--mask='${MaskFrames}' \
 				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".log
-			else			
+			else
 				# -- Echo full command into a script
 				echo ""
 				geho "Full Command:"
@@ -1559,7 +1564,7 @@ computeBOLDfc() {
 				--options=${FCCommand} \
 				--method=${Method} \
 				--targetf=${OutPath} \
-				--mask=${MaskFrames} \
+				--mask='${MaskFrames}' \
 				--covariance=${Covariance}" >> "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh
 				# -- Make script executable 
 				chmod 770 "$LogFolder"/ComputeFunctionalConnectivity_"$Suffix".sh
@@ -3612,7 +3617,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	RunType=`opts_GetOpt "${setflag}runtype" $@`
 	FileList=`opts_GetOpt "${setflag}flist" $@`
 	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`
-	MaskFrames=`opts_GetOpt "${setflag}mask" $@`
+	MaskFrames=`opts_GetOpt "${setflag}mask" "$@"`
 	Covariance=`opts_GetOpt "${setflag}covariance" $@`
 	TargetROI=`opts_GetOpt "${setflag}target" $@`
 	RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`
