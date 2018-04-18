@@ -410,7 +410,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             --avgrdcmethod="%(avgrdcmethod)s" \
             --topupconfig="%(topupconfig)s" \
             --bfsigma="%(bfsigma)s" \
-            --t1biascorrect="%(biascorrect)s" ' % {
+            --t1biascorrect="%(biascorrect)s" \
+            --usejacobian="%(usejacobian)s" \
+            --printcom="%(printcom)s" \
+            --mppversion="%(mppversion)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh'),
                 'path'              : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
@@ -441,7 +444,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 'avgrdcmethod'      : options['hcp_avgrdcmethod'],
                 'topupconfig'       : topupconfig,
                 'bfsigma'           : options['hcp_bfsigma'],
-                'biascorrect'       : options['hcp_biascorrect_t1w']}
+                'biascorrect'       : options['hcp_biascorrect_t1w'],
+                'usejacobian'       : options['hcp_usejacobian'],
+                'printcom'          : options['hcp_printcom'],
+                'mppversion'        : options['hcp_mppversion']}
 
         tfile = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')
         # tfile = os.path.join(hcp['T1w_folder'], '_PreFS.done')

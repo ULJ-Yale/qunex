@@ -56,7 +56,6 @@ def readSubjectData(filename, verbose=False):
             sub = [e for e in sub if len(e) > 0]
 
             dic = {}
-            images = {}
             for line in sub:
                 c += 1
                 line = line.split(':')
