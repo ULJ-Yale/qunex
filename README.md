@@ -160,6 +160,7 @@ Change Log
 * 0.10.5 [matlab] Fixed a bug in g_FindPeaks that did not print headers in the peaks report
 * 0.10.6 [hcpmodified] Added fslreorient2std step to GenericfMRIVolumeProcessingPipeline to exhibit more robust handling of legacy EPI data
 * 0.10.7 [niutilities, hcpextended] Added support for HCPe PreFreeSurferPipeline
+* 0.10.8 [niutilities] Updated argument list in gmri
 
 =======
 [Mind and Brain Lab]: http://mblab.si
