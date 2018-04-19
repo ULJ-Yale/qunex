@@ -637,55 +637,57 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
        # ------------------------------------------------------------------
        # - Alan added integrated code for FreeSurfer 6.0 completion check
        # -----------------------------------------------------------------
-       freesurferhome = options['hcp_freesurfer_home']
-       # - Set FREESURFER_HOME based on --hcp_freesurfer_home flag to ensure backward compatibility
-       if freesurferhome:
-           sys.path.append(freesurferhome)
-           os.environ['FREESURFER_HOME'] = str(freesurferhome)
-           r +=  "\n---> FREESURFER_HOME set to: " + str(freesurferhome)
-       else:
-           fshome = os.environ["FREESURFER_HOME"]
-           r += "\n---> FREESURFER_HOME set to: " + str(fshome)
-       
+        freesurferhome = options['hcp_freesurfer_home']
+        # - Set FREESURFER_HOME based on --hcp_freesurfer_home flag to ensure backward compatibility
+        if freesurferhome:
+            sys.path.append(freesurferhome)
+            os.environ['FREESURFER_HOME'] = str(freesurferhome)
+            r +=  "\n---> FREESURFER_HOME set to: " + str(freesurferhome)
+            versionfile=os.path.join(os.environ['FREESURFER_HOME'], 'build-stamp.txt')
+        else:
+            fshome = os.environ["FREESURFER_HOME"]
+            r += "\n---> FREESURFER_HOME set to: " + str(fshome)
+            versionfile=os.path.join(os.environ['FREESURFER_HOME'], 'build-stamp.txt')
+       		
        # - Check if recon-all.log exists to set the FS version
-       reconallfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'scripts', 'recon-all.log')
+        reconallfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'scripts', 'recon-all.log')
             # --- Deprecated versions of tfile variable based on prior FS runs ---------------------------------------------
             # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')
             # tfile = os.path.join(hcp['T1w_folder'], '_FS.done')
             # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
             # --------------------------------------------------------------------------------------------------------------
-       if os.path.exists(reconallfile):
-           r +=  "\n---> FreeSurfer recon-all.log was found!"
-           # - check FS version for the previous FS run
-           if 'stable-pub-v6.0.0' in open(reconallfile).read():
-               tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
-               r +=  "\n---> FreeSurfer version used to complete run: stable-pub-v6.0.0"
-               fsversion="6.0"
-           if 'stable-pub-v5.3.0-HCP' in open(reconallfile).read():
-               tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
-               r +=  "\n---> FreeSurfer version used to complete run: stable-pub-v5.3.0-HCP"
-               fsversion="5.3-HCP"
-       else:
-           r += "\n --> FreeSurfer recon-all.log NOT found! Assuming 'legacy' v5.3.0-HCP was used"
-           tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
-           r +=  "\n---> FreeSurfer version: 5.3"
+        if os.path.exists(reconallfile):
+            r +=  "\n---> FreeSurfer recon-all.log was found!"
+            # - check FS version for the previous FS run
+            if 'stable-pub-v6.0.0' in open(reconallfile).read():
+                tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
+                r +=  "\n---> FreeSurfer version used to complete run: stable-pub-v6.0.0"
+                fsversion="6.0"
+            if 'stable-pub-v5.3.0-HCP' in open(reconallfile).read():
+                tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
+                r +=  "\n---> FreeSurfer version used to complete run: stable-pub-v5.3.0-HCP"
+                fsversion="5.3-HCP"
+        else:
+            r += "\n --> FreeSurfer recon-all.log NOT found! Assuming 'legacy' v5.3.0-HCP was used"
+            tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
+            r +=  "\n---> FreeSurfer version: 5.3"
            
        # --------------------------------------------------------------
        # -- End of code for FreeSurfer 6.0 completion check
        # --------------------------------------------------------------
 
-       if fsversion in open($FREESURFER_HOME/build-stamp.txt).read():
-           r += "\n---> FREESURFER_HOME matches recon-all.log. Proceeding..."
-       else
-           r += "\n---> FREESURFER_HOME does not match recon-all.log."
-           report = "Please check your FS version or set overwrite to yes"
-           run = False
+        if fsversion in open(versionfile).read():
+            r += "\n---> FREESURFER_HOME matches recon-all.log. Proceeding..."
+        else:
+            r += "\n---> FREESURFER_HOME does not match recon-all.log."
+            report = "Please check your FS version or set overwrite to yes"
+            run = False
            
         # --- set up T2 NONE if needed
 
-       if hcp['T2w'] == 'NONE':
+        if hcp['T2w'] == 'NONE':
             t2w = 'NONE'
-       else:
+        else:
             t2w = os.path.join(hcp['T1w_folder'], 'T2w_acpc_dc_restore.nii.gz')
 
 
