@@ -215,6 +215,7 @@ get_options() {
 
     if [ -z ${WayTotal} ]; then
         reho "No <use_waytotal_normalized_data> specified. Assuming default [none]"
+        WayTotal=none
         echo ""
     fi
     
@@ -263,19 +264,19 @@ echo ""
 
 if [ "$WayTotal" == "none" ]; then
 	echo "--- Using dconn file without waytotal normalization"
-	DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"
+	DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
 fi
 if [ "$WayTotal" == "standard" ]; then
 	echo "--- Using waytotal normalized dconn file"
-	DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii"
+	DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pdconn.nii"
 fi
 if [ "$WayTotal" == "log" ]; then
 	echo "--- Using log-transformed waytotal normalized dconn file"
-	DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii"
+	DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pdconn.nii"
 fi
