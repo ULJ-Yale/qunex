@@ -2843,10 +2843,12 @@ QCPreproc() {
 			if [ "$BOLDS" == "subject_hcp.txt" ]; then
 				geho "--- No BOLD parameter specified. Checking if subject_hcp.txt exists to run QC on all BOLDs..."; echo ""
 				 if [ -f ${SubjectsFolder}/${CASE}/subject_hcp.txt ]; then
-				 	BOLDCount=`more ${SubjectsFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
+				 	# Stalling on some systems --> BOLDCount=`more ${SubjectsFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
+				 	BOLDCount=`grep "bold" ${SubjectsFolder}/${CASE}/subject_hcp.txt  | grep -v "ref" | wc -l`
 					rm ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
 					COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
-					BOLDS=`more ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
+					# Stalling on some systems --> BOLDS=`more ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
+					BOLDS=`cat ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
 					rm ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
 					geho "--- Information file ${SubjectsFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
 				 else
