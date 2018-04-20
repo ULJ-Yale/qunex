@@ -162,6 +162,7 @@ Change Log
 * 0.10.7 [niutilities, hcpextended] Added support for HCPe PreFreeSurferPipeline
 * 0.10.8 [niutilities] Updated argument list in gmri
 * 0.10.9 [library] Improved handling of environment checks in mnap_environment.sh code
+* 0.10.10 [connector] Improved handling of BOLD counts in the QCPreproc function
 
 =======
 [Mind and Brain Lab]: http://mblab.si
