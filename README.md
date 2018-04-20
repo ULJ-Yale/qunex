@@ -161,6 +161,7 @@ Change Log
 * 0.10.6 [hcpmodified] Added fslreorient2std step to GenericfMRIVolumeProcessingPipeline to exhibit more robust handling of legacy EPI data
 * 0.10.7 [niutilities, hcpextended] Added support for HCPe PreFreeSurferPipeline
 * 0.10.8 [niutilities] Updated argument list in gmri
+* 0.10.9 [library] Improved handling of environment checks in mnap_environment.sh code
 
 =======
 [Mind and Brain Lab]: http://mblab.si
