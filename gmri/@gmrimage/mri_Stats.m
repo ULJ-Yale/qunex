@@ -8,17 +8,19 @@ function [out, doIt] = mri_Stats(img, doIt, exclude)
 %       img ... A gmrimage object
 %       do  ... A comma separated string or a cell array of the statistics to
 %               compute ['m']:
-%           'n'   ... number of values
-%           'm'   ... mean
-%           'me'  ... median
-%           'max' ... max
-%           'min' ... min
-%           'sum' ... sum
-%           'sd'  ... standard deviation
-%           'var' ... variability
-%           't'   ... t value of t-test against zero
-%           'tp'  ... p values of t-test against zero
-%           'tz'  ... z values of t-test against zero
+%           'n'     ... number of values
+%           'm'     ... mean
+%           'me'    ... median
+%           'max'   ... max
+%           'min'   ... min
+%           'sum'   ... sum
+%           'sd'    ... standard deviation
+%           'var'   ... variability
+%           'rmsd'  ... root mean squared difference across time
+%           'nrmsd' ... mean normalized root mean squared difference across time
+%           't'     ... t value of t-test against zero
+%           'tp'    ... p values of t-test against zero
+%           'tz'    ... z values of t-test against zero
 %       exclude - values to be omitted from computing the statistics
 %
 %   OUTPUT
@@ -41,6 +43,8 @@ function [out, doIt] = mri_Stats(img, doIt, exclude)
 %            - Updated documentation.
 %            - Now accepts string with a comma separated commands.
 %            - Made loop more robust.
+%   2018-04-21 Grega Repovs
+%            - Added computation of RMSD and intensity normalized RMDS.
 
 
 if nargin < 3, exclude = [];            end
@@ -73,6 +77,8 @@ s  = [];
 t  = [];
 p  = [];
 z  = [];
+r  = [];
+nr = [];
 
 c = 0;
 for d = doIt(:)'
@@ -138,6 +144,19 @@ for d = doIt(:)'
         p(p<0.00000000000001)=0.00000000000001;
         if isempty(z), z = icdf('Normal', (1-(double(p)/2)), 0, 1) .* sign(m); end
         out.data(:,c) = z;
+
+    case 'rmsd'
+        if isempty(r), r = sqrt(mean(diff(img.data, 1, 2) .^ 2, 2)); end
+        out.data(:,c) = r;
+
+    case 'nrmsd'
+        if isempty(s), s = nansum(img.data, 2); end
+        if isempty(n), n = sum(~isnan(img.data), 2); end
+        if isempty(m), m = s./n; end
+        if isempty(r), r = sqrt(mean(diff(img.data, 1, 2) .^ 2, 2)); end
+        if isempty(nr), nr = r ./ m; end
+        out.data(:,c) = nr;
+
     end
 end
 
