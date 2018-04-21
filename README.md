@@ -164,6 +164,7 @@ Change Log
 * 0.10.9 [library] Improved handling of environment checks in mnap_environment.sh code
 * 0.10.10 [connector] Improved handling of BOLD counts in the QCPreproc function
 * 0.10.11 [hcpextended] Merged HCPe-MNAP with master
+* 0.10.12 [matlab] Added computation of RMSD and intensity normalized RMDS across time to mri_Stats
 
 =======
 [Mind and Brain Lab]: http://mblab.si
