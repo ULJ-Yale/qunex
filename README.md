@@ -165,6 +165,7 @@ Change Log
 * 0.10.10 [connector] Improved handling of BOLD counts in the QCPreproc function
 * 0.10.11 [hcpextended] Merged HCPe-MNAP with master
 * 0.10.12 [matlab] Added computation of RMSD and intensity normalized RMDS across time to mri_Stats
+* 0.10.13 [niutilities hcpextended] Added version checking and support for new PostFreeSurfer pipeline
 
 =======
 [Mind and Brain Lab]: http://mblab.si
