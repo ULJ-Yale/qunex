@@ -633,7 +633,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
 
        # -> check version of FS against previous version of FS
- 
+
        # ------------------------------------------------------------------
        # - Alan added integrated code for FreeSurfer 6.0 completion check
        # -----------------------------------------------------------------
@@ -648,7 +648,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             fshome = os.environ["FREESURFER_HOME"]
             r += "\n---> FREESURFER_HOME set to: " + str(fshome)
             versionfile=os.path.join(os.environ['FREESURFER_HOME'], 'build-stamp.txt')
-       		
+
        # - Check if recon-all.log exists to set the FS version
         reconallfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'scripts', 'recon-all.log')
             # --- Deprecated versions of tfile variable based on prior FS runs ---------------------------------------------
@@ -671,7 +671,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             r += "\n --> FreeSurfer recon-all.log NOT found! Assuming 'legacy' v5.3.0-HCP was used"
             tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')
             r +=  "\n---> FreeSurfer version: 5.3"
-           
+
        # --------------------------------------------------------------
        # -- End of code for FreeSurfer 6.0 completion check
        # --------------------------------------------------------------
@@ -682,7 +682,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             r += "\n---> FREESURFER_HOME does not match recon-all.log."
             report = "Please check your FS version or set overwrite to yes"
             run = False
-           
+
         # --- set up T2 NONE if needed
 
         if hcp['T2w'] == 'NONE':
@@ -893,6 +893,9 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             --subcortgraylabels="%(subcortgraylabels)s" \
             --freesurferlabels="%(freesurferlabels)s" \
             --refmyelinmaps="%(refmyelinmaps)s" \
+            --mcsigma="%(refmyelinmaps)s" \
+            --regname"%(regname)s" \
+            --inflatescale"%(inflatescale)s" \
             --regname"%(regname)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh'),
                 'path'              : sinfo['hcp'],
@@ -905,7 +908,10 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                 'subcortgraylabels' : os.path.join(hcp['hcp_Config'], 'FreeSurferSubcorticalLabelTableLut.txt'),
                 'freesurferlabels'  : os.path.join(hcp['hcp_Config'], 'FreeSurferAllLut.txt'),
                 'refmyelinmaps'     : os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases', 'Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii'),
-                'regname'           : options['hcp_regname']}
+                'mcsigma'           : options['hcp_mcsigma'],
+                'regname'           : options['hcp_regname'],
+                'inflatescale'      : options['hcp_inflatescale'],
+                'mppversion'        : options['hcp_mppversion']}
 
         if run:
             # tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
