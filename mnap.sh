@@ -2662,15 +2662,16 @@ probtrackxGPUDense() {
 					# -- Clean prior command 
 					rm -f "$LogFolder"/Matrix${MNum}_"$Suffix".sh &> /dev/null	
 					# -- Echo full command into a script
-					echo "${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}" > "$LogFolder"/Matrix${MNum}_"$Suffix".sh
-					# -- Make script executable 
+					echo "${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}" >> "$LogFolder"/Matrix${MNum}_"$Suffix".sh
+					#echo "${ScriptsFolder}/RunMatrix${MNum}.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}" > "$LogFolder"/Matrix${MNum}_"$Suffix".sh
+				# -- Make script executable 
 					chmod 770 "$LogFolder"/Matrix${MNum}_"$Suffix".sh
 					cd ${LogFolder}
 					# -- Send to scheduler 
 					gmri schedule command="${LogFolder}/Matrix${MNum}_${Suffix}.sh" \
 					settings="${Scheduler}" \
 					output="stdout:${LogFolder}/Matrix${MNum}.${Suffix}.output.log|stderr:${LogFolder}/Matrix${MNum}.${Suffix}.error.log" \
-					workdir="${LogFolder}"			
+					workdir="${LogFolder}"
 					echo "--------------------------------------------------------------"
 					echo "Data successfully submitted" 
 					echo "Scheduler Name and Options: $Scheduler"
@@ -3155,8 +3156,9 @@ show_usage_QCPreproc() {
 				echo "-- OPTIONAL PARMETERS:"
 				echo "" 
 				echo "--overwrite=<clean_prior_run>                    Delete prior QC run"
-				echo "--templatefolder=<path_for_the_template_folder>  Specify the output path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/templates)"
-				echo "--outpath=<path_for_output_file>                 Specify the output path name of the QC folder"
+				echo "--templatefolder=<path_for_the_template_folder>  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/templates)"
+				echo "--outpath=<path_for_output_file>                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
+				echo "                                                    If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
 				echo "--dwipath=<path_for_dwi_data>                    Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
 				echo "--dwidata=<file_name_for_dwi_data>               Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
 				echo "--dtifitqc=<visual_qc_for_dtifit>                Specify if dtifit visual QC should be completed [e.g. yes or no]"
