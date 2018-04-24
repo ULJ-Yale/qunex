@@ -678,7 +678,10 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
         if fsversion in open(versionfile).read():
             r += "\n---> FREESURFER_HOME matches recon-all.log. Proceeding..."
-        else:
+        elif overwrite:
+        	r += "\n---> FREESURFER_HOME does not match recon-all.log."
+        	eport = "Overwriting previous version of recon-all"
+        elif not overwrite:
             r += "\n---> FREESURFER_HOME does not match recon-all.log."
             report = "Please check your FS version or set overwrite to yes"
             run = False
