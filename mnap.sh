@@ -2583,7 +2583,6 @@ show_usage_pretractographyDense() {
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
 probtrackxGPUDense() {
-		
 		# -- Parse general parameters
 		ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/Tractography_gpu_scripts
 		ResultsFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography
@@ -2688,7 +2687,7 @@ show_usage_probtrackxGPUDense() {
 				echo "-- DESCRIPTION for $UsageInput"
 				echo ""
 				echo "This function runs the probtrackxgpu dense whole-brain connectome generation by calling $ScriptsFolder/RunMatrix1.sh or $ScriptsFolder/RunMatrix3.sh"
-				echo "Note that this function needs to send work to a GPU-enabled queue. It is cluster-enabled by default."
+				echo "Note that this function needs to send work to a GPU-enabled queue or you need to run it locally from a GPU-equiped machine"
 				echo "It explicitly assumes the Human Connectome Project folder structure and completed FSLBedpostxGPU and pretractographyDense functions processing:"
 				echo ""
 				echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion            ---> Processed DWI data needs to be here"
@@ -2700,12 +2699,34 @@ show_usage_probtrackxGPUDense() {
 				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Conn1.dconn.nii.gz   ---> Dense Connectome CIFTI Results in MNI space for Matrix1"
 				echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Conn3.dconn.nii.gz   ---> Dense Connectome CIFTI Results in MNI space for Matrix3"
 				echo ""
+				echo "-- Note on waytotal normalization and log transformation of streamline counts:"
+				echo ""
+				echo "  waytotal normalization is computed automatically as part of the run prior to any inter-subject or group comparisons"
+				echo "  to account for individual differences in geometry and brain size. The function divides the "
+				echo "  dense connectome by the waytotal value, turning absolute streamline counts into relative "
+				echo "  proportions of the total streamline count in each subject. "
+				echo ""
+				echo "  Next, a log transformation is computed on the waytotal normalized data, "
+				echo "  which will yield stronger connectivity values for longe-range projections. "
+				echo "  Log-transformation accounts for algorithmic distance bias in tract generation "
+				echo "  (path probabilities drop with distance as uncertainty is accumulated)."
+				echo "  See Donahue et al. • The Journal of Neuroscience, June 22, 2016 • 36(25):6758 – 6770. "
+				echo "      DOI: https://doi.org/10.1523/JNEUROSCI.0493-16.2016"
+				echo ""
+				echo "  The outputs for these files will be in:"
+				echo ""
+				echo "     /<path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm.dconn.nii"
+				echo "     /<path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm_log.dconn.nii"
+				echo ""
+				echo ""
 				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "--function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
 				echo "--subjectsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
 				echo "--subjects=<comma_separated_list_of_cases>            List of subjects to run"
-				echo "--scheduler=<name_of_cluster_scheduler>               A string for the cluster scheduler (e.g. LSF, PBS or SLURM) without any options (they are hard coded in the sub-script calls)"
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                               e.g. for SLURM the string would look like this: "
+				echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo "--overwrite=<clean_prior_run>                         Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
 				echo "--omatrix1=<matrix1_model>                            Specify if you wish to run matrix 1 model [yes or omit flag]"
 				echo "--omatrix3=<matrix3_model>                            Specify if you wish to run matrix 3 model [yes or omit flag]"
@@ -2728,10 +2749,10 @@ show_usage_probtrackxGPUDense() {
 				echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
 				echo "--function='probtrackxGPUDense' \ "
-				echo "--scheduler='<name_of_scheduler>' \ "
+				echo "--scheduler='<name_of_scheduler_and_options>' \ "
 				echo "--omatrix1='yes' \ " 
 				echo "--nsamplesmatrix1='10000' \ "
-				echo "--overwrite='no'" 
+				echo "--overwrite='no'"
 				echo ""				
 }
 
