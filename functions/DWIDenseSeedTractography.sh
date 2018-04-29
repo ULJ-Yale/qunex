@@ -266,17 +266,6 @@ reho "--- Establishing paths for all input and output folders:"
 echo ""
 
 # -- Define input and check if WayTotal normalization is selected
-if [ ${WayTotal} == "none" ]; then
-	echo "--- Using dconn file without waytotal normalization"
-	DWIInput=`ls $SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii*`
-	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
-		DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii.gz"
-	else
-		DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn$MatrixVersion.dconn.nii"	
-	fi
-	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
-	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii"
-fi
 if [ ${WayTotal} == "standard" ]; then
 	echo "--- Using waytotal normalized dconn file"
 	DWIInput=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii*`
@@ -287,8 +276,7 @@ if [ ${WayTotal} == "standard" ]; then
 	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dconn.nii"
-fi
-if [ ${WayTotal} == "log" ]; then
+elif [ ${WayTotal} == "log" ]; then
 	echo "--- Using log-transformed waytotal normalized dconn file"
 	DWIInput=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii*`
 	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
@@ -298,6 +286,16 @@ if [ ${WayTotal} == "log" ]; then
 	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.dconn.nii"
+elif ! { [ "${WayTotal}" = "log" ] || [ "${WayTotal}" = "standard" ]; }; then
+	echo "--- Using dconn file without waytotal normalization"
+	DWIInput=`ls $SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii*`
+	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
+		DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
+	else
+		DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii"	
+	fi
+	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
+	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii"
 fi
 
 # -- Define output directory
