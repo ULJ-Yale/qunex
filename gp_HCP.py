@@ -816,6 +816,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     --hcp_lowresmesh       ... The number of vertices for the low resolution
                                mesh of each hemisphere (in thousands) [32].
     --hcp_regname          ... The registration used, currently only FS [FS].
+    --hcp_mcsigma          ... Correction sigma used for metric smooting [sqrt(200)].
+    --hcp_inflatescale     ... Inflate extra scale parameter [1].
 
     EXAMPLE USE
     ===========
@@ -832,6 +834,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     Changelog
     2017-01-08 Grega Repovš
              - Updated documentation.
+    2018-04-23 Grega Repovš
+             - Added new options and updated documentation.
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1856,7 +1860,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                     --fmrires="%(fmrires)s" \
                     --smoothingFWHM="%(smoothingFWHM)s" \
                     --grayordinatesres="%(grayordinatesres)d" \
-                    --regname"%(regname)s"' % {
+                    --regname"%(regname)s" \
+                    --printcom"%(printcom)s"' % {
                         'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
                         'path'              : sinfo['hcp'],
                         'subject'           : sinfo['id'] + options['hcp_suffix'],
@@ -1866,7 +1871,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                         'fmrires'           : options['hcp_bold_res'],
                         'smoothingFWHM'     : options['hcp_bold_smoothFWHM'],
                         'grayordinatesres'  : options['hcp_grayordinatesres'],
-                        'regname'           : options['hcp_regname']}
+                        'regname'           : options['hcp_regname'],
+                        'printcom'          : options['hcp_printcom']}
 
 
                 if run and boldok:
