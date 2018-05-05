@@ -168,6 +168,7 @@ Change Log
 * 0.10.13 [niutilities hcpextended] Added version checking and support for new PostFreeSurfer pipeline
 * 0.10.14 [connector] Improved QCPreproc help call to clarify --outpath and --templatefolder flags
 * 0.10.15 [connector] Improved probtrackxGPUDense help call to clarify usage
+* 0.10.16 [niutilities] Added support for Philips in getDICOMInfo
 
 =======
 [Mind and Brain Lab]: http://mblab.si
