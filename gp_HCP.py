@@ -906,7 +906,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             --subcortgraylabels="%(subcortgraylabels)s" \
             --freesurferlabels="%(freesurferlabels)s" \
             --refmyelinmaps="%(refmyelinmaps)s" \
-            --mcsigma="%(refmyelinmaps)s" \
+            --mcsigma="%(mcsigma)s" \
             --regname"%(regname)s" \
             --inflatescale"%(inflatescale)s" \
             --regname"%(regname)s"' % {
