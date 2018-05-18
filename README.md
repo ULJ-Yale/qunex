@@ -171,6 +171,7 @@ Change Log
 * 0.10.16 [niutilities] Added support for Philips in getDICOMInfo
 * 0.10.17 [library] Added the Octave configuration file .octaverc that sets all the paths and packages. (Grace-specific for now)
 * 0.10.18 [niutilities] Fixed a bug and cleaned up runFS code
+* 0.10.19 [connector] Edited XNATCloudUpload.sh script to improve functionality 
 
 =======
 [Mind and Brain Lab]: http://mblab.si
