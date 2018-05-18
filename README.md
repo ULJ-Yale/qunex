@@ -35,7 +35,7 @@ Installation
 * Install latest version of numpy, pydicom, scipy & nibabel  
 * 			(e.g. `pip install numpy pydicom scipy nibabel `)
 
-### Step 3. Configure the environment script by adding the following lines to your .bash_profile.
+### Step 4. Configure the environment script by adding the following lines to your .bash_profile.
 
 	TOOLS=~/mnaptools
 	export TOOLS
