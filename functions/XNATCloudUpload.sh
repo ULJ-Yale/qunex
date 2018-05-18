@@ -7,12 +7,10 @@
 #
 # Copyright (C)
 #
-# * Radiologics
 # * Yale University
 #
 # ## Author(s)
 #
-# * Tim Olsen <tim@radiologics.com>
 # * Alan Anticevic, N3 Division, Yale University
 #
 # ## Product
@@ -47,7 +45,7 @@
 # * The necessary input files are data stored in the following format
 # * These data are stored in: "$StudyFolder/subjects/$CASE/
 #
-# Last Modified: 07/24/2017
+# Last Modified: 05/17/2018 by Alan Anticevic
 #
 #~ND~END~
 
@@ -57,27 +55,32 @@ usage() {
 		echo ""
 		echo "This function implements syncing to the XNAT cloud HOST via the CURL REST API."
 		echo ""
+		echo "Note: To invoke this function you need a credential file in your home folder: " 
+		echo ""
+		echo "       ~/.xnat     --> This file stores the username and password for the XNAT site"
+		echo "                       Permissions of this file need to be set to 400 "
+		echo "                       If this file does not exist the script will prompt you to generate one"
 		echo ""
 		echo "-- REQUIRED PARMETERS:"
 		echo ""
- 		echo "		--path=<study_folder>						Path to study data folder"
-		echo "		--mastersubjectid=<list_of_cases>			Overall database subject ID within XNAT"
-		echo "		--subject=<list_of_cases>					List of subjects to run that are study-specific (may be unique from --mastersubjectid)"
-		echo "		--project=<name_of_xnat_project>			Specify the XNAT cloud project name"
-		echo "		--hostname=<xnat_hostname>					Specify the XNAT hostname"
-		echo "		--niftiupload=<specify_nifti_upload>		Specify <yes> or <no> for NIFTI upload. Default is [yes]"
-		echo "		--overwrite=<specify_level_of_overwrite>	Specify <yes> or <no> for cleanup of prior upload. Default is [yes]"
+		echo "		--path=<study_folder>                     Path to study data folder"
+		echo "		--mastersubjectid=<master_id>             Overall database subject ID within XNAT"
+		echo "		--subject=<list_of_cases>                 List of subjects to run that are study-specific (may be unique from --mastersubjectid)"
+		echo "		--project=<name_of_xnat_project>          Specify the XNAT cloud project name"
+		echo "		--hostname=<xnat_hostname>                Specify the XNAT hostname"
 		echo ""
 		echo "-- OPTIONAL PARMETERS:"
 		echo "" 
- 		echo " N/A"
- 		echo ""
- 		echo "-- Example:"
+		echo "		--niftiupload=<specify_nifti_upload>      Specify <yes> or <no> for NIFTI upload. Default is [yes]"
+		echo "		--overwrite=<specify_level_of_overwrite>  Specify <yes> or <no> for cleanup of prior upload. Default is [yes]"
 		echo ""
-		echo "XNATCloudUpload.sh --path='/gpfs/project/fas/n3/Studies/BlackThorn/subjects' \ "
-		echo "--subject='100206' \ "
-		echo "--project='bt-yale' \ "
-		echo "--hostname='https://blackthornrx-sandbox.dev.radiologics.com' "
+		echo "-- Example:"
+		echo ""
+		echo "XNATCloudUpload.sh --path='<absolute_path_to_studyfolder>' \ "
+		echo "--subject='<case_id>' \ "
+		echo "--mastersubjectid='<master_id>' \ "
+		echo "--project='<project_name>' \ "
+		echo "--hostname='<XNAT_site_URL>' "
 		echo ""	
 }
 
@@ -278,19 +281,19 @@ else
 fi
 
 # ------------------------------------------------------------------------------
-#   check if you are on the transfer node:
+#  check the server you are transfering data from transfer node:
 # ------------------------------------------------------------------------------
 
 TRANSFERNODE=`hostname` 
-if [ $TRANSFERNODE == "transfer-grace.hpc.yale.edu" ]; then 
+#if [ $TRANSFERNODE == "transfer-grace.hpc.yale.edu" ]; then 
 	echo ""
-	geho "-- Transfer node confirmed: $TRANSFERNODE. Proceeding"
+	geho "-- Transferring data from: $TRANSFERNODE"
 	echo ""
-else
-	reho "-- Transfer to the XNAT server from $TRANSFERNODE is not supported."
-	echo ""
-	exit 1
-fi
+#else
+	# reho "-- Transfer to the XNAT server from $TRANSFERNODE is not supported."
+#	echo "-- Unusual transfer server"
+	# exit 1
+#fi
 
 # ------------------------------------------------------------------------------
 #  Setup the JSESSION and clean up prior temp folders:
@@ -299,16 +302,17 @@ fi
 START=$(date +"%s")
 
 ## -- get credentials
-CRED=`more ${HOME}/.xnat`
+CRED=$(cat ${HOME}/.xnat)
 
 ## -- open JSESSION
-curl -X POST -u "$CRED" "$HOST/data/JSESSION" -i > ${StudyFolder}/JSESSION.txt
+#curl -X POST -u "$CRED" "$HOST/data/JSESSION" -i > ${StudyFolder}/JSESSION.txt
+JSESSION=$(curl -X POST -u "$CRED" "$HOST/data/JSESSION" )
 
 #`date +%Y-%m-%d-%H-%M`
 #JSESSIONLOG=`ls ${StudyFolder}/JSESSION-*.txt`
 
-JSESSION=`grep "JSESSIONID" ${StudyFolder}/JSESSION.txt`
-JSESSION=${JSESSION:23:32}
+#JSESSION=`grep "JSESSIONID" ${StudyFolder}/JSESSION.txt`
+#JSESSION=${JSESSION:23:32}
 echo ""
 geho "-- JSESSION created: $JSESSION"
 
@@ -337,7 +341,7 @@ for CASE in ${CASES}; do
 		DICOMCOUNTER=$((DICOMCOUNTER+1))
 		geho "-- Working on SERIES: $SERIES"
 		echo ""
-		mkdir ${StudyFolder}/xnatupload/temp/working/ &> /dev/null
+		mkdir -p ${StudyFolder}/xnatupload/temp/working/ &> /dev/null
 		## -- unzip files for upload
 		geho "-- Unzipping DICOMs and linking into temp location --> ${StudyFolder}/xnatupload/temp/working/"
 		echo ""
