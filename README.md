@@ -20,7 +20,7 @@ Installation
 
 ### Step 1. Clone all MNAP repos and initiate submodules.
 
-* Clone: `git clone git@bitbucket.org:mnap/mnaptools.git` 
+* Clone: `git clone git@/bitbucket.org/hidradev/mnaptools` 
 * Initiate submodules from inside cloned repo folder: `git submodule init`
 * Pull and update all submodules: `git pull --recurse-submodules && git submodule update --recursive`
 * Update submodules to latest commit on origin: `git submodule foreach git pull origin master`
@@ -29,11 +29,11 @@ Installation
 
 ### Step 3. Configure `niutilities` repository. 
 
-* Add `MNAP/niutilities` folder to `$PATH`
-* Add `MNAP/niutilities` folder to `$PYTHONPATH`
-* Make `MNAP/niutilities/gmri` executable
-* Install latest version of numpy, pydicom, scipy & nibabel  
-* 			(e.g. `pip install numpy pydicom scipy nibabel `)
+* Add `~/mnaptools/niutilities` folder to `$PATH`
+* Add `~/mnaptools/niutilities` folder to `$PYTHONPATH`
+* Make `~/mnaptools/niutilities/gmri` executable
+* Install latest version of numpy, pydicom, scipy & nibabel
+* (e.g. `pip install numpy pydicom scipy nibabel `)
 
 ### Step 4. Configure the environment script by adding the following lines to your .bash_profile.
 
@@ -53,6 +53,10 @@ List of functions can be obtained by running the following command from the term
 The utilities are used through the `mnap` command. The general use form is:
 
 * `mnap --function="<command>" --option="<value>" --option="<value>" ...`
+
+Or the simplified form with command name first omitting the flag:
+
+* `mnap <command> --option="<value>" --option="<value>" ...`
 
 The list of commands and their specific documentation is provided through `mnap`
 command itself using the folowing options:
@@ -74,21 +78,38 @@ Perusing documentation, please note the following conventions used:
 External dependencies
 =====================
 ---
+For complete MNAP Suite functionality the following dependencies are needed for the latest stable release:
 
-* All MNAP repositories (git clone git@bitbucket.org:mnap/mnaptools.git)
-* Connectome Workbench (v1.0 or above)
-* FSL (version 5.0.9 or above with GPU-enabled DWI tools)
-* FreeSurfer (5.3 HCP version for HCP-compatible data)
-* FreeSurfer (6.0 version for all other data)
-* MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
-* FIX ICA
-* PALM
-* Python (version 2.7 or above with numpy, pydicom, scipy & nibabel)
-* AFNI
+* All MNAP Suite repositories (https://bitbucket.org/hidradev/mnaptools)
+* Connectome Workbench (v1.0 or above; https://www.humanconnectome.org/software/connectome-workbench)
+* FSL (v5.0.9 or above with GPU-enabled DWI tools; https://fsl.fmrib.ox.ac.uk/fsl/fslwiki)
+* FreeSurfer (v5.3-HCP version for HCP-compatible data; http://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/)
+* FreeSurfer (v6.0 or later stable for all other data; https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall)
+* MATLAB (v2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
+* FIX ICA (if wishing to run FIX de-noising only; https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIX/UserGuide)
+* PALM: Permutation Analysis of Linear Models (https://github.com/andersonwinkler/PALM) 
+* Python (v2.7 or above with numpy, pydicom, scipy & nibabel)
+* AFNI: Analysis of Functional NeuroImages (https://github.com/afni/afni) 
 * Human Connectome Pipelines modified for MNAP (https://bitbucket.org/mnap/hcpmodified)
 * Gradunwarp for HCP workflow (https://github.com/ksubramz/gradunwarp)
-* R Statistical Environment with ggplot
-* dcm2nii (23-June-2017 release)
+* R Statistical Environment with ggplot (https://www.r-project.org/)
+* dcm2niix (23-June-2017 release or later; https://github.com/rordenlab/dcm2niix)
+
+MNAP Versioning
+============
+---
+
+The MNAP Suite follows the semantic versioning system (https://semver.org/). 
+Given a version number MAJOR.MINOR.PATCH, increment the:
+
+* MAJOR version when you make incompatible API changes,
+* MINOR version when you add functionality in a backwards-compatible manner, and
+* PATCH version when you make backwards-compatible bug fixes.
+
+The version history and change log is listed below. The MNAP version in the current release 
+is listed in the VERSION file or can be invoked via the command line by running:
+
+* `mnap --version`
 
 Change Log
 ============
@@ -172,6 +193,7 @@ Change Log
 * 0.10.17 [library] Added the Octave configuration file .octaverc that sets all the paths and packages. (Grace-specific for now)
 * 0.10.18 [niutilities] Fixed a bug and cleaned up runFS code
 * 0.10.19 [connector] Edited XNATCloudUpload.sh script to improve functionality 
+* 0.10.20 [mnaptools] Improved README.md
 
 =======
 [Mind and Brain Lab]: http://mblab.si
