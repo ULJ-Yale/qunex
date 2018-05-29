@@ -194,6 +194,7 @@ Change Log
 * 0.10.18 [niutilities] Fixed a bug and cleaned up runFS code
 * 0.10.19 [connector] Edited XNATCloudUpload.sh script to improve functionality 
 * 0.10.20 [mnaptools] Improved README.md
+* 0.10.21 [niutilities] Added variable expansion to processing of processing parameters
 
 =======
 [Mind and Brain Lab]: http://mblab.si
