@@ -464,6 +464,13 @@ def run(command, args):
         print "       Please correct the listed parameter names in command line or batch file and run the command again!"
         exit()
 
+
+    # ---- Take care of variable expansion
+
+    for key in options:
+        options[key] = os.path.expandvars(options[key])
+
+
     # ---- Set key parameters
 
     overwrite    = options['overwrite']
