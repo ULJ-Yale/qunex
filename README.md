@@ -197,6 +197,7 @@ Change Log
 * 0.10.21 [niutilities] Added variable expansion to processing of processing parameters
 * 0.10.22 [niutilities] Fixed a bug in variable expansion
 * 0.10.23 [mnaptools] Changed licenses to new MNAP name
+* 0.10.24 [niutilities] Fixed subjects definition bug
 
 =======
 [Mind and Brain Lab]: http://mblab.si
