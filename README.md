@@ -5,7 +5,7 @@ Background
 ==========
 ---
 
-The Multimodal Neuroimaging Analysis Platform (MNAP) suite of tools integrates several 
+The Multimodal Neuroimaging Analysis Platform (MNAP) Suite of tools integrates several 
 packages that support a flexible and extensible framework for data organization, preprocessing, 
 quality assurance, and various analyses across neuroimaging modalities. The MNAP suite is 
 flexible and can be updated by adding functions developed around its component tools.
@@ -195,6 +195,8 @@ Change Log
 * 0.10.19 [connector] Edited XNATCloudUpload.sh script to improve functionality 
 * 0.10.20 [mnaptools] Improved README.md
 * 0.10.21 [niutilities] Added variable expansion to processing of processing parameters
+* 0.10.22 [niutilities] Fixed a bug in variable expansion
+* 0.10.23 [mnaptools] Changed licenses to new MNAP name
 
 =======
 [Mind and Brain Lab]: http://mblab.si

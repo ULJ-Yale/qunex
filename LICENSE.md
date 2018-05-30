@@ -1,11 +1,12 @@
-# Multimodal Neuroimaging Analyses Pipelines (MNAP) Software Suite
+# Multimodal Neuroimaging Analyses Platform (MNAP) Suite
 
 ## License
 
 MNAP Suite = THIS SOFTWARE
 
-Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
-& Alan Anticevic, [AnticevicLab], Yale University
+Copyright (c)
+Alan Anticevic, [AnticevicLab], Yale University
+Grega Repovš, [Mind & Brain Lab], University of Ljubljana
 
 The Software remains the joint property of Alan Anticevic (Yale University)
 & Grega Repovs (University of Ljubljana) ("the Authors").
