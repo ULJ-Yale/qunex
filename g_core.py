@@ -210,7 +210,7 @@ def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, v
     if re.match(".*\.list$", listString):
         slist = readList(listString, verbose=verbose)
 
-    elif os.path.exists(listString):
+    elif os.path.isfile(listString):
         slist, gpref = readSubjectData(listString, verbose=verbose)
 
     else:
