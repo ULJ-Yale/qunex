@@ -1,4 +1,4 @@
-# Multimodal Neuroimaging Analyses Pipelines (MNAP) Matlab Analysis Code
+# Multimodal Neuroimaging Analyses Platform (MNAP) Matlab Analysis Code
 
 ## License
 
