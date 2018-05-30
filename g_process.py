@@ -468,7 +468,8 @@ def run(command, args):
     # ---- Take care of variable expansion
 
     for key in options:
-        options[key] = os.path.expandvars(options[key])
+        if type(options[key]) is str:
+            options[key] = os.path.expandvars(options[key])
 
 
     # ---- Set key parameters
