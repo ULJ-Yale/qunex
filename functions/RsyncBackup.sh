@@ -1,36 +1,44 @@
-#!/bin/bash
+#!/bin/sh
 #
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# # RsyncBackup.sh
+# ## COPYRIGHT NOTICE
 #
-# ## Copyright Notice
+# Copyright (C) 2015 Anticevic Lab, Yale University
+# Copyright (C) 2015 MBLAB, University of Ljubljana
 #
-# Copyright (C) 2015 Anticevic Lab 
-#
-# * Yale University
-#
-# ## Author(s)
+# ## AUTHORS(s)
 #
 # * Alan Anticevic, Department of Psychiatry, Yale University
 #
-# ## Product
+# ## PRODUCT
 #
-# * RsyncBackup wrapper for backup of studies on HPC clusters to servers
+# * RsyncBackup.sh
 #
-# ## License
+# ## LICENCE
 #
-# Standard Yale OCR License
+# * The RsyncBackup.sh = the "Software"
+# * This Software conforms to the license outlined in the MNAP Suite:
+# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
 #
-# ## Description:
+# ## TODO
 #
-# * This is a RsyncBackup.sh wrapper developed for backup from a cluster to local
-#   storage
+# ## DESCRIPTION 
 #
-# ### Installed Software (Prerequisites):
+# * This is a RsyncBackup.sh wrapper developed for backup from a cluster to local storage
 #
-# * * NONE
+# ## PREREQUISITE INSTALLED SOFTWARE
+#
+# N/A
+#
+# ## PREREQUISITE ENVIRONMENT VARIABLES
+#
+# N/A
+#
+# ## PREREQUISITE PRIOR PROCESSING
+#
+# N/A
 #
 #~ND~END~
 
@@ -43,7 +51,6 @@
 # ------------------------------------------------------------------------------
 
 show_usage() {
-
 echo ""
 echo "---------------------------------------------------------------------------"
 echo "------ General usage for backing up folders onto remote servers -----------"
@@ -72,7 +79,7 @@ echo ""
 }
 
 # ------------------------------------------------------------------------------
-#  -- Setup color outputs
+# -- Setup color outputs
 # ------------------------------------------------------------------------------
 
 reho() {
@@ -84,10 +91,11 @@ geho() {
 }
 
 # ------------------------------------------------------------------------------
-#  -- Check if command line arguments are passed for single user setup
+# -- Check if command line arguments are passed for single user setup
 # ------------------------------------------------------------------------------
 
 opts_GetOpt() {
+
 sopt="$1"
 shift 1
 for fn in "$@" ; do
@@ -96,10 +104,13 @@ for fn in "$@" ; do
 		return 0
 	fi
 done
+
+local scriptName=$(basename ${0})
+
 }
 
 # ------------------------------------------------------------------------------
-#  -- Parse help calls
+# -- Parse help calls
 # ------------------------------------------------------------------------------
 
 
@@ -117,14 +128,14 @@ if opts_CheckForHelpRequest $@; then
 	exit 0
 fi
 
-# ------------------------------------------------------------------------------
-#  -- Check if command line arguments are specified
-# ------------------------------------------------------------------------------
+######################################### DO WORK ##########################################
 
-reho ""
-reho "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-reho "=-=-=-= Starting syncing script for local N3 servers and NAS -=-=-=-="
-reho "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+main() {
+
+echo ""
+echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+echo "=-=-=-= Starting MNAP rsync script -=-=-=-="
+echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 echo ""
 
 # -- Check if command line options are requested and return to default run if not
@@ -148,7 +159,7 @@ else
 	else
 		if [ "$singleflag" == "-" ]; then
 			setflag="$singleflag"
-		fi	
+		fi
 	fi
 	# -- Parse inputs
 	if [[ "$setflag" =~ .*-.* ]]; then
@@ -156,7 +167,6 @@ else
 		StudyFolders=`opts_GetOpt "${setflag}studies" "$@" | sed 's/,/ /g;s/|/ /g'`; StudyFolders=`echo "$StudyFolders" | sed 's/,/ /g;s/|/ /g'` 	# list of inputs; removing comma or pipes
 		BackupServer=`opts_GetOpt "${setflag}backupserver" $@` # server to backup to
 		LogFolder=`opts_GetOpt "${setflag}logfolder" $@`       # Log folder
-		
 		if [ -z "$StudiesFolder" ]; then reho "ERROR -- Studies folder flag missing"; show_usage; exit 0; fi
 		if [ -z "$StudyFolders" ]; then reho "ERROR -- Individual folders flag missing"; show_usage; exit 0; fi
 		if [ -z "$BackupServer" ]; then reho "ERROR -- Backup server flag missing"; show_usage; exit 0; fi
@@ -167,10 +177,26 @@ fi
 # -- Setup new logfile, move old to outdated_logs
 mkdir $LogFolder  &> /dev/null
 mkdir $LogFolder/outdated_logs  &> /dev/null
-
 mv "$LogFolder"/backup_log* "$LogFolder"/outdated_logs/  &> /dev/null
 now=$(date +"%Y-%m-%d-%H-%M-%S")
+TimeStamp=${now}
 
+# -- Report options
+echo ""
+echo "-- ${scriptName}: Specified Command-Line Options - Start --"
+echo ""
+echo " Path for Studies folder: $StudiesFolder"
+echo " Folders to Backup: $StudyFolders"
+echo " Server to backup to: $BackupServer"
+echo " Log Folder: $LogFolder"
+echo " Time stamp: $TimeStamp"
+echo ""
+echo "-- ${scriptName}: Specified Command-Line Options - End --"
+echo ""
+geho "------------------------- Start of work --------------------------------"
+echo ""
+
+# -- Setup logging
 echo "" > "$LogFolder"/backup_log_"$now".txt
 echo "######## Study Backup Log  $(date) ########" > "$LogFolder"/backup_log_"$now".txt
 echo "" >> "$LogFolder"/backup_log_"$now".txt
@@ -187,6 +213,7 @@ do
 		echo ""
 		reho "   ERROR -- The specified $StudiesFolder/$StudyFolder is missing a link on ${BackupServer}:/n3/$StudyFolder. Setup link first and re-run"
 		echo ""
+		exit 1
 	else
 		geho "Found ${BackupServer}:/n3/$StudyFolder Starting backup ..."
 		echo ""
@@ -219,4 +246,17 @@ done
 
 echo '----------' >> "$LogFolder"/backup_log_"$now".txt
 
-exit 0
+geho "--- Rsync Backup completed. Check outputs and logs for errors."
+echo ""
+geho "--- Check output logs here: ${LogFolder}/backup_log_${now}.txt}"
+echo ""
+geho "------------------------- End of work --------------------------------"
+echo ""
+
+}
+
+# ---------------------------------------------------------
+# -- Invoke the main function to get things started -------
+# ---------------------------------------------------------
+
+main $@

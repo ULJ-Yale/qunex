@@ -4,29 +4,27 @@
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# # mnap.sh
+# ## COPYRIGHT NOTICE
 #
-# ## Copyright Notice
+# Copyright (C) 2015 Anticevic Lab, Yale University
+# Copyright (C) 2015 MBLAB, University of Ljubljana
 #
-# Copyright (C) 2015 Anticevic Lab 
-# Copyright (C) 2015 MBLAB 
-#
-# * Yale University
-# * University of Ljubljana
-#
-# ## Author(s)
+# ## AUTHORS(s)
 #
 # * Alan Anticevic, Department of Psychiatry, Yale University
 # * Grega Repovs , Department of Psychology,  University of Ljubljana
 #
 # ## PRODUCT
 #
-# * This is a MNAP connector wrapper developed as for front-end bash integration for MNAP
+# * mnap.sh is a connector wrapper 
+#   developed as for front-end bash integration for the MNAP Suite
 #
-# ## LICENSE & README
+# ## LICENSE
 #
-# See the [MNAP Repo](https://bitbucket.org/hidradev/mnaptools/) file
-#
+# * The mnap.sh = the "Software"
+# * This Software conforms to the license outlined in the MNAP Suite:
+# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# 
 #
 #~ND~END~
 
@@ -175,7 +173,7 @@ echo "Data organization functions"
 echo "----------------------------"
 echo " organizeDicom ...... sort DICOMs and setup nifti files from DICOMs"
 echo " mapHCPFiles ...... setup data structure for hcp processing"
-echo " createLists ...... setup subject lists for preprocessing or analyses"
+echo " createLists ...... setup subject lists for batch processing or analyses"
 echo " hpcSync ...... sync with hpc cluster(s) for preprocessing"
 echo " AWSHCPSync ...... sync hcp data from aws s3 cloud"
 echo ""
@@ -455,38 +453,44 @@ show_usage_mapHCPFiles() {
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  createLists - Generate processing & analysis lists for fcMRI
+#  createLists - Generate batch processing & analysis lists
 # ------------------------------------------------------------------------------------------------------
 
 createLists() {
-
-	if [ "$ListGenerate" == "preprocessing" ]; then
+	if [ "$ListGenerate" == "batch" ]; then
 		# -- Check if appending list
 		if [ "$Append" == "yes" ]; then
 			# -- If append was set to yes and file exists then clear header
-			ParameterFile="no"
+			HeaderBatch="no"
 			echo ""
 			geho "---------------------------------------------------------------------"
-			geho "--> You are appending the paramater file with $CASE                  "
-			geho "--> --parameterfile flag will be cleared"
-			geho "--> Check usage to overwrite the file"
+			geho "--> You are appending the batch header file with $CASE               "
+			geho "--> --headerbatch is now set to 'no'                                 "
+			geho "--> Check usage to overwrite the file                                "
 			geho "---------------------------------------------------------------------"
 			echo ""
-			source "$ListFunction"
 		else
 			echo ""
 			geho "---------------------------------------------------------------------"
-			geho "--> Generaring new file with parameter header for $CASE              "
+			geho "--> Generaring new batch file with specified header for $CASE        "
 			geho "---------------------------------------------------------------------"
 			echo ""
-			
-			source "$ListFunction"
-			
 		fi
+		
+		echo "Running locally on `hostname`"
+		echo "Check log file output here: $LogFolder"
+		echo "--------------------------------------------------------------"
+		echo ""
+		${ListFunction} \
+		--subjectsfolder="${SubjectsFolder}" \
+		--subjects="${CASE}" \
+		--outname="${ListName}" \
+		--outpath="${ListPath}"
+		echo ""
 	fi
 
 	if [ "$ListGenerate" == "analysis" ]; then
-		unset ParameterFile
+		unset HeaderBatch
 		unset Append
 		echo ""
 		geho "---------------------------------------------------------------------"
@@ -496,16 +500,15 @@ createLists() {
 		echo ""
 		source "$ListFunction"
 	fi
-	
-	if [ "$ListGenerate" == "snr" ]; then
-		# -- Generate subject SNR list for all subjects across all BOLDs
-		cd ${SubjectsFolder}/QC/snr
-		for BOLD in $BOLDS
-		do
-			echo subject id:${CASE} >> subjects.snr.txt
-			echo file:${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz >> ${SubjectsFolder}/QC/snr/subjects.snr.txt
-		done
-	fi
+	# if [ "$ListGenerate" == "snr" ]; then
+	# 	# -- Generate subject SNR list for all subjects across all BOLDs
+	# 	cd ${SubjectsFolder}/QC/snr
+	# 	for BOLD in $BOLDS
+	# 	do
+	# 		echo subject id:${CASE} >> subjects.snr.txt
+	# 		echo file:${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz >> ${SubjectsFolder}/QC/snr/subjects.snr.txt
+	# 	done
+	# fi
 }
 
 show_usage_createLists() {
@@ -513,22 +516,22 @@ show_usage_createLists() {
   				echo "-- DESCRIPTION for $UsageInput"
     			echo ""
   				echo "This function generates a lists for processing or analyses for multiple subjects."
-  				echo "The function supports generation of parameter files for HCP processing for either 'legacy' of multiband data."
+  				echo "The function supports generation of batch parameter files for HCP processing for either 'legacy' of multiband data."
   				echo ""
   				echo "Supported lists:"
   				echo ""
-  				echo "    * preprocessing --> Subject parameter list with cases to preprocess"
+  				echo "    * batch    --> Subject parameter list with cases to preprocess"
   				echo "    * analysis --> List of cases to compute seed connectivity or GBC"
-  				echo "    * snr --> List of cases to compute signal-to-noise ratio"
+  				echo "    * snr      --> List of cases to compute signal-to-noise ratio [DEPRECATED for QCPreproc]"
   				echo ""
   				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "--function=<function_name>                  Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
 				echo "--subjectsfolder=<folder_with_subjects>     Path to study folder that contains subjects"
 				echo "--subjects=<comma_separated_list_of_cases>  List of subjects to run"
-				echo "--listtocreate=<type_of_list_to_generate>   Type of list to generate (e.g. preprocessing). "
+				echo "--listtocreate=<type_of_list_to_generate>   Type of list to generate (e.g. batch). "
 				echo "--listname=<output_name_of_the_list>        Output name of the list to generate. "
-				echo "                                            Supported: preprocessing, analysis, snr "
+				echo "                                            Supported: batch, analysis, snr "
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
@@ -539,7 +542,7 @@ show_usage_createLists() {
 				echo ""
 				echo "    * Note: If --append set to <yes> then function will append new cases to the end"
 				echo ""
-				echo "--parameterfile=<header_file_for_processing_list>	Set header for the processing list."
+				echo "--headerbatch=<header_file_for_the_batch_file>  Set header for the batch file."
 				echo ""
 				echo "    * Default:"
 				echo ""
@@ -549,7 +552,7 @@ show_usage_createLists() {
 				echo ""
 				echo "`ls ${TOOLS}/${MNAPREPO}/connector/functions/subjectparamlist_header*` "
 				echo ""
-				echo "    * Note: If --parameterfile set to <no> then function will not add a header"
+				echo "    * Note: If --headerbatch set to <no> then function will not add a header"
 				echo ""
 				echo "--listfunction=<function_used_to_create_list>   Point to external function to use"
 				echo "--bolddata=<comma_separated_list_of_bolds>      List of BOLD files to append to analysis or snr lists"
@@ -562,10 +565,10 @@ show_usage_createLists() {
 				echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
 				echo "--function='createLists' \ "
 				echo "--subjects='<comma_separarated_list_of_cases>' \ "
-				echo "--listtocreate='preprocessing' \ "
+				echo "--listtocreate='batch' \ "
 				echo "--overwrite='yes' \ "
 				echo "--listname='<list_to_generate>' \ "
-				echo "--parameterfile='no' \ "
+				echo "--headerbatch='no' \ "
 				echo "--append='yes' "
 				echo ""
 				echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
@@ -835,28 +838,28 @@ show_usage_BOLDHardLinkFIXICA() {
 
 FIXICAInsertMean() {
 
-		for BOLD in $BOLDS
-			do		
-					cd ${SubjectsFolder}/${CASE}/images/functional/
-					
-					# -- First check if the boldFIXICA file has the mean inserted
-					3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
-					ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
-					if [ $(echo " $ImgMean > 1000" | bc) -eq 1 ]; then
-					echo "1st frame mean=$ImgMean Mean inserted OK for subject $CASE and bold# $BOLD. Skipping to next..."
-						else
-						# -- Next check if the boldFIXICA file has the mean inserted twice by accident
-						if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
-						echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."	
-							else
-							# -- Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
-							echo "Re-inserting mean image on the mapped $BOLD data for $CASE... "
-							matlab -nosplash -nodisplay -nojvm -r "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldFIXICA' num2str($BOLD) '.nii.gz']),quit()"
+for BOLD in $BOLDS
+do		
+	cd ${SubjectsFolder}/${CASE}/images/functional/
+	
+	# -- First check if the boldFIXICA file has the mean inserted
+	3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
+	ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
+	if [ $(echo " $ImgMean > 1000" | bc) -eq 1 ]; then
+	echo "1st frame mean=$ImgMean Mean inserted OK for subject $CASE and bold# $BOLD. Skipping to next..."
+		else
+		# -- Next check if the boldFIXICA file has the mean inserted twice by accident
+		if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
+		echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."	
+			else
+			# -- Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
+			echo "Re-inserting mean image on the mapped $BOLD data for $CASE... "
+			matlab -nosplash -nodisplay -nojvm -r "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldFIXICA' num2str($BOLD) '.nii.gz']),quit()"
 
-						fi
-					fi
-					rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
-			done
+		fi
+	fi
+	rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
+done
 }
 
 show_usage_FIXICAInsertMean() {
@@ -873,27 +876,26 @@ show_usage_FIXICAInsertMean() {
 # ------------------------------------------------------------------------------------------------------
 
 FIXICARemoveMean() {
-
-		for BOLD in $BOLDS
-			do		
-					cd ${SubjectsFolder}/${CASE}/images/functional/
-					# First check if the boldFIXICA file has the mean inserted
-					#3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
-					#ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
-					#if [ $(echo " $ImgMean < 1000" | bc) -eq 1 ]; then
-					#echo "1st frame mean=$ImgMean Mean removed OK for subject $CASE and bold# $BOLD. Skipping to next..."
-					#	else
-						# Next check if the boldFIXICA file has the mean inserted twice by accident
-					#	if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
-					#	echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."	
-					#		else
-							# Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
-							echo "Removing mean image on the mapped CIFTI FIX ICA $BOLD data for $CASE... "
-							matlab -nosplash -nodisplay -nojvm -r "g_RemoveMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA_demean' num2str($BOLD) '.dtseries.nii']),quit()"
-						#fi
-					#fi
-					#rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
-			done
+for BOLD in $BOLDS
+do
+	cd ${SubjectsFolder}/${CASE}/images/functional/
+	# First check if the boldFIXICA file has the mean inserted
+	#3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
+	#ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
+	#if [ $(echo " $ImgMean < 1000" | bc) -eq 1 ]; then
+	#echo "1st frame mean=$ImgMean Mean removed OK for subject $CASE and bold# $BOLD. Skipping to next..."
+	#	else
+		# Next check if the boldFIXICA file has the mean inserted twice by accident
+	#	if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
+	#	echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."	
+	#		else
+			# Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
+			echo "Removing mean image on the mapped CIFTI FIX ICA $BOLD data for $CASE... "
+			matlab -nosplash -nodisplay -nojvm -r "g_RemoveMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA_demean' num2str($BOLD) '.dtseries.nii']),quit()"
+		#fi
+	#fi
+	#rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
+done
 }
 
 show_usage_FIXICARemoveMean() {
@@ -2839,7 +2841,7 @@ QCPreproc() {
 		DWIPath="$DWIPath"
 		DWIData="$DWIData"
 		DWILegacy="$DWILegacy"
-		DtiFitQ="$DtiFitQC"
+		DtiFitQC="$DtiFitQC"
 		BedpostXQC="$BedpostXQC"
 		EddyQCStats="$EddyQCStats"
 		# -- BOLD Parameters
@@ -3440,7 +3442,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@`
 	Append=`opts_GetOpt "${setflag}append" $@`
 	ListName=`opts_GetOpt "${setflag}listname" $@`
-	ParameterFile=`opts_GetOpt "${setflag}parameterfile" $@`
+	HeaderBatch=`opts_GetOpt "${setflag}headerbatch" $@`
 	ListFunction=`opts_GetOpt "${setflag}listfunction" $@`
 	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
@@ -3844,50 +3846,59 @@ if [ "$FunctionToRun" == "createLists" ]; then
 	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$ListGenerate" ]; then reho "Error: Type of list to generate missing [preprocessing, analysis, snr]"; exit 1; fi
+	if [ -z "$ListGenerate" ]; then reho "Error: Type of list to generate missing [batch, analysis, snr]"; exit 1; fi
 	# -- Check optional parameters:
-	if [ -z "$Append" ]; then Append="no"; reho "Setting --append='no' by default"; fi
+	if [ -z "$Append" ]; then Append="no"; reho "    Setting --append='no' by default"; echo ""; fi
 	# -- Set list path if not set by user
-	if [ -z "$ListPath" ]; then 
+	if [ -z "$ListPath" ]; then
 		unset ListPath
 		mkdir ${StudyFolder}/processing/lists &> /dev/null
 		cd ${StudyFolder}/processing/lists
 		ListPath=`pwd`
-		reho "Setting default path for list folder --> $ListPath"
+		reho "    Setting default path for list folder --> $ListPath"; echo ""
+		export ListPath
+	else
 		export ListPath
 	fi
 	# --------------------------
 	# --- preprocessing loop ---
 	# --------------------------
-	if [ "$ListGenerate" == "preprocessing" ]; then
-		ListPath=${StudyFolder}/processing/lists
+	if [ "$ListGenerate" == "batch" ]; then
 		# -- Check of overwrite flag was set
 		if [ "$Overwrite" == "yes" ]; then
 			echo ""
-			reho "===> Deleting prior processing lists"
+			reho "===> Deleting prior batch processing files"
 			echo ""
 			rm "$ListPath"/batch."$ListName".txt &> /dev/null
 		fi
 		if [ -z "$ListFunction" ]; then 
-			reho "List function not set. Using default function."
-			ListFunction="${TOOLS}/${MNAPREPO}/connector/functions/SubjectsParamList.sh"
-			echo ""
+			reho "    List function not set. Using default function."
+			ListFunction="        ${TOOLS}/${MNAPREPO}/connector/functions/SubjectsParamList.sh"
 			reho "$ListFunction"
 			echo ""
 		fi
-		if [ -z "$ListName" ]; then reho "Name of preprocessing list for is missing."; exit 1; fi
-		if [ -z "$ParameterFile" ]; then 
+		TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+		if [ -z "$ListName" ]; then 
+			ListName="$TimeStamp"
+			reho "    Name of batch preprocessing file not specified. Using defaults with timestamp to avoid overwriting: $ListName"
+		fi
+		if [ -z "$HeaderBatch" ]; then
 			echo ""
-			echo "No parameter header file set - Using defaults: "
-			ParameterFile="${TemplateFolder}/templates/batch_multiband_parameters.txt"
-			echo "--> $ParameterFile"
-			echo ""
+			reho "    Batch parameter header file not specified. Using defaults for multi-band data: "
+			HeaderBatch="${TOOLS}/${MNAPREPO}/library/data/templates/batch_multiband_parameters.txt"
+			if [ -f $HeaderBatch ]; then
+				reho "        $HeaderBatch"; echo ""
+			else
+				reho "---> ERROR: $HeaderBatch not found! Check MNAP environment variables."
+				echo ""
+				exit 1
+			fi
 		fi
 		# -- Check if skipping parameter file header
-		if [ "$ParameterFile" != "no" ]; then
+		if [ "$HeaderBatch" != "no" ]; then
 			# -- Check if lists exists  
 			if [ -s ${ListPath}/batch."$ListName".txt ]; then
-				# -- If ParameterFile was set and file exists then exit and report error
+				# -- If HeaderBatch was set and file exists then exit and report error
 				echo ""
 				reho "---------------------------------------------------------------------"
 				reho "--> The file exists and you are trying to set the header again"
@@ -3896,12 +3907,9 @@ if [ "$FunctionToRun" == "createLists" ]; then
 				echo ""
 				exit 1
 			else
-				echo ""
-				echo "-- Adding Parameter Header: "
-				echo "--> ${ParameterFile}"
-				cat ${ParameterFile} >> ${ListPath}/batch."$ListName".txt
-			fi 
-		fi	
+				cat ${HeaderBatch} >> ${ListPath}/batch."$ListName".txt
+			fi
+		fi
 		# -- Report parameters
 		echo ""
 		echo "Running $FunctionToRun processing with the following parameters:"
@@ -3911,6 +3919,8 @@ if [ "$FunctionToRun" == "createLists" ]; then
 		echo "Subjects Folder: ${SubjectsFolder}"
 		echo "Subjects: ${CASES}"
 		echo "List to generate: ${ListGenerate}"
+		echo "List path: ${ListPath}"
+		echo "List name: ${ListName}"
 		echo "Scheduler Name and Options: $Scheduler"
 		echo "Overwrite prior run: $Overwrite"
 		echo "--------------------------------------------------------------"
@@ -3961,34 +3971,34 @@ if [ "$FunctionToRun" == "createLists" ]; then
 			for CASE in $CASES; do ${FunctionToRun} ${CASE}; done
 	fi	
 	# ----------------
-	# --- snr loop ---
+	# --- snr loop --- --> DEPRECATED for QCPreproc
 	# ----------------
-	if [ "$ListGenerate" == "snr" ]; then		
-	if [ -z "$BOLDS" ]; then reho "Error: BOLDs to generate the snr list for missing"; exit 1; fi
-		# -- Check of overwrite flag was set
-		if [ "$Overwrite" == "yes" ]; then
-			echo ""
-			reho "===> Deleting prior snr lists"
-			echo ""
-			cd ${SubjectsFolder}/QC/snr
-			rm *subjects.snr.txt  &> /dev/null
-			# -- Report parameters
-			echo ""
-			echo "Running $FunctionToRun processing with the following parameters:"
-			echo ""
-			echo "--------------------------------------------------------------"
-			echo "Study Folder: ${StudyFolder}"
-			echo "Subjects Folder: ${SubjectsFolder}"
-			echo "Subjects: ${CASES}"
-			echo "List to generate: ${ListGenerate}"
-			echo "Scheduler Name and Options: $Scheduler"
-			echo "Overwrite prior run: $Overwrite"
-			echo "--------------------------------------------------------------"
-			echo ""
-		  	# -- Loop through all the cases
-		  	for CASE in $CASES; do ${FunctionToRun} ${CASE}; done
-		fi	
-	fi
+	# if [ "$ListGenerate" == "snr" ]; then		
+	# if [ -z "$BOLDS" ]; then reho "Error: BOLDs to generate the snr list for missing"; exit 1; fi
+	# 	# -- Check of overwrite flag was set
+	# 	if [ "$Overwrite" == "yes" ]; then
+	# 		echo ""
+	# 		reho "===> Deleting prior snr lists"
+	# 		echo ""
+	# 		cd ${SubjectsFolder}/QC/snr
+	# 		rm *subjects.snr.txt  &> /dev/null
+	# 		# -- Report parameters
+	# 		echo ""
+	# 		echo "Running $FunctionToRun processing with the following parameters:"
+	# 		echo ""
+	# 		echo "--------------------------------------------------------------"
+	# 		echo "Study Folder: ${StudyFolder}"
+	# 		echo "Subjects Folder: ${SubjectsFolder}"
+	# 		echo "Subjects: ${CASES}"
+	# 		echo "List to generate: ${ListGenerate}"
+	# 		echo "Scheduler Name and Options: $Scheduler"
+	# 		echo "Overwrite prior run: $Overwrite"
+	# 		echo "--------------------------------------------------------------"
+	# 		echo ""
+	# 	  	# -- Loop through all the cases
+	# 	  	for CASE in $CASES; do ${FunctionToRun} ${CASE}; done
+	# 	fi	
+	# fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -4520,7 +4530,7 @@ if [ "$FunctionToRun" == "ROIExtract" ]; then
 		# -- Loop through all the cases
 		for CASE in $CASES; do ${FunctionToRun} ${CASE}; done
 	else
-		# -- Execute on single case
+		# -- Execute on single input file
 		${FunctionToRun}
 	fi
 fi

@@ -3,34 +3,31 @@
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# ## Copyright Notice
+# ## COPYRIGHT NOTICE
 #
-# Copyright (C)
-#
-# * Yale University
-#
-# ## Author(s)
+# Copyright (C) 2015 Anticevic Lab, Yale University
+# Copyright (C) 2015 MBLAB, University of Ljubljana
 #
 # * Alan Anticevic, N3 Division, Yale University
 #
-# ## Product
+# ## PRODUCT
 #
-#  Wrapper for DWI EDDY QC code
+#  DWIEddyQC.sh Wrapper for DWI EDDY QC code
 #
-# ## License
+# ## LICENSE
 #
 # * The DWIEddyQC.sh = the "Software"
-# * This Software is distributed "AS IS" without warranty of any kind, either 
-# * expressed or implied, including, but not limited to, the implied warranties
-# * of merchantability and fitness for a particular purpose.
+# * This Software conforms to the license outlined in the MNAP Suite:
+# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
 #
-# ### TODO
+# ## TODO
 #
-# ## Description 
+# ## DESCRIPTION 
 #   
-# This script, DWIEddyQC.sh, implements DWI eddy QC based on code developed by Matteo Bastiani, FMRIB 
+# This script, DWIEddyQC.sh, is a wrapper for DWI EDDY QC code. 
+# It implements DWI eddy QC based on code developed by Matteo Bastiani, FMRIB 
 # 
-# ## Prerequisite Installed Software
+# ## PREREQUISITE INSTALLED SOFTWARE
 #
 # -------------------------------------------
 # EDDY QC by Matteo Bastiani, FMRIB
@@ -39,88 +36,91 @@
 #     python setup.py install --prefix=/path_to_location
 # -------------------------------------------
 #
-# ## Prerequisite Environment Variables
+# ## PREREQUISITE ENVIRONMENT VARIABLES
 #
 # See output of usage function: e.g. $./DWIEddyQC.sh --help
 #
-# ### Expected Previous Processing
+# ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are results following eddy. For instance:
 # * For instance, following HCP pipelines: "$SubjectsFolder/$CASE/hcp/$CASE/Diffusion/eddy/ 
 #
 #~ND~END~
 
-usage() {
-				echo ""
-				echo "-- DESCRIPTION:"
-				echo ""
-				echo "This function is based on FSL's eddy to perform quality control on diffusion mri (dMRI) datasets."
-				echo "It explicitly assumes the that eddy has been run and that EDDY QC by Matteo Bastiani, FMRIB has been installed. "
-				echo "For full documentation of the EDDY QC please examine the README file."
-				echo ""
-				echo "   <folder_with_subjects>/<case>/hcp/<case>/Diffusion/eddy/ ---> DWI eddy outputs would be here"
-				echo ""
-				echo "-- REQUIRED PARMETERS:"
-				echo ""
- 				echo "   --subjectsfolder=<folder_with_subjects>   Path to study subjects folder"
-				echo "   --subject=<subj_id>   Subjects ID to run EDDY QC on"
- 				echo "   --eddybase=<eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
- 				echo "   --eddyidx=<eddy_index_file>   EDDY index file"
- 				echo "   --eddyparams=<eddy_param_file>   EDDY parameters file"
- 				echo "   --mask=<mask_file>   Binary mask file (most qc measures will be averaged across voxels labeled in the mask)"
- 				echo "   --bvalsfile=<bvals_file>   bvals input file"
- 				echo "   --report=<run_group_or_individual_report>   If you want to generate a group report [individual or group  Default: individual]"
- 				echo ""
- 				echo "    *IF* --report='group' *THEN* this argument needs to be specificed: "
- 				echo ""
- 				echo "   --list=<group_list_input>   Text file containing a list of qc.json files obtained from SQUAD"
-				echo ""
-				echo ""
-    			echo "-- OPTIONAL PARMETERS:"
-				echo "" 
- 				echo "   --overwrite=<clean_prior_run>   Delete prior run for a given subject"
-				echo "   --eddypath=<eddy_folder_relative_to_subject_folder>   Specify the relative path of the eddy folder you want to use for inputs"
-				echo "                                                         --> Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
-				echo "   --bvecsfile=<bvecs_file>   If specified, the tool will create a bvals_no_outliers.txt "
-				echo "                              & a bvecs_no_outliers.txt file that contain the bvals and bvecs of the non outlier volumes, based on the MSR estimates)"
-				echo ""
-    			echo "-- EXTRA OPTIONAL PARMETERS IF --report='group' "
-    			echo ""
-				echo "   --groupvar=<extra_grouping_variable>   Text file containing extra grouping variable"
-				echo "   --outputdir=<name_of_cleaned_eddy_output>   Output directory - default = '<eddyBase>.qc' "
-				echo "   --update=<setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single subject qc reports "
-				echo ""
- 				echo ""
- 				echo "-- EXAMPLE:"
-				echo ""
-				echo "DWIEddyQC.sh --subjectsfolder='<path_to_study_folder_with_subject_directories>' \ "
-				echo "--subject='<subj_id>' \ "
-				echo "--eddybase='<eddy_base_name>' \ "
-				echo "--report='individual'"
-				echo "--bvalsfile='<bvals_file>' \ "
-				echo "--mask='<mask_file>' \ "
-				echo "--eddyidx='<eddy_index_file>' \ "
-				echo "--eddyparams='<eddy_param_file>' \ "
-				echo "--bvecsfile='<bvecs_file>' \ "
-				echo "--overwrite='yes' "
-				echo ""	
-				echo "-- OUTPUTS FOR INDIVIDUAL RUN: "
-				echo "" 
-   				echo " - qc.pdf: single subject QC report "
-				echo " - qc.json: single subject QC and data info"
-    			echo " - vols_no_outliers.txt: text file that contains the list of the non-outlier volumes (based on eddy residuals)"
-				echo ""
-				echo "-- OUTPUTS FOR GROUP RUN: "
-				echo "" 
-   				echo " - group_qc.pdf: single subject QC report "
-				echo " - group_qc.db: database"  
-				echo ""
-				echo ""  
+# ------------------------------------------------------------------------------
+# -- General help usage function
+# ------------------------------------------------------------------------------
 
+usage() {
+     echo ""
+     echo "-- DESCRIPTION:"
+     echo ""
+     echo "This function is based on FSL's eddy to perform quality control on diffusion mri (dMRI) datasets."
+     echo "It explicitly assumes the that eddy has been run and that EDDY QC by Matteo Bastiani, FMRIB has been installed. "
+     echo "For full documentation of the EDDY QC please examine the README file."
+     echo ""
+     echo "   <folder_with_subjects>/<case>/hcp/<case>/Diffusion/eddy/ ---> DWI eddy outputs would be here"
+     echo ""
+     echo "-- REQUIRED PARMETERS:"
+     echo ""
+     echo "   --subjectsfolder=<folder_with_subjects>   Path to study subjects folder"
+     echo "   --subject=<subj_id>   Subjects ID to run EDDY QC on"
+     echo "   --eddybase=<eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
+     echo "   --eddyidx=<eddy_index_file>   EDDY index file"
+     echo "   --eddyparams=<eddy_param_file>   EDDY parameters file"
+     echo "   --mask=<mask_file>   Binary mask file (most qc measures will be averaged across voxels labeled in the mask)"
+     echo "   --bvalsfile=<bvals_file>   bvals input file"
+     echo "   --report=<run_group_or_individual_report>   If you want to generate a group report [individual or group  Default: individual]"
+     echo ""
+     echo "    *IF* --report='group' *THEN* this argument needs to be specificed: "
+     echo ""
+     echo "   --list=<group_list_input>   Text file containing a list of qc.json files obtained from SQUAD"
+     echo ""
+     echo ""
+     echo "-- OPTIONAL PARMETERS:"
+     echo "" 
+     echo "   --overwrite=<clean_prior_run>   Delete prior run for a given subject"
+     echo "   --eddypath=<eddy_folder_relative_to_subject_folder>   Specify the relative path of the eddy folder you want to use for inputs"
+     echo "                                                         --> Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
+     echo "   --bvecsfile=<bvecs_file>   If specified, the tool will create a bvals_no_outliers.txt "
+     echo "                              & a bvecs_no_outliers.txt file that contain the bvals and bvecs of the non outlier volumes, based on the MSR estimates)"
+     echo ""
+     echo "-- EXTRA OPTIONAL PARMETERS IF --report='group' "
+     echo ""
+     echo "   --groupvar=<extra_grouping_variable>   Text file containing extra grouping variable"
+     echo "   --outputdir=<name_of_cleaned_eddy_output>   Output directory - default = '<eddyBase>.qc' "
+     echo "   --update=<setting_to_update_subj_reports>   Applies only if --report='group' - set to <true> to update existing single subject qc reports "
+     echo ""
+     echo ""
+     echo "-- EXAMPLE:"
+     echo ""
+     echo "DWIEddyQC.sh --subjectsfolder='<path_to_study_folder_with_subject_directories>' \ "
+     echo "--subject='<subj_id>' \ "
+     echo "--eddybase='<eddy_base_name>' \ "
+     echo "--report='individual'"
+     echo "--bvalsfile='<bvals_file>' \ "
+     echo "--mask='<mask_file>' \ "
+     echo "--eddyidx='<eddy_index_file>' \ "
+     echo "--eddyparams='<eddy_param_file>' \ "
+     echo "--bvecsfile='<bvecs_file>' \ "
+     echo "--overwrite='yes' "
+     echo ""	
+     echo "-- OUTPUTS FOR INDIVIDUAL RUN: "
+     echo "" 
+     echo " - qc.pdf: single subject QC report "
+     echo " - qc.json: single subject QC and data info"
+     echo " - vols_no_outliers.txt: text file that contains the list of the non-outlier volumes (based on eddy residuals)"
+     echo ""
+     echo "-- OUTPUTS FOR GROUP RUN: "
+     echo "" 
+     echo " - group_qc.pdf: single subject QC report "
+     echo " - group_qc.db: database"  
+     echo ""
+     echo ""  
 }
 
 # ------------------------------------------------------------------------------
-#  Setup color outputs
+# -- Setup color outputs
 # ------------------------------------------------------------------------------
 
 reho() {
@@ -143,262 +143,257 @@ if [ -z ${EddySquadCheck} ] || [ -z ${EddySquadCheck} ]; then
     echo ""
     exit 1
 fi
-    
+
+# ------------------------------------------------------------------------------
+#  -- Check if command line arguments are specified
+# ------------------------------------------------------------------------------
+
 ########################################## INPUTS ########################################## 
 
-# eddy-cleaned DWI Data
+# -- eddy-cleaned DWI Data
 
 ########################################## OUTPUTS #########################################
 
-# Outputs will be located in <eddyBase>.qc per EDDY QC specification
+# -- Outputs will be located in <eddyBase>.qc per EDDY QC specification
 
-#  Get the command line options for this script
-#
-
+# -- Get the command line options for this script
 get_options() {
-    local scriptName=$(basename ${0})
-    local arguments=($@)
-    
-    # initialize global output variables
-    unset SubjectsFolder
-    unset Subject
-    unset Report
-    unset EddyBase
-    unset List
-    unset EddyIdx
-    unset EddyParams
-    unset Mask
-    unset BvalsFile
-    
-    # optional parameters
-    unset Overwrite
-    unset EddyPath
-    unset GroupVar
-    unset OutputDir
-    unset Update
-    unset BvecsFile
 
-    runcmd=""
+local scriptName=$(basename ${0})
+local arguments=($@)
 
-    # parse arguments
-    local index=0
-    local numArgs=${#arguments[@]}
-    local argument
+# -- Initialize global output variables
+unset SubjectsFolder
+unset Subject
+unset Report
+unset EddyBase
+unset List
+unset EddyIdx
+unset EddyParams
+unset Mask
+unset BvalsFile
 
-    while [ ${index} -lt ${numArgs} ]; do
-        argument=${arguments[index]}
+# -- Optional parameters
+unset Overwrite
+unset EddyPath
+unset GroupVar
+unset OutputDir
+unset Update
+unset BvecsFile
 
-        case ${argument} in
-            --help)
-                usage
-                exit 1
-                ;;
-            --version)
-                version_show $@
-                exit 0
-                ;;
-            --subjectsfolder=*)
-                SubjectsFolder=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --subject=*)
-                CASE=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --report=*)
-                Report=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --eddybase=*)
-                EddyBase=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --list=*)
-                List=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-             --eddyidx=*)
-                EddyIdx=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-             --eddyparams=*)
-                EddyParams=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-             --mask=*)
-                Mask=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-             --bvalsfile=*)
-                BvalsFile=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;; 
-            --outputdir=*)
-                OutputDir=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --eddypath=*)
-                EddyPath=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --update=*)
-                Update=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;                
-            --groupvar=*)
-                GroupVar=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;; 
-            --overwrite=*)
-                Overwrite=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;      
-            --bvecsfile=*)
-                BvecsFile=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;   
-            *)
-                usage
-                reho "ERROR: Unrecognized Option: ${argument}"
-        		echo ""
-                exit 1
-                ;;
-        esac
-    done
+runcmd=""
 
-    # check required parameters
-    if [ -z ${SubjectsFolder} ]; then
-        usage
-        reho "ERROR: <subjects-folder-path> not specified>"
-        echo ""
-        exit 1
-    fi
+# -- Parse arguments
+local index=0
+local numArgs=${#arguments[@]}
+local argument
 
-    if [ -z ${Report} ]; then
-        usage
-        reho "ERROR: <report> type specified>"
-        echo ""
-        exit 1
-    fi
-    
-    if [ ${Report} == "individual" ]; then
-    	# check each individual parameter         	
-        if [ -z ${CASE} ]; then
-        	usage
-        	reho "ERROR: <subject-id> not specified>"
-        	echo ""
-        	exit 1
-    	fi
-        if [ -z ${EddyBase} ]; then
-        	usage
-        	reho "ERROR: <eddy_base_name> not specified>"
-        	echo ""
-        	exit 1
-    	fi
-    	if [ -z ${BvalsFile} ]; then
-        	usage
-        	reho "ERROR: <bvals_file> not specified>"
-        	echo ""
-        	exit 1
-    	fi
-    	if [ -z ${EddyIdx} ]; then
-        	usage
-        	reho "ERROR: <eddy_index> file not specified>"
-        	echo ""
-        	exit 1
-    	fi
-    	if [ -z ${EddyParams} ]; then
-        	usage
-        	reho "ERROR: <eddy_params> file not specified>"
-        	echo ""
-        	exit 1
-    	fi
-    	if [ -z ${Mask} ]; then
-        	usage
-        	reho "ERROR: <mask> file not specified>"
-        	echo ""
-        	exit 1
-    	fi
-    fi
-    
-    if [ ${Report} == "group" ]; then
-    	if [ -z ${List} ]; then
-        	usage
-        	reho "ERROR: <group_list_input> no specified>"
-        	echo ""
-        	exit 1
-        fi
-    fi
+while [ ${index} -lt ${numArgs} ]; do
+    argument=${arguments[index]}
 
-	# check optional parameters
-    if [ -z ${Overwrite} ]; then
-        Overwrite="no"
-    fi
-    
-	if [ -z ${EddyPath} ]; then
-        EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
-        echo $EddyPath
-    fi
-    
-    if [ -z ${GroupVar} ]; then
-		GroupVar=""
-    fi
+    case ${argument} in
+        --help)
+            usage
+            exit 1
+            ;;
+        --version)
+            version_show $@
+            exit 0
+            ;;
+        --subjectsfolder=*)
+            SubjectsFolder=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --subject=*)
+            CASE=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --report=*)
+            Report=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --eddybase=*)
+            EddyBase=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --list=*)
+            List=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+         --eddyidx=*)
+            EddyIdx=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+         --eddyparams=*)
+            EddyParams=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+         --mask=*)
+            Mask=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+         --bvalsfile=*)
+            BvalsFile=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;; 
+        --outputdir=*)
+            OutputDir=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --eddypath=*)
+            EddyPath=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --update=*)
+            Update=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;                
+        --groupvar=*)
+            GroupVar=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;; 
+        --overwrite=*)
+            Overwrite=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;      
+        --bvecsfile=*)
+            BvecsFile=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;   
+        *)
+            usage
+            reho "ERROR: Unrecognized Option: ${argument}"
+    		echo ""
+            exit 1
+            ;;
+    esac
+done
 
-    if [ -z ${OutputDir} ]; then
-        OutputDir="${EddyPath}/${EddyBase}.qc"
-    fi
-    
-    if [ -z ${Update} ]; then
-        Update="false"
-    fi
-    
-    if [ -z ${BvecsFile} ]; then
-        BvecsFile=""
-    fi
-
- 	# set StudyFolder
-	cd $SubjectsFolder/../ &> /dev/null
-	StudyFolder=`pwd` &> /dev/null
-    
-    # report parameters
+# -- Check required parameters
+if [ -z ${SubjectsFolder} ]; then
+    usage
+    reho "ERROR: <subjects-folder-path> not specified>"
     echo ""
+    exit 1
+fi
+if [ -z ${Report} ]; then
+    usage
+    reho "ERROR: <report> type specified>"
     echo ""
-    echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    echo "   SubjectsFolder: ${SubjectsFolder}"
-    echo "   Subject: ${CASE}"
-    echo "   Report Type: ${Report}"
-    echo "   Eddy QC Input Path: ${EddyPath}"
-    echo "   Eddy QC Output Path: ${OutputDir}"
-    # report group parameters
-    if [ ${Report} == "group" ]; then
-    echo "   List: ${List}"
-    echo "   Grouping Variable: ${GroupVar}"
-    echo "   Update single subjects: ${Update}"
-	echo ""
+    exit 1
+fi
+if [ ${Report} == "individual" ]; then
+	# -- Check each individual parameter
+	if [ -z ${CASE} ]; then
+		usage
+		reho "ERROR: <subject-id> not specified>"
+		echo ""
+		exit 1
 	fi
-	# report individual parameters
-	if [ ${Report} == "individual" ]; then
-    echo "   Eddy Inputs Base Name: ${EddyBase}"
-    echo "   Mask: ${EddyPath}/${Mask}"
-    echo "   BVALS file: ${EddyPath}/${BvalsFile}"
-    echo "   Eddy Index file: ${EddyPath}/${EddyIdx}"
-    echo "   Eddy parameter file: ${EddyPath}/${EddyParams}"
+	if [ -z ${EddyBase} ]; then
+		usage
+		reho "ERROR: <eddy_base_name> not specified>"
+		echo ""
+		exit 1
 	fi
-	# report optional parameters
-    echo "   BvecsFile: ${EddyPath}/${BvecsFile}"
-    echo "   Overwrite: ${EddyPath}/${Overwrite}"
-    echo "-- ${scriptName}: Specified Command-Line Options - End --"
-    echo ""
-    geho "------------------------- Start of work --------------------------------"
-    echo ""
+	if [ -z ${BvalsFile} ]; then
+		usage
+		reho "ERROR: <bvals_file> not specified>"
+		echo ""
+		exit 1
+	fi
+	if [ -z ${EddyIdx} ]; then
+		usage
+		reho "ERROR: <eddy_index> file not specified>"
+		echo ""
+		exit 1
+	fi
+	if [ -z ${EddyParams} ]; then
+		usage
+		reho "ERROR: <eddy_params> file not specified>"
+		echo ""
+		exit 1
+	fi
+	if [ -z ${Mask} ]; then
+		usage
+		reho "ERROR: <mask> file not specified>"
+		echo ""
+		exit 1
+	fi
+fi
+if [ ${Report} == "group" ]; then
+	if [ -z ${List} ]; then
+    	usage
+    	reho "ERROR: <group_list_input> no specified>"
+    	echo ""
+    	exit 1
+	fi
+fi
+
+# -- Check optional parameters
+if [ -z ${Overwrite} ]; then
+    Overwrite="no"
+fi
+if [ -z ${EddyPath} ]; then
+    EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+    echo $EddyPath
+fi
+if [ -z ${GroupVar} ]; then
+	GroupVar=""
+fi
+if [ -z ${OutputDir} ]; then
+    OutputDir="${EddyPath}/${EddyBase}.qc"
+fi
+if [ -z ${Update} ]; then
+    Update="false"
+fi
+if [ -z ${BvecsFile} ]; then
+    BvecsFile=""
+fi
+
+# -- Set StudyFolder
+cd $SubjectsFolder/../ &> /dev/null
+StudyFolder=`pwd` &> /dev/null
+
+# -- Report parameters
+echo ""
+echo ""
+echo "-- ${scriptName}: Specified Command-Line Options - Start --"
+echo "   SubjectsFolder: ${SubjectsFolder}"
+echo "   Subject: ${CASE}"
+echo "   Report Type: ${Report}"
+echo "   Eddy QC Input Path: ${EddyPath}"
+echo "   Eddy QC Output Path: ${OutputDir}"
+# -- Report group parameters
+if [ ${Report} == "group" ]; then
+echo "   List: ${List}"
+echo "   Grouping Variable: ${GroupVar}"
+echo "   Update single subjects: ${Update}"
+echo ""
+fi
+# -- Report individual parameters
+if [ ${Report} == "individual" ]; then
+echo "   Eddy Inputs Base Name: ${EddyBase}"
+echo "   Mask: ${EddyPath}/${Mask}"
+echo "   BVALS file: ${EddyPath}/${BvalsFile}"
+echo "   Eddy Index file: ${EddyPath}/${EddyIdx}"
+echo "   Eddy parameter file: ${EddyPath}/${EddyParams}"
+fi
+# -- Report optional parameters
+echo "   BvecsFile: ${EddyPath}/${BvecsFile}"
+echo "   Overwrite: ${EddyPath}/${Overwrite}"
+echo "-- ${scriptName}: Specified Command-Line Options - End --"
+echo ""
+geho "------------------------- Start of work --------------------------------"
+echo ""
 }
 
 ######################################### DO WORK ##########################################
 
 main() {
 
-    # Get Command Line Options
-    get_options $@
+# -- Get Command Line Options
+get_options $@
 
 # -- Define inputs and output
 echo "--- Establishing paths for all input and output folders:"
@@ -434,7 +429,6 @@ else
 	echo ""
 	geho "Computing DWI EDDY QC using specified parameters..."
 	echo ""
-	
 	# -- Check if individual run was selected
 	if [ ${Report} == "individual" ]; then
 		geho "Computing individual QC run on ${EddyQCIn} "
@@ -447,7 +441,6 @@ else
 		more ${EddyQCOut}/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${EddyQCOut}/${CASE}_qc_mot_abs.txt
 	fi
 	echo ""
-
 	# -- Check if group run was selected
 	if [ ${Report} == "group" ]; then
 		geho "Computing group QC run on ${EddyQCIn} "
@@ -459,9 +452,9 @@ else
 		echo ""
 	fi
 	echo ""
-fi	
+fi
 
-# -- Perform completion checks"
+# -- Perform completion checks
 echo "--- Checking DWI EDDY QC outputs..."
 echo ""
 if [ -f ${EddyQCOut}/qc.json ]; then
@@ -489,12 +482,10 @@ echo ""
 geho "------------------------- End of work --------------------------------"
 echo ""
 
-exit 1
+}
 
-}	
-
-#
-# Invoke the main function to get things started
-#
+# ---------------------------------------------------------
+# -- Invoke the main function to get things started -------
+# ---------------------------------------------------------
 
 main $@

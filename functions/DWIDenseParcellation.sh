@@ -3,89 +3,87 @@
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
 #
-# ## Copyright Notice
+# ## COPYRIGHT NOTICE
 #
-# Copyright (C)
+# Copyright (C) 2015 Anticevic Lab, Yale University
+# Copyright (C) 2015 MBLAB, University of Ljubljana
 #
-# * Yale University
-#
-# ## Author(s)
+# ## AUTHORS(s)
 #
 # * Alan Anticevic, N3 Division, Yale University
-# * Murat Demirtas, N3 Division, Yale University
 #
-# ## Product
+# ## PRODUCT
 #
-#  Parcellation wrapper for dense connectome DWI data
+# DWIDenseParcellation.sh
 #
-# ## License
+# ## LICENSE
 #
 # * The DWIDenseParcellation.sh = the "Software"
-# * This Software is distributed "AS IS" without warranty of any kind, either 
-# * expressed or implied, including, but not limited to, the implied warranties
-# * of merchantability and fitness for a particular purpose.
+# * This Software conforms to the license outlined in the MNAP Suite:
+# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
 #
-# ### TODO
+# ## TODO
 #
-# ## Description 
+# ## DESCRIPTION 
 #   
 # This script, DWIDenseParcellation.sh, implements parcellation on the DWI dense connectomes 
 # using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)
 # 
-# ## Prerequisite Installed Software
+# ## PREREQUISITE INSTALLED SOFTWARE
 #
 # * Connectome Workbench (v1.0 or above)
 #
-# ## Prerequisite Environment Variables
+# ## PREREQUISITE ENVIRONMENT VARIABLES
 #
 # See output of usage function: e.g. $./DWIDenseParcellation.sh --help
 #
-# ### Expected Previous Processing
+# ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are either Conn1.nii.gz or Conn3.nii.gz, both of which are results of the AP probtrackxgpudense function
 # * These data are stored in: "$SubjectsFolder/subjects/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
 #
 #~ND~END~
 
+# ------------------------------------------------------------------------------
+# -- General help usage function
+# ------------------------------------------------------------------------------
 
 usage() {
-				
-				echo ""
-				echo "-- DESCRIPTION:"
-				echo ""
-				echo "This function implements parcellation on the DWI dense connectomes using a whole-brain parcellation (e.g. Glasser parcellation with subcortical labels included)."
-				echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
-				echo ""
-				echo " <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
-				echo ""
-				echo ""
-				echo "-- REQUIRED PARMETERS:"
-				echo ""
- 				echo "		--subjectsfolder=<folder_with_subjects>             Path to study data folder"
-				echo "		--subject=<list_of_cases>                           List of subjects to run"
-				echo "		--matrixversion=<matrix_version_value>              Matrix solution verion to run parcellation on; e.g. 1 or 3"
-				echo "		--parcellationfile=<file_for_parcellation>          Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
-				echo "		--outname=<name_of_output_pconn_file>               Specify the suffix output name of the pconn file"
-				echo ""
-				echo "-- OPTIONAL PARMETERS:"
-				echo "" 
- 				echo "		--overwrite=<clean_prior_run>                       Delete prior run for a given subject"
-				echo "		--waytotal=<none,standard,log>                      Use the waytotal normalized or log-transformed waytotal version of the DWI dense connectome. Default: [none]"
- 				echo ""
- 				echo "-- Example:"
-				echo ""
-				echo "DWIDenseParcellation.sh --subjectsfolder='<folder_with_subjects>' \ "
-				echo "--subject='<case_id>' \ "
-				echo "--matrixversion='3' \ "
-				echo "--parcellationfile='FileName.dlabel.nii' \ "
-				echo "--overwrite='no' \ "
-				echo "--outname='<output_name_suffix>'"
-				echo ""	
+     echo ""
+     echo "-- DESCRIPTION:"
+     echo ""
+     echo "This function implements parcellation on the DWI dense connectomes using a whole-brain parcellation (e.g. Glasser parcellation with subcortical labels included)."
+     echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
+     echo ""
+     echo " <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
+     echo ""
+     echo ""
+     echo "-- REQUIRED PARMETERS:"
+     echo ""
+     echo "     --subjectsfolder=<folder_with_subjects>             Path to study data folder"
+     echo "     --subject=<list_of_cases>                           List of subjects to run"
+     echo "     --matrixversion=<matrix_version_value>              Matrix solution verion to run parcellation on; e.g. 1 or 3"
+     echo "     --parcellationfile=<file_for_parcellation>          Specify the absolute path of the file you want to use for parcellation (e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii)"
+     echo "     --outname=<name_of_output_pconn_file>               Specify the suffix output name of the pconn file"
+     echo ""
+     echo "-- OPTIONAL PARMETERS:"
+     echo "" 
+     echo "     --overwrite=<clean_prior_run>                       Delete prior run for a given subject"
+     echo "     --waytotal=<none,standard,log>                      Use the waytotal normalized or log-transformed waytotal version of the DWI dense connectome. Default: [none]"
+     echo ""
+     echo "-- Example:"
+     echo ""
+     echo "DWIDenseParcellation.sh --subjectsfolder='<folder_with_subjects>' \ "
+     echo "--subject='<case_id>' \ "
+     echo "--matrixversion='3' \ "
+     echo "--parcellationfile='FileName.dlabel.nii' \ "
+     echo "--overwrite='no' \ "
+     echo "--outname='<output_name_suffix>'"
+     echo ""
 }
 
-
 # ------------------------------------------------------------------------------
-#  Setup color outputs
+# -- Setup color outputs
 # ------------------------------------------------------------------------------
 
 reho() {
@@ -95,6 +93,10 @@ reho() {
 geho() {
     echo -e "\033[32m $1 \033[0m"
 }
+
+# ------------------------------------------------------------------------------
+#  -- Parse arguments
+# ------------------------------------------------------------------------------
 
 ########################################## INPUTS ########################################## 
 
@@ -109,147 +111,143 @@ geho() {
 
 ########################################## OUTPUTS #########################################
 
-# Outputs will be *pconn.nii files located here:
-#    DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
+# -- Outputs will be *pconn.nii files located here:
+#       DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
-# Get the command line options for this script
+# -- Get the command line options for this script
 
 get_options() {
-    local scriptName=$(basename ${0})
-    local arguments=($@)
-    
-    # initialize global output variables
-    unset SubjectsFolder
-    unset Subject
-    unset MatrixVersion
-    unset ParcellationFile
-    unset OutName
-    unset Overwrite
-    unset WayTotal
-    unset DWIOutFilePconn
-    unset DWIOutFilePDconn
-    runcmd=""
 
-    # parse arguments
-    local index=0
-    local numArgs=${#arguments[@]}
-    local argument
+local scriptName=$(basename ${0})
+local arguments=($@)
 
-    while [ ${index} -lt ${numArgs} ]; do
-        argument=${arguments[index]}
+# -- Initialize global output variables
+unset SubjectsFolder
+unset Subject
+unset MatrixVersion
+unset ParcellationFile
+unset OutName
+unset Overwrite
+unset WayTotal
+unset DWIOutFilePconn
+unset DWIOutFilePDconn
+runcmd=""
 
-        case ${argument} in
-            --help)
-                usage
-                exit 1
-                ;;
-            --version)
-                version_show $@
-                exit 0
-                ;;
-            --subjectsfolder=*)
-                SubjectsFolder=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --subject=*)
-                CASE=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --matrixversion=*)
-                MatrixVersion=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --parcellationfile=*)
-                ParcellationFile=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --outname=*)
-                OutName=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --waytotal=*)
-                WayTotal=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;                
-            --overwrite=*)
-                Overwrite=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;      
-            *)
-                usage
-                reho "ERROR: Unrecognized Option: ${argument}"
-        		echo ""
-                exit 1
-                ;;
-        esac
-    done
+# -- Parse arguments
+local index=0
+local numArgs=${#arguments[@]}
+local argument
 
-    # check required parameters
-    if [ -z ${SubjectsFolder} ]; then
-        usage
-        reho "ERROR: <subjects-folder-path> not specified>"
-        echo ""
-        exit 1
-    fi
+while [ ${index} -lt ${numArgs} ]; do
+    argument=${arguments[index]}
 
-    if [ -z ${CASE} ]; then
-        usage
-        reho "ERROR: <subject-id> not specified>"
-        echo ""
-        exit 1
-    fi
+    case ${argument} in
+        --help)
+            usage
+            exit 1
+            ;;
+        --version)
+            version_show $@
+            exit 0
+            ;;
+        --subjectsfolder=*)
+            SubjectsFolder=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --subject=*)
+            CASE=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --matrixversion=*)
+            MatrixVersion=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --parcellationfile=*)
+            ParcellationFile=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --outname=*)
+            OutName=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --waytotal=*)
+            WayTotal=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;                
+        --overwrite=*)
+            Overwrite=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;      
+        *)
+            usage
+            reho "ERROR: Unrecognized Option: ${argument}"
+    		echo ""
+            exit 1
+            ;;
+    esac
+done
 
-    if [ -z ${MatrixVersion} ]; then
-        usage
-        reho "ERROR: <matrix_version_value> not specified>"
-        echo ""
-        exit 1
-    fi
-
-    if [ -z ${ParcellationFile} ]; then
-        usage
-        reho "ERROR: <file_for_parcellation> not specified>"
-        echo ""
-        exit 1
-    fi
-
-    if [ -z ${WayTotal} ]; then
-        reho "No <use_waytotal_normalized_data> specified. Assuming default [none]"
-        WayTotal=none
-        echo ""
-    fi
-    
-    if [ -z ${OutName} ]; then
-        usage
-        reho "ERROR: <name_of_output_pconn_file> not specified>"
-        exit 1
-    fi
- 
-	# set StudyFolder
-	cd $SubjectsFolder/../ &> /dev/null
-	StudyFolder=`pwd` &> /dev/null
-	   
-    # report options
+# -- Check required parameters
+if [ -z ${SubjectsFolder} ]; then
+    usage
+    reho "ERROR: <subjects-folder-path> not specified>"
     echo ""
+    exit 1
+fi
+if [ -z ${CASE} ]; then
+    usage
+    reho "ERROR: <subject-id> not specified>"
     echo ""
-    echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    echo "   SubjectsFolder: ${SubjectsFolder}"
-    echo "   Subject: ${CASE}"
-    echo "   MatrixVersion: ${MatrixVersion}"
-    echo "   ParcellationFile: ${ParcellationFile}"
-    echo "   Waytotal normalization: ${WayTotal}"
-    echo "   OutName: ${OutName}"
-    echo "   Overwrite: ${Overwrite}"
-    echo "-- ${scriptName}: Specified Command-Line Options - End --"
+    exit 1
+fi
+if [ -z ${MatrixVersion} ]; then
+    usage
+    reho "ERROR: <matrix_version_value> not specified>"
     echo ""
-    geho "------------------------- Start of work --------------------------------"
+    exit 1
+fi
+if [ -z ${ParcellationFile} ]; then
+    usage
+    reho "ERROR: <file_for_parcellation> not specified>"
     echo ""
+    exit 1
+fi
+if [ -z ${WayTotal} ]; then
+    reho "No <use_waytotal_normalized_data> specified. Assuming default [none]"
+    WayTotal=none
+    echo ""
+fi
+if [ -z ${OutName} ]; then
+    usage
+    reho "ERROR: <name_of_output_pconn_file> not specified>"
+    exit 1
+fi
+
+# -- Set StudyFolder
+cd $SubjectsFolder/../ &> /dev/null
+StudyFolder=`pwd` &> /dev/null
+   
+# -- Report options
+echo ""
+echo ""
+echo "-- ${scriptName}: Specified Command-Line Options - Start --"
+echo "   SubjectsFolder: ${SubjectsFolder}"
+echo "   Subject: ${CASE}"
+echo "   MatrixVersion: ${MatrixVersion}"
+echo "   ParcellationFile: ${ParcellationFile}"
+echo "   Waytotal normalization: ${WayTotal}"
+echo "   OutName: ${OutName}"
+echo "   Overwrite: ${Overwrite}"
+echo "-- ${scriptName}: Specified Command-Line Options - End --"
+echo ""
+geho "------------------------- Start of work --------------------------------"
+echo ""
 }
 
 ######################################### DO WORK ##########################################
 
-#gzip $ResultsFolder/${OutFileName} --fast
-#gzip $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
+# gzip $ResultsFolder/${OutFileName} --fast
+# gzip $ResultsFolder/${OutFileTemp}_waytotnorm.dconn.nii --fast
 
 main() {
 
@@ -261,7 +259,6 @@ reho "--- Establishing paths for all input and output folders:"
 echo ""
 
 # -- Define input and check if WayTotal normalization is selected
-
 if [ "$WayTotal" == "none" ]; then
 	echo "--- Using dconn file without waytotal normalization"
 	DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
@@ -319,8 +316,7 @@ else
 	wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFilePDconn" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFilePconn"
 fi	
 
-# Perform completion checks"
-
+# -- Perform completion checks
 	reho "--- Checking outputs..."
 	echo ""
 	if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
@@ -336,14 +332,11 @@ fi
 	echo ""
     geho "------------------------- End of work --------------------------------"
     echo ""
-
-exit 1
-
-}	
+    
+}
 
 # ---------------------------------------------------------
 # -- Invoke the main function to get things started -------
 # ---------------------------------------------------------
-
 
 main $@
