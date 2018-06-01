@@ -533,7 +533,7 @@ if [ "$Modality" == "BOLD" ]; then
 			echo ""
 			reho "--- Check presence of your inputs for BOLD ${BOLD} and re-run!"
 			echo ""
-			return 1
+			exit 1
 		else
 			# -- Generate QC statistics for a given BOLD
 			geho "--- BOLD data specified found. Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
