@@ -525,8 +525,9 @@ if [ "$Modality" == "BOLD" ]; then
 	
 	# -- Run BOLD loop across BOLD runs
 	for BOLD in $BOLDS; do
+	
 		# -- Check if BOLD exists and skip if not it does not
-		if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii ]; then
+		if [[ ! -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii ]]; then
 			echo ""
 			reho "--- BOLD data specified for BOLD ${BOLD} not found: "
 			reho "     --> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii "
@@ -534,137 +535,137 @@ if [ "$Modality" == "BOLD" ]; then
 			reho "--- Check presence of your inputs for BOLD ${BOLD} and re-run!"
 			echo ""
 			exit 1
+		fi
+		
+		# -- Generate QC statistics for a given BOLD
+		geho "--- BOLD data specified found. Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
+		echo ""
+		# -- Reduce dtseries
+		wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii \
+		TSNR \
+		${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii \
+		-exclude-outliers 4 4
+		# -- Compute SNR
+		TSNR=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
+		# -- Record values 
+		TSNRLog="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
+		TSNRReport="${OutPath}/TSNR_Report_${BOLD}_${TimeStampQCPreproc}.txt"
+		printf "${TSNRLog}\n" >> ${TSNRReport}
+		# -- Echo completion & Check SNROnly flag
+		if [ -f ${TSNRReport} ]; then
+			if [ SNROnly == "yes" ]; then 
+				echo ""
+				geho "--- Completed ONLY SNR calculations for ${TSNRLog}. Final report can be found here: ${TSNRReport}"; echo ""
+				exit 1
+			else
+				geho "--- Completed SNR calculations for ${TSNRLog}. "
+				geho "    Final report can be found here: ${TSNRReport}"
+				echo ""
+			fi
 		else
-			# -- Generate QC statistics for a given BOLD
-			geho "--- BOLD data specified found. Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
+			reho "--- SNR report not found. Something went wrong. Check inputs."; echo ""
+		fi
+		
+		# -- Get values for plotting GS chart & Compute the GS scalar series file
+		
+		# -- Get TR
+		TR=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
+		
+		# -- Clean preexisting outputs
+		rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt &> /dev/null
+		rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii &> /dev/null
+		rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii &> /dev/null
+		
+		# -- Regenerate outputs
+		wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii MEAN ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
+		wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt
+		
+		# -- Check skipped frames
+		if [ ${SkipFrames} > 0 ]; then 
+			rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt &> /dev/null
+			tail -n +${SkipFrames} ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt >> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt
+			TR=`cat ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt | wc -l` 
+			wb_command -cifti-create-scalar-series ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
+			xmax="$TR"
+		else
+			wb_command -cifti-create-scalar-series ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
+			xmax=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
+		fi
+		
+		# -- Get mix/max stats
+		ymax=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`	
+		ymin=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
+		
+		# -- Rsync over template files for a given BOLD
+		Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null "
+		Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null "
+		
+		# -- Setup naming conventions before generating scene
+		Com3="cp ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com4="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
+		Com5="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com6="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com7="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com8="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com9="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		
+		# -- Set the BOLDSuffix variable
+		Com10="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		
+		# -- Add timestamp to the scene
+		Com11="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com12="sed -i -e 's|DUMMYBOLDANNOT|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		
+		# -- Output image of the scene
+		Com13="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.GSmap.QC.wb.png 1194 539"
+		Com14="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 2 ${OutPath}/${CASE}.${Modality}.${BOLD}.GStimeseries.QC.wb.png 1194 539"
+		
+		# -- Clean temp scene
+		Com15="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
+		
+		# -- Generate Scene Zip File if set to YES
+		if [ "$SceneZip" == "yes" ]; then
+			echo "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
+			echo "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
 			echo ""
-			# -- Reduce dtseries
-			wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii \
-			TSNR \
-			${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii \
-			-exclude-outliers 4 4
-			# -- Compute SNR
-			TSNR=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
-			# -- Record values 
-			TSNRLog="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
-			TSNRReport="${OutPath}/TSNR_Report_${BOLD}_${TimeStampQCPreproc}.txt"
-			printf "${TSNRLog}\n" >> ${TSNRReport}
-			# -- Echo completion & Check SNROnly flag
-			if [ -f ${TSNRReport} ]; then
-				if [ SNROnly == "yes" ]; then 
-					echo ""
-					geho "--- Completed ONLY SNR calculations for ${TSNRLog}. Final report can be found here: ${TSNRReport}"; echo ""
-					exit 1
-				else
-					geho "--- Completed SNR calculations for ${TSNRLog}. "
-					geho "    Final report can be found here: ${TSNRReport}"
-					echo ""
-				fi
-			else
-				reho "--- SNR report not found. Something went wrong. Check inputs."; echo ""
-			fi
-			
-			# -- Get values for plotting GS chart & Compute the GS scalar series file
-			
-			# -- Get TR
-			TR=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
-			
-			# -- Clean preexisting outputs
-			rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt &> /dev/null
-			rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii &> /dev/null
-			rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii &> /dev/null
-			
-			# -- Regenerate outputs
-			wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii MEAN ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
-			wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt
-			
-			# -- Check skipped frames
-			if [ ${SkipFrames} > 0 ]; then 
-				rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt &> /dev/null
-				tail -n +${SkipFrames} ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt >> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt
-				TR=`cat ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt | wc -l` 
-				wb_command -cifti-create-scalar-series ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
-				xmax="$TR"
-			else
-				wb_command -cifti-create-scalar-series ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
-				xmax=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
-			fi
-			
-			# -- Get mix/max stats
-			ymax=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`	
-			ymin=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
-			
-			# -- Rsync over template files for a given BOLD
-			Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null "
-			Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null "
-			
-			# -- Setup naming conventions before generating scene
-			Com3="cp ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com4="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
-			Com5="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com6="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com7="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com8="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com9="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			
-			# -- Set the BOLDSuffix variable
-			Com10="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			
-			# -- Add timestamp to the scene
-			Com11="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			Com12="sed -i -e 's|DUMMYBOLDANNOT|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-			
-			# -- Output image of the scene
-			Com13="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.GSmap.QC.wb.png 1194 539"
-			Com14="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 2 ${OutPath}/${CASE}.${Modality}.${BOLD}.GStimeseries.QC.wb.png 1194 539"
-			
-			# -- Clean temp scene
-			Com15="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
-			
-			# -- Generate Scene Zip File if set to YES
-			if [ "$SceneZip" == "yes" ]; then
-				echo "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
-				echo "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+			echo "--- The zip file will be saved to: "
+			echo "    ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.zip"
+			echo ""
+			RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
+			Com16="cp ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+			Com17="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.*.zip &> /dev/null "
+			Com18="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
+			Com19="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene pb0986.${Modality}.${BOLD}.QC.wb.${TimeStamp} ${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+			Com20="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com21="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
+			Com22="cp ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+		fi
+		
+		# -- Combine all the calls into a single command
+		if [ "$SceneZip" == "yes" ]; then
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14; $Com15; $Com16; $Com17; $Com18; $Com19; $Com20; $Com21; $Com22"
+		else
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14; $Com15"
+		fi
+		
+		# -- Clean up prior conflicting scripts, generate script and set permissions
+		rm -f "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
+		echo "$ComQUEUE" >> "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
+		chmod 770 "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
+		
+		# -- Run script
+		"$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$LogFolder"/QC_"$CASE"_ComQUEUE_"$Modality"_"$TimeStamp".log
+		
+		# -- Check if Scene Zip file generated OK
+		if [ "$SceneZip" == "yes" ]; then
+			if [ -f ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip ]; then
 				echo ""
-				echo "--- The zip file will be saved to: "
-				echo "    ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.zip"
+				echo "--- Scene zip file found and generated: "
+				echo "    ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip " 
 				echo ""
-				RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-				Com16="cp ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
-				Com17="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.*.zip &> /dev/null "
-				Com18="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
-				Com19="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene pb0986.${Modality}.${BOLD}.QC.wb.${TimeStamp} ${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-				Com20="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-				Com21="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-				Com22="cp ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
-			fi
-			
-			# -- Combine all the calls into a single command
-			if [ "$SceneZip" == "yes" ]; then
-				ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14; $Com15; $Com16; $Com17; $Com18; $Com19; $Com20; $Com21; $Com22"
 			else
-				ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14; $Com15"
-			fi
-			
-			# -- Clean up prior conflicting scripts, generate script and set permissions
-			rm -f "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
-			echo "$ComQUEUE" >> "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-			chmod 770 "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-			
-			# -- Run script
-			"$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$LogFolder"/QC_"$CASE"_ComQUEUE_"$Modality"_"$TimeStamp".log
-			
-			# -- Check if Scene Zip file generated OK
-			if [ "$SceneZip" == "yes" ]; then
-				if [ -f ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip ]; then
-					echo ""
-					echo "--- Scene zip file found and generated: "
-					echo "    ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip " 
-					echo ""
-				else
-					echo ""
-					reho "--- Scene zip generation for ${BOLD} failed. Check inputs."; echo ""
-				fi
+				echo ""
+				reho "--- Scene zip generation for ${BOLD} failed. Check inputs."; echo ""
 			fi
 		fi
 	done
