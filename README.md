@@ -200,6 +200,7 @@ Change Log
 * 0.10.24 [niutilities] Fixed subjects definition bug
 * 0.11.0 [connector] Upgraded QC functionality to include scene zipping and to allow time stamping and subject info integration into PNGs
 * 0.11.1 [connector] Resolved QC functionality bug
+* 0.11.2 [library] Resolved GZIP issue with library atlas files
 
 
 =======
