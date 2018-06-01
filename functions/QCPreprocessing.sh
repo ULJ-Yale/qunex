@@ -358,7 +358,7 @@ if [ "$Modality" = "DWI" ]; then
 	if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; echo ""; fi
 	if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; echo ""; fi
 	if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; echo ""; fi
-	if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; echo ""; fi		
+	if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; echo ""; fi
 fi
 # -- BOLD modality-specific settings:
 if [ "$Modality" = "BOLD" ]; then
@@ -463,7 +463,7 @@ if [ "$Overwrite" == "yes" ]; then
 		done
 	else
 		rm -f "$OutPath"/${CASE}."$Modality".* &> /dev/null
-	fi	
+	fi
 fi
 # -- Check if a given case exists
 if [ -f "$OutPath"/${CASE}."$Modality".QC.png ]; then
@@ -640,7 +640,11 @@ if [ "$Modality" == "BOLD" ]; then
 			fi
 			
 			# -- Combine all the calls into a single command
-			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14; $Com15; $Com16; $Com17; $Com18; $Com19; $Com20; $Com21; $Com22"
+			if [ "$SceneZip" == "yes" ]; then
+				ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14; $Com15; $Com16; $Com17; $Com18; $Com19; $Com20; $Com21; $Com22"
+			else
+				ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14; $Com15"
+			fi
 			
 			# -- Clean up prior conflicting scripts, generate script and set permissions
 			rm -f "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
@@ -902,13 +906,15 @@ Com8="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutP
 
 # -- Check if dtifit is requested
 if [ "$DtiFitQC" == "yes" ]; then
-	Com7a="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-	Com8a="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.dtifit.QC.png 1194 539"
+	Com8a="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+	Com8b="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.dtifit.QC.png 1194 539"
+	Com8="$Com8; $Com8a; $Com8b"
 fi
 # -- Check of bedpostx QC is requested
 if [ "$BedpostXQC" == "yes" ]; then
-	Com7b="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-	Com8b="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.bedpostx.QC.png 1194 539"
+	Com8c="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+	Com8d="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.bedpostx.QC.png 1194 539"
+	Com8="$Com8; $Com8c; $Com8d"
 fi
 
 # -- Clean templates and files for next subject
@@ -922,16 +928,17 @@ if [ "$SceneZip" == "yes" ]; then
 	geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
 	echo ""
 	geho "--- The zip file will be saved to: "
-	geho "    ${OutPath}/${CASE}.${Modality}.QC.wb.${TimeStamp}.zip"
+	geho "    ${OutPath}/${CASE}.${Modality}.QC.wb.${TimeStamp}.zip "
 	echo ""
 	RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com12="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com13="rm ${OutPath}/${CASE}.${Modality}.QC.wb.*.zip &> /dev/null"
-	Com14="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene" 
-	Com15="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene pb0986.${Modality}.QC.wb.${TimeStamp} ${CASE}.${Modality}.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com16="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene"
-	Com17="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-	Com18="cp ${OutPath}/${CASE}.${Modality}.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+	Com12a="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+	Com12b="rm ${OutPath}/${CASE}.${Modality}.QC.wb.*.zip &> /dev/null"
+	Com12c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene" 
+	Com12d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene pb0986.${Modality}.QC.wb.${TimeStamp} ${CASE}.${Modality}.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+	Com12e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene"
+	Com12f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
+	Com12g="cp ${OutPath}/${CASE}.${Modality}.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+	Com12="$Com12a; $Com12b; $Com12c; $Com12d; $Com12e; $Com12f; $Com12g"
 fi
 
 # -- Generate Zip files for dtifit and bedpostx scenes if requested
@@ -943,13 +950,14 @@ if [ "$DtiFitQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
 	geho "    ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.${TimeStamp}.zip"
 	echo ""
 	RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com12a="cp ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com13a="rm ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.*.zip &> /dev/null"
-	Com14a="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.dtifit.QC.wb.scene" 
-	Com15a="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.dtifit.QC.wb.scene pb0986.${Modality}.dtifit.QC.wb.${TimeStamp} ${CASE}.${Modality}.dtifit.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com16a="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-	Com17a="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-	Com18a="cp ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+	Com13a="cp ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+	Com13b="rm ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.*.zip &> /dev/null"
+	Com13c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.dtifit.QC.wb.scene" 
+	Com13d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.dtifit.QC.wb.scene pb0986.${Modality}.dtifit.QC.wb.${TimeStamp} ${CASE}.${Modality}.dtifit.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+	Com13e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+	Com13f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
+	Com13g="cp ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+	Com13="$Com13a; $Com13b; $Com13c; $Com13d; $Com13e; $Com13f; $Com13g"
 fi
 if [ "$BedpostXQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
 	geho "--- Scene zip set to: $SceneZip. BedpostXQC set to: $BedpostXQC. Relevant scene files will be zipped using the following base folder:" 
@@ -959,22 +967,39 @@ if [ "$BedpostXQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
 	geho "    ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.${TimeStamp}.zip"
 	echo ""
 	RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com12b="cp ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com13b="rm ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.*.zip &> /dev/null"
-	Com14b="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.bedpostx.QC.wb.scene" 
-	Com15b="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.bedpostx.QC.wb.scene pb0986.${Modality}.bedpostx.QC.wb.${TimeStamp} ${CASE}.${Modality}.bedpostx.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com16b="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-	Com17b="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-	Com18b="cp ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+	Com14a="cp ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+	Com14b="rm ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.*.zip &> /dev/null"
+	Com14c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.bedpostx.QC.wb.scene" 
+	Com14d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.bedpostx.QC.wb.scene pb0986.${Modality}.bedpostx.QC.wb.${TimeStamp} ${CASE}.${Modality}.bedpostx.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+	Com14e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
+	Com14f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
+	Com14g="cp ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+	Com14="$Com14a; $Com14b; $Com14c; $Com14d; $Com14e; $Com14f; $Com14g"
 fi
 
-# -- Combine all the calls into a single command
-ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com7a; $Com8a; $Com7b; $Com8b; $Com9; $Com10; $Com11; $Com12; $Com12a; $Com12b; $Com13; $Com13a; $Com13b; $Com14; $Com14a; $Com14b; $Com15; $Com15a; $Com15b; $Com16; $Com16a; $Com16b; $Com17; $Com17a; $Com17b; $Com18; $Com18a; $Com18b;"
+# -- Combine all the calls into a single command based on various specifications
+if [ "$SceneZip" == "yes" ]; then
+ 	if [ "$DtiFitQC" == "no" ]; then
+ 		if [ "$BedpostXQC" == "no" ]; then
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12"
+		else
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com14"
+		fi
+	else
+	 	if [ "$BedpostXQC" == "yes" ]; then
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13; $Com14"
+		else
+			ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11; $Com12; $Com13"
+		fi
+	fi
+else
+	ComQUEUE="$Com1; $Com2; $Com3; $Com4; $Com5; $Com6; $Com7; $Com8; $Com9; $Com10; $Com11"
+fi
 
 # -- Clean up prior conflicting scripts, generate script and set permissions
 rm -f "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh &> /dev/null
 echo "$ComQUEUE" >> "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh
-chmod 770 "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh	
+chmod 770 "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh
 
 # -- Run Job
 "$LogFolder"/${CASE}_ComQUEUE_${Modality}_${TimeStamp}.sh |& tee -a "$LogFolder"/QC_"$CASE"_ComQUEUE_"$Modality"_"$TimeStamp".log
