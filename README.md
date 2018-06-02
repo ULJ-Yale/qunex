@@ -202,7 +202,7 @@ Change Log
 * 0.11.1 [connector] Resolved QC functionality bug
 * 0.11.2 [library] Resolved GZIP issue with library atlas files
 * 0.11.3 [connector] QC function exit call fix if BOLD missing
-
+* 0.11.4 [connector] Edited names of example batch and mapping files to avoid conflicts
 
 =======
 [Mind and Brain Lab]: http://mblab.si
