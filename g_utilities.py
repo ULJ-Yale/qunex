@@ -87,9 +87,10 @@ def createStudy(studyfolder=None):
         └── QC
 
     Do note that the command will create all the missing subfolders in which the
-    specified study is to reside. The command also prepares template batch_parameters.txt
-    and hcp_mapping.txt files in <studyfolder>/subjects/specs folder. Finally, it
-    creates a .mnapstudy file in the <studyfolder> to identify it as a study basefolder.
+    specified study is to reside. The command also prepares template
+    batch_parameters_example.txt and hcp_mapping_example.txt files in
+    <studyfolder>/subjects/specs folder. Finally, it creates a .mnapstudy file in
+    the <studyfolder> to identify it as a study basefolder.
 
     Example:
 
@@ -103,6 +104,8 @@ def createStudy(studyfolder=None):
              - Added copying of parameters and hcpmap templates.
     2018-03-31 Grega Repovs
              - Added creation of .mnapstudy file.
+    2018-06-02 Grega Repovs
+             - Changed templates to *_example.txt.
     '''
 
     if studyfolder is None:
@@ -126,9 +129,9 @@ def createStudy(studyfolder=None):
     TemplateFolder = os.environ['TemplateFolder']
     print "\nPreparing template files:"
 
-    paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters.txt')
+    paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters_example.txt')
     if not os.path.exists(paramFile):
-        print " ... batch_parameters.txt"
+        print " ... batch_parameters_example.txt"
         pfile = open(paramFile, 'w')
         print >> pfile, parameterTemplateHeader
         for line in gp.arglist:
@@ -138,14 +141,14 @@ def createStudy(studyfolder=None):
                 print >> pfile, "#\n# " + line[0] + '\n#'
         pfile.close()
     else:
-        print " ... batch_parameters.txt file already exists"
+        print " ... batch_parameters_example.txt file already exists"
 
-    mapFile = os.path.join(studyfolder, 'subjects', 'specs', 'hcp_mapping.txt')
+    mapFile = os.path.join(studyfolder, 'subjects', 'specs', 'hcp_mapping_example.txt')
     if os.path.exists(mapFile):
-        print " ... hcp_mapping.txt file already exists"
+        print " ... hcp_mapping_example.txt file already exists"
     else:
-        print " ... hcp_mapping.txt"
-        shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping.txt'), mapFile)
+        print " ... hcp_mapping_example.txt"
+        shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), mapFile)
 
     markFile = os.path.join(studyfolder, '.mnapstudy')
     if os.path.exists(markFile):

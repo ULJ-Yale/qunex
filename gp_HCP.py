@@ -1209,7 +1209,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                  empty otherwise. []
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
-                                 to the bold name. []
+                                 to the bold name. [BOLD_]
 
     image acquisition details
     -------------------------
