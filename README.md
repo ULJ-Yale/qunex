@@ -206,6 +206,7 @@ Change Log
 * 0.11.5 [niutilities] Updated createStudy to use the new example batch and mapping file names
 * 0.11.6 [connector] Made QC functionality more robust to BOLD naming variation
 * 0.11.7 [connector] Improved handling of paramaters in organizeDicom function
+* 0.11.8 [niutilities, library] Improved handling of deprecated parameters
 
 =======
 [Mind and Brain Lab]: http://mblab.si
