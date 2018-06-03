@@ -204,6 +204,7 @@ Change Log
 * 0.11.3 [connector] QC function exit call fix if BOLD missing
 * 0.11.4 [connector] Edited names of example batch and mapping files to avoid conflicts
 * 0.11.5 [niutilities] Updated createStudy to use the new example batch and mapping file names
+* 0.11.6 [connector] Made QC functionality more robust to BOLD naming variation
 
 =======
 [Mind and Brain Lab]: http://mblab.si
