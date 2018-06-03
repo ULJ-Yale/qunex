@@ -154,7 +154,6 @@ unset ExtractData
 # -- Set pconn variables to defaults before parsing inputs
 ComputePConn="no"
 UseWeights="no"
-
 runcmd=""
 
 # -- Parse arguments

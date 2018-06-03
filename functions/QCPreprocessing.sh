@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/sh 
+#set -x
 #
 #~ND~FORMAT~MARKDOWN~
 #~ND~START~
@@ -25,7 +26,7 @@
 # ## TODO
 #
 # ## DESCRIPTION 
-#   
+#
 # This script, QCPreprocessing.sh, implements quality control for various stages of 
 # HCP preprocessed data
 # 
@@ -66,38 +67,51 @@ usage() {
      echo ""
      echo "                Note: For BOLD data there is also an SNR txt output if specified."
      echo ""
-     echo "-- REQUIRED PARMETERS:"
+     echo "-- REQUIRED GENERAL PARMETERS:"
      echo ""
-     echo "--subjectsfolder=<folder_with_subjects>     Path to study folder that contains subjects"
-     echo "--subjects=<list_of_cases>                  List of subjects to run, separated by commas"
-     echo "--modality=<input_modality_for_qc>          Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
-     echo "" 
-     echo "-- OPTIONAL PARMETERS:"
-     echo "" 
-     echo "--overwrite=<clean_prior_run>                    Delete prior QC run"
-     echo "--templatefolder=<path_for_the_template_folder>  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/templates)"
-     echo "--outpath=<path_for_output_file>                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
-     echo "                                                    If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
-     echo "--dwipath=<path_for_dwi_data>                    Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
-     echo "--dwidata=<file_name_for_dwi_data>               Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
-     echo "--dtifitqc=<visual_qc_for_dtifit>                Specify if dtifit visual QC should be completed [e.g. yes or no]"
-     echo "--bedpostxqc=<visual_qc_for_bedpostx>            Specify if BedpostX visual QC should be completed [e.g. yes or no]"
-     echo "--eddyqcstats=<qc_stats_for_eddy>                    Specify if EDDY QC stats should be linked into QC folder and motion report generated [e.g. yes or no]"
-     echo "--dwilegacy=<dwi_data_processed_via_legacy_pipeline>     Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
-     echo "--bolddata=<file_names_for_bold_data>                    Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
-     echo "                                                         Note: You can also specify subject_hcp.txt, which will result in parsing all referenced BOLDs."
-     echo "                                                         Note: If left empty will assume presence of subject_hcp.txt and parse all referenced BOLDs."
-     echo "--boldsuffix=<file_name_for_bold_data>                   Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
+     echo "--function=<function_name>                                      Explicitly specify Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
+     echo "--subjectsfolder=<folder_with_subjects>                         Path to study folder that contains subjects"
+     echo "--subjects=<list_of_cases>                                      List of subjects to run, separated by commas"
+     echo "--modality=<input_modality_for_qc>                              Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
+     echo ""
+     echo "-- DWI PARMETERS"
+     echo ""
+     echo "--dwipath=<path_for_dwi_data>                                   Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
+     echo "--dwidata=<file_name_for_dwi_data>                              Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
+     echo "--dtifitqc=<visual_qc_for_dtifit>                               Specify if dtifit visual QC should be completed [e.g. yes or no]"
+     echo "--bedpostxqc=<visual_qc_for_bedpostx>                           Specify if BedpostX visual QC should be completed [e.g. yes or no]"
+     echo "--eddyqcstats=<qc_stats_for_eddy>                               Specify if EDDY QC stats should be linked into QC folder and motion report generated [e.g. yes or no]"
+     echo "--dwilegacy=<dwi_data_processed_via_legacy_pipeline>            Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
+     echo ""
+     echo "-- BOLD PARMETERS"
+     echo ""
+     echo "--bolddata=<bold_run_numbers>                                    Specify BOLD data numbers separated by comma, space or pipe."
+     echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
+     echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
+     echo "--boldprefix=<prefix_file_name_for_bold_data>                    Specify the prefix file name for BOLD dtseries data [may differ across studies depending on processing; e.g. BOLD or TASK or REST]"
+     echo "                                                                   Note: If unspecified then QC script will assume that folder names containing processed BOLDs are named numerically only (e.g. 1, 2, 3)."
+     echo "--boldsuffix=<suffix_file_name_for_bold_data>                    Specify the suffix file name for BOLD dtseries data [may differ across studies depending on processing; e.g. Atlas or MSMAll]"
      echo "--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
      echo "--snronly=<compute_snr_only_for_bold>                            Specify if you wish to compute only SNR BOLD QC calculation and skip image generation <yes/no>. Default is [no]"
-     echo "--timestamp=<specify_time_stamp>                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
-     echo "--suffix=<specify_suffix_id_for_logging>         Allows user to specify unique suffix or to parse a time stamp from connector wrapper [Default is <subject_id>_<timestamp> ]"
-     echo "--scenezip=<zip_generate_scene_file>             Generates a ZIP file with the scene and all relevant files for Connectome Workbench visualization [yes]"
-     echo "                                                 Note: If scene zip set to yes, then relevant scene files will be zipped with an updated relative base folder." 
-     echo "                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
-     echo "                                                 The scene zip file will be saved to: "
-     echo "                                                       /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
      echo ""
+     echo "-- OPTIONAL PARMETERS:"
+     echo "" 
+     echo "--overwrite=<clean_prior_run>                                    Delete prior QC run"
+     echo "--templatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/templates)"
+     echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
+     echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
+     echo "--scenezip=<zip_generate_scene_file>                             Generates a ZIP file with the scene and all relevant files for Connectome Workbench visualization [yes]"
+     echo "                                                                 Note: If scene zip set to yes, then relevant scene files will be zipped with an updated relative base folder." 
+     echo "                                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
+     echo "                                                                 The scene zip file will be saved to: "
+     echo "                                                                     /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
+     echo ""
+     echo "--scheduler=<name_of_cluster_scheduler_and_options>              A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+     echo "                                                                     e.g. for SLURM the string would look like this: "
+     echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+     echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
+     echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
+     echo "" 
      echo ""
      echo "-- Complete examples for each supported modality:"
      echo ""
@@ -179,11 +193,34 @@ geho() {
 
 	# -- Outputs will be files located in the location specified in the outputpath
 
-# -- Get the command line options for this script
-get_options() {
+# -- Set general options functions
+opts_GetOpt() {
+sopt="$1"
+shift 1
+for fn in "$@" ; do
+	if [ `echo ${fn} | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
+		echo "${fn}" | sed "s/^${sopt}=//"
+		return 0
+	fi
+done
+}
 
-local scriptName=$(basename ${0})
-local arguments=("$@")
+opts_CheckForHelpRequest() {
+for fn in "$@" ; do
+	if [ "$fn" = "--help" ]; then
+		return 0
+	fi
+done
+}
+
+if [ $(opts_CheckForHelpRequest $@) ]; then
+	showVersion
+	show_usage
+	exit 0
+fi
+
+# -- Get the command line options for this script
+# get_options() {
 
 # -- Initialize global variables
 unset SubjectsFolder # --subjectsfolder=
@@ -199,6 +236,7 @@ unset BedpostXQC # --bedpostxqc
 unset EddyQCStats # --eddyqcstats
 unset DWILegacy # --dwilegacy
 unset BOLDS # --bolddata
+unset BOLDPrefix # --boldprefix
 unset BOLDSuffix # --boldsuffix
 unset SkipFrames # --skipframes
 unset SNROnly # --snronly
@@ -207,107 +245,47 @@ unset Suffix # --suffix
 unset SceneZip # --scenezip
 runcmd=""
 
-# -- Parse arguments
-local index=0
-local numArgs=${#arguments[@]}
-local argument
+# -- Parse general arguments
+SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
+CASE=`opts_GetOpt "--subject" $@`
+Overwrite=`opts_GetOpt "--overwrite" $@`
+OutPath=`opts_GetOpt "--outpath" $@`
+TemplateFolder=`opts_GetOpt "--templatefolder" $@`
+Modality=`opts_GetOpt "--modality" $@`
 
-while [ ${index} -lt ${numArgs} ]; do
-        argument=${arguments[index]}
-        case ${argument} in
-            --help)
-                usage
-                exit 1
-                ;;
-            --version)
-                version_show $@
-                exit 0
-                ;;
-            --subjectsfolder=*)
-                SubjectsFolder=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --subject=*)
-                CASE=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --outpath=*)
-                OutPath=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --overwrite=*)
-                Overwrite=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;      
-            --templatefolder=*)
-                TemplateFolder=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;       
-            --modality=*)
-                Modality=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --dwipath=*)
-                DWIPath=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;  
-            --dwidata=*)
-                DWIData=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;  
-            --dtifitqc=*)
-                DtiFitQC=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --bedpostxqc=*)
-                BedpostXQC=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;  
-            --eddyqcstats=*)
-                EddyQCStats=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --dwilegacy=*)
-                DWILegacy=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;  
-            --bolddata=*)
-                BOLDS=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --boldsuffix=*)
-                BOLDSuffix=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --skipframes=*)
-                SkipFrames=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;
-            --snronly=*)
-                SNROnly=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;  
-            --timestamp=*)
-                TimeStamp=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;  
-            --suffix=*)
-                Suffix=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;;  
-            --scenezip=*)
-                SceneZip=${argument/*=/""}
-                index=$(( index + 1 ))
-                ;; 
-            *)
-                  usage
-                  reho "ERROR: Unrecognized Option: ${argument}"
-                  echo ""
-                  exit 1
-                 ;;
-        esac
-    done
-echo ""
+# -- Parse DWI arguments
+DWIPath=`opts_GetOpt "--dwipath" $@`
+DWIData=`opts_GetOpt "--dwidata" $@`
+DtiFitQC=`opts_GetOpt "--dtifitqc" $@`
+BedpostXQC=`opts_GetOpt "--bedpostxqc" $@`
+EddyQCStats=`opts_GetOpt "--eddyqcstats" $@`
+DWILegacy=`opts_GetOpt "--dwilegacy" $@`
+
+# -- Parse BOLD arguments
+BOLDDATA=`opts_GetOpt "--bolddata" "$@"` #| sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
+BOLDRUNS=`opts_GetOpt "--boldruns" "$@"` #| sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
+BOLDS=`opts_GetOpt "--bolds" "$@"` #| sed #'s/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+if [[ ! -z $BOLDDATA ]]; then
+	if [[ -z $BOLDS ]]; then
+		BOLDS="${BOLDDATA}"
+	fi
+fi
+if [[ ! -z $BOLDRUNS ]]; then
+	if [[ -z $BOLDS ]]; then
+		BOLDS="${BOLDDATA}"
+	fi
+fi
+reho "${BOLDS}"
+
+BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
+BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
+SkipFrames=`opts_GetOpt "--skipframes" $@`
+SNROnly=`opts_GetOpt "--snronly" $@`
+
+# -- Parse optional arguments
+TimeStamp=`opts_GetOpt "--timestamp" $@`
+Suffix=`opts_GetOpt "--suffix" $@`
+SceneZip=`opts_GetOpt "--scenezip" $@`
 
 # -- Check general required parameters
 if [ -z ${CASE} ]; then
@@ -370,7 +348,7 @@ if [ "$Modality" = "BOLD" ]; then
 		echo ""
 	fi
 	# -- Check if subject_hcp.txt is present:
-	if [ ${BOLDS} == "subject_hcp.txt" ]; then
+	if [[ ${BOLDS} == "subject_hcp.txt" ]]; then
 		echo ""
 		echo "--- Using subject_hcp.txt individual information files. Verifying that subject_hcp.txt exists."; echo ""
 		if [[ -f ${SubjectsFolder}/${CASE}/subject_hcp.txt ]]; then
@@ -383,6 +361,10 @@ if [ "$Modality" = "BOLD" ]; then
 	else
 		# -- Remove commas or pipes from BOLD input list if still present if using manual input
 		BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+	fi
+	# -- Set BOLD prefix correctly
+	if [ -z "$BOLDPrefix" ]; then 
+		BOLDPrefix=""; echo "BOLD prefix not specified. Assuming no prefix"; echo ""
 	fi
 	# -- Set BOLD suffix correctly
 	if [ -z "$BOLDSuffix" ]; then 
@@ -400,6 +382,8 @@ fi
 # -- Set StudyFolder
 cd $SubjectsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
+
+scriptName=$(basename ${0})
 
 # -- Report options
 echo ""
@@ -423,6 +407,7 @@ if [ "$Modality" = "DWI" ]; then
 fi
 if [ "$Modality" = "BOLD" ]; then
 	echo "  BOLD data input: ${BOLDS}"
+	echo "  BOLD prefix: ${BOLDPrefix}"
 	echo "  BOLD suffix: ${BOLDSuffix}"
 	echo "  Skip Initial Frames: ${SkipFrames}"
 	echo "  Compute SNR Only: ${SNROnly}"
@@ -436,14 +421,12 @@ echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of work --------------------------------"
 echo ""
-}
+
+# }
 
 ######################################### DO WORK ##########################################
 
 main() {
-
-# -- Get Command Line Options
-get_options "$@"
 
 # -- Parse all the input cases for an individual or group run
 INPUTCASES=`echo "$CASE" | sed 's/,/ /g'`
@@ -525,7 +508,29 @@ if [ "$Modality" == "BOLD" ]; then
 	
 	# -- Run BOLD loop across BOLD runs
 	for BOLD in $BOLDS; do
-	
+
+		# -- Check if prefix is specified
+		if [ ! -z "$BOLDPrefix" ]; then 
+			echo ""
+			BOLD="$BOLDPrefix_$BOLD"
+			geho "-- BOLD Prefix specified. Appending to BOLD number: $BOLD"
+			echo ""
+		else
+			# -- Check if BOLD folder with the given number contains additional prefix info and return an exit code if yes
+			echo ""
+			NoBOLDDirPreffix=`ls -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/*${BOLD}`
+			NoBOLDPreffix=`ls -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/*${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
+			if [[ ! -z ${NoBOLDDirPreffix} ]]; then
+				reho "-- A directory with the BOLD number is found but containing a prefix, yet no prefix was specified: "
+				reho "   --> ${NoBOLDDirPreffix}"
+				reho "-- Setting BOLD prefix to: $NoBOLDPreffix "
+				echo ""
+				reho "-- If this is not correct please re-run with correct --boldprefix flag to ensure correct BOLDs are specified."
+				echo ""
+				BOLD=$NoBOLDPreffix
+			fi
+		fi
+
 		# -- Check if BOLD exists and skip if not it does not
 		if [[ ! -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii ]]; then
 			echo ""
@@ -1033,4 +1038,4 @@ echo ""
 # -- Invoke the main function to get things started -------
 # ---------------------------------------------------------
 
-main $@
+main

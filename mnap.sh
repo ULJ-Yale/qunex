@@ -2837,6 +2837,7 @@ QCPreproc() {
 		Overwrite="$Overwrite"
 		Cluster="$RunMethod"
 		SceneZip="$SceneZip"
+
 		# -- DWI Parameters
 		DWIPath="$DWIPath"
 		DWIData="$DWIData"
@@ -2844,8 +2845,10 @@ QCPreproc() {
 		DtiFitQC="$DtiFitQC"
 		BedpostXQC="$BedpostXQC"
 		EddyQCStats="$EddyQCStats"
+
 		# -- BOLD Parameters
 		BOLDS="$BOLDS"
+		BOLDPrefix="$BOLDPrefix"
 		BOLDSuffix="$BOLDSuffix"
 		SkipFrames="$SkipFrames"
 		SNROnly="SNROnly"
@@ -2886,7 +2889,8 @@ QCPreproc() {
 			--dtifitqc=${DtiFitQC} \
 			--bedpostxqc=${BedpostXQC} \
 			--eddyqcstats=${EddyQCStats} \
-			--bolddata=${BOLDS} \
+			--bolddata='${BOLDS}' \
+			--boldprefix=${BOLDPrefix} \
 			--boldsuffix=${BOLDSuffix} \
 			--skipframes=${SkipFrames} \
 			--snronly=${SNROnly} \
@@ -2898,25 +2902,26 @@ QCPreproc() {
 			echo "--------------------------------------------------------------"
 			echo ""
 			eval "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
-			--subjectsfolder=${SubjectsFolder} \
-			--subject=${CASE} \
-			--outpath=${OutPath} \
-			--overwrite=${Overwrite} \
-			--templatefolder=${TemplateFolder} \
-			--modality=${Modality} \
-			--dwipath=${DWIPath} \
-			--dwidata=${DWIData} \
-			--dwilegacy=${DWILegacy} \
-			--dtifitqc=${DtiFitQC} \
-			--bedpostxqc=${BedpostXQC} \
-			--eddyqcstats=${EddyQCStats} \
-			--bolddata=${BOLDS} \
-			--boldsuffix=${BOLDSuffix} \
-			--skipframes=${SkipFrames} \
-			--snronly=${SNROnly} \
-			--timestamp=${TimeStamp} \
-			--scenezip=${SceneZip} \
-			--suffix=${Suffix}" >> "$LogFolder"/QCPreprocessing_"$Suffix".log
+			--subjectsfolder='${SubjectsFolder}' \
+			--subject='${CASE}' \
+			--outpath='${OutPath}' \
+			--overwrite='${Overwrite}' \
+			--templatefolder='${TemplateFolder}' \
+			--modality='${Modality}' \
+			--dwipath='${DWIPath}' \
+			--dwidata='${DWIData}' \
+			--dwilegacy='${DWILegacy}' \
+			--dtifitqc='${DtiFitQC}' \
+			--bedpostxqc='${BedpostXQC}' \
+			--eddyqcstats='${EddyQCStats}' \
+			--bolddata='${BOLDS}' \
+			--boldprefix='${BOLDPrefix}' \
+			--boldsuffix='${BOLDSuffix}' \
+			--skipframes='${SkipFrames}' \
+			--snronly='${SNROnly}' \
+			--timestamp='${TimeStamp}' \
+			--scenezip='${SceneZip}' \
+			--suffix='${Suffix}'" >> "$LogFolder"/QCPreprocessing_"$Suffix".log
 		else
 			# -- Echo full command into a script
 			echo ""
@@ -2934,13 +2939,14 @@ QCPreproc() {
 			--dtifitqc=${DtiFitQC} \
 			--bedpostxqc=${BedpostXQC} \
 			--eddyqcstats=${EddyQCStats} \
-			--bolddata=${BOLDS} \
+			--bolddata='${BOLDS}' \
+			--boldprefix=${BOLDPrefix} \
 			--boldsuffix=${BOLDSuffix} \
 			--skipframes=${SkipFrames} \
 			--snronly=${SNROnly} \
 			--timestamp=${TimeStamp} \
 			--suffix=${Suffix} \
-			--scenezip=${SceneZip} "
+			--scenezip=${SceneZip}"
 			echo ""
 			echo "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 			--subjectsfolder='${SubjectsFolder}' \
@@ -2956,6 +2962,7 @@ QCPreproc() {
 			--bedpostxqc='${BedpostXQC}' \
 			--eddyqcstats='${EddyQCStats}' \
 			--bolddata='${BOLDS}' \
+			--boldprefix=${BOLDPrefix} \
 			--boldsuffix='${BOLDSuffix}' \
 			--skipframes='${SkipFrames}' \
 			--snronly='${SNROnly}' \
@@ -3000,39 +3007,51 @@ show_usage_QCPreproc() {
 				echo ""
 				echo "                Note: For BOLD data there is also an SNR txt output if specified."
 				echo ""
-				echo "-- REQUIRED PARMETERS:"
+				echo "-- REQUIRED GENERAL PARMETERS:"
 				echo ""
-				echo "--function=<function_name>                  Explicitly specify Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-				echo "--subjectsfolder=<folder_with_subjects>     Path to study folder that contains subjects"
-				echo "--subjects=<list_of_cases>                  List of subjects to run, separated by commas"
-				echo "--modality=<input_modality_for_qc>          Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
-				echo "--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-				echo "                                                               e.g. for SLURM the string would look like this: "
-				echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-				echo "" 
-				echo "-- OPTIONAL PARMETERS:"
-				echo "" 
-				echo "--overwrite=<clean_prior_run>                    Delete prior QC run"
-				echo "--templatefolder=<path_for_the_template_folder>  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/templates)"
-				echo "--outpath=<path_for_output_file>                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
-				echo "                                                    If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
-				echo "--dwipath=<path_for_dwi_data>                    Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
-				echo "--dwidata=<file_name_for_dwi_data>               Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
-				echo "--dtifitqc=<visual_qc_for_dtifit>                Specify if dtifit visual QC should be completed [e.g. yes or no]"
-				echo "--bedpostxqc=<visual_qc_for_bedpostx>            Specify if BedpostX visual QC should be completed [e.g. yes or no]"
-				echo "--eddyqcstats=<qc_stats_for_eddy>                    Specify if EDDY QC stats should be linked into QC folder and motion report generated [e.g. yes or no]"
-				echo "--dwilegacy=<dwi_data_processed_via_legacy_pipeline>     Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
-				echo "--bolddata=<file_names_for_bold_data>                    Specify the file names for BOLD data separated by comma [may differ across studies; e.g. 1, 2, 3 or BOLD_1 or rfMRI_REST1_LR,rfMRI_REST2_LR]"
-				echo "--boldsuffix=<file_name_for_bold_data>                   Specify the file name for BOLD data [may differ across studies; e.g. Atlas or MSMAll]"
+				echo "--function=<function_name>                                      Explicitly specify Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
+				echo "--subjectsfolder=<folder_with_subjects>                         Path to study folder that contains subjects"
+				echo "--subjects=<list_of_cases>                                      List of subjects to run, separated by commas"
+				echo "--modality=<input_modality_for_qc>                              Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
+				echo ""
+				echo "-- DWI PARMETERS"
+				echo ""
+				echo "--dwipath=<path_for_dwi_data>                                   Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
+				echo "--dwidata=<file_name_for_dwi_data>                              Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
+				echo "--dtifitqc=<visual_qc_for_dtifit>                               Specify if dtifit visual QC should be completed [e.g. yes or no]"
+				echo "--bedpostxqc=<visual_qc_for_bedpostx>                           Specify if BedpostX visual QC should be completed [e.g. yes or no]"
+				echo "--eddyqcstats=<qc_stats_for_eddy>                               Specify if EDDY QC stats should be linked into QC folder and motion report generated [e.g. yes or no]"
+				echo "--dwilegacy=<dwi_data_processed_via_legacy_pipeline>            Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
+				echo ""
+				echo "-- BOLD PARMETERS"
+				echo ""
+				echo "--bolddata=<bold_run_numbers>                                    Specify BOLD data numbers separated by comma, space or pipe."
+				echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
+				echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
+				echo "--boldprefix=<prefix_file_name_for_bold_data>                    Specify the prefix file name for BOLD dtseries data [may differ across studies depending on processing; e.g. BOLD or TASK or REST]"
+				echo "                                                                   Note: If unspecified then QC script will assume that folder names containing processed BOLDs are named numerically only (e.g. 1, 2, 3)."
+				echo "--boldsuffix=<suffix_file_name_for_bold_data>                    Specify the suffix file name for BOLD dtseries data [may differ across studies depending on processing; e.g. Atlas or MSMAll]"
 				echo "--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
 				echo "--snronly=<compute_snr_only_for_bold>                            Specify if you wish to compute only SNR BOLD QC calculation and skip image generation <yes/no>. Default is [no]"
-				echo "--timestamp=<specify_time_stamp>                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
-				echo "--suffix=<specify_suffix_id_for_logging>         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
-				echo "--scenezip=<zip_generate_scene_file>             Generates a ZIP file with the scene and all relevant files for Connectome Workbench visualization [yes]"
-				echo "                                                 Note: If scene zip set to yes, then relevant scene files will be zipped with an updated relative base folder." 
-				echo "                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
-				echo "                                                 The scene zip file will be saved to: "
-				echo "                                                       /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
+				echo ""
+				echo "-- OPTIONAL PARMETERS:"
+				echo "" 
+				echo "--overwrite=<clean_prior_run>                                    Delete prior QC run"
+				echo "--templatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/templates)"
+				echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
+				echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
+				echo "--scenezip=<zip_generate_scene_file>                             Generates a ZIP file with the scene and all relevant files for Connectome Workbench visualization [yes]"
+				echo "                                                                 Note: If scene zip set to yes, then relevant scene files will be zipped with an updated relative base folder." 
+				echo "                                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
+				echo "                                                                 The scene zip file will be saved to: "
+				echo "                                                                     /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
+				echo ""
+				echo "--scheduler=<name_of_cluster_scheduler_and_options>              A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+				echo "                                                                     e.g. for SLURM the string would look like this: "
+				echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+				echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
+				echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
+				echo "" 
 				echo ""
 				echo ""
 				echo "-- Example with flagged parameters for a local run:"
@@ -3055,7 +3074,7 @@ show_usage_QCPreproc() {
 				echo "--modality='<input_modality_for_qc>'"
 				echo "--overwrite='no' \ "
 				echo "--scheduler='<name_of_scheduler_and_options>' \ "
-				echo "" 			
+				echo ""
 				echo ""
 				echo "-- Complete examples for each supported modality:"
 				echo ""
@@ -3542,13 +3561,20 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
 	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
 	BOLDDATA=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
+	BOLDRUNS=`opts_GetOpt "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
 	BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 	if [[ ! -z $BOLDDATA ]]; then
 		if [[ -z $BOLDS ]]; then
 			BOLDS=$BOLDDATA
 		fi
 	fi
+	if [[ ! -z $BOLDRUNS ]]; then
+		if [[ -z $BOLDS ]]; then
+			BOLDS=$BOLDRUNS
+		fi
+	fi
 	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
+	BOLDPrefix=`opts_GetOpt "${setflag}boldprefix" $@`
 	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@`
 	SNROnly=`opts_GetOpt "${setflag}snronly" $@`
 	TimeStamp=`opts_GetOpt "${setflag}timestamp" $@`
@@ -3639,17 +3665,19 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 		if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; fi
 		if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; fi
 		if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; fi
-		if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; fi		
+		if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; fi
 	fi
 	# -- BOLD modality-specific settings:
 	if [ "$Modality" = "BOLD" ]; then
 		# - Check if BOLDS parameter is empty:
 		if [ -z "$BOLDS" ]; then
 			echo ""
-			reho "BOLD input list not specified. Relying subject_hcp.txt individual information files."
+			reho "BOLD input list not specified. Relying on subject_hcp.txt individual information files."
 			BOLDS="subject_hcp.txt"
 			echo ""
 		fi
+		if [ -z "$BOLDPrefix" ]; then BOLDPrefix=""; echo "Input BOLD Prefix not specified. Assuming no BOLD name prefix."; fi
+		if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "Processed BOLD Suffix not specified. Assuming no BOLD output suffix."; fi
 	fi
 	# -- Report parameters
 	echo ""
@@ -3674,7 +3702,8 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 	fi
 	if [ "$Modality" = "BOLD" ]; then
 		echo "BOLD data input: ${BOLDS}"
-		echo "BOLD suffix: ${BOLDSuffix}"
+		echo "BOLD Prefix: ${BOLDPrefix}"
+		echo "BOLD Suffix: ${BOLDSuffix}"
 		echo "Skip Initial Frames: ${SkipFrames}"
 		echo "Compute SNR Only: ${SNROnly}"
 		if [ "$SNROnly" == "yes" ]; then echo ""; echo "BOLD SNR only specified. Will skip QC images"; echo ""; fi
