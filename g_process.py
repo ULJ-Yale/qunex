@@ -454,7 +454,7 @@ def run(command, args):
     # ---- Take care of mapping
 
     mapwarn = False
-    for k, v in args.iteritems():
+    for k, v in options.iteritems():
         if k in tomap:
             if not mapwarn:
                 print "\nERROR: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
