@@ -266,17 +266,21 @@ show_usage_gmri() {
 		echo ""
 }
 
-# ------------------------------------------------------------------------------------------------------
-#  organizeDicom - Sort original DICOMs into sub-folders and then generate NIFTI files
-# ------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------
+#  organizeDicom - Sort original DICOMs into folders and generates NIFTI files using sortDicom and dicom2niix
+# ---------------------------------------------------------------------------------------------------------------
 
 organizeDicom() {
-	  		mkdir ${SubjectsFolder}/${CASE}/dicom &> /dev/null
-	  		
-	  		if [ "$Overwrite" == "yes" ]; then
+
+# -- Note:
+#    This function passes parameters into two NIUtilities commands: sortDicom and dicom2niix
+# 	
+			mkdir ${SubjectsFolder}/${CASE}/dicom &> /dev/null
+			
+			if [ "$Overwrite" == "yes" ]; then
 				reho "===> Removing prior DICOM run"
 				rm -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
-	  		fi
+			fi
 				echo ""
 				reho "===> Checking for presence of ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
 				echo ""
@@ -295,16 +299,22 @@ organizeDicom() {
 						echo " ---> running sortDicom and dicom2nii for $CASE"
 						echo ""
 						Com2="gmri sortDicom"
-						Com3="gmri dicom2niix unzip=yes gzip=yes clean=yes verbose=true cores=4"
+						# -- Check if SubjectID not set and set it to $CASE if missing
+						if [ -z "$SubjectID" ]; then 
+							echo " ---> Note: --subjectid was not explicitly set. Assuming DICOM session names matche subject name: $CASE"
+							echo ""
+							SubjectID=${CASE}
+						fi
+						Com3="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${SubjectID}"
 						ComQUEUE="$Com1; $Com2; $Com3"
-						
+						# -- Set the time stamp for job
 						TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
 						Suffix="$CASE_$TimeStamp"
 						# -- Set the scheduler commands
 						rm -f ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh &> /dev/null
 						echo "$ComQUEUE" >> ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
 						chmod 770 ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
-
+						# -- Check if job is set to local (1) or cluster run (2)
 						if [ "$Cluster" == 1 ]; then
 						  	echo ""
 							echo "---------------------------------------------------------------------------------"
@@ -332,28 +342,38 @@ organizeDicom() {
 }
 
 show_usage_organizeDicom() {
-  				echo ""
-  				echo "-- DESCRIPTION for $UsageInput"
-    			echo ""
-  				echo "This function expects a set of raw DICOMs in <study_folder>/<case>/inbox."
-  				echo "DICOMs are organized, gzipped and converted to NIFTI format for additional processing."
-  				echo ""
-  				echo ""
-  				echo "-- REQUIRED PARMETERS:"
+				echo ""
+				echo "-- DESCRIPTION for $UsageInput"
+				echo ""
+				echo "This function expects a set of raw DICOMs in <study_folder>/<case>/inbox."
+				echo "DICOMs are organized, gzipped and converted to NIFTI format for additional processing."
+				echo ""
+				echo ""
+				echo "-- REQUIRED PARMETERS:"
 				echo ""
 				echo "--function=<function_name>                             Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-				echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects"
-				echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run"
+				echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects. If missing then optional paramater --folder needs to be provided."
+				echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run. If missing then --folder needs to be provided for a single-session run."
 				echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 				echo "                                                       e.g. for SLURM the string would look like this: "
 				echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 				echo ""
 				echo "-- OPTIONAL PARAMETERS: "
 				echo ""
-				echo "--overwrite=<re-run_organizeDicom>                     Explicitly force a re-run of organizeDicom"
+				echo "--folder=<folder_with_subjects>                     The base subject folder with the dicom subfolder that holds session numbered folders with dicom files. [.]"
+				echo "--overwrite=<re-run_organizeDicom>                  Explicitly force a re-run of organizeDicom"
+				echo "--clean=<clean_NIfTI_files>                         Whether to remove preexisting NIfTI files (yes), leave them and abort (no) or ask interactively (ask). [ask]"
+				echo "--overwrite=<re-run_organizeDicom>                  Explicitly force a re-run of organizeDicom"
+				echo "--overwrite=<re-run_organizeDicom>                  Explicitly force a re-run of organizeDicom"
+				echo "--unzip=<unzip_dicoms>                              If the dicom files are gziped whether to unzip them (yes), leave them be and abort (no) or ask interactively (ask). [ask]"
+				echo "--gzip=<zip_dicoms>                                 After the dicom files were processed whether to gzip them (yes), leave them ungzipped (no) or ask interactively (ask). [ask]"
+				echo "--subjectid=<subjext_id>                            The session id code to use for this subject. If not provided, the subject id is extracted from dicom files."
+				echo "--verbose=<print_verbose_output>                    Whether to be report on the progress (True) or not (False). [True]"
+				echo "--cores=<number_of_cores>                           How many parallel processes to run dcm2nii conversion with. "
+				echo "                                                    The number is one by defaults, if specified as 'all', the number of available cores is utilized." 
 				echo ""
-    			echo ""
-    			echo "-- Example with flagged parameters for a local run:"
+				echo ""
+				echo "-- Example with flagged parameters for a local run:"
 				echo ""
 				echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
 				echo "--function='organizeDicom' \ "
@@ -3454,6 +3474,15 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	else
 		RunMethod="1"
 	fi
+	
+	# -- Set flags for organizeDicom parameters
+	Folder=`opts_GetOpt "${setflag}folder" $@`
+	Clean=`opts_GetOpt "${setflag}clean" $@`
+	Unzip=`opts_GetOpt "${setflag}unzip" $@`
+	Gzip=`opts_GetOpt "${setflag}gzip" $@`
+	SubjectId=`opts_GetOpt "${setflag}subjectid" $@`
+	VerboseRun=`opts_GetOpt "${setflag}verbose" $@`
+	Cores=`opts_GetOpt "${setflag}cores" $@`
 	# -- Path options for FreeSurfer or MNAP
 	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@`
 	MNAPVersion=`opts_GetOpt "${setflag}version" $@`
@@ -3616,23 +3645,66 @@ fi
 if [ "$FunctionToRun" == "organizeDicom" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then 
+		if [ -z "$Folder" ]; then 
+			reho "Error: Study folder missing and optional parameter --folder not specified."
+			exit 1
+		fi
+	fi
+	if [ -z "$SubjectsFolder" ]; then 
+		if [ -z "$Folder" ]; then 
+			reho "Error: Subjects folder missing and optiona parameter --folder not specified"
+			exit 1
+		fi
+	fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$Overwrite" ]; then Overwrite="no"; fi
 	Cluster="$RunMethod"
 	if [ "$Cluster" == "2" ]; then
 			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 	fi
+	# -- Optional parameters
+	if [ -z "$Folder" ]; then 
+		Folder="$SubjectsFolder"
+	else
+		if [ -z "$StudyFolder" ] && [ -z "$SubjectsFolder" ]; then
+			SubjectsFolder="$Folder"
+			StudyFolder="../$SubjectsFolder"
+		fi
+	fi
+	if [ -z "$Clean" ]; then Clean="yes"; echo ""; echo "--clean not specified explicitly. Setting --clean=$Clean."; echo ""; fi
+	if [ -z "$Unzip" ]; then Unzip="yes"; echo ""; echo "--unzip not specified explicitly. Setting --unzip=$Unzip."; echo ""; fi
+	if [ -z "$Unzip" ]; then Gzip="yes"; echo ""; echo "--gzip not specified explicitly. Setting --gzip=$Gzip."; echo ""; fi
+	if [ -z "$SubjectId" ]; then SubjectId=""; echo ""; echo "--subjectid not specified explicitly. Proceeding without --subjectid parameter"; echo ""; fi
+	if [ -z "$VerboseRun" ]; then VerboseRun="True"; echo ""; echo "--verbose not specified explicitly. Proceeding --verbose=$Verbose"; echo ""; fi
+	if [ -z "$Cores" ]; then Cores="4"; echo ""; echo "--cores not specified explicitly. Proceeding --cores=$Cores"; echo ""; fi
+
 	# -- Report parameters
-	echo ""
+	echo ""s
 	echo "Running $FunctionToRun processing with the following parameters:"
 	echo ""
 	echo "--------------------------------------------------------------"
-	echo "Study Folder: ${StudyFolder}"
-	echo "Subject Folder: ${SubjectsFolder}"
+	if [ -z "$Folder" ]; then 
+		echo "Optional --folder parameter not set. Using standard inputs."
+		echo "Study Folder: ${StudyFolder}"
+		echo "Subject Folder: ${SubjectsFolder}"
+	else
+		echo "Optional --folder parameter set explicitly. "
+		echo "Setting subjects folder and study accordingly."
+		echo "Study Folder: ${StudyFolder}"
+		echo "Subject Folder: ${SubjectsFolder}"
+	fi
 	echo "Subjects: ${CASES}"
 	echo "Overwrite prior run: ${Overwrite}"
+	echo ""
+	# Report optional parameters
+	echo "Clean NIFTI files: ${Clean}"
+	echo "Unzip DICOM files: ${Unzip}"
+	echo "Gzip DICOM files: ${Gzip}"
+	echo "SubjectId for DICOM Session: ${SubjectId}"
+	echo "Report verbose run: ${VerboseRun}"
+	echo "Cores to use: ${Cores}"
+	echo ""
 	echo "--------------------------------------------------------------"
 	# -- Loop through all the cases
 	for CASE in $CASES; do ${FunctionToRun} ${CASE}; done
