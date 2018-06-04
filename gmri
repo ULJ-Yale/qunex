@@ -10,8 +10,20 @@ import os.path
 import sys
 import datetime
 
+# --- Get current MNAP Suite version and prepend to help calls
+
+tools = os.environ['TOOLS']
+mnaprepo = os.environ['MNAPREPO']
+version = 'VERSION.md'
+mnapver = os.path.join(tools,mnaprepo,version)
+with open(mnapver,'r') as f: # 'with' will automatically close file for you,
+    for line in f: # Do something with the file
+        print "\nMultimodal Neuroimaging Analysis Platform (MNAP) Suite Version",line
+
 help = '''
-gmri utility for MRI processing and analysis.
+================================================================================
+ 
+General magnetic resonance Imaging (gmri) utilities for processing and analysis.
 
 usage: gmri <command> [option=value] [option=value] ...
        gmri -h         (prints this help)
@@ -37,7 +49,8 @@ usage: gmri <command> [option=value] [option=value] ...
 
 comlist = '''
 ================================================================================
-gmri utility for MRI processing and analysis.
+ 
+General magnetic resonance Imaging (gmri) utilities for processing and analysis.
 
 use: gmri <command> [option=value] [option=value] ...
 
@@ -360,7 +373,8 @@ def printHelp(com):
     # --- print list of processing options and flags
     elif com in ['o']:
         print "================================================================================"
-        print "gmri utility for MRI processing and analysis."
+        print ""
+        print "General magnetic resonance Imaging (gmri) utilities for processing and analysis."
         print "\nuse: gmri <command> [option=value] [option=value] ..."
         print "\nList of processing options"
         for line in gp.arglist:
@@ -383,7 +397,8 @@ def printHelp(com):
     # --- print list of processing options and flags
     elif com in ['c']:
         print "================================================================================"
-        print "gmri utility for MRI processing and analysis."
+        print ""
+        print "General magnetic resonance Imaging (gmri) utilities for processing and analysis."
         print "\nuse: gmri <command> [option=value] [option=value] ..."
         print "\nList of processing commands \n"
         for line in gp.calist + [[]] + gp.salist:
@@ -427,9 +442,12 @@ def main(args=None):
     comm = args[0]
     opts = dict()
 
+     # --- check if help arguments are specified and strip all flags (? or -)
     if comm[0] in ['?', '-']:
+        comm = comm.strip('-')
+        comm = comm.strip('?')
         try:
-            printHelp(comm[1:])
+            printHelp(comm[0:])
         except:
             print "ERROR: '%s' is not a recognized command!\n-----------------------" % (comm[1:])
             print help
@@ -448,8 +466,8 @@ def main(args=None):
             else:
                 k = args[n].strip('-')
                 opts[k] = True
-
         runCommand(comm, opts)
+        
     except ValueError as e:
         print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)
         print e
