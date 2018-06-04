@@ -207,6 +207,7 @@ Change Log
 * 0.11.6 [connector] Made QC functionality more robust to BOLD naming variation
 * 0.11.7 [connector] Improved handling of paramaters in organizeDicom function
 * 0.11.8 [niutilities, library] Improved handling of deprecated parameters
+* 0.11.9 [niutilities, connector] Improved handling of batch paramaters options request
 
 =======
 [Mind and Brain Lab]: http://mblab.si
