@@ -214,10 +214,10 @@ echo " BOLDSeparateCIFTIFIXICA ...... separate specified bold timeseries (use if
 echo " BOLDHardLinkFIXICAMerged ...... setup sym links for merged FIX ICA results (use if BOLDs merged)"
 echo ""
 echo ""
-echo "             General MRI utilities for preprocessing and analyses          "
+echo "             General MRI Utilities for Preprocessing and Analyses          "
 echo "---------------------------------------------------------------------------"
 echo ""
-echo " MNAP pipelines contain additional python-based 'general mri (gmri) utilities."
+echo " MNAP Suite workflows contain additional python-based 'general mri (gmri) utilities."
 echo " These are accessed either directly via 'gmri' command from the terminal."
 echo " Alternatively the 'mnap' connector wrapper parses all functions via "
 echo " 'gmri' package as standard input."
@@ -263,6 +263,30 @@ gmriFunction() {
 show_usage_gmri() {
 		echo ""
 		gmri ?${UsageInput}
+		echo ""
+}
+
+show_help_gmri() {
+		echo ""
+		gmri
+		echo ""
+}
+
+show_options_gmri() {
+		echo ""
+		gmri -o
+		echo ""
+}
+
+show_commands_gmri() {
+		echo ""
+		gmri -l
+		echo ""
+}
+
+show_processing_gmri() {
+		echo ""
+		gmri -c
 		echo ""
 }
 
@@ -3214,7 +3238,7 @@ timeStamp() {
 showVersion() {
 	MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
 	echo ""
-	geho "    Multimodal Neuroimaging Analysis Pipeline (MNAP) Version: v${MNAPVer}"
+	geho "    Multimodal Neuroimaging Analysis Platform (MNAP) Version: v${MNAPVer}"
 }
 
 # ------------------------------------------------------------------------------
@@ -3249,6 +3273,16 @@ fi
 
 # -- Get list of all supported gmri functions
 gmrifunctions=`gmri -available`
+
+# -- Check if command-line input has flags that need to be removed
+# if [[ "${gmrifunctions}" =~ `echo ${1} | cut -c 2-` ]]; then
+# 	GmriFunctionToRun=`echo ${1} | cut -c 2-`
+# elif [[ "${gmrifunctions}" =~ `echo ${1} | cut -c 3-` ]]; then
+# 	GmriFunctionToRun=`echo ${1} | cut -c 3-`
+# else
+# 	return 0
+# fi
+
 # -- Check if command-line input matches any of the gmri functions
 if [ -z "${gmrifunctions##*$1*}" ]; then
 	# -- If yes then set the gmri function variable
@@ -3262,23 +3296,31 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
 		showVersion
 		show_usage_gmri
 		exit 0
+	fi
+	# -- Check for input with flag mark
+	if [[ "$GmriFunctionToRun" =~ .*"-".* ]] && [ -z "$2" ]; then
+		# -- Set UsageInput variable to pass and remove question mark
+		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
+		# -- If no other input is provided print help
+		echo ""
+		showVersion
+		show_usage_gmri
+		exit 0
+	fi
+	# -- Check for input is function name with no other arguments
+	if [[ "$GmriFunctionToRun" != *"-"* ]] && [ -z "$2" ]; then
+		UsageInput="$GmriFunctionToRun"
+		# -- If no other input is provided print help
+		echo ""
+		showVersion
+		show_usage_gmri
+		exit 0
 	else
-		# -- Check for input is function name with no other arguments
-		if [[ "$GmriFunctionToRun" != *"-"* ]] && [ -z "$2" ]; then
-			# -- Set UsageInput variable to pass and remove flag
-			UsageInput="$GmriFunctionToRun"
-			# -- If no other input is provided print help
-			echo ""
-			showVersion
-			show_usage_gmri
-			exit 0
-		else
-			# -- Otherwise pass the function with all inputs from the command line
-			gmriinput="$@"
-			showVersion
-			gmriFunction
-			exit 0
-		fi
+		# -- Otherwise pass the function with all inputs from the command line
+		gmriinput="$@"
+		showVersion
+		gmriFunction
+		exit 0
 	fi
 fi
 
@@ -3311,6 +3353,19 @@ isMNAPFunction() {
 # -- Check for input with double flags
 if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then
 	Usage="$1"
+	# -- Check for gmri help inputs (--o --l --c)
+	if [[ "$Usage" == "--o" ]]; then
+		show_options_gmri
+		exit 0
+	fi
+	if [[ "$Usage" == "--l" ]]; then
+		show_commands_gmri
+		exit 0
+	fi
+	if [[ "$Usage" == "--c" ]]; then
+		show_processing_gmri
+		exit 0
+	fi
 	UsageInput=`echo ${Usage:2}`
 	# -- Check if input part of function list
 	isMNAPFunction $UsageInput
@@ -3321,6 +3376,19 @@ fi
 # -- Check for input with single flags
 if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then
 	Usage="$1"
+	# -- Check for gmri help inputs (--o --l --c)
+	if [[ "$Usage" == "-o" ]]; then
+		show_options_gmri
+		exit 0
+	fi
+	if [[ "$Usage" == "-l" ]]; then
+		show_commands_gmri
+		exit 0
+	fi
+	if [[ "$Usage" == "-c" ]]; then
+		show_processing_gmri
+		exit 0
+	fi
 	UsageInput=`echo ${Usage:1}`
 	# -- Check if input part of function list
 	isMNAPFunction $UsageInput
