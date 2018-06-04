@@ -16,7 +16,7 @@
 #
 #  XNATCloudUpload.sh
 #
-# ## License
+# ## LICENSE
 #
 # * The XNATCloudUpload.sh = the "Software"
 # * This Software conforms to the license outlined in the MNAP Suite:
@@ -25,6 +25,11 @@
 # ## TODO
 #
 # --> Add functionality to take in all data types into the XNAT database
+# --> Add functionality to loop over --xnatsubjectids for each --subject
+#     Here need to check if variable lenghts are the same
+#     Here need to take positional xnatsubjectid for each CASE within the CASES loop.
+#     Do the same for session ID
+#     Right now -sessionid is a SINGLE variable that is assumed to be the same for all CASES
 #
 # ## DESCRIPTION 
 #   
@@ -41,7 +46,7 @@
 # ## PREREQUISITE PRIOR PROCESSING
 # 
 # * The necessary input files are data stored in the following format
-# * These data are stored in: "$StudyFolder/subjects/$CASE/
+# * These data are stored in: "$SubjectsFolder/$CASE/
 #
 #~ND~END~
 
@@ -59,23 +64,36 @@ usage() {
     echo ""
     echo "-- REQUIRED PARMETERS:"
     echo ""
-    echo "          --path=<study_folder>                     Path to study data folder"
-    echo "          --mastersubjectid=<master_id>             Overall database subject ID within XNAT"
-    echo "          --subject=<list_of_cases>                 List of subjects to run that are study-specific (may be unique from --mastersubjectid)"
-    echo "          --project=<name_of_xnat_project>          Specify the XNAT cloud project name"
-    echo "          --hostname=<xnat_hostname>                Specify the XNAT hostname"
+    echo "-- Local system variables:"
+    echo ""
+    echo "          --subjectsfolder=<folder_with_subjects_data>  Path to study data folder where the subjects folders reside"
+    echo "          --subjects=<list_of_cases>                    List of subjects to run that are study-specific and correspond to XNAT database subject IDs"
+    echo ""
+    echo "-- XNAT site variables"
+    echo ""
+    echo "          --projectid=<name_of_xnat_project_id>     Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title."
+    echo "                                                    This project should be created on the XNAT Site prior to upload."
+    echo "                                                    If it is not found on the XNAT Site or not provided then the data will land into the prearchive and be left unassigned to a project."
+    echo "                                                    Please check upon completion and specify assignment manually."
+    echo "          --hostname=<XNAT_site_URL>                Specify the XNAT site hostname URL to push data to."
     echo ""
     echo "-- OPTIONAL PARMETERS:"
     echo "" 
-    echo "          --niftiupload=<specify_nifti_upload>      Specify <yes> or <no> for NIFTI upload. Default is [yes]"
+    echo ""
+    echo "          --sessionid=<session_id>                 Name of session within XNAT for a given subject id. Default []. "
+    echo "                                                    Use if you wish to upload multiple distinct sessions per subject id."
+    echo "                                                    If you wish to upload a new session for this subject id please supply this flag."
+    echo "          --xnatsubjectids=<list_of_cases>           List of XNAT database subject IDs Default it []."
+    echo "                                                    Use if your XNAT database has a different set of subject ids."
+    echo "                                                    If your XNAT database subject id is distinct from your local server subject id then please supply this flag."
+    echo "          --niftiupload=<specify_nifti_upload>      Specify <yes> or <no> for NIFTI upload. Default is [no]"
     echo "          --overwrite=<specify_level_of_overwrite>  Specify <yes> or <no> for cleanup of prior upload. Default is [yes]"
     echo ""
     echo "-- Example:"
     echo ""
-    echo "XNATCloudUpload.sh --path='<absolute_path_to_studyfolder>' \ "
-    echo "--subject='<case_id>' \ "
-    echo "--mastersubjectid='<master_id>' \ "
-    echo "--project='<project_name>' \ "
+    echo "XNATCloudUpload.sh --subjectsfolder='<absolute_path_to_subjects_folder>' \ "
+    echo "--subject='<case_id_on_local_server>' \ "
+    echo "--projectid='<name_of_xnat_project_id>' \ "
     echo "--hostname='<XNAT_site_URL>' "
     echo ""
 }
@@ -106,8 +124,10 @@ ceho() {
   ## -- HOST=https://somewhere.xnat.org
   ## -- CRED="username:password"
   ## -- PROJ="XNAT PROJECT ID to push data to"
-  ## -- StudyFolder="Master directory containing folders to push"
+  ## -- SubjectsFolder="Master directory containing subject-specific folders to push"
   ## -- CASES="List of FOLDERS to push that have a specific subject name
+  ## -- XNATSubjectID="List of XNAT database subject IDs Default it []. Use if your XNAT database has a different set of subject ids."
+  ## -- SessionID="Name of session within XNAT for a given subject id. Default []."
   ## -- Overwrite="whether to delete existing XNAT upload prior to upload
   ## -- NIFTIUPLOAD="whether to upload NIFTIs
   ## -----------------------------------------------------------------------------
@@ -118,13 +138,14 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global output variables
-unset StudyFolder
+unset SubjectsFolder
 unset HOST
 unset CRED
 unset PROJ
 unset CASES
+unset XNATSubjectIDS
+unset SessionID
 unset NIFTIUPLOAD
-unset MASTERSUBID
 unset Overwrite
 
 # -- Parse arguments
@@ -143,16 +164,20 @@ while [ ${index} -lt ${numArgs} ]; do
             version_show $@
             exit 0
             ;;
-        --path=*)
-            StudyFolder=${argument/*=/""}
+        --subjectsfolder=*)
+            SubjectsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subject=*)
+        --subjects=*)
             CASES=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --mastersubjectid=*)
-            MASTERSUBIDS=${argument/*=/""}
+        --sessionid=*)
+            SessionID=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
+        --xnatsubjectids=*)
+            XNATSubjectIDS=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
         --niftiupload=*)
@@ -167,7 +192,7 @@ while [ ${index} -lt ${numArgs} ]; do
             HOST=${argument/*=/""}
             index=$(( index + 1 ))
             ;;      
-        --project=*)
+        --projectid=*)
             PROJ=${argument/*=/""}
             index=$(( index + 1 ))
             ;;      
@@ -181,9 +206,9 @@ while [ ${index} -lt ${numArgs} ]; do
 done
 
 # -- Check required parameters
-if [ -z ${StudyFolder} ]; then
+if [ -z ${SubjectsFolder} ]; then
     usage
-    reho "ERROR: <study-path> not specified"
+    reho "ERROR: <folder-with-subjects> not specified"
     echo ""
     exit 1
 fi
@@ -201,19 +226,28 @@ if [ -z ${HOST} ]; then
 fi
 if [ -z ${PROJ} ]; then
     usage
-    reho "ERROR: XNAT project id not specified"
+    reho "Note: --projectid flag, which defines the XNAT Site Project is not specified."
+    reho "      Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
     echo ""
-    exit 1
 fi
 if [ -z ${NIFTIUPLOAD} ]; then
-	NIFTIUPLOAD="yes"
+	NIFTIUPLOAD="no"
 fi
-if [ -z ${MASTERSUBIDS} ]; then
-	MASTERSUBIDS=$CASES
+if [ -z ${SessionID} ]; then
+	SessionID=""
     echo ""
-    reho "Note: --mastersubjectid flag omitted. Assuming --subject flag matches --mastersubjectid in XNAT"
+    reho "Note: --sessionid flag omitted. Assuming --subjects flag matches --sessionid in XNAT."
+    reho "    If you wish to upload a new session for this subject id please supply this flag."
     echo ""
 fi
+if [ -z ${XNATSubjectIDS} ]; then
+	XNATSubjectIDS="$CASES"
+    echo ""
+    reho "Note: --xnatsubjectids flag omitted. Assuming --subjects flag matches --xnatsubjectids in XNAT."
+    reho "    If your XNAT database subject id is distinct from your local server subject id then please supply this flag."
+    echo ""
+fi
+
  if [ -z ${Overwrite} ]; then
 	Overwrite="yes"
 fi
@@ -222,13 +256,15 @@ fi
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-echo "   StudyFolder: ${StudyFolder}"
+echo "   Folder with all subjects: ${SubjectsFolder}"
 echo "   Subjects to process: ${CASES}"
-echo "   Master XNAT IDs for subjects (in order): ${MASTERSUBID}"
+echo "   XNAT IDs for subjects (in order matching subjects to process): ${XNATSubjectIDS}"
+echo "   Session ID: ${SessionID}" 
 echo "   NIFTI upload: ${NIFTIUPLOAD}"
 echo "	 Overwrite set to: ${Overwrite}"
 echo "   XNAT Hostname: ${HOST}"
 echo "   XNAT Project ID: ${PROJ}"
+
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of work --------------------------------"
@@ -298,33 +334,36 @@ START=$(date +"%s")
 ## -- Get credentials
 CRED=$(cat ${HOME}/.xnat)
 
-## -- Open JSESSION
-#curl -X POST -u "$CRED" "$HOST/data/JSESSION" -i > ${StudyFolder}/JSESSION.txt
+## -- Open JSESSION to the XNAT Site
 JSESSION=$(curl -X POST -u "$CRED" "$HOST/data/JSESSION" )
-
-#`date +%Y-%m-%d-%H-%M`
-#JSESSIONLOG=`ls ${StudyFolder}/JSESSION-*.txt`
-
-#JSESSION=`grep "JSESSIONID" ${StudyFolder}/JSESSION.txt`
-#JSESSION=${JSESSION:23:32}
 echo ""
 geho "-- JSESSION created: $JSESSION"
-
 COUNTER=1
-
-rm -r ${StudyFolder}/xnatupload/temp/working &> /dev/null
+## -- Clean prior temp folders
+rm -r ${SubjectsFolder}/xnatupload/temp/working &> /dev/null
 
 # ------------------------------------------------------------------------------
 # -- Iterate over CASES:
 # ------------------------------------------------------------------------------
 
-cd ${StudyFolder}
+# ${XNATSubjectIDS}"
+# ${SessionID}"
+
+cd ${SubjectsFolder}
 for CASE in ${CASES}; do
+	## -- If SessionID is empty set it to CASE
+	if [ -z ${SessionID} ]; then
+		SessionID="$CASE"
+	fi
+	## -- If XNATSubjectID is empty set it to CASE
+	if [ -z ${XNATSubjectID} ]; then
+		XNATSubjectID="$CASE"
+	fi
 	## -- First check if data drop is present or if inbox is populated
-	cd ${StudyFolder}/${CASE}/dicom
+	cd ${SubjectsFolder}/${CASE}/dicom
 	echo ""
 	geho "-- Working on subject: ${CASE}"
-	cd ${StudyFolder}/${CASE}/dicom/
+	cd ${SubjectsFolder}/${CASE}/dicom/
 	echo ""
 	DICOMSERIES=`ls -vd */ | cut -f1 -d'/'`
 	#DICOMSERIES="1"
@@ -334,13 +373,14 @@ for CASE in ${CASES}; do
 		DICOMCOUNTER=$((DICOMCOUNTER+1))
 		geho "-- Working on SERIES: $SERIES"
 		echo ""
-		mkdir -p ${StudyFolder}/xnatupload/temp/working/ &> /dev/null
+		mkdir -p ${SubjectsFolder}/xnatupload/temp/working/ &> /dev/null
 		## -- Unzip DICOM files for upload
-		geho "-- Unzipping DICOMs and linking into temp location --> ${StudyFolder}/xnatupload/temp/working/"
+		geho "-- Unzipping DICOMs and linking into temp location --> ${SubjectsFolder}/xnatupload/temp/working/"
 		echo ""
-		gunzip -f ${StudyFolder}/${CASE}/dicom/${SERIES}/*.gz &> /dev/null
+		cp ${SubjectsFolder}/${CASE}/dicom/${SERIES}/* ${SubjectsFolder}/xnatupload/temp/working/
+		gunzip ${SubjectsFolder}/xnatupload/temp/working/*.gz &> /dev/null
 		geho "-- Uploading individual DICOMs ... "
-			cd ${StudyFolder}/${CASE}/dicom/${SERIES}/
+			cd ${SubjectsFolder}/xnatupload/temp/working/
 			UPLOADDICOMS=`ls ./*dcm | cut -f2 -d'/'`
 			echo ""
 			echo "--------------------- DICOMs Staged for XNAT Upload: -------------------"
@@ -350,19 +390,37 @@ for CASE in ${CASES}; do
 			echo "------------------------------------------------------------------------"
 			echo ""
 			for DCM in $UPLOADDICOMS; do
-				cd ${StudyFolder}/xnatupload/temp/working/
-				ln ${StudyFolder}/${CASE}/dicom/${SERIES}/${DCM} ${StudyFolder}/xnatupload/temp/working/
-				if [ -d "${StudyFolder}/xnatupload/temp/working/${DCM}" ]; then
-					reho "--> ERROR: Unexpected directory ${StudyFolder}/${CASE}/dicom/${SERIES}/${DCM}"
+				if [ -d "${SubjectsFolder}/xnatupload/temp/working/${DCM}" ]; then
+					reho "--> ERROR: Unexpected directory ${SubjectsFolder}/${CASE}/dicom/${SERIES}/${DCM}"
 					exit 1
 				fi
-				## -- Upload individual dicom files
-				echo curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&inbody=true&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$CASE" --data-binary "@${DCM}"
-				PREARCPATH=$(curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&inbody=true&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$CASE" --data-binary "@${DCM}")
-			done	
+
+				## -- DESCRIPTION OF XNAT Site Variables for the Curl command:
+				## 
+				##    -b "JSESSIONID=$JSESSION" --> XNAT Site Open Session Variable
+				##    -X --> Here $HOST corresponds to the XNAT URL; 
+				##       --> PROJECT_ID corresponds to the XNAT Project ID in the Site URL; 
+				##           if not defined or not found then data goes into prearchive and left unassigned
+				##       --> SUBJECT_ID corresponds to the XNAT Subject ID that is unique to that subject and project within the XNAT Site
+				##       --> SUBJECT_LABEL corresponds to what a given 
+				##       --> EXPT_LABEL corresponds to the XNAT Subject ID
+				##    -F "${DCM}=@${DCM}"       --> What you are sending to the XNAT Site
+				## -- 
+				## 
+				## Accession #: SUBJECT_ID         #  A unique XNAT-wide ID for a given human irrespective of project
+				## Subject Details: SUBJECT_LABEL  #  A unique XNAT project-specific ID that matches the experimenter expectations
+				## MR Session: EXPT_LABEL          #  A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
+				##
+				## -------------------------------------------------------------
+				
+				## -- Upload individual dicom files:
+				echo curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$SessionID" -F "${DCM}=@${DCM}"
+				PREARCPATH=$(curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$SessionID" -F "${DCM}=@${DCM}")
+			done
 		echo ""
 		geho "-- PREARCHIVE XNAT PATH: ${PREARCPATH}"
 		echo ""
+		
 		## -- Check timestamp format matches the inputs
 		TIMESTAMP=$(echo ${PREARCPATH} | cut -d'/' -f 6 | tr -d '/')
 		PATTERN="[0-9]_[0-9]"
@@ -373,8 +431,8 @@ for CASE in ${CASES}; do
 			reho `date` "- Debug TS doesn't pass! ${TIMESTAMP}"
 		fi
 		## - Clean up and gzip data
-		rm -rf ${StudyFolder}/xnatupload/temp/working/ &> /dev/null
-		gzip ${StudyFolder}/${CASE}/dicom/${SERIES}/* &> /dev/null
+		rm -rf ${SubjectsFolder}/xnatupload/temp/working/ &> /dev/null
+		gzip ${SubjectsFolder}/${CASE}/dicom/${SERIES}/* &> /dev/null
 		clear UPLOADDICOMS
 		echo ""
 		geho "-- DICOM SERIES $SERIES upload completed"
@@ -392,15 +450,15 @@ for CASE in ${CASES}; do
 	geho "-- DICOM archiving completed completed for a total of $DICOMCOUNTER series"
 	geho "--------------------------------------------------------------------------------"
 	echo ""
-	
+
 	## ------------------------------------------------------------------
 	## -- Code for uploading extra directories, such as NIFTI, HCP ect.
 	## ------------------------------------------------------------------
-		
+
 	if [ "$NIFTIUPLOAD" == "yes" ]; then
 		geho "-- Uploading individual NIFTIs ... "
 		echo ""
-		cd ${StudyFolder}/${CASE}/nii/
+		cd ${SubjectsFolder}/${CASE}/nii/
 		NIFTISERIES=`ls | cut -f1 -d"." | uniq`
 		#NIFTISERIES="01"
 		## -- Iterate over individual nifti files
@@ -410,6 +468,7 @@ for CASE in ${CASES}; do
 			MULTIFILES=`ls ./$NIFTIFILE.*`
 			FILESTOUPLOAD=`echo $MULTIFILES | sed -e 's,./,,g'`
 			for NIFTIFILEUPLOAD in $FILESTOUPLOAD; do
+				## -- Start the upload for NIFTI files
 				geho "-- Uploading NIFTI $NIFTIFILEUPLOAD"
 				echo ""
 				## -- Clean existing nii session if requested
@@ -423,7 +482,6 @@ for CASE in ${CASES}; do
 			done
 			geho "-- NIFTI series $NIFTIFILE upload completed"
 		done
-		
 		echo ""
 		geho "-- NIFTI upload completed with a total of $SCANCOUNTER scans"
 		geho "--------------------------------------------------------------------------------"
@@ -433,6 +491,7 @@ done
 
 ## -- Close JSESSION
 curl -X DELETE -b "JSESSIONID=${JSESSION}" "$HOST/data/JSESSION"
+
 ## -- Log completion message
 echo ""
 geho "--- XNAT upload completed. Check output log for outputs and errors."
