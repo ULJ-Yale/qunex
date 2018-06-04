@@ -24,11 +24,16 @@ import subprocess
 import niutilities.g_NIfTI
 import niutilities.g_gimg as gimg
 import niutilities
-import dicom.filereader as dfr
 import zipfile
 import gzip
 import zlib
 import csv
+
+try:
+    import pydicom.filereader as dfr
+except:
+    import dicom.filereader as dfr
+
 
 
 # fcount = 0
