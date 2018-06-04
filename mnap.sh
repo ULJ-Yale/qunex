@@ -300,7 +300,6 @@ organizeDicom() {
 #    This function passes parameters into two NIUtilities commands: sortDicom and dicom2niix
 #
 			mkdir ${SubjectsFolder}/${CASE}/dicom &> /dev/null
-
 			if [ "$Overwrite" == "yes" ]; then
 				reho "===> Removing prior DICOM run"
 				rm -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
@@ -340,7 +339,11 @@ organizeDicom() {
 							echo "Check output here: ${SubjectsFolder}/${CASE}/dicom "
 							echo "---------------------------------------------------------------------------------"
 							echo ""
-							${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh |& tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.log
+							#if [[ ${OperatingSystem} == "Darwin" ]]; then
+								${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh 2>&1 | tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.log
+							#else
+							#	${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh |& tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.log
+							#fi
 						else
 							echo "Job ID:"
 							# -- Run the scheduler commands
