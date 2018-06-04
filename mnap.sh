@@ -339,11 +339,9 @@ organizeDicom() {
 							echo "Check output here: ${SubjectsFolder}/${CASE}/dicom "
 							echo "---------------------------------------------------------------------------------"
 							echo ""
-							#if [[ ${OperatingSystem} == "Darwin" ]]; then
-								${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh 2>&1 | tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.log
-							#else
-							#	${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh |& tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.log
-							#fi
+							${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh 2>&1 | tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.log
+							# --> This fails on some OS |& versions due to BASH version incompatiblity - need to use full expansion 2>&1 | : 
+							#${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh |& tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.log
 						else
 							echo "Job ID:"
 							# -- Run the scheduler commands
@@ -438,8 +436,10 @@ mapHCPFiles() {
 				echo "Running mapHCPFiles locally on `hostname`"
 				echo "Check output here: ${SubjectsFolder}/${CASE}/hcp "
 				echo "---------------------------------------------------------------------------------"
-		 		echo ""
-				${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh |& tee -a ${SubjectsFolder}/${CASE}/mapHCPFiles.${Suffix}.log
+				echo "" 
+				${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh 2>&1 | tee -a ${SubjectsFolder}/${CASE}/mapHCPFiles.${Suffix}.log
+				# --> This fails on some OS |& versions due to BASH version incompatiblity - need to use full expansion 2>&1 | : 
+				# ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh |& tee -a ${SubjectsFolder}/${CASE}/mapHCPFiles.${Suffix}.log
 			else
 				echo "Job ID:"
 				# -- Run the scheduler commands
@@ -2305,7 +2305,9 @@ FSLDtifit() {
 		# -- Make script executable
 		chmod 770 "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
 		if [ "$Cluster" == 1 ]; then
-			"$LogFolder"/fsldtifit_${Suffix}.sh |& tee -a "$LogFolder"/fsldtifit_${Suffix}.log
+			"$LogFolder"/fsldtifit_${Suffix}.sh 2>&1 | tee -a "$LogFolder"/fsldtifit_${Suffix}.log
+			# --> This fails on some OS |& versions due to BASH version incompatiblity - need to use full expansion 2>&1 | : 
+			# "$LogFolder"/fsldtifit_${Suffix}.sh |& tee -a "$LogFolder"/fsldtifit_${Suffix}.log
 		fi
 		if [ "$Cluster" == 2 ]; then
 			# -- Send to scheduler
