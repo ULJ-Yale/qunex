@@ -208,6 +208,7 @@ Change Log
 * 0.11.7 [connector] Improved handling of paramaters in organizeDicom function
 * 0.11.8 [niutilities, library] Improved handling of deprecated parameters
 * 0.11.9 [niutilities, connector] Improved handling of batch paramaters options request
+* 0.11.10 [connector] Improved handling of bash redirects
 
 =======
 [Mind and Brain Lab]: http://mblab.si
