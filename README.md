@@ -37,10 +37,14 @@ Installation
 
 ### Step 4. Configure the environment script by adding the following lines to your .bash_profile.
 
-	TOOLS=~/mnaptools
+	TOOLS=<path_to_folder_with_mnap_software>
 	export TOOLS
-	source $TOOLS/library/environment/mnap_environment.sh
+	source ${TOOLS}/library/environment/mnap_environment.sh
 
+* Note: All relevant dependencies should be inside TOOLS folder. 
+* For more info on how to define individual software paths run:
+
+	${TOOLS}/library/environment/mnap_environment.sh --help
 
 Usage and command documentation
 ===============================
@@ -210,6 +214,8 @@ Change Log
 * 0.11.9 [niutilities, connector] Improved handling of batch paramaters options request
 * 0.11.10 [connector] Improved handling of bash redirects
 * 0.11.11 [connector] Improved XNATCloudUpload script to more robustly handle input flags
+* 0.11.12 [niutilities] Updated g_dicom.py to use both pydicom v1.x and < v1.0
+* 0.12.0 [library] Upgraded mnap environment script
 
 =======
 [Mind and Brain Lab]: http://mblab.si
