@@ -55,7 +55,7 @@ Updating the MNAP Suite
 
 * To update the main MNAP Suite repository and all the submodules run:
 
-`mnapupdateall --branch="<name_of_branch_you_wish_to_update>`
+`mnapupdateall --branch="<name_of_branch_you_wish_to_update>"`
 
 * For this to work you need to have an active git account and read access across the MNAP Suite.
 
