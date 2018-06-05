@@ -3272,6 +3272,15 @@ if [ "$1" == "help" ]; then
 	exit 0
 fi
 
+if [ "$1" == "--envsetup" ]; then
+	showVersion
+	echo ""
+	echo "Printing help call for $MNAPPATH/library/environment/mnap_environment.sh"
+	echo ""
+	$TOOLS/$MNAPREPO/library/environment/mnap_environment.sh --help
+	exit 0
+fi
+
 # ------------------------------------------------------------------------------
 #  gmri function loop outside local functions to bypass checking
 # ------------------------------------------------------------------------------
