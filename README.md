@@ -1,4 +1,4 @@
-# README File for MNAP Matlab Analysis Utilities
+# README File for MNAP Suite Matlab Analysis Utilities
 
 Background
 ==========
@@ -29,28 +29,7 @@ Installation
 ===============================
 ---
 
-### Step 1. Clone all MNAP repos and initiate submodules.
-
-* Clone: `git clone git@bitbucket.org:hidradev/mnaptools.git` 
-* Initiate submodules from inside cloned repo folder: `git submodule init`
-* Pull and update all submodules: `git pull --recurse-submodules && git submodule update --recursive`
-* Update submodules to latest commit on origin: `git submodule foreach git pull origin master`
-
-### Step 2. Install all necessary dependencies for full functionality (see below). 
-
-### Step 3. Configure `niutilities` repository. 
-
-* Add `~/mnaptools/niutilities` folder to `$PATH`
-* Add `~/mnaptools/niutilities` folder to `$PYTHONPATH`
-* Make `~/mnaptools/niutilities/gmri` executable
-* Install latest version of numpy, pydicom, scipy & nibabel
-* (e.g. `pip install numpy pydicom scipy nibabel `)
-
-### Step 4. Configure the environment script by adding the following lines to your .bash_profile.
-
-	TOOLS=~/mnaptools
-	export TOOLS
-	source $TOOLS/library/environment/mnap_environment.sh
+### See https://bitbucket.org/hidradev/mnaptools/src/master/README.md
 
 Usage and command documentation
 ===============================
@@ -82,9 +61,8 @@ External dependencies
 =====================
 ---
 
-* All MNAP repositories for optimal functionality (git clone git@bitbucket.org:mnap/mnaptools.git)
-* Connectome Workbench (v1.0 or above)
-* MATLAB (version 2012b or above with Signal Processing, Statistics and Machine Learning and Image Processing Toolbox)
+### See https://bitbucket.org/hidradev/mnaptools/src/master/README.md
+
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
