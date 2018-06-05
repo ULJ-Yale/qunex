@@ -44,7 +44,8 @@ source $TOOLS/library/environment/mnap_environment.sh
 * All relevant dependencies should be inside `$TOOLS` folder.
 
 * The `mnap_environment.sh` script automatically sets assumptions for dependency paths. 
-These can be changed. For more info on how to define specific MNAP dependencies paths run:
+These can be changed by the user. 
+* For more info on how to define specific MNAP dependencies paths run:
 
 `mnap --envsetup`
 
