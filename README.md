@@ -37,9 +37,11 @@ Installation
 
 ### Step 4. Configure the environment script by adding the following lines to your .bash_profile.
 
-	TOOLS=<path_to_folder_with_mnap_software>
-	export TOOLS
-	source ${TOOLS}/library/environment/mnap_environment.sh
+```
+TOOLS=<path_to_folder_with_mnap_suite_and_dependencies>
+export TOOLS
+source $TOOLS/library/environment/mnap_environment.sh
+```
 
 * Note: All relevant dependencies should be inside TOOLS folder. 
 * For more info on how to define individual software paths run:
