@@ -20,22 +20,18 @@ Installation
 
 ### Step 1. Clone all MNAP repos and initiate submodules.
 
-* Clone: `git clone git@bitbucket.org:hidradev/mnaptools.git` 
+* Clone: `git clone git@bitbucket.org:hidradev/mnaptools.git`
 * Initiate submodules from inside cloned repo folder: `git submodule init`
 * Pull and update all submodules: `git pull --recurse-submodules && git submodule update --recursive`
 * Update submodules to latest commit on origin: `git submodule foreach git pull origin master`
 
-### Step 2. Install all necessary dependencies for full functionality (see below). 
+### Step 2. Configure `niutilities` repository. 
 
-### Step 3. Configure `niutilities` repository. 
-
-* Add `~/mnaptools/niutilities` folder to `$PATH`
-* Add `~/mnaptools/niutilities` folder to `$PYTHONPATH`
 * Make `~/mnaptools/niutilities/gmri` executable
 * Install latest version of numpy, pydicom, scipy & nibabel
-* (e.g. `pip install numpy pydicom scipy nibabel `)
+* (e.g. `pip install numpy pydicom scipy nibabel`)
 
-### Step 4. Configure the environment script by adding the following lines to your .bash_profile.
+### Step 3. Configure the environment script by adding the following lines to your .bash_profile.
 
 ```
 TOOLS=<path_to_folder_with_mnap_suite_and_dependencies>
@@ -43,10 +39,15 @@ export TOOLS
 source $TOOLS/library/environment/mnap_environment.sh
 ```
 
-* Note: All relevant dependencies should be inside TOOLS folder. 
-* For more info on how to define individual software paths run:
+### Step 4. Install all necessary dependencies for full functionality (see below). 
+
+* All relevant dependencies should be inside `$TOOLS` folder.
+
+* The `mnap_environment.sh` script automatically sets assumptions for dependency paths. 
+These can be changed. For more info on how to define specific MNAP dependencies paths run:
 
 `mnap --envsetup`
+
 
 Usage and command documentation
 ===============================
