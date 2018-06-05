@@ -48,6 +48,13 @@ These can be changed. For more info on how to define specific MNAP dependencies 
 
 `mnap --envsetup`
 
+Updating the MNAP Suite
+===============================
+
+* To update the MNAP Suite across all repositories run:
+
+`mnapupdateall --branch="<name_of_branch_you_wish_to_update>"
+
 
 Usage and command documentation
 ===============================
