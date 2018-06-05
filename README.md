@@ -20,10 +20,11 @@ Installation
 
 ### Step 1. Clone all MNAP repos and initiate submodules.
 
-* Clone: `git clone git@bitbucket.org:hidradev/mnaptools.git`
+* Clone a branch: `git clone -b <BRANCH> git@bitbucket.org:hidradev/mnaptools.git`
 * Initiate submodules from inside cloned repo folder: `git submodule init`
 * Pull and update all submodules: `git pull --recurse-submodules && git submodule update --recursive`
-* Update submodules to latest commit on origin: `git submodule foreach git pull origin master`
+* Checkout desired branch for each submodule: `git submodule foreach git checkout <BRANCH>`
+* Update submodules to latest commit on the branch: `git submodule foreach git pull origin <BRANCH>`
 
 ### Step 2. Configure `niutilities` repository. 
 
