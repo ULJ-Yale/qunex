@@ -20,7 +20,7 @@ Installation
 
 ### Step 1. Clone all MNAP repos and initiate submodules.
 
-* Clone: `git clone git@bitbucket.org/hidradev/mnaptools.git` 
+* Clone: `git clone git@bitbucket.org:hidradev/mnaptools.git` 
 * Initiate submodules from inside cloned repo folder: `git submodule init`
 * Pull and update all submodules: `git pull --recurse-submodules && git submodule update --recursive`
 * Update submodules to latest commit on origin: `git submodule foreach git pull origin master`
@@ -46,7 +46,7 @@ source $TOOLS/library/environment/mnap_environment.sh
 * Note: All relevant dependencies should be inside TOOLS folder. 
 * For more info on how to define individual software paths run:
 
-	${TOOLS}/library/environment/mnap_environment.sh --help
+`mnap --envsetup`
 
 Usage and command documentation
 ===============================
