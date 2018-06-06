@@ -231,6 +231,7 @@ Change Log
 * 0.11.12 [niutilities] Updated g_dicom.py to use both pydicom v1.x and < v1.0
 * 0.12.0 [library] Upgraded mnap environment script
 * 0.12.1 [mnaptools] Updated README files across the suite
+* 0.12.2 [connector, library] Fixed environment issue with FSL, fixed XNATCloudUpload working paths, and made small QCPreproc tweaks
 
 =======
 [Mind and Brain Lab]: http://mblab.si
