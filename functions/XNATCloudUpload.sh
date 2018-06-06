@@ -136,10 +136,31 @@ ceho() {
   ## -- NIFTIUPLOAD="whether to upload NIFTIs
   ## -----------------------------------------------------------------------------
 
-get_options() {
+# -- Set general options functions
+opts_GetOpt() {
+sopt="$1"
+shift 1
+for fn in "$@" ; do
+	if [ `echo ${fn} | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
+		echo "${fn}" | sed "s/^${sopt}=//"
+		return 0
+	fi
+done
+}
 
-local scriptName=$(basename ${0})
-local arguments=($@)
+opts_CheckForHelpRequest() {
+for fn in "$@" ; do
+	if [ "$fn" = "--help" ]; then
+		return 0
+	fi
+done
+}
+
+if [ $(opts_CheckForHelpRequest $@) ]; then
+	showVersion
+	show_usage
+	exit 0
+fi
 
 # -- Initialize global output variables
 unset SubjectsFolder
@@ -153,61 +174,14 @@ unset NIFTIUPLOAD
 unset Overwrite
 
 # -- Parse arguments
-local index=0
-local numArgs=${#arguments[@]}
-local argument
-
-while [ ${index} -lt ${numArgs} ]; do
-    argument=${arguments[index]}
-    case ${argument} in
-        --help)
-            usage
-            exit 1
-            ;;
-        --version)
-            version_show $@
-            exit 0
-            ;;
-        --subjectsfolder=*)
-            SubjectsFolder=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;
-        --subjects=*)
-            CASES=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;
-        --sessionid=*)
-            SessionID=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;
-        --xnatsubjectids=*)
-            XNATSubjectIDS=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;
-        --niftiupload=*)
-            NIFTIUPLOAD=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;
-        --overwrite=*)
-            Overwrite=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;            
-        --hostname=*)
-            HOST=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;      
-        --projectid=*)
-            PROJ=${argument/*=/""}
-            index=$(( index + 1 ))
-            ;;      
-        *)
-            usage
-            reho "ERROR: Unrecognized Option: ${argument}"
-            echo ""
-            exit 1
-            ;;
-    esac
-done
+SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
+HOST=`opts_GetOpt "--hostname" $@`
+PROJ=`opts_GetOpt "--projectid" $@`
+CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
+XNATSubjectIDS=`opts_GetOpt "--xnatsubjectids" $@`
+SessionID=`opts_GetOpt "--sessionid" $@`
+NIFTIUPLOAD=`opts_GetOpt "--niftiupload" $@`
+Overwrite=`opts_GetOpt "--overwrite" $@`
 
 # -- Check required parameters
 if [ -z ${SubjectsFolder} ]; then
@@ -265,23 +239,21 @@ echo "   Subjects to process: ${CASES}"
 echo "   XNAT IDs for subjects (in order matching subjects to process): ${XNATSubjectIDS}"
 echo "   Session ID: ${SessionID}" 
 echo "   NIFTI upload: ${NIFTIUPLOAD}"
-echo "	 Overwrite set to: ${Overwrite}"
+echo "   Overwrite set to: ${Overwrite}"
 echo "   XNAT Hostname: ${HOST}"
 echo "   XNAT Project ID: ${PROJ}"
-
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of work --------------------------------"
 echo ""
 
-}
-
 ######################################### DO WORK ##########################################
 
 main() {
 
+TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
+
 # -- Get Command Line Options
-get_options $@
 
 echo ""
 ceho "       ********************************************"
@@ -344,7 +316,7 @@ echo ""
 geho "-- JSESSION created: $JSESSION"
 COUNTER=1
 ## -- Clean prior temp folders
-rm -r ${SubjectsFolder}/xnatupload/temp/working &> /dev/null
+rm -r ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working &> /dev/null
 
 # ------------------------------------------------------------------------------
 # -- Iterate over CASES:
@@ -377,14 +349,17 @@ for CASE in ${CASES}; do
 		DICOMCOUNTER=$((DICOMCOUNTER+1))
 		geho "-- Working on SERIES: $SERIES"
 		echo ""
-		mkdir -p ${SubjectsFolder}/xnatupload/temp/working/ &> /dev/null
+		mkdir -p ${SubjectsFolder}/xnatupload/ &> /dev/null
+		mkdir -p ${SubjectsFolder}/xnatupload/ &> /dev/null
+		mkdir -p ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/ &> /dev/null
+		mkdir -p ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working/ &> /dev/null
 		## -- Unzip DICOM files for upload
-		geho "-- Unzipping DICOMs and linking into temp location --> ${SubjectsFolder}/xnatupload/temp/working/"
+		geho "-- Unzipping DICOMs and linking into temp location --> ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working/"
 		echo ""
-		cp ${SubjectsFolder}/${CASE}/dicom/${SERIES}/* ${SubjectsFolder}/xnatupload/temp/working/
-		gunzip ${SubjectsFolder}/xnatupload/temp/working/*.gz &> /dev/null
+		cp ${SubjectsFolder}/${CASE}/dicom/${SERIES}/* ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working/
+		gunzip ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working/*.gz &> /dev/null
 		geho "-- Uploading individual DICOMs ... "
-			cd ${SubjectsFolder}/xnatupload/temp/working/
+			cd ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working/
 			UPLOADDICOMS=`ls ./*dcm | cut -f2 -d'/'`
 			echo ""
 			echo "--------------------- DICOMs Staged for XNAT Upload: -------------------"
@@ -394,11 +369,10 @@ for CASE in ${CASES}; do
 			echo "------------------------------------------------------------------------"
 			echo ""
 			for DCM in $UPLOADDICOMS; do
-				if [ -d "${SubjectsFolder}/xnatupload/temp/working/${DCM}" ]; then
+				if [ -d "${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working/${DCM}" ]; then
 					reho "--> ERROR: Unexpected directory ${SubjectsFolder}/${CASE}/dicom/${SERIES}/${DCM}"
 					exit 1
 				fi
-
 				## -- DESCRIPTION OF XNAT Site Variables for the Curl command:
 				## 
 				##    -b "JSESSIONID=$JSESSION" --> XNAT Site Open Session Variable
@@ -435,7 +409,7 @@ for CASE in ${CASES}; do
 			reho `date` "- Debug TS doesn't pass! ${TIMESTAMP}"
 		fi
 		## - Clean up and gzip data
-		rm -rf ${SubjectsFolder}/xnatupload/temp/working/ &> /dev/null
+		rm -rf ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/ &> /dev/null
 		gzip ${SubjectsFolder}/${CASE}/dicom/${SERIES}/* &> /dev/null
 		clear UPLOADDICOMS
 		echo ""
@@ -509,4 +483,4 @@ echo ""
 # -- Invoke the main function to get things started -------
 # ---------------------------------------------------------
 
-main $@
+main

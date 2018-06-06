@@ -71,7 +71,7 @@ usage() {
      echo ""
      echo "--function=<function_name>                                      Explicitly specify Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
      echo "--subjectsfolder=<folder_with_subjects>                         Path to study folder that contains subjects"
-     echo "--subjects=<list_of_cases>                                      List of subjects to run, separated by commas"
+     echo "--subject=<list_of_cases>                                      List of subjects to run, separated by commas"
      echo "--modality=<input_modality_for_qc>                              Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
      echo ""
      echo "-- DWI PARMETERS"
@@ -119,7 +119,7 @@ usage() {
      echo "# -- T1w QC"
      echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--function='QCPreproc' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--subject='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='T1w' \ "
@@ -128,7 +128,7 @@ usage() {
      echo "# -- T2w QC"
      echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--function='QCPreproc' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--subject='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='T2w' \ "
@@ -137,7 +137,7 @@ usage() {
      echo "# -- Myelin QC"
      echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--function='QCPreproc' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--subject='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='myelin' \ "
@@ -146,7 +146,7 @@ usage() {
      echo "# -- DWI QC "
      echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--function='QCPreproc' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--subject='<comma_separated_list_of_cases>' \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='DWI' \ "
      echo "--outpath='<path_for_output_file> \ "
@@ -158,7 +158,7 @@ usage() {
      echo "# -- BOLD QC"
      echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--function='QCPreproc' \ "
-     echo "--subjects='<comma_separated_list_of_cases>' \ "
+     echo "--subject='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='BOLD' \ "
@@ -220,7 +220,6 @@ if [ $(opts_CheckForHelpRequest $@) ]; then
 fi
 
 # -- Get the command line options for this script
-# get_options() {
 
 # -- Initialize global variables
 unset SubjectsFolder # --subjectsfolder=
@@ -275,7 +274,6 @@ if [[ ! -z $BOLDRUNS ]]; then
 		BOLDS="${BOLDDATA}"
 	fi
 fi
-reho "${BOLDS}"
 
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
 BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
@@ -390,7 +388,7 @@ echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "  Study Folder: ${StudyFolder}"
 echo "  Subject Folder: ${SubjectsFolder}"
-echo "  Subjects: ${CASE}"
+echo "  Subject: ${CASE}"
 echo "  QC Modality: ${Modality}"
 echo "  QC Output Path: ${OutPath}"
 echo "  QC Scene Template: ${TemplateFolder}"
@@ -422,17 +420,10 @@ echo ""
 geho "------------------------- Start of work --------------------------------"
 echo ""
 
-# }
 
 ######################################### DO WORK ##########################################
 
 main() {
-
-# -- Parse all the input cases for an individual or group run
-INPUTCASES=`echo "$CASE" | sed 's/,/ /g'`
-echo ""
-
-# -- Define all inputs and outputs depending on data type input
 
 # -- Check of overwrite flag was set
 if [ "$Overwrite" == "yes" ]; then
