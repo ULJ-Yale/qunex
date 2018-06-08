@@ -232,6 +232,7 @@ Change Log
 * 0.12.0 [library] Upgraded mnap environment script
 * 0.12.1 [mnaptools] Updated README files across the suite
 * 0.12.2 [connector, library] Fixed environment issue with FSL, fixed XNATCloudUpload working paths, and made small QCPreproc tweaks
+* 0.13.0 [library] Upgraded environment script
 
 =======
 [Mind and Brain Lab]: http://mblab.si
