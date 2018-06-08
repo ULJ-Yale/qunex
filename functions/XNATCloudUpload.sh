@@ -84,19 +84,20 @@ usage() {
     echo "-- OPTIONAL PARMETERS:"
     echo "" 
     echo ""
-    echo "          --sessionid=<session_id>                 Name of session within XNAT for a given subject id. Default []. "
-    echo "                                                    Use if you wish to upload multiple distinct sessions per subject id."
-    echo "                                                    If you wish to upload a new session for this subject id please supply this flag."
-    echo "          --xnatsubjectids=<list_of_cases>           List of XNAT database subject IDs Default it []."
-    echo "                                                    Use if your XNAT database has a different set of subject ids."
-    echo "                                                    If your XNAT database subject id is distinct from your local server subject id then please supply this flag."
-    echo "          --niftiupload=<specify_nifti_upload>      Specify <yes> or <no> for NIFTI upload. Default is [no]"
-    echo "          --overwrite=<specify_level_of_overwrite>  Specify <yes> or <no> for cleanup of prior upload. Default is [yes]"
+    echo "          --sessionid=<session_id>                              Name of session within XNAT for a given subject id. Default []. "
+    echo "                                                                Use if you wish to upload multiple distinct sessions per subject id."
+    echo "                                                                If you wish to upload a new session for this subject id please supply this flag."
+    echo "          --xnatsubjectids=<list_of_cases>                      List of XNAT database subject IDs Default it []."
+    echo "                                                                Use if your XNAT database has a different set of subject ids."
+    echo "                                                                If your XNAT database subject id is distinct from your local server subject id then please supply this flag."
+    echo "          --niftiupload=<specify_nifti_upload>                  Specify <yes> or <no> for NIFTI upload. Default is [no]"
+    echo "          --overwrite=<specify_overwrite>              Specify <yes> or <no> for cleanup of prior upload on the host server. Default is [yes]"
+    echo "          --resetcredentials=<reset_credentials_for_xnat_site_>  Specify <yes> if you wish to reset your XNAT site user and password. Default is [no]"
     echo ""
     echo "-- Example:"
     echo ""
     echo "XNATCloudUpload.sh --subjectsfolder='<absolute_path_to_subjects_folder>' \ "
-    echo "--subject='<case_id_on_local_server>' \ "
+    echo "--subjects='<case_id_on_local_server>' \ "
     echo "--projectid='<name_of_xnat_project_id>' \ "
     echo "--hostname='<XNAT_site_URL>' "
     echo ""
@@ -134,6 +135,7 @@ ceho() {
   ## -- SessionID="Name of session within XNAT for a given subject id. Default []."
   ## -- Overwrite="whether to delete existing XNAT upload prior to upload
   ## -- NIFTIUPLOAD="whether to upload NIFTIs
+  ## -- ResetCredentials="Specify <yes> if you wish to reset your XNAT site user and password"
   ## -----------------------------------------------------------------------------
 
 # -- Set general options functions
@@ -172,6 +174,7 @@ unset XNATSubjectIDS
 unset SessionID
 unset NIFTIUPLOAD
 unset Overwrite
+unset ResetCredentials
 
 # -- Parse arguments
 SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
@@ -182,6 +185,7 @@ XNATSubjectIDS=`opts_GetOpt "--xnatsubjectids" $@`
 SessionID=`opts_GetOpt "--sessionid" $@`
 NIFTIUPLOAD=`opts_GetOpt "--niftiupload" $@`
 Overwrite=`opts_GetOpt "--overwrite" $@`
+ResetCredentials=`opts_GetOpt "--resetcredentials" $@`
 
 # -- Check required parameters
 if [ -z ${SubjectsFolder} ]; then
@@ -226,10 +230,14 @@ if [ -z ${XNATSubjectIDS} ]; then
     echo ""
 fi
 
- if [ -z ${Overwrite} ]; then
+if [ -z ${ResetCredentials} ]; then
+	ResetCredentials="no"
+fi
+
+if [ -z ${Overwrite} ]; then
 	Overwrite="yes"
 fi
-    
+  
 # -- Report options
 echo ""
 echo ""
@@ -237,9 +245,10 @@ echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   Folder with all subjects: ${SubjectsFolder}"
 echo "   Subjects to process: ${CASES}"
 echo "   XNAT IDs for subjects (in order matching subjects to process): ${XNATSubjectIDS}"
-echo "   Session ID: ${SessionID}" 
+echo "   Session ID: ${SessionID}"
 echo "   NIFTI upload: ${NIFTIUPLOAD}"
 echo "   Overwrite set to: ${Overwrite}"
+echo "   Reset XNAT site credentials: ${ResetCredentials}"
 echo "   XNAT Hostname: ${HOST}"
 echo "   XNAT Project ID: ${PROJ}"
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
@@ -265,18 +274,26 @@ echo ""
 # -- First check if .xnat credentials exist:
 # ------------------------------------------------------------------------------
 
+if [ ${ResetCredential} == "yes" ]; then
+	echo ""
+	reho " -- Reseting XNAT credentials in ${HOME}/.xnat "
+	echo ""
+	rm -f ${HOME}/.xnat &> /dev/null
+	echo ""
+fi
+
 if [ -f ${HOME}/.xnat ]; then
 	echo ""
-	ceho "       XNAT credentials found. Proceeding with upload.        "
+	ceho " -- XNAT credentials in ${HOME}/.xnat found. Proceeding with upload.        "
 	echo ""
 else
-	reho "-- XNAT credentials NOT found. Please generate them now."
+	reho " -- XNAT credentials in ${HOME}/.xnat NOT found. Please generate them now."
 	echo ""
-	reho "--> Enter your XNAT HOST username:"
+	reho "   --> Enter your XNAT HOST username:"
 	if read -s answer; then
 		XNATUser=$answer
 	fi
-	reho "--> Enter your XNAT HOST password:"
+	reho "   --> Enter your XNAT HOST password:"
 	if read -s answer; then
 		XNATPass=$answer
 	fi
@@ -284,22 +301,21 @@ else
 	chmod 400 ${HOME}/.xnat
 	unset XNATUser
 	unset XNATPass
+	echo ""
+	ceho " -- XNAT credentials generated in ${HOME}/.xnat " 
+	echo ""
+	ceho " -- Proceeding with upload.        "
+	echo ""
 fi
 
 # ------------------------------------------------------------------------------
 # -- Check the server you are transfering data from:
 # ------------------------------------------------------------------------------
 
-TRANSFERNODE=`hostname` 
-#if [ $TRANSFERNODE == "transfer-grace.hpc.yale.edu" ]; then 
+TRANSFERNODE=`hostname`
 	echo ""
 	geho "-- Transferring data from: $TRANSFERNODE"
 	echo ""
-#else
-	# reho "-- Transfer to the XNAT server from $TRANSFERNODE is not supported."
-#	echo "-- Unusual transfer server"
-	# exit 1
-#fi
 
 # ------------------------------------------------------------------------------
 #  -- Setup the JSESSION and clean up prior temp folders:
@@ -311,7 +327,7 @@ START=$(date +"%s")
 CRED=$(cat ${HOME}/.xnat)
 
 ## -- Open JSESSION to the XNAT Site
-JSESSION=$(curl -X POST -u "$CRED" "$HOST/data/JSESSION" )
+JSESSION=$(curl -k -X POST -u "$CRED" "$HOST/data/JSESSION" )
 echo ""
 geho "-- JSESSION created: $JSESSION"
 COUNTER=1
@@ -392,8 +408,8 @@ for CASE in ${CASES}; do
 				## -------------------------------------------------------------
 				
 				## -- Upload individual dicom files:
-				echo curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$SessionID" -F "${DCM}=@${DCM}"
-				PREARCPATH=$(curl -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$SessionID" -F "${DCM}=@${DCM}")
+				echo curl -k -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$SessionID" -F "${DCM}=@${DCM}"
+				PREARCPATH=$(curl -k -b "JSESSIONID=$JSESSION" -X POST "$HOST/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=$PROJ&SUBJECT_ID=$CASE&EXPT_LABEL=$SessionID" -F "${DCM}=@${DCM}")
 			done
 		echo ""
 		geho "-- PREARCHIVE XNAT PATH: ${PREARCPATH}"
@@ -420,9 +436,9 @@ for CASE in ${CASES}; do
 	## -- Commit session (builds prearchive xml)
 	geho "-- Committing XNAT session to prearchive..."
 	echo ""
-	curl -b "JSESSIONID=$JSESSION" -X POST "${HOST}${PREARCPATHFINAL}?action=build" &> /dev/null
+	curl -k -b "JSESSIONID=$JSESSION" -X POST "${HOST}${PREARCPATHFINAL}?action=build" &> /dev/null
 	## -- Archive session
-	curl -b "JSESSIONID=$JSESSION" -X POST -H "Content-Type: application/x-www-form-urlencoded" "${HOST}/data/services/archive?src=${PREARCPATHFINAL}&overwrite=delete"
+	curl -k -b "JSESSIONID=$JSESSION" -X POST -H "Content-Type: application/x-www-form-urlencoded" "${HOST}/data/services/archive?src=${PREARCPATHFINAL}&overwrite=delete"
 	echo ""
 	echo ""
 	geho "-- DICOM archiving completed completed for a total of $DICOMCOUNTER series"
@@ -451,12 +467,12 @@ for CASE in ${CASES}; do
 				echo ""
 				## -- Clean existing nii session if requested
 				if [ "$Overwrite" == "yes" ]; then
-					curl -b "JSESSIONID=$JSESSION" -X DELETE "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii"
+					curl -k -b "JSESSIONID=$JSESSION" -X DELETE "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii"
 				fi
 				## -- Create a folder for nii scans
-				curl -b "JSESSIONID=$JSESSION" -X PUT "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii"
+				curl -k -b "JSESSIONID=$JSESSION" -X PUT "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii"
 				## -- Upload a specific nii session
-				curl -b "JSESSIONID=$JSESSION" -X POST "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii/files/${NIFTIFILEUPLOAD}?inbody=true&overwrite=delete" --data-binary "@${NIFTIFILEUPLOAD}"
+				curl -k -b "JSESSIONID=$JSESSION" -X POST "${HOST}/data/projects/${PROJ}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii/files/${NIFTIFILEUPLOAD}?inbody=true&overwrite=delete" --data-binary "@${NIFTIFILEUPLOAD}"
 			done
 			geho "-- NIFTI series $NIFTIFILE upload completed"
 		done
@@ -468,7 +484,7 @@ for CASE in ${CASES}; do
 done
 
 ## -- Close JSESSION
-curl -X DELETE -b "JSESSIONID=${JSESSION}" "$HOST/data/JSESSION"
+curl -k -X DELETE -b "JSESSIONID=${JSESSION}" "$HOST/data/JSESSION"
 
 ## -- Log completion message
 echo ""

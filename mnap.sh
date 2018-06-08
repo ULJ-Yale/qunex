@@ -3272,10 +3272,10 @@ if [ "$1" == "help" ]; then
 	exit 0
 fi
 
-if [ "$1" == "--envsetup" ]; then
+if [ "$1" == "--envsetup" ] || [ "$1" == "-envsetup" ] || [ "$1" == "envsetup" ]; then
 	showVersion
 	echo ""
-	echo "Printing help call for $MNAPPATH/library/environment/mnap_environment.sh"
+	echo "Printing help call for $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh"
 	echo ""
 	$TOOLS/$MNAPREPO/library/environment/mnap_environment.sh --help
 	exit 0
@@ -3541,7 +3541,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	# -- Set additional general flags
 	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 	Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
-	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`  # Option for printing the entire command
+	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
 	Scheduler=`opts_GetOpt "${setflag}scheduler" $@`  # Specify the type of scheduler to use
 	# -- If scheduler flag set then set RunMethod variable
 	if [ ! -z "$Scheduler" ]; then
