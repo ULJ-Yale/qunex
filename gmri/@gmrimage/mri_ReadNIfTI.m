@@ -165,7 +165,11 @@ elseif strcmp(img.imageformat, 'CIFTI')
     end
 
     if strcmp(img.filetype, '.pconn')
-        img.voxels  = img.dim(1) .* img.dim(2);
+        if length(img.dim) > 1
+            img.voxels  = img.dim(1) .* img.dim(2);
+        else
+            img.voxels = img.dim ^ 2;
+        end
         img.frames  = 1;
     else
         img.voxels  = img.dim(1);

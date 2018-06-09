@@ -271,7 +271,7 @@ classdef gmrimage
                                 obj.hdrnifti.intent_name = 'ConnDenseSeries ';
                                 obj.meta = obj.dtseriesXML();
                             case 'dscalar'
-                                obj.filetype = '.dtseries';
+                                obj.filetype = '.dscalar';
                                 obj.hdrnifti.intent_code = 3006;
                                 obj.hdrnifti.intent_name = 'ConnDenseScalar ';
                                 if isa(frames, 'cell')
