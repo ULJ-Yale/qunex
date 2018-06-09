@@ -8,6 +8,8 @@
 # Copyright (C) 2015 Anticevic Lab, Yale University
 # Copyright (C) 2015 MBLAB, University of Ljubljana
 #
+# ## AUTHORS(s)
+#
 # * Alan Anticevic, N3 Division, Yale University
 #
 # ## PRODUCT

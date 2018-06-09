@@ -103,19 +103,18 @@ geho() {
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
 # The data should be in $DiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
-    # SubjectsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome/subjects
-    # Subject	     # e.g. 100307
-    # MatrixVersion  # e.g. 1 or 3
-    # ParcellationFile  # e.g. /gpfs/project/fas/n3/Studies/Connectome/Parcellations/GlasserParcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii
-    # OutName  # e.g. LR_Colelab_partitions_v1d_islands_withsubcortex
-
+    # SubjectsFolder 
+    # Subject        
+    # MatrixVersion     e.g. 1 or 3
+    # ParcellationFile  in *.dlabel.nii format
+    # OutName  
 ########################################## OUTPUTS #########################################
 
 # -- Outputs will be *pconn.nii files located here:
 #       DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
-# -- Get the command line options for this script
 
+# -- Get the command line options for this script
 get_options() {
 
 local scriptName=$(basename ${0})
@@ -181,7 +180,7 @@ while [ ${index} -lt ${numArgs} ]; do
         *)
             usage
             reho "ERROR: Unrecognized Option: ${argument}"
-    		echo ""
+            echo ""
             exit 1
             ;;
     esac
@@ -317,22 +316,22 @@ else
 fi	
 
 # -- Perform completion checks
-	reho "--- Checking outputs..."
+reho "--- Checking outputs..."
+echo ""
+if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
+	geho "Parcellated (pconn) file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFilePconn}"
 	echo ""
-	if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
-		geho "Parcellated (pconn) file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFilePconn}"
-		echo ""
-	else
-		reho "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
-		echo ""
-		exit 1
-	fi
-	
-	reho "--- DWI Parcellation successfully completed"
+else
+	reho "Parcellated (pconn) file for Matrix $MatrixVersion is missing. Something went wrong."
 	echo ""
-    geho "------------------------- End of work --------------------------------"
-    echo ""
-    
+	exit 1
+fi
+
+reho "--- DWI Parcellation successfully completed"
+echo ""
+geho "------------------------- End of work --------------------------------"
+echo ""
+
 }
 
 # ---------------------------------------------------------
