@@ -26,9 +26,13 @@ function [report] = g_ExtractROIValues(roif, mfs, sefs, vnames, output, stats, v
 %
 %	verbose		- to report on progress or not [not]
 %
-% 	Created by Grega Repovš on 2014-08-26.
+%   ---
+%   Written by Grega Repovs, 2014-08-26
 %
-% 	Copyright (c) 2014 Grega Repovs. All rights reserved.
+%   Changelog
+%   2018-06-13 Grega Repovs ... Implemented printing in long format
+%
+
 
 if nargin < 7, verbose = false; end
 if nargin < 6 || isempty(stats),  stats   = 'rsize, rmean, mean';    end
@@ -242,6 +246,47 @@ for output = outputs
 
     if strfind(output, 'long')
 
+        % --- print header
+        %
+        % roi, variable, frame, [roi_size], [roi_xyz], [vlstats ...], vstats, [vstats_se]
+
+
+        fprintf(fout, 'roi');
+        if ~isempty(rsize), fprintf(fout, '\troi_size'); end
+        if ~isempty(rmean), fprintf(fout, '\troi_xyz'); end
+
+        fprintf(fout, '\tvariable\tframe\tvar_frame');
+        if ~isempty(vlstats), for vlstat = vlstats, fprintf(fout, '\t%s', vlstat{1}); end; end
+        for vstat = vstats, fprintf(fout, '\t%s', vstat{1}); end
+        if ~isempty(sefs), for vstat = vstats, fprintf(fout, '\t%s_se', vstat{1}); end; end
+
+        % --- print values
+
+        for r = 1:nroi
+            sroidata = sprintf('\n%s', roi.roi.roinames{r});
+            if ~isempty(rsize), sroidata = [sroidata sprintf('\t%d', rsize(r))]; end
+            if ~isempty(rmean), sroidata = [sroidata sprintf('\t(%.1f, %.1f, %.1f)', rmean(r,:))]; end
+
+            for filen = 1:nfiles
+                for framen = 1:frames(filen)
+                    fprintf(fout, '%s\t%s\t%d\t%s_%d', sroidata, vnames{filen}, framen, vnames{filen}, framen);
+
+                    for vlstat = 1:vlstatsn
+                        fprintf(fout, '\t(%d, %d, %d)', vldata{filen}(r, framen, vlstat, :));
+                    end
+
+                    for vstat = 1:vstatsn
+                        fprintf(fout, '\t%f', vdata{filen}(r, framen, vstat));
+                    end
+                    if ~isempty(sefs)
+                        for vstat = 1:vstatsn
+                            fprintf(fout, '\t%f', sedata{filen}(r, framen, vstat));
+                        end
+                    end
+                end
+            end
+        end
+
 
     else
 
@@ -252,30 +297,30 @@ for output = outputs
         if ~isempty(rmean), fprintf(fout, '\troi_xyz'); end
         for filen = 1:nfiles
             for vstat = vstats
-                if frames(framen) == 1
+                if frames(filen) == 1
                     fprintf(fout, '\t%s_%s', vnames{filen}, vstat{1});
                 else
-                    for framen = 1:frames(framen)
+                    for framen = 1:frames(filen)
                         fprintf(fout, '\t%s_f%d_%s', vnames{filen}, framen, vstat{1});
                     end
                 end
             end
             if ~isempty(sefs)
                 for vstat = vstats
-                    if frames(framen) == 1
+                    if frames(filen) == 1
                         fprintf(fout, '\tse_%s_%s', vnames{filen}, vstat{1});
                     else
-                        for framen = 1:frames(framen)
+                        for framen = 1:frames(filen)
                             fprintf(fout, '\tse_%s_f%d_%s', vnames{filen}, framen, vstat{1});
                         end
                     end
                 end
             end
             for vlstat = vlstats
-                if frames(framen) == 1
+                if frames(filen) == 1
                     fprintf(fout, '\t%s_%s', vnames{filen}, vlstat{1});
                 else
-                    for framen = 1:frames(framen)
+                    for framen = 1:frames(filen)
                         fprintf(fout, '\t%s_f%d_%s', vnames{filen}, framen, vlstat{1});
                     end
                 end
@@ -291,20 +336,20 @@ for output = outputs
             if ~isempty(rmean), fprintf(fout, '\t(%.1f, %.1f, %.1f)', rmean(r,:)); end
             for filen = 1:nfiles
                 for vstat = 1:vstatsn
-                    for framen = 1:frames(framen)
-                        fprintf(fout, '\t%f', vdata{filen}(r,framen,vstat));
+                    for framen = 1:frames(filen)
+                        fprintf(fout, '\t%f', vdata{filen}(r, framen, vstat));
                     end
                 end
                 if ~isempty(sefs)
                     for vstat = 1:vstatsn
-                        for framen = 1:frames(framen)
-                            fprintf(fout, '\t%f', sedata{filen}(r,framen,vstat));
+                        for framen = 1:frames(filen)
+                            fprintf(fout, '\t%f', sedata{filen}(r, framen, vstat));
                         end
                     end
                 end
                 for vlstat = 1:vlstatsn
-                    for framen = 1:frames(framen)
-                        fprintf(fout, '\t(%d, %d, %d)', vldata{filen}(r,framen,vstat,:));
+                    for framen = 1:frames(filen)
+                        fprintf(fout, '\t(%d, %d, %d)', vldata{filen}(r, framen, vlstat, :));
                     end
                 end
             end
