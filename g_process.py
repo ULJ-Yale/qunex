@@ -99,7 +99,7 @@ def isNone(s):
     Check if the string is "None", "none" or "NONE" and returns None, otherwise
     returns the passed string.
     '''
-    if s in ['None', 'none', 'NONE']:
+    if s in ['None', 'none', 'NONE', '']:
         return None
     else:
         return s
@@ -155,7 +155,7 @@ def plist(s):
 arglist = [['# ---- Basic settings'],
            ['subjects',           'batch.txt',                                   str,    "The file with subject information."],
            ['subjectsfolder',     '',                                            os.path.abspath, 'The path to study subjects folder.'],
-           ['logfolder',          'None',                                        isNone,    'The path to log folder.'],
+           ['logfolder',          '',                                            isNone, 'The path to log folder.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
            ['nprocess',           '0',                                           int,    'How many subjects to process (0 - all).'],
@@ -293,7 +293,7 @@ arglist = [['# ---- Basic settings'],
 
            ['# --- Processing options'],
            ['run',                    'run',                                      str,    "run type: run - do the task, test - perform checks"],
-           ['log',                    'remove',                                   str,    "Whether to keep ('keep') or remove ('remove') the temporary logs once jobs are completed."]
+           ['log',                    'keep',                                     str,    "Whether to keep ('keep') or remove ('remove') the temporary logs once jobs are completed."]
            ]
 
 #   --------------------------------------------------------- PARAMETER MAPPING

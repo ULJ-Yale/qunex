@@ -199,6 +199,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -537,6 +541,10 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -803,6 +811,10 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -1010,6 +1022,10 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -1197,6 +1213,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -1724,6 +1744,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:

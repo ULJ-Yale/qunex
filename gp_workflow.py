@@ -170,6 +170,10 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                           'WM|Control|rest') or 'all' to copy all [rest].
     --boldname        ... The default name of the bold files in the images
                           folder [bold].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     The parameters can be specified in command call or subject.txt file.
 
@@ -387,6 +391,10 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                           'WM|Control|rest') or 'all' to copy all [rest].
     --boldname        ... The default name of the bold files in the images
                           folder [bold].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -614,6 +622,10 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                           'WM|Control|rest') or 'all' to copy all [rest].
     --boldname        ... The default name of the bold files in the images
                           folder [bold].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -977,6 +989,10 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                           'WM|Control|rest') or 'all' to copy all [rest].
     --boldname        ... The default name of the bold files in the images
                           folder [bold].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -1190,6 +1206,10 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                           folder [bold].
     --image_target    ... The target format to work with, one of 4dfp, nifti,
                           dtseries or ptseries [nifti].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -1649,10 +1669,11 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    preprocessConc is a complex command initially used to prepare BOLD files
-    for further functional connectivity analysis. While it still accomplishes
-    that it can now also be used for complex activation modeling that creates
-    GLM files for further second-level analyses. The function enables the
+    preprocessConc is a complex general purpose command implementing
+    spatial and temporal filtering, and multiple regression (GLM) to
+    enable both preprocessing and denoising of BOLD files for further
+    analysis, as well as complex activation modeling that creates
+    GLM files for second-level analyses. The function enables the
     following actions:
 
     * spatial smoothing (3D or 2D for cifti files)
@@ -1687,6 +1708,10 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                           folder [bold].
     --image_target    ... The target format to work with, one of 4dfp, nifti,
                           dtseries or ptseries [nifti].
+    --logfolder       ... The path to the folder where runlogs and comlogs
+                          are to be stored, if other than default []
+    --log             ... Whether to keep ('keep') or remove ('remove') the
+                          temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
