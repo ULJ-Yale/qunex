@@ -237,6 +237,7 @@ Change Log
 * 0.13.2 [library] Updated mnap environment script for better git handling and checks
 * 0.13.3 [matlab] Fixed a bug and implemented printing in long format for g_ExtractROIValues
 * 0.13.4 [niutilities] Updated inline documentation and defaults related to logging
+* 0.13.5 [niutilities] Updated preprocessing log reporting and optimized bold selection
 
 =======
 [Mind and Brain Lab]: http://mblab.si
