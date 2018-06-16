@@ -264,7 +264,11 @@ if ~strcmp(ntarget, 'none')
     fname = strrep(fname, '.gz', '');
     fname = strrep(fname, '.nii', '');
 
-    imwrite(pic, fullfile(ntarget, [fname '_nuisance.png']), 'png');
+    try
+        imwrite(pic, fullfile(ntarget, [fname '_nuisance.png']), 'png');
+    catch
+        fprintf('\n---> WARNING: Could not save mask PNG image! Check supported image formats!');
+    end
 end
 
 if verbose, fprintf('\n---> done!\n'); end

@@ -41,6 +41,7 @@ function [s] = g_WriteTable(filename, data, hdr, extra, sform, sep, pre, post)
 %   2016-02-05 Grega Repovs ... Added pre and post options
 %   2016-08-18 Grega Repovs ... Added printing to string
 %   2017-03-19 Grega Repovs ... Updated documentation
+%   2018-06-16 Grega Repovs ... Adjusted to work with Octave
 %
 
 if nargin < 8                    post  = [];                end
@@ -50,14 +51,14 @@ if nargin < 5 || isempty(sform), sform = '%s|%d|%.5g|%s';   end
 if nargin < 4,                   extra = [];                end
 if nargin < 3,                   hdr   = {};                end
 
-sform = regexp(sform, '|,|;| |\|', 'split');
+sform = regexp(sform, ',|;| |\|', 'split');
 
 if ~isempty(extra)
-    extra = regexp(extra, '|,|;| |\|', 'split');
+    extra = regexp(extra, ',|;| |\|', 'split');
 end
 
 if ~isempty(hdr) && isa(hdr, 'char')
-    hdr = regexp(sform, '|,|;| |\|', 'split');
+    hdr = regexp(sform, ',|;| |\|', 'split');
 end
 
 s = '';
@@ -124,6 +125,6 @@ end
 
 if ~isempty(filename)
     fout = fopen(filename, 'w');
-    fprintf(fout, s);
+    fprintf(fout, '%s', s);
     fclose(fout);
 end
