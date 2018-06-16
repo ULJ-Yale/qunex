@@ -271,8 +271,7 @@ def deduceFolders(args):
     if logfolder is None:
         logfolder = os.path.abspath(".")
         if basefolder:
-            if not any([os.path.abspath(os.path.join(os.path.dirname(basefolder), e)) in logfolder for e in ['fcMRI', 'fcmri', 'analysis', 'Analysis', 'processing', 'Processing']]):
-                logfolder = os.path.join(basefolder, 'processing', 'logs')
+            logfolder = os.path.join(basefolder, 'processing', 'logs')
 
     return {'basefolder': basefolder, 'subjectsfolder': subjectsfolder, 'logfolder': logfolder}
 
