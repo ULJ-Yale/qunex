@@ -335,6 +335,11 @@ def findFile(sinfo, options, fname):
     if os.path.exists(tfile):
         return tfile
 
+    if any([e in fname for e in ['conc', 'fidl']]):
+        tfile = os.path.join(d['inbox'], 'events', "%s_%s" % (sinfo['id'], fname))
+        if os.path.exists(tfile):
+            return tfile
+
     tfile = os.path.join(d['s_source'], fname)
     if os.path.exists(tfile):
         return tfile
