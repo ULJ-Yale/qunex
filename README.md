@@ -239,6 +239,7 @@ Change Log
 * 0.13.4 [niutilities] Updated inline documentation and defaults related to logging
 * 0.13.5 [niutilities] Updated preprocessing log reporting and optimized bold selection
 * 0.13.6 [matlab, library] Updates for Octave compatibility
+* 0.13.7 [matlab, niutilities] Further updates for Octave compatibility, conc and fidl file searc
 
 =======
 [Mind and Brain Lab]: http://mblab.si
