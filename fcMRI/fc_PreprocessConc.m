@@ -440,7 +440,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %              - Added the option for interpolation of bad frames after regression.
 %
 %   2018-06-17 Grega Repovs (v0.9.12)
-%              - Minor changes for Octave compatibility.
+%              - Changes for Octave compatibility.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 16, done = [];                                  end
@@ -783,20 +783,20 @@ for current = doIt
                         elseif strcmp(tail, '.ptseries.nii')
                             fprintf(' WARNING: No spatial smoothing will be performed on ptseries images!')
                         else
-                            img(b) = readIfEmpty(img(b), file(b).sfile, omit);
-                            img(b).data = img(b).image2D;
+                            tmpi = readIfEmpty(img(b), file(b).sfile, omit);
+                            tmpi.data = tmpi.image2D;
                             if strcmp(options.smooth_mask, 'false')
-                                img(b) = img(b).mri_Smooth3D(options.voxel_smooth, true);
+                                tmpi = tmpi.mri_Smooth3D(options.voxel_smooth, true);
                             else
 
                                 % --- set up the smoothing mask
 
                                 if strcmp(options.smooth_mask, 'nonzero')
-                                    bmask = img(b).zeroframes(1);
-                                    bmask.data = img(b).data(:,1) > 0;
+                                    bmask = tmpi.zeroframes(1);
+                                    bmask.data = tmpi.data(:,1) > 0;
                                 elseif strcmp(options.smooth_mask, 'brainsignal')
-                                    bmask = img(b).zeroframes(1);
-                                    bmask.data = img(b).data(:,1) > 300;
+                                    bmask = tmpi.zeroframes(1);
+                                    bmask.data = tmpi.data(:,1) > 300;
                                 elseif strcmp(options.smooth_mask, 'brainmask')
                                     bmask = gmrimage(file(b).bmask);
                                 else
@@ -806,29 +806,32 @@ for current = doIt
                                 % --- set up the dilation mask
 
                                 if strcmp(options.dilate_mask, 'nonzero')
-                                    dmask = img(b).zeroframes(1);
-                                    dmask.data = img(b).data(:,1) > 0;
+                                    dmask = tmpi.zeroframes(1);
+                                    dmask.data = tmpi.data(:,1) > 0;
                                 elseif strcmp(options.dilate_mask, 'brainsignal')
-                                    dmask = img(b).zeroframes(1);
-                                    dmask.data = img(b).data(:,1) > 300;
+                                    dmask = tmpi.zeroframes(1);
+                                    dmask.data = tmpi.data(:,1) > 300;
                                 elseif strcmp(options.dilate_mask, 'brainmask')
                                     dmask = gmrimage(file(b).bmask);
                                 else
                                     dmask = options.dilate_mask;
                                 end
 
-                                img(b) = img(b).mri_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
+                                tmpi = tmpi.mri_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
                             end
+                            img(b) = tmpi;
 
                         end
                     case 'h'
-                        img(b) = readIfEmpty(img(b), file(b).sfile, omit);
+                        tmpi = readIfEmpty(img(b), file(b).sfile, omit);
                         hpsigma = ((1/TR)/options.hipass_filter)/2;
-                        img(b) = img(b).mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
+                        tmpi = tmpi.mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
+                        img(b) = tmpi;
                     case 'l'
-                        img(b) = readIfEmpty(img(b), file(b).sfile, omit);
+                        tmpi = readIfEmpty(tmpi, file(b).sfile, omit);
                         lpsigma = ((1/TR)/options.lopass_filter)/2;
-                        img(b) = img(b).mri_Filter(0, lpsigma, omit, true, ignore.lopass);
+                        tmpi = tmpi.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
+                        img(b) = tmpi;
                 end
 
                 if ~img(b).empty
@@ -1313,19 +1316,22 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     for b = 1:nbolds
         fstart = sum(mframes(1:b-1)) + 1;
         fend   = sum(mframes(1:b));
-        img(b).data(:,masks{b}) = res.data(:,fstart:fend);
+        % img(b).data(:,masks{b}) = res.data(:,fstart:fend);    % --- led to strange error in Octave, had to give it off to a temporary image
+        tmpi   = img(b);        
+        tmpi.data(:,masks{b}) = res.data(:,fstart:fend);        
         if min(masks{b}) == 0
             if strcmp(ignore, 'mark')
                 fprintf(' marking %d bad frames ', sum(~masks{b}));
-                img(b).data(:, ~masks{b}) = NaN;
+                tmpi.data(:, ~masks{b}) = NaN;
             elseif ismember({ignore}, {'linear', 'spline'})
                 fprintf(' %s interpolating %d bad frames ', ignore, sum(~masks{b}));
                 x  = [1:length(masks{b})]';
                 xi = x;
                 x  = x(masks{b});
-                img(b).data = interp1(x, img(b).data(:, masks{b})', xi, ignore, 'extrap')';
+                tmpi.data = interp1(x, tmpi.data(:, masks{b})', xi, ignore, 'extrap')';
             end
         end
+        img(b) = tmpi;
     end
 
     coeff = coeff.mri_EmbedMeta(xtable, 64, 'GLM');
