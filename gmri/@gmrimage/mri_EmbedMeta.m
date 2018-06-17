@@ -37,6 +37,7 @@ function [img] = mri_EmbedMeta(img, data, code, name, verbose)
 %
 %   Change log
 %   2016-12-13 - Grega Repovs - Updated documentation
+%   2018-06-17 - Grega Repovs - Explicit conversion of 10 to string.
 %
 
 if nargin < 5 || isempty(verbose), verbose = false; end
@@ -45,7 +46,7 @@ if nargin < 3 || isempty(code),    code = 64; end
 if nargin < 2, error('\n==> ERROR: Missing data to be embedded!'); end
 
 if ~isempty(name)
-    data = ['# meta: ' name 10 data];
+    data = ['# meta: ' name char(10) data];
 end
 
 % -- embed data

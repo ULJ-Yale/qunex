@@ -438,6 +438,9 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %
 %   2017-04-22 Grega Repovs (v0.9.11)
 %              - Added the option for interpolation of bad frames after regression.
+%
+%   2018-06-17 Grega Repovs (v0.9.12)
+%              - Minor changes for Octave compatibility.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 16, done = [];                                  end
@@ -457,7 +460,7 @@ if nargin < 4 || isempty(TR), TR = 2.5;                     end
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces conc script v0.9.11 [%s]\n', tail);
+fprintf('\nRunning preproces conc script v0.9.12 [%s]\n', tail);
 
 options
 
@@ -487,7 +490,7 @@ end
 doscrubbing = ~any(ismember({ignore.hipass, ignore.regress, ignore.lopass}, {'keep'}));
 
 rgsse = strrep(strrep(strrep(strrep(rgss, ',', ''), ' ', ''), ';', ''), '|', '');
-rgss  = regexp(rgss, '|,|;| |\|', 'split');
+rgss  = regexp(rgss, ',|;| |\|', 'split');
 rtype = 0;
 
 switch tail
@@ -1287,7 +1290,11 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         mimg = X(nmask==1, :);
         mimg = mimg / (max(max(abs(mimg))) * 2);
         mimg = mimg + 0.5;
-        imwrite(mimg, [Xroot '.png']);
+        try
+            imwrite(mimg, [Xroot '.png']);
+        catch
+            fprintf('\n---> WARNING: Could not save GLM PNG image! Check supported image formats!');
+        end
     end
 
     %   ----> mask nuisance and do GLM
