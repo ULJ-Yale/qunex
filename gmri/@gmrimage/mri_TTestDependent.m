@@ -1,22 +1,32 @@
 function [p Z M D SE t] = mri_TTestDependent(A, B, verbose)
 
 %function [p Z M D SE t] = mri_TTestDependent(A, B, verbose)
-%	
+%
 %	Computes dependent t-test comparing the called image object (A) to B
-%	
+%
 %	A       - the image object the method is called on
 %	B       - the image object to compare to
 %   verbose - should it talk a lot [no]
 %
 %   Returns
-%       p   - an image with p-values 
+%       p   - an image with p-values
 %       t   - an image with t-values
 %       Z   - an image with Z-scores converted from p-values
 %       M   - on image with means of both groups
 %       D   - an image with A - B difference in group means
 %       SE  - an image with standard errors of both groups and their differences
 %
-%   Grega Repovš, 2011-10-09
+%   WARNING
+%   To compute Z-scores, the function uses icdf function, which is
+%   currently not supported by Octave and the resulting map will be
+%   all zeros when Octave is used.
+%
+%   ---
+%   Written by Grega Repovš, 2011-10-09
+%
+%   Changelog
+%   2018-06-19 Grega Repovs
+%            - Changed ttest call to use named parameters.
 %
 
 if nargin < 3
@@ -42,9 +52,9 @@ p = A.zeroframes(1);
 if verbose, fprintf('\nComputing t-test'), end
 
 if nargout > 4
-    [h, p.data, c, s] = ttest(A.data, B.data, 0.05, 'both', 2);
+    [h, p.data, c, s] = ttest(A.data, B.data, 'Alpha', 0.05, 'Tail', 'both', 'Dim', 2);
 else
-    [h, p.data] = ttest(A.data, B.data, 0.05, 'both', 2);
+    [h, p.data] = ttest(A.data, B.data, 'Alpha', 0.05, 'Tail', 'both', 'Dim', 2);
 end
 
 M.data = [mean(A.data, 2) mean(B.data, 2)];
@@ -52,10 +62,15 @@ D.data = M.data(:,1) - M.data(:,2);
 
 % ---- compute Z scores
 
-if nargout > 1
-    if verbose, fprintf('\nComputing Z-scores'), end
-    Z = A.zeroframes(1);
-    Z.data = icdf('Normal', (1-(p.data ./ 2)), 0, 1) .* sign(D.data);
+try
+    if nargout > 1
+        if verbose, fprintf('\nComputing Z-scores'), end
+        Z = A.zeroframes(1);
+        Z.data = icdf('Normal', (1-(p.data ./ 2)), 0, 1) .* sign(D.data);
+    end
+catch
+    fprintf('\nWARNING: Z-scores image not computed (all values are set to 0)! Likely due to use of Octave.')
+    Z = obj.zeroframes(1);
 end
 
 % ---- compute SE

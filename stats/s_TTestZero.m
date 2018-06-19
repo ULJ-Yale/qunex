@@ -1,9 +1,9 @@
 function [] = s_TTestZero(dfile, output, exclude, verbose)
 
 %function [] = s_TTestZero(dfile, output, exclude, verbose)
-%	
+%
 %	Computes t-test against zero and saves specified results.
-%	
+%
 %	dfile   - the data file to work on - either a single image or a conc file
 %   output  - the type of results to save ['metpz']
 %             m : mean value for each voxel
@@ -14,8 +14,14 @@ function [] = s_TTestZero(dfile, output, exclude, verbose)
 %   exclude - values to be excluded from computation
 %   verbose - should report each step?
 %
-%   Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
+%   WARNING
+%   To compute Z-scores, the function uses icdf function, which is
+%   currently not supported by Octave and the resulting map will be
+%   all zeros when Octave is used.
 %
+%   ---
+%   Written by Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
+
 
 
 if nargin < 4
@@ -46,7 +52,7 @@ root = strrep(root, '.conc', '');
 
 if verbose, fprintf('--------------------------\nComputing t-test against zero\n ... reading data (%s) ', dfile), end
 img = gmrimage(dfile);
-img.data = img.image2D;		
+img.data = img.image2D;
 
 if ~isempty(exclude)
     img.data(ismember(img.data, exclude)) = NaN;

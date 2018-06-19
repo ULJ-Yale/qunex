@@ -14,7 +14,17 @@ function [p Z M SE t] = mri_TTestZero(obj, verbose)
 %       M   - an image with means across all volumes
 %       SE  - an image with standard errors of means across all volumes
 %
-%   Grega Repovš, 2011-10-09
+%   WARNING
+%   To compute Z-scores, the function uses icdf function, which is
+%   currently not supported by Octave and the resulting map will be
+%   all zeros when Octave is used.
+%
+%   ---
+%   Written by Grega Repovš, 2011-10-09
+%
+%   Changelog
+%   2018-06-19 Grega Repovs
+%            - Changed ttest call to use named parameters.
 %
 
 if nargin < 2
@@ -37,19 +47,24 @@ p = obj.zeroframes(1);
 if verbose, fprintf('\nComputing t-test'), end
 
 if nargout > 3
-    [h, p.data, c, s] = ttest(obj.data, 0, 0.05, 'both', 2);
+    [h, p.data, c, s] = ttest(obj.data, 0, 'Alpha', 0.05, 'Tail', 'both', 'Dim', 2);
 else
-    [h, p.data] = ttest(obj.data, 0, 0.05, 'both', 2);
+    [h, p.data] = ttest(obj.data, 0, 'Alpha', 0.05, 'Tail', 'both', 'Dim', 2);
 end
 
 M.data = nanmean(obj.data, 2);
 
 % ---- compute Z scores
 
-if nargout > 1
-    if verbose, fprintf('\nComputing Z-scores'), end
+try
+    if nargout > 1
+        if verbose, fprintf('\nComputing Z-scores'), end
+        Z = obj.zeroframes(1);
+        Z.data = icdf('Normal', (1-(p.data./2)), 0, 1) .* sign(M.data);
+    end
+catch
+    fprintf('\nWARNING: Z-scores image not computed (all values are set to 0)! Likely due to use of Octave.\n')
     Z = obj.zeroframes(1);
-    Z.data = icdf('Normal', (1-(p.data./2)), 0, 1) .* sign(M.data);
 end
 
 % ---- compute SE

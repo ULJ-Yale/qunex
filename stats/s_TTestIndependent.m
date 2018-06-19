@@ -1,9 +1,9 @@
 function [] = s_TTestIndependent(filea, fileb, target, output, vartype, exclude, verbose)
 
 %function [] = s_TTestIndependent(filea, fileb, output, vartype, exclude, verbose)
-%	
+%
 %	Computes t-test of differences between two independent groups.
-%	
+%
 %	filea   - either a single image or a conc file with data of the group to compare to
 %	fileb   - either a single image or a conc file with data of the group to compare with
 %	target  - the base filename (and path) to be used when saving the results
@@ -18,7 +18,13 @@ function [] = s_TTestIndependent(filea, fileb, target, output, vartype, exclude,
 %   exclude - values to be excluded from computation
 %   verbose - should report each step?
 %
-%   Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
+%   WARNING
+%   To compute Z-scores, the function uses icdf function, which is
+%   currently not supported by Octave and the resulting map will be
+%   all zeros when Octave is used.
+%
+%   ---
+%   Written by Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
 %
 
 

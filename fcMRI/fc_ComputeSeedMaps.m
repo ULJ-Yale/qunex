@@ -73,6 +73,12 @@ function [] = fc_ComputeSeedMaps(flist, roiinfo, inmask, event, targetf, method,
 %
 %   >>> fc_ComputeSeedMaps('scz.list', 'CCNet.names', 0, 'task:easyblock,hardblock:2,1', 'seed-maps', 'mean', 'event');
 %
+%
+%   WARNING
+%   To compute Z-scores, the function uses icdf function, which is currently
+%   not supported by Octave and the resulting group Z-scores map will be all
+%   zeros when Octave is used.
+%
 %   ---
 %   Written by Grega Repovš 2008-02-07.
 %

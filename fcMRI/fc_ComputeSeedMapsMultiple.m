@@ -42,8 +42,10 @@ function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, target
 %   >>> fc_ComputeSeedMapsMultiple('con.list', 'DMN.names', 0, '', 'mean', 'udvarsme', false);
 %
 %
-%   NOTE
-%   The function is superseded by fc_ComputeSeedMapsMultiple
+%   WARNING
+%   To compute Z-scores, the function uses icdf function, which is currently
+%   not supported by Octave and the resulting group Z-scores map will be all
+%   zeros when Octave is used.
 %
 %   ---
 % 	Written by Grega Repovš, 2008-02-07.
