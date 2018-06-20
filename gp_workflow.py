@@ -528,7 +528,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
             # --- running the stats
 
             scrub = "radius:%d|fdt:%.2f|dvarsmt:%.2f|dvarsme:%.2f|after:%d|before:%d|reject:%s" % (options['mov_radius'], options['mov_fd'], options['mov_dvars'], options['mov_dvarsme'], options['mov_after'], options['mov_before'], options['mov_bad'])
-            comm = "%s \"try g_ComputeBOLDStats('%s', '', '%s', 'same', '%s', true), catch fprintf('\\nMatlab error! Processing failed!\\n'), end; exit\"" % (mcommand, f['bold'], d['s_bold_mov'], scrub)
+            comm = "%s \"try g_ComputeBOLDStats('%s', '', '%s', 'same', '%s', true); catch ME, g_ReportError(ME); exit(1), end; exit\"" % (mcommand, f['bold'], d['s_bold_mov'], scrub)
             if options['print_command'] == "yes":
                 r += '\n\nRunning\n' + comm + '\n'
             runit = True
@@ -536,7 +536,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                 report['bolddone'] += 1
                 runit = False
             r += runExternalForFileShell(f['bold_stats'], comm, '... running matlab g_ComputeBOLDStats on %s' % (f['bold']), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ComputeBOLDStats_B%d' % (boldnum), logfolder=options['comlogs'])
-            r, status = checkForFile(r, f['bold_stats'], 'ERROR: Matlab has failed preprocessing bold using command: %s' % (comm))
+            r, status = checkForFile(r, f['bold_stats'], 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: %s' % (comm))
 
             if status and runit:
                 report['boldok'] += 1
@@ -1114,7 +1114,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
             # --- running nuisance extraction
 
 
-            comm = "%s \"try g_ExtractNuisance('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s), catch fprintf('\\nMatlab error! Processing failed!\\n'), end; exit\"" % (
+            comm = "%s \"try g_ExtractNuisance('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s); catch ME, g_ReportError(ME); exit(1), end; exit\"" % (
                 mcommand,                   # --- matlab command to run
                 f['bold'],                  # --- bold file to process
                 segfile,                    # --- aseg or aparc file
@@ -1135,7 +1135,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                 report['bolddone'] += 1
                 runit = False
             r += runExternalForFileShell(f['bold_nuisance'], comm, '... running matlab g_ExtractNuisance on %s' % (f['bold']), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ExtractNuisance_B%d' % (boldnum), logfolder=options['comlogs'])
-            r, status = checkForFile(r, f['bold_nuisance'], 'ERROR: Matlab has failed preprocessing bold using command: %s' % (comm))
+            r, status = checkForFile(r, f['bold_nuisance'], 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: %s' % (comm))
 
             if runit and status:
                 report['boldok'] += 1
@@ -1619,14 +1619,14 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                 options['pignore'],                 # --- how to deal with bad frames ('hipass:keep/linear/spline|regress:keep/ignore|lopass:keep/linear/spline')
                 opts)                               # --- additional options
 
-            comm = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit"' % (mcommand, mcomm)
+            comm = '%s "try %s; catch ME, g_ReportError(ME); exit(1), end; exit"' % (mcommand, mcomm)
 
             # r += '\n ... running: %s' % (comm)
             if options['run'] == "run":
                 if options['print_command'] == "yes":
                     r += '\n\nRunning\n' + comm + '\n'
-                r += runExternalForFileShell(f['bold_final'], comm, 'running matlab fc_Preprocess on %s bold %s' % (d['s_bold'], boldnum), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='Preprocess_B%s' % (boldnum), logfolder=options['comlogs'])
-                r, status = checkForFile(r, f['bold_final'], 'ERROR: Matlab has failed preprocessing bold using command: \n--> %s\n' % (mcomm))
+                r += runExternalForFileShell(f['bold_final'], comm, 'running matlab/octave fc_Preprocess on %s bold %s' % (d['s_bold'], boldnum), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='Preprocess_B%s' % (boldnum), logfolder=options['comlogs'])
+                r, status = checkForFile(r, f['bold_final'], 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n' % (mcomm))
                 if status:
                     report['done'].append(boldnum)
                 else:
@@ -2209,14 +2209,14 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     opts,                               # --- additional options
                     done)                               # --- file to save when done
 
-                comm = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message), end; exit;"' % (mcommand, mcomm)
+                comm = '%s "try %s; catch ME, g_ReportError(ME); exit(1), end; exit;"' % (mcommand, mcomm)
 
                 r += '\n\n%s nuisance and task removal' % (action("Running", options['run']))
                 if options['print_command'] == "yes":
                     r += '\n' + comm + '\n'
                 if options['run'] == "run":
-                    r += runExternalForFileShell(done, comm, 'running matlab fc_PreprocessConc on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PreprocessConc2', logfolder=options['comlogs'])
-                    r, status = checkForFile(r, done, 'ERROR: Matlab has failed preprocessing bold using command: \n--> %s\n' % (mcomm))
+                    r += runExternalForFileShell(done, comm, 'running matlab/octave fc_PreprocessConc on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PreprocessConc2', logfolder=options['comlogs'])
+                    r, status = checkForFile(r, done, 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n' % (mcomm))
                     if os.path.exists(done):
                         os.remove(done)
                     if status:
