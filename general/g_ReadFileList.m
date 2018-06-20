@@ -70,6 +70,7 @@ end
 nsubjects = 0;
 nfiles    = 0;
 nf        = -9;
+prepend   = '       ... ';
 
 for s = files(:)'
     s = s{1};
@@ -78,36 +79,36 @@ for s = files(:)'
         nf  = 0;
         [t, s] = strtok(s, ':');
         subject(nsubjects).id = strtrim(s(2:end));
-        if verbose, fprintf('%s \n', subject(nsubjects).id); end
+        if verbose, fprintf('\n     - subject id: %s\n', subject(nsubjects).id); end
         continue
     end
     if nf < 0
         continue
     elseif ~isempty(strfind(s, 'roi:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'ROI image', report);
+        if g_CheckFile(strtrim(s(2:end)), 'ROI image', report, prepend);
             subject(nsubjects).roi = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'file:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'image file', report)
+        if g_CheckFile(strtrim(s(2:end)), 'image file', report, prepend)
             nf = nf + 1;
             nfiles = nfiles + 1;
             subject(nsubjects).files{nf} = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'fidl:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'fidl file', report);
+        if g_CheckFile(strtrim(s(2:end)), 'fidl file', report, prepend);
             subject(nsubjects).fidl = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'glm:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'GLM file', report);
+        if g_CheckFile(strtrim(s(2:end)), 'GLM file', report, prepend);
             subject(nsubjects).glm = strtrim(s(2:end));
         end
     elseif ~isempty(strfind(s, 'folder:'))
         [t, s] = strtok(s, ':');
-        if g_CheckFile(strtrim(s(2:end)), 'folder', report)
+        if g_CheckFile(strtrim(s(2:end)), 'folder', report, prepend)
             subject(nsubjects).folder = strtrim(s(2:end));
         end
     end

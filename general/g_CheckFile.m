@@ -1,6 +1,6 @@
-function [ok] = g_CheckFile(filename, description, v)
+function [ok] = g_CheckFile(filename, description, v, prepend)
 
-%function [ok] = g_CheckFile(filename, description, v)
+%function [ok] = g_CheckFile(filename, description, v, prepend)
 %
 %  Checks for existence of a file and prints error notices specified in v.
 %
@@ -13,6 +13,7 @@ function [ok] = g_CheckFile(filename, description, v)
 %                    'errorstop'   - report missing files only and stop execution on error
 %                    'full'        - report both missing and found files and continue
 %                    'fullstop'    - report both missing and found files and stop execution on error
+%   prepend      ... String to prepend before the reported line
 %
 %   OUTPUT
 %     ok ... Whether the file was found (true or false).
@@ -33,12 +34,9 @@ function [ok] = g_CheckFile(filename, description, v)
 %            - Updated documentation
 %
 
-if nargin < 3
-	v = 'error stop';
-	if nargin < 2
-	    description = 'a file';
-    end
-end
+if nargin < 4 || isempty(prepend), prepend = '... '; end
+if nargin < 3 || isempty(v), v = 'error stop'; end
+if nargin < 2 || isempty(description), description = 'a file'; end
 
 if ~exist(filename, 'file')
 	pause(5);
@@ -47,14 +45,14 @@ end
 if exist(filename, 'file')
 
     if ismember(v, {'full', 'fullstop'})
-		fprintf('... found %s (%s)\n', description, filename);
+		fprintf('%sfound %s (%s)\n', prepend, description, filename);
 	end
 	ok = true;
 else
 	ok = false;
 	if ismember(v, {'errorstop', 'fullstop'})
-	    error('... could not find %s (%s), please check your paths!\n', description, filename);
+	    error('%scould not find %s (%s), please check your paths!\n', prepend, description, filename);
     elseif ismember(v, {'error', 'full'})
-        fprintf('... could not find %s (%s), please check your paths!\n', description, filename);
+        fprintf('%scould not find %s (%s), please check your paths!\n', prepend, description, filename);
     end
 end
