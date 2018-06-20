@@ -64,6 +64,8 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %            - Split in two to enable single bold file processing
 %   2017-03-12 Grega Repovs
 %            - Updated documentation
+%   2018-06-20 Grega Repovš
+%            - Added more detailed reporting of parameters used.
 %
 
 if nargin < 6, verbose = false; end
@@ -76,6 +78,16 @@ brainthreshold = 300;
 minbrainvoxels = 20000;
 
 % ======= Run main
+
+if verbose,
+    if verbose, fprintf('\nRunning g_ComputeBOLDStats\n--------------------------\n'); end
+    fprintf('\nParameters:\n-----------');
+    fprintf('\n        img: %s', img);
+    fprintf('\n       mask: %s', mask);
+    fprintf('\n     target: %s', target);
+    fprintf('\n      store: %s', store);
+    fprintf('\n      scrub: %s\n', scrub);
+end
 
 % --- check mask
 
@@ -214,5 +226,6 @@ if ext
 end
 
 if verbose, fprintf(' ... done!\n'); end
+if verbose, fprintf('===> Finished!\n'); end
 
 

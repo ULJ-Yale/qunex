@@ -441,6 +441,9 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %
 %   2018-06-17 Grega Repovs (v0.9.12)
 %              - Changes for Octave compatibility.
+%
+%   2018-06-20 Grega Repovs (v0.9.12)
+%              - Added more detailed reporting of parameters used.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 16, done = [];                                  end
@@ -457,12 +460,31 @@ if nargin < 6 || isempty(rgss), rgss = 'm,V,WM,WB,1d';      end
 if nargin < 5 || isempty(omit), omit = [];                  end
 if nargin < 4 || isempty(TR), TR = 2.5;                     end
 
+fprintf('\nRunning preproces conc script v0.9.12 [%s]\n-------------------------------------\n', tail);
+fprintf('\nParameters:\n---------------');
+fprintf('\n       subjectf: %s', subjectf);
+fprintf('\n          bolds: [%s]', num2str(bolds));
+fprintf('\n           doIt: %s', doIt);
+fprintf('\n             TR: %.2f', TR);
+fprintf('\n           omit: %s', num2str(omit));
+fprintf('\n           rgss: %s', rgss);
+fprintf('\n           task: [%s]', num2str(size(task)));
+fprintf('\n          efile: %s', efile);
+fprintf('\n   eventrstring: %s', eventstring);
+fprintf('\n        variant: %s', variant);
+fprintf('\n      overwrite: %s', num2str(overwrite));
+fprintf('\n           tail: %s', tail);
+fprintf('\n          scrub: %s', scrub);
+fprintf('\n        ignores: %s', ignores);
+fprintf('\n           done: %s', done);
+fprintf('\n        options: %s', options);
+
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces conc script v0.9.12 [%s]\n', tail);
-
-options
+fprintf('\n\nOptions used:\n---------------\n');
+optionsStr = [[fieldnames(options)], [struct2cell(options)]]';
+fprintf('%15s: %s\n', optionsStr{:});
 
 TS = [];
 
@@ -1317,8 +1339,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         fstart = sum(mframes(1:b-1)) + 1;
         fend   = sum(mframes(1:b));
         % img(b).data(:,masks{b}) = res.data(:,fstart:fend);    % --- led to strange error in Octave, had to give it off to a temporary image
-        tmpi   = img(b);        
-        tmpi.data(:,masks{b}) = res.data(:,fstart:fend);        
+        tmpi   = img(b);
+        tmpi.data(:,masks{b}) = res.data(:,fstart:fend);
         if min(masks{b}) == 0
             if strcmp(ignore, 'mark')
                 fprintf(' marking %d bad frames ', sum(~masks{b}));

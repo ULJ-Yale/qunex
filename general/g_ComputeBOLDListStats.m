@@ -35,6 +35,9 @@ function [] = g_ComputeBOLDListStats(flist, target, store, scrub, verbose)
 %            - Split into two functions to separate list processing and actual statistic computation
 %   2017-03-12 Grega Repovs
 %            - Updated documentation
+%   2018-06-20 Grega Repovš
+%            - Added more detailed reporting of parameters used.
+%
 
 if nargin < 5 || isempty(verbose), verbose = false; end
 if nargin < 4, scrub  = []; end
@@ -42,6 +45,15 @@ if nargin < 3, store  = []; end
 if nargin < 2, target = []; end
 
 % ======= Run main
+
+if verbose,
+    fprintf('\nRunning g_ComputeBOLDListStats\n------------------------------\n');
+    fprintf('\nParameters:\n---------------');
+    fprintf('\n          flist: %s', flist);
+    fprintf('\n         target: %s', target);
+    fprintf('\n          store: %s', store);
+    fprintf('\n          scrub: %s\n', scrub);
+end
 
 if verbose, fprintf('\n\nStarting processing of %s...\n\n---> Reading in the file', flist); end
 

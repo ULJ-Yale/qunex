@@ -383,6 +383,9 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %
 %   2018-06-17 Grega Repovs (v0.9.11)
 %              - Minor changes for Octave compatibility.
+%
+%   2018-06-20 Grega Repovs (v0.9.12)
+%              - Added more detailed reporting of parameters used.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -401,10 +404,32 @@ if nargin < 3, omit = [];                                   end
 if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!'); end
 
 
+fprintf('\nRunning preproces script v0.9.11 [%s]\n--------------------------------\n', tail);
+fprintf('\nParameters:\n---------------');
+fprintf('\n       subjectf: %s', subjectf);
+fprintf('\n           bold: %s', num2str(bold));
+fprintf('\n           omit: %s', num2str(omit));
+fprintf('\n           doIt: %s', doIt);
+fprintf('\n           rgss: %s', rgss);
+fprintf('\n           task: [%s]', num2str(size(task)));
+fprintf('\n          efile: %s', efile);
+fprintf('\n             TR: %.2f', TR);
+fprintf('\n   eventrstring: %s', eventstring);
+fprintf('\n        variant: %s', variant);
+fprintf('\n      overwrite: %s', num2str(overwrite));
+fprintf('\n           tail: %s', tail);
+fprintf('\n          scrub: %s', scrub);
+fprintf('\n        ignores: %s', ignores);
+fprintf('\n        options: %s\n', options);
+
+
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
 options = g_ParseOptions([], options, default);
 
-fprintf('\nRunning preproces script v0.9.11 [%s]\n', tail);
+fprintf('\n\nOptions used:\n---------------\n');
+optionsStr = [[fieldnames(options)], [struct2cell(options)]]';
+fprintf('%15s: %s\n', optionsStr{:});
+
 
 ignore.hipass  = 'keep';
 ignore.regress = 'keep';
