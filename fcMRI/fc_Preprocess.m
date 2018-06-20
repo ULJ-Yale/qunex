@@ -386,6 +386,9 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %
 %   2018-06-20 Grega Repovs (v0.9.12)
 %              - Added more detailed reporting of parameters used.
+%
+%   2018-06-21 Grega Repovs (v0.9.13)
+%              - Updated the function to store GLM information ain the same manner as preprocessConc.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -464,7 +467,9 @@ file.bstats    = strcat(subjectf, ['/images/functional/movement/' options.boldna
 file.fidlfile  = strcat(subjectf, ['/images/functional/events/' options.boldname   int2str(bold) efile]);
 file.bmask     = strcat(subjectf, ['/images/segmentation/boldmasks/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
 
+eroot          = strrep(efile, '.fidl', '');
 file.nuisance  = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '.nuisance']);
+file.Xroot     = strcat(subjectf, ['/images/functional/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
 
 file.lsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
 file.rsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
@@ -543,8 +548,21 @@ if strfind(doIt, 'r')
         rmodel          = g_CreateTaskRegressors(file.fidlfile, nuisance.nframes, eventstring);
         runs            = rmodel.run;
         nuisance.events = runs(1).matrix;
+        nuisance.effects     = {rmodel.regressor.name};
+        nuisance.nevents     = size(nuisance(1).events, 2);
+        nuisance.eventnamesr = runs(1).regressors;
+        nuisance.eventnames  = rmodel.columns.event;
+        nuisance.eventframes = rmodel.columns.frame;
     else
-        nuisance.events = [];
+        rmodel.fidl.fidl     = 'None';
+        rmodel.description   = 'None';
+        rmodel.ignore        = 'None';
+        nuisance.effects     = [];
+        nuisance.events      = [];
+        nuisance.nevents     = [];
+        nuisance.eventnamesr = [];
+        nuisance.eventnames  = [];
+        nuisance.eventframes = [];
     end
     nuisance.nevents = size(nuisance.events,2);
 
@@ -668,7 +686,7 @@ for current = doIt
                 img = img.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
             case 'r'
                 img = readIfEmpty(img, sfile, omit);
-                [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore.regress);
+                [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore.regress, options, [file.Xroot ext], rmodel);
                 if docoeff
                     coeff.mri_saveimage([froot ext '_coeff' tail]);
                 end
@@ -714,7 +732,7 @@ return
 %
 
 
-function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
+function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore, options, Xroot, rmodel)
 
 
     img.data = img.image2D;
@@ -724,6 +742,20 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
     task        = ismember('t', rgss);
     event       = ismember('e', rgss);
     rgss        = rgss(~ismember(rgss, {'1d', 'e', 't', 'm'}));
+    hdr         = {};
+    hdre        = {};
+    hdrf        = [];
+    effects     = {};
+    effect      = [];
+    eindex      = [];
+
+    % ---> bold starts, ends, frames, selection of nuisance
+
+    smask = ismember(nuisance.signal_hdr, rgss);
+    nuisance.signal  = nuisance.signal(:,smask);
+    nuisance.signal  = zscore(nuisance.signal);
+    nuisance.nsignal = sum(smask);
+    nuisance.signal_hdr = nuisance.signal_hdr(smask);
 
     %   ----> baseline and linear trend
 
@@ -736,16 +768,45 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     X = [ones(na,1) pl];
 
+    effects     = {'Baseline', 'Trend'};
+    hdr{end+1}  = sprintf('baseline');
+    hdr{end+1}  = sprintf('trend');
+    hdre{end+1} = sprintf('baseline');
+    hdre{end+1} = sprintf('trend');
+    hdrf(end+1:end+2) = [1 1];
+    effect(end+1:end+2) = [1 2];
+    eindex(end+1:end+2) = [1 1];
+
 
     %   ----> movement
 
+
     if movement
         X = [X nuisance.mov(omit+1:end,:)];
+        for mi = 1:nuisance.nmov
+            ts = sprintf('mov_%s', nuisance.mov_hdr{mi});
+            effects{end+1}  = ts;
+            hdr{end+1}      = ts;
+            hdre{end+1}     = ts;
+            hdrf(end+1)     = 1;
+            effect(end+1)   = find(ismember(effects, ts));
+            eindex(end+1)   = 1;
+        end
+
         if derivatives
             if omit
                 X = [X diff(nuisance.mov(omit:end,:))];
             else
                 X = [X [zeros(1,nuisance.nmov); diff(nuisance.mov)]];
+            end
+            for mi = 1:nuisance.nmov
+                ts = sprintf('mov_%s_d1', nuisance.mov_hdr{mi});
+                effects{end+1} = ts;
+                hdr{end+1}     = ts;
+                hdre{end+1}    = ts;
+                hdrf(end+1)    = 1;
+                effect(end+1)  = find(ismember(effects, ts));
+                eindex(end+1)  = 1;
             end
         end
     end
@@ -753,11 +814,29 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     %   ----> signal
 
-    smask = ismember(nuisance.signal_hdr,rgss);
     if sum(smask)
-        X = [X zscore(nuisance.signal(omit+1:end,smask))];
+        X = [X zscore(nuisance.signal(omit+1:end,:))];
+        for mi = 1:nuisance.nsignal
+            ts             = sprintf('%s', nuisance.signal_hdr{mi});
+            effects{end+1} = ts;
+            hdr{end+1}     = ts;
+            hdre{end+1}    = ts;
+            hdrf(end+1)    = 1;
+            effect(end+1)  = find(ismember(effects, nuisance.signal_hdr{mi}));
+            eindex(end+1)  = 1;
+        end
+
         if derivatives
-            X = [X [zeros(1,sum(smask)); diff(nuisance.signal(omit+1:end,smask))]];
+            X = [X [zeros(1, nuisance.nsignal); diff(nuisance.signal(omit+1:end,:))]];
+            for mi = 1:nuisance.nsignal
+                ts             = sprintf('%s_d1', nuisance.signal_hdr{mi});
+                effects{end+1} = ts;
+                hdr{end+1}     = ts;
+                hdre{end+1}    = ts;
+                hdrf(end+1)    = 1;
+                effect(end+1)  = find(ismember(effects, nuisance.signal_hdr{mi}));
+                eindex(end+1)  = 1;
+            end
         end
     end
 
@@ -766,6 +845,15 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     if task && nuisance.ntask
         X = [X nuisance.task(omit+1:end,:)];
+        for mi = 1:nuisance.ntask
+            ts             = sprintf('task_%d', mi);
+            effects{end+1} = ts;
+            hdr{end+1}     = ts;
+            hdre{end+1}    = ts;
+            hdrf(end+1)    = 1;
+            effect(end+1)  = find(ismember(effects, ts));
+            eindex(end+1)  = 1;
+        end
     end
 
 
@@ -773,6 +861,15 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     if event && nuisance.nevents
         X = [X nuisance.events(omit+1:end,:)];
+        for mi = 1:nuisance.nevents
+            ts             = nuisance.eventnames{mi};
+            effects{end+1} = ts;
+            hdr{end+1}     = ts;
+            hdre{end+1}    = ts;
+            hdrf(end+1)    = 1;
+            effect(end+1)  = find(ismember(effects, nuisance.eventnames{mi}));
+            eindex(end+1)  = 1;
+        end
     end
 
 
@@ -791,6 +888,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
 
     [coeff res] = Y.mri_GLMFit(X);
     img.data(:,mask) = res.image2D;
+    coeff = [coeff Y.mri_Stats({'m', 'sd'})];
 
     if min(mask) == 0
         if strcmp(ignore, 'mark')
@@ -804,6 +902,41 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, ignore)
             img.data = interp1(x, img.data(:, mask)', xi, ignore, 'extrap')';
         end
     end
+
+    % --- header info
+
+    hdr  = [hdr  {'gmean', 'sd'}];
+    hdre = [hdre {'gmean', 'sd'}];
+    hdrf = [hdrf 1 1];
+    effects = [effects {'gmean', 'sd'}];
+    effect  = [effect find(ismember(effects, 'gmean')), find(ismember(effects, 'sd'))];
+    eindex  = [eindex 1 1];
+
+    if ismember(options.glm_matrix, {'text', 'both'})
+        xfile = [Xroot '.txt'];
+    else
+        xfile = [];
+    end
+    xevents  = sprintf(strjoin(hdre, '\t'));
+    xframes  = sprintf('%d\t', hdrf);
+    xeffects = sprintf(strjoin(effects, '\t'));
+    xeffect  = sprintf('%d\t', effect);
+    xeindex  = sprintf('%d\t', eindex);
+    pre      = sprintf('# fidl: %s\n# model: %s\n# bolds: %d\n# effects: %s\n# effect: %s\n# eindex: %s\n# ignore: %s\n# event: %s\n# frame: %s', rmodel.fidl.fidl, rmodel.description, 1, xeffects, xeffect, xeindex, rmodel.ignore, xevents, xframes(1:end-1));
+    xtable   = g_WriteTable(xfile, [X zeros(sum(mask==1), 2)], hdr, 'sd|mean|min|max', [], [], pre);
+
+    if ismember(options.glm_matrix, {'image', 'both'})
+        mimg = X;
+        mimg = mimg / (max(max(abs(mimg))) * 2);
+        mimg = mimg + 0.5;
+        try
+            imwrite(mimg, [Xroot '.png']);
+        catch
+            fprintf('\n---> WARNING: Could not save GLM PNG image! Check supported image formats!');
+        end
+    end
+
+    coeff = coeff.mri_EmbedMeta(xtable, 64, 'GLM');
 
 return
 
