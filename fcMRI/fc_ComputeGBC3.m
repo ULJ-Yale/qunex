@@ -60,13 +60,14 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %
 % Change log
 % 2009-11-04 - Created by Grega Repovš.
-% 2010-11-16 - Modified by Grega Repovš.
-% 2010-11-22 - Modified by Grega Repovš.
-% 2010-12-01 - Modified by Grega Repovš - added in smoothing and dilation of images.
-% 2014-01-22 - Modified by Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
-% 2016-02-08 - Modified by Grega Repovš - added an option to specify how many voxels to work with in a single step.
-% 2016-11-26 - Modified by Grega Repovš - updated documentation.
-% 2017-04-18 - Modified by Grega Repovš - adopted use of g_ReadFileList.
+% 2010-11-16 - Grega Repovš.
+% 2010-11-22 - Grega Repovš.
+% 2010-12-01 - Grega Repovš - added in smoothing and dilation of images.
+% 2014-01-22 - Grega Repovs - took care of commands that return mulitiple volumes (e.g. mFzp)
+% 2016-02-08 - Grega Repovš - added an option to specify how many voxels to work with in a single step.
+% 2016-11-26 - Grega Repovš - updated documentation.
+% 2017-04-18 - Grega Repovš - adopted use of g_ReadFileList.
+% 2018-06-20 - Grega Repovš - updated for Octave compatibility.
 %
 
 fprintf('\n\nStarting ...');
@@ -170,7 +171,9 @@ for s = 1:nsubjects
     end
 
     for n = 1:nvolumes
-        gbc(n).data(:,s) = img.data(:,n);
+        timg = gbc(n);
+        timg.data(:,s) = img.data(:,n);
+        gbc(n) = timg;
     end
     fprintf(' [%.1fs]\n', toc);
 end
