@@ -39,6 +39,7 @@ function [correlations, zscores, pvaues] = mri_ComputeCorrelations(obj, bdata, v
 %   2016-11-25 - Grega Repovs - Updated documentation.
 %   2017-07-10 - Grega Repovs - Added Z-scores.
 %   2017-07-19 - Grega Repovs - Fixed significance output.
+%   2018-06-25 - Grega Repovs - Replaced cdf and with normcdf to support Octave
 %
 
 if nargin < 4 || isempty(cv),      cv      = false; end
@@ -102,7 +103,7 @@ end
 if nargout > 2
     if verbose, fprintf('\n... computing p-values'), end
     pvalues = obj.zeroframes(1);
-    pvalues.data = (1-cdf('Normal', abs(zscores.data), 0, 1)) * 2 .* sign(correlations.data);
+    pvalues.data = (1 - normcdf(abs(zscores.data), 0, 1)) * 2 .* sign(correlations.data);
 end
 
 if verbose, fprintf('\n... done!'), end

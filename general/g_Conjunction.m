@@ -37,6 +37,8 @@ function [p, t, c] = g_Conjunction(img, method, effect, q, data)
 %
 %	2015-10-20 Grega Repovs
 %              - updated argument parsing
+%   2018-06-25 Grega Repovs
+%            - Replaced icdf and cdf with norminv and normcdf to support Octave
 %
 
 %  ---- parsing arguments
@@ -73,12 +75,12 @@ if (strcmpi(data, 'z'))
 	end
 
 	if (~strcmpi(method,'Stouffer'))
-		img = (1-cdf('Normal', img, 0, 1));
+		img = (1-normcdf(img, 0, 1));
 	end
 end
 
 if (strcmpi(method,'Stouffer') & strcmpi(data, 'p'))
-	img = icdf('Normal', (1-img), 0, 1);
+	img = norminv((1-img), 0, 1);
 end
 
 %  _________________________________________________
@@ -104,7 +106,7 @@ if strcmpi(method, 'Stouffer')
 	for u = 1:nsub
 		p(:,u) = sum(img(:,1:(nsub-u+1)),2)./sqrt(nsub-u+1);
 	end
-	p = (1-cdf('Normal', p, 0, 1));
+	p = (1-normcdf(p, 0, 1));
 end
 
 
@@ -146,7 +148,7 @@ c = sum(c,2);
 %  ---- If needed convert to z values
 
 if (strcmpi(data, 'z'))
-	p = icdf('Normal', (1-p.*tail),0,1);
+	p = norminv((1-p.*tail), 0, 1);
 	p(p>5) = 5;
 
 	switch effect

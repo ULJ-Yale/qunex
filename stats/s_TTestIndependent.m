@@ -18,11 +18,6 @@ function [] = s_TTestIndependent(filea, fileb, target, output, vartype, exclude,
 %   exclude - values to be excluded from computation
 %   verbose - should report each step?
 %
-%   WARNING
-%   To compute Z-scores, the function uses icdf function, which is
-%   currently not supported by Octave and the resulting map will be
-%   all zeros when Octave is used.
-%
 %   ---
 %   Written by Grega Repovš, 2011-10-09 (rewriten from previous function with the same name)
 %

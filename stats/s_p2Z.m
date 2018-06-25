@@ -26,6 +26,8 @@ function [img] = s_p2Z(img, out, tail)
 %   2017-03-19 Grega Repovs
 %            - Updated to use gmrimage objects
 %            - Updated documentation
+%   2018-06-25 Grega Repovs
+%            - Replaced icdf with norminv to support Octave
 
 
 if nargin < 3 || isempty(tail), tail = 'two'; end
@@ -41,7 +43,7 @@ end
 % ======================================================
 % 	----> convert
 
-img.data = icdf('Normal', (1-(img.data/2)), 0, 1);
+img.data = norminv((1-(img.data/2)), 0, 1);
 
 % ======================================================
 % 	----> save results

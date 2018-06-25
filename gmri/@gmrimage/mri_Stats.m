@@ -45,6 +45,8 @@ function [out, doIt] = mri_Stats(img, doIt, exclude)
 %            - Made loop more robust.
 %   2018-04-21 Grega Repovs
 %            - Added computation of RMSD and intensity normalized RMDS.
+%   2018-06-25 Grega Repovs
+%            - Replaced icdf and cdf with norminv and tcdf to support Octave
 
 
 if nargin < 3, exclude = [];            end
@@ -131,7 +133,7 @@ for d = doIt(:)'
         if isempty(m), m = s./n; end
         if isempty(v), v = nanvar(img.data, 1, 2); end
         if isempty(t), t = m./(sqrt(v./n)); end
-        if isempty(p), p = cdf('t', -abs(t), n-1).*2; end
+        if isempty(p), p = tcdf(-abs(t), n-1).*2; end
         out.data(:,c) = p;
 
     case 'tz'
@@ -140,9 +142,9 @@ for d = doIt(:)'
         if isempty(m), m = s./n; end
         if isempty(v), v = nanvar(img.data, 1, 2); end
         if isempty(t), t = m./(sqrt(v./n)); end
-        if isempty(p), p = cdf('t', -abs(t), n-1).*2; end
+        if isempty(p), p = tcdf(-abs(t), n-1).*2; end
         p(p<0.00000000000001)=0.00000000000001;
-        if isempty(z), z = icdf('Normal', (1-(double(p)/2)), 0, 1) .* sign(m); end
+        if isempty(z), z = norminv((1-(double(p)/2)), 0, 1) .* sign(m); end
         out.data(:,c) = z;
 
     case 'rmsd'

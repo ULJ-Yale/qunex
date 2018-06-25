@@ -57,6 +57,8 @@ function [out, doIt] = mri_StatsDiff(img1, img2, doIt, exclude)
 %            - made the loop more robust
 %            - added ability to specify commands in comma separated string
 %            - renamed to mri_StatsDiff
+%   2018-06-25 Grega Repovs
+%            - Replaced icdf and cdf with norminv and tcdf to support Octave
 
 if nargin < 4,  exclude = []; end
 if nargin < 3 || isempty(doIt), doIt = 'dm'; end
@@ -191,7 +193,7 @@ for d = doIt(:)'
         if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
         if isempty(t2df), t2df = (n1+n2-2); end
         if isempty(t2), t2 = dm ./ sqrt(((n1-1).*v1 + (n2-1).*v2)./t2df); end
-        if isempty(t2p), t2p = cdf('t', -abs(t2), t2df).*2; end
+        if isempty(t2p), t2p = tcdf(-abs(t2), t2df).*2; end
         out.data(:,c) = t2p;
 
     case 't2z'
@@ -207,9 +209,9 @@ for d = doIt(:)'
         if isempty(v2), v2 = nanvar(img2.data, 1, 2); end
         if isempty(t2df), t2df = (n1+n2-2); end
         if isempty(t2), t2 = dm ./ sqrt(((n1-1).*v1 + (n2-1).*v2)./t2df); end
-        if isempty(t2p), t2p = cdf('t', -abs(t2), t2df).*2; end
+        if isempty(t2p), t2p = tcdf(-abs(t2), t2df).*2; end
         t2p(t2p<0.00000000000001)=0.00000000000001;
-        if isempty(t2z), t2z = icdf('Normal', (1-(double(t2p)/2)), 0, 1) .* sign(dm); end
+        if isempty(t2z), t2z = norminv((1-(double(t2p)/2)), 0, 1) .* sign(dm); end
         out.data(:,c) = t2z;
     end
 end

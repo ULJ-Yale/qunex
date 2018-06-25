@@ -29,6 +29,7 @@ function [B, Z] = mri_ComputeRTypeI(obj, bdata, verbose)
 %
 %   Change log
 %   2016-11-26 - Grega Repovš - Updated documentation.
+%   2018-06-25 - Grega Repovs - Replaced icdf and cdf with norminv and fcdf to support Octave
 %
 
 if nargin < 3
@@ -61,7 +62,7 @@ data = obj.data;
 for n = 1:nX
     [Bthis RSSthis Pthis] = mri_GLMFit2(obj, X(:,1:n+1));
     F = ((RSSlast.data - RSSthis.data)./(Pthis-Plast)) ./ (RSSthis.data ./(obj.frames-Pthis));
-    Z.data(:,n) = icdf('normal', cdf('F', F, Pthis-Plast, obj.frames-Plast), 0, 1);
+    Z.data(:,n) = norminv(fcdf(F, Pthis-Plast, obj.frames-Plast), 0, 1);
     B.data(:,n) = Bthis.data(:,n+1);
     Blast   = Bthis;
     RSSlast = RSSthis;

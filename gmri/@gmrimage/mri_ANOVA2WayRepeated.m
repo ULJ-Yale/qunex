@@ -1,12 +1,12 @@
 function [p F Z M SE] = mri_ANOVA2WayRepeated(obj, a, b, verbose)
 
 %function [p F Z M SE] = mri_ANOVA2WayRepeated(obj, a, b, verbose)
-%	
+%
 %	Computes ANOVA with two repeated measures factors with a and b levels.
-%	
+%
 %	obj     - the images to work on
-%             The images have to be organized as a series of volumes with 
-%             subject, factor A, factor B in the order of faster to slowest 
+%             The images have to be organized as a series of volumes with
+%             subject, factor A, factor B in the order of faster to slowest
 %             varying variable. The data has to be fully balanced with no
 %             missing values.
 %   a       - number of levels for factor A
@@ -23,6 +23,10 @@ function [p F Z M SE] = mri_ANOVA2WayRepeated(obj, a, b, verbose)
 %   The algorithm was created based on the rm_anova2 function created by Aron Schurger (2005.02.04)
 %
 %   Grega Repovš, 2011-10-07
+%
+%   Change log
+%   2018-06-25 Grega Repovs
+%            - Replaced icdf with norminv to support Octave
 %
 
 if nargin < 4
@@ -82,7 +86,7 @@ expAB = sum(sum(AB.^2, 3), 2)./n;
 expAS = sum(sum(AS.^2, 3), 2)./b;
 expBS = sum(sum(BS.^2, 3), 2)./a;
 
-expY  = sum(sum(sum(obj.data.^2, 4), 3), 2); 
+expY  = sum(sum(sum(obj.data.^2, 4), 3), 2);
 expT  = T.^2 ./ (a*b*n);
 
 
@@ -126,17 +130,17 @@ if nargout > 2
     if verbose, fprintf('\nComputing Z values'), end
 
     Z = obj.zeroframes(3);
-    Z.data = icdf('Normal', (1-(double(p.data)./2)), 0, 1);
-end    
+    Z.data = norminv((1-(double(p.data)./2)), 0, 1);
+end
 
-% ---- compute means 
+% ---- compute means
 
 if nargout > 3
     if verbose, fprintf('\nComputing cell means'), end
 
     M = obj.zeroframes(a*b);
     M.data = reshape(squeeze(mean(obj.data, 2)), M.voxels, (a*b));
-end    
+end
 
 % ---- compute stamdard error
 
@@ -145,7 +149,7 @@ if nargout > 4
 
     SE = obj.zeroframes(a*b);
     SE.data = reshape(squeeze(std(obj.data, 0, 2)./sqrt(n)), SE.voxels, (a*b));
-end    
+end
 
 % ---- The End!
 

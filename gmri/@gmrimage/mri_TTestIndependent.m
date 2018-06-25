@@ -17,17 +17,14 @@ function [p Z M D SE t] = mri_TTestIndependent(A, B, vartype, verbose)
 %       D   - an image with A - B difference in group means
 %       SE  - an image with standard errors of both groups
 %
-%   WARNING
-%   To compute Z-scores, the function uses icdf function, which is
-%   currently not supported by Octave and the resulting map will be
-%   all zeros when Octave is used.
-%
 %   ---
 %   Written by Grega Repovš, 2011-10-09
 %
 %   Changelog
 %   2018-06-19 Grega Repovs
 %            - Changed ttest call to use named parameters.
+%   2018-06-25 Grega Repovs
+%            - Replaced icdf with norminv to support Octave
 %
 
 if nargin < 4
@@ -70,15 +67,10 @@ D.data = M.data(:,1) - M.data(:,2);
 
 % ---- compute Z scores
 
-try
-    if nargout > 1
-        if verbose, fprintf('\nComputing Z-scores'), end
-        Z = A.zeroframes(1);
-        Z.data = icdf('Normal', (1-(p.data ./2)), 0, 1) .* sign(D.data);
-    end
-catch
-    fprintf('\nWARNING: Z-scores image not computed (all values are set to 0)! Likely due to use of Octave.\n')
-    Z = obj.zeroframes(1);
+if nargout > 1
+    if verbose, fprintf('\nComputing Z-scores'), end
+    Z = A.zeroframes(1);
+    Z.data = norminv((1-(p.data ./2)), 0, 1) .* sign(D.data);
 end
 
 % ---- compute SE

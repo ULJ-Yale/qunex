@@ -37,6 +37,8 @@ function [] = fc_fcMRISegment(flist, smask, tmask, mask, root, options, verbose)
 %   Changelog
 %   2017-03-19 Grega Repovs
 %            - Cleaned code, updated documentation
+%   2018-06-25 Grega Repovs
+%            - Replaced icdf with norminv to support Octave
 %
 
 
@@ -168,7 +170,7 @@ for r = 1:nroi
     gcorr.data(:,r+1) = fc_FisherInv(mean(f,2));
 
     [h, p] = ttest(f, 0, 0.05, 'both', 2);
-    Z = icdf('Normal', (1-(p/2)), 0, 1);
+    Z = norminv((1-(p/2)), 0, 1);
     gZ.data(:,r+1) = Z .* sign(mean(f, 2));
 
     gseg.data(:,r+1) = sum(ismember(segs.data,r),2)./nsubjects;
