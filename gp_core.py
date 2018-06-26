@@ -314,9 +314,9 @@ def getBOLDFileNames(sinfo, boldname, options):
             f['bold_dts_coef']  = f['bold_dts_final'].replace('.dtseries.nii', '_coeff' + '.dtseries.nii')
             f['bold_pts_coef']  = f['bold_pts_final'].replace('.ptseries.nii', '_coeff' + '.ptseries.nii')
         elif ch == 'r':
-            f['bold_final'] = f['bold_final'].replace(ext, '_res-' + rgss + ext)
-            f['bold_dts_final'] = f['bold_dts_final'].replace('.dtseries.nii', '_res-' + rgss + '.dtseries.nii')
-            f['bold_pts_final'] = f['bold_pts_final'].replace('.ptseries.nii', '_res-' + rgss + '.ptseries.nii')
+            f['bold_final'] = f['bold_final'].replace(ext, '_res-' + rgss + options['glm_name'] + ext)
+            f['bold_dts_final'] = f['bold_dts_final'].replace('.dtseries.nii', '_res-' + rgss + options['glm_name'] + '.dtseries.nii')
+            f['bold_pts_final'] = f['bold_pts_final'].replace('.ptseries.nii', '_res-' + rgss + options['glm_name'] + '.ptseries.nii')
         elif ch == 'l':
             f['bold_final'] = f['bold_final'].replace(ext, '_lpss' + ext)
             f['bold_dts_final'] = f['bold_dts_final'].replace('.dtseries.nii', '_lpss' + '.dtseries.nii')
