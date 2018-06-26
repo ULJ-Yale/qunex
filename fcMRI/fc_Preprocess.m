@@ -389,6 +389,9 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %
 %   2018-06-21 Grega Repovs (v0.9.13)
 %              - Updated the function to store GLM information ain the same manner as preprocessConc.
+%
+%   2018-06-26 Grega Repovs (v0.9.14)
+%              - Updated naming of residual files to include GLM name.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -574,7 +577,7 @@ end
 %   ----> run processing loop
 
 task = ['shrl'];
-exts = {'_g7','_hpss',['_res-' rgsse],'_lpss'};
+exts = {'_g7','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
 
 % ---> clear exisitng data

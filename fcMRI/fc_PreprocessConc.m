@@ -703,7 +703,7 @@ end
 %                               ---> run processing loop
 
 tasklist = ['shrl'];
-exts     = {'_g7','_hpss',['_res-' rgsse],'_lpss'};
+exts     = {'_g7','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
 info     = {'Smoothing','High-pass filtering','Computing GLM','Low-pass filtering'};
 
 
@@ -888,8 +888,6 @@ for current = doIt
     % --- run tasks that are run on the joint bolds
 
     if current == 'r'
-
-        ext = [ext options.glm_name];
 
         for b = 1:nbolds
             file(b).tfile = [file(b).froot ext tail];
@@ -1259,7 +1257,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     %   ---> first create per bold masks
 
     masks   = {};
-    mframes = zeros(1,nbolds);
+    mframes = zeros(1, nbolds);
     nmask   = [];
     if ~strcmp(ignore, 'keep'), fprintf(' excluding'); end
     for b = 1:nbolds
