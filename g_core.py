@@ -158,6 +158,9 @@ def readList(filename, verbose=False):
 
     with open(filename) as f:
         for line in f:
+            if line.strip()[:1] == "#":
+                continue
+
             line = [e.strip() for e in line.split(":")]
 
             if len(line) == 2:
