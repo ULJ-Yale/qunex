@@ -22,7 +22,7 @@ with open(mnapver,'r') as f: # 'with' will automatically close file for you,
 
 help = '''
 ================================================================================
- 
+
 General magnetic resonance Imaging (gmri) utilities for processing and analysis.
 
 usage: gmri <command> [option=value] [option=value] ...
@@ -49,7 +49,7 @@ usage: gmri <command> [option=value] [option=value] ...
 
 comlist = '''
 ================================================================================
- 
+
 General magnetic resonance Imaging (gmri) utilities for processing and analysis.
 
 use: gmri <command> [option=value] [option=value] ...
@@ -234,6 +234,7 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'modniftihdr'          : {'com': niu.g_gimg.modniftihdr,             'args': ('filename', 's')},
             'compileBatch'         : {'com': niu.g_utilities.compileBatch,       'args': ('subjectsfolder', 'sfile', 'tfile', 'subjects', 'sfilter', 'overwrite', 'paramfile')},
             'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyfolder', )},
+            'createList'           : {'com': niu.g_utilities.createList,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
             'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder')},
             'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder')},
             'splitFidl'            : {'com': niu.g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},
@@ -467,7 +468,7 @@ def main(args=None):
                 k = args[n].strip('-')
                 opts[k] = True
         runCommand(comm, opts)
-        
+
     except ValueError as e:
         print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)
         print e
