@@ -1529,7 +1529,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     r += "\nPreprocessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bold_preprocess'].split("|")))
     r += "\n%s Preprocessing bold runs ..." % (action("Running", options['run']))
 
-    report = {'done': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+    report = {'done': [], 'processed': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
     report['skipped'] = [str(n) for n, b, t in bskip]
@@ -1556,7 +1556,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
             # --- check for data availability
 
-            r += '... checking for data'
+            r += '\n... checking for data'
             status = True
 
 
@@ -1583,6 +1583,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
             # --- bold
             r, status = checkForFile2(r, f['bold'], '\n    ... bold data present', '\n    ... bold data missing [%s]' % (f['bold']), status=status)
 
+            # --- results
+            r, alreadyDone = checkForFile2(r, f['bold_final'], '\n    ... result present', '')
 
             # --- check
             if not status:
@@ -1591,6 +1593,9 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                 continue
             else:
                 report['ready'].append(boldnum)
+
+            if alreadyDone:
+                report['done'].append(boldnum)
 
             # --- run matlab preprocessing script
 
@@ -1623,14 +1628,17 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
             # r += '\n ... running: %s' % (comm)
             if options['run'] == "run":
-                if options['print_command'] == "yes":
-                    r += '\n\nRunning\n' + comm + '\n'
-                r += runExternalForFileShell(f['bold_final'], comm, 'running matlab/octave fc_Preprocess on %s bold %s' % (d['s_bold'], boldnum), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='Preprocess_B%s' % (boldnum), logfolder=options['comlogs'])
-                r, status = checkForFile(r, f['bold_final'], 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n' % (mcomm))
-                if status:
-                    report['done'].append(boldnum)
+                if alreadyDone and not overwrite:
+                    r += '\n\nProcessing already completed! Set overwrite to yes to redo processing!\n'
                 else:
-                    report['failed'].append(boldnum)
+                    if options['print_command'] == "yes":
+                        r += '\n\nRunning\n' + comm + '\n'
+                    r += runExternalForFileShell(f['bold_final'], comm, 'running matlab/octave fc_Preprocess on %s bold %s' % (d['s_bold'], boldnum), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='Preprocess_B%s' % (boldnum), logfolder=options['comlogs'])
+                    r, status = checkForFile(r, f['bold_final'], 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n' % (mcomm))
+                    if status:
+                        report['processed'].append(boldnum)
+                    else:
+                        report['failed'].append(boldnum)
         except (ExternalFailed, NoSourceFolder), errormessage:
             r += str(errormessage)
             report['failed'].append(boldnum)
@@ -1642,9 +1650,9 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nBold preprocessing completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     if options['run'] == "run":
-        rstatus = "bolds: %d ready [%s], %d not ready [%s], %d ran ok [%s], %d failed [%s], %d skipped [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']), len(report['done']), " ".join(report['done']), len(report['failed']), " ".join(report['failed']), len(report['skipped']), " ".join(report['skipped']))
+        rstatus = "bolds: %d ready [%s], %d not ready [%s], %d already processed [%s], %d ran ok [%s], %d failed [%s], %d skipped [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']), len(report['done']), " ".join(report['done']), len(report['processed']), " ".join(report['processed']), len(report['failed']), " ".join(report['failed']), len(report['skipped']), " ".join(report['skipped']))
     else:
-        rstatus = "bolds: %d ready [%s], %d not ready [%s], %d skipped [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']), len(report['skipped']), " ".join(report['skipped']))
+        rstatus = "bolds: %d ready [%s], %d not ready [%s], %d already processed [%s], %d skipped [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']), len(report['done']), " ".join(report['done']), len(report['skipped']), " ".join(report['skipped']))
 
     print r
     return (r, (sinfo['id'], rstatus))

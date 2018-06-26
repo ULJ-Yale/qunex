@@ -63,7 +63,7 @@ def writelog(item):
     log.append(r)
     stati.append(status)
     f = open(logname, "a")
-    print >> f, item
+    print >> f, r
     f.close()
 
 
@@ -556,7 +556,7 @@ def run(command, args):
 
 
     # -----------------------------------------------------------------------
-    #                                                               local cue
+    #                                                             local queue
 
     if options['scheduler'] == 'local' or options['run'] == 'test':
 
@@ -586,12 +586,6 @@ def run(command, args):
                 r, status = procResponse(todo(subjects, options, overwrite))
                 writelog(r)
 
-            f = open(logname + '2.log', "w")
-            print >> f, "\n\n============================= LOG ================================\n"
-            for e in log:
-                print >> f, e
-            f.close()
-
         else:
             c = 0
             if command in pactions:
@@ -612,16 +606,21 @@ def run(command, args):
             pool.close()
             pool.join()
 
-            f = open(logname + '2.log', "w")
-            print >> f, "\n\n============================= LOG ================================\n"
-            for e in log:
-                print >> f, e
-            f.close()
+        # --- Create log
+
+        f = open(logname, "w")
+        print >> f, "\n\n============================= LOG ================================\n"
+        for e in log:
+            print >> f, e
 
         print "\n\n===> Final report\n"
+        print >> f, "\n\n===> Final report\n"
         for sid, status in stati:
             if "Unknown" not in sid:
                 print "... %s ---> %s" % (sid, status)
+                print >> f, "... %s ---> %s" % (sid, status)
+
+        f.close()
 
 
     # -----------------------------------------------------------------------
