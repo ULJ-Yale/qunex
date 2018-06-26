@@ -243,6 +243,7 @@ Change Log
 * 0.13.8 [matlab, niutilities] Improved reporting of errors and parameters
 * 0.13.9 [matlab] Updated fc_Preprocess to store GLM data
 * 0.13.10 [matlab] Moved to use specific rather than general cdf and icdf functions to support Octave
+* 0.13.11 [matlab niutilities] Optimized logging and updated processing of bad frames in computing seedmaps
 
 =======
 [Mind and Brain Lab]: http://mblab.si
