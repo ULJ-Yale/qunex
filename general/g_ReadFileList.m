@@ -73,7 +73,10 @@ nf        = -9;
 prepend   = '       ... ';
 
 for s = files(:)'
-    s = s{1};
+    s = strtrim(s{1});
+    if length(s) > 0 && s(1) == '#'
+        continue
+    end
     if ~isempty(strfind(s, 'subject id:'))
         nsubjects = nsubjects + 1;
         nf  = 0;
