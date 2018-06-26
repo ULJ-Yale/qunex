@@ -107,6 +107,7 @@ if isa(inmask, 'char')
     end
 end
 
+
 % ----- Check if the files are there!
 
 go = true;
@@ -182,9 +183,20 @@ for n = 1:nsub
     for f = 2:length(subject(n).files)
         y = [y gmrimage(subject(n).files{f})];
     end
-    y = y.correlize;
 
     fprintf(' ... %d frames read, done.', y.frames);
+
+    % ---> creating use mask
+
+    if ~ismember(ignore, {'use', 'fidl'})
+        useScrub = find(ismember(y.scrub_hdr, ignore));
+        if isempty(useScrub)
+            error('ERROR: The specified ignore field (%s) is not valid!', ignore);
+        end
+        y.use = y.scrub(:, useScrub)' == 0;
+        y.use = y.use;
+    end
+
 
     % ---> creating task mask
 
