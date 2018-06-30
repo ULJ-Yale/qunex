@@ -79,6 +79,7 @@ def createStudy(studyfolder=None):
         │   ├── MR
         │   ├── EEG
         │   ├── behavior
+        │   ├── concs
         │   └── events
         ├── archive
         │   ├── MR
@@ -114,7 +115,7 @@ def createStudy(studyfolder=None):
 
     folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
                ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
-               ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'events'],
+               ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
                ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'behavior'], ['subjects', 'specs'], ['subjects', 'QC']]
 
     print "\nCreating study folder structure:"

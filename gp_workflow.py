@@ -1235,7 +1235,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     [<subject id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual subject's folders, they are
-    searched for in the <subjectsfolder>/inbox folder. In that case the
+    searched for in the <subjectsfolder>/inbox/events folder. In that case the
     "<subject id>_" is not optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
@@ -1728,8 +1728,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     [<subject id>_]<boldname>_<image_target>_<fidl name>.fidl. In the case of
     cifti files, image_target is composed of <cifti_tail>_cifti. If the files
     are not present in the relevant individual subject's folders, they are
-    searched for in the <subjectsfolder>/inbox folder. In that case the
-    "<subject id>_" is not optional but required.
+    searched for in the <subjectsfolder>/inbox/events and
+    <subjectsfolder>/inbox/concs folder. In that case the "<subject id>_" is not
+    optional but required.
 
     The actions that can be performed are denoted by a single letter, and they
     will be executed in the sequence listed:
