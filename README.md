@@ -245,6 +245,7 @@ Change Log
 * 0.13.10 [matlab] Moved to use specific rather than general cdf and icdf functions to support Octave
 * 0.13.11 [matlab niutilities] Optimized logging and updated processing of bad frames in computing seedmaps
 * 0.13.12 [niutilities matlab] Added createList command and enabled comments in lists
+* 0.13.13 [niutilities] Added createConc command
 
 =======
 [Mind and Brain Lab]: http://mblab.si
