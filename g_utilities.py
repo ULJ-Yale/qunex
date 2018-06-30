@@ -333,7 +333,7 @@ def compileBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjec
 
 def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, bolds=None, conc=None, fidl=None, glm=None, roi=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
     """
-    createList [subjectsfolder="."] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite='no'] [check='yes']
+    createList [subjectsfolder="."] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 
     The function creates a .list formated file that can be used as input to a
     number of processing and analysis functions. The function is fairly flexible,
@@ -616,4 +616,248 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
         print >> lfile, line
 
     lfile.close()
+    print "===> Done"
+
+
+def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
+    """
+    createConc [subjectsfolder="."] [subjects=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+
+    The function creates a set of .conc formated files that can be used as input
+    to a number of processing and analysis functions. The function is fairly
+    flexible, its output defined using a number of parameters.
+
+    The location of the files
+    -------------------------
+
+    The files are created at the path specified in `concfolder` parameter. If no
+    parameter is provided, the resulting files are saved in:
+
+    <studyfolder>/<subjects>/inbox/concs/
+
+    Individual files are named using the following formula:
+
+    <subjectid><concname>.conc
+
+    If a file already exists, depending on the `overwrite` parameter the
+    function will:
+
+    - ask:    ask interactively, what to do
+    - yes:    overwrite the existing file
+    - no:     abort creating the file
+
+    The subjects to list
+    --------------------
+
+    Subjects to include in the generation of conc files are specified using
+    `subjects` parameter.  This can be a pipe, comma or space separated list of
+    subject ids, a batch file or another list file. If a string is provided,
+    grob patterns can be used (e.g. subjects="AP*|OR*") and all matching
+    subjects will be included.
+
+    If a batch file is provided, subjects can be filtered using the `sfilter`
+    parameter. The parameter should be provided as a string in the format:
+
+    "<key>:<value>|<key>:<value>"
+
+    The conc files will be generated only for the subjects for which all the
+    specified keys match the specified values.
+
+    If no subjects are specified, the function will inspect the `subjectsfolder`
+    and generate conc files for all the subjects for which an `images` folder
+    exists as a subfolder in the subject's folder.
+
+    The files to include
+    --------------------
+
+    The bold files to incude in the conc file are specified using the `bolds`
+    parameter. To specify the bolds to be included in the conc files, provide a
+    string that lists bold numbers or bold task names in a space, comma or pipe
+    separated string. The numeric values in the string will be interpreted as
+    bold numbers to include, strings will be interpreted as bold task names as
+    they are provided in the batch file. All the bolds that match any of the
+    tasks listed will be included. If `all` is specified, all the bolds listed
+    in the batch file will be included.
+
+    Two other parameters are cruical for generation of bold file entries in the
+    conc files: `boldname` and `boldtail`.
+
+    The bolds will be listed in the list file as:
+
+    file:<subjectsfolder>/<subject>/images/functional/<boldname><boldnumber><boldtail>
+
+    Note that the function expects the files to be present in the correct place
+    within the MNAP subjects folder structure.
+
+    Checking for presence of files
+    ------------------------------
+
+    By default the function checks if the files listed indeed exist. If a file
+    is missing, the function will abort and no list will be created or appended.
+    The behavior is specified using the `check` parameter that can take the
+    following values:
+
+    - yes  ... check for presence and abort if the file to be listed is not found
+    - no   ... do not check whether files are present or not
+    - warn ... check for presence and warn if the file to be listed is not found
+
+    Examples
+    --------
+
+    > gmri createConc bolds="1,2,3"
+
+    The command will create set of conc files in `/inbox/concs`,
+    each of them named <subject id>.conc, one for each of the subjects found in
+    the current folder. Each conc file will include BOLD files 1, 2, 3
+    listed as:
+
+      file:<current path>/<subject>/images/functional/bold[n].nii.gz
+
+    > gmri createConc subjectsfolder="/studies/myStudy/subjects" subjects="batch.txt" \\
+           bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
+
+    The command will create for each subject listed in the `batch.txt` a
+    `<subjectid>_WM.conc` file in `subjects/inbox/concs` in which it will list
+    all the BOLD files tagged as `WM` as:
+
+      file:<subjectsfolder>/<subject>/images/functional/bold[n]_Atlas.dtseries
+
+    > gmri createConc subjectsfolder="/studies/myStudy/subjects" subjects="batch.txt" \\
+           sfilter="EC:use" concfolder="analysis/EC/concs" \\
+           concname="_EC_g7_hpss_res-mVWMWB1de" bolds="EC" \\
+           boldtail="_g7_hpss_res-mVWMWB1deEC.dtseries.nii"
+
+    For all the subjects in the `batch.txt` file that have the key:value pair
+    "EC:use" set the command will create a conc file in `analysis/EC/concs`
+    folder. The conc files will be named `<subject id>_EC_g7_hpss_res-mVWMWB1de.conc`
+    and will list all the bold files that are marked as `EC` runs as:
+
+      file:<subjectsfolder>/<subject>/images/functional/bold[N]_g7_hpss_res-mVWMWB1deEC.dtseries.nii
+
+    ----------------
+    Written by Grega Repovš 2018-06-30
+
+    """
+
+    def checkFile(fileName):
+        if check == 'no':
+            return True
+        elif not os.path.exists(fileName):
+            if check == 'warn':
+                print "     WARNING: File does not exist [%s]!" % (fileName)
+                return True
+            else:
+                print "     ERROR: File does not exist [%s]!" % (fileName)
+                return False
+        return True
+
+    print "Running createConc\n=================="
+
+    # --- check subjects
+
+    if subjects in ['None', 'none', 'NONE']:
+        subjects = None
+
+    if sfilter in ['None', 'none', 'NONE']:
+        sfilter = None
+
+    # --- prepare parameters
+
+    boldtags, boldnums = None, None
+
+    if bolds:
+        bolds = [e.strip() for e in re.split(' *, *| *\| *| +', bolds)]
+        boldtags = [e for e in bolds if not e.isdigit()]
+        boldnums = [e for e in bolds if e.isdigit()]
+    else:
+        print "ERROR: No bolds specified to be included in the conc files.\n         Aborting."
+        return
+
+    bsearch  = re.compile('bold([0-9]+)')
+
+    # --- prepare target file name and folder
+
+    if concfolder is None:
+        concfolder = os.path.join(os.path.abspath(subjectsfolder), 'inbox', 'concs')
+        print "WARNING: No target conc folder specified.\n         The conc files will be created in folder: %s!" % (concfolder)
+
+    if not os.path.exists(concfolder):
+        print "---> Creating target folder %s" % (concfolder)
+        os.makedirs(concfolder)
+
+    # --- check subjects
+
+    if subjects is None:
+        print "WARNING: No subjects specified. The list will be generated for all subjects in the subjects folder!"
+        subjects = glob.glob(os.path.join(subjectsfolder, '*', 'images'))
+        subjects = [os.path.basename(os.path.dirname(e)) for e in subjects]
+        subjects = "|".join(subjects)
+
+    subjects, gopts = gc.getSubjectList(subjects, sfilter=sfilter, verbose=False)
+
+    # --- generate list entries
+
+    for subject in subjects:
+
+        print "---> Processing subject %s" % (subject['id'])
+        files = []
+        complete = True
+
+        if boldnums:
+            for boldnum in boldnums:
+                tfile = os.path.join(os.path.abspath(subjectsfolder), subject['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                complete = complete & checkFile(tfile)
+                files.append("    file:" + tfile)
+
+        if boldtags:
+            try:
+                bolds = [(bsearch.match(v['name']).group(1), v['name'], v['task']) for (k, v) in subject.iteritems() if k.isdigit() and bsearch.match(v['name'])]
+                if "all" not in boldtags:
+                    bolds = [n for n, b, t in bolds if t in boldtags]
+                else:
+                    bolds = [n for n, b, t in bolds]
+                bolds.sort()
+            except:
+                pass
+            for boldnum in bolds:
+                tfile = os.path.join(os.path.abspath(subjectsfolder), subject['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                complete = complete & checkFile(tfile)
+                files.append("    file:" + tfile)
+
+        concfile = os.path.join(concfolder, subject['id'] + concname + '.conc')
+
+        if not complete and check == 'yes':
+            print "     WARNING: Due to missing source files conc file was not created!"
+            continue
+
+        if os.path.exists(concfile):
+            print "     WARNING: Conc file %s already exists!" % (os.path.abspath(concfile))
+            if overwrite == 'ask':
+                s = raw_input("              Do you want to overwrite it (o) or skip (s) creating this file? [o/s]: ")
+                if s == 'o':
+                    print "              Overwriting exisiting file."
+                    overwrite = 'yes'
+                else:
+                    print "              Skipping."
+                    continue
+            elif overwrite == 'yes':
+                print "              Overwriting the exisiting file."
+            elif overwrite == 'no':
+                print "              Skipping this conc file."
+                continue
+        else:
+            overwrite = 'yes'
+
+        # --- write to target file
+
+        if overwrite == 'yes':
+            print "     ... creating %s with %d files" % (os.path.basename(concfile), len(files))
+            cfile = open(concfile, 'w')
+
+            print >> cfile, "number_of_files: %d" % (len(files))
+            for tfile in files:
+                print >> cfile, tfile
+
+            cfile.close()
+
     print "===> Done"
