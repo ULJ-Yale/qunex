@@ -248,6 +248,7 @@ Change Log
 * 0.13.13 [niutilities] Added createConc command
 * 0.13.14 [niutilities hcpmodified] Added option for custom brain mask in PreFreeSurfer pipeline
 * 0.13.15 [library] Octave and branching environment settings, added a label file
+* 0.13.16 [library] Simplified octave setup and .octaverc
 
 =======
 [Mind and Brain Lab]: http://mblab.si
