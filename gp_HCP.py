@@ -254,7 +254,12 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                Map (x, y or NONE) [NONE].
     --hcp_topupconfig      ... Path to a configuration file for TOPUP method
                                or "NONE" if not used [NONE].
-
+    --hcp_prefs_brainmask  ... Whether to only run the final registration using
+                               either a custom prepared brain mask (MASK) or to
+                               run the full set of processing steps (NONE). [NONE]
+                               If a mask is to be used (MASK) then a "
+                               custom_acpc_dc_restore_mask.nii.gz" image needs
+                               to be placed in the T1w folder.
 
     EXAMPLE USE
     ===========
@@ -380,7 +385,27 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         else:
             gdcoeffs = 'NONE'
 
+        # --- see if we have set up to use custom mask
 
+        if options['hcp_prefs_brainmask'] == 'MASK':
+            tfile = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')
+            mfile = os.path.join(hcp['T1w_folder'], 'custom_acpc_dc_restore_mask.nii.gz')
+            r += "\n---> Set to run only final atlas registration with a custom mask."
+
+            if os.path.exists(tfile):
+                r += "\n     ... Previous results present."
+                if os.path.exists(mfile):
+                    r += "\n     ... Custom mask present."
+                else:
+                    r += "\n     ... ERROR: Custom mask missing! [%s]!." % (mfile)
+                    run = False
+            else:
+                run = False
+                r += "\n     ... ERROR: No previous results found! Please run PreFS without hcp_prefs_brainmask set to MASK first!"
+                if os.path.exists(mfile):
+                    r += "\n     ... Custom mask present."
+                else:
+                    r += "\n     ... ERROR: Custom mask missing as well! [%s]!." % (mfile)
 
         # --- Set up the command
 
@@ -416,6 +441,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             --bfsigma="%(bfsigma)s" \
             --t1biascorrect="%(biascorrect)s" \
             --usejacobian="%(usejacobian)s" \
+            --custombrain="%(custombrain)s" \
             --printcom="%(printcom)s" \
             --mppversion="%(mppversion)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh'),
@@ -450,6 +476,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 'bfsigma'           : options['hcp_bfsigma'],
                 'biascorrect'       : options['hcp_biascorrect_t1w'],
                 'usejacobian'       : options['hcp_usejacobian'],
+                'custombrain'       : options['hcp_prefs_brainmask'],
                 'printcom'          : options['hcp_printcom'],
                 'mppversion'        : options['hcp_mppversion']}
 
