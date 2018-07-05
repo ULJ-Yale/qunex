@@ -246,6 +246,7 @@ Change Log
 * 0.13.11 [matlab niutilities] Optimized logging and updated processing of bad frames in computing seedmaps
 * 0.13.12 [niutilities matlab] Added createList command and enabled comments in lists
 * 0.13.13 [niutilities] Added createConc command
+* 0.13.14 [niutilities hcpmodified] Added option for custom brain mask in PreFreeSurfer pipeline
 
 =======
 [Mind and Brain Lab]: http://mblab.si
