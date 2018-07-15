@@ -247,7 +247,10 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'joinMaps'             : {'com': niu.g_palm.joinMaps,                'args': ('images', 'output', 'names', 'originals')},
             'runPALM'              : {'com': niu.g_palm.runPALM,                 'args': ('image', 'design', 'args', 'root', 'cores', 'overwrite')},
             'createWSPALMDesign'   : {'com': niu.g_palm.createWSPALMDesign,      'args': ('factors', 'nsubjects', 'root')},
-            'schedule'             : {'com': niu.g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')}
+            'schedule'             : {'com': niu.g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
+            'getDICOMFields'       : {'com': niu.g_dicomdeid.run_scanning,       'args': ('folder_to_scan', 'output_file', 'limit')},
+            'changeDICOMs'         : {'com': niu.g_dicomdeid.run_deid,           'args': ('folder_to_scan', 'param_file', 'archive_file', 'output_folder', 'rename_files', 'extension')}
+
             }
 
 
