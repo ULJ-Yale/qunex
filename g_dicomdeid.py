@@ -21,6 +21,11 @@ try:
     import pydicom
 except:
     import dicom as pydicom
+
+try:
+    import pydicom.filereader as dfr
+except:
+    import dicom.filereader as dfr
     
 #######################
 
@@ -30,6 +35,30 @@ except:
 
 
 dicom_counter = 0
+
+def _at_frame(tag, VR, length):
+    return tag == (0x5200, 0x9230)
+
+
+def readDICOMBase(filename):
+    # try partial read
+    try:
+        if '.gz' in filename:
+            f = gzip.open(filename, 'r')
+        else:
+            f = open(filename, 'r')
+        d = dfr.read_partial(f, stop_when=_at_frame)
+        f.close()
+        return d
+    except:
+        # return None
+        # print " ===> WARNING: Could not partial read dicom file, attempting full read! [%s]" % (filename)
+        try:
+            d = dfr.read_file(filename, stop_before_pixels=True)
+            return d
+        except:
+            # print " ===> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename)
+            return None
 
 
 def get_dicom_name(opened_dicom, extension="dcm"):
@@ -80,11 +109,20 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
         for filename in filenames:
             full_filename = os.path.join(dirpath, filename)
 
+            print "---> Inspecting", full_filename
+
             opened_dicom = None
 
             try:
-                opened_dicom = pydicom.dcmread(full_filename, stop_before_pixels=True)
+                # opened_dicom = pydicom.dcmread(full_filename, stop_before_pixels=True)
+                opened_dicom = readDICOMBase(full_filename)
+
+                if opened_dicom:
+                    print "     ... read as dicom"
+
                 modified_dicom = deid_function(opened_dicom)
+
+                
 
                 if output_folder is None:
                     output_file = full_filename
@@ -105,6 +143,9 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     opened_dicom = pydicom.dcmread(file, stop_before_pixels=True)
                     modified_dicom = deid_function(opened_dicom)
                     file.close()
+
+                    if opened_dicom:
+                        print "     ... read as gzipped dicom"
 
                     if output_folder is None:
                         file = gzip.open(full_filename, mode='wb')
@@ -127,6 +168,9 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     temp_directory = tempfile.mkdtemp("_".join(full_filename.split("/")))
                     file.extractall(temp_directory)
                     file.close()
+
+                    if opened_dicom:
+                        print "     ... extracted as a zip file"
 
                     opened_dicom = True
 
@@ -157,6 +201,9 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     temp_directory = tempfile.mkdtemp("_".join(full_filename.split("/")))
                     file.extractall(temp_directory)
                     file.close()
+
+                    if opened_dicom:
+                        print "     ... extracted as a tar file"
 
                     opened_dicom = True
 
@@ -217,6 +264,7 @@ def field_dict_modifier(node_id, node_path, node):
             value_list.add("POTENTIAL PHI; REMOVE: binary data")
     else:
         value_list.add(str(node.value))
+    print "          >", value_list
     field_dict[(node_id, node_path)] = value_list
 
 
@@ -236,6 +284,9 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None):
     :rtype: None
     """
     # order the dicom tags
+
+    print "     ... recursing tree"
+
     for data_element in dataset:
         if data_element.name == "Pixel Data":
             continue
@@ -253,13 +304,21 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None):
                 data_element_name = from_tag(data_element.tag)
             node_path = parent_path + "/" + data_element_name
 
+        print "         > node id:", node_id, "node path:", node_path
+        print "         > checking element type"
+
         if isinstance(data_element.value, pydicom.Sequence):   # a sequence
+            print "          > a sequence"
             for dataset in data_element.value:
                 recurse_tree(dataset, node_func, node_id, node_path)
         elif isinstance(data_element.value, pydicom.Dataset):
+            print "          > a dataset"
             recurse_tree(data_element.value, node_func, node_id, node_path)
         else:
+            print "          > processing"
             node_func(node_id, node_path, data_element)
+
+    print "     ... end recursing"
 
 
 def dicom_scan(opened_dicom):
