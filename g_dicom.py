@@ -178,10 +178,8 @@ def readDICOMInfo(filename):
     try:
         info['volumes'] = d[0x2001, 0x1081].value
     except:
-        try:
-            info['volumes'] = d[0x0019, 0x100a].value
-        except:
-            pass
+        info['volumes'] = 0
+
 
     info['frames']     = info['volumes']
     info['directions'] = info['volumes']
@@ -191,7 +189,10 @@ def readDICOMInfo(filename):
     try:
         info['slices'] = d[0x2001, 0x1018].value
     except:
-        info['slices'] = 0
+        try:
+            info['slices'] = d[0x0019, 0x100a].value
+        except:
+            info['slices'] = 0
 
     # --- datetime
 
@@ -229,7 +230,7 @@ def readDICOMInfo(filename):
 #         fcount = 1
 
 def _at_frame(tag, VR, length):
-    return tag == (0x5200, 0x9230)
+    return tag == (0x5200, 0x9230) or tag == (0x7fe0, 0x0010)
 
 
 def readDICOMBase(filename):
@@ -984,6 +985,27 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
         else:
             try:
                 info = readDICOMInfo(glob.glob(os.path.join(folder, "*.dcm"))[-1])
+                if info['volumes'] == 0:
+                    da, db, ta, tb = 0, 0, 0, 0
+                    try:
+                        da = info['dicom'][0x0020, 0x0012].value
+                    except:
+                        try: 
+                            db = info['dicom'][0x0020, 0x0013].value 
+                        except:
+                            pass
+                    if da > 0:
+                        ta, tb = 0x0020, 0x0012
+                    elif db > 0:
+                        ta, tb = 0x0020, 0x0013
+
+                    if ta > 0:
+                        for dfile in glob.glob(os.path.join(folder, "*.dcm")):
+                            tinfo = readDICOMInfo(dfile)                            
+                            info['volumes'] = max(tinfo['dicom'][ta, tb].value, info['volumes'])
+
+                    info['frames']     = info['volumes']
+                    info['directions'] = info['volumes']
             except:
                 print >> r, "# WARNING: Could not read dicom file! Skipping folder %s" % (folder)
                 print "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
