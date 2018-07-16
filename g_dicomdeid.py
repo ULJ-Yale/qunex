@@ -16,6 +16,7 @@ import functools
 import base64
 import struct
 import shutil
+import collections
 
 try:
     import pydicom
@@ -135,7 +136,8 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
                 modified_dicom.save_as(output_file)
             except Exception as e:
-                pass  # file was not a dicom
+            	raise e
+               	# pass  # file was not a dicom
 
             if opened_dicom is None:
                 try:
