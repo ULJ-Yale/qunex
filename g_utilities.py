@@ -167,9 +167,9 @@ def createStudy(studyfolder=None):
     print "\nDone.\n"
 
 
-def compileBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
+def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
     '''
-    compileBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+    createBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 
     Combines all the sfile in all subject folders in subjectsfolder to
     generate a joint batch file and save it as tfile. If only specific subjects
@@ -208,17 +208,19 @@ def compileBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjec
 
     Example:
 
-    gmri compileBatch sfile="subject.txt" tfile="fcMRI/subjects_fcMRI.txt"
+    gmri createBatch sfile="subject.txt" tfile="fcMRI/subjects_fcMRI.txt"
 
     ----------------
     Written by Grega Repovš
 
     Changelog
     2017-12-26 Grega Repovš
-             - Renamed to compileBatch and batch.txt.
+             - Renamed to createBatch and batch.txt.
     2018-01-01 Grega Repovš
              - Added append option and changed parameter names.
              - Added the option to specify subjects to add explicitly.
+    2018-07-16 Grega Repovš
+             - Renamed to createBatch from compileBatch
     '''
 
     if subjects in ['None', 'none', 'NONE']:
