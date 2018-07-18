@@ -43,6 +43,7 @@ functions = {
     'g_PlotBoldTS':                    [('images', 'string'), ('elements', 'string'), ('masks', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('subjid', 'string'), ('verbose', 'bool')],
     'g_PlotBoldTSList':                [('flist', 'string'), ('elements', 'string'), ('filename', 'string'), ('skip', 'numeric'), ('fformat', 'string'), ('verbose', 'bool')],
     'g_QAConcFile':                    [('file', 'string'), ('do', 'string'), ('target', 'string')],
+    'g_ConjunctionG':                  [('imgf', 'string'), ('maskf', 'string'), ('method', 'string'), ('effect', 'string'), ('q', 'numeric'), ('data', 'string')],
     'qa_imgOverlap':                   [('af', 'string'), ('bf', 'string'), ('tf', 'string'), ('v', 'numeric')],
     'fc_ComputeABCorr':                [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('verbose', 'bool')],
     'fc_ComputeABCorrKCA':             [('flist', 'string'), ('smask', 'string'), ('tmask', 'string'), ('nc', 'numeric'), ('mask', 'numeric'), ('root', 'string'), ('options', 'string'), ('dmeasure', 'string'), ('nrep', 'numeric'), ('verbose', 'bool')],

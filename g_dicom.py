@@ -16,6 +16,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 # import dicom
 import os
+import os.path
 import re
 import glob
 import shutil
@@ -36,6 +37,187 @@ except:
 
 
 
+
+def readPARInfo(filename):
+    '''readPARInfo
+
+    Function for reading `.PAR` files. It returns the PAR fields as well as a
+    set of standard information. Including:
+
+    - subjectid
+    - seriesNumber
+    - seriesDescription
+    - TR
+    - TE
+    - frames
+    - directions
+    - volumes
+    - slices
+    - datetime
+
+    It returns the information as a dictionary.
+
+    ----------------
+    Written by Grega Repovš, 2018-07-03'''
+
+
+    if not os.path.exists(filename):
+        raise ValueError('PAR file %s does not exist!' % (filename))
+
+    info = {}
+    with open(filename, 'r') as f:
+        for line in f:
+            if len(line) > 1 and line[0] == '.':
+                line = line[1:].strip()
+                k, v = [e.strip() for e in line.split(':  ')]
+                info[k] = v
+
+    info['subjectid']          = info['Patient name']
+    info['seriesNumber']       = int(info['Acquisition nr']) * 100 + int(info['Reconstruction nr'])
+    info['seriesDescription']  = info['Protocol name'].replace("WIP ", "")
+    info['TR']                 = float(info['Repetition time [msec]'])
+    info['TE']                 = 0.
+    info['frames']             = int(info['Max. number of dynamics'])
+    info['directions']         = int(info['Max. number of gradient orients']) - 1
+    info['volumes']            = max(info['frames'], info['directions'])
+    info['slices']             = int(info['Max. number of slices/locations'])
+    info['datetime']           = info['Examination date/time']
+
+    return info
+
+
+def readDICOMInfo(filename):
+    '''readDICOMInfo
+
+    Function for reading basic information from DICOM files. It tries to extract
+    the following standard information:
+
+    - subjectid
+    - seriesNumber
+    - seriesDescription
+    - TR
+    - TE
+    - frames
+    - directions
+    - volumes
+    - slices
+    - datetime
+
+    The infomation is returned in a dictionary along with a dicom objects stored
+    as 'dicom'.
+
+    ----------------
+    Written by Grega Repovš, 2018-07-03'''
+
+    if not os.path.exists(filename):
+        raise ValueError('DICOM file %s does not exist!' % (filename))
+
+    d = readDICOMBase(filename)
+
+    info = {}
+
+    info['subjectid']  = getID(d)
+
+    # --- subjectid
+
+    info['subjectid'] = ""
+    if "PatientID" in d:
+        info['subjectid'] = d.PatientID
+    if info['subjectid'] == "":
+        if "StudyID" in d:
+            info['subjectid'] = d.StudyID
+
+    # --- seriesNumber
+
+    try:
+        info['seriesNumber'] = d.SeriesNumber
+        try:
+            if d.Manufacturer == 'Philips Medical Systems':
+                info['seriesNumber'] = (d.SeriesNumber - 1) / 100
+        except:
+            pass
+    except:
+        info['seriesNumber'] = None
+
+    # --- seriesDescription
+
+    try:
+        info['seriesDescription'] = d.SeriesDescription
+    except:
+        try:
+            info['seriesDescription'] = d.ProtocolName
+        except:
+            info['seriesDescription'] = "None"
+
+    # --- TR, TE
+
+    TR, TE = 0., 0.
+    try:
+        TR = d.RepetitionTime
+    except:
+        try:
+            TR = float(d[0x2005, 0x1030].value)
+        except:
+            try:
+                TR = d[0x2005, 0x1030].value[0]
+            except:
+                pass
+    try:
+        TE = d.EchoTime
+    except:
+        try:
+            TE = float(d[0x2001, 0x1025].value)
+        except:
+            pass
+
+    info['TR'], info['TE'] = float(TR), float(TE)
+
+    # --- Frames
+
+    info['volumes'] = 0
+    try:
+        info['volumes'] = d[0x2001, 0x1081].value
+    except:
+        info['volumes'] = 0
+
+
+    info['frames']     = info['volumes']
+    info['directions'] = info['volumes']
+
+    # --- slices
+
+    try:
+        info['slices'] = d[0x2001, 0x1018].value
+    except:
+        try:
+            info['slices'] = d[0x0019, 0x100a].value
+        except:
+            info['slices'] = 0
+
+    # --- datetime
+
+    try:
+        info['datetime'] = datetime.datetime.strptime(str(int(float(d.StudyDate + d.ContentTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+    except:
+        try:
+            info['datetime'] = datetime.datetime.strptime(str(int(float(d.StudyDate + d.StudyTime))), "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+        except:
+            info['datetime'] = ""
+
+    # --- SOPInstanceUID
+
+    try:
+        info['SOPInstanceUID'] = d.SOPInstanceUID
+    except:
+        info['SOPInstanceUID'] = None
+
+    # --- dicom header
+
+    info['dicom'] = d
+
+    return info
+
+
 # fcount = 0
 #
 # def _at_frame(tag, VR, length):
@@ -48,7 +230,7 @@ except:
 #         fcount = 1
 
 def _at_frame(tag, VR, length):
-    return tag == (0x5200, 0x9230)
+    return tag == (0x5200, 0x9230) or tag == (0x7fe0, 0x0010)
 
 
 def readDICOMBase(filename):
@@ -103,7 +285,7 @@ def getTRTE(info):
             # TR = d[0x5200,0x9229][0][0x0018,0x9112][0][0x0018,0x0080].value
         except:
             try:
-                TR = d[0x2005, 0x1030].value[0]
+                TR = info[0x2005, 0x1030].value[0]
             except:
                 pass
     try:
@@ -579,13 +761,13 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     USE
     ===
 
-    The command is used to convert MR images from DICOM to NIfTI format. It
-    searches for images within the a dicom subfolder within the provided
-    subject folder (folder). It expects to find each image within a separate
-    subfolder. It then converts the images to NIfTI format and places them
-    in the nii folder within the subject folder. To reduce the space use it
-    can then gzip the dicom files (gzip). To speed the process up, it can
-    run multiple dcm2niix processes in parallel (cores).
+    The command is used to convert MR images from DICOM and PAR/REC files to
+    NIfTI format. It searches for images within the a dicom subfolder within the
+    provided subject folder (folder). It expects to find each image within a
+    separate subfolder. It then converts the found images to NIfTI format and
+    places them in the nii folder within the subject folder. To reduce the space
+    used it can then gzip the dicom or .REC files (gzip). To speed the process
+    up, it can run multiple dcm2niix processes in parallel (cores).
 
     This version of the command uses dcm2niix.
 
@@ -594,7 +776,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     it will ask interactively, what to do. If set to 'yes' it will remove any
     existing files and proceede. If set to 'no' it will leave them and abort.
 
-    Before running, the command also checks whether DICOM files might be
+    Before running, the command also checks whether DICOM or .REC files might be
     gzipped. If that is the case, the response depends on the setting of the
     unzip parameter. If set to 'yes' it will automatically gunzip them and
     continue. If set to 'no', it will leave them be and abort. If set to 'ask',
@@ -722,6 +904,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     2018-04-01 Grega Repovš
              - Updated documentation with information on running for multiple
                subjects and scheduling
+    2018-07-03 Grega Repovš
+             - Changed to work with readDICOMInfo and readPARInfo, and to
+               support PAR/REC files.
     '''
 
     if subjectid in ['none', 'None', 'NONE']:
@@ -793,23 +978,47 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
 
     for folder in folders:
-        # d = dicom.read_file(glob.glob(os.path.join(folder, "*.dcm"))[-1], stop_before_pixels=True)
-        d = readDICOMBase(glob.glob(os.path.join(folder, "*.dcm"))[-1])
+        par = glob.glob(os.path.join(folder, "*.PAR"))
+        if par:
+            par = par[0]
+            info = readPARInfo(par)
+        else:
+            try:
+                info = readDICOMInfo(glob.glob(os.path.join(folder, "*.dcm"))[-1])
+                if info['volumes'] == 0:
+                    da, db, ta, tb = 0, 0, 0, 0
+                    try:
+                        da = info['dicom'][0x0020, 0x0012].value
+                    except:
+                        try: 
+                            db = info['dicom'][0x0020, 0x0013].value 
+                        except:
+                            pass
+                    if da > 0:
+                        ta, tb = 0x0020, 0x0012
+                    elif db > 0:
+                        ta, tb = 0x0020, 0x0013
 
-        if d is None:
-            print >> r, "# WARNING: Could not read dicom file! Skipping folder %s" % (folder)
-            print "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
-            continue
+                    if ta > 0:
+                        for dfile in glob.glob(os.path.join(folder, "*.dcm")):
+                            tinfo = readDICOMInfo(dfile)                            
+                            info['volumes'] = max(tinfo['dicom'][ta, tb].value, info['volumes'])
+
+                    info['frames']     = info['volumes']
+                    info['directions'] = info['volumes']
+            except:
+                print >> r, "# WARNING: Could not read dicom file! Skipping folder %s" % (folder)
+                print "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
+                continue
 
         c += 1
         if first:
             first = False
-            time = getDicomTime(d)
             if subjectid is None:
-                subjectid = getID(d)
-            print >> r, "Report for %s (%s) scanned on %s\n" % (subjectid, getID(d), time)
+                subjectid = info['subjectid']
+            print >> r, "Report for %s (%s) scanned on %s\n" % (subjectid, info['subjectid'], info['datetime'])
             if verbose:
-                print "\n\nProcessing images from %s (%s) scanned on %s\n" % (subjectid, getID(d), time)
+                print "\n\nProcessing images from %s (%s) scanned on %s\n" % (subjectid, info['subjectid'], info['datetime'])
 
             # --- setup subject.txt file
 
@@ -820,29 +1029,6 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
             print >> stxt, "data:", os.path.abspath(os.path.join(base, '4dfp'))
             print >> stxt, "hcp:", os.path.abspath(os.path.join(base, 'hcp'))
             print >> stxt, ""
-
-        try:
-            seriesDescription = d.SeriesDescription
-        except:
-            try:
-                seriesDescription = d.ProtocolName
-            except:
-                seriesDescription = "None"
-
-        try:
-            time = datetime.datetime.strptime(d.ContentTime[0:6], "%H%M%S").strftime("%H:%M:%S")
-        except:
-            try:
-                time = datetime.datetime.strptime(d.StudyTime[0:6], "%H%M%S").strftime("%H:%M:%S")
-            except:
-                time = ""
-
-        TR, TE = getTRTE(d)
-
-        try:
-            nslices = d[0x2001, 0x1018].value
-        except:
-            nslices = 0
 
     # recenter, dofz2zf, fz, reorder = False, False, "", False
     # try:
@@ -857,30 +1043,25 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
         # --- Special nii naming for Philips
 
-        niinum = c
-        try:
-            if d.Manufacturer == 'Philips Medical Systems':
-                # niinum = (d.SeriesNumber - 1) / 100
-                niinum = d.SeriesNumber
-        except:
-            pass
+        if info['seriesNumber']:
+            niinum = info['seriesNumber']
+        else:
+            niinum = c
 
-        try:
-            nframes = d[0x2001, 0x1081].value
-            logs.append("%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time))
-            reps.append("---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time))
-        except:
-            nframes = 0
-            logs.append("%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time))
-            reps.append("---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time))
+        info['niinum'] = niinum
+
+        logs.append("%(niinum)02d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
+        reps.append("---> %(niinum)02d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
 
         if niinum > 0:
-            print >> stxt, "%02d: %s" % (niinum, seriesDescription)
+            print >> stxt, "%02d: %s" % (niinum, info['seriesDescription'])
 
         niiid = str(niinum)
-        calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
-        files.append([niinum, folder, nframes, nslices])
-        # subprocess.call(call, shell=True, stdout=null, stderr=null)
+        if par:
+            calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+        else:
+            calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+        files.append([niinum, folder, info['volumes'], info['slices']])
 
     niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 
@@ -978,7 +1159,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
             print "\nCompressing dicom files in folders:"
         calls = []
         for folder in folders:
-            calls.append({'name': 'gzip: ' + folder, 'args': ['gzip'] + glob.glob(os.path.join(os.path.abspath(folder), "*.dcm")), 'sout': None})
+            calls.append({'name': 'gzip: ' + folder, 'args': ['gzip'] + glob.glob(os.path.join(os.path.abspath(folder), "*.dcm")) + glob.glob(os.path.join(os.path.abspath(folder), "*.REC")), 'sout': None})
         niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
 
     if verbose:
@@ -995,10 +1176,13 @@ def sortDicom(folder=".", **kwargs):
     ===
 
     The command looks for the inbox subfolder in the specified subject folder
-    (folder) and checks for presence of DICOM files in the inbox folder and its
-    subfolders. It inspects the found files, creates a dicom folder and for each
-    image a numbered subfolder. It then moves the found DICOM files in the
-    correct subfolders to prepare them for dicom2nii processing.
+    (folder) and checks for presence of DICOM or PAR/REC files in the inbox
+    folder and its subfolders. It inspects the found files, creates a dicom
+    folder and for each image a numbered subfolder. It then moves the found
+    DICOM or PAR/REC files in the correct subfolders to prepare them for
+    dicom2nii(x) processing. In the process it checks that PAR/REC extensions
+    are uppercase and changes them if necessary. If log files are found, they
+    are placed in a separate `log` subfolder.
 
     PARAMETERS
     ==========
@@ -1043,10 +1227,26 @@ def sortDicom(folder=".", **kwargs):
     2018-04-01 Grega Repovš
              - Updated documentation with information on running for multiple
                subjects and scheduling
+    2018-07-03 Grega Repovš
+             - Changed to work with readDICOMInfo and readPARInfo, and to
+               support PAR/REC files.
     '''
 
-    from shutil import copy
+    # --- should we copy or move
+
+    should_copy = kwargs.get('copy', False)
+    if should_copy:
+        from shutil import copy
+        doFile = copy
+    else:
+        doFile = os.rename
+
+    # --- establish target folder
+
     dcmf  = os.path.join(kwargs.get('out_dir', folder), 'dicom')
+
+    # --- get list of files
+
     files = kwargs.get('files', None)
     if files is None:
         inbox = os.path.join(folder, 'inbox')
@@ -1056,69 +1256,90 @@ def sortDicom(folder=".", **kwargs):
         files = files + glob.glob(os.path.join(inbox, "*/*/*"))
         files = [e for e in files if os.path.isfile(e)]
 
-    seqs  = []
+    info = None
     for dcm in files:
-        try:
-            # info = dicom.read_file(dcm, stop_before_pixels=True)
-            info = readDICOMBase(dcm)
-            sid  = getID(info)
-            time = getDicomTime(info)
-            print "===> Sorting dicoms for %s scanned on %s\n" % (sid, time)
+        ext = dcm.split('.')[-1]
+        if ext.lower() == 'par':
+            info = readPARInfo(dcm)
+        else:
+            try:
+                info = readDICOMInfo(dcm)
+            except:
+                pass
+        if info:
+            print "===> Sorting dicoms for %s scanned on %s\n" % (info['subjectid'], info['datetime'])
             break
-        except:
-            # raise
-            pass
 
     if not os.path.exists(dcmf):
         os.makedirs(dcmf)
         print "---> Created a dicom superfolder"
 
+    logFolder = os.path.join(dcmf, 'log')
+
     dcmn = 0
 
     for dcm in files:
+        ext = dcm.split('.')[-1]
+
         if os.path.basename(dcm)[0:2] in ["XX", "PS"]:
             continue
-        try:
-            # d    = dicom.read_file(dcm, stop_before_pixels=True)
-            d    = readDICOMBase(dcm)
-            if d is None:
-                continue
-            sqid = str(d.SeriesNumber)
 
-        except:
+        elif ext == 'log':
+            if not os.path.exists(logFolder):
+                os.makedirs(logFolder)
+                print "---> Created log folder"
+            doFile(dcm, os.path.join(logFolder, os.path.basename(dcm)))
             continue
+
+        elif ext.lower() == 'par':
+            info  = readPARInfo(dcm)
+
+        else:
+            try:
+                info = readDICOMInfo(dcm)
+            except:
+                continue
+
+        sqid = str(info['seriesNumber'])
         sqfl = os.path.join(dcmf, sqid)
-        sid  = getID(d)
-        if sqid not in seqs:
-            if not os.path.exists(sqfl):
-                os.makedirs(sqfl)
-                try:
-                    print "---> Created subfolder for sequence %s %s - %s" % (sid, sqid, d.SeriesDescription)
-                except:
-                    print "---> Created subfolder for sequence %s %s - %s " % (sid, sqid, d.ProtocolName)
 
-        dcmn += 1
+        if not os.path.exists(sqfl):
+            os.makedirs(sqfl)
+            print "---> Created subfolder for sequence %s %s - %s" % (info['subjectid'], sqid, info['seriesDescription'])
 
-        try:
-            sop = d.SOPInstanceUID
-        except:
-            sop = "%010d" % (dcmn)
+        if ext.lower() == 'par':
+            tgpar = os.path.join(sqfl, os.path.basename(dcm))
+            tgpar = tgpar[:-3] + 'PAR'
+            doFile(dcm, tgpar)
 
-        # --- check if for some reason we are dealing with gzipped dicom files and add an extension when renaming
+            if os.path.exists(dcm[:-3] + 'REC'):
+                doFile(dcm[:-3] + 'REC', tgpar[:-3] + 'REC')
+            elif os.path.exists(dcm[:-3] + 'rec'):
+                doFile(dcm[:-3] + 'rec', tgpar[:-3] + 'REC')
+            else:
+                print "---> Warning %s does not exist!" % (dcm[:-3] + 'REC')
 
-        ext = dcm.split('.')[-1]
-        if ext == "gz":
-            ext = ".gz"
         else:
-            ext = ""
 
-        tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (sid, sqid, sop, ext))
+            # --- get info for dcm naming
 
-        should_copy = kwargs.get('copy', False)
-        if should_copy:
-            copy(dcm, tgf)
-        else:
-            os.rename(dcm, tgf)
+            dcmn += 1
+            if info['SOPInstanceUID']:
+                sop = info['SOPInstanceUID']
+            else:
+                sop = "%010d" % (dcmn)
+
+            # --- check if for some reason we are dealing with gzipped dicom files and add an extension when renaming
+
+            if ext == "gz":
+                dext = ".gz"
+            else:
+                dext = ""
+
+            # --- do the deed
+
+            tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (info['subjectid'], sqid, sop, dext))
+            doFile(dcm, tgf)
 
     print "\nDone!\n\n"
     return "completed ok"
@@ -1367,9 +1588,9 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     ===
 
     The command is used to automatically process packets with individual
-    subject's DICOM files all the way to, and including, generation of NIfTI
-    files. Packet can be either a zip file or a folder that contains DICOM
-    files.
+    subject's DICOM or PAR/REC files all the way to, and including, generation
+    of NIfTI files. Packet can be either a zip file or a folder that contains
+    DICOM or PAR/REC files.
 
     The command first looks into provided inbox folder (inbox; by default
     `inbox/MR`) and finds any packets that match the specified regex pattern
@@ -1392,13 +1613,14 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     folder(s) and rerun the command to process those packet(s) as well.
 
     After the files have been copied or extracted to the inbox folder, a
-    sortDicom command is run on that folder and all the DICOM files are sorted
-    and moved to the dicom folder. After that is done, a dicom2nii command is
-    run to convert the DICOM images to the NIfTI format and move them to the nii
-    folder. The DICOM files are preserved and gzipped to save space. To speed up
-    the conversion the cores parameter is passed to the dicom2niix command.
-    subject.txt and DICOM-Report.txt files are created as well. Please, check
-    the help for sortDicom and dicom2niix commands for the specifics.
+    sortDicom command is run on that folder and all the DICOM or PAR/REC files
+    are sorted and moved to the dicom folder. After that is done, a dicom2niix
+    command is run to convert the DICOM images or PAR/REC files to the NIfTI
+    format and move them to the nii folder. The DICOM or PAR/REC files are
+    preserved and gzipped to save space. To speed up the conversion the cores
+    parameter is passed to the dicom2niix command. subject.txt and
+    DICOM-Report.txt files are created as well. Please, check the help for
+    sortDicom and dicom2niix commands for the specifics.
 
     PARAMETERS
     ==========
@@ -1439,6 +1661,9 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     2018-03-18 Grega Repovš
              - Added more detailed informaton on existing subject folders in
                documentation
+    2018-07-03 Grega Repovš
+             - Changed to work with readDICOMInfo and readPARInfo, and to
+               support PAR/REC files.
     '''
 
     verbose = verbose == 'yes'
@@ -1606,17 +1831,28 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
                     fnum += 1
 
                     print "...  extracting:", sf.filename, sf.file_size
+
                     fdata = z.read(sf)
-                    if igz.match(sf.filename):
-                        gzname = os.path.join(dfol, str(dnum), str(fnum) + ".gz")
-                        fout = open(gzname, 'wb')
-                        fout.write(fdata)
-                        fout.close()
-                        fin = gzip.open(gzname, 'rb')
-                        fdata = fin.read()
-                        fin.close()
-                        os.remove(gzname)
-                    fout = open(os.path.join(dfol, str(dnum), str(fnum)), 'wb')
+
+                    # --- do we have par / rec / log
+
+                    if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
+                        tfile = os.path.basename(sf.filename)
+                        for ext in ['rec', 'par']:
+                            if tfile.split('.')[-1] == ext:
+                                tfile = tfile[:-3] + ext.upper()
+                    else:
+                        if igz.match(sf.filename):
+                            gzname = os.path.join(dfol, str(dnum), str(fnum) + ".gz")
+                            fout = open(gzname, 'wb')
+                            fout.write(fdata)
+                            fout.close()
+                            fin = gzip.open(gzname, 'rb')
+                            fdata = fin.read()
+                            fin.close()
+                            os.remove(gzname)
+                        tfile = str(fnum)
+                    fout = open(os.path.join(dfol, str(dnum), tfile), 'wb')
                     fout.write(fdata)
                     fout.close()
 
@@ -1894,12 +2130,6 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
         except:
             print "    Estimated dwelltime: unknown"
 
-
     # --- look for slice ordering info
 
-
-
     print
-
-
-
