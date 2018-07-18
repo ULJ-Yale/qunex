@@ -507,7 +507,7 @@ if [ "$ComputePConn" == "yes" ]; then
 fi
 geho "--- BOLD Parcellation completed. Check output log for outputs and errors."
 echo ""
-geho "------------------------- End of work --------------------------------"
+geho "------------------------- Successful end of work --------------------------------"
 echo ""
 
 }

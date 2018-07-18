@@ -176,12 +176,11 @@ main() {
 get_options $@
 
 # -- Run mri_ExtractROI.m --> mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
-
-matlab -nodisplay -nojvm -r "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
+${MNAPMCOMMAND} "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
 
 geho "-- ROIExtract successfully completed "
 echo ""
-geho "------------------------- End of work --------------------------------"
+geho "------------------------- Successful end of work --------------------------------"
 echo ""
 
 }

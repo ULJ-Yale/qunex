@@ -304,13 +304,11 @@ unset OutPath          # --targetf=
 unset Overwrite        # --overwrite=      
 unset ExtractData      # --extractdata=
 unset Calculation      # --calculation=   
-
 unset RunType          # --runtype=       
 unset FileList         # --flist=         
 unset IgnoreFrames     # --ignore=         
 unset MaskFrames       # --mask=      
 unset Covariance       # --covariance=      
-
 unset TargetROI        # --target=         
 unset RadiusSmooth     # --rsmooth=      
 unset RadiusDilate     # --rdilate=      
@@ -318,7 +316,6 @@ unset GBCCommand       # --command=
 unset Verbose          # --verbose=      
 unset ComputeTime      # --time=         
 unset VoxelStep        # --vstep=         
-
 unset ROIInfo          # --roinfo=         
 unset FCCommand        # --options=      
 unset Method           # --method=      
@@ -384,7 +381,7 @@ while [ ${index} -lt ${numArgs} ]; do
         --flist=*)
             FileList=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;                                    
+            ;;
         --ignore=*)
             IgnoreFrames=${argument/*=/""}
             index=$(( index + 1 ))
@@ -396,7 +393,7 @@ while [ ${index} -lt ${numArgs} ]; do
         --covariance=*)
             Covariance=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;       
+            ;;
         --target=*)
             TargetROI=${argument/*=/""}
             index=$(( index + 1 ))
@@ -404,7 +401,7 @@ while [ ${index} -lt ${numArgs} ]; do
         --rsmooth=*)
             RadiusSmooth=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;                                
+            ;;
         --rdilate=*)
             RadiusDilate=${argument/*=/""}
             index=$(( index + 1 ))
@@ -416,15 +413,15 @@ while [ ${index} -lt ${numArgs} ]; do
         --verbose=*)
             Verbose=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;   
+            ;;
         --time=*)
             ComputeTime=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;                                
+            ;;
         --vstep=*)
             VoxelStep=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;       
+            ;;
         --roinfo=*)
             ROIInfo=${argument/*=/""}
             index=$(( index + 1 ))
@@ -432,11 +429,11 @@ while [ ${index} -lt ${numArgs} ]; do
         --options=*)
             FCCommand=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;                  
+            ;;
         --method=*)
             Method=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;                                 
+            ;;
         *)
               usage
               reho "ERROR: Unrecognized Option: ${argument}"
@@ -644,7 +641,7 @@ echo ""
 
 # -- Define all inputs and outputs depending on data type input
 if [ ${RunType} == "individual" ]; then
-	for INPUTCASE in $INPUTCASES; do
+	for INPUTCASE in ${INPUTCASES}; do
 		# -- Define inputs
 		geho "--- Establishing paths for all input and output folders:"
 		echo ""
@@ -652,15 +649,15 @@ if [ ${RunType} == "individual" ]; then
 			OutPath=${SubjectsFolder}/${INPUTCASE}/${InputPath}
 		fi
 		# -- Parse input from the InputFiles variable
-		InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
+		InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
 		# -- Cleanup prior tmp lists
 		rm -rf ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
 		# -- Generate output directories
 		mkdir ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
 		mkdir ${OutPath} > /dev/null 2>&1
 		# -- Generate the temp list
-		echo "subject id:$INPUTCASE" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
-		for InputFile in $InputFiles; do echo "file:$SubjectsFolder/$INPUTCASE/$InputPath/$InputFile" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done	
+		echo "subject id:${INPUTCASE}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
+		for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
 		FinalInput="${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
 	done
 fi
@@ -678,7 +675,7 @@ if [ ${RunType} == "group" ]; then
 		InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
 		# -- Generate the temp list
 		echo "subject id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
-		for InputFile in $InputFiles; do echo "file:$SubjectsFolder/$INPUTCASE/$InputPath/$InputFile" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done	
+		for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
 		FinalInput="${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list"
 	done
 fi
@@ -687,7 +684,7 @@ fi
 echo ""
 echo "Seed functional connectivity inputs:"
 echo ""
-more $FinalInput
+more ${FinalInput}
 echo ""
 # -- Echo outputs
 echo "Seed functional connectivity will be saved here for each specified ROI:"
@@ -700,18 +697,18 @@ fi
 # -- Check if FC seed run is specified
 if [ ${Calculation} == "seed" ]; then
 	# -- run FC seed command: 
-	# Call to get matlab help --> matlab -nosplash -nodisplay -nojvm -r "help fc_ComputeGBC3,quit()"
+	# Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
 	# Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-	# Example with string input --> matlab -nosplash -nodisplay -nojvm -r "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
-	matlab -nosplash -nodisplay -nojvm -r "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+	# Example with string input --> ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+	${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
 fi
 # -- Check if GBC seed run is specified
 if [ ${Calculation} == "gbc" ]; then
 	# -- run GBC seed command: 
-	# Call to get matlab help --> matlab -nosplash -nodisplay -nojvm -r "help fc_ComputeGBC3,quit()"
+	# Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
 	# Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-	# Example with string input --> matlab -nosplash -nodisplay -nojvm -r "fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
-	matlab -nosplash -nodisplay -nojvm -r "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+	# Example with string input --> ${MNAPMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+	${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
 fi
 
 echo ""
@@ -740,10 +737,43 @@ if [ "$ExtractData" == "yes" ]; then
 	fi
 fi
 
-geho "--- Connectivity calculation completed. Check outputs and logs for errors."
-echo ""
-geho "------------------------- End of work --------------------------------"
-echo ""
+# -- Perform completion checks
+if [ ${Calculation} == "individual" ]; then
+	for INPUTCASE in ${INPUTCASES}; do
+		if [[ -f ${OutPath}/${OutName}*.nii ]]; then
+			echo ""
+			geho "--- Connectivity calculation completed for ${INPUTCASE}"
+			echo ""
+		else
+			echo ""
+			reho "--- Result for ${INPUTCASE} not found. Something went wrong."
+			echo ""
+			RunError="yes"
+		fi
+	done
+fi
+if [ ${Calculation} == "group" ]; then
+	if [[ -f ${OutPath}/${OutName}*.nii ]]; then
+		echo ""
+		geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
+		echo ""
+	else
+		echo ""
+		reho "--- Result for ${OutPath}/${OutName} not found. Something went wrong."
+		echo ""
+		RunError="yes"
+	fi
+fi
+if [[ -z ${RunError} ]]; then 
+	echo ""
+	geho "------------------------- Successful end of work --------------------------------"
+	echo ""
+else
+	echo ""
+	reho "--- Results missing. Something went wrong."
+	echo ""
+	exit 1
+fi
 
 }
 

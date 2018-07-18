@@ -14,7 +14,7 @@
 #
 # ## PRODUCT
 #
-#  DWIDenseSeedTractography.sh 
+# DWIDenseSeedTractography.sh 
 #
 # ## LICENSE
 #
@@ -24,12 +24,12 @@
 #
 # ## TODO
 #
-# ## DESCRIPTION 
+# ## DESCRIPTION
 #
 # This script, DWIDenseSeedTractography.sh, is a wrapper for deducting dense 
 # connectome DWI data with seed input. It implements reduction on the DWI dense 
 # connectomes using a given 'seed' structure (e.g. thalamus)
-# 
+#
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
 # * Connectome Workbench (v1.0 or above)
@@ -44,7 +44,7 @@
 # * These data are stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/ 
 #
 #~ND~END~
-
+#
 # ------------------------------------------------------------------------------
 # -- General help usage function
 # ------------------------------------------------------------------------------
@@ -72,6 +72,7 @@ usage() {
     echo "     --subject=<list_of_cases>                   List of subjects to run"
     echo "     --matrixversion=<matrix_version_value>      Matrix solution verion to run parcellation on; e.g. 1 or 3"
     echo "     --seedfile=<file_for_seed_reduction>        Specify the absolute path of the seed file you want to use as a seed for dconn reduction (e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz )"
+    echo "                                                 Note: If you specify --seedfile='gbc' then the function computes an average across all streamlines from every greyordinate to all other greyordinates."
     echo "     --outname=<name_of_output_dscalar_file>     Specify the suffix output name of the dscalar file"
     echo ""
     echo "-- OPTIONAL PARMETERS:"
@@ -234,7 +235,7 @@ fi
 # -- Set StudyFolder
 cd $SubjectsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
-    
+
 # -- Report options
 echo ""
 echo ""
@@ -261,12 +262,11 @@ main() {
 get_options $@
 
 # -- Define inputs and output
-reho "--- Establishing paths for all input and output folders:"
-echo ""
+echo "--- Establishing paths for all input and output folders:"; echo ""
 
 # -- Define input and check if WayTotal normalization is selected
 if [ ${WayTotal} == "standard" ]; then
-	echo "--- Using waytotal normalized dconn file"
+	echo "--- Using waytotal normalized dconn file"; echo ""
 	DWIInput=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii*`
 	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
 		DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
@@ -275,8 +275,9 @@ if [ ${WayTotal} == "standard" ]; then
 	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}.dconn.nii"
+	DWIOutFileDscalarGBC="${CASE}_Conn${MatrixVersion}_waytotnorm_${OutName}_Avg_GBC.dscalar.nii"
 elif [ ${WayTotal} == "log" ]; then
-	echo "--- Using log-transformed waytotal normalized dconn file"
+	echo "--- Using log-transformed waytotal normalized dconn file"; echo ""
 	DWIInput=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii*`
 	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
 		DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
@@ -285,35 +286,39 @@ elif [ ${WayTotal} == "log" ]; then
 	fi
 	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}.dconn.nii"
+	DWIOutFileDscalarGBC="${CASE}_Conn${MatrixVersion}_waytotnorm_log_${OutName}_Avg_GBC.dscalar.nii"
 elif ! { [ "${WayTotal}" = "log" ] || [ "${WayTotal}" = "standard" ]; }; then
-	echo "--- Using dconn file without waytotal normalization"
+	echo "--- Using dconn file without waytotal normalization"; echo ""
 	DWIInput=`ls $SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii*`
 	if [ $(echo $DWIInput | grep -c gz) -eq 1 ]; then
 		DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
 	else
 		DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii"	
 	fi
-	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
 	DWIOutFileDconn="${CASE}_Conn${MatrixVersion}_${OutName}.dconn.nii"
+	DWIOutFileDscalar="${CASE}_Conn${MatrixVersion}_${OutName}_Avg.dscalar.nii"
+	DWIOutFileDscalarGBC="${CASE}_Conn${MatrixVersion}_${OutName}_Avg_GBC.dscalar.nii"
+fi
+
+# -- Check if GBC requested
+if [ ${SeedFile} == "gbc" ]; then
+	DWIOutFileDscalar="$DWIOutFileDscalarGBC"
 fi
 
 # -- Define output directory
 DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
-echo "--- Dense DWI Connectome Input:          ${DWIInput}"
-echo "--- Parcellated DWI Connectome Output:   ${DWIOutput}/${DWIOutFileDscalar}"
-echo ""
+echo "--- Dense DWI Connectome Input:          ${DWIInput}"; echo ""
+echo "--- Parcellated DWI Connectome Output:   ${DWIOutput}/${DWIOutFileDscalar}"; echo ""
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-	reho "--- Deleting prior runs in $DWIOutput..."
-	echo ""
+	reho "--- Deleting prior runs in $DWIOutput..."; echo ""
 	rm -f ${DWIOutput}/${DWIOutFileDconn} > /dev/null 2>&1
 	rm -f ${DWIOutput}/${DWIOutFileDscalar} > /dev/null 2>&1
 fi
 
 # -- Check if the dense parcellation was completed and exists
-reho "--- Checking if parcellation was completed..."
-echo ""
+echo "--- Checking if parcellation was completed..."; echo ""
 # -- Check if file present
 if [ -f ${DWIOutput}/${DWIOutFileDscalar} ]; then
 	geho "--- Dense scalar seed tractography data found: "
@@ -322,43 +327,36 @@ if [ -f ${DWIOutput}/${DWIOutFileDscalar} ]; then
 	echo ""
 	exit 1
 else
-	reho "--- Dense scalar seed tractography data not found."
-	echo ""
-	geho "--- Computing dense DWI connectome restriction by COLUMN on $DWIInput..."
-	echo ""
-	# -- First restrict by COLUMN and save a *dconn file
-	wb_command -cifti-restrict-dense-map ${DWIInput} COLUMN ${DWIOutput}/${DWIOutFileDconn} -vol-roi ${SeedFile}
-	geho "--- Computing average of the restricted dense connectome across the input structure $SeedFile..."
-	echo ""
-	# -- Next average the restricted dense connectome across the input structure and save the dscalar
-	wb_command -cifti-average-dense-roi ${DWIOutput}/${DWIOutFileDscalar} -cifti ${DWIOutput}/${DWIOutFileDconn} -vol-roi ${SeedFile}
+	reho "--- Dense scalar seed tractography data not found."; echo ""
+	# -- Check of GBC only was requested 
+	if [ ${SeedFile} == "gbc" ]; then
+		geho "--- Computing dense DWI GBC on $DWIInput..."; echo ""
+		wb_command -cifti-reduce ${DWIInput} MEAN ${DWIOutput}/${DWIOutFileDscalar}
+	else
+		# -- First restrict by COLUMN and save a *dconn file
+		geho "--- Computing dense DWI connectome restriction by COLUMN on $DWIInput..."; echo ""
+		wb_command -cifti-restrict-dense-map ${DWIInput} COLUMN ${DWIOutput}/${DWIOutFileDconn} -vol-roi ${SeedFile}
+		geho "--- Computing average of the restricted dense connectome across the input structure $SeedFile..."; echo ""
+		# -- Next average the restricted dense connectome across the input structure and save the dscalar
+		wb_command -cifti-average-dense-roi ${DWIOutput}/${DWIOutFileDscalar} -cifti ${DWIOutput}/${DWIOutFileDconn} -vol-roi ${SeedFile}
+	fi
 fi	
 
 # -- Perform completion checks
-reho "--- Checking outputs..."
-echo ""
-if [ -f ${DWIOutput}/${DWIOutFileDconn} ]; then
-	geho "--- Dense connectivity seed tractography file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFileDconn}"
-	echo ""
-else
-	reho "--- Dense connectivity seed tractography file for Matrix $MatrixVersion is missing. Something went wrong."
-	echo ""
-	exit 1
-fi
-
+echo "--- Checking outputs..."; echo ""
 if [ -f ${DWIOutput}/${DWIOutFileDscalar} ]; then
-	geho "--- Dense scalar seed tractography file for Matrix $MatrixVersion:     ${DWIOutput}/${DWIOutFileDconn}"
+	geho "--- Dense scalar output file for Matrix ${MatrixVersion}:     ${DWIOutput}/${DWIOutFileDscalar}"
+	echo ""
+	geho "--- DWI restriction of dense connectome successfully completed "
+	echo ""
+	geho "------------------------- Successful end of work --------------------------------"
 	echo ""
 else
-	reho "--- Dense scalar seed tractography file for Matrix $MatrixVersion is missing. Something went wrong."
+	reho "--- Dense scalar output file for Matrix ${MatrixVersion} is missing. Something went wrong."
 	echo ""
 	exit 1
 fi
 
-reho "--- DWI seed restriction of dense connectome successfully completed"
-echo ""
-geho "------------------------- End of work --------------------------------"
-echo ""
 }
 
 # ---------------------------------------------------------

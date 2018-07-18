@@ -481,7 +481,7 @@ fi
 
 geho "--- DWI EDDY QC successfully completed"
 echo ""
-geho "------------------------- End of work --------------------------------"
+geho "------------------------- Successful end of work --------------------------------"
 echo ""
 
 }

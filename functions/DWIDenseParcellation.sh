@@ -254,24 +254,23 @@ main() {
 get_options $@
 
 # -- Define inputs and output
-reho "--- Establishing paths for all input and output folders:"
-echo ""
+echo "--- Establishing paths for all input and output folders:"; echo ""
 
 # -- Define input and check if WayTotal normalization is selected
 if [ "$WayTotal" == "none" ]; then
-	echo "--- Using dconn file without waytotal normalization"
+	echo "--- Using dconn file without waytotal normalization"; echo ""
 	DWIInput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography/Conn${MatrixVersion}.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_${OutName}.pdconn.nii"
 fi
 if [ "$WayTotal" == "standard" ]; then
-	echo "--- Using waytotal normalized dconn file"
+	echo "--- Using waytotal normalized dconn file"; echo ""
 	DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm.${OutName}.pdconn.nii"
 fi
 if [ "$WayTotal" == "log" ]; then
-	echo "--- Using log-transformed waytotal normalized dconn file"
+	echo "--- Using log-transformed waytotal normalized dconn file"; echo ""
 	DWIInput="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography/Conn${MatrixVersion}_waytotnorm_log.dconn.nii.gz"
 	DWIOutFilePconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pconn.nii"
 	DWIOutFilePDconn="${CASE}_Conn${MatrixVersion}_waytotnorm_log.${OutName}.pdconn.nii"
@@ -279,10 +278,8 @@ fi
 
 # -- Define output
 DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
-
-echo "      Dense DWI Connectome Input:              ${DWIInput}"
-echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${DWIOutFilePconn}"
-echo ""
+echo "      Dense DWI Connectome Input:              ${DWIInput}"; echo ""
+echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${DWIOutFilePconn}"; echo ""
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
@@ -305,11 +302,11 @@ if [ -f ${DWIOutput}/${DWIOutFilePconn} ]; then
 else
 	reho "--- Parcellation data not found."
 	echo ""
-	geho "--- Computing parcellation by COLUMN on $DWIInput..."
+	echo "--- Computing parcellation by COLUMN on $DWIInput..."
 	echo ""
 	# -- First parcellate by COLUMN and save a *pdconn file
 	wb_command -cifti-parcellate "$DWIInput" "$ParcellationFile" COLUMN "$DWIOutput"/"$DWIOutFilePDconn"
-	geho "--- Computing parcellation by ROW on ${DWIOutput}/${DWIOutFilePDconn} ..."
+	echo "--- Computing parcellation by ROW on ${DWIOutput}/${DWIOutFilePDconn} ..."
 	echo ""
 	# -- Next parcellate by ROW and save final *pconn file
 	wb_command -cifti-parcellate "$DWIOutput"/"$DWIOutFilePDconn" "$ParcellationFile" ROW "$DWIOutput"/"$DWIOutFilePconn"
@@ -329,7 +326,7 @@ fi
 
 reho "--- DWI Parcellation successfully completed"
 echo ""
-geho "------------------------- End of work --------------------------------"
+geho "------------------------- Successful end of work --------------------------------"
 echo ""
 
 }

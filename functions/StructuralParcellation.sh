@@ -298,7 +298,7 @@ fi
 
 geho "--- Parcellation successfully completed"
 echo ""
-geho "------------------------- End of work --------------------------------"
+geho "------------------------- Successful end of work --------------------------------"
 echo ""
 
 }
