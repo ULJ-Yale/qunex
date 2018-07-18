@@ -25,6 +25,8 @@
 #
 # ### TODO
 #
+# --> finish turnkey type and add ability to pick a step.
+#
 # ## Description 
 #   
 # This script, MNAP_XNAT_Turnkey.sh MNAP Suite workflows in the XNAT Docker Engine
@@ -98,20 +100,24 @@ weho() {
 }
 
 source $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
-MNAPWorkflow="createStudy organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 hcp4 hcp5 hcpd QCPreproc"
+MNAPTurnkeyWorkflow="createStudy organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 hcp4 hcp5 hcpd QCPreproc"
 
 usage() {
     echo ""
     echo "  -- DESCRIPTION:"
     echo ""
-    echo "  This function implements MNAP Suite workflows in the XNAT Docker engine."
+    echo "  This function implements MNAP Suite workflows as a turnkey function."
+    echo "  It operates on a local server or cluster or within the XNAT Docker engine."
     echo ""
-    geho "     --> Supported MNAP workflow steps:"
-    geho "         ${MNAPWorkflow} "
+    geho "     --> Supported MNAP turnkey workflow steps:"
+    geho "         ${MNAPTurnkeyWorkflow} "
     echo ""
     echo "  -- REQUIRED PARMETERS:"
     echo ""
-    echo "  -- XNAT host and project variables"
+    echo "    --turnkey=<turnkey_run_type>                  Specify type turnkey run. Options are: local or xnat"
+    echo "                                                  If empty default is set to: [xnat]."
+    echo ""
+    echo "  -- XNAT HOST & PROJECT PARMETERS:"
     echo ""
     echo "    --batch=<batch_file>                          Batch file with processing parameters which exist as a project-level resource on XNAT"
     echo "    --mappingfile=<mapping_file>                  file for mapping into desired file structure, e.g. hcp, which exist as a project-level resource on XNAT"
@@ -124,12 +130,15 @@ usage() {
     echo ""
     echo "  -- OPTIONAL PARMETERS:"
     echo ""
-    echo "    --xnataccsessionid=<accesession_id>           Identifier of a subject across the entire XNAT database."
-    echo "    --overwrite=<specify_overwrite>               Specify <yes> or <no> for cleanup of prior run. Default is [yes]"
+    echo "    --path=<study_path>                                Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
+    echo "    --xnataccsessionid=<accesession_id>                Identifier of a subject across the entire XNAT database."
+    echo "    --overwritesubject=<specify_subject_overwrite>     Specify <yes> or <no> for cleanup of prior subject run. Default is [no]."
+    echo "    --overwriteproject=<specify_project_overwrite>     Specify <yes> or <no> for cleanup of entire project. Default is [no]."
     echo ""
     echo "  -- EXAMPLE:"
     echo ""
     echo "  MNAP_XNAT_Turnkey.sh \ "
+    echo "   --turnkey=<turnkey_run_type> \ "
     echo "   --batchfile=<batch_file> \ "
     echo "   --overwrite=yes \ "
     echo "   --mappingfile=<mapping_file> \ "
@@ -148,7 +157,8 @@ fi
 
 # -- Clear variables
 unset BATCH_PARAMETERS_FILENAME
-unset OVERWRITE
+unset OVERWRITE_PROJECT
+unset OVERWRITE_SUBJECT
 unset SCAN_MAPPING_FILENAME
 unset XNAT_ACCSESSION_ID
 unset XNAT_SESSION_LABEL
@@ -157,17 +167,26 @@ unset XNAT_SUBJECT_ID
 unset XNAT_HOST_NAME
 unset XNAT_USER_NAME
 unset XNAT_PASSWORD
+unset TURNKEY_TYPE
 
 # -- Parse arguments
 while [ "$1" != "" ]; do
     PARAM=`echo $1 | awk -F= '{print $1}'`
     VALUE=`echo $1 | awk -F= '{print $2}'`
     case $PARAM in
+        --path)
+            STUDY_PATH=$VALUE
+            ;;
         --batchfile)
             BATCH_PARAMETERS_FILENAME=$VALUE
             ;;
-        --overwrite)
-            OVERWRITE=$VALUE
+        --turnkey)
+            TURNKEY_TYPE=$VALUE
+        --overwritesubject)
+            OVERWRITE_SUBJECT=$VALUE
+            ;;
+        --overwriteproject)
+            OVERWRITE_PROJECT=$VALUE
             ;;
         --mappingfile)
             SCAN_MAPPING_FILENAME=$VALUE
@@ -202,10 +221,27 @@ while [ "$1" != "" ]; do
     shift
 done
 
+# -- Check that all inputs are provided
+if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; exit 1; fi
+if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; exit 1; fi
+if [ -z "$XNAT_SESSION_LABEL" ]; then reho "Error: --xnatsessionlabel flag missing."; exit 1; fi
+if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; exit 1; fi
+if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; exit 1; fi
+if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Batch parameter file not specified."; exit 1; fi
+if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Batch parameter file not specified."; exit 1; fi
+if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
+if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
+if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; fi
+if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey: $TURNKEY_TYPE"; fi
+
 # -- Define additional variables
 local scriptName=$(basename ${0})
-workdir="/output"
-mnap_studyfolder="${workdir}/${XNAT_PROJECT_ID}"
+if [[ -z ${STUDY_PATH} ]]; then
+	workdir="/output"
+	mnap_studyfolder="${workdir}/${XNAT_PROJECT_ID}"
+else
+	mnap_studyfolder="${STUDY_PATH}"
+fi
 mnap_subjectsfolder="${mnap_studyfolder}/subjects"
 mnap_workdir="${mnap_subjectsfolder}/${XNAT_SESSION_LABEL}"
 logdir="${mnap_studyfolder}/processing/logs/"
@@ -219,6 +255,7 @@ mnap='bash ${TOOLS}/${MNAPREPO}/connector/mnap.sh'
 # -- Report options
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   "
+echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
 echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
 echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
 echo "   XNAT Session Label: ${XNAT_SESSION_LABEL}"
@@ -227,52 +264,51 @@ echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
 echo "   Project-specific Batch file: ${project_batch_file}"
 echo "   MNAP Study folder: ${mnap_studyfolder}"
 echo "   MNAP Subject-specific working folder: ${rawdir}"
-echo "   OVERWRITE set to: ${OVERWRITE}"
+echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
+echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
 echo "   "
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of work --------------------------------"
 echo ""
 
-# -- Check if overwrite is set to yes
-if [[ ${OVERWRITE} == "yes" ]]; then
-	rm -rf ./${mnap_studyfolder}
+# -- Check if overwrite is set to yes for subject and project
+if [[ ${OVERWRITE_PROJECT} == "yes" ]]; then
+	if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABEL" ]]; then 
+		reho "-- Found only ${XNAT_SESSION_LABEL} in ${mnap_subjectsfolder}."
+		reho "   Removing entire project folder."; echo ""
+		rm -rf ./${mnap_studyfolder}/ &> /dev/null
+	else
+		reho "-- There are more than ${XNAT_SESSION_LABEL} directories ${mnap_studyfolder}."
+		reho "   Skipping project overwrite."; echo ""
+	fi
+fi
+if [[ ${OVERWRITE_SUBJECT} == "yes" ]]; then
+	reho "-- Removing ${mnap_workdir}."; echo ""
+	rm -rf ./${mnap_workdir}/ &> /dev/null
 fi
 
 # -- Create study hieararchy and generate subject folders
-geho " -- Generating study folder ${mnap_studyfolder}"; echo ""
+geho " -- Checking for and generating study folder ${mnap_studyfolder}"; echo ""
 if [ ! -d ${workdir} ]; then
-        mkdir -p ${workdir}
+	mkdir -p ${workdir} &> /dev/null
 fi
-mnap createStudy --studyfolder="${mnap_studyfolder}"
+if [ ! -d ${mnap_studyfolder} ]; then
+	mnap createStudy --studyfolder="${mnap_studyfolder}"
+fi
 mkdir -p ${mnap_workdir} &> /dev/null
-cd ${mnap_workdir}
-mkdir inbox &> /dev/null
-mkdir inbox_temp &> /dev/null
-
-# -- Check if overwrite is set to yes
-if [[ ${OVERWRITE} == "yes" ]]; then
-	rm -rf ./${mnap_studyfolder}
-fi
-
-# -- Create study hieararchy and generate subject folders
-geho " -- Generating study folder ${mnap_studyfolder}"; echo ""
-if [ ! -d ${workdir} ]; then
-        mkdir -p ${workdir}
-fi
-mnap createStudy --studyfolder="${mnap_studyfolder}"
-mkdir -p ${mnap_workdir} &> /dev/null
-cd ${mnap_workdir}
-mkdir inbox &> /dev/null
-mkdir inbox_temp &> /dev/null
+mkdir -p ${mnap_workdir}/inbox &> /dev/null
+mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
 
 # -- Get data from XNAT server
-geho " -- Fetching batch and mapping files from ${XNAT_HOST_NAME}"; echo ""
-curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/919/files/${BATCH_PARAMETERS_FILENAME}" > ${specsdir}/${BATCH_PARAMETERS_FILENAME}
-curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/919/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME} 
-echo ""
-geho " -- Linking DICOMs into ${rawdir}"; echo ""
-find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
+if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+	geho " -- Fetching batch and mapping files from ${XNAT_HOST_NAME}"; echo ""
+	curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/919/files/${BATCH_PARAMETERS_FILENAME}" > ${specsdir}/${BATCH_PARAMETERS_FILENAME}
+	curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/919/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME} 
+	echo ""
+	geho " -- Linking DICOMs into ${rawdir}"; echo ""
+	find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
+fi
 
 # -- Organize DICOMs and map processing folder structure
 mnap organizeDicom --subjectsfolder="${mnap_subjectsfolder}" --subjects="${XNAT_SESSION_LABEL}" --overwrite="${OVERWRITE}"
@@ -288,6 +324,7 @@ cat ${mnap_workdir}/subject_hcp.txt >> ${project_batch_file}
 geho " -- Starting HCP Processing and QC Calls"; echo ""; echo ""
 geho " ---------------------------------------"; echo ""; echo ""
 # =-=-=-=-=-=-= COMMANDS START =-=-=-=-=-=-=
+#
 mnap hcp1      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --logfolder="${logdir}"
 mnap hcp2      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --logfolder="${logdir}"
 mnap hcp3      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --logfolder="${logdir}"
@@ -299,6 +336,7 @@ mnap hcp5      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_b
 mnap QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --boldsuffix="Atlas" --templatefolder="${TOOLS}/${MNAPREPO}/library/data" --outpath="${mnap_subjectsfolder}/QC/BOLD" --modality="BOLD" --overwrite="yes" --logfolder="${logdir}"
 mnap hcpd      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --logfolder="${logdir}"
 mnap QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --templatefolder="${TOOLS}/${MNAPREPO}/library/data" --outpath="${mnap_subjectsfolder}/QC/DWI" --dwilegacy="no" --dwidata="data" --dwipath="Diffusion" --modality="DWI" --overwrite="yes" --logfolder="${logdir}"
+#
 # =-=-=-=-=-=-= COMMANDS END =-=-=-=-=-=-= 
 echo ""; echo ""
 geho " -- HCP Processing and QC Calls done"; echo ""; echo ""
@@ -312,7 +350,7 @@ filecnt=$(find ${logdir}/comlogs/  -type f -not -name "done_*.log"  | wc -l)  &>
 if [[ ${filecnt} != "" ]]; then
 	echo ""
 	reho "Appears atleast ${filecnt} steps have failed"
-	echo ""	
+	echo ""
 else
 	echo ""
 	geho "------------------------- Successful end of work --------------------------------"

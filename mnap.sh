@@ -299,6 +299,12 @@ TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 cd ${MasterRunLogFolder}
 Platform="Platform Information: `uname -a`"
 
+# -- Check if study folder is created
+if [[ ! -d ${StudyFolder} ]]; then 
+	echo "Study folder ${StudyFolder} not found. Generating now..."
+	gmri createStudy ${StudyFolder}
+fi
+
 # -- Define specific logs
 #
 # -- Runlog
@@ -360,7 +366,10 @@ MNAPXNATTurnkey() {
 geho "Full command:"
 echo "${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
 --batchfile="${BATCH_PARAMETERS_FILENAME}" \
---overwrite="${overwrite}" \
+--path="${STUDY_PATH}" \
+--turnkey="${TURNKEY_TYPE}" \
+--overwritesubject="${OVERWRITE_SUBJECT}" \
+--overwriteproject="${OVERWRITE_PROJECT}" \
 --mappingfile="${SCAN_MAPPING_FILENAME}" \
 --xnatsessionlabel="${XNAT_SESSION_LABEL}" \
 --xnatprojectid="${XNAT_PROJECT_ID}" \
@@ -371,7 +380,10 @@ echo ""
 # -- Specify command variable
 CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
 --batchfile="${BATCH_PARAMETERS_FILENAME}" \
---overwrite="${overwrite}" \
+--path="${STUDY_PATH}" \
+--turnkey="${TURNKEY_TYPE}" \
+--overwritesubject="${OVERWRITE_SUBJECT}" \
+--overwriteproject="${OVERWRITE_PROJECT}" \
 --mappingfile="${SCAN_MAPPING_FILENAME}" \
 --xnatsessionlabel="${XNAT_SESSION_LABEL}" \
 --xnatprojectid="${XNAT_PROJECT_ID}" \
@@ -398,7 +410,7 @@ if [ "$Overwrite" == "yes" ]; then
 	rm -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
 fi
 echo ""
-reho "===> Checking for presence of ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
+echo "===> Checking for presence of ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
 echo ""
 
 if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
@@ -413,45 +425,13 @@ else
 	echo ""
 	# -- Combine all the calls into a single command
 	Com1="cd ${SubjectsFolder}/${CASE}"
-	echo " ---> running sortDicom and dicom2nii for $CASE"
-	echo ""
-	Com2="gmri sortDicom"
-	Com3="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
-	ComQUEUE="$Com1; $Com2; $Com3"
-	# -- Set the time stamp for job
-	TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-	Suffix="${CASE}-${TimeStamp}"
-	# -- Set the scheduler commands
-	rm -f ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh &> /dev/null
-	echo "$ComQUEUE" >> ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
-	chmod 770 ${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh
-	# -- Check if job is set to local (1) or cluster run (2)
-	if [ "$Cluster" == 1 ]; then
-		echo ""
-		echo "---------------------------------------------------------------------------------"
-		echo "Running ${FunctionToRun} locally on `hostname`"
-		echo "Check command log here: ${MasterRunLogFolder}"
-		echo "Check output log here: ${MasterComLogFolder}"
-		echo "---------------------------------------------------------------------------------"
-		echo ""
-		${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh 2>&1 | tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom-${Suffix}.log
-		# --> This fails on some OS |& versions due to BASH version incompatiblity - need to use full expansion 2>&1 | : 
-		#${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_"$Suffix".sh |& tee -a ${SubjectsFolder}/${CASE}/dicom/organizeDicom-${Suffix}.log
-	else
-		echo "Job ID:"
-		# -- Run the scheduler commands
-		cd ${SubjectsFolder}/${CASE}/dicom/
-		gmri schedule command="${SubjectsFolder}/${CASE}/dicom/ComQUEUE_organizeDicom_${Suffix}.sh" \
-		settings="${Scheduler}" output="stdout:${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.output.log|stderr:${SubjectsFolder}/${CASE}/dicom/organizeDicom.${Suffix}.error.log" \
-		workdir="${SubjectsFolder}/${CASE}/dicom"
-		echo ""
-		echo "---------------------------------------------------------------------------------"
-		echo "Data successfully submitted"
-		echo "Scheduler: $Scheduler"
-		echo "Check output logs here: ${SubjectsFolder}/${CASE}/dicom"
-		echo "---------------------------------------------------------------------------------"
-		echo ""
-	fi
+	Com2="echo '---> running sortDicom and dicom2nii for $CASE'; echo ''"
+	Com3="gmri sortDicom"
+	Com4="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
+	# -- Specify command variable
+	CommandToRun="$Com1; $Com2; $Com3; $Com4"
+	# -- Connector execute function
+	connectorExec
 fi
 }
 show_usage_organizeDicom() {
@@ -506,46 +486,10 @@ echo ""
 # ------------------------------------------------------------------------------------------------------
 
 mapHCPFiles() {
-cd ${SubjectsFolder}/${CASE}
-echo "--> running mapHCPFiles for $CASE"
-echo ""
-# -- Combine all the calls into a single command
-Com1="cd ${SubjectsFolder}/${CASE}"
-Com2="gmri setupHCP"
-ComQUEUE="$Com1; $Com2"
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="${CASE}-${TimeStamp}"
-# -- Set the scheduler commands
-rm -f ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh &> /dev/null
-echo "$ComQUEUE" >> ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh
-chmod 770 ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh
-if [ "$Cluster" == 1 ]; then
-	echo ""
-	echo "---------------------------------------------------------------------------------"
-	echo "Running mapHCPFiles locally on `hostname`"
-	echo "Check output here: ${SubjectsFolder}/${CASE}/hcp "
-	echo "---------------------------------------------------------------------------------"
-	echo "" 
-	${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh 2>&1 | tee -a ${SubjectsFolder}/${CASE}/mapHCPFiles-${Suffix}.log
-	# --> This fails on some OS |& versions due to BASH version incompatiblity - need to use full expansion 2>&1 | : 
-	# ${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh |& tee -a ${SubjectsFolder}/${CASE}/mapHCPFiles.${Suffix}.log
-else
-	echo "Job ID:"
-	# -- Run the scheduler commands
-	cd ${SubjectsFolder}/${CASE}/
-	gmri schedule command="${SubjectsFolder}/${CASE}/mapHCPFiles_${Suffix}.sh" \
-	settings="${Scheduler}" \
-	output="stdout:${SubjectsFolder}/${CASE}/mapHCPFiles.${Suffix}.output.log|stderr:${SubjectsFolder}/${CASE}/mapHCPFiles.${Suffix}.error.log"  \
-	workdir="${SubjectsFolder}/${CASE}"
-	echo ""
-	echo "---------------------------------------------------------------------------------"
-	echo "Data successfully submitted"
-	echo "Scheduler Name and Options: $Scheduler"
-	echo "Check output logs here: ${SubjectsFolder}/${CASE}/"
-	echo "---------------------------------------------------------------------------------"
-	echo ""
-fi
+# -- Specify command variable
+CommandToRun="cd ${SubjectsFolder}/${CASE}; echo '--> running mapHCPFiles for ${CASE}'; echo ''; gmri setupHCP"
+# -- Connector execute function
+connectorExec
 }
 show_usage_mapHCPFiles() {
 echo ""
@@ -705,15 +649,15 @@ echo ""
 # ------------------------------------------------------------------------------------------------------
 
 dataSync() {
-	# -- Command to run
-	CommandToRun="DataSync.sh \
-	--syncfolders="${SyncFolders}" \
-	--subjects="${CASE}" \
-	--syncserver="${SyncServer}" \
-	--synclogfolder="${SyncLogFolder}" \
-	--syncdestination="${SyncDestination}""
-	# -- Connector execute function
-	connectorExec
+# -- Command to run
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DataSync.sh \
+--syncfolders="${SyncFolders}" \
+--subjects="${CASE}" \
+--syncserver="${SyncServer}" \
+--synclogfolder="${SyncLogFolder}" \
+--syncdestination="${SyncDestination}""
+# -- Connector execute function
+connectorExec
 }
 
 show_usage_dataSync() {
@@ -835,9 +779,9 @@ for BOLD in $BOLDS; do
 		if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii ]; then
 				echo "FIX ICA Computed for this for $CASE and $BOLD. Skipping to next..."
 		else
-				echo "Running FIX ICA on $BOLD data for $CASE... (note: this uses Melodic which is a slow single-threaded process)"
-				rm -r *hp2000* &> /dev/null
-				"$FIXICADIR"/hcp_fix.sh ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz 2000
+			echo "Running FIX ICA on $BOLD data for $CASE... (note: this uses Melodic which is a slow single-threaded process)"
+			rm -r *hp2000* &> /dev/null
+			"$FIXICADIR"/hcp_fix.sh ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz 2000
 		fi
 done
 }
@@ -1011,53 +955,22 @@ T1wDiffFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
 FieldMapFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/FieldMap_strc
 LogFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/log
 Overwrite="$Overwrite"
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="${CASE}-${TimeStamp}"
-if [ "$Cluster" == 1 ]; then
-	echo "Running locally on `hostname`"
-	echo "Check log file output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
-	--subjectsfolder="${SubjectsFolder}" \
-	--subject="${CASE}" \
-	--scanner="${Scanner}" \
-	--usefieldmap="${UseFieldmap}" \
-	--PEdir="${PEdir}" \
-	--echospacing="${EchoSpacing}" \
-	--TE="${TE}" \
-	--unwarpdir="${UnwarpDir}" \
-	--overwrite="${Overwrite}" \
-	--diffdatasuffix="${DiffDataSuffix}" >> "$LogFolder"/DiffPreprocPipelineLegacy_"$Suffix".log
-else
-	rm -f ${SubjectsFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh &> /dev/null
-	echo "${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--subject=${CASE} \
-	--scanner=${Scanner} \
-	--usefieldmap=${UseFieldmap} \
-	--PEdir=${PEdir} \
-	--echospacing=${EchoSpacing} \
-	--TE=${TE} \
-	--unwarpdir=${UnwarpDir} \
-	--diffdatasuffix=${DiffDataSuffix} \
-	--overwrite=${Overwrite}" > ${SubjectsFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh
-	# -- Make script executable
-	chmod 770 ${SubjectsFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh
-	cd ${SubjectsFolder}/${CASE}/hcp/
-	# -- Send to scheduler
-	gmri schedule command="${SubjectsFolder}/${CASE}/hcp/hcpd_legacy_${Suffix}.sh" \
-	settings="${Scheduler}" \
-	output="stdout:${SubjectsFolder}/${CASE}/hcp/hcpd_legacy.${Suffix}.output.log|stderr:${SubjectsFolder}/${CASE}/hcp/hcpd_legacy.${Suffix}.error.log" \
-	workdir="${SubjectsFolder}/${CASE}/hcp/"
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted"
-	echo "Scheduler Name and Options: $Scheduler"
-	echo "Check output logs here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-fi
+
+# -- Specify command variable
+CommandToRun="${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
+--subjectsfolder=${SubjectsFolder} \
+--subject=${CASE} \
+--scanner=${Scanner} \
+--usefieldmap=${UseFieldmap} \
+--PEdir=${PEdir} \
+--echospacing=${EchoSpacing} \
+--TE=${TE} \
+--unwarpdir=${UnwarpDir} \
+--diffdatasuffix=${DiffDataSuffix} \
+--overwrite=${Overwrite}"
+# -- Connector execute function
+connectorExec
+
 }
 show_usage_hcpdLegacy() {
 echo ""
@@ -1154,63 +1067,24 @@ if [ -z ${EddySquadCheck} ] || [ -z ${EddySquadCheck} ]; then
 	echo ""
 	exit 1
 fi
-########################################## INPUTS ##########################################
-# -- eddy-cleaned DWI Data
-########################################## OUTPUTS #########################################
-# -- Outputs will be located in <eddyBase>.qc per EDDY QC specification
-LogFolder="${EddyPath}/log_eddyqc"
-mkdir ${LogFolder} > /dev/null 2>&1
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="${CASE}-${TimeStamp}"
-if [ "$Cluster" == 1 ]; then
-	echo "Running locally on `hostname`"
-	echo "Check log file output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	eval "DWIeddyQC.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--subject=${CASE} \
-	--eddybase=${EddyBase} \
-	--eddypath=${EddyPath} \
-	--report=${Report} \
-	--bvalsfile=${BvalsFile} \
-	--mask=${Mask} \
-	--eddyidx=${EddyIdx} \
-	--eddyparams=${EddyParams} \
-	--bvecsfile=${BvecsFile} \
-	--overwrite=${Overwrite}" >> "$LogFolder"/DWIEddyQC_"$Suffix".log
-else
-	# -- Clean prior command
-	rm -f "$LogFolder"/DWIEddyQC_"$Suffix".sh &> /dev/null
-	# -- Echo full command into a script
-	echo "DWIeddyQC.sh \
-	--subjectsfolder='${SubjectsFolder}' \
-	--subject='${CASE}' \
-	--eddybase='${EddyBase}' \
-	--eddypath=${EddyPath} \
-	--report='${Report}' \
-	--bvalsfile='${BvalsFile}' \
-	--mask='${Mask}' \
-	--eddyidx='${EddyIdx}' \
-	--eddyparams='${EddyParams}' \
-	--bvecsfile='${BvecsFile}' \
-	--overwrite='${Overwrite}'" > "$LogFolder"/DWIEddyQC_"$Suffix".sh
-	# -- Make script executable
-	chmod 770 "$LogFolder"/DWIEddyQC_"$Suffix".sh
-	cd ${LogFolder}
-	# -- Send to scheduler
-	gmri schedule command="${LogFolder}/DWIEddyQC_${Suffix}.sh" \
-	settings="${Scheduler}" \
-	output="stdout:${LogFolder}/DWIEddyQC.${Suffix}.output.log|stderr:${LogFolder}/DWIEddyQC.${Suffix}.error.log" \
-	workdir="${LogFolder}"
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted"
-	echo "Scheduler Name and Options: $Scheduler"
-	echo "Check output logs here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-fi
+# -- INPUTS:  eddy-cleaned DWI Data
+# -- OUTPUTS: located in <eddyBase>.qc per EDDY QC specification
+
+# -- Specify command variable
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIeddyQC.sh \
+--subjectsfolder=${SubjectsFolder} \
+--subject=${CASE} \
+--eddybase=${EddyBase} \
+--eddypath=${EddyPath} \
+--report=${Report} \
+--bvalsfile=${BvalsFile} \
+--mask=${Mask} \
+--eddyidx=${EddyIdx} \
+--eddyparams=${EddyParams} \
+--bvecsfile=${BvecsFile} \
+--overwrite=${Overwrite}"
+# -- Connector execute function
+connectorExec
 }
 show_usage_eddyQC() {
 echo ""
@@ -1294,57 +1168,23 @@ DWIDenseParcellation() {
 # -- Parse general parameters
 QUEUE="$QUEUE"
 SubjectsFolder="$SubjectsFolder"
-CASE=${CASE}
+CASE="$CASE"
 MatrixVersion="$MatrixVersion"
 ParcellationFile="$ParcellationFile"
 OutName="$OutName"
 DWIOutput="${SubjectsFolder}/${CASE}/hcp/$CASE/MNINonLinear/Results/Tractography"
-mkdir "$DWIOutput"/log > /dev/null 2>&1
-LogFolder="$DWIOutput"/log
 Overwrite="$Overwrite"
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="${CASE}-${TimeStamp}"
-if [ "$Cluster" == 1 ]; then
-	echo "Running locally on `hostname`"
-	echo "Check log file output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	DWIDenseParcellation.sh \
-	--subjectsfolder="${SubjectsFolder}" \
-	--subject="${CASE}" \
-	--matrixversion="${MatrixVersion}" \
-	--parcellationfile="${ParcellationFile}" \
-	--waytotal="${WayTotal}" \
-	--outname="${OutName}" \
-	--overwrite="${Overwrite}" >> "$LogFolder"/DWIDenseParcellation_"$Suffix".log
-else
-	# -- Clean prior command
-	rm -f "$LogFolder"/DWIDenseParcellation_"$Suffix".sh &> /dev/null
-	# -- Echo full command into a script
-	echo "DWIDenseParcellation.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--subject=${CASE} \
-	--matrixversion=${MatrixVersion} \
-	--parcellationfile=${ParcellationFile} \
-	--waytotal=${WayTotal} \
-	--outname=${OutName} \
-	--overwrite=${Overwrite}" > "$LogFolder"/DWIDenseParcellation_"$Suffix".sh
-	# -- Make script executable
-	chmod 770 "$LogFolder"/DWIDenseParcellation_"$Suffix".sh
-	cd ${LogFolder}
-	# -- Send to scheduler
-	gmri schedule command="${LogFolder}/DWIDenseParcellation_${Suffix}.sh" \
-	settings="${Scheduler}" \
-	output="stdout:${LogFolder}/DWIDenseParcellation.${Suffix}.output.log|stderr:${LogFolder}/DWIDenseParcellation.${Suffix}.error.log" \
-	workdir="${LogFolder}"
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted"
-	echo "Scheduler Name and Options: $Scheduler"
-	echo "Check output logs here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-fi
+
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIDenseParcellation.sh \
+--subjectsfolder=${SubjectsFolder} \
+--subject=${CASE} \
+--matrixversion=${MatrixVersion} \
+--parcellationfile=${ParcellationFile} \
+--waytotal=${WayTotal} \
+--outname=${OutName} \
+--overwrite=${Overwrite}"
+# -- Connector execute function
+connectorExec
 }
 show_usage_DWIDenseParcellation() {
 echo ""
@@ -1510,7 +1350,7 @@ InputPath="$InputPath"			# --inputpath
 Overwrite="$Overwrite"			# --overwrite
 
 # -- Check type of run
-if [ "$RunType" == "individual" ]; then
+if [ "${RunType}" == "individual" ]; then
 	OutPath="${SubjectsFolder}/${CASE}/${InputPath}"
 	# -- Make sure individual runs default to the original input path location (/images/functional)
 	if [ "$InputPath" == "" ]; then
@@ -1518,7 +1358,7 @@ if [ "$RunType" == "individual" ]; then
 	fi
 	# -- Make sure individual runs default to the original input path location (/images/functional)
 	if [ "$OutPath" == "" ]; then
-		OutPath="${SubjectsFolder}/${CASE}/$InputPath"
+		OutPath="${SubjectsFolder}/${CASE}/${InputPath}"
 	fi
 fi
 
@@ -1785,49 +1625,18 @@ InputDataType="$InputDataType"
 OutName="$OutName"
 ParcellationFile="$ParcellationFile"
 ExtractData="$ExtractData"
-mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/structuralparcellation_log > /dev/null 2>&1
-LogFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/fsaverage_LR32k/structuralparcellation_log
 Overwrite="$Overwrite"
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="$CASE-$TimeStamp"
-if [ "$Cluster" == 1 ]; then
-	echo "Running locally on `hostname`"
-	echo "Check log file output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	${TOOLS}/${MNAPREPO}/connector/functions/StructuralParcellation.sh \
-	--subjectsfolder="${SubjectsFolder}" \
-	--subject="${CASE}" \
-	--inputdatatype="${InputDataType}" \
-	--parcellationfile="${ParcellationFile}" \
-	--overwrite="${Overwrite}" \
-	--outname="${OutName}" \
-	--extractdata="${ExtractData}" >> "$LogFolder"/StructuralParcellation_"$Suffix".log
-else
-	echo "${TOOLS}/${MNAPREPO}/connector/functions/StructuralParcellation.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--subject=${CASE} \
-	--inputdatatype=${InputDataType} \
-	--parcellationfile=${ParcellationFile} \
-	--overwrite=${Overwrite} \
-	--outname=${OutName} \
-	--extractdata=${ExtractData}" > "$LogFolder"/StructuralParcellation_"$Suffix".sh &> /dev/null
-	# -- Make script executable
-	chmod 770 "$LogFolder"/StructuralParcellation_"$Suffix".sh &> /dev/null
-	cd ${LogFolder}
-	# -- Send to scheduler
-	gmri schedule command="${LogFolder}/StructuralParcellation_${Suffix}.sh" \
-	settings="${Scheduler}" \
-	output="stdout:${LogFolder}/StructuralParcellation.${Suffix}.output.log|stderr:${LogFolder}/StructuralParcellation.${Suffix}.error.log" \
-	workdir="${LogFolder}"
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted"
-	echo "Scheduler Name and Options: $Scheduler"
-	echo "Check output logs here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-fi
+# -- Command to run
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/StructuralParcellation.sh \
+--subjectsfolder=${SubjectsFolder} \
+--subject=${CASE} \
+--inputdatatype=${InputDataType} \
+--parcellationfile=${ParcellationFile} \
+--overwrite=${Overwrite} \
+--outname=${OutName} \
+--extractdata=${ExtractData}"
+# -- Connector execute function
+connectorExec
 }
 show_usage_structuralParcellation() {
 echo ""
@@ -1883,84 +1692,45 @@ echo ""
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 BOLDParcellation() {
-		# -- Parse general parameters
-		QUEUE="$QUEUE"
-		SubjectsFolder="$SubjectsFolder"
-		CASE=${CASE}
-		InputFile="$InputFile"
-		InputPath="$InputPath"
-		InputDataType="$InputDataType"
-		SingleInputFile="$SingleInputFile"
-		OutPath="$OutPath"
-		OutName="$OutName"
-		ComputePConn="$ComputePConn"
-		UseWeights="$UseWeights"
-		WeightsFile="$WeightsFile"
-		ParcellationFile="$ParcellationFile"
-		Cluster="$RunMethod"
-		if [ -z "$SingleInputFile" ]; then
-			BOLDOutput="${SubjectsFolder}/${CASE}/$OutPath"
-		else
-			BOLDOutput="$OutPath"
-		fi
-		ExtractData="$ExtractData"
-		mkdir "$BOLDOutput"/boldparcellation_log > /dev/null 2>&1
-		LogFolder="$BOLDOutput"/boldparcellation_log
-		Overwrite="$Overwrite"
-		# -- Generate timestamp for logs and scripts
-		TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-		Suffix="$CASE-$TimeStamp"
-		if [ "$Cluster" == 1 ]; then
-			echo "Running locally on `hostname`"
-			echo "Check log file output here: $LogFolder"
-			echo "--------------------------------------------------------------"
-			echo ""
-			BOLDParcellation.sh \
-			--subjectsfolder="${SubjectsFolder}" \
-			--subject="${CASE}" \
-			--inputfile="${InputFile}" \
-			--singleinputfile="${SingleInputFile}" \
-			--inputpath="${InputPath}" \
-			--inputdatatype="${InputDataType}" \
-			--parcellationfile="${ParcellationFile}" \
-			--overwrite="${Overwrite}" \
-			--outname="${OutName}" \
-			--outpath="${OutPath}" \
-			--computepconn="${ComputePConn}" \
-			--extractdata="${ExtractData}" \
-			--useweights="${UseWeights}" \
-			--weightsfile="${WeightsFile}" >> "$LogFolder"/BOLDParcellation_"$Suffix".log
-		else
-			echo "BOLDParcellation.sh \
-			--subjectsfolder='${SubjectsFolder}' \
-			--subject='${CASE}' \
-			--inputfile='${InputFile}' \
-			--singleinputfile='${SingleInputFile}' \
-			--inputpath='${InputPath}' \
-			--inputdatatype='${InputDataType}' \
-			--parcellationfile='${ParcellationFile}' \
-			--overwrite='${Overwrite}' \
-			--outname='${OutName}' \
-			--outpath='${OutPath}' \
-			--computepconn='${ComputePConn}' \
-			--extractdata='${ExtractData}' \
-			--useweights='${UseWeights}' \
-			--weightsfile='${WeightsFile}'" > "$LogFolder"/BOLDParcellation_"$Suffix".sh
-			# -- Make script executable
-			chmod 770 "$LogFolder"/BOLDParcellation_"$Suffix".sh &> /dev/null
-			cd ${LogFolder}
-			# -- Send to scheduler
-			gmri schedule command="${LogFolder}/BOLDParcellation_${Suffix}.sh" \
-			settings="${Scheduler}" \
-			output="stdout:${LogFolder}/BOLDParcellation.${Suffix}.output.log|stderr:${LogFolder}/BOLDParcellation.${Suffix}.error.log" \
-			workdir="${LogFolder}"
-			echo "--------------------------------------------------------------"
-			echo "Data successfully submitted "
-			echo "Scheduler Options: $Scheduler "
-			echo "Check output logs here: $LogFolder "
-			echo "--------------------------------------------------------------"
-			echo ""
-		fi
+# -- Parse general parameters
+QUEUE="$QUEUE"
+SubjectsFolder="$SubjectsFolder"
+CASE=${CASE}
+InputFile="$InputFile"
+InputPath="$InputPath"
+InputDataType="$InputDataType"
+SingleInputFile="$SingleInputFile"
+OutPath="$OutPath"
+OutName="$OutName"
+ComputePConn="$ComputePConn"
+UseWeights="$UseWeights"
+WeightsFile="$WeightsFile"
+ParcellationFile="$ParcellationFile"
+Cluster="$RunMethod"
+ExtractData="$ExtractData"
+if [ -z ${SingleInputFile} ]; then
+	BOLDOutput="${SubjectsFolder}/${CASE}/${OutPath}"
+else
+	BOLDOutput="${OutPath}"
+fi
+# -- Command to run
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/BOLDParcellation.sh \
+--subjectsfolder='${SubjectsFolder}' \
+--subject='${CASE}' \
+--inputfile='${InputFile}' \
+--singleinputfile='${SingleInputFile}' \
+--inputpath='${InputPath}' \
+--inputdatatype='${InputDataType}' \
+--parcellationfile='${ParcellationFile}' \
+--overwrite='${Overwrite}' \
+--outname='${OutName}' \
+--outpath='${OutPath}' \
+--computepconn='${ComputePConn}' \
+--extractdata='${ExtractData}' \
+--useweights='${UseWeights}' \
+--weightsfile='${WeightsFile}'"
+# -- Connector execute function
+connectorExec
 }
 show_usage_BOLDParcellation() {
 echo ""
@@ -2043,64 +1813,27 @@ CASE=${CASE}
 ROIFileSubjectSpecific="$ROIFileSubjectSpecific"
 SingleInputFile="$SingleInputFile"
 Cluster="$RunMethod"
-
+ExtractData="${ExtractData}"
 if [ -z "$SingleInputFile" ]; then
-	OutPath="${SubjectsFolder}/${CASE}/$OutPath"
+	OutPath="${SubjectsFolder}/${CASE}/${OutPath}"
 else
-	OutPath="$OutPath"
-	InputFile="$SingleInputFile"
+	OutPath="${OutPath}"
+	InputFile="${SingleInputFile}"
 fi
-
-if [ "$ROIFileSubjectSpecific" == "no" ]; then
-	ROIFile="$ROIFile"
+if [ "${ROIFileSubjectSpecific}" == "no" ]; then
+	ROIFile="${ROIFile}"
 else
-	ROIFile="${SubjectsFolder}/${CASE}/$ROIFile"
+	ROIFile="${SubjectsFolder}/${CASE}/${ROIFile}"
 fi
-
-ExtractData="$ExtractData"
-mkdir "$OutPath"/roiextraction_log > /dev/null 2>&1
-LogFolder="$OutPath"/roiextraction_log
-Overwrite="$Overwrite"
-
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="$OutName_$TimeStamp"
-
-if [ "$Cluster" == 1 ]; then
-	echo "Running locally on `hostname`"
-	echo "Check log file output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	/$TOOLS/${MNAPREPO}/connector/functions/ROIExtract.sh \
-	--roifile="${ROIFile}" \
-	--inputfile="${InputFile}" \
-	--outpath="${OutPath}" \
-	--outname="${OutName}" >> "$LogFolder"/extract_ROIs_"$Suffix".log
-else
-	echo "/$TOOLS/${MNAPREPO}/connector/functions/ROIExtract.sh \
-	--roifile='${ROIFile}' \
-	--inputfile='${InputFile}' \
-	--outdir='${OutPath}' \
-	--outname='${OutName}'" > "$LogFolder"/extract_ROIs_"$Suffix".sh &> /dev/null
-
-	# -- Make script executable
-	chmod 770 "$LogFolder"/extract_ROIs_"$Suffix".sh &> /dev/null
-	cd ${LogFolder}
-
-	# -- Send to scheduler
-	gmri schedule command="${LogFolder}/extract_ROIs_${Suffix}.sh" \
-	settings="${Scheduler}" \
-	output="stdout:${LogFolder}/extract_ROIs.${Suffix}.output.log|stderr:${LogFolder}/extract_ROIs.${Suffix}.error.log" \
-	workdir="${LogFolder}"
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted "
-	echo "Scheduler Options: $Scheduler "
-	echo "Check output logs here: $LogFolder "
-	echo "--------------------------------------------------------------"
-	echo ""
-fi
+# -- Command to run
+CommandToRun=". /$TOOLS/${MNAPREPO}/connector/functions/ROIExtract.sh \
+--roifile='${ROIFile}' \
+--inputfile='${InputFile}' \
+--outdir='${OutPath}' \
+--outname='${OutName}'"
+# -- Connector execute function
+connectorExec
 }
-
 show_usage_ROIExtract() {
 echo ""
 echo "DESCRIPTION for $UsageInput"
@@ -2147,58 +1880,30 @@ echo ""
 # ------------------------------------------------------------------------------------------------------
 
 FSLDtifit() {
-mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dtifit_log > /dev/null 2>&1
-LogFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dtifit_log
 # -- Check if overwrite flag was set
+minimumfilesize=100000
 if [ "$Overwrite" == "yes" ]; then
 	echo ""
 	reho "Removing existing dtifit run for $CASE..."
 	echo ""
 	rm -rf ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_* > /dev/null 2>&1
 fi
-minimumfilesize=100000
+# -- Check file presence
 if [ -a ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz ]; then
 	actualfilesize=$(wc -c <${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz)
 else
 	actualfilesize="0"
 fi
-
 if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
 	echo ""
 	echo "--- DTI Fit completed for $CASE ---"
 	echo ""
-else
-	# -- Generate timestamp for logs and scripts
-	TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-	Suffix="$CASE-$TimeStamp"
-	rm "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
-	DtiFitCommand="dtifit --data=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./data --out=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./dti --mask=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./nodif_brain_mask --bvecs=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvecs --bvals=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvals"
-	geho "Running the following command"
-	geho "${DtiFitCommand}"
-	echo ""
-	echo "${DtiFitCommand}" >> "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
-	# -- Make script executable
-	chmod 770 "$LogFolder"/fsldtifit_${Suffix}.sh &> /dev/null
-	if [ "$Cluster" == 1 ]; then
-		"$LogFolder"/fsldtifit_${Suffix}.sh 2>&1 | tee -a "$LogFolder"/fsldtifit-${Suffix}.log
-		# --> This fails on some OS |& versions due to BASH version incompatiblity - need to use full expansion 2>&1 | : 
-		# "$LogFolder"/fsldtifit_${Suffix}.sh |& tee -a "$LogFolder"/fsldtifit_${Suffix}.log
-	fi
-	if [ "$Cluster" == 2 ]; then
-		# -- Send to scheduler
-		cd ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/
-		gmri schedule command="${DtiFitCommand}" \
-		settings="${Scheduler}" \
-		output="stdout:${LogFolder}/fsldtifit.${Suffix}.output.log|stderr:${LogFolder}/fsldtifit.${Suffix}.error.log" \
-		workdir="${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/"
-		echo "--------------------------------------------------------------"
-		echo "Data successfully submitted"
-		echo "Scheduler Name and Options: $Scheduler"
-		echo "Check output logs here: $LogFolder"
-		echo "--------------------------------------------------------------"
-		echo ""
-	fi
+	exit 0
 fi
+# -- Command to run
+CommandToRun="dtifit --data=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./data --out=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./dti --mask=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./nodif_brain_mask --bvecs=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvecs --bvals=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvals"
+# -- Connector execute function
+connectorExec
 }
 show_usage_FSLDtifit() {
 echo ""
@@ -2287,7 +1992,7 @@ if [ "$filecount" == 9 ]; then > /dev/null 2>&1
 		echo ""
 		echo "--------------------------------------------------------------"
 		echo ""
-		return 0
+		exit 0
 	else
 		echo ""
 		reho " --> Bedpostx outputs missing or incomplete for $CASE"
@@ -2300,45 +2005,14 @@ reho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..
 echo ""
 # -- Generate log folder
 mkdir ${BedPostXFolder} > /dev/null 2>&1
-mkdir ${LogFolder} > /dev/null 2>&1
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="${CASE}-${TimeStamp}"
-if [ "$Cluster" == 1 ]; then
-	echo "Running bedpostx_gpu locally on `hostname`"
-	echo "Check log file output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-		${FSLGPUBinary}/bedpostx_gpu_noscheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" -g "$RicianFlag" >> "$LogFolder"/bedpostX-"$Suffix".log
-	else
-		${FSLGPUBinary}/bedpostx_gpu_noscheduler "$T1wDiffFolder"/. -n "$Fibers" -model "$Model" -b "$Burnin" "$RicianFlag" >> "$LogFolder"/bedpostX-"$Suffix".log
-	fi
+# -- Command to run
+if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
+	CommandToRun="${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}"
+else
+	CommandToRun="${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}"
 fi
-if [ "$Cluster" == 2 ]; then
-	# -- Clean prior command
-	rm -f "$LogFolder"/bedpostX_"$Suffix".sh &> /dev/null
-	# -- Echo full command into a script
-	if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-		echo "${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}" > "$LogFolder"/bedpostX_"$Suffix".sh
-	else
-		echo "${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}" > "$LogFolder"/bedpostX_"$Suffix".sh
-	fi
-	# -- Make script executable
-	chmod 770 "$LogFolder"/bedpostX_"$Suffix".sh
-	cd ${LogFolder}
-	# -- Send to scheduler
-	gmri schedule command="${LogFolder}/bedpostX_${Suffix}.sh" \
-	settings="${Scheduler}" \
-	output="stdout:${LogFolder}/bedpostX.${Suffix}.output.log|stderr:${LogFolder}/bedpostX.${Suffix}.error.log" \
-	workdir="${LogFolder}"
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted"
-	echo "Scheduler Name and Options: $Scheduler"
-	echo "Check output logs here: $LogFolder/bedpostX-$Suffix.log "
-	echo "--------------------------------------------------------------"
-	echo ""
-fi
+# -- Connector execute function
+connectorExec
 }
 
 show_usage_FSLBedpostxGPU() {
@@ -2429,35 +2103,13 @@ echo ""
 
 pretractographyDense() {
 # -- Parse general parameters
-ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/PreTractography
-LogFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_pretractographydense
-mkdir "$LogFolder"  &> /dev/null
-RunFolder=${SubjectsFolder}/${CASE}/hcp/
-if [ "$Cluster" == 1 ]; then
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "Running Pretractography Dense locally on `hostname`"
-	echo "Check output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	"$ScriptsFolder"/PreTractography.sh "$RunFolder" ${CASE} 0 >> "$LogFolder"/PretractographyDense_${CASE}_`date +%Y-%m-%d-%H-%M-%S`.log
-else
-	echo "Job ID:"
-	PreTracCommand="${ScriptsFolder}/PreTractography.sh ${RunFolder} ${CASE} 0 "
-	# -- Send to scheduler
-	cd ${LogFolder}
-	gmri schedule command="${PreTracCommand}" \
-	settings="${Scheduler}" \
-	output="stdout:${LogFolder}/pretractographydense.output.log|stderr:${LogFolder}/pretractographydense.error.log" \
-	workdir="${LogFolder}"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted"
-	echo "Scheduler Name and Options: $Scheduler"
-	echo "Check output logs here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-fi
+ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/PreTractography"
+LogFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_pretractographydense"
+RunFolder="${SubjectsFolder}/${CASE}/hcp/"
+# -- Command to run
+CommandToRun="${ScriptsFolder}/PreTractography.sh ${RunFolder} ${CASE} 0 "
+# -- Connector execute function
+connectorExec
 }
 
 show_usage_pretractographyDense() {
@@ -2496,17 +2148,14 @@ echo ""
 
 probtrackxGPUDense() {
 # -- Parse general parameters
-ScriptsFolder="$HCPPIPEDIR_dMRITracFull"/Tractography_gpu_scripts
-ResultsFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography
-RunFolder=${SubjectsFolder}/${CASE}/hcp/
+ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/Tractography_gpu_scripts"
+ResultsFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"
+RunFolder="${SubjectsFolder}/${CASE}/hcp/"
 NsamplesMatrixOne="$NsamplesMatrixOne"
 NsamplesMatrixThree="$NsamplesMatrixThree"
 minimumfilesize=100000000
 # -- Generate the results and log folders
 mkdir "$ResultsFolder"  &> /dev/null
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="${CASE}-${TimeStamp}"
 
 # -------------------------------------------------
 # -- Check if Matrix 1 or 3 flag set
@@ -2529,8 +2178,6 @@ fi
 for MNum in $MNumber; do
 	if [ "$MNum" == "1" ]; then NSamples="$NsamplesMatrixOne"; fi
 	if [ "$MNum" == "3" ]; then NSamples="$NsamplesMatrixThree"; fi
-	LogFolder="$ResultsFolder"/Mat${MNum}_logs
-	mkdir "$LogFolder"  &> /dev/null
 	# -- Check of overwrite flag was set
 	if [ "$Overwrite" == "yes" ]; then
 		echo ""
@@ -2561,39 +2208,13 @@ for MNum in $MNumber; do
 		echo ""
 		geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
 		echo ""
-		# -- Submit script locally
-		if [ "$Cluster" == 1 ]; then
-			echo "Running probtrackxgpudense locally on `hostname`"
-			echo "Check log file output here: $LogFolder"
-			echo "--------------------------------------------------------------"
-			echo ""
-			"$ScriptsFolder"/RunMatrix${MNum}_NoScheduler.sh "$RunFolder" ${CASE} "$Nsamples" "$SchedulerType" >> "$LogFolder"/Matrix${MNum}_"$Suffix".log
-		fi
-		if [ "$Cluster" == 2 ]; then
-			# -- Clean prior command
-			rm -f "$LogFolder"/Matrix${MNum}_"$Suffix".sh &> /dev/null
-			# -- Echo full command into a script
-			echo "${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}" >> "$LogFolder"/Matrix${MNum}_"$Suffix".sh
-			#echo "${ScriptsFolder}/RunMatrix${MNum}.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}" > "$LogFolder"/Matrix${MNum}_"$Suffix".sh
-		# -- Make script executable
-			chmod 770 "$LogFolder"/Matrix${MNum}_"$Suffix".sh
-			cd ${LogFolder}
-			# -- Send to scheduler
-			gmri schedule command="${LogFolder}/Matrix${MNum}_${Suffix}.sh" \
-			settings="${Scheduler}" \
-			output="stdout:${LogFolder}/Matrix${MNum}.${Suffix}.output.log|stderr:${LogFolder}/Matrix${MNum}.${Suffix}.error.log" \
-			workdir="${LogFolder}"
-			echo "--------------------------------------------------------------"
-			echo "Data successfully submitted"
-			echo "Scheduler Name and Options: $Scheduler"
-			echo "Check output logs here: $LogFolder"
-			echo "--------------------------------------------------------------"
-			echo ""
-		fi
+		# -- Command to run
+		CommandToRun="{ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}"
+		# -- Connector execute function
+		connectorExec
 	fi
 done
 }
-
 show_usage_probtrackxGPUDense() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
@@ -2673,34 +2294,30 @@ echo ""
 # -------------------------------------------------------------------------------------------------------------------------------
 
 AWSHCPSync() {
-# -- Parse general parameters
-mkdir "$SubjectsFolder"/aws.logs &> /dev/null
-cd "$SubjectsFolder"/aws.logs
-if [ "$RunMethod" == "2" ]; then
-	echo "Dry run"
+mkdir ${SubjectsFolder}/aws.logs &> /dev/null
+cd $SubjectsFolder}/aws.logs
+if [ ${RunMethod} == "2" ]; then
+	reho "AWS sync dry run..."
 	if [ -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear ]; then
-		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/"$Modality" &> /dev/null
-		time aws s3 sync --dryrun s3:/"$Awsuri"/${CASE}/"$Modality" ${SubjectsFolder}/${CASE}/hcp/${CASE}/"$Modality"/ >> AWSHCPSync_${CASE}_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log
+		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
+		AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+		time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
 	else
-		mkdir ${SubjectsFolder}/${CASE} &> /dev/null
-		mkdir ${SubjectsFolder}/${CASE}/hcp &> /dev/null
-		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE} &> /dev/null
-		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/"$Modality" &> /dev/null
-		time aws s3 sync --dryrun s3:/"$Awsuri"/${CASE}/"$Modality" ${SubjectsFolder}/${CASE}/hcp/${CASE}/"$Modality"/ >> AWSHCPSync_${CASE}_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log
+		mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
+		AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+		time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
 	fi
 fi
-if [ "$RunMethod" == "1" ]; then
-	echo "Syncing"
+if [ ${RunMethod} == "1" ]; then
+	geho "AWS sync running..."
 	if [ -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear ]; then
-		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/"$Modality" &> /dev/null
-		time aws s3 sync s3:/"$Awsuri"/${CASE}/"$Modality" ${SubjectsFolder}/${CASE}/hcp/${CASE}/"$Modality"/ >> AWSHCPSync_${CASE}_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log
+		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
+		AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+		time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
 	else
-		mkdir ${SubjectsFolder}/${CASE} &> /dev/null
-		mkdir ${SubjectsFolder}/${CASE}/hcp &> /dev/null
-		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE} &> /dev/null
-		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/"$Modality" &> /dev/null
-		echo "$Awsuri"/${CASE}/"$Modality"
-		time aws s3 sync s3:/"$Awsuri"/${CASE}/"$Modality" ${SubjectsFolder}/${CASE}/hcp/${CASE}/"$Modality"/ >> AWSHCPSync_${CASE}_"$Modality"_`date +%Y-%m-%d-%H-%M-%S`.log
+		mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
+		AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+		time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
 	fi
 fi
 }
@@ -2758,7 +2375,6 @@ BOLDPrefix="$BOLDPrefix"
 BOLDSuffix="$BOLDSuffix"
 SkipFrames="$SkipFrames"
 SNROnly="SNROnly"
-
 # -- Check general output folders for QC
 if [ ! -d ${SubjectsFolder}/QC ]; then
 	mkdir -p ${SubjectsFolder}/QC &> /dev/null
@@ -2772,125 +2388,56 @@ LogFolder=${OutPath}/qclog
 if [ ! -d ${LogFolder} ]; then
 	mkdir -p ${LogFolder}  &> /dev/null
 fi
+# -- Echo full command
+echo ""
+geho "Full Command:"
+geho "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
+--subjectsfolder=${SubjectsFolder} \
+--subject=${CASE} \
+--outpath=${OutPath} \
+--overwrite=${Overwrite} \
+--templatefolder=${TemplateFolder} \
+--modality=${Modality} \
+--dwipath=${DWIPath} \
+--dwidata=${DWIData} \
+--dwilegacy=${DWILegacy} \
+--dtifitqc=${DtiFitQC} \
+--bedpostxqc=${BedpostXQC} \
+--eddyqcstats=${EddyQCStats} \
+--bolddata='${BOLDS}' \
+--boldprefix=${BOLDPrefix} \
+--boldsuffix=${BOLDSuffix} \
+--skipframes=${SkipFrames} \
+--snronly=${SNROnly} \
+--timestamp=${TimeStamp} \
+--suffix=${Suffix} \
+--scenezip=${SceneZip} "
+echo ""
+# -- Command to run
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
+--subjectsfolder='${SubjectsFolder}' \
+--subject='${CASE}' \
+--outpath='${OutPath}' \
+--overwrite='${Overwrite}' \
+--templatefolder='${TemplateFolder}' \
+--modality='${Modality}' \
+--dwipath='${DWIPath}' \
+--dwidata='${DWIData}' \
+--dwilegacy='${DWILegacy}' \
+--dtifitqc='${DtiFitQC}' \
+--bedpostxqc='${BedpostXQC}' \
+--eddyqcstats='${EddyQCStats}' \
+--bolddata='${BOLDS}' \
+--boldprefix='${BOLDPrefix}' \
+--boldsuffix='${BOLDSuffix}' \
+--skipframes='${SkipFrames}' \
+--snronly='${SNROnly}' \
+--timestamp='${TimeStamp}' \
+--scenezip='${SceneZip}' \
+--suffix='${Suffix}'"
+# -- Connector execute function
+connectorExec
 
-# -- Generate timestamp for logs and scripts
-TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-Suffix="${CASE}-${TimeStamp}"
-
-# -- Run locally or send to scheduler
-if [ "$Cluster" == 1 ]; then
-	echo "Running function locally on `hostname`"
-	echo ""
-	geho "Full Command:"
-	geho "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--subject=${CASE} \
-	--outpath=${OutPath} \
-	--overwrite=${Overwrite} \
-	--templatefolder=${TemplateFolder} \
-	--modality=${Modality} \
-	--dwipath=${DWIPath} \
-	--dwidata=${DWIData} \
-	--dwilegacy=${DWILegacy} \
-	--dtifitqc=${DtiFitQC} \
-	--bedpostxqc=${BedpostXQC} \
-	--eddyqcstats=${EddyQCStats} \
-	--bolddata='${BOLDS}' \
-	--boldprefix=${BOLDPrefix} \
-	--boldsuffix=${BOLDSuffix} \
-	--skipframes=${SkipFrames} \
-	--snronly=${SNROnly} \
-	--timestamp=${TimeStamp} \
-	--suffix=${Suffix} \
-	--scenezip=${SceneZip} "
-	echo ""
-	echo "Check log file output here when finished: $LogFolder/QCPreprocessing_$Suffix.log "
-	echo "--------------------------------------------------------------"
-	echo ""
-	eval "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
-	--subjectsfolder='${SubjectsFolder}' \
-	--subject='${CASE}' \
-	--outpath='${OutPath}' \
-	--overwrite='${Overwrite}' \
-	--templatefolder='${TemplateFolder}' \
-	--modality='${Modality}' \
-	--dwipath='${DWIPath}' \
-	--dwidata='${DWIData}' \
-	--dwilegacy='${DWILegacy}' \
-	--dtifitqc='${DtiFitQC}' \
-	--bedpostxqc='${BedpostXQC}' \
-	--eddyqcstats='${EddyQCStats}' \
-	--bolddata='${BOLDS}' \
-	--boldprefix='${BOLDPrefix}' \
-	--boldsuffix='${BOLDSuffix}' \
-	--skipframes='${SkipFrames}' \
-	--snronly='${SNROnly}' \
-	--timestamp='${TimeStamp}' \
-	--scenezip='${SceneZip}' \
-	--suffix='${Suffix}'" >> "$LogFolder"/QCPreprocessing_"$Suffix".log
-else
-	# -- Echo full command into a script
-	echo ""
-	geho "Full Command:"
-	geho "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--subject=${CASE} \
-	--outpath=${OutPath} \
-	--overwrite=${Overwrite} \
-	--templatefolder=${TemplateFolder} \
-	--modality=${Modality} \
-	--dwipath=${DWIPath} \
-	--dwidata=${DWIData} \
-	--dwilegacy=${DWILegacy} \
-	--dtifitqc=${DtiFitQC} \
-	--bedpostxqc=${BedpostXQC} \
-	--eddyqcstats=${EddyQCStats} \
-	--bolddata='${BOLDS}' \
-	--boldprefix=${BOLDPrefix} \
-	--boldsuffix=${BOLDSuffix} \
-	--skipframes=${SkipFrames} \
-	--snronly=${SNROnly} \
-	--timestamp=${TimeStamp} \
-	--suffix=${Suffix} \
-	--scenezip=${SceneZip}"
-	echo ""
-	echo "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
-	--subjectsfolder='${SubjectsFolder}' \
-	--subject='${CASE}' \
-	--outpath='${OutPath}' \
-	--overwrite='${Overwrite}' \
-	--templatefolder='${TemplateFolder}' \
-	--modality='${Modality}' \
-	--dwipath='${DWIPath}' \
-	--dwidata='${DWIData}' \
-	--dwilegacy='${DWILegacy}' \
-	--dtifitqc='${DtiFitQC}' \
-	--bedpostxqc='${BedpostXQC}' \
-	--eddyqcstats='${EddyQCStats}' \
-	--bolddata='${BOLDS}' \
-	--boldprefix=${BOLDPrefix} \
-	--boldsuffix='${BOLDSuffix}' \
-	--skipframes='${SkipFrames}' \
-	--snronly='${SNROnly}' \
-	--timestamp='${TimeStamp}' \
-	--suffix='${Suffix}' \
-	--scenezip='${SceneZip}'" >> "$LogFolder"/QCPreprocessing_"$Suffix".sh
-	# -- Make script executable
-	chmod 770 "$LogFolder"/QCPreprocessing_"$Suffix".sh
-	cd ${LogFolder}
-	# -- Send to scheduler
-	gmri schedule command="${LogFolder}/QCPreprocessing_${Suffix}.sh" \
-	settings="${Scheduler}" \
-	output="stdout:${LogFolder}/QCPreprocessing.${Suffix}.output.log|stderr:${LogFolder}/QCPreprocessing.${Suffix}.error.log" \
-	workdir="${LogFolder}"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted "
-	echo "Scheduler Options: $Scheduler "
-	echo "Check output logs here: $LogFolder "
-	echo "--------------------------------------------------------------"
-	echo ""
-fi
 }
 show_usage_QCPreproc() {
 echo ""
@@ -3043,36 +2590,27 @@ echo ""
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
 # =-=-=-=-=-==-=-=-= Establish general MNAP functions and variables =-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
-
-# ------------------------------------------------------------------------------
-#  Set exit if error is reported (turn on for debugging)
-# ------------------------------------------------------------------------------
 
 # -- Setup this script such that if any command exits with a non-zero value, the
-# -- script itself exits and does not attempt any further processing.
+#    script itself exits and does not attempt any further processing.
 # set -e
 
 # ------------------------------------------------------------------------------
 #  Load relevant libraries for logging and parsing options
 # ------------------------------------------------------------------------------
-
 source $HCPPIPEDIR/global/scripts/log.shlib  # -- Logging related functions
 source $HCPPIPEDIR/global/scripts/opts.shlib # -- Command line option functions
 
 # ------------------------------------------------------------------------------
 #  Establish tool name for logging
 # ------------------------------------------------------------------------------
-
 log_SetToolName "mnap.sh"
 
 # ------------------------------------------------------------------------------
 #  Load Core Functions
 # ------------------------------------------------------------------------------
-
 # -- Parses the input command line for a specified command line option
 # -- The first parameter is the command line option to look for.
 # -- The remaining parameters are the full list of flagged command line arguments
@@ -3096,6 +2634,9 @@ for fn in "$@" ; do
 	fi
 done
 }
+
+# -- Set version variable
+MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
 
 # -- Checks for version
 showVersion() {
@@ -3404,6 +2945,9 @@ if [[ "$setflag" =~ .*-.* ]]; then
 		RunMethod="1"
 	fi
 	# -- Set flags for MNAPXNATTurnkey and XNATCloudUpload
+	TURNKEY_TYPE=`opts_GetOpt "${setflag}turnkey" $@`
+	OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
+	OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
 	BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
 	SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
 	XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
@@ -3560,13 +3104,11 @@ if [[ "$setflag" =~ .*-.* ]]; then
 fi
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 # =-=-=-=-=-=-=-=-=-=-=-= Execute specific functions =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 
 echo ""
-geho "--- Running ${FunctionToRun} function"
+geho "--- Running MNAP v${MNAPVer}: ${FunctionToRun} function"
 echo ""
 
 # ------------------------------------------------------------------------------
@@ -3592,20 +3134,26 @@ if [ "$FunctionToRun" == "MNAPXNATTurnkey" ]; then
 	if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Batch parameter file not specified."; exit 1; fi
 	if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Batch parameter file not specified."; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Note: List of subjects missing. Assuming $XNAT_SESSION_LABEL matches subject names."; CASES="$XNAT_SESSION_LABEL"; fi
+	if [ -z "$StudyFolder" ]; then StudyFolder="/output/${XNAT_PROJECT_ID}"; reho "Note: Study folder missing. Setting defaults: $StudyFolder"; STUDY_PATH="$StudyFolder"; fi
+	if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
+	if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
+	if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey: $TURNKEY_TYPE"; fi
+
 	# -- Report parameters
 	echo ""
 	echo "Running $FunctionToRun processing with the following parameters:"
 	echo ""
 	echo "--------------------------------------------------------------"
+	echo "   MNAP turnkey run type: ${TURNKEY_TYPE}"
 	echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
 	echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
 	echo "   XNAT Session Label: ${XNAT_SESSION_LABEL}"
 	echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
 	echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
 	echo "   Project-specific Batch file: ${project_batch_file}"
-	echo "   MNAP Study folder: ${mnap_studyfolder}"
-	echo "   MNAP Subject-specific working folder: ${rawdir}"
-	echo "   OVERWRITE set to: ${OVERWRITE}"
+	echo "   MNAP Study folder: ${StudyFolder}"
+	echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
+	echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
 	echo "--------------------------------------------------------------"
 	# -- Loop through all the cases
 	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
@@ -3964,9 +3512,9 @@ if [ "$FunctionToRun" == "createLists" ]; then
 			reho "    Batch parameter header file not specified. Using defaults for multi-band data: "
 			HeaderBatch="${TOOLS}/${MNAPREPO}/library/data/templates/batch_multiband_parameters.txt"
 			if [ -f $HeaderBatch ]; then
-				reho "        $HeaderBatch"; echo ""
+				reho "        ${HeaderBatch}"; echo ""
 			else
-				reho "---> ERROR: $HeaderBatch not found! Check MNAP environment variables."
+				reho "---> ERROR: ${HeaderBatch} not found! Check MNAP environment variables."
 				echo ""
 				exit 1
 			fi
@@ -4052,12 +3600,17 @@ if [ "$FunctionToRun" == "createLists" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  printMatrix function loop -- under development
+#  printMatrix function loop
 # ------------------------------------------------------------------------------
 
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri #  FIXICA function loop
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
+# --> under development
+
+# ------------------------------------------------------------------------------
+#  FIXICA function loop
+# ------------------------------------------------------------------------------
+
+# --> under development
+
 ## -- FIXICA Code - integrate into gmri
 ## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "FIXICA" ]; then
 ## -- FIXICA Code - integrate into gmri 	echo "Note: Expects that minimally processed NIFTI & CIFTI BOLDs"
@@ -4188,8 +3741,10 @@ fi
 ## -- FIXICA Code - integrate into gmri fi
 
 # ------------------------------------------------------------------------------
-#  BOLDDense function loop  -- under development
+#  BOLDDense function loop
 # ------------------------------------------------------------------------------
+
+# --> under development
 
 # ------------------------------------------------------------------------------
 #  FSLDtifit function loop
