@@ -20,8 +20,10 @@ import collections
 
 try:
     import pydicom
+    print "===> Imported pydicom"    
 except:
     import dicom as pydicom
+    print "===> Imported dicom"    
 
 try:
     import pydicom.filereader as dfr
@@ -123,8 +125,6 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
                 modified_dicom = deid_function(opened_dicom)
 
-                
-
                 if output_folder is None:
                     output_file = full_filename
                 else:
@@ -136,8 +136,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
                 modified_dicom.save_as(output_file)
             except Exception as e:
-            	raise e
-               	# pass  # file was not a dicom
+               	pass  # file was not a dicom
 
             if opened_dicom is None:
                 try:
@@ -266,7 +265,6 @@ def field_dict_modifier(node_id, node_path, node):
             value_list.add("POTENTIAL PHI; REMOVE: binary data")
     else:
         value_list.add(str(node.value))
-    print "          >", value_list
     field_dict[(node_id, node_path)] = value_list
 
 
@@ -306,18 +304,18 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None):
                 data_element_name = from_tag(data_element.tag)
             node_path = parent_path + "/" + data_element_name
 
-        print "         > node id:", node_id, "node path:", node_path
-        print "         > checking element type"
+        print "         > node id:", node_id, "node path:", node_path, 
+        print "> checking element type", 
 
         if isinstance(data_element.value, pydicom.Sequence):   # a sequence
-            print "          > a sequence"
+            print "> a sequence"
             for dataset in data_element.value:
                 recurse_tree(dataset, node_func, node_id, node_path)
         elif isinstance(data_element.value, pydicom.Dataset):
-            print "          > a dataset"
+            print "> a dataset"
             recurse_tree(data_element.value, node_func, node_id, node_path)
         else:
-            print "          > processing"
+            print "> an element"
             node_func(node_id, node_path, data_element)
 
     print "     ... end recursing"
@@ -334,7 +332,7 @@ def write_field_dict(output_file, limit):
         writer = csv.writer(f)
         for key, items in field_dict.items():
             row = [key[0], key[1]]
-            row.extend(list(items)[:limit])
+            row.extend(list(items)[:int(limit)])
             writer.writerow(row)
 
 
