@@ -109,9 +109,9 @@ For complete MNAP Suite functionality the following dependencies are needed for 
 * Python (v2.7 or above with numpy, pydicom, scipy & nibabel)
 * AFNI: Analysis of Functional NeuroImages (https://github.com/afni/afni) 
 * Human Connectome Pipelines modified for MNAP (https://bitbucket.org/mnap/hcpmodified)
-* Gradunwarp for HCP workflow (https://github.com/ksubramz/gradunwarp)
+* Gradunwarp for HCP workflow (https://github.com/Washington-University/gradunwarp)
 * R Statistical Environment with ggplot (https://www.r-project.org/)
-* dcm2niix (23-June-2017 release or later; https://github.com/rordenlab/dcm2niix)
+* dcm2niix (23-June-2017 release; https://github.com/rordenlab/dcm2niix)
 
 MNAP Versioning
 ============
