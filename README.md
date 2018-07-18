@@ -251,6 +251,7 @@ Change Log
 * 0.13.16 [library] Simplified octave setup and .octaverc
 * 0.13.17 [niutilities] Added support for par/rec files and improved dicom processing
 * 0.14.00 [connector] Integrated unified execution and logging functionality into connector
+* 0.14.1 [library] Updated environment script and added new atlases and parcelations
 
 =======
 [Mind and Brain Lab]: http://mblab.si
