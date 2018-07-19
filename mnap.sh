@@ -406,6 +406,7 @@ organizeDicom() {
 #    This function passes parameters into two NIUtilities commands: sortDicom and dicom2niix
 mkdir ${SubjectsFolder}/${CASE}/dicom &> /dev/null
 if [ "$Overwrite" == "yes" ]; then
+	echo ""
 	reho "===> Removing prior DICOM run"
 	rm -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
 fi
@@ -415,24 +416,23 @@ echo ""
 
 if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
 	echo ""
-	geho "--- Found ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
+	geho "===> Found ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
 	geho "    Note: To re-run set --overwrite='yes'"
 	echo ""
 	geho " ... $CASE ---> organizeDicom done"
 	echo ""
-else
-	echo "--- Did not find ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
-	echo ""
-	# -- Combine all the calls into a single command
-	Com1="cd ${SubjectsFolder}/${CASE}"
-	Com2="echo '---> running sortDicom and dicom2nii for $CASE'; echo ''"
-	Com3="gmri sortDicom"
-	Com4="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
-	# -- Specify command variable
-	CommandToRun="$Com1; $Com2; $Com3; $Com4"
-	# -- Connector execute function
-	connectorExec
+	exit 0
 fi
+reho "===>  Did not find ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
+echo ""
+echo="echo '---> running sortDicom and dicom2nii for ${CASE}'; echo ''"
+# -- Combine all the calls into a single command
+Com1="gmri sortDicom --folder=${SubjectsFolder}/${CASE}/"
+Com2="gmri dicom2niix --folder=${SubjectsFolder}/${CASE}/ unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
+# -- Specify command variable
+CommandToRun="$Com1; $Com2"
+# -- Connector execute function
+connectorExec
 }
 show_usage_organizeDicom() {
 echo ""

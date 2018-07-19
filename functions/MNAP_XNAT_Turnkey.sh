@@ -132,7 +132,7 @@ usage() {
     echo ""
     echo "    --path=<study_path>                                Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
     echo "    --xnataccsessionid=<accesession_id>                Identifier of a subject across the entire XNAT database."
-    echo "    --overwritesubject=<specify_subject_overwrite>     Specify <yes> or <no> for cleanup of prior subject run. Default is [no]."
+    echo "    --overwritesubject=<specify_subject_overwrite>     Specify <yes> or <no> for cleanup of prior subject run. Default is [no]. Also supports --overwrite"
     echo "    --overwriteproject=<specify_project_overwrite>     Specify <yes> or <no> for cleanup of entire project. Default is [no]."
     echo ""
     echo "  -- EXAMPLE:"
@@ -156,7 +156,9 @@ if [[ -z $1 ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usa
 fi
 
 # -- Clear variables
+reset
 unset BATCH_PARAMETERS_FILENAME
+unset OVERWRITE
 unset OVERWRITE_PROJECT
 unset OVERWRITE_SUBJECT
 unset SCAN_MAPPING_FILENAME
@@ -182,8 +184,12 @@ while [ "$1" != "" ]; do
             ;;
         --turnkey)
             TURNKEY_TYPE=$VALUE
+            ;;
         --overwritesubject)
             OVERWRITE_SUBJECT=$VALUE
+            ;;
+        --overwrite)
+            OVERWRITE=$VALUE
             ;;
         --overwriteproject)
             OVERWRITE_PROJECT=$VALUE
@@ -229,10 +235,12 @@ if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Ba
 if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; exit 1; fi
 if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Batch parameter file not specified."; exit 1; fi
 if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Batch parameter file not specified."; exit 1; fi
-if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
+if [ -z "$OVERWRITE" ]; then OVERWRITE="no"; fi
+if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
 if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; fi
 if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey: $TURNKEY_TYPE"; fi
+if [ -z "$OVERWRITE" ]; then OVERWRITE="OVERWRITE_SUBJECT"; fi
 
 # -- Define additional variables
 local scriptName=$(basename ${0})
@@ -313,7 +321,7 @@ fi
 # -- Organize DICOMs and map processing folder structure
 mnap organizeDicom --subjectsfolder="${mnap_subjectsfolder}" --subjects="${XNAT_SESSION_LABEL}" --overwrite="${OVERWRITE}"
 mnap getHCPReady --subjectsfolder="${mnap_subjectsfolder}" --subjects="${XNAT_SESSION_LABEL}" --mapping="${specsdir}/${SCAN_MAPPING_FILENAME}" --overwrite="${OVERWRITE}"
-mnap mapHCPFiles --subjectsfolder="${mnap_subjectsfolder}" --subjects="${XNAT_SESSION_LABEL}" --overwrite="$OVERWRITE"
+mnap mapHCPFiles --subjectsfolder="${mnap_subjectsfolder}" --subjects="${XNAT_SESSION_LABEL}" --overwrite="${OVERWRITE}"
 
 # -- Generate subject specific hcp processing file
 geho " -- Generating ${project_batch_file}"; echo ""
