@@ -253,6 +253,7 @@ Change Log
 * 0.14.00 [connector] Integrated unified execution and logging functionality into connector
 * 0.14.01 [library] Updated environment script and added new atlases and parcelations
 * 0.15.00 [connector] Integrated MNAP turnkey functionality for local servers and XNAT environment
+* 0.16.00 [mnaptools] Added Dockerfile for building Docker container
 
 =======
 [Mind and Brain Lab]: http://mblab.si
