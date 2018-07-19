@@ -70,7 +70,7 @@ RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.b
     echo "pkg load struct" >> ~/.octaverc && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
-    rm -rf ~/.cache/pip && \
+    rm -rf ~/.cache/pip
 
 CMD ["bash"]
 
