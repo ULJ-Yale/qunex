@@ -1,8 +1,44 @@
-
-ckerfile for MNAP
-# MNAP code created by: Anticevic Lab, Yale University and Mind and Brain Lab, University of Ljubljana
-# Maintainer of Dockerfile: Zailyn Tamayo, Yale University
-##
+#
+#~ND~FORMAT~MARKDOWN~
+#~ND~START~
+#
+# ## COPYRIGHT NOTICE
+#
+# Copyright (C) 2015 Anticevic Lab, Yale University
+# Copyright (C) 2015 MBLAB, University of Ljubljana
+#
+# ## AUTHORS(s)
+#
+# * Zailyn Tamayo, Department of Psychiatry, Yale University
+#
+# ## PRODUCT
+#
+#  Dockerfile
+#
+# ## LICENSE
+#
+# * The Dockerfile = the "Software"
+# * This Software conforms to the license outlined in the MNAP Suite:
+# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+#
+# ## TODO
+#
+#
+# ## DESCRIPTION:
+#
+# * This is a general docker generation script for the MNAP suite
+#
+# ## PREREQUISITE INSTALLED SOFTWARE
+#
+# * MNAP Suite and dependencies
+#
+# ## PREREQUISITE ENVIRONMENT VARIABLES
+#
+#
+# ## PREREQUISITE PRIOR PROCESSING
+#
+#
+#~ND~END~
 
 ##
 # Tag: ztamayo/mnap:latest
@@ -10,38 +46,31 @@ ckerfile for MNAP
 # Sets environment for MNAP
 ##
 
+# -- Define docker image location
 FROM ztamayo/mnap_deps2:latest
 
+# -- Define where the mnaptools repo resides on the image
 ADD . /opt/mnaptools
-
 WORKDIR /opt/mnaptools
 
-ADD bedpostx_gpu_cuda_6.5/ ${FSLDIR}
-
-# Set Python path
+# -- Set Python path
 ENV PYTHONPATH="${PYTONPATH}:/mnaptools" 
-# Set MNAP tools path
+
+# -- Set MNAP tools path
 ENV TOOLS="/opt"
 
+# -- Set environment & Set Octave as default & Clear apt cache and other empty folders
 RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.bashrc && \
     echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.bash_profile && \
     touch ~/.mnapuseoctave && \
-#    touch ~/.octaverc && \
-#    echo "pkg load control"> > ~/.octaverc && \
     echo "pkg load general" >> ~/.octaverc && \
-#    echo "pkg load image" >> ~/.octaverc && \
     echo "pkg load io" >> ~/.octaverc && \
     echo "pkg load miscellaneous" >> ~/.octaverc && \
-#    echo "pkg load nan" >> ~/.octaverc && \
     echo "pkg load optim" >> ~/.octaverc && \
-#    echo "pkg load signal" >> ~/.octaverc && \
-#    echo "pkg load statistics" >> ~/.octaverc && \
     echo "pkg load struct" >> ~/.octaverc && \
-# Clear apt cache and other empty folders
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip && \
-    rm -rf /opt/mnaptools/bedpostx_gpu_cuda_6.5
 
 CMD ["bash"]
 
