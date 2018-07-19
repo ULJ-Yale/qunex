@@ -327,6 +327,14 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 
 # -- Batchlog
 #    <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
+
+# -- Code for debugging
+echo ""
+cyaneho "---- DEBUGGING START -----"; echo ""
+cyaneho ${CommandToRun}
+cyaneho "----- DEBUGGING END -----"; echo ""
+echo ""
+
 ComRunSet="cd ${MasterRunLogFolder}; echo ${CommandToRun} >> ${Runlog}; echo ${CommandToRun} >> ${ComRun}; chmod 770 ${ComRun}"
 ComRunExec="${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep 'Successful' &> ${CompletionCheck}"
@@ -430,7 +438,7 @@ echo="echo '---> running sortDicom and dicom2nii for ${CASE}'; echo ''"
 Com1="gmri sortDicom --folder=${SubjectsFolder}/${CASE}/"
 Com2="gmri dicom2niix --folder=${SubjectsFolder}/${CASE}/ unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
 # -- Specify command variable
-CommandToRun="$Com1; $Com2"
+CommandToRun="${Com1}; ${Com2}"
 # -- Connector execute function
 connectorExec
 }
