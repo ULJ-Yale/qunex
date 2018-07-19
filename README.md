@@ -254,6 +254,7 @@ Change Log
 * 0.14.01 [library] Updated environment script and added new atlases and parcelations
 * 0.15.00 [connector] Integrated MNAP turnkey functionality for local servers and XNAT environment
 * 0.16.00 [mnaptools] Added Dockerfile for building Docker container
+* 0.16.01 [library] Changes to to environment script
 
 =======
 [Mind and Brain Lab]: http://mblab.si
