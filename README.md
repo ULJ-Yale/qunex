@@ -257,6 +257,7 @@ Change Log
 * 0.16.01 [library] Changes to to environment script
 * 0.16.02 [niutilities] Added more robust checking for and reporting of presence of image files in sortDicom
 * 0.16.03 [niutilities connector] Fixed a bug in sortDicom and createBatch, resolved realtime logging for python commands
+* 0.16.04 [niutilities connector] Small updates to completion logging
 
 =======
 [Mind and Brain Lab]: http://mblab.si
