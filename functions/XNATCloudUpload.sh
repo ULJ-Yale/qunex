@@ -490,7 +490,7 @@ curl -k -X DELETE -b "JSESSIONID=${JSESSION}" "$XNAT_HOST_NAME/data/JSESSION"
 echo ""
 geho "--- XNAT upload completed. Check output log for outputs and errors."
 echo ""
-geho "------------------------- Successful end of work --------------------------------"
+geho "------------------------- Successful completion of work --------------------------------"
 echo ""
 
 }

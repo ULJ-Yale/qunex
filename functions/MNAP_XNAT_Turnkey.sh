@@ -361,6 +361,6 @@ if [[ ${filecnt} != "" ]]; then
 	echo ""
 else
 	echo ""
-	geho "------------------------- Successful end of work --------------------------------"
+	geho "------------------------- Successful completion of work --------------------------------"
 	echo ""
 fi

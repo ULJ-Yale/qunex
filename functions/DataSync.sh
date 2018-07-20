@@ -280,7 +280,7 @@ geho "--- Data sync completed. Check outputs and logs for errors."
 echo ""
 geho "--- Check output logs here: ${SyncLogFolder}/sync_log_${now}.txt}"
 echo ""
-geho "------------------------- Successful end of work --------------------------------"
+geho "------------------------- Successful completion of work --------------------------------"
 echo ""
 }
 

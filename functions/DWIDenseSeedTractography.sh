@@ -349,7 +349,7 @@ if [ -f ${DWIOutput}/${DWIOutFileDscalar} ]; then
 	echo ""
 	geho "--- DWI restriction of dense connectome successfully completed "
 	echo ""
-	geho "------------------------- Successful end of work --------------------------------"
+	geho "------------------------- Successful completion of work --------------------------------"
 	echo ""
 else
 	reho "--- Dense scalar output file for Matrix ${MatrixVersion} is missing. Something went wrong."

@@ -180,7 +180,7 @@ ${MNAPMCOMMAND} "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrit
 
 geho "-- ROIExtract successfully completed "
 echo ""
-geho "------------------------- Successful end of work --------------------------------"
+geho "------------------------- Successful completion of work --------------------------------"
 echo ""
 
 }

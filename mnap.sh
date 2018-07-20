@@ -330,15 +330,15 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 #    <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
 
 # -- Code for debugging
-echo ""
-cyaneho "---- Commands to run: -----"; echo ""
-cyaneho "${CommandToRun}"; echo ""
-cyaneho "---------------------------"; echo ""
-echo ""
-
+# echo ""
+# cyaneho "---- Commands to run: -----"; echo ""
+# cyaneho "${CommandToRun}"; echo ""
+# cyaneho "---------------------------"; echo ""
+# echo ""
+SuccessCheck="Successful completion"
 ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 770 ${ComRun}"
 ComRunExec="${ComRun} |& tee ${ComlogTmp}"
-ComComplete="cat ${ComlogTmp} | grep 'Successful' &> ${CompletionCheck}"
+ComComplete="cat ${ComlogTmp} | grep ${SuccessCheck} &> ${CompletionCheck}"
 ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo '--- DONE. Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
 ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
@@ -445,7 +445,10 @@ else
 fi
 # -- Specify command variable
 unset CommandToRun
-CommandToRun="cd ${SubjectsFolder}/${CASE}; gmri sortDicom folder=.; gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
+ComA="cd ${SubjectsFolder}/${CASE}"
+ComB="gmri sortDicom folder=. " 
+ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
+CommandToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
 # -- Connector execute function
 connectorExec
 }

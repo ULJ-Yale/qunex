@@ -195,7 +195,9 @@ fi
 
 }
 
-geho "------------------------- Successful end of work --------------------------------"
+echo ""
+geho "------------------------- Successful completion of work --------------------------------"
+echo ""
 
 # ---------------------------------------------------------
 # -- Invoke the main function to get things started -------

@@ -1016,7 +1016,7 @@ geho "--- QC Generation completed for ${Modality}. Check outputs and logs for er
 echo ""
 geho "--- Check output logs here: ${LogFolder}"
 echo ""
-geho "------------------------- Successful end of work --------------------------------"
+geho "------------------------- Successful completion of work --------------------------------"
 echo ""
 
 # --------------------------------------------------------------------------------

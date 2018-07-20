@@ -766,7 +766,7 @@ if [ ${Calculation} == "group" ]; then
 fi
 if [[ -z ${RunError} ]]; then 
 	echo ""
-	geho "------------------------- Successful end of work --------------------------------"
+	geho "------------------------- Successful completion of work --------------------------------"
 	echo ""
 else
 	echo ""
