@@ -749,7 +749,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
             subprocess.call("gzip " + os.path.join(folder, "*.dcm"), shell=True, stdout=null, stderr=null)
 
     if verbose:
-        print "Finished!\n"
+        print "===> Successful completion of work. Finished!\n"
 
     return "completed ok"
 
@@ -1354,8 +1354,8 @@ def sortDicom(folder=".", **kwargs):
             doFile(dcm, tgf)
 
     print "\nDone!\n\n"
+    print "===> Successful completion of work. Finished!\n"
     return "completed ok"
-
 
 def listDicom(folder=None):
     '''

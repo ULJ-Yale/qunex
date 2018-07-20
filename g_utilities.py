@@ -164,7 +164,7 @@ def createStudy(studyfolder=None):
         print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
         mark.close()
 
-    print "\nDone.\n"
+    print "===> Successful completion of work."
 
 
 def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
@@ -337,7 +337,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
 
     # --- close file
 
-    print "===> Done"
+    print "===> Successful completion of work."
+
     jfile.close()
 
 
@@ -627,7 +628,7 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
         print >> lfile, line
 
     lfile.close()
-    print "===> Done"
+    print "===> Successful completion of work."
 
 
 def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
@@ -871,4 +872,4 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
             cfile.close()
 
-    print "===> Done"
+    print "===> Successful completion of work."
