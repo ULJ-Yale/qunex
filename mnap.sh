@@ -331,11 +331,11 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 # -- Code for debugging
 echo ""
 cyaneho "---- DEBUGGING START -----"; echo ""
-cyaneho ${CommandToRun}
+cyaneho "${CommandToRun}"
 cyaneho "----- DEBUGGING END -----"; echo ""
 echo ""
 
-ComRunSet="cd ${MasterRunLogFolder}; echo ${CommandToRun} >> ${Runlog}; echo ${CommandToRun} >> ${ComRun}; chmod 770 ${ComRun}"
+ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo ${CommandToRun} >> ${ComRun}; chmod 770 ${ComRun}"
 ComRunExec="${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep 'Successful' &> ${CompletionCheck}"
 ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo '--- DONE. Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
@@ -421,7 +421,6 @@ fi
 echo ""
 echo "===> Checking for presence of ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
 echo ""
-
 if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
 	echo ""
 	geho "===> Found ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
@@ -431,10 +430,8 @@ if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
 	echo ""
 	exit 0
 fi
-reho "===>  Did not find ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
-echo ""
-echo="echo '---> running sortDicom and dicom2nii for ${CASE}'; echo ''"
 # -- Combine all the calls into a single command
+unset CommandToRun
 Com1="gmri sortDicom --folder=${SubjectsFolder}/${CASE}/"
 Com2="gmri dicom2niix --folder=${SubjectsFolder}/${CASE}/ unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
 # -- Specify command variable
