@@ -1277,10 +1277,10 @@ def sortDicom(folder=".", **kwargs):
             try:
                 info = readDICOMInfo(dcm)
             except:
-                pass
-        if info['subjectid']:
-            print "---> Sorting dicoms for %s scanned on %s" % (info['subjectid'], info['datetime'])
-            break
+                pass                
+        if info and info['subjectid']:
+                print "---> Sorting dicoms for %s scanned on %s" % (info['subjectid'], info['datetime'])
+                break
 
     if not os.path.exists(dcmf):
         os.makedirs(dcmf)
