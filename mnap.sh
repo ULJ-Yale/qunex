@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+#
 #set -x
 #
 #~ND~FORMAT~MARKDOWN~
@@ -319,8 +320,8 @@ Runlog="${MasterRunLogFolder}/Log-${FunctionToRun}_${TimeStamp}.log"
 #    Specification:  done_<command_name>[_B<N>]_<subject code>_<date>_<hour>.<minute>.<microsecond>.log
 #    Example:        done_ComputeBOLDStats_pb0986_2017-05-06_16.16.1494101784.log
 #
-ComlogTmp="${MasterComlogFolder}/tmp_${FunctionToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}
-ComRun="${MasterComlogFolder}/Run_${FunctionToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}
+ComlogTmp="${MasterComlogFolder}/tmp_${FunctionToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
+ComRun="${MasterComlogFolder}/Run_${FunctionToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 770 ${ComlogTmp}
 ComlogError="${MasterComlogFolder}/error_${FunctionToRun}_${CASE}_${TimeStamp}.log"
 ComlogDone="${MasterComlogFolder}/done_${FunctionToRun}_${CASE}_${TimeStamp}.log"
 CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.Check"
@@ -330,16 +331,18 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 
 # -- Code for debugging
 echo ""
-cyaneho "---- DEBUGGING START -----"; echo ""
-cyaneho "${CommandToRun}"
-cyaneho "----- DEBUGGING END -----"; echo ""
+cyaneho "---- Commands to run: -----"; echo ""
+cyaneho "${CommandToRun}"; echo ""
+cyaneho "---------------------------"; echo ""
 echo ""
 
-ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo ${CommandToRun} >> ${ComRun}; chmod 770 ${ComRun}"
-ComRunExec="${ComRun} 2>&1 | tee -a ${ComlogTmp}"
+ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 770 ${ComRun}"
+ComRunExec="${ComRun} |& tee ${ComlogTmp}"  
+#>> ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep 'Successful' &> ${CompletionCheck}"
-ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo '--- DONE. Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
-ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
+ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo '--- DONE. Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
+#ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
+ComRunAll="${ComRunSet}; ${ComRunExec}"
 
 # -- Run the local commands
 if [[ "$Cluster" == 1 ]]; then
@@ -363,6 +366,7 @@ if [[ "$Cluster" == 2 ]]; then
 	geho "   Function output: ${ComlogTmp} "
 	echo ""
 fi
+
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -430,12 +434,21 @@ if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
 	echo ""
 	exit 0
 fi
-# -- Combine all the calls into a single command
-unset CommandToRun
-Com1="gmri sortDicom --folder=${SubjectsFolder}/${CASE}/"
-Com2="gmri dicom2niix --folder=${SubjectsFolder}/${CASE}/ unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
+
+if [ ! -d ${SubjectsFolder}/${CASE}/inbox ]; then
+	reho "===> ${SubjectsFolder}/${CASE}/inbox not found. Make sure your DICOMs are present."; echo ""
+	exit 1
+else
+	InboxCheck=`ls ${SubjectsFolder}/${CASE}/inbox/`
+	if [[ ${InboxCheck} == "" ]]; then
+		reho "===> ${SubjectsFolder}/${CASE}/inbox found but empty. Make sure your DICOMs are present."; echo ""
+		exit 1
+	fi
+fi
+
 # -- Specify command variable
-CommandToRun="${Com1}; ${Com2}"
+unset CommandToRun
+CommandToRun="cd ${SubjectsFolder}/${CASE}; gmri sortDicom folder=.; gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
 # -- Connector execute function
 connectorExec
 }
