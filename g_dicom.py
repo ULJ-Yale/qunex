@@ -1163,7 +1163,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
         niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
 
     if verbose:
-        print "Finished!\n"
+        print "===> Successful completion of work. Finished!\n"
 
     return "completed ok"
 
