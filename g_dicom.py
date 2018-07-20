@@ -1230,6 +1230,9 @@ def sortDicom(folder=".", **kwargs):
     2018-07-03 Grega Repovš
              - Changed to work with readDICOMInfo and readPARInfo, and to
                support PAR/REC files.
+    2018-07-20 Grega Repovš
+             - Added more robust checking for and reporting of presence of image 
+               files in sortDicom
     '''
 
     # --- should we copy or move
@@ -1250,11 +1253,20 @@ def sortDicom(folder=".", **kwargs):
     files = kwargs.get('files', None)
     if files is None:
         inbox = os.path.join(folder, 'inbox')
-        print "\nProcessing files from %s\n" % (inbox)
+        if not os.path.exists(inbox):
+            print "===> ERROR: Inbox folder not found, please check your paths! [%s]" % (os.path.abspath(inbox))
+            print "     Aborting"
+            raise ValueError('Inbox folder does not exist [%s]' % (os.path.abspath(inbox)))
         files = glob.glob(os.path.join(inbox, "*"))
-        files = files + glob.glob(os.path.join(inbox, "*/*"))
-        files = files + glob.glob(os.path.join(inbox, "*/*/*"))
-        files = [e for e in files if os.path.isfile(e)]
+        if len(files):
+            files = files + glob.glob(os.path.join(inbox, "*/*"))
+            files = files + glob.glob(os.path.join(inbox, "*/*/*"))
+            files = [e for e in files if os.path.isfile(e)]
+            print "---> Processing %d files from %s" % (len(files), inbox)
+        else:
+            print "===> ERROR: No files found in the specified inbox folder! [%s]" % (os.path.abspath(inbox))
+            print "     Aborting"
+            raise ValueError('No files found in inbox folder! [%s]' % (os.path.abspath(inbox)))
 
     info = None
     for dcm in files:
@@ -1266,8 +1278,8 @@ def sortDicom(folder=".", **kwargs):
                 info = readDICOMInfo(dcm)
             except:
                 pass
-        if info:
-            print "===> Sorting dicoms for %s scanned on %s\n" % (info['subjectid'], info['datetime'])
+        if info['subjectid']:
+            print "---> Sorting dicoms for %s scanned on %s" % (info['subjectid'], info['datetime'])
             break
 
     if not os.path.exists(dcmf):
