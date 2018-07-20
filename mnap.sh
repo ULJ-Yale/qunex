@@ -337,12 +337,10 @@ cyaneho "---------------------------"; echo ""
 echo ""
 
 ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 770 ${ComRun}"
-ComRunExec="${ComRun} |& tee ${ComlogTmp}"  
-#>> ${ComlogTmp}"
+ComRunExec="${ComRun} |& tee ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep 'Successful' &> ${CompletionCheck}"
 ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo '--- DONE. Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
-#ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
-ComRunAll="${ComRunSet}; ${ComRunExec}"
+ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
 # -- Run the local commands
 if [[ "$Cluster" == 1 ]]; then
@@ -366,7 +364,6 @@ if [[ "$Cluster" == 2 ]]; then
 	geho "   Function output: ${ComlogTmp} "
 	echo ""
 fi
-
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -419,12 +416,13 @@ organizeDicom() {
 mkdir ${SubjectsFolder}/${CASE}/dicom &> /dev/null
 if [ "$Overwrite" == "yes" ]; then
 	echo ""
-	reho "===> Removing prior DICOM run"
+	reho "===> Removing prior DICOM run log. Will initiate new run."
 	rm -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
 fi
 echo ""
 echo "===> Checking for presence of ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
 echo ""
+# -- Check if DICOM-Report.txt is there
 if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
 	echo ""
 	geho "===> Found ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
@@ -434,24 +432,24 @@ if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
 	echo ""
 	exit 0
 fi
-
+# -- Check if inbox missing or is empty
 if [ ! -d ${SubjectsFolder}/${CASE}/inbox ]; then
-	reho "===> ${SubjectsFolder}/${CASE}/inbox not found. Make sure your DICOMs are present."; echo ""
+	reho "===> ${SubjectsFolder}/${CASE}/inbox/ not found. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
 	exit 1
 else
 	InboxCheck=`ls ${SubjectsFolder}/${CASE}/inbox/`
 	if [[ ${InboxCheck} == "" ]]; then
-		reho "===> ${SubjectsFolder}/${CASE}/inbox found but empty. Make sure your DICOMs are present."; echo ""
+		reho "===> ${SubjectsFolder}/${CASE}/inbox/ found but empty. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
 		exit 1
 	fi
 fi
-
 # -- Specify command variable
 unset CommandToRun
 CommandToRun="cd ${SubjectsFolder}/${CASE}; gmri sortDicom folder=.; gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
 # -- Connector execute function
 connectorExec
 }
+
 show_usage_organizeDicom() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
