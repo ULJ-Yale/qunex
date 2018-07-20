@@ -294,14 +294,14 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
                         print >> pfile, "#\n# " + line[0] + '\n#'
                 pfile.close()
 
-            if os.path.exists(paramfile):
-                print "---> appending parameter file [%s]." % (paramfile)
-                print >> jfile, "# Parameter file: %s\n#" % (paramfile)
-                with open(paramfile) as f:
-                    for line in f:
-                        print >> jfile, line,
-            else:
-                print "---> parameter files does not exist, skipping [%s]." % (paramfile)
+        if os.path.exists(paramfile):
+            print "---> appending parameter file [%s]." % (paramfile)
+            print >> jfile, "# Parameter file: %s\n#" % (paramfile)
+            with open(paramfile) as f:
+                for line in f:
+                    print >> jfile, line,
+        else:
+            print "---> parameter files does not exist, skipping [%s]." % (paramfile)
 
     # -- get list of subject folders
 
