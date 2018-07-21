@@ -3267,8 +3267,7 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 	fi
 	# -- Perform careful scene checks
 	if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo "Template folder path value not explicitly specified. Using MNAP defaults: ${TemplateFolder}"; fi
-	cd ${TemplateFolder}
-	if ls ./*scene 1> /dev/null 2>&1; then geho "" else reho "Error: Specified ${TemplateFolder} folder empty. Check scenes and re-run. Reverting to defaults."; TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo "$TemplateFolder"; echo ""; fi
+	if ls ${TemplateFolder}/*scene 1> /dev/null 2>&1; then geho "Scene files present in ${TemplateFolder}. Proceeding."; echo ""; else reho "Error: Specified ${TemplateFolder} folder empty. Check scenes and re-run. Reverting to defaults: ${TOOLS}/${MNAPREPO}/library/data/scenes/qc/"; TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo ""; fi
 	if [ -z "$OutPath" ]; then OutPath="${SubjectsFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
 	if [ -z "$SceneZip" ]; then SceneZip="yes"; echo "Generation of scene zip file not explicitly provided. Using default: ${SceneZip}"; fi
 	# -- DWI modality-specific settings:
