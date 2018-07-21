@@ -593,8 +593,8 @@ if [ "$Modality" == "BOLD" ]; then
 		ymin=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
 		
 		# -- Rsync over template files for a given BOLD
-		Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null "
-		Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null "
+		Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null "
+		Com2="rsync -aWH ${TemplateFolder}/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null "
 		
 		# -- Setup naming conventions before generating scene
 		Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
@@ -689,7 +689,7 @@ Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &
 Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
 Com5="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
 Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-		
+
 # -- Perform checks if modality is T1w
 if [ "$Modality" == "T1w" ]; then
 	# -- Check if Preprocessed T1w files are present
