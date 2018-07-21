@@ -240,7 +240,7 @@ if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
 if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; fi
 if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey: $TURNKEY_TYPE"; fi
-if [ -z "$OVERWRITE" ]; then OVERWRITE="OVERWRITE_SUBJECT"; fi
+if [ -z "$OVERWRITE" ] && if [ ! -z "$OVERWRITE_SUBJECT" ] ; then OVERWRITE="OVERWRITE_SUBJECT"; fi
 
 # -- Define additional variables
 local scriptName=$(basename ${0})
@@ -291,7 +291,7 @@ if [[ ${OVERWRITE_PROJECT} == "yes" ]]; then
 		reho "   Skipping project overwrite."; echo ""
 	fi
 fi
-if [[ ${OVERWRITE_SUBJECT} == "yes" ]]; then
+if [[ ${OVERWRITE} == "yes" ]]; then
 	reho "-- Removing ${mnap_workdir}."; echo ""
 	rm -rf ./${mnap_workdir}/ &> /dev/null
 fi
