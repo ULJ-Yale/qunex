@@ -2508,7 +2508,8 @@ echo ""
 echo "-- OPTIONAL PARMETERS:"
 echo ""
 echo "--overwrite=<clean_prior_run>                                    Delete prior QC run"
-echo "--templatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/templates)"
+echo "--templatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/scenes/qc)"
+echo "                                                                 Note: relevant scene template data has to be in the same folder as the template scenes"
 echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
 echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
 echo "--scenezip=<zip_generate_scene_file>                             Generates a ZIP file with the scene and all relevant files for Connectome Workbench visualization [yes]"
@@ -2516,6 +2517,9 @@ echo "                                                                 Note: If 
 echo "                                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
 echo "                                                                 The scene zip file will be saved to: "
 echo "                                                                     /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
+echo "--userscenefile=<user_specified_scene_file>                      User-specified scene file. --modality info is still required to ensure correct run. Relevant data needs to be provided. Default []"
+echo "--userscenepath=<user_specified_scene_data_path>                      Path for user-specified data that is used for user-specified scene file. --modality info is still required to ensure correct run. Default []"
+
 echo ""
 echo "--scheduler=<name_of_cluster_scheduler_and_options>              A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo "                                                                     e.g. for SLURM the string would look like this: "
@@ -3085,6 +3089,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	# -- QCPreproc input flags
 	OutPath=`opts_GetOpt "${setflag}outpath" $@`
 	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@`
+	UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
 	Modality=`opts_GetOpt "${setflag}modality" $@`
 	DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
 	DWIData=`opts_GetOpt "${setflag}dwidata" $@`
@@ -3266,8 +3271,13 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 	fi
 	# -- Perform careful scene checks
-	if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo "Template folder path value not explicitly specified. Using MNAP defaults: ${TemplateFolder}"; fi
-	if ls ${TemplateFolder}/*scene 1> /dev/null 2>&1; then geho "Scene files present in ${TemplateFolder}. Proceeding."; echo ""; else reho "Error: Specified ${TemplateFolder} folder empty. Check scenes and re-run. Reverting to defaults: ${TOOLS}/${MNAPREPO}/library/data/scenes/qc/"; TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo ""; fi
+	if [-z "$UserSceneFile" ]; then
+		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo "Template folder path value not explicitly specified. Using MNAP defaults: ${TemplateFolder}"; fi
+		if ls ${TemplateFolder}/*scene 1> /dev/null 2>&1; then geho "Scene files found in ${TemplateFolder} "; echo ""; else reho "Error: Specified ${TemplateFolder} folder empty. Check scenes and re-run. Reverting to defaults: ${TOOLS}/${MNAPREPO}/library/data/scenes/qc/"; TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo ""; fi
+	else
+		if ls ${UserSceneFile} 1> /dev/null 2>&1; then geho "User scene file: ${UserSceneFile} "; echo ""; else reho "Error: Specified ${UserSceneFile} not found. Check your inputs and re-run"; echo ""; exit 1; fi
+	fi
+	
 	if [ -z "$OutPath" ]; then OutPath="${SubjectsFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
 	if [ -z "$SceneZip" ]; then SceneZip="yes"; echo "Generation of scene zip file not explicitly provided. Using default: ${SceneZip}"; fi
 	# -- DWI modality-specific settings:
@@ -3302,7 +3312,8 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 	echo "   Study Log Folder: ${MasterLogFolder}"
 	echo "   QC Modality: ${Modality}"
 	echo "   QC Output Path: ${OutPath}"
-	echo "   QC Scene Template: ${TemplateFolder}"
+	echo "   QC Scene Template Folder: ${TemplateFolder}"
+	echo "   QC User-defined Scene: ${UserSceneFile}"
 	echo "   Overwrite prior run: ${Overwrite}"
 	echo "   Zip Scene File: ${SceneZip}"
 	if [ "   $Modality" = "DWI" ]; then
