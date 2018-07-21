@@ -240,7 +240,7 @@ if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
 if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; fi
 if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey: $TURNKEY_TYPE"; fi
-if [ -z "$OVERWRITE" ] && if [ ! -z "$OVERWRITE_SUBJECT" ] ; then OVERWRITE="OVERWRITE_SUBJECT"; fi
+if [ -z "$OVERWRITE" ] && [ ! -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE="OVERWRITE_SUBJECT"; fi
 
 # -- Define additional variables
 local scriptName=$(basename ${0})
