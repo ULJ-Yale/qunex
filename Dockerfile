@@ -62,7 +62,7 @@ ENV TOOLS="/opt"
 # -- Set environment & Set Octave as default & Clear apt cache and other empty folders
 RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.bashrc && \
     touch ~/.mnapuseoctave && \
-    cd /matlab/gmri/@gmrimage/ && \
+    cd matlab/gmri/\@gmrimage && \
     cp mri_ReadNIfTImx_Octave.cpp mri_ReadNIfTImx.cpp && \
     cp mri_SaveNIfTImx_Octave.cpp mri_SaveNIfTImx.cpp && \
     octave mkoctfile --mex -lz -std=c++11 mri_ReadNIfTImx.cpp g_nifti.c znzlib.c && \
