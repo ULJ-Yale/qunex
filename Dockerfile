@@ -67,11 +67,6 @@ RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.b
     cp mri_SaveNIfTImx_Octave.cpp mri_SaveNIfTImx.cpp && \
     octave mkoctfile --mex -lz -std=c++11 mri_ReadNIfTImx.cpp g_nifti.c znzlib.c && \
     octave mkoctfile --mex -lz -std=c++11 mri_SaveNIfTImx.cpp g_nifti.c znzlib.c && \
-#    echo "pkg load general" >> ~/.octaverc && \
-#    echo "pkg load io" >> ~/.octaverc && \
-#    echo "pkg load miscellaneous" >> ~/.octaverc && \
-#    echo "pkg load optim" >> ~/.octaverc && \
-#    echo "pkg load struct" >> ~/.octaverc && \
     rm mri_ReadNIfTImx.cpp && \
     rm mri_SaveNIfTImx.cpp && \
     rm g_nifti.o && \
