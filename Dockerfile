@@ -65,10 +65,8 @@ RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.b
     cd matlab/gmri/\@gmrimage && \
     cp mri_ReadNIfTImx_Octave.cpp mri_ReadNIfTImx.cpp && \
     cp mri_SaveNIfTImx_Octave.cpp mri_SaveNIfTImx.cpp && \
-    octave —no-gui && \ 
     mkoctfile --mex -lz -std=c++11 mri_ReadNIfTImx.cpp g_nifti.c znzlib.c && \
     mkoctfile --mex -lz -std=c++11 mri_SaveNIfTImx.cpp g_nifti.c znzlib.c && \
-    exit && \
     rm mri_ReadNIfTImx.cpp && \
     rm mri_SaveNIfTImx.cpp && \
     rm g_nifti.o && \
