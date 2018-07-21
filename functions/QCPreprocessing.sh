@@ -310,7 +310,7 @@ if [ -z ${Modality} ]; then
     exit 1
 fi
 if [ -z "$TemplateFolder" ]; then
-    TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/"
+    TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
     echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; echo ""
 fi
 if [ -z ${TimeStamp} ]; then
@@ -597,7 +597,7 @@ if [ "$Modality" == "BOLD" ]; then
 		Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null "
 		
 		# -- Setup naming conventions before generating scene
-		Com3="cp ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 		Com4="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
 		Com5="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 		Com6="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
@@ -681,9 +681,9 @@ fi
 # --------------------------------------------------------------------------------
 
 # -- Rsync over template files for a given modality
-Com1="rsync -aWH ${TemplateFolder}/atlases/HCP/S900* ${OutPath}/ &> /dev/null"
-Com2="rsync -aWH ${TemplateFolder}/atlases/MNITemplates/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"
-Com3="rsync -aWH ${TemplateFolder}/scenes/qc/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
+Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
+Com2="rsync -aWH ${TemplateFolder}/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"
+Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
 
 # -- Setup naming conventions before generating scene
 Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"

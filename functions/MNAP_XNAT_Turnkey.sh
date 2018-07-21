@@ -147,16 +147,17 @@ usage() {
     echo "   --xnathostname=<XNAT_site_URL> \ "
     echo "   --xnatuser=<your_username> \ "
     echo ""
+    exit 0
 }
 
+reset
+
 # -- Check help call
-if [[ -z $1 ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
 	usage
-	exit 0
 fi
 
 # -- Clear variables
-reset
 unset BATCH_PARAMETERS_FILENAME
 unset OVERWRITE
 unset OVERWRITE_PROJECT
@@ -243,7 +244,7 @@ if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey
 if [ -z "$OVERWRITE" ] && [ ! -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE="OVERWRITE_SUBJECT"; fi
 
 # -- Define additional variables
-local scriptName=$(basename ${0})
+scriptName=$(basename ${0})
 if [[ -z ${STUDY_PATH} ]]; then
 	workdir="/output"
 	mnap_studyfolder="${workdir}/${XNAT_PROJECT_ID}"
@@ -283,17 +284,17 @@ echo ""
 # -- Check if overwrite is set to yes for subject and project
 if [[ ${OVERWRITE_PROJECT} == "yes" ]]; then
 	if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABEL" ]]; then 
-		reho "-- Found only ${XNAT_SESSION_LABEL} in ${mnap_subjectsfolder}."
-		reho "   Removing entire project folder."; echo ""
-		rm -rf ./${mnap_studyfolder}/ &> /dev/null
+		reho "-- ${XNAT_SESSION_LABEL} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
+		reho "   Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
+		rm -rf ${mnap_studyfolder}/ &> /dev/null
 	else
 		reho "-- There are more than ${XNAT_SESSION_LABEL} directories ${mnap_studyfolder}."
-		reho "   Skipping project overwrite."; echo ""
+		reho "   Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
 	fi
 fi
 if [[ ${OVERWRITE} == "yes" ]]; then
 	reho "-- Removing ${mnap_workdir}."; echo ""
-	rm -rf ./${mnap_workdir}/ &> /dev/null
+	rm -rf ${mnap_workdir} &> /dev/null
 fi
 
 # -- Create study hieararchy and generate subject folders
