@@ -259,6 +259,7 @@ Change Log
 * 0.16.03 [niutilities connector] Fixed a bug in sortDicom and createBatch, resolved realtime logging for python commands
 * 0.16.04 [niutilities connector] Small updates to completion logging
 * 0.16.05 [library] Updates to environment code
+* 0.16.06 [library] CARET7DIR points to WORKBENCHDIR to ensure across-system robust functionality
 
 =======
 [Mind and Brain Lab]: http://mblab.si
