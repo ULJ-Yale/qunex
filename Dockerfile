@@ -47,7 +47,7 @@
 ##
 
 # -- Define docker image location
-FROM ztamayo/mnap_deps2:latest
+FROM ztamayo/mnap_deps2:test
 
 # -- Define where the mnaptools repo resides on the image
 ADD . /opt/mnaptools
@@ -65,8 +65,8 @@ RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.b
     cd matlab/gmri/\@gmrimage && \
     cp mri_ReadNIfTImx_Octave.cpp mri_ReadNIfTImx.cpp && \
     cp mri_SaveNIfTImx_Octave.cpp mri_SaveNIfTImx.cpp && \
-    mkoctfile --mex -lz -std=c++11 mri_ReadNIfTImx.cpp g_nifti.c znzlib.c && \
-    mkoctfile --mex -lz -std=c++11 mri_SaveNIfTImx.cpp g_nifti.c znzlib.c && \
+    mkoctfile --mex -lz  mri_ReadNIfTImx.cpp g_nifti.c znzlib.c && \
+    mkoctfile --mex -lz  mri_SaveNIfTImx.cpp g_nifti.c znzlib.c && \
     rm mri_ReadNIfTImx.cpp && \
     rm mri_SaveNIfTImx.cpp && \
     rm g_nifti.o && \
