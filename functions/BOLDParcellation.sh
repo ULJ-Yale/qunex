@@ -87,6 +87,7 @@ usage() {
      echo "--outname='<name_of_output_pconn_file>' \ "
      echo "--outpath='<path_for_output_file>'"
      echo ""
+     exit 0
 }
 
 
@@ -101,6 +102,14 @@ reho() {
 geho() {
     echo -e "\033[32m $1 \033[0m"
 }
+
+# ------------------------------------------------------------------------------
+# -- Check for help
+# ------------------------------------------------------------------------------
+
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
+	usage
+fi
 
 # ------------------------------------------------------------------------------
 # -- Check if command line arguments are specified
@@ -165,7 +174,7 @@ while [ ${index} -lt ${numArgs} ]; do
     case ${argument} in
         --help)
             usage
-            exit 1
+            exit 0
             ;;
         --version)
             version_show $@
@@ -240,7 +249,7 @@ done
 if [ -z ${SingleInputFile} ]; then
 		if [ -z ${SubjectsFolder} ]; then
 		    usage
-    	    reho "ERROR: <subjects-folder-path> not specified>"
+		    reho "ERROR: <subjects-folder-path> not specified>"
 		    echo ""
 		    exit 1
 		fi

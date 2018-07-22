@@ -78,6 +78,7 @@ usage() {
  echo "--extractdata='yes' \ "
  echo "--outname='<name_of_output_pconn_file>' "
  echo ""
+ exit 0
 }
 
 
@@ -92,6 +93,14 @@ reho() {
 geho() {
     echo -e "\033[32m $1 \033[0m"
 }
+
+# ------------------------------------------------------------------------------
+# -- Check for help
+# ------------------------------------------------------------------------------
+
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
+	usage
+fi
 
 # ------------------------------------------------------------------------------
 # -- Parse and check all arguments
@@ -133,7 +142,6 @@ while [ ${index} -lt ${numArgs} ]; do
     case ${argument} in
         --help)
             usage
-            exit 1
             ;;
         --version)
             version_show $@

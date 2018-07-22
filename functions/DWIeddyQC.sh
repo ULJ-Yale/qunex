@@ -118,7 +118,7 @@ usage() {
      echo " - group_qc.pdf: single subject QC report "
      echo " - group_qc.db: database"  
      echo ""
-     echo ""  
+     exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -132,6 +132,14 @@ reho() {
 geho() {
     echo -e "\033[32m $1 \033[0m"
 }
+
+# ------------------------------------------------------------------------------
+# -- Check for help
+# ------------------------------------------------------------------------------
+
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
+	usage
+fi
 
 ################# CHECK eddy_squad and eddy_squad INSTALL ################################
 
@@ -196,7 +204,6 @@ while [ ${index} -lt ${numArgs} ]; do
     case ${argument} in
         --help)
             usage
-            exit 1
             ;;
         --version)
             version_show $@

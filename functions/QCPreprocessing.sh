@@ -97,7 +97,8 @@ usage() {
      echo "-- OPTIONAL PARMETERS:"
      echo "" 
      echo "--overwrite=<clean_prior_run>                                    Delete prior QC run"
-     echo "--templatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/templates)"
+     echo "--templatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/scenes/qc)"
+     echo "                                                                 Note: relevant scene template data has to be in the same folder as the template scenes"
      echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
      echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
      echo "--scenezip=<zip_generate_scene_file>                             Generates a ZIP file with the scene and all relevant files for Connectome Workbench visualization [yes]"
@@ -105,13 +106,12 @@ usage() {
      echo "                                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
      echo "                                                                 The scene zip file will be saved to: "
      echo "                                                                     /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
+     echo "--userscenefile=<user_specified_scene_file>                      User-specified scene file name. --modality info is still required to ensure correct run. Relevant data needs to be provided. Default []"
+     echo "--userscenepath=<user_specified_scene_data_path>                 Path for user-specified scene and relevant data in the same location. --modality info is still required to ensure correct run. Default []"
      echo ""
-     echo "--scheduler=<name_of_cluster_scheduler_and_options>              A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-     echo "                                                                     e.g. for SLURM the string would look like this: "
-     echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
      echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
      echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
-     echo "" 
+     echo ""
      echo ""
      echo "-- Complete examples for each supported modality:"
      echo ""
@@ -166,7 +166,7 @@ usage() {
      echo "--boldsuffix='Atlas' \ "
      echo "--overwrite='yes'"
      echo ""
-     echo ""
+     exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -180,6 +180,14 @@ reho() {
 geho() {
     echo -e "\033[32m $1 \033[0m"
 }
+
+# ------------------------------------------------------------------------------
+# -- Check for help
+# ------------------------------------------------------------------------------
+
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
+	usage
+fi
 
 # ------------------------------------------------------------------------------
 # -- Parse and check all arguments
@@ -205,20 +213,6 @@ for fn in "$@" ; do
 done
 }
 
-opts_CheckForHelpRequest() {
-for fn in "$@" ; do
-	if [ "$fn" = "--help" ]; then
-		return 0
-	fi
-done
-}
-
-if [ $(opts_CheckForHelpRequest $@) ]; then
-	showVersion
-	show_usage
-	exit 0
-fi
-
 # -- Get the command line options for this script
 
 # -- Initialize global variables
@@ -227,6 +221,8 @@ unset CASE # --subject=
 unset Overwrite # --overwrite=
 unset OutPath # --outpath
 unset TemplateFolder # --templatefolder
+unset UserSceneFile # --userscenefile
+unset UserScenePath # --userscenepath
 unset Modality # --modality
 unset DWIPath # --dwipath
 unset DWIData  # --dwidata
@@ -251,7 +247,8 @@ Overwrite=`opts_GetOpt "--overwrite" $@`
 OutPath=`opts_GetOpt "--outpath" $@`
 TemplateFolder=`opts_GetOpt "--templatefolder" $@`
 Modality=`opts_GetOpt "--modality" $@`
-
+UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
+UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
 # -- Parse DWI arguments
 DWIPath=`opts_GetOpt "--dwipath" $@`
 DWIData=`opts_GetOpt "--dwidata" $@`
@@ -259,7 +256,6 @@ DtiFitQC=`opts_GetOpt "--dtifitqc" $@`
 BedpostXQC=`opts_GetOpt "--bedpostxqc" $@`
 EddyQCStats=`opts_GetOpt "--eddyqcstats" $@`
 DWILegacy=`opts_GetOpt "--dwilegacy" $@`
-
 # -- Parse BOLD arguments
 BOLDDATA=`opts_GetOpt "--bolddata" "$@"` #| sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
 BOLDRUNS=`opts_GetOpt "--boldruns" "$@"` #| sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
@@ -309,9 +305,12 @@ if [ -z ${Modality} ]; then
     reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; echo ""
     exit 1
 fi
-if [ -z "$TemplateFolder" ]; then
-    TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
-    echo "Template folder path value not explicitly specified. Using default: ${TemplateFolder}"; echo ""
+if [ -z "$UserSceneFile" ]; then
+	if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo "Template folder path value not explicitly specified. Using MNAP defaults: ${TemplateFolder}"; fi
+	if ls ${TemplateFolder}/*scene 1> /dev/null 2>&1; then geho "Scene files found in ${TemplateFolder} "; echo ""; else reho "Error: Specified ${TemplateFolder} folder empty. Check scenes and re-run. Reverting to defaults: ${TOOLS}/${MNAPREPO}/library/data/scenes/qc/"; TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo ""; fi
+else
+	if [ -z "$UserScenePath" ]; then reho "Path for user scene file not specified. Check your inputs and re-run"; echo ""; exit 1; fi
+	if ls ${UserScenePath}/${UserSceneFile} 1> /dev/null 2>&1; then TemplateFolder=${UserScenePath}; geho "User scene file: ${TemplateFolder}/${UserSceneFile} "; echo ""; else reho "Error: Specified ${UserScenePath}/${UserSceneFile} not found. Check your inputs and re-run"; echo ""; exit 1; fi
 fi
 if [ -z ${TimeStamp} ]; then
    TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
@@ -391,7 +390,8 @@ echo "  Subject Folder: ${SubjectsFolder}"
 echo "  Subject: ${CASE}"
 echo "  QC Modality: ${Modality}"
 echo "  QC Output Path: ${OutPath}"
-echo "  QC Scene Template: ${TemplateFolder}"
+echo "   QC Scene Template Folder: ${TemplateFolder}"
+echo "   QC User-defined Scene: ${UserSceneFile}"
 echo "  Overwrite prior run: ${Overwrite}"
 echo "  Time stamp for logging: ${TimeStamp}"
 echo "  Zip Scene File: ${SceneZip}"
@@ -425,30 +425,40 @@ echo ""
 
 main() {
 
+# ${CASE}.${Modality}.QC.wb.scene
+
+if [ ! -z "$UserSceneFile" ]; then
+	TemplateSceneFile"${UserSceneFile}"
+	WorkingSceneFile="${CASE}.${Modality}.${UserSceneFile}"
+else
+	TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
+	WorkingSceneFile="${CASE}.${Modality}.QC.wb.scene"
+fi
+
 # -- Check of overwrite flag was set
-if [ "$Overwrite" == "yes" ]; then
+if [ ${Overwrite} == "yes" ]; then
 	echo ""
-	reho " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+	reho " --- Removing existing ${Modality} QC scene: ${OutPath}/${WorkingSceneFile} "
 	echo ""
-	if [ "$Modality" == "BOLD" ]; then
+	if [ ${Modality} == "BOLD" ]; then
 		for BOLD in $BOLDS
 		do
 			rm -f ${OutPath}/${CASE}.${Modality}.${BOLD}.* &> /dev/null
 		done
 	else
-		rm -f "$OutPath"/${CASE}."$Modality".* &> /dev/null
+		rm -f ${OutPath}/${CASE}.${Modality}.* &> /dev/null
 	fi
 fi
 # -- Check if a given case exists
-if [ -f "$OutPath"/${CASE}."$Modality".QC.png ]; then
+if [ -f ${OutPath}/${CASE}.${Modality}.QC.png ]; then
 	echo ""
-	geho " --- ${Modality} QC scene completed: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+	geho " --- ${Modality} QC scene completed: ${OutPath}/${WorkingSceneFile}"
 	echo ""
 	return 1
 else 
 	# -- Start of generating QC
 	echo ""
-	geho " --- Generating ${Modality} QC scene: ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+	geho " --- Generating ${Modality} QC scene: ${OutPath}/${WorkingSceneFile}"
 	echo ""
 	echo ""
 	geho " --- Checking and generating output folders..."
@@ -536,6 +546,16 @@ if [ "$Modality" == "BOLD" ]; then
 		# -- Generate QC statistics for a given BOLD
 		geho "--- BOLD data specified found. Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
 		echo ""
+		if [ ! -z "$UserSceneFile" ]; then
+			WorkingSceneFile="${CASE}.${Modality}.${BOLD}.${UserSceneFile}"
+			Com1="rsync -aWH ${TemplateFolder}/* ${OutPath}/ &> /dev/null"
+			Com2="echo ''"
+		else
+			WorkingSceneFile="${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			# -- Rsync over template files for a given BOLD
+			Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null "
+			Com2="rsync -aWH ${TemplateFolder}/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null "
+		fi
 		# -- Reduce dtseries
 		wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii \
 		TSNR \
@@ -589,52 +609,48 @@ if [ "$Modality" == "BOLD" ]; then
 		fi
 		
 		# -- Get mix/max stats
-		ymax=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`	
+		ymax=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`
 		ymin=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
 		
-		# -- Rsync over template files for a given BOLD
-		Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null "
-		Com2="rsync -aWH ${TemplateFolder}/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null "
-		
 		# -- Setup naming conventions before generating scene
-		Com3="cp ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-		Com4="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
-		Com5="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-		Com6="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-		Com7="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-		Com8="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-		Com9="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com3="cp ${TemplateFolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
+		Com4="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/{WorkingSceneFile}" 
+		Com5="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/{WorkingSceneFile}"
+		Com6="sed -i -e 's|DUMMYBOLDDATA|$BOLD|g' ${OutPath}/{WorkingSceneFile}"
+		Com7="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/{WorkingSceneFile}"
+		Com8="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/{WorkingSceneFile}"
+		Com9="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/{WorkingSceneFile}"
 		
 		# -- Set the BOLDSuffix variable
-		Com10="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com10="sed -i -e 's|_DUMMYBOLDSUFFIX|$BOLDSuffix|g' ${OutPath}/{WorkingSceneFile}"
 		
 		# -- Add timestamp to the scene
-		Com11="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
-		Com12="sed -i -e 's|DUMMYBOLDANNOT|$BOLD|g' ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+		Com11="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/{WorkingSceneFile}"
+		Com12="sed -i -e 's|DUMMYBOLDANNOT|$BOLD|g' ${OutPath}/{WorkingSceneFile}"
 		
 		# -- Output image of the scene
-		Com13="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.${BOLD}.GSmap.QC.wb.png 1194 539"
-		Com14="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene 2 ${OutPath}/${CASE}.${Modality}.${BOLD}.GStimeseries.QC.wb.png 1194 539"
+		Com13="wb_command -show-scene ${OutPath}/{WorkingSceneFile} 1 ${OutPath}/{WorkingSceneFile}.GSmap.QC.wb.png 1194 539"
+		Com14="wb_command -show-scene ${OutPath}/{WorkingSceneFile} 2 ${OutPath}/{WorkingSceneFile}.GStimeseries.QC.wb.png 1194 539"
 		
 		# -- Clean temp scene
-		Com15="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene-e &> /dev/null"
+		Com15="rm ${OutPath}/{WorkingSceneFile}-e &> /dev/null"
 		
 		# -- Generate Scene Zip File if set to YES
 		if [ "$SceneZip" == "yes" ]; then
-			echo "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
-			echo "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+			geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
+			geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
 			echo ""
-			echo "--- The zip file will be saved to: "
-			echo "    ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.zip"
+			geho "--- The zip file will be saved to: "
+			geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
 			echo ""
 			RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-			Com16="cp ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
-			Com17="rm ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.*.zip &> /dev/null "
-			Com18="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene" 
-			Com19="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene pb0986.${Modality}.${BOLD}.QC.wb.${TimeStamp} ${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-			Com20="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.${BOLD}.QC.wb.scene"
+			Com16="cp ${OutPath}/{WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+			Com17="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip &> /dev/null "
+			Com18="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/{WorkingSceneFile}" 
+			Com19="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/{WorkingSceneFile} {WorkingZipFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+			Com20="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/{WorkingSceneFile}"
 			Com21="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-			Com22="cp ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+			Com22="cp ${OutPath}/{WorkingZipFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
 		fi
 		
 		# -- Combine all the calls into a single command
@@ -654,10 +670,10 @@ if [ "$Modality" == "BOLD" ]; then
 		
 		# -- Check if Scene Zip file generated OK
 		if [ "$SceneZip" == "yes" ]; then
-			if [ -f ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip ]; then
+			if [ -f ${OutPath}/{WorkingZipFile}.${TimeStamp}.zip ]; then
 				echo ""
 				echo "--- Scene zip file found and generated: "
-				echo "    ${OutPath}/${CASE}.${Modality}.${BOLD}.QC.wb.${TimeStamp}.zip " 
+				echo "    ${OutPath}/{WorkingZipFile}.${TimeStamp}.zip " 
 				echo ""
 			else
 				echo ""
@@ -681,14 +697,21 @@ fi
 # --------------------------------------------------------------------------------
 
 # -- Rsync over template files for a given modality
-Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
-Com2="rsync -aWH ${TemplateFolder}/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"
-Com3="rsync -aWH ${TemplateFolder}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath} &> /dev/null"
-
+if [ ! -z "$UserSceneFile" ]; then
+	WorkingSceneFile="${CASE}.${Modality}.${UserSceneFile}"
+	Com1="rsync -aWH ${TemplateFolder}/* ${OutPath}/ &> /dev/null"
+	Com2="echo ''"
+else
+	WorkingSceneFile="${CASE}.${Modality}.QC.wb.scene"
+	# -- Rsync over template files for a given BOLD
+	Com1="rsync -aWH ${TemplateFolder}/S900* ${OutPath}/ &> /dev/null"
+	Com2="rsync -aWH ${TemplateFolder}/MNI152_*_0.7mm.nii.gz ${OutPath}/ &> /dev/null"
+fi
+Com3="rsync -aWH ${TemplateFolder}/${TemplateSceneFile} ${OutPath} &> /dev/null"
 # -- Setup naming conventions before generating scene
-Com4="cp ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
-Com5="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene" 
-Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+Com4="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/{WorkingSceneFile}"
+Com5="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/{WorkingSceneFile}" 
+Com6="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/{WorkingSceneFile}"
 
 # -- Perform checks if modality is T1w
 if [ "$Modality" == "T1w" ]; then
@@ -788,13 +811,18 @@ if [ "$Modality" == "DWI" ]; then
 		# -- Clean split volumes
 		Com6d="rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split* &> /dev/null"
 		# -- Setup naming conventions for DWI before generating scene
-		Com6e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+		Com6e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/{WorkingSceneFile}"
 		Com6="$Com6; $Com6a; $Com6b; $Com6c; $Com6d; $Com6e"
 		# --------------------------------------------------
 		# -- Check if DTIFIT and BEDPOSTX flags are set
 		# --------------------------------------------------
 		# -- If dtifit qc is selected then generate dtifit scene
 		if [ "$DtiFitQC" == "yes" ]; then
+			if [ ! -z "$UserSceneFile" ]; then
+				WorkingDTISceneFile="${CASE}.${Modality}.dtifit.${UserSceneFile}"
+			else
+				WorkingDTISceneFile="${CASE}.${Modality}.dtifit.QC.wb.scene"
+			fi
 			echo ""
 			geho "--- QC for FSL dtifit requested. Checking if dtifit was completed..."
 			echo ""
@@ -810,11 +838,11 @@ if [ "$Modality" == "DWI" ]; then
 				geho "    --> FSL dtifit results found here: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/"
 				echo ""
 				# -- Replace DWI scene specifications with the dtifit results
-				Com6g1="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-				Com6g2="sed -i -e 's|1st frame|dti FA|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-				Com6g3="sed -i -e 's|10th frame|dti L3|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-				Com6g4="sed -i -e 's|data_frame1_brain.nii.gz|dti_FA.nii.gz|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-				Com6g5="sed -i -e 's|data_frame10_brain.nii.gz|dti_L3.nii.gz|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
+				Com6g1="cp ${OutPath}/{WorkingSceneFile} ${OutPath}/${WorkingDTISceneFile}"
+				Com6g2="sed -i -e 's|1st frame|dti FA|g' ${OutPath}/${WorkingDTISceneFile}"
+				Com6g3="sed -i -e 's|10th frame|dti L3|g' ${OutPath}/${WorkingDTISceneFile}"
+				Com6g4="sed -i -e 's|data_frame1_brain.nii.gz|dti_FA.nii.gz|g' ${OutPath}/${WorkingDTISceneFile}"
+				Com6g5="sed -i -e 's|data_frame10_brain.nii.gz|dti_L3.nii.gz|g' ${OutPath}/${WorkingDTISceneFile}"
 				# -- Combine dtifit commands
 				Com6g="$Com6g1; $Com6g2; $Com6g3; $Com6g4; $Com6g5"
 				# -- Combine DWI commands
@@ -826,6 +854,11 @@ if [ "$Modality" == "DWI" ]; then
 		fi
 		# -- If bedpostx qc is selected then generate bedpostx scene
 		if [ "$BedpostXQC" == "yes" ]; then
+			if [ ! -z "$UserSceneFile" ]; then
+				WorkingBedpostXSceneFile="${CASE}.${Modality}.bedpostx.${UserSceneFile}"
+			else
+				WorkingBedpostXSceneFile="${CASE}.${Modality}.bedpostx.QC.wb.scene"
+			fi
 			echo ""
 			geho "--- QC for FSL BedpostX requested. Checking if BedpostX was completed..."
 			echo ""
@@ -843,14 +876,14 @@ if [ "$Modality" == "DWI" ]; then
 						geho "    --> BedpostX outputs found and completed here: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
 						echo ""
 						# -- Replace DWI scene specifications with the dtifit results
-						Com6h1="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						Com6h2="sed -i -e 's|1st frame|mean d diffusivity|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						Com6h3="sed -i -e 's|10th frame|mean f anisotropy|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						Com6h4="sed -i -e 's|$DWIPath/data_frame1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						Com6h5="sed -i -e 's|$DWIPath/data_frame10_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-						# -- combine dtifit commands
+						Com6h1="cp ${OutPath}/{WorkingSceneFile} ${OutPath}/${WorkingBedpostXSceneFile}"
+						Com6h2="sed -i -e 's|1st frame|mean d diffusivity|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+						Com6h3="sed -i -e 's|10th frame|mean f anisotropy|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+						Com6h4="sed -i -e 's|$DWIPath/data_frame1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+						Com6h5="sed -i -e 's|$DWIPath/data_frame10_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+						# -- combine BedpostX commands
 						Com6h="$Com6h1; $Com6h2; $Com6h3; $Com6h4; $Com6h5"
-						# -- Combine DWI commands
+						# -- Combine BedpostX commands
 						Com6="$Com6; $Com6h"
 					fi
 				fi
@@ -896,27 +929,27 @@ if [ "$Modality" == "DWI" ]; then
 fi
 
 # -- Add timestamp to the scene
-Com7="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.QC.wb.scene"
+Com7="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/{WorkingSceneFile}"
 
 # -- Output image of the scene
-Com8="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.QC.png 1194 539"
+Com8="wb_command -show-scene ${OutPath}/{WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.png 1194 539"
 
 # -- Check if dtifit is requested
 if [ "$DtiFitQC" == "yes" ]; then
-	Com8a="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene"
-	Com8b="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.dtifit.QC.png 1194 539"
+	Com8a="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingDTISceneFile}"
+	Com8b="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene 1 ${OutPath}/${WorkingDTISceneFile}.png 1194 539"
 	Com8="$Com8; $Com8a; $Com8b"
 fi
 # -- Check of bedpostx QC is requested
 if [ "$BedpostXQC" == "yes" ]; then
-	Com8c="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene"
-	Com8d="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${CASE}.${Modality}.bedpostx.QC.png 1194 539"
+	Com8c="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+	Com8d="wb_command -show-scene ${OutPath}/${CASE}.${Modality}.bedpostx.QC.wb.scene 1 ${OutPath}/${WorkingBedpostXSceneFile}.png 1194 539"
 	Com8="$Com8; $Com8c; $Com8d"
 fi
 
 # -- Clean templates and files for next subject
-Com9="rm ${OutPath}/${CASE}.${Modality}.QC.wb.scene-e &> /dev/null"
-Com10="rm ${OutPath}/TEMPLATE.${Modality}.QC.wb.scene &> /dev/null"
+Com9="rm ${OutPath}/{WorkingSceneFile}-e &> /dev/null"
+Com10="rm ${OutPath}/${TemplateSceneFile} &> /dev/null"
 Com11="rm -f ${OutPath}/data_split*"
 
 # -- Generate Scene Zip File if set to YES
@@ -925,26 +958,26 @@ if [ "$SceneZip" == "yes" ]; then
 	geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
 	echo ""
 	geho "--- The zip file will be saved to: "
-	geho "    ${OutPath}/${CASE}.${Modality}.QC.wb.${TimeStamp}.zip "
+	geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
 	echo ""
 	RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com12a="cp ${OutPath}/${CASE}.${Modality}.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com12b="rm ${OutPath}/${CASE}.${Modality}.QC.wb.*.zip &> /dev/null"
-	Com12c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene" 
-	Com12d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene pb0986.${Modality}.QC.wb.${TimeStamp} ${CASE}.${Modality}.QC.wb.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-	Com12e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${CASE}.${Modality}.QC.wb.scene"
+	Com12a="cp ${OutPath}/{WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+	Com12b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
+	Com12c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}" 
+	Com12d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile} {WorkingZipFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+	Com12e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}"
 	Com12f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-	Com12g="cp ${OutPath}/${CASE}.${Modality}.QC.wb.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+	Com12g="cp ${OutPath}/{WorkingZipFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
 	Com12="$Com12a; $Com12b; $Com12c; $Com12d; $Com12e; $Com12f; $Com12g"
 fi
 
 # -- Generate Zip files for dtifit and bedpostx scenes if requested
 if [ "$DtiFitQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
-	geho "--- Scene zip set to: $SceneZip. BedpostXQC set to: $DtiFitQC. Relevant scene files will be zipped using the following base folder:" 
+	geho "--- Scene zip set to: $SceneZip. DtiFitQC set to: $DtiFitQC. Relevant scene files will be zipped using the following base folder:" 
 	geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
 	echo ""
 	geho "--- The zip file will be saved to: "
-	geho "    ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.${TimeStamp}.zip"
+	geho "    ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip"
 	echo ""
 	RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
 	Com13a="cp ${OutPath}/${CASE}.${Modality}.dtifit.QC.wb.scene ${SubjectsFolder}/${CASE}/hcp/${CASE}"

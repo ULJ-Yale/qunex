@@ -403,7 +403,7 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
 connectorExec
 }
 show_usage_MNAPXNATTurnkey() {
-. ${TOOLS}/${MNAPREPO}/connector/functions/MNAP_XNAT_Turnkey.sh
+bash ${TOOLS}/${MNAPREPO}/connector/functions/MNAP_XNAT_Turnkey.sh
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -2517,17 +2517,13 @@ echo "                                                                 Note: If 
 echo "                                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
 echo "                                                                 The scene zip file will be saved to: "
 echo "                                                                     /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
-echo "--userscenefile=<user_specified_scene_file>                      User-specified scene file. --modality info is still required to ensure correct run. Relevant data needs to be provided. Default []"
-echo "--userscenepath=<user_specified_scene_data_path>                      Path for user-specified data that is used for user-specified scene file. --modality info is still required to ensure correct run. Default []"
-
-echo ""
+echo "--userscenefile=<user_specified_scene_file>                      User-specified scene file name. --modality info is still required to ensure correct run. Relevant data needs to be provided. Default []"
+echo "--userscenepath=<user_specified_scene_data_path>                 Path for user-specified scene and relevant data in the same location. --modality info is still required to ensure correct run. Default []"
+echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
+echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
 echo "--scheduler=<name_of_cluster_scheduler_and_options>              A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo "                                                                     e.g. for SLURM the string would look like this: "
 echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
-echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
-echo ""
-echo ""
 echo ""
 echo "-- Example with flagged parameters for a local run:"
 echo ""
@@ -3084,12 +3080,12 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
 	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`
 	# -- AWSHCPSync input flags
-	Modality=`opts_GetOpt "${setflag}modality" $@`
 	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`
 	# -- QCPreproc input flags
 	OutPath=`opts_GetOpt "${setflag}outpath" $@`
 	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@`
 	UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
+	UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
 	Modality=`opts_GetOpt "${setflag}modality" $@`
 	DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
 	DWIData=`opts_GetOpt "${setflag}dwidata" $@`
@@ -3271,11 +3267,12 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 	fi
 	# -- Perform careful scene checks
-	if [-z "$UserSceneFile" ]; then
+	if [ -z "$UserSceneFile" ]; then
 		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo "Template folder path value not explicitly specified. Using MNAP defaults: ${TemplateFolder}"; fi
 		if ls ${TemplateFolder}/*scene 1> /dev/null 2>&1; then geho "Scene files found in ${TemplateFolder} "; echo ""; else reho "Error: Specified ${TemplateFolder} folder empty. Check scenes and re-run. Reverting to defaults: ${TOOLS}/${MNAPREPO}/library/data/scenes/qc/"; TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo ""; fi
 	else
-		if ls ${UserSceneFile} 1> /dev/null 2>&1; then geho "User scene file: ${UserSceneFile} "; echo ""; else reho "Error: Specified ${UserSceneFile} not found. Check your inputs and re-run"; echo ""; exit 1; fi
+		if [ -z "$UserScenePath" ]; then reho "Path for user scene file not specified. Check your inputs and re-run"; echo ""; exit 1; fi
+		if ls ${UserScenePath}/${UserSceneFile} 1> /dev/null 2>&1; then TemplateFolder=${UserScenePath}; geho "User scene file: ${TemplateFolder}/${UserSceneFile} "; echo ""; else reho "Error: Specified ${UserScenePath}/${UserSceneFile} not found. Check your inputs and re-run"; echo ""; exit 1; fi
 	fi
 	
 	if [ -z "$OutPath" ]; then OutPath="${SubjectsFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi

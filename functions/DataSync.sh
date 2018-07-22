@@ -50,7 +50,7 @@
 # -- General help usage function
 # ------------------------------------------------------------------------------
 
-show_usage() {
+usage() {
 echo ""
 echo "-----------------------------------------------------------------------------------------------------------"
 echo "------ General usage for syncing and backing up folders and data onto local or remote servers -------------"
@@ -73,6 +73,7 @@ echo ""
 echo " Written by Alan Anticevic"
 echo ""
 echo ""
+exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -88,6 +89,14 @@ geho() {
 }
 
 # ------------------------------------------------------------------------------
+# -- Check for help
+# ------------------------------------------------------------------------------
+
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
+	usage
+fi
+
+# ------------------------------------------------------------------------------
 # -- Check if command line arguments are passed for single user setup
 # ------------------------------------------------------------------------------
 
@@ -99,7 +108,6 @@ unset CASES
 unset SyncDestination
 
 opts_GetOpt() {
-
 sopt="$1"
 shift 1
 for fn in "$@" ; do
@@ -108,29 +116,9 @@ for fn in "$@" ; do
 		return 0
 	fi
 done
-
 local scriptName=$(basename ${0})
-
 }
 
-# ------------------------------------------------------------------------------
-# -- Parse help calls
-# ------------------------------------------------------------------------------
-
-
-opts_CheckForHelpRequest() {
-for fn in "$@" ; do
-	if [ "$fn" = "--help" ]; then
-		return 0
-	fi
-done
-return 1
-}
-
-if opts_CheckForHelpRequest $@; then
-	show_usage
-	exit 0
-fi
 
 ######################################### DO WORK ##########################################
 
@@ -145,7 +133,7 @@ echo ""
 # -- Check if command line options are requested and return to default run if not
 if [ -z "$1" ]; then
 	reho "ERROR: No inputs provided!"
-	show_usage
+	usage
 else
 	# -- First check if single or double flags are set
 	doubleflag=`echo $1 | cut -c1-2`

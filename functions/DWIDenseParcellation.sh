@@ -80,6 +80,7 @@ usage() {
      echo "--overwrite='no' \ "
      echo "--outname='<output_name_suffix>'"
      echo ""
+     exit 0
 }
 
 # ------------------------------------------------------------------------------
@@ -93,6 +94,14 @@ reho() {
 geho() {
     echo -e "\033[32m $1 \033[0m"
 }
+
+# ------------------------------------------------------------------------------
+# -- Check for help
+# ------------------------------------------------------------------------------
+
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
+	usage
+fi
 
 # ------------------------------------------------------------------------------
 #  -- Parse arguments
@@ -113,13 +122,10 @@ geho() {
 # -- Outputs will be *pconn.nii files located here:
 #       DWIOutput="$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/Tractography"
 
-
 # -- Get the command line options for this script
 get_options() {
-
 local scriptName=$(basename ${0})
 local arguments=($@)
-
 # -- Initialize global output variables
 unset SubjectsFolder
 unset Subject
@@ -143,7 +149,6 @@ while [ ${index} -lt ${numArgs} ]; do
     case ${argument} in
         --help)
             usage
-            exit 1
             ;;
         --version)
             version_show $@
