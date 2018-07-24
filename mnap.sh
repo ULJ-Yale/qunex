@@ -339,7 +339,7 @@ SuccessCheck="Successful completion"
 ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 770 ${ComRun}"
 ComRunExec="${ComRun} |& tee ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep ${SuccessCheck} &> ${CompletionCheck}"
-ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo '--- DONE. Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
+ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo '  ===> Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
 ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
 # -- Run the local commands
@@ -380,7 +380,7 @@ echo "${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
 --overwritesubject="${OVERWRITE_SUBJECT}" \
 --overwriteproject="${OVERWRITE_PROJECT}" \
 --mappingfile="${SCAN_MAPPING_FILENAME}" \
---xnatsessionlabel="${XNAT_SESSION_LABEL}" \
+--xnatsessionlabels="${XNAT_SESSION_LABELS}" \
 --xnatprojectid="${XNAT_PROJECT_ID}" \
 --xnathost="${XNAT_HOST_NAME}" \
 --xnatuser="${XNAT_USER_NAME}" \
@@ -394,7 +394,7 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
 --overwritesubject="${OVERWRITE_SUBJECT}" \
 --overwriteproject="${OVERWRITE_PROJECT}" \
 --mappingfile="${SCAN_MAPPING_FILENAME}" \
---xnatsessionlabel="${XNAT_SESSION_LABEL}" \
+--xnatsessionlabels="${XNAT_SESSION_LABELS}" \
 --xnatprojectid="${XNAT_PROJECT_ID}" \
 --xnathost="${XNAT_HOST_NAME}" \
 --xnatuser="${XNAT_USER_NAME}" \
@@ -2381,6 +2381,8 @@ TemplateFolder="$TemplateFolder"
 Overwrite="$Overwrite"
 Cluster="$RunMethod"
 SceneZip="$SceneZip"
+ProcessCustomQC="$ProcessCustomQC"
+
 # -- DWI Parameters
 DWIPath="$DWIPath"
 DWIData="$DWIData"
@@ -2393,7 +2395,8 @@ BOLDS="$BOLDS"
 BOLDPrefix="$BOLDPrefix"
 BOLDSuffix="$BOLDSuffix"
 SkipFrames="$SkipFrames"
-SNROnly="SNROnly"
+SNROnly="$SNROnly"
+
 # -- Check general output folders for QC
 if [ ! -d ${SubjectsFolder}/QC ]; then
 	mkdir -p ${SubjectsFolder}/QC &> /dev/null
@@ -2417,6 +2420,8 @@ geho "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --overwrite=${Overwrite} \
 --templatefolder=${TemplateFolder} \
 --modality=${Modality} \
+--processcustom=${ProcessCustomQC} \
+--omitdefaults=${OmitDefaults} \
 --dwipath=${DWIPath} \
 --dwidata=${DWIData} \
 --dwilegacy=${DWILegacy} \
@@ -2440,6 +2445,8 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --overwrite='${Overwrite}' \
 --templatefolder='${TemplateFolder}' \
 --modality='${Modality}' \
+--processcustom=${ProcessCustomQC} \
+--omitdefaults=${OmitDefaults} \
 --dwipath='${DWIPath}' \
 --dwidata='${DWIData}' \
 --dwilegacy='${DWILegacy}' \
@@ -2456,7 +2463,6 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --suffix='${Suffix}'"
 # -- Connector execute function
 connectorExec
-
 }
 show_usage_QCPreproc() {
 echo ""
@@ -2521,9 +2527,27 @@ echo "--userscenefile=<user_specified_scene_file>                      User-spec
 echo "--userscenepath=<user_specified_scene_data_path>                 Path for user-specified scene and relevant data in the same location. --modality info is still required to ensure correct run. Default []"
 echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
 echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
+echo ""
+echo "  -- OPTIONAL CUSTOM QC PARAMETER:"
+echo ""
+echo "--processcustom=<yes/no>     Default is [no]. If set to 'yes' then the script looks into: "
+echo "                            ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes."
+echo "                                  Note: The provided scene has to conform to MNAP QC template standards.xw"
+echo "                                        See $TOOLS/$MNAPREPO/library/data/scenes/qc/ for example templates."
+echo "                                        The qc path has to contain relevant files for the provided scene."
+echo "--omitdefaults=<yes/no>     Default is [no]. If set to 'yes' then the script omits defaults."
+echo ""
 echo "--scheduler=<name_of_cluster_scheduler_and_options>              A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo "                                                                     e.g. for SLURM the string would look like this: "
 echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+echo ""
+echo "  -- OPTIONAL CUSTOM QC PARAMETER:"
+echo ""
+echo "    --customqc=<yes/no>     Default is [no]. If set to 'yes' then the script looks into: "
+echo "                            ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes."
+echo "                                  Note: The provided scene has to conform to MNAP QC template standards.xw"
+echo "                                        See $TOOLS/$MNAPREPO/library/data/scenes/qc/ for example templates."
+echo "                                        The qc path has to contain relevant files for the provided scene."
 echo ""
 echo "-- Example with flagged parameters for a local run:"
 echo ""
@@ -2970,7 +2994,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
 	SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
 	XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
-	XNAT_SESSION_LABEL=`opts_GetOpt "${setflag}xnatsessionlabel" $@`
+	XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" $@`
 	XNAT_PROJECT_ID=`opts_GetOpt "${setflag}xnatprojectid" $@`
 	XNAT_SUBJECT_ID=`opts_GetOpt "${setflag}xnatsubjectid" $@`
 	XNAT_HOST_NAME=`opts_GetOpt "${setflag}xnathost" $@`
@@ -3087,6 +3111,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
 	UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
 	Modality=`opts_GetOpt "${setflag}modality" $@`
+	ProcessCustomQC=`opts_GetOpt "${setflag}processcustom" $@`
+	OmitDefaults=`opts_GetOpt "${setflag}omitdefaults" $@`
 	DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
 	DWIData=`opts_GetOpt "${setflag}dwidata" $@`
 	DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@`
@@ -3148,12 +3174,12 @@ if [ "$FunctionToRun" == "MNAPXNATTurnkey" ]; then
 	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
 	if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; exit 1; fi
 	if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; exit 1; fi
-	if [ -z "$XNAT_SESSION_LABEL" ]; then reho "Error: --xnatsessionlabel flag missing."; exit 1; fi
+	if [ -z "$XNAT_SESSION_LABELS" ]; then reho "Error: --xnatsessionlabels flag missing."; exit 1; fi
 	if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; exit 1; fi
 	if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; exit 1; fi
 	if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Batch parameter file not specified."; exit 1; fi
 	if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Batch parameter file not specified."; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Note: List of subjects missing. Assuming $XNAT_SESSION_LABEL matches subject names."; CASES="$XNAT_SESSION_LABEL"; fi
+	if [ -z "$CASES" ]; then reho "Note: List of subjects missing. Assuming $XNAT_SESSION_LABELS matches subject names."; CASES="$XNAT_SESSION_LABELS"; fi
 	if [ -z "$StudyFolder" ]; then StudyFolder="/output/${XNAT_PROJECT_ID}"; reho "Note: Study folder missing. Setting defaults: $StudyFolder"; STUDY_PATH="$StudyFolder"; fi
 	if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
 	if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
@@ -3167,7 +3193,7 @@ if [ "$FunctionToRun" == "MNAPXNATTurnkey" ]; then
 	echo "   MNAP turnkey run type: ${TURNKEY_TYPE}"
 	echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
 	echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
-	echo "   XNAT Session Label: ${XNAT_SESSION_LABEL}"
+	echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
 	echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
 	echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
 	echo "   Project-specific Batch file: ${project_batch_file}"
@@ -3262,19 +3288,54 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 	if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
+	if [ -z "$ProcessCustomQC" ]; then ProcessCustomQC="no"; fi
+	if [ -z "$OmitDefaults" ]; then OmitDefaults="no"; fi
 	Cluster="$RunMethod"
 	if [ "$Cluster" == "2" ]; then
 		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
 	fi
-	# -- Perform careful scene checks
+	# -- Perform some careful scene checks
 	if [ -z "$UserSceneFile" ]; then
-		if [ -z "$TemplateFolder" ]; then TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo "Template folder path value not explicitly specified. Using MNAP defaults: ${TemplateFolder}"; fi
-		if ls ${TemplateFolder}/*scene 1> /dev/null 2>&1; then geho "Scene files found in ${TemplateFolder} "; echo ""; else reho "Error: Specified ${TemplateFolder} folder empty. Check scenes and re-run. Reverting to defaults: ${TOOLS}/${MNAPREPO}/library/data/scenes/qc/"; TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"; echo ""; fi
+		if [ ! -z "$UserScenePath" ]; then 
+			reho "---> Provided --userscenepath but --userscenefile not specified."
+			reho "     Check your inputs and re-run.";
+			TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+			reho "---> Reverting to MNAP defaults: ${TemplateFolder}"; echo ""
+		fi
+		if [ -z "$TemplateFolder" ]; then
+			TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+			reho "---> Template folder path value not explicitly specified."
+			reho "---> Using MNAP defaults: ${TemplateFolder}"
+		fi
+		if ls ${TemplateFolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
+			geho "---> Scene files found in `ls ${TemplateFolder}/*${Modality}*.scene` "; echo ""
+		else 
+			reho "---> Specified folder contains no scenes: ${TemplateFolder}" 
+			TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+			reho "---> Reverting to defaults: ${TemplateFolder} "; echo ""
+		fi
 	else
-		if [ -z "$UserScenePath" ]; then reho "Path for user scene file not specified. Check your inputs and re-run"; echo ""; exit 1; fi
-		if ls ${UserScenePath}/${UserSceneFile} 1> /dev/null 2>&1; then TemplateFolder=${UserScenePath}; geho "User scene file: ${TemplateFolder}/${UserSceneFile} "; echo ""; else reho "Error: Specified ${UserScenePath}/${UserSceneFile} not found. Check your inputs and re-run"; echo ""; exit 1; fi
+		if [ -f "$UserSceneFile" ]; then
+			geho "---> User scene file found: ${UserSceneFile}"; echo ""
+			UserScenePath=`echo ${UserSceneFile} | awk -F'/' '{print $1}'`
+			UserSceneFile=`echo ${UserSceneFile} | awk -F'/' '{print $2}'`
+			TemplateFolder=${UserScenePath}
+		else
+			if [ -z "$UserScenePath" ] && [ -z "$TemplateFolder" ]; then 
+				reho "---> Error: Path for user scene file not specified."
+				reho "     Specify --templatefolder or --userscenepath with correct path and re-run."; echo ""; exit 1
+			fi
+			if [ ! -z "$UserScenePath" ] && [ -z "$TemplateFolder" ]; then 
+				TemplateFolder=${UserScenePath}
+			fi
+			if ls ${TemplateFolder}/${UserSceneFile} 1> /dev/null 2>&1; then 
+				geho "---> User specified scene files found in: ${TemplateFolder}/${UserSceneFile} "; echo ""
+			else 
+				reho "---> Error: User specified scene ${TemplateFolder}/${UserSceneFile} not found." 
+				reho "     Check your inputs and re-run."; echo ""; exit 1
+			fi
+		fi
 	fi
-	
 	if [ -z "$OutPath" ]; then OutPath="${SubjectsFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
 	if [ -z "$SceneZip" ]; then SceneZip="yes"; echo "Generation of scene zip file not explicitly provided. Using default: ${SceneZip}"; fi
 	# -- DWI modality-specific settings:
@@ -3307,6 +3368,8 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
 	echo "   Subject Folder: ${SubjectsFolder}"
 	echo "   Subjects: ${CASES}"
 	echo "   Study Log Folder: ${MasterLogFolder}"
+	echo "   Custom QC requested: ${ProcessCustomQC}"
+	echo "   Omit default QC: ${OmitDefaults}"
 	echo "   QC Modality: ${Modality}"
 	echo "   QC Output Path: ${OutPath}"
 	echo "   QC Scene Template Folder: ${TemplateFolder}"
