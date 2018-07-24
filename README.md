@@ -261,6 +261,7 @@ Change Log
 * 0.16.05 [library] Updates to environment code
 * 0.16.06 [library] CARET7DIR points to WORKBENCHDIR to ensure across-system robust functionality
 * 0.17.00 [connector] Upgraded QC functionality
+* 0.17.01 [niutilities] Extended createStudy to include QC scenes
 
 =======
 [Mind and Brain Lab]: http://mblab.si
