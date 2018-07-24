@@ -69,6 +69,13 @@ def createStudy(studyfolder=None):
     ├── processing
     │   ├── logs
     │   ├── lists
+    │   ├── scenes
+    │   │   └── QC
+    │   │       ├── T1w
+    │   │       ├── T2w
+    │   │       ├── myelin
+    │   │       ├── BOLD
+    │   │       └── DWI
     │   └── scripts
     ├── info
     │   ├── demographics
@@ -108,12 +115,15 @@ def createStudy(studyfolder=None):
              - Added creation of .mnapstudy file.
     2018-06-02 Grega Repovs
              - Changed templates to *_example.txt.
+    2018-07-24 Grega Repovs
+             - Expanded folders to include QC scenes
     '''
 
     if studyfolder is None:
         raise ValueError("ERROR: studyfolder parameter has to be provided!")
 
     folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
+               ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
                ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
                ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
                ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'behavior'], ['subjects', 'specs'], ['subjects', 'QC']]
