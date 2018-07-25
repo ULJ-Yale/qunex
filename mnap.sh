@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync printMatrix BOLDDense linkmovement FIXICA postFIXICA BOLDHardLinkFIXICA FIXICAInsertMean FIXICARemoveMean hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc MNAPXNATTurnkey commandExecute showVersion"
+MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync printMatrix BOLDDense linkmovement FIXICA postFIXICA BOLDHardLinkFIXICA FIXICAInsertMean FIXICARemoveMean hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc runTurnkey commandExecute showVersion"
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -179,7 +179,7 @@ echo " createList ...... setup subject lists for analyses"
 echo " createConc ...... setup conc files for analyses" 
 echo " compileBatch ...... setup batch files for processing or analyses" 
 echo " dataSync ...... sync/backup data across hpc cluster(s)"
-echo " MNAPXNATTurnkey ...... turnkey execution of MNAP workflow via XNAT Docker engine"
+echo " runTurnkey ...... turnkey execution of MNAP workflow compatible with XNAT Docker engine"
 echo ""
 echo "QC functions"
 echo "------------"
@@ -367,13 +367,13 @@ fi
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-#  MNAPXNATTurnkey - Turnkey execution of MNAP workflow via the XNAT docker engine
+#  runTurnkey - Turnkey execution of MNAP workflow via the XNAT docker engine
 # ---------------------------------------------------------------------------------------------------------------
 
-MNAPXNATTurnkey() {
+runTurnkey() {
 # -- Echo command
 geho "Full command:"
-echo "${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
+echo "${TOOLS}/${MNAPREPO}/connector/RunTurnkey.sh \
 --batchfile="${BATCH_PARAMETERS_FILENAME}" \
 --path="${STUDY_PATH}" \
 --turnkey="${TURNKEY_TYPE}" \
@@ -387,7 +387,7 @@ echo "${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
 --xnatpass="${XNAT_PASSWORD}""
 echo ""
 # -- Specify command variable
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/RunTurnkey.sh \
 --batchfile="${BATCH_PARAMETERS_FILENAME}" \
 --path="${STUDY_PATH}" \
 --turnkey="${TURNKEY_TYPE}" \
@@ -402,8 +402,8 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/MNAP_XNAT_Turnkey.sh \
 # -- Connector execute function
 connectorExec
 }
-show_usage_MNAPXNATTurnkey() {
-bash ${TOOLS}/${MNAPREPO}/connector/functions/MNAP_XNAT_Turnkey.sh
+show_usage_runTurnkey() {
+${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -2987,7 +2987,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	else
 		RunMethod="1"
 	fi
-	# -- Set flags for MNAPXNATTurnkey and XNATCloudUpload
+		
+	# -- Set flags for runTurnkey and XNATCloudUpload
 	TURNKEY_TYPE=`opts_GetOpt "${setflag}turnkey" $@`
 	OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
 	OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
@@ -3030,26 +3031,6 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	HCPSubjectsFolder=`opts_GetOpt "${setflag}clusterpath" $@`
 	Direction=`opts_GetOpt "${setflag}dir" $@`
 	ClusterName=`opts_GetOpt "${setflag}cluster" $@`
-	# -- hcpdLegacy input flags
-	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`
-	PEdir=`opts_GetOpt "${setflag}PEdir" $@`
-	TE=`opts_GetOpt "${setflag}TE" $@`
-	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@`
-	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@`
-	Scanner=`opts_GetOpt "${setflag}scanner" $@`
-	UseFieldmap=`opts_GetOpt "${setflag}usefieldmap" $@`
-	# -- BOLDParcellation input flags
-	InputFile=`opts_GetOpt "${setflag}inputfile" $@`
-	InputPath=`opts_GetOpt "${setflag}inputpath" $@`
-	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@`
-	SingleInputFile=`opts_GetOpt "${setflag}singleinputfile" $@`
-	OutPath=`opts_GetOpt "${setflag}outpath" $@`
-	OutName=`opts_GetOpt "${setflag}outname" $@`
-	ExtractData=`opts_GetOpt "${setflag}extractdata" $@`
-	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@`
-	UseWeights=`opts_GetOpt "${setflag}useweights" $@`
-	WeightsFile=`opts_GetOpt "${setflag}useweights" $@`
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
 	# -- ROIExtract input flags
 	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@`
 	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@`
@@ -3072,6 +3053,26 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`
 	FCCommand=`opts_GetOpt "${setflag}options" $@`
 	Method=`opts_GetOpt "${setflag}method" $@`
+	# -- BOLDParcellation input flags
+	InputFile=`opts_GetOpt "${setflag}inputfile" $@`
+	InputPath=`opts_GetOpt "${setflag}inputpath" $@`
+	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@`
+	SingleInputFile=`opts_GetOpt "${setflag}singleinputfile" $@`
+	OutPath=`opts_GetOpt "${setflag}outpath" $@`
+	OutName=`opts_GetOpt "${setflag}outname" $@`
+	ExtractData=`opts_GetOpt "${setflag}extractdata" $@`
+	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@`
+	UseWeights=`opts_GetOpt "${setflag}useweights" $@`
+	WeightsFile=`opts_GetOpt "${setflag}useweights" $@`
+	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
+	# -- hcpdLegacy input flags
+	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`
+	PEdir=`opts_GetOpt "${setflag}PEdir" $@`
+	TE=`opts_GetOpt "${setflag}TE" $@`
+	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@`
+	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@`
+	Scanner=`opts_GetOpt "${setflag}scanner" $@`
+	UseFieldmap=`opts_GetOpt "${setflag}usefieldmap" $@`
 	# -- DWIDenseParcellation input flags
 	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@`
 	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
@@ -3166,10 +3167,10 @@ if [ "$FunctionToRun" == "matlabHelp" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  MNAPXNATTurnkey function loop
+#  runTurnkey function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "MNAPXNATTurnkey" ]; then
+if [ "$FunctionToRun" == "runTurnkey" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
 	if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; exit 1; fi
@@ -3190,7 +3191,7 @@ if [ "$FunctionToRun" == "MNAPXNATTurnkey" ]; then
 	echo "Running $FunctionToRun processing with the following parameters:"
 	echo ""
 	echo "--------------------------------------------------------------"
-	echo "   MNAP turnkey run type: ${TURNKEY_TYPE}"
+	echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
 	echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
 	echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
 	echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
@@ -3640,7 +3641,7 @@ if [ "$FunctionToRun" == "createLists" ]; then
 		echo "   List path: ${ListPath}"
 		echo "   List name: ${ListName}"
 		echo "   Scheduler Name and Options: $Scheduler"
-		echo "   Overwrite prior run: $Overwrite"
+		echo "   Overwrite prior run: ${Overwrite}"
 		echo "--------------------------------------------------------------"
 		echo ""
 		# -- Loop through all the cases
@@ -3683,7 +3684,7 @@ if [ "$FunctionToRun" == "createLists" ]; then
 			echo "   Study Log Folder: ${MasterLogFolder}"
 			echo "   List to generate: ${ListGenerate}"
 			echo "   Scheduler Name and Options: $Scheduler"
-			echo "   Overwrite prior run: $Overwrite"
+			echo "   Overwrite prior run: ${Overwrite}"
 			echo "--------------------------------------------------------------"
 			echo ""
 			# -- Loop through all the cases
@@ -3692,145 +3693,137 @@ if [ "$FunctionToRun" == "createLists" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  printMatrix function loop
+#  FIXICA function loop # --> under development
 # ------------------------------------------------------------------------------
 
-# --> under development
+## -- 
+## --  if [ "$FunctionToRunInt" == "FIXICA" ]; then
+## --  	echo "Note: Expects that minimally processed NIFTI & CIFTI BOLDs"
+## --  	echo ""
+## --  	echo "Overwrite existing run [yes, no]:"
+## --  		if read answer; then
+## --  		Overwrite=$answer
+## --  		fi
+## --  	echo "Enter BOLD numbers you want to run FIX ICA on - e.g. 1 2 3 or 1_3 for merged BOLDs:"
+## --  		if read answer; then
+## --  		BOLDS=$answer
+## --  				for CASE in ${CASES}
+## --  				do
+## --    					"$FunctionToRunInt" ${CASE}
+## --    				done
+## --    		fi
+## --  fi
 
-# ------------------------------------------------------------------------------
-#  FIXICA function loop
-# ------------------------------------------------------------------------------
+## --  # ------------------------------------------------------------------------------
+## --  #  postFIXICA function loop
+## --  # ------------------------------------------------------------------------------
+## -- 
+## --  if [ "$FunctionToRunInt" == "postFIXICA" ]; then
+## --  	echo "Note: This function depends on fsl, wb_command and matlab and expects startup.m to point to wb_command and fsl."
+## --  	echo ""
+## --  	echo "Overwrite existing postFIXICA scenes [yes, no]:"
+## --  		if read answer; then
+## --  		Overwrite=$answer
+## --  		fi
+## --  	echo "Enter BOLD numbers you want to run PostFix.sh on [e.g. 1 2 3]:"
+## --  		if read answer; then
+## --  		BOLDS=$answer
+## --  			echo "Enter high pass filter used for FIX ICA [e.g. 2000]"
+## --  				if read answer; then
+## --  				HighPass=$answer
+## --  					for CASE in ${CASES}
+## --  					do
+## --    						"$FunctionToRunInt" ${CASE}
+## --    					done
+## --    				fi
+## --    		fi
+## --  fi
 
-# --> under development
+## --  # ------------------------------------------------------------------------------
+## --  #  boldseparateciftiFIXICA function loop
+## --  # ------------------------------------------------------------------------------
+## -- 
+## --  if [ "$FunctionToRunInt" == "boldseparateciftiFIXICA" ]; then
+## --  	echo "Enter which study and data you want to separate"
+## --  	echo "supported: 1_4_raw 5_8_raw 10_13_raw 14_17_raw"
+## --  			if read answer; then
+## --  			DatatoSeparate=$answer
+## --  					for CASE in ${CASES}
+## --  					do
+## --    						"$FunctionToRunInt" ${CASE}
+## --    					done
+## --    			fi
+## --  fi
 
-## -- FIXICA Code - integrate into gmri
-## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "FIXICA" ]; then
-## -- FIXICA Code - integrate into gmri 	echo "Note: Expects that minimally processed NIFTI & CIFTI BOLDs"
-## -- FIXICA Code - integrate into gmri 	echo ""
-## -- FIXICA Code - integrate into gmri 	echo "Overwrite existing run [yes, no]:"
-## -- FIXICA Code - integrate into gmri 		if read answer; then
-## -- FIXICA Code - integrate into gmri 		Overwrite=$answer
-## -- FIXICA Code - integrate into gmri 		fi
-## -- FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run FIX ICA on - e.g. 1 2 3 or 1_3 for merged BOLDs:"
-## -- FIXICA Code - integrate into gmri 		if read answer; then
-## -- FIXICA Code - integrate into gmri 		BOLDS=$answer
-## -- FIXICA Code - integrate into gmri 				for CASE in ${CASES}
-## -- FIXICA Code - integrate into gmri 				do
-## -- FIXICA Code - integrate into gmri   					"$FunctionToRunInt" ${CASE}
-## -- FIXICA Code - integrate into gmri   				done
-## -- FIXICA Code - integrate into gmri   		fi
-## -- FIXICA Code - integrate into gmri fi
+## --  # ------------------------------------------------------------------------------
+## --  #  BOLDHardLinkFIXICA function loop
+## --  # ------------------------------------------------------------------------------
+## -- 
+## --  if [ "$FunctionToRunInt" == "BOLDHardLinkFIXICA" ]; then
+## --  	echo "Enter BOLD numbers you want to generate connectivity hard links for [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
+## --  		if read answer; then
+## --  		BOLDS=$answer
+## --  			for CASE in ${CASES}
+## --  				do
+## --    				"$FunctionToRunInt" ${CASE}
+## --    			done
+## --    		fi
+## --  fi
+## -- 
+## --  if [ "$FunctionToRunInt" == "boldhardlinkFIXICAmerged" ]; then
+## --  				for CASE in ${CASES}
+## --  				do
+## --    					"$FunctionToRunInt" ${CASE}
+## --    				done
+## --  fi
+## -- 
 
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri #  postFIXICA function loop
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri
-## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "postFIXICA" ]; then
-## -- FIXICA Code - integrate into gmri 	echo "Note: This function depends on fsl, wb_command and matlab and expects startup.m to point to wb_command and fsl."
-## -- FIXICA Code - integrate into gmri 	echo ""
-## -- FIXICA Code - integrate into gmri 	echo "Overwrite existing postFIXICA scenes [yes, no]:"
-## -- FIXICA Code - integrate into gmri 		if read answer; then
-## -- FIXICA Code - integrate into gmri 		Overwrite=$answer
-## -- FIXICA Code - integrate into gmri 		fi
-## -- FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run PostFix.sh on [e.g. 1 2 3]:"
-## -- FIXICA Code - integrate into gmri 		if read answer; then
-## -- FIXICA Code - integrate into gmri 		BOLDS=$answer
-## -- FIXICA Code - integrate into gmri 			echo "Enter high pass filter used for FIX ICA [e.g. 2000]"
-## -- FIXICA Code - integrate into gmri 				if read answer; then
-## -- FIXICA Code - integrate into gmri 				HighPass=$answer
-## -- FIXICA Code - integrate into gmri 					for CASE in ${CASES}
-## -- FIXICA Code - integrate into gmri 					do
-## -- FIXICA Code - integrate into gmri   						"$FunctionToRunInt" ${CASE}
-## -- FIXICA Code - integrate into gmri   					done
-## -- FIXICA Code - integrate into gmri   				fi
-## -- FIXICA Code - integrate into gmri   		fi
-## -- FIXICA Code - integrate into gmri fi
+## --  # ------------------------------------------------------------------------------
+## --  #  FIXICAInsertMean function loop
+## --  # ------------------------------------------------------------------------------
+## -- 
+## --  if [ "$FunctionToRunInt" == "FIXICAInsertMean" ]; then
+## --  	echo "Note: This function will insert mean images into FIX ICA files"
+## --  	echo "Enter BOLD numbers you want to run mean insertion on [e.g. 1 2 3]:"
+## --  		if read answer; then
+## --  		BOLDS=$answer
+## --  				for CASE in ${CASES}
+## --  				do
+## --    					"$FunctionToRunInt" ${CASE}
+## --    				done
+## --    		fi
+## --  fi
 
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri #  boldseparateciftiFIXICA function loop
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri
-## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldseparateciftiFIXICA" ]; then
-## -- FIXICA Code - integrate into gmri 	echo "Enter which study and data you want to separate"
-## -- FIXICA Code - integrate into gmri 	echo "supported: 1_4_raw 5_8_raw 10_13_raw 14_17_raw"
-## -- FIXICA Code - integrate into gmri 			if read answer; then
-## -- FIXICA Code - integrate into gmri 			DatatoSeparate=$answer
-## -- FIXICA Code - integrate into gmri 					for CASE in ${CASES}
-## -- FIXICA Code - integrate into gmri 					do
-## -- FIXICA Code - integrate into gmri   						"$FunctionToRunInt" ${CASE}
-## -- FIXICA Code - integrate into gmri   					done
-## -- FIXICA Code - integrate into gmri   			fi
-## -- FIXICA Code - integrate into gmri fi
+## --  # ------------------------------------------------------------------------------
+## --  #  FIXICARemoveMean function loop
+## --  # ------------------------------------------------------------------------------
+## -- 
+## --  if [ "$FunctionToRunInt" == "FIXICARemoveMean" ]; then
+## --  	echo "Note: This function will remove mean from mapped FIX ICA files and save new images"
+## --  	echo "Enter BOLD numbers you want to run mean removal on [e.g. 1 2 3]:"
+## --  		if read answer; then
+## --  		BOLDS=$answer
+## --  				for CASE in ${CASES}
+## --  				do
+## --    					"$FunctionToRunInt" ${CASE}
+## --    				done
+## --    		fi
+## --  fi
 
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri #  BOLDHardLinkFIXICA function loop
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri
-## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "BOLDHardLinkFIXICA" ]; then
-## -- FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to generate connectivity hard links for [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
-## -- FIXICA Code - integrate into gmri 		if read answer; then
-## -- FIXICA Code - integrate into gmri 		BOLDS=$answer
-## -- FIXICA Code - integrate into gmri 			for CASE in ${CASES}
-## -- FIXICA Code - integrate into gmri 				do
-## -- FIXICA Code - integrate into gmri   				"$FunctionToRunInt" ${CASE}
-## -- FIXICA Code - integrate into gmri   			done
-## -- FIXICA Code - integrate into gmri   		fi
-## -- FIXICA Code - integrate into gmri fi
-## -- FIXICA Code - integrate into gmri
-## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "boldhardlinkFIXICAmerged" ]; then
-## -- FIXICA Code - integrate into gmri 				for CASE in ${CASES}
-## -- FIXICA Code - integrate into gmri 				do
-## -- FIXICA Code - integrate into gmri   					"$FunctionToRunInt" ${CASE}
-## -- FIXICA Code - integrate into gmri   				done
-## -- FIXICA Code - integrate into gmri fi
-## -- FIXICA Code - integrate into gmri
-
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri #  FIXICAInsertMean function loop
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri
-## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "FIXICAInsertMean" ]; then
-## -- FIXICA Code - integrate into gmri 	echo "Note: This function will insert mean images into FIX ICA files"
-## -- FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run mean insertion on [e.g. 1 2 3]:"
-## -- FIXICA Code - integrate into gmri 		if read answer; then
-## -- FIXICA Code - integrate into gmri 		BOLDS=$answer
-## -- FIXICA Code - integrate into gmri 				for CASE in ${CASES}
-## -- FIXICA Code - integrate into gmri 				do
-## -- FIXICA Code - integrate into gmri   					"$FunctionToRunInt" ${CASE}
-## -- FIXICA Code - integrate into gmri   				done
-## -- FIXICA Code - integrate into gmri   		fi
-## -- FIXICA Code - integrate into gmri fi
-
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri #  FIXICARemoveMean function loop
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri
-## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "FIXICARemoveMean" ]; then
-## -- FIXICA Code - integrate into gmri 	echo "Note: This function will remove mean from mapped FIX ICA files and save new images"
-## -- FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to run mean removal on [e.g. 1 2 3]:"
-## -- FIXICA Code - integrate into gmri 		if read answer; then
-## -- FIXICA Code - integrate into gmri 		BOLDS=$answer
-## -- FIXICA Code - integrate into gmri 				for CASE in ${CASES}
-## -- FIXICA Code - integrate into gmri 				do
-## -- FIXICA Code - integrate into gmri   					"$FunctionToRunInt" ${CASE}
-## -- FIXICA Code - integrate into gmri   				done
-## -- FIXICA Code - integrate into gmri   		fi
-## -- FIXICA Code - integrate into gmri fi
-
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri #  linkMovement function loop
-## -- FIXICA Code - integrate into gmri # ------------------------------------------------------------------------------
-## -- FIXICA Code - integrate into gmri
-## -- FIXICA Code - integrate into gmri if [ "$FunctionToRunInt" == "linkMovement" ]; then
-## -- FIXICA Code - integrate into gmri 	echo "Enter BOLD numbers you want to link [e.g. 1 2 3 or 1-3 for merged BOLDs]:"
-## -- FIXICA Code - integrate into gmri 		if read answer; then
-## -- FIXICA Code - integrate into gmri 		BOLDS=$answer
-## -- FIXICA Code - integrate into gmri 			for CASE in ${CASES}
-## -- FIXICA Code - integrate into gmri 			do
-## -- FIXICA Code - integrate into gmri   				"$FunctionToRunInt" ${CASE}
-## -- FIXICA Code - integrate into gmri   			done
-## -- FIXICA Code - integrate into gmri   		fi
-## -- FIXICA Code - integrate into gmri fi
+## --  # ------------------------------------------------------------------------------
+## --  #  linkMovement function loop
+## --  # ------------------------------------------------------------------------------
+## -- 
+## --  if [ "$FunctionToRunInt" == "linkMovement" ]; then
+## --  	echo "Enter BOLD numbers you want to link [e.g. 1 2 3 or 1-3 for merged BOLDs]:"
+## --  		if read answer; then
+## --  		BOLDS=$answer
+## --  			for CASE in ${CASES}
+## --  			do
+## --    				"$FunctionToRunInt" ${CASE}
+## --    			done
+## --    		fi
+## --  fi
 
 # ------------------------------------------------------------------------------
 #  BOLDDense function loop
@@ -3862,7 +3855,7 @@ if [ "$FunctionToRun" == "FSLDtifit" ]; then
 	echo "   Subjects: ${CASES}"
 	echo "   Study Log Folder: ${MasterLogFolder}"
 	echo "   Scheduler Name and Options: $Scheduler"
-	echo "   Overwrite prior run: $Overwrite"
+	echo "   Overwrite prior run: ${Overwrite}"
 	echo "--------------------------------------------------------------"
 	echo ""
 	# -- Loop through all the cases
@@ -3882,7 +3875,7 @@ if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
 	if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
 	if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
 	if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
-	Cluster=$RunMethod
+	Cluster=${RunMethod}
 	# -- Report parameters
 	echo ""
 	echo "Running $FunctionToRun processing with the following parameters:"
@@ -3892,13 +3885,12 @@ if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
 	echo "   Subjects Folder: ${SubjectsFolder}"
 	echo "   Subjects: ${CASES}"
 	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Number of Fibers: $Fibers"
-	echo "   Model Type: $Model"
-	echo "   Burnin Period: $Burnin"
-	echo "   Rician flag: $Rician"
-	echo "   EPI Unwarp Direction: $UnwarpDir"
-	echo "   Scheduler Name and Options: $Scheduler"
-	echo "   Overwrite prior run: $Overwrite"
+	echo "   Number of Fibers: ${Fibers}"
+	echo "   Model Type: ${Model}"
+	echo "   Burnin Period: ${Burnin}"
+	echo "   Rician flag: ${Rician}"
+	echo "   Scheduler Name and Options: ${{Scheduler}"
+	echo "   Overwrite prior run: ${Overwrite}"
 	echo "--------------------------------------------------------------"
 	echo ""
 	# -- Loop through all the cases
@@ -3936,14 +3928,14 @@ if [ "$FunctionToRun" == "hcpdLegacy" ]; then
 	echo "   Subjects Folder: ${SubjectsFolder}"
 	echo "   Subjects: ${CASES}"
 	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Scanner: $Scanner"
-	echo "   Using FieldMap: $UseFieldmap"
-	echo "   Echo Spacing: $EchoSpacing"
-	echo "   Phase Encoding Direction: $PEdir"
-	echo "   TE value for Fieldmap: $TE"
-	echo "   EPI Unwarp Direction: $UnwarpDir"
-	echo "   Diffusion Data Suffix Name: $DiffDataSuffix"
-	echo "   Overwrite prior run: $Overwrite"
+	echo "   Scanner: ${Scanner"
+	echo "   Using FieldMap: ${UseFieldmap}"
+	echo "   Echo Spacing: ${EchoSpacing}"
+	echo "   Phase Encoding Direction: ${PEdir}"
+	echo "   TE value for Fieldmap: ${TE}"
+	echo "   EPI Unwarp Direction: ${UnwarpDir}"
+	echo "   Diffusion Data Suffix Name: ${DiffDataSuffix}"
+	echo "   Overwrite prior run: ${Overwrite}"
 	echo "--------------------------------------------------------------"
 	echo ""
 	# -- Loop through all the cases
@@ -4180,11 +4172,11 @@ if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
 	echo "   Subjects Folder: ${SubjectsFolder}"
 	echo "   Subjects: ${CASES}"
 	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Matrix version used for input: $MatrixVersion"
-	echo "   File to use for parcellation: $ParcellationFile"
-	echo "   Dense DWI Parcellated Connectome Output Name: $OutName"
+	echo "   Matrix version used for input: ${MatrixVersion}"
+	echo "   File to use for parcellation: ${ParcellationFile}"
+	echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
 	echo "   Waytotal normalization: ${WayTotal}"
-	echo "   Overwrite prior run: $Overwrite"
+	echo "   Overwrite prior run: ${Overwrite}"
 	echo "--------------------------------------------------------------"
 	echo ""
 	# -- Loop through all the cases
@@ -4267,11 +4259,11 @@ if [ "$FunctionToRun" == "DWISeedTractography" ]; then
 	echo "   Subjects Folder: ${SubjectsFolder}"
 	echo "   Subjects: ${CASES}"
 	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Matrix version used for input: $MatrixVersion"
-	echo "   Dense dconn seed reduction: $SeedFile"
-	echo "   Dense DWI Parcellated Connectome Output Name: $OutName"
+	echo "   Matrix version used for input: ${MatrixVersion}"
+	echo "   Dense dconn seed reduction: ${SeedFile}"
+	echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
 	echo "   Waytotal normalization: ${WayTotal}"
-	echo "   Overwrite prior run: $Overwrite"
+	echo "   Overwrite prior run: ${Overwrite}"
 	echo "--------------------------------------------------------------"
 	echo ""
 	# -- Loop through all the cases
@@ -4372,9 +4364,9 @@ if [ "$FunctionToRun" == "AWSHCPSync" ]; then
 	echo "   Subjects Folder: ${SubjectsFolder}"
 	echo "   Subjects: ${CASES}"
 	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Run Method: $RunMethod"
-	echo "   Modality: $Modality"
-	echo "   AWS URI Path: $Awsuri"
+	echo "   Run Method: ${RunMethod}"
+	echo "   Modality: ${Modality}"
+	echo "   AWS URI Path: ${Awsuri}"
 	echo "--------------------------------------------------------------"
 	echo ""
 	# -- Loop through all the cases
