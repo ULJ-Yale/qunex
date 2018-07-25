@@ -1,18 +1,18 @@
-#!/usr/bin/Rscript
+#!/usr/local/bin/Rscript
 
 library(ggplot2)
 
-fidlfile <- FALSE
-plotfile <- FALSE
+fidlfile   <- FALSE
+plotfile   <- FALSE
 fidlfolder <- FALSE
-allcodes <- FALSE
+allcodes   <- FALSE
 
 args <- commandArgs(TRUE)
 
 for (arg in args){
-    if (grepl("-fidlfile=", arg)) fidlfile <- sub("-fidl=(.*)", "\\1", arg)
-    if (grepl("-fidlfolder=", arg)) fidlfolder <- sub("-folder=(.*)", "\\1", arg)
-    if (grepl("-plotfile=", arg)) plotfile <- sub("-plot=(.*)", "\\1", arg)
+    if (grepl("-fidlfile=", arg)) fidlfile <- sub("-fidlfile=(.*)", "\\1", arg)
+    if (grepl("-fidlfolder=", arg)) fidlfolder <- sub("-fidlfolder=(.*)", "\\1", arg)
+    if (grepl("-plotfile=", arg)) plotfile <- sub("-plotfile=(.*)", "\\1", arg)
     if (grepl("-allcodes", arg)) allcodes <- TRUE
 }
 
@@ -29,11 +29,16 @@ if (fidlfile==FALSE){
 }
 
 
+write(cat("===> Check Fidl: processing", length(flist), "fidl files from", fidlfolder ), "")
+
 for (fidl in flist) {
+
+    write(cat("---> processing", fidl), "")
+    # flush.console()
 
     # ------- read header
 
-    h <- read.delim(fidl, nrows=1, header=FALSE, blank.lines.skip=TRUE, sep="")
+    h <- read.delim(file.path(fidlfolder, fidl), nrows=1, header=FALSE, blank.lines.skip=TRUE, sep="")
 
     TR <- h[1]
     codes <- h[2:length(h)]
@@ -42,7 +47,7 @@ for (fidl in flist) {
 
     # ------- read data
 
-    d <- read.delim(fidl, skip=1, header=FALSE, blank.lines.skip=TRUE, sep="")
+    d <- read.delim(file.path(fidlfolder, fidl), skip=1, header=FALSE, blank.lines.skip=TRUE, sep="")
 
     cnames <- c('time','code','duration')
     cols <- dim(d)[2]
@@ -70,7 +75,7 @@ for (fidl in flist) {
     }
 
     #ggplot(d, aes(xmin=time, xmax=time+duration,ymin=code,ymax=code+1, color=event, fill=event)) + geom_rect(alpha=0.7, size=0) + geom_point(aes(x=time, y=0), color='black', size=0.5)
-    fplot <- ggplot(d, aes(xmin=time, xmax=time+duration,ymin=-rank,ymax=-(rank+1), color=event, fill=event)) + geom_rect(alpha=0.7, size=0) + geom_rect(aes(xmin=time, xmax=time+0.5, ymin=0, ymax=0.5), size=0) + theme(axis.text.y=element_blank(), axis.ticks.y = element_blank()) + scale_y_continuous(breaks=c(0:-ncodes), minor_breaks=NULL) + geom_hline(x=0, color='darkgray')
+    fplot <- ggplot(d, aes(xmin=time, xmax=time+duration,ymin=-rank,ymax=-(rank+1), color=event, fill=event)) + geom_rect(alpha=0.7, size=0) + geom_rect(aes(xmin=time, xmax=time+0.5, ymin=0, ymax=0.5), size=0) + theme(axis.text.y=element_blank(), axis.ticks.y = element_blank()) + scale_y_continuous(breaks=c(0:-ncodes), minor_breaks=NULL) + geom_hline(yintercept=0, color='darkgray')
     #ggplot(d, aes(xmin=time, xmax=time+duration,ymin=code,ymax=code+1, color=event, fill=event)) + geom_rect(alpha=0.7, size=0) + geom_rect(aes(xmin=time, xmax=time+duration, ymin=-0.5, ymax=0), size=0, alpha=0.5) + theme(axis.text.y=element_blank()) + scale_y_continuous(breaks=c(0:ncodes), minor_breaks=NULL)
 
     if (plotfile==FALSE) {
@@ -91,3 +96,5 @@ for (fidl in flist) {
     dev.off()
 
 }
+
+write("===> Successful completion of task", "")

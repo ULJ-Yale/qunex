@@ -90,9 +90,9 @@ def readConc(concf, TR):
     return bolds
 
 
-def joinFidl(concfile, fidlroot, outfolder=None):
+def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
     '''
-    joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern>
+    joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]
 
     Combines all the fild files matching root based on the information in conc file.
     - concfile:  the conc file to use as reference
@@ -103,6 +103,9 @@ def joinFidl(concfile, fidlroot, outfolder=None):
     '''
 
     # ---> find all fidl files, sort them, read them, get TR info
+
+    if fidlname is None:
+        fidlname = ""
 
     fidlf = glob.glob(fidlroot + '*.fidl')
     fidlf.sort()
@@ -158,7 +161,7 @@ def joinFidl(concfile, fidlroot, outfolder=None):
         tfidl = tfidl + [[e[0] + bold[1]] + e[1:] for e in sfidl['events'] if e[0] < bold[2]]
         c += 1
 
-    jointfile = fidlroot + '.fidl'
+    jointfile = fidlroot + fidlname + '.fidl'
     if outfolder is not None:
         jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 
@@ -172,7 +175,7 @@ def joinFidl(concfile, fidlroot, outfolder=None):
     return True
 
 
-def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
+def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     '''
     joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]
 
@@ -193,8 +196,8 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
     concfiles = glob.glob(concfolder + '/*.conc')
 
     for concfile in concfiles:
-        root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ''))
-        joinFidl(concfile, root, outfolder)
+        root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ""))
+        joinFidl(concfile, root, outfolder, fidlname)
 
 
 def splitFidl(concfile, fidlfile, outfolder=None):
@@ -260,7 +263,7 @@ def splitFidl(concfile, fidlfile, outfolder=None):
 
 def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     '''
-    gmri checkFidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
+    checkFidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false] [verbose=true]
 
     Prints figures showing fidl events and their duration.
 
@@ -268,13 +271,14 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     - fidlfolder: The folder from which to plot the fidl files.
     - plotfile:   The name of the file to save the plot to. Only makes sense if fidlfile is specified.
     - allcodes:   Whether to plot line for all fidl codes even if no event has a particular code.
+    - verbose:    Whether to report progress
 
     Example use:
     gmri checkFidl fidlfolder=jfidls
     '''
 
-    command = ['g_CheckFidl.R']
-    command.append('-fidlfolder="%s"' % (fidlfolder))
+    command = ['Rscript', os.path.join(os.environ['MNAPPATH'], 'niutilities', 'g_CheckFidl.R')]
+    command.append('-fidlfolder=%s' % (fidlfolder))
 
     if fidlfile is not None:
         command.append("-fidlfile=" + fidlfile)
@@ -283,7 +287,7 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     if allcodes is not None:
         command.append("-allcodes")
 
-    if subprocess.call(command, shell=True):
+    if subprocess.call(command):
         raise ValueError("ERROR: Running checkFidl.R failed! Call: %s" % (" ".join(command)))
 
     return True

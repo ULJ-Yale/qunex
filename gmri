@@ -115,8 +115,8 @@ createConc   [subjectsfolder=.] [subjects=None] [sfilter=None] [concfolder=None]
 
 Fidl file utilities
 -------------------
-joinFidl       concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern>
-joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]
+joinFidl       concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidlname to append>]
+joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>] [fidlname=<optional fidl name to append>]
 splitFidl      concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
 checkFidl      [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
 
@@ -237,8 +237,8 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyfolder', )},
             'createList'           : {'com': niu.g_utilities.createList,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
             'createConc'           : {'com': niu.g_utilities.createConc,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
-            'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder')},
-            'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder')},
+            'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
+            'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder', 'fidlname')},
             'splitFidl'            : {'com': niu.g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},
             'checkFidl'            : {'com': niu.g_fidl.checkFidl,               'args': ('fidlfile', 'fidlfolder', 'plotfile', 'allcodes')},
             'map2PALS'             : {'com': niu.g_4dfp.map2PALS,                'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
