@@ -337,7 +337,7 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 # echo ""
 SuccessCheck="Successful completion"
 ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 770 ${ComRun}"
-ComRunExec="${ComRun} |& tee ${ComlogTmp}"
+ComRunExec="${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep ${SuccessCheck} &> ${CompletionCheck}"
 ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo '  ===> Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
 ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
