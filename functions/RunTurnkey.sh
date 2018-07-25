@@ -211,134 +211,106 @@ unset XNAT_USER_NAME
 unset XNAT_PASSWORD
 unset TURNKEY_TYPE
 unset TURNKEY_STEP
-unset setflag
-unset doubleflag
-unset singleflag
 
-# -- Check if first parameter is missing flags and parse it as FunctionToRun
-if [ -z `echo "$1" | grep '-'` ]; then
-	FunctionToRun="$1"
-	# -- Check if single or double flags are set
-	doubleflagparameter=`echo $2 | cut -c1-2`
-	singleflagparameter=`echo $2 | cut -c1`
-	if [ "$doubleflagparameter" == "--" ]; then
-		setflag="$doubleflagparameter"
-	else
-		if [ "$singleflagparameter" == "-" ]; then
-			setflag="$singleflagparameter"
-		fi
-	fi
-else
-	# -- Check if single or double flags are set
-	doubleflag=`echo $1 | cut -c1-2`
-	singleflag=`echo $1 | cut -c1`
-	if [ "$doubleflag" == "--" ]; then
-		setflag="$doubleflag"
-	else
-		if [ "$singleflag" == "-" ]; then
-			setflag="$singleflag"
-		fi
-	fi
-fi
 
 # =-=-=-=-=-= GENERAL OPTIONS =-=-=-=-=-=
 
 # -- General input flags
-STUDY_PATH=`opts_GetOpt "${setflag}path" $@`
-CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
-OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
-OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
-BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
-SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
-XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
-XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" $@`
-XNAT_PROJECT_ID=`opts_GetOpt "${setflag}xnatprojectid" $@`
-XNAT_SUBJECT_ID=`opts_GetOpt "${setflag}xnatsubjectid" $@`
-XNAT_HOST_NAME=`opts_GetOpt "${setflag}xnathost" $@`
-XNAT_USER_NAME=`opts_GetOpt "${setflag}xnatuser" $@`
-XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
+STUDY_PATH=`opts_GetOpt "--path" $@`
+CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
+OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
+OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
+BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
+SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
+XNAT_ACCSESSION_ID=`opts_GetOpt "--xnataccsessionid" $@`
+XNAT_SESSION_LABELS=`opts_GetOpt "--xnatsessionlabels" $@`
+XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
+XNAT_SUBJECT_ID=`opts_GetOpt "--xnatsubjectid" $@`
+XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
+XNAT_USER_NAME=`opts_GetOpt "--xnatuser" $@`
+XNAT_PASSWORD=`opts_GetOpt "--xnatpass" $@`
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
 
 # -- computeBOLDfc input flags
-InputFiles=`opts_GetOpt "${setflag}inputfiles" $@`
-OutPathFC=`opts_GetOpt "${setflag}targetf" $@`
-Calculation=`opts_GetOpt "${setflag}calculation" $@`
-RunType=`opts_GetOpt "${setflag}runtype" $@`
-FileList=`opts_GetOpt "${setflag}flist" $@`
-IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`
-MaskFrames=`opts_GetOpt "${setflag}mask" "$@"`
-Covariance=`opts_GetOpt "${setflag}covariance" $@`
-TargetROI=`opts_GetOpt "${setflag}target" $@`
-RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`
-RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`
-GBCCommand=`opts_GetOpt "${setflag}command" $@`
-Verbose=`opts_GetOpt "${setflag}verbose" $@`
-ComputeTime=`opts_GetOpt "${setflag}-time" $@`
-VoxelStep=`opts_GetOpt "${setflag}vstep" $@`
-ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`
-FCCommand=`opts_GetOpt "${setflag}options" $@`
-Method=`opts_GetOpt "${setflag}method" $@`
+InputFiles=`opts_GetOpt "--inputfiles" $@`
+OutPathFC=`opts_GetOpt "--targetf" $@`
+Calculation=`opts_GetOpt "--calculation" $@`
+RunType=`opts_GetOpt "--runtype" $@`
+FileList=`opts_GetOpt "--flist" $@`
+IgnoreFrames=`opts_GetOpt "--ignore" $@`
+MaskFrames=`opts_GetOpt "--mask" "$@"`
+Covariance=`opts_GetOpt "--covariance" $@`
+TargetROI=`opts_GetOpt "--target" $@`
+RadiusSmooth=`opts_GetOpt "--rsmooth" $@`
+RadiusDilate=`opts_GetOpt "--rdilate" $@`
+GBCCommand=`opts_GetOpt "--command" $@`
+Verbose=`opts_GetOpt "--verbose" $@`
+ComputeTime=`opts_GetOpt "---time" $@`
+VoxelStep=`opts_GetOpt "--vstep" $@`
+ROIInfo=`opts_GetOpt "--roinfo" $@`
+FCCommand=`opts_GetOpt "--options" $@`
+Method=`opts_GetOpt "--method" $@`
 
 # =-=-=-=-=-= DIFFUSION OPTIONS =-=-=-=-=-=
 
 # -- hcpdLegacy input flags
-EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`
-PEdir=`opts_GetOpt "${setflag}PEdir" $@`
-TE=`opts_GetOpt "${setflag}TE" $@`
-UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@`
-DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@`
-Scanner=`opts_GetOpt "${setflag}scanner" $@`
-UseFieldmap=`opts_GetOpt "${setflag}usefieldmap" $@`
+EchoSpacing=`opts_GetOpt "--echospacing" $@`
+PEdir=`opts_GetOpt "--PEdir" $@`
+TE=`opts_GetOpt "--TE" $@`
+UnwarpDir=`opts_GetOpt "--unwarpdir" $@`
+DiffDataSuffix=`opts_GetOpt "--diffdatasuffix" $@`
+Scanner=`opts_GetOpt "--scanner" $@`
+UseFieldmap=`opts_GetOpt "--usefieldmap" $@`
 # -- DWIDenseParcellation input flags
-MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@`
-ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
-OutName=`opts_GetOpt "${setflag}outname" $@`
-WayTotal=`opts_GetOpt "${setflag}waytotal" $@`
+MatrixVersion=`opts_GetOpt "--matrixversion" $@`
+ParcellationFile=`opts_GetOpt "--parcellationfile" $@`
+OutName=`opts_GetOpt "--outname" $@`
+WayTotal=`opts_GetOpt "--waytotal" $@`
 # -- DWISeedTractography input flags
-SeedFile=`opts_GetOpt "${setflag}seedfile" $@`
+SeedFile=`opts_GetOpt "--seedfile" $@`
 # -- eddyQC input flags
-EddyBase=`opts_GetOpt "${setflag}eddybase" $@`
-EddyPath=`opts_GetOpt "${setflag}eddypath" $@`
-Report=`opts_GetOpt "${setflag}report" $@`
-BvalsFile=`opts_GetOpt "${setflag}bvalsfile" $@`
-BvecsFile=`opts_GetOpt "${setflag}bvecsfile" $@`
-EddyIdx=`opts_GetOpt "${setflag}eddyidx" $@`
-EddyParams=`opts_GetOpt "${setflag}eddyparams" $@`
-List=`opts_GetOpt "${setflag}list" $@`
-Mask=`opts_GetOpt "${setflag}mask" $@`
-GroupBar=`opts_GetOpt "${setflag}groupvar" $@`
-OutputDir=`opts_GetOpt "${setflag}outputdir" $@`
-Update=`opts_GetOpt "${setflag}update" $@`
+EddyBase=`opts_GetOpt "--eddybase" $@`
+EddyPath=`opts_GetOpt "--eddypath" $@`
+Report=`opts_GetOpt "--report" $@`
+BvalsFile=`opts_GetOpt "--bvalsfile" $@`
+BvecsFile=`opts_GetOpt "--bvecsfile" $@`
+EddyIdx=`opts_GetOpt "--eddyidx" $@`
+EddyParams=`opts_GetOpt "--eddyparams" $@`
+List=`opts_GetOpt "--list" $@`
+Mask=`opts_GetOpt "--mask" $@`
+GroupBar=`opts_GetOpt "--groupvar" $@`
+OutputDir=`opts_GetOpt "--outputdir" $@`
+Update=`opts_GetOpt "--update" $@`
 # -- FSLBedpostxGPU input flags
-Fibers=`opts_GetOpt "${setflag}fibers" $@`
-Model=`opts_GetOpt "${setflag}model" $@`
-Burnin=`opts_GetOpt "${setflag}burnin" $@`
-Jumps=`opts_GetOpt "${setflag}jumps" $@`
-Rician=`opts_GetOpt "${setflag}rician" $@`
+Fibers=`opts_GetOpt "--fibers" $@`
+Model=`opts_GetOpt "--model" $@`
+Burnin=`opts_GetOpt "--burnin" $@`
+Jumps=`opts_GetOpt "--jumps" $@`
+Rician=`opts_GetOpt "--rician" $@`
 # -- probtrackxGPUDense input flags
-MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
-MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`
-NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
-NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`
+MatrixOne=`opts_GetOpt "--omatrix1" $@`
+MatrixThree=`opts_GetOpt "--omatrix3" $@`
+NsamplesMatrixOne=`opts_GetOpt "--nsamplesmatrix1" $@`
+NsamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
 
 # =-=-=-=-=-= QC OPTIONS =-=-=-=-=-=
 
 # -- QCPreproc input flags
-OutPath=`opts_GetOpt "${setflag}outpath" $@`
-TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@`
-UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
-UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
-Modality=`opts_GetOpt "${setflag}modality" $@`
-DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
-DWIData=`opts_GetOpt "${setflag}dwidata" $@`
-DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@`
-BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
-EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
-DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
-BOLDDATA=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
-BOLDRUNS=`opts_GetOpt "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
-BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+OutPath=`opts_GetOpt "--outpath" $@`
+TemplateFolder=`opts_GetOpt "--templatefolder" $@`
+UserSceneFile=`opts_GetOpt "--userscenefile" $@`
+UserScenePath=`opts_GetOpt "--userscenepath" $@`
+Modality=`opts_GetOpt "--modality" $@`
+DWIPath=`opts_GetOpt "--dwipath" $@`
+DWIData=`opts_GetOpt "--dwidata" $@`
+DtiFitQC=`opts_GetOpt "--dtifitqc" $@`
+BedpostXQC=`opts_GetOpt "--bedpostxqc" $@`
+EddyQCStats=`opts_GetOpt "--eddyqcstats" $@`
+DWILegacy=`opts_GetOpt "--dwilegacy" $@`
+BOLDDATA=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
+BOLDRUNS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
+BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 if [[ ! -z $BOLDDATA ]]; then
 	if [[ -z $BOLDS ]]; then
 		BOLDS=$BOLDDATA
@@ -349,14 +321,14 @@ if [[ ! -z $BOLDRUNS ]]; then
 		BOLDS=$BOLDRUNS
 	fi
 fi
-BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
-BOLDPrefix=`opts_GetOpt "${setflag}boldprefix" $@`
-SkipFrames=`opts_GetOpt "${setflag}skipframes" $@`
-SNROnly=`opts_GetOpt "${setflag}snronly" $@`
-TimeStamp=`opts_GetOpt "${setflag}timestamp" $@`
-Suffix=`opts_GetOpt "${setflag}suffix" $@`
-SceneZip=`opts_GetOpt "${setflag}scenezip" $@`
-QCPreprocCustom=`opts_GetOpt "${setflag}customqc" $@`
+BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
+BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
+SkipFrames=`opts_GetOpt "--skipframes" $@`
+SNROnly=`opts_GetOpt "--snronly" $@`
+TimeStamp=`opts_GetOpt "--timestamp" $@`
+Suffix=`opts_GetOpt "--suffix" $@`
+SceneZip=`opts_GetOpt "--scenezip" $@`
+QCPreprocCustom=`opts_GetOpt "--customqc" $@`
 
 # -- Check if subject input is a parameter file instead of list of cases
 if [[ ${CASES} == *.txt ]]; then
