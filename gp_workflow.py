@@ -2100,7 +2100,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     else:
                         r += '\n... event data present'
                 else:
-                    r += '\n... event data not needed (e not specified in --bold_nuisance)'
+                    r += '\n... event data not needed (e not specified in --bold_nuisance) %s' % (options['bold_nuisance'])
 
                 # --- loop through bold files
 
