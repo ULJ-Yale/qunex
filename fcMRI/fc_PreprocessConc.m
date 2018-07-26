@@ -485,9 +485,7 @@ fprintf('\n        options: %s', options);
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=';
 options = g_ParseOptions([], options, default);
 
-fprintf('\n\nOptions used:\n---------------\n');
-optionsStr = [[fieldnames(options)], [struct2cell(options)]]';
-fprintf('%15s: %s\n', optionsStr{:});
+g_PrintStruct(options, '\nOptions used');
 
 TS = [];
 
