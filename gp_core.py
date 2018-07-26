@@ -367,6 +367,11 @@ def getSubjectFolders(sinfo, options):
     else:
         d['s_source'] = sinfo['data']
 
+    if options['hcp_bold_variant'] == "":
+        bvar = ''
+    else:
+        bvar = '.' + options['hcp_bold_variant']
+
     if "hcp" in sinfo:
         d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'])
 
@@ -374,14 +379,14 @@ def getSubjectFolders(sinfo, options):
     d['s_images']           = os.path.join(d['s_base'], 'images')
     d['s_struc']            = os.path.join(d['s_images'], 'structural')
     d['s_seg']              = os.path.join(d['s_images'], 'segmentation')
-    d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks')
-    d['s_bold']             = os.path.join(d['s_images'], 'functional')
+    d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks' + bvar)
+    d['s_bold']             = os.path.join(d['s_images'], 'functional' + bvar)
     d['s_bold_mov']         = os.path.join(d['s_bold'], 'movement')
     d['s_bold_events']      = os.path.join(d['s_bold'], 'events')
     d['s_bold_concs']       = os.path.join(d['s_bold'], 'concs')
     d['s_bold_glm']         = os.path.join(d['s_bold'], 'glm')
     d['s_roi']              = os.path.join(d['s_images'], 'ROI')
-    d['s_nuisance']         = os.path.join(d['s_roi'], 'nuisance')
+    d['s_nuisance']         = os.path.join(d['s_roi'], 'nuisance' + bvar)
     d['s_fs']               = os.path.join(d['s_seg'], 'freesurfer')
     d['s_hcp']              = os.path.join(d['s_seg'], 'hcp')
     d['s_s32k']             = os.path.join(d['s_hcp'], 'fsaverage_LR32k')
@@ -391,7 +396,7 @@ def getSubjectFolders(sinfo, options):
     d['inbox']              = os.path.join(options['subjectsfolder'], 'inbox')
 
     d['qc']                 = os.path.join(options['subjectsfolder'], 'QC')
-    d['qc_mov']             = os.path.join(d['qc'], 'movement')
+    d['qc_mov']             = os.path.join(d['qc'], 'movement' + bvar)
 
     if not os.path.exists(d['s_source']) and options['source_folder']:
         print "WARNING: Source folder not found, waiting 15s to give it a chance to come online!"

@@ -2159,21 +2159,25 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     The relevant processing parameters are:
 
-    --subjects        ... The batch.txt file with all the subject information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --hcp_cifti_tail  ... The tail (see above) that specifies, which version of
-                          the cifti files to copy over [].
-    --bold_preprocess ... Which bold images (as they are specified in the
-                          batch.txt file) to copy over. It can be a single
-                          type (e.g. 'task'), a pipe separated list (e.g.
-                          'WM|Control|rest') or 'all' to copy all [all].
-    --boldname        ... The default name of the bold files in the images
-                          folder [bold].
+    --subjects         ... The batch.txt file with all the subject information
+                           [batch.txt].
+    --subjectsfolder   ... The path to the study/subjects folder, where the
+                           imaging  data is supposed to go [.].
+    --cores            ... How many cores to utilize [1].
+    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
+                           [no].
+    --hcp_cifti_tail   ... The tail (see above) that specifies, which version of
+                           the cifti files to copy over [].
+    --bold_preprocess  ... Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all [all].
+    --boldname         ... The default name of the bold files in the images
+                           folder [bold].
+    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+                           specified, the results will be copied/linked from
+                           `Results.<hcp_bold_variant>` into 
+                           `images/functional.<hcp_bold_variant>. []
 
     The parameters can be specified in command call or subject.txt file.
     If possible, the files are not copied but rather hard links are created to
@@ -2191,6 +2195,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     Changelog
     2016-12-24 - Grega Repovš - Added documentation, fixed copy of volume images.
     2017-03-25 - Grega Repovš - Added more detailed reporting of progress.
+    2018-07-17 - Grega Repovš - Added hcp_bold_variant option.
     """
 
     bsearch = re.compile('bold([0-9]+)')
@@ -2199,6 +2204,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
     r += "\n   The command will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bold_preprocess parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bold_preprocess'].split("|")), options['hcp_cifti_tail'])
+    if options['hcp_bold_variant']:
+        r += "\n   As --hcp_bold_variant was set to '%s', the files will be copied/linked to 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
     # --- file/dir structure
@@ -2299,6 +2306,11 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     report['boldskipped'] = 0
     skipped = []
 
+    if options['hcp_bold_variant'] == "":
+        bvar = ''
+    else:
+        bvar = '.' + options['hcp_bold_variant']    
+
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
             bnum = bsearch.match(v['name'])
@@ -2321,7 +2333,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                             bname = v['bold']
                         else:
                             for posb in ["%s", "bold%s", "BOLD%s", "BOLD_%s"]:
-                                if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'Results', posb % (bnum))):
+                                if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'Results' + bvar, posb % (bnum))):
                                     bname = posb % (bnum)
                                     break
                             if bname == "":

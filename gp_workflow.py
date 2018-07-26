@@ -177,23 +177,27 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     The relevant processing parameters are:
 
-    --subjects        ... The batch.txt file with all the subject information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --bold_preprocess ... Which bold images (as they are specified in the
-                          batch.txt file) to copy over. It can be a single
-                          type (e.g. 'task'), a pipe separated list (e.g.
-                          'WM|Control|rest') or 'all' to copy all [rest].
-    --boldname        ... The default name of the bold files in the images
-                          folder [bold].
-    --logfolder       ... The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+    --subjects         ... The batch.txt file with all the subject information
+                           [batch.txt].
+    --subjectsfolder   ... The path to the study/subjects folder, where the
+                           imaging  data is supposed to go [.].
+    --cores            ... How many cores to utilize [1].
+    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
+                           [no].
+    --bold_preprocess  ... Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all [rest].
+    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed [].
+    --boldname         ... The default name of the bold files in the images
+                           folder [bold].
+    --logfolder        ... The path to the folder where runlogs and comlogs
+                           are to be stored, if other than default []
+    --log              ... Whether to keep ('keep') or remove ('remove') the
+                           temporary logs once jobs are completed ['keep']
 
     The parameters can be specified in command call or subject.txt file.
 
@@ -222,6 +226,8 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nCreating masks for bold runs ... \n"
     r += "\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bold_preprocess parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed."
+    if options['hcp_bold_variant']:
+        r += "\n   As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n   Bold masks will be saved in images/segmentation/boldmasks.%s" % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
     d = getSubjectFolders(sinfo, options)
@@ -392,23 +398,27 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --bold_preprocess ... Which bold images (as they are specified in the
-                          batch.txt file) to copy over. It can be a single
-                          type (e.g. 'task'), a pipe separated list (e.g.
-                          'WM|Control|rest') or 'all' to copy all [rest].
-    --boldname        ... The default name of the bold files in the images
-                          folder [bold].
-    --logfolder       ... The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+    --subjects         ... The batch.txt file with all the subject information
+                           [batch.txt].
+    --subjectsfolder   ... The path to the study/subjects folder, where the
+                           imaging  data is supposed to go [.].
+    --cores            ... How many cores to utilize [1].
+    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
+                           [no].
+    --bold_preprocess  ... Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all [rest].
+    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed [].
+    --boldname         ... The default name of the bold files in the images
+                           folder [bold].
+    --logfolder        ... The path to the folder where runlogs and comlogs
+                           are to be stored, if other than default []
+    --log              ... Whether to keep ('keep') or remove ('remove') the
+                           temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -479,6 +489,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     r += "\n\n    The command will compute per frame statistics for each of the specified BOLD\n    files based on its movement correction parameter file and BOLD image analysis.\n    The results will be saved as *.bstat and *.bscrub files in the images/movement\n    subfolder. Only images specified using --bold_preprocess parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    target format, nifti volume image will be used to compute statistics."
     r += "\n\n    Using parameters:\n\n    --mov_radius: %(mov_radius)s\n    --mov_fd: %(mov_fd)s\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_after: %(mov_after)s\n    --mov_before: %(mov_before)s\n    --mov_bad: %(mov_bad)s" % (options)
     r += "\n\n    for computing scrubbing information."
+    if options['hcp_bold_variant']:
+        r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
     d = getSubjectFolders(sinfo, options)
@@ -615,23 +627,29 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --bold_preprocess ... Which bold images (as they are specified in the
-                          batch.txt file) to copy over. It can be a single
-                          type (e.g. 'task'), a pipe separated list (e.g.
-                          'WM|Control|rest') or 'all' to copy all [rest].
-    --boldname        ... The default name of the bold files in the images
-                          folder [bold].
-    --logfolder       ... The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+    --subjects         ... The batch.txt file with all the subject information
+                           [batch.txt].
+    --subjectsfolder   ... The path to the study/subjects folder, where the
+                           imaging  data is supposed to go [.].
+    --cores            ... How many cores to utilize [1].
+    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
+                           [no].
+    --bold_preprocess  ... Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all [rest].
+    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed, and the group report will be stored in
+                           `<subjectsfolder>/QC/movement.<hcp_bold_variant>`
+                           folder [].
+    --boldname         ... The default name of the bold files in the images
+                           folder [bold].
+    --logfolder        ... The path to the folder where runlogs and comlogs
+                           are to be stored, if other than default []
+    --log              ... Whether to keep ('keep') or remove ('remove') the
+                           temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -731,6 +749,8 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\n\nCreating BOLD Movement and statistics report ..."
         r += "\n\n    The command will use movement correction parameters and computed BOLD\n    statistics to create per subject plots, fidl snippets and group reports. Only\n    images specified using --bold_preprocess parameter will be processed. Please\n    see documentation for use of other relevant parameters!"
         r += "\n\n    Using parameters:\n\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_fd: %(mov_fd)s\n    --mov_radius: %(mov_radius)s\n    --mov_fidl: %(mov_fidl)s\n    --mov_post: %(mov_post)s\n    --mov_pref: %(mov_pref)s" % (options)
+        if options['hcp_bold_variant']:
+            r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n    Group results will be stored in <subjectsfolder>/QC/movement.%s." % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])    
         r += "\n\n........................................................"
 
         d = getSubjectFolders(sinfo, options)
@@ -977,23 +997,27 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --bold_preprocess ... Which bold images (as they are specified in the
-                          batch.txt file) to copy over. It can be a single
-                          type (e.g. 'task'), a pipe separated list (e.g.
-                          'WM|Control|rest') or 'all' to copy all [rest].
-    --boldname        ... The default name of the bold files in the images
-                          folder [bold].
-    --logfolder       ... The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+    --subjects         ... The batch.txt file with all the subject information
+                           [batch.txt].
+    --subjectsfolder   ... The path to the study/subjects folder, where the
+                           imaging  data is supposed to go [.].
+    --cores            ... How many cores to utilize [1].
+    --overwrite        ... Whether to overwrite existing data (yes) or not (no)
+                           [no].
+    --bold_preprocess  ... Which bold images (as they are specified in the
+                           batch.txt file) to copy over. It can be a single
+                           type (e.g. 'task'), a pipe separated list (e.g.
+                           'WM|Control|rest') or 'all' to copy all [rest].
+    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed [].
+    --boldname         ... The default name of the bold files in the images
+                           folder [bold].
+    --logfolder        ... The path to the folder where runlogs and comlogs
+                           are to be stored, if other than default []
+    --log              ... Whether to keep ('keep') or remove ('remove') the
+                           temporary logs once jobs are completed ['keep']
 
     specific parameters
     -------------------
@@ -1055,6 +1079,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     r += "\n\n    The command will extract nuisance signal from each of the specifie BOLD files.\n    The results will be saved as *.nuisance files in the images/movement\n    subfolder. Only images specified using --bold_preprocess parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal."
     r += "\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sbjroi: %(sbjroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s" % (options)
     r += "\n\n    when extracting nuisance signal."
+    if options['hcp_bold_variant']:
+        r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
     d = getSubjectFolders(sinfo, options)
@@ -1211,10 +1237,14 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     There are a number of basic specific parameters for this command that are
     relevant for all or most of the actions:
 
-    --bold_preprocess ... A pipe ('|') separated list of bold files to process.
-    --event_file      ... The name of the fidl file to be used with each bold.
-    --bold_actions    ... A string specifying which actions, and in what sequence
-                          to perform [shrcl]
+    --bold_preprocess  ... A pipe ('|') separated list of bold files to process.
+    --event_file       ... The name of the fidl file to be used with each bold.
+    --bold_actions     ... A string specifying which actions, and in what sequence
+                           to perform [shrcl]
+    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed [].
 
     List of bold files specify, which types of bold files are to be processed,
     as they are specified in the batch.txt file. An example of a list of
@@ -1527,12 +1557,20 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nPreprocessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bold_preprocess'].split("|")))
+    if options['hcp_bold_variant']:
+        r += "\nAs --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
+
     r += "\n%s Preprocessing bold runs ..." % (action("Running", options['run']))
 
     report = {'done': [], 'processed': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
     report['skipped'] = [str(n) for n, b, t in bskip]
+
+    if options['hcp_bold_variant'] == "":
+        options['bold_variant'] = ''
+    else:
+        options['bold_variant'] = '.' + options['hcp_bold_variant'] 
 
     for boldnum, boldname, boldtask in bolds:
 
@@ -1605,7 +1643,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                 boldow = 'false'
 
             scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-            opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(hcp_cifti_tail)s" % (options)
+            opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(hcp_cifti_tail)s|bold_variant=%(bold_variant)s" % (options)
 
             mcomm = 'fc_Preprocess(\'%s\', %s, %d, \'%s\', \'%s\', %s, \'%s\', %f, \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\')' % (
                 d['s_base'],                        # --- subject folder
@@ -2045,6 +2083,13 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s Preprocessing conc bundles ..." % (action("Running", options['run']))
+    if options['hcp_bold_variant']:
+        r += "\nAs --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
+
+    if options['hcp_bold_variant'] == "":
+        options['bold_variant'] = ''
+    else:
+        options['bold_variant'] = '.' + options['hcp_bold_variant']  
 
     concs = options['bold_preprocess'].split("|")
     fidls = options['event_file'].split("|")
@@ -2199,7 +2244,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(hcp_cifti_tail)s" % (options)
+                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(hcp_cifti_tail)s|bold_variant=%(bold_variant)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- subject folder
