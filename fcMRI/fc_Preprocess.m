@@ -50,17 +50,22 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %                     lopass  - keep / linear /spline
 %                     ['hipass:keep|regress:keep|lopass:keep']
 %       options   ... additional options that can be set using the 'key=value|key=value' string:
-%                     surface_smooth: 6
-%                     volume_smooth:  6
-%                     voxel_smooth:   2
-%                     lopass_filter:  0.08
-%                     hipass_filter:  0.009
-%                     framework_path:
-%                     wb_command_path:
-%                     omp_threads:    0
-%                     smooth_mask:    false
-%                     dilate_mask:    false
-%                     boldname:       bold
+%                     surface_smooth  : 6
+%                     volume_smooth   : 6
+%                     voxel_smooth    : 2
+%                     lopass_filter   : 0.08
+%                     hipass_filter   : 0.009
+%                     framework_path  :
+%                     wb_command_path :
+%                     omp_threads     : 0
+%                     smooth_mask     : false
+%                     dilate_mask     : false
+%                     boldname        : bold
+%                     bold_tail       :
+%                     bold_variant    :
+%                     glm_matrix      : none  ('none' / 'text' / 'image' / 'both')
+%                     glm_residuals   : save
+%                     glm_name        : 
 %
 %  USE
 %  fc_Preprocess is a complex function initially used to prepare BOLD files
@@ -429,7 +434,7 @@ fprintf('\n        ignores: %s', ignores);
 fprintf('\n        options: %s\n', options);
 
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=';
 options = g_ParseOptions([], options, default);
 
 fprintf('\n\nOptions used:\n---------------\n');
@@ -461,18 +466,18 @@ rgss  = regexp(rgss, ',|;| |\|', 'split');
 % ======================================================
 %   ----> prepare paths
 
-froot = strcat(subjectf, ['/images/functional/' options.boldname int2str(bold) options.bold_tail]);
+froot = strcat(subjectf, ['/images/functional' options.bold_variant '/' options.boldname int2str(bold) options.bold_tail]);
 
-file.movdata   = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '_mov.dat']);
-file.oscrub    = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '.scrub']);
-file.tscrub    = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) options.bold_tail variant '.scrub']);
-file.bstats    = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '.bstats']);
-file.fidlfile  = strcat(subjectf, ['/images/functional/events/' options.boldname   int2str(bold) efile]);
-file.bmask     = strcat(subjectf, ['/images/segmentation/boldmasks/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
+file.movdata   = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '_mov.dat']);
+file.oscrub    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.scrub']);
+file.tscrub    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) options.bold_tail variant '.scrub']);
+file.bstats    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.bstats']);
+file.fidlfile  = strcat(subjectf, ['/images/functional' options.bold_variant '/events/' options.boldname   int2str(bold) efile]);
+file.bmask     = strcat(subjectf, ['/images/segmentation/boldmasks' options.bold_variant '/' options.boldname int2str(bold) '_frame1_brain_mask' tail]);
 
 eroot          = strrep(efile, '.fidl', '');
-file.nuisance  = strcat(subjectf, ['/images/functional/movement/' options.boldname int2str(bold) '.nuisance']);
-file.Xroot     = strcat(subjectf, ['/images/functional/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
+file.nuisance  = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname int2str(bold) '.nuisance']);
+file.Xroot     = strcat(subjectf, ['/images/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
 
 file.lsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
 file.rsurf     = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);

@@ -70,6 +70,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %           glm_residuals   : ['save']
 %           glm_name        : ['']
 %           bold_tail       : ['']
+%           bold_variant    : ['']
 %
 %       done        - A path to a file to save to confirm all is a-ok. ['']
 %
@@ -115,20 +116,22 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %
 %   Important are also the following optional keys in the options parameter:
 %
-%   - boldname  ... Specifies, how the BOLD files are named in the
-%                   images/functional folder.
-%   - bold_tail ... Specifies the additional tail that the bold name might
-%                   have (see below).
+%   - boldname     ... Specifies, how the BOLD files are named in the
+%                      images/functional folder.
+%   - bold_tail    ... Specifies the additional tail that the bold name might
+%                      have (see below).
+%   - bold_variant ... Specifies a possible extension for the images/functional
+%                      and images/segmentation/boldmasks folders
 %
 %   The files that will be processed / used are:
 %
-%   bolds           : <subjectf>/images/functional/<boldname>[N]<bold_tail><tail>
-%   movement data   : <subjectf>/images/functional/movement/<boldname>_mov.dat
-%   scrubbing data  : <subjectf>/images/functional/movement/<boldname>.scrub
-%   bold stats data : <subjectf>/images/functional/movement/<boldname>.bstats
-%   nuisance signal : <subjectf>/images/functional/movement/<boldname>.nuisance
-%   bold brain mask : <subjectf>/images/segmentation/boldmasks/<boldname>[N]_frame1_brain_mask<tail>
-%   event file      : <subjectf>/images/functional/events/<efile>
+%   bolds           : <subjectf>/images/functional<bold_variant>/<boldname>[N]<bold_tail><tail>
+%   movement data   : <subjectf>/images/functional<bold_variant>/movement/<boldname>_mov.dat
+%   scrubbing data  : <subjectf>/images/functional<bold_variant>/movement/<boldname>.scrub
+%   bold stats data : <subjectf>/images/functional<bold_variant>/movement/<boldname>.bstats
+%   nuisance signal : <subjectf>/images/functional<bold_variant>/movement/<boldname>.nuisance
+%   bold brain mask : <subjectf>/images/segmentation/boldmasks<bold_variant>/<boldname>[N]_frame1_brain_mask<tail>
+%   event file      : <subjectf>/images/functional<bold_variant>/events/<efile>
 %
 %   The actions that can be performed are denoted by a single letter, and they
 %   will be executed in the sequence listed:
@@ -479,7 +482,7 @@ fprintf('\n        ignores: %s', ignores);
 fprintf('\n           done: %s', done);
 fprintf('\n        options: %s', options);
 
-default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=';
+default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=';
 options = g_ParseOptions([], options, default);
 
 fprintf('\n\nOptions used:\n---------------\n');
@@ -537,21 +540,21 @@ for b = 1:nbolds
     % ---> general paths
 
     bnum = int2str(bolds(b));
-    file(b).froot       = strcat(subjectf, ['/images/functional/' options.boldname bnum options.bold_tail]);
+    file(b).froot       = strcat(subjectf, ['/images/functional' options.bold_variant '/' options.boldname bnum options.bold_tail]);
 
-    file(b).movdata     = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum '_mov.dat']);
-    file(b).oscrub      = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum '.scrub']);
-    file(b).tscrub      = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum options.bold_tail variant '.scrub']);
-    file(b).bstats      = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum '.bstats']);
-    file(b).nuisance    = strcat(subjectf, ['/images/functional/movement/' options.boldname bnum '.nuisance']);
-    file(b).fidlfile    = strcat(subjectf, ['/images/functional/events/' efile]);
-    file(b).bmask       = strcat(subjectf, ['/images/segmentation/boldmasks/' options.boldname bnum '_frame1_brain_mask' tail]);
+    file(b).movdata     = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum '_mov.dat']);
+    file(b).oscrub      = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum '.scrub']);
+    file(b).tscrub      = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum options.bold_tail variant '.scrub']);
+    file(b).bstats      = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum '.bstats']);
+    file(b).nuisance    = strcat(subjectf, ['/images/functional' options.bold_variant '/movement/' options.boldname bnum '.nuisance']);
+    file(b).fidlfile    = strcat(subjectf, ['/images/functional' options.bold_variant '/events/' efile]);
+    file(b).bmask       = strcat(subjectf, ['/images/segmentation/boldmasks' options.bold_variant '/' options.boldname bnum '_frame1_brain_mask' tail]);
 
     eroot               = strrep(efile, '.fidl', '');
-    file(b).croot       = strcat(subjectf, ['/images/functional/' options.boldname options.bold_tail '_conc_' eroot]);
-    file(b).cfroot      = strcat(subjectf, ['/images/functional/concs/' options.boldname options.bold_tail '_' fformat '_' eroot]);
+    file(b).croot       = strcat(subjectf, ['/images/functional' options.bold_variant '/' options.boldname options.bold_tail '_conc_' eroot]);
+    file(b).cfroot      = strcat(subjectf, ['/images/functional' options.bold_variant '/concs/' options.boldname options.bold_tail '_' fformat '_' eroot]);
 
-    file(b).Xroot       = strcat(subjectf, ['/images/functional/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
+    file(b).Xroot       = strcat(subjectf, ['/images/functional' options.bold_variant '/glm/' options.boldname options.bold_tail '_GLM-X_' eroot]);
 
     file(b).lsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/L.midthickness.32k_fs_LR.surf.gii']);
     file(b).rsurf       = strcat(subjectf, ['/images/segmentation/hcp/fsaverage_LR32k/R.midthickness.32k_fs_LR.surf.gii']);
