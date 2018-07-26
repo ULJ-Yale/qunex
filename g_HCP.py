@@ -289,6 +289,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
 
     print "\n ---=====         DONE          =====---\n"
+    print "===> Successful completion of work."
+    
     return "completed ok"
 
 
@@ -401,6 +403,7 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
             setupHCP(sfolder=os.path.dirname(sfile), tfolder=tfolder, sfile=sbjf)
 
     print "\n\n===> done processing %s\n" % (subjectsfolder)
+    print "===> Successful completion of work."
 
 
 def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, sfilter=None, overwrite="no"):
@@ -622,5 +625,8 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
             fout = open(stfile, 'w')
             for line in nlines:
                 print >> fout, line
+    
+    print "===> Successful completion of work."
 
+    return "completed ok"
 

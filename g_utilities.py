@@ -69,6 +69,13 @@ def createStudy(studyfolder=None):
     ├── processing
     │   ├── logs
     │   ├── lists
+    │   ├── scenes
+    │   │   └── QC
+    │   │       ├── T1w
+    │   │       ├── T2w
+    │   │       ├── myelin
+    │   │       ├── BOLD
+    │   │       └── DWI
     │   └── scripts
     ├── info
     │   ├── demographics
@@ -108,12 +115,15 @@ def createStudy(studyfolder=None):
              - Added creation of .mnapstudy file.
     2018-06-02 Grega Repovs
              - Changed templates to *_example.txt.
+    2018-07-24 Grega Repovs
+             - Expanded folders to include QC scenes
     '''
 
     if studyfolder is None:
         raise ValueError("ERROR: studyfolder parameter has to be provided!")
 
     folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
+               ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
                ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
                ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
                ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'behavior'], ['subjects', 'specs'], ['subjects', 'QC']]
@@ -164,7 +174,7 @@ def createStudy(studyfolder=None):
         print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
         mark.close()
 
-    print "\nDone.\n"
+    print "===> Successful completion of work."
 
 
 def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
@@ -189,9 +199,11 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
     - no:     abort creating the file
     - append: append subjects to the existing file
 
-    If overwrite is set to "append", the parameters will not be changed, however,
-    any subjects that are not yet present in the batch file will be appended at
-    the end of the batch file.
+    Note that if If a batch file already exists then parameter file will not be 
+    added to the header of the batch unless --overwrite is set to "yes". If 
+    --overwrite is set to "append", then the parameters will not be changed, 
+    however, any subjects that are not yet present in the batch file will be 
+    appended at the end of the batch file.
 
     The command will also look for a parameter file. If it exists, it will
     prepend its content at the beginning of the batch.txt file. If no paramfile
@@ -221,6 +233,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
              - Added the option to specify subjects to add explicitly.
     2018-07-16 Grega Repovš
              - Renamed to createBatch from compileBatch
+    2018-07-20 Grega Repovš
+             - Fixed adding paramfile and updated documentation
     '''
 
     if subjects in ['None', 'none', 'NONE']:
@@ -264,6 +278,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
 
     # --- open target file
 
+    preexist = os.path.exists(tfile)
+
     if overwrite == 'yes':
         print "---> Creating file %s" % (os.path.basename(tfile))
         jfile = open(tfile, 'w')
@@ -276,11 +292,13 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
         slist, parameters = gc.getSubjectList(tfile)
         slist = [e['id'] for e in slist]
         print "---> Appending to file %s" % (os.path.basename(tfile))
+        if paramfile and preexist:
+            print "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!"
         jfile = open(tfile, 'a')
 
     # --- check for param file
 
-    if overwrite == 'yes':
+    if overwrite == 'yes' or not preexist:
         if paramfile is None:
             paramfile = os.path.join(subjectsfolder, 'specs', 'batch_parameters.txt')
             if not os.path.exists(paramfile):
@@ -294,14 +312,14 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
                         print >> pfile, "#\n# " + line[0] + '\n#'
                 pfile.close()
 
-            if os.path.exists(paramfile):
-                print "---> appending parameter file [%s]." % (paramfile)
-                print >> jfile, "# Parameter file: %s\n#" % (paramfile)
-                with open(paramfile) as f:
-                    for line in f:
-                        print >> jfile, line,
-            else:
-                print "---> parameter files does not exist, skipping [%s]." % (paramfile)
+        if os.path.exists(paramfile):
+            print "---> appending parameter file [%s]." % (paramfile)
+            print >> jfile, "# Parameter file: %s\n#" % (paramfile)
+            with open(paramfile) as f:
+                for line in f:
+                    print >> jfile, line,
+        else:
+            print "---> parameter files does not exist, skipping [%s]." % (paramfile)
 
     # -- get list of subject folders
 
@@ -329,7 +347,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
 
     # --- close file
 
-    print "===> Done"
+    print "===> Successful completion of work."
+
     jfile.close()
 
 
@@ -619,7 +638,7 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
         print >> lfile, line
 
     lfile.close()
-    print "===> Done"
+    print "===> Successful completion of work."
 
 
 def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
@@ -863,4 +882,4 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
             cfile.close()
 
-    print "===> Done"
+    print "===> Successful completion of work."
