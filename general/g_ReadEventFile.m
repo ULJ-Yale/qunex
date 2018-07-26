@@ -1,4 +1,4 @@
-function [out] = g_ReadEventFile(file)
+function [out] = g_ReadEventFile(file, tunit)
 
 %
 %	Reads fidl event file and returns a structure that includes:
@@ -14,7 +14,10 @@ function [out] = g_ReadEventFile(file)
 %   (c) Grega Repovš
 %   2011-07-30 - Added coding of frames to ignore
 %   2016-02-03 - Added checking for event length in ms
+%   2018-07-27 - Updated checking for event length in ms
 %
+
+if nargin < 2 || isempty(tunit), tunit = 's'; end
 
 [fin message] = fopen(file);
 if fin == -1
@@ -47,7 +50,7 @@ while feof(fin) == 0
 		event_s = [event_s data(1)];
 
 		el      = data(3);
-		if el > 100
+		if strcmp(tunit, 'ms')
 			el  = el / 1000;
 		end
 
@@ -86,3 +89,7 @@ out.events  = events;
 out.beh     = beh;
 out.TR      = TR;
 out.nevents = length(frame);
+
+if max(event_l) >= 750 && min(event_l) > 10
+	out = g_ReadEventFile(file, 'ms');
+end
