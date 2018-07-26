@@ -396,7 +396,11 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %              - Updated the function to store GLM information ain the same manner as preprocessConc.
 %
 %   2018-06-26 Grega Repovs (v0.9.14)
-%              - Updated naming of residual files to include GLM name.
+%              - Updated naming of residual files to include GLM name
+%
+%   2018-06-26 Grega Repovs (v0.9.15)
+%              - Changed to pretty struct printing.
+%              - Added option to support hcp_bold variant processing.
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -415,7 +419,7 @@ if nargin < 3, omit = [];                                   end
 if nargin < 2, error('ERROR: At least subject folder and BOLD number need to be specified for the funtion to run!'); end
 
 
-fprintf('\nRunning preproces script v0.9.11 [%s]\n--------------------------------\n', tail);
+fprintf('\nRunning preproces script v0.9.15 [%s]\n--------------------------------\n', tail);
 fprintf('\nParameters:\n---------------');
 fprintf('\n       subjectf: %s', subjectf);
 fprintf('\n           bold: %s', num2str(bold));
@@ -431,13 +435,14 @@ fprintf('\n      overwrite: %s', num2str(overwrite));
 fprintf('\n           tail: %s', tail);
 fprintf('\n          scrub: %s', scrub);
 fprintf('\n        ignores: %s', ignores);
-fprintf('\n        options: %s\n', options);
+fprintf('\n        options: %s', options);
+fprintf('\n');
 
 
 default = 'boldname=bold|surface_smooth=6|volume_smooth=6|voxel_smooth=2|lopass_filter=0.08|hipass_filter=0.009|framework_path=|wb_command_path=|omp_threads=0|smooth_mask=false|dilate_mask=false|glm_matrix=none|glm_residuals=save|glm_name=|bold_tail=|bold_variant=';
 options = g_ParseOptions([], options, default);
 
-g_PrintStruct(options, '\nOptions used');
+g_PrintStruct(options, 'Options used');
 
 ignore.hipass  = 'keep';
 ignore.regress = 'keep';
