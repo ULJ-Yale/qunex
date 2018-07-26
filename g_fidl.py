@@ -163,6 +163,9 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
     jointfile = fidlroot + fidlname + '.fidl'
     if outfolder is not None:
+        if not os.path.exists(outfolder):
+            print "--> Creating output folder:", outfolder
+            os.makedirs(outfolder)
         jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 
     out = open(jointfile, 'w')
@@ -198,6 +201,8 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     for concfile in concfiles:
         root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ""))
         joinFidl(concfile, root, outfolder, fidlname)
+
+    print "===> Successful completion of task"
 
 
 def splitFidl(concfile, fidlfile, outfolder=None):
