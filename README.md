@@ -264,6 +264,7 @@ Change Log
 * 0.17.01 [niutilities] Extended createStudy to include QC scenes
 * 0.17.02 [connector] Aligned redirects for logging to comply with bash versions 3 and 4.
 * 0.17.03 [connector] Updates to turnkey code
+* 0.17.04 [library] Added ungzipped version of brain mask needed for PALM
 
 =======
 [Mind and Brain Lab]: http://mblab.si
