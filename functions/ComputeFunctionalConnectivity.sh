@@ -102,28 +102,24 @@ echo ""
 echo "For more detailed documentation run <help fc_ComputeGBC3>, <help gmrimage.mri_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside matlab"
 echo ""
 echo ""
-echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
+echo "-- GENERAL PARMETERS:"
 echo ""
-echo "      --calculation=<type_of_calculation>      Run <seed> or <gbc> calculation for functional connectivity."
+echo "      --calculation=<type_of_calculation>      Run <seed> , <gbc> or <dense> calculation for functional connectivity."
 echo "      --runtype=<type_of_run>                  Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
-echo "      --flist=<subject_list_file>              Specify *.list file of subject information. If specified then --subjectsfolder, --inputfile, --subject and --outname are omitted"
 echo "      --targetf=<path_for_output_file>         Specify the absolute path for output folder. If using --runtype='individual' and left empty the output will default to --inputpath location for each subject"
-echo "      --ignore=<frames_to_ignore>              The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
-echo "      --mask=<which_frames_to_use>             An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped."
+echo "      --overwrite=<clean_prior_run>            Delete prior run for a given subject. Default [no]."
 echo ""
-echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
+echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP SEED/GBC RUN:"
+echo ""
+echo "      --flist=<subject_list_file>              Specify *.list file of subject information. If specified then --subjectsfolder, --inputfile, --subject and --outname are omitted"
+echo ""
+echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT SEED/GBC RUN:"
 echo ""
 echo "      --subjectsfolder=<folder_with_subjects>             Path to study subjects folder"
-echo "      --subject=<list_of_cases>                           List of subjects to run"
+echo "      --subjects=<list_of_cases>                          List of subjects to run"
 echo "      --inputfiles=<files_to_compute_connectivity_on>     Specify the comma separated file names you want to use (e.g. /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
 echo "      --inputpath=<path_for_input_file>                   Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/)"
 echo "      --outname=<name_of_output_file>                     Specify the suffix name of the output file name"  
-echo ""
-echo "-- OPTIONAL GENERAL PARAMETERS: "   
-echo ""
-echo "      --overwrite=<clean_prior_run>                    Delete prior run for a given subject"
-echo "      --extractdata=<save_out_the_data_as_as_csv>      Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
-echo "      --covariance=<compute_covariance>                Whether to compute covariances instead of correlations (true / false). Default is [false]"
 echo ""
 echo "-- REQUIRED GBC PARMETERS:"
 echo ""
@@ -150,7 +146,7 @@ echo "          > pDs:n  ... computes proportion of voxels within n strength ran
 echo "          > nDs:n  ... computes proportion of voxels within n strength ranges of negative r "  
 echo ""
 echo "-- OPTIONAL GBC PARMETERS:"
-echo "" 
+echo ""
 echo "      --verbose=<print_output_verbosely>   Report what is going on. Default is [false]"
 echo "      --time=<print_time_needed>           Whether to print timing information. [false]"
 echo "      --vstep=<how_many_voxels>            How many voxels to process in a single step. Default is [1200]"
@@ -169,13 +165,27 @@ echo "         > f ... save map of Fisher z values "
 echo "         > cv ... save map of covariances "
 echo "         > z ... save map of Z scores "
 echo ""
+echo "-- OPTIONAL SEED OR GBC PARAMETERS: "   
+echo ""
+echo "      --extractdata=<save_out_the_data_as_as_csv>      Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) "
+echo "      --covariance=<compute_covariance>                Whether to compute covariances instead of correlations (true / false). Default is [false]"
+echo "      --ignore=<frames_to_ignore>              The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
+echo "      --mask=<which_frames_to_use>             An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped."
+echo ""
+echo "-- REQUIRED PARMETERS FOR A DENSE FC RUN:"
+echo ""
+echo "      --subjectsfolder=<folder_with_subjects>             Path to study subjects folder"
+echo "      --subjects=<list_of_cases>                          List of subjects to run"
+echo "      --inputfiles=<files_to_compute_connectivity_on>     Specify the comma separated file names you want to use (e.g. bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
+echo "      --weights=<yes/no>                                  Specify if using weights or not."
+echo ""
 echo "-- Examples:"
 echo ""
 echo "ComputeFunctionalConnectivity.sh \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--calculation='seed' \ "
 echo "--runtype='individual' \ "
-echo "--subject='<case_id>' \ "
+echo "--subjects='<case_id>' \ "
 echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
 echo "--inputpath='/images/functional' \ "
 echo "--extractdata='yes' \ "
@@ -206,7 +216,7 @@ echo "ComputeFunctionalConnectivity.sh \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='individual' \ "
-echo "--subject='100206' \ "
+echo "--subjects='<case_id>' \ "
 echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
 echo "--inputpath='/images/functional' \ "
 echo "--extractdata='yes' \ "
@@ -305,7 +315,7 @@ local arguments=("$@")
 # -- Initialize global output variables
 
 unset SubjectsFolder   # --subjectsfolder=
-unset CASE             # --subject=
+unset CASES            # --subjects=
 unset InputFiles       # --inputfile=
 unset InputPath        # --inputpath=
 unset OutName          #  --outname=
@@ -350,8 +360,8 @@ while [ ${index} -lt ${numArgs} ]; do
             SubjectsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subject=*)
-            CASE=${argument/*=/""}
+        --subjects=*)
+            CASES=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
         --inputfiles=*)
@@ -465,6 +475,10 @@ if [ -z ${Calculation} ]; then
     exit 1
 fi
 if [ -z ${RunType} ]; then
+	if [ ${Calculation} == "dense" ]; then
+		RunType="individual"
+	fi
+else
     usage
     reho "ERROR: <type_of_run> not specified."
     exit 1
@@ -479,9 +493,9 @@ if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
 		echo ""
 		exit 1
 	fi
-	if [ -z ${CASE} ]; then
+	if [ -z ${CASES} ]; then
 		usage
-		reho "ERROR: <subject_id> not specified."
+		reho "ERROR: <subject_ids> not specified."
 		echo ""
 		exit 1
 	fi
@@ -514,20 +528,35 @@ if [ ${RunType} == "list" ]; then
 	fi
 fi
 # -- Check additional mandatory options
-if [ -z ${IgnoreFrames} ]; then
-	reho "WARNING: <bad_movement_frames_to_ignore_command> not specified. Assuming no input."
-	IgnoreFrames=""
-	echo ""
+if [ ${Calculation} != "dense" ]; then
+	if [ -z ${IgnoreFrames} ]; then
+		reho "WARNING: <bad_movement_frames_to_ignore_command> not specified. Assuming no input."
+		IgnoreFrames=""
+		echo ""
+	fi
+	if [ -z ${MaskFrames} ]; then
+		reho "WARNING: <frames_to_mask_out> not specified. Assuming zero."
+		MaskFrames=""
+		echo ""
+	fi
+	if [ -z ${Covariance} ]; then
+		reho "WARNING: <compute_covariance> not specified. Assuming correlation."
+		Covariance="false"
+		echo ""
+	fi
 fi
-if [ -z ${MaskFrames} ]; then
-	reho "WARNING: <frames_to_mask_out> not specified. Assuming zero."
-	MaskFrames=""
-	echo ""
-fi
-if [ -z ${Covariance} ]; then
-	reho "WARNING: <compute_covariance> not specified. Assuming correlation."
-	Covariance="false"
-	echo ""
+if [ ${Calculation} == "dense" ]; then
+	if [ ${RunType} == "list" ] || if [ ${RunType} == "group" ]; then
+		usage
+		reho "ERROR: dense calculation and <list> or <group> selection are not supported. Use <individual>."
+		echo ""
+		exit 1
+	fi
+	if [ -z ${IgnoreFrames} ]; then
+		reho "WARNING: <bad_movement_frames_to_ignore_command> not specified. Assuming no input."
+		IgnoreFrames=""
+		echo ""
+	fi
 fi
 
 # -- Check which function is specified and then check additional needed parameters
@@ -611,7 +640,7 @@ if [ ${RunType} == "list" ]; then
 fi
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
 	echo "  SubjectsFolder: ${SubjectsFolder}"
-	echo "  Subjects: ${CASE}"
+	echo "  Subjects: ${CASES}"
 	echo "  InputFiles: ${InputFiles}"
 	echo "  InputPath: ${SubjectsFolder}/<subject_id>/${InputPath}"
 	echo "  OutName: ${OutName}"
@@ -644,7 +673,7 @@ main() {
 get_options "$@"
 
 # -- Parse all the input cases for an individual or group run
-INPUTCASES=`echo "$CASE" | sed 's/,/ /g'`
+INPUTCASES=`echo "$CASES" | sed 's/,/ /g'`
 echo ""
 
 # -- Define all inputs and outputs depending on data type input
@@ -710,6 +739,7 @@ if [ ${Calculation} == "seed" ]; then
 	# Example with string input --> ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
 	${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
 fi
+
 # -- Check if GBC seed run is specified
 if [ ${Calculation} == "gbc" ]; then
 	# -- run GBC seed command: 
@@ -717,6 +747,43 @@ if [ ${Calculation} == "gbc" ]; then
 	# Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
 	# Example with string input --> ${MNAPMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
 	${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+fi
+
+# -- Check if dense run is specified
+if [ ${Calculation} == "dense" ]; then
+	for INPUTCASE in ${INPUTCASES}; do
+		geho "--- Running Dense Connectome on BOLD data for ${INPUTCASE}. Note: need ~30GB free RAM at any one time per subject!"
+		echo ""
+		# -- Define inputs
+		geho "--- Establishing paths for all input and output folders:"
+		echo ""
+		if [ ${OutPath} == "" ]; then
+			OutPath=${SubjectsFolder}/${INPUTCASE}/${InputPath}
+		fi
+		# -- Parse input from the InputFiles variable
+		InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
+		# -- Generate output directories
+		mkdir ${OutPath} > /dev/null 2>&1
+		# -- Generate the temp list
+		for InputFile in ${InputFiles}; do
+			if [[ `echo ${InputFile}` | grep 'dtseries' != "" ]]; then
+				InputFileName=`echo '${InputFile}' | sed 's/.dtseries.nii//'
+			else
+				reho " ---> Requesting ${InputFile}. This is not a valid .dtseries.nii file"
+			fi
+			# [-weights] - specify column weights
+			#    <weight-file> - text file containing one weight per column
+			# [-fisher-z] - apply fisher small z transform (ie, artanh) to correlation
+			# [-no-demean] - instead of correlation, do dot product of rows, then
+			#    normalize by diagonal
+			# [-covariance] - compute covariance instead of correlation
+			# [-mem-limit] - restrict memory usage
+			#    <limit-GB> - memory limit in gigabytes
+			wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+			${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii \
+			-fisher-z -weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold"$BOLD".use
+		done
+	done
 fi
 
 echo ""
@@ -727,7 +794,7 @@ echo ""
 rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
 
 # -- Check if data extraction requested
-if [ "$ExtractData" == "yes" ]; then 
+if [ "$ExtractData" == "yes" ] && [ ${Calculation} != "dense" ]; then 
 	geho "--- Saving out the data in a CSV file..."
 	# -- Specify pconn file inputs and outputs
 	PConnBOLDInputs=`ls ${OutPath}/${CASE}-${OutName}*ptseries.nii > /dev/null 2>&1`
