@@ -663,7 +663,8 @@ echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of work --------------------------------"
 echo ""
-}
+ 
+}   
 
 ######################################### DO WORK ##########################################
 
@@ -767,7 +768,7 @@ if [ ${Calculation} == "dense" ]; then
 		# -- Generate the temp list
 		for InputFile in ${InputFiles}; do
 			if [[ `echo ${InputFile}` | grep 'dtseries' != "" ]]; then
-				InputFileName=`echo '${InputFile}' | sed 's/.dtseries.nii//'
+				InputFileName=`echo '${InputFile}' | sed 's/.dtseries.nii//'`
 			else
 				reho " ---> Requesting ${InputFile}. This is not a valid .dtseries.nii file"
 			fi
