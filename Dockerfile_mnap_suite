@@ -47,7 +47,7 @@
 ##
 
 # -- Define docker image location
-FROM ztamayo/mnap_deps2:latest
+FROM ztamayo/mnap_dep:latest
 
 # -- Define where the mnaptools repo resides on the image
 ADD . /opt/mnaptools

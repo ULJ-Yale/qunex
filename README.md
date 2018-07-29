@@ -267,6 +267,7 @@ Change Log
 * 0.17.04 [library] Added ungzipped version of brain mask needed for PALM
 * 0.17.05 [library] Had to add MNI152_T1_2mm_brain_mask_dil.nii again
 * 0.17.06 [niutilities matlab] Updated matlab functions to be octave friendly, enabled support for hcp_bold_variant, added support for PAR/REC files
+* 0.18.00 [mnaptools connector library] Upgraded Dockerfile specifications, cleaned up connector and added environment specs to library repo
 
 =======
 [Mind and Brain Lab]: http://mblab.si
