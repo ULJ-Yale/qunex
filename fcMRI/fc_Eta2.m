@@ -19,15 +19,11 @@ if nargin > 1
         if (colsb > 1) & (colsa == 1)
             a = repmat(a, 1, colsb);
         else
-            fprintf('ERROR: Sets a and b are not of equal column size [a: %d, b: %d]', colsa, colsb);
-            eta = [];
-            return
+            error('ERROR: Sets a and b are not of equal column size [a: %d, b: %d]', colsa, colsb);
         end
     end
     if size(a) ~= size(b)
-        fprintf('ERROR: Sets a and b are not of equal size!');
-        eta = [];
-        return
+        error('ERROR: Sets a and b are not of equal size!');
     end
     m = (a+b)./2;
     M = mean(m, 1);

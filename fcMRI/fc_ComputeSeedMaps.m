@@ -118,8 +118,7 @@ go = go & g_CheckFile(roiinfo, 'ROI definition file', 'error');
 g_CheckFolder(targetf, 'results folder');
 
 if ~go
-    fprintf('ERROR: Some files were not found. Please check the paths and start again!\n\n');
-    return
+    error('ERROR: Some files were not found. Please check the paths and start again!\n\n');
 end
 
 % ---- Start
