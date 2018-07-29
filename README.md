@@ -269,6 +269,7 @@ Change Log
 * 0.17.06 [niutilities matlab] Updated matlab functions to be octave friendly, enabled support for hcp_bold_variant, added support for PAR/REC files
 * 0.18.00 [mnaptools connector library] Upgraded Dockerfile specifications, cleaned up connector and added environment specs to library repo
 * 0.18.01 [library] Updated the dependencies handling and .octaverc
+* 0.18.02 [matlab] Updated error exits from matlab code
 
 =======
 [Mind and Brain Lab]: http://mblab.si
