@@ -266,6 +266,7 @@ Change Log
 * 0.17.03 [connector] Updates to turnkey code
 * 0.17.04 [library] Added ungzipped version of brain mask needed for PALM
 * 0.17.05 [library] Had to add MNI152_T1_2mm_brain_mask_dil.nii again
+* 0.17.06 [niutilities matlab] Updated matlab functions to be octave friendly, enabled support for hcp_bold_variant, added support for PAR/REC files
 
 =======
 [Mind and Brain Lab]: http://mblab.si
