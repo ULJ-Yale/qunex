@@ -51,8 +51,6 @@
 
 usage() {
      echo ""
-     echo "-- DESCRIPTION for QCPreprocessing"
-     echo ""
      echo "This function runs the QC preprocessing for a given specified modality. Supported: T1w, T2w, myelin, BOLD, DWI."
      echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing."
      echo ""
@@ -71,7 +69,7 @@ usage() {
      echo ""
      echo "--function=<function_name>                                      Explicitly specify Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
      echo "--subjectsfolder=<folder_with_subjects>                         Path to study folder that contains subjects"
-     echo "--subject=<list_of_cases>                                       List of subjects to run, separated by commas"
+     echo "--subjects=<list_of_cases>                                       List of subjects to run, separated by commas"
      echo "--modality=<input_modality_for_qc>                              Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
      echo ""
      echo "-- DWI PARMETERS"
@@ -113,7 +111,7 @@ usage() {
      echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
      echo ""
      echo ""
-     echo "  -- OPTIONAL CUSTOM QC PARAMETER:"
+     echo "  -- OPTIONAL QC PARAMETERS FOR CUSTOM SCENE:"
      echo ""
      echo "--processcustom=<yes/no>                                         Default is [no]. If set to 'yes' then the script looks into: "
      echo "                                                                   ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes."
@@ -123,12 +121,24 @@ usage() {
      echo ""
      echo "--omitdefaults=<yes/no>     Default is [no]. If set to 'yes' then the script omits defaults."
      echo ""
-     echo "-- Complete examples for each supported modality:"
+     echo "-- EXAMPLES:"
+     echo ""
+     echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo ""
+     reho "           * NOTE: --scheduler is not available via direct script call."
+     echo ""
+     echo "   --> Run via mnap QCPreproc --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo ""
+     geho "           * NOTE: scheduler is available via mnap call:"
+     echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+     echo ""
+     echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+     echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
      echo ""
      echo ""
      echo "# -- T1w QC"
-     echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--function='QCPreproc' \ "
+     echo "mnap QCPreproc \ "
+     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subject='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
@@ -136,27 +146,27 @@ usage() {
      echo "--overwrite='yes' "
      echo ""
      echo "# -- T2w QC"
-     echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--function='QCPreproc' \ "
-     echo "--subject='<comma_separated_list_of_cases>' \ "
+     echo "mnap QCPreproc \ "
+     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
+     echo "--subjects='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='T2w' \ "
      echo "--overwrite='yes'"
      echo ""
      echo "# -- Myelin QC"
-     echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--function='QCPreproc' \ "
-     echo "--subject='<comma_separated_list_of_cases>' \ "
+     echo "mnap QCPreproc \ "
+     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
+     echo "--subjects='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='myelin' \ "
      echo "--overwrite='yes'"
      echo ""
      echo "# -- DWI QC "
-     echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--function='QCPreproc' \ "
-     echo "--subject='<comma_separated_list_of_cases>' \ "
+     echo "mnap QCPreproc \ "
+     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
+     echo "--subjects='<comma_separated_list_of_cases>' \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='DWI' \ "
      echo "--outpath='<path_for_output_file> \ "
@@ -166,9 +176,9 @@ usage() {
      echo "--overwrite='yes'"
      echo ""
      echo "# -- BOLD QC"
-     echo "QCPreprocessing.sh --subjectsfolder='<path_to_study_subjects_folder>' \ "
-     echo "--function='QCPreproc' \ "
-     echo "--subject='<comma_separated_list_of_cases>' \ "
+     echo "mnap QCPreproc \ "
+     echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
+     echo "--subjects='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--templatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='BOLD' \ "
@@ -203,6 +213,8 @@ fi
 # -- Parse and check all arguments
 # ------------------------------------------------------------------------------
 
+get_options() {
+
 ########### INPUTS ###############
 
 	# -- Various HCP processed modalities
@@ -227,7 +239,7 @@ done
 
 # -- Initialize global variables
 unset SubjectsFolder # --subjectsfolder=
-unset CASE # --subject=
+unset CASES # --subjects=
 unset Overwrite # --overwrite=
 unset OutPath # --outpath
 unset TemplateFolder # --templatefolder
@@ -255,7 +267,7 @@ runcmd=""
 
 # -- Parse general arguments
 SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
-CASE=`opts_GetOpt "--subject" $@`
+CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 Overwrite=`opts_GetOpt "--overwrite" $@`
 OutPath=`opts_GetOpt "--outpath" $@`
 TemplateFolder=`opts_GetOpt "--templatefolder" $@`
@@ -298,9 +310,9 @@ Suffix=`opts_GetOpt "--suffix" $@`
 SceneZip=`opts_GetOpt "--scenezip" $@`
 
 # -- Check general required parameters
-if [ -z ${CASE} ]; then
+if [ -z ${CASES} ]; then
     usage
-    reho "ERROR: <subject_id> not specified."; echo ""
+    reho "ERROR: <subject_ids> not specified."; echo ""
     exit 1
 fi
 if [ -z ${SubjectsFolder} ]; then
@@ -444,7 +456,7 @@ echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "  Study Folder: ${StudyFolder}"
 echo "  Subject Folder: ${SubjectsFolder}"
-echo "  Subject: ${CASE}"
+echo "  Subjects: ${CASES}"
 echo "  QC Modality: ${Modality}"
 echo "  QC Output Path: ${OutPath}"
 echo "  Custom QC requested: ${ProcessCustomQC}"
@@ -479,9 +491,16 @@ echo ""
 geho "------------------------- Start of work --------------------------------"
 echo ""
 
+}
+
 ######################################### DO WORK ##########################################
 
 main() {
+
+# -- Get Command Line Options
+get_options "$@"
+
+for CASE in $CASES; do
 
 if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then Modality="BOLD"; fi
 if [ "$Modality" == "DWI" ] || [ "$Modality" == "dwi" ]; then Modality="DWI"; fi
@@ -891,9 +910,7 @@ fi
 # =-=-=-=-=-=- End of BOLD QC Section =-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-= remaining modalities (i.e. T1w, T2w, Myelin or DWI) =-=
@@ -1386,14 +1403,18 @@ if [ ! -z "$UserSceneFile" ]; then
 fi
 fi
 
+done
+
+echo ""
+geho "------------------------- Successful completion of work --------------------------------"
+echo ""
+
 }
 
 # ---------------------------------------------------------
 # -- Invoke the main function to get things started -------
 # ---------------------------------------------------------
 
-main
+main $@
 
-echo ""
-geho "------------------------- Successful completion of work --------------------------------"
-echo ""
+

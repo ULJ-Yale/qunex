@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync printMatrix BOLDDense linkmovement FIXICA postFIXICA BOLDHardLinkFIXICA FIXICAInsertMean FIXICARemoveMean hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc runTurnkey commandExecute showVersion"
+MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc runTurnkey commandExecute showVersion"
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -202,21 +202,8 @@ echo " structuralParcellation ...... parcellate myelin or thickness"
 echo " BOLDParcellation ...... parcellate BOLD data and generate pconn files"
 echo " DWIDenseParcellation ...... parcellate dense dwi tractography data"
 echo " DWISeedTractography ...... reduce dense DWI tractography data using a seed structure"
-echo " printMatrix ...... extract parcellated matrix for dense CIFTI data using a network solution"
-echo " BOLDDense ...... compute bold dense connectome (needs >30gb ram per bold)"
-echo " CIFTISmooth ...... smooth CIFTI data"
 echo " ROIExtract ...... extract data from pre-specified ROIs in CIFTI or NIFTI"
 echo " AWSHCPSync ...... sync hcp data from aws s3 cloud"
-echo ""
-echo "FIX ICA de-noising functions"
-echo "---------------------------"
-echo " FIXICA ...... run FIX ICA de-noising on a given volume"
-echo " postFIXICA ...... generates Workbench scenes for each subject directory"
-echo " BOLDHardLinkFIXICA ...... setup hard links for single run FIX ICA results"
-echo " FIXICAInsertMean ...... re-insert mean image back into mapped FIX ICA data"
-echo " FIXICARemoveMean ...... remove mean image from mapped FIX ICA data"
-echo " BOLDSeparateCIFTIFIXICA ...... separate specified bold timeseries (use if BOLDs merged)"
-echo " BOLDHardLinkFIXICAMerged ...... setup sym links for merged FIX ICA results (use if BOLDs merged)"
 echo ""
 echo ""
 echo "             General MRI Utilities for Preprocessing and Analyses          "
@@ -335,6 +322,8 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 # cyaneho "${CommandToRun}"; echo ""
 # cyaneho "---------------------------"; echo ""
 # echo ""
+
+# -- Run commands
 SuccessCheck="Successful completion"
 ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 770 ${ComRun}"
 ComRunExec="${ComRun} 2>&1 | tee -a ${ComlogTmp}"
@@ -342,7 +331,7 @@ ComComplete="cat ${ComlogTmp} | grep ${SuccessCheck} &> ${CompletionCheck}"
 ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo '  ===> Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
 ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
-# -- Run the local commands
+# -- Run the commands locally
 if [[ "$Cluster" == 1 ]]; then
 	echo "--------------------------------------------------------------"
 	echo ""
@@ -352,7 +341,7 @@ if [[ "$Cluster" == 1 ]]; then
 	echo ""
 	eval ${ComRunAll}
 fi
-# -- Run the scheduler commands
+# -- Run the commands via scheduler
 if [[ "$Cluster" == 2 ]]; then
 	cd ${MasterRunLogFolder}
 	gmri schedule command="${ComRunAll}" settings="${Scheduler}"
@@ -467,9 +456,6 @@ echo ""
 echo "--function=<function_name>                             Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
 echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects. If missing then optional paramater --folder needs to be provided."
 echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run. If missing then --folder needs to be provided for a single-session run."
-echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                       e.g. for SLURM the string would look like this: "
-echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
 echo "-- OPTIONAL PARAMETERS: "
 echo ""
@@ -483,20 +469,16 @@ echo "--verbose=<print_verbose_output>      Whether to be report on the progress
 echo "--cores=<number_of_cores>             How many parallel processes to run dcm2nii conversion with. "
 echo "                                      The number is one by defaults, if specified as 'all', the number of available cores is utilized."
 echo ""
+echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+echo "                                                       e.g. for SLURM the string would look like this: "
+echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
-echo "-- Example with flagged parameters for a local run:"
+echo "-- EXAMPLE:"
 echo ""
 echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
 echo "--function='organizeDicom' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' "
-echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='organizeDicom' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
 echo "--scheduler='<name_of_scheduler_and_options>'"
-echo ""
 echo ""
 }
 
@@ -711,9 +693,11 @@ echo ""
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 hcpdLegacy() {
+
 # -- Unique requirements for this function:
 #      Installed versions of: FSL5.0.9 or higher
 #      Needs CUDA 6.0 libraries to run eddy_cuda (10x faster than on a CPU)
+
 # -- Parse general parameters
 EchoSpacing="$EchoSpacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
 PEdir="$PEdir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
@@ -1088,10 +1072,6 @@ echo "--overwrite='no' \ "
 echo "--outname='Thalamus_Seed' \ "
 echo "--scheduler='<name_of_scheduler_and_options>' \ "
 echo ""
-echo "-- Example with interactive terminal:"
-echo ""
-echo "Interactive terminal run method not supported for this function"
-echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1125,6 +1105,7 @@ FCCommand="$FCCommand"			# --options=
 Method="$Method"				# --method=
 InputPath="$InputPath"			# --inputpath
 Overwrite="$Overwrite"			# --overwrite
+MemLimit="$MemLimit"			# --mem-limit=
 
 # -- Check type of run
 if [ "${RunType}" == "individual" ]; then
@@ -1144,14 +1125,14 @@ if [ ${Calculation} == "seed" ]; then
 	echo ""
 	# -- Echo command
 	geho "Full Command:"; echo ""
-	geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
+	geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
 	echo ""
 	# -- Specify command variable
 	CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
 	--subjectsfolder=${SubjectsFolder} \
 	--calculation=${Calculation} \
 	--runtype=${RunType} \
-	--subject=${CASE} \
+	--subjects=${CASE} \
 	--inputfiles=${InputFiles} \
 	--inputpath=${InputPath} \
 	--extractdata=${ExtractData} \
@@ -1173,14 +1154,14 @@ if [ ${Calculation} == "gbc" ]; then
 	echo ""
 	# -- Echo command
 	geho "Full Command:"; echo ""
-	geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subject=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --flist=${FileList} --outname=${OutName} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --target=${TargetROI} --command=${GBCCommand} --targetf=${OutPath} --mask=${MaskFrames} --rsmooth=${RadiusSmooth} --rdilate=${RadiusDilate} --verbose=${Verbose} --time=${ComputeTime} --vstep=${VoxelStep} --covariance=${Covariance}"
+	geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --flist=${FileList} --outname=${OutName} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --target=${TargetROI} --command=${GBCCommand} --targetf=${OutPath} --mask=${MaskFrames} --rsmooth=${RadiusSmooth} --rdilate=${RadiusDilate} --verbose=${Verbose} --time=${ComputeTime} --vstep=${VoxelStep} --covariance=${Covariance}"
 	echo ""
 	# -- Specify command variable
 	CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
 	--subjectsfolder=${SubjectsFolder} \
 	--calculation=${Calculation} \
 	--runtype=${RunType} \
-	--subject=${CASE} \
+	--subjects=${CASE} \
 	--inputfiles=${InputFiles} \
 	--inputpath=${InputPath} \
 	--extractdata=${ExtractData} \
@@ -1201,192 +1182,33 @@ if [ ${Calculation} == "gbc" ]; then
 	# -- Connector execute function
 	connectorExec
 fi
+# -- Check type of connectivity calculation is seed
+if [ ${Calculation} == "dense" ]; then
+	echo ""
+	# -- Echo command
+	geho "Full Command:"; echo ""
+	geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --outname=${OutName} --overwrite=${Overwrite} --targetf=${OutPath} --covariance=${Covariance} --mem-limit=${MemLimit}"
+	echo ""
+	# -- Specify command variable
+	CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+	--subjectsfolder=${SubjectsFolder} \
+	--calculation=${Calculation} \
+	--runtype=${RunType} \
+	--subjects=${CASE} \
+	--inputfiles=${InputFiles} \
+	--inputpath=${InputPath} \
+	--outname=${OutName} \
+	--overwrite=${Overwrite} \
+	--targetf=${OutPath} \
+	--covariance=${Covariance} \"
+	--mem-limit=${MemLimit} "
+	# -- Connector execute function
+	connectorExec
+fi
 }
 show_usage_computeBOLDfc() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function implements Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) on the dense or parcellated (e.g. Glasser parcellation)."
-echo ""
-echo ""
-echo "For more detailed documentation run <help fc_ComputeGBC3>, <help gmrimage.mri_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside matlab"
-echo ""
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>   A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                      e.g. for SLURM the string would look like this: "
-echo "                                                      --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "-- REQUIRED GENERAL PARMETERS FOR A GROUP RUN:"
-echo ""
-echo "--calculation=<type_of_calculation>           Run <seed> or <gbc> calculation for functional connectivity."
-echo "--runtype=<type_of_run>                       Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
-echo "--flist=<subject_list_file>                   Specify *.list file of subject information. If specified then --inputfile, --subject --inputpath --inputdatatype and --outname are omitted"
-echo "--targetf=<path_for_output_file>              Specify the absolute path for group result output folder. If using --runtype='individual' the output will default to --inputpath location for each individual subject"
-echo "--ignore=<frames_to_ignore>                   The column in *_scrub.txt file that matches bold file to be used for ignore mask. All if empty. Default is [] "
-echo "--mask=<which_frames_to_use>                  An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified then this number of frames is skipped." # inmask for fc_ComputeSeedMapsMultiple
-echo ""
-echo "-- REQUIRED GENERAL PARMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
-echo ""
-echo "--subjectsfolder=<folder_with_subjects>            Path to study folder that contains subjects"
-echo "--subjects=<list_of_cases>                         List of subjects to run"
-echo "--inputfiles=<files_to_compute_connectivity_on>    Specify the comma separated file names you want to use (e.g. 'bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii')"
-echo "--outname=<name_of_output_file>                    Specify the suffix name of the output file name"
-echo ""
-echo "-- OPTIONAL PARAMETERS FOR AN INDIVIDUAL SUBJECT RUN:"
-echo "--inputpath=<path_for_input_file>                  Specify path of the file you want to use relative to the master study folder and subject directory (e.g. /images/functional/). Default [<study_folder>/subjects/<subject_id>/images/functional]"
-echo "--targetf=<path_for_output_file>                   Specify the absolute path for result output folder. If using --runtype='individual' the output will default to --inputpath location for each individual subject unless otherwise specified."
-echo ""
-echo ""
-echo "-- OPTIONAL GENERAL PARAMETERS: "
-echo ""
-echo "--overwrite=<clean_prior_run>                      Delete prior run for a given subject <yes/no>. Default is [no]"
-echo "--extractdata=<save_out_the_data_as_as_csv>        Specify if you want to save out the matrix as a CSV file (only available if the file is a ptseries) <yes/no>. Default is [no]"
-echo "--covariance=<compute_covariance>                  Whether to compute covariances instead of correlations (true / false). Default is [false]"
-echo ""
-echo "-- REQUIRED GBC PARMETERS:"
-echo ""
-echo "--target=<which_roi_to_use>                        Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]"
-echo "--rsmooth=<smoothing_radius>                       Radius for smoothing (no smoothing if empty). Default is []"
-echo "--rdilate=<dilation_radius>                        Radius for dilating mask (no dilation if empty). Default is []"
-echo "--command=<type_of_gbc_to_run>                     Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
-echo ""
-echo "                   > mFz:t  ... computes mean Fz value across all voxels (over threshold t) "
-echo "                   > aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t) "
-echo "                   > pFz:t  ... computes mean positive Fz value across all voxels (over threshold t) "
-echo "                   > nFz:t  ... computes mean positive Fz value across all voxels (below threshold t) "
-echo "                   > aD:t   ... computes proportion of voxels with absolute r over t "
-echo "                   > pD:t   ... computes proportion of voxels with positive r over t "
-echo "                   > nD:t   ... computes proportion of voxels with negative r below t "
-echo "                   > mFzp:n ... computes mean Fz value across n proportional ranges "
-echo "                   > aFzp:n ... computes mean absolute Fz value across n proportional ranges "
-echo "                   > mFzs:n ... computes mean Fz value across n strength ranges "
-echo "                   > pFzs:n ... computes mean Fz value across n strength ranges for positive correlations "
-echo "                   > nFzs:n ... computes mean Fz value across n strength ranges for negative correlations "
-echo "                   > mDs:n  ... computes proportion of voxels within n strength ranges of r "
-echo "                   > aDs:n  ... computes proportion of voxels within n strength ranges of absolute r "
-echo "                   > pDs:n  ... computes proportion of voxels within n strength ranges of positive r "
-echo "                   > nDs:n  ... computes proportion of voxels within n strength ranges of negative r "
-echo ""
-echo "-- OPTIONAL GBC PARMETERS:"
-echo ""
-echo "--verbose=<print_output_verbosely>                Report what is going on. Default is [false]"
-echo "--time=<print_time_needed>                        Whether to print timing information. [false]"
-echo "--vstep=<how_many_voxels>                         How many voxels to process in a single step. Default is [1200]"
-echo ""
-echo "-- REQUIRED SEED FC PARMETERS:"
-echo ""
-echo "--roinfo=<roi_seed_names_file>                         Region of interest (ROI) specification names file (*.names)"
-echo "                                                       For an example see: $TOOLS/$MNAPREPO/library/data/roi/seeds_cifti.names"
-echo "                                                       For detailed use specification see: https://bitbucket.org/hidradev/mnaptools/wiki/Overview/FileFormats.md"
-echo ""
-echo "-- OPTIONAL SEED FC PARMETERS: "
-echo ""
-echo "--method=<method_to_get_timeseries>               Method for extracting timeseries - 'mean' or 'pca' Default is ['mean'] "
-echo "--options=<calculations_to_save>                  A string defining which subject files to save. Default assumes all [''] "
-echo ""
-echo "           > r ... save map of correlations "
-echo "           > f ... save map of Fisher z values "
-echo "           > cv ... save map of covariances "
-echo "           > z ... save map of Z scores "
-echo ""
-echo ""
-echo "-- Seed and GBC FC Examples with flagged parameters for submission to the scheduler:"
-echo ""
-echo "- Example for seed calculation for each individual subject:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='computeBOLDfc' \ "
-echo "--calculation='seed' \ "
-echo "--runtype='individual' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--inputfiles='<files_to_compute_connectivity_on>' \ "
-echo "--inputpath='/images/functional' \ "
-echo "--overwrite='yes' \ "
-echo "--extractdata='yes' \ "
-echo "--roinfo='ROI_Names_File.names' \ "
-echo "--outname='<name_of_output_file>' \ "
-echo "--ignore='' \ "
-echo "--options='' \ "
-echo "--method='' \ "
-echo "--targetf='' \ "
-echo "--mask='5' \ "
-echo "--covariance='false' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo "- Example for seed calculation for a group of three subjects with the absolute path for a target folder:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='computeBOLDfc' \ "
-echo "--calculation='seed' \ "
-echo "--runtype='group' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--inputfiles='<files_to_compute_connectivity_on>' \ "
-echo "--inputpath='/images/functional' \ "
-echo "--overwrite='yes' \ "
-echo "--extractdata='yes' \ "
-echo "--roinfo='ROI_Names_File.names' \ "
-echo "--outname='<name_of_output_file>' \ "
-echo "--ignore='' \ "
-echo "--options='' \ "
-echo "--method='' \ "
-echo "--targetf='<path_for_output_file>' \ "
-echo "--mask='5' \ "
-echo "--covariance='false' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo "- Example for gbc calculation for each individual subject:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='computeBOLDfc' \ "
-echo "--calculation='gbc' \ "
-echo "--runtype='individual' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--inputfiles='<files_to_compute_connectivity_on>' \ "
-echo "--inputpath='/images/functional' \ "
-echo "--overwrite='yes' \ "
-echo "--extractdata='yes' \ "
-echo "--outname='<name_of_output_file>' \ "
-echo "--ignore='' \ "
-echo "--command='mFz:' \ "
-echo "--targetf='' \ "
-echo "--mask='5' \ "
-echo "--target='' \ "
-echo "--rsmooth='0' \ "
-echo "--rdilate='0' \ "
-echo "--verbose='true' \ "
-echo "--time='true' \ "
-echo "--vstep='5000' \ "
-echo "--covariance='false' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo "- Example for gbc calculation for a group of three subjects with the absolute path for a target folder:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='computeBOLDfc' \ "
-echo "--calculation='gbc' \ "
-echo "--runtype='group' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--inputfiles='<files_to_compute_connectivity_on>' \ "
-echo "--inputpath='/images/functional' \ "
-echo "--overwrite='yes' \ "
-echo "--extractdata='yes' \ "
-echo "--outname='<name_of_output_file>' \ "
-echo "--ignore='' \ "
-echo "--command='mFz:' \ "
-echo "--targetf='<path_for_output_file>' \ "
-echo "--mask='5' \ "
-echo "--target='' \ "
-echo "--rsmooth='0' \ "
-echo "--rdilate='0' \ "
-echo "--verbose='true' \ "
-echo "--time='true' \ "
-echo "--vstep='5000' \ "
-echo "--covariance='false' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1701,7 +1523,7 @@ echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the clus
 echo "                                                     e.g. for SLURM the string would look like this: "
 echo "                                                     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
+echo "-- EXAMPLE:"
 echo ""
 echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
@@ -1816,7 +1638,7 @@ echo "                                                        e.g. for SLURM the
 echo "                                                         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo "                                                           * Note: You need to specify a GPU-enabled queue or partition"
 echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
+echo "-- EXAMPLE"
 echo ""
 echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
 echo "--function='FSLBedpostxGPU' \ "
@@ -1834,43 +1656,32 @@ echo ""
 # -------------------------------------------------------------------------------------------------------------------------------
 
 autoPtx() {
-Subject=${CASE}
-StudyFolder=${SubjectsFolder}/${CASE}/hcp/
-BpxFolder="$BedPostXFolder"
-QUEUE="$QUEUE"
-if [ "$Cluster" == 1 ]; then
-	echo "--------------------------------------------------------------"
-	echo "Running locally on `hostname`"
-	echo "Check log file output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	"$AutoPtxFolder"/autoptx "$SubjectsFolder" "$Subject" "$BpxFolder"
-	"$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
-	"$AutoPtxFolder"/Prepare_for_Display.sh $StudyFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
-else
-	# -- Set scheduler for fsl_sub command
-	#fslsub="$Scheduler"
-	#fsl_sub."$fslsub" -Q "$QUEUE" "$AutoPtxFolder"/autoPtx "$SubjectsFolder" "$Subject" "$BpxFolder"
-	#fsl_sub."$fslsub" -Q "$QUEUE" -j <jid> "$AutoPtxFolder"/Prepare_for_Display.sh $SubjectsFolder/$Subject/MNINonLinear/Results/autoptx 0.005 1
-	#fsl_sub."$fslsub" -Q "$QUEUE" -j <jid> "$AutoPtxFolder"/Prepare_for_Display.sh $SubjectsFolder/$Subject/MNINonLinear/Results/autoptx 0.005 0
-	# -- Send to scheduler
-	#gmri schedule command="ComputeFunctionalConnectivity_gbc_${CASE}.sh" \
-	#settings="${Scheduler}" \
-	#output="stdout:ComputeFunctionalConnectivity_gbc.output.log|stderr:ComputeFunctionalConnectivity_gbc.error.log" \
-	#workdir="${LogFolder}"
-	echo "--------------------------------------------------------------"
-	echo "Data successfully submitted"
-	echo "Scheduler Name and Options: $Scheduler"
-	echo "Check output logs here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
+# -- Check inputs
+if [[ -d ${BedPostXFolder} ]]; then 
+	reho "Prior BedpostX run not found or incomplete for $CASE. Check work and re-run."
+	exit 1
 fi
+if [[ -z ${AutoPtxFolder} ]]; then 
+	reho "AutoPtxFolder environment variable not. Set it correctly and re-run."
+	exit 1
+fi
+# -- Set commands
+Com1="${AutoPtxFolder}/autoptx ${SubjectsFolder} ${CASE} ${BedPostXFolder}"
+Com2="${AutoPtxFolder}/Prepare_for_Display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 1"
+Com3="${AutoPtxFolder}/Prepare_for_Display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 0"
+# -- Command to run
+CommandToRun="${Com1}; ${Com2}; ${Com3}"
+# -- Connector execute function
+connectorExec
 }
+
 show_usage_autoPtx() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput "
 echo ""
-echo "USAGE PENDING... "
+echo "This function runs the autoptx script in ${AutoPtxFolder}."
+echo ""
+echo "For full details on AutoPtx functionality see: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/AutoPtx"
 echo ""
 }
 
@@ -1909,13 +1720,12 @@ echo "--scheduler=<name_of_cluster_scheduler_and_options>     A string for the c
 echo "                                                        e.g. for SLURM the string would look like this: "
 echo "                                                        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
+echo "-- EXAMPLE:"
 echo ""
 echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
 echo "--function='pretractographyDense' \ "
 echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo "--scheduler='LSF'"
 echo ""
 }
 
@@ -2054,7 +1864,7 @@ echo "    $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix3.sh"
 echo ""
 echo "    --> both are cluster-aware and send the jobs to the GPU-enabled queue. They do not work interactively."
 echo ""
-echo "-- Example with flagged parameters for submission to the scheduler (needs to be GPU-enabled):"
+echo "-- EXAMPLE with flagged parameters for submission to the scheduler (needs to be GPU-enabled):"
 echo ""
 echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
@@ -2173,7 +1983,7 @@ echo ""
 geho "Full Command:"
 geho "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --subjectsfolder=${SubjectsFolder} \
---subject=${CASE} \
+--subjects=${CASE} \
 --outpath=${OutPath} \
 --overwrite=${Overwrite} \
 --templatefolder=${TemplateFolder} \
@@ -2198,7 +2008,7 @@ echo ""
 # -- Command to run
 CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --subjectsfolder='${SubjectsFolder}' \
---subject='${CASE}' \
+--subjects='${CASE}' \
 --outpath='${OutPath}' \
 --overwrite='${Overwrite}' \
 --templatefolder='${TemplateFolder}' \
@@ -2223,171 +2033,8 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 connectorExec
 }
 show_usage_QCPreproc() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function runs the QC preprocessing for a given specified modality. Supported: T1w, T2w, myelin, BOLD, DWI."
-echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing."
-echo ""
-echo ""
-echo "The function is compabible with both legacy data [without T2w scans] and HCP-compliant data [with T2w scans and DWI]"
-echo ""
-echo "The function is compabible with both legacy data [without T2w scans] and HCP-compliant data [with T2w scans and DWI]."
-echo ""
-echo "The function generates 3 types of outputs, which are stored within the Study in <path_to_folder_with_subjects>/QC "
-echo ""
-echo "                *.scene files that contain all relevant data loadable into Connectome Workbench"
-echo "                *.png images that contain the output of the referenced scene file."
-echo "                *.zip file that contains all relevant files to download and re-generate the scene in Connectome Workbench."
-echo ""
-echo "                Note: For BOLD data there is also an SNR txt output if specified."
-echo ""
-echo "-- REQUIRED GENERAL PARMETERS:"
-echo ""
-echo "--function=<function_name>                                      Explicitly specify Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>                         Path to study folder that contains subjects"
-echo "--subjects=<list_of_cases>                                      List of subjects to run, separated by commas"
-echo "--modality=<input_modality_for_qc>                              Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
-echo ""
-echo "-- DWI PARMETERS"
-echo ""
-echo "--dwipath=<path_for_dwi_data>                                   Specify the input path for the DWI data [may differ across studies; e.g. Diffusion or Diffusion or Diffusion_DWI_dir74_AP_b1000b2500]"
-echo "--dwidata=<file_name_for_dwi_data>                              Specify the file name for DWI data [may differ across studies; e.g. data or DWI_dir74_AP_b1000b2500_data]"
-echo "--dtifitqc=<visual_qc_for_dtifit>                               Specify if dtifit visual QC should be completed [e.g. yes or no]"
-echo "--bedpostxqc=<visual_qc_for_bedpostx>                           Specify if BedpostX visual QC should be completed [e.g. yes or no]"
-echo "--eddyqcstats=<qc_stats_for_eddy>                               Specify if EDDY QC stats should be linked into QC folder and motion report generated [e.g. yes or no]"
-echo "--dwilegacy=<dwi_data_processed_via_legacy_pipeline>            Specify if DWI data was processed via legacy pipelines [e.g. yes or no]"
-echo ""
-echo "-- BOLD PARMETERS"
-echo ""
-echo "--bolddata=<bold_run_numbers>                                    Specify BOLD data numbers separated by comma, space or pipe."
-echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
-echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
-echo "--boldprefix=<prefix_file_name_for_bold_data>                    Specify the prefix file name for BOLD dtseries data [may differ across studies depending on processing; e.g. BOLD or TASK or REST]"
-echo "                                                                   Note: If unspecified then QC script will assume that folder names containing processed BOLDs are named numerically only (e.g. 1, 2, 3)."
-echo "--boldsuffix=<suffix_file_name_for_bold_data>                    Specify the suffix file name for BOLD dtseries data [may differ across studies depending on processing; e.g. Atlas or MSMAll]"
-echo "--skipframes=<number_of_initial_frames_to_discard_for_bold_qc>   Specify the number of initial frames you wish to exclude from the BOLD QC calculation"
-echo "--snronly=<compute_snr_only_for_bold>                            Specify if you wish to compute only SNR BOLD QC calculation and skip image generation <yes/no>. Default is [no]"
-echo ""
-echo "-- OPTIONAL PARMETERS:"
-echo ""
-echo "--overwrite=<clean_prior_run>                                    Delete prior QC run"
-echo "--templatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/scenes/qc)"
-echo "                                                                 Note: relevant scene template data has to be in the same folder as the template scenes"
-echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
-echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
-echo "--scenezip=<zip_generate_scene_file>                             Generates a ZIP file with the scene and all relevant files for Connectome Workbench visualization [yes]"
-echo "                                                                 Note: If scene zip set to yes, then relevant scene files will be zipped with an updated relative base folder."
-echo "                                                                       All paths will be relative to this base --> <path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>"
-echo "                                                                 The scene zip file will be saved to: "
-echo "                                                                     /<path_for_output_file>/<subject_id>.<input_modality_for_qc>.QC.wb.zip"
-echo "--userscenefile=<user_specified_scene_file>                      User-specified scene file name. --modality info is still required to ensure correct run. Relevant data needs to be provided. Default []"
-echo "--userscenepath=<user_specified_scene_data_path>                 Path for user-specified scene and relevant data in the same location. --modality info is still required to ensure correct run. Default []"
-echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
-echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
-echo ""
-echo "  -- OPTIONAL CUSTOM QC PARAMETER:"
-echo ""
-echo "--processcustom=<yes/no>     Default is [no]. If set to 'yes' then the script looks into: "
-echo "                            ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes."
-echo "                                  Note: The provided scene has to conform to MNAP QC template standards.xw"
-echo "                                        See $TOOLS/$MNAPREPO/library/data/scenes/qc/ for example templates."
-echo "                                        The qc path has to contain relevant files for the provided scene."
-echo "--omitdefaults=<yes/no>     Default is [no]. If set to 'yes' then the script omits defaults."
-echo ""
-echo "--scheduler=<name_of_cluster_scheduler_and_options>              A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                                     e.g. for SLURM the string would look like this: "
-echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "  -- OPTIONAL CUSTOM QC PARAMETER:"
-echo ""
-echo "    --customqc=<yes/no>     Default is [no]. If set to 'yes' then the script looks into: "
-echo "                            ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes."
-echo "                                  Note: The provided scene has to conform to MNAP QC template standards.xw"
-echo "                                        See $TOOLS/$MNAPREPO/library/data/scenes/qc/ for example templates."
-echo "                                        The qc path has to contain relevant files for the provided scene."
-echo ""
-echo "-- Example with flagged parameters for a local run:"
-echo ""
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--function='QCPreproc' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--outpath='<path_for_output_file> \ "
-echo "--templatefolder='<path_for_the_template_folder>' \ "
-echo "--modality='<input_modality_for_qc>'"
-echo "--overwrite='no' \ "
-echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
-echo ""
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--function='QCPreproc' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--outpath='<path_for_output_file> \ "
-echo "--templatefolder='<path_for_the_template_folder>' \ "
-echo "--modality='<input_modality_for_qc>'"
-echo "--overwrite='no' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo ""
-echo "-- Complete examples for each supported modality:"
-echo ""
-echo ""
-echo "# -- T1w QC"
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--function='QCPreproc' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--outpath='<path_for_output_file> \ "
-echo "--templatefolder='<path_for_the_template_folder>' \ "
-echo "--modality='T1w' \ "
-echo "--overwrite='yes' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo "# -- T2w QC"
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--function='QCPreproc' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--outpath='<path_for_output_file> \ "
-echo "--templatefolder='<path_for_the_template_folder>' \ "
-echo "--modality='T2w' \ "
-echo "--overwrite='yes' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo "# -- Myelin QC"
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--function='QCPreproc' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--outpath='<path_for_output_file> \ "
-echo "--templatefolder='<path_for_the_template_folder>' \ "
-echo "--modality='myelin' \ "
-echo "--overwrite='yes' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo "# -- DWI QC "
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--function='QCPreproc' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--templatefolder='<path_for_the_template_folder>' \ "
-echo "--modality='DWI' \ "
-echo "--outpath='<path_for_output_file> \ "
-echo "--dwilegacy='yes' \ "
-echo "--dwidata='<file_name_for_dwi_data>' \ "
-echo "--dwipath='<path_for_dwi_data>' \ "
-echo "--overwrite='yes' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo "# -- BOLD QC"
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--function='QCPreproc' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--outpath='<path_for_output_file> \ "
-echo "--templatefolder='<path_for_the_template_folder>' \ "
-echo "--modality='BOLD' \ "
-echo "--bolddata='1' \ "
-echo "--boldsuffix='Atlas' \ "
-echo "--overwrite='yes' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
@@ -2811,6 +2458,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
 	ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`
 	FCCommand=`opts_GetOpt "${setflag}options" $@`
 	Method=`opts_GetOpt "${setflag}method" $@`
+	MemLimit=`opts_GetOpt "${setflag}mem-limit" $@`
 	# -- BOLDParcellation input flags
 	InputFile=`opts_GetOpt "${setflag}inputfile" $@`
 	InputPath=`opts_GetOpt "${setflag}inputpath" $@`
@@ -3454,135 +3102,6 @@ fi
 #  FIXICA function loop # --> under development
 # ------------------------------------------------------------------------------
 
-## -- 
-## --  if [ "$FunctionToRunInt" == "FIXICA" ]; then
-## --  	echo "Note: Expects that minimally processed NIFTI & CIFTI BOLDs"
-## --  	echo ""
-## --  	echo "Overwrite existing run [yes, no]:"
-## --  		if read answer; then
-## --  		Overwrite=$answer
-## --  		fi
-## --  	echo "Enter BOLD numbers you want to run FIX ICA on - e.g. 1 2 3 or 1_3 for merged BOLDs:"
-## --  		if read answer; then
-## --  		BOLDS=$answer
-## --  				for CASE in ${CASES}
-## --  				do
-## --    					"$FunctionToRunInt" ${CASE}
-## --    				done
-## --    		fi
-## --  fi
-
-## --  # ------------------------------------------------------------------------------
-## --  #  postFIXICA function loop
-## --  # ------------------------------------------------------------------------------
-## -- 
-## --  if [ "$FunctionToRunInt" == "postFIXICA" ]; then
-## --  	echo "Note: This function depends on fsl, wb_command and matlab and expects startup.m to point to wb_command and fsl."
-## --  	echo ""
-## --  	echo "Overwrite existing postFIXICA scenes [yes, no]:"
-## --  		if read answer; then
-## --  		Overwrite=$answer
-## --  		fi
-## --  	echo "Enter BOLD numbers you want to run PostFix.sh on [e.g. 1 2 3]:"
-## --  		if read answer; then
-## --  		BOLDS=$answer
-## --  			echo "Enter high pass filter used for FIX ICA [e.g. 2000]"
-## --  				if read answer; then
-## --  				HighPass=$answer
-## --  					for CASE in ${CASES}
-## --  					do
-## --    						"$FunctionToRunInt" ${CASE}
-## --    					done
-## --    				fi
-## --    		fi
-## --  fi
-
-## --  # ------------------------------------------------------------------------------
-## --  #  boldseparateciftiFIXICA function loop
-## --  # ------------------------------------------------------------------------------
-## -- 
-## --  if [ "$FunctionToRunInt" == "boldseparateciftiFIXICA" ]; then
-## --  	echo "Enter which study and data you want to separate"
-## --  	echo "supported: 1_4_raw 5_8_raw 10_13_raw 14_17_raw"
-## --  			if read answer; then
-## --  			DatatoSeparate=$answer
-## --  					for CASE in ${CASES}
-## --  					do
-## --    						"$FunctionToRunInt" ${CASE}
-## --    					done
-## --    			fi
-## --  fi
-
-## --  # ------------------------------------------------------------------------------
-## --  #  BOLDHardLinkFIXICA function loop
-## --  # ------------------------------------------------------------------------------
-## -- 
-## --  if [ "$FunctionToRunInt" == "BOLDHardLinkFIXICA" ]; then
-## --  	echo "Enter BOLD numbers you want to generate connectivity hard links for [e.g. 1 2 3 or 1_3 for merged BOLDs]:"
-## --  		if read answer; then
-## --  		BOLDS=$answer
-## --  			for CASE in ${CASES}
-## --  				do
-## --    				"$FunctionToRunInt" ${CASE}
-## --    			done
-## --    		fi
-## --  fi
-## -- 
-## --  if [ "$FunctionToRunInt" == "boldhardlinkFIXICAmerged" ]; then
-## --  				for CASE in ${CASES}
-## --  				do
-## --    					"$FunctionToRunInt" ${CASE}
-## --    				done
-## --  fi
-## -- 
-
-## --  # ------------------------------------------------------------------------------
-## --  #  FIXICAInsertMean function loop
-## --  # ------------------------------------------------------------------------------
-## -- 
-## --  if [ "$FunctionToRunInt" == "FIXICAInsertMean" ]; then
-## --  	echo "Note: This function will insert mean images into FIX ICA files"
-## --  	echo "Enter BOLD numbers you want to run mean insertion on [e.g. 1 2 3]:"
-## --  		if read answer; then
-## --  		BOLDS=$answer
-## --  				for CASE in ${CASES}
-## --  				do
-## --    					"$FunctionToRunInt" ${CASE}
-## --    				done
-## --    		fi
-## --  fi
-
-## --  # ------------------------------------------------------------------------------
-## --  #  FIXICARemoveMean function loop
-## --  # ------------------------------------------------------------------------------
-## -- 
-## --  if [ "$FunctionToRunInt" == "FIXICARemoveMean" ]; then
-## --  	echo "Note: This function will remove mean from mapped FIX ICA files and save new images"
-## --  	echo "Enter BOLD numbers you want to run mean removal on [e.g. 1 2 3]:"
-## --  		if read answer; then
-## --  		BOLDS=$answer
-## --  				for CASE in ${CASES}
-## --  				do
-## --    					"$FunctionToRunInt" ${CASE}
-## --    				done
-## --    		fi
-## --  fi
-
-## --  # ------------------------------------------------------------------------------
-## --  #  linkMovement function loop
-## --  # ------------------------------------------------------------------------------
-## -- 
-## --  if [ "$FunctionToRunInt" == "linkMovement" ]; then
-## --  	echo "Enter BOLD numbers you want to link [e.g. 1 2 3 or 1-3 for merged BOLDs]:"
-## --  		if read answer; then
-## --  		BOLDS=$answer
-## --  			for CASE in ${CASES}
-## --  			do
-## --    				"$FunctionToRunInt" ${CASE}
-## --    			done
-## --    		fi
-## --  fi
-
 # ------------------------------------------------------------------------------
 #  FSLDtifit function loop
 # ------------------------------------------------------------------------------
@@ -3742,25 +3261,25 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 	# -- Check all the user-defined parameters:
 	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
 	if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
-	if [ -z "$RunType" ]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
-	if [ ${RunType} == "list" ]; then
+	if [ -z "$RunType" ] && [[ "$Calculation" != "dense" ]]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
+	if [[ ${RunType} == "list" ]]; then
 		if [ -z "$FileList" ]; then reho "Error: Group file list missing"; exit 1; fi
 	fi
-	if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
+	if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
 		if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
 		if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
 		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 		if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
 		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
-		if [ ${RunType} == "individual" ]; then
-		    if [ -z "$InputPath" ]; then echo ""; reho "Warning: Input path value missing. Assuming individual folder structure for output: ${SubjectsFolder}/${CASE}/images/functional"; InputPath="${SubjectsFolder}/${CASE}/images/functional"; fi
-			if [ -z "$OutPathFC" ]; then echo ""; reho "Warning: Output path value missing. Assuming individual folder structure for output: ${SubjectsFolder}/${CASE}/images/functional"; OutPathFC="${SubjectsFolder}/${CASE}/images/functional"; fi
+		if [[ ${RunType} == "individual" ]]; then
+		    if [ -z "$InputPath" ]; then echo ""; reho "Warning: Input path value missing. Assuming individual folder structure for output"; fi
+			if [ -z "$OutPathFC" ]; then echo ""; reho "Warning: Output path value missing. Assuming individual folder structure for output"; fi
 		fi
-		if [ ${RunType} == "group" ]; then
+		if [[ ${RunType} == "group" ]]; then
 			if [ -z "$OutPathFC" ]; then reho "Error: Output path value missing and is needed for a group run."; exit 1; fi
 		fi
 	fi
-	if [ ${Calculation} == "gbc" ]; then
+	if [[ ${Calculation} == "gbc" ]]; then
 		if [ -z "$TargetROI" ]; then TargetROI="[]"; fi
 		if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
 		if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
@@ -3769,7 +3288,7 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 		if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
 		if [ -z "$VoxelStep" ]; then VoxelStep="5000"; fi
 	fi
-	if [ ${Calculation} == "seed" ]; then
+	if [[ ${Calculation} == "seed" ]]; then
 		if [ -z "$ROIInfo" ]; then reho "Error: ROI seed file not specified"; exit 1; fi
 		if [ -z "$FCCommand" ]; then FCCommand=""; fi
 		if [ -z "$Method" ]; then Method="mean"; fi
@@ -3783,6 +3302,12 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 	if [ -z "$MaskFrames" ]; then MaskFrames=""; fi
 	if [ -z "$Covariance" ]; then Covariance=""; fi
 	if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+	
+	if [[ ${Calculation} == "dense" ]]; then 
+		RunType="individual"; 
+		if [ -z ${MemLimit} ]; then MemLimit="4"; reho "Warning: MemLimit value missing. Setting to $MemLimit"; fi
+	fi
+
 	# -- Report parameters
 	echo ""
 	echo "Running $FunctionToRun with the following parameters:"
@@ -3793,13 +3318,17 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 	echo "   Extract data in CSV format: ${ExtractData}"
 	echo "   Type of fc calculation: ${Calculation}"
 	echo "   Type of run: ${RunType}"
-	echo "   Ignore frames: ${IgnoreFrames}"
-	echo "   Mask out frames: ${MaskFrames}"
 	echo "   Calculate Covariance: ${Covariance}"
-	if [ ${RunType} == "list" ]; then
+	if [[ ${Calculation} != "dense" ]]; then
+		echo "   Ignore frames: ${IgnoreFrames}"
+		echo "   Mask out frames: ${MaskFrames}"
+	else
+		echo "   Memory Limit: ${MemLimit}"
+	fi
+	if [[ ${RunType} == "list" ]]; then
 		echo "   FileList: ${FileList}"
 	fi
-	if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
+	if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
 		echo "   Study Folder: ${StudyFolder}"
 		echo "   Subjects Folder: ${SubjectsFolder}"
 		echo "   Subjects: ${CASES}"
@@ -3807,7 +3336,7 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 		echo "   Input Path for Data: ${SubjectFolder}/<subject_id>/${InputPath}"
 		echo "   Output Name: ${OutName}"
 	fi
-	if [ ${Calculation} == "gbc" ]; then
+	if [[ ${Calculation} == "gbc" ]]; then
 		echo "   Target ROI for GBC: ${TargetROI}"
 		echo "   Radius Smooth for GBC: ${RadiusSmooth}"
 		echo "   Radius Dilate for GBC: ${RadiusDilate}"
@@ -3816,24 +3345,24 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 		echo "   Print Compute Time: ${ComputeTime}"
 		echo "   Voxel Steps to use: ${VoxelStep}"
 	fi
-	if [ ${Calculation} == "seed" ]; then
+	if [[ ${Calculation} == "seed" ]]; then
 		echo "   ROI Information for seed fc: ${ROIInfo}"
 		echo "   FC Commands to run: ${FCCommand}"
 		echo "   Method to compute fc: ${Method}"
 	fi
 	echo "--------------------------------------------------------------"
 	echo ""
-	if [ ${RunType} == "individual" ]; then
+	if [[ ${RunType} == "individual" ]]; then
 		for CASE in ${CASES}; do
 			${FunctionToRun} ${CASE}
 		done
 	fi
-	if [ ${RunType} == "group" ]; then
+	if [[ ${RunType} == "group" ]]; then
 		CASE=`echo "$CASES" | sed 's/ /,/g'`
 		echo $CASE
 		${FunctionToRun} ${CASE}
 	fi
-	if [ ${RunType} == "list" ]; then
+	if [[ ${RunType} == "list" ]]; then
 		${FunctionToRun}
 	fi
 fi
@@ -4023,8 +3552,35 @@ if [ "$FunctionToRun" == "DWISeedTractography" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  autoPtx function loop --> NEED TO CODE
+#  autoPtx function loop
 # ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "autoPtx" ]; then
+	# -- Check all the user-defined parameters:
+	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+	Cluster="$RunMethod"
+	if [ "$Cluster" == "2" ]; then
+		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+	fi
+	if [[ -z ${BedPostXFolder} ]]; then BedPostXFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX; fi
+	
+	# -- Report parameters
+	echo ""
+	echo "Running $FunctionToRun with the following parameters:"
+	echo ""
+	echo "--------------------------------------------------------------"
+	echo "   Study Folder: ${StudyFolder}"
+	echo "   Subjects Folder: ${SubjectsFolder}"
+	echo "   Subjects: ${CASES}"
+	echo "   Study Log Folder: ${MasterLogFolder}"
+	echo "   BedpostX Folder: ${BedPostXFolder} "
+	echo "--------------------------------------------------------------"
+	echo ""
+	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+fi
 
 # ------------------------------------------------------------------------------
 #  pretractographyDense function loop

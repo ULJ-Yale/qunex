@@ -94,13 +94,9 @@ usage() {
 # -------------------------------------------------------------------------------------------------------------------
 
 echo ""
-echo "-- DESCRIPTION:"
-echo ""
 echo "This function implements Global Brain Connectivity (GBC) or seed-based functional connectivity (FC) on the dense or parcellated (e.g. Glasser parcellation)."
 echo ""
-echo ""
 echo "For more detailed documentation run <help fc_ComputeGBC3>, <help gmrimage.mri_ComputeGBC> or <help fc_ComputeSeedMapsMultiple> inside matlab"
-echo ""
 echo ""
 echo "-- GENERAL PARMETERS:"
 echo ""
@@ -177,16 +173,35 @@ echo ""
 echo "      --subjectsfolder=<folder_with_subjects>             Path to study subjects folder"
 echo "      --subjects=<list_of_cases>                          List of subjects to run"
 echo "      --inputfiles=<files_to_compute_connectivity_on>     Specify the comma separated file names you want to use (e.g. bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii)"
-echo "      --weights=<yes/no>                                  Specify if using weights or not."
+echo "      --mem-limit=<limit-GB>                              Restrict memory. Memory limit expressed in gigabytes. Default [4]"
 echo ""
-echo "-- Examples:"
+echo "-- OPTIONAL SEED, GBC or DENSE PARAMETERS: "   
 echo ""
-echo "ComputeFunctionalConnectivity.sh \ "
+echo "      --covariance=<compute_covariance>                   Whether to compute covariances instead of correlations (true / false). Default is [false]"
+echo ""
+echo ""
+echo "-- EXAMPLES:"
+echo ""
+echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+echo ""
+reho "           * NOTE: --scheduler is not available via direct script call."
+echo ""
+echo "   --> Run via mnap computeBOLDfc --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+echo ""
+geho "           * NOTE: scheduler is available via mnap call:"
+echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+echo ""
+echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+echo ""
+echo ""
+echo ""
+echo "mnap computeBOLDfc \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--calculation='seed' \ "
 echo "--runtype='individual' \ "
-echo "--subjects='<case_id>' \ "
-echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
+echo "--subjects='<comma_separarated_list_of_cases>' \ "
+echo "--inputfiles='<files_to_compute_connectivity_on>' \ "
 echo "--inputpath='/images/functional' \ "
 echo "--extractdata='yes' \ "
 echo "--extractdata='yes' \ "
@@ -198,7 +213,7 @@ echo "--targetf='<path_for_output_file>' \ "
 echo "--mask='5' \ "
 echo "--covariance='false' "
 echo ""
-echo "ComputeFunctionalConnectivity.sh \ "
+echo "mnap computeBOLDfc \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--runtype='list' \ "
 echo "--flist='subjects.list' \ "
@@ -212,15 +227,15 @@ echo "--targetf='<path_for_output_file>' \ "
 echo "--mask='5' "
 echo "--covariance='false' "
 echo ""
-echo "ComputeFunctionalConnectivity.sh \ "
+echo "mnap computeBOLDfc \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='individual' \ "
-echo "--subjects='<case_id>' \ "
+echo "--subjects='<comma_separarated_list_of_cases>' \ "
 echo "--inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \ "
 echo "--inputpath='/images/functional' \ "
 echo "--extractdata='yes' \ "
-echo "--outname='GBC' \ "
+echo "--outname='<name_of_output_file>' \ "
 echo "--ignore='udvarsme' \ "
 echo "--command='mFz:' \ "
 echo "--targetf='<path_for_output_file>' \ "
@@ -233,13 +248,13 @@ echo "--time='true' \ "
 echo "--vstep='10000'"
 echo "--covariance='false' "
 echo ""
-echo "ComputeFunctionalConnectivity.sh \ "
+echo "mnap computeBOLDfc \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='list' \ "
 echo "--flist='subjects.list' \ "
 echo "--extractdata='yes' \ "
-echo "--outname='GBC' \ "
+echo "--outname='<name_of_output_file>' \ "
 echo "--ignore='udvarsme' \ "
 echo "--command='mFz:' \ "
 echo "--targetf='<path_for_output_file>' \ "
@@ -289,6 +304,7 @@ fi
 # -- Outputs will be files located in the location specified in the outputpath
 
 # -- Get the command line options for this script
+
 get_options() {
 
 # opts_GetOpt() {
@@ -338,6 +354,7 @@ unset VoxelStep        # --vstep=
 unset ROIInfo          # --roinfo=         
 unset FCCommand        # --options=      
 unset Method           # --method=      
+unset MemLimit         # --mem-limit=      
 
 runcmd=""
 
@@ -452,6 +469,10 @@ while [ ${index} -lt ${numArgs} ]; do
             Method=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
+        --mem-limit=*)
+            MemLimit=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
         *)
               usage
               reho "ERROR: Unrecognized Option: ${argument}"
@@ -465,22 +486,21 @@ echo ""
 # -- Check general required parameters
 
 if [ -z ${OutPath} ]; then
-    usage
-    reho "ERROR: <path_for_output> not specified."
+    echo ""
+    reho "ERROR: <path_for_output> not specified. Check usage."; echo ""
     exit 1
 fi
 if [ -z ${Calculation} ]; then
-    usage
-    reho "ERROR: <type_of_calculation> not specified."
+    echo ""
+    reho "ERROR: <type_of_calculation> not specified. Check usage."; echo ""
     exit 1
 fi
+if [ ${Calculation} == "dense" ]; then
+	RunType="individual"
+fi
 if [ -z ${RunType} ]; then
-	if [ ${Calculation} == "dense" ]; then
-		RunType="individual"
-	fi
-else
-    usage
-    reho "ERROR: <type_of_run> not specified."
+    echo ""
+    reho "ERROR: <type_of_run> not specified. Check usage."; echo ""
     exit 1
 fi
     
@@ -488,32 +508,32 @@ fi
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
 	# -- Check options for individual run
 	if [ -z ${SubjectsFolder} ]; then
-		usage
-		reho "ERROR: <subjects-folder-path> not specified>"
+		echo ""
+		reho "ERROR: <subjects-folder-path> not specified>. Check usage."; echo ""
 		echo ""
 		exit 1
 	fi
 	if [ -z ${CASES} ]; then
-		usage
-		reho "ERROR: <subject_ids> not specified."
+		echo ""
+		reho "ERROR: <subject_ids> not specified. Check usage."; echo ""
 		echo ""
 		exit 1
 	fi
 	if [ -z ${InputFiles} ]; then
-		usage
-		reho "ERROR: <file(s)_to_compute_connectivity_on> not specified."
+		echo ""
+		reho "ERROR: <file(s)_to_compute_connectivity_on> not specified. Check usage."; echo ""
 		echo ""
 		exit 1
 	fi
 	if [ -z ${InputPath} ]; then
-		usage
-		reho "ERROR: <absolute_path_to_data> not specified."
+		echo ""
+		reho "ERROR: <absolute_path_to_data> not specified. Check usage."; echo ""
 		echo ""
 		exit 1
 	fi
 	if [ -z ${OutName} ]; then
-		usage
-		reho "ERROR: <name_of_output_file> not specified."
+		echo ""
+		reho "ERROR: <name_of_output_file> not specified. Check usage."; echo ""
 		exit 1
 	fi
 fi
@@ -521,8 +541,8 @@ fi
 # -- Check options for group run
 if [ ${RunType} == "list" ]; then
 	if [ -z ${FileList} ]; then
-		usage
-		reho "ERROR: <group_list_file_to_compute_connectivity_on> not specified."
+		echo ""
+		reho "ERROR: <group_list_file_to_compute_connectivity_on> not specified. Check usage."; echo ""
 		echo ""
 		exit 1
 	fi
@@ -546,15 +566,20 @@ if [ ${Calculation} != "dense" ]; then
 	fi
 fi
 if [ ${Calculation} == "dense" ]; then
-	if [ ${RunType} == "list" ] || if [ ${RunType} == "group" ]; then
-		usage
+	if [ ${RunType} == "list" ] || [ ${RunType} == "group" ]; then
+		echo ""
 		reho "ERROR: dense calculation and <list> or <group> selection are not supported. Use <individual>."
 		echo ""
 		exit 1
 	fi
-	if [ -z ${IgnoreFrames} ]; then
-		reho "WARNING: <bad_movement_frames_to_ignore_command> not specified. Assuming no input."
-		IgnoreFrames=""
+	if [ -z ${MemLimit} ]; then
+		reho "WARNING: Memory limit not specified. Assuming 4GB as limit."
+		MemLimit="4"
+		echo ""
+	fi
+	if [ -z ${Covariance} ]; then
+		reho "WARNING: <compute_covariance> not specified. Assuming correlation."
+		Covariance="false"
 		echo ""
 	fi
 fi
@@ -564,7 +589,7 @@ fi
 # -- Check options for seed FC
 if [ ${Calculation} == "seed" ]; then
 	if [ -z ${ROIInfo} ]; then
-		usage
+		echo ""
 		reho "ERROR: <roi_seed_file> not specified."
 		echo ""
 		exit 1
@@ -584,38 +609,45 @@ fi
 # -- Check options for GBC
 if [ ${Calculation} == "gbc" ]; then
 	if [ -z ${GBCCommand} ]; then
+		echo ""
 		reho "WARNNING: <commands_for_gbc> not specified. Assuming standard mFz calculation."
 		GBCCommand="mFz:"
 		echo ""
 	fi
 	if [ -z ${TargetROI} ]; then
+		echo ""
 		reho "WARNING: <target_roi_for_gbc> not specified. Assuming whole-brain calculation."
 		TargetROI="[]"
 		echo ""
 	fi
 	if [ -z ${RadiusSmooth} ]; then
+		echo ""
 		reho "WARNING: <smoothing_radius> not specified. Assuming no smoothing."
 		RadiusSmooth="0"
 		echo ""
 	fi
 	if [ -z ${RadiusDilate} ]; then
+		echo ""
 		reho "WARNING: <dilation_radius>. Assuming no dilation."
 		RadiusDilate="0"
 		echo ""
 	fi
 	if [ -z ${Verbose} ]; then
+		echo ""
 		reho "WARNING: <verbose_output> not specified. Assuming 'true'."
 		Verbose="true"
 		echo ""
 	fi
 	if [ -z ${ComputeTime} ]; then
+		echo ""
 		reho "WARNING: <computation_time> not specified. Assuming 'true'"
 		ComputeTime="true"
 		echo ""
 	fi
 	if [ -z ${VoxelStep} ]; then
+		echo ""
 		reho "WARNING: <voxel_steps_to_use> not specified. Assuming '1200'"
-		VoxelStep="1200"	
+		VoxelStep="1200"
 		echo ""
 	fi
 fi
@@ -642,7 +674,7 @@ if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
 	echo "  SubjectsFolder: ${SubjectsFolder}"
 	echo "  Subjects: ${CASES}"
 	echo "  InputFiles: ${InputFiles}"
-	echo "  InputPath: ${SubjectsFolder}/<subject_id>/${InputPath}"
+	echo "  InputPath: ${InputPath}"
 	echo "  OutName: ${OutName}"
 fi
 if [ ${Calculation} == "gbc" ]; then
@@ -663,19 +695,18 @@ echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of work --------------------------------"
 echo ""
- 
-}   
+
+}
 
 ######################################### DO WORK ##########################################
 
 main() {
 
 # -- Get Command Line Options
-get_options "$@"
+get_options $@
 
 # -- Parse all the input cases for an individual or group run
 INPUTCASES=`echo "$CASES" | sed 's/,/ /g'`
-echo ""
 
 # -- Define all inputs and outputs depending on data type input
 if [ ${RunType} == "individual" ]; then
@@ -688,18 +719,21 @@ if [ ${RunType} == "individual" ]; then
 		fi
 		# -- Parse input from the InputFiles variable
 		InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
-		# -- Cleanup prior tmp lists
-		rm -rf ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
-		# -- Generate output directories
-		mkdir ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
-		mkdir ${OutPath} > /dev/null 2>&1
-		# -- Generate the temp list
-		echo "subject id:${INPUTCASE}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
-		for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
-		FinalInput="${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
+		if [ ${Calculation} != "dense" ]; then
+			# -- Cleanup prior tmp lists
+			rm -rf ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
+			# -- Generate output directories
+			mkdir ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
+			mkdir ${OutPath} > /dev/null 2>&1
+			# -- Generate the temp list
+			echo "subject id:${INPUTCASE}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
+			for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+			FinalInput="${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
+		fi
 	done
 fi
-if [ ${RunType} == "group" ]; then
+
+if [ ${RunType} == "group" ] && [ ${Calculation} != "dense" ]; then
 	# -- Generate output directories
 	mkdir ${OutPath} > /dev/null 2>&1
 	# -- Cleanup prior tmp lists
@@ -718,36 +752,43 @@ if [ ${RunType} == "group" ]; then
 	done
 fi
 
-# -- Echo inputs
-echo ""
-echo "Seed functional connectivity inputs:"
-echo ""
-more ${FinalInput}
-echo ""
-# -- Echo outputs
-echo "Seed functional connectivity will be saved here for each specified ROI:"
-echo "  --> ${OutPath}"
-# -- Check if list set
-if [ ${RunType} == "list" ]; then
-	FinalInput=${FileList}
-fi
-
-# -- Check if FC seed run is specified
-if [ ${Calculation} == "seed" ]; then
-	# -- run FC seed command: 
-	# Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
-	# Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-	# Example with string input --> ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
-	${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
-fi
-
-# -- Check if GBC seed run is specified
-if [ ${Calculation} == "gbc" ]; then
-	# -- run GBC seed command: 
-	# Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
-	# Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-	# Example with string input --> ${MNAPMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
-	${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+if [ ${Calculation} != "dense" ]; then
+	# -- Echo inputs
+	echo ""
+	echo "--- Functional connectivity inputs:"
+	echo ""
+	more ${FinalInput}
+	echo ""
+	# -- Echo outputs
+	echo "Seed functional connectivity will be saved here for each specified ROI:"
+	echo "  --> ${OutPath}"
+	# -- Check if list set
+	if [ ${RunType} == "list" ]; then
+		FinalInput=${FileList}
+	fi
+	# -- Check if FC seed run is specified
+	if [ ${Calculation} == "seed" ]; then
+		# -- run FC seed command: 
+		# Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
+		# Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
+		# Example with string input --> ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+		${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+	fi
+	# -- Check if GBC seed run is specified
+	if [ ${Calculation} == "gbc" ]; then
+		# -- run GBC seed command: 
+		# Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
+		# Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
+		# Example with string input --> ${MNAPMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+		${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+	fi
+	# -- Remove temp lists
+	echo ""
+	echo ""
+	echo ""
+	geho "--- Removing temporary list files: ${OutPath}/templist_${Calculation}_${OutName}"
+	echo ""
+	rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
 fi
 
 # -- Check if dense run is specified
@@ -755,56 +796,69 @@ if [ ${Calculation} == "dense" ]; then
 	for INPUTCASE in ${INPUTCASES}; do
 		geho "--- Running Dense Connectome on BOLD data for ${INPUTCASE}. Note: need ~30GB free RAM at any one time per subject!"
 		echo ""
-		# -- Define inputs
-		geho "--- Establishing paths for all input and output folders:"
-		echo ""
-		if [ ${OutPath} == "" ]; then
-			OutPath=${SubjectsFolder}/${INPUTCASE}/${InputPath}
-		fi
 		# -- Parse input from the InputFiles variable
 		InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
 		# -- Generate output directories
 		mkdir ${OutPath} > /dev/null 2>&1
 		# -- Generate the temp list
 		for InputFile in ${InputFiles}; do
-			if [[ `echo ${InputFile}` | grep 'dtseries' != "" ]]; then
+			dtseriesCheck=`echo ${InputFile} | grep ".dtseries.nii"`
+			if [[ ! -z ${dtseriesCheck} ]]; then
 				InputFileName=`echo '${InputFile}' | sed 's/.dtseries.nii//'`
+				BOLDNumber=`echo '${InputFile}' | egrep -o [0-9]+ | head -n1`
 			else
 				reho " ---> Requesting ${InputFile}. This is not a valid .dtseries.nii file"
+				return 1
 			fi
-			# [-weights] - specify column weights
-			#    <weight-file> - text file containing one weight per column
-			# [-fisher-z] - apply fisher small z transform (ie, artanh) to correlation
-			# [-no-demean] - instead of correlation, do dot product of rows, then
-			#    normalize by diagonal
-			# [-covariance] - compute covariance instead of correlation
-			# [-mem-limit] - restrict memory usage
-			#    <limit-GB> - memory limit in gigabytes
-			wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
-			${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii \
-			-fisher-z -weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold"$BOLD".use
+			# -- Parameters for wb_command -cifti-correlation: 
+				#
+				# [-weights] - specify column weights
+				#    <weight-file> - text file containing one weight per column
+				# [-fisher-z] - apply fisher small z transform (ie, artanh) to correlation
+				# [-no-demean] - instead of correlation, do dot product of rows, then
+				#    normalize by diagonal
+				# [-covariance] - compute covariance instead of correlation
+				# [-mem-limit] - restrict memory
+				#    <limit-GB> - memory limit in gigabytes
+				#
+			if [[ ${Covariance} == "false" ]]; then
+				wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+				${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii \
+				-weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
+				-fisher-z -mem-limit ${MemLimit}
+			else
+				wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+				${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii \
+				-weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
+				-mem-limit ${MemLimit} -covariance
+			fi
+			if [[ -f ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii ]]; then
+				echo ""
+				geho "--- Dense connectivity calculation completed for: "
+				geho "     ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii"
+				echo ""
+			else
+				echo ""
+				reho "--- Result for ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii not found" 
+				reho "    Something went wrong."
+				echo ""
+				RunError="yes"
+			fi
 		done
 	done
 fi
 
-echo ""
-echo ""
-echo ""
-geho "--- Removing temporary list files: ${OutPath}/templist_${Calculation}_${OutName}"
-echo ""
-rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
-
 # -- Check if data extraction requested
-if [ "$ExtractData" == "yes" ] && [ ${Calculation} != "dense" ]; then 
+if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]]; then 
 	geho "--- Saving out the data in a CSV file..."
 	# -- Specify pconn file inputs and outputs
-	PConnBOLDInputs=`ls ${OutPath}/${CASE}-${OutName}*ptseries.nii > /dev/null 2>&1`
+	PConnBOLDInputs=`ls ${OutPath}/${CASE}-${OutName}*ptseries.nii`
 	if [ -z ${PConnBOLDInputs} ]; then
 		echo ""
 		reho "WARNING: No parcellated files found for this run."
 		echo ""
 	else
-		for PConnBOLDInput in $PConnBOLDInputs; do 
+		for PConnBOLDInput in ${PConnBOLDInputs}; do 
 			CSVPConnFileExt=".csv"
 			CSVPConnBOLDOutput="${PConnBOLDInput}_${CSVPConnFileExt}"
 			rm -f ${CSVPConnBOLDOutput} > /dev/null 2>&1
@@ -812,9 +866,8 @@ if [ "$ExtractData" == "yes" ] && [ ${Calculation} != "dense" ]; then
 		done
 	fi
 fi
-
 # -- Perform completion checks
-if [ ${Calculation} == "individual" ]; then
+if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
 	for INPUTCASE in ${INPUTCASES}; do
 		if [[ -f ${OutPath}/${OutName}*.nii ]]; then
 			echo ""
@@ -828,7 +881,7 @@ if [ ${Calculation} == "individual" ]; then
 		fi
 	done
 fi
-if [ ${Calculation} == "group" ]; then
+if [[ ${RunType} == "group" ]] && [[ ${Calculation} != "dense" ]]; then
 	if [[ -f ${OutPath}/${OutName}*.nii ]]; then
 		echo ""
 		geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
@@ -846,12 +899,14 @@ if [[ -z ${RunError} ]]; then
 	echo ""
 else
 	echo ""
-	reho "--- Results missing. Something went wrong."
+	reho "--- Results missing. Something went wrong with ${Calculation} calculation."
 	echo ""
 	exit 1
 fi
 
 }
+
+######################################### END OF WORK ##########################################
 
 # ---------------------------------------------------------
 # -- Invoke the main function to get things started -------
