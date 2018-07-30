@@ -216,6 +216,9 @@ def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, v
     elif os.path.isfile(listString):
         slist, gpref = readSubjectData(listString, verbose=verbose)
 
+    elif re.match(".*\.txt$", listString) or '/' in listString:
+        raise ValueError("ERROR: The specified subject file is not found! [%s]!" % listString)
+
     else:
         slist = [e.strip() for e in re.split(' +|,|\|', listString)]
 
