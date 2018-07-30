@@ -61,8 +61,7 @@ RUN yum update -y  && \
     export PATH="/usr/local/bin:$PATH" && \
     echo "Installing pip for Python 2.7..." && \
     yum install -y python-pip && \
-    yum install -y python-devel && \
-    yum groupinstall -y 'development tools' && \   
+    yum install -y python-devel && \  
     yum clean all && \
     pip install --upgrade virtualenv && \
     pip install --upgrade setuptools && \
@@ -70,9 +69,8 @@ RUN yum update -y  && \
     echo "Installing Python packages..." && \
     pip install numpy pydicom scipy nibabel && \
 # Install Octave and R
-    echo "Installing R and Octave..." && \
-    yum install -y R \
-                   octave
+    echo "Installing R..." && \
+    yum install -y R \                  
 # Install R package
 RUN echo "Installing R packages..." && \
     wget --progress=bar:force -O /tmp/digest_0.6.15.tar.gz https://cran.r-project.org/src/contrib/digest_0.6.15.tar.gz && \
@@ -97,16 +95,33 @@ RUN echo "Installing R packages..." && \
     R CMD INSTALL /tmp/reshape2_1.4.3.tar.gz && \
     wget --progress=bar:force -O /tmp/rlang_0.2.1.tar.gz https://cran.r-project.org/src/contrib/rlang_0.2.1.tar.gz && \
     R CMD INSTALL /tmp/rlang_0.2.1.tar.gz && \
+    wget --progress=bar:force -O /tmp/viridisLite_0.3.0.tar.gz https://cran.r-project.org/src/contrib/viridisLite_0.3.0.tar.gz && \
+    R CMD INSTALL /tmp/viridisLite_0.3.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/RColorBrewer_1.1-2.tar.gz https://cran.r-project.org/src/contrib/RColorBrewer_1.1-2.tar.gz && \
+    R CMD INSTALL /tmp/RColorBrewer_1.1-2.tar.gz && \
+    wget --progress=bar:force -O /tmp/R6_2.2.2.tar.gz https://cran.r-project.org/src/contrib/R6_2.2.2.tar.gz && \
+    R CMD INSTALL /tmp/R6_2.2.2.tar.gz && \
+    wget --progress=bar:force -O /tmp/labeling_0.3.tar.gz https://cran.r-project.org/src/contrib/labeling_0.3.tar.gz && \
+    R CMD INSTALL /tmp/labeling_0.3.tar.gz && \
+    wget --progress=bar:force -O /tmp/munsell_0.5.0.tar.gz https://cran.r-project.org/src/contrib/munsell_0.5.0.tar.gz && \
+    R CMD INSTALL /tmp/munsell_0.5.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/dichromat_2.0-0.tar.gz https://cran.r-project.org/src/contrib/dichromat_2.0-0.tar.gz && \
+    R CMD INSTALL /tmp/dichromat_2.0-0.tar.gz && \
     wget --progress=bar:force -O /tmp/scales_0.5.0.tar.gz https://cran.r-project.org/src/contrib/scales_0.5.0.tar.gz && \
     R CMD INSTALL /tmp/scales_0.5.0.tar.gz && \
     wget --progress=bar:force -O /tmp/tibble_1.4.2.tar.gz https://cran.r-project.org/src/contrib/tibble_1.4.2.tar.gz && \
     R CMD INSTALL /tmp/tibble_1.4.2.tar.gz && \
-    wget --progress=bar:force -O /tmp/viridisLite_0.3.0.tar.gz https://cran.r-project.org/src/contrib/viridisLite_0.3.0.tar.gz && \
-    R CMD INSTALL /tmp/viridisLite_0.3.0.tar.gz && \
     wget --progress=bar:force -O /tmp/withr_2.1.2.tar.gz https://cran.r-project.org/src/contrib/withr_2.1.2.tar.gz && \
     R CMD INSTALL /tmp/withr_2.1.2.tar.gz && \
     wget --progress=bar:force -O /tmp/ggplot2_3.0.0.tar.gz https://cran.r-project.org/src/contrib/ggplot2_3.0.0.tar.gz && \
-    R CMD INSTALL /tmp/ggplot2_3.0.0.tar.gz && \
+    R CMD INSTALL /tmp/ggplot2_3.0.0.tar.gz
+# Install Octave 4.2.1
+RUN wget --progress=bar:force -O /tmp/octave-4.2.1.tar.lz ftp://ftp.gnu.org/gnu/octave/octave-4.2.1.tar.lz && \
+    tar --lzip -xvf /tmp/octave-4.2.1.tar.lz -C /tmp/ --strip-components 1 && \
+    export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
+    ./configure --prefix=/usr/local/OCTAVE/4.2.1 --with-qt=4 && \
+    cd /tmp/octave-4.2.1 && \
+    make -j4 && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
     yum install -y liboctave-dev \
