@@ -59,7 +59,6 @@ RUN yum update -y && yum upgrade -y && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip && \
-    mkdir /opt && \
     chmod 777 /opt && chmod a+s /opt && \
 # Install perlbrew and perl-5.16.3
     wget -O - https://install.perlbrew.pl | bash && \
