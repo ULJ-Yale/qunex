@@ -48,37 +48,33 @@ ENV PATH="/opt" \
     PYDICOMDIR="/opt/pydicom" \
     PATH="/opt/pydicom:$PATH"
 
-# Run yum update
+#RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
 RUN yum update -y  && \
     yum clean all && \
 # Install Python 2.7
-    echo "Installing Python 2.7.14..." && \
+    echo "Install Python 2.7.14" && \
     wget --progress=bar:force -O /tmp/Python-2.7.14.tgz https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz && \
     tar -xzvf /tmp/Python-2.7.14.tgz -C /tmp/ --strip-components 1 && \
     cd /tmp && \
     ./configure --prefix=/usr/local && \
     make && make altinstall && \
     export PATH="/usr/local/bin:$PATH" && \
-    echo "Installing pip for Python 2.7..." && \
+    echo "Install pip for Python 2.7" && \
     yum install -y python-pip && \
     yum install -y python-devel && \
-    yum groupinstall -y 'development tools' && \   
+    yum groupinstall 'development tools' && \   
     yum clean all && \
     pip install --upgrade virtualenv && \
     pip install --upgrade setuptools && \
 # Install Python packages
-    echo "Installing Python packages..." && \
     pip install numpy pydicom scipy nibabel && \
 # Install Octave and R
-    echo "Installing R and Octave..." && \
-    yum install -y r-base \
-                   octave && \
+    yum install -y --allow-unauthenticated r-base \
+                                           octave && \
 # Install R package
-    echo "Installing R packages..." && \
     echo "r <- getOption('repos'); r['CRAN'] <- 'http://cran.us.r-project.org'; options(repos = r);" > ~/.Rprofile && \
     Rscript -e "install.packages('ggplot2')" && \
 # Install Octave packages
-    echo "Installing Octave packages..." && \
     yum install -y liboctave-dev \
                    octave-general \
                    octave-control \
@@ -99,8 +95,7 @@ RUN yum update -y  && \
 ENV PATH="/opt/dcm2niix/bin:$PATH" 
 
 # Install dcm2niix
-RUN echo "Downloading dcm2niix..." && \
-    mkdir -p /tmp/dcm2niix && \
+RUN mkdir -p /tmp/dcm2niix && \
     wget --progress=bar:force -O /tmp/dcm2niix.tar.gz https://github.com/rordenlab/dcm2niix/archive/v1.0.20170624.tar.gz && \
     tar -xzvf /tmp/dcm2niix.tar.gz -C /tmp/ --strip-components 1 && \
     cd /tmp && \
@@ -111,7 +106,7 @@ RUN echo "Downloading dcm2niix..." && \
     cd / && \
     rm -rf /tmp/* && \
 # Install FSL
-    echo "Downloading FSL 5.0.9..." && \
+    echo "Downloading FSL 5.0.9" && \
     mkdir -p /opt/fsl-5.0.9 && \
     wget --progress=bar:force -O /tmp/fsl-5.0.9-centos6_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-5.0.9-centos6_64.tar.gz && \
     tar -xzvf /tmp/fsl-5.0.9-centos6_64.tar.gz -C /opt/fsl-5.0.9 --strip-components 1 && \
@@ -119,7 +114,7 @@ RUN echo "Downloading dcm2niix..." && \
     rm -R /opt/fsl-5.0.9/data/first/
 
 # Install FreeSurfer 6.0
-RUN echo "Downloading FreeSurfer 6.0..." && \
+RUN echo "Downloading FreeSurfer 6.0" && \
     yum update -qq && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
@@ -130,29 +125,26 @@ RUN echo "Downloading FreeSurfer 6.0..." && \
     rm /tmp/recon-all-freesurfer6-3.min.tgz && \
     rm -R /opt/freesurfer-6.0/trctrain && \
 # Install FreeSurfer 5.3-HCP
-    echo "Downloading FreeSurfer-5.3-HCP..." && \
+    echo "Downloading FreeSurfer-5.3-HCP" && \
     mkdir -p /opt/freesurfer-5.3-HCP/ && \
     wget --progress=bar:force -O /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz ftp://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
     tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer-5.3-HCP/ --strip-components 1 && \
     rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
     rm -R /opt/freesurfer-5.3-HCP/ && \
 # Install PALM
-    echo "Installing PALM..." && \
     wget --progress=bar:force -O /tmp/palm-alpha111.tar.gz https://s3-us-west-2.amazonaws.com/andersonwinkler/palm/palm-alpha111.tar.gz && \
     tar -xzvf /tmp/palm-alpha111.tar.gz -C /opt && \
     rm /tmp/palm-alpha111.tar.gz && \
 # Git clone Gradunwarp
     cd /opt/pylib && \
-    echo "Downloading Gradunwarp..." && \
     git clone https://github.com/Washington-University/gradunwarp.git
 
 WORKDIR /opt/pylib/gradunwarp/
 
 # Install Gradunwarp
-RUN echo "Installing Gradunwarp..." && \
-    python setup.py install && \
+RUN python setup.py install && \
 # Download nibabel
-    echo "Downloading nibabel..." && \
+    python setup.py install && \
     wget --progress=bar:force -O /tmp/nibabel-1.2.0.dev.tar.gz https://github.com/downloads/ksubramz/gradunwarp/nibabel-1.2.0.dev.tar.gz && \
     tar -xzvf /tmp/nibabel-1.2.0.dev.tar.gz -C /opt && \
     rm /tmp/nibabel-1.2.0.dev.tar.gz 
@@ -160,10 +152,9 @@ RUN echo "Installing Gradunwarp..." && \
 WORKDIR /opt/pylib/nibabel-1.2.0.dev/
 
 # Install nibabel
-RUN echo "Installing nibabel..." && \
-    python setup.py install && \
+RUN python setup.py install && \
 # Install Workbench
-    echo "Downloading workbench..." && \
+    echo "Downloading workbench ..." && \
     wget --progress=bar:force -O /tmp/workbench-linux64.zip https://ftp.humanconnectome.org/workbench/workbench-rh_linux64-v1.3.1.zip && \
     unzip /tmp/workbench-rh_linux64.zip -d /opt/ && \
     rm /tmp/workbench-rh_linux64.zip && \
