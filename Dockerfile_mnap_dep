@@ -50,8 +50,6 @@ ENV PATH="/opt" \
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     yum update && \
-    yum install -yq --no-install-recommends pkg-config \
-                                            tmux && \
     yum clean all && \
 # Install Python 2.7
     yum install --no-install-recommends -y python2.7-dev && \

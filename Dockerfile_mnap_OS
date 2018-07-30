@@ -50,6 +50,8 @@ RUN yum update -y && yum upgrade -y && \
                    perl \
                    tcsh \
                    wget \
+                   pkg-config \
+                   tmux \
                    centos-release-scl-rh \
 # Install shared libraries  
                    netcdf \             
@@ -98,9 +100,10 @@ RUN yum update -y && yum upgrade -y && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip && \
-    chmod 777 /opt && chmod a+s /opt && \
+    chmod 777 /opt && chmod a+s /opt
+
 # Install perlbrew and perl-5.16.3
-    wget -O - https://install.perlbrew.pl | bash && \
+RUN wget -O - https://install.perlbrew.pl | bash && \
     echo "source ~/perl5/perlbrew/etc/bashrc" >> ~/.bashrc
 
 ENV PATH="/root/perl5/perlbrew/bin:$PATH"
