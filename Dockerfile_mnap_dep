@@ -32,11 +32,10 @@
 #  │   └── pydicom                  # Env. Variable = $PYDICOMDIR         # -- pydicom (v1.1.0 or later; https://pydicom.github.io) 
 #  └── workbench                    # Env. Variable = $HCPWBDIR           # -- Connectome Workbench (v1.0 or above; https://www.humanconnectome.org/software/connectome-workbench)
 #
-#
 ## -----------------------------------------------------------------------------
 
 ## -- Get OS image
-FROM ztamayo/mnap_os_CentOS:latest 
+FROM ztamayo/mnap_os_centos:latest 
 
 # Set $TOOLS path
 ENV PATH="/opt" \
@@ -48,7 +47,7 @@ ENV PATH="/opt" \
     PATH="/opt/nibabel:$PATH" \
     PYDICOMDIR="/opt/pydicom" \
     PATH="/opt/pydicom:$PATH"
-    
+
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
     apt-get update && \
     apt-get install -yq --no-install-recommends pkg-config \
@@ -84,6 +83,7 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
                                                 octave-miscellaneous \
                                                 octave-struct \
                                                 octave-optim && \
+                                                
 ## -- Clear apt cache and other empty folders
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
@@ -119,7 +119,8 @@ RUN echo "Downloading FreeSurfer 6.0" \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && mkdir -p /opt/freesurfer-6.0/ \
     && wget --progress=bar:force -O /tmp/recon-all-freesurfer6-3.min.tgz https://dl.dropbox.com/s/nnzcfttc41qvt31/recon-all-freesurfer6-3.min.tgz \ 
-    && tar -xzvf /tmp/recon-all-freesurfer6-3.min.tgz -C /opt/freesurfer-6.0/ --strip-components 1 \
+    && tar -xzvf /tmp/recon-all-freesurfer6-3.min.tgz -C /opt --strip-components 1 \
+    && mv /opt/freesurfer /opt/freesurfer-6.0 \
     && rm /tmp/recon-all-freesurfer6-3.min.tgz \
     && rm -R /opt/freesurfer-6.0/trctrain \
     && ADD license.txt /opt/freesurfer-6.0/
@@ -158,9 +159,10 @@ RUN python setup.py install
 
 # Install Workbench
     echo "Downloading workbench ..." && \
-    wget --progress=bar:force -O /tmp/workbench-linux64.zip https://ftp.humanconnectome.org/workbench/workbench-linux64-v1.3.1.zip && \
-    unzip /tmp/workbench-linux64.zip -d /opt/ && \
-    rm /tmp/workbench-linux64.zip && \
+    wget --progress=bar:force -O /tmp/workbench-linux64.zip https://ftp.humanconnectome.org/workbench/workbench-rh_linux64-v1.3.1.zip && \
+    unzip /tmp/workbench-rh_linux64.zip -d /opt/ && \
+    rm /tmp/workbench-rh_linux64.zip && \
+
 # Clear apt cache and other empty folders
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \

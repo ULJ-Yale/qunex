@@ -23,7 +23,6 @@
 #
 # ## TODO
 #
-#
 # ## DESCRIPTION:
 #
 # * This is a general docker generation script for the MNAP suite
@@ -41,7 +40,7 @@
 #~ND~END~
 
 ##
-# Tag: ztamayo/mnap:latest
+# Tag: aanticev/mnap_suite:latest
 # Dockerfile for MNAP suite
 # Sets environment for MNAP
 ##
@@ -70,11 +69,12 @@ RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.b
     rm mri_ReadNIfTImx.cpp && \
     rm mri_SaveNIfTImx.cpp && \
     rm g_nifti.o && \
-    rm znzlib.o && \
+    rm znzlib.o
+
+# -- Clean the environment and go to mnap folder
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip && \
     cd /opt/mnaptools
 
 CMD ["bash"]
-

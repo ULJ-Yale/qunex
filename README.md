@@ -271,6 +271,7 @@ Change Log
 * 0.18.01 [library] Updated the dependencies handling and .octaverc
 * 0.18.02 [matlab] Updated error exits from matlab code
 * 0.18.03 [niutilities] Made interpretation of subjects parameter more robust
+* 0.18.04 [mnaptools] Made improvements to Dockerfiles
 
 =======
 [Mind and Brain Lab]: http://mblab.si

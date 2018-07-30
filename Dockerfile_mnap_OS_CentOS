@@ -1,99 +1,131 @@
 ##
-# Dockerfile for MNAP
+# CentOS 7 Dockerfile for MNAP
 # MNAP code created by: Anticevic Lab, Yale University and Mind and Brain Lab, University of Ljubljana
 # Maintainer of Dockerfile: Zailyn Tamayo, Yale University
 ##
 
 ##
-# Tag: ztamayo/mnap_deps0:latest
+# Tag: aanticev/mnap_os_centos:latest
 # Base OS Dockerfile with ContOS deployed needed to run MNAP suite and dependencies
 ##
 
-FROM ubuntu:18.04
+##
+# Build:
+# docker build -t aanticev/mnap_os_centos:latest .
+##
 
-RUN apt-get update -qq \
-    && apt-get clean \
-    && apt-get install -y -q --no-install-recommends \
-           apt-utils \
-           bzip2 \
-           ca-certificates \
-           curl \
-           locales \
-           unzip \
-           cmake \
-           g++ \
-           gcc \
-           git \
-           make \
-           pigz \
-           wget \
-           vim \
-           bc \
-           dc \
-           file \
-           perl \
-           tcsh \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && chmod 777 /opt && chmod a+s /opt 
+##
+# Create:
+# docker create -it --name mnap_os_centos -h mnap_os_centos aanticev/centos
+##
 
-RUN apt-get update -qq \
-# Install shared libraries
-    && apt-get install -y -q --no-install-recommends \
-           zlib1g-dev \
-           libfontconfig1 \
-           libfreetype6 \
-           libgl1-mesa-dev \
-           libglu1-mesa-dev \
-           libgomp1 \
-           libice6 \
-           libxcursor1 \
-           libxft2 \
-           libxinerama1 \
-           libxrandr2 \
-           libxrender1 \
-           libxt6 \
-           libc6 \
-           libftgl2 \
-           libgcc1 \
-           libgl1-mesa-glx \
-           libgl1 \
-           libglu1-mesa \
-           libglu1 \
-           libosmesa6 \
-           libqt4-network \
-           libqt4-opengl \
-           libqt4-xml \
-           libqtcore4 \
-           libstdc++6 \
-           zlib1g \
-           libqtgui4 \
-           libqtwebkit4 \
-           libxmu6 \
-           libxm4  \
-           libglw1-mesa \
-           libglib2.0-0 \
-           libjpeg62 \
-           libssl1.0.0 \
-           libssl-dev \
-    && wget --progress=bar:force -O /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-6/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
-    && dpkg -i /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
-    && rm /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
-    && wget --progress=bar:force -O /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-6/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
-    && dpkg -i /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
-    && rm /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
-    && wget --progress=bar:force -O /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb http://security.ubuntu.com/ubuntu/pool/universe/h/hdf5/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
-    && dpkg -i /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
-    && rm /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
-    && wget --progress=bar:force -O /tmp/libnetcdf6_4.1.1-6_amd64.deb http://security.ubuntu.com/ubuntu/pool/universe/n/netcdf/libnetcdf6_4.1.1-6_amd64.deb \
-    && dpkg -i /tmp/libnetcdf6_4.1.1-6_amd64.deb \
-    && rm /tmp/libnetcdf6_4.1.1-6_amd64.deb \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+##
+# Start:
+# docker start mnap_os_centos
+##
 
-# Clear apt cache and other empty folders
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
-    rm -rf ~/.cache/pip
+##
+# Connect with bash
+# docker exec -it mnap_os_centos bash
+##
 
+## -- Pull base image
+FROM centos:latest
+
+## -- Update CentOS 7 (https://access.redhat.com/sites/default/files/attachments/rh_yum_cheatsheet_1214_jcs_print-1.pdf) 
+RUN yum update -y && yum upgrade -y
+
+## -- Install packages
+RUN yum install -y yum-utils 
+                   bzip2 \
+                   ca-certificates \
+                   zlib-devel \
+                   curl \
+                   locales \
+                   unzip \
+                   cmake \
+                   g++ \
+                   gcc \
+                   git \
+                   make \
+                   pigz \
+                   wget \
+                   vim \
+                   bc \
+                   dc \
+                   file \
+                   perl \
+                   tcsh \
+                   wget \
+                   zlib1g-dev \
+                   libfontconfig1 \
+                   libfreetype6 \
+                   libgl1-mesa-dev \
+                   libglu1-mesa-dev \
+                   libgomp1 \
+                   libice6 \
+                   libxcursor1 \
+                   libxft2 \
+                   libxinerama1 \
+                   libxrandr2 \
+                   libxrender1 \
+                   libxt6 \
+                   libc6 \
+                   libftgl2 \
+                   libgcc1 \
+                   libgl1-mesa-glx \
+                   libgl1 \
+                   libglu1-mesa \
+                   libglu1 \
+                   libosmesa6 \
+                   libqt4-network \
+                   libqt4-opengl \
+                   libqt4-xml \
+                   libqtcore4 \
+                   libstdc++6 \
+                   zlib1g \
+                   libqtgui4 \
+                   libqtwebkit4 \
+                   libxmu6 \
+                   libxm4  \
+                   libglw1-mesa \
+                   libglib2.0-0 \
+                   libjpeg62 \
+                   libssl1.0.0 \
+                   libssl-dev
+
+## -- Install EPEL Repository
+RUN yum install -y epel-release
+
+## -- Clean CentOS 7
+RUN yum clean all
+
+## -- Set the environment variables
+ENV HOME /root
+
+## -- Working directory
+WORKDIR /root
+
+## -- Default command
 CMD ["bash"]
+
+#      && wget --progress=bar:force -O /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-6/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
+#      && dpkg -i /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
+#      && rm /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
+#      && wget --progress=bar:force -O /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-6/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
+#      && dpkg -i /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
+#      && rm /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
+#      && wget --progress=bar:force -O /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb http://security.ubuntu.com/ubuntu/pool/universe/h/hdf5/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
+#      && dpkg -i /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
+#      && rm /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
+#      && wget --progress=bar:force -O /tmp/libnetcdf6_4.1.1-6_amd64.deb http://security.ubuntu.com/ubuntu/pool/universe/n/netcdf/libnetcdf6_4.1.1-6_amd64.deb \
+#      && dpkg -i /tmp/libnetcdf6_4.1.1-6_amd64.deb \
+#      && rm /tmp/libnetcdf6_4.1.1-6_amd64.deb \
+#      && apt-get clean \
+#      && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+#  
+#  # Clear apt cache and other empty folders
+#      apt-get clean && \
+#      rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
+#      rm -rf ~/.cache/pip
+#  
