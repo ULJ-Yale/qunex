@@ -58,6 +58,10 @@ ENV PYTHONPATH="${PYTONPATH}:/mnaptools"
 # Set MNAP tools path
 ENV TOOLS="/opt"
 
+# Copy over FreeSurfer license
+ADD /library/etc/license.txt /opt/freesurfer-6.0/
+ADD /library/etc/license.txt /opt/freesurfer-5.3-HCP/
+
 # Set environment & Set Octave as default & Clear apt cache and other empty folders
 RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.bashrc && \
     touch ~/.mnapuseoctave && \

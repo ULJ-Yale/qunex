@@ -70,7 +70,7 @@ RUN yum update -y  && \
     pip install numpy pydicom scipy nibabel && \
 # Install Octave and R
     echo "Installing R..." && \
-    yum install -y R \                  
+    yum install -y R                  
 # Install R package
 RUN echo "Installing R packages..." && \
     wget --progress=bar:force -O /tmp/digest_0.6.15.tar.gz https://cran.r-project.org/src/contrib/digest_0.6.15.tar.gz && \
@@ -221,10 +221,6 @@ RUN echo "Installing nibabel..." && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip
-
-# Copy over FreeSurfer license
-ADD license.txt /opt/freesurfer-6.0/
-ADD license.txt /opt/freesurfer-5.3-HCP/
 
 CMD ["bash"]
 
