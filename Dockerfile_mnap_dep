@@ -103,12 +103,20 @@ RUN echo "Installing R packages..." && \
     R CMD INSTALL /tmp/R6_2.2.2.tar.gz && \
     wget --progress=bar:force -O /tmp/labeling_0.3.tar.gz https://cran.r-project.org/src/contrib/labeling_0.3.tar.gz && \
     R CMD INSTALL /tmp/labeling_0.3.tar.gz && \
+    wget --progress=bar:force -O /tmp/colorspace_1.3-2.tar.gz https://cran.r-project.org/src/contrib/colorspace_1.3-2.tar.gz && \
+    R CMD INSTALL /tmp/colorspace_1.3-2.tar.gz && \
     wget --progress=bar:force -O /tmp/munsell_0.5.0.tar.gz https://cran.r-project.org/src/contrib/munsell_0.5.0.tar.gz && \
     R CMD INSTALL /tmp/munsell_0.5.0.tar.gz && \
     wget --progress=bar:force -O /tmp/dichromat_2.0-0.tar.gz https://cran.r-project.org/src/contrib/dichromat_2.0-0.tar.gz && \
     R CMD INSTALL /tmp/dichromat_2.0-0.tar.gz && \
     wget --progress=bar:force -O /tmp/scales_0.5.0.tar.gz https://cran.r-project.org/src/contrib/scales_0.5.0.tar.gz && \
     R CMD INSTALL /tmp/scales_0.5.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/crayon_1.3.4.tar.gz https://cran.r-project.org/src/contrib/crayon_1.3.4.tar.gz && \
+    R CMD INSTALL /tmp/crayon_1.3.4.tar.gz && \
+    wget --progress=bar:force -O /tmp/cli_1.0.0.tar.gz https://cran.r-project.org/src/contrib/cli_1.0.0.tar.gz && \
+    R CMD INSTALL /tmp/cli_1.0.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/pillar_1.3.0.tar.gz https://cran.r-project.org/src/contrib/pillar_1.3.0.tar.gz && \
+    R CMD INSTALL /tmp/pillar_1.3.0.tar.gz && \
     wget --progress=bar:force -O /tmp/tibble_1.4.2.tar.gz https://cran.r-project.org/src/contrib/tibble_1.4.2.tar.gz && \
     R CMD INSTALL /tmp/tibble_1.4.2.tar.gz && \
     wget --progress=bar:force -O /tmp/withr_2.1.2.tar.gz https://cran.r-project.org/src/contrib/withr_2.1.2.tar.gz && \
