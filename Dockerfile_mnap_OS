@@ -34,10 +34,8 @@ RUN yum update -y && yum upgrade -y && \
                    bzip2 \
                    ca-certificates \
                    curl \
-                   locales \
                    unzip \
                    cmake \
-                   g++ \
                    gcc \
                    git \
                    make \
@@ -45,53 +43,14 @@ RUN yum update -y && yum upgrade -y && \
                    wget \
                    vim \
                    bc \
-                   dc \
                    file \
                    perl \
                    tcsh \
                    wget \
-                   pkg-config \
                    tmux \
                    centos-release-scl-rh \
-# Install shared libraries  
-                   netcdf \             
-                   zlib-devel \
-                   zlib1g-dev \
-                   libfontconfig1 \
-                   libfreetype6 \
-                   libgl1-mesa-dev \
-                   libglu1-mesa-dev \
-                   libgomp1 \
-                   libice6 \
-                   libxcursor1 \
-                   libxft2 \
-                   libxinerama1 \
-                   libxrandr2 \
-                   libxrender1 \
-                   libxt6 \
-                   libc6 \
-                   libftgl2 \
-                   libgcc1 \
-                   libgl1-mesa-glx \
-                   libgl1 \
-                   libglu1-mesa \
-                   libglu1 \
-                   libosmesa6 \
-                   libqt4-network \
-                   libqt4-opengl \
-                   libqt4-xml \
-                   libqtcore4 \
-                   libstdc++6 \
-                   zlib1g \
-                   libqtgui4 \
-                   libqtwebkit4 \
-                   libxmu6 \
-                   libxm4  \
-                   libglw1-mesa \
-                   libglib2.0-0 \
-                   libjpeg62 \
-                   libssl1.0.0 \
-                   libssl-dev && \
+# Install shared libraries              
+                   zlib-devel && \
 # Install EPEL Repository
     yum install -y epel-release && \
 # Install devtoolset-6-gcc rpm package
@@ -100,6 +59,7 @@ RUN yum update -y && yum upgrade -y && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip && \
+    mkdir /opt && \
     chmod 777 /opt && chmod a+s /opt
 
 # Install perlbrew and perl-5.16.3
