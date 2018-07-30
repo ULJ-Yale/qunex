@@ -125,6 +125,7 @@ RUN wget --progress=bar:force -O /tmp/octave-4.2.1.tar.lz ftp://ftp.gnu.org/gnu/
 # Install Octave packages
     echo "Installing Octave packages..." && \
     yum install -y liboctave-dev \
+                   octave-devel \
                    octave-general \
                    octave-control \
                    octave-image \
