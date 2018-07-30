@@ -72,9 +72,9 @@ RUN yum update -y  && \
 # Install Octave and R
     echo "Installing R and Octave..." && \
     yum install -y R \
-                   octave && \
+                   octave
 # Install R package
-    echo "Installing R packages..." && \
+RUN echo "Installing R packages..." && \
     wget --progress=bar:force -O /tmp/digest_0.6.15.tar.gz https://cran.r-project.org/src/contrib/digest_0.6.15.tar.gz && \
     R CMD INSTALL /tmp/digest_0.6.15.tar.gz && \
     wget --progress=bar:force -O /tmp/gtable_0.2.0.tar.gz https://cran.r-project.org/src/contrib/gtable_0.2.0.tar.gz && \
@@ -85,6 +85,12 @@ RUN yum update -y  && \
     R CMD INSTALL /tmp/Rcpp_0.12.18.tar.gz && \
     wget --progress=bar:force -O /tmp/plyr_1.8.4.tar.gz https://cran.r-project.org/src/contrib/plyr_1.8.4.tar.gz && \
     R CMD INSTALL /tmp/plyr_1.8.4.tar.gz && \
+    wget --progress=bar:force -O /tmp/glue_1.3.0.tar.gz https://cran.r-project.org/src/contrib/glue_1.3.0.tar.gz && \
+    R CMD INSTALL /tmp/glue_1.3.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/magrittr_1.5.tar.gz https://cran.r-project.org/src/contrib/magrittr_1.5.tar.gz && \
+    R CMD INSTALL /tmp/magrittr_1.5.tar.gz && \
+    wget --progress=bar:force -O /tmp/stringi_1.2.4.tar.gz https://cran.r-project.org/src/contrib/stringi_1.2.4.tar.gz && \
+    R CMD INSTALL /tmp/stringi_1.2.4.tar.gz && \
     wget --progress=bar:force -O /tmp/stringr_1.3.1.tar.gz https://cran.r-project.org/src/contrib/stringr_1.3.1.tar.gz && \
     R CMD INSTALL /tmp/stringr_1.3.1.tar.gz && \
     wget --progress=bar:force -O /tmp/reshape2_1.4.3.tar.gz https://cran.r-project.org/src/contrib/reshape2_1.4.3.tar.gz && \
