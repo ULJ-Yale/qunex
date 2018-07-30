@@ -48,8 +48,8 @@ ENV PATH="/opt" \
     PYDICOMDIR="/opt/pydicom" \
     PATH="/opt/pydicom:$PATH"
 
-RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
-    yum update && \
+#RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
+RUN yum update -y  && \
     yum clean all && \
 # Install Python 2.7
     yum install --no-install-recommends -y python2.7-dev && \
