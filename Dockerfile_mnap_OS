@@ -54,16 +54,15 @@ RUN yum update -y && yum upgrade -y && \
 # Install EPEL Repository
     yum install -y epel-release && \
 # Install devtoolset-6-gcc rpm package
-    yum install --enablerepo=centos-sclo-rh-testing install devtoolset-6-gcc && \
+    yum --enablerepo=centos-sclo-rh-testing install -y devtoolset-6-gcc && \
 # Clean cache and other empty folders
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip && \
     mkdir /opt && \
-    chmod 777 /opt && chmod a+s /opt
-
+    chmod 777 /opt && chmod a+s /opt && \
 # Install perlbrew and perl-5.16.3
-RUN wget -O - https://install.perlbrew.pl | bash && \
+    wget -O - https://install.perlbrew.pl | bash && \
     echo "source ~/perl5/perlbrew/etc/bashrc" >> ~/.bashrc
 
 ENV PATH="/root/perl5/perlbrew/bin:$PATH"
