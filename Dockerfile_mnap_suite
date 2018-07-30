@@ -40,25 +40,25 @@
 #~ND~END~
 
 ##
-# Tag: aanticev/mnap_suite:latest
+# Tag: ztamayo/mnap_suite:latest
 # Dockerfile for MNAP suite
 # Sets environment for MNAP
 ##
 
-# -- Define docker image location
+# Define docker image location
 FROM ztamayo/mnap_dep:latest
 
-# -- Define where the mnaptools repo resides on the image
+# Define where the mnaptools repo resides on the image
 ADD . /opt/mnaptools
 WORKDIR /opt/mnaptools
 
-# -- Set Python path
+# Set Python path
 ENV PYTHONPATH="${PYTONPATH}:/mnaptools" 
 
-# -- Set MNAP tools path
+# Set MNAP tools path
 ENV TOOLS="/opt"
 
-# -- Set environment & Set Octave as default & Clear apt cache and other empty folders
+# Set environment & Set Octave as default & Clear apt cache and other empty folders
 RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.bashrc && \
     touch ~/.mnapuseoctave && \
     cd matlab/gmri/\@gmrimage && \
@@ -71,8 +71,8 @@ RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.b
     rm g_nifti.o && \
     rm znzlib.o
 
-# -- Clean the environment and go to mnap folder
-    apt-get clean && \
+# Clean the environment and go to mnap folder
+    yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip && \
     cd /opt/mnaptools

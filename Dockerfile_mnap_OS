@@ -5,41 +5,34 @@
 ##
 
 ##
-# Tag: aanticev/mnap_os_centos:latest
+# Tag: ztamayo/mnap_os:latest
 # Base OS Dockerfile with ContOS deployed needed to run MNAP suite and dependencies
 ##
 
 ##
 # Build:
-# docker build -t aanticev/mnap_os_centos:latest .
+# docker build -t ztamayo/mnap_os:latest .
 ##
 
 ##
 # Create:
-# docker create -it --name mnap_os_centos -h mnap_os_centos aanticev/centos
-##
-
-##
-# Start:
-# docker start mnap_os_centos
+# docker container run -it --name mnap_os ztamayo/mnap_os
 ##
 
 ##
 # Connect with bash
-# docker exec -it mnap_os_centos bash
+# docker exec -it mnap_os bash
 ##
 
-## -- Pull base image
+# Pull base image
 FROM centos:latest
 
-## -- Update CentOS 7 (https://access.redhat.com/sites/default/files/attachments/rh_yum_cheatsheet_1214_jcs_print-1.pdf) 
-RUN yum update -y && yum upgrade -y
-
-## -- Install packages
-RUN yum install -y yum-utils 
+# Update CentOS 7
+RUN yum update -y && yum upgrade -y && \
+# Install packages
+    yum install -y yum-utils \
                    bzip2 \
                    ca-certificates \
-                   zlib-devel \
                    curl \
                    locales \
                    unzip \
@@ -57,6 +50,10 @@ RUN yum install -y yum-utils
                    perl \
                    tcsh \
                    wget \
+                   centos-release-scl-rh \
+# Install shared libraries  
+                   netcdf \             
+                   zlib-devel \
                    zlib1g-dev \
                    libfontconfig1 \
                    libfreetype6 \
@@ -92,21 +89,30 @@ RUN yum install -y yum-utils
                    libglib2.0-0 \
                    libjpeg62 \
                    libssl1.0.0 \
-                   libssl-dev
+                   libssl-dev && \
+# Install EPEL Repository
+    yum install -y epel-release && \
+# Install devtoolset-6-gcc rpm package
+    yum install --enablerepo=centos-sclo-rh-testing install devtoolset-6-gcc && \
+# Clean cache and other empty folders
+    yum clean all && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
+    rm -rf ~/.cache/pip && \
+    chmod 777 /opt && chmod a+s /opt && \
+# Install perlbrew and perl-5.16.3
+    wget -O - https://install.perlbrew.pl | bash && \
+    echo "source ~/perl5/perlbrew/etc/bashrc" >> ~/.bashrc
 
-## -- Install EPEL Repository
-RUN yum install -y epel-release
+ENV PATH="/root/perl5/perlbrew/bin:$PATH"
+ENV PATH="~/perl5/perlbrew:$PATH"
+ENV PATH="~/perl5/perlbrew/bin/perlbrew:$PATH"
+ENV PATH="~/perl5/perlbrew/etc/bashrc:$PATH"
+ENV PERLBREW_PERL="perl-5.16.3"
 
-## -- Clean CentOS 7
-RUN yum clean all
+RUN perlbrew --notest install perl-5.16.3 -n --switch && \
+    perlbrew clean && \
+    perlbrew switch perl-5.16.3
 
-## -- Set the environment variables
-ENV HOME /root
-
-## -- Working directory
-WORKDIR /root
-
-## -- Default command
 CMD ["bash"]
 
 #      && wget --progress=bar:force -O /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-6/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
@@ -121,11 +127,9 @@ CMD ["bash"]
 #      && wget --progress=bar:force -O /tmp/libnetcdf6_4.1.1-6_amd64.deb http://security.ubuntu.com/ubuntu/pool/universe/n/netcdf/libnetcdf6_4.1.1-6_amd64.deb \
 #      && dpkg -i /tmp/libnetcdf6_4.1.1-6_amd64.deb \
 #      && rm /tmp/libnetcdf6_4.1.1-6_amd64.deb \
-#      && apt-get clean \
-#      && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-#  
-#  # Clear apt cache and other empty folders
-#      apt-get clean && \
-#      rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
-#      rm -rf ~/.cache/pip
-#  
+
+# Set the environment variables
+# ENV HOME /root
+
+# Working directory
+# WORKDIR /root
