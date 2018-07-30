@@ -71,12 +71,12 @@ RUN yum update -y  && \
     pip install numpy pydicom scipy nibabel && \
 # Install Octave and R
     echo "Installing R and Octave..." && \
-    yum install -y r-base \
+    yum install -y R \
                    octave && \
 # Install R package
     echo "Installing R packages..." && \
-    echo "r <- getOption('repos'); r['CRAN'] <- 'http://cran.us.r-project.org'; options(repos = r);" > ~/.Rprofile && \
-    Rscript -e "install.packages('ggplot2')" && \
+    wget --progress=bar:force -O /tmp/ggplot2_3.0.0.tar.gz https://cran.r-project.org/src/contrib/ggplot2_3.0.0.tar.gz && \
+    R CMD INSTALL -l /tmp/ggplot2_3.0.0.tar.gz && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
     yum install -y liboctave-dev \
