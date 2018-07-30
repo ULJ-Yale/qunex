@@ -75,8 +75,32 @@ RUN yum update -y  && \
                    octave && \
 # Install R package
     echo "Installing R packages..." && \
+    wget --progress=bar:force -O /tmp/digest_0.6.15.tar.gz https://cran.r-project.org/src/contrib/digest_0.6.15.tar.gz && \
+    R CMD INSTALL /tmp/digest_0.6.15.tar.gz && \
+    wget --progress=bar:force -O /tmp/gtable_0.2.0.tar.gz https://cran.r-project.org/src/contrib/gtable_0.2.0.tar.gz && \
+    R CMD INSTALL /tmp/gtable_0.2.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/lazyeval_0.2.1.tar.gz https://cran.r-project.org/src/contrib/lazyeval_0.2.1.tar.gz && \
+    R CMD INSTALL /tmp/lazyeval_0.2.1.tar.gz && \
+    wget --progress=bar:force -O /tmp/Rcpp_0.12.18.tar.gz https://cran.r-project.org/src/contrib/Rcpp_0.12.18.tar.gz && \
+    R CMD INSTALL /tmp/Rcpp_0.12.18.tar.gz && \
+    wget --progress=bar:force -O /tmp/plyr_1.8.4.tar.gz https://cran.r-project.org/src/contrib/plyr_1.8.4.tar.gz && \
+    R CMD INSTALL /tmp/plyr_1.8.4.tar.gz && \
+    wget --progress=bar:force -O /tmp/stringr_1.3.1.tar.gz https://cran.r-project.org/src/contrib/stringr_1.3.1.tar.gz && \
+    R CMD INSTALL /tmp/stringr_1.3.1.tar.gz && \
+    wget --progress=bar:force -O /tmp/reshape2_1.4.3.tar.gz https://cran.r-project.org/src/contrib/reshape2_1.4.3.tar.gz && \
+    R CMD INSTALL /tmp/reshape2_1.4.3.tar.gz && \
+    wget --progress=bar:force -O /tmp/rlang_0.2.1.tar.gz https://cran.r-project.org/src/contrib/rlang_0.2.1.tar.gz && \
+    R CMD INSTALL /tmp/rlang_0.2.1.tar.gz && \
+    wget --progress=bar:force -O /tmp/scales_0.5.0.tar.gz https://cran.r-project.org/src/contrib/scales_0.5.0.tar.gz && \
+    R CMD INSTALL /tmp/scales_0.5.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/tibble_1.4.2.tar.gz https://cran.r-project.org/src/contrib/tibble_1.4.2.tar.gz && \
+    R CMD INSTALL /tmp/tibble_1.4.2.tar.gz && \
+    wget --progress=bar:force -O /tmp/viridisLite_0.3.0.tar.gz https://cran.r-project.org/src/contrib/viridisLite_0.3.0.tar.gz && \
+    R CMD INSTALL /tmp/viridisLite_0.3.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/withr_2.1.2.tar.gz https://cran.r-project.org/src/contrib/withr_2.1.2.tar.gz && \
+    R CMD INSTALL /tmp/withr_2.1.2.tar.gz && \
     wget --progress=bar:force -O /tmp/ggplot2_3.0.0.tar.gz https://cran.r-project.org/src/contrib/ggplot2_3.0.0.tar.gz && \
-    R CMD INSTALL -l /tmp/ggplot2_3.0.0.tar.gz && \
+    R CMD INSTALL /tmp/ggplot2_3.0.0.tar.gz && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
     yum install -y liboctave-dev \
