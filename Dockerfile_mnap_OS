@@ -50,8 +50,15 @@ RUN yum update -y && yum upgrade -y && \
                    tmux \
                    patch \
                    centos-release-scl-rh \
-# Install shared libraries              
+                   lzip \
+                   bzip2-devel \
+                   atlas-devel \
+                   libsndfile-devel \
+                   portaudio-devel \
+                   GraphicsMagick-c++-devel              
                    zlib-devel && \
+# Fix for an Octave 4.2.1 error
+    ln -s /usr/lib64/atlas/libtatlas.so /usr/lib64/libatlas.so && \
 # Install EPEL Repository
     yum install -y epel-release && \
 # Install devtoolset-6-gcc rpm package
