@@ -52,31 +52,39 @@ ENV PATH="/opt" \
 RUN yum update -y  && \
     yum clean all && \
 # Install Python 2.7
-    yum install --no-install-recommends -y python2.7-dev && \
-    yum install --no-install-recommends -y python-pip build-essential && \
+    echo "Install Python 2.7.14" && \
+    wget --progress=bar:force -O /tmp/Python-2.7.14.tgz https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz && \
+    tar -xzvf /tmp/Python-2.7.14.tgz && \
+    cd /tmp/Python-2.7.14.tgz && \
+    ./configure --prefix=/usr/local && \
+    make && make altinstall && \
+    export PATH="/usr/local/bin:$PATH" && \
+    echo "Install pip for Python 2.7" && \
+    wget --progress=bar:force -O /usr/local/python2.7 https://bootstrap.pypa.io/get-pip.py && \
+    /usr/local/bin/python2.7 get-pip.py && \    
     yum clean all && \
     pip install --upgrade virtualenv && \
     pip install --upgrade setuptools && \
 # Install Python packages
     pip install numpy pydicom scipy nibabel && \
 # Install Octave and R
-    yum install -yq --no-install-recommends --allow-unauthenticated r-base \
-                                                                    octave && \
+    yum install -y --allow-unauthenticated r-base \
+                                           octave && \
 # Install R package
     echo "r <- getOption('repos'); r['CRAN'] <- 'http://cran.us.r-project.org'; options(repos = r);" > ~/.Rprofile && \
     Rscript -e "install.packages('ggplot2')" && \
 # Install Octave packages
-    yum install -yq --no-install-recommends liboctave-dev \
-                                            octave-general \
-                                            octave-control \
-                                            octave-image \
-                                            octave-nan \
-                                            octave-signal \
-                                            octave-io \
-                                            octave-statistics \
-                                            octave-miscellaneous \
-                                            octave-struct \
-                                            octave-optim && \                                              
+    yum install -y liboctave-dev \
+                   octave-general \
+                   octave-control \
+                   octave-image \
+                   octave-nan \
+                   octave-signal \
+                   octave-io \
+                   octave-statistics \
+                   octave-miscellaneous \
+                   octave-struct \
+                   octave-optim && \                                              
 # Clear yum cache and other empty folders
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
