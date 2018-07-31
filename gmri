@@ -9,6 +9,7 @@ import glob
 import os.path
 import sys
 import datetime
+import copy
 
 # --- Get current MNAP Suite version and prepend to help calls
 
@@ -438,6 +439,8 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
+    oargs = copy.deepcopy(args)
+
     if len(args) == 0:
         print help
         sys.exit(0)
@@ -474,7 +477,7 @@ def main(args=None):
     except ValueError as e:
         print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)
         print e
-        print "\nThe call received was: \n\ngmri %s " % (" \\\n    ".join(args))
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
         print "--------------------------------------------------------------"
         sys.exit(1)
     except SystemExit as e:
@@ -482,7 +485,7 @@ def main(args=None):
     except:
         print "\n--------------------==== gmri failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
         print "       Please check documentation for the command (`gmri ?%s`)!" % (comm)
-        print "\nThe call received was: \n\ngmri %s " % (" \\\n    ".join(args))
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
         print "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
         raise
         print "\n--------------------------------------------------------------\n"
