@@ -113,6 +113,10 @@ RUN echo "Installing R packages..." && \
     R CMD INSTALL /tmp/scales_0.5.0.tar.gz && \
     wget --progress=bar:force -O /tmp/crayon_1.3.4.tar.gz https://cran.r-project.org/src/contrib/crayon_1.3.4.tar.gz && \
     R CMD INSTALL /tmp/crayon_1.3.4.tar.gz && \
+    wget --progress=bar:force -O /tmp/testthat_2.0.0.tar.gz https://cran.r-project.org/src/contrib/testthat_2.0.0.tar.gz && \
+    R CMD INSTALL /tmp/testthat_2.0.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/assertthat_0.2.0.tar.gz https://cran.r-project.org/src/contrib/assertthat_0.2.0.tar.gz && \
+    R CMD INSTALL /tmp/assertthat_0.2.0.tar.gz && \
     wget --progress=bar:force -O /tmp/cli_1.0.0.tar.gz https://cran.r-project.org/src/contrib/cli_1.0.0.tar.gz && \
     R CMD INSTALL /tmp/cli_1.0.0.tar.gz && \
     wget --progress=bar:force -O /tmp/pillar_1.3.0.tar.gz https://cran.r-project.org/src/contrib/pillar_1.3.0.tar.gz && \
