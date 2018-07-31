@@ -29,6 +29,8 @@ FROM centos:latest
 
 # Update CentOS 7
 RUN yum update -y && yum upgrade -y && \
+# Install EPEL Repository
+    yum install -y epel-release && \
 # Install packages
     yum install -y yum-utils \
                    bzip2 \
@@ -50,17 +52,35 @@ RUN yum update -y && yum upgrade -y && \
                    tmux \
                    patch \
                    centos-release-scl-rh \
-                   lzip \
+                   qt5-qtbase-devel \
+                   mesa-libOSMesa-devel \
+                   gl2ps-devel \
+                   qhull-devel \
+                   java-1.8.0-openjdk-devel \
+                   qt-devel \
+                   libcurl-devel \
+                   freetype-devel \
                    bzip2-devel \
                    atlas-devel \
                    libsndfile-devel \
                    portaudio-devel \
-                   GraphicsMagick-c++-devel \              
+                   GraphicsMagick-c++-devel \ 
+                   lapack64-devel \
+                   lapack64 \
+                   libblas-dev \
+                   libatlas-dev \
+                   liblapack-dev \
+                   freeglut-devel \
+                   gnuplot \
+                   fltk-devel \
+                   readline-devel \
+                   qrupdate-devel \
+                   hdf5-devel \
+                   fftw-devel \
+                   glpk-devel \             
                    zlib-devel && \
 # Fix for an Octave 4.2.1 error
     ln -s /usr/lib64/atlas/libtatlas.so /usr/lib64/libatlas.so && \
-# Install EPEL Repository
-    yum install -y epel-release && \
 # Install devtoolset-6-gcc rpm package
     yum --enablerepo=centos-sclo-rh-testing install -y devtoolset-6-gcc && \
 # Clean cache and other empty folders

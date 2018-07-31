@@ -138,10 +138,11 @@ RUN wget --progress=bar:force -O /tmp/octave-4.2.1.tar.gz ftp://ftp.gnu.org/gnu/
     tar -xzvf /tmp/octave-4.2.1.tar.gz -C /tmp/ --strip-components 1 && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
     cd /tmp && \
-    ./configure --prefix=/usr/local/OCTAVE/4.2.1 --with-qt=4 && \
+    ./configure --prefix=/usr/local/OCTAVE/4.2.1 --with-qt=5 && \
     make -j4 && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
+    yum update -y  && \
     yum install -y liboctave-dev \
                    octave-devel \
                    octave-general \
@@ -184,7 +185,7 @@ RUN echo "Downloading dcm2niix..." && \
 
 # Install FreeSurfer 6.0
 RUN echo "Downloading FreeSurfer 6.0..." && \
-    yum update -qq && \
+    yum update -y && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     mkdir -p /opt/freesurfer-6.0/ && \
@@ -236,6 +237,7 @@ RUN echo "Installing nibabel..." && \
     ln -s /lib/x86_64-linux-gnu/libz.so.1 && \
     cd / && \
 # Clear yum cache and other empty folders
+    yum update -y && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip
