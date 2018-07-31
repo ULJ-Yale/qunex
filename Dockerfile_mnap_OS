@@ -25,7 +25,7 @@
 ##
 
 # Pull base image
-FROM centos:latest
+FROM centos:7
 
 # Update CentOS 7
 RUN yum update -y && yum upgrade -y && \
@@ -100,8 +100,7 @@ ENV PATH="~/perl5/perlbrew/bin/perlbrew:$PATH"
 ENV PATH="~/perl5/perlbrew/etc/bashrc:$PATH"
 ENV PERLBREW_PERL="perl-5.16.3"
 
-RUN perlbrew install-patchperl && \
-    perlbrew --notest install perl-5.16.3 -n --switch && \
+RUN perlbrew --notest install perl-5.16.3 -n --switch && \
     perlbrew clean && \
     perlbrew switch perl-5.16.3
 

@@ -63,6 +63,7 @@ RUN yum update -y  && \
     yum install -y python-pip && \
     yum install -y python-devel && \  
     yum clean all && \
+    pip install --upgrade pip && \
     pip install --upgrade virtualenv && \
     pip install --upgrade setuptools && \
 # Install Python packages
