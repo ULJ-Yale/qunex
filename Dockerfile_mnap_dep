@@ -119,6 +119,10 @@ RUN echo "Installing R packages..." && \
     R CMD INSTALL /tmp/assertthat_0.2.0.tar.gz && \
     wget --progress=bar:force -O /tmp/cli_1.0.0.tar.gz https://cran.r-project.org/src/contrib/cli_1.0.0.tar.gz && \
     R CMD INSTALL /tmp/cli_1.0.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/fansi_0.2.3.tar.gz https://cran.r-project.org/src/contrib/fansi_0.2.3.tar.gz && \
+    R CMD INSTALL /tmp/fansi_0.2.3.tar.gz && \
+    wget --progress=bar:force -O /tmp/utf8_1.1.4.tar.gz https://cran.r-project.org/src/contrib/utf8_1.1.4.tar.gz && \
+    R CMD INSTALL /tmp/utf8_1.1.4.tar.gz && \
     wget --progress=bar:force -O /tmp/pillar_1.3.0.tar.gz https://cran.r-project.org/src/contrib/pillar_1.3.0.tar.gz && \
     R CMD INSTALL /tmp/pillar_1.3.0.tar.gz && \
     wget --progress=bar:force -O /tmp/tibble_1.4.2.tar.gz https://cran.r-project.org/src/contrib/tibble_1.4.2.tar.gz && \
@@ -130,11 +134,11 @@ RUN echo "Installing R packages..." && \
     wget --progress=bar:force -O /tmp/ggplot2_3.0.0.tar.gz https://cran.r-project.org/src/contrib/ggplot2_3.0.0.tar.gz && \
     R CMD INSTALL /tmp/ggplot2_3.0.0.tar.gz
 # Install Octave 4.2.1
-RUN wget --progress=bar:force -O /tmp/octave-4.2.1.tar.lz ftp://ftp.gnu.org/gnu/octave/octave-4.2.1.tar.lz && \
-    tar --lzip -xvf /tmp/octave-4.2.1.tar.lz -C /tmp/ --strip-components 1 && \
+RUN wget --progress=bar:force -O /tmp/octave-4.2.1.tar.gz ftp://ftp.gnu.org/gnu/octave/octave-4.2.1.tar.gz && \
+    tar -xzvf /tmp/octave-4.2.1.tar.gz -C /tmp/ --strip-components 1 && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
+    cd /tmp && \
     ./configure --prefix=/usr/local/OCTAVE/4.2.1 --with-qt=4 && \
-    cd /tmp/octave-4.2.1 && \
     make -j4 && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
