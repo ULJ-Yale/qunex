@@ -39,6 +39,7 @@ RUN yum update -y && yum upgrade -y && \
                    unzip \
                    cmake \
                    gcc \
+                   gcc-c++ \
                    git \
                    make \
                    pigz \
@@ -77,6 +78,7 @@ RUN yum update -y && yum upgrade -y && \
                    qrupdate-devel \
                    hdf5-devel \
                    fftw-devel \
+                   libstdc++-static \
                    glpk-devel \             
                    zlib-devel && \
 # Fix for an Octave 4.2.1 error
