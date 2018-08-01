@@ -65,7 +65,7 @@ RUN yum update -y && yum upgrade -y && \
                    atlas-devel \
                    libsndfile-devel \
                    portaudio-devel \
-                   GraphicsMagick-c++-devel \ 
+                   GraphicsMagick-c++-devel \
                    lapack64-devel \
                    lapack64 \
                    libblas-dev \
@@ -79,7 +79,12 @@ RUN yum update -y && yum upgrade -y && \
                    hdf5-devel \
                    fftw-devel \
                    libstdc++-static \
-                   glpk-devel \             
+                   glpk-devel \
+                   pcre-devel \
+                   octave-devel \
+                   systemd \
+                   units \
+                   python-devel \
                    zlib-devel && \
 # Fix for an Octave 4.2.1 error
     ln -s /usr/lib64/atlas/libtatlas.so /usr/lib64/libatlas.so && \
@@ -87,7 +92,7 @@ RUN yum update -y && yum upgrade -y && \
     yum --enablerepo=centos-sclo-rh-testing install -y devtoolset-6-gcc && \
 # Clean cache and other empty folders
     yum clean all && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
+    rm -rf /var/lib/yum/* /var/cache/yum/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip && \
     chmod 777 /opt && chmod a+s /opt && \
 # Install perlbrew and perl-5.16.3
@@ -105,6 +110,7 @@ RUN perlbrew --notest install perl-5.16.3 -n --switch && \
     perlbrew switch perl-5.16.3
 
 CMD ["bash"]
+
 
 #      && wget --progress=bar:force -O /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-6/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
 #      && dpkg -i /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
