@@ -53,23 +53,24 @@ RUN yum update -y  && \
     yum clean all && \
 # Install Python 2.7
     echo "Installing Python 2.7.14..." && \
+    mkdir /tmp/Python-2.7.14 && \
     wget --progress=bar:force -O /tmp/Python-2.7.14.tgz https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz && \
-    tar -xzvf /tmp/Python-2.7.14.tgz -C /tmp/ --strip-components 1 && \
-    cd /tmp && \
-    ./configure --prefix=/usr/local && \
+    tar -xzvf /tmp/Python-2.7.14.tgz -C /tmp/Python-2.7.14 --strip-components 1 && \
+    cd /tmp/Python-2.7.14 && \
+    ./configure --prefix=/usr/local --enable-optimizations --enable-unicode=ucs4 --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib" && \
     make && make altinstall && \
-    export PATH="/usr/local/bin:$PATH" && \
+    alias python="/usr/local/bin/python2.7" && \
+    echo "alias python='/usr/local/bin/python2.7'" >> ~/.bashrc && \
     echo "Installing pip for Python 2.7..." && \
-    yum install -y python-pip && \
-    yum install -y python-devel && \  
-    yum clean all && \
-    pip install --upgrade pip && \
-    pip install --upgrade virtualenv && \
-    pip install --upgrade setuptools && \
+    cd /usr/local/bin && \
+    wget --progress=bar:force -O /usr/local/bin/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
+    python2.7 /usr/local/bin/get-pip.py && \
+    alias pip="pip2.7" && \
+    echo "alias pip='pip2.7'" >> ~/.bashrc && \
 # Install Python packages
     echo "Installing Python packages..." && \
     pip install numpy pydicom scipy nibabel && \
-# Install Octave and R
+# Install R
     echo "Installing R..." && \
     yum install -y R                  
 # Install R package
@@ -135,30 +136,32 @@ RUN echo "Installing R packages..." && \
     wget --progress=bar:force -O /tmp/ggplot2_3.0.0.tar.gz https://cran.r-project.org/src/contrib/ggplot2_3.0.0.tar.gz && \
     R CMD INSTALL /tmp/ggplot2_3.0.0.tar.gz
 # Install Octave 4.2.1
-RUN wget --progress=bar:force -O /tmp/octave-4.2.1.tar.gz ftp://ftp.gnu.org/gnu/octave/octave-4.2.1.tar.gz && \
-    tar -xzvf /tmp/octave-4.2.1.tar.gz -C /tmp/ --strip-components 1 && \
+RUN mkdir -p /tmp/octave-4.2.1 && \
+    wget --progress=bar:force -O /tmp/octave-4.2.1.tar.gz ftp://ftp.gnu.org/gnu/octave/octave-4.2.1.tar.gz && \
+    tar -xzvf /tmp/octave-4.2.1.tar.gz -C /tmp/octave-4.2.1 --strip-components 1 && \
+    cd /tmp/octave-4.2.1 && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
-    cd /tmp && \
-    ./configure --prefix=/usr/local/OCTAVE/4.2.1 --with-qt=5 && \
+    ./configure --prefix=/usr/local --with-qt=5 && \
     make -j4 && \
+    make check && \
+    make install && \
+    alias octave="/usr/local/bin/octave" && \
+    echo "alias octave='/usr/local/bin/octave'" >> ~/.bashrc && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
-    yum update -y  && \
-    yum install -y liboctave-dev \
-                   octave-devel \
-                   octave-general \
-                   octave-control \
-                   octave-image \
-                   octave-nan \
-                   octave-signal \
-                   octave-io \
-                   octave-statistics \
-                   octave-miscellaneous \
-                   octave-struct \
-                   octave-optim && \                                              
+    octave --no-gui --eval "pkg install -verbose -forge -auto general" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto control" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto image" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto nan" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto signal" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto io" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto statistics" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto miscellaneous" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto struct" && \
+    octave --no-gui --eval "pkg install -verbose -forge -auto optim" && \                                  
 # Clear yum cache and other empty folders
     yum clean all && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
+    rm -rf /var/lib/yum/lists/* /var/cache/yum/ /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip
     
 # Set dcm2niix path
@@ -230,18 +233,36 @@ RUN echo "Installing nibabel..." && \
     python setup.py install && \
 # Install Workbench
     echo "Downloading workbench..." && \
-    wget --progress=bar:force -O /tmp/workbench-linux64.zip https://ftp.humanconnectome.org/workbench/workbench-rh_linux64-v1.3.1.zip && \
+    wget --progress=bar:force -O /tmp/workbench-rh_linux64.zip https://ftp.humanconnectome.org/workbench/workbench-rh_linux64-v1.3.1.zip && \
     unzip /tmp/workbench-rh_linux64.zip -d /opt/ && \
     rm /tmp/workbench-rh_linux64.zip && \
-    cd /opt/workbench/libs_linux64 && \
-    mv libz.so.1 libz.so.1.old && \
-    ln -s /lib/x86_64-linux-gnu/libz.so.1 && \
+    cd /opt/workbench/libs_rh_linux64 &&  \
+    ln -s /usr/lib64/libz.so.1 && \
     cd / && \
 # Clear yum cache and other empty folders
     yum update -y && \
     yum clean all && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
+    rm -rf /var/lib/yum/lists/* /var/cache/yum/ /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip
+
+# Create Octave Sym Links
+RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
+    ln -fs /usr/local/bin/octave-4.2.1 /opt/octave && \
+    ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
+    ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
+    ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
+# Set up Python Sym Links
+    ln -fs /usr/local/bin/python2.7 /usr/bin/python && \
+    ln -fs /usr/local/bin/python2.7-config /usr/bin/python-config && \
+    ln -fs /usr/local/bin/python2.7-config /usr/bin/python2-config && \
+    ln -fs /usr/local/bin/python2.7 /opt/python && \
+# Sym Links for Python and Octave packages
+    mkdir -p /opt/octavepkg && \
+    ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
+    ln -fs /usr/local/lib/python2.7/site-packages/numpy /opt/pylib/numpy && \
+    ln -fs /usr/local/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel && \
+    ln -fs /usr/local/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
+    ln -fs /usr/local/lib/python2.7/site-packages/scipy /opt/pylib/scipy
 
 CMD ["bash"]
 
