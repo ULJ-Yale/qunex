@@ -248,6 +248,7 @@ RUN echo "Installing nibabel..." && \
 
 # Create Octave Sym Links
 RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
+    mkdir -p /opt/Octave/4.2.1 && \
     ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave/4.2.1 && \
     ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
     ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
@@ -256,6 +257,7 @@ RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
     ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
 # Set up Python Sym Links
     ln -fs /usr/local/bin/python2.7 /opt/python && \
+    mkdir -p /opt/pylib/lib/python2.7/site-packages && \
     ln -fs /usr/local/lib/python2.7/site-packages/ /opt/pylib/lib/python2.7/site-packages
 
 CMD ["bash"]
