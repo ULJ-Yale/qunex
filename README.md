@@ -273,6 +273,8 @@ Change Log
 * 0.18.03 [niutilities] Made interpretation of subjects parameter more robust
 * 0.18.04 [mnaptools] Made improvements to Dockerfiles
 * 0.18.05 [mnaptools] Change Docker container image base CentOS 7
+* 0.18.06 [niutilities] Unified logging of comlogs and runlogs naming
+* 0.18.07 [mnaptools] Added .gitignore to master and all subrepositories
 
 =======
 [Mind and Brain Lab]: http://mblab.si
