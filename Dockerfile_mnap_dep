@@ -257,8 +257,11 @@ RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
     ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
 # Set up Python Sym Links
     ln -fs /usr/local/bin/python2.7 /opt/python && \
-    mkdir -p /opt/pylib/lib/python2.7/site-packages && \
-    ln -fs /usr/local/lib/python2.7/site-packages/ /opt/pylib/lib/python2.7/site-packages
+    mkdir -p /opt/pylib/lib/python2.7 && \
+    ln -fs /usr/lib/python2.7/site-packages /opt/pylib/lib/python2.7 && \
+    ln -fs /usr/lib64/python2.7/site-packages /opt/pylib/lib64/python2.7 && \
+    ln -fs /usr/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
+    ln -fs /usr/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel
 
 CMD ["bash"]
 
