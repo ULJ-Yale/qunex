@@ -275,6 +275,7 @@ Change Log
 * 0.18.05 [mnaptools] Change Docker container image base CentOS 7
 * 0.18.06 [niutilities] Unified logging of comlogs and runlogs naming
 * 0.18.07 [mnaptools] Added .gitignore to master and all subrepositories
+* 0.18.08 [library] Improved handling of gitmnap functions
 
 =======
 [Mind and Brain Lab]: http://mblab.si
