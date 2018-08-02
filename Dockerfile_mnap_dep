@@ -43,10 +43,10 @@ ENV PATH="/opt" \
     PATH="/opt:$PATH" \
     PYLIBDIR="/opt/pylib" \
     PATH="/opt/pylib:$PATH" \
-    NIBABELDIR="/opt/nibabel" \
-    PATH="/opt/nibabel:$PATH" \
-    PYDICOMDIR="/opt/pydicom" \
-    PATH="/opt/pydicom:$PATH"
+    NIBABELDIR="/opt/pylib/nibabel" \
+    PATH="/opt/pylib/nibabel:$PATH" \
+    PYDICOMDIR="/opt/pylib/pydicom" \
+    PATH="/opt/pylib/pydicom:$PATH"
 
 # Run yum update
 RUN yum update -y  && \
@@ -59,12 +59,12 @@ RUN yum update -y  && \
     cd /tmp/Python-2.7.14 && \
     ./configure --prefix=/usr/local --enable-optimizations --enable-unicode=ucs4 --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib" && \
     make && make altinstall && \
-    alias python="/usr/local/bin/python2.7" && \
-    echo "alias python='/usr/local/bin/python2.7'" >> ~/.bashrc && \
+    alias python="python2.7" && \
+    echo "alias python='python2.7'" >> ~/.bashrc && \
     echo "Installing pip for Python 2.7..." && \
     cd /usr/local/bin && \
     wget --progress=bar:force -O /usr/local/bin/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
-    python2.7 /usr/local/bin/get-pip.py && \
+    python /usr/local/bin/get-pip.py && \
     alias pip="pip2.7" && \
     echo "alias pip='pip2.7'" >> ~/.bashrc && \
 # Install Python packages
@@ -72,7 +72,8 @@ RUN yum update -y  && \
     pip install numpy pydicom scipy nibabel && \
 # Install R
     echo "Installing R..." && \
-    yum install -y R                  
+    yum install -y R
+                
 # Install R package
 RUN echo "Installing R packages..." && \
     wget --progress=bar:force -O /tmp/digest_0.6.15.tar.gz https://cran.r-project.org/src/contrib/digest_0.6.15.tar.gz && \
@@ -204,13 +205,14 @@ RUN echo "Downloading FreeSurfer 6.0..." && \
     wget --progress=bar:force -O /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz ftp://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
     tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer-5.3-HCP/ --strip-components 1 && \
     rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
-    rm -R /opt/freesurfer-5.3-HCP/ && \
+    rm -R /opt/freesurfer-5.3-HCP/trctrain
 # Install PALM
-    echo "Installing PALM..." && \
+RUN echo "Installing PALM..." && \
     wget --progress=bar:force -O /tmp/palm-alpha111.tar.gz https://s3-us-west-2.amazonaws.com/andersonwinkler/palm/palm-alpha111.tar.gz && \
     tar -xzvf /tmp/palm-alpha111.tar.gz -C /opt && \
     rm /tmp/palm-alpha111.tar.gz && \
 # Git clone Gradunwarp
+    mkdir -p /opt/pylib && \
     cd /opt/pylib && \
     echo "Downloading Gradunwarp..." && \
     git clone https://github.com/Washington-University/gradunwarp.git
@@ -247,22 +249,15 @@ RUN echo "Installing nibabel..." && \
 
 # Create Octave Sym Links
 RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
-    ln -fs /usr/local/bin/octave-4.2.1 /opt/octave && \
+    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave/4.2.1 && \
     ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
     ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
     ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
-# Set up Python Sym Links
-    ln -fs /usr/local/bin/python2.7 /usr/bin/python && \
-    ln -fs /usr/local/bin/python2.7-config /usr/bin/python-config && \
-    ln -fs /usr/local/bin/python2.7-config /usr/bin/python2-config && \
-    ln -fs /usr/local/bin/python2.7 /opt/python && \
-# Sym Links for Python and Octave packages
     mkdir -p /opt/octavepkg && \
     ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
-    ln -fs /usr/local/lib/python2.7/site-packages/numpy /opt/pylib/numpy && \
-    ln -fs /usr/local/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel && \
-    ln -fs /usr/local/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
-    ln -fs /usr/local/lib/python2.7/site-packages/scipy /opt/pylib/scipy
+# Set up Python Sym Links
+    ln -fs /usr/local/bin/python2.7 /opt/python && \
+    ln -fs /usr/local/lib/python2.7/site-packages/ /opt/pylib/lib/python2.7/site-packages
 
 CMD ["bash"]
 

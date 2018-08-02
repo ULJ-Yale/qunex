@@ -54,6 +54,7 @@ WORKDIR /opt/mnaptools
 
 # Set Python path
 ENV PYTHONPATH="${PYTONPATH}:/mnaptools" 
+ENV PTYHONPATH="/usr/local/bin/:$PTYHONPATH"
 
 # Set MNAP tools path
 ENV TOOLS="/opt"
@@ -73,12 +74,10 @@ RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.b
     rm mri_ReadNIfTImx.cpp && \
     rm mri_SaveNIfTImx.cpp && \
     rm g_nifti.o && \
-    rm znzlib.o
-
+    rm znzlib.o && \
 # Clean the environment and go to mnap folder
     yum clean all && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
-    rm -rf ~/.cache/pip && \
-    cd /opt/mnaptools
+    rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \
+    rm -rf ~/.cache/pip
 
 CMD ["bash"]
