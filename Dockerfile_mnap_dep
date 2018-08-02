@@ -193,10 +193,9 @@ RUN echo "Downloading FreeSurfer 6.0..." && \
     yum update -y && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    mkdir -p /opt/freesurfer-6.0/ && \
+    mkdir -p /opt/freesurfer-6.0 && \
     wget --progress=bar:force -O /tmp/recon-all-freesurfer6-3.min.tgz https://dl.dropbox.com/s/nnzcfttc41qvt31/recon-all-freesurfer6-3.min.tgz && \ 
-    tar -xzvf /tmp/recon-all-freesurfer6-3.min.tgz -C /opt --strip-components 1 && \
-    mv /opt/freesurfer-6.0/freesurfer /opt/freesurfer-6.0 && \
+    tar -xzvf /tmp/recon-all-freesurfer6-3.min.tgz -C /opt/freesurfer-6.0 --strip-components 1 && \
     rm /tmp/recon-all-freesurfer6-3.min.tgz && \
     rm -R /opt/freesurfer-6.0/trctrain && \
 # Install FreeSurfer 5.3-HCP
