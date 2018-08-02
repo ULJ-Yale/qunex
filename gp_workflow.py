@@ -547,7 +547,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
             if os.path.exists(f['bold_stats']) and not overwrite:
                 report['bolddone'] += 1
                 runit = False
-            r += runExternalForFileShell(f['bold_stats'], comm, '... running matlab g_ComputeBOLDStats on %s' % (f['bold']), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ComputeBOLDStats_B%d' % (boldnum), logfolder=options['comlogs'])
+            r += runExternalForFileShell(f['bold_stats'], comm, '... running matlab g_ComputeBOLDStats on %s' % (f['bold']), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='%s_B%d' % (options['command_ran'], boldnum), logfolder=options['comlogs'])
             r, status = checkForFile(r, f['bold_stats'], 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: %s' % (comm))
 
             if status and runit:
@@ -862,7 +862,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
         if options['print_command'] == "yes":
             r += '\n\nRunning\n' + rcomm + '\n'
-        r += runExternalForFile(tfile, rcomm, "\nRunning g_BoldStats", overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PlotBoldStats', logfolder=options['comlogs'])
+        r += runExternalForFile(tfile, rcomm, "\nRunning g_BoldStats", overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'])
         if os.path.exists(tfile):
             preport['procok'] = 'ok'
             os.remove(tfile)
@@ -1160,7 +1160,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
             if os.path.exists(f['bold_nuisance']):
                 report['bolddone'] += 1
                 runit = False
-            r += runExternalForFileShell(f['bold_nuisance'], comm, '... running matlab g_ExtractNuisance on %s' % (f['bold']), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='ExtractNuisance_B%d' % (boldnum), logfolder=options['comlogs'])
+            r += runExternalForFileShell(f['bold_nuisance'], comm, '... running matlab g_ExtractNuisance on %s' % (f['bold']), overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task='%s_B%d' % (options['command_ran'], boldnum), logfolder=options['comlogs'])
             r, status = checkForFile(r, f['bold_nuisance'], 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: %s' % (comm))
 
             if runit and status:
@@ -1671,7 +1671,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                 else:
                     if options['print_command'] == "yes":
                         r += '\n\nRunning\n' + comm + '\n'
-                    r += runExternalForFileShell(f['bold_final'], comm, 'running matlab/octave fc_Preprocess on %s bold %s' % (d['s_bold'], boldnum), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='Preprocess_B%s' % (boldnum), logfolder=options['comlogs'])
+                    r += runExternalForFileShell(f['bold_final'], comm, 'running matlab/octave fc_Preprocess on %s bold %s' % (d['s_bold'], boldnum), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='%s_B%s' % (options['command_ran'], boldnum), logfolder=options['comlogs'])
                     r, status = checkForFile(r, f['bold_final'], 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n' % (mcomm))
                     if status:
                         report['processed'].append(boldnum)
@@ -2269,7 +2269,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 if options['print_command'] == "yes":
                     r += '\n' + comm + '\n'
                 if options['run'] == "run":
-                    r += runExternalForFileShell(done, comm, 'running matlab/octave fc_PreprocessConc on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task='PreprocessConc2', logfolder=options['comlogs'])
+                    r += runExternalForFileShell(done, comm, 'running matlab/octave fc_PreprocessConc on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'])
                     r, status = checkForFile(r, done, 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n' % (mcomm))
                     if os.path.exists(done):
                         os.remove(done)

@@ -417,7 +417,7 @@ def run(command, args):
     # --------------------------------------------------------------------------
     #                                                            Parsing options
 
-    options = {}
+    options = {'command_ran': command}
 
     # --- set up default options
 
@@ -492,7 +492,7 @@ def run(command, args):
     options['logfolder'] = logfolder
 
     # --------------------------------------------------------------------------
-    #                                                          start writing log
+    #                                                       start writing runlog
 
     for cfolder in [runlogfolder, comlogfolder]:
         if not os.path.exists(cfolder):
