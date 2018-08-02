@@ -52,9 +52,8 @@ FROM ztamayo/mnap_dep:latest
 ADD . /opt/mnaptools
 WORKDIR /opt/mnaptools
 
-# Set Python path
-ENV PYTHONPATH="${PYTONPATH}:/mnaptools" 
-ENV PTYHONPATH="/usr/local/bin/:$PTYHONPATH"
+# Set Python path 
+ENV PTYHONPATH="/usr/local/bin/python2.7:$PTYHONPATH"
 
 # Set MNAP tools path
 ENV TOOLS="/opt"
