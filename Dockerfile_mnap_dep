@@ -224,7 +224,7 @@ RUN echo "Installing Gradunwarp..." && \
 # Download nibabel
     echo "Downloading nibabel..." && \
     wget --progress=bar:force -O /tmp/nibabel-1.2.0.dev.tar.gz https://github.com/downloads/ksubramz/gradunwarp/nibabel-1.2.0.dev.tar.gz && \
-    tar -xzvf /tmp/nibabel-1.2.0.dev.tar.gz -C /opt && \
+    tar -xzvf /tmp/nibabel-1.2.0.dev.tar.gz -C /opt/pylib && \
     rm /tmp/nibabel-1.2.0.dev.tar.gz 
 
 WORKDIR /opt/pylib/nibabel-1.2.0.dev/
