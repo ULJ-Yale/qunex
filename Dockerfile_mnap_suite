@@ -81,7 +81,7 @@ RUN echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> ~/.b
      rpm -ev --nodeps hdf5 && \
      rpm -i /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
      wget --progress=bar:force -O /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/n/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
-     rpm -ev --nodeps netcdf && \
+#     rpm -ev --nodeps netcdf && \
      rpm -i /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
 # Clean up binary package files
      rm /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
