@@ -111,23 +111,3 @@ RUN perlbrew --notest install perl-5.16.3 -n --switch && \
     perlbrew switch perl-5.16.3
 
 CMD ["bash"]
-
-
-#      && wget --progress=bar:force -O /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-6/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
-#      && dpkg -i /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
-#      && rm /tmp/gcc-6-base_6.4.0-17ubuntu1_amd64.deb \
-#      && wget --progress=bar:force -O /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb http://mirrors.kernel.org/ubuntu/pool/universe/g/gcc-6/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
-#      && dpkg -i /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
-#      && rm /tmp/libgfortran3_6.4.0-17ubuntu1_amd64.deb \
-#      && wget --progress=bar:force -O /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb http://security.ubuntu.com/ubuntu/pool/universe/h/hdf5/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
-#      && dpkg -i /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
-#      && rm /tmp/libhdf5-serial-1.8.4_1.8.4-patch1-3ubuntu2_amd64.deb \
-#      && wget --progress=bar:force -O /tmp/libnetcdf6_4.1.1-6_amd64.deb http://security.ubuntu.com/ubuntu/pool/universe/n/netcdf/libnetcdf6_4.1.1-6_amd64.deb \
-#      && dpkg -i /tmp/libnetcdf6_4.1.1-6_amd64.deb \
-#      && rm /tmp/libnetcdf6_4.1.1-6_amd64.deb \
-
-# Set the environment variables
-# ENV HOME /root
-
-# Working directory
-# WORKDIR /root
