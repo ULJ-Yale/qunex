@@ -132,11 +132,6 @@ def readDICOMInfo(filename):
 
     try:
         info['seriesNumber'] = d.SeriesNumber
-        try:
-            if d.Manufacturer == 'Philips Medical Systems':
-                info['seriesNumber'] = (d.SeriesNumber - 1) / 100
-        except:
-            pass
     except:
         info['seriesNumber'] = None
 
@@ -1336,7 +1331,7 @@ def sortDicom(folder=".", **kwargs):
             tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (info['subjectid'], sqid, sop, dext))
             doFile(dcm, tgf)
 
-    print "\nDone!\n\n"
+    print "---> Done"
     return 
 
 def listDicom(folder=None):
