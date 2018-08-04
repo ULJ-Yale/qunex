@@ -559,7 +559,7 @@ fi
        # -- FreeSurfer
        turnkey_hcp2() {
            cyaneho "-- RUNNING HCP Pipelines step: hcp2 (hcp_FS)"
-           LogHCPLogNameName="hcpFS"
+           HCPLogName="hcpFS"
            ${MNAPCOMMAND} hcp2      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
        }
        # -- PostFreeSurfer
@@ -796,7 +796,7 @@ if [ "$TURNKEY_STEPS" == "all" ]; then
         turnkey_${TURNKEY_STEP}
         # -- Check for completion of turnkey function
         cd ${logdir}/comlogs
-        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1`
+        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1` &> /dev/null
         # -- More robust logging check for hcp functions
         if [[ ${TURNKEY_STEP} == "hcp1" ]] || [[ ${TURNKEY_STEP} == "hcp2" ]] || [[ ${TURNKEY_STEP} == "hcp3" ]] || [[ ${TURNKEY_STEP} == "hcp4" ]] || [[ ${TURNKEY_STEP} == "hcp5" ]] || [[ ${TURNKEY_STEP} == "hcpd" ]]; then
             if [[ -z ${CheckLog} ]]; then
@@ -819,7 +819,13 @@ if [ "$TURNKEY_STEPS" != "all" ]; then
         turnkey_${TURNKEY_STEP}
         # -- Check for completion of turnkey function
         cd ${logdir}/comlogs
-        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1`
+        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1` &> /dev/null
+        # -- More robust logging check for hcp functions
+        if [[ ${TURNKEY_STEP} == "hcp1" ]] || [[ ${TURNKEY_STEP} == "hcp2" ]] || [[ ${TURNKEY_STEP} == "hcp3" ]] || [[ ${TURNKEY_STEP} == "hcp4" ]] || [[ ${TURNKEY_STEP} == "hcp5" ]] || [[ ${TURNKEY_STEP} == "hcpd" ]]; then
+            if [[ -z ${CheckLog} ]]; then
+               CheckLog=`ls -t1 *_${HCPLogName}*log | head -n 1`
+            fi
+        fi
         geho " -- Looking for incomplete/failed process"
         if [[ -z `echo "${CheckLog}" | grep 'done'` ]]; then
             echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
