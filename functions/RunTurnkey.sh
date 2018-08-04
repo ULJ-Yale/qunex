@@ -568,7 +568,23 @@ fi
            HCPLogName="hcpPostFS"
            ${MNAPCOMMAND} hcp3      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T1w"    --modality="T1w"    --overwrite="${OVERWRITE_STEP}"
+           if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+              CheckLogQCT1w=""
+           else
+              CheckLogQCT1w=`ls -t1 *_${QCPreproc}*log | head -n 1`
+           fi
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T2w"    --modality="T2w"    --overwrite="${OVERWRITE_STEP}"
+           if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+              CheckLogQCT2w=""
+           else
+              CheckLogQCT2w=`ls -t1 *_${QCPreproc}*log | head -n 1`
+           fi
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/myelin"  --modality="myelin" --overwrite="${OVERWRITE_STEP}"
+           if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+              CheckLogQCMyelin=""
+           else
+              CheckLogQCMyelin=`ls -t1 *_${QCPreproc}*log | head -n 1`
+           fi
        }
        # -- fMRIVolume
        turnkey_hcp4() {
@@ -582,6 +598,11 @@ fi
            HCPLogName="hcpfMRISurface"
            ${MNAPCOMMAND} hcp5      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/BOLD"   --modality="BOLD"   --overwrite="${OVERWRITE_STEP}" --boldsuffix="_Atlas"
+           if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+              CheckLogQCTBOLD=""
+           else
+              CheckLogQCTBOLD=`ls -t1 *_${QCPreproc}*log | head -n 1`
+           fi
        }
        # -- Diffusion
        turnkey_hcpd() {
@@ -589,6 +610,11 @@ fi
            HCPLogName="hcpDiffusion"
            ${MNAPCOMMAND} hcpd      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI"    --modality="DWI"    --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion"
+           if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+              CheckLogQCDWI=""
+           else
+              CheckLogQCDWI=`ls -t1 *_${QCPreproc}*log | head -n 1`
+           fi
        }
        # -- Diffusion Legacy
        turnkey_hcpdLegacy() {
@@ -655,11 +681,27 @@ fi
            for Modality in ${Modalities}; do
                if [[ ${Modality} == "BOLD" ]]; then
                    ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
+                   if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+                      CheckLogQCBOLDCustom=""
+                   else
+                      CheckLogQCBOLDCustom=`ls -t1 *_${QCPreproc}*log | head -n 1`
+                   fi
                fi
                if [[ ${Modality} == "DWI" ]]; then
                    ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
+                   if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+                      CheckLogQCDWICustom=""
+                   else
+                      CheckLogQCDWICustom=`ls -t1 *_${QCPreproc}*log | head -n 1`
+                   fi
                else
                    ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
+                   CheckLogQC${Modality}Custom=`ls -t1 *_${QCPreproc}*log | head -n 1`
+                   if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+                      CheckLogQC${Modality}Custom=""
+                   else
+                      CheckLogQC${Modality}Custom=`ls -t1 *_${QCPreproc}*log | head -n 1`
+                   fi
                fi
            done
        }
@@ -792,49 +834,56 @@ fi
 # -- Check turnkey steps and execute
 if [ "$TURNKEY_STEPS" == "all" ]; then
     geho "==> Running all MNAP turkey workflow steps: ${MNAPTurnkeyWorkflow}"; echo ""
-    for TURNKEY_STEP in ${MNAPTurnkeyWorkflow}; do
-        turnkey_${TURNKEY_STEP}
-        # -- Check for completion of turnkey function
-        cd ${logdir}/comlogs
-        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1` &> /dev/null
-        # -- More robust logging check for hcp functions
-        if [[ ${TURNKEY_STEP} == "hcp1" ]] || [[ ${TURNKEY_STEP} == "hcp2" ]] || [[ ${TURNKEY_STEP} == "hcp3" ]] || [[ ${TURNKEY_STEP} == "hcp4" ]] || [[ ${TURNKEY_STEP} == "hcp5" ]] || [[ ${TURNKEY_STEP} == "hcpd" ]]; then
-            if [[ -z ${CheckLog} ]]; then
-               CheckLog=`ls -t1 *_${HCPLogName}*log | head -n 1`
-            fi
-        fi
-        geho " -- Looking for incomplete/failed process"
-        if [[ -z `echo "${CheckLog}" | grep 'done'` ]]; then
-            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
-            TURNKEY_STEP_ERRORS="yes"
-        else
-            echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed"
-        fi
-    done
+    TURNKEY_STEPS=${MNAPTurnkeyWorkflow}
 fi
 if [ "$TURNKEY_STEPS" != "all" ]; then
-    echo ""; cyaneho "==> Running the following MNAP turkey workflow steps: ${TURNKEY_STEPS}"; echo ""
-    unset TURNKEY_STEP_ERRORS
-    for TURNKEY_STEP in ${TURNKEY_STEPS}; do
-        turnkey_${TURNKEY_STEP}
-        # -- Check for completion of turnkey function
-        cd ${logdir}/comlogs
-        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1` &> /dev/null
-        # -- More robust logging check for hcp functions
-        if [[ ${TURNKEY_STEP} == "hcp1" ]] || [[ ${TURNKEY_STEP} == "hcp2" ]] || [[ ${TURNKEY_STEP} == "hcp3" ]] || [[ ${TURNKEY_STEP} == "hcp4" ]] || [[ ${TURNKEY_STEP} == "hcp5" ]] || [[ ${TURNKEY_STEP} == "hcpd" ]]; then
-            if [[ -z ${CheckLog} ]]; then
-               CheckLog=`ls -t1 *_${HCPLogName}*log | head -n 1`
-            fi
-        fi
-        geho " -- Looking for incomplete/failed process"
-        if [[ -z `echo "${CheckLog}" | grep 'done'` ]]; then
-            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
-            TURNKEY_STEP_ERRORS="yes"
-        else
-            echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed"
-        fi
-    done
+    echo ""; cyaneho "==> Running specific MNAP turkey workflow steps: ${TURNKEY_STEPS}"; echo ""
 fi
+unset TURNKEY_STEP_ERRORS
+
+for TURNKEY_STEP in ${TURNKEY_STEPS}; do
+    turnkey_${TURNKEY_STEP}
+    # -- Check for completion of turnkey function
+    cd ${logdir}/comlogs
+    if [ -z `ls -t1 *_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then 
+        CheckLog=""
+    else
+        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1`
+    fi
+    # -- More robust logging check for hcp functions
+    if [[ ${TURNKEY_STEP} == "hcp1" ]] || [[ ${TURNKEY_STEP} == "hcp2" ]] || [[ ${TURNKEY_STEP} == "hcp3" ]] || [[ ${TURNKEY_STEP} == "hcp4" ]] || [[ ${TURNKEY_STEP} == "hcp5" ]] || [[ ${TURNKEY_STEP} == "hcpd" ]]; then
+        if [[ -z ${CheckLog} ]]; then
+           CheckLog=`ls -t1 *_${HCPLogName}*log | head -n 1`
+        fi
+    fi
+    geho " -- Looking for incomplete/failed process"
+    if [[ ! -z `echo "${CheckLog}" | grep 'done'` ]]; then
+    
+       if  [[ ${TURNKEY_STEP} == "hcp3" ]]; then
+           if [[ -z `echo "${CheckLogQCT1w}" | grep 'done'` ]] || [[ -z `echo "${CheckLogQCT2w}" | grep 'done'` ]] || [[ -z `echo "${CheckLogQCMyelin}" | grep 'done'` ]]; then
+              echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
+              TURNKEY_STEP_ERRORS="yes"
+           fi
+       fi
+       
+       if  [[ ${TURNKEY_STEP} == "hcp5" ]]; then
+           if [[ -z `echo "${CheckLogQCBOLD}" | grep 'done'` ]]; then
+              echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
+              TURNKEY_STEP_ERRORS="yes"
+           fi
+       fi
+       if  [[ ${TURNKEY_STEP} == "hcpd" ]]; then
+           if [[ -z `echo "${CheckLogQCDWI}" | grep 'done'` ]]; then
+              echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
+              TURNKEY_STEP_ERRORS="yes"
+           fi
+       fi
+       echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed"
+    else
+        echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
+        TURNKEY_STEP_ERRORS="yes"
+    fi
+done
 
 if [[ ${TURNKEY_STEP_ERRORS} == "yes" ]]; then
     echo ""
