@@ -95,7 +95,7 @@ usage() {
      echo "-- OPTIONAL PARMETERS:"
      echo "" 
      echo "--overwrite=<clean_prior_run>                                    Delete prior QC run"
-     echo "--templatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/scenes/qc)"
+     echo "--scenetemplatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/scenes/qc)"
      echo "                                                                 Note: relevant scene template data has to be in the same folder as the template scenes"
      echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
      echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
@@ -141,7 +141,7 @@ usage() {
      echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subject='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
-     echo "--templatefolder='<path_for_the_template_folder>' \ "
+     echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='T1w' \ "
      echo "--overwrite='yes' "
      echo ""
@@ -150,7 +150,7 @@ usage() {
      echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subjects='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
-     echo "--templatefolder='<path_for_the_template_folder>' \ "
+     echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='T2w' \ "
      echo "--overwrite='yes'"
      echo ""
@@ -159,7 +159,7 @@ usage() {
      echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subjects='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
-     echo "--templatefolder='<path_for_the_template_folder>' \ "
+     echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='myelin' \ "
      echo "--overwrite='yes'"
      echo ""
@@ -167,7 +167,7 @@ usage() {
      echo "mnap QCPreproc \ "
      echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subjects='<comma_separated_list_of_cases>' \ "
-     echo "--templatefolder='<path_for_the_template_folder>' \ "
+     echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='DWI' \ "
      echo "--outpath='<path_for_output_file> \ "
      echo "--dwilegacy='yes' \ "
@@ -180,7 +180,7 @@ usage() {
      echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subjects='<comma_separated_list_of_cases>' \ "
      echo "--outpath='<path_for_output_file> \ "
-     echo "--templatefolder='<path_for_the_template_folder>' \ "
+     echo "--scenetemplatefolder='<path_for_the_template_folder>' \ "
      echo "--modality='BOLD' \ "
      echo "--bolddata='1' \ "
      echo "--boldsuffix='Atlas' \ "
@@ -242,7 +242,7 @@ unset SubjectsFolder # --subjectsfolder=
 unset CASES # --subjects=
 unset Overwrite # --overwrite=
 unset OutPath # --outpath
-unset TemplateFolder # --templatefolder
+unset scenetemplatefolder # --scenetemplatefolder
 unset UserSceneFile # --userscenefile
 unset UserScenePath # --userscenepath
 unset Modality # --modality
@@ -270,7 +270,7 @@ SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
 CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 Overwrite=`opts_GetOpt "--overwrite" $@`
 OutPath=`opts_GetOpt "--outpath" $@`
-TemplateFolder=`opts_GetOpt "--templatefolder" $@`
+scenetemplatefolder=`opts_GetOpt "--scenetemplatefolder" $@`
 Modality=`opts_GetOpt "--modality" $@`
 UserSceneFile=`opts_GetOpt "--userscenefile" $@`
 UserScenePath=`opts_GetOpt "--userscenepath" $@`
@@ -344,39 +344,39 @@ if [ -z "$UserSceneFile" ]; then
 	if [ ! -z "$UserScenePath" ]; then 
 		reho "---> Provided --userscenepath but --userscenefile not specified."
 		reho "     Check your inputs and re-run.";
-		TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
-		reho "---> Reverting to MNAP defaults: ${TemplateFolder}"; echo ""
+		scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+		reho "---> Reverting to MNAP defaults: ${scenetemplatefolder}"; echo ""
 	fi
-	if [ -z "$TemplateFolder" ]; then
-		TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+	if [ -z "$scenetemplatefolder" ]; then
+		scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
 		reho "---> Template folder path value not explicitly specified."
-		reho "---> Using MNAP defaults: ${TemplateFolder}"
+		reho "---> Using MNAP defaults: ${scenetemplatefolder}"
 	fi
-	if ls ${TemplateFolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
-		geho "---> Scene files found in `ls ${TemplateFolder}/*${Modality}*.scene` "; echo ""
+	if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
+		geho "---> Scene files found in `ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
 	else 
-		reho "---> Specified folder contains no scenes: ${TemplateFolder}" 
-		TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
-		reho "---> Reverting to defaults: ${TemplateFolder} "; echo ""
+		reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
+		scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+		reho "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
 	fi
 else
 	if [ -f "$UserSceneFile" ]; then
 		geho "---> User scene file found: ${UserSceneFile}"; echo ""
 		UserScenePath=`echo ${UserSceneFile} | awk -F'/' '{print $1}'`
 		UserSceneFile=`echo ${UserSceneFile} | awk -F'/' '{print $2}'`
-		TemplateFolder=${UserScenePath}
+		scenetemplatefolder=${UserScenePath}
 	else
-		if [ -z "$UserScenePath" ] && [ -z "$TemplateFolder" ]; then 
+		if [ -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then 
 			reho "---> Error: Path for user scene file not specified."
-			reho "     Specify --templatefolder or --userscenepath with correct path and re-run."; echo ""; exit 1
+			reho "     Specify --scenetemplatefolder or --userscenepath with correct path and re-run."; echo ""; exit 1
 		fi
-		if [ ! -z "$UserScenePath" ] && [ -z "$TemplateFolder" ]; then 
-			TemplateFolder=${UserScenePath}
+		if [ ! -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then 
+			scenetemplatefolder=${UserScenePath}
 		fi
-		if ls ${TemplateFolder}/${UserSceneFile} 1> /dev/null 2>&1; then 
-			geho "---> User specified scene files found in: ${TemplateFolder}/${UserSceneFile} "; echo ""
+		if ls ${scenetemplatefolder}/${UserSceneFile} 1> /dev/null 2>&1; then 
+			geho "---> User specified scene files found in: ${scenetemplatefolder}/${UserSceneFile} "; echo ""
 		else 
-			reho "---> Error: User specified scene ${TemplateFolder}/${UserSceneFile} not found." 
+			reho "---> Error: User specified scene ${scenetemplatefolder}/${UserSceneFile} not found." 
 			reho "     Check your inputs and re-run."; echo ""; exit 1
 		fi
 	fi
@@ -399,7 +399,7 @@ fi
 if [ "$Modality" = "DWI" ]; then
 	if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; echo ""; fi
 	if [ -z "$DWIData" ]; then DWIData="data"; echo "DWI data name not explicitly specified. Using default: ${DWIData}"; echo ""; fi
-	if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; echo ""; fi
+	if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${scenetemplatefolder}"; echo ""; fi
 	if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; echo ""; fi
 	if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; echo ""; fi
 	if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; echo ""; fi
@@ -461,7 +461,7 @@ echo "  QC Modality: ${Modality}"
 echo "  QC Output Path: ${OutPath}"
 echo "  Custom QC requested: ${ProcessCustomQC}"
 echo "  Omit default QC: ${OmitDefaults} "
-echo "  QC Scene Template Folder: ${TemplateFolder}"
+echo "  QC Scene Template Folder: ${scenetemplatefolder}"
 echo "  QC User-defined Scene: ${UserSceneFile}"
 echo "  Overwrite prior run: ${Overwrite}"
 echo "  Time stamp for logging: ${TimeStamp}"
@@ -512,9 +512,9 @@ if [ ! -z "$UserSceneFile" ]; then
 	WorkingSceneFile="${CASE}.${Modality}.${UserSceneFile}"
 fi
 if [ "$ProcessCustomQC" == "yes" ]; then
-	CustomTemplateFolder="${StudyFolder}/processing/scenes/QC/${Modality}"
-	CustomTemplateSceneFiles=`ls ${CustomTemplateFolder}/*.scene`
-	geho " ===> Custom scenes requested from ${CustomTemplateFolder}"; echo ""
+	Customscenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
+	CustomTemplateSceneFiles=`ls ${Customscenetemplatefolder}/*.scene`
+	geho " ===> Custom scenes requested from ${Customscenetemplatefolder}"; echo ""
 fi
 
 # -- Check of overwrite flag was set
@@ -779,16 +779,16 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
 		BOLDDummyVariable_Check () {
 			BOLDDUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYBOLDDATA _DUMMYBOLDSUFFIX DUMMYTIMESTAMP DUMMYBOLDANNOT"
 			for DUMMYVARIABLE in ${BOLDDUMMYVARIABLES}; do
-				DUMMYVARIABLE_TEST=`echo ${TemplateFolder}/${TemplateSceneFile} | grep '${DUMMYVARIABLE}'`
+				DUMMYVARIABLE_TEST=`echo ${scenetemplatefolder}/${TemplateSceneFile} | grep '${DUMMYVARIABLE}'`
 				if [ -z $DUMMYVARIABLE_TEST ]; then
 					echo ""
-					reho " ---> ${DUMMYVARIABLE} variable not defined in ${CustomTemplateFolder}/${TemplateSceneFile}."
+					reho " ---> ${DUMMYVARIABLE} variable not defined in ${Customscenetemplatefolder}/${TemplateSceneFile}."
 					reho "      Fix the scene and re-run!"
 					echo ""
 					return 1
 				else
 					echo ""
-					geho " ---> ${DUMMYVARIABLE} variable found in ${CustomTemplateFolder}/${TemplateSceneFile}."
+					geho " ---> ${DUMMYVARIABLE} variable found in ${Customscenetemplatefolder}/${TemplateSceneFile}."
 					reho "      Proceeding..."
 					echo ""
 				fi
@@ -798,7 +798,7 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
 		if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ]; then
 			Modality="BOLD"
 			TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
-			TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+			scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
 			WorkingSceneFile="${CASE}.${Modality}.${BOLD}.QC.wb.scene"
 			# -- Reduce dtseries
 			wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii TSNR \
@@ -849,7 +849,7 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
 			ymin=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
 			
 			# -- Rsync over template files for a given BOLD
-			Com1="rsync -aWH ${TemplateFolder}/${TemplateSceneFile} ${OutPath}/"
+			Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/"
 			Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null "
 			Com3="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${WorkingSceneFile}"
 			Com4="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${WorkingSceneFile}"
@@ -866,14 +866,14 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
 		fi
 		# -- Check if custom QC was specified
 		if [ "$ProcessCustomQC" == "yes" ]; then
-			CustomTemplateFolder="${StudyFolder}/processing/scenes/QC/${Modality}"
+			Customscenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
 			CustomTemplateSceneFiles=`ls ${StudyFolder}/processing/scenes/QC/${Modality}/*.scene`
-			TemplateFolder=${CustomTemplateFolder}
+			scenetemplatefolder=${Customscenetemplatefolder}
 			for TemplateSceneFile in ${CustomTemplateSceneFiles}; do
 				WorkingSceneFile="${CASE}.${Modality}.${BOLD}.${TemplateSceneFile}"
 				BOLDDummyVariable_Check
-				Com1="rsync -aWH ${TemplateFolder}/* ${OutPath}/ &> /dev/null"
-				Com2="cp ${TemplateFolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
+				Com1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
+				Com2="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
 				ComQueue="$Com1; $Com2"
 				runscene_BOLD
 				CustomRunQUEUE=${ComRunBoldQUEUE}
@@ -889,8 +889,8 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
 		# -- Check if user specific scene path was provided
 		if [ ! -z "$UserSceneFile" ]; then
 			WorkingSceneFile="${CASE}.${Modality}.${BOLD}.${UserSceneFile}"
-			Com1="rsync -aWH ${TemplateFolder}/* ${OutPath}/ &> /dev/null"
-			Com2="cp ${TemplateFolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
+			Com1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
+			Com2="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
 			ComQueue="$Com1; $Com2"
 			BOLDDummyVariable_Check
 			runscene_BOLD
@@ -921,7 +921,7 @@ if [ "$Modality" != "BOLD" ]; then
 # -- Check if running defaults w/o UserSceneFile
 if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ]; then
 	# -- Setup naming conventions before generating scene
-	Com1="rsync -aWH ${TemplateFolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
+	Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
 	Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
 	Com3="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${WorkingSceneFile}" 
 	Com4="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${WorkingSceneFile}"
@@ -1284,16 +1284,16 @@ fi
 DummyVariable_Check () {
 	DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYTIMESTAMP"
 	for DUMMYVARIABLES in ${BOLDDUMMYVARIABLES}; do
-		DUMMYVARIABLE_TEST=`echo ${TemplateFolder}/${TemplateSceneFile} | grep '${DUMMYVARIABLE}'`
+		DUMMYVARIABLE_TEST=`echo ${scenetemplatefolder}/${TemplateSceneFile} | grep '${DUMMYVARIABLE}'`
 		if [ -z $DUMMYVARIABLE_TEST ]; then
 			echo ""
-			reho " ---> ${DUMMYVARIABLE} variable not defined in ${CustomTemplateFolder}/${TemplateSceneFile}."
+			reho " ---> ${DUMMYVARIABLE} variable not defined in ${Customscenetemplatefolder}/${TemplateSceneFile}."
 			reho "      Fix the scene and re-run!"
 			echo ""
 			return 1
 		else
 			echo ""
-			geho " ---> ${DUMMYVARIABLE} variable found in ${CustomTemplateFolder}/${TemplateSceneFile}."
+			geho " ---> ${DUMMYVARIABLE} variable found in ${Customscenetemplatefolder}/${TemplateSceneFile}."
 			reho "      Proceeding..."
 			echo ""
 		fi
@@ -1305,14 +1305,14 @@ if [ "$ProcessCustomQC" == "yes" ]; then
 	echo ""
 	reho "====================== Process custom scenes: $ProcessCustomQC ============================="
 	echo ""
-	CustomTemplateFolder="${StudyFolder}/processing/scenes/QC/${Modality}"
+	Customscenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
 	CustomTemplateSceneFiles=`ls ${StudyFolder}/processing/scenes/QC/${Modality}/*.scene | xargs -n 1 basename`
 	geho "$CustomTemplateSceneFiles"
-	TemplateFolder=${CustomTemplateFolder}
+	scenetemplatefolder=${Customscenetemplatefolder}
 	for TemplateSceneFile in ${CustomTemplateSceneFiles}; do
 		DummyVariable_Check
 		WorkingSceneFile="${CASE}.${Modality}.${TemplateSceneFile}"
-		QCPreprocCustom1="rsync -aWH ${TemplateFolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
+		QCPreprocCustom1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
 		QCPreprocCustom2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
 		QCPreprocCustom3="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${WorkingSceneFile}" 
 		QCPreprocCustom4="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${WorkingSceneFile}"
@@ -1360,7 +1360,7 @@ if [ ! -z "$UserSceneFile" ]; then
 	TemplateSceneFile"${UserSceneFile}"
 	DummyVariable_Check
 	WorkingSceneFile="${CASE}.${Modality}.${UserSceneFile}"
-	QCPreprocUser1="rsync -aWH ${TemplateFolder}/* ${OutPath}/ &> /dev/null"
+	QCPreprocUser1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
 	QCPreprocUser2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
 	QCPreprocUser3="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${WorkingSceneFile}" 
 	QCPreprocUser4="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${WorkingSceneFile}"

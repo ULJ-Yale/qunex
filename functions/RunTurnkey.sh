@@ -100,7 +100,7 @@ weho() {
 }
 
 $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
-MNAPTurnkeyWorkflow="createStudy organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 hcp4 hcp5 hcpd FSLDtifit FSLBedpostxGPU eddyQC QCPreprocDWIProcess pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc computeBOLDfcGBC computeBOLDfcSeed"
+MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 hcp4 hcp5 hcpd FSLDtifit FSLBedpostxGPU eddyQC QCPreprocDWIProcess pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc computeBOLDfcGBC computeBOLDfcSeed"
 
 # ------------------------------------------------------------------------------
 # -- General usage
@@ -118,16 +118,15 @@ usage() {
     echo ""
     echo "  -- PARMETERS:"
     echo ""
-    echo "    --turnkey=<turnkey_run_type>                  Specify type turnkey run. Options are: local or xnat"
+    echo "    --turnkeytype=<turnkey_run_type>              Specify type turnkey run. Options are: local or xnat"
     echo "                                                  If empty default is set to: [xnat]."
-    echo ""
     echo "  -- XNAT HOST & PROJECT PARMETERS:"
     echo ""
     echo "    --batch=<batch_file>                          Batch file with processing parameters which exist as a project-level resource on XNAT"
     echo "    --mappingfile=<mapping_file>                  File for mapping into desired file structure, e.g. hcp, which exist as a project-level resource on XNAT"
     echo "    --xnatprojectid=<name_of_xnat_project_id>     Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title."
     echo "    --xnathost=<XNAT_site_URL>                    Specify the XNAT site hostname URL to push data to."
-    echo "    --xnatsessionlabels=<session_id>               Name of session within XNAT for a given subject id. If not provided then --subjects is needed."
+    echo "    --xnatsessionlabels=<session_id>              Name of session within XNAT for a given subject id. If not provided then --subjects is needed."
     echo "    --xnatsubjectid=<subject_id>                  Name of XNAT database subject IDs Default it []."
     echo "    --xnatuser=<xnat_host_user_name>              Specify XNAT username."
     echo "    --xnatpass=<xnat_host_user_pass>              Specify XNAT password."
@@ -140,7 +139,8 @@ usage() {
     echo ""
     echo "    --path=<study_path>                                Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
     echo "    --subjects=<comma_separated_list_of_cases>             List of subjects to run locally if --xnatsessionlabels and --xnatsubjectid missing."
-    echo "    --overwritesubject=<specify_subject_overwrite>     Specify <yes> or <no> for cleanup of prior subject run. Default is [no]. Also supports --overwrite"
+    echo "    --overwritestep=<specify_step_to_overwrite>        Specify <yes> or <no> for cleanup of prior workflow step. Default is [no]."
+    echo "    --overwritesubject=<specify_subject_overwrite>     Specify <yes> or <no> for cleanup of prior subject run. Default is [no]."
     echo "    --overwriteproject=<specify_project_overwrite>     Specify <yes> or <no> for cleanup of entire project. Default is [no]."
     echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
     echo "                                                       Supported:   ${MNAPTurnkeyWorkflow} "
@@ -158,7 +158,7 @@ usage() {
     echo "  RunTurnkey.sh \ "
     echo "   --turnkey=<turnkey_run_type> \ "
     echo "   --batchfile=<batch_file> \ "
-    echo "   --overwrite=yes \ "
+    echo "   --overwritestep=yes \ "
     echo "   --mappingfile=<mapping_file> \ "
     echo "   --xnatsessionlabels=<XNAT_SESSION_LABELS> \ "
     echo "   --xnatprojectid=<name_of_xnat_project_id> \ "
@@ -173,7 +173,7 @@ usage() {
 # ------------------------------------------------------------------------------
 
 if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]] || [[ $1 == "help" ]] || [[ $1 == "usage" ]]; then
-	usage
+    usage
 fi
 
 main() {
@@ -186,10 +186,10 @@ opts_GetOpt() {
 sopt="$1"
 shift 1
 for fn in "$@" ; do
-	if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-		echo $fn | sed "s/^${sopt}=//"
-		return 0
-	fi
+    if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
+        echo $fn | sed "s/^${sopt}=//"
+        return 0
+    fi
 done
 }
 
@@ -199,7 +199,7 @@ done
 
 # -- Clear variables
 unset BATCH_PARAMETERS_FILENAME
-unset OVERWRITE
+unset OVERWRITE_STEP
 unset OVERWRITE_PROJECT
 unset OVERWRITE_SUBJECT
 unset SCAN_MAPPING_FILENAME
@@ -211,7 +211,7 @@ unset XNAT_HOST_NAME
 unset XNAT_USER_NAME
 unset XNAT_PASSWORD
 unset TURNKEY_TYPE
-unset TURNKEY_STEP
+unset TURNKEY_STEPS
 
 # =-=-=-=-=-= GENERAL OPTIONS =-=-=-=-=-=
 
@@ -219,6 +219,7 @@ unset TURNKEY_STEP
 STUDY_PATH=`opts_GetOpt "--path" $@`
 CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
 OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
+OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
 BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
@@ -229,6 +230,8 @@ XNAT_SUBJECT_ID=`opts_GetOpt "--xnatsubjectid" $@`
 XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
 XNAT_USER_NAME=`opts_GetOpt "--xnatuser" $@`
 XNAT_PASSWORD=`opts_GetOpt "--xnatpass" $@`
+TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" $@`
+TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
 
@@ -298,7 +301,7 @@ NsamplesMatrixThree=`opts_GetOpt "--nsamplesmatrix3" $@`
 
 # -- QCPreproc input flags
 OutPath=`opts_GetOpt "--outpath" $@`
-TemplateFolder=`opts_GetOpt "--templatefolder" $@`
+SceneTemplateFolder=`opts_GetOpt "--scenetemplatefolder" $@`
 UserSceneFile=`opts_GetOpt "--userscenefile" $@`
 UserScenePath=`opts_GetOpt "--userscenepath" $@`
 Modality=`opts_GetOpt "--modality" $@`
@@ -312,14 +315,14 @@ BOLDDATA=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo
 BOLDRUNS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
 BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 if [[ ! -z $BOLDDATA ]]; then
-	if [[ -z $BOLDS ]]; then
-		BOLDS=$BOLDDATA
-	fi
+    if [[ -z $BOLDS ]]; then
+        BOLDS=$BOLDDATA
+    fi
 fi
 if [[ ! -z $BOLDRUNS ]]; then
-	if [[ -z $BOLDS ]]; then
-		BOLDS=$BOLDRUNS
-	fi
+    if [[ -z $BOLDS ]]; then
+        BOLDS=$BOLDRUNS
+    fi
 fi
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
 BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
@@ -333,48 +336,58 @@ QCPreprocCustom=`opts_GetOpt "--customqc" $@`
 # -- Check if subject input is a parameter file instead of list of cases
 echo ""
 if [[ ${CASES} == *.txt ]]; then
-	SubjectParamFile="$CASES"
-	echo ""
-	echo "Using $SubjectParamFile for input."
-	echo ""
-	CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
+    SubjectParamFile="$CASES"
+    echo ""
+    echo "Using $SubjectParamFile for input."
+    echo ""
+    CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
 fi
 
 # -- Check that all inputs are provided
-if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
-if [ -z "$XNAT_SESSION_LABELS" ]; then
-	if [ -z "$CASES" ]; then 
-		reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ''
-		exit 1
-	fi
+if [ -z "$CASES" ]; then
+     if [ -z "$XNAT_SESSION_LABELS" ]; then
+        reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ''
+        exit 1
+    fi
 fi
-if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
-if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
-if [ -z "$OVERWRITE" ]; then OVERWRITE="no"; fi
-if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE="no"; fi
+if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
+if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
+if [[ ${TURNKEY_STEPS} == "mapRawData" ]] || [[ ${TURNKEY_STEPS} == "all" ]]; then
+    if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+fi
+if [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
+    if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+fi
+if [[ ${TURNKEY_STEPS} == "getHCPReady" ]]; then
+    if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+fi
+if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
+    if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
+    if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
+fi
+
+if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
+if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
 if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; echo ''; fi
-if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
-if [ -z "$OVERWRITE" ] && [ ! -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE="OVERWRITE_SUBJECT"; echo ''; fi
 if [ -z "$QCPreprocCustom" ] || [ "$QCPreprocCustom" == "no" ]; then QCPreprocCustom="no"; MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//$QCPreprocCustom/}"`; fi
-if [ -z "$TURNKEY_STEPS" ]; then TURNKEY_STEPS="all"; geho "Running all turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; fi
 
 # -- Define script name
 scriptName=$(basename ${0})
 
 # -- Define additional variables
 if [[ -z ${STUDY_PATH} ]]; then
-	workdir="/output"
-	mnap_studyfolder="${workdir}/${XNAT_PROJECT_ID}"
+    workdir="/output"
+    mnap_studyfolder="${workdir}/${XNAT_PROJECT_ID}"
 else
-	mnap_studyfolder="${STUDY_PATH}"
+    mnap_studyfolder="${STUDY_PATH}"
 fi
 mnap_subjectsfolder="${mnap_studyfolder}/subjects"
 mnap_workdir="${mnap_subjectsfolder}/${XNAT_SESSION_LABELS}"
-logdir="${mnap_studyfolder}/processing/logs/"
+logdir="${mnap_studyfolder}/processing/logs"
 specsdir="${mnap_subjectsfolder}/specs"
 rawdir="${mnap_workdir}/inbox"
 rawdir_temp="${mnap_workdir}/inbox_temp"
@@ -387,341 +400,432 @@ echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   "
 echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
-	CASES="$XNAT_SESSION_LABELS"
-	echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
-	echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
-	echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
-	echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
-	echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
+    CASES="$XNAT_SESSION_LABELS"
+    echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
+    echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
+    echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
+    echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
+    echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
 fi
 echo "   Project-specific Batch file: ${project_batch_file}"
 echo "   MNAP Study folder: ${mnap_studyfolder}"
 echo "   MNAP Subject-specific working folder: ${rawdir}"
+echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
 echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
 echo "   Custom QC requested: ${QCPreprocCustom}"
 if [ "$TURNKEY_STEPS" == "all" ]; then
-	echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
+    echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
 else
-	echo "   Turnkey workflow steps: ${TURNKEY_STEPS}"
+    echo "   Turnkey workflow steps: ${TURNKEY_STEPS}"
 fi
 echo 
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
-geho "------------------------- Start of work --------------------------------"
+geho "------------------------- Start of MNAP Turnkey Workflow --------------------------------"
 echo ""
 
 # -- Check if overwrite is set to yes for subject and project
-if [[ ${OVERWRITE_PROJECT} == "yes" ]]; then
-	if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABELS" ]]; then 
-		reho "-- ${XNAT_SESSION_LABELS} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
-		reho "   Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
-		rm -rf ${mnap_studyfolder}/ &> /dev/null
-	else
-		reho "-- There are more than ${XNAT_SESSION_LABELS} directories ${mnap_studyfolder}."
-		reho "   Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
-	fi
-fi
-if [[ ${OVERWRITE} == "yes" ]]; then
-	reho "-- Removing ${mnap_workdir}."; echo ""
-	rm -rf ${mnap_workdir} &> /dev/null
+if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "all" ]]; then
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABELS" ]]; then 
+        reho "-- ${XNAT_SESSION_LABELS} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
+        reho "   Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
+        rm -rf ${mnap_studyfolder}/ &> /dev/null
+    else
+        reho "-- There are more than ${XNAT_SESSION_LABELS} directories ${mnap_studyfolder}."
+        reho "   Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
+    fi
 fi
 
-# -- Execute processing and QC commands
-geho " ----- Starting Turnkey Processing -----"; echo ""; echo ""
-geho " ---------------------------------------"; echo ""; echo ""
+if [[ ${OVERWRITE_SUBJECT} == "yes" ]]; then
+    reho "-- Removing specific subject: ${mnap_workdir}."; echo ""
+    rm -rf ${mnap_workdir} &> /dev/null
+fi
 
 # =-=-=-=-=-=-= TURNKEY COMMANDS START =-=-=-=-=-=-= 
 #
 #
-	# -- Create study hieararchy and generate subject folders
-	turnkey_createStudy() {
-		geho " -- Checking for and generating study folder ${mnap_studyfolder}"; echo ""
-		if [ ! -d ${workdir} ]; then
-			mkdir -p ${workdir} &> /dev/null
-		fi
-		if [ ! -d ${mnap_studyfolder} ]; then
-			${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}"
-		fi
-		mkdir -p ${mnap_workdir} &> /dev/null
-		mkdir -p ${mnap_workdir}/inbox &> /dev/null
-		mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
-	}
-	
-	# -- Get data from original location & organize DICOMs
-	turnkey_organizeDicom() {
-		if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-			geho " -- Fetching batch and mapping files from ${XNAT_HOST_NAME}"; echo ""
-			curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/919/files/${BATCH_PARAMETERS_FILENAME}" > ${specsdir}/${BATCH_PARAMETERS_FILENAME}
-			curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/919/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME} 
-			echo ""
-			geho " -- Linking DICOMs into ${rawdir}"; echo ""
-			find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
-		else
-			reho " ===> Turnkey for local study execution not yet supported!"; echo ""; exit 0
-		fi
-		${MNAPCOMMAND} organizeDicom --subjectsfolder="${mnap_subjectsfolder}" --subjects="${XNAT_SESSION_LABELS}" --overwrite="${OVERWRITE}"
-	}
-	
-	# -- Map processing folder structure
-	turnkey_getHCPReady() {
-		${MNAPCOMMAND} getHCPReady   --subjectsfolder="${mnap_subjectsfolder}" --subjects="${XNAT_SESSION_LABELS}" --mapping="${specsdir}/${SCAN_MAPPING_FILENAME}" --overwrite="${OVERWRITE}"
-	}
-	
-	# -- Generate subject specific hcp processing file
-	turnkey_mapHCPFiles() {
-		${MNAPCOMMAND} mapHCPFiles   --subjectsfolder="${mnap_subjectsfolder}" --subjects="${XNAT_SESSION_LABELS}" --overwrite="${OVERWRITE}"
-		geho " -- Generating ${project_batch_file}"; echo ""
-		cp ${specsdir}/${BATCH_PARAMETERS_FILENAME} ${project_batch_file}; cat ${mnap_workdir}/subject_hcp.txt >> ${project_batch_file}
-	}
-	
-	# -- HCP processing steps and relevant QC
-	turnkey_hcp1() {
-		${MNAPCOMMAND} hcp1      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --logfolder="${logdir}"
-	}
-	turnkey_hcp2() {
-		${MNAPCOMMAND} hcp2      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --logfolder="${logdir}"
-	}
-	turnkey_hcp3() {
-		${MNAPCOMMAND} hcp3      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --logfolder="${logdir}"
-		${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T1w"    --modality="T1w"    --overwrite="${OVERWRITE}"
-		${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T2w"    --modality="T2w"    --overwrite="${OVERWRITE}"
-	}
-	turnkey_hcp4() {
-		${MNAPCOMMAND} hcp4      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}"
-	}
-	turnkey_hcp5() {
-		${MNAPCOMMAND} hcp5      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}"
-		${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/BOLD"   --modality="BOLD"   --overwrite="${OVERWRITE}" --boldsuffix="_Atlas"
-	}
-	turnkey_hcpd() {
-		${MNAPCOMMAND} hcpd      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}"
-		${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI"    --modality="DWI"    --overwrite="${OVERWRITE}" --dwidata="data" --dwipath="Diffusion"
-	}
-	turnkey_hcpdLegacy() {
-		cyaneho "-- PENDING: hcpdLegacy processing steps and relevant QC go here... "
-		# ${MNAPCOMMAND} hcpdLegacy --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
-		# ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI"    --modality="DWI"    --overwrite="${OVERWRITE}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion"
-	}
-	
-	# -- FSLDtifit processing steps and relevant QC
-	turnkey_FSLDtifit() {
-		${MNAPCOMMAND} FSLDtifit --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}"
-	}
-	
-	# -- FSLBedpostxGPU processing steps and relevant QC
-	turnkey_FSLBedpostxGPU() {
-		if [ -z "$Fibers" ]; then Fibers="3"; fi
-		if [ -z "$Model" ]; then Model="3"; fi
-		if [ -z "$Burnin" ]; then Burnin="3000"; fi
-		if [ -z "$Rician" ]; then Rician="yes"; fi
-		${MNAPCOMMAND} FSLBedpostxGPU --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
-	}
-	
-	# -- eddyQC processing steps and relevant QC
-	turnkey_eddyQC() {
-		cyaneho "-- PENDING: eddyQC processing steps and relevant QC go here... "
-		# ${MNAPCOMMAND} eddyQC --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --eddybase="eddy_unwarped_images" --report="individual" --bvalsfile="Pos_Neg.bvals" --mask="nodif_brain_mask.nii.gz" --eddyidx="index.txt" --eddyparams="acqparams.txt" --bvecsfile="Pos_Neg.bvecs"
-	}
-	
-	# -- Processing for DWI analyses
-	turnkey_QCPreprocDWIProcess() {
-		cyaneho "-- PENDING: QCPreproc processing steps for DWI analyses... "
-		#${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --bedpostxqc="yes" --eddyqcpdf="yes"
-	}
-	
-	# -- Pre-tractography for DWI data
-	turnkey_pretractographyDense() {
-		cyaneho "-- PENDING: pretractographyDense steps for DWI analyses... "
-		# ${MNAPCOMMAND} pretractographyDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --omatrix1="yes" --omatrix3="yes"
-	}
-	
-	# -- Pre-tractography for DWI data
-	turnkey_DWIDenseParcellation() {
-		cyaneho "-- PENDING: DWIDenseParcellation steps for DWI analyses... "
-		# ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
-	}
-	
-	# -- Pre-tractography for DWI data
-	turnkey_DWISeedTractography() {
-		cyaneho "-- PENDING: DWISeedTractography steps for DWI analyses... "
-		# ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --outname="${DWIOutName}" --matrixversion='1' --seedfile="${SeedFile}"
-		# ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --outname="${DWIOutName}_GBC" --matrixversion='1' --seedfile="gbc"
-	}
-	
-	# -- Check if Custom QC was requested
-	turnkey_QCPreprocCustom() {
-		Modalities="T1w, T2w, myelin, BOLD, DWI"
-		for Modality in ${Modalities}; do
-			if [[ ${Modality} == "BOLD" ]]; then
-				${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
-			fi
-			if [[ ${Modality} == "DWI" ]]; then
-				${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
-			else
-				${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE}" --processcustom="yes" --omitdefaults="yes"
-			fi
-		done
-	}
-	
-	# -- Map HCP processed outputs for further FC BOLD analyses
-	turnkey_mapHCPData() {
-		cyaneho "-- PENDING: mapHCPData processing steps go here... "
-		${MNAPCOMMAND} mapHCPData \
-		--subjects="${project_batch_file}" \
-		--subjectsfolder="${mnap_subjectsfolder}" \
-		--overwrite="${OVERWRITE}"
-	}
-	
-	# -- Generate brain masks for de-noising
-	turnkey_createBOLDBrainMasks() {
-		cyaneho "-- PENDING: createBOLDBrainMasks processing steps go here... "
-		${MNAPCOMMAND} createBOLDBrainMasks \
-		--subjects="${project_batch_file}" \
-		--subjectsfolder="${mnap_subjectsfolder}" \
-		--overwrite="${OVERWRITE}" \
-		--logfolder="${logdir}" \
-		--image_target="nifti"
-	}
-	
-	# -- Compute BOLD statistics
-	turnkey_computeBOLDStats() {
-	cyaneho "-- PENDING: computeBOLDStats processing steps go here... "
-		${MNAPCOMMAND} computeBOLDStats \
-		--subjects="${project_batch_file}" \
-		--subjectsfolder="${mnap_subjectsfolder}" \
-		--logfolder="${logdir}" \
-		--overwrite="${OVERWRITE}" \
-		--image_target="nifti"
-	}
-	
-	# -- Create final BOLD statistics report
-	turnkey_createStatsReport() {
-		cyaneho "-- PENDING: createStatsReport processing steps go here... "
-		${MNAPCOMMAND} createStatsReport \
-		--subjects="${project_batch_file}" \
-		--subjectsfolder="${mnap_subjectsfolder}" \
-		--logfolder="${logdir}" \
-		--overwrite="${OVERWRITE}"
-	}
-	
-	# -- Extract nuisance signal for further de-noising
-	turnkey_extractNuisanceSignal() {
-		cyaneho "-- PENDING: extractNuisanceSignal processing steps go here... "
-		${MNAPCOMMAND} extractNuisanceSignal \
-		--subjects="${project_batch_file}" \
-		--subjectsfolder="${mnap_subjectsfolder}" \
-		--logfolder="${logdir}" \
-		--overwrite="${OVERWRITE}"
-	}
-	
-	# -- Process BOLDs
-	turnkey_preprocessBold() {
-	cyaneho "-- PENDING: preprocessBold processing steps go here... "
-		${MNAPCOMMAND} preprocessBold \
-		--subjects="${project_batch_file}" \
-		--subjectsfolder="${mnap_subjectsfolder}" \
-		--logfolder="${logdir}" \
-		--overwrite="${OVERWRITE}"
-	}
-	
-	# -- Process via CONC file
-	turnkey_preprocessConc() {
-		cyaneho "-- PENDING: preprocessConc processing steps go here... "
-		${MNAPCOMMAND} preprocessConc \
-		--subjects="${project_batch_file}" \
-		--subjectsfolder="${mnap_subjectsfolder}" \
-		--overwrite="${OVERWRITE}" \
-		--logfolder="${logdir}"
-	}
-	
-	# -- Compute GBC
-	turnkey_computeBOLDfcGBC() {
-	cyaneho "-- PENDING: computeBOLDfc processing steps for GBC go here... "
-		InputFile="bold1_Atlas_scrub_g7_hpss_res-VWMWB.dtseries.nii"
-		OutName="GBC_bold1_Atlas_scrub_g7_hpss_res-VWMWB"
-		Ignore=""
-		# ${MNAPCOMMAND} computeBOLDfc \
-		# --subjectsfolder="${mnap_subjectsfolder}" \
-		# --calculation="gbc" \
-		# --runtype="individual" \
-		# --subjects="${project_batch_file}" \
-		# --inputfiles="${InputFile}" \
-		# --inputpath="images/functional" \
-		# --extractdata="yes" \
-		# --outname="${OutName}" \
-		# --overwrite="${OVERWRITE}" \
-		# --ignore="${Ignore}" \
-		# --target=[] \
-		# --command="mFz:" \
-		# --targetf="${mnap_subjectsfolder}/${CASE}/images/functional" \
-		# --mask="5" \
-		# --rsmooth="0" \
-		# --rdilate="0" \
-		# --verbose="true" \
-		# --time="true" \
-		# --vstep="1000" \
-		# --covariance="true"
-	}
-	
-	# -- Compute Seed FC for relevant ROIs
-	turnkey_computeBOLDfcSeed() {
-	cyaneho "-- PENDING: computeBOLDfc processing steps for seeds go here... "
-		# ${MNAPCOMMAND} computeBOLDfc \
-		# --subjectsfolder="${mnap_subjectsfolder}" \
-		# --function="computeboldfc" \
-		# --calculation="seed" \
-		# --runtype="individual" \
-		# --subjects="${project_batch_file}" \
-		# --inputfiles="bold1_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii" \
-		# --inputpath="images/functional" \
-		# --extractdata="yes" \
-		# --outname="boldRest1AtlasScrubHPSSg7resVWMWB" \
-		# --overwrite="${OVERWRITE}" \
-		# --roinfo="/gpfs/project/fas/n3/software/MNAP/general/templates/Thalamus_Atlas/Thal.FSL.Associative.Sensory.MNI152.CIFTI.Atlas.names" \
-		# --ignore="udvarsme" \
-		# --options="" \
-		# --method="" \
-		# --targetf="" \
-		# --mask="0" \
-		# --covariance="true"
-	}
-#
+    # --------------- Intial study and file organization start -----------------
+    #
+       # -- Create study hieararchy and generate subject folders
+       turnkey_createStudy() {
+           cyaneho "-- RUNNING createStudy..."
+           echo ""
+           geho " -- Checking for and generating study folder ${mnap_studyfolder}"; echo ""
+           if [ ! -d ${workdir} ]; then
+               mkdir -p ${workdir} &> /dev/null
+           fi
+           if [ ! -d ${mnap_studyfolder} ]; then
+               ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}"
+           fi
+           mkdir -p ${mnap_workdir} &> /dev/null
+           mkdir -p ${mnap_workdir}/inbox &> /dev/null
+           mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
+       }
+       # -- Get data from original location & organize DICOMs
+       turnkey_mapRawData() {
+           TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+           # -- Define specific logs
+           mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${TimeStamp}.log"
+           mapRawData_ComlogTmp="${logdir}/comlogs/tmp_mapRawData_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
+           mapRawData_ComlogError="${logdir}/comlogs/error_mapRawData_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+           mapRawData_ComlogDone="${logdir}/comlogs/done_mapRawData_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+           if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+               rm -rf ${specsdir}/${BATCH_PARAMETERS_FILENAME} &> /dev/null
+               rm -rf ${specsdir}/${SCAN_MAPPING_FILENAME} &> /dev/null
+               rm -rf ${processingdir}/scenes/QC/* &> /dev/null
+               if [[ ${OVERWRITE_STEP} == "yes" ]]; then
+                  rm ${rawdir}/*
+               fi
+               geho " -- Fetching batch and mapping files from ${XNAT_HOST_NAME}"; echo ""
+               echo "" >> ${mapRawData_ComlogTmp}
+               geho "  Logging turnkey_mapRawData output at time ${TimeStamp}:" >> ${mapRawData_ComlogTmp}
+               echo "----------------------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
+               echo "" >> ${mapRawData_ComlogTmp}
+               echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}"" >> ${mapRawData_ComlogTmp}
+               echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}"" >> ${mapRawData_ComlogTmp}
+               curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${specsdir}/${BATCH_PARAMETERS_FILENAME}
+               curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME}
+               #curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/*" > ${processingdir}/scenes/QC/
+               echo ""
+               geho " -- Linking DICOMs into ${rawdir}"; echo ""
+               echo "  find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';'" >> ${mapRawData_ComlogTmp}
+               find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
+               # -- Perform checks
+               DicomInputCount=`find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
+               DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
+               if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then DICOMCOUNTCHECK="pass"; else DICOMCOUNTCHECK="fail"; fi
+               if [[ -f ${specsdir}/${BATCH_PARAMETERS_FILENAME} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
+               if [[ -f ${specsdir}/${SCAN_MAPPING_FILENAME} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
+               echo "" >> ${mapRawData_ComlogTmp}
+               echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
+               echo "  --> Batch file transfer check: ${BATCHFILECHECK}" >> ${mapRawData_ComlogTmp}
+               echo "  --> Mapping file transfer check: ${MAPPINGFILECHECK}" >> ${mapRawData_ComlogTmp}
+               echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" >> ${mapRawData_ComlogTmp}
+               echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" >> ${mapRawData_ComlogTmp}
+               echo "  --> DICOM mapping check: ${DICOMCOUNTCHECK}" >> ${mapRawData_ComlogTmp}
+               echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
+               if [[ ${DICOMCOUNTCHECK} == "pass" ]] && [[ ${BATCHFILECHECK} == "pass" ]] && [[ ${MAPPINGFILECHECK} == "pass" ]]; then
+                   echo "" >> ${mapRawData_ComlogTmp}
+                   geho "------------------------- Successful completion of work --------------------------------" >> ${mapRawData_ComlogTmp}
+                   echo "" >> ${mapRawData_ComlogTmp}
+                  mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogDone}
+                  mapRawData_Comlog=${mapRawData_ComlogDone}
+               else
+                   echo "" >> ${mapRawData_ComlogTmp}
+                   echo "Error. Something went wrong." >> ${mapRawData_ComlogTmp}
+                   echo "" >> ${mapRawData_ComlogTmp}
+                  mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogError}
+                  mapRawData_Comlog=${mapRawData_ComlogError}
+               fi
+               unset XNAT_PASSWORD
+               unset XNAT_USER_NAME
+           else
+               reho " ===> Turnkey for local study execution not yet supported!"; echo ""; exit 0
+           fi
+       }
+       # -- organize DICOMs
+       turnkey_organizeDicom() {
+           cyaneho "-- RUNNING organizeDicom..."
+           ${MNAPCOMMAND} organizeDicom --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- Map processing folder structure
+       turnkey_getHCPReady() {
+           cyaneho "-- RUNNING getHCPReady..."
+           ${MNAPCOMMAND} getHCPReady   --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --mapping="${specsdir}/${SCAN_MAPPING_FILENAME}" --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- Generate subject specific hcp processing file
+       turnkey_mapHCPFiles() {
+           cyaneho "-- RUNNING mapHCPFiles..."
+           ${MNAPCOMMAND} mapHCPFiles   --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}"
+           geho " -- Generating ${project_batch_file}"; echo ""
+           if [[ ${OVERWRITE_STEP} == "yes" ]]; then
+              rm ${project_batch_file}
+           fi
+           cp ${specsdir}/${BATCH_PARAMETERS_FILENAME} ${project_batch_file}; cat ${mnap_workdir}/subject_hcp.txt >> ${project_batch_file}
+       }
+    #
+    # --------------- Intial study and file organization end -------------------
+    
+
+    # --------------- HCP Processing and relevant QC start ---------------------
+    #
+       # -- PreFreeSurfer
+       turnkey_hcp1() {
+           cyaneho "-- RUNNING HCP Pipelines step: hcp1 (hcp_PreFS)"
+           ${MNAPCOMMAND} hcp1      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
+       }
+       # -- FreeSurfer
+       turnkey_hcp2() {
+           cyaneho "-- RUNNING HCP Pipelines step: hcp2 (hcp_FS)"
+           ${MNAPCOMMAND} hcp2      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
+       }
+       # -- PostFreeSurfer
+       turnkey_hcp3() {
+           cyaneho "-- RUNNING HCP Pipelines step: hcp3 (hcp_PostFS)"
+           ${MNAPCOMMAND} hcp3      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T1w"    --modality="T1w"    --overwrite="${OVERWRITE_STEP}"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T2w"    --modality="T2w"    --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- fMRIVolume
+       turnkey_hcp4() {
+           cyaneho "-- RUNNING HCP Pipelines step: hcp4 (hcp_fMRIVolume)"
+           ${MNAPCOMMAND} hcp4      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- fMRISurface
+       turnkey_hcp5() {
+           cyaneho "-- RUNNING HCP Pipelines step: hcp4 (hcp_fMRISurface)"
+           ${MNAPCOMMAND} hcp5      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/BOLD"   --modality="BOLD"   --overwrite="${OVERWRITE_STEP}" --boldsuffix="_Atlas"
+       }
+       # -- Diffusion
+       turnkey_hcpd() {
+       cyaneho "-- RUNNING HCP Pipelines step: hcp4 (hcp_Diffusion)"
+           ${MNAPCOMMAND} hcpd      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI"    --modality="DWI"    --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion"
+       }
+       # -- Diffusion Legacy
+       turnkey_hcpdLegacy() {
+           cyaneho "-- PENDING: HCP Pipelines step: hcpdLegacy"
+           # ${MNAPCOMMAND} hcpdLegacy --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
+           # ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI"    --modality="DWI"    --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion"
+       }
+    #
+    # --------------- HCP Processing and relevant QC end -----------------------
+
+
+    # --------------- DWI Processing and analyses start ------------------------
+    #
+       # -- FSLDtifit processing steps and relevant QC
+       turnkey_FSLDtifit() {
+           cyaneho "-- PENDING: FSLDtifit for DWI... "
+           ${MNAPCOMMAND} FSLDtifit --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- FSLBedpostxGPU processing steps and relevant QC
+       turnkey_FSLBedpostxGPU() {
+           cyaneho "-- PENDING: FSLBedpostxGPU for DWI... "
+           if [ -z "$Fibers" ]; then Fibers="3"; fi
+           if [ -z "$Model" ]; then Model="3"; fi
+           if [ -z "$Burnin" ]; then Burnin="3000"; fi
+           if [ -z "$Rician" ]; then Rician="yes"; fi
+           ${MNAPCOMMAND} FSLBedpostxGPU --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
+       }
+       # -- eddyQC processing steps and relevant QC
+       turnkey_eddyQC() {
+           cyaneho "-- PENDING: eddyQC for DWI... "
+           # ${MNAPCOMMAND} eddyQC --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --eddybase="eddy_unwarped_images" --report="individual" --bvalsfile="Pos_Neg.bvals" --mask="nodif_brain_mask.nii.gz" --eddyidx="index.txt" --eddyparams="acqparams.txt" --bvecsfile="Pos_Neg.bvecs"
+       }
+       # -- Processing for DWI analyses
+       turnkey_QCPreprocDWIProcess() {
+           cyaneho "-- PENDING: QCPreproc processing steps for DWI analyses... "
+           #${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --bedpostxqc="yes" --eddyqcpdf="yes"
+       }
+       # -- Pre-tractography for DWI data
+       turnkey_pretractographyDense() {
+           cyaneho "-- PENDING: pretractographyDense... "
+           # ${MNAPCOMMAND} pretractographyDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+       }
+       # -- Pre-tractography for DWI data
+       turnkey_DWIDenseParcellation() {
+           cyaneho "-- PENDING: DWIDenseParcellation... "
+           # ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
+       }
+       # -- Pre-tractography for DWI data
+       turnkey_DWISeedTractography() {
+           cyaneho "-- PENDING: DWISeedTractography... "
+           # ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --outname="${DWIOutName}" --matrixversion='1' --seedfile="${SeedFile}"
+           # ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --outname="${DWIOutName}_GBC" --matrixversion='1' --seedfile="gbc"
+       }
+    #
+    # --------------- DWI Processing and analyses end --------------------------
+
+
+    # --------------- Custom QC start ------------------------------------------
+    # 
+       # -- Check if Custom QC was requested
+       turnkey_QCPreprocCustom() {
+           cyaneho "-- QCPreprocCustom... "
+           Modalities="T1w, T2w, myelin, BOLD, DWI"
+           for Modality in ${Modalities}; do
+               if [[ ${Modality} == "BOLD" ]]; then
+                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
+               fi
+               if [[ ${Modality} == "DWI" ]]; then
+                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
+               else
+                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
+               fi
+           done
+       }
+    #
+    # --------------- Custom QC end --------------------------------------------
+
+
+    # --------------- BOLD FC Processing and analyses start --------------------
+    #
+       # -- Map HCP processed outputs for further FC BOLD analyses
+       turnkey_mapHCPData() {
+           echo ""; cyaneho "-- mapHCPData "; echo ""
+           ${MNAPCOMMAND} mapHCPData \
+           --subjects="${project_batch_file}" \
+           --subjectsfolder="${mnap_subjectsfolder}" \
+           --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- Generate brain masks for de-noising
+       turnkey_createBOLDBrainMasks() {
+           cyaneho "-- PENDING: createBOLDBrainMasks processing steps go here... "
+           ${MNAPCOMMAND} createBOLDBrainMasks \
+           --subjects="${project_batch_file}" \
+           --subjectsfolder="${mnap_subjectsfolder}" \
+           --overwrite="${OVERWRITE_STEP}" \
+           --logfolder="${logdir}" \
+           --image_target="nifti"
+       }
+       # -- Compute BOLD statistics
+       turnkey_computeBOLDStats() {
+           cyaneho "-- PENDING: computeBOLDStats processing steps go here... "
+           ${MNAPCOMMAND} computeBOLDStats \
+           --subjects="${project_batch_file}" \
+           --subjectsfolder="${mnap_subjectsfolder}" \
+           --logfolder="${logdir}" \
+           --overwrite="${OVERWRITE_STEP}" \
+           --image_target="nifti"
+       }
+       # -- Create final BOLD statistics report
+       turnkey_createStatsReport() {
+           cyaneho "-- PENDING: createStatsReport processing steps go here... "
+           ${MNAPCOMMAND} createStatsReport \
+           --subjects="${project_batch_file}" \
+           --subjectsfolder="${mnap_subjectsfolder}" \
+           --logfolder="${logdir}" \
+           --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- Extract nuisance signal for further de-noising
+       turnkey_extractNuisanceSignal() {
+           cyaneho "-- PENDING: extractNuisanceSignal processing steps go here... "
+           ${MNAPCOMMAND} extractNuisanceSignal \
+           --subjects="${project_batch_file}" \
+           --subjectsfolder="${mnap_subjectsfolder}" \
+           --logfolder="${logdir}" \
+           --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- Process BOLDs
+       turnkey_preprocessBold() {
+           cyaneho "-- PENDING: preprocessBold processing steps go here... "
+           ${MNAPCOMMAND} preprocessBold \
+           --subjects="${project_batch_file}" \
+           --subjectsfolder="${mnap_subjectsfolder}" \
+           --logfolder="${logdir}" \
+           --overwrite="${OVERWRITE_STEP}"
+       }
+       # -- Process via CONC file
+       turnkey_preprocessConc() {
+           cyaneho "-- PENDING: preprocessConc processing steps go here... "
+           ${MNAPCOMMAND} preprocessConc \
+           --subjects="${project_batch_file}" \
+           --subjectsfolder="${mnap_subjectsfolder}" \
+           --overwrite="${OVERWRITE_STEP}" \
+           --logfolder="${logdir}"
+       }
+       # -- Compute GBC
+       turnkey_computeBOLDfcGBC() {
+       cyaneho "-- PENDING: computeBOLDfc processing steps for GBC go here... "
+           InputFile="bold1_Atlas_scrub_g7_hpss_res-VWMWB.dtseries.nii"
+           OutName="GBC_bold1_Atlas_scrub_g7_hpss_res-VWMWB"
+           Ignore=""
+           # ${MNAPCOMMAND} computeBOLDfc \
+           # --subjectsfolder="${mnap_subjectsfolder}" \
+           # --calculation="gbc" \
+           # --runtype="individual" \
+           # --subjects="${project_batch_file}" \
+           # --inputfiles="${InputFile}" \
+           # --inputpath="images/functional" \
+           # --extractdata="yes" \
+           # --outname="${OutName}" \
+           # --overwrite="${OVERWRITE_STEP}" \
+           # --ignore="${Ignore}" \
+           # --target=[] \
+           # --command="mFz:" \
+           # --targetf="${mnap_subjectsfolder}/${CASE}/images/functional" \
+           # --mask="5" \
+           # --rsmooth="0" \
+           # --rdilate="0" \
+           # --verbose="true" \
+           # --time="true" \
+           # --vstep="1000" \
+           # --covariance="true"
+       }
+       # -- Compute Seed FC for relevant ROIs
+       turnkey_computeBOLDfcSeed() {
+       cyaneho "-- PENDING: computeBOLDfc processing steps for seeds go here... "
+           # ${MNAPCOMMAND} computeBOLDfc \
+           # --subjectsfolder="${mnap_subjectsfolder}" \
+           # --function="computeboldfc" \
+           # --calculation="seed" \
+           # --runtype="individual" \
+           # --subjects="${project_batch_file}" \
+           # --inputfiles="bold1_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii" \
+           # --inputpath="images/functional" \
+           # --extractdata="yes" \
+           # --outname="boldRest1AtlasScrubHPSSg7resVWMWB" \
+           # --overwrite="${OVERWRITE_STEP}" \
+           # --roinfo="/gpfs/project/fas/n3/software/MNAP/general/templates/Thalamus_Atlas/Thal.FSL.Associative.Sensory.MNI152.CIFTI.Atlas.names" \
+           # --ignore="udvarsme" \
+           # --options="" \
+           # --method="" \
+           # --targetf="" \
+           # --mask="0" \
+           # --covariance="true"
+       }
+    #
+    # --------------- BOLD FC Processing and analyses end ----------------------
+    
 #
 # =-=-=-=-=-=-= TURNKEY COMMANDS END =-=-=-=-=-=-= 
 
 # -- Check turnkey steps and execute
 if [ "$TURNKEY_STEPS" == "all" ]; then
-	geho "==> Running all Turkey workflow steps: ${MNAPTurnkeyWorkflow}"; echo ""
-	for MNAPTurnkeyWorkflowStep in ${MNAPTurnkeyWorkflow}; do
-		turnkey_${MNAPTurnkeyWorkflowStep}
-	done
+    geho "==> Running all MNAP turkey workflow steps: ${MNAPTurnkeyWorkflow}"; echo ""
+    for TURNKEY_STEP in ${MNAPTurnkeyWorkflow}; do
+        turnkey_${TURNKEY_STEP}
+        # -- Check for completion of turnkey function
+        cd ${logdir}/comlogs
+        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1`
+        geho " -- Looking for incomplete/failed process"
+        if [[ -z `echo "${CheckLog}" | grep 'done'` ]]; then
+            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
+            TURNKEY_STEP_ERRORS="yes"
+        else
+            echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed"
+        fi
+    done
 fi
 if [ "$TURNKEY_STEPS" != "all" ]; then
-	TURNKEY_STEPS
-	geho "==> Running specific Turkey workflow steps: ${TURNKEY_STEPS}"; echo ""
-	for TURNKEY_STEP in ${TURNKEY_STEPS}; do
-		turnkey_${TURNKEY_STEP}
-	done
+    echo ""; cyaneho "==> Running the following MNAP turkey workflow steps: ${TURNKEY_STEPS}"; echo ""
+    unset TURNKEY_STEP_ERRORS
+    for TURNKEY_STEP in ${TURNKEY_STEPS}; do
+        turnkey_${TURNKEY_STEP}
+        # -- Check for completion of turnkey function
+        cd ${logdir}/comlogs
+        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1`
+        geho " -- Looking for incomplete/failed process"
+        if [[ -z `echo "${CheckLog}" | grep 'done'` ]]; then
+            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
+            TURNKEY_STEP_ERRORS="yes"
+        else
+            echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed"
+        fi
+    done
 fi
 
-echo ""; echo ""
-geho " ---- Turnkey Processing Calls done ----"; echo ""; echo ""
-geho " ---------------------------------------"; echo ""; echo ""
-
-# -- Check for completion
-geho " -- Looking into ${sourcepath} for incomplete/failed process"
-find ${logdir}/comlogs  -type f -not -name "done_*.log"  &> /dev/null
-filecnt=$(find ${logdir}/comlogs/  -type f -not -name "done_*.log"  | wc -l)  &> /dev/null
-
-if [[ ${filecnt} != "" ]]; then
-	echo ""
-	reho "Appears atleast ${filecnt} steps have failed"
-	echo ""
+if [[ ${TURNKEY_STEP_ERRORS} == "yes" ]]; then
+    echo ""
+    reho " ===> Appears some turnkey steps have failed. Check ${logdir}/comlogs/"
+    echo ""
 else
-	echo ""
-	geho "------------------------- Successful completion of work --------------------------------"
-	echo ""
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
 fi
 
 }

@@ -81,36 +81,36 @@ weho() {
 # ------------------------------------------------------------------------------
 
 show_usage_matlabHelp() {
-		echo ""
-		echo ""
-		echo "Complete listing of all MNAP-supported Matlab functions:"
-		echo "--------------------------------------------------------"
-		echo ""
-		MatlabFunctions=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/"`
-		MatlabFunctionsfcMRI=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
-		MatlabFunctionsGeneral=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "/general/"`
-		MatlabFunctionsGMRI=`ls $TOOLS/$MNAPREPO/matlab/gmri/\@gmrimage/*.m`
-		MatlabFunctionsStats=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "stats"`
-		echo "  * Functional connectivity tools"; echo ""
-		for MatlabFunction in $MatlabFunctionsfcMRI; do
-			echo "      ==> $MatlabFunction";
-		done
-		echo ""
-		echo "  * General image manipulation tools"; echo ""
-		for MatlabFunction in $MatlabFunctionsGeneral; do
-			echo "      ==> $MatlabFunction";
-		done
-		echo ""
-		echo "  * Specific image analyses tools"; echo ""
-		for MatlabFunction in $MatlabFunctionsGMRI; do
-			echo "      ==> $MatlabFunction";
-		done
-		echo ""
-		echo "  * Statistical tools"; echo ""
-		for MatlabFunction in $MatlabFunctionsStats; do
-			echo "      ==> $MatlabFunction";
-		done
-		echo ""
+        echo ""
+        echo ""
+        echo "Complete listing of all MNAP-supported Matlab functions:"
+        echo "--------------------------------------------------------"
+        echo ""
+        MatlabFunctions=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/"`
+        MatlabFunctionsfcMRI=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
+        MatlabFunctionsGeneral=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "/general/"`
+        MatlabFunctionsGMRI=`ls $TOOLS/$MNAPREPO/matlab/gmri/\@gmrimage/*.m`
+        MatlabFunctionsStats=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "stats"`
+        echo "  * Functional connectivity tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsfcMRI; do
+            echo "      ==> $MatlabFunction";
+        done
+        echo ""
+        echo "  * General image manipulation tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsGeneral; do
+            echo "      ==> $MatlabFunction";
+        done
+        echo ""
+        echo "  * Specific image analyses tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsGMRI; do
+            echo "      ==> $MatlabFunction";
+        done
+        echo ""
+        echo "  * Statistical tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsStats; do
+            echo "      ==> $MatlabFunction";
+        done
+        echo ""
 }
 
 show_usage() {
@@ -214,8 +214,8 @@ echo " These are accessed either directly via 'gmri' command from the terminal."
 echo " Alternatively the 'mnap' connector wrapper parses all functions via "
 echo " 'gmri' package as standard input."
 echo ""
-echo "	Example to pass function:                mnap <function_name> [options]"
-echo "	Example to request help for function:    mnap ?<function_name>"
+echo "    Example to pass function:                mnap <function_name> [options]"
+echo "    Example to request help for function:    mnap ?<function_name>"
 echo ""
 echo "`gmri`"
 echo "`gmri -l`"
@@ -245,36 +245,36 @@ echo ""
 # ------------------------------------------------------------------------------------------------------
 
 gmriFunction() {
-		echo ""
-		gmri ${gmriinput}
-		echo ""
-		exit 0
+        echo ""
+        gmri ${gmriinput}
+        echo ""
+        exit 0
 }
 show_usage_gmri() {
-		echo ""
-		gmri ?${UsageInput}
-		echo ""
+        echo ""
+        gmri ?${UsageInput}
+        echo ""
 }
 
 show_help_gmri() {
-		echo ""
-		gmri
-		echo ""
+        echo ""
+        gmri
+        echo ""
 }
 show_options_gmri() {
-		echo ""
-		gmri -o
-		echo ""
+        echo ""
+        gmri -o
+        echo ""
 }
 show_commands_gmri() {
-		echo ""
-		gmri -l
-		echo ""
+        echo ""
+        gmri -l
+        echo ""
 }
 show_processing_gmri() {
-		echo ""
-		gmri -c
-		echo ""
+        echo ""
+        gmri -c
+        echo ""
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -289,8 +289,8 @@ Platform="Platform Information: `uname -a`"
 
 # -- Check if study folder is created
 if [[ ! -d ${StudyFolder} ]]; then 
-	echo "Study folder ${StudyFolder} not found. Generating now..."
-	gmri createStudy ${StudyFolder}
+    echo "Study folder ${StudyFolder} not found. Generating now..."
+    gmri createStudy ${StudyFolder}
 fi
 
 # -- Define specific logs
@@ -333,25 +333,25 @@ ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
 # -- Run the commands locally
 if [[ "$Cluster" == 1 ]]; then
-	echo "--------------------------------------------------------------"
-	echo ""
-	geho "   Running ${FunctionToRun} locally on `hostname`"
-	geho "   Command log:     ${Runlog}  "
-	geho "   Function output: ${ComlogTmp} "
-	echo ""
-	eval ${ComRunAll}
+    echo "--------------------------------------------------------------"
+    echo ""
+    geho "   Running ${FunctionToRun} locally on `hostname`"
+    geho "   Command log:     ${Runlog}  "
+    geho "   Function output: ${ComlogTmp} "
+    echo ""
+    eval ${ComRunAll}
 fi
 # -- Run the commands via scheduler
 if [[ "$Cluster" == 2 ]]; then
-	cd ${MasterRunLogFolder}
-	gmri schedule command="${ComRunAll}" settings="${Scheduler}"
-	echo "---------------------------------------------------------------------------------"
-	echo ""
-	geho "   Data successfully submitted to scheduler"
-	geho "   Scheduler details: ${Scheduler}"
-	geho "   Command log:     ${Runlog}  "
-	geho "   Function output: ${ComlogTmp} "
-	echo ""
+    cd ${MasterRunLogFolder}
+    gmri schedule command="${ComRunAll}" settings="${Scheduler}"
+    echo "---------------------------------------------------------------------------------"
+    echo ""
+    geho "   Data successfully submitted to scheduler"
+    geho "   Scheduler details: ${Scheduler}"
+    geho "   Command log:     ${Runlog}  "
+    geho "   Function output: ${ComlogTmp} "
+    echo ""
 fi
 }
 
@@ -365,7 +365,9 @@ geho "Full command:"
 echo "${TOOLS}/${MNAPREPO}/connector/RunTurnkey.sh \
 --batchfile="${BATCH_PARAMETERS_FILENAME}" \
 --path="${STUDY_PATH}" \
---turnkey="${TURNKEY_TYPE}" \
+--turnkeytype="${TURNKEY_TYPE}" \
+--turnkeysteps="${TURNKEY_STEPS}" \
+--overwritestep="${OVERWRITE_STEP}" \
 --overwritesubject="${OVERWRITE_SUBJECT}" \
 --overwriteproject="${OVERWRITE_PROJECT}" \
 --mappingfile="${SCAN_MAPPING_FILENAME}" \
@@ -379,7 +381,9 @@ echo ""
 CommandToRun="${TOOLS}/${MNAPREPO}/connector/RunTurnkey.sh \
 --batchfile="${BATCH_PARAMETERS_FILENAME}" \
 --path="${STUDY_PATH}" \
---turnkey="${TURNKEY_TYPE}" \
+--turnkeytype="${TURNKEY_TYPE}" \
+--turnkeysteps="${TURNKEY_STEPS}" \
+--overwritestep="${OVERWRITE_STEP}" \
 --overwritesubject="${OVERWRITE_SUBJECT}" \
 --overwriteproject="${OVERWRITE_PROJECT}" \
 --mappingfile="${SCAN_MAPPING_FILENAME}" \
@@ -404,33 +408,33 @@ organizeDicom() {
 #    This function passes parameters into two NIUtilities commands: sortDicom and dicom2niix
 mkdir ${SubjectsFolder}/${CASE}/dicom &> /dev/null
 if [ "$Overwrite" == "yes" ]; then
-	echo ""
-	reho "===> Removing prior DICOM run log. Will initiate new run."
-	rm -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
+    echo ""
+    reho "===> Removing prior DICOM run log. Will initiate new run."
+    rm -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt &> /dev/null
 fi
 echo ""
 echo "===> Checking for presence of ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
 echo ""
 # -- Check if DICOM-Report.txt is there
 if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
-	echo ""
-	geho "===> Found ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
-	geho "    Note: To re-run set --overwrite='yes'"
-	echo ""
-	geho " ... $CASE ---> organizeDicom done"
-	echo ""
-	exit 0
+    echo ""
+    geho "===> Found ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt"
+    geho "    Note: To re-run set --overwrite='yes'"
+    echo ""
+    geho " ... $CASE ---> organizeDicom done"
+    echo ""
+    exit 0
 fi
 # -- Check if inbox missing or is empty
 if [ ! -d ${SubjectsFolder}/${CASE}/inbox ]; then
-	reho "===> ${SubjectsFolder}/${CASE}/inbox/ not found. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
-	exit 1
+    reho "===> ${SubjectsFolder}/${CASE}/inbox/ not found. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
+    exit 1
 else
-	InboxCheck=`ls ${SubjectsFolder}/${CASE}/inbox/`
-	if [[ ${InboxCheck} == "" ]]; then
-		reho "===> ${SubjectsFolder}/${CASE}/inbox/ found but empty. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
-		exit 1
-	fi
+    InboxCheck=`ls ${SubjectsFolder}/${CASE}/inbox/`
+    if [[ ${InboxCheck} == "" ]]; then
+        reho "===> ${SubjectsFolder}/${CASE}/inbox/ found but empty. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
+        exit 1
+    fi
 fi
 # -- Specify command variable
 unset CommandToRun
@@ -531,45 +535,45 @@ echo ""
 
 createLists() {
 if [ "$ListGenerate" == "batch" ]; then
-	# -- Check if appending list
-	if [ "$Append" == "yes" ]; then
-		# -- If append was set to yes and file exists then clear header
-		HeaderBatch="no"
-		echo ""
-		geho "---------------------------------------------------------------------"
-		geho "--> You are appending the batch header file with $CASE               "
-		geho "--> --headerbatch is now set to 'no'                                 "
-		geho "--> Check usage to overwrite the file                                "
-		geho "---------------------------------------------------------------------"
-		echo ""
-	else
-		echo ""
-		geho "---------------------------------------------------------------------"
-		geho "--> Generaring new batch file with specified header for $CASE        "
-		geho "---------------------------------------------------------------------"
-		echo ""
-	fi
-	echo "Running locally on `hostname`"
-	echo "Check log file output here: $LogFolder"
-	echo "--------------------------------------------------------------"
-	echo ""
-	${ListFunction} \
-	--subjectsfolder="${SubjectsFolder}" \
-	--subjects="${CASE}" \
-	--outname="${ListName}" \
-	--outpath="${ListPath}"
-	echo ""
+    # -- Check if appending list
+    if [ "$Append" == "yes" ]; then
+        # -- If append was set to yes and file exists then clear header
+        HeaderBatch="no"
+        echo ""
+        geho "---------------------------------------------------------------------"
+        geho "--> You are appending the batch header file with $CASE               "
+        geho "--> --headerbatch is now set to 'no'                                 "
+        geho "--> Check usage to overwrite the file                                "
+        geho "---------------------------------------------------------------------"
+        echo ""
+    else
+        echo ""
+        geho "---------------------------------------------------------------------"
+        geho "--> Generaring new batch file with specified header for $CASE        "
+        geho "---------------------------------------------------------------------"
+        echo ""
+    fi
+    echo "Running locally on `hostname`"
+    echo "Check log file output here: $LogFolder"
+    echo "--------------------------------------------------------------"
+    echo ""
+    ${ListFunction} \
+    --subjectsfolder="${SubjectsFolder}" \
+    --subjects="${CASE}" \
+    --outname="${ListName}" \
+    --outpath="${ListPath}"
+    echo ""
 fi
 if [ "$ListGenerate" == "analysis" ]; then
-	unset HeaderBatch
-	unset Append
-	echo ""
-	geho "---------------------------------------------------------------------"
-	geho "--> Generaring analysis list files for $CASE... "
-	geho "--> Check output here: ${SubjectsFolder}/lists... "
-	geho "---------------------------------------------------------------------"
-	echo ""
-	source "$ListFunction"
+    unset HeaderBatch
+    unset Append
+    echo ""
+    geho "---------------------------------------------------------------------"
+    geho "--> Generaring analysis list files for $CASE... "
+    geho "--> Check output here: ${SubjectsFolder}/lists... "
+    geho "---------------------------------------------------------------------"
+    echo ""
+    source "$ListFunction"
 fi
 }
 
@@ -697,7 +701,7 @@ hcpdLegacy() {
 # -- Unique requirements for this function:
 #      Installed versions of: FSL5.0.9 or higher
 #      Needs CUDA 6.0 libraries to run eddy_cuda (10x faster than on a CPU)
-
+#
 # -- Parse general parameters
 EchoSpacing="$EchoSpacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
 PEdir="$PEdir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
@@ -717,8 +721,23 @@ FieldMapFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/FieldMap_strc
 LogFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/log
 Overwrite="$Overwrite"
 
+# -- Echo command
+geho "Full Command:"; echo ""
+geho "${TOOLS}/${MNAPREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
+--subjectsfolder=${SubjectsFolder} \
+--subject=${CASE} \
+--scanner=${Scanner} \
+--usefieldmap=${UseFieldmap} \
+--PEdir=${PEdir} \
+--echospacing=${EchoSpacing} \
+--TE=${TE} \
+--unwarpdir=${UnwarpDir} \
+--diffdatasuffix=${DiffDataSuffix} \
+--overwrite=${Overwrite} "
+echo ""
+
 # -- Specify command variable
-CommandToRun="${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLegacy.sh \
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --scanner=${Scanner} \
@@ -731,86 +750,10 @@ CommandToRun="${HCPPIPEDIR}/DiffusionPreprocessingLegacy/DiffPreprocPipelineLega
 --overwrite=${Overwrite}"
 # -- Connector execute function
 connectorExec
-
 }
 show_usage_hcpdLegacy() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function runs the DWI preprocessing using the FUGUE method for legacy data that are not TOPUP compatible"
-echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
-echo ""
-echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
-echo " <study_folder>/<case>/hcp/<case>/T1w       ---> T1w data needs to be here"
-echo ""
-echo "  Note: "
-echo "  - If PreFreeSurfer component of the HCP Pipelines was run the function will make use of the T1w data [Results will be better due to superior brain stripping]."
-echo "  - If PreFreeSurfer component of the HCP Pipelines was NOT run the function will start from raw T1w data [Results may be less optimal]."
-echo "  - If you are this function interactively you need to be on a GPU-enabled node or send it to a GPU-enabled queue."
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "     --subjectsfolder=<folder_with_subjects>       Path to study folder that contains subjects"
-echo "     --subject=<list_of_cases>                     List of subjects to run"
-echo "     --scanner=<scanner_manufacturer>              Name of scanner manufacturer (siemens or ge supported) "
-echo "     --usefieldmap=<yes_no>                        Whether to use the standard field map. If set to <yes> then the TE parameter becomes mandatory:"
-echo "     --echospacing=<echo_spacing_value>            EPI Echo Spacing for data [in msec]; e.g. 0.69"
-echo "     --PEdir=<phase_encoding_direction>            Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"
-echo "     --unwarpdir=<epi_phase_unwarping_direction>   Direction for EPI image unwarping; e.g. x or x- for LR/RL, y or y- for AP/PA; may been to try out both -/+ combinations"
-echo "     --diffdatasuffix=<diffusion_data_name>        Name of the DWI image; e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR"
-echo " "
-echo "-- OPTIONAL PARMETERS:"
-echo ""
-echo "     --overwrite=<clean_prior_run>           Delete prior run for a given subject"
-echo ""
-echo " FIELDMAP-SPECFIC PARAMETERS (these become mandatory if --usefieldmap=yes):"
-echo ""
-echo "     --TE=<delta_te_value_for_fieldmap>      This is the echo time difference of the fieldmap sequence - find this out form the operator - defaults are *usually* 2.46ms on SIEMENS"
-echo ""
-echo ""
-echo "-- Example with flagged parameters for a local run using Siemens FieldMap (needs GPU-enabled node):"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--function='hcpdLegacy' \ "
-echo "--PEdir='1' \ "
-echo "--echospacing='0.69' \ "
-echo "--TE='2.46' \ "
-echo "--unwarpdir='x-' \ "
-echo "--diffdatasuffix='DWI_dir91_LR' \ "
-echo "--usefieldmap='yes' \ "
-echo "--scanner='siemens' \ "
-echo "--overwrite='yes'"
-echo ""
-echo "-- Example with flagged parameters for submission to the scheduler using Siemens FieldMap [ needs GPU-enabled queue ]:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--function='hcpdLegacy' \ "
-echo "--PEdir='1' \ "
-echo "--echospacing='0.69' \ "
-echo "--TE='2.46' \ "
-echo "--unwarpdir='x-' \ "
-echo "--diffdatasuffix='DWI_dir91_LR' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo "--usefieldmap='yes' \ "
-echo "--scanner='siemens' \ "
-echo "--overwrite='yes' \ "
-echo ""
-echo "-- Example with flagged parameters for submission to the scheduler using GE data w/out FieldMap [ needs GPU-enabled queue ]:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--function='hcpdLegacy' \ "
-echo "--diffdatasuffix='DWI_dir91_LR' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo "--usefieldmap='no' \ "
-echo "--PEdir='1' \ "
-echo "--echospacing='0.69' \ "
-echo "--unwarpdir='x-' \ "
-echo "--scanner='ge' \ "
-echo "--overwrite='yes' \ "
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${MNAPREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -823,10 +766,10 @@ eddyQC() {
 EddySquadCheck=`which eddy_squad`
 EddyQuadCheck=`which eddy_quad`
 if [ -z ${EddySquadCheck} ] || [ -z ${EddySquadCheck} ]; then
-	echo ""
-	reho " -- ERROR: EDDY QC does not seem to be installed on this system."
-	echo ""
-	exit 1
+    echo ""
+    reho " -- ERROR: EDDY QC does not seem to be installed on this system."
+    echo ""
+    exit 1
 fi
 # -- INPUTS:  eddy-cleaned DWI Data
 # -- OUTPUTS: located in <eddyBase>.qc per EDDY QC specification
@@ -1087,123 +1030,123 @@ OutPath="$OutPathFC"
 OutName="$OutName"
 ExtractData="$ExtractData"
 # -- Parse additional parameters
-Calculation="$Calculation"		# --calculation=
-RunType="$RunType"				# --runtype=
-FileList="$FileList"			# --flist=
-IgnoreFrames="$IgnoreFrames"	# --ignore=
-MaskFrames="$MaskFrames"		# --mask=
-Covariance="$Covariance"		# --covariance=
-TargetROI="$TargetROI"			# --target=
-RadiusSmooth="$RadiusSmooth"	# --rsmooth=
-RadiusDilate="$RadiusDilate"	# --rdilate=
-GBCCommand="$GBCCommand"		# --command=
-Verbose="$Verbose"				# --verbose=
-ComputeTime="$ComputeTime"		# --time=
-VoxelStep="$VoxelStep"			# --vstep=
-ROIInfo="$ROIInfo"				# --roinfo=
-FCCommand="$FCCommand"			# --options=
-Method="$Method"				# --method=
-InputPath="$InputPath"			# --inputpath
-Overwrite="$Overwrite"			# --overwrite
-MemLimit="$MemLimit"			# --mem-limit=
+Calculation="$Calculation"        # --calculation=
+RunType="$RunType"                # --runtype=
+FileList="$FileList"            # --flist=
+IgnoreFrames="$IgnoreFrames"    # --ignore=
+MaskFrames="$MaskFrames"        # --mask=
+Covariance="$Covariance"        # --covariance=
+TargetROI="$TargetROI"            # --target=
+RadiusSmooth="$RadiusSmooth"    # --rsmooth=
+RadiusDilate="$RadiusDilate"    # --rdilate=
+GBCCommand="$GBCCommand"        # --command=
+Verbose="$Verbose"                # --verbose=
+ComputeTime="$ComputeTime"        # --time=
+VoxelStep="$VoxelStep"            # --vstep=
+ROIInfo="$ROIInfo"                # --roinfo=
+FCCommand="$FCCommand"            # --options=
+Method="$Method"                # --method=
+InputPath="$InputPath"            # --inputpath
+Overwrite="$Overwrite"            # --overwrite
+MemLimit="$MemLimit"            # --mem-limit=
 
 # -- Check type of run
 if [ "${RunType}" == "individual" ]; then
-	OutPath="${SubjectsFolder}/${CASE}/${InputPath}"
-	# -- Make sure individual runs default to the original input path location (/images/functional)
-	if [ "$InputPath" == "" ]; then
-		InputPath="${SubjectsFolder}/${CASE}/images/functional"
-	fi
-	# -- Make sure individual runs default to the original input path location (/images/functional)
-	if [ "$OutPath" == "" ]; then
-		OutPath="${SubjectsFolder}/${CASE}/${InputPath}"
-	fi
+    OutPath="${SubjectsFolder}/${CASE}/${InputPath}"
+    # -- Make sure individual runs default to the original input path location (/images/functional)
+    if [ "$InputPath" == "" ]; then
+        InputPath="${SubjectsFolder}/${CASE}/images/functional"
+    fi
+    # -- Make sure individual runs default to the original input path location (/images/functional)
+    if [ "$OutPath" == "" ]; then
+        OutPath="${SubjectsFolder}/${CASE}/${InputPath}"
+    fi
 fi
 
 # -- Check type of connectivity calculation is seed
 if [ ${Calculation} == "seed" ]; then
-	echo ""
-	# -- Echo command
-	geho "Full Command:"; echo ""
-	geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
-	echo ""
-	# -- Specify command variable
-	CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--calculation=${Calculation} \
-	--runtype=${RunType} \
-	--subjects=${CASE} \
-	--inputfiles=${InputFiles} \
-	--inputpath=${InputPath} \
-	--extractdata=${ExtractData} \
-	--outname=${OutName} \
-	--flist=${FileList} \
-	--overwrite=${Overwrite} \
-	--ignore=${IgnoreFrames} \
-	--roinfo=${ROIInfo} \
-	--options=${FCCommand} \
-	--method=${Method} \
-	--targetf=${OutPath} \
-	--mask='${MaskFrames}' \
-	--covariance=${Covariance}"
-	# -- Connector execute function
-	connectorExec
+    echo ""
+    # -- Echo command
+    geho "Full Command:"; echo ""
+    geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
+    echo ""
+    # -- Specify command variable
+    CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    --subjectsfolder=${SubjectsFolder} \
+    --calculation=${Calculation} \
+    --runtype=${RunType} \
+    --subjects=${CASE} \
+    --inputfiles=${InputFiles} \
+    --inputpath=${InputPath} \
+    --extractdata=${ExtractData} \
+    --outname=${OutName} \
+    --flist=${FileList} \
+    --overwrite=${Overwrite} \
+    --ignore=${IgnoreFrames} \
+    --roinfo=${ROIInfo} \
+    --options=${FCCommand} \
+    --method=${Method} \
+    --targetf=${OutPath} \
+    --mask='${MaskFrames}' \
+    --covariance=${Covariance}"
+    # -- Connector execute function
+    connectorExec
 fi
 # -- Check type of connectivity calculation is gbc
 if [ ${Calculation} == "gbc" ]; then
-	echo ""
-	# -- Echo command
-	geho "Full Command:"; echo ""
-	geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --flist=${FileList} --outname=${OutName} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --target=${TargetROI} --command=${GBCCommand} --targetf=${OutPath} --mask=${MaskFrames} --rsmooth=${RadiusSmooth} --rdilate=${RadiusDilate} --verbose=${Verbose} --time=${ComputeTime} --vstep=${VoxelStep} --covariance=${Covariance}"
-	echo ""
-	# -- Specify command variable
-	CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--calculation=${Calculation} \
-	--runtype=${RunType} \
-	--subjects=${CASE} \
-	--inputfiles=${InputFiles} \
-	--inputpath=${InputPath} \
-	--extractdata=${ExtractData} \
-	--outname=${OutName} \
-	--flist=${FileList} \
-	--overwrite=${Overwrite} \
-	--ignore=${IgnoreFrames} \
-	--target=${TargetROI} \
-	--command=${GBCCommand} \
-	--targetf=${OutPath} \
-	--mask=${MaskFrames} \
-	--rsmooth=${RadiusSmooth} \
-	--rdilate=${RadiusDilate} \
-	--verbose=${Verbose} \
-	--time=${ComputeTime} \
-	--vstep=${VoxelStep} \
-	--covariance=${Covariance}"
-	# -- Connector execute function
-	connectorExec
+    echo ""
+    # -- Echo command
+    geho "Full Command:"; echo ""
+    geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --flist=${FileList} --outname=${OutName} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --target=${TargetROI} --command=${GBCCommand} --targetf=${OutPath} --mask=${MaskFrames} --rsmooth=${RadiusSmooth} --rdilate=${RadiusDilate} --verbose=${Verbose} --time=${ComputeTime} --vstep=${VoxelStep} --covariance=${Covariance}"
+    echo ""
+    # -- Specify command variable
+    CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    --subjectsfolder=${SubjectsFolder} \
+    --calculation=${Calculation} \
+    --runtype=${RunType} \
+    --subjects=${CASE} \
+    --inputfiles=${InputFiles} \
+    --inputpath=${InputPath} \
+    --extractdata=${ExtractData} \
+    --outname=${OutName} \
+    --flist=${FileList} \
+    --overwrite=${Overwrite} \
+    --ignore=${IgnoreFrames} \
+    --target=${TargetROI} \
+    --command=${GBCCommand} \
+    --targetf=${OutPath} \
+    --mask=${MaskFrames} \
+    --rsmooth=${RadiusSmooth} \
+    --rdilate=${RadiusDilate} \
+    --verbose=${Verbose} \
+    --time=${ComputeTime} \
+    --vstep=${VoxelStep} \
+    --covariance=${Covariance}"
+    # -- Connector execute function
+    connectorExec
 fi
 # -- Check type of connectivity calculation is seed
 if [ ${Calculation} == "dense" ]; then
-	echo ""
-	# -- Echo command
-	geho "Full Command:"; echo ""
-	geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --outname=${OutName} --overwrite=${Overwrite} --targetf=${OutPath} --covariance=${Covariance} --mem-limit=${MemLimit}"
-	echo ""
-	# -- Specify command variable
-	CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
-	--subjectsfolder=${SubjectsFolder} \
-	--calculation=${Calculation} \
-	--runtype=${RunType} \
-	--subjects=${CASE} \
-	--inputfiles=${InputFiles} \
-	--inputpath=${InputPath} \
-	--outname=${OutName} \
-	--overwrite=${Overwrite} \
-	--targetf=${OutPath} \
-	--covariance=${Covariance} \"
-	--mem-limit=${MemLimit} "
-	# -- Connector execute function
-	connectorExec
+    echo ""
+    # -- Echo command
+    geho "Full Command:"; echo ""
+    geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --outname=${OutName} --overwrite=${Overwrite} --targetf=${OutPath} --covariance=${Covariance} --mem-limit=${MemLimit}"
+    echo ""
+    # -- Specify command variable
+    CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    --subjectsfolder=${SubjectsFolder} \
+    --calculation=${Calculation} \
+    --runtype=${RunType} \
+    --subjects=${CASE} \
+    --inputfiles=${InputFiles} \
+    --inputpath=${InputPath} \
+    --outname=${OutName} \
+    --overwrite=${Overwrite} \
+    --targetf=${OutPath} \
+    --covariance=${Covariance} \"
+    --mem-limit=${MemLimit} "
+    # -- Connector execute function
+    connectorExec
 fi
 }
 show_usage_computeBOLDfc() {
@@ -1308,9 +1251,9 @@ ParcellationFile="$ParcellationFile"
 Cluster="$RunMethod"
 ExtractData="$ExtractData"
 if [ -z ${SingleInputFile} ]; then
-	BOLDOutput="${SubjectsFolder}/${CASE}/${OutPath}"
+    BOLDOutput="${SubjectsFolder}/${CASE}/${OutPath}"
 else
-	BOLDOutput="${OutPath}"
+    BOLDOutput="${OutPath}"
 fi
 # -- Command to run
 CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/BOLDParcellation.sh \
@@ -1357,7 +1300,7 @@ echo "-- OPTIONAL PARMETERS:"
 echo ""
 echo "--singleinputfile=<parcellate_single_file>                     Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --studyfolder, -inputfile, --inputpath ]"
 echo "--overwrite=<clean_prior_run>                                  Delete prior run"
-echo "--computepconn=<specify_parcellated_connectivity_calculation>	 Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
+echo "--computepconn=<specify_parcellated_connectivity_calculation>     Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
 echo "--useweights=<clean_prior_run>                                 If computing a  parcellated connectivity file you can specify which frames to omit [ e.g. yes' or no; default is set to no ] "
 echo "--weightsfile=<location_and_name_of_weights_file>              Specify the location of the weights file relative to the master study folder [ e.g. /images/functional/movement/bold1.use ]"
 echo "--extractdata=<save_out_the_data_as_as_csv>                    Specify if you want to save out the matrix as a CSV file"
@@ -1414,15 +1357,15 @@ SingleInputFile="$SingleInputFile"
 Cluster="$RunMethod"
 ExtractData="${ExtractData}"
 if [ -z "$SingleInputFile" ]; then
-	OutPath="${SubjectsFolder}/${CASE}/${OutPath}"
+    OutPath="${SubjectsFolder}/${CASE}/${OutPath}"
 else
-	OutPath="${OutPath}"
-	InputFile="${SingleInputFile}"
+    OutPath="${OutPath}"
+    InputFile="${SingleInputFile}"
 fi
 if [ "${ROIFileSubjectSpecific}" == "no" ]; then
-	ROIFile="${ROIFile}"
+    ROIFile="${ROIFile}"
 else
-	ROIFile="${SubjectsFolder}/${CASE}/${ROIFile}"
+    ROIFile="${SubjectsFolder}/${CASE}/${ROIFile}"
 fi
 # -- Command to run
 CommandToRun=". /$TOOLS/${MNAPREPO}/connector/functions/ROIExtract.sh \
@@ -1452,7 +1395,7 @@ echo "--outname=<name_of_output_file>            Specify base name of the output
 echo " "
 echo "-- OUTPUT FORMAT:"
 echo ""
-echo "<output_name>.csv	  <-- matrix with one ROI per row and one column per frame/volume in singleinputfile"
+echo "<output_name>.csv      <-- matrix with one ROI per row and one column per frame/volume in singleinputfile"
 echo ""
 echo ""
 echo "OPTIONAL PARMETERS:"
@@ -1482,22 +1425,22 @@ FSLDtifit() {
 # -- Check if overwrite flag was set
 minimumfilesize=100000
 if [ "$Overwrite" == "yes" ]; then
-	echo ""
-	reho "Removing existing dtifit run for $CASE..."
-	echo ""
-	rm -rf ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_* > /dev/null 2>&1
+    echo ""
+    reho "Removing existing dtifit run for $CASE..."
+    echo ""
+    rm -rf ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_* > /dev/null 2>&1
 fi
 # -- Check file presence
 if [ -a ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz ]; then
-	actualfilesize=$(wc -c <${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz)
+    actualfilesize=$(wc -c <${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz)
 else
-	actualfilesize="0"
+    actualfilesize="0"
 fi
 if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
-	echo ""
-	echo "--- DTI Fit completed for $CASE ---"
-	echo ""
-	exit 0
+    echo ""
+    echo "--- DTI Fit completed for $CASE ---"
+    echo ""
+    exit 0
 fi
 # -- Command to run
 CommandToRun="dtifit --data=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./data --out=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./dti --mask=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./nodif_brain_mask --bvecs=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvecs --bvals=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvals"
@@ -1547,58 +1490,58 @@ Overwrite="$Overwrite"
 module load GPU/Cuda/6.5 > /dev/null 2>&1
 # -- Check if overwrite flag was set
 if [ "$Overwrite" == "yes" ]; then
-	echo ""
-	reho "Removing existing Bedpostx run for $CASE..."
-	echo ""
-	rm -rf "$BedPostXFolder" > /dev/null 2>&1
+    echo ""
+    reho "Removing existing Bedpostx run for $CASE..."
+    echo ""
+    rm -rf "$BedPostXFolder" > /dev/null 2>&1
 fi
 geho "Checking if Bedpostx was completed on $CASE..."
 # Set file depending on model specification
 if [ "$Model" == 2 ]; then
-	CheckFile="mean_d_stdsamples.nii.gz"
+    CheckFile="mean_d_stdsamples.nii.gz"
 fi
 if [ "$Model" == 3 ]; then
-	CheckFile="mean_Rsamples.nii.gz"
+    CheckFile="mean_Rsamples.nii.gz"
 fi
 if [ "$Rician" == "no" ] || [ "$Rician" == "NO" ]; then
-	echo ""
-	geho "Omitting --rician flag"
-	RicianFlag=""
-	echo ""
+    echo ""
+    geho "Omitting --rician flag"
+    RicianFlag=""
+    echo ""
 else
-	echo ""
-	geho "Setting --rician flag"
-	RicianFlag="--rician"
-	echo ""
+    echo ""
+    geho "Setting --rician flag"
+    RicianFlag="--rician"
+    echo ""
 fi
 # -- Check if the file even exists
 if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"$CheckFile" ]; then
-	# -- Set file sizes to check for completion
-	minimumfilesize=20000000
-	actualfilesize=`wc -c < ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
-	filecount=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
+    # -- Set file sizes to check for completion
+    minimumfilesize=20000000
+    actualfilesize=`wc -c < ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
+    filecount=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
 fi
 # -- Then check if run is complete based on file count
 if [ "$filecount" == 9 ]; then > /dev/null 2>&1
-	echo ""
-	cyaneho " --> $filecount merged samples for $CASE found."
-	# -- Then check if run is complete based on file size
-	if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
-		echo ""
-		cyaneho " --> Bedpostx outputs found and completed for $CASE"
-		echo ""
-		cyaneho "Check prior output logs here: $LogFolder"
-		echo ""
-		echo "--------------------------------------------------------------"
-		echo ""
-		exit 0
-	else
-		echo ""
-		reho " --> Bedpostx outputs missing or incomplete for $CASE"
-		echo ""
-		reho "--------------------------------------------------------------"
-		echo ""
-	fi
+    echo ""
+    cyaneho " --> $filecount merged samples for $CASE found."
+    # -- Then check if run is complete based on file size
+    if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
+        echo ""
+        cyaneho " --> Bedpostx outputs found and completed for $CASE"
+        echo ""
+        cyaneho "Check prior output logs here: $LogFolder"
+        echo ""
+        echo "--------------------------------------------------------------"
+        echo ""
+        exit 0
+    else
+        echo ""
+        reho " --> Bedpostx outputs missing or incomplete for $CASE"
+        echo ""
+        reho "--------------------------------------------------------------"
+        echo ""
+    fi
 fi
 reho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
 echo ""
@@ -1606,9 +1549,9 @@ echo ""
 mkdir ${BedPostXFolder} > /dev/null 2>&1
 # -- Command to run
 if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-	CommandToRun="${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}"
+    CommandToRun="${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}"
 else
-	CommandToRun="${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}"
+    CommandToRun="${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}"
 fi
 # -- Connector execute function
 connectorExec
@@ -1658,12 +1601,12 @@ echo ""
 autoPtx() {
 # -- Check inputs
 if [[ -d ${BedPostXFolder} ]]; then 
-	reho "Prior BedpostX run not found or incomplete for $CASE. Check work and re-run."
-	exit 1
+    reho "Prior BedpostX run not found or incomplete for $CASE. Check work and re-run."
+    exit 1
 fi
 if [[ -z ${AutoPtxFolder} ]]; then 
-	reho "AutoPtxFolder environment variable not. Set it correctly and re-run."
-	exit 1
+    reho "AutoPtxFolder environment variable not. Set it correctly and re-run."
+    exit 1
 fi
 # -- Set commands
 Com1="${AutoPtxFolder}/autoptx ${SubjectsFolder} ${CASE} ${BedPostXFolder}"
@@ -1748,58 +1691,58 @@ mkdir "$ResultsFolder"  &> /dev/null
 # -- Check if Matrix 1 or 3 flag set
 # -------------------------------------------------
 if [ "$MatrixOne" == "yes" ]; then
-	MNumber="1"
-	if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
+    MNumber="1"
+    if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
 fi
 if [ "$MatrixThree" == "yes" ]; then
-	MNumber="3"
-	if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixThree=3000; fi
+    MNumber="3"
+    if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixThree=3000; fi
 fi
 if [ "$MatrixOne" == "yes" ] && [ "$MatrixThree" == "yes" ]; then
-	MNumber="1 3"
+    MNumber="1 3"
 fi
 
 # -------------------------------------------------
 # -- Do work for Matrix 1 or 3
 # -------------------------------------------------
 for MNum in $MNumber; do
-	if [ "$MNum" == "1" ]; then NSamples="$NsamplesMatrixOne"; fi
-	if [ "$MNum" == "3" ]; then NSamples="$NsamplesMatrixThree"; fi
-	# -- Check of overwrite flag was set
-	if [ "$Overwrite" == "yes" ]; then
-		echo ""
-		reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
-		echo ""
-		rm -f "$ResultsFolder"/Conn${MNum}.dconn.nii.gz &> /dev/null
-	fi
-	# -- Check for Matrix completion
-	echo ""
-	geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
-	echo ""
-	# -- Check if the file even exists
-	if [ -f "$ResultsFolder"/Conn${MNum}.dconn.nii.gz ]; then
-		# -- Set file sizes to check for completion
-		actualfilesize=`wc -c < "$ResultsFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1
-		# -- Then check if Matrix run is complete based on size
-		if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
-			echo ""
-			cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for $CASE"
-			cyaneho "To re-run set overwrite flag to 'yes'"
-			cyaneho "Check prior output logs here: $LogFolder"
-			echo ""
-			echo "--------------------------------------------------------------"
-			echo ""
-		fi
-	else
-		# -- If run is incomplete perform run for Matrix
-		echo ""
-		geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
-		echo ""
-		# -- Command to run
-		CommandToRun="{ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}"
-		# -- Connector execute function
-		connectorExec
-	fi
+    if [ "$MNum" == "1" ]; then NSamples="$NsamplesMatrixOne"; fi
+    if [ "$MNum" == "3" ]; then NSamples="$NsamplesMatrixThree"; fi
+    # -- Check of overwrite flag was set
+    if [ "$Overwrite" == "yes" ]; then
+        echo ""
+        reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
+        echo ""
+        rm -f "$ResultsFolder"/Conn${MNum}.dconn.nii.gz &> /dev/null
+    fi
+    # -- Check for Matrix completion
+    echo ""
+    geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
+    echo ""
+    # -- Check if the file even exists
+    if [ -f "$ResultsFolder"/Conn${MNum}.dconn.nii.gz ]; then
+        # -- Set file sizes to check for completion
+        actualfilesize=`wc -c < "$ResultsFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1
+        # -- Then check if Matrix run is complete based on size
+        if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
+            echo ""
+            cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for $CASE"
+            cyaneho "To re-run set overwrite flag to 'yes'"
+            cyaneho "Check prior output logs here: $LogFolder"
+            echo ""
+            echo "--------------------------------------------------------------"
+            echo ""
+        fi
+    else
+        # -- If run is incomplete perform run for Matrix
+        echo ""
+        geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
+        echo ""
+        # -- Command to run
+        CommandToRun="{ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}"
+        # -- Connector execute function
+        connectorExec
+    fi
 done
 }
 show_usage_probtrackxGPUDense() {
@@ -1884,28 +1827,28 @@ AWSHCPSync() {
 mkdir ${SubjectsFolder}/aws.logs &> /dev/null
 cd $SubjectsFolder}/aws.logs
 if [ ${RunMethod} == "2" ]; then
-	reho "AWS sync dry run..."
-	if [ -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear ]; then
-		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
-		AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-		time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
-	else
-		mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
-		AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-		time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
-	fi
+    reho "AWS sync dry run..."
+    if [ -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear ]; then
+        mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
+        AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
+    else
+        mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
+        AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        time aws s3 sync --dryrun s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
+    fi
 fi
 if [ ${RunMethod} == "1" ]; then
-	geho "AWS sync running..."
-	if [ -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear ]; then
-		mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
-		AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-		time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
-	else
-		mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
-		AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-		time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
-	fi
+    geho "AWS sync running..."
+    if [ -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear ]; then
+        mkdir ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
+        AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
+    else
+        mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality} &> /dev/null
+        AWSSyncTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        time aws s3 sync s3:/${Awsuri}/${CASE}/${Modality} ${SubjectsFolder}/${CASE}/hcp/${CASE}/${Modality}/ >> AWSHCPSync_${CASE}_${Modality}_${AWSSyncTimeStamp}.log
+    fi
 fi
 }
 show_usage_AWSHCPSync() {
@@ -1945,7 +1888,7 @@ SubjectsFolder="$SubjectsFolder"
 CASE="$CASE"
 Modality="$Modality"
 OutPath="$OutPath"
-TemplateFolder="$TemplateFolder"
+scenetemplatefolder="$scenetemplatefolder"
 Overwrite="$Overwrite"
 Cluster="$RunMethod"
 SceneZip="$SceneZip"
@@ -1967,16 +1910,16 @@ SNROnly="$SNROnly"
 
 # -- Check general output folders for QC
 if [ ! -d ${SubjectsFolder}/QC ]; then
-	mkdir -p ${SubjectsFolder}/QC &> /dev/null
+    mkdir -p ${SubjectsFolder}/QC &> /dev/null
 fi
 # -- Check T1w output folders for QC
 if [ ! -d ${OutPath} ]; then
-	mkdir -p ${OutPath} &> /dev/null
+    mkdir -p ${OutPath} &> /dev/null
 fi
 # -- Define log folder
 LogFolder=${OutPath}/qclog
 if [ ! -d ${LogFolder} ]; then
-	mkdir -p ${LogFolder}  &> /dev/null
+    mkdir -p ${LogFolder}  &> /dev/null
 fi
 # -- Echo full command
 echo ""
@@ -1986,7 +1929,7 @@ geho "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --subjects=${CASE} \
 --outpath=${OutPath} \
 --overwrite=${Overwrite} \
---templatefolder=${TemplateFolder} \
+--scenetemplatefolder=${scenetemplatefolder} \
 --modality=${Modality} \
 --processcustom=${ProcessCustomQC} \
 --omitdefaults=${OmitDefaults} \
@@ -2011,7 +1954,7 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --subjects='${CASE}' \
 --outpath='${OutPath}' \
 --overwrite='${Overwrite}' \
---templatefolder='${TemplateFolder}' \
+--scenetemplatefolder='${scenetemplatefolder}' \
 --modality='${Modality}' \
 --processcustom=${ProcessCustomQC} \
 --omitdefaults=${OmitDefaults} \
@@ -2067,19 +2010,19 @@ opts_GetOpt() {
 sopt="$1"
 shift 1
 for fn in "$@" ; do
-	if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-		echo $fn | sed "s/^${sopt}=//"
-		return 0
-	fi
+    if [ `echo $fn | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
+        echo $fn | sed "s/^${sopt}=//"
+        return 0
+    fi
 done
 }
 
 # -- Checks command line arguments for "--help" indicating that help has been requested
 opts_CheckForHelpRequest() {
 for fn in "$@" ; do
-	if [ "$fn" = "--help" ]; then
-		return 0
-	fi
+    if [ "$fn" = "--help" ]; then
+        return 0
+    fi
 done
 }
 
@@ -2088,9 +2031,9 @@ MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
 
 # -- Checks for version
 showVersion() {
-	MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
-	echo ""
-	geho "    Multimodal Neuroimaging Analysis Platform (MNAP) Version: v${MNAPVer}"
+    MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
+    echo ""
+    geho "    Multimodal Neuroimaging Analysis Platform (MNAP) Version: v${MNAPVer}"
 }
 
 # ------------------------------------------------------------------------------
@@ -2099,33 +2042,33 @@ showVersion() {
 
 # -- Check if general help requested in three redundant ways (AP, AP --help or AP help)
 if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ]; then
-	showVersion
-	echo ""
-	exit 0
+    showVersion
+    echo ""
+    exit 0
 fi
 if [ $(opts_CheckForHelpRequest $@) ]; then
-	showVersion
-	show_usage
-	exit 0
+    showVersion
+    show_usage
+    exit 0
 fi
 if [ -z "$1" ]; then
-	showVersion
-	show_usage
-	exit 0
+    showVersion
+    show_usage
+    exit 0
 fi
 if [ "$1" == "help" ]; then
-	showVersion
-	show_usage
-	exit 0
+    showVersion
+    show_usage
+    exit 0
 fi
 
 if [ "$1" == "--envsetup" ] || [ "$1" == "-envsetup" ] || [ "$1" == "envsetup" ]; then
-	showVersion
-	echo ""
-	echo "Printing help call for $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh"
-	echo ""
-	$TOOLS/$MNAPREPO/library/environment/mnap_environment.sh --help
-	exit 0
+    showVersion
+    echo ""
+    echo "Printing help call for $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh"
+    echo ""
+    $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh --help
+    exit 0
 fi
 
 # ------------------------------------------------------------------------------
@@ -2136,39 +2079,39 @@ fi
 gmrifunctions=`gmri -available`
 # -- Check if command-line input matches any of the gmri functions
 if [ -z "${gmrifunctions##*$1*}" ]; then
-	# -- If yes then set the gmri function variable
-	GmriFunctionToRun="$1"
-	# -- Check for input with question mark
-	if [[ "$GmriFunctionToRun" =~ .*"?".* ]] && [ -z "$2" ]; then
-		# -- Set UsageInput variable to pass and remove question mark
-		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
-		# -- If no other input is provided print help
-		echo ""
-		show_usage_gmri
-		exit 0
-	fi
-	# -- Check for input with flag mark
-	if [[ "$GmriFunctionToRun" =~ .*"-".* ]] && [ -z "$2" ]; then
-		# -- Set UsageInput variable to pass and remove question mark
-		UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
-		# -- If no other input is provided print help
-		echo ""
-		show_usage_gmri
-		exit 0
-	fi
-	# -- Check for input is function name with no other arguments
-	if [[ "$GmriFunctionToRun" != *"-"* ]] && [ -z "$2" ]; then
-		UsageInput="$GmriFunctionToRun"
-		# -- If no other input is provided print help
-		echo ""
-		show_usage_gmri
-		exit 0
-	else
-		# -- Otherwise pass the function with all inputs from the command line
-		gmriinput="$@"
-		gmriFunction
-		exit 0
-	fi
+    # -- If yes then set the gmri function variable
+    GmriFunctionToRun="$1"
+    # -- Check for input with question mark
+    if [[ "$GmriFunctionToRun" =~ .*"?".* ]] && [ -z "$2" ]; then
+        # -- Set UsageInput variable to pass and remove question mark
+        UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
+        # -- If no other input is provided print help
+        echo ""
+        show_usage_gmri
+        exit 0
+    fi
+    # -- Check for input with flag mark
+    if [[ "$GmriFunctionToRun" =~ .*"-".* ]] && [ -z "$2" ]; then
+        # -- Set UsageInput variable to pass and remove question mark
+        UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
+        # -- If no other input is provided print help
+        echo ""
+        show_usage_gmri
+        exit 0
+    fi
+    # -- Check for input is function name with no other arguments
+    if [[ "$GmriFunctionToRun" != *"-"* ]] && [ -z "$2" ]; then
+        UsageInput="$GmriFunctionToRun"
+        # -- If no other input is provided print help
+        echo ""
+        show_usage_gmri
+        exit 0
+    else
+        # -- Otherwise pass the function with all inputs from the command line
+        gmriinput="$@"
+        gmriFunction
+        exit 0
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -2178,19 +2121,19 @@ fi
 isMNAPFunction() {
 MatlabFunctionsCheck=`find $TOOLS/$MNAPREPO/matlab/ -name "*.m" | grep -v "archive/"`
 if [ -z "${MNAPFunctions##*$1*}" ]; then
-	return 0
+    return 0
 elif [[ ! -z `echo $MatlabFunctionsCheck | grep "$1"` ]]; then
-	MNAPMatlabFunction="$1"
-	echo ""
-	echo "Requested $MatlabFunction function is part of the MNAP Matlab tools. Checking usage:"
-	echo ""
-	${MNAPMCOMMAND} "help ${MNAPMatlabFunction},quit()"
-	exit 0
+    MNAPMatlabFunction="$1"
+    echo ""
+    echo "Requested $MatlabFunction function is part of the MNAP Matlab tools. Checking usage:"
+    echo ""
+    ${MNAPMCOMMAND} "help ${MNAPMatlabFunction},quit()"
+    exit 0
 else
-	echo ""
-	reho "ERROR: $1 -- Requested function does not exist or not supported! Refer to general usage."
-	echo ""
-	exit 0
+    echo ""
+    reho "ERROR: $1 -- Requested function does not exist or not supported! Refer to general usage."
+    echo ""
+    exit 0
 fi
 }
 
@@ -2198,69 +2141,69 @@ fi
 
 # -- Check for input with double flags
 if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then
-	Usage="$1"
-	# -- Check for gmri help inputs (--o --l --c)
-	if [[ "$Usage" == "--o" ]]; then
-		show_options_gmri
-		exit 0
-	fi
-	if [[ "$Usage" == "--l" ]]; then
-		show_commands_gmri
-		exit 0
-	fi
-	if [[ "$Usage" == "--c" ]]; then
-		show_processing_gmri
-		exit 0
-	fi
-	UsageInput=`echo ${Usage:2}`
-	# -- Check if input part of function list
-	isMNAPFunction $UsageInput
-	showVersion
-	show_usage_"$UsageInput"
-	exit 0
+    Usage="$1"
+    # -- Check for gmri help inputs (--o --l --c)
+    if [[ "$Usage" == "--o" ]]; then
+        show_options_gmri
+        exit 0
+    fi
+    if [[ "$Usage" == "--l" ]]; then
+        show_commands_gmri
+        exit 0
+    fi
+    if [[ "$Usage" == "--c" ]]; then
+        show_processing_gmri
+        exit 0
+    fi
+    UsageInput=`echo ${Usage:2}`
+    # -- Check if input part of function list
+    isMNAPFunction $UsageInput
+    showVersion
+    show_usage_"$UsageInput"
+    exit 0
 fi
 # -- Check for input with single flags
 if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then
-	Usage="$1"
-	# -- Check for gmri help inputs (--o --l --c)
-	if [[ "$Usage" == "-o" ]]; then
-		show_options_gmri
-		exit 0
-	fi
-	if [[ "$Usage" == "-l" ]]; then
-		show_commands_gmri
-		exit 0
-	fi
-	if [[ "$Usage" == "-c" ]]; then
-		show_processing_gmri
-		exit 0
-	fi
-	UsageInput=`echo ${Usage:1}`
-	# -- Check if input part of function list
-	isMNAPFunction $UsageInput
-	showVersion
-	show_usage_"$UsageInput"
-	exit 0
+    Usage="$1"
+    # -- Check for gmri help inputs (--o --l --c)
+    if [[ "$Usage" == "-o" ]]; then
+        show_options_gmri
+        exit 0
+    fi
+    if [[ "$Usage" == "-l" ]]; then
+        show_commands_gmri
+        exit 0
+    fi
+    if [[ "$Usage" == "-c" ]]; then
+        show_processing_gmri
+        exit 0
+    fi
+    UsageInput=`echo ${Usage:1}`
+    # -- Check if input part of function list
+    isMNAPFunction $UsageInput
+    showVersion
+    show_usage_"$UsageInput"
+    exit 0
 fi
 # -- Check for input with question mark
 HelpInputUsage="$1"
 if [[ ${HelpInputUsage:0:1} == "?" ]] && [ -z "$2" ]; then
-	Usage="$1"
-	UsageInput=`echo ${Usage} | cut -c 2-`
-	# -- Check if input part of function list
-	isMNAPFunction $UsageInput
-	showVersion
-	show_usage_"$UsageInput"
-	exit 0
+    Usage="$1"
+    UsageInput=`echo ${Usage} | cut -c 2-`
+    # -- Check if input part of function list
+    isMNAPFunction $UsageInput
+    showVersion
+    show_usage_"$UsageInput"
+    exit 0
 fi
 # -- Check for input with no flags
 if [ -z "$2" ]; then
-	UsageInput="$1"
-	# -- Check if input part of function list
-	isMNAPFunction $UsageInput
-	showVersion
-	show_usage_"$UsageInput"
-	exit 0
+    UsageInput="$1"
+    # -- Check if input part of function list
+    isMNAPFunction $UsageInput
+    showVersion
+    show_usage_"$UsageInput"
+    exit 0
 fi
 
 # ------------------------------------------------------------------------------
@@ -2284,276 +2227,278 @@ unset singleflag
 
 # -- Check if first parameter is missing flags and parse it as FunctionToRun
 if [ -z `echo "$1" | grep '-'` ]; then
-	FunctionToRun="$1"
-	# -- Check if single or double flags are set
-	doubleflagparameter=`echo $2 | cut -c1-2`
-	singleflagparameter=`echo $2 | cut -c1`
-	if [ "$doubleflagparameter" == "--" ]; then
-		setflag="$doubleflagparameter"
-	else
-		if [ "$singleflagparameter" == "-" ]; then
-			setflag="$singleflagparameter"
-		fi
-	fi
+    FunctionToRun="$1"
+    # -- Check if single or double flags are set
+    doubleflagparameter=`echo $2 | cut -c1-2`
+    singleflagparameter=`echo $2 | cut -c1`
+    if [ "$doubleflagparameter" == "--" ]; then
+        setflag="$doubleflagparameter"
+    else
+        if [ "$singleflagparameter" == "-" ]; then
+            setflag="$singleflagparameter"
+        fi
+    fi
 else
-	# -- Check if single or double flags are set
-	doubleflag=`echo $1 | cut -c1-2`
-	singleflag=`echo $1 | cut -c1`
-	if [ "$doubleflag" == "--" ]; then
-		setflag="$doubleflag"
-	else
-		if [ "$singleflag" == "-" ]; then
-			setflag="$singleflag"
-		fi
-	fi
+    # -- Check if single or double flags are set
+    doubleflag=`echo $1 | cut -c1-2`
+    singleflag=`echo $1 | cut -c1`
+    if [ "$doubleflag" == "--" ]; then
+        setflag="$doubleflag"
+    else
+        if [ "$singleflag" == "-" ]; then
+            setflag="$singleflag"
+        fi
+    fi
 fi
 
 # -- Next check if any additional flags are set
 if [[ "$setflag" =~ .*-.* ]]; then
-	echo ""
-	# ------------------------------------------------------------------------------
-	#  List of command line options across all functions
-	# ------------------------------------------------------------------------------
+    echo ""
+    # ------------------------------------------------------------------------------
+    #  List of command line options across all functions
+    # ------------------------------------------------------------------------------
 
-	# -- First get function / command input (to harmonize input with gmri)
-	if [ -z "$FunctionToRun" ]; then
-		FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
-		CommandInput=`opts_GetOpt "${setflag}command" "$@"`  # function to execute
-		# -- If input name uses 'command' instead of function set that to $FunctionToRun
-		if [ -z "$FunctionInput" ]; then
-			FunctionToRun="$CommandInput"
-		else
-			FunctionToRun="$FunctionInput"
-		fi
-	fi
-	# -- SubjectsFolder and StudyFolder input flags
-	StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`       # study folder to work on
-	StudyFolderPath=`opts_GetOpt "${setflag}path" $@`          # local folder to work on
-	SubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@` # subjects folder to work on
-	SubjectFolder=`opts_GetOpt "${setflag}subjectfolder"  $@`  # subjects folder to work on
-	# -- Check if SubjectFolder was set (i.e. missing 's') and correct variable
-	if [ -z "$SubjectFolder" ]; then
-		echo "" &> /dev/null
-	else
-		SubjectsFolder="$SubjectFolder"
-	fi
-	# -- If input name uses 'command' instead of function set that to $FunctionToRun
-	if [ -z "$StudyFolder" ]; then
-		StudyFolder="$StudyFolderPath"
-	else
-		StudyFolder="$StudyFolder"
-	fi
-	# -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure
-	if [ -z "$SubjectsFolder" ]; then
-		if [ -z "$StudyFolder" ]; then
-		echo "" &> /dev/null
-		else
-			SubjectsFolder="$StudyFolder/subjects"
-		fi
-	fi
-	# -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure
-	if [ -z "$StudyFolder" ]; then
-		if [ -z "$SubjectsFolder" ]; then
-		echo "" &> /dev/null
-		else
-			cd $SubjectsFolder/../ &> /dev/null
-			StudyFolder=`pwd` &> /dev/null
-		fi
-	fi
-	# -- Set additional general flags
-	CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
-	Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
-	PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
-	Scheduler=`opts_GetOpt "${setflag}scheduler" $@`  # Specify the type of scheduler to use
-	LogFolder=`opts_GetOpt "${setflag}logfolder" $@`  # Log location
-	LogSave=`opts_GetOpt "${setflag}log" $@`          # Log save
-	# -- If logfolder flag set then set it and set master log
-	if [ -z "$LogFolder" ]; then
-		MasterLogFolder="${StudyFolder}/processing/logs"
-	else
-		MasterLogFolder="$LogFolder"
-	fi
-	# -- Generate the master log, comlogs and runlogs folder
-	mkdir ${MasterLogFolder}  &> /dev/null
-	MasterRunLogFolder="${MasterLogFolder}/runlogs"
-	MasterComlogFolder="${MasterLogFolder}/comlogs"
-	mkdir ${MasterRunLogFolder}  &> /dev/null
-	mkdir ${MasterComlogFolder}  &> /dev/null
-	# -- If log flag set then set it
-	if [ -z "$LogSave" ] || [ "$LogSave" == "yes" ]; then
-		LogSave="keep"
-	fi
-	if [ "$LogSave" == "no" ]; then
-		LogSave="remove"
-	fi
-	# -- If scheduler flag set then set RunMethod variable
-	if [ ! -z "$Scheduler" ]; then
-		RunMethod="2"
-	else
-		RunMethod="1"
-	fi
-		
-	# -- Set flags for runTurnkey and XNATCloudUpload
-	TURNKEY_TYPE=`opts_GetOpt "${setflag}turnkey" $@`
-	OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
-	OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
-	BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
-	SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
-	XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
-	XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" $@`
-	XNAT_PROJECT_ID=`opts_GetOpt "${setflag}xnatprojectid" $@`
-	XNAT_SUBJECT_ID=`opts_GetOpt "${setflag}xnatsubjectid" $@`
-	XNAT_HOST_NAME=`opts_GetOpt "${setflag}xnathost" $@`
-	XNAT_USER_NAME=`opts_GetOpt "${setflag}xnatuser" $@`
-	XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
-	ResetCredentials=`opts_GetOpt "--resetcredentials" $@`
-	XNAT_SUBJECT_IDS=`opts_GetOpt "--xnatsubjectids" $@`
-	NIFTIUPLOAD=`opts_GetOpt "--niftiupload" $@`
-	# -- Set flags for organizeDicom parameters
-	Folder=`opts_GetOpt "${setflag}folder" $@`
-	Clean=`opts_GetOpt "${setflag}clean" $@`
-	Unzip=`opts_GetOpt "${setflag}unzip" $@`
-	Gzip=`opts_GetOpt "${setflag}gzip" $@`
-	VerboseRun=`opts_GetOpt "${setflag}verbose" $@`
-	Cores=`opts_GetOpt "${setflag}cores" $@`
-	# -- Path options for FreeSurfer or MNAP
-	FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@`
-	MNAPVersion=`opts_GetOpt "${setflag}version" $@`
-	# -- createLists input flags
-	ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@`
-	Append=`opts_GetOpt "${setflag}append" $@`
-	ListName=`opts_GetOpt "${setflag}listname" $@`
-	HeaderBatch=`opts_GetOpt "${setflag}headerbatch" $@`
-	ListFunction=`opts_GetOpt "${setflag}listfunction" $@`
-	BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
-	FileType=`opts_GetOpt "${setflag}filetype" $@`
-	BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
-	SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@`
-	ListPath=`opts_GetOpt "${setflag}listpath" $@`
-	# -- dataSync input flags
-	NetID=`opts_GetOpt "${setflag}netid" $@`
-	HCPSubjectsFolder=`opts_GetOpt "${setflag}clusterpath" $@`
-	Direction=`opts_GetOpt "${setflag}dir" $@`
-	ClusterName=`opts_GetOpt "${setflag}cluster" $@`
-	# -- ROIExtract input flags
-	ROIInputFile=`opts_GetOpt "${setflag}roifile" $@`
-	ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@`
-	# -- computeBOLDfc input flags
-	InputFiles=`opts_GetOpt "${setflag}inputfiles" $@`
-	OutPathFC=`opts_GetOpt "${setflag}targetf" $@`
-	Calculation=`opts_GetOpt "${setflag}calculation" $@`
-	RunType=`opts_GetOpt "${setflag}runtype" $@`
-	FileList=`opts_GetOpt "${setflag}flist" $@`
-	IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`
-	MaskFrames=`opts_GetOpt "${setflag}mask" "$@"`
-	Covariance=`opts_GetOpt "${setflag}covariance" $@`
-	TargetROI=`opts_GetOpt "${setflag}target" $@`
-	RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`
-	RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`
-	GBCCommand=`opts_GetOpt "${setflag}command" $@`
-	Verbose=`opts_GetOpt "${setflag}verbose" $@`
-	ComputeTime=`opts_GetOpt "${setflag}-time" $@`
-	VoxelStep=`opts_GetOpt "${setflag}vstep" $@`
-	ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`
-	FCCommand=`opts_GetOpt "${setflag}options" $@`
-	Method=`opts_GetOpt "${setflag}method" $@`
-	MemLimit=`opts_GetOpt "${setflag}mem-limit" $@`
-	# -- BOLDParcellation input flags
-	InputFile=`opts_GetOpt "${setflag}inputfile" $@`
-	InputPath=`opts_GetOpt "${setflag}inputpath" $@`
-	InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@`
-	SingleInputFile=`opts_GetOpt "${setflag}singleinputfile" $@`
-	OutPath=`opts_GetOpt "${setflag}outpath" $@`
-	OutName=`opts_GetOpt "${setflag}outname" $@`
-	ExtractData=`opts_GetOpt "${setflag}extractdata" $@`
-	ComputePConn=`opts_GetOpt "${setflag}computepconn" $@`
-	UseWeights=`opts_GetOpt "${setflag}useweights" $@`
-	WeightsFile=`opts_GetOpt "${setflag}useweights" $@`
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
-	# -- hcpdLegacy input flags
-	EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`
-	PEdir=`opts_GetOpt "${setflag}PEdir" $@`
-	TE=`opts_GetOpt "${setflag}TE" $@`
-	UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@`
-	DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@`
-	Scanner=`opts_GetOpt "${setflag}scanner" $@`
-	UseFieldmap=`opts_GetOpt "${setflag}usefieldmap" $@`
-	# -- DWIDenseParcellation input flags
-	MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@`
-	ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
-	OutName=`opts_GetOpt "${setflag}outname" $@`
-	WayTotal=`opts_GetOpt "${setflag}waytotal" $@`
-	# -- DWISeedTractography input flags
-	SeedFile=`opts_GetOpt "${setflag}seedfile" $@`
-	# -- eddyQC input flags
-	EddyBase=`opts_GetOpt "${setflag}eddybase" $@`
-	EddyPath=`opts_GetOpt "${setflag}eddypath" $@`
-	Report=`opts_GetOpt "${setflag}report" $@`
-	BvalsFile=`opts_GetOpt "${setflag}bvalsfile" $@`
-	BvecsFile=`opts_GetOpt "${setflag}bvecsfile" $@`
-	EddyIdx=`opts_GetOpt "${setflag}eddyidx" $@`
-	EddyParams=`opts_GetOpt "${setflag}eddyparams" $@`
-	List=`opts_GetOpt "${setflag}list" $@`
-	Mask=`opts_GetOpt "${setflag}mask" $@`
-	GroupBar=`opts_GetOpt "${setflag}groupvar" $@`
-	OutputDir=`opts_GetOpt "${setflag}outputdir" $@`
-	Update=`opts_GetOpt "${setflag}update" $@`
-	# -- FSLBedpostxGPU input flags
-	Fibers=`opts_GetOpt "${setflag}fibers" $@`
-	Model=`opts_GetOpt "${setflag}model" $@`
-	Burnin=`opts_GetOpt "${setflag}burnin" $@`
-	Jumps=`opts_GetOpt "${setflag}jumps" $@`
-	Rician=`opts_GetOpt "${setflag}rician" $@`
-	# -- probtrackxGPUDense input flags
-	MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
-	MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`
-	NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
-	NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`
-	# -- AWSHCPSync input flags
-	Awsuri=`opts_GetOpt "${setflag}awsuri" $@`
-	# -- QCPreproc input flags
-	OutPath=`opts_GetOpt "${setflag}outpath" $@`
-	TemplateFolder=`opts_GetOpt "${setflag}templatefolder" $@`
-	UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
-	UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
-	Modality=`opts_GetOpt "${setflag}modality" $@`
-	ProcessCustomQC=`opts_GetOpt "${setflag}processcustom" $@`
-	OmitDefaults=`opts_GetOpt "${setflag}omitdefaults" $@`
-	DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
-	DWIData=`opts_GetOpt "${setflag}dwidata" $@`
-	DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@`
-	BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
-	EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
-	DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
-	BOLDDATA=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
-	BOLDRUNS=`opts_GetOpt "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
-	BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
-	if [[ ! -z $BOLDDATA ]]; then
-		if [[ -z $BOLDS ]]; then
-			BOLDS=$BOLDDATA
-		fi
-	fi
-	if [[ ! -z $BOLDRUNS ]]; then
-		if [[ -z $BOLDS ]]; then
-			BOLDS=$BOLDRUNS
-		fi
-	fi
-	BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
-	BOLDPrefix=`opts_GetOpt "${setflag}boldprefix" $@`
-	SkipFrames=`opts_GetOpt "${setflag}skipframes" $@`
-	SNROnly=`opts_GetOpt "${setflag}snronly" $@`
-	TimeStamp=`opts_GetOpt "${setflag}timestamp" $@`
-	Suffix=`opts_GetOpt "${setflag}suffix" $@`
-	SceneZip=`opts_GetOpt "${setflag}scenezip" $@`
-	# -- Check if subject input is a parameter file instead of list of cases
-	if [[ ${CASES} == *.txt ]]; then
-		SubjectParamFile="$CASES"
-		echo ""
-		echo "Using $SubjectParamFile for input."
-		echo ""
-		CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
-	fi
+    # -- First get function / command input (to harmonize input with gmri)
+    if [ -z "$FunctionToRun" ]; then
+        FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
+        CommandInput=`opts_GetOpt "${setflag}command" "$@"`  # function to execute
+        # -- If input name uses 'command' instead of function set that to $FunctionToRun
+        if [ -z "$FunctionInput" ]; then
+            FunctionToRun="$CommandInput"
+        else
+            FunctionToRun="$FunctionInput"
+        fi
+    fi
+    # -- SubjectsFolder and StudyFolder input flags
+    StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`       # study folder to work on
+    StudyFolderPath=`opts_GetOpt "${setflag}path" $@`          # local folder to work on
+    SubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@` # subjects folder to work on
+    SubjectFolder=`opts_GetOpt "${setflag}subjectfolder"  $@`  # subjects folder to work on
+    # -- Check if SubjectFolder was set (i.e. missing 's') and correct variable
+    if [ -z "$SubjectFolder" ]; then
+        echo "" &> /dev/null
+    else
+        SubjectsFolder="$SubjectFolder"
+    fi
+    # -- If input name uses 'command' instead of function set that to $FunctionToRun
+    if [ -z "$StudyFolder" ]; then
+        StudyFolder="$StudyFolderPath"
+    else
+        StudyFolder="$StudyFolder"
+    fi
+    # -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure
+    if [ -z "$SubjectsFolder" ]; then
+        if [ -z "$StudyFolder" ]; then
+        echo "" &> /dev/null
+        else
+            SubjectsFolder="$StudyFolder/subjects"
+        fi
+    fi
+    # -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure
+    if [ -z "$StudyFolder" ]; then
+        if [ -z "$SubjectsFolder" ]; then
+        echo "" &> /dev/null
+        else
+            cd $SubjectsFolder/../ &> /dev/null
+            StudyFolder=`pwd` &> /dev/null
+        fi
+    fi
+    # -- Set additional general flags
+    CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
+    PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
+    Scheduler=`opts_GetOpt "${setflag}scheduler" $@`  # Specify the type of scheduler to use
+    LogFolder=`opts_GetOpt "${setflag}logfolder" $@`  # Log location
+    LogSave=`opts_GetOpt "${setflag}log" $@`          # Log save
+    # -- If logfolder flag set then set it and set master log
+    if [ -z "$LogFolder" ]; then
+        MasterLogFolder="${StudyFolder}/processing/logs"
+    else
+        MasterLogFolder="$LogFolder"
+    fi
+    # -- Generate the master log, comlogs and runlogs folder
+    mkdir ${MasterLogFolder}  &> /dev/null
+    MasterRunLogFolder="${MasterLogFolder}/runlogs"
+    MasterComlogFolder="${MasterLogFolder}/comlogs"
+    mkdir ${MasterRunLogFolder}  &> /dev/null
+    mkdir ${MasterComlogFolder}  &> /dev/null
+    # -- If log flag set then set it
+    if [ -z "$LogSave" ] || [ "$LogSave" == "yes" ]; then
+        LogSave="keep"
+    fi
+    if [ "$LogSave" == "no" ]; then
+        LogSave="remove"
+    fi
+    # -- If scheduler flag set then set RunMethod variable
+    if [ ! -z "$Scheduler" ]; then
+        RunMethod="2"
+    else
+        RunMethod="1"
+    fi
+
+    # -- Set flags for runTurnkey and XNATCloudUpload
+    TURNKEY_TYPE=`opts_GetOpt "${setflag}turnkeytype" $@`
+    TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" $@`
+    OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
+    OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
+    BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
+    SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
+    XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
+    XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" $@`
+    XNAT_PROJECT_ID=`opts_GetOpt "${setflag}xnatprojectid" $@`
+    XNAT_SUBJECT_ID=`opts_GetOpt "${setflag}xnatsubjectid" $@`
+    XNAT_HOST_NAME=`opts_GetOpt "${setflag}xnathost" $@`
+    XNAT_USER_NAME=`opts_GetOpt "${setflag}xnatuser" $@`
+    XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
+    ResetCredentials=`opts_GetOpt "${setflag}resetcredentials" $@`
+    XNAT_SUBJECT_IDS=`opts_GetOpt "${setflag}xnatsubjectids" $@`
+    NIFTIUPLOAD=`opts_GetOpt "${setflag}niftiupload" $@`
+
+    # -- Set flags for organizeDicom parameters
+    Folder=`opts_GetOpt "${setflag}folder" $@`
+    Clean=`opts_GetOpt "${setflag}clean" $@`
+    Unzip=`opts_GetOpt "${setflag}unzip" $@`
+    Gzip=`opts_GetOpt "${setflag}gzip" $@`
+    VerboseRun=`opts_GetOpt "${setflag}verbose" $@`
+    Cores=`opts_GetOpt "${setflag}cores" $@`
+    # -- Path options for FreeSurfer or MNAP
+    FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@`
+    MNAPVersion=`opts_GetOpt "${setflag}version" $@`
+    # -- createLists input flags
+    ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@`
+    Append=`opts_GetOpt "${setflag}append" $@`
+    ListName=`opts_GetOpt "${setflag}listname" $@`
+    HeaderBatch=`opts_GetOpt "${setflag}headerbatch" $@`
+    ListFunction=`opts_GetOpt "${setflag}listfunction" $@`
+    BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+    ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
+    FileType=`opts_GetOpt "${setflag}filetype" $@`
+    BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
+    SubjectHCPFile=`opts_GetOpt "${setflag}subjecthcpfile" $@`
+    ListPath=`opts_GetOpt "${setflag}listpath" $@`
+    # -- dataSync input flags
+    NetID=`opts_GetOpt "${setflag}netid" $@`
+    HCPSubjectsFolder=`opts_GetOpt "${setflag}clusterpath" $@`
+    Direction=`opts_GetOpt "${setflag}dir" $@`
+    ClusterName=`opts_GetOpt "${setflag}cluster" $@`
+    # -- ROIExtract input flags
+    ROIInputFile=`opts_GetOpt "${setflag}roifile" $@`
+    ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@`
+    # -- computeBOLDfc input flags
+    InputFiles=`opts_GetOpt "${setflag}inputfiles" $@`
+    OutPathFC=`opts_GetOpt "${setflag}targetf" $@`
+    Calculation=`opts_GetOpt "${setflag}calculation" $@`
+    RunType=`opts_GetOpt "${setflag}runtype" $@`
+    FileList=`opts_GetOpt "${setflag}flist" $@`
+    IgnoreFrames=`opts_GetOpt "${setflag}ignore" $@`
+    MaskFrames=`opts_GetOpt "${setflag}mask" "$@"`
+    Covariance=`opts_GetOpt "${setflag}covariance" $@`
+    TargetROI=`opts_GetOpt "${setflag}target" $@`
+    RadiusSmooth=`opts_GetOpt "${setflag}rsmooth" $@`
+    RadiusDilate=`opts_GetOpt "${setflag}rdilate" $@`
+    GBCCommand=`opts_GetOpt "${setflag}command" $@`
+    Verbose=`opts_GetOpt "${setflag}verbose" $@`
+    ComputeTime=`opts_GetOpt "${setflag}-time" $@`
+    VoxelStep=`opts_GetOpt "${setflag}vstep" $@`
+    ROIInfo=`opts_GetOpt "${setflag}roinfo" $@`
+    FCCommand=`opts_GetOpt "${setflag}options" $@`
+    Method=`opts_GetOpt "${setflag}method" $@`
+    MemLimit=`opts_GetOpt "${setflag}mem-limit" $@`
+    # -- BOLDParcellation input flags
+    InputFile=`opts_GetOpt "${setflag}inputfile" $@`
+    InputPath=`opts_GetOpt "${setflag}inputpath" $@`
+    InputDataType=`opts_GetOpt "${setflag}inputdatatype" $@`
+    SingleInputFile=`opts_GetOpt "${setflag}singleinputfile" $@`
+    OutPath=`opts_GetOpt "${setflag}outpath" $@`
+    OutName=`opts_GetOpt "${setflag}outname" $@`
+    ExtractData=`opts_GetOpt "${setflag}extractdata" $@`
+    ComputePConn=`opts_GetOpt "${setflag}computepconn" $@`
+    UseWeights=`opts_GetOpt "${setflag}useweights" $@`
+    WeightsFile=`opts_GetOpt "${setflag}useweights" $@`
+    ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
+    # -- hcpdLegacy input flags
+    EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`
+    PEdir=`opts_GetOpt "${setflag}PEdir" $@`
+    TE=`opts_GetOpt "${setflag}TE" $@`
+    UnwarpDir=`opts_GetOpt "${setflag}unwarpdir" $@`
+    DiffDataSuffix=`opts_GetOpt "${setflag}diffdatasuffix" $@`
+    Scanner=`opts_GetOpt "${setflag}scanner" $@`
+    UseFieldmap=`opts_GetOpt "${setflag}usefieldmap" $@`
+    # -- DWIDenseParcellation input flags
+    MatrixVersion=`opts_GetOpt "${setflag}matrixversion" $@`
+    ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
+    OutName=`opts_GetOpt "${setflag}outname" $@`
+    WayTotal=`opts_GetOpt "${setflag}waytotal" $@`
+    # -- DWISeedTractography input flags
+    SeedFile=`opts_GetOpt "${setflag}seedfile" $@`
+    # -- eddyQC input flags
+    EddyBase=`opts_GetOpt "${setflag}eddybase" $@`
+    EddyPath=`opts_GetOpt "${setflag}eddypath" $@`
+    Report=`opts_GetOpt "${setflag}report" $@`
+    BvalsFile=`opts_GetOpt "${setflag}bvalsfile" $@`
+    BvecsFile=`opts_GetOpt "${setflag}bvecsfile" $@`
+    EddyIdx=`opts_GetOpt "${setflag}eddyidx" $@`
+    EddyParams=`opts_GetOpt "${setflag}eddyparams" $@`
+    List=`opts_GetOpt "${setflag}list" $@`
+    Mask=`opts_GetOpt "${setflag}mask" $@`
+    GroupBar=`opts_GetOpt "${setflag}groupvar" $@`
+    OutputDir=`opts_GetOpt "${setflag}outputdir" $@`
+    Update=`opts_GetOpt "${setflag}update" $@`
+    # -- FSLBedpostxGPU input flags
+    Fibers=`opts_GetOpt "${setflag}fibers" $@`
+    Model=`opts_GetOpt "${setflag}model" $@`
+    Burnin=`opts_GetOpt "${setflag}burnin" $@`
+    Jumps=`opts_GetOpt "${setflag}jumps" $@`
+    Rician=`opts_GetOpt "${setflag}rician" $@`
+    # -- probtrackxGPUDense input flags
+    MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
+    MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`
+    NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
+    NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`
+    # -- AWSHCPSync input flags
+    Awsuri=`opts_GetOpt "${setflag}awsuri" $@`
+    # -- QCPreproc input flags
+    OutPath=`opts_GetOpt "${setflag}outpath" $@`
+    scenetemplatefolder=`opts_GetOpt "${setflag}scenetemplatefolder" $@`
+    UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
+    UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
+    Modality=`opts_GetOpt "${setflag}modality" $@`
+    ProcessCustomQC=`opts_GetOpt "${setflag}processcustom" $@`
+    OmitDefaults=`opts_GetOpt "${setflag}omitdefaults" $@`
+    DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
+    DWIData=`opts_GetOpt "${setflag}dwidata" $@`
+    DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@`
+    BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
+    EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
+    DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
+    BOLDDATA=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
+    BOLDRUNS=`opts_GetOpt "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
+    BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+    if [[ ! -z $BOLDDATA ]]; then
+        if [[ -z $BOLDS ]]; then
+            BOLDS=$BOLDDATA
+        fi
+    fi
+    if [[ ! -z $BOLDRUNS ]]; then
+        if [[ -z $BOLDS ]]; then
+            BOLDS=$BOLDRUNS
+        fi
+    fi
+    BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
+    BOLDPrefix=`opts_GetOpt "${setflag}boldprefix" $@`
+    SkipFrames=`opts_GetOpt "${setflag}skipframes" $@`
+    SNROnly=`opts_GetOpt "${setflag}snronly" $@`
+    TimeStamp=`opts_GetOpt "${setflag}timestamp" $@`
+    Suffix=`opts_GetOpt "${setflag}suffix" $@`
+    SceneZip=`opts_GetOpt "${setflag}scenezip" $@`
+    # -- Check if subject input is a parameter file instead of list of cases
+    if [[ ${CASES} == *.txt ]]; then
+        SubjectParamFile="$CASES"
+        echo ""
+        echo "Using $SubjectParamFile for input."
+        echo ""
+        CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
+    fi
 fi
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
@@ -2569,7 +2514,7 @@ echo ""
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "matlabHelp" ]; then
-	${FunctionToRun}
+    ${FunctionToRun}
 fi
 
 # ------------------------------------------------------------------------------
@@ -2577,39 +2522,42 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "runTurnkey" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; exit 1; fi
-	if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; exit 1; fi
-	if [ -z "$XNAT_SESSION_LABELS" ]; then reho "Error: --xnatsessionlabels flag missing."; exit 1; fi
-	if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; exit 1; fi
-	if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; exit 1; fi
-	if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Batch parameter file not specified."; exit 1; fi
-	if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Batch parameter file not specified."; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Note: List of subjects missing. Assuming $XNAT_SESSION_LABELS matches subject names."; CASES="$XNAT_SESSION_LABELS"; fi
-	if [ -z "$StudyFolder" ]; then StudyFolder="/output/${XNAT_PROJECT_ID}"; reho "Note: Study folder missing. Setting defaults: $StudyFolder"; STUDY_PATH="$StudyFolder"; fi
-	if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
-	if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
-	if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey: $TURNKEY_TYPE"; fi
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; exit 1; fi
+    if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; exit 1; fi
+    if [ -z "$XNAT_SESSION_LABELS" ]; then reho "Error: --xnatsessionlabels flag missing."; exit 1; fi
+    if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; exit 1; fi
+    if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; exit 1; fi
+    if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Batch parameter file not specified."; exit 1; fi
+    if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Batch parameter file not specified."; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Note: List of subjects missing. Assuming $XNAT_SESSION_LABELS matches subject names."; CASES="$XNAT_SESSION_LABELS"; fi
+    if [ -z "$StudyFolder" ]; then StudyFolder="/output/${XNAT_PROJECT_ID}"; reho "Note: Study folder missing. Setting defaults: $StudyFolder"; STUDY_PATH="$StudyFolder"; fi
+    if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
+    if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
+    if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
+    if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey: $TURNKEY_TYPE"; fi
+    if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
 
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun processing with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
-	echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
-	echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
-	echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
-	echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
-	echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
-	echo "   Project-specific Batch file: ${project_batch_file}"
-	echo "   MNAP Study folder: ${StudyFolder}"
-	echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
-	echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
-	echo "--------------------------------------------------------------"
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun processing with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
+    echo "   MNAP Turnkey steps: ${TURNKEY_STEPS}"
+    echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
+    echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
+    echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
+    echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
+    echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
+    echo "   Project-specific Batch file: ${project_batch_file}"
+    echo "   MNAP Study folder: ${StudyFolder}"
+    echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
+    echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
+    echo "--------------------------------------------------------------"
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -2617,70 +2565,70 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "organizeDicom" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then
-		if [ -z "$Folder" ]; then
-			reho "Error: Study folder missing and optional parameter --folder not specified."
-			exit 1
-		fi
-	fi
-	if [ -z "$SubjectsFolder" ]; then
-		if [ -z "$Folder" ]; then
-			reho "Error: Subjects folder missing and optiona parameter --folder not specified"
-			exit 1
-		fi
-	fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$Overwrite" ]; then Overwrite="no"; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Optional parameters
-	if [ -z "$Folder" ]; then
-		Folder="$SubjectsFolder"
-	else
-		if [ -z "$StudyFolder" ] && [ -z "$SubjectsFolder" ]; then
-			SubjectsFolder="$Folder"
-			StudyFolder="../$SubjectsFolder"
-		fi
-	fi
-	if [ -z "$Clean" ]; then Clean="yes"; echo ""; echo "--clean not specified explicitly. Setting --clean=$Clean."; echo ""; fi
-	if [ -z "$Unzip" ]; then Unzip="yes"; echo ""; echo "--unzip not specified explicitly. Setting --unzip=$Unzip."; echo ""; fi
-	if [ -z "$Unzip" ]; then Gzip="yes"; echo ""; echo "--gzip not specified explicitly. Setting --gzip=$Gzip."; echo ""; fi
-	if [ -z "$VerboseRun" ]; then VerboseRun="True"; echo ""; echo "--verbose not specified explicitly. Proceeding --verbose=$Verbose"; echo ""; fi
-	if [ -z "$Cores" ]; then Cores="4"; echo ""; echo "--cores not specified explicitly. Proceeding --cores=$Cores"; echo ""; fi
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then
+        if [ -z "$Folder" ]; then
+            reho "Error: Study folder missing and optional parameter --folder not specified."
+            exit 1
+        fi
+    fi
+    if [ -z "$SubjectsFolder" ]; then
+        if [ -z "$Folder" ]; then
+            reho "Error: Subjects folder missing and optiona parameter --folder not specified"
+            exit 1
+        fi
+    fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$Overwrite" ]; then Overwrite="no"; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Optional parameters
+    if [ -z "$Folder" ]; then
+        Folder="$SubjectsFolder"
+    else
+        if [ -z "$StudyFolder" ] && [ -z "$SubjectsFolder" ]; then
+            SubjectsFolder="$Folder"
+            StudyFolder="../$SubjectsFolder"
+        fi
+    fi
+    if [ -z "$Clean" ]; then Clean="yes"; echo ""; echo "--clean not specified explicitly. Setting --clean=$Clean."; echo ""; fi
+    if [ -z "$Unzip" ]; then Unzip="yes"; echo ""; echo "--unzip not specified explicitly. Setting --unzip=$Unzip."; echo ""; fi
+    if [ -z "$Unzip" ]; then Gzip="yes"; echo ""; echo "--gzip not specified explicitly. Setting --gzip=$Gzip."; echo ""; fi
+    if [ -z "$VerboseRun" ]; then VerboseRun="True"; echo ""; echo "--verbose not specified explicitly. Proceeding --verbose=$Verbose"; echo ""; fi
+    if [ -z "$Cores" ]; then Cores="4"; echo ""; echo "--cores not specified explicitly. Proceeding --cores=$Cores"; echo ""; fi
 
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun processing with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	if [ -z "$Folder" ]; then
-		echo "   Optional --folder parameter not set. Using standard inputs."
-		echo "   Study Folder: ${StudyFolder}"
-		echo "   Subject Folder: ${SubjectsFolder}"
-	else
-		echo "Optional --folder parameter set explicitly. "
-		echo "   Setting subjects folder and study accordingly."
-		echo "   Study Folder: ${StudyFolder}"
-		echo "   Subject Folder: ${SubjectsFolder}"
-	fi
-	echo "   Subjects: ${CASES}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo ""
-	# Report optional parameters
-	echo "   Clean NIFTI files: ${Clean}"
-	echo "   Unzip DICOM files: ${Unzip}"
-	echo "   Gzip DICOM files: ${Gzip}"
-	echo "   Report verbose run: ${VerboseRun}"
-	echo "   Cores to use: ${Cores}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo ""
-	echo "--------------------------------------------------------------"
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun processing with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    if [ -z "$Folder" ]; then
+        echo "   Optional --folder parameter not set. Using standard inputs."
+        echo "   Study Folder: ${StudyFolder}"
+        echo "   Subject Folder: ${SubjectsFolder}"
+    else
+        echo "Optional --folder parameter set explicitly. "
+        echo "   Setting subjects folder and study accordingly."
+        echo "   Study Folder: ${StudyFolder}"
+        echo "   Subject Folder: ${SubjectsFolder}"
+    fi
+    echo "   Subjects: ${CASES}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo ""
+    # Report optional parameters
+    echo "   Clean NIFTI files: ${Clean}"
+    echo "   Unzip DICOM files: ${Unzip}"
+    echo "   Gzip DICOM files: ${Gzip}"
+    echo "   Report verbose run: ${VerboseRun}"
+    echo "   Cores to use: ${Cores}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo ""
+    echo "--------------------------------------------------------------"
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -2688,120 +2636,120 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "QCPreproc" ]; then
-	# -- Check all the user-defined parameters:
-	TimeStampQCPreproc=`date +%Y-%m-%d-%H-%M-%S`
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
-	if [ -z "$ProcessCustomQC" ]; then ProcessCustomQC="no"; fi
-	if [ -z "$OmitDefaults" ]; then OmitDefaults="no"; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Perform some careful scene checks
-	if [ -z "$UserSceneFile" ]; then
-		if [ ! -z "$UserScenePath" ]; then 
-			reho "---> Provided --userscenepath but --userscenefile not specified."
-			reho "     Check your inputs and re-run.";
-			TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
-			reho "---> Reverting to MNAP defaults: ${TemplateFolder}"; echo ""
-		fi
-		if [ -z "$TemplateFolder" ]; then
-			TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
-			reho "---> Template folder path value not explicitly specified."
-			reho "---> Using MNAP defaults: ${TemplateFolder}"
-		fi
-		if ls ${TemplateFolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
-			geho "---> Scene files found in `ls ${TemplateFolder}/*${Modality}*.scene` "; echo ""
-		else 
-			reho "---> Specified folder contains no scenes: ${TemplateFolder}" 
-			TemplateFolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
-			reho "---> Reverting to defaults: ${TemplateFolder} "; echo ""
-		fi
-	else
-		if [ -f "$UserSceneFile" ]; then
-			geho "---> User scene file found: ${UserSceneFile}"; echo ""
-			UserScenePath=`echo ${UserSceneFile} | awk -F'/' '{print $1}'`
-			UserSceneFile=`echo ${UserSceneFile} | awk -F'/' '{print $2}'`
-			TemplateFolder=${UserScenePath}
-		else
-			if [ -z "$UserScenePath" ] && [ -z "$TemplateFolder" ]; then 
-				reho "---> Error: Path for user scene file not specified."
-				reho "     Specify --templatefolder or --userscenepath with correct path and re-run."; echo ""; exit 1
-			fi
-			if [ ! -z "$UserScenePath" ] && [ -z "$TemplateFolder" ]; then 
-				TemplateFolder=${UserScenePath}
-			fi
-			if ls ${TemplateFolder}/${UserSceneFile} 1> /dev/null 2>&1; then 
-				geho "---> User specified scene files found in: ${TemplateFolder}/${UserSceneFile} "; echo ""
-			else 
-				reho "---> Error: User specified scene ${TemplateFolder}/${UserSceneFile} not found." 
-				reho "     Check your inputs and re-run."; echo ""; exit 1
-			fi
-		fi
-	fi
-	if [ -z "$OutPath" ]; then OutPath="${SubjectsFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
-	if [ -z "$SceneZip" ]; then SceneZip="yes"; echo "Generation of scene zip file not explicitly provided. Using default: ${SceneZip}"; fi
-	# -- DWI modality-specific settings:
-	if [ "$Modality" = "DWI" ]; then
-		if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
-		if [ -z "$DWIData" ]; then DWIData="data"; echo "DWI data name not explicitly specified. Using default: ${DWIData}"; fi
-		if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${TemplateFolder}"; fi
-		if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; fi
-		if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; fi
-		if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; fi
-	fi
-	# -- BOLD modality-specific settings:
-	if [ "$Modality" = "BOLD" ]; then
-		# - Check if BOLDS parameter is empty:
-		if [ -z "$BOLDS" ]; then
-			echo ""
-			reho "BOLD input list not specified. Relying on subject_hcp.txt individual information files."
-			BOLDS="subject_hcp.txt"
-			echo ""
-		fi
-		if [ -z "$BOLDPrefix" ]; then BOLDPrefix=""; echo "Input BOLD Prefix not specified. Assuming no BOLD name prefix."; fi
-		if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "Processed BOLD Suffix not specified. Assuming no BOLD output suffix."; fi
-	fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun processing with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subject Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Custom QC requested: ${ProcessCustomQC}"
-	echo "   Omit default QC: ${OmitDefaults}"
-	echo "   QC Modality: ${Modality}"
-	echo "   QC Output Path: ${OutPath}"
-	echo "   QC Scene Template Folder: ${TemplateFolder}"
-	echo "   QC User-defined Scene: ${UserSceneFile}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "   Zip Scene File: ${SceneZip}"
-	if [ "   $Modality" = "DWI" ]; then
-		echo "   DWI input path: ${DWIPath}"
-		echo "   DWI input name: ${DWIData}"
-		echo "   DWI legacy processing: ${DWILegacy}"
-		echo "   DWI dtifit QC requested: ${DtiFitQC}"
-		echo "   DWI bedpostX QC requested: ${BedpostXQC}"
-		echo "   DWI EDDY QC Stats requested: ${EddyQCStats}"
-	fi
-	if [ "$Modality" = "BOLD" ]; then
-		echo "   BOLD data input: ${BOLDS}"
-		echo "   BOLD Prefix: ${BOLDPrefix}"
-		echo "   BOLD Suffix: ${BOLDSuffix}"
-		echo "   Skip Initial Frames: ${SkipFrames}"
-		echo "   Compute SNR Only: ${SNROnly}"
-		if [ "$SNROnly" == "yes" ]; then echo ""; echo "   BOLD SNR only specified. Will skip QC images"; echo ""; fi
-	fi
-	echo "--------------------------------------------------------------"
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    TimeStampQCPreproc=`date +%Y-%m-%d-%H-%M-%S`
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
+    if [ -z "$ProcessCustomQC" ]; then ProcessCustomQC="no"; fi
+    if [ -z "$OmitDefaults" ]; then OmitDefaults="no"; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+        if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Perform some careful scene checks
+    if [ -z "$UserSceneFile" ]; then
+        if [ ! -z "$UserScenePath" ]; then 
+            reho "---> Provided --userscenepath but --userscenefile not specified."
+            reho "     Check your inputs and re-run.";
+            scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+            reho "---> Reverting to MNAP defaults: ${scenetemplatefolder}"; echo ""
+        fi
+        if [ -z "$scenetemplatefolder" ]; then
+            scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+            reho "---> Template folder path value not explicitly specified."
+            reho "---> Using MNAP defaults: ${scenetemplatefolder}"
+        fi
+        if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
+            geho "---> Scene files found in `ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
+        else 
+            reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
+            scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+            reho "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
+        fi
+    else
+        if [ -f "$UserSceneFile" ]; then
+            geho "---> User scene file found: ${UserSceneFile}"; echo ""
+            UserScenePath=`echo ${UserSceneFile} | awk -F'/' '{print $1}'`
+            UserSceneFile=`echo ${UserSceneFile} | awk -F'/' '{print $2}'`
+            scenetemplatefolder=${UserScenePath}
+        else
+            if [ -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then 
+                reho "---> Error: Path for user scene file not specified."
+                reho "     Specify --scenetemplatefolder or --userscenepath with correct path and re-run."; echo ""; exit 1
+            fi
+            if [ ! -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then 
+                scenetemplatefolder=${UserScenePath}
+            fi
+            if ls ${scenetemplatefolder}/${UserSceneFile} 1> /dev/null 2>&1; then 
+                geho "---> User specified scene files found in: ${scenetemplatefolder}/${UserSceneFile} "; echo ""
+            else 
+                reho "---> Error: User specified scene ${scenetemplatefolder}/${UserSceneFile} not found." 
+                reho "     Check your inputs and re-run."; echo ""; exit 1
+            fi
+        fi
+    fi
+    if [ -z "$OutPath" ]; then OutPath="${SubjectsFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
+    if [ -z "$SceneZip" ]; then SceneZip="yes"; echo "Generation of scene zip file not explicitly provided. Using default: ${SceneZip}"; fi
+    # -- DWI modality-specific settings:
+    if [ "$Modality" = "DWI" ]; then
+        if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
+        if [ -z "$DWIData" ]; then DWIData="data"; echo "DWI data name not explicitly specified. Using default: ${DWIData}"; fi
+        if [ -z "$DWILegacy" ]; then DWILegacy="no"; echo "DWI legacy not specified. Using default: ${scenetemplatefolder}"; fi
+        if [ -z "$DtiFitQC" ]; then DtiFitQC="no"; echo "DWI dtifit QC not specified. Using default: ${DtiFitQC}"; fi
+        if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; fi
+        if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; fi
+    fi
+    # -- BOLD modality-specific settings:
+    if [ "$Modality" = "BOLD" ]; then
+        # - Check if BOLDS parameter is empty:
+        if [ -z "$BOLDS" ]; then
+            echo ""
+            reho "BOLD input list not specified. Relying on subject_hcp.txt individual information files."
+            BOLDS="subject_hcp.txt"
+            echo ""
+        fi
+        if [ -z "$BOLDPrefix" ]; then BOLDPrefix=""; echo "Input BOLD Prefix not specified. Assuming no BOLD name prefix."; fi
+        if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "Processed BOLD Suffix not specified. Assuming no BOLD output suffix."; fi
+    fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun processing with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subject Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Custom QC requested: ${ProcessCustomQC}"
+    echo "   Omit default QC: ${OmitDefaults}"
+    echo "   QC Modality: ${Modality}"
+    echo "   QC Output Path: ${OutPath}"
+    echo "   QC Scene Template Folder: ${scenetemplatefolder}"
+    echo "   QC User-defined Scene: ${UserSceneFile}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "   Zip Scene File: ${SceneZip}"
+    if [ "   $Modality" = "DWI" ]; then
+        echo "   DWI input path: ${DWIPath}"
+        echo "   DWI input name: ${DWIData}"
+        echo "   DWI legacy processing: ${DWILegacy}"
+        echo "   DWI dtifit QC requested: ${DtiFitQC}"
+        echo "   DWI bedpostX QC requested: ${BedpostXQC}"
+        echo "   DWI EDDY QC Stats requested: ${EddyQCStats}"
+    fi
+    if [ "$Modality" = "BOLD" ]; then
+        echo "   BOLD data input: ${BOLDS}"
+        echo "   BOLD Prefix: ${BOLDPrefix}"
+        echo "   BOLD Suffix: ${BOLDSuffix}"
+        echo "   Skip Initial Frames: ${SkipFrames}"
+        echo "   Compute SNR Only: ${SNROnly}"
+        if [ "$SNROnly" == "yes" ]; then echo ""; echo "   BOLD SNR only specified. Will skip QC images"; echo ""; fi
+    fi
+    echo "--------------------------------------------------------------"
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -2809,93 +2757,93 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "eddyQC" ]; then
-	#unset EddyPath
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
-	# -- Perform checks for individual run
-	if [ "$Report" == "individual" ]; then
-		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$EddyBase" ]; then reho "Eddy base input name missing"; exit 1; fi
-		if [ -z "$BvalsFile" ]; then reho "BVALS file missing"; exit 1; fi
-		if [ -z "$EddyIdx" ]; then reho "Eddy index missing"; exit 1; fi
-		if [ -z "$EddyParams" ]; then reho "Eddy parameters missing"; exit 1; fi
-		if [ -z "$Mask" ]; then reho "Error: Mask missing"; exit 1; fi
-		if [ -z "$BvecsFile" ]; then BvecsFile=""; fi
-	fi
-	# -- Perform checks for group run
-	if [ "$Report" == "group" ]; then
-		if [ -z "$List" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$Update" ]; then Update="false"; fi
-		if [ -z "$GroupVar" ]; then GroupVar=""; fi
-	fi
-	# -- Check if cluster options are set
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Loop through cases for an individual run call
-	if [ ${Report} == "individual" ]; then
-		for CASE in ${CASES}; do
-			# -- Check in/out paths
-			if [ -z ${EddyPath} ]; then
-				reho "Eddy path not set. Assuming defaults."
-				EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
-			else
-				EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/$EddyPath"
-				echo $EddyPath
-			fi
-			if [ -z ${OutputDir} ]; then
-				reho "Output folder not set. Assuming defaults."
-				OutputDir="${EddyPath}/${EddyBase}.qc"
-			fi
-			# -- Report individual parameters
-			echo ""
-			echo "Running $FunctionToRun processing with the following parameters:"
-			echo ""
-			echo "--------------------------------------------------------------"
-			echo "   StudyFolder: ${StudyFolder}"
-			echo "   Subjects Folder: ${SubjectsFolder}"
-			echo "   Subject: ${CASE}"
-			echo "   Study Log Folder: ${MasterLogFolder}"
-			echo "   Report Type: ${Report}"
-			echo "   Eddy QC Input Path: ${EddyPath}"
-			echo "   Eddy QC Output Path: ${OutputDir}"
-			echo "   Eddy Inputs Base Name: ${EddyBase}"
-			echo "   Mask: ${EddyPath}/${Mask}"
-			echo "   BVALS file: ${EddyPath}/${BvalsFile}"
-			echo "   Eddy Index file: ${EddyPath}/${EddyIdx}"
-			echo "   Eddy parameter file: ${EddyPath}/${EddyParams}"
-			# Report optional parameters
-			echo "   BvecsFile: ${EddyPath}/${BvecsFile}"
-			echo "   Overwrite: ${EddyPath}/${Overwrite}"
-			echo "--------------------------------------------------------------"
-			# -- Execute function
-			${FunctionToRun} ${CASE}
-		done
-	fi
-	# -- Check if group call specified
-	if [ ${Report} == "group" ]; then
-		# -- Report group parameters
-		echo ""
-		echo "Running $FunctionToRun processing with the following parameters:"
-		echo ""
-		echo "--------------------------------------------------------------"
-		echo "   Study Folder: ${StudyFolder}"
-		echo "   Subjects Folder: ${SubjectsFolder}"
-		echo "   Study Log Folder: ${MasterLogFolder}"
-		echo "   Report Type: ${Report}"
-		echo "   Eddy QC Input Path: ${EddyPath}"
-		echo "   Eddy QC Output Path: ${OutputDir}"
-		echo "   List: ${List}"
-		echo "   Grouping Variable: ${GroupVar}"
-		echo "   Update single subjects: ${Update}"
-		echo "   Overwrite: ${EddyPath}/${Overwrite}"
-		echo "--------------------------------------------------------------"
-		# ---> Add function all here
-	fi
+    #unset EddyPath
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
+    # -- Perform checks for individual run
+    if [ "$Report" == "individual" ]; then
+        if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [ -z "$EddyBase" ]; then reho "Eddy base input name missing"; exit 1; fi
+        if [ -z "$BvalsFile" ]; then reho "BVALS file missing"; exit 1; fi
+        if [ -z "$EddyIdx" ]; then reho "Eddy index missing"; exit 1; fi
+        if [ -z "$EddyParams" ]; then reho "Eddy parameters missing"; exit 1; fi
+        if [ -z "$Mask" ]; then reho "Error: Mask missing"; exit 1; fi
+        if [ -z "$BvecsFile" ]; then BvecsFile=""; fi
+    fi
+    # -- Perform checks for group run
+    if [ "$Report" == "group" ]; then
+        if [ -z "$List" ]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [ -z "$Update" ]; then Update="false"; fi
+        if [ -z "$GroupVar" ]; then GroupVar=""; fi
+    fi
+    # -- Check if cluster options are set
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Loop through cases for an individual run call
+    if [ ${Report} == "individual" ]; then
+        for CASE in ${CASES}; do
+            # -- Check in/out paths
+            if [ -z ${EddyPath} ]; then
+                reho "Eddy path not set. Assuming defaults."
+                EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
+            else
+                EddyPath="${SubjectsFolder}/${CASE}/hcp/${CASE}/$EddyPath"
+                echo $EddyPath
+            fi
+            if [ -z ${OutputDir} ]; then
+                reho "Output folder not set. Assuming defaults."
+                OutputDir="${EddyPath}/${EddyBase}.qc"
+            fi
+            # -- Report individual parameters
+            echo ""
+            echo "Running $FunctionToRun processing with the following parameters:"
+            echo ""
+            echo "--------------------------------------------------------------"
+            echo "   StudyFolder: ${StudyFolder}"
+            echo "   Subjects Folder: ${SubjectsFolder}"
+            echo "   Subject: ${CASE}"
+            echo "   Study Log Folder: ${MasterLogFolder}"
+            echo "   Report Type: ${Report}"
+            echo "   Eddy QC Input Path: ${EddyPath}"
+            echo "   Eddy QC Output Path: ${OutputDir}"
+            echo "   Eddy Inputs Base Name: ${EddyBase}"
+            echo "   Mask: ${EddyPath}/${Mask}"
+            echo "   BVALS file: ${EddyPath}/${BvalsFile}"
+            echo "   Eddy Index file: ${EddyPath}/${EddyIdx}"
+            echo "   Eddy parameter file: ${EddyPath}/${EddyParams}"
+            # Report optional parameters
+            echo "   BvecsFile: ${EddyPath}/${BvecsFile}"
+            echo "   Overwrite: ${EddyPath}/${Overwrite}"
+            echo "--------------------------------------------------------------"
+            # -- Execute function
+            ${FunctionToRun} ${CASE}
+        done
+    fi
+    # -- Check if group call specified
+    if [ ${Report} == "group" ]; then
+        # -- Report group parameters
+        echo ""
+        echo "Running $FunctionToRun processing with the following parameters:"
+        echo ""
+        echo "--------------------------------------------------------------"
+        echo "   Study Folder: ${StudyFolder}"
+        echo "   Subjects Folder: ${SubjectsFolder}"
+        echo "   Study Log Folder: ${MasterLogFolder}"
+        echo "   Report Type: ${Report}"
+        echo "   Eddy QC Input Path: ${EddyPath}"
+        echo "   Eddy QC Output Path: ${OutputDir}"
+        echo "   List: ${List}"
+        echo "   Grouping Variable: ${GroupVar}"
+        echo "   Update single subjects: ${Update}"
+        echo "   Overwrite: ${EddyPath}/${Overwrite}"
+        echo "--------------------------------------------------------------"
+        # ---> Add function all here
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -2903,36 +2851,36 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "mapHCPFiles" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun processing with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "Study Folder: ${StudyFolder}"
-	echo "Subjects Folder: ${SubjectsFolder}"
-	echo "Subjects: ${CASES}"
-	echo "Study Log Folder: ${MasterLogFolder}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	for CASE in ${CASES}; do
-		echo "--> Ensuring that and correct subjects_hcp.txt files is generated..."; echo ""
-		if [ -f ${SubjectsFolder}/${CASE}/subject_hcp.txt ]; then
-			echo "--> ${SubjectsFolder}/${CASE}/subject_hcp.txt found"
-			echo ""
-			${FunctionToRun} ${CASE}
-		else
-			echo "--> ${SubjectsFolder}/${CASE}/subject_hcp.txt is missing - please setup the subject.txt files and re-run function."
-		fi
-	done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun processing with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "Study Folder: ${StudyFolder}"
+    echo "Subjects Folder: ${SubjectsFolder}"
+    echo "Subjects: ${CASES}"
+    echo "Study Log Folder: ${MasterLogFolder}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    for CASE in ${CASES}; do
+        echo "--> Ensuring that and correct subjects_hcp.txt files is generated..."; echo ""
+        if [ -f ${SubjectsFolder}/${CASE}/subject_hcp.txt ]; then
+            echo "--> ${SubjectsFolder}/${CASE}/subject_hcp.txt found"
+            echo ""
+            ${FunctionToRun} ${CASE}
+        else
+            echo "--> ${SubjectsFolder}/${CASE}/subject_hcp.txt is missing - please setup the subject.txt files and re-run function."
+        fi
+    done
 fi
 
 # ------------------------------------------------------------------------------
@@ -2940,24 +2888,24 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "dataSync" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Specific subjects not provided"; fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun processing with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Specific subjects not provided"; fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun processing with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -2965,137 +2913,137 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "createLists" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$ListGenerate" ]; then reho "Error: Type of list to generate missing [batch, analysis, snr]"; exit 1; fi
-	# -- Check optional parameters:
-	if [ -z "$Append" ]; then Append="no"; reho "    Setting --append='no' by default"; echo ""; fi
-	# -- Set list path if not set by user
-	if [ -z "$ListPath" ]; then
-		unset ListPath
-		mkdir ${StudyFolder}/processing/lists &> /dev/null
-		cd ${StudyFolder}/processing/lists
-		ListPath=`pwd`
-		reho "    Setting default path for list folder --> $ListPath"; echo ""
-		export ListPath
-	else
-		export ListPath
-	fi
-	# --------------------------
-	# --- preprocessing loop ---
-	# --------------------------
-	if [ "$ListGenerate" == "batch" ]; then
-		# -- Check of overwrite flag was set
-		if [ "$Overwrite" == "yes" ]; then
-			echo ""
-			reho "===> Deleting prior batch processing files"
-			echo ""
-			rm "$ListPath"/batch."$ListName".txt &> /dev/null
-		fi
-		if [ -z "$ListFunction" ]; then
-			reho "    List function not set. Using default function."
-			ListFunction="        ${TOOLS}/${MNAPREPO}/connector/functions/SubjectsParamList.sh"
-			reho "$ListFunction"
-			echo ""
-		fi
-		TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-		if [ -z "$ListName" ]; then
-			ListName="$TimeStamp"
-			reho "    Name of batch preprocessing file not specified. Using defaults with timestamp to avoid overwriting: $ListName"
-		fi
-		if [ -z "$HeaderBatch" ]; then
-			echo ""
-			reho "    Batch parameter header file not specified. Using defaults for multi-band data: "
-			HeaderBatch="${TOOLS}/${MNAPREPO}/library/data/templates/batch_multiband_parameters.txt"
-			if [ -f $HeaderBatch ]; then
-				reho "        ${HeaderBatch}"; echo ""
-			else
-				reho "---> ERROR: ${HeaderBatch} not found! Check MNAP environment variables."
-				echo ""
-				exit 1
-			fi
-		fi
-		# -- Check if skipping parameter file header
-		if [ "$HeaderBatch" != "no" ]; then
-			# -- Check if lists exists
-			if [ -s ${ListPath}/batch."$ListName".txt ]; then
-				# -- If HeaderBatch was set and file exists then exit and report error
-				echo ""
-				reho "---------------------------------------------------------------------"
-				reho "--> The file exists and you are trying to set the header again"
-				reho "--> Check usage to append the file or overwrite it."
-				reho "---------------------------------------------------------------------"
-				echo ""
-				exit 1
-			else
-				cat ${HeaderBatch} >> ${ListPath}/batch."$ListName".txt
-			fi
-		fi
-		# -- Report parameters
-		echo ""
-		echo "Running $FunctionToRun processing with the following parameters:"
-		echo ""
-		echo "--------------------------------------------------------------"
-		echo "   Study Folder: ${StudyFolder}"
-		echo "   Subjects Folder: ${SubjectsFolder}"
-		echo "   Subjects: ${CASES}"
-		echo "   Study Log Folder: ${MasterLogFolder}"
-		echo "   List to generate: ${ListGenerate}"
-		echo "   List path: ${ListPath}"
-		echo "   List name: ${ListName}"
-		echo "   Scheduler Name and Options: $Scheduler"
-		echo "   Overwrite prior run: ${Overwrite}"
-		echo "--------------------------------------------------------------"
-		echo ""
-		# -- Loop through all the cases
-		for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
-		echo ""
-		geho "-------------------------------------------------------------------------------------------"
-		geho "--> Check output:"
-		geho "  `ls ${ListPath}/batch.${ListName}.txt `"
-		geho "-------------------------------------------------------------------------------------------"
-		echo ""
-	fi
-	# --------------------------
-	# --- analysis loop --------
-	# --------------------------
-	if [ "$ListGenerate" == "analysis" ]; then
-		if [ -z "$ListFunction" ]; then
-		reho "List function not set. Using default function."
-			ListFunction="${TOOLS}/${MNAPREPO}/connector/functions/AnalysisList.sh"
-			echo ""
-			reho "$ListFunction"
-			echo ""
-		fi
-		if [ -z "$ListName" ]; then reho "Name of analysis list for is missing."; exit 1; fi
-		if [ -z "$BOLDS" ]; then reho "List of BOLDs missing."; exit 1; fi
-		# -- Check of overwrite flag was set
-		if [ "$Overwrite" == "yes" ]; then
-			echo ""
-			reho "===> Deleting prior analysis lists"
-			echo ""
-			rm ${ListPath}/analysis."$ListName".*.list &> /dev/null
-		fi
-			# -- Report parameters
-			echo ""
-			echo "Running $FunctionToRun processing with the following parameters:"
-			echo ""
-			echo "--------------------------------------------------------------"
-			echo "   Study Folder: ${StudyFolder}"
-			echo "   Subjects Folder: ${SubjectsFolder}"
-			echo "   Subjects: ${CASES}"
-			echo "   Study Log Folder: ${MasterLogFolder}"
-			echo "   List to generate: ${ListGenerate}"
-			echo "   Scheduler Name and Options: $Scheduler"
-			echo "   Overwrite prior run: ${Overwrite}"
-			echo "--------------------------------------------------------------"
-			echo ""
-			# -- Loop through all the cases
-			for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
-	fi
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$ListGenerate" ]; then reho "Error: Type of list to generate missing [batch, analysis, snr]"; exit 1; fi
+    # -- Check optional parameters:
+    if [ -z "$Append" ]; then Append="no"; reho "    Setting --append='no' by default"; echo ""; fi
+    # -- Set list path if not set by user
+    if [ -z "$ListPath" ]; then
+        unset ListPath
+        mkdir ${StudyFolder}/processing/lists &> /dev/null
+        cd ${StudyFolder}/processing/lists
+        ListPath=`pwd`
+        reho "    Setting default path for list folder --> $ListPath"; echo ""
+        export ListPath
+    else
+        export ListPath
+    fi
+    # --------------------------
+    # --- preprocessing loop ---
+    # --------------------------
+    if [ "$ListGenerate" == "batch" ]; then
+        # -- Check of overwrite flag was set
+        if [ "$Overwrite" == "yes" ]; then
+            echo ""
+            reho "===> Deleting prior batch processing files"
+            echo ""
+            rm "$ListPath"/batch."$ListName".txt &> /dev/null
+        fi
+        if [ -z "$ListFunction" ]; then
+            reho "    List function not set. Using default function."
+            ListFunction="        ${TOOLS}/${MNAPREPO}/connector/functions/SubjectsParamList.sh"
+            reho "$ListFunction"
+            echo ""
+        fi
+        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        if [ -z "$ListName" ]; then
+            ListName="$TimeStamp"
+            reho "    Name of batch preprocessing file not specified. Using defaults with timestamp to avoid overwriting: $ListName"
+        fi
+        if [ -z "$HeaderBatch" ]; then
+            echo ""
+            reho "    Batch parameter header file not specified. Using defaults for multi-band data: "
+            HeaderBatch="${TOOLS}/${MNAPREPO}/library/data/templates/batch_multiband_parameters.txt"
+            if [ -f $HeaderBatch ]; then
+                reho "        ${HeaderBatch}"; echo ""
+            else
+                reho "---> ERROR: ${HeaderBatch} not found! Check MNAP environment variables."
+                echo ""
+                exit 1
+            fi
+        fi
+        # -- Check if skipping parameter file header
+        if [ "$HeaderBatch" != "no" ]; then
+            # -- Check if lists exists
+            if [ -s ${ListPath}/batch."$ListName".txt ]; then
+                # -- If HeaderBatch was set and file exists then exit and report error
+                echo ""
+                reho "---------------------------------------------------------------------"
+                reho "--> The file exists and you are trying to set the header again"
+                reho "--> Check usage to append the file or overwrite it."
+                reho "---------------------------------------------------------------------"
+                echo ""
+                exit 1
+            else
+                cat ${HeaderBatch} >> ${ListPath}/batch."$ListName".txt
+            fi
+        fi
+        # -- Report parameters
+        echo ""
+        echo "Running $FunctionToRun processing with the following parameters:"
+        echo ""
+        echo "--------------------------------------------------------------"
+        echo "   Study Folder: ${StudyFolder}"
+        echo "   Subjects Folder: ${SubjectsFolder}"
+        echo "   Subjects: ${CASES}"
+        echo "   Study Log Folder: ${MasterLogFolder}"
+        echo "   List to generate: ${ListGenerate}"
+        echo "   List path: ${ListPath}"
+        echo "   List name: ${ListName}"
+        echo "   Scheduler Name and Options: $Scheduler"
+        echo "   Overwrite prior run: ${Overwrite}"
+        echo "--------------------------------------------------------------"
+        echo ""
+        # -- Loop through all the cases
+        for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+        echo ""
+        geho "-------------------------------------------------------------------------------------------"
+        geho "--> Check output:"
+        geho "  `ls ${ListPath}/batch.${ListName}.txt `"
+        geho "-------------------------------------------------------------------------------------------"
+        echo ""
+    fi
+    # --------------------------
+    # --- analysis loop --------
+    # --------------------------
+    if [ "$ListGenerate" == "analysis" ]; then
+        if [ -z "$ListFunction" ]; then
+        reho "List function not set. Using default function."
+            ListFunction="${TOOLS}/${MNAPREPO}/connector/functions/AnalysisList.sh"
+            echo ""
+            reho "$ListFunction"
+            echo ""
+        fi
+        if [ -z "$ListName" ]; then reho "Name of analysis list for is missing."; exit 1; fi
+        if [ -z "$BOLDS" ]; then reho "List of BOLDs missing."; exit 1; fi
+        # -- Check of overwrite flag was set
+        if [ "$Overwrite" == "yes" ]; then
+            echo ""
+            reho "===> Deleting prior analysis lists"
+            echo ""
+            rm ${ListPath}/analysis."$ListName".*.list &> /dev/null
+        fi
+            # -- Report parameters
+            echo ""
+            echo "Running $FunctionToRun processing with the following parameters:"
+            echo ""
+            echo "--------------------------------------------------------------"
+            echo "   Study Folder: ${StudyFolder}"
+            echo "   Subjects Folder: ${SubjectsFolder}"
+            echo "   Subjects: ${CASES}"
+            echo "   Study Log Folder: ${MasterLogFolder}"
+            echo "   List to generate: ${ListGenerate}"
+            echo "   Scheduler Name and Options: $Scheduler"
+            echo "   Overwrite prior run: ${Overwrite}"
+            echo "--------------------------------------------------------------"
+            echo ""
+            # -- Loop through all the cases
+            for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -3107,30 +3055,30 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "FSLDtifit" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun processing with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Scheduler Name and Options: $Scheduler"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+        if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun processing with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Scheduler Name and Options: $Scheduler"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3138,34 +3086,34 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
-	if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
-	if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
-	if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
-	Cluster=${RunMethod}
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun processing with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Number of Fibers: ${Fibers}"
-	echo "   Model Type: ${Model}"
-	echo "   Burnin Period: ${Burnin}"
-	echo "   Rician flag: ${Rician}"
-	echo "   Scheduler Name and Options: ${{Scheduler}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
+    if [ -z "$Model" ]; then reho "Error: Model value missing"; exit 1; fi
+    if [ -z "$Burnin" ]; then reho "Error: Burnin value missing"; exit 1; fi
+    if [ -z "$Rician" ]; then reho "Note: Rician flag missing. Setting to default --> YES"; Rician="YES"; fi
+    Cluster=${RunMethod}
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun processing with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Number of Fibers: ${Fibers}"
+    echo "   Model Type: ${Model}"
+    echo "   Burnin Period: ${Burnin}"
+    echo "   Rician flag: ${Rician}"
+    echo "   Scheduler Name and Options: ${{Scheduler}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3173,44 +3121,44 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "hcpdLegacy" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
-	if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
-	if [ ${UseFieldmap} == "yes" ]; then
-		if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
-	elif [ ${UseFieldmap} == "no" ]; then
-		reho "Note: Processing without FieldMap (TE option not needed)"
-	fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Scanner: ${Scanner}"
-	echo "   Using FieldMap: ${UseFieldmap}"
-	echo "   Echo Spacing: ${EchoSpacing}"
-	echo "   Phase Encoding Direction: ${PEdir}"
-	echo "   TE value for Fieldmap: ${TE}"
-	echo "   EPI Unwarp Direction: ${UnwarpDir}"
-	echo "   Diffusion Data Suffix Name: ${DiffDataSuffix}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
+    if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
+    if [ ${UseFieldmap} == "yes" ]; then
+        if [ -z "$TE" ]; then reho "Error: TE value for Fieldmap missing"; exit 1; fi
+    elif [ ${UseFieldmap} == "no" ]; then
+        reho "Note: Processing without FieldMap (TE option not needed)"
+    fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Scanner: ${Scanner}"
+    echo "   Using FieldMap: ${UseFieldmap}"
+    echo "   Echo Spacing: ${EchoSpacing}"
+    echo "   Phase Encoding Direction: ${PEdir}"
+    echo "   TE value for Fieldmap: ${TE}"
+    echo "   EPI Unwarp Direction: ${UnwarpDir}"
+    echo "   Diffusion Data Suffix Name: ${DiffDataSuffix}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3218,39 +3166,39 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "structuralParcellation" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
-	if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
-	if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Check optional parameters if not specified
-	if [ -z "$ExtractData" ]; then ExtractData="no"; fi
-	if [ -z "$Overwrite" ]; then Overwrite="no"; fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   ParcellationFile: ${ParcellationFile}"
-	echo "   Parcellated Data Output Name: ${OutName}"
-	echo "   Input Data Type: ${InputDataType}"
-	echo "   Extract data in CSV format: ${ExtractData}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
+    if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+    if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Check optional parameters if not specified
+    if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+    if [ -z "$Overwrite" ]; then Overwrite="no"; fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   ParcellationFile: ${ParcellationFile}"
+    echo "   Parcellated Data Output Name: ${OutName}"
+    echo "   Input Data Type: ${InputDataType}"
+    echo "   Extract data in CSV format: ${ExtractData}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3258,113 +3206,113 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "computeBOLDfc" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
-	if [ -z "$RunType" ] && [[ "$Calculation" != "dense" ]]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
-	if [[ ${RunType} == "list" ]]; then
-		if [ -z "$FileList" ]; then reho "Error: Group file list missing"; exit 1; fi
-	fi
-	if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
-		if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-		if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
-		if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
-		if [[ ${RunType} == "individual" ]]; then
-		    if [ -z "$InputPath" ]; then echo ""; reho "Warning: Input path value missing. Assuming individual folder structure for output"; fi
-			if [ -z "$OutPathFC" ]; then echo ""; reho "Warning: Output path value missing. Assuming individual folder structure for output"; fi
-		fi
-		if [[ ${RunType} == "group" ]]; then
-			if [ -z "$OutPathFC" ]; then reho "Error: Output path value missing and is needed for a group run."; exit 1; fi
-		fi
-	fi
-	if [[ ${Calculation} == "gbc" ]]; then
-		if [ -z "$TargetROI" ]; then TargetROI="[]"; fi
-		if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
-		if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
-		if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
-		if [ -z "$Verbose" ]; then Verbose="true"; fi
-		if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
-		if [ -z "$VoxelStep" ]; then VoxelStep="5000"; fi
-	fi
-	if [[ ${Calculation} == "seed" ]]; then
-		if [ -z "$ROIInfo" ]; then reho "Error: ROI seed file not specified"; exit 1; fi
-		if [ -z "$FCCommand" ]; then FCCommand=""; fi
-		if [ -z "$Method" ]; then Method="mean"; fi
-	fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Check optional parameters if not specified
-	if [ -z "$IgnoreFrames" ]; then IgnoreFrames=""; fi
-	if [ -z "$MaskFrames" ]; then MaskFrames=""; fi
-	if [ -z "$Covariance" ]; then Covariance=""; fi
-	if [ -z "$ExtractData" ]; then ExtractData="no"; fi
-	
-	if [[ ${Calculation} == "dense" ]]; then 
-		RunType="individual"; 
-		if [ -z ${MemLimit} ]; then MemLimit="4"; reho "Warning: MemLimit value missing. Setting to $MemLimit"; fi
-	fi
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
+    if [ -z "$RunType" ] && [[ "$Calculation" != "dense" ]]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
+    if [[ ${RunType} == "list" ]]; then
+        if [ -z "$FileList" ]; then reho "Error: Group file list missing"; exit 1; fi
+    fi
+    if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
+        if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+        if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
+        if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+        if [[ ${RunType} == "individual" ]]; then
+            if [ -z "$InputPath" ]; then echo ""; reho "Warning: Input path value missing. Assuming individual folder structure for output"; fi
+            if [ -z "$OutPathFC" ]; then echo ""; reho "Warning: Output path value missing. Assuming individual folder structure for output"; fi
+        fi
+        if [[ ${RunType} == "group" ]]; then
+            if [ -z "$OutPathFC" ]; then reho "Error: Output path value missing and is needed for a group run."; exit 1; fi
+        fi
+    fi
+    if [[ ${Calculation} == "gbc" ]]; then
+        if [ -z "$TargetROI" ]; then TargetROI="[]"; fi
+        if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
+        if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
+        if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
+        if [ -z "$Verbose" ]; then Verbose="true"; fi
+        if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
+        if [ -z "$VoxelStep" ]; then VoxelStep="5000"; fi
+    fi
+    if [[ ${Calculation} == "seed" ]]; then
+        if [ -z "$ROIInfo" ]; then reho "Error: ROI seed file not specified"; exit 1; fi
+        if [ -z "$FCCommand" ]; then FCCommand=""; fi
+        if [ -z "$Method" ]; then Method="mean"; fi
+    fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Check optional parameters if not specified
+    if [ -z "$IgnoreFrames" ]; then IgnoreFrames=""; fi
+    if [ -z "$MaskFrames" ]; then MaskFrames=""; fi
+    if [ -z "$Covariance" ]; then Covariance=""; fi
+    if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+    
+    if [[ ${Calculation} == "dense" ]]; then 
+        RunType="individual"; 
+        if [ -z ${MemLimit} ]; then MemLimit="4"; reho "Warning: MemLimit value missing. Setting to $MemLimit"; fi
+    fi
 
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Output Path: ${OutPathFC}"
-	echo "   Extract data in CSV format: ${ExtractData}"
-	echo "   Type of fc calculation: ${Calculation}"
-	echo "   Type of run: ${RunType}"
-	echo "   Calculate Covariance: ${Covariance}"
-	if [[ ${Calculation} != "dense" ]]; then
-		echo "   Ignore frames: ${IgnoreFrames}"
-		echo "   Mask out frames: ${MaskFrames}"
-	else
-		echo "   Memory Limit: ${MemLimit}"
-	fi
-	if [[ ${RunType} == "list" ]]; then
-		echo "   FileList: ${FileList}"
-	fi
-	if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
-		echo "   Study Folder: ${StudyFolder}"
-		echo "   Subjects Folder: ${SubjectsFolder}"
-		echo "   Subjects: ${CASES}"
-		echo "   Input Files: ${InputFiles}"
-		echo "   Input Path for Data: ${SubjectFolder}/<subject_id>/${InputPath}"
-		echo "   Output Name: ${OutName}"
-	fi
-	if [[ ${Calculation} == "gbc" ]]; then
-		echo "   Target ROI for GBC: ${TargetROI}"
-		echo "   Radius Smooth for GBC: ${RadiusSmooth}"
-		echo "   Radius Dilate for GBC: ${RadiusDilate}"
-		echo "   GBC Commands to run: ${GBCCommand}"
-		echo "   Verbose outout: ${Verbose}"
-		echo "   Print Compute Time: ${ComputeTime}"
-		echo "   Voxel Steps to use: ${VoxelStep}"
-	fi
-	if [[ ${Calculation} == "seed" ]]; then
-		echo "   ROI Information for seed fc: ${ROIInfo}"
-		echo "   FC Commands to run: ${FCCommand}"
-		echo "   Method to compute fc: ${Method}"
-	fi
-	echo "--------------------------------------------------------------"
-	echo ""
-	if [[ ${RunType} == "individual" ]]; then
-		for CASE in ${CASES}; do
-			${FunctionToRun} ${CASE}
-		done
-	fi
-	if [[ ${RunType} == "group" ]]; then
-		CASE=`echo "$CASES" | sed 's/ /,/g'`
-		echo $CASE
-		${FunctionToRun} ${CASE}
-	fi
-	if [[ ${RunType} == "list" ]]; then
-		${FunctionToRun}
-	fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Output Path: ${OutPathFC}"
+    echo "   Extract data in CSV format: ${ExtractData}"
+    echo "   Type of fc calculation: ${Calculation}"
+    echo "   Type of run: ${RunType}"
+    echo "   Calculate Covariance: ${Covariance}"
+    if [[ ${Calculation} != "dense" ]]; then
+        echo "   Ignore frames: ${IgnoreFrames}"
+        echo "   Mask out frames: ${MaskFrames}"
+    else
+        echo "   Memory Limit: ${MemLimit}"
+    fi
+    if [[ ${RunType} == "list" ]]; then
+        echo "   FileList: ${FileList}"
+    fi
+    if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
+        echo "   Study Folder: ${StudyFolder}"
+        echo "   Subjects Folder: ${SubjectsFolder}"
+        echo "   Subjects: ${CASES}"
+        echo "   Input Files: ${InputFiles}"
+        echo "   Input Path for Data: ${SubjectFolder}/<subject_id>/${InputPath}"
+        echo "   Output Name: ${OutName}"
+    fi
+    if [[ ${Calculation} == "gbc" ]]; then
+        echo "   Target ROI for GBC: ${TargetROI}"
+        echo "   Radius Smooth for GBC: ${RadiusSmooth}"
+        echo "   Radius Dilate for GBC: ${RadiusDilate}"
+        echo "   GBC Commands to run: ${GBCCommand}"
+        echo "   Verbose outout: ${Verbose}"
+        echo "   Print Compute Time: ${ComputeTime}"
+        echo "   Voxel Steps to use: ${VoxelStep}"
+    fi
+    if [[ ${Calculation} == "seed" ]]; then
+        echo "   ROI Information for seed fc: ${ROIInfo}"
+        echo "   FC Commands to run: ${FCCommand}"
+        echo "   Method to compute fc: ${Method}"
+    fi
+    echo "--------------------------------------------------------------"
+    echo ""
+    if [[ ${RunType} == "individual" ]]; then
+        for CASE in ${CASES}; do
+            ${FunctionToRun} ${CASE}
+        done
+    fi
+    if [[ ${RunType} == "group" ]]; then
+        CASE=`echo "$CASES" | sed 's/ /,/g'`
+        echo $CASE
+        ${FunctionToRun} ${CASE}
+    fi
+    if [[ ${RunType} == "list" ]]; then
+        ${FunctionToRun}
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -3372,58 +3320,58 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "BOLDParcellation" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
-	if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
-	if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
-	if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
-	if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Check optional parameters if not specified
-	if [ -z "$UseWeights" ]; then UseWeights="no"; fi
-	if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
-	if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
-	if [ -z "$ExtractData" ]; then ExtractData="no"; fi
-	if [ -z "$SingleInputFile" ]; then SingleInputFile="";
-		if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-		if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-		if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
-	fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Input File: ${InputFile}"
-	echo "   Input Path: ${InputPath}"
-	echo "   Single Input File: ${SingleInputFile}"
-	echo "   ParcellationFile: ${ParcellationFile}"
-	echo "   BOLD Parcellated Connectome Output Name: ${OutName}"
-	echo "   BOLD Parcellated Connectome Output Path: ${OutPath}"
-	echo "   Input Data Type: ${InputDataType}"
-	echo "   Compute PConn File: ${ComputePConn}"
-	echo "   Weights file specified to omit certain frames: ${UseWeights}"
-	echo "   Weights file name: ${WeightsFile}"
-	echo "   Extract data in CSV format: ${ExtractData}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	if [ -z "$SingleInputFile" ]; then SingleInputFile="";
-		# -- Loop through all the cases
-		for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
-	else
-		# -- Execute on single case
-		${FunctionToRun} ${CASE}
-	fi
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
+    if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
+    if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
+    if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+    if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Check optional parameters if not specified
+    if [ -z "$UseWeights" ]; then UseWeights="no"; fi
+    if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
+    if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
+    if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+    if [ -z "$SingleInputFile" ]; then SingleInputFile="";
+        if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+        if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+        if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
+    fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Input File: ${InputFile}"
+    echo "   Input Path: ${InputPath}"
+    echo "   Single Input File: ${SingleInputFile}"
+    echo "   ParcellationFile: ${ParcellationFile}"
+    echo "   BOLD Parcellated Connectome Output Name: ${OutName}"
+    echo "   BOLD Parcellated Connectome Output Path: ${OutPath}"
+    echo "   Input Data Type: ${InputDataType}"
+    echo "   Compute PConn File: ${ComputePConn}"
+    echo "   Weights file specified to omit certain frames: ${UseWeights}"
+    echo "   Weights file name: ${WeightsFile}"
+    echo "   Extract data in CSV format: ${ExtractData}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    if [ -z "$SingleInputFile" ]; then SingleInputFile="";
+        # -- Loop through all the cases
+        for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    else
+        # -- Execute on single case
+        ${FunctionToRun} ${CASE}
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -3431,37 +3379,37 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
-	if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
-	if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	if [ -z "$WayTotal" ]; then reho "--waytotal normalized data not specified. Assuming default [no]"; fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Matrix version used for input: ${MatrixVersion}"
-	echo "   File to use for parcellation: ${ParcellationFile}"
-	echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
-	echo "   Waytotal normalization: ${WayTotal}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
+    if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
+    if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    if [ -z "$WayTotal" ]; then reho "--waytotal normalized data not specified. Assuming default [no]"; fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Matrix version used for input: ${MatrixVersion}"
+    echo "   File to use for parcellation: ${ParcellationFile}"
+    echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
+    echo "   Waytotal normalization: ${WayTotal}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3469,48 +3417,48 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "ROIExtract" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
-	if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
-	if [ -z "$ROIInputFile" ]; then reho "Error: File to use for ROI extraction missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Check optional parameters if not specified
-	if [ -z "$ROIFileSubjectSpecific" ]; then ROIFileSubjectSpecific="no"; fi
-	if [ -z "$Overwrite" ]; then Overwrite="no"; fi
-	if [ -z "$SingleInputFile" ]; then SingleInputFile="";
-		if [ -z "$InputFile" ]; then reho "Error: Input file path value missing"; exit 1; fi
-		if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-		if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-		if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "   --------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Input File: ${InputFile}"
-	echo "   Output File Name: ${OutName}"
-	echo "   Single Input File: ${SingleInputFile}"
-	echo "   ROI File: ${ROIInputFile}"
-	echo "   Subject specific ROI file set: ${ROIFileSubjectSpecific}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	if [ -z "$SingleInputFile" ]; then SingleInputFile="";
-		# -- Loop through all the cases
-		for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
-	else
-		# -- Execute on single input file
-		${FunctionToRun}
-	fi
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
+    if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+    if [ -z "$ROIInputFile" ]; then reho "Error: File to use for ROI extraction missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Check optional parameters if not specified
+    if [ -z "$ROIFileSubjectSpecific" ]; then ROIFileSubjectSpecific="no"; fi
+    if [ -z "$Overwrite" ]; then Overwrite="no"; fi
+    if [ -z "$SingleInputFile" ]; then SingleInputFile="";
+        if [ -z "$InputFile" ]; then reho "Error: Input file path value missing"; exit 1; fi
+        if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+        if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "   --------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Input File: ${InputFile}"
+    echo "   Output File Name: ${OutName}"
+    echo "   Single Input File: ${SingleInputFile}"
+    echo "   ROI File: ${ROIInputFile}"
+    echo "   Subject specific ROI file set: ${ROIFileSubjectSpecific}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    if [ -z "$SingleInputFile" ]; then SingleInputFile="";
+        # -- Loop through all the cases
+        for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    else
+        # -- Execute on single input file
+        ${FunctionToRun}
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -3518,37 +3466,37 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "DWISeedTractography" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
-	if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi	
-	if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-			if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	if [ -z "$WayTotal" ]; then WayTotal="no"; reho "--waytotal normalized data not specified. Assuming default [no]"; fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Matrix version used for input: ${MatrixVersion}"
-	echo "   Dense dconn seed reduction: ${SeedFile}"
-	echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
-	echo "   Waytotal normalization: ${WayTotal}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
+    if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi    
+    if [ -z "$OutName" ]; then reho "Error: Name of output pconn file missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    if [ -z "$WayTotal" ]; then WayTotal="no"; reho "--waytotal normalized data not specified. Assuming default [no]"; fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Matrix version used for input: ${MatrixVersion}"
+    echo "   Dense dconn seed reduction: ${SeedFile}"
+    echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
+    echo "   Waytotal normalization: ${WayTotal}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3556,30 +3504,30 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "autoPtx" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	if [[ -z ${BedPostXFolder} ]]; then BedPostXFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX; fi
-	
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   BedpostX Folder: ${BedPostXFolder} "
-	echo "--------------------------------------------------------------"
-	echo ""
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+        if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    if [[ -z ${BedPostXFolder} ]]; then BedPostXFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX; fi
+    
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   BedpostX Folder: ${BedPostXFolder} "
+    echo "--------------------------------------------------------------"
+    echo ""
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3587,27 +3535,27 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "pretractographyDense" ]; then
-	# -- Check all the user-defined parameters:
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+        if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3615,41 +3563,41 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "probtrackxGPUDense" ]; then
-	# Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
-	if [ "$MatrixOne" == "yes" ]; then
-		if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
-	fi
-	if [ "$MatrixThree" == "yes" ]; then
-		if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
-	fi
-	Cluster="$RunMethod"
-	if [ "$Cluster" == "2" ]; then
-		if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-	fi
-	# -- Report parameters
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Scheduler: ${Scheduler}"
-	echo "   Compute Matrix1: ${MatrixOne}"
-	echo "   Compute Matrix3: ${MatrixThree}"
-	echo "   Number of samples for Matrix1: ${NsamplesMatrixOne}"
-	echo "   Number of samples for Matrix3: ${NsamplesMatrixThree}"
-	echo "   Overwrite prior run: ${Overwrite}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
+    if [ "$MatrixOne" == "yes" ]; then
+        if [ -z "$NsamplesMatrixOne" ]; then NsamplesMatrixOne=10000; fi
+    fi
+    if [ "$MatrixThree" == "yes" ]; then
+        if [ -z "$NsamplesMatrixThree" ]; then NsamplesMatrixThree=3000; fi
+    fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+        if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Scheduler: ${Scheduler}"
+    echo "   Compute Matrix1: ${MatrixOne}"
+    echo "   Compute Matrix3: ${MatrixThree}"
+    echo "   Number of samples for Matrix1: ${NsamplesMatrixOne}"
+    echo "   Number of samples for Matrix3: ${NsamplesMatrixThree}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
@@ -3657,26 +3605,26 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "AWSHCPSync" ]; then
-	# Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
-	if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-	if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-	if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-	if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-	if [ -z "$Modality" ]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
-	if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
-	echo ""
-	echo "Running $FunctionToRun with the following parameters:"
-	echo ""
-	echo "--------------------------------------------------------------"
-	echo "   Study Folder: ${StudyFolder}"
-	echo "   Subjects Folder: ${SubjectsFolder}"
-	echo "   Subjects: ${CASES}"
-	echo "   Study Log Folder: ${MasterLogFolder}"
-	echo "   Run Method: ${RunMethod}"
-	echo "   Modality: ${Modality}"
-	echo "   AWS URI Path: ${Awsuri}"
-	echo "--------------------------------------------------------------"
-	echo ""
-	# -- Loop through all the cases
-	for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    # Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$Modality" ]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
+    if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Run Method: ${RunMethod}"
+    echo "   Modality: ${Modality}"
+    echo "   AWS URI Path: ${Awsuri}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
