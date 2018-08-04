@@ -137,7 +137,8 @@ RUN echo "Installing R packages..." && \
     wget --progress=bar:force -O /tmp/ggplot2_3.0.0.tar.gz https://cran.r-project.org/src/contrib/ggplot2_3.0.0.tar.gz && \
     R CMD INSTALL /tmp/ggplot2_3.0.0.tar.gz
 # Install Octave 4.2.1
-RUN mkdir -p /tmp/octave-4.2.1 && \
+RUN echo "Installing Ocatve 4.2.1..." && \
+    mkdir -p /tmp/octave-4.2.1 && \
     wget --progress=bar:force -O /tmp/octave-4.2.1.tar.gz ftp://ftp.gnu.org/gnu/octave/octave-4.2.1.tar.gz && \
     tar -xzvf /tmp/octave-4.2.1.tar.gz -C /tmp/octave-4.2.1 --strip-components 1 && \
     cd /tmp/octave-4.2.1 && \

@@ -277,6 +277,13 @@ Change Log
 * 0.18.07 [mnaptools] Added .gitignore to master and all subrepositories
 * 0.18.08 [library] Improved handling of gitmnap functions
 * 0.19.00 [niutilities] Improved error catching and status reporting
+* 0.19.01 [connector, matlab, hcpmodified] Cleaned up FS module loading on FreeSurfer.sh to remove local assumotions
+                                           Cleaned up mnap.sh code to read help directly from connector functions to avoid in-line help duplication
+                                           Integrated module checking ino mnap_environment.sh
+                                           Ingested DWIPreprocPipelineLegacy.sh code into /connector/functions for unification w/other connector code
+                                           Improved documentation for g_PlotBoldTS.m and variable handling
+                                           Improved RunTurnkey code and tested on Docker
+* 0.19.02 [connector] Further improvements to RunTurnkey code and testing on Docker
 
 =======
 [Mind and Brain Lab]: http://mblab.si
