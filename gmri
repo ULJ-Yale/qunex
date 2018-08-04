@@ -14,13 +14,11 @@ import copy
 
 # --- Get current MNAP Suite version and prepend to help calls
 
-tools = os.environ['TOOLS']
+tools    = os.environ['TOOLS']
 mnaprepo = os.environ['MNAPREPO']
-version = 'VERSION.md'
-mnapver = os.path.join(tools,mnaprepo,version)
-with open(mnapver,'r') as f: # 'with' will automatically close file for you,
-    for line in f: # Do something with the file
-        print "\nMultimodal Neuroimaging Analysis Platform (MNAP) Suite Version",line
+with open(os.path.join(tools, mnaprepo, 'VERSION.md'), "r") as f:
+    version  = f.read().strip()
+print "Multimodal Neuroimaging Analysis Platform (MNAP) Suite Version", version
 
 help = '''
 ================================================================================
@@ -220,7 +218,6 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'sortDicom'            : {'com': niu.g_dicom.sortDicom,              'args': ('folder', 'out_dir', 'files', 'copy')},
             'dicom2nii'            : {'com': niu.g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores', 'debug')},
             'dicom2niix'           : {'com': niu.g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'subjectid', 'verbose', 'cores', 'debug')},
-            'processPhilips'       : {'com': niu.g_dicom.processPhilips,         'args': ('folder', 'check', 'pattern')},
             'processInbox'         : {'com': niu.g_dicom.processInbox,           'args': ('subjectsfolder', 'inbox', 'check', 'pattern', 'cores', 'logfile', 'archive', 'verbose')},
             'getDICOMInfo'         : {'com': niu.g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
             'runNILFolder'         : {'com': niu.g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'sfile')},
