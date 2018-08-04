@@ -145,6 +145,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                hcp ready and what to do with existing files
     '''
 
+    print "Running setupHCP\n================"
+
     inf   = niutilities.g_core.readSubjectData(os.path.join(sfolder, sfile))[0][0]
     basef = os.path.join(sfolder, tfolder, inf['id'])
     rawf  = inf['raw_data']
@@ -340,6 +342,8 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
     '''
 
     # list all possible sbjfiles and check them
+    
+    print "Running setupHCPFolder\n======================"
 
     sbjf   = sfile
     sfiles = glob.glob(os.path.join(subjectsfolder, "*", sbjf))
@@ -523,6 +527,8 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
              - Adjusted and expanded help string.
              - Added the option to map sequence names.
     '''
+
+    print "Running getHCPReady\n==================="
 
     if mapping is None:
         mapping = os.path.join(subjectsfolder, 'specs', 'hcp_mapping.txt')

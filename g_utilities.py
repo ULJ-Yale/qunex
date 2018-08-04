@@ -120,6 +120,8 @@ def createStudy(studyfolder=None):
              - Expanded folders to include QC scenes
     '''
 
+    print "Running createStudy\n==================="
+
     if studyfolder is None:
         raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
 
@@ -235,6 +237,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
     2018-07-20 Grega Repovš
              - Fixed adding paramfile and updated documentation
     '''
+
+    print "Running createBatch\n==================="
 
     if subjects in ['None', 'none', 'NONE']:
         subjects = None
@@ -495,6 +499,8 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
 
     """
 
+    print "Running createList\n=================="
+
     def checkFile(fileName):
         if check == 'no':
             pass
@@ -503,8 +509,6 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
                 print "WARNING: File does not exist [%s]!" % (fileName)
             else:
                 raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
-
-    print "Running createList\n=================="
 
     # --- check subjects
 
@@ -877,4 +881,4 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
             cfile.close()
 
     if error:
-        raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details")
+        raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details!")

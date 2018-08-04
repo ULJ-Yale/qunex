@@ -17,6 +17,7 @@ mnaprepo = os.environ['MNAPREPO']
 with open(os.path.join(tools, mnaprepo, 'VERSION.md'), "r") as f:
     version  = f.read().strip()
 print "Multimodal Neuroimaging Analysis Platform (MNAP) Suite Version", version
+print 
 
 help = '''
 ================================================================================
@@ -315,7 +316,7 @@ def runCommand(command, args):
 
     elif subjects is None:
         commands[command]['com'](**args)
-        print "\n\n===> Successful completion of task\n"
+        print "\n===> Successful completion of task\n"
 
     # -- subjects loop
 
@@ -340,12 +341,13 @@ def runCommand(command, args):
         print "\n===> Summary Report"       
         results.sort(key=lambda x: x[0])
         for name, result, targetLog, prepend in results:
-            if not result:
-                result = 'failed'
+            if result:                
                 ok = False
+            else:
+                result = 'completed'
             print "%s %s %s [log: %s]" % (prepend, name, result, targetLog)
         if ok:
-            print "\n\n===> Successful completion of task\n"
+            print "\n===> Successful completion of task\n"
 
 
 def printHelp(com):
@@ -475,9 +477,9 @@ def main(args=None):
 
     except ge.CommandFailed as e:
         if e.function == comm:
-            print "\n===> ERROR in completing %s:\n     %s" % (comm, "\n     ".join(e.report))
+            print "\n===> ERROR in completing %s:\n     %s\n" % (comm, "\n     ".join(e.report))
         else:
-            print "\n===> ERROR in completing %s at %s:\n     %s" % (comm, e.function, "\n     ".join(e.report))
+            print "\n===> ERROR in completing %s at %s:\n     %s\n" % (comm, e.function, "\n     ".join(e.report))
         sys.exit(1)
     except ge.CommandError as e:
         if e.function == comm:
@@ -485,7 +487,7 @@ def main(args=None):
         else:
             print "\nERROR in running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
-        print "\nPlease run `gmri ?%s` to get help for the failed command." % (comm)
+        print "\nPlease run `gmri ?%s` to get help for the failed command.\n" % (comm)
         sys.exit(1)
     except ValueError as e:
         print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)

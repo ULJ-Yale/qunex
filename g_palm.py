@@ -237,7 +237,7 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
             - Corrected for new locations of templates
     '''
 
-    print "\n Running PALM"
+    print "Running PALM\n============"
     print " --> checking environment"
 
     if not "MNAPPATH" in os.environ:
@@ -621,19 +621,21 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
              - Updated documentation.
     '''
 
+    print "Running maskMap\n==============="
+
     # --- process the arguments
 
     if image is None:
         raise ge.CommandError("maskMap", "No image file specified", "Please provide path to input image for masking!")
     elif not os.path.exists(image):
-        raise ge.CommandError("maskMap", "Image file not found", "Input image file for masking was not found!", "Please check path [%s]" % (image))
+        raise ge.CommandFailed("maskMap", "Image file not found", "Input image file for masking was not found!", "Please check path [%s]" % (image))
 
     if masks is None:
         raise ge.CommandError("maskMap", "No mask file specified", "Please provide path to file(s) used as mask(s)!")
     masks = [e.strip() for e in masks.split(',')]
     for mask in masks:
         if not os.path.exists(mask):
-            raise ge.CommandError("maskMap", "Mask file not found", "Mask file for masking was not found!", "Please check path [%s]" % (mask))
+            raise ge.CommandFailed("maskMap", "Mask file not found", "Mask file for masking was not found!", "Please check path [%s]" % (mask))
     nmasks = len(masks)
 
     if output is None:
@@ -721,6 +723,8 @@ def joinMaps(images=None, output=None, names=None, originals=None):
     2017-02-06 Grega Repovš
              - Updated documentation.
     '''
+
+    print "Running joinMaps\n================"
 
     # --- process the arguments
 

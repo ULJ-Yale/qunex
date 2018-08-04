@@ -96,5 +96,3 @@ for (fidl in flist) {
     dev.off()
 
 }
-
-write("===> Successful completion of task", "")

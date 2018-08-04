@@ -439,6 +439,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                subjects and scheduling
     '''
 
+    print "Running dicom2nii\n================="
+
     # debug = True
     base = folder
     null = open(os.devnull, 'w')
@@ -571,15 +573,15 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
 
         try:
             nframes = d[0x2001, 0x1081].value
-            logs.append("%04d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
-            reps.append("---> %04d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
+            logs.append("%4d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
+            reps.append("---> %4d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
         except:
             nframes = 0
-            logs.append("%04d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
-            reps.append("---> %04d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
+            logs.append("%4d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
+            reps.append("---> %4d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
 
         if niinum > 0:
-            print >> stxt, "%04d: %s" % (niinum, seriesDescription)
+            print >> stxt, "%4d: %s" % (niinum, seriesDescription)
 
         niiid = str(niinum)
         calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
@@ -898,6 +900,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                support PAR/REC files.
     '''
 
+    print "Running dicom2niix\n=================="
+
     if subjectid in ['none', 'None', 'NONE']:
         subjectid = None
     base = folder
@@ -966,7 +970,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     reps  = []
     files = []
 
-    print "Running dicom2niix\n---> Analyzing data"
+    print "---> Analyzing data"
 
     for folder in folders:
         par = glob.glob(os.path.join(folder, "*.PAR"))
@@ -1041,11 +1045,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
         info['niinum'] = niinum
 
-        logs.append("%(niinum)04d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
-        reps.append("---> %(niinum)04d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
+        logs.append("%(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
+        reps.append("---> %(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
 
         if niinum > 0:
-            print >> stxt, "%04d: %s" % (niinum, info['seriesDescription'])
+            print >> stxt, "%4d: %s" % (niinum, info['seriesDescription'])
 
         niiid = str(niinum)
         if par:
@@ -1135,9 +1139,6 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                         if verbose:
                             print "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
 
-    if verbose:
-        print "---> done!"
-
     r.close()
     stxt.close()
 
@@ -1225,6 +1226,8 @@ def sortDicom(folder=".", **kwargs):
     '''
 
     # --- should we copy or move
+
+    print "Running sortDicom\n================="
 
     should_copy = kwargs.get('copy', False)
     if should_copy:
@@ -1549,6 +1552,8 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
                support PAR/REC files.
     '''
 
+    print "Running processInbox\n===================="
+
     verbose = verbose == 'yes'
 
     if check == 'no':
@@ -1566,8 +1571,6 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
         pattern = r".*?(OP[0-9.-]+).*\.zip"
 
     igz = re.compile(r'.*\.gz')
-
-    print "===> Starting processInbox"
 
     # ---- check acquisition log if present:
 
@@ -1751,12 +1754,12 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
 
             # ===> run sort dicom
 
-            print "\n\n===> running sortDicom"
+            print
             sortDicom(folder=opfolder)
 
             # ===> run dicom to nii
 
-            print "\n\n===> running dicom2niix"
+            print
             dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, cores=cores, verbose=True)
 
             # ===> archive
@@ -1794,9 +1797,9 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
                 else:
                     os.remove(p)
 
-            report['ok'].append(p, o, s, note)
+            report['ok'].append((p, o, s, note))
         except ge.CommandFailed as e: 
-            report['failed'].append(p, o, s, "%s: %s" % (e.function, e.error))
+            report['failed'].append((p, o, s, "%s: %s" % (e.function, e.error)))
 
     print "\nFinal report\n============"
 

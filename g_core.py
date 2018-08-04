@@ -15,6 +15,7 @@ import datetime
 import glob
 import sys
 import traceback
+import niutilities.g_exceptions as ge
 
 
 def readSubjectData(filename, verbose=False):
@@ -412,7 +413,7 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
     if logfile:
         logFolder, logName = os.path.split(logfile)
         logNameBase, logNameExt = os.path.splitext(logName)
-        logName  = logNameBase + datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f") + logNameExt
+        logName  = logNameBase + "_" + datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f") + logNameExt
         tlogfile = os.path.join(logFolder, 'running_' + logName)
 
         if not os.path.exists(logFolder):
@@ -433,11 +434,16 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
 
     try:
         result = function(**args)
-    except:
+    except (ge.CommandError, ge.CommandFailed) as e:
+        with lock:
+            print "\n\nERROR"
+            print e.message
+        result = e.error
+    except Exception as e:
         with lock:
             print "\n\nERROR"
             print traceback.format_exc()
-        result = False
+        result = e.message
 
     with lock:
         print "\n-----------------------------------------\nFinished at %s" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -448,9 +454,9 @@ def runWithLog(function, args=None, logfile=None, name=None, prepend=None):
         sys.stderr = sysstderr
 
         if result:
-            targetLog = os.path.join(logFolder, 'done_' + logName)
+            targetLog = os.path.join(logFolder, 'error_' + logName)            
         else:
-            targetLog = os.path.join(logFolder, 'error_' + logName)
+            targetLog = os.path.join(logFolder, 'done_' + logName)
         os.rename(os.path.join(logFolder, 'running_' + logName), targetLog)
     else:
         targetLog = None
