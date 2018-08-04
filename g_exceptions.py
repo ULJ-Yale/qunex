@@ -16,7 +16,7 @@ class CommandError(Exception):
         if error is None:
             error = "unspecified"
         msg = "Error '%s' occured in %s" % (error, function)
-        super(CommandFailed, self).__init__(msg)
+        super(CommandError, self).__init__(msg)
         self.function = function
         self.error    = error
         self.hints    = hints
