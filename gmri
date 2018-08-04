@@ -5,6 +5,7 @@ import niutilities as niu
 import niutilities.g_process as gp
 import niutilities.g_matlab as gm
 import niutilities.g_core as gc
+import niutilities.g_exceptions as ge
 import glob
 import os.path
 import sys
@@ -474,7 +475,13 @@ def main(args=None):
                 opts[k] = True
         runCommand(comm, opts)
 
-    except ValueError as e:
+    except ge.CommandFailed as e:
+        if e.function == comm:
+            print "\n===> ERROR in completing %s:\n     %s" % (comm, "\n     ".join(e.report))
+        else:
+            print "\n===> ERROR in completing %s at %s:\n     %s" % (comm, e.function, "\n     ".join(e.report))
+        sys.exit(1)
+    except (ValueError, ge.CommandError) as e:
         print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)
         print e
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))

@@ -24,6 +24,7 @@ import datetime
 import subprocess
 import niutilities.g_NIfTI
 import niutilities.g_gimg as gimg
+import niutilities.g_exceptions as ge
 import niutilities
 import zipfile
 import gzip
@@ -464,9 +465,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                 print "---> ", p
                 os.remove(p)
         else:
-            print "\nPlease remove existing NIfTI files or run the command with 'clean' set to 'yes'. \nAborting processing of DICOM files!\n"
-            return
-            # exit()
+            raise ge.CommandFailed("dicom2nii", "Existing NIfTI files", "Please remove existing NIfTI files or run the command with 'clean' set to 'yes'.", "Aborting processing of DICOM files!")
 
     # gzipped files
 
@@ -481,9 +480,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
             for g in gzipped:
                 subprocess.call("gunzip " + g, shell=True)  # , stdout=null, stderr=null)
         else:
-            print "\nCan not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.\nAborting processing of DICOM files!\n"
-            return
-            # exit()
+            raise ge.CommandFailed("dicom2nii", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
 
     # --- open report files
 
@@ -748,10 +745,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                 print "--->", folder
             subprocess.call("gzip " + os.path.join(folder, "*.dcm"), shell=True, stdout=null, stderr=null)
 
-    if verbose:
-        print "===> Successful completion of work. Finished!\n"
-
-    return "completed ok"
+    return
 
 
 def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None, verbose=True, cores=1, debug=False):
@@ -931,9 +925,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 print "---> ", p
                 os.remove(p)
         else:
-            print "\nPlease remove existing NIfTI files or run the command with 'clean' set to 'yes'. \nAborting processing of DICOM files!\n"
-            return
-            # exit()
+            raise ge.CommandFailed("dicom2niix", "Existing NIfTI files", "Please remove existing NIfTI files or run the command with 'clean' set to 'yes'.", "Aborting processing of DICOM files!")
 
     # gzipped files
 
@@ -950,9 +942,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 calls.append({'name': 'gunzip: ' + g, 'args': ['gunzip', g], 'sout': None})
             niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
         else:
-            print "\nCan not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.\nAborting processing of DICOM files!\n"
-            return
-            # exit()
+            raise ge.CommandFailed("dicom2niix", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
 
     # --- open report files
 
@@ -1162,10 +1152,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
             calls.append({'name': 'gzip: ' + folder, 'args': ['gzip'] + glob.glob(os.path.join(os.path.abspath(folder), "*.dcm")) + glob.glob(os.path.join(os.path.abspath(folder), "*.REC")), 'sout': None})
         niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
 
-    if verbose:
-        print "===> Successful completion of work. Finished!\n"
-
-    return "completed ok"
+    return
 
 
 def sortDicom(folder=".", **kwargs):
@@ -1254,9 +1241,7 @@ def sortDicom(folder=".", **kwargs):
     if files is None:
         inbox = os.path.join(folder, 'inbox')
         if not os.path.exists(inbox):
-            print "===> ERROR: Inbox folder not found, please check your paths! [%s]" % (os.path.abspath(inbox))
-            print "     Aborting"
-            raise ValueError('Inbox folder does not exist [%s]' % (os.path.abspath(inbox)))
+            raise ge.CommandFailed("sortDicom", "Inbox folder not found", "Please check your paths! [%s]" % (os.path.abspath(inbox)), "Aborting")
         files = glob.glob(os.path.join(inbox, "*"))
         if len(files):
             files = files + glob.glob(os.path.join(inbox, "*/*"))
@@ -1264,9 +1249,7 @@ def sortDicom(folder=".", **kwargs):
             files = [e for e in files if os.path.isfile(e)]
             print "---> Processing %d files from %s" % (len(files), inbox)
         else:
-            print "===> ERROR: No files found in the specified inbox folder! [%s]" % (os.path.abspath(inbox))
-            print "     Aborting"
-            raise ValueError('No files found in inbox folder! [%s]' % (os.path.abspath(inbox)))
+            raise ge.CommandFailed("sortDicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
 
     info = None
     for dcm in files:
@@ -1354,8 +1337,7 @@ def sortDicom(folder=".", **kwargs):
             doFile(dcm, tgf)
 
     print "\nDone!\n\n"
-    print "===> Successful completion of work. Finished!\n"
-    return "completed ok"
+    return 
 
 def listDicom(folder=None):
     '''
@@ -1414,7 +1396,7 @@ def listDicom(folder=None):
         except:
             pass
 
-    return "completed ok"
+    return
 
 
 def splitDicom(folder=None):
@@ -1475,119 +1457,6 @@ def splitDicom(folder=None):
             os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
         except:
             pass
-
-    return "completed ok"
-
-
-def processPhilips(folder=None, check=None, pattern=None):
-    '''
-    processPhilips [folder=.] [check=yes] [pattern=OP]
-
-    The "original" processInbox function written specifically for data coming off the Ljubljana Philips scanner,
-    it has been adapted for more flexible use in the form of the processInbox function, which should be used instead.
-    '''
-
-    if check == 'no':
-        check = False
-    else:
-        check = True
-
-    if folder is None:
-        folder = "."
-    inbox = os.path.join(folder, 'inbox')
-
-    if pattern is None:
-        pattern = r"(OP[0-9.-]+)"
-    else:
-        pattern = r"(%s[0-9.-]+)" % (pattern)
-
-    # ---- get file list
-
-    print "\n---> Checking for packets in %s ..." % (inbox)
-
-    zips = glob.glob(os.path.join(inbox, '*.zip'))
-    getop = re.compile(pattern)
-
-    okpackets  = []
-    badpackets = []
-    for zipf in zips:
-        m = getop.search(zipf)
-        if m.groups():
-            okpackets.append((zipf, m.group(0)))
-        else:
-            badpackets.append(zipf)
-
-    print "---> Found the following packets to process:"
-    for p, o in okpackets:
-        print "     %s: %s" % (o, os.path.basename(p))
-
-    if len(badpackets):
-        print "---> For these packets no OP code was found and won't be processed:"
-        for p in badpackets:
-            print "     %s" % (os.path.basename(p))
-
-    if check:
-        s = raw_input("\n===> Should I proceeed with processing the listed packages [y/n]: ")
-        if s != "y":
-            print "---> Aborting operation!\n"
-            return
-
-    print "---> Starting to process %d packets ..." % (len(okpackets))
-
-
-    # ---- Ok, now loop through the packets
-
-    afolder = os.path.join(folder, "Archive")
-    if not os.path.exists(afolder):
-        os.makedirs(afolder)
-        print "---> Created Archive folder for processed packages."
-
-    for p, o in okpackets:
-
-        # --- Big info
-
-        print "\n\n---=== PROCESSING %s ===---\n" % (o)
-
-        # --- create a new OP folder
-        opfolder = os.path.join(folder, o)
-
-        if os.path.exists(opfolder):
-            print "---> WARNING: %s folder exists, skipping package %s" % (o, os.path.basename(p))
-            continue
-
-        os.makedirs(opfolder)
-
-        # --- unzip the file
-
-        print "...  unzipping %s" % (os.path.basename(p))
-        with zipfile.ZipFile(p, 'r') as z:
-            z.extractall(opfolder)
-        print "     -> done!"
-
-        # --- move package to archive
-
-        print "... moving %s to archive" % (os.path.basename(p))
-        shutil.move(p, afolder)
-        print "     -> done!"
-
-        # --- move dicom files to inbox
-
-        print "... moving dicoms to inbox"
-        shutil.move(os.path.join(opfolder, "Dicom", "DICOM"), os.path.join(opfolder, "inbox"))
-        shutil.rmtree(os.path.join(opfolder, "Dicom"))
-        print "     -> done!"
-
-        # --- run sort dicom
-
-        print "\n\n===> running sortDicom"
-        sortDicom(folder=opfolder)
-
-        # --- run dicom to nii
-
-        print "\n\n===> running dicom2nii"
-        dicom2nii(folder=opfolder, clean='no', unzip='yes', gzip='yes', verbose=True)
-
-    print "\n\n---=== DONE PROCESSING PACKAGES - Have a nice day! ===---\n"
 
     return
 
@@ -1708,12 +1577,10 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
             for key in ['subjectid', 'sessionid']:
                 log[key] = int(log[key]) - 1
         except:
-            print "\n---> ERROR: Please create a valid logfile specification! [%s]" % (logfile)
-            return
+            ge.CommandFailed("processInbox", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
 
         if not all([e in log for e in ['path', 'subjectid', 'sessionid']]):
-            print "\n---> ERROR: Please provide all information in the logfile specification! [%s]" % (logfile)
-            return
+            ge.CommandFailed("processInbox", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
 
         if os.path.exists(log['path']):
             print "---> Reading acquisition log [%s]." % (log['path'])
@@ -1803,123 +1670,147 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
         os.makedirs(afolder)
         print "---> Created Archive folder for processed packages."
 
+    report = {'failed': [], 'ok': []}
+
     for p, o, s in okpackets:
+        note = None
+        try:
+            # --- Big info
 
-        # --- Big info
+            print "\n\n---=== PROCESSING %s ===---\n" % (o)
 
-        print "\n\n---=== PROCESSING %s ===---\n" % (o)
+            # --- create a new OP folder
+            opfolder = os.path.join(subjectsfolder, o)
 
-        # --- create a new OP folder
-        opfolder = os.path.join(subjectsfolder, o)
+            if os.path.exists(opfolder):
+                print "---> WARNING: %s folder exists, skipping package %s" % (o, os.path.basename(p))
+                report["failed"].append((p, o, s, "Subject folder exists!"))
+                continue
 
-        if os.path.exists(opfolder):
-            print "---> WARNING: %s folder exists, skipping package %s" % (o, os.path.basename(p))
-            continue
+            os.makedirs(opfolder)
+            dfol = os.path.join(opfolder, 'inbox')
 
-        os.makedirs(opfolder)
-        dfol = os.path.join(opfolder, 'inbox')
+            # --- unzip or copy the package
 
-        # --- unzip or copy the package
+            if p.split('.')[-1] == 'zip':
 
-        if p.split('.')[-1] == 'zip':
+                ptype = "zip"
 
-            ptype = "zip"
+                # --- create the inbox folder for dicoms
+                os.makedirs(dfol)
 
-            # --- create the inbox folder for dicoms
-            os.makedirs(dfol)
+                print "...  unzipping %s" % (os.path.basename(p))
+                dnum = 0
+                fnum = 0
 
-            print "...  unzipping %s" % (os.path.basename(p))
-            dnum = 0
-            fnum = 0
+                z = zipfile.ZipFile(p, 'r')
+                ilist = z.infolist()
+                for sf in ilist:
+                    if sf.file_size > 0:
 
-            z = zipfile.ZipFile(p, 'r')
-            ilist = z.infolist()
-            for sf in ilist:
-                if sf.file_size > 0:
+                        if fnum % 1000 == 0:
+                            dnum += 1
+                            os.makedirs(os.path.join(dfol, str(dnum)))
+                        fnum += 1
 
-                    if fnum % 1000 == 0:
-                        dnum += 1
-                        os.makedirs(os.path.join(dfol, str(dnum)))
-                    fnum += 1
+                        print "...  extracting:", sf.filename, sf.file_size
 
-                    print "...  extracting:", sf.filename, sf.file_size
+                        fdata = z.read(sf)
 
-                    fdata = z.read(sf)
+                        # --- do we have par / rec / log
 
-                    # --- do we have par / rec / log
+                        if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
+                            tfile = os.path.basename(sf.filename)
+                            for ext in ['rec', 'par']:
+                                if tfile.split('.')[-1] == ext:
+                                    tfile = tfile[:-3] + ext.upper()
+                        else:
+                            if igz.match(sf.filename):
+                                gzname = os.path.join(dfol, str(dnum), str(fnum) + ".gz")
+                                fout = open(gzname, 'wb')
+                                fout.write(fdata)
+                                fout.close()
+                                fin = gzip.open(gzname, 'rb')
+                                fdata = fin.read()
+                                fin.close()
+                                os.remove(gzname)
+                            tfile = str(fnum)
+                        fout = open(os.path.join(dfol, str(dnum), tfile), 'wb')
+                        fout.write(fdata)
+                        fout.close()
 
-                    if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                        tfile = os.path.basename(sf.filename)
-                        for ext in ['rec', 'par']:
-                            if tfile.split('.')[-1] == ext:
-                                tfile = tfile[:-3] + ext.upper()
-                    else:
-                        if igz.match(sf.filename):
-                            gzname = os.path.join(dfol, str(dnum), str(fnum) + ".gz")
-                            fout = open(gzname, 'wb')
-                            fout.write(fdata)
-                            fout.close()
-                            fin = gzip.open(gzname, 'rb')
-                            fdata = fin.read()
-                            fin.close()
-                            os.remove(gzname)
-                        tfile = str(fnum)
-                    fout = open(os.path.join(dfol, str(dnum), tfile), 'wb')
-                    fout.write(fdata)
-                    fout.close()
-
-            z.close()
-            print "     -> done!"
-
-        else:
-            ptype = "folder"
-            print "...  copying %s dicom files" % (os.path.basename(p))
-            shutil.copytree(p, dfol)
-
-        # ===> run sort dicom
-
-        print "\n\n===> running sortDicom"
-        sortDicom(folder=opfolder)
-
-        # ===> run dicom to nii
-
-        print "\n\n===> running dicom2niix"
-        dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, cores=cores, verbose=True)
-
-        # ===> archive
-
-        archivetarget = os.path.join(afolder, os.path.basename(p))
-
-        # --- move package to archive
-        if archive == 'move':
-            if os.path.exists(archivetarget):
-                print "...  WARNING: %s already exists in archive and it will not be moved!" % (os.path.basename(p))
-            else:
-                print "...  moving %s to archive" % (os.path.basename(p))
-                shutil.move(p, archivetarget)
+                z.close()
                 print "     -> done!"
 
-        # --- copy package to archive
-        elif archive == 'copy':
-            if os.path.exists(archivetarget):
-                print "...  WARNING: %s already exists in archive and it will not be copied!" % (os.path.basename(p))
             else:
-                print "...  copying %s to archive" % (os.path.basename(p))
-                if ptype == 'folder':
-                    shutil.copytree(p, archivetarget)
+                ptype = "folder"
+                print "...  copying %s dicom files" % (os.path.basename(p))
+                shutil.copytree(p, dfol)
+
+            # ===> run sort dicom
+
+            print "\n\n===> running sortDicom"
+            sortDicom(folder=opfolder)
+
+            # ===> run dicom to nii
+
+            print "\n\n===> running dicom2niix"
+            dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, cores=cores, verbose=True)
+
+            # ===> archive
+
+            archivetarget = os.path.join(afolder, os.path.basename(p))
+
+            # --- move package to archive
+            if archive == 'move':
+                if os.path.exists(archivetarget):
+                    print "...  WARNING: %s already exists in archive and it will not be moved!" % (os.path.basename(p))
+                    note = "WARNING: %s already exists in archive and it was not moved!" % (os.path.basename(p))
                 else:
-                    shutil.copy2(p, afolder)
-                print "     -> done!"
+                    print "...  moving %s to archive" % (os.path.basename(p))
+                    shutil.move(p, archivetarget)
+                    print "     -> done!"
 
-        # --- delete original package
-        elif archive == 'delete':
-            print "...  deleting packet [%s]" % (os.path.basename(p))
-            if ptype == 'folder':
-                shutil.rmtree(p)
+            # --- copy package to archive
+            elif archive == 'copy':
+                if os.path.exists(archivetarget):
+                    print "...  WARNING: %s already exists in archive and it will not be copied!" % (os.path.basename(p))
+                    note = "WARNING: %s already exists in archive and it was not copied!" % (os.path.basename(p))
+                else:
+                    print "...  copying %s to archive" % (os.path.basename(p))
+                    if ptype == 'folder':
+                        shutil.copytree(p, archivetarget)
+                    else:
+                        shutil.copy2(p, afolder)
+                    print "     -> done!"
+
+            # --- delete original package
+            elif archive == 'delete':
+                print "...  deleting packet [%s]" % (os.path.basename(p))
+                if ptype == 'folder':
+                    shutil.rmtree(p)
+                else:
+                    os.remove(p)
+
+            report['ok'].append(p, o, s, note)
+        except ge.CommandFailed as e: 
+            report['failed'].append(p, o, s, "%s: %s" % (e.function, e.error))
+
+    print "\nFinal report\n============"
+
+    if report["ok"]:
+        print "\nSuccessfully processed:"
+        for p, o, s, note in report["ok"]:
+            if note:
+                print "... %s [%s] %s" % (s, p, note)
             else:
-                os.remove(p)
+                print "... %s [%s]" % (s, p)
 
-    print "\n\n---=== DONE PROCESSING PACKAGES - Have a nice day! ===---\n"
+    if report["failed"]:
+        print "\nFailed to process:"
+        for p, o, s, note in report["failed"]:
+            print "... %s [%s] %s" % (s, p, note)
+        raise ge.CommandFailed("processInbox", "Some packages failed to process", "Please check report!")
 
     return
 
@@ -1976,16 +1867,13 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
     '''
 
     if dicomfile is None:
-        print "\nERROR: No path to the dicom file is provided!"
-        return
+        raise ge.CommandFailed("getDICOMInfo", "No path to the dicom file is provided")
 
     if not os.path.exists(dicomfile):
-        print "\nERROR: Could not find the requested dicom file! [%s]" % (dicomfile)
-        return
+        raise ge.CommandFailed("getDICOMInfo", "DICOM file does not exist", "Please check path! [%s]" % (dicomfile))
 
     if scanner not in ['siemens', 'philips']:
-        print "\nERROR: The provided scanner is not supported! [%s]" % (scanner)
-        return
+        raise ge.CommandFailed("getDICOMInfo", "Scanner not supported", "The specified scanner is not yet supported! [%s]" % (scanner))
 
     d = readDICOMBase(dicomfile)
     ok = True
