@@ -276,6 +276,7 @@ Change Log
 * 0.18.06 [niutilities] Unified logging of comlogs and runlogs naming
 * 0.18.07 [mnaptools] Added .gitignore to master and all subrepositories
 * 0.18.08 [library] Improved handling of gitmnap functions
+* 0.19.00 [niutilities] Improved error catching and status reporting
 
 =======
 [Mind and Brain Lab]: http://mblab.si
