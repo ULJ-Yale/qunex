@@ -1867,13 +1867,13 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
     '''
 
     if dicomfile is None:
-        raise ge.CommandFailed("getDICOMInfo", "No path to the dicom file is provided")
+        raise ge.CommandError("getDICOMInfo", "No path to the dicom file was provided")
 
     if not os.path.exists(dicomfile):
         raise ge.CommandFailed("getDICOMInfo", "DICOM file does not exist", "Please check path! [%s]" % (dicomfile))
 
     if scanner not in ['siemens', 'philips']:
-        raise ge.CommandFailed("getDICOMInfo", "Scanner not supported", "The specified scanner is not yet supported! [%s]" % (scanner))
+        raise ge.CommandError("getDICOMInfo", "Scanner not supported", "The specified scanner is not yet supported! [%s]" % (scanner))
 
     d = readDICOMBase(dicomfile)
     ok = True
