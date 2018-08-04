@@ -610,6 +610,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             shutil.move(tmplogfile, errlogfile)
             raise ExternalFailed(r)
 
+        print >> nf, "\n\n===> Successful completion of task\n"
         nf.close()
         if remove:
             os.remove(tmplogfile)
@@ -657,6 +658,7 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
             nf.close()
             shutil.move(tmplogfile, errlogfile)
         else:
+            print >> nf, "\n\n===> Successful completion of task\n"
             nf.close()
             if remove:
                 os.remove(tmplogfile)
@@ -698,6 +700,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
         shutil.move(tmplogfile, errlogfile)
         raise ExternalFailed(r)
     else:
+        print >> nf, "\n\n===> Successful completion of task\n"
         nf.close()
         if remove:
             os.remove(tmplogfile)

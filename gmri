@@ -6,10 +6,8 @@ import niutilities.g_process as gp
 import niutilities.g_matlab as gm
 import niutilities.g_core as gc
 import niutilities.g_exceptions as ge
-import glob
 import os.path
 import sys
-import datetime
 import copy
 
 # --- Get current MNAP Suite version and prepend to help calls
@@ -286,21 +284,20 @@ def runCommand(command, args):
     # -- check extra arguments
 
     if eargs:
-        argsok = True
+        bad = []
         for k, v in eargs.items():
             if k not in ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder']:
+                bad.append(k)
                 print "ERROR: Extra argument %s is not valid! Please check your command!" % (k)
-                argsok = False
-        if not argsok:
-            sys.exit(1)
+        if bad:
+            raise ge.CommandError("gmri", "Invalid arguments", "The extra argument(s) provided is/are not valid! [%s]" % (", ".join(bad)))
 
     # -- process extra arguments
 
     subjects = None
     if 'subjects' in eargs:
         if not any([e in commands[command]['args'] for e in ['sfolder', 'folder']]):
-            print "ERROR: Command %s can not be run on multiple subjects!" % (command)
-            sys.exit(1)
+            raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple subjects!" % (command))
         if folders['subjectsfolder'] is None:
             folders['subjectsfolder'] = "."
         subjects, gopts = gc.getSubjectList(eargs['subjects'], sfilter=eargs.get('filter'), subjid=eargs.get('subjid'), subjectsfolder=folders['subjectsfolder'], verbose=False)
@@ -318,6 +315,7 @@ def runCommand(command, args):
 
     elif subjects is None:
         commands[command]['com'](**args)
+        print "\n\n===> Successful completion of task\n"
 
     # -- subjects loop
 
@@ -338,13 +336,16 @@ def runCommand(command, args):
 
         results = gc.runInParallel(calls, cores=cores, prepend="     ... ")
 
-        print "\n===> Summary Report"
+        ok = True
+        print "\n===> Summary Report"       
         results.sort(key=lambda x: x[0])
         for name, result, targetLog, prepend in results:
             if not result:
                 result = 'failed'
+                ok = False
             print "%s %s %s [log: %s]" % (prepend, name, result, targetLog)
-
+        if ok:
+            print "\n\n===> Successful completion of task\n"
 
 
 def printHelp(com):

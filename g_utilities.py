@@ -14,6 +14,7 @@ import datetime
 import shutil
 import niutilities.g_process as gp
 import niutilities.g_core as gc
+import niutilities.g_exceptions as ge
 import getpass
 import re
 
@@ -120,7 +121,7 @@ def createStudy(studyfolder=None):
     '''
 
     if studyfolder is None:
-        raise ValueError("ERROR: studyfolder parameter has to be provided!")
+        raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
 
     folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
                ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
@@ -173,8 +174,6 @@ def createStudy(studyfolder=None):
             username = "unknown user"
         print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
         mark.close()
-
-    print "===> Successful completion of work."
 
 
 def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
@@ -249,8 +248,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
         tfile = os.path.join(os.path.dirname(os.path.abspath(subjectsfolder)), 'processing', 'batch.txt')
 
     if os.path.exists(tfile):
-        print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
         if overwrite == 'ask':
+            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
             s = raw_input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
             if s == 'o':
                 print "         Overwriting exisiting file."
@@ -259,15 +258,15 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
                 print "         Appending to exisiting file."
                 overwrite = 'append'
             else:
-                print "         Aborting."
-                return
+                raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(tfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
         elif overwrite == 'yes':
+            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
             print "         Overwriting exisiting file."
         elif overwrite == 'append':
+            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
             print "         Appending to exisiting file."
         elif overwrite == 'no':
-            print "         Aborting."
-            return
+            raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(tfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
     else:
         overwrite = 'yes'
 
@@ -346,8 +345,6 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
                     print >> jfile, line,
 
     # --- close file
-
-    print "===> Successful completion of work."
 
     jfile.close()
 
@@ -505,9 +502,7 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
             if check == 'warn':
                 print "WARNING: File does not exist [%s]!" % (fileName)
             else:
-                print "ERROR: File does not exist [%s]!" % (fileName)
-                print "       Aborting."
-                exit()
+                raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
 
     print "Running createList\n=================="
 
@@ -547,15 +542,13 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
                 print "         Appending to exisiting file."
                 overwrite = 'append'
             else:
-                print "         Aborting."
-                return
+                raise ge.CommandFailed("createList", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
         elif overwrite == 'yes':
             print "         Overwriting the exisiting file."
         elif overwrite == 'append':
             print "         Appending to the exisiting file."
         elif overwrite == 'no':
-            print "         Aborting."
-            return
+            raise ge.CommandFailed("createList", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
     else:
         overwrite = 'yes'
 
@@ -638,7 +631,6 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
         print >> lfile, line
 
     lfile.close()
-    print "===> Successful completion of work."
 
 
 def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
@@ -792,8 +784,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
     else:
-        print "ERROR: No bolds specified to be included in the conc files.\n         Aborting."
-        return
+        raise ge.CommandError("createConc", "No bolds specified to be included in the conc files")
 
     bsearch  = re.compile('bold([0-9]+)')
 
@@ -819,6 +810,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
     # --- generate list entries
 
+    error = False
     for subject in subjects:
 
         print "---> Processing subject %s" % (subject['id'])
@@ -850,6 +842,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
         if not complete and check == 'yes':
             print "     WARNING: Due to missing source files conc file was not created!"
+            error = True
             continue
 
         if os.path.exists(concfile):
@@ -866,6 +859,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
                 print "              Overwriting the exisiting file."
             elif overwrite == 'no':
                 print "              Skipping this conc file."
+                error = True
                 continue
         else:
             overwrite = 'yes'
@@ -882,4 +876,5 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
             cfile.close()
 
-    print "===> Successful completion of work."
+    if error:
+        raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details")
