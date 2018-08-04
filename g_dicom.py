@@ -907,7 +907,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
     # check for existing .gz files
 
-    prior = glob.glob(os.path.join(imgf, "*.nii.gz")) + glob.glob(os.path.join(dmcf, "*", "*.nii.gz"))
+    prior = []
+    for tfolder in [imgf, dmcf]:
+        for ext in ['*.nii.gz', '*.bval', '*.bvec']:
+            prior += glob.glob(os.path.join(tfolder, ext))
+
     if len(prior) > 0:
         if clean == 'ask':
             print "\nWARNING: The following files already exist:"
@@ -915,10 +919,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 print p
             clean = raw_input("\nDo you want to delete the existing NIfTI files? [no] > ")
         if clean == "yes":
-            print "\nDeleting files:"
+            print "\nDeleting preexisting files:"
             for p in prior:
                 print "---> ", p
                 os.remove(p)
+            print ""
         else:
             raise ge.CommandFailed("dicom2niix", "Existing NIfTI files", "Please remove existing NIfTI files or run the command with 'clean' set to 'yes'.", "Aborting processing of DICOM files!")
 
