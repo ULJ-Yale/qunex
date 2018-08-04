@@ -571,15 +571,15 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
 
         try:
             nframes = d[0x2001, 0x1081].value
-            logs.append("%02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
-            reps.append("---> %02d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
+            logs.append("%04d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
+            reps.append("---> %04d  %4d %40s   %3d   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, nframes, TR, TE, getID(d), time, fz))
         except:
             nframes = 0
-            logs.append("%02d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
-            reps.append("---> %02d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
+            logs.append("%04d  %4d %40s  [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
+            reps.append("---> %04d  %4d %40s   [TR %7.2f, TE %6.2f]   %s   %s%s" % (niinum, d.SeriesNumber, seriesDescription, TR, TE, getID(d), time, fz))
 
         if niinum > 0:
-            print >> stxt, "%02d: %s" % (niinum, seriesDescription)
+            print >> stxt, "%04d: %s" % (niinum, seriesDescription)
 
         niiid = str(niinum)
         calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
@@ -1035,11 +1035,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
         info['niinum'] = niinum
 
-        logs.append("%(niinum)02d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
-        reps.append("---> %(niinum)02d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
+        logs.append("%(niinum)04d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
+        reps.append("---> %(niinum)04d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
 
         if niinum > 0:
-            print >> stxt, "%02d: %s" % (niinum, info['seriesDescription'])
+            print >> stxt, "%04d: %s" % (niinum, info['seriesDescription'])
 
         niiid = str(niinum)
         if par:
