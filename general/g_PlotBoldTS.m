@@ -2,15 +2,15 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 
 %function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verbose)
 %
-%		Creates and saves a plot of BOLD timeseries
+%       Creates and saves a plot of BOLD timeseries
 %
 %       images      - input image(s) as gmri images or paths
-%		elements    - plot element specifications
+%       elements    - plot element specifications
 %       masks       - one or multiple masks to use for extracting BOLD data
 %       filename    - filename to save the plot to
-%		skip		- how many frames to skip at the stat of the bold run
-%		subjid		- subject code
-%		verbose		- whether to be talkative
+%       skip  - how many frames to skip at the stat of the bold run
+%       subjid  - subject code
+%       verbose  - whether to be talkative
 %
 %   USE
 %   The function is used to create a plot of BOLD timeseries for quality control inspection. 
@@ -38,9 +38,9 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %   the first two files would be concatenated to image 1 and the second pair to image 2.
 %   This allows easy plotting of conatenated bolds.
 %
-%   Do note that these should be NIfTI files as most often signal from ventricles and
-%   white matter is plotted and this information is not present in cifti files. If
-%   these signals are not required, the function can work with cifti files as well.
+%   Inputs should be NIfTI files if signal from ventricles and white matter is plotted. 
+%   This volume-based information is not present in CIFTI files. 
+%   If CIFTI files are specified then specification of volume-based masks needs to be omitted.
 %
 %   *masks*
 %   masks again can be either a single iamge or a set of images passed either as gmrimage
@@ -93,7 +93,7 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %                 type elements. [0]
 %   * stats   ... This field is a structure with fields that provide additional information
 %                 for stats type plots. It should define the following fields:
-%     - type      ... A string that specifies, what statistic is plotted. Valid values are [fd]:
+%     - statstype      ... A string that specifies, what statistic is plotted. Valid values are [fd]:
 %                     fd - display frame displacement information
 %                     dvars - display dvars values
 %                     dvarsm - display image mean intensity normalised dvars values
@@ -104,15 +104,15 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %                     WB - mean whole brain signal
 %                     GO - mean signal across the whole image
 %                     scrub - whether the frame is to be used or scrubbed
-%     - img       ... The index of the image the statistics refers to. [1]
-%     - mask      ... The index of the mask that holds aseg or aseg+aparc image when 
+%     - imgindex       ... The index of the image the statistics refers to. [1]
+%     - maskindex      ... The index of the mask that holds aseg or aseg+aparc image when 
 %                     mean signal statistic is to be displayed. [1]
-%                 Do note that if stats is structure array, multiple statistics will
-%                 be plotted in the same element/graph.
+%                     Do note that if stats is structure array, multiple statistics will
+%                     be plotted in the same element/graph.
 %
 %   An example string specification:
 %
-%   'type=stats|stats>type=fd,img=1>type=dvarsme,img=1;
+%   'type=stats|stats>statstype=fd,img=1>statstype=dvarsme,img=1;
 %    type=image|name=V|img=1|mask=1;
 %    type=image|name=WM|img=1|mask=1;
 %    type=image|name=GM|img=1|mask=1;
@@ -138,17 +138,30 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %   *verbose*
 %   Whether to print out the information about the progress of the plotting. False by default.
 %
-%   EXAMPLE USE
-%   g_PlotBoldTS('bold1.nii.gz;bold1_g7_hpss_res.nii.gz', 'type=stats|stats>type=fd,img=1>type=dvarsme,img=1;type=image|name=V|img=1|mask=1;type=image|name=WM|img=1|mask=1;type=image|name=GM|img=1|mask=1;type=image|name=GM|img=2|mask=1|use=1', 'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
+%   EXAMPLE USE INSIDE MATLAB
 %
+%   g_PlotBoldTS('bold1.nii.gz;bold1_g7_hpss_res.nii.gz', 'type=stats|stats>statstype=fd,img=1>statstype=dvarsme,img=1;type=image|name=V|img=1|mask=1;type=image|name=WM|img=1|mask=1;type=image|name=GM|img=1|mask=1;type=image|name=GM|img=2|mask=1|use=1', 'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
+%
+%   EXAMPLE USE VIA MNAP FROM TERMINAL
+% 
+%   mnap g_PlotBoldTS --images="<Path_to_Study>/subjects/AP1937/images/functional/bold1.nii.gz" \
+%   --elements="type=stats|stats>statstype=fd,img=1>statstype=dvarsme,img=1;type=image|name=V|img=1|mask=1;type=image|name=WM|img=1|mask=1;type=image|name=GM|img=1|mask=1" \
+%   --masks="<Path_to_Study>/subjects/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \
+%   --filename='AP1937-BoldTSPlot.pdf' \
+%   --skip="0" \
+%   --subjid="AP1937" \
+%   --verbose="true"
+% 
 %   ——————————————————————————
 %   Written by Grega Repovs, 2015-10-17
 %
 %   Change log
 %   2018-01-20 Grega Repovs
 %            - Written detailed documentation
+%   2018-08-04 Alan Anticevic
+%            - Edited documentation & adjusted variable names
 %
-
+%
 %  ---- initializing
 
 if nargin < 7 || isempty(verbose), verbose = false; end
@@ -195,7 +208,7 @@ end
 %  ---- Process figure parts
 
 if ischar(elements)
-    elements = g_ParseOptions([], elements, 'type=image|img=1|mask=[]|ROI=[]|name=[]|size=[]|use=0|scale=0|stats>type=fd,img=1,mask=1');
+    elements = g_ParseOptions([], elements, 'type=image|img=1|mask=[]|ROI=[]|name=[]|size=[]|use=0|scale=0|stats>statstype=fd,imgindex=1,maskindex=1');
 end
 
 nelements = length(elements);
@@ -270,27 +283,27 @@ for n = 1:nelements
 				error('ERROR: The specified image does not exist! [%d of %d]', id, length(img));
 			end
 
-			if strcmp(elements(n).stats(s).type, 'fd')
+			if strcmp(elements(n).stats(s).statstype, 'fd')
 				if isempty(img(id).fstats_hdr) || ~ismember('fd', img(id).fstats_hdr)
 					error('\nERROR: FD data not present! [%s]', img(id).filename);
 				end
 				elements(n).stats(s).data = img(id).fstats(:, ismember(img(id).fstats_hdr, 'fd'));
-			elseif ismember(elements(n).stats(s).type, {'dvars', 'dvarsm', 'dvarsme'})
+			elseif ismember(elements(n).stats(s).statstype, {'dvars', 'dvarsm', 'dvarsme'})
 				stats = img(id).mri_StatsTime('dvars');
-				elements(n).stats(s).data = stats.(elements(n).stats(s).type);
-			elseif ismember(elements(n).stats(s).type, {'V', 'WM', 'GM', 'WB'})
-				tmask = ismember(mask(elements(n).stats(s).mask).image2D, roi.(elements(n).stats(s).type));
+				elements(n).stats(s).data = stats.(elements(n).stats(s).statstype);
+			elseif ismember(elements(n).stats(s).statstype, {'V', 'WM', 'GM', 'WB'})
+				tmask = ismember(mask(elements(n).stats(s).maskindex).image2D, roi.(elements(n).stats(s).statstype));
 				stats = img(id).mri_StatsTime('m', tmask);
 				elements(n).stats(s).data = stats.mean;
-			elseif ismember(elements(n).stats(s).type, {'GO'})
+			elseif ismember(elements(n).stats(s).statstype, {'GO'})
 				stats = img(id).mri_StatsTime('m');
 				elements(n).stats(s).data = stats.mean;
-			elseif strcmp(elements(n).stats(s).type, 'scrub')
+			elseif strcmp(elements(n).stats(s).statstype, 'scrub')
 				if isempty(img(id).use)
 					error('\nERROR: Use data not present! [%s]', img(id).filename);
 				end
 			else
-				error('\nERROR: Unknown stats type! [%s]', elements(n).stats(s).type);
+				error('\nERROR: Unknown stats type! [%s]', elements(n).stats(s).statstype);
 			end
 		end
 		if isempty(elements(n).size)
@@ -340,8 +353,8 @@ for n = 1:nelements
 		fleg = {};
 		thline = false;
 		for sn = 1:length(elements(n).stats)
-			if isfield(th, elements(n).stats(sn).type)
-				data = [data reshape(elements(n).stats(sn).data, [], 1) ./ th.(elements(n).stats(sn).type)];
+			if isfield(th, elements(n).stats(sn).statstype)
+				data = [data reshape(elements(n).stats(sn).data, [], 1) ./ th.(elements(n).stats(sn).statstype)];
 				thline = true;
 			else
 				dmin = min(elements(n).stats(sn).data);
@@ -349,7 +362,7 @@ for n = 1:nelements
 				data = [data (reshape(elements(n).stats(sn).data, [], 1) - dmin) / (dmax - dmin) * 2.5 ];
 			end
 
-			fleg{sn} = elements(n).stats(sn).type;
+			fleg{sn} = elements(n).stats(sn).statstype;
 		end
 		% data = data(dstart:end, :);
 
