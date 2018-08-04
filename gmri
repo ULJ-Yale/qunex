@@ -478,7 +478,15 @@ def main(args=None):
         else:
             print "\n===> ERROR in completing %s at %s:\n     %s" % (comm, e.function, "\n     ".join(e.report))
         sys.exit(1)
-    except (ValueError, ge.CommandError) as e:
+    except ge.CommandError as e:
+        if e.function == comm:
+            print "\nERROR in running %s:\n%s" % (comm, "\n".join(e.report))
+        else:
+            print "\nERROR in running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
+        print "\nPlease run `gmri ?%s` to get help for the failed command." % (comm)
+        sys.exit(1)
+    except ValueError as e:
         print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)
         print e
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
