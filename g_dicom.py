@@ -961,6 +961,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     reps  = []
     files = []
 
+    print "Running dicom2niix\n---> Analyzing data"
 
     for folder in folders:
         par = glob.glob(os.path.join(folder, "*.PAR"))
@@ -1003,7 +1004,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 subjectid = info['subjectid']
             print >> r, "Report for %s (%s) scanned on %s\n" % (subjectid, info['subjectid'], info['datetime'])
             if verbose:
-                print "\n\nProcessing images from %s (%s) scanned on %s\n" % (subjectid, info['subjectid'], info['datetime'])
+                print "\nProcessing images from %s (%s) scanned on %s" % (subjectid, info['subjectid'], info['datetime'])
 
             # --- setup subject.txt file
 
@@ -1050,6 +1051,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
     niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 
+    print "\nProcessed sequences:"
     for niinum, folder, nframes, nslices in files:
 
         print >> r, logs.pop(0),
@@ -1129,7 +1131,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                             print "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
 
     if verbose:
-        print "... done!"
+        print "---> done!"
 
     r.close()
     stxt.close()
