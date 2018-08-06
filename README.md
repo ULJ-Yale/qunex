@@ -286,6 +286,7 @@ Change Log
 * 0.19.02 [connector] Further improvements to RunTurnkey code and testing on Docker
 * 0.19.03 [library] Tweak to gitmnap function to allow more robust adding of files during commit/push
 * 0.19.04 [connector] Improved log handling for hcp functions in RunTurnkey code
+* 0.19.05 [matlab] Updated g_PlotBoldTS to allow specification of a colormap
 
 =======
 [Mind and Brain Lab]: http://mblab.si
