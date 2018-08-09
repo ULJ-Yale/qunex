@@ -287,6 +287,7 @@ Change Log
 * 0.19.03 [library] Tweak to gitmnap function to allow more robust adding of files during commit/push
 * 0.19.04 [connector] Improved log handling for hcp functions in RunTurnkey code
 * 0.19.05 [matlab] Updated g_PlotBoldTS to allow specification of a colormap
+* 0.19.06 [matlab] Futher updates to g_PlotBoldTS
 
 =======
 [Mind and Brain Lab]: http://mblab.si
