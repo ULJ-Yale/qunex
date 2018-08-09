@@ -54,74 +54,77 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %   or a string that can be parsed into a structure using g_ParseOptions function. Each 
 %   element can have the following fields:
 % 
-%   * name     ... The name or title of the element to draw. There are four standard names
-%                  that can be used to simplify the latter definition of the mask, these are:
-%                  V  - ventricles
-%                  WM - white matter
-%                  GM - gray matter
-%                  WB - whole brain
-%                  any other name can be used if desired. []
-%   * type     ... Defines what will be drawn, it can be 'image' for actual signal values 
-%                  or 'stats' for plot of summary statistics across voxels. [image]
-%   * img      ... Defines, which image file the data to plot should be based on, it is
-%                  an integer value, an index starting with 1. [1]
-%   * mask     ... Defines, which of the mask images specified using masks parameter should
-%                  be used to select only a specific part of the image to draw, it is an
-%                  integer value, an index starting with 1. If a mask is not specified, then
-%                  all the nonzero voxels across the image will be plotted. Do take care to
-%                  use a mask of the same image type and dimensions. If they do not match,
-%                  an error will be reported. []
-%   * ROI      ... An array of values that will be matched against the mask. Only those 
-%                  voxels that match ROI values in the mask will be plotted. E.g. if in a 
-%                  mask PFC is marked with 1, thalamus with 2, and cerebellum with 3, then
-%                  ROI=[1] would plot only PFC voxels, and ROI=[2 3] would plot thalamus
-%                  and cerebellum voxels. If one of the standard names is specified for 
-%                  the name field (V, WM, GM, WB) and ROI is not specified, then the mask
-%                  will be assumed to be a FreeSurfer aseg or aseg+aparc file and the 
-%                  correct ROI values will be automatically used. []
-%   * size     ... The vertical size of the element. For standard names it can be left 
-%                  empty, otherwise it provides a relative size information, the actual
-%                  size will be computed for all elements to fit a page. []
-%   * use      ... Whether frames use information should be taken into account. If set to
-%                  1 frames marked as bad in a bold file will be masked and their intensity
-%                  will not be shown. If set to 0, then all frames will be plotted. Do take
-%                  into account that voxel intensity values are mapped onto a grayscale
-%                  image to show the whole range of values from lowest to highest, so
-%                  if bad frames are plotted they can significantly change the mapping. [0]
-%   * scale    ... Which element should intensity scaling be based on. If set to 0, the
-%                  scaling will be based on the minimal and maximal value of data in this
-%                  element, otherwise it should be a an integer value specifying the index
-%                  of the relevant element. Setting elements to the same scale allows 
-%                  direct comparison between them. This field is only relevant for image 
-%                  type elements. [0]
-%   * colormap ... What color map is to be used for the plot. Options are gray, darkgray, jet,
-%                  or hsv. [gray]
-%   * stats    ... This field is a structure with fields that provide additional information
-%                  for stats type plots. It should define the following fields:
-%      - plotdata  ... A string that specifies, what statistic is plotted. Valid values are [fd]:
-%                      fd - display frame displacement information
-%                      dvars - display dvars values
-%                      dvarsm - display image mean intensity normalised dvars values
-%                      dvarsme - display timeseries median normalised dvarsm values
-%                      V - mean ventricle signal
-%                      WM - mean white matter signal
-%                      GM - mean gray matter signal
-%                      WB - mean whole brain signal
-%                      GO - mean signal across the whole image
-%                      scrub - whether the frame is to be used or scrubbed
-%      - imgindex  ... The index of the image the statistics refers to. [1]
-%      - maskindex ... The index of the mask that holds aseg or aseg+aparc image when 
-%                      mean signal statistic is to be displayed. [1]
-%                      Do note that if stats is structure array, multiple statistics will
-%                      be plotted in the same element/graph.
+%   * name       ... The name or title of the element to draw. There are four standard names
+%                    that can be used to simplify the latter definition of the mask, these are:
+%                    V  - ventricles
+%                    WM - white matter
+%                    GM - gray matter
+%                    WB - whole brain
+%                    any other name can be used if desired. []
+%   * type       ... Defines what will be drawn, it can be 'signal' for actual signal values 
+%                    or 'stats' for plot of summary statistics across voxels. [signal]
+%   * imageindex ... Defines, which of the image files specified by the `images` parameter the data 
+%                    to plot should be based on. It should be an integer value starting with 1
+%                    for the first image specified. If the images parameter is specified as:
+%                    'bold1.nii.gz;bold3.nii.gz;bold7.nii.gz', specifying `imageindex` as 2 would
+%                    set the plot to be based on 'bold3.nii.gz'. [1]
+%   * maskindex  ... Defines, which of the mask images specified using `masks` parameter should
+%                    be used to select only a specific part of the image to draw. It should be an
+%                    integer value, an index starting with 1. If a mask is not specified, then
+%                    all the nonzero voxels across the image will be plotted. Do take care to
+%                    use a mask of the same image type and dimensions. If they do not match,
+%                    an error will be reported. []
+%   * ROI        ... An array of values that will be matched against the mask. Only those 
+%                    voxels that match ROI values in the mask will be plotted. E.g. if in a 
+%                    mask PFC is marked with 1, thalamus with 2, and cerebellum with 3, then
+%                    ROI=[1] would plot only PFC voxels, and ROI=[2 3] would plot thalamus
+%                    and cerebellum voxels. If one of the standard names is specified for 
+%                    the name field (V, WM, GM, WB) and ROI is not specified, then the mask
+%                    will be assumed to be a FreeSurfer aseg or aseg+aparc file and the 
+%                    correct ROI values will be automatically used. []
+%   * size       ... The vertical size of the element. For standard names it can be left 
+%                    empty, otherwise it provides a relative size information, the actual
+%                    size will be computed for all elements to fit a page. []
+%   * use        ... Whether frames use information should be taken into account. If set to
+%                    1 frames marked as bad in a bold file will be masked and their intensity
+%                    will not be shown. If set to 0, then all frames will be plotted. Do take
+%                    into account that voxel intensity values are mapped onto a grayscale
+%                    image to show the whole range of values from lowest to highest, so
+%                    if bad frames are plotted they can significantly change the mapping. [0]
+%   * scale      ... Which element should intensity scaling be based on. If set to 0, the
+%                    scaling will be based on the minimal and maximal value of data in this
+%                    element, otherwise it should be a an integer value specifying the index
+%                    of the relevant element. Setting elements to the same scale allows 
+%                    direct comparison between them. This field is only relevant for image 
+%                    type elements. [0]
+%   * colormap   ... What color map is to be used for the plot. Options are gray, darkgray, jet,
+%                    or hsv. [gray]
+%   * stats      ... This field is a structure with fields that provide additional information
+%                    for stats type plots. It should define the following fields:
+%      - plotdata   ... A string that specifies, what statistic is plotted. Valid values are [fd]:
+%                       fd - display frame displacement information
+%                       dvars - display dvars values
+%                       dvarsm - display image mean intensity normalised dvars values
+%                       dvarsme - display timeseries median normalised dvarsm values
+%                       V - mean ventricle signal
+%                       WM - mean white matter signal
+%                       GM - mean gray matter signal
+%                       WB - mean whole brain signal
+%                       GO - mean signal across the whole image
+%                       scrub - whether the frame is to be used or scrubbed
+%      - imageindex ... The index of the image the statistics refers to. [1]
+%      - maskindex  ... The index of the mask that holds aseg or aseg+aparc image when 
+%                       mean signal statistic is to be displayed. [1]
+%                       Do note that if stats is structure array, multiple statistics will
+%                       be plotted in the same element/graph.
 %
 %   An example string specification:
 %
-%   'type=stats|stats>plotdata=fd,img=1>plotdata=dvarsme,img=1;
-%    type=image|name=V|img=1|mask=1;
-%    type=image|name=WM|img=1|mask=1;
-%    type=image|name=GM|img=1|mask=1;
-%    type=image|name=GM|img=2|mask=1|use=1'
+%   'type=stats|stats>plotdata=fd,img=1>plotdata=dvarsme,imageindex=1;
+%    type=signal|name=V|imageindex=1|maskindex=1;
+%    type=signal|name=WM|imageindex=1|maskindex=1;
+%    type=signal|name=GM|imageindex=1|maskindex=1;
+%    type=signal|name=GM|imageindex=2|maskindex=1|use=1'
 %
 %   If the first image is raw bold, the second image fully preprocessed bold, and the mask
 %   an aseg or aseg+aparc image, this specification would show frame displacement and dvarsme
@@ -145,12 +148,12 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %
 %   EXAMPLE USE INSIDE MATLAB
 %
-%   g_PlotBoldTS('bold1.nii.gz;bold1_g7_hpss_res.nii.gz', 'type=stats|stats>plotdata=fd,img=1>plotdata=dvarsme,img=1;type=image|name=V|img=1|mask=1;type=image|name=WM|img=1|mask=1;type=image|name=GM|img=1|mask=1;type=image|name=GM|img=2|mask=1|use=1', 'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
+%   g_PlotBoldTS('bold1.nii.gz;bold1_g7_hpss_res.nii.gz', 'type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|maskindex=1|use=1', 'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
 %
 %   EXAMPLE USE VIA MNAP FROM TERMINAL
 % 
 %   mnap g_PlotBoldTS --images="<Path_to_Study>/subjects/AP1937/images/functional/bold1.nii.gz" \
-%   --elements="type=stats|stats>plotdata=fd,img=1>plotdata=dvarsme,img=1;type=image|name=V|img=1|mask=1;type=image|name=WM|img=1|mask=1;type=image|name=GM|img=1|mask=1" \
+%   --elements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1" \
 %   --masks="<Path_to_Study>/subjects/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \
 %   --filename='AP1937-BoldTSPlot.pdf' \
 %   --skip="0" \
@@ -167,6 +170,8 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %            - Edited documentation & adjusted variable names
 %   2018-08-06 Grega Repovs
 %            - Added option to specify element colormap, edited documentation and variable names
+%   2018-08-09 Grega Repovs
+%            - Further changes to variable names and documentation
 %
 %
 %  ---- initializing
@@ -219,7 +224,7 @@ end
 if verbose, fprintf('\n ---> parsing elements'); end
 
 if ischar(elements)
-    elements = g_ParseOptions([], elements, 'type=image|img=1|mask=[]|ROI=[]|name=[]|size=[]|use=0|scale=0|colormap=grayscale|stats>plotdata=fd,imgindex=1,maskindex=1');
+    elements = g_ParseOptions([], elements, 'type=signal|imageindex=1|maskindex=[]|ROI=[]|name=[]|size=[]|use=0|scale=0|colormap=grayscale|stats>plotdata=fd,imageindex=1,maskindex=1');
 end
 
 nelements = length(elements);
@@ -228,10 +233,10 @@ for n = 1:nelements
 
 	% ----> preprocess image entry
 
-	if strcmp(elements(n).type, 'image')
+	if strcmp(elements(n).type, 'signal')
 
-		if elements(n).img > length(img)
-			error('ERROR: The specified image does not exist! [%d of %d]', elements(n).img, length(img));
+		if elements(n).imageindex > length(img)
+			error('ERROR: The specified image does not exist! [%d of %d]', elements(n).imageindex, length(img));
 		end
 
 		% ----> Define ROI
@@ -253,32 +258,32 @@ for n = 1:nelements
 		end
 
 		% ----> Create mask
-		if ~isempty(elements(n).mask)
-			if elements(n).mask > length(mask)
-				error('ERROR: The specified mask does not exist! [%d of %d]', elements(n).mask, length(mask));
+		if ~isempty(elements(n).maskindex)
+			if elements(n).maskindex > length(mask)
+				error('ERROR: The specified mask does not exist! [%d of %d]', elements(n).maskindex, length(mask));
 			end
 
-			if img(elements(n).img).voxels ~= mask(elements(n).mask).voxels
-				error('ERROR: Image and mask size does not match! [%d vs. %d]\n       image: %s\n       mask: %s', img(elements(n).img).voxels, mask(elements(n).mask).voxels, img(elements(n).img).filename, mask(elements(n).mask).filename);
+			if img(elements(n).imageindex).voxels ~= mask(elements(n).maskindex).voxels
+				error('ERROR: Image and mask size does not match! [%d vs. %d]\n       image: %s\n       mask: %s', img(elements(n).imageindex).voxels, mask(elements(n).maskindex).voxels, img(elements(n).imageindex).filename, mask(elements(n).maskindex).filename);
 			end
 
 			if isempty(elements(n).ROI)
-				elements(n).mask = sum(img(elements(n).img).data, 2) > 0;
+				elements(n).maskindex = sum(img(elements(n).imageindex).data, 2) > 0;
 				if verbose, fprintf('\n ---> masking with nonzero!'); end
 			else
-				elements(n).mask = ismember(mask(elements(n).mask).image2D, elements(n).ROI);
+				elements(n).maskindex = ismember(mask(elements(n).maskindex).image2D, elements(n).ROI);
 				if verbose, fprintf('\n ---> masking with ROI!'); end
 			end
 		else
 			if verbose, fprintf('\n ---> masking with nonzero!'); end
-			elements(n).mask = sum(img(elements(n).img).data, 2) > 0;
+			elements(n).maskindex = sum(img(elements(n).imageindex).data, 2) > 0;
 		end
 
 
 		% ----> Compute image size
 
 		if isempty(elements(n).size)
-			elements(n).size = sum(elements(n).mask);
+			elements(n).size = sum(elements(n).maskindex);
 		end
 		sz.Var = sz.Var + elements(n).size;
 		if verbose, fprintf('\n ---> added %s of size %d', elements(n).name, elements(n).size); end
@@ -289,7 +294,7 @@ for n = 1:nelements
 	if strcmp(elements(n).type, 'stats')
 		for s = 1:length(elements(n).stats)
 
-			id = elements(n).stats(s).img;
+			id = elements(n).stats(s).imageindex;
 			if id > length(img)
 				error('ERROR: The specified image does not exist! [%d of %d]', id, length(img));
 			end
@@ -394,17 +399,17 @@ for n = 1:nelements
 
 		if elements(n).use == 1
 			if verbose, fprintf('\n ---> ignoring bad frames'); end
-			tmask = img(elements(n).img).use;
+			tmask = img(elements(n).imageindex).use;
 			if skip > 0
 				tmask(1:skip) = 0;
 			end
 		else
 			if verbose, fprintf('\n ---> using all data'); end
-			tmask = ones(img(elements(n).img).frames, 1);
+			tmask = ones(img(elements(n).imageindex).frames, 1);
 		end
 		tmask = tmask > 0;
 
-		data = img(elements(n).img).data(elements(n).mask,:);
+		data = img(elements(n).imageindex).data(elements(n).maskindex,:);
 		mimg = mean(data(:, tmask), 2);
 		data = bsxfun(@minus, data, mimg);
 		elements(n).imax = max(max(data(:, tmask)));
