@@ -449,6 +449,11 @@ fi
     #
        # -- Create study hieararchy and generate subject folders
        turnkey_createStudy() {
+           TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+           createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
+           createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
+           createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+           createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            cyaneho "-- RUNNING createStudy..."
            echo ""
            geho " -- Checking for and generating study folder ${mnap_studyfolder}"; echo ""
@@ -456,12 +461,26 @@ fi
                mkdir -p ${workdir} &> /dev/null
            fi
            if [ ! -d ${mnap_studyfolder} ]; then
-               ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}"
+               ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder} 2>&1 | tee -a ${createStudy_ComlogTmp}"
            fi
            mkdir -p ${mnap_workdir} &> /dev/null
            mkdir -p ${mnap_workdir}/inbox &> /dev/null
            mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
            mkdir -p ${logdir} &> /dev/null
+           if [ -f ${mnap_studyfolder}/.mnapstudy ]; then CREATESTUDYCHECK="pass"; else CREATESTUDYCHECK="fail"; fi
+           if [[ ${CREATESTUDYCHECK} == "pass" ]]; then
+               cho "" >> ${createStudy_ComlogTmp}
+               eho "------------------------- Successful completion of work --------------------------------" >> ${createStudy_ComlogTmp}
+               cho "" >> ${createStudy_ComlogTmp}
+               mv ${createStudy_ComlogTmp} ${createStudy_ComlogDone}
+               createStudy_Comlog=${createStudy_ComlogDone}
+           else
+              echo "" >> ${createStudy_ComlogTmp}
+              echo "Error. Something went wrong." >> ${createStudy_ComlogTmp}
+              echo "" >> ${createStudy_ComlogTmp}
+              mv ${createStudy_ComlogTmp} ${createStudy_ComlogError}
+              createStudy_Comlog=${createStudy_ComlogError}
+          fi
        }
        # -- Get data from original location & organize DICOMs
        turnkey_mapRawData() {
