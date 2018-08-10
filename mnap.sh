@@ -2320,8 +2320,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
     mkdir ${MasterLogFolder}  &> /dev/null
     MasterRunLogFolder="${MasterLogFolder}/runlogs"
     MasterComlogFolder="${MasterLogFolder}/comlogs"
-    mkdir ${MasterRunLogFolder}  &> /dev/null
-    mkdir ${MasterComlogFolder}  &> /dev/null
+    mkdir ${MasterRunLogFolder} &> /dev/null
+    mkdir ${MasterComlogFolder} &> /dev/null
     # -- If log flag set then set it
     if [ -z "$LogSave" ] || [ "$LogSave" == "yes" ]; then
         LogSave="keep"

@@ -461,6 +461,7 @@ fi
            mkdir -p ${mnap_workdir} &> /dev/null
            mkdir -p ${mnap_workdir}/inbox &> /dev/null
            mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
+           mkdir -p ${logdir} &> /dev/null
        }
        # -- Get data from original location & organize DICOMs
        turnkey_mapRawData() {
@@ -865,7 +866,6 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
               TURNKEY_STEP_ERRORS="yes"
            fi
        fi
-       
        if  [[ ${TURNKEY_STEP} == "hcp5" ]]; then
            if [[ -z `echo "${CheckLogQCBOLD}" | grep 'done'` ]]; then
               echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
