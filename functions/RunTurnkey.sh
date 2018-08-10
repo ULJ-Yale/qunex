@@ -427,7 +427,18 @@ echo ""
 
 # -- Check if overwrite is set to yes for subject and project
 if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "all" ]]; then
-    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABELS" ]]; then 
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABELS" ]]; then
+        reho "-- ${XNAT_SESSION_LABELS} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
+        reho "   Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
+        rm -rf ${mnap_studyfolder}/ &> /dev/null
+    else
+        reho "-- There are more than ${XNAT_SESSION_LABELS} directories ${mnap_studyfolder}."
+        reho "   Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
+    fi
+fi
+
+if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABELS" ]]; then
         reho "-- ${XNAT_SESSION_LABELS} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
         reho "   Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
         rm -rf ${mnap_studyfolder}/ &> /dev/null
@@ -451,7 +462,7 @@ fi
        turnkey_createStudy() {
            TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
            createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
-           createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
+           createStudy_ComlogTmp="/output/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
            createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            cyaneho "-- RUNNING createStudy..."
@@ -461,17 +472,21 @@ fi
                mkdir -p ${workdir} &> /dev/null
            fi
            if [ ! -d ${mnap_studyfolder} ]; then
-               ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder} 2>&1 | tee -a ${createStudy_ComlogTmp}"
+               ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
+               mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
+               createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+           else
+               createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+               geho " -- Study folder ${mnap_studyfolder} already exits!" 2>&1 | tee -a ${createStudy_ComlogTmp}
            fi
            mkdir -p ${mnap_workdir} &> /dev/null
            mkdir -p ${mnap_workdir}/inbox &> /dev/null
            mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
-           mkdir -p ${logdir} &> /dev/null
            if [ -f ${mnap_studyfolder}/.mnapstudy ]; then CREATESTUDYCHECK="pass"; else CREATESTUDYCHECK="fail"; fi
            if [[ ${CREATESTUDYCHECK} == "pass" ]]; then
-               cho "" >> ${createStudy_ComlogTmp}
-               eho "------------------------- Successful completion of work --------------------------------" >> ${createStudy_ComlogTmp}
-               cho "" >> ${createStudy_ComlogTmp}
+               echo "" >> ${createStudy_ComlogTmp}
+               echo "------------------------- Successful completion of work --------------------------------" >> ${createStudy_ComlogTmp}
+               echo "" >> ${createStudy_ComlogTmp}
                mv ${createStudy_ComlogTmp} ${createStudy_ComlogDone}
                createStudy_Comlog=${createStudy_ComlogDone}
            else
