@@ -289,6 +289,7 @@ Change Log
 * 0.19.05 [matlab] Updated g_PlotBoldTS to allow specification of a colormap
 * 0.19.06 [matlab] Futher updates to g_PlotBoldTS
 * 0.19.07 [connector] Updated BOLDParcellation to allow both fisher-z and r calculations and fixed --useweights bug
+* 0.19.08 [niutilities] Updated createStudy to include comlogs and runlogs folders
 
 =======
 [Mind and Brain Lab]: http://mblab.si
