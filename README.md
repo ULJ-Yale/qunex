@@ -291,6 +291,7 @@ Change Log
 * 0.19.07 [connector] Updated BOLDParcellation to allow both fisher-z and r calculations and fixed --useweights bug
 * 0.19.08 [niutilities] Updated createStudy to include comlogs and runlogs folders
 * 0.19.09 [connector] Improved createStudy logging within RunTurnkey script
+* 0.19.10 [mnaptools] Changed source of environment script in Dockerfile_mnap_suite to system-wide 
 
 =======
 [Mind and Brain Lab]: http://mblab.si
