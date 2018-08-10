@@ -100,7 +100,6 @@ weho() {
 }
 
 source /opt/mnaptools/library/environment/mnap_environment.sh
-
 $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
 MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 hcp4 hcp5 hcpd FSLDtifit FSLBedpostxGPU eddyQC QCPreprocDWIProcess pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc computeBOLDfcGBC computeBOLDfcSeed"
 
