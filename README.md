@@ -292,6 +292,7 @@ Change Log
 * 0.19.08 [niutilities] Updated createStudy to include comlogs and runlogs folders
 * 0.19.09 [connector] Improved createStudy logging within RunTurnkey script
 * 0.19.10 [mnaptools] Changed source of environment script in Dockerfile_mnap_suite to system-wide 
+* 0.19.11 [library] Added XNAT wrapper script to library/etc
 
 =======
 [Mind and Brain Lab]: http://mblab.si

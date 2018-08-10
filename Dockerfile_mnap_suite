@@ -62,8 +62,10 @@ ENV TOOLS="/opt"
 ADD library/etc/license.txt /opt/freesurfer-6.0/
 ADD library/etc/license.txt /opt/freesurfer-5.3-HCP/
 
+
 # Set environment & Set Octave as default & Clear apt cache and other empty folders
-RUN ln /opt/mnaptools/library/environment/mnap_environment.sh /etc/profile.d/mnap_environment.sh && \
+RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
+    ln /opt/mnaptools/library/environment/mnap_environment.sh /etc/profile.d/mnap_environment.sh && \
     touch ~/.mnapuseoctave && \
     cd matlab/gmri/\@gmrimage && \
     cp mri_ReadNIfTImx_Octave.cpp mri_ReadNIfTImx.cpp && \
