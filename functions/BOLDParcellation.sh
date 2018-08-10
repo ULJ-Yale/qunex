@@ -415,8 +415,10 @@ else
 		if [ "$ComputePConn" == "yes" ]; then
 			# -- Specify pconn file outputs for correlation (r) value and covariance 
 			OutPConnFileExtR="r.pconn.nii"
+			OutPConnFileExtRfZ="r_Fz.pconn.nii"
 			OutPConnFileExtCov="cov.pconn.nii"
 			PConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
+			PConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtRfZ}"
 			PConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
 			# -- Check if weights file is specified
 			geho "-- Using weights: $UseWeights"
@@ -428,21 +430,29 @@ else
 				# -- Compute pconn using correlation
 				geho "-- Computing pconn using correlation..."
 				echo ""
-				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -fisher-z -weights "$WeightsFile"
+				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -weights "$WeightsFile"
 				# -- Compute pconn using covariance
 				geho "-- Computing pconn using covariance..."
 				echo ""
 				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance -weights "$WeightsFile"
+				# -- Compute pconn using fisher-z correlation
+				geho "-- Computing pconn using correlation w/ fisher-z transform..."
+				echo ""
+				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z -weights "$WeightsFile"
 			fi
 			if [ "$UseWeights" == "no" ]; then
 				# -- Compute pconn using correlation
 				geho "-- Computing pconn using correlation..."
 				echo ""
-				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -fisher-z
+				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR"
 				# -- Compute pconn using covariance
 				geho "-- Computing pconn using covariance..."
 				echo ""
 				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance
+				# -- Compute pconn using fisher-z correlation
+				geho "-- Computing pconn using correlation w/ fisher-z transform..."
+				echo ""
+				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z
 			fi
 		fi
 	fi
@@ -513,7 +523,16 @@ if [ "$ComputePConn" == "yes" ]; then
 		echo ""
 		exit 1
 	fi
+	if [ -f "$PConnBOLDOutputRfZ" ]; then
+		geho "Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform:           $PConnBOLDOutputRfZ"
+		echo ""
+	else
+		reho "Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform $PConnBOLDOutputRfZ is missing. Something went wrong."
+		echo ""
+		exit 1
+	fi
 fi
+
 geho "--- BOLD Parcellation completed. Check output log for outputs and errors."
 echo ""
 geho "------------------------- Successful completion of work --------------------------------"

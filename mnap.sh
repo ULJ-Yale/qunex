@@ -2414,7 +2414,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     ExtractData=`opts_GetOpt "${setflag}extractdata" $@`
     ComputePConn=`opts_GetOpt "${setflag}computepconn" $@`
     UseWeights=`opts_GetOpt "${setflag}useweights" $@`
-    WeightsFile=`opts_GetOpt "${setflag}useweights" $@`
+    WeightsFile=`opts_GetOpt "${setflag}weightsfile" $@`
     ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
     # -- hcpdLegacy input flags
     EchoSpacing=`opts_GetOpt "${setflag}echospacing" $@`
@@ -3332,7 +3332,11 @@ if [ "$FunctionToRun" == "BOLDParcellation" ]; then
             if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
     fi
     # -- Check optional parameters if not specified
-    if [ -z "$UseWeights" ]; then UseWeights="no"; fi
+    if [ -z "$UseWeights" ]; then 
+        UseWeights="no"; WeightsFile="no"; 
+    else
+        if [ -z "$WeightsFile" ]; then reho "Error: Weights file to use is missing"; echo ""; exit 1; fi
+    fi
     if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
     if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
     if [ -z "$ExtractData" ]; then ExtractData="no"; fi
