@@ -361,40 +361,46 @@ fi
 
 runTurnkey() {
 # -- Echo command
-geho "Full command:"
-echo "${TOOLS}/${MNAPREPO}/connector/RunTurnkey.sh \
---batchfile="${BATCH_PARAMETERS_FILENAME}" \
---path="${STUDY_PATH}" \
---turnkeytype="${TURNKEY_TYPE}" \
---turnkeysteps="${TURNKEY_STEPS}" \
---overwritestep="${OVERWRITE_STEP}" \
---overwritesubject="${OVERWRITE_SUBJECT}" \
---overwriteproject="${OVERWRITE_PROJECT}" \
---mappingfile="${SCAN_MAPPING_FILENAME}" \
---xnatsessionlabels="${XNAT_SESSION_LABELS}" \
---xnatprojectid="${XNAT_PROJECT_ID}" \
---xnathost="${XNAT_HOST_NAME}" \
---xnatuser="${XNAT_USER_NAME}" \
---xnatpass="${XNAT_PASSWORD}""
+geho "Full command:"; echo ""
+echo "${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh \
+--batchfile='${BATCH_PARAMETERS_FILENAME}' \
+--path='${STUDY_PATH}' \
+--workingdir='${workdir}' \
+--turnkeytype='${TURNKEY_TYPE}' \
+--turnkeysteps='${TURNKEY_STEPS}' \
+--overwritestep='${OVERWRITE_STEP}' \
+--overwritesubject='${OVERWRITE_SUBJECT}' \
+--overwriteproject='${OVERWRITE_PROJECT}' \
+--overwriteprojectforce='${OVERWRITE_PROJECT_FORCE}' \
+--mappingfile='${SCAN_MAPPING_FILENAME}' \
+--xnatsessionlabels='${XNAT_SESSION_LABELS}' \
+--xnatprojectid='${XNAT_PROJECT_ID}' \
+--xnathost='${XNAT_HOST_NAME}' \
+--xnatuser='${XNAT_USER_NAME}' \
+--xnatpass='${XNAT_PASSWORD}'"
 echo ""
 # -- Specify command variable
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/RunTurnkey.sh \
---batchfile="${BATCH_PARAMETERS_FILENAME}" \
---path="${STUDY_PATH}" \
---turnkeytype="${TURNKEY_TYPE}" \
---turnkeysteps="${TURNKEY_STEPS}" \
---overwritestep="${OVERWRITE_STEP}" \
---overwritesubject="${OVERWRITE_SUBJECT}" \
---overwriteproject="${OVERWRITE_PROJECT}" \
---mappingfile="${SCAN_MAPPING_FILENAME}" \
---xnatsessionlabels="${XNAT_SESSION_LABELS}" \
---xnatprojectid="${XNAT_PROJECT_ID}" \
---xnathost="${XNAT_HOST_NAME}" \
---xnatuser="${XNAT_USER_NAME}" \
---xnatpass="${XNAT_PASSWORD}""
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh \
+--batchfile='${BATCH_PARAMETERS_FILENAME}' \
+--path='${STUDY_PATH}' \
+--workingdir='${workdir}' \
+--turnkeytype='${TURNKEY_TYPE}' \
+--turnkeysteps='${TURNKEY_STEPS}' \
+--overwritestep='${OVERWRITE_STEP}' \
+--overwritesubject='${OVERWRITE_SUBJECT}' \
+--overwriteproject='${OVERWRITE_PROJECT}' \
+--overwriteprojectforce='${OVERWRITE_PROJECT_FORCE}' \
+--mappingfile='${SCAN_MAPPING_FILENAME}' \
+--xnatsessionlabels='${XNAT_SESSION_LABELS}' \
+--xnatprojectid='${XNAT_PROJECT_ID}' \
+--xnathost='${XNAT_HOST_NAME}' \
+--xnatuser='${XNAT_USER_NAME}' \
+--xnatpass='${XNAT_PASSWORD}'"
+
 # -- Connector execute function
 connectorExec
 }
+
 show_usage_runTurnkey() {
 ${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh
 }
@@ -492,6 +498,9 @@ echo ""
 
 mapHCPFiles() {
 # -- Specify command variable
+if [[ ${Overwrite} == "yes" ]]; then
+    HLinks=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
+fi
 CommandToRun="cd ${SubjectsFolder}/${CASE}; echo '--> running mapHCPFiles for ${CASE}'; echo ''; gmri setupHCP"
 # -- Connector execute function
 connectorExec
@@ -2272,8 +2281,10 @@ if [[ "$setflag" =~ .*-.* ]]; then
     # -- SubjectsFolder and StudyFolder input flags
     StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`       # study folder to work on
     StudyFolderPath=`opts_GetOpt "${setflag}path" $@`          # local folder to work on
+    STUDY_PATH=${StudyFolderPath}
     SubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@` # subjects folder to work on
     SubjectFolder=`opts_GetOpt "${setflag}subjectfolder"  $@`  # subjects folder to work on
+    if [[ ! -z ${STUDY_PATH} ]]; then StudyFolder=${STUDY_PATH}; fi 
     # -- Check if SubjectFolder was set (i.e. missing 's') and correct variable
     if [ -z "$SubjectFolder" ]; then
         echo "" &> /dev/null
@@ -2302,6 +2313,9 @@ if [[ "$setflag" =~ .*-.* ]]; then
             cd $SubjectsFolder/../ &> /dev/null
             StudyFolder=`pwd` &> /dev/null
         fi
+    fi
+    if [ -z "$STUDY_PATH" ]; then
+         STUDY_PATH=${StudyFolder}
     fi
     # -- Set additional general flags
     CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
@@ -2335,12 +2349,14 @@ if [[ "$setflag" =~ .*-.* ]]; then
     else
         RunMethod="1"
     fi
-
     # -- Set flags for runTurnkey and XNATCloudUpload
-    TURNKEY_TYPE=`opts_GetOpt "${setflag}turnkeytype" $@`
+    workdir=`opts_GetOpt "${setflag}workingdir" $@`
+    TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "$TURNKEY_STEPS" | sed 's/,/ /g;s/|/ /g'`
     TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" $@`
     OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
     OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
+    OVERWRITE_PROJECT_FORCE=`opts_GetOpt "${setflag}overwriteprojectforce" $@`
+    OVERWRITE_STEP=`opts_GetOpt "${setflag}overwritestep" $@`
     BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
@@ -2353,7 +2369,6 @@ if [[ "$setflag" =~ .*-.* ]]; then
     ResetCredentials=`opts_GetOpt "${setflag}resetcredentials" $@`
     XNAT_SUBJECT_IDS=`opts_GetOpt "${setflag}xnatsubjectids" $@`
     NIFTIUPLOAD=`opts_GetOpt "${setflag}niftiupload" $@`
-
     # -- Set flags for organizeDicom parameters
     Folder=`opts_GetOpt "${setflag}folder" $@`
     Clean=`opts_GetOpt "${setflag}clean" $@`
@@ -2524,37 +2539,80 @@ fi
 if [ "$FunctionToRun" == "runTurnkey" ]; then
     # -- Check all the user-defined parameters:
     if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; exit 1; fi
-    if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; exit 1; fi
-    if [ -z "$XNAT_SESSION_LABELS" ]; then reho "Error: --xnatsessionlabels flag missing."; exit 1; fi
-    if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; exit 1; fi
-    if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; exit 1; fi
-    if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Batch parameter file not specified."; exit 1; fi
-    if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Batch parameter file not specified."; exit 1; fi
-    if [ -z "$CASES" ]; then reho "Note: List of subjects missing. Assuming $XNAT_SESSION_LABELS matches subject names."; CASES="$XNAT_SESSION_LABELS"; fi
-    if [ -z "$StudyFolder" ]; then StudyFolder="/output/${XNAT_PROJECT_ID}"; reho "Note: Study folder missing. Setting defaults: $StudyFolder"; STUDY_PATH="$StudyFolder"; fi
+    if [ -z "$CASES" ]; then
+       if [ -z "$XNAT_SESSION_LABELS" ]; then
+           reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ''
+           exit 1
+       else
+           CASES="$XNAT_SESSION_LABELS"
+       fi
+    else
+        if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
+            XNAT_SESSION_LABELS="$CASES"
+        fi
+    fi
+    if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
+    if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
+    if [[ ${TURNKEY_STEPS} == "mapRawData" ]] || [[ ${TURNKEY_STEPS} == "all" ]]; then
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+    fi
+    if [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    fi
+    if [[ ${TURNKEY_STEPS} == "getHCPReady" ]]; then
+        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+    fi
+    if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
+        if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
+    fi
     if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
     if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
     if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
-    if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey: $TURNKEY_TYPE"; fi
-    if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
-
+    
+    if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; echo ''; fi
+    StudyFolder="${STUDY_PATH}"
+    SubjectsFolder="${STUDY_PATH}/subjects"
+    
+    # -- Define additional variables
+    if [ -z "$workdir" ]; then workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''; fi
+    if [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" == "xnat" ]]; then
+        workdir="/output"
+        mnap_studyfolder="${workdir}/${XNAT_PROJECT_ID}"
+    else
+        mnap_studyfolder="${STUDY_PATH}"
+    fi
+    MNAPTurnkeyWorkflow=`more ${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh | grep 'MNAPTurnkeyWorkflow="' | sed 's/\MNAPTurnkeyWorkflow=//g' | sed 's/\"//g'`
     # -- Report parameters
     echo ""
     echo "Running $FunctionToRun processing with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
-    echo "   MNAP Turnkey steps: ${TURNKEY_STEPS}"
-    echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
-    echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
-    echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
-    echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
-    echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
+    if [ "$TURNKEY_TYPE" == "xnat" ]; then
+        CASES="$XNAT_SESSION_LABELS"
+        echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
+        echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
+        echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
+        echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
+        echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
+    fi
     echo "   Project-specific Batch file: ${project_batch_file}"
-    echo "   MNAP Study folder: ${StudyFolder}"
+    echo "   MNAP Study folder: ${mnap_studyfolder}"
+    echo "   MNAP Subject-specific working folder: ${rawdir}"
+    echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
     echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
     echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
+    echo "   Custom QC requested: ${QCPreprocCustom}"
+    if [ "$TURNKEY_STEPS" == "all" ]; then
+        echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
+    else
+        echo "   Turnkey workflow steps: ${TURNKEY_STEPS}"
+    fi
+    echo
     echo "--------------------------------------------------------------"
     # -- Loop through all the cases
     for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
