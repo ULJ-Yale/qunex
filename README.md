@@ -294,6 +294,7 @@ Change Log
 * 0.19.10 [mnaptools] Changed source of environment script in Dockerfile_mnap_suite to system-wide 
 * 0.19.11 [library] Added XNAT wrapper script to library/etc
 * 0.19.12 [niutilities] Updated log file naming
+* 0.19.13 [matlab niutilities] Added gmrimages to read an array of images and adopted g_PlotBoldTS to work with octave, getHCPReady checks for mapping file validity
 
 =======
 [Mind and Brain Lab]: http://mblab.si
