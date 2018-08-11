@@ -295,6 +295,7 @@ Change Log
 * 0.19.11 [library] Added XNAT wrapper script to library/etc
 * 0.19.12 [niutilities] Updated log file naming
 * 0.19.13 [matlab niutilities] Added gmrimages to read an array of images and adopted g_PlotBoldTS to work with octave, getHCPReady checks for mapping file validity
+* 0.19.14 [connector] Further RunTurnkey edits
 
 =======
 [Mind and Brain Lab]: http://mblab.si
