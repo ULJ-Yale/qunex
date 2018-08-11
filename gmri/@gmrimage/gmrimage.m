@@ -192,9 +192,8 @@ classdef gmrimage
             if nargin < 2, dtype = 'single'; end
 
             if nargin > 0
-               if isa(varone, 'char')
+                if isa(varone, 'char')
                     images = regexp(varone, ';', 'split');
-                    iset = [];
                     for n = 1:length(images)
                         parts = regexp(images{n}, '\|', 'split');
                         for p = 1:length(parts)
@@ -204,11 +203,7 @@ classdef gmrimage
                                 t = [t gmrimage(parts{p}, dtype, frames, verbose)];
                             end
                         end
-                        if n == 1
-                            iset = t;
-                        else
-                            iset(end+1:end+length(t)) = t;
-                        end
+                        iset(n) = t;
                     end
                     if length(images) > 1
                         obj = iset;

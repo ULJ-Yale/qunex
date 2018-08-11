@@ -211,10 +211,10 @@ dstart = skip + 1;
 
 if verbose, fprintf('\nRunning g_PlotBoldTS\n====================\n ---> reading images and maps'); end
 
-img = gmrimage(images);
+img = gmrimages(images);
 
 if ~isempty(masks)
-    mask = gmrimage(masks);
+    mask = gmrimages(masks);
 else
     mask = [];
 end
@@ -459,7 +459,7 @@ text(0, 0, {['\bf\fontsize{16}BOLD Timeseries Plot \rm|\color{red} ' subjid], ['
 set(sp, 'Visible', 'off');
 
 saveas(f, filename);
-%print(f,'-dpdf', '-r72', [filename '.pdf']);
+% print(f,'-dpdf', '-r72', [filename '-print' '.pdf']);
 close(f);
 
 if verbose, fprintf('\n DONE\n'); end
