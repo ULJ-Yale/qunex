@@ -20,11 +20,6 @@ Changelog
 
 """
 
-import sys
-import time
-import getopt
-import subprocess
-import gp_core
 import g_core
 import gp_HCP
 import gp_workflow
@@ -156,6 +151,7 @@ arglist = [['# ---- Basic settings'],
            ['subjects',           'batch.txt',                                   str,    "The file with subject information."],
            ['subjectsfolder',     '',                                            os.path.abspath, 'The path to study subjects folder.'],
            ['logfolder',          '',                                            isNone, 'The path to log folder.'],
+           ['logtag',             '',                                            str,    'An optional additional tag to add to the log file after the command name.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
            ['nprocess',           '0',                                           int,    'How many subjects to process (0 - all).'],

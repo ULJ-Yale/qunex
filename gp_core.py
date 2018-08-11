@@ -573,21 +573,25 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
             return (False, "%s%sERROR: %s could not be copied, source file does not exist [%s]! " % (r, prefix, name, source))
 
 
-def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None, logfolder=""):
+def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None, logfolder="", logtags=None):
     """
     runExternalForFile - documentation not yet available.
     """
     if overwrite or not os.path.exists(checkfile):
-        if task is None:
-            task = ""
-        else:
-            task = task + "_"
+
         r = '\n%s' % (description)
 
+        if isinstance(logtags, basestring):
+            logtags = [logtags]
+
         logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-        tmplogfile = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
-        donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
-        errlogfile = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
+        logname  = [task] + logtags + [thread, logstamp]
+        logname  = [e for e in logname if e]
+        logname  = "_".join(logname)
+
+        tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+        donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
+        errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
 
         nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
@@ -627,22 +631,24 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     return r
 
 
-def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder=""):
+def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags=""):
     """
     runExternalForFileShell - documentation not yet available.
     """
     if overwrite or not os.path.exists(checkfile):
-        if task is None:
-            task = ""
-        else:
-            task = task + "_"
         r = '\n\n%s' % (description)
-        # nf = open('/dev/null', 'w')
+
+        if isinstance(logtags, basestring):
+            logtags = [logtags]
 
         logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-        tmplogfile = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
-        donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
-        errlogfile = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
+        logname  = [task] + logtags + [thread, logstamp]
+        logname  = [e for e in logname if e]
+        logname  = "_".join(logname)
+
+        tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+        donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
+        errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
 
         nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
@@ -667,28 +673,31 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
             r += ' --- done'
     else:
         if os.path.getsize(checkfile) < 100:
-            r = runExternalForFileShell(checkfile, run, description, overwrite=True, thread=thread)
+            r = runExternalForFileShell(checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags)
         else:
             r = '\n%s --- already completed' % (description)
 
     return r
 
 
-def runScriptThroughShell(run, description, thread="0", remove=True, task=None, logfolder=""):
+def runScriptThroughShell(run, description, thread="0", remove=True, task=None, logfolder="", logtags=""):
     """
     runScriptThroughShell - documentation not yet available.
     """
-    if task is None:
-        task = ""
-    else:
-        task = task + "_"
-
+    
     r = '\n\n%s' % (description)
 
-    logstamp    = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-    tmplogfile  = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
-    donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
-    errlogfile  = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
+    if isinstance(logtags, basestring):
+        logtags = [logtags]
+
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logname  = [task] + logtags + [thread, logstamp]
+    logname  = [e for e in logname if e]
+    logname  = "_".join(logname)
+
+    tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+    donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
+    errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
 
     nf = open(tmplogfile, 'w')
     print >> nf, "\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description)
