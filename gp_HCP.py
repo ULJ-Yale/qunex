@@ -2252,7 +2252,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         if os.path.exists(f['fs_aparc_bold']):
             os.remove(f['fs_aparc_bold'])
         if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')) and os.path.exists(f['fs_aparc_t1']):
-            r += runExternalForFile(f['fs_aparc_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite, sinfo['id'])
+            r += runExternalForFile(f['fs_aparc_bold'], 'flirt -interp nearestneighbour -ref %s -in %s -out %s -applyisoxfm 2' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite, sinfo['id'])
             report['lores aseg+aparc'] = 'generated'
         else:
             r += "\n ... ERROR: could not generate downsampled aseg+aparc, files missing!"
@@ -2337,7 +2337,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                                     bname = posb % (bnum)
                                     break
                             if bname == "":
-                                r += "\n     ... ERROR: could not identify HCP boldname for %s!" % (boldname)
+                                r += "\n     ... ERROR: could not find sourcefile for %s!" % (boldname)
                                 status = False
                                 raise NoSourceFolder(r)
                         boldpath = os.path.join(d['hcp'], 'MNINonLinear', 'Results', bname)
@@ -2380,6 +2380,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
                     except (ExternalFailed, NoSourceFolder), errormessage:
                         r += str(errormessage)
+                        report['boldfail'] += 1
                     except:
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                         time.sleep(3)
