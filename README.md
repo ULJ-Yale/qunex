@@ -296,6 +296,7 @@ Change Log
 * 0.19.12 [niutilities] Updated log file naming
 * 0.19.13 [matlab niutilities] Added gmrimages to read an array of images and adopted g_PlotBoldTS to work with octave, getHCPReady checks for mapping file validity
 * 0.19.14 [connector] Further RunTurnkey edits
+* 0.19.15 [niutilities] Changed mapHCPData resampling to FSL, fixed bugs
 
 =======
 [Mind and Brain Lab]: http://mblab.si
