@@ -287,7 +287,7 @@ geho() {
 # ------------------------------------------------------------------------------
 
 if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
-	usage
+    usage
 fi
 
 # ------------------------------------------------------------------------------
@@ -311,13 +311,13 @@ get_options() {
 # sopt="$1"
 # shift 1
 # for fn in "$@" ; do
-# 	if [ `echo "$fn" | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
-# 		echo "$@" | grep -o -P 'mask.{0,20000}' | sed "s/mask=//" | sed 's/-.*//'
-# 		MaskVariable=`echo "$@" | grep -o -P 'mask.{0,20000}' | sed "s/mask=//" | sed 's/-.*//'`
-# 		MaskVariable="--mask=${MaskVariable}"
-# 		#echo $MaskVariable
-# 		return 0
-# 	fi
+#     if [ `echo "$fn" | grep -- "^${sopt}=" | wc -w` -gt 0 ]; then
+#         echo "$@" | grep -o -P 'mask.{0,20000}' | sed "s/mask=//" | sed 's/-.*//'
+#         MaskVariable=`echo "$@" | grep -o -P 'mask.{0,20000}' | sed "s/mask=//" | sed 's/-.*//'`
+#         MaskVariable="--mask=${MaskVariable}"
+#         #echo $MaskVariable
+#         return 0
+#     fi
 # done
 # }
 # 
@@ -404,7 +404,7 @@ while [ ${index} -lt ${numArgs} ]; do
         --extractdata=*)
             ExtractData=${argument/*=/""}
             index=$(( index + 1 ))
-            ;;	
+            ;;    
         --calculation=*)
             Calculation=${argument/*=/""}
             index=$(( index + 1 ))
@@ -496,7 +496,7 @@ if [ -z ${Calculation} ]; then
     exit 1
 fi
 if [ ${Calculation} == "dense" ]; then
-	RunType="individual"
+    RunType="individual"
 fi
 if [ -z ${RunType} ]; then
     echo ""
@@ -506,150 +506,150 @@ fi
     
 # -- Check run type (group or individual)
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
-	# -- Check options for individual run
-	if [ -z ${SubjectsFolder} ]; then
-		echo ""
-		reho "ERROR: <subjects-folder-path> not specified>. Check usage."; echo ""
-		echo ""
-		exit 1
-	fi
-	if [ -z ${CASES} ]; then
-		echo ""
-		reho "ERROR: <subject_ids> not specified. Check usage."; echo ""
-		echo ""
-		exit 1
-	fi
-	if [ -z ${InputFiles} ]; then
-		echo ""
-		reho "ERROR: <file(s)_to_compute_connectivity_on> not specified. Check usage."; echo ""
-		echo ""
-		exit 1
-	fi
-	if [ -z ${InputPath} ]; then
-		echo ""
-		reho "ERROR: <absolute_path_to_data> not specified. Check usage."; echo ""
-		echo ""
-		exit 1
-	fi
-	if [ -z ${OutName} ]; then
-		echo ""
-		reho "ERROR: <name_of_output_file> not specified. Check usage."; echo ""
-		exit 1
-	fi
+    # -- Check options for individual run
+    if [ -z ${SubjectsFolder} ]; then
+        echo ""
+        reho "ERROR: <subjects-folder-path> not specified>. Check usage."; echo ""
+        echo ""
+        exit 1
+    fi
+    if [ -z ${CASES} ]; then
+        echo ""
+        reho "ERROR: <subject_ids> not specified. Check usage."; echo ""
+        echo ""
+        exit 1
+    fi
+    if [ -z ${InputFiles} ]; then
+        echo ""
+        reho "ERROR: <file(s)_to_compute_connectivity_on> not specified. Check usage."; echo ""
+        echo ""
+        exit 1
+    fi
+    if [ -z ${InputPath} ]; then
+        echo ""
+        reho "ERROR: <absolute_path_to_data> not specified. Check usage."; echo ""
+        echo ""
+        exit 1
+    fi
+    if [ -z ${OutName} ]; then
+        echo ""
+        reho "ERROR: <name_of_output_file> not specified. Check usage."; echo ""
+        exit 1
+    fi
 fi
 
 # -- Check options for group run
 if [ ${RunType} == "list" ]; then
-	if [ -z ${FileList} ]; then
-		echo ""
-		reho "ERROR: <group_list_file_to_compute_connectivity_on> not specified. Check usage."; echo ""
-		echo ""
-		exit 1
-	fi
+    if [ -z ${FileList} ]; then
+        echo ""
+        reho "ERROR: <group_list_file_to_compute_connectivity_on> not specified. Check usage."; echo ""
+        echo ""
+        exit 1
+    fi
 fi
 # -- Check additional mandatory options
 if [ ${Calculation} != "dense" ]; then
-	if [ -z ${IgnoreFrames} ]; then
-		reho "WARNING: <bad_movement_frames_to_ignore_command> not specified. Assuming no input."
-		IgnoreFrames=""
-		echo ""
-	fi
-	if [ -z ${MaskFrames} ]; then
-		reho "WARNING: <frames_to_mask_out> not specified. Assuming zero."
-		MaskFrames=""
-		echo ""
-	fi
-	if [ -z ${Covariance} ]; then
-		reho "WARNING: <compute_covariance> not specified. Assuming correlation."
-		Covariance="false"
-		echo ""
-	fi
+    if [ -z ${IgnoreFrames} ]; then
+        reho "WARNING: <bad_movement_frames_to_ignore_command> not specified. Assuming no input."
+        IgnoreFrames=""
+        echo ""
+    fi
+    if [ -z ${MaskFrames} ]; then
+        reho "WARNING: <frames_to_mask_out> not specified. Assuming zero."
+        MaskFrames=""
+        echo ""
+    fi
+    if [ -z ${Covariance} ]; then
+        reho "WARNING: <compute_covariance> not specified. Assuming correlation."
+        Covariance="false"
+        echo ""
+    fi
 fi
 if [ ${Calculation} == "dense" ]; then
-	if [ ${RunType} == "list" ] || [ ${RunType} == "group" ]; then
-		echo ""
-		reho "ERROR: dense calculation and <list> or <group> selection are not supported. Use <individual>."
-		echo ""
-		exit 1
-	fi
-	if [ -z ${MemLimit} ]; then
-		reho "WARNING: Memory limit not specified. Assuming 4GB as limit."
-		MemLimit="4"
-		echo ""
-	fi
-	if [ -z ${Covariance} ]; then
-		reho "WARNING: <compute_covariance> not specified. Assuming correlation."
-		Covariance="false"
-		echo ""
-	fi
+    if [ ${RunType} == "list" ] || [ ${RunType} == "group" ]; then
+        echo ""
+        reho "ERROR: dense calculation and <list> or <group> selection are not supported. Use <individual>."
+        echo ""
+        exit 1
+    fi
+    if [ -z ${MemLimit} ]; then
+        reho "WARNING: Memory limit not specified. Assuming 4GB as limit."
+        MemLimit="4"
+        echo ""
+    fi
+    if [ -z ${Covariance} ]; then
+        reho "WARNING: <compute_covariance> not specified. Assuming correlation."
+        Covariance="false"
+        echo ""
+    fi
 fi
 
 # -- Check which function is specified and then check additional needed parameters
 
 # -- Check options for seed FC
 if [ ${Calculation} == "seed" ]; then
-	if [ -z ${ROIInfo} ]; then
-		echo ""
-		reho "ERROR: <roi_seed_file> not specified."
-		echo ""
-		exit 1
-	fi
-	if [ -z ${FCCommand} ]; then
-		reho "WARNING: <calculations_to_save> for seed FC not specified. Assuming all calculations should be saved."
-		FCCommand=""
-		echo ""
-	fi
-	if [ -z ${Method} ]; then
-		reho "WARNING: <method_to_get_timeseries> not specified. Assuming defaults [mean]."
-		Method=""
-		echo ""
-	fi
+    if [ -z ${ROIInfo} ]; then
+        echo ""
+        reho "ERROR: <roi_seed_file> not specified."
+        echo ""
+        exit 1
+    fi
+    if [ -z ${FCCommand} ]; then
+        reho "WARNING: <calculations_to_save> for seed FC not specified. Assuming all calculations should be saved."
+        FCCommand=""
+        echo ""
+    fi
+    if [ -z ${Method} ]; then
+        reho "WARNING: <method_to_get_timeseries> not specified. Assuming defaults [mean]."
+        Method=""
+        echo ""
+    fi
 fi
 
 # -- Check options for GBC
 if [ ${Calculation} == "gbc" ]; then
-	if [ -z ${GBCCommand} ]; then
-		echo ""
-		reho "WARNNING: <commands_for_gbc> not specified. Assuming standard mFz calculation."
-		GBCCommand="mFz:"
-		echo ""
-	fi
-	if [ -z ${TargetROI} ]; then
-		echo ""
-		reho "WARNING: <target_roi_for_gbc> not specified. Assuming whole-brain calculation."
-		TargetROI="[]"
-		echo ""
-	fi
-	if [ -z ${RadiusSmooth} ]; then
-		echo ""
-		reho "WARNING: <smoothing_radius> not specified. Assuming no smoothing."
-		RadiusSmooth="0"
-		echo ""
-	fi
-	if [ -z ${RadiusDilate} ]; then
-		echo ""
-		reho "WARNING: <dilation_radius>. Assuming no dilation."
-		RadiusDilate="0"
-		echo ""
-	fi
-	if [ -z ${Verbose} ]; then
-		echo ""
-		reho "WARNING: <verbose_output> not specified. Assuming 'true'."
-		Verbose="true"
-		echo ""
-	fi
-	if [ -z ${ComputeTime} ]; then
-		echo ""
-		reho "WARNING: <computation_time> not specified. Assuming 'true'"
-		ComputeTime="true"
-		echo ""
-	fi
-	if [ -z ${VoxelStep} ]; then
-		echo ""
-		reho "WARNING: <voxel_steps_to_use> not specified. Assuming '1200'"
-		VoxelStep="1200"
-		echo ""
-	fi
+    if [ -z ${GBCCommand} ]; then
+        echo ""
+        reho "WARNNING: <commands_for_gbc> not specified. Assuming standard mFz calculation."
+        GBCCommand="mFz:"
+        echo ""
+    fi
+    if [ -z ${TargetROI} ]; then
+        echo ""
+        reho "WARNING: <target_roi_for_gbc> not specified. Assuming whole-brain calculation."
+        TargetROI="[]"
+        echo ""
+    fi
+    if [ -z ${RadiusSmooth} ]; then
+        echo ""
+        reho "WARNING: <smoothing_radius> not specified. Assuming no smoothing."
+        RadiusSmooth="0"
+        echo ""
+    fi
+    if [ -z ${RadiusDilate} ]; then
+        echo ""
+        reho "WARNING: <dilation_radius>. Assuming no dilation."
+        RadiusDilate="0"
+        echo ""
+    fi
+    if [ -z ${Verbose} ]; then
+        echo ""
+        reho "WARNING: <verbose_output> not specified. Assuming 'true'."
+        Verbose="true"
+        echo ""
+    fi
+    if [ -z ${ComputeTime} ]; then
+        echo ""
+        reho "WARNING: <computation_time> not specified. Assuming 'true'"
+        ComputeTime="true"
+        echo ""
+    fi
+    if [ -z ${VoxelStep} ]; then
+        echo ""
+        reho "WARNING: <voxel_steps_to_use> not specified. Assuming '1200'"
+        VoxelStep="1200"
+        echo ""
+    fi
 fi
 
 # -- Set StudyFolder
@@ -668,28 +668,28 @@ echo "  IgnoreFrames: ${IgnoreFrames}"
 echo "  MaskFrames: ${MaskFrames}"
 echo "  Covariance: ${Covariance}"
 if [ ${RunType} == "list" ]; then
-	echo "  FileList: ${FileList}"
+    echo "  FileList: ${FileList}"
 fi
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
-	echo "  SubjectsFolder: ${SubjectsFolder}"
-	echo "  Subjects: ${CASES}"
-	echo "  InputFiles: ${InputFiles}"
-	echo "  InputPath: ${InputPath}"
-	echo "  OutName: ${OutName}"
+    echo "  SubjectsFolder: ${SubjectsFolder}"
+    echo "  Subjects: ${CASES}"
+    echo "  InputFiles: ${InputFiles}"
+    echo "  InputPath: ${InputPath}"
+    echo "  OutName: ${OutName}"
 fi
 if [ ${Calculation} == "gbc" ]; then
-	echo "  TargetROI: ${TargetROI}"
-	echo "  RadiusSmooth: ${RadiusSmooth}"
-	echo "  RadiusDilate: ${RadiusDilate}"
-	echo "  GBCCommand: ${GBCCommand}"
-	echo "  Verbose: ${Verbose}"
-	echo "  ComputeTime: ${ComputeTime}"
-	echo "  VoxelStep: ${VoxelStep}"
+    echo "  TargetROI: ${TargetROI}"
+    echo "  RadiusSmooth: ${RadiusSmooth}"
+    echo "  RadiusDilate: ${RadiusDilate}"
+    echo "  GBCCommand: ${GBCCommand}"
+    echo "  Verbose: ${Verbose}"
+    echo "  ComputeTime: ${ComputeTime}"
+    echo "  VoxelStep: ${VoxelStep}"
 fi
 if [ ${Calculation} == "seed" ]; then
-	echo "  ROIInfo: ${ROIInfo}"
-	echo "  FCCommand: ${FCCommand}"
-	echo "  Method: ${Method}"
+    echo "  ROIInfo: ${ROIInfo}"
+    echo "  FCCommand: ${FCCommand}"
+    echo "  Method: ${Method}"
 fi
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
@@ -710,198 +710,200 @@ INPUTCASES=`echo "$CASES" | sed 's/,/ /g'`
 
 # -- Define all inputs and outputs depending on data type input
 if [ ${RunType} == "individual" ]; then
-	for INPUTCASE in ${INPUTCASES}; do
-		# -- Define inputs
-		geho "--- Establishing paths for all input and output folders:"
-		echo ""
-		if [ ${OutPath} == "" ]; then
-			OutPath=${SubjectsFolder}/${INPUTCASE}/${InputPath}
-		fi
-		# -- Parse input from the InputFiles variable
-		InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
-		if [ ${Calculation} != "dense" ]; then
-			# -- Cleanup prior tmp lists
-			rm -rf ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
-			# -- Generate output directories
-			mkdir ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
-			mkdir ${OutPath} > /dev/null 2>&1
-			# -- Generate the temp list
-			echo "subject id:${INPUTCASE}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
-			for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
-			FinalInput="${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
-		fi
-	done
+    for INPUTCASE in ${INPUTCASES}; do
+        # -- Define inputs
+        geho "--- Establishing paths for all input and output folders:"
+        echo ""
+        if [ ${OutPath} == "" ]; then
+            OutPath=${SubjectsFolder}/${INPUTCASE}/${InputPath}
+        fi
+        # -- Parse input from the InputFiles variable
+        InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
+        if [ ${Calculation} != "dense" ]; then
+            # -- Cleanup prior tmp lists
+            rm -rf ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
+            # -- Generate output directories
+            mkdir ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
+            mkdir ${OutPath} > /dev/null 2>&1
+            # -- Generate the temp list
+            echo "subject id:${INPUTCASE}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
+            for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+            FinalInput="${SubjectsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list"
+        fi
+    done
 fi
 
 if [ ${RunType} == "group" ] && [ ${Calculation} != "dense" ]; then
-	# -- Generate output directories
-	mkdir ${OutPath} > /dev/null 2>&1
-	# -- Cleanup prior tmp lists
-	rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
-	mkdir ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1	
-	for INPUTCASE in $INPUTCASES; do
-		# -- Define inputs
-		geho "--- Establishing paths for all input and output folders for $INPUTCASE:"
-		echo ""
-		# -- Parse input from the InputFiles variable
-		InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
-		# -- Generate the temp list
-		echo "subject id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
-		for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
-		FinalInput="${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list"
-	done
+    # -- Generate output directories
+    mkdir ${OutPath} > /dev/null 2>&1
+    # -- Cleanup prior tmp lists
+    rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
+    mkdir ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1    
+    for INPUTCASE in $INPUTCASES; do
+        # -- Define inputs
+        geho "--- Establishing paths for all input and output folders for $INPUTCASE:"
+        echo ""
+        # -- Parse input from the InputFiles variable
+        InputFiles=`echo "$InputFiles" | sed 's/,/ /g;s/|/ /g'`
+        # -- Generate the temp list
+        echo "subject id:$INPUTCASE" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list
+        for InputFile in ${InputFiles}; do echo "file:${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile}" >> ${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list; done
+        FinalInput="${OutPath}/templist_${Calculation}_${OutName}/${OutName}.list"
+    done
 fi
 
 if [ ${Calculation} != "dense" ]; then
-	# -- Echo inputs
-	echo ""
-	echo "--- Functional connectivity inputs:"
-	echo ""
-	more ${FinalInput}
-	echo ""
-	# -- Echo outputs
-	echo "Seed functional connectivity will be saved here for each specified ROI:"
-	echo "  --> ${OutPath}"
-	# -- Check if list set
-	if [ ${RunType} == "list" ]; then
-		FinalInput=${FileList}
-	fi
-	# -- Check if FC seed run is specified
-	if [ ${Calculation} == "seed" ]; then
-		# -- run FC seed command: 
-		# Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
-		# Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-		# Example with string input --> ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
-		${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
-	fi
-	# -- Check if GBC seed run is specified
-	if [ ${Calculation} == "gbc" ]; then
-		# -- run GBC seed command: 
-		# Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
-		# Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-		# Example with string input --> ${MNAPMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
-		${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
-	fi
-	# -- Remove temp lists
-	echo ""
-	echo ""
-	echo ""
-	geho "--- Removing temporary list files: ${OutPath}/templist_${Calculation}_${OutName}"
-	echo ""
-	rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
+    # -- Echo inputs
+    echo ""
+    echo "--- Functional connectivity inputs:"
+    echo ""
+    more ${FinalInput}
+    echo ""
+    # -- Echo outputs
+    echo "Seed functional connectivity will be saved here for each specified ROI:"
+    echo "  --> ${OutPath}"
+    # -- Check if list set
+    if [ ${RunType} == "list" ]; then
+        FinalInput=${FileList}
+    fi
+    # -- Check if FC seed run is specified
+    if [ ${Calculation} == "seed" ]; then
+        # -- run FC seed command: 
+        # Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
+        # Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
+        # Example with string input --> ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+    fi
+    # -- Check if GBC seed run is specified
+    if [ ${Calculation} == "gbc" ]; then
+        # -- run GBC seed command: 
+        # Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
+        # Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
+        # Example with string input --> ${MNAPMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        ${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+    fi
+    # -- Remove temp lists
+    echo ""
+    echo ""
+    echo ""
+    geho "--- Removing temporary list files: ${OutPath}/templist_${Calculation}_${OutName}"
+    echo ""
+    rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
 fi
 
 # -- Check if dense run is specified
 if [ ${Calculation} == "dense" ]; then
-	for INPUTCASE in ${INPUTCASES}; do
-		geho "--- Running Dense Connectome on BOLD data for ${INPUTCASE}. Note: need ~30GB free RAM at any one time per subject!"
-		echo ""
-		# -- Parse input from the InputFiles variable
-		InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
-		# -- Generate output directories
-		mkdir ${OutPath} > /dev/null 2>&1
-		# -- Generate the temp list
-		for InputFile in ${InputFiles}; do
-			dtseriesCheck=`echo ${InputFile} | grep ".dtseries.nii"`
-			if [[ ! -z ${dtseriesCheck} ]]; then
-				InputFileName=`echo '${InputFile}' | sed 's/.dtseries.nii//'`
-				BOLDNumber=`echo '${InputFile}' | egrep -o [0-9]+ | head -n1`
-			else
-				reho " ---> Requesting ${InputFile}. This is not a valid .dtseries.nii file"
-				return 1
-			fi
-			# -- Parameters for wb_command -cifti-correlation: 
-				#
-				# [-weights] - specify column weights
-				#    <weight-file> - text file containing one weight per column
-				# [-fisher-z] - apply fisher small z transform (ie, artanh) to correlation
-				# [-no-demean] - instead of correlation, do dot product of rows, then
-				#    normalize by diagonal
-				# [-covariance] - compute covariance instead of correlation
-				# [-mem-limit] - restrict memory
-				#    <limit-GB> - memory limit in gigabytes
-				#
-			if [[ ${Covariance} == "false" ]]; then
-				wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
-				${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii \
-				-weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
-				-fisher-z -mem-limit ${MemLimit}
-			else
-				wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
-				${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii \
-				-weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
-				-mem-limit ${MemLimit} -covariance
-			fi
-			if [[ -f ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii ]]; then
-				echo ""
-				geho "--- Dense connectivity calculation completed for: "
-				geho "     ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii"
-				echo ""
-			else
-				echo ""
-				reho "--- Result for ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}.dconn.nii not found" 
-				reho "    Something went wrong."
-				echo ""
-				RunError="yes"
-			fi
-		done
-	done
+    for INPUTCASE in ${INPUTCASES}; do
+        geho "--- Running Dense Connectome on BOLD data for ${INPUTCASE}. Note: need ~30GB free RAM at any one time per subject!"
+        echo ""
+        # -- Parse input from the InputFiles variable
+        InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
+        # -- Generate output directories
+        mkdir ${OutPath} > /dev/null 2>&1
+        # -- Generate the temp list
+        for InputFile in ${InputFiles}; do
+            dtseriesCheck=`echo ${InputFile} | grep ".dtseries.nii"`
+            if [[ ! -z ${dtseriesCheck} ]]; then
+                InputFileName=`echo '${InputFile}' | sed 's/.dtseries.nii//'`
+                BOLDNumber=`echo '${InputFile}' | egrep -o [0-9]+ | head -n1`
+            else
+                reho " ---> Requesting ${InputFile}. This is not a valid .dtseries.nii file"
+                return 1
+            fi
+            # -- Parameters for wb_command -cifti-correlation: 
+                #
+                # [-weights] - specify column weights
+                #    <weight-file> - text file containing one weight per column
+                # [-fisher-z] - apply fisher small z transform (ie, artanh) to correlation
+                # [-no-demean] - instead of correlation, do dot product of rows, then
+                #    normalize by diagonal
+                # [-covariance] - compute covariance instead of correlation
+                # [-mem-limit] - restrict memory
+                #    <limit-GB> - memory limit in gigabytes
+                #
+            if [[ ${Covariance} == "false" ]]; then
+                wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+                ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii \
+                -weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
+                -fisher-z -mem-limit ${MemLimit}
+                OutDense="${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_r_Fz.dconn.nii"
+            else
+                wb_command -cifti-correlation ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFile} \
+                ${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii \
+                -weights ${SubjectsFolder}/${INPUTCASE}/${InputPath}/movement/bold${BOLDNumber}.use \
+                -mem-limit ${MemLimit} -covariance
+                OutDense="${SubjectsFolder}/${INPUTCASE}/${InputPath}/${InputFileName}_cov.dconn.nii"
+            fi
+            if [[ -f ${OutDense} ]]; then
+                echo ""
+                geho "--- Dense connectivity calculation completed for: "
+                geho "     ${OutDense}"
+                echo ""
+            else
+                echo ""
+                reho "--- Result for ${OutDense} not found" 
+                reho "    Something went wrong."
+                echo ""
+                RunError="yes"
+            fi
+        done
+    done
 fi
 
 # -- Check if data extraction requested
 if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]]; then 
-	geho "--- Saving out the data in a CSV file..."
-	# -- Specify pconn file inputs and outputs
-	PConnBOLDInputs=`ls ${OutPath}/${CASE}-${OutName}*ptseries.nii`
-	if [ -z ${PConnBOLDInputs} ]; then
-		echo ""
-		reho "WARNING: No parcellated files found for this run."
-		echo ""
-	else
-		for PConnBOLDInput in ${PConnBOLDInputs}; do 
-			CSVPConnFileExt=".csv"
-			CSVPConnBOLDOutput="${PConnBOLDInput}_${CSVPConnFileExt}"
-			rm -f ${CSVPConnBOLDOutput} > /dev/null 2>&1
-			wb_command -nifti-information -print-matrix "$PConnBOLDInput" >> "$CSVPConnBOLDOutput"
-		done
-	fi
+    geho "--- Saving out the data in a CSV file..."
+    # -- Specify pconn file inputs and outputs
+    PConnBOLDInputs=`ls ${OutPath}/${CASE}-${OutName}*ptseries.nii`
+    if [ -z ${PConnBOLDInputs} ]; then
+        echo ""
+        reho "WARNING: No parcellated files found for this run."
+        echo ""
+    else
+        for PConnBOLDInput in ${PConnBOLDInputs}; do 
+            CSVPConnFileExt=".csv"
+            CSVPConnBOLDOutput="${PConnBOLDInput}_${CSVPConnFileExt}"
+            rm -f ${CSVPConnBOLDOutput} > /dev/null 2>&1
+            wb_command -nifti-information -print-matrix "$PConnBOLDInput" >> "$CSVPConnBOLDOutput"
+        done
+    fi
 fi
 # -- Perform completion checks
 if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
-	for INPUTCASE in ${INPUTCASES}; do
-		if [[ -f ${OutPath}/${OutName}*.nii ]]; then
-			echo ""
-			geho "--- Connectivity calculation completed for ${INPUTCASE}"
-			echo ""
-		else
-			echo ""
-			reho "--- Result for ${INPUTCASE} not found. Something went wrong."
-			echo ""
-			RunError="yes"
-		fi
-	done
+    for INPUTCASE in ${INPUTCASES}; do
+        if [[ -f ${OutPath}/${OutName}*.nii ]]; then
+            echo ""
+            geho "--- Connectivity calculation completed for ${INPUTCASE}"
+            echo ""
+        else
+            echo ""
+            reho "--- Result for ${INPUTCASE} not found. Something went wrong."
+            echo ""
+            RunError="yes"
+        fi
+    done
 fi
 if [[ ${RunType} == "group" ]] && [[ ${Calculation} != "dense" ]]; then
-	if [[ -f ${OutPath}/${OutName}*.nii ]]; then
-		echo ""
-		geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
-		echo ""
-	else
-		echo ""
-		reho "--- Result for ${OutPath}/${OutName} not found. Something went wrong."
-		echo ""
-		RunError="yes"
-	fi
+    if [[ -f ${OutPath}/${OutName}*.nii ]]; then
+        echo ""
+        geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
+        echo ""
+    else
+        echo ""
+        reho "--- Result for ${OutPath}/${OutName} not found. Something went wrong."
+        echo ""
+        RunError="yes"
+    fi
 fi
 if [[ -z ${RunError} ]]; then 
-	echo ""
-	geho "------------------------- Successful completion of work --------------------------------"
-	echo ""
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
 else
-	echo ""
-	reho "--- Results missing. Something went wrong with ${Calculation} calculation."
-	echo ""
-	exit 1
+    echo ""
+    reho "--- Results missing. Something went wrong with ${Calculation} calculation."
+    echo ""
+    exit 1
 fi
 
 }

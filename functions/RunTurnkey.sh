@@ -489,7 +489,7 @@ fi
     #
        # -- Create study hieararchy and generate subject folders
        turnkey_createStudy() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  createStudy..."; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStudy ..."; echo ""
            TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
            createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
            createStudy_ComlogTmp="${workdir}/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
@@ -528,7 +528,7 @@ fi
        }
        # -- Get data from original location & organize DICOMs
        turnkey_mapRawData() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  mapRawData..."; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: mapRawData ..."; echo ""
            TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
            # -- Define specific logs
            mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${TimeStamp}.log"
@@ -591,13 +591,13 @@ fi
        }
        # -- organize DICOMs
        turnkey_organizeDicom() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  organizeDicom..."; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: organizeDicom ..."; echo ""
            ${MNAPCOMMAND} organizeDicom --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}"
            cd ${mnap_subjectsfolder}/${CASES}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done 
        }
        # -- Map processing folder structure
        turnkey_getHCPReady() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  getHCPReady..."; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..."; echo ""
            TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
            getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady${TimeStamp}.log"
            getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
@@ -623,7 +623,7 @@ fi
        }
        # -- Generate subject specific hcp processing file
        turnkey_mapHCPFiles() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  mapHCPFiles..."; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: mapHCPFiles ..."; echo ""
            if [[ ${OVERWRITE_STEP} == "yes" ]]; then
               echo "  -- Removing prior hard link mapping..."; echo ""
               rm -rf ${project_batch_file} &> /dev/null
@@ -643,12 +643,12 @@ fi
     #
        # -- PreFreeSurfer
        turnkey_hcp1() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  HCP Pipelines step: hcp1 (hcp_PreFS)"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp1 (hcp_PreFS) ... "; echo ""
            ${MNAPCOMMAND} hcp1 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
        }
        # -- FreeSurfer
        turnkey_hcp2() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  HCP Pipelines step: hcp2 (hcp_FS)"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp2 (hcp_FS) ... "; echo ""
            ${MNAPCOMMAND} hcp2 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
            CleanupFiles=" talairach_with_skull.log lh.white.deformed.out lh.pial.deformed.out rh.white.deformed.out rh.pial.deformed.out"
            for CleanupFile in ${CleanupFiles}; do 
@@ -658,12 +658,12 @@ fi
        }
        # -- PostFreeSurfer
        turnkey_hcp3() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  HCP Pipelines step: hcp3 (hcp_PostFS)"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp3 (hcp_PostFS) ... "; echo ""
            ${MNAPCOMMAND} hcp3 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
        }
        # -- QCPreprocT1W (after hcp3)
        turnkey_QCPreprocT1w() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  QCPreproc step for T1w data"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for T1w data ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T1w" --modality="T1w" --overwrite="${OVERWRITE_STEP}"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCT1w=""
@@ -673,7 +673,7 @@ fi
        }
        # -- QCPreprocT2W (after hcp3)
        turnkey_QCPreprocT2w() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  QCPreproc step for T2w data"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for T2w data ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T2w" --modality="T2w" --overwrite="${OVERWRITE_STEP}"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCT2w=""
@@ -683,7 +683,7 @@ fi
        }
        # -- QCPreprocMyelin (after hcp3)
        turnkey_QCPreprocMyelin() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  QCPreproc step for myelin data"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for myelin data .. "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/myelin" --modality="myelin" --overwrite="${OVERWRITE_STEP}"
            if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCMyelin=""
@@ -693,19 +693,19 @@ fi
        }
        # -- fMRIVolume
        turnkey_hcp4() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  HCP Pipelines step: hcp4 (hcp_fMRIVolume)"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRIVolume) ... "; echo ""
            HCPLogName="hcpfMRIVolume"
            ${MNAPCOMMAND} hcp4 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
        }
        # -- fMRISurface
        turnkey_hcp5() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  HCP Pipelines step: hcp4 (hcp_fMRISurface)"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRISurface) ... "; echo ""
            HCPLogName="hcpfMRISurface"
            ${MNAPCOMMAND} hcp5 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
        }
        # -- QCPreprocBOLD (after hcp5)
        turnkey_QCPreprocBOLD() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  QCPreproc step for BOLD data"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for BOLD data ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/BOLD" --modality="BOLD" --overwrite="${OVERWRITE_STEP}" --boldsuffix="_Atlas"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCTBOLD=""
@@ -715,7 +715,7 @@ fi
        }
        # -- Diffusion
        turnkey_hcpd() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING:  HCP Pipelines step: hcp4 (hcp_Diffusion)"; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_Diffusion) ..."; echo ""
            HCPLogName="hcpDiffusion"
            ${MNAPCOMMAND} hcpd      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
@@ -726,13 +726,13 @@ fi
        }
        # -- Diffusion Legacy
        turnkey_hcpdLegacy() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step hcpdLegacy..."; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step hcpdLegacy ..."; echo ""
            # ${MNAPCOMMAND} hcpdLegacy --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
            # ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI"    --modality="DWI"    --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion"
        }
        # -- QCPreprocDWILegacy (after hcpd)
        turnkey_QCPreprocDWILegacy() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : QCPreproc steps for DWI Legacy HCP processing... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI Legacy HCP processing ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               QCPreprocDWILegacy=""
@@ -742,7 +742,7 @@ fi
        }
        # -- QCPreprocDWI (after hcpd)
        turnkey_QCPreprocDWI() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : QCPreproc steps for DWI HCP processing... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI HCP processing ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               QCPreprocDWI=""
@@ -752,12 +752,12 @@ fi
        }
        # -- eddyQC processing steps
        turnkey_eddyQC() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : eddyQC for DWI... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: eddyQC for DWI ... "; echo ""
            # ${MNAPCOMMAND} eddyQC --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --eddybase="eddy_unwarped_images" --report="individual" --bvalsfile="Pos_Neg.bvals" --mask="nodif_brain_mask.nii.gz" --eddyidx="index.txt" --eddyparams="acqparams.txt" --bvecsfile="Pos_Neg.bvecs"
        }
        # -- QCPreprocDWIeddyQC (after eddyQC)
        turnkey_QCPreprocDWIeddyQC() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : QCPreproc steps for DWI eddy QC... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI eddy QC ... "; echo ""
            #${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcpdf="yes"
        }
     #
@@ -772,7 +772,7 @@ fi
        }
        # -- FSLBedpostxGPU (after FSLDtifit)
        turnkey_FSLBedpostxGPU() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : FSLBedpostxGPU for DWI... "
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: FSLBedpostxGPU for DWI ... "
            if [ -z "$Fibers" ]; then Fibers="3"; fi
            if [ -z "$Model" ]; then Model="3"; fi
            if [ -z "$Burnin" ]; then Burnin="3000"; fi
@@ -781,27 +781,27 @@ fi
        }
        # -- QCPreprocDWIDTIFIT (after FSLDtifit)
        turnkey_QCPreprocDWIDTIFIT() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : QCPreproc steps for DWI FSL's dtifit analyses... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI FSL's dtifit analyses ... "; echo ""
            #${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" 
        }
        # -- QCPreprocDWIBedpostX (after FSLBedpostxGPU)
        turnkey_QCPreprocDWIBedpostX() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : QCPreproc steps for DWI FSL's BedpostX analyses... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI FSL's BedpostX analyses ... "; echo ""
            #${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes"
        }
        # -- pretractographyDense for DWI data (after FSLBedpostxGPU)
        turnkey_pretractographyDense() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : pretractographyDense... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: pretractographyDense ... "; echo ""
            # ${MNAPCOMMAND} pretractographyDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
        }
        # -- DWIDenseParcellationfor DWI data (after pretractographyDense)
        turnkey_DWIDenseParcellation() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : DWIDenseParcellation... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: DWIDenseParcellation ... "; echo ""
            # ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
        }
        # -- DWISeedTractography for DWI data (after pretractographyDense)
        turnkey_DWISeedTractography() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : DWISeedTractography... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: DWISeedTractography ... "; echo ""
            # ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --outname="${DWIOutName}" --matrixversion='1' --seedfile="${SeedFile}"
            # ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --outname="${DWIOutName}_GBC" --matrixversion='1' --seedfile="gbc"
        }
@@ -813,7 +813,7 @@ fi
     # 
        # -- Check if Custom QC was requested
        turnkey_QCPreprocCustom() {
-           echo ""; cyaneho "-- QCPreprocCustom... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreprocCustom ... "; echo ""
            Modalities="T1w, T2w, myelin, BOLD, DWI"
            for Modality in ${Modalities}; do
                if [[ ${Modality} == "BOLD" ]]; then
@@ -850,7 +850,7 @@ fi
     #
        # -- Map HCP processed outputs for further FC BOLD analyses
        turnkey_mapHCPData() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : mapHCPData "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: mapHCPData ... "; echo ""
            ${MNAPCOMMAND} mapHCPData \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
@@ -859,7 +859,7 @@ fi
        }
        # -- Generate brain masks for de-noising
        turnkey_createBOLDBrainMasks() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : createBOLDBrainMasks processing steps go here... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createBOLDBrainMasks ... "; echo ""
            ${MNAPCOMMAND} createBOLDBrainMasks \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
@@ -868,7 +868,7 @@ fi
        }
        # -- Compute BOLD statistics
        turnkey_computeBOLDStats() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : computeBOLDStats processing steps go here... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDStats ... "; echo ""
            ${MNAPCOMMAND} computeBOLDStats \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
@@ -877,7 +877,7 @@ fi
        }
        # -- Create final BOLD statistics report
        turnkey_createStatsReport() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : createStatsReport processing steps go here... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStatsReport ... "; echo ""
            ${MNAPCOMMAND} createStatsReport \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
@@ -886,7 +886,7 @@ fi
        }
        # -- Extract nuisance signal for further de-noising
        turnkey_extractNuisanceSignal() {
-           cyaneho " ===> RunTurnkey ~~~ RUNNING: : extractNuisanceSignal processing steps go here... "; echo ""
+           cyaneho " ===> RunTurnkey ~~~ RUNNING: extractNuisanceSignal ... "; echo ""
            ${MNAPCOMMAND} extractNuisanceSignal \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
@@ -895,7 +895,7 @@ fi
        }
        # -- Process BOLDs
        turnkey_preprocessBold() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : preprocessBold processing steps go here... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: preprocessBold ... "; echo ""
            ${MNAPCOMMAND} preprocessBold \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
@@ -904,7 +904,7 @@ fi
        }
        # -- Process via CONC file
        turnkey_preprocessConc() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : preprocessConc processing steps go here... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: preprocessConc ... "; echo ""
            ${MNAPCOMMAND} preprocessConc \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
@@ -913,32 +913,9 @@ fi
        }
        # -- Compute GBC
        turnkey_computeBOLDfcGBC() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : computeBOLDfc processing steps for GBC go here... "; echo ""
-           
-           # InputFile="bold1_Atlas_scrub_g7_hpss_res-VWMWB.dtseries.nii"
-           # OutName="GBC_bold1_Atlas_scrub_g7_hpss_res-VWMWB"
-           # ${MNAPCOMMAND} computeBOLDfc \
-           # --subjectsfolder="${mnap_subjectsfolder}" \
-           # --calculation="gbc" \
-           # --runtype="individual" \
-           # --subjects="${CASE}" \
-           # --inputfiles="${InputFiles}" \
-           # --inputpath="images/functional" \
-           # --extractdata="yes" \
-           # --outname="${OutName}" \
-           # --overwrite="${OVERWRITE_STEP}" \
-           # --ignore="${Ignore}" \
-           # --target=[] \
-           # --command="mFz:" \
-           # --targetf="${mnap_subjectsfolder}/${CASE}/images/functional" \
-           # --mask="5" \
-           # --rsmooth="0" \
-           # --rdilate="0" \
-           # --verbose="true" \
-           # --time="true" \
-           # --vstep="1000" \
-           # --covariance="true"
-           
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for GBC ... "; echo ""
+           ExtractData="yes"
+           Covariance="true"
            ${MNAPCOMMAND} computeBOLDfc \
            --subjectsfolder=${mnap_subjectsfolder} \
            --calculation="gbc" \
@@ -961,42 +938,36 @@ fi
            --time="${ComputeTime}" \
            --vstep="${VoxelStep}" \
            --covariance="${Covariance}"
-    
        }
        # -- Compute Seed FC for relevant ROIs
        turnkey_computeBOLDfcSeed() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : computeBOLDfc processing steps for seeds go here... "; echo ""
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for Seed FC ... "; echo ""
            if [[ -z ${ROIInfo} ]]; then
-              ROINames="/library/data/roi/seeds_cifti.names library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
+              ROINames="${TOOLS}/${MNAPREPO}/library/data/roi/seeds_cifti.names ${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
+           else 
+              ROINames=${ROIInfo}
            fi
-           #ROIInfo="${TOOLS}/${MNAPREPO}/library/data/roi/seeds_cifti.names"
-           #ROIInfo="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
-           for ROIName in ${ROINames}; do
-           Covariance="true"
-           ${MNAPCOMMAND} computeBOLDfc \
-           --subjectsfolder="${mnap_subjectsfolder}" \
-           --calculation="seed" \
-           --runtype="individual" \
-           --subjects="${CASE}" \
-           --inputfiles="${InputFiles}" \
-           --inputpath="${InputPath}" \
-           --extractdata="${ExtractData}" \
-           --outname="${OutName}" \
-           --overwrite="${OVERWRITE_STEP}" \
-           --ignore="${IgnoreFrames}" \
-           --roinfo="${ROIInfo}" \
-           --options="${FCCommand}" \
-           --method="${Method}" \
-           --targetf="${OutPath}" \
-           --mask="${MaskFrames}" \
-           --covariance="${Covariance}"
-    
-           --ignore="udvarsme" \
-           --options="" \
-           --method="" \
-           --targetf="" \
-           --mask="0" \
-           --covariance="true"
+           for ROIInfo in ${ROINames}; do
+              ExtractData="yes"
+              Covariance="true"
+              ${MNAPCOMMAND} computeBOLDfc \
+              --subjectsfolder="${mnap_subjectsfolder}" \
+              --calculation="seed" \
+              --runtype="individual" \
+              --subjects="${CASE}" \
+              --inputfiles="${InputFiles}" \
+              --inputpath="${InputPath}" \
+              --extractdata="${ExtractData}" \
+              --outname="${OutName}" \
+              --overwrite="${OVERWRITE_STEP}" \
+              --ignore="${IgnoreFrames}" \
+              --roinfo="${ROIInfo}" \
+              --options="${FCCommand}" \
+              --method="${Method}" \
+              --targetf="${OutPath}" \
+              --mask="${MaskFrames}" \
+              --covariance="${Covariance}"
+           done
        }
     #
     # --------------- BOLD FC Processing and analyses end ----------------------
@@ -1024,46 +995,56 @@ if [ "$TURNKEY_STEPS" != "all" ]; then
     geho "  ---------------------------------------------------------------------"
     echo ""
 fi
-unset TURNKEY_STEP_ERRORS
 
+# -- Lopp through specified Turnkey steps
+unset TURNKEY_STEP_ERRORS
 for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     turnkey_${TURNKEY_STEP}
     # -- Check for completion of turnkey function
-    cd ${logdir}/comlogs
-    if [ -z `ls -t1 *_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then 
-        CheckLog=""
-        reho " ===> ERROR: Log file not found!"; echo ""
-    else
-        CheckLog=`ls -t1 *_${TURNKEY_STEP}*log | head -n 1`
-        chmod 777 ${CheckLog} 2>/dev/null
-        geho " ===> Log file: ${CheckLog}"; echo ""
-    fi
-    # -- More robust logging check for hcp functions
-    # if [[ ${TURNKEY_STEP} == "hcp1" ]] || [[ ${TURNKEY_STEP} == "hcp2" ]] || [[ ${TURNKEY_STEP} == "hcp3" ]] || [[ ${TURNKEY_STEP} == "hcp4" ]] || [[ ${TURNKEY_STEP} == "hcp5" ]] || [[ ${TURNKEY_STEP} == "hcpd" ]]; then
-    #     if [[ -z ${CheckLog} ]]; then
-    #        CheckLog=`ls -t1 *_${HCPLogName}*log | head -n 1`
-    #     fi
-    # fi
-    # ```===> Final report
-    # ...
-    # ===> Successful completion of all tasks```
-    # vs:
-    # ```===> Final report
-    # ...
-    # ===> Not all tasks completed fully!```
     geho " -- Looking for incomplete/failed process"
-    if [[ ! -z `echo "${CheckLog}" | grep 'done'` ]]; then
-       echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed"
-       TURNKEY_STEP_ERRORS="no"
+    # -- Specific checks for NIUtilities functions that run on multiple jobs
+    NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
+    if [[ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]]; then 
+        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log | head -n 1`
+        if [[ -z ${CheckRunLog} ]]; then 
+           TURNKEY_STEP_ERRORS="yes"
+           reho " ===> ERROR: Runlog file not found!"; echo ""
+        else
+           geho " ===> Runlog file: ${CheckRunLog}"; echo ""
+           CheckRunLogOut=`cat ${CheckRunLog} | grep '===> Successful completion'`
+           if [[ -z ${CheckRunLogOut} ]]; then
+               TURNKEY_STEP_ERRORS="yes"
+               reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
+           else
+               echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed!"
+               TURNKEY_STEP_ERRORS="no"
+           fi
+        fi
     else
-       echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${logdir}/comlogs."
-       TURNKEY_STEP_ERRORS="yes"
+    # -- Specific checks for all other functions
+        if [ -z `ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then 
+            CheckLog=""
+            reho " ===> ERROR: Comlog file not found!"; echo ""
+        else
+            CheckLog=`ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log | head -n 1`
+            chmod 777 ${CheckLog} 2>/dev/null
+            geho " ===> Comlog file: ${CheckLog}"; echo ""
+            if [[ -z `echo "${CheckLog}" | grep 'done'` ]]; then
+               echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${CheckLog}."
+               TURNKEY_STEP_ERRORS="yes"
+            else
+               echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed!"
+               TURNKEY_STEP_ERRORS="no"
+            fi
+        fi
     fi
 done
 
 if [[ ${TURNKEY_STEP_ERRORS} == "yes" ]]; then
     echo ""
-    reho " ===> Appears some turnkey steps have failed. Check ${logdir}/comlogs/"
+    reho " ===> Appears some RunTurnkey steps have failed."
+    reho "       Check ${logdir}/comlogs/:"
+    reho "       Check ${logdir}/runlogs/:"
     echo ""
 else
     echo ""

@@ -3289,7 +3289,7 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
         if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
         if [ -z "$Verbose" ]; then Verbose="true"; fi
         if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
-        if [ -z "$VoxelStep" ]; then VoxelStep="2000"; fi
+        if [ -z "$VoxelStep" ]; then VoxelStep="1200"; fi
     fi
     if [[ ${Calculation} == "seed" ]]; then
         if [ -z "$ROIInfo" ]; then reho "Error: ROI seed file not specified"; exit 1; fi
@@ -3303,7 +3303,7 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
     # -- Check optional parameters if not specified
     if [ -z "$IgnoreFrames" ]; then IgnoreFrames=""; fi
     if [ -z "$MaskFrames" ]; then MaskFrames=""; fi
-    if [ -z "$Covariance" ]; then Covariance="true"; fi
+    if [ -z "$Covariance" ]; then Covariance=""; fi
     if [ -z "$ExtractData" ]; then ExtractData="no"; fi
     
     if [[ ${Calculation} == "dense" ]]; then 
