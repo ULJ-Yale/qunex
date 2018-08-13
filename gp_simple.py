@@ -23,15 +23,8 @@ Copyright (c) Grega Repovs. All rights reserved.
 from gp_core import *
 from g_img import *
 import os
-import shutil
 import re
-import subprocess
-import glob
-import exceptions
-import sys
-import traceback
 from datetime import datetime
-import time
 
 
 def createBoldList(sinfo, options, overwrite=False, thread=0):
@@ -223,20 +216,20 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     except AssertionError, message:
         r += str(message) + "\n---------------------------------------------------------"
         print r
-        return (r, (sinfo['id'], message))
+        return (r, (sinfo['id'], message, 1))
 
     except ExternalFailed, errormessage:
         r += str(errormessage) + "\n---------------------------------------------------------"
         print r
-        return (r, (sinfo['id'], "Failed: " + str(message)))
+        return (r, (sinfo['id'], "Failed: " + str(message), 1))
 
     except:
         message = 'ERROR: Error in parsing or executing script %s' % (options['script'])
         r += "\n" + message + "\n---------------------------------------------------------"
         print r
         raise
-        return (r, (sinfo['id'], message))
+        return (r, (sinfo['id'], message, 1))
 
     r += "\n\nrunShellScript %s completed on %s\n---------------------------------------------------------" % (options['script'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     print r
-    return (r, (sinfo['id'], "Ran %s without errors" % (options['script'])))
+    return (r, (sinfo['id'], "Ran %s without errors" % (options['script']), 0))

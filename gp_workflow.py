@@ -322,7 +322,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d" % (report)
 
     print r
-    return (r, (sinfo['id'], rstatus))
+    return (r, (sinfo['id'], rstatus, report['boldmissing'] + report['boldfail']))
 
 
 
@@ -566,7 +566,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d" % (report)
 
     print r
-    return (r, (sinfo['id'], rstatus))
+    return (r, (sinfo['id'], rstatus, report['boldmissing'] + report['boldfail']))
 
 
 
@@ -912,7 +912,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         rstatus += ", plots: %(plotdone)s" % (preport)
 
     print r
-    return (r, (sinfo['id'], rstatus))
+    return (r, (sinfo['id'], rstatus, preport['boldmissing'] + preport['procok'] == 'failed'))
 
 
 
@@ -1180,7 +1180,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, skipped: %(boldskipped)2d, processed: %(boldok)2d" % (report)
 
     print r
-    return (r, (sinfo['id'], rstatus))
+    return (r, (sinfo['id'], rstatus, report['boldmissing'] + report['boldfail']))
 
 
 
@@ -1693,7 +1693,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
         rstatus = "bolds: %d ready [%s], %d not ready [%s], %d already processed [%s], %d skipped [%s]" % (len(report['ready']), " ".join(report['ready']), len(report['not ready']), " ".join(report['not ready']), len(report['done']), " ".join(report['done']), len(report['skipped']), " ".join(report['skipped']))
 
     print r
-    return (r, (sinfo['id'], rstatus))
+    return (r, (sinfo['id'], rstatus, len(report['not ready']) + len(report['failed'])))
 
 
 def preprocessConc(sinfo, options, overwrite=False, thread=0):
@@ -2275,24 +2275,30 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                         os.remove(done)
                     if status:
                         report += " => processed ok"
+                        failed = 0
                     else:
                         report += " => processing failed"
+                        failed = 1
                 else:
                     if os.path.exists(done):
                         report += " => already done"
+                        failed = 0
                     else:
                         report += " => ready"
+                        failed = 0
 
             except (ExternalFailed, NoSourceFolder), errormessage:
                 r += str(errormessage)
                 report += " => processing failed"
+                failed = 1
             except:
                 report += " => processing failed"
                 r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                 time.sleep(5)
+                failed = 1
 
     r += "\n\nConc preprocessing (v2) completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
-    return (r, (sinfo['id'], report))
+    return (r, (sinfo['id'], report, failed))
 

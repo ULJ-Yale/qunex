@@ -67,12 +67,22 @@ def procResponse(r):
     procResponse(r)
     It processes the response returned from the utilities functions
     called. It splits it into the report string and status tuple. If
-    no status tupple is present, it adds an "Unknown" tupple.
+    no status tupple is present, it adds an "Unknown" tupple. If the 
+    third element is missing, it assumes it ran ok and sets it to
+    0.
     '''
     if type(r) is tuple:
-        return r
+        if len(r) == 2:
+            if len(r[1]) == 2:
+                return (r[0], (r[1][0], r[1][1], None))
+            elif len(r[1]) == 3:
+                return r
+            else:
+                return("Unknown", ("Unknown", "Unknown", None))
+        else:
+            return("Unknown", ("Unknown", "Unknown", None))
     else:
-        return (r, ("Unknown", "Unknown"))
+        return (r, ("Unknown", "Unknown", None))
 
 
 def torf(s):
@@ -613,10 +623,25 @@ def run(command, args):
 
         print "\n\n===> Final report\n"
         print >> f, "\n\n===> Final report\n"
-        for sid, status in stati:
+        failedTotal = 0
+        for sid, report, failed in stati:
             if "Unknown" not in sid:
                 print "... %s ---> %s" % (sid, status)
                 print >> f, "... %s ---> %s" % (sid, status)
+            if failed is None:
+                failedTotal = None
+            else:
+                if failedTotal is not None:
+                    failedTotal += failed
+        if failedTotal is None:
+            print "===> Success status not reported for some or all tasks"
+            print >> f, "===> Success status not reported for some or all tasks"
+        elif failedTotal > 0:
+            print "===> Not all tasks completed fully!"
+            print >> f, "===> Not all tasks completed fully!"
+        else:
+            print "===> Successful completion of all tasks"
+            print >> f, "===> Successful completion of all tasks"
 
         f.close()
 

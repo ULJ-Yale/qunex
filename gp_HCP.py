@@ -35,9 +35,7 @@ import os
 import os.path
 import shutil
 import re
-import subprocess
 import glob
-import exceptions
 import sys
 import traceback
 from datetime import datetime
@@ -491,35 +489,45 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 r += runExternalForFileShell(tfile, comm, '... running HCP PreFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP PreFS failed running command: %s' % (comm))
                 # print "---> Done with Pre FS"
-                report = "Pre FS Done" if status else "Pre FS Failed"
+                if status:
+                    report = "Pre FS Done" 
+                    failed = 0
+                else:
+                    report = "Pre FS Failed"
+                    failed = 1
             else:
                 if os.path.exists(tfile):
                     r += "\n---> HCP PreFS completed"
                     # print "---> HCP PreFS completed"
                     report = "Pre FS done"
+                    failed = 0
                 else:
                     r += "\n---> HCP PreFS can be run"
                     # print "---> HCP PreFS can be run"
                     report = "Pre FS can be run"
+                    failed = 0
         else:
             r += "\n---> Due to missing files subject can not be processed."
             # print "---> Due to missing files subject can not be processed."
             report = "Files missing, PreFS can not be run"
+            failed = 1
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         # print "---> External failed"
         r += str(errormessage)
         report = "PreFS failed"
+        failed = 1
     except:
         # print "---> Unknown error"
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = "PreFS failed"
+        failed = 1
 
     # print "---> Completed %s HCP Pre FS" % (action("running", options['run']))
     r += "\n\nHCP PreFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
-    return (r, (sinfo['id'], report))
+    return (r, (sinfo['id'], report, failed))
 
 
 def hcpFS(sinfo, options, overwrite=False, thread=0):
@@ -771,27 +779,37 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                             os.remove(os.path.join(hcp['T1w_folder'], toremove))
                 r += runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP FS failed running command: %s' % (comm))
-                report = "FS Done" if status else "FS Failed"
+                if status:
+                    report = "FS Done"
+                    failed = 0
+                else:
+                    report = "FS Failed"
+                    failed = 1
             else:
                 if os.path.exists(tfile):
                     r += "\n---> HCP FS completed"
                     report = "FS done"
+                    failed = 0
                 else:
                     r += "\n---> HCP FS can be run"
                     report = "FS can be run"
+                    failed = 0
         else:
             r += "\n---> Subject can not be processed."
             report = "FS can not be run"
+            failed = 1
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
+        failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
 
     r += "\n\nHCP FS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
-    return (r, (sinfo['id'], report))
+    return (r, (sinfo['id'], report, failed))
 
 
 def hcpPostFS(sinfo, options, overwrite=False, thread=0):
@@ -976,27 +994,37 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                 r, status = checkForFile(r, tfile, 'ERROR: HCP PostFS failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
-                report = "Post FS Done" if status else "Post FS Failed"
+                if status:
+                    report = "Post FS Done" 
+                    failed = 0
+                else:
+                    report = "Post FS Failed"
+                    failed = 1
             else:
                 if os.path.exists(tfile):
                     r += "\n---> HCP Post FS completed"
                     report = "Post FS done"
+                    failed = 0
                 else:
                     r += "\n---> HCP Post FS can be run"
                     report = "Post FS can be run"
+                    failed = 0
         else:
             r += "\n---> Subject can not be processed."
             report = "Post FS can not be run"
+            failed = 1
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
+        failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
 
     r += "\n\nHCP PostFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
-    return (r, (sinfo['id'], report))
+    return (r, (sinfo['id'], report, failed))
 
 
 def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
@@ -1171,27 +1199,37 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                 r, status = checkForFile(r, tfile, 'ERROR: HCP Diffusion Preprocessing failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
-                report = "Diffusion done" if status else "Diffusion failed"
+                if status:
+                    report = "Diffusion done" 
+                    failed = 0
+                else: 
+                    report = "Diffusion failed"
+                    failed = 1
             else:
                 if os.path.exists(tfile):
                     r += "---> HCP Diffusion completed"
                     report = "HCP Diffusion done"
+                    failed = 0
                 else:
                     r += "---> HCP Diffusion can be run"
                     report = "HCP Diffusion can be run"
+                    failed = 0
         else:
             r += "---> Subject can not be processed."
             report = "HCP Diffusion can not be run"
+            failed = 1
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
+        failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
 
     r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
-    return (r, (sinfo['id'], report))
+    return (r, (sinfo['id'], report, failed))
 
 
 
@@ -1713,14 +1751,14 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         for k in ['done', 'failed', 'ready', 'not ready']:
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
-        report = (sinfo['id'], "HCP fMRI Volume: bolds " + "; ".join(rep))
+        report = (sinfo['id'], "HCP fMRI Volume: bolds " + "; ".join(rep), len(report['failed']) + len(report['not ready']))
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
-        report = (sinfo['id'], 'HCP fMRI Volume failed')
+        report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
-        report = (sinfo['id'], 'HCP fMRI Volume failed')
+        report = (sinfo['id'], 'HCP fMRI Volume failed', 1)
 
     r += "\n\nHCP fMRIVolume %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
@@ -1977,7 +2015,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         for k in ['done', 'failed', 'ready', 'not ready']:
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
-        report = (sinfo['id'], "HCP fMRI Surface: bolds " + "; ".join(rep))
+        report = (sinfo['id'], "HCP fMRI Surface: bolds " + "; ".join(rep), len(report['failed']) + len(report['not ready']))
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
@@ -2039,27 +2077,37 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
                 r, status = checkForFile(r, tfile, 'ERROR: DTI Fit failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
-                report = "DTI Fit done" if status else "DTI Fit failed"
+                if status:
+                    report = "DTI Fit done"
+                    failed = 0
+                else:
+                    report = "DTI Fit failed"
+                    failed = 1
             else:
                 if os.path.exists(tfile):
                     r += "---> HCP DTI Fit completed"
                     report = "HCP DTI Fit done"
+                    failed = 0
                 else:
                     r += "---> HCP DTI Fit can be run"
                     report = "HCP DTI Fit can be run"
+                    failed = 0
         else:
             r += "---> Subject can not be processed."
             report = "HCP DTI Fit can not be run"
+            failed = 1
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
+        failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
 
     r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
-    return (r, (sinfo['id'], report))
+    return (r, (sinfo['id'], report, failed))
 
 
 def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
@@ -2111,27 +2159,37 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
                 r, status = checkForFile(r, tfile, 'ERROR: HCP BedpostX failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
-                report = "BedpostX done" if status else "BedpostX failed"
+                if status:
+                    report = "BedpostX done" 
+                    failed = 0
+                else:
+                    report = "BedpostX failed"
+                    failed = 1
             else:
                 if os.path.exists(tfile):
                     r += "---> HCP BedpostX completed"
                     report = "HCP BedpostX done"
+                    failed = 0
                 else:
                     r += "---> HCP BedpostX can be run"
                     report = "HCP BedpostX can be run"
+                    failed = 0
         else:
             r += "---> Subject can not be processed."
             report = "HCP BedpostX can not be run"
+            failed = 1
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
+        failed = 1
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        failed = 1
 
     r += "\n\nHCP Diffusion Preprocessing %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
-    return (r, (sinfo['id'], report))
+    return (r, (sinfo['id'], report, failed))
 
 
 def mapHCPData(sinfo, options, overwrite=False, thread=0):
@@ -2224,6 +2282,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     #                                                                                      map T1 and segmentation
 
     report = {}
+    failed = 0
 
     r += "\n\nSource folder: " + d['hcp']
     r += "\nTarget folder: " + d['s_images']
@@ -2258,6 +2317,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
             r += "\n ... ERROR: could not generate downsampled aseg+aparc, files missing!"
             report['lores aseg+aparc'] = 'failed'
             status = False
+            failed += 1
 
     report['surface'] = 'ok'
     if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k')):
@@ -2285,6 +2345,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                 else:
                     r += "\n     -> ERROR: could not map or copy %s" % (sfile)
                     report['surface'] = 'error'
+                    failed += 1
         if npre:
             r += "\n     -> %d files already copied" % (npre)
         if ncp:
@@ -2293,6 +2354,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         r += "\n ... ERROR: missing folder: %s!" % (os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k'))
         status = False
         report['surface'] = 'error'
+        failed += 1
 
     # ------------------------------------------------------------------------------------------------------------
     #                                                                                          map functional data
@@ -2369,6 +2431,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                                 r += "\n     ... movement data prepared"
                             else:
                                 r += "\n     ... ERROR: could not prepare movement data, source does not exist: %s" % os.path.join(boldpath, 'Movement_Regressors.txt')
+                                failed += 1
                                 status = False
 
                         if status:
@@ -2377,12 +2440,15 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                         else:
                             r += "\n     ---> ERROR: Data missing, please check source!\n"
                             report['boldfail'] += 1
+                            failed += 1
 
                     except (ExternalFailed, NoSourceFolder), errormessage:
                         r += str(errormessage)
+                        failed += 1
                     except:
                         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                         time.sleep(3)
+                        failed += 1
                 else:
                     skipped.append((v['name'], v['task']))
                     report['boldskipped'] += 1
@@ -2396,4 +2462,4 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     rstatus = "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d, bolds skipped: %(boldskipped)d" % (report)
 
     print r
-    return (r, (sinfo['id'], rstatus))
+    return (r, (sinfo['id'], rstatus, failed))
