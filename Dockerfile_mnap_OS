@@ -94,8 +94,8 @@ RUN yum update -y && yum upgrade -y && \
     ln -s /usr/lib64/atlas/libtatlas.so /usr/lib64/libatlas.so && \
 # Install devtoolset-6-gcc rpm package
     yum --enablerepo=centos-sclo-rh-testing install -y devtoolset-6-gcc && \
-    yum --enablerepo=epel-testing install plotutils && \
-    yum --enablerepo=remi install gd-last && \
+    yum --enablerepo=epel-testing install -y plotutils && \
+    yum --enablerepo=remi install -y gd-last && \
 # Manually install libraries needed for Octave
     wget --progress=bar:force -O /tmp/transfig-3.2.5d-13.el7.x86_64.rpm http://mirror.centos.org/centos/7/os/x86_64/Packages/transfig-3.2.5d-13.el7.x86_64.rpm  && \
     rpm -i /tmp/transfig-3.2.5d-13.el7.x86_64.rpm  && \
