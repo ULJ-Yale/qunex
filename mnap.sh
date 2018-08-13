@@ -708,8 +708,7 @@ echo ""
 hcpdLegacy() {
 
 # -- Unique requirements for this function:
-#      Installed versions of: FSL5.0.9 or higher
-#      Needs CUDA 6.0 libraries to run eddy_cuda (10x faster than on a CPU)
+#      Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
 #
 # -- Parse general parameters
 EchoSpacing="$EchoSpacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
@@ -1495,8 +1494,6 @@ T1wDiffFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
 BedPostXFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX
 LogFolder="$BedPostXFolder"/logs
 Overwrite="$Overwrite"
-# -- Hard-coded cuda call for HPC clusters
-module load GPU/Cuda/6.5 > /dev/null 2>&1
 # -- Check if overwrite flag was set
 if [ "$Overwrite" == "yes" ]; then
     echo ""

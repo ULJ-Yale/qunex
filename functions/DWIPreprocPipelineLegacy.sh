@@ -356,10 +356,6 @@ get_options() {
 main() {
     # -- Get Command Line Options
     get_options $@
-    # -- Load CUDA Module
-    module load GPU/Cuda/7.5
-    # -- set compatible eddy call
-    eddy_cuda=${FSLDIR}/bin/eddy_cuda7.5_wQC
 
 ##############################
 # Setup folders and variables
