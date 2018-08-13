@@ -621,18 +621,19 @@ def run(command, args):
         for e in log:
             print >> f, e
 
-        print "\n\n===> Final report\n"
-        print >> f, "\n\n===> Final report\n"
+        print "\n\n===> Final report for command", options['command_ran']
+        print >> f, "\n\n===> Final report for command", options['command_ran']
         failedTotal = 0
+
         for sid, report, failed in stati:
             if "Unknown" not in sid:
-                print "... %s ---> %s" % (sid, status)
-                print >> f, "... %s ---> %s" % (sid, status)
-            if failed is None:
-                failedTotal = None
-            else:
-                if failedTotal is not None:
-                    failedTotal += failed
+                print "... %s ---> %s" % (sid, report)
+                print >> f, "... %s ---> %s" % (sid, report)
+                if failed is None:
+                    failedTotal = None
+                else:
+                    if failedTotal is not None:
+                        failedTotal += failed
         if failedTotal is None:
             print "===> Success status not reported for some or all tasks"
             print >> f, "===> Success status not reported for some or all tasks"

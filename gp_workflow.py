@@ -912,7 +912,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         rstatus += ", plots: %(plotdone)s" % (preport)
 
     print r
-    return (r, (sinfo['id'], rstatus, preport['boldmissing'] + preport['procok'] == 'failed'))
+    return (r, (sinfo['id'], rstatus, preport['boldmissing'] + (preport['procok'] == 'failed')))
 
 
 
