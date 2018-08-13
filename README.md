@@ -298,6 +298,7 @@ Change Log
 * 0.19.14 [connector] Further RunTurnkey edits
 * 0.19.15 [niutilities] Changed mapHCPData resampling to FSL, fixed bugs
 * 0.19.16 [mnaptools library] Installed libraries for Octave and updated environment script to add path to libraries for container
+* 0.19.17 [connector] Further RunTurnkey edits
 
 =======
 [Mind and Brain Lab]: http://mblab.si
