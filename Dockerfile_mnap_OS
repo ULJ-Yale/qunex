@@ -31,9 +31,6 @@ FROM centos:7
 RUN yum update -y && yum upgrade -y && \
 # Install EPEL Repository
     yum install -y epel-release && \
-# Install REMI Repository
-    wget --progress=bar:force -O /tmp/remi-release-7.rpm http://rpms.famillecollet.com/enterprise/remi-release-7.rpm && \
-    rpm -Uvh /tmp/remi-release-7.rpm && \
 # Install packages
     yum install -y yum-utils \
                    bzip2 \
@@ -90,6 +87,9 @@ RUN yum update -y && yum upgrade -y && \
                    python-devel \
                    openssl-devel \
                    zlib-devel && \
+# Install REMI Repository
+     wget --progress=bar:force -O /tmp/remi-release-7.rpm http://rpms.famillecollet.com/enterprise/remi-release-7.rpm && \
+     rpm -Uvh /tmp/remi-release-7.rpm && \
 # Fix for an Octave 4.2.1 error
     ln -s /usr/lib64/atlas/libtatlas.so /usr/lib64/libatlas.so && \
 # Install devtoolset-6-gcc rpm package
