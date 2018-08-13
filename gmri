@@ -27,7 +27,6 @@ General magnetic resonance Imaging (gmri) utilities for processing and analysis.
 usage: gmri <command> [option=value] [option=value] ...
        gmri -h         (prints this help)
        gmri -l         (list available commands)
-       gmri -c         (list available processing commands)
        gmri -o         (list available processing options)
        gmri ?<command> (print help for a given command)
 
@@ -188,6 +187,12 @@ createStatsReport       [preprocessing options] [preprocessing options] ...
 extractNuisanceSignal   [preprocessing options] [preprocessing options] ...
 preprocessBold          [preprocessing options] [preprocessing options] ...
 preprocessConc          [preprocessing options] [preprocessing options] ...
+
+
+General purpose commands
+------------------------
+
+runShellScript   [preprocessing options] [preprocessing options] ...
 
 
 Matlab functions

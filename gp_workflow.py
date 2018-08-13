@@ -438,7 +438,22 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     --mov_before  ... How many frames before each frame identified as bad
                       to also exclude from further processing and analysis [0].
     --mov_bad     ... Which criteria to use for identification of bad frames
-                      [udvarsme].
+                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
+                      See movement scrubbing documentation for further 
+                      information [udvarsme].
+    
+    Criteria for identification of bad frames can be one out of:
+
+    * mov       ... frame displacement threshold (fdt) is exceeded
+    * dvars     ... image intensity normalized root mean squared error (RMSE) 
+                    threshold (dvarsmt) is exceeded
+    * dvarsme   ... median normalised RMSE (dvarsmet) threshold is exceeded
+    * idvars    ... both fdt and dvarsmt are exceeded (i for intersection)
+    * uvars     ... either fdt or dvarsmt are exceeded (u for union)
+    * idvarsme  ... both fdt and dvarsmet are exceeded
+    * udvarsme  ... either fdt or udvarsmet are exceeded
+
+    For more detailed description please see wiki entry on Movement scrubbing.
 
     The listed parameters can be specified in command call or subject.txt file.
 
@@ -671,7 +686,22 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     --mov_before  ... How many frames before each frame identified as bad
                       to also exclude from further processing and analysis [0].
     --mov_bad     ... Which criteria to use for identification of bad frames
-                      [udvarsme].
+                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
+                      See movement scrubbing documentation for further 
+                      information [udvarsme].
+
+    Criteria for identification of bad frames can be one out of:
+
+    * mov       ... frame displacement threshold (fdt) is exceeded
+    * dvars     ... image intensity normalized root mean squared error (RMSE) 
+                    threshold (dvarsmt) is exceeded
+    * dvarsme   ... median normalised RMSE (dvarsmet) threshold is exceeded
+    * idvars    ... both fdt and dvarsmt are exceeded (i for intersection)
+    * uvars     ... either fdt or dvarsmt are exceeded (u for union)
+    * idvarsme  ... both fdt and dvarsmet are exceeded
+    * udvarsme  ... either fdt or udvarsmet are exceeded
+
+    For more detailed description please see wiki entry on Movement scrubbing.
 
     Reporting specific options:
 
@@ -1245,6 +1275,9 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
                            processed [].
+    --bold_prefix      ... An optional prefix to place in front of processing
+                           name extensions in the resulting files, e.g. 
+                           bold3<bold_prefix>_g7_hpss.nii.gz [].
 
     List of bold files specify, which types of bold files are to be processed,
     as they are specified in the batch.txt file. An example of a list of
@@ -1305,7 +1338,22 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --mov_before  ... How many frames before each frame identified as bad
                       to also exclude from further processing and analysis [0].
     --mov_bad     ... Which criteria to use for identification of bad frames
-                      [udvarsme].
+                      (mov, dvars, dvarsme, idvars, uvars, idvarsme, udvarsme).
+                      See movement scrubbing documentation for further 
+                      information [udvarsme].
+
+    Criteria for identification of bad frames can be one out of:
+
+    * mov       ... frame displacement threshold (fdt) is exceeded
+    * dvars     ... image intensity normalized root mean squared error (RMSE) 
+                    threshold (dvarsmt) is exceeded
+    * dvarsme   ... median normalised RMSE (dvarsmet) threshold is exceeded
+    * idvars    ... both fdt and dvarsmt are exceeded (i for intersection)
+    * uvars     ... either fdt or dvarsmt are exceeded (u for union)
+    * idvarsme  ... both fdt and dvarsmet are exceeded
+    * udvarsme  ... either fdt or udvarsmet are exceeded
+
+    For more detailed description please see wiki entry on Movement scrubbing.
 
     In any case, if scrubbing was done beforehand or as a part of this commmand,
     one has to specify, how the scrubbing information is used:
@@ -1753,11 +1801,18 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     There are a number of basic specific parameters for this command that are
     relevant for all or most of the actions:
 
-    --bold_preprocess ... A pipe ('|') separated list of conc names to process.
-    --event_file      ... A pipe ('|') separated list of fidl names to use, that
-                          matches the conc list.
-    --bold_actions    ... A string specifying which actions, and in what sequence
-                          to perform [shrcl]
+    --bold_preprocess  ... A pipe ('|') separated list of conc names to process.
+    --event_file       ... A pipe ('|') separated list of fidl names to use, that
+                           matches the conc list.
+    --bold_actions     ... A string specifying which actions, and in what sequence
+                           to perform [shrcl]
+    --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
+                           specified, the BOLD images in                            
+                           `images/functional.<hcp_bold_variant>` will be
+                           processed [].
+    --bold_prefix      ... An optional prefix to place in front of processing
+                           name extensions in the resulting files, e.g. 
+                           bold3<bold_prefix>_g7_hpss.nii.gz [].
 
     The two names give the bases for searching for the appropriate .conc and
     .fidl files. Both are first searched for in images/functional/concs and
@@ -1808,6 +1863,19 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                       to also exclude from further processing and analysis [0].
     --mov_bad     ... Which criteria to use for identification of bad frames
                       [udvarsme].
+
+    Criteria for identification of bad frames can be one out of:
+
+    * mov       ... frame displacement threshold (fdt) is exceeded
+    * dvars     ... image intensity normalized root mean squared error (RMSE) 
+                    threshold (dvarsmt) is exceeded
+    * dvarsme   ... median normalised RMSE (dvarsmet) threshold is exceeded
+    * idvars    ... both fdt and dvarsmt are exceeded (i for intersection)
+    * uvars     ... either fdt or dvarsmt are exceeded (u for union)
+    * idvarsme  ... both fdt and dvarsmet are exceeded
+    * udvarsme  ... either fdt or udvarsmet are exceeded
+
+    For more detailed description please see wiki entry on Movement scrubbing.
 
     In any case, if scrubbing was done beforehand or as a part of this commmand,
     one has to specify, how the scrubbing information is used:
@@ -2056,7 +2124,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
          overwrite=no cores=10 bold_preprocess=SRT event_file=SRT glm_name=-M1 \\
          bold_actions=src bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
-         glm_matrix=both glm_residuals=forget nprocess=0 \\
+         glm_matrix=both glm_residuals=none nprocess=0 \\
          pignore="hipass=keep|regress=keep|lopass=keep"
 
     Functional connectivity preprocessing
