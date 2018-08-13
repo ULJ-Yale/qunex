@@ -84,6 +84,7 @@ RUN yum update -y && yum upgrade -y && \
                    octave-devel \
                    systemd \
                    units \
+                   ghostscript \
                    python-devel \
                    openssl-devel \
                    zlib-devel && \
