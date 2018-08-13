@@ -599,6 +599,9 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                    empty otherwise [].
     --hcp_wm_edits             ... Specify YES to use manually edited WM mask or
                                    empty otherwise [].
+    --hcp_autotopofix_off      ... Specify YES to turn off the automatic topologic fix 
+                                   step in FS and compute WM surface deterministically 
+                                   from manual WM mask, or empty otherwise [].                             
     --hcp_freesurfer_home      ... Path for FreeSurfer home folder can be manually
                                    specified to override default environment variable
                                    to ensure backwards compatiblity and hcp2 customization
@@ -749,6 +752,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             --ExpertFile="%(ExpertFile)s" \
             --ControlPoints="%(ControlPoints)s" \
             --WMEdits="%(WMEdits)s" \
+            --AutoTopoFixOff="%(AutoTopoFixOff)s" \
             --FreeSurferHome="%(FreeSurferHome)s" \
             --FSLoadHPCModule="%(FSLoadHPCModule)s" \
             --t1="%(t1)s" \
@@ -762,6 +766,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 'ExpertFile'        : options['hcp_expert_file'],
                 'ControlPoints'     : options['hcp_control_points'],
                 'WMEdits'           : options['hcp_wm_edits'],
+                'AutoTopoFixOff'    : options['hcp_autotopofix_off'],
                 't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                 't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
                 't2'                : t2w}
