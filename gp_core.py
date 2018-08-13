@@ -573,7 +573,7 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
             return (False, "%s%sERROR: %s could not be copied, source file does not exist [%s]! " % (r, prefix, name, source))
 
 
-def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None, logfolder="", logtags=None):
+def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None, logfolder="", logtags=""):
     """
     runExternalForFile - documentation not yet available.
     """
@@ -638,7 +638,7 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
     if overwrite or not os.path.exists(checkfile):
         r = '\n\n%s' % (description)
 
-        if isinstance(logtags, basestring):
+        if isinstance(logtags, basestring) or logtags is None:
             logtags = [logtags]
 
         logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")

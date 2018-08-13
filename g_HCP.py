@@ -546,6 +546,9 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
     mappingNumber = dict([[int(e[0]), e[1]] for e in mapping if e[0].isdigit()])
     mappingName   = dict([e for e in mapping if not e[0].isdigit()])
 
+    if not mapping:
+        raise ge.CommandFailed("getHCPReady", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
+
     # -- get list of subject folders
 
     subjects, gopts = g_core.getSubjectList(subjects, sfilter=sfilter, verbose=False)

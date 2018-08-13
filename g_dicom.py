@@ -1084,7 +1084,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
                 img += '.gz'
 
-            tfname = os.path.join(imgf, "%02d.nii.gz" % (niinum))
+            tfname = os.path.join(imgf, "%d.nii.gz" % (niinum))
             if debug:
                 print "         ... moving '%s' to '%s'" % (img, tfname)
             os.rename(img, tfname)
@@ -1094,7 +1094,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
             for dwiextra in ['.bval', '.bvec']:
                 dwisrc = img.replace('.nii.gz', dwiextra)
                 if os.path.exists(dwisrc):
-                    os.rename(dwisrc, os.path.join(imgf, "%02d%s" % (niinum, dwiextra)))
+                    os.rename(dwisrc, os.path.join(imgf, "%d%s" % (niinum, dwiextra)))
 
 
         # --- check if resulting nifti is present
