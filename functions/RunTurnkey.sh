@@ -914,15 +914,15 @@ fi
        # -- Compute GBC
        turnkey_computeBOLDfcGBC() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : computeBOLDfc processing steps for GBC go here... "; echo ""
-           InputFile="bold1_Atlas_scrub_g7_hpss_res-VWMWB.dtseries.nii"
-           OutName="GBC_bold1_Atlas_scrub_g7_hpss_res-VWMWB"
+           # InputFile="bold1_Atlas_scrub_g7_hpss_res-VWMWB.dtseries.nii"
+           # OutName="GBC_bold1_Atlas_scrub_g7_hpss_res-VWMWB"
            Ignore=""
            ${MNAPCOMMAND} computeBOLDfc \
            --subjectsfolder="${mnap_subjectsfolder}" \
            --calculation="gbc" \
            --runtype="individual" \
-           --subjects="${project_batch_file}" \
-           --inputfiles="${InputFile}" \
+           --subjects="${CASE}" \
+           --inputfiles="${InputFiles}" \
            --inputpath="images/functional" \
            --extractdata="yes" \
            --outname="${OutName}" \
@@ -944,14 +944,13 @@ fi
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : computeBOLDfc processing steps for seeds go here... "; echo ""
            ${MNAPCOMMAND} computeBOLDfc \
            --subjectsfolder="${mnap_subjectsfolder}" \
-           --function="computeboldfc" \
            --calculation="seed" \
            --runtype="individual" \
-           --subjects="${project_batch_file}" \
-           --inputfiles="bold1_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii" \
+           --subjects="${CASE}" \
+           --inputfiles="${InputFiles}" \
            --inputpath="images/functional" \
            --extractdata="yes" \
-           --outname="boldRest1AtlasScrubHPSSg7resVWMWB" \
+           --outname="${OutName}" \
            --overwrite="${OVERWRITE_STEP}" \
            --roinfo="/gpfs/project/fas/n3/software/MNAP/general/templates/Thalamus_Atlas/Thal.FSL.Associative.Sensory.MNI152.CIFTI.Atlas.names" \
            --ignore="udvarsme" \
