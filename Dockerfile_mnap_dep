@@ -260,6 +260,7 @@ RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
     ln -fs /bin/epstool /opt/olib && \
     ln -sf /bin/fig2dev /opt/olib && \
     ln -sf /bin/pstoedit /opt/olib && \
+    ln -sf /usr/bin/hdf5 /opt/olib && \
 # Set up Python Sym Links
     ln -fs /usr/local/bin/python2.7 /opt/python && \
     mkdir -p /opt/pylib/lib/python2.7 && \
