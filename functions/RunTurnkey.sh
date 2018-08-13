@@ -966,7 +966,12 @@ fi
        # -- Compute Seed FC for relevant ROIs
        turnkey_computeBOLDfcSeed() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : computeBOLDfc processing steps for seeds go here... "; echo ""
-           ROIInfo="/templates/Thalamus_Atlas/Thal.FSL.Associative.Sensory.MNI152.CIFTI.Atlas.names"
+           if [[ -z ${ROIInfo} ]]; then
+              ROINames="/library/data/roi/seeds_cifti.names library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
+           fi
+           #ROIInfo="${TOOLS}/${MNAPREPO}/library/data/roi/seeds_cifti.names"
+           #ROIInfo="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
+           for ROIName in ${ROINames}; do
            Covariance="true"
            ${MNAPCOMMAND} computeBOLDfc \
            --subjectsfolder="${mnap_subjectsfolder}" \
