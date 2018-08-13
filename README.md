@@ -297,6 +297,7 @@ Change Log
 * 0.19.13 [matlab niutilities] Added gmrimages to read an array of images and adopted g_PlotBoldTS to work with octave, getHCPReady checks for mapping file validity
 * 0.19.14 [connector] Further RunTurnkey edits
 * 0.19.15 [niutilities] Changed mapHCPData resampling to FSL, fixed bugs
+* 0.19.16 [mnaptools library] Installed libraries for Octave and updated environment script to add path to libraries for container
 
 =======
 [Mind and Brain Lab]: http://mblab.si

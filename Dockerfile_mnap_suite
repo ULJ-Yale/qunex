@@ -63,9 +63,10 @@ ADD library/etc/license.txt /opt/freesurfer-6.0/
 ADD library/etc/license.txt /opt/freesurfer-5.3-HCP/
 
 
-# Set environment & Set Octave as default & Clear apt cache and other empty folders
+# Set environment
 RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
     ln /opt/mnaptools/library/environment/mnap_environment.sh /etc/profile.d/mnap_environment.sh && \
+# Set Octave as default
     touch ~/.mnapuseoctave && \
     cd matlab/gmri/\@gmrimage && \
     cp mri_ReadNIfTImx_Octave.cpp mri_ReadNIfTImx.cpp && \
@@ -76,11 +77,14 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
     rm mri_SaveNIfTImx.cpp && \
     rm g_nifti.o && \
     rm znzlib.o && \
+# Move libhdf5.so.8 to /opt/olib for Octave to compute BOLD
+    mkdir -p /opt/olib/hdf5 && \
+    mv libhdf5* /opt/olib/hdf5 && \
 # This code to install libraries is needed in this section because mnap_dep updates libraries
 # This reverts back to the libraries needed by FS
 # Manually install libraries needed for FS run
      wget --progress=bar:force -O /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/h/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
-     rpm -ev --nodeps hdf5 && \
+#     rpm -ev --nodeps hdf5 && \
      rpm -i /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
      wget --progress=bar:force -O /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/n/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
 #     rpm -ev --nodeps netcdf && \

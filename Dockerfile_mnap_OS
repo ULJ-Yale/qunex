@@ -31,6 +31,9 @@ FROM centos:7
 RUN yum update -y && yum upgrade -y && \
 # Install EPEL Repository
     yum install -y epel-release && \
+# Install REMI Repository
+    wget --progress=bar:force -O /tmp/remi-release-7.rpm http://rpms.famillecollet.com/enterprise/remi-release-7.rpm && \
+    rpm -Uvh /tmp/remi-release-7.rpm && \
 # Install packages
     yum install -y yum-utils \
                    bzip2 \
@@ -91,6 +94,25 @@ RUN yum update -y && yum upgrade -y && \
     ln -s /usr/lib64/atlas/libtatlas.so /usr/lib64/libatlas.so && \
 # Install devtoolset-6-gcc rpm package
     yum --enablerepo=centos-sclo-rh-testing install -y devtoolset-6-gcc && \
+    yum --enablerepo=epel-testing install plotutils && \
+    yum --enablerepo=remi install gd-last && \
+# Manually install libraries needed for Octave
+    wget --progress=bar:force -O /tmp/transfig-3.2.5d-13.el7.x86_64.rpm http://mirror.centos.org/centos/7/os/x86_64/Packages/transfig-3.2.5d-13.el7.x86_64.rpm  && \
+    rpm -i /tmp/transfig-3.2.5d-13.el7.x86_64.rpm  && \
+    rm /tmp/transfig-3.2.5d-13.el7.x86_64.rpm && \
+    wget --progress=bar:force -O /tmp/libEMF-1.0.4-1.el6.x86_64.rpm http://mirror.centos.org/centos/6/os/x86_64/Packages/libEMF-1.0.4-1.el6.x86_64.rpm && \
+    rpm -i /tmp/libEMF-1.0.4-1.el6.x86_64.rpm && \
+    rm /tmp/libEMF-1.0.4-1.el6.x86_64.rpm && \
+    wget --progress=bar:force -O /tmp/glibc-2.28-4.fc29.x86_64.rpm http://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/Packages/g/glibc-2.28-4.fc29.x86_64.rpm && \
+    wget --progress=bar:force -O /tmp/glibc-common-2.28-4.fc29.x86_64.rpm http://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/Packages/g/glibc-common-2.28-4.fc29.x86_64.rpm && \
+    wget --progress=bar:force -O /tmp/glibc-langpack-en-2.28-4.fc29.x86_64.rpm http://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/Packages/g/glibc-langpack-en-2.28-4.fc29.x86_64.rpm && \
+    rpm -i /tmp/glibc-* --force && \
+    wget --progress=bar:force -O /tmp/libstdc++-8.2.1-2.fc29.x86_64.rpm http://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/Packages/l/libstdc++-8.2.1-2.fc29.x86_64.rpm && \
+    rpm -i /tmp/libstdc++-8.2.1-2.fc29.x86_64.rpm --force && \
+    rm /tmp/libstdc++-8.2.1-2.fc29.x86_64.rpm && \
+    wget --progress=bar:force -O /tmp/pstoedit-3.73-3.fc29.x86_64.rpm http://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/x86_64/os/Packages/p/pstoedit-3.73-3.fc29.x86_64.rpm && \
+    rpm -i /tmp/pstoedit-3.73-3.fc29.x86_64.rpm && \
+    rm /tmp/pstoedit-3.73-3.fc29.x86_64.rpm && \
 # Clean cache and other empty folders
     yum clean all && \
     rm -rf /var/lib/yum/* /var/cache/yum/* /tmp/* /var/tmp/* /boot /media /mnt /srv && \
