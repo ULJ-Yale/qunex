@@ -914,45 +914,78 @@ fi
        # -- Compute GBC
        turnkey_computeBOLDfcGBC() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : computeBOLDfc processing steps for GBC go here... "; echo ""
+           
            # InputFile="bold1_Atlas_scrub_g7_hpss_res-VWMWB.dtseries.nii"
            # OutName="GBC_bold1_Atlas_scrub_g7_hpss_res-VWMWB"
-           Ignore=""
+           # ${MNAPCOMMAND} computeBOLDfc \
+           # --subjectsfolder="${mnap_subjectsfolder}" \
+           # --calculation="gbc" \
+           # --runtype="individual" \
+           # --subjects="${CASE}" \
+           # --inputfiles="${InputFiles}" \
+           # --inputpath="images/functional" \
+           # --extractdata="yes" \
+           # --outname="${OutName}" \
+           # --overwrite="${OVERWRITE_STEP}" \
+           # --ignore="${Ignore}" \
+           # --target=[] \
+           # --command="mFz:" \
+           # --targetf="${mnap_subjectsfolder}/${CASE}/images/functional" \
+           # --mask="5" \
+           # --rsmooth="0" \
+           # --rdilate="0" \
+           # --verbose="true" \
+           # --time="true" \
+           # --vstep="1000" \
+           # --covariance="true"
+           
            ${MNAPCOMMAND} computeBOLDfc \
-           --subjectsfolder="${mnap_subjectsfolder}" \
+           --subjectsfolder=${mnap_subjectsfolder} \
            --calculation="gbc" \
            --runtype="individual" \
            --subjects="${CASE}" \
            --inputfiles="${InputFiles}" \
-           --inputpath="images/functional" \
-           --extractdata="yes" \
+           --inputpath="${InputPath}" \
+           --extractdata="${ExtractData}" \
            --outname="${OutName}" \
+           --flist="${FileList}" \
            --overwrite="${OVERWRITE_STEP}" \
-           --ignore="${Ignore}" \
-           --target=[] \
-           --command="mFz:" \
-           --targetf="${mnap_subjectsfolder}/${CASE}/images/functional" \
-           --mask="5" \
-           --rsmooth="0" \
-           --rdilate="0" \
-           --verbose="true" \
-           --time="true" \
-           --vstep="1000" \
-           --covariance="true"
+           --ignore="${IgnoreFrames}" \
+           --target="${TargetROI}" \
+           --command="${GBCCommand}" \
+           --targetf="${OutPath}" \
+           --mask="${MaskFrames}" \
+           --rsmooth="${RadiusSmooth}" \
+           --rdilate="${RadiusDilate}" \
+           --verbose="${Verbose}" \
+           --time="${ComputeTime}" \
+           --vstep="${VoxelStep}" \
+           --covariance="${Covariance}"
+    
        }
        # -- Compute Seed FC for relevant ROIs
        turnkey_computeBOLDfcSeed() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : computeBOLDfc processing steps for seeds go here... "; echo ""
+           ROIInfo="/templates/Thalamus_Atlas/Thal.FSL.Associative.Sensory.MNI152.CIFTI.Atlas.names"
+           Covariance="true"
            ${MNAPCOMMAND} computeBOLDfc \
            --subjectsfolder="${mnap_subjectsfolder}" \
            --calculation="seed" \
            --runtype="individual" \
            --subjects="${CASE}" \
            --inputfiles="${InputFiles}" \
-           --inputpath="images/functional" \
-           --extractdata="yes" \
+           --inputpath="${InputPath}" \
+           --extractdata="${ExtractData}" \
            --outname="${OutName}" \
            --overwrite="${OVERWRITE_STEP}" \
-           --roinfo="/gpfs/project/fas/n3/software/MNAP/general/templates/Thalamus_Atlas/Thal.FSL.Associative.Sensory.MNI152.CIFTI.Atlas.names" \
+           --ignore="${IgnoreFrames}" \
+           --roinfo="${ROIInfo}" \
+           --options="${FCCommand}" \
+           --method="${Method}" \
+           --targetf="${OutPath}" \
+           --mask="${MaskFrames}" \
+           --covariance="${Covariance}"
+    
            --ignore="udvarsme" \
            --options="" \
            --method="" \
