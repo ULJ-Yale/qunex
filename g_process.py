@@ -30,6 +30,7 @@ import os
 import os.path
 from multiprocessing import Pool
 from datetime import datetime
+import niutilities.g_exceptions as ge
 
 
 # =======================================================================
@@ -459,7 +460,11 @@ def run(command, args):
 
     for line in arglist:
         if len(line) == 4:
-            options[line[0]] = line[2](options[line[0]])
+            try:
+                options[line[0]] = line[2](options[line[0]])
+            except:
+                raise ge.CommandError(command, "Invalid parameter value", "Parameter %s is set to invalid value [%s]!" % (line[0], str(options[line[0]])))
+
 
     # ---- Take care of mapping
 
