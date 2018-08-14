@@ -101,6 +101,9 @@ RUN yum update -y && yum upgrade -y && \
     yum --enablerepo=epel-testing install -y plotutils && \
     yum --enablerepo=remi install -y gd-last && \
     yum install -y chrome-deps-stable && \
+# CUDA specific installs
+    yum install -y kernel.x86_64 && \
+    yum install -y --enablerepo=epel dkms && \
 # Manually install libraries needed for Octave
     wget --progress=bar:force -O /tmp/transfig-3.2.5d-13.el7.x86_64.rpm http://mirror.centos.org/centos/7/os/x86_64/Packages/transfig-3.2.5d-13.el7.x86_64.rpm  && \
     rpm -i /tmp/transfig-3.2.5d-13.el7.x86_64.rpm  && \
