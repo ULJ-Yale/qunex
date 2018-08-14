@@ -112,8 +112,8 @@ RUN echo "Installing R packages..." && \
     R CMD INSTALL /tmp/munsell_0.5.0.tar.gz && \
     wget --progress=bar:force -O /tmp/dichromat_2.0-0.tar.gz https://cran.r-project.org/src/contrib/dichromat_2.0-0.tar.gz && \
     R CMD INSTALL /tmp/dichromat_2.0-0.tar.gz && \
-    wget --progress=bar:force -O /tmp/scales_0.5.0.tar.gz https://cran.r-project.org/src/contrib/scales_0.5.0.tar.gz && \
-    R CMD INSTALL /tmp/scales_0.5.0.tar.gz && \
+    wget --progress=bar:force -O /tmp/scales_1.0.0.tar.gz https://cran.r-project.org/src/contrib/scales_1.0.0.tar.gz && \
+    R CMD INSTALL /tmp/scales_1.0.0.tar.gz && \
     wget --progress=bar:force -O /tmp/crayon_1.3.4.tar.gz https://cran.r-project.org/src/contrib/crayon_1.3.4.tar.gz && \
     R CMD INSTALL /tmp/crayon_1.3.4.tar.gz && \
     wget --progress=bar:force -O /tmp/praise_1.0.0.tar.gz https://cran.r-project.org/src/contrib/praise_1.0.0.tar.gz && \
