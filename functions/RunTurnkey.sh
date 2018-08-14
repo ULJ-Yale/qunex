@@ -353,6 +353,7 @@ scriptName=$(basename ${0})
 
 # -- Check if subject input is a parameter file instead of list of cases
 echo ""
+if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
 if [[ ${CASES} == *.txt ]]; then
     SubjectParamFile="$CASES"
     echo ""
@@ -360,7 +361,6 @@ if [[ ${CASES} == *.txt ]]; then
     echo ""
     CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
 fi
-
 
 # -- Check that all inputs are provided
 if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]]; then
@@ -398,7 +398,6 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
    fi
 fi
 
-if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
 if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
 
 if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
@@ -606,7 +605,7 @@ fi
                   rm -f ${mnap_workdir}/inbox/* &> /dev/null
            fi
            CheckInbox=`ls -1A ${rawdir} | wc -l`
-           if [[ ${CheckInbox} == "0" ]]; then
+           if [[ ${CheckInbox} == "0" ]] && [[ ${OVERWRITE_STEP} == "no" ]]; then
                   reho "Error. ${mnap_workdir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
                   reho "Set overwrite to 'yes' and re-run..."
                   echo ""
@@ -648,16 +647,20 @@ fi
                    echo ""; geho " -- Custom scene files found ${processingdir}/scenes/QC/scene_qc_files.zip "
                    geho " Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
                    echo "" >> ${mapRawData_ComlogTmp}
-                   unzip ${processingdir}/scenes/QC/scene_qc_files.zip &> /dev/null
+                   cd ${processingdir}/scenes/QC; echo ""
+                   unzip scene_qc_files.zip; echo ""
                    CustomQCModalities="T1w T2w myelin DWI BOLD"
                    for CustomQCModality in ${CustomQCModalities}; do
                        mkdir -p ${processingdir}/scenes/QC/${CustomQCModality} &> /dev/null
                        cp ${processingdir}/scenes/QC/${XNAT_PROJECT_ID}/resources/scenes_qc/files/${CustomQCModality}/*.scene ${processingdir}/scenes/QC/${CustomQCModality}/ &> /dev/null
+                       CopiedSceneFile=`ls ${processingdir}/scenes/QC/${CustomQCModality}/*scene 2> /dev/null`
+                       if [ ! -z ${CopiedSceneFile} ]; then
+                          geho " -- Copied: $CopiedSceneFile"; echo ""
+                          echo " Copied the following scenes from ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc:" >> ${mapRawData_ComlogTmp}
+                          echo " ${CopiedSceneFile}" >> ${mapRawData_ComlogTmp}
+                       fi
                    done
                    rm -rf ${processingdir}/scenes/QC/${XNAT_PROJECT_ID} &> /dev/null
-                   CopiedSceneFiles=`ls ${processingdir}/scenes/QC/*/*scene`
-                   echo " Copied the following scenes from ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc:" >> ${mapRawData_ComlogTmp}
-                   echo " ${CopiedSceneFiles}" >> ${mapRawData_ComlogTmp}
                    echo "" >> ${mapRawData_ComlogTmp}
                else
                     geho " No custom scene files found as an XNAT resources. If this is an error check your project resources in the XNAT web interface." >> ${mapRawData_ComlogTmp}
