@@ -300,6 +300,7 @@ Change Log
 * 0.19.16 [mnaptools library] Installed libraries for Octave and updated environment script to add path to libraries for container
 * 0.19.17 [connector] Further RunTurnkey edits
 * 0.19.18 [niutilities] Extended final summary reporting, documentation updates
+* 0.19.19 [mnaptools, connector, library, hcpmodified] Further RunTurnkey edits and misc updates across functions to iron out CUDA compatibility
 
 =======
 [Mind and Brain Lab]: http://mblab.si
