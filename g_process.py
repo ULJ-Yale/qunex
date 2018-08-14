@@ -463,7 +463,7 @@ def run(command, args):
             try:
                 options[line[0]] = line[2](options[line[0]])
             except:
-                raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is set to an invalid value [%s]!" % (line[0], str(options[line[0]])))
+                raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
 
 
     # ---- Take care of mapping
