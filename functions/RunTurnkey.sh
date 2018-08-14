@@ -562,12 +562,14 @@ fi
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip
                
                # -- Transfer data from XNAT HOST
-               if [[ -f ${processingdir}/scenes/QC/scene_qc_files.zip ]]; then
-                   geho " Custom scene files found. Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
+               if [ -f ${processingdir}/scenes/QC/scene_qc_files.zip ]; then
+                   echo ""; geho " -- Custom scene files found ${processingdir}/scenes/QC/scene_qc_files.zip "
+                   geho " Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
                    echo "" >> ${mapRawData_ComlogTmp}
                    unzip ${processingdir}/scenes/QC/scene_qc_files.zip &> /dev/null
                    CustomQCModalities="T1w T2w myelin DWI BOLD"
                    for CustomQCModality in ${CustomQCModalities}; do
+                       mkdir -p ${processingdir}/scenes/QC/${CustomQCModality} &> /dev/null
                        cp ${processingdir}/scenes/QC/${XNAT_PROJECT_ID}/resources/scenes_qc/files/${CustomQCModality}/*.scene ${processingdir}/scenes/QC/${CustomQCModality}/ &> /dev/null
                    done
                    rm -rf ${processingdir}/scenes/QC/${XNAT_PROJECT_ID} &> /dev/null
@@ -878,37 +880,37 @@ fi
 
     # --------------- Custom QC start ------------------------------------------
     # 
-       # -- Check if Custom QC was requested
-       turnkey_QCPreprocCustom() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreprocCustom ... "; echo ""
-           Modalities="T1w, T2w, myelin, BOLD, DWI"
-           for Modality in ${Modalities}; do
-               if [[ ${Modality} == "BOLD" ]]; then
-                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
-                   if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-                      CheckLogQCBOLDCustom=""
-                   else
-                      CheckLogQCBOLDCustom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-                   fi
-               fi
-               if [[ ${Modality} == "DWI" ]]; then
-                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
-                   if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-                      CheckLogQCDWICustom=""
-                   else
-                      CheckLogQCDWICustom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-                   fi
-               else
-                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
-                   CheckLogQC${Modality}Custom=`ls -t1 *_${QCPreproc}*log | head -n 1`
-                   if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-                      CheckLogQC${Modality}Custom=""
-                   else
-                      CheckLogQC${Modality}Custom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-                   fi
-               fi
-           done
-       }
+      # # -- Check if Custom QC was requested
+      turnkey_QCPreprocCustom() {
+          echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreprocCustom ... "; echo ""
+          Modalities="T1w, T2w, myelin, BOLD, DWI"
+          for Modality in ${Modalities}; do
+              if [[ ${Modality} == "BOLD" ]]; then
+                  ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
+                  if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+                     CheckLogQCBOLDCustom=""
+                  else
+                     CheckLogQCBOLDCustom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
+                  fi
+              fi
+              if [[ ${Modality} == "DWI" ]]; then
+                  ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
+                  if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+                     CheckLogQCDWICustom=""
+                  else
+                     CheckLogQCDWICustom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
+                  fi
+              else
+                  ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
+                  CheckLogQC${Modality}Custom=`ls -t1 *_${QCPreproc}*log | head -n 1`
+                  if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
+                     CheckLogQC${Modality}Custom=""
+                  else
+                     CheckLogQC${Modality}Custom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
+                  fi
+              fi
+          done
+      }
     #
     # --------------- Custom QC end --------------------------------------------
 
@@ -916,13 +918,14 @@ fi
     # --------------- BOLD FC Processing and analyses start --------------------
     #
        # -- BOLD Parcellation 
-       turnkey_mapHCPData() {
+       turnkey_BOLDParcellation() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation ... "; echo ""
-           # Defaults if not specified:
+           # -- Defaults if not specified:
            if [ -z "$InputFile" ]; then InputFile="bold1_Atlas_g7_hpss_res-VWMWB_lpss"; fi
            if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
+           # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
            if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
-           if [ -z "$OutName" ]; then OutName="BOLD-CAB-NP-v1.0"; fi # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
+           if [ -z "$OutName" ]; then OutName="BOLD-CAB-NP-v1.0"; fi
            if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
            if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
            if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
@@ -947,8 +950,8 @@ fi
            ${MNAPCOMMAND} mapHCPData \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
-           --overwrite="${OVERWRITE_STEP}"
-           --logfolder="${logdir}" \
+           --overwrite="${OVERWRITE_STEP}" \
+           --logfolder="${logdir}"
        }
        # -- Generate brain masks for de-noising
        turnkey_createBOLDBrainMasks() {
@@ -957,7 +960,7 @@ fi
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
            --overwrite="${OVERWRITE_STEP}" \
-           --logfolder="${logdir}" \
+           --logfolder="${logdir}"
        }
        # -- Compute BOLD statistics
        turnkey_computeBOLDStats() {
@@ -974,8 +977,8 @@ fi
            ${MNAPCOMMAND} createStatsReport \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
-           --overwrite="${OVERWRITE_STEP}"
-           --logfolder="${logdir}" \
+           --overwrite="${OVERWRITE_STEP}" \
+           --logfolder="${logdir}"
        }
        # -- Extract nuisance signal for further de-noising
        turnkey_extractNuisanceSignal() {
@@ -983,8 +986,8 @@ fi
            ${MNAPCOMMAND} extractNuisanceSignal \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
-           --overwrite="${OVERWRITE_STEP}"
-           --logfolder="${logdir}" \
+           --overwrite="${OVERWRITE_STEP}" \
+           --logfolder="${logdir}"
        }
        # -- Process BOLDs
        turnkey_preprocessBold() {
@@ -992,8 +995,8 @@ fi
            ${MNAPCOMMAND} preprocessBold \
            --subjects="${project_batch_file}" \
            --subjectsfolder="${mnap_subjectsfolder}" \
-           --overwrite="${OVERWRITE_STEP}"
-           --logfolder="${logdir}" \
+           --overwrite="${OVERWRITE_STEP}" \
+           --logfolder="${logdir}"
        }
        # -- Process via CONC file
        turnkey_preprocessConc() {
@@ -1034,12 +1037,12 @@ fi
            --vstep="${VoxelStep}" \
            --covariance="${Covariance}"
        }
-       # -- Compute Seed FC for relevant ROIs
+       # # -- Compute Seed FC for relevant ROIs
        turnkey_computeBOLDfcSeed() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for Seed FC ... "; echo ""
-           if [[ -z ${ROIInfo} ]]; then
+           if [ -z ${ROIInfo} ]; then
               ROINames="${TOOLS}/${MNAPREPO}/library/data/roi/seeds_cifti.names ${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
-           else 
+           else
               ROINames=${ROIInfo}
            fi
            for ROIInfo in ${ROINames}; do
@@ -1067,7 +1070,7 @@ fi
        }
     #
     # --------------- BOLD FC Processing and analyses end ----------------------
-    
+
 #
 # =-=-=-=-=-=-= TURNKEY COMMANDS END =-=-=-=-=-=-= 
 
@@ -1097,7 +1100,7 @@ unset TURNKEY_STEP_ERRORS
 for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     turnkey_${TURNKEY_STEP}
     # -- Check for completion of turnkey function
-    geho " -- Looking for incomplete/failed process ..."
+    geho " -- Looking for incomplete/failed process ..."; echo ""
     # -- Specific checks for NIUtilities functions that run on multiple jobs
     NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
     if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
@@ -1114,7 +1117,7 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
                TURNKEY_STEP_ERRORS="yes"
                reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
            else
-               echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed!"
+               echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
                TURNKEY_STEP_ERRORS="no"
         fi
     fi
@@ -1127,13 +1130,13 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
         if [ ! -z `ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then
             CheckLog=`ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log | head -n 1`
             chmod 777 ${CheckLog} 2>/dev/null
-            geho " ===> Comlog file: ${CheckLog}"; echo ""
+            geho " ===> Comlog file: ${CheckLog}"
         fi
         if [ -z `echo "${CheckLog}" | grep 'done'` ]; then
             echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${CheckLog}."
             TURNKEY_STEP_ERRORS="yes"
         else
-            echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed!"
+            echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
             TURNKEY_STEP_ERRORS="no"
         fi
     fi
