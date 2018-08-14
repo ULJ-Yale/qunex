@@ -922,7 +922,10 @@ echo "                                                      --scheduler='SLURM,j
 echo "-- OPTIONAL PARMETERS:"
 echo ""
 echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
-echo "--waytotal=<use_waytotal_normalized_data>            Use the waytotal normalized version of the DWI dense connectome. Default: [no]"
+echo "--waytotal=<use_waytotal_normalized_data>            Use the waytotal normalized version of the DWI dense connectome. Default: [none]"
+echo "                                                     none: without waytotal normalization [Default]" 
+echo "                                                     standard: standard waytotal normalized"
+echo "                                                     log: log-transformed waytotal normalized"
 echo ""
 echo "-- Example with flagged parameters for a local run:"
 echo ""
@@ -3450,7 +3453,7 @@ if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
     if [ "$Cluster" == "2" ]; then
             if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
     fi
-    if [ -z "$WayTotal" ]; then reho "--waytotal normalized data not specified. Assuming default [no]"; fi
+    if [ -z "$WayTotal" ]; then WayTotal="no"; reho "--waytotal normalized data not specified. Assuming default [no]"; fi
     # -- Report parameters
     echo ""
     echo "Running $FunctionToRun with the following parameters:"

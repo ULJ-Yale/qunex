@@ -538,12 +538,11 @@ fi
     # -- For best possible results you want opposing diff directions but in practice we distribute directions on the sphere. Instead we look at 'cones'. This does not smooth the data but rather the predictions to allow best possible estimation via EDDY.
     reho "--- Running eddy_cuda..."    
     echo ""
-    geho "Using the following eddy_cuda binary:    $eddy_cuda"
+    geho "Using the following eddy_cuda binary:    ${EDDYCUDADIR}/${eddy_cuda}"
     echo ""
     
-    # -- Eddy call with cuda 7.5 with extra QC options
-    $eddy_cuda --imain="$DiffFolder"/"$DiffData" --mask="$DiffFolder"/"$DiffDataSuffix"/rawdata/"$DiffData"_nodif_brain_mask --acqp="$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/acqparams.txt --index="$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/index.txt --bvecs="$DiffFolder"/"$DiffData".bvec --bvals="$DiffFolder"/"$DiffData".bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out="$DiffFolder"/"$DiffDataSuffix"/eddy/"$DiffData"_eddy_corrected --data_is_shelled --repol -v
-    
+    # -- Eddy call with cuda with extra QC options
+    ${EDDYCUDADIR}/${eddy_cuda} --imain="$DiffFolder"/"$DiffData" --mask="$DiffFolder"/"$DiffDataSuffix"/rawdata/"$DiffData"_nodif_brain_mask --acqp="$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/acqparams.txt --index="$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/index.txt --bvecs="$DiffFolder"/"$DiffData".bvec --bvals="$DiffFolder"/"$DiffData".bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out="$DiffFolder"/"$DiffDataSuffix"/eddy/"$DiffData"_eddy_corrected --data_is_shelled --repol -v
     
 ############################################
 # STEP 4 - Run epi_reg w/fieldmap correction

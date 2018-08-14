@@ -549,10 +549,27 @@ fi
                echo "" >> ${mapRawData_ComlogTmp}
                echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}"" >> ${mapRawData_ComlogTmp}
                echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}"" >> ${mapRawData_ComlogTmp}
-               echo "  curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD}  -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip"  >> ${mapRawData_ComlogTmp}
+               echo "  curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip"  >> ${mapRawData_ComlogTmp}
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${specsdir}/${BATCH_PARAMETERS_FILENAME}
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME}
-               curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD}  -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip
+               curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip
+               if [[ -f ${processingdir}/scenes/QC/scene_qc_files.zip ]]; then
+                   geho " Custom scene files found. Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
+                   echo "" >> ${mapRawData_ComlogTmp}
+                   unzip ${processingdir}/scenes/QC/scene_qc_files.zip &> /dev/null
+                   CustomQCModalities="T1w T2w myelin DWI BOLD"
+                   for CustomQCModality in ${CustomQCModalities}; do
+                       cp ${processingdir}/scenes/QC/${XNAT_PROJECT_ID}/resources/scenes_qc/files/${CustomQCModality}/*.scene ${processingdir}/scenes/QC/${CustomQCModality}/ &> /dev/null
+                   if
+                   rm -rf ${processingdir}/scenes/QC/${XNAT_PROJECT_ID} &> /dev/null
+                   CopiedSceneFiles=`ls ${processingdir}/scenes/QC/*/*scene`
+                   echo " Copied the following scenes from ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc:" >> ${mapRawData_ComlogTmp}
+                   echo " ${CopiedSceneFiles}" >> ${mapRawData_ComlogTmp}
+                   echo "" >> ${mapRawData_ComlogTmp}
+               else
+                    geho " No custom scene files found as an XNAT resources. If this is an error check your project resources in the XNAT web interface." >> ${mapRawData_ComlogTmp}
+                    echo "" >> ${mapRawData_ComlogTmp}
+               fi
                echo ""
                geho " -- Linking DICOMs into ${rawdir}"; echo ""
                echo "  find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';'" >> ${mapRawData_ComlogTmp}
@@ -664,7 +681,7 @@ fi
        # -- QCPreprocT1W (after hcp3)
        turnkey_QCPreprocT1w() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for T1w data ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T1w" --modality="T1w" --overwrite="${OVERWRITE_STEP}"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/T1w" --modality="T1w" --overwrite="${OVERWRITE_STEP}"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCT1w=""
            else
@@ -674,7 +691,7 @@ fi
        # -- QCPreprocT2W (after hcp3)
        turnkey_QCPreprocT2w() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for T2w data ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/T2w" --modality="T2w" --overwrite="${OVERWRITE_STEP}"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/T2w" --modality="T2w" --overwrite="${OVERWRITE_STEP}"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCT2w=""
            else
@@ -684,7 +701,7 @@ fi
        # -- QCPreprocMyelin (after hcp3)
        turnkey_QCPreprocMyelin() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for myelin data .. "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/myelin" --modality="myelin" --overwrite="${OVERWRITE_STEP}"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/myelin" --modality="myelin" --overwrite="${OVERWRITE_STEP}"
            if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCMyelin=""
            else
@@ -706,34 +723,32 @@ fi
        # -- QCPreprocBOLD (after hcp5)
        turnkey_QCPreprocBOLD() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for BOLD data ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/BOLD" --modality="BOLD" --overwrite="${OVERWRITE_STEP}" --boldsuffix="_Atlas"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/BOLD" --modality="BOLD" --overwrite="${OVERWRITE_STEP}" --boldsuffix="_Atlas"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCTBOLD=""
            else
               CheckLogQCTBOLD=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
            fi
        }
-       # -- Diffusion
+       # -- Diffusion HCP (after hcp1)
        turnkey_hcpd() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_Diffusion) ..."; echo ""
-           HCPLogName="hcpDiffusion"
-           ${MNAPCOMMAND} hcpd      --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
+           ${MNAPCOMMAND} hcpd --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               CheckLogQCDWI=""
            else
               CheckLogQCDWI=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
            fi
        }
-       # -- Diffusion Legacy
+       # -- Diffusion Legacy (after hcp1)
        turnkey_hcpdLegacy() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step hcpdLegacy ..."; echo ""
-           # ${MNAPCOMMAND} hcpdLegacy --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
-           # ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI"    --modality="DWI"    --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion"
+           ${MNAPCOMMAND} hcpdLegacy --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
        }
        # -- QCPreprocDWILegacy (after hcpd)
        turnkey_QCPreprocDWILegacy() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI Legacy HCP processing ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               QCPreprocDWILegacy=""
            else
@@ -743,7 +758,7 @@ fi
        # -- QCPreprocDWI (after hcpd)
        turnkey_QCPreprocDWI() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI HCP processing ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion"
            if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
               QCPreprocDWI=""
            else
@@ -752,13 +767,29 @@ fi
        }
        # -- eddyQC processing steps
        turnkey_eddyQC() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: eddyQC for DWI ... "; echo ""
-           # ${MNAPCOMMAND} eddyQC --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --eddybase="eddy_unwarped_images" --report="individual" --bvalsfile="Pos_Neg.bvals" --mask="nodif_brain_mask.nii.gz" --eddyidx="index.txt" --eddyparams="acqparams.txt" --bvecsfile="Pos_Neg.bvecs"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: eddyQC for DWI data ... "; echo ""
+           # -- Defaults if values not set:
+           if [ -z "$EddyBase" ]; then EddyBase="eddy_unwarped_images"; fi
+           if [ -z "$Report" ]; then Report="individual"; fi
+           if [ -z "$BvalsFile" ]; then BvalsFile="Pos_Neg.bvals"; fi
+           if [ -z "$Mask" ]; then Mask="nodif_brain_mask.nii.gz"; fi
+           if [ -z "$EddyIdx" ]; then EddyIdx="index.txt"; fi
+           if [ -z "$EddyParams" ]; then EddyParams="acqparams.txt"; fi
+           if [ -z "$BvecsFile" ]; then BvecsFile="Pos_Neg.bvecs"; fi
+           #
+           # --> Example for 'Legacy' data:
+           # --eddypath='Diffusion/DWI_dir74_AP_b1000b2500/eddy/eddylinked' 
+           # --eddybase='DWI_dir74_AP_b1000b2500_eddy_corrected' 
+           # --bvalsfile='DWI_dir74_AP_b1000b2500.bval' 
+           # --bvecsfile='DWI_dir74_AP_b1000b2500.bvec' 
+           # --mask='DWI_dir74_AP_b1000b2500_nodif_brain_mask.nii.gz' 
+           #
+           ${MNAPCOMMAND} eddyQC --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
        }
        # -- QCPreprocDWIeddyQC (after eddyQC)
        turnkey_QCPreprocDWIeddyQC() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI eddy QC ... "; echo ""
-           #${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcpdf="yes"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI eddyQC ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes"
        }
     #
     # --------------- HCP Processing and relevant QC end -----------------------
@@ -768,7 +799,7 @@ fi
        # -- FSLDtifit (after hcpd or hcpdLegacy)
        turnkey_FSLDtifit() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : FSLDtifit for DWI... "; echo ""
-           ${MNAPCOMMAND} FSLDtifit --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
+           ${MNAPCOMMAND} FSLDtifit --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}"
        }
        # -- FSLBedpostxGPU (after FSLDtifit)
        turnkey_FSLBedpostxGPU() {
@@ -777,33 +808,57 @@ fi
            if [ -z "$Model" ]; then Model="3"; fi
            if [ -z "$Burnin" ]; then Burnin="3000"; fi
            if [ -z "$Rician" ]; then Rician="yes"; fi
-           ${MNAPCOMMAND} FSLBedpostxGPU --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
+           ${MNAPCOMMAND} FSLBedpostxGPU --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
        }
        # -- QCPreprocDWIDTIFIT (after FSLDtifit)
        turnkey_QCPreprocDWIDTIFIT() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI FSL's dtifit analyses ... "; echo ""
-           #${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" 
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" 
        }
        # -- QCPreprocDWIBedpostX (after FSLBedpostxGPU)
        turnkey_QCPreprocDWIBedpostX() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI FSL's BedpostX analyses ... "; echo ""
-           #${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes"
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes"
+       }
+       # -- probtrackxGPUDense for DWI data (after FSLBedpostxGPU)
+       turnkey_probtrackxGPUDense() {
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: probtrackxGPUDense ... "; echo ""
+           ${MNAPCOMMAND} probtrackxGPUDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
        }
        # -- pretractographyDense for DWI data (after FSLBedpostxGPU)
        turnkey_pretractographyDense() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: pretractographyDense ... "; echo ""
-           # ${MNAPCOMMAND} pretractographyDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+           ${MNAPCOMMAND} pretractographyDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
        }
        # -- DWIDenseParcellationfor DWI data (after pretractographyDense)
        turnkey_DWIDenseParcellation() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: DWIDenseParcellation ... "; echo ""
-           # ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
+           # Defaults if not specified:
+           if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
+           if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
+           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
+           if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
+           for MatrixVersion in $MatrixVersions; do
+               ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
+           done
        }
        # -- DWISeedTractography for DWI data (after pretractographyDense)
        turnkey_DWISeedTractography() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: DWISeedTractography ... "; echo ""
-           # ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --outname="${DWIOutName}" --matrixversion='1' --seedfile="${SeedFile}"
-           # ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --outname="${DWIOutName}_GBC" --matrixversion='1' --seedfile="gbc"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: DWISeedTractography ... "; echo "" 
+           if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
+           if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
+           if [ -z "$SeedFile" ]; then 
+               # Thalamus SomatomotorSensory
+               SeedFile="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii" 
+               OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
+               ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${SubjectsFolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+               # Thalamus Prefrontal
+               SeedFile="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii" 
+               OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
+               ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${SubjectsFolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+           fi
+           OutNameGBC="DWI_GBC"
+           ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${SubjectsFolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
        }
     #
     # --------------- DWI Processing and analyses end --------------------------
@@ -817,7 +872,7 @@ fi
            Modalities="T1w, T2w, myelin, BOLD, DWI"
            for Modality in ${Modalities}; do
                if [[ ${Modality} == "BOLD" ]]; then
-                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
+                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
                    if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
                       CheckLogQCBOLDCustom=""
                    else
@@ -825,14 +880,14 @@ fi
                    fi
                fi
                if [[ ${Modality} == "DWI" ]]; then
-                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
+                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
                    if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
                       CheckLogQCDWICustom=""
                    else
                       CheckLogQCDWICustom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
                    fi
                else
-                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
+                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
                    CheckLogQC${Modality}Custom=`ls -t1 *_${QCPreproc}*log | head -n 1`
                    if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
                       CheckLogQC${Modality}Custom=""
@@ -848,6 +903,32 @@ fi
 
     # --------------- BOLD FC Processing and analyses start --------------------
     #
+       # -- BOLD Parcellation 
+       turnkey_mapHCPData() {
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation ... "; echo ""
+           # Defaults if not specified:
+           if [ -z "$InputFile" ]; then InputFile="bold1_Atlas_g7_hpss_res-VWMWB_lpss"; fi
+           if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
+           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
+           if [ -z "$OutName" ]; then OutName="BOLD-CAB-NP-v1.0"; fi # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
+           if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
+           if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
+           if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
+           # -- Command
+           ${MNAPCOMMAND} BOLDParcellation \
+           --subjects="${CASES}" \
+           --inputfile='${InputFile}' \
+           --inputpath='${InputPath}' \
+           --inputdatatype='${InputDataType}' \
+           --parcellationfile='${ParcellationFile}' \
+           --overwrite='${OVERWRITE_STEP}' \
+           --outname='${OutName}' \
+           --outpath='${OutPath}' \
+           --useweights='${UseWeights}' \
+           --weightsfile='${WeightsFile}' \
+           --extractdata='${ExtractData}' \
+           --computepconn='${ComputePConn}'
+       }
        # -- Map HCP processed outputs for further FC BOLD analyses
        turnkey_mapHCPData() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: mapHCPData ... "; echo ""
@@ -916,6 +997,8 @@ fi
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for GBC ... "; echo ""
            ExtractData="yes"
            Covariance="true"
+           InputFiles="bold1_Atlas_g7_hpss_res-VWMWB_lpss.dtseries.nii"
+           OutName="GBC_bold1_Atlas_g7_hpss_res-VWMWB_lpss"
            ${MNAPCOMMAND} computeBOLDfc \
            --subjectsfolder=${mnap_subjectsfolder} \
            --calculation="gbc" \
@@ -950,6 +1033,7 @@ fi
            for ROIInfo in ${ROINames}; do
               ExtractData="yes"
               Covariance="true"
+              InputFiles="bold1_Atlas_g7_hpss_res-VWMWB_lpss.dtseries.nii"
               ${MNAPCOMMAND} computeBOLDfc \
               --subjectsfolder="${mnap_subjectsfolder}" \
               --calculation="seed" \
