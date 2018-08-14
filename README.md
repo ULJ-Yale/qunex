@@ -303,6 +303,7 @@ Change Log
 * 0.19.19 [mnaptools, connector, library, hcpmodified] Further RunTurnkey edits and misc updates across functions to iron out CUDA compatibility
 * 0.19.20 [library] Environment to iron out CUDA compatibility
 * 0.19.21 [mnaptools library] Edit Dockerfile_mnap_dep to install CUDA and add paths to environment 
+* 0.19.22 [niutilities] More robust handling of parameters
 
 =======
 [Mind and Brain Lab]: http://mblab.si
