@@ -301,6 +301,7 @@ Change Log
 * 0.19.17 [connector] Further RunTurnkey edits
 * 0.19.18 [niutilities] Extended final summary reporting, documentation updates
 * 0.19.19 [mnaptools, connector, library, hcpmodified] Further RunTurnkey edits and misc updates across functions to iron out CUDA compatibility
+* 0.19.20 [library] Environment to iron out CUDA compatibility
 
 =======
 [Mind and Brain Lab]: http://mblab.si
