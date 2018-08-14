@@ -101,7 +101,8 @@ weho() {
 source $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
 $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
 
-MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 QCPreprocT1W QCPreprocT2W QCPreprocMyelin hcp4 hcp5 QCPreprocBOLD hcpd QCPreprocDWI hcpdLegacy QCPreprocDWILegacy eddyQC QCPreprocDWIeddyQC FSLDtifit QCPreprocDWIDTIFIT FSLBedpostxGPU QCPreprocDWIProcess QCPreprocDWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc computeBOLDfcGBC computeBOLDfcSeed"
+MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 QCPreprocT1W QCPreprocT2W QCPreprocMyelin hcp4 hcp5 QCPreprocBOLD hcpd QCPreprocDWI hcpdLegacy QCPreprocDWILegacy eddyQC QCPreprocDWIeddyQC FSLDtifit QCPreprocDWIDTIFIT FSLBedpostxGPU QCPreprocDWIProcess QCPreprocDWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom BOLDParcellation mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS computeBOLDfcGBC computeBOLDfcSeed"
+QCPlotElements="'type=stats|stats>statstype=fd,img=1>statstype=dvarsme,img=1;type=image|name=V|img=1|mask=1|colormap=hsv;type=image|name=WM|img=1|mask=1|colormap=jet;type=image|name=GM|img=1|mask=1;type=image|name=GM|img=2|use=1','${mnap_subjectsfolder}/${CASES}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz'"
 
 # ------------------------------------------------------------------------------
 # -- General usage
@@ -156,6 +157,10 @@ usage() {
     echo "                                  Note: The provided scene has to conform to MNAP QC template standards.xw"
     echo "                                        See $TOOLS/$MNAPREPO/library/data/scenes/qc/ for example templates."
     echo "                                        The qc path has to contain relevant files for the provided scene."
+    echo ""
+    echo "    --qcplotelements=<specify_plot_elements>     Plot elements for g_PlotBoldTS. See 'mnap g_PlotBoldTS' for help. "
+    echo "                                                 Only set if g_PlotBoldTS is requested. If not set then the default is: "
+    echo "        ${QCPlotElements}"
     echo ""
     echo "  -- EXAMPLE:"
     echo ""
@@ -221,6 +226,7 @@ unset TURNKEY_STEPS
 unset workdir
 unset RawDataInputPath
 unset PROJECT_NAME
+unset PlotElements
 
 # =-=-=-=-=-= GENERAL OPTIONS =-=-=-=-=-=
 #
@@ -347,6 +353,8 @@ TimeStamp=`opts_GetOpt "--timestamp" $@`
 Suffix=`opts_GetOpt "--suffix" $@`
 SceneZip=`opts_GetOpt "--scenezip" $@`
 QCPreprocCustom=`opts_GetOpt "--customqc" $@`
+# -- g_PlotsBoldTS input flags
+QCPlotElements=`opts_GetOpt "--qcplotelements" $@`
 
 # -- Define script name
 scriptName=$(basename ${0})
@@ -416,7 +424,6 @@ if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
     if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
     if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
     if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; echo ''; fi
-    project_batch_file="${processingdir}/${XNAT_PROJECT_ID}_batch_params.txt"
 fi
 
 if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
@@ -461,6 +468,13 @@ rawdir_temp="${mnap_workdir}/inbox_temp"
 processingdir="${mnap_studyfolder}/processing"
 MNAPCOMMAND="${TOOLS}/${MNAPREPO}/connector/mnap.sh"
 
+if [ "$TURNKEY_TYPE" == "xnat" ]; then
+   project_batch_file="${processingdir}/${XNAT_PROJECT_ID}_batch_params.txt"
+fi
+if [ "$TURNKEY_TYPE" != "xnat" ]; then
+   project_batch_file="${processingdir}/${PROJECT_NAME}_batch_params.txt"
+fi
+
 # -- Report options
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   "
@@ -484,6 +498,9 @@ echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
 echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
 echo "   Custom QC requested: ${QCPreprocCustom}"
+if [ ! -z ${QCPlotElements} ] then
+     echo "   QC Plot Elements: ${QCPlotElements}"
+fi
 if [ "$TURNKEY_STEPS" == "all" ]; then
     echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
 else
@@ -1123,7 +1140,7 @@ fi
            --vstep="${VoxelStep}" \
            --covariance="${Covariance}"
        }
-       # # -- Compute Seed FC for relevant ROIs
+       # -- Compute Seed FC for relevant ROIs
        turnkey_computeBOLDfcSeed() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for Seed FC ... "; echo ""
            if [ -z ${ROIInfo} ]; then
@@ -1153,6 +1170,20 @@ fi
               --mask="${MaskFrames}" \
               --covariance="${Covariance}"
            done
+       }
+       # -- Compute g_PlotBoldTS
+       turnkey_g_PlotBoldTS() {
+          echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: g_PlotBoldTS QC plotting ... "; echo ""
+          if [ -z ${QCPlotElements} ]; then
+              QCPlotElements="'type=stats|stats>statstype=fd,img=1>statstype=dvarsme,img=1;type=image|name=V|img=1|mask=1|colormap=hsv;type=image|name=WM|img=1|mask=1|colormap=jet;type=image|name=GM|img=1|mask=1;type=image|name=GM|img=2|use=1','${mnap_subjectsfolder}/${CASES}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz'"
+          fi
+          ${MNAPCOMMAND} g_PlotBoldTS \
+          --images="${mnap_subjectsfolder}/${CASES}/images/functional/bold1_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii" \
+          --elements="${QCPlotElements}" \
+          --filename='${mnap_subjectsfolder}/${CASES}/images/functional/movement/${CASES}_BoldTSPlot_CIFTI.pdf' \
+          --skip="0" \
+          --subjid="${CASES}" \
+          --verbose="true"
        }
     #
     # --------------- BOLD FC Processing and analyses end ----------------------

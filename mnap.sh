@@ -2386,6 +2386,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
     ResetCredentials=`opts_GetOpt "${setflag}resetcredentials" $@`
     XNAT_SUBJECT_IDS=`opts_GetOpt "${setflag}xnatsubjectids" $@`
     NIFTIUPLOAD=`opts_GetOpt "${setflag}niftiupload" $@`
+    # -- g_PlotsBoldTS input flags
+    QCPlotElements=`opts_GetOpt "--qcplotelements" $@`
     # -- Set flags for organizeDicom parameters
     Folder=`opts_GetOpt "${setflag}folder" $@`
     Clean=`opts_GetOpt "${setflag}clean" $@`
@@ -2639,7 +2641,24 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
     else
         mnap_studyfolder="${STUDY_PATH}"
     fi
+    mnap_subjectsfolder="${mnap_studyfolder}/subjects"
+    mnap_workdir="${mnap_subjectsfolder}/${XNAT_SESSION_LABELS}"
+    logdir="${mnap_studyfolder}/processing/logs"
+    specsdir="${mnap_subjectsfolder}/specs"
+    rawdir="${mnap_workdir}/inbox"
+    rawdir_temp="${mnap_workdir}/inbox_temp"
+    processingdir="${mnap_studyfolder}/processing"
+    MNAPCOMMAND="${TOOLS}/${MNAPREPO}/connector/mnap.sh"
+    
+    if [ "$TURNKEY_TYPE" == "xnat" ]; then
+       project_batch_file="${processingdir}/${XNAT_PROJECT_ID}_batch_params.txt"
+    fi
+    if [ "$TURNKEY_TYPE" != "xnat" ]; then
+       project_batch_file="${processingdir}/${PROJECT_NAME}_batch_params.txt"
+    fi
+    
     MNAPTurnkeyWorkflow=`more ${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh | grep 'MNAPTurnkeyWorkflow="' | sed 's/\MNAPTurnkeyWorkflow=//g' | sed 's/\"//g'`
+    
     # -- Report parameters
     echo ""
     echo "Running $FunctionToRun processing with the following parameters:"
@@ -2665,6 +2684,8 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
     echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
     echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
     echo "   Custom QC requested: ${QCPreprocCustom}"
+    if [ ! -z ${QCPlotElements} ] then
+    echo "   QC Plot Elements: ${QCPlotElements}"
     if [ "$TURNKEY_STEPS" == "all" ]; then
         echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
     else
