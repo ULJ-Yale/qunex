@@ -81,15 +81,13 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
     cd /usr/lib64/ && \
     mkdir hdf5 && \
     mv libhdf5* hdf5/ && \
-    export LD_LIBRARY_PATH=hdf5:$LD_LIBRARY_PATH && \
+    export LD_LIBRARY_PATH=/usr/lib64/hdf5/:LD_LIBRARY_PATH && \
 # This code to install libraries is needed in this section because mnap_dep updates libraries
 # This reverts back to the libraries needed by FS
 # Manually install libraries needed for FS run
      wget --progress=bar:force -O /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/h/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
-#     rpm -ev --nodeps hdf5 && \
      rpm -i /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm --force && \
      wget --progress=bar:force -O /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/n/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
-#     rpm -ev --nodeps netcdf && \
      rpm -i /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
 # Clean up binary package files
      rm /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
@@ -97,6 +95,7 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
 # Clean the environment and go to mnap folder
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \
-    rm -rf ~/.cache/pip
+    rm -rf ~/.cache/pip && \
+    cd /opt/mnaptools
 
 CMD ["bash"]
