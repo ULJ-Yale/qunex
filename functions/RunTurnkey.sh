@@ -118,8 +118,8 @@ usage() {
     echo ""
     echo "  -- PARMETERS:"
     echo ""
-    echo "    --turnkeytype=<turnkey_run_type>              Specify type turnkey run. Options are: local or xnat"
-    echo "                                                  If empty default is set to: [xnat]."
+    echo "    --turnkeytype=<turnkey_run_type>                   Specify type turnkey run. Options are: local or xnat"
+    echo "                                                       If empty default is set to: [xnat]."
     echo "    --path=<study_path>                                Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
     echo "    --subjects=<comma_separated_list_of_cases>         List of subjects to run locally if --xnatsessionlabels and --xnatsubjectid missing."
     echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
@@ -158,14 +158,19 @@ usage() {
     echo "                                        See $TOOLS/$MNAPREPO/library/data/scenes/qc/ for example templates."
     echo "                                        The qc path has to contain relevant files for the provided scene."
     echo ""
-    echo "    --qcplotelements=<specify_plot_elements>     Plot elements for g_PlotBoldTS. See 'mnap g_PlotBoldTS' for help. "
+    echo "    --qcplotimages=<specify_plot_images>         Absolute path to images for g_PlotBoldTS. See 'mnap g_PlotBoldTS' for help. "
+    echo "                                                 Only set if g_PlotBoldTS is requested then this is a required setting."
+    echo "    --qcplotmasks=<specify_plot_masks>           Absolute path to one or multiple masks to use for extracting BOLD data. See 'mnap g_PlotBoldTS' for help. "
+    echo "                                                 Only set if g_PlotBoldTS is requested then this is a required setting."
+    echo "    --qcplotelements=<specify_plot_elements>     Plot element specifications for g_PlotBoldTS. See 'mnap g_PlotBoldTS' for help. "
     echo "                                                 Only set if g_PlotBoldTS is requested. If not set then the default is: "
     echo "        ${QCPlotElements}"
     echo ""
     echo "  -- EXAMPLE:"
     echo ""
     echo "  RunTurnkey.sh \ "
-    echo "   --turnkey=<turnkey_run_type> \ "
+    echo "   --turnkeytype=<turnkey_run_type> \ "
+    echo "   --turnkeysteps=<turnkey_worlflow_steps> \ "
     echo "   --batchfile=<batch_file> \ "
     echo "   --overwritestep=yes \ "
     echo "   --mappingfile=<mapping_file> \ "
@@ -355,6 +360,8 @@ SceneZip=`opts_GetOpt "--scenezip" $@`
 QCPreprocCustom=`opts_GetOpt "--customqc" $@`
 # -- g_PlotsBoldTS input flags
 QCPlotElements=`opts_GetOpt "--qcplotelements" $@`
+QCPlotImages=`opts_GetOpt "--qcplotimages" $@`
+QCPlotMasks=`opts_GetOpt "--qcplotmasks" $@`
 
 # -- Define script name
 scriptName=$(basename ${0})
@@ -498,9 +505,6 @@ echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
 echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
 echo "   Custom QC requested: ${QCPreprocCustom}"
-if [ ! -z ${QCPlotElements} ] then
-     echo "   QC Plot Elements: ${QCPlotElements}"
-fi
 if [ "$TURNKEY_STEPS" == "all" ]; then
     echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
 else
@@ -1171,16 +1175,26 @@ fi
               --covariance="${Covariance}"
            done
        }
-       # -- Compute g_PlotBoldTS
+       # -- Compute g_PlotBoldTS ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
        turnkey_g_PlotBoldTS() {
           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: g_PlotBoldTS QC plotting ... "; echo ""
           if [ -z ${QCPlotElements} ]; then
-              QCPlotElements="'type=stats|stats>statstype=fd,img=1>statstype=dvarsme,img=1;type=image|name=V|img=1|mask=1|colormap=hsv;type=image|name=WM|img=1|mask=1|colormap=jet;type=image|name=GM|img=1|mask=1;type=image|name=GM|img=2|use=1','${mnap_subjectsfolder}/${CASES}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz'"
+               QCPlotElements="type=stats|stats>statstype=fd,img=1>statstype=dvarsme,img=1;type=image|name=V|img=1|mask=1|colormap=hsv;type=image|name=WM|img=1|mask=1|colormap=jet;type=image|name=GM|img=1|mask=1;type=image|name=GM|img=2|use=1"
           fi
+          if [ -z ${QCPlotMasks} ]; then
+                QCPlotMasks="${mnap_subjectsfolder}/${CASES}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz"
+          fi
+          if [ -z ${QCPlotImages} ]; then
+                QCPlotImages="${mnap_subjectsfolder}/${CASES}/images/functional/bold1.nii.gz;${mnap_subjectsfolder}/${CASES}/images/functional/bold1_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii"
+          fi
+          echo "   QC Plot Images: ${QCPlotImages}"; echo ""
+          echo "   QC Plot Masks: ${QCPlotMasks}"; echo ""
+          echo "   QC Plot Elements: ${QCPlotElements}"; echo ""
           ${MNAPCOMMAND} g_PlotBoldTS \
-          --images="${mnap_subjectsfolder}/${CASES}/images/functional/bold1_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii" \
+          --images="${QCPlotImages}" \
           --elements="${QCPlotElements}" \
-          --filename='${mnap_subjectsfolder}/${CASES}/images/functional/movement/${CASES}_BoldTSPlot_CIFTI.pdf' \
+          --masks="${QCPlotMasks}" \
+          --filename='${mnap_subjectsfolder}/${CASES}/images/functional/movement/${CASES}_BOLD_QCPlot_CIFTI.pdf' \
           --skip="0" \
           --subjid="${CASES}" \
           --verbose="true"

@@ -2387,7 +2387,9 @@ if [[ "$setflag" =~ .*-.* ]]; then
     XNAT_SUBJECT_IDS=`opts_GetOpt "${setflag}xnatsubjectids" $@`
     NIFTIUPLOAD=`opts_GetOpt "${setflag}niftiupload" $@`
     # -- g_PlotsBoldTS input flags
-    QCPlotElements=`opts_GetOpt "--qcplotelements" $@`
+    QCPlotElements=`opts_GetOpt "${setflag}qcplotelements" $@`
+    QCPlotImages=`opts_GetOpt "${setflag}qcplotimages" $@`
+    QCPlotMasks=`opts_GetOpt "${setflag}qcplotmasks" $@`
     # -- Set flags for organizeDicom parameters
     Folder=`opts_GetOpt "${setflag}folder" $@`
     Clean=`opts_GetOpt "${setflag}clean" $@`
@@ -2611,9 +2613,7 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
         if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
         if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
         if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; echo ''; fi
-        project_batch_file="${processingdir}/${XNAT_PROJECT_ID}_batch_params.txt"
-    fi 
-
+    fi
     if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
     if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
     if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
@@ -2658,7 +2658,7 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
     fi
     
     MNAPTurnkeyWorkflow=`more ${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh | grep 'MNAPTurnkeyWorkflow="' | sed 's/\MNAPTurnkeyWorkflow=//g' | sed 's/\"//g'`
-    
+
     # -- Report parameters
     echo ""
     echo "Running $FunctionToRun processing with the following parameters:"
@@ -2684,8 +2684,6 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
     echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
     echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
     echo "   Custom QC requested: ${QCPreprocCustom}"
-    if [ ! -z ${QCPlotElements} ] then
-    echo "   QC Plot Elements: ${QCPlotElements}"
     if [ "$TURNKEY_STEPS" == "all" ]; then
         echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
     else
