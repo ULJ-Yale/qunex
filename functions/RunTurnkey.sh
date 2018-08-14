@@ -15,7 +15,7 @@
 #
 # ## PRODUCT
 #
-#  mnap_xnat_turnkey.sh
+#  RunTurnkey.sh
 #
 # ## LICENSE
 #
@@ -37,7 +37,7 @@
 #
 # ## Prerequisite Environment Variables
 #
-# See output of usage function: e.g. $./MNAP_XNAT_Turnkey.sh --help
+# See output of usage function: e.g. $./RunTurnkey.sh --help
 #
 # ### Expected Previous Processing
 # 
@@ -51,7 +51,6 @@
 ###################################################################
 #
 # batchfile (batch file with processing parameters)
-# overwrite (overwrite prior run)
 # mappingfile (file for mapping into desired file structure; e.g. hcp)
 # xnataccsessionid (Imaging Session Accession ID)
 # xnatsessionlabels (Imaging Session Label)
@@ -140,12 +139,15 @@ usage() {
     echo ""
     echo "    --xnataccsessionid=<accesession_id>           Identifier of a subject across the entire XNAT database."
     echo ""
-    echo "  -- OPTIONAL GENERAL PARMETERS:"
+    echo "  -- GENERAL PARMETERS:"
     echo ""
+    echo "    --rawdatainput=<specify_absolute_path_of_raw_data>         If --turnkeytype is not XNAT then specify location of raw data on the file system for a subject."
+    echo "                                                                    Default is [] for the XNAT type run as host is used to pull data."
+    echo "    --workingdir=<specify_directory_where_study_is_located>    Specify where the study folder is to be created or resides. Default is [/output]."
+    echo "    --projectname=<specify_project_name>                       Specify name of the project on local file system if XNAT is not specified."
     echo "    --overwritestep=<specify_step_to_overwrite>                Specify <yes> or <no> for cleanup of prior workflow step. Default is [no]."
     echo "    --overwritesubject=<specify_subject_overwrite>             Specify <yes> or <no> for cleanup of prior subject run. Default is [no]."
     echo "    --overwriteproject=<specify_project_overwrite>             Specify <yes> or <no> for cleanup of entire project. Default is [no]."
-    echo "    --workingdir=<specify_directory_where_study_is_located>    Specify where the study folder is to be created or resides. Default is [/output]."
     echo ""
     echo "  -- OPTIONAL CUSTOM QC PARAMETER:"
     echo ""
@@ -217,16 +219,19 @@ unset XNAT_PASSWORD
 unset TURNKEY_TYPE
 unset TURNKEY_STEPS
 unset workdir
+unset RawDataInputPath
+unset PROJECT_NAME
 
 # =-=-=-=-=-= GENERAL OPTIONS =-=-=-=-=-=
 #
 # -- General input flags
 STUDY_PATH=`opts_GetOpt "--path" $@`
 workdir=`opts_GetOpt "--workingdir" $@`
+PROJECT_NAME=`opts_GetOpt "--projectname" $@`
+RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
 StudyFolder=`opts_GetOpt "--path" $@`
 SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
-SubjectFolder=`opts_GetOpt "$--subjectfolder"  $@`
-CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
+CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "${CASES}" | sed 's/,/ /g;s/|/ /g'`
 OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
@@ -234,13 +239,13 @@ OVERWRITE_PROJECT_FORCE=`opts_GetOpt "--overwriteprojectforce" $@`
 BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
 XNAT_ACCSESSION_ID=`opts_GetOpt "--xnataccsessionid" $@`
-XNAT_SESSION_LABELS=`opts_GetOpt "--xnatsessionlabels" $@`
+XNAT_SESSION_LABELS=`opts_GetOpt "--xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
 XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
 XNAT_SUBJECT_ID=`opts_GetOpt "--xnatsubjectid" $@`
 XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
 XNAT_USER_NAME=`opts_GetOpt "--xnatuser" $@`
 XNAT_PASSWORD=`opts_GetOpt "--xnatpass" $@`
-TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "$TURNKEY_STEPS" | sed 's/,/ /g;s/|/ /g'`
+TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
@@ -356,47 +361,88 @@ if [[ ${CASES} == *.txt ]]; then
     CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
 fi
 
+
 # -- Check that all inputs are provided
-if [ -z "$CASES" ]; then
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]]; then
+   reho "Error. Raw data input flag missing "
+fi
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${STUDY_PATH} ]] && [[ -z ${PROJECT_NAME} ]]; then
+   reho "Error. Project name flag missing "
+fi
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${workdir} ]]; then
+   reho "Error. Working directory name flag missing "
+fi
+if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
+    if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/${workdir}/${PROJECT_NAME}"; reho "Note: Study path missing. Setting to: $STUDY_PATH"; echo ''; fi
+   if [ -z "$CASES" ]; then
+       if [ -z "$XNAT_SESSION_LABELS" ]; then
+           reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ""
+           exit 1
+       else
+           CASES="$XNAT_SESSION_LABELS"
+       fi
+   else
+       XNAT_SESSION_LABELS="$CASES"
+   fi
+fi
+if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
    if [ -z "$XNAT_SESSION_LABELS" ]; then
-       reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ''
-       exit 1
+       if [ -z "$CASES" ]; then
+           reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ""
+           exit 1
+       else
+        XNAT_SESSION_LABELS="$CASES"
+       fi
    else
        CASES="$XNAT_SESSION_LABELS"
    fi
-else
-    if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
-        XNAT_SESSION_LABELS="$CASES"
-    fi
 fi
+
 if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
 if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
-if [[ ${TURNKEY_STEPS} == "mapRawData" ]] || [[ ${TURNKEY_STEPS} == "all" ]]; then
-    if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
-fi
-if [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
-    if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-fi
-if [[ ${TURNKEY_STEPS} == "getHCPReady" ]]; then
-    if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
-fi
+
 if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
+    if [[ ${TURNKEY_STEPS} == "mapRawData" ]] || [[ ${TURNKEY_STEPS} == "all" ]]; then
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+    fi
+    if [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    fi
+    if [[ ${TURNKEY_STEPS} == "getHCPReady" ]]; then
+        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+    fi
     if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
     if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
     if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
     if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
+    if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; echo ''; fi
+    project_batch_file="${processingdir}/${XNAT_PROJECT_ID}_batch_params.txt"
 fi
+
 if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
 if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
-if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; echo ''; fi
+
 if [ -z "$QCPreprocCustom" ] || [ "$QCPreprocCustom" == "no" ]; then QCPreprocCustom=""; MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocCustom/}"`; fi
 if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then 
     DWILegacy=""
     QCPreprocDWILegacy=""
     MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//hcpdLegacy/}"`
     MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocDWILegacy/}"`
+fi
+
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
+    STUDY_PATH="${workdir}/${PROJECT_NAME}"
+    StudyFolder="${workdir}/${PROJECT_NAME}"
+    SubjectsFolder="${workdir}/${PROJECT_NAME}/subjects"
+fi
+
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+fi
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ${TURNKEY_STEPS} == "getHCPReady" ]]; then
+        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
 fi
 
 # -- Define additional variables
@@ -414,7 +460,6 @@ specsdir="${mnap_subjectsfolder}/specs"
 rawdir="${mnap_workdir}/inbox"
 rawdir_temp="${mnap_workdir}/inbox_temp"
 processingdir="${mnap_studyfolder}/processing"
-project_batch_file="${processingdir}/${XNAT_PROJECT_ID}_batch_params.txt"
 MNAPCOMMAND="${TOOLS}/${MNAPREPO}/connector/mnap.sh"
 
 # -- Report options
@@ -428,6 +473,10 @@ if [ "$TURNKEY_TYPE" == "xnat" ]; then
     echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
     echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
     echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
+fi
+if [ "$TURNKEY_TYPE" != "xnat" ]; then
+    echo "   Local project name: ${PROJECT_NAME}"
+    echo "   Raw data input path: ${RawDataInputPath}"
 fi
 echo "   Project-specific Batch file: ${project_batch_file}"
 echo "   MNAP Study folder: ${mnap_studyfolder}"
@@ -496,11 +545,9 @@ fi
            createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            geho " -- Checking for and generating study folder ${mnap_studyfolder}"; echo ""
-           
            if [ ! -d ${workdir} ]; then
                mkdir -p ${workdir} &> /dev/null
            fi
-           
            if [ ! -d ${mnap_studyfolder} ]; then
                ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
                mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
@@ -536,18 +583,47 @@ fi
        turnkey_mapRawData() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: mapRawData ..."; echo ""
            TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+           # Perform checks
+           if [ ! -d ${workdir} ]; then
+               reho "Error. ${workdir} not found."; echo ""; exit 1
+           fi
+           if [ ! -d ${mnap_studyfolder} ]; then
+               reho "Error. ${mnap_studyfolder} not found."; echo ""; exit 1
+           fi
+           if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
+               reho "Error. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Re-run createStudy function."; echo ""; exit 1
+           fi
+           if [ ! -d ${mnap_subjectsfolder} ]; then
+               reho "Error. ${mnap_subjectsfolder} not found."; echo ""; exit 1
+           fi
+           if [ ! -f ${mnap_workdir} ]; then
+               reho "Note. ${mnap_workdir} not found. Creating one now..."; echo ""
+               mkdir -p ${mnap_workdir} &> /dev/null
+               mkdir -p ${mnap_workdir}/inbox &> /dev/null
+               mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
+           fi
+           if [[ ${OVERWRITE_STEP} == "yes" ]] && [[ ${TURNKEY_STEP} == "mapRawData" ]]; then
+                  rm -f ${mnap_workdir}/inbox/* &> /dev/null
+           fi
+           CheckInbox=`ls -1A ${rawdir} | wc -l`
+           if [[ ${CheckInbox} == "0" ]]; then
+                  reho "Error. ${mnap_workdir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
+                  reho "Set overwrite to 'yes' and re-run..."
+                  echo ""
+                  exit 1
+           fi
            # -- Define specific logs
            mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${TimeStamp}.log"
-           mapRawData_ComlogTmp="${logdir}/comlogs/tmp_mapRawData_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
-           mapRawData_ComlogError="${logdir}/comlogs/error_mapRawData_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
-           mapRawData_ComlogDone="${logdir}/comlogs/done_mapRawData_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+           mapRawData_ComlogTmp="${logdir}/comlogs/tmp_mapRawData_${CASES}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
+           mapRawData_ComlogError="${logdir}/comlogs/error_mapRawData_${CASES}_${TimeStamp}.log"
+           mapRawData_ComlogDone="${logdir}/comlogs/done_mapRawData_${CASES}_${TimeStamp}.log"
+           # -- Map data from XNAT
            if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+               geho " --> Running turnkey via XNAT: ${XNAT_HOST_NAME}"; echo ""
+               RawDataInputPath="/input/SCANS/"
                rm -rf ${specsdir}/${BATCH_PARAMETERS_FILENAME} &> /dev/null
                rm -rf ${specsdir}/${SCAN_MAPPING_FILENAME} &> /dev/null
                rm -rf ${processingdir}/scenes/QC/* &> /dev/null
-               if [[ ${OVERWRITE_STEP} == "yes" ]]; then
-                  rm ${rawdir}/*
-               fi
                geho " -- Fetching batch and mapping files from ${XNAT_HOST_NAME}"; echo ""
                echo "" >> ${mapRawData_ComlogTmp}
                geho "  Logging turnkey_mapRawData output at time ${TimeStamp}:" >> ${mapRawData_ComlogTmp}
@@ -560,6 +636,12 @@ fi
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${specsdir}/${BATCH_PARAMETERS_FILENAME}
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME}
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip
+               
+               # -- BIDS support
+               #if [[ ${GETBIDS} == "yes" ]]; then 
+                   # echo "curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/SUBJECT_ID/experiments/EXPERIMENT_ID/scans/ALL/files?format=zip"  > ${mnap_subjectsfolder}/${CASES}/nii/bids_scans.zip" >> ${mapRawData_ComlogTmp}
+                   # curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/SUBJECT_ID/experiments/EXPERIMENT_ID/scans/ALL/files?format=zip"  > ${mnap_subjectsfolder}/${CASES}/nii/bids_scans.zip
+               #fi
                
                # -- Transfer data from XNAT HOST
                if [ -f ${processingdir}/scenes/QC/scene_qc_files.zip ]; then
@@ -581,43 +663,44 @@ fi
                     geho " No custom scene files found as an XNAT resources. If this is an error check your project resources in the XNAT web interface." >> ${mapRawData_ComlogTmp}
                     echo "" >> ${mapRawData_ComlogTmp}
                fi
-               # -- Link to inbox
-               echo ""
-               geho " -- Linking DICOMs into ${rawdir}"; echo ""
-               echo "  find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';'" >> ${mapRawData_ComlogTmp}
-               find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
-               
-               # -- Perform checks
-               DicomInputCount=`find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
-               DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
-               if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then DICOMCOUNTCHECK="pass"; else DICOMCOUNTCHECK="fail"; fi
-               if [[ -f ${specsdir}/${BATCH_PARAMETERS_FILENAME} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
-               if [[ -f ${specsdir}/${SCAN_MAPPING_FILENAME} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
-               echo "" >> ${mapRawData_ComlogTmp}
-               echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
-               echo "  --> Batch file transfer check: ${BATCHFILECHECK}" >> ${mapRawData_ComlogTmp}
-               echo "  --> Mapping file transfer check: ${MAPPINGFILECHECK}" >> ${mapRawData_ComlogTmp}
-               echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" >> ${mapRawData_ComlogTmp}
-               echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" >> ${mapRawData_ComlogTmp}
-               echo "  --> DICOM mapping check: ${DICOMCOUNTCHECK}" >> ${mapRawData_ComlogTmp}
-               echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
-               if [[ ${DICOMCOUNTCHECK} == "pass" ]] && [[ ${BATCHFILECHECK} == "pass" ]] && [[ ${MAPPINGFILECHECK} == "pass" ]]; then
-                   echo "" >> ${mapRawData_ComlogTmp}
-                   geho "------------------------- Successful completion of work --------------------------------" >> ${mapRawData_ComlogTmp}
-                   echo "" >> ${mapRawData_ComlogTmp}
-                  mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogDone}
-                  mapRawData_Comlog=${mapRawData_ComlogDone}
-               else
-                   echo "" >> ${mapRawData_ComlogTmp}
-                   echo "Error. Something went wrong." >> ${mapRawData_ComlogTmp}
-                   echo "" >> ${mapRawData_ComlogTmp}
-                  mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogError}
-                  mapRawData_Comlog=${mapRawData_ComlogError}
-               fi
-           fi
-           if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
-               echo ""; reho " ===> Turnkey for local study execution not yet supported!"; echo ""; exit 0
-           fi
+            fi
+            
+            if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
+                geho " --> Running turnkey via local: `hostname`"; echo ""
+                RawDataInputPath="${RawDataInputPath}"
+            fi
+            # -- Link to inbox
+            echo ""
+            geho " -- Linking DICOMs into ${rawdir}"; echo ""
+            echo "  find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';'" >> ${mapRawData_ComlogTmp}
+            find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
+            # -- Perform checks
+            DicomInputCount=`find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
+            DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
+            if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then DICOMCOUNTCHECK="pass"; else DICOMCOUNTCHECK="fail"; fi
+            if [[ -f ${specsdir}/${BATCH_PARAMETERS_FILENAME} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
+            if [[ -f ${specsdir}/${SCAN_MAPPING_FILENAME} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
+            echo "" >> ${mapRawData_ComlogTmp}
+            echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
+            echo "  --> Batch file transfer check: ${BATCHFILECHECK}" >> ${mapRawData_ComlogTmp}
+            echo "  --> Mapping file transfer check: ${MAPPINGFILECHECK}" >> ${mapRawData_ComlogTmp}
+            echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" >> ${mapRawData_ComlogTmp}
+            echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" >> ${mapRawData_ComlogTmp}
+            echo "  --> DICOM mapping check: ${DICOMCOUNTCHECK}" >> ${mapRawData_ComlogTmp}
+            echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
+            if [[ ${DICOMCOUNTCHECK} == "pass" ]] && [[ ${BATCHFILECHECK} == "pass" ]] && [[ ${MAPPINGFILECHECK} == "pass" ]]; then
+                echo "" >> ${mapRawData_ComlogTmp}
+                geho "------------------------- Successful completion of work --------------------------------" >> ${mapRawData_ComlogTmp}
+                echo "" >> ${mapRawData_ComlogTmp}
+               mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogDone}
+               mapRawData_Comlog=${mapRawData_ComlogDone}
+            else
+                echo "" >> ${mapRawData_ComlogTmp}
+                echo "Error. Something went wrong." >> ${mapRawData_ComlogTmp}
+                echo "" >> ${mapRawData_ComlogTmp}
+               mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogError}
+               mapRawData_Comlog=${mapRawData_ComlogError}
+            fi
        }
        # -- organize DICOMs
        turnkey_organizeDicom() {
@@ -1153,7 +1236,6 @@ else
     geho "------------------------- Successful completion of work --------------------------------"
     echo ""
 fi
-
 }
 
 main $@
