@@ -242,8 +242,8 @@ RUN echo "Installing nibabel..." && \
     ln -s /usr/lib64/libz.so.1 && \
     cd / && \
 # Install CUDA
-    wget --progress=bar:force -O /tmp/cuda-repo-rhel7-9.2.148-1.x86_64.rpm http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-9.2.148-1.x86_64.rpm && \
-    rpm -i /tmp/cuda-repo-rhel7-9.2.148-1.x86_64.rpm && \
+    wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-7.5-18.x86_64.rpm && \
+    rpm -i /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm && \
     yum clean all expire-cache &&\
     yum install -y cuda && \
 # Clear yum cache and other empty folders
