@@ -305,6 +305,7 @@ Change Log
 * 0.19.21 [mnaptools library] Edit Dockerfile_mnap_dep to install CUDA and add paths to environment 
 * 0.19.22 [niutilities] More robust handling of parameters
 * 0.19.23 [mnaptools connector] Updates to RunTurnkey
+* 0.19.24 [mnaptools connector] Updates to RunTurnkey
 
 =======
 [Mind and Brain Lab]: http://mblab.si
