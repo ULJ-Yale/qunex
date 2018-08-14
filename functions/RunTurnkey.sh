@@ -496,9 +496,11 @@ fi
            createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            geho " -- Checking for and generating study folder ${mnap_studyfolder}"; echo ""
+           
            if [ ! -d ${workdir} ]; then
                mkdir -p ${workdir} &> /dev/null
            fi
+           
            if [ ! -d ${mnap_studyfolder} ]; then
                ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
                mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
@@ -507,10 +509,13 @@ fi
                createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
                geho " -- Study folder ${mnap_studyfolder} already exits!" 2>&1 | tee -a ${createStudy_ComlogTmp}
            fi
+           
            mkdir -p ${mnap_workdir} &> /dev/null
            mkdir -p ${mnap_workdir}/inbox &> /dev/null
            mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
+           
            if [ -f ${mnap_studyfolder}/.mnapstudy ]; then CREATESTUDYCHECK="pass"; else CREATESTUDYCHECK="fail"; fi
+          
            if [[ ${CREATESTUDYCHECK} == "pass" ]]; then
                echo "" >> ${createStudy_ComlogTmp}
                echo "------------------------- Successful completion of work --------------------------------" >> ${createStudy_ComlogTmp}
@@ -524,6 +529,7 @@ fi
               cp ${createStudy_ComlogTmp} ${createStudy_ComlogError}
               createStudy_Comlog=${createStudy_ComlogError}
            fi
+           
            rm ${createStudy_ComlogTmp}
        }
        # -- Get data from original location & organize DICOMs
@@ -547,12 +553,15 @@ fi
                geho "  Logging turnkey_mapRawData output at time ${TimeStamp}:" >> ${mapRawData_ComlogTmp}
                echo "----------------------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
                echo "" >> ${mapRawData_ComlogTmp}
+               # -- Transfer data from XNAT HOST
                echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}"" >> ${mapRawData_ComlogTmp}
                echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}"" >> ${mapRawData_ComlogTmp}
                echo "  curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip"  >> ${mapRawData_ComlogTmp}
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${specsdir}/${BATCH_PARAMETERS_FILENAME}
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME}
                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip
+               
+               # -- Transfer data from XNAT HOST
                if [[ -f ${processingdir}/scenes/QC/scene_qc_files.zip ]]; then
                    geho " Custom scene files found. Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
                    echo "" >> ${mapRawData_ComlogTmp}
@@ -560,7 +569,7 @@ fi
                    CustomQCModalities="T1w T2w myelin DWI BOLD"
                    for CustomQCModality in ${CustomQCModalities}; do
                        cp ${processingdir}/scenes/QC/${XNAT_PROJECT_ID}/resources/scenes_qc/files/${CustomQCModality}/*.scene ${processingdir}/scenes/QC/${CustomQCModality}/ &> /dev/null
-                   if
+                   done
                    rm -rf ${processingdir}/scenes/QC/${XNAT_PROJECT_ID} &> /dev/null
                    CopiedSceneFiles=`ls ${processingdir}/scenes/QC/*/*scene`
                    echo " Copied the following scenes from ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc:" >> ${mapRawData_ComlogTmp}
@@ -570,10 +579,12 @@ fi
                     geho " No custom scene files found as an XNAT resources. If this is an error check your project resources in the XNAT web interface." >> ${mapRawData_ComlogTmp}
                     echo "" >> ${mapRawData_ComlogTmp}
                fi
+               # -- Link to inbox
                echo ""
                geho " -- Linking DICOMs into ${rawdir}"; echo ""
                echo "  find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';'" >> ${mapRawData_ComlogTmp}
                find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
+               
                # -- Perform checks
                DicomInputCount=`find /input/SCANS/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
                DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
@@ -836,8 +847,9 @@ fi
            # Defaults if not specified:
            if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
            if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
+           # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
            if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
-           if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
+           if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
            for MatrixVersion in $MatrixVersions; do
                ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
            done
@@ -847,7 +859,7 @@ fi
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: DWISeedTractography ... "; echo "" 
            if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
            if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
-           if [ -z "$SeedFile" ]; then 
+           if [ -z "$SeedFile" ]; then
                # Thalamus SomatomotorSensory
                SeedFile="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii" 
                OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
@@ -1085,41 +1097,44 @@ unset TURNKEY_STEP_ERRORS
 for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     turnkey_${TURNKEY_STEP}
     # -- Check for completion of turnkey function
-    geho " -- Looking for incomplete/failed process"
+    geho " -- Looking for incomplete/failed process ..."
     # -- Specific checks for NIUtilities functions that run on multiple jobs
     NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
-    if [[ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]]; then 
-        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log | head -n 1`
-        if [[ -z ${CheckRunLog} ]]; then 
+    if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
+       CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log | head -n 1`
+        if [ -z ${CheckRunLog} ]; then
            TURNKEY_STEP_ERRORS="yes"
            reho " ===> ERROR: Runlog file not found!"; echo ""
-        else
-           geho " ===> Runlog file: ${CheckRunLog}"; echo ""
+        fi
+        if [ ! -z ${CheckRunLog} ]; then
+           geho " ===> Runlog file: ${CheckRunLog} "; echo ""
            CheckRunLogOut=`cat ${CheckRunLog} | grep '===> Successful completion'`
-           if [[ -z ${CheckRunLogOut} ]]; then
+        fi
+        if [ -z ${CheckRunLogOut} ]; then
                TURNKEY_STEP_ERRORS="yes"
                reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
            else
                echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed!"
                TURNKEY_STEP_ERRORS="no"
-           fi
         fi
-    else
+    fi
     # -- Specific checks for all other functions
-        if [ -z `ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then 
-            CheckLog=""
-            reho " ===> ERROR: Comlog file not found!"; echo ""
-        else
+    if [ ! -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
+        if [ -z `ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then
+           CheckLog=""
+           reho " ===> ERROR: Comlog file not found!"; echo ""
+        fi
+        if [ ! -z `ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then
             CheckLog=`ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log | head -n 1`
             chmod 777 ${CheckLog} 2>/dev/null
             geho " ===> Comlog file: ${CheckLog}"; echo ""
-            if [[ -z `echo "${CheckLog}" | grep 'done'` ]]; then
-               echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${CheckLog}."
-               TURNKEY_STEP_ERRORS="yes"
-            else
-               echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed!"
-               TURNKEY_STEP_ERRORS="no"
-            fi
+        fi
+        if [ -z `echo "${CheckLog}" | grep 'done'` ]; then
+            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${CheckLog}."
+            TURNKEY_STEP_ERRORS="yes"
+        else
+            echo ""; geho " ===> Success: ${TURNKEY_STEP} step passed!"
+            TURNKEY_STEP_ERRORS="no"
         fi
     fi
 done
