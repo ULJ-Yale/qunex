@@ -587,7 +587,7 @@ task = ['shrl'];
 exts = {'_g7','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
 
-% ---> clear exisitng data
+% ---> clear existing data
 
 if overwrite
     ext  = '';
@@ -595,19 +595,21 @@ if overwrite
 
     for current = doIt
         c = ismember(task, current);
-        sfile = [froot ext tail];
-        if isempty(ext)
-            ext = variant;
-        end
-        ext   = [ext exts{c}];
-        tfile = [froot ext tail];
-        if exist(tfile, 'file')
-            if first
-                fprintf('\n---> removing old files:');
-                first = false;
+        if any(c)
+            sfile = [froot ext tail];
+            if isempty(ext)
+                ext = variant;
             end
-            fprintf('\n     ... %s', tfile);
-            delete(tfile);
+            ext   = [ext exts{c}];
+            tfile = [froot ext tail];
+            if exist(tfile, 'file')
+                if first
+                    fprintf('\n---> removing old files:');
+                    first = false;
+                end
+                fprintf('\n     ... %s', tfile);
+                delete(tfile);
+            end
         end
     end
 end

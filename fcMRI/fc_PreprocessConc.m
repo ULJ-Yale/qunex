@@ -451,6 +451,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   2018-06-26 Grega Repovs (v0.9.13)
 %              - Changed to pretty struct printing.
 %              - Added option to support hcp_bold variant processing.
+%
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 16, done = [];                                  end
@@ -723,36 +724,37 @@ if overwrite
 
         c = ismember(tasklist, current);
 
-        for b = 1:nbolds
-            file(b).sfile = [file(b).froot ext tail];
-        end
-        if isempty(ext)
-            ext = variant;
-        end
-        ext   = [ext exts{c}];
-        for b = 1:nbolds
-            file(b).tfile = [file(b).froot ext tail];
-            file(b).tconc = [file(b).cfroot ext '.conc'];
-        end
-
-        if exist(file(b).tfile, 'file')
-            if first
-                fprintf('\n---> removing old files:');
-                first = false;
+        if any(c)
+            for b = 1:nbolds
+                file(b).sfile = [file(b).froot ext tail];
             end
-            fprintf('\n     ... %s', file(b).tfile);
-            delete(file(b).tfile);
-        end
-
-        if exist(file(b).tconc, 'file')
-            if first
-                fprintf('\n---> removing old files:');
-                first = false;
+            if isempty(ext)
+                ext = variant;
             end
-            fprintf('\n     ... %s', file(b).tconc);
-            delete(file(b).tconc);
-        end
+            ext   = [ext exts{c}];
+            for b = 1:nbolds
+                file(b).tfile = [file(b).froot ext tail];
+                file(b).tconc = [file(b).cfroot ext '.conc'];
+            end
+    
+            if exist(file(b).tfile, 'file')
+                if first
+                    fprintf('\n---> removing old files:');
+                    first = false;
+                end
+                fprintf('\n     ... %s', file(b).tfile);
+                delete(file(b).tfile);
+            end
 
+            if exist(file(b).tconc, 'file')
+                if first
+                    fprintf('\n---> removing old files:');
+                    first = false;
+                end
+                fprintf('\n     ... %s', file(b).tconc);
+                delete(file(b).tconc);
+            end
+        end
     end
 end
 
