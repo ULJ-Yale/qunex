@@ -146,9 +146,11 @@ usage() {
     echo "                                                                    Default is [] for the XNAT type run as host is used to pull data."
     echo "    --workingdir=<specify_directory_where_study_is_located>    Specify where the study folder is to be created or resides. Default is [/output]."
     echo "    --projectname=<specify_project_name>                       Specify name of the project on local file system if XNAT is not specified."
-    echo "    --overwritestep=<specify_step_to_overwrite>                Specify <yes> or <no> for cleanup of prior workflow step. Default is [no]."
-    echo "    --overwritesubject=<specify_subject_overwrite>             Specify <yes> or <no> for cleanup of prior subject run. Default is [no]."
-    echo "    --overwriteproject=<specify_project_overwrite>             Specify <yes> or <no> for cleanup of entire project. Default is [no]."
+    echo "    --overwritestep=<specify_step_to_overwrite>                Specify <yes> or <no> for delete of prior workflow step. Default is [no]."
+    echo "    --overwritesubject=<specify_subject_overwrite>             Specify <yes> or <no> for delete of prior subject run. Default is [no]."
+    echo "    --overwriteproject=<specify_project_overwrite>             Specify <yes> or <no> for delete of entire project prior to run. Default is [no]."
+    echo "    --cleanupsubject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of subject folder after steps are done. Default is [no]."
+    echo "    --cleanupproject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of entire project after steps are done. Default is [no]."
     echo ""
     echo "  -- OPTIONAL CUSTOM QC PARAMETER:"
     echo ""
@@ -232,6 +234,8 @@ unset workdir
 unset RawDataInputPath
 unset PROJECT_NAME
 unset PlotElements
+unset CleanupSubject
+unset CleanupProject
 
 # =-=-=-=-=-= GENERAL OPTIONS =-=-=-=-=-=
 #
@@ -239,6 +243,8 @@ unset PlotElements
 STUDY_PATH=`opts_GetOpt "--path" $@`
 workdir=`opts_GetOpt "--workingdir" $@`
 PROJECT_NAME=`opts_GetOpt "--projectname" $@`
+CleanupSubject=`opts_GetOpt "--cleanupsubject" $@`
+CleanupProject=`opts_GetOpt "--cleanupproject" $@`
 RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
 StudyFolder=`opts_GetOpt "--path" $@`
 SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
@@ -350,6 +356,11 @@ if [[ ! -z $BOLDRUNS ]]; then
         BOLDS=$BOLDRUNS
     fi
 fi
+if [[ ! -z $BOLDS ]]; then
+    if [[ -z $BOLDRUNS ]]; then
+        BOLDRUNS=$BOLDS
+    fi
+fi
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
 BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
 SkipFrames=`opts_GetOpt "--skipframes" $@`
@@ -366,6 +377,9 @@ QCPlotMasks=`opts_GetOpt "--qcplotmasks" $@`
 # -- Define script name
 scriptName=$(basename ${0})
 
+if [[ -z ${CleanupProject} ]]; then CleanupProject="no"; fi
+if [[ -z ${CleanupSubject} ]]; then CleanupSubject="no"; fi
+
 # -- Check if subject input is a parameter file instead of list of cases
 echo ""
 if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
@@ -378,17 +392,24 @@ if [[ ${CASES} == *.txt ]]; then
 fi
 
 # -- Check that all inputs are provided
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]]; then
-   reho "Error. Raw data input flag missing "
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]] && [[ ${TURNKEY_STEPS} == "all" ]] || [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
+   reho "Error. Raw data input flag missing "; return 1
 fi
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${STUDY_PATH} ]] && [[ -z ${PROJECT_NAME} ]]; then
-   reho "Error. Project name flag missing "
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${PROJECT_NAME} ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
+   reho "Error. Project name flag missing "; return 1
 fi
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${workdir} ]]; then
-   reho "Error. Working directory name flag missing "
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${workdir} ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
+   reho "Error. Working directory name flag missing "; return 1
 fi
+
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
-    if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/${workdir}/${PROJECT_NAME}"; reho "Note: Study path missing. Setting to: $STUDY_PATH"; echo ''; fi
+    StudyFolder="${STUDY_PATH}"
+    SubjectsFolder="${STUDY_PATH}"
+    mnap_studyfolder="${STUDY_PATH}"
+fi
+
+if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
+   if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/${workdir}/${PROJECT_NAME}"; reho "Note: Study path missing. Setting to: $STUDY_PATH"; echo ''; fi
    if [ -z "$CASES" ]; then
        if [ -z "$XNAT_SESSION_LABELS" ]; then
            reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ""
@@ -445,31 +466,34 @@ if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then
     MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocDWILegacy/}"`
 fi
 
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
+# -- Define additional variables
+if [[ -z ${workdir} ]] && [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" != "xnat" ]] && [ -z "$StudyFolder" ]; then
+         workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
+         STUDY_PATH="${workdir}/${ROJECT_NAME}"
+fi
+if [[ -z ${workdir} ]] && [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" == "xnat" ]] && [ -z "$StudyFolder" ]; then
+         workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
+         STUDY_PATH="${workdir}/${XNAT_PROJECT_ID}"    
+fi
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
+    if [[ -z ${PROJECT_NAME} ]]; then reho "Error: project name parameter required when createStudy specified!"; echo ""; exit 1; fi
+    if [[ -z ${workdir} ]]; then reho "Error: working directory parameter required when createStudy specified!"; echo ""; exit 1; fi
     STUDY_PATH="${workdir}/${PROJECT_NAME}"
     StudyFolder="${workdir}/${PROJECT_NAME}"
     SubjectsFolder="${workdir}/${PROJECT_NAME}/subjects"
 fi
 
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'mapHCPFiles'` ]]; then
         if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
 fi
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ${TURNKEY_STEPS} == "getHCPReady" ]]; then
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'getHCPReady'` ]]; then
         if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
 fi
 
-# -- Define additional variables
-if [ -z "$workdir" ]; then workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''; fi
-if [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" == "xnat" ]]; then
-    workdir="/output"
-    mnap_studyfolder="${workdir}/${XNAT_PROJECT_ID}"
-else
-    mnap_studyfolder="${STUDY_PATH}"
-fi
-mnap_subjectsfolder="${mnap_studyfolder}/subjects"
+mnap_subjectsfolder="${STUDY_PATH}/subjects"
 mnap_workdir="${mnap_subjectsfolder}/${XNAT_SESSION_LABELS}"
-logdir="${mnap_studyfolder}/processing/logs"
-specsdir="${mnap_subjectsfolder}/specs"
+logdir="${STUDY_PATH}/processing/logs"
+specsdir="${STUDY_PATH}/specs"
 rawdir="${mnap_workdir}/inbox"
 rawdir_temp="${mnap_workdir}/inbox_temp"
 processingdir="${mnap_studyfolder}/processing"
@@ -500,10 +524,13 @@ if [ "$TURNKEY_TYPE" != "xnat" ]; then
 fi
 echo "   Project-specific Batch file: ${project_batch_file}"
 echo "   MNAP Study folder: ${mnap_studyfolder}"
+echo "   MNAP Log folder: ${logdir}"
 echo "   MNAP Subject-specific working folder: ${rawdir}"
 echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
 echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
+echo "   Cleanup for subject set to: ${CleanupSubject}"
+echo "   Cleanup for project set to: ${CleanupProject}"
 echo "   Custom QC requested: ${QCPreprocCustom}"
 if [ "$TURNKEY_STEPS" == "all" ]; then
     echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
@@ -775,6 +802,19 @@ fi
     #
     # --------------- Intial study and file organization end -------------------
     
+       QCPreproc_Finalize() {
+           QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc-*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreproc${QCLogName} ${logdir}/comlogs/${QCPreprocComLog} 2> /dev/null
+           rename QCPreproc QCPreproc${QCLogName} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
+           mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
+           mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/runlog 2> /dev/null
+           mkdir -p ${mnap_subjectsfolder}/${CASES}/QC/${Modality} 2> /dev/null
+           ln ${logdir}/comlogs/${QCPreprocComLog} ${mnap_subjectsfolder}/${CASES}/logs/comlog/${QCPreprocComLog} 2> /dev/null
+           ln ${logdir}/comlogs/${QCPreprocRunLog} ${mnap_subjectsfolder}/${CASES}/logs/comlog/${QCPreprocRunLog} 2> /dev/null
+           cp ${mnap_subjectsfolder}/subjects/QC/${Modality}/*${CASES}*scene ${mnap_subjectsfolder}/${CASES}/QC/${Modality}/ 2> /dev/null
+           cp ${mnap_subjectsfolder}/subjects/QC/${Modality}/*${CASES}*zip ${mnap_subjectsfolder}/${CASES}/QC/${Modality}/ 2> /dev/null
+      }
 
     # --------------- HCP Processing and relevant QC start ---------------------
     #
@@ -803,24 +843,24 @@ fi
            Modality="T1w"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
-           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-           rename QCPreproc QCPreprocT1w ${logdir}/comlogs/${QCPreprocLog}
+           QCLogName="T1w"
+           QCPreproc_Finalize
        }
        # -- QCPreprocT2W (after hcp3)
        turnkey_QCPreprocT2w() {
            Modality="T2w"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
-           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-           rename QCPreproc QCPreprocT2w ${logdir}/comlogs/${QCPreprocLog}
+           QCLogName="T2w"
+           QCPreproc_Finalize
        }
        # -- QCPreprocMyelin (after hcp3)
        turnkey_QCPreprocMyelin() {
            Modality="myelin"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
-           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-           rename QCPreproc QCPreprocMyelin ${logdir}/comlogs/${QCPreprocLog}
+           QCLogName="Myelin"
+           QCPreproc_Finalize
        }
        # -- fMRIVolume
        turnkey_hcp4() {
@@ -841,7 +881,7 @@ fi
            if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
            if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
            if [ -z "${BOLDS}" ]; then
-                BOLDS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'}`
+                BOLDS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
            fi
            for BOLD in ${BOLDS}; do
                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLD}"
@@ -864,16 +904,16 @@ fi
            Modality="DWI"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} legacy data ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}"
-           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-           rename QCPreproc QCPreprocDWILegacy ${logdir}/comlogs/${QCPreprocLog}
+           QCLogName="DWILegacy"
+           QCPreproc_Finalize
        }
        # -- QCPreprocDWI (after hcpd)
        turnkey_QCPreprocDWI() {
            Modality="DWI"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} HCP processing ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${logdir}" 
-           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-           rename QCPreproc QCPreprocDWI ${logdir}/comlogs/${QCPreprocLog}
+           QCLogName="DWI"
+           QCPreproc_Finalize
        }
        # -- eddyQC processing steps
        turnkey_eddyQC() {
@@ -901,8 +941,8 @@ fi
            Modality="DWI"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} eddyQC ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes"
-           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-           rename QCPreproc QCPreprocDWIeddyQC ${logdir}/comlogs/${QCPreprocLog}
+           QCLogName="DWIeddyQC"
+           QCPreproc_Finalize
        }
     #
     # --------------- HCP Processing and relevant QC end -----------------------
@@ -928,16 +968,16 @@ fi
            Modality="DWI"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} FSL's dtifit analyses ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" 
-           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-           rename QCPreproc QCPreprocDWIDTIFIT ${logdir}/comlogs/${QCPreprocLog}
+           QCLogName="DWIDTIFIT" 
+           QCPreproc_Finalize
        }
        # -- QCPreprocDWIBedpostX (after FSLBedpostxGPU)
        turnkey_QCPreprocDWIBedpostX() {
            Modality="DWI"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} FSL's BedpostX analyses ... "; echo ""
            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes"
-           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-           rename QCPreproc QCPreprocDWIBedpostX ${logdir}/comlogs/${QCPreprocLog}
+           QCLogName="DWIBedpostX" 
+           QCPreproc_Finalize
        }
        # -- probtrackxGPUDense for DWI data (after FSLBedpostxGPU)
        turnkey_probtrackxGPUDense() {
@@ -993,11 +1033,17 @@ fi
           for Modality in ${Modalities}; do
               if [[ ${Modality} == "BOLD" ]]; then
                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
+                  QCLogName="Custom" 
+                  QCPreproc_Finalize
               fi
               if [[ ${Modality} == "DWI" ]]; then
                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
+                  QCLogName="Custom" 
+                  QCPreproc_Finalize
               else
                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
+                  QCLogName="Custom" 
+                  QCPreproc_Finalize
               fi
           done
       }
@@ -1161,26 +1207,83 @@ fi
        # -- Compute g_PlotBoldTS ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
        turnkey_g_PlotBoldTS() {
           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: g_PlotBoldTS QC plotting ... "; echo ""
+          TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+          g_PlotBoldTS_Runlog="${logdir}/runlogs/Log-g_PlotBoldTS_${TimeStamp}.log"
+          g_PlotBoldTS_ComlogTmp="${logdir}/comlogs/tmp_g_PlotBoldTS_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
+          g_PlotBoldTS_ComlogError="${logdir}/comlogs/error_g_PlotBoldTS_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+          g_PlotBoldTS_ComlogDone="${logdir}/comlogs/done_g_PlotBoldTS_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+          
           if [ -z ${QCPlotElements} ]; then
-               QCPlotElements="type=stats|stats>statstype=fd,img=1>statstype=dvarsme,img=1;type=image|name=V|img=1|mask=1|colormap=hsv;type=image|name=WM|img=1|mask=1|colormap=jet;type=image|name=GM|img=1|mask=1;type=image|name=GM|img=2|use=1"
+                QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
           fi
           if [ -z ${QCPlotMasks} ]; then
                 QCPlotMasks="${mnap_subjectsfolder}/${CASES}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz"
           fi
-          if [ -z ${QCPlotImages} ]; then
-                QCPlotImages="${mnap_subjectsfolder}/${CASES}/images/functional/bold1.nii.gz;${mnap_subjectsfolder}/${CASES}/images/functional/bold1_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii"
+          if [ -z ${images_folder} ]; then
+              images_folder="${mnap_subjectsfolder}/$CASES/images/functional"
           fi
-          echo "   QC Plot Images: ${QCPlotImages}"; echo ""
-          echo "   QC Plot Masks: ${QCPlotMasks}"; echo ""
-          echo "   QC Plot Elements: ${QCPlotElements}"; echo ""
-          ${MNAPCOMMAND} g_PlotBoldTS \
-          --images="${QCPlotImages}" \
-          --elements="${QCPlotElements}" \
-          --masks="${QCPlotMasks}" \
-          --filename='${mnap_subjectsfolder}/${CASES}/images/functional/movement/${CASES}_BOLD_QCPlot_CIFTI.pdf' \
-          --skip="0" \
-          --subjid="${CASES}" \
-          --verbose="true"
+          if [ -z ${output_folder} ]; then
+              output_folder="${mnap_subjectsfolder}/$CASES/images/functional/movement"
+          fi
+          if [ -z ${output_name} ]; then
+              output_name="${CASES}_BOLD_GreyPlot_CIFTI.pdf"
+          fi
+          if [ -z ${BOLDSRUNS} ]; then
+              BOLDSRUNS="1"
+          fi
+          echo " -- Log folder: ${logdir}/comlogs/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo " -- Parameters for g_PlotBoldTS: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   QC Plot Masks: ${QCPlotMasks}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   QC Plot Elements: ${QCPlotElements}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   QC Plot image folder: ${images_folder}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   QC Plot output folder: ${output_folder}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   QC Plot output name: ${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   QC Plot BOLDS runs: ${BOLDSRUNS}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+
+          for BOLDRUN in ${BOLDSRUNS}; do 
+             cd ${images_folder} 
+             if [ -z ${QCPlotImages} ]; then
+                 QCPlotImages="bold${BOLDRUN}.nii.gz;bold${BOLDRUN}_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii"
+             fi
+             echo "   QC Plot images: ${QCPlotImages}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             echo " -- Command: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             echo "${MNAPCOMMAND} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASES}" --verbose="true"" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             
+             ${MNAPCOMMAND} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASES}" --verbose="true"
+             echo " -- Copying ${output_folder}/${output_name} to ${mnap_subjectsfolder}/QC/BOLD/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+             cp ${output_folder}/${output_name} ${mnap_subjectsfolder}/QC/BOLD/
+             if [ -f ${mnap_subjectsfolder}/QC/BOLD/${output_name} ]; then
+                 echo " -- Found ${mnap_subjectsfolder}/QC/BOLD/${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+                 echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+                 g_PlotBoldTS_Check="pass"
+            else
+                 echo " -- Result ${mnap_subjectsfolder}/QC/BOLD/${output_name} missing!" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+                 echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+                 g_PlotBoldTS_Check="fail"
+             fi
+          done
+          
+          if [[ ${g_PlotBoldTS_Check} == "pass" ]]; then
+              echo "" >> ${g_PlotBoldTS_ComlogTmp}
+              echo "------------------------- Successful completion of work --------------------------------" >> ${g_PlotBoldTS_ComlogTmp}
+              echo "" >> ${g_PlotBoldTS_ComlogTmp}
+              cp ${g_PlotBoldTS_ComlogTmp} ${g_PlotBoldTS_ComlogDone}
+              g_PlotBoldTS_Comlog=${g_PlotBoldTS_ComlogDone}
+          else
+             echo "" >> ${g_PlotBoldTS_ComlogTmp}
+             echo "Error. Something went wrong." >> ${g_PlotBoldTS_ComlogTmp}
+             echo "" >> ${g_PlotBoldTS_ComlogTmp}
+             cp ${g_PlotBoldTS_ComlogTmp} ${g_PlotBoldTS_ComlogError}
+             g_PlotBoldTS_Comlog=${g_PlotBoldTS_ComlogError}
+          fi
+          rm ${g_PlotBoldTS_ComlogTmp}
        }
     #
     # --------------- BOLD FC Processing and analyses end ----------------------
@@ -1218,7 +1321,8 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     # -- Specific checks for NIUtilities functions that run on multiple jobs
     NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
     if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
-       CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log | head -n 1`
+       CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+       CheckComLog=`ls -t1 ${logdir}/comlogs/done_${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
         if [ -z "${CheckRunLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
            reho " ===> ERROR: Runlog file not found!"; echo ""
@@ -1237,17 +1341,18 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     fi
     # -- Specific checks for all other functions
     if [ ! -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
-           CheckComLog=`ls -t1 ${logdir}/comlogs/done_${TURNKEY_STEP}*log | head -n 1`
+           CheckComLog=`ls -t1 ${logdir}/comlogs/done_${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+           CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
-           reho " ===> ERROR: Completed ComLog file not found!"; echo ""
+           reho " ===> ERROR: Completed ComLog file not found!"
         fi
         if [ ! -z "${CheckComLog}" ]; then
            geho " ===> Comlog file: ${CheckComLog}"
            chmod 777 ${CheckLog} 2>/dev/null
         fi
         if [ -z `echo "${CheckComLog}" | grep 'done'` ]; then
-            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${CheckComLog}."
+            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed."
             TURNKEY_STEP_ERRORS="yes"
         else
             echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
@@ -1256,7 +1361,10 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     fi
 done
 
-if [[ ${TURNKEY_STEP_ERRORS} == "yes" ]]; then
+ln ${CheckComLog} ${mnap_subjectsfolder}/${CASE}/logs/comlogs/${CheckComLog} 2> /dev/null
+ln ${CheckRunLog} ${mnap_subjectsfolder}/${CASE}/logs/runlogs/${CheckRunLog} 2> /dev/null
+
+if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
     echo ""
     reho " ===> Appears some RunTurnkey steps have failed."
     reho "       Check ${logdir}/comlogs/:"
@@ -1267,6 +1375,7 @@ else
     geho "------------------------- Successful completion of work --------------------------------"
     echo ""
 fi
+
 }
 
 main $@

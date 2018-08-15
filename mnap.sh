@@ -282,6 +282,7 @@ show_processing_gmri() {
 # ---------------------------------------------------------------------------------------------------------------
 
 connectorExec() {
+
 # -- Set the time stamp for given job
 TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 
@@ -296,9 +297,9 @@ fi
 Platform="Platform Information: `uname -a`"
 
 # -- Check if study folder is created
-if [[ ! -d ${StudyFolder} ]]; then 
-    echo "Study folder ${StudyFolder} not found. Generating now..."
-    gmri createStudy ${StudyFolder}
+if [[ ! -f ${StudyFolder}/.mnapstudy ]]; then 
+    echo "MNAP study folder specification in ${StudyFolder} not found. Generating now..."
+    gmri createStudy "${StudyFolder}"
 fi
 
 # -- If logfolder flag set then set it and set master log
@@ -307,8 +308,9 @@ if [ -z "$LogFolder" ]; then
 else
     MasterLogFolder="$LogFolder"
 fi
+
 # -- Generate the master log, comlogs and runlogs folder
-mkdir ${MasterLogFolder}  &> /dev/null
+mkdir ${MasterLogFolder} &> /dev/null
 MasterRunLogFolder="${MasterLogFolder}/runlogs"
 MasterComlogFolder="${MasterLogFolder}/comlogs"
 mkdir ${MasterRunLogFolder} &> /dev/null
@@ -331,7 +333,7 @@ Runlog="${MasterRunLogFolder}/Log-${FunctionToRun}_${TimeStamp}.log"
 #    Example:        done_ComputeBOLDStats_pb0986_2017-05-06_16.16.1494101784.log
 #
 ComlogTmp="${MasterComlogFolder}/tmp_${FunctionToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
-ComRun="${MasterComlogFolder}/Run_${FunctionToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 770 ${ComlogTmp}
+ComRun="${MasterComlogFolder}/Run_${FunctionToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
 ComlogError="${MasterComlogFolder}/error_${FunctionToRun}_${CASE}_${TimeStamp}.log"
 ComlogDone="${MasterComlogFolder}/done_${FunctionToRun}_${CASE}_${TimeStamp}.log"
 CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.Check"
@@ -340,19 +342,36 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 #    <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
 
 # -- Code for debugging
-# echo ""
-# cyaneho "---- Commands to run: -----"; echo ""
-# cyaneho "${CommandToRun}"; echo ""
-# cyaneho "---------------------------"; echo ""
-# echo ""
+echo ""
+cyaneho "---- Commands to run: -----"
+echo ""
+cyaneho "${CommandToRun}"
+echo ""
+cyaneho "---------------------------"
+echo ""
+echo ""
 
 # -- Run commands
 SuccessCheck="Successful completion"
-ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 770 ${ComRun}"
-ComRunExec="${ComRun} 2>&1 | tee -a ${ComlogTmp}"
+echo "${CommandToRun}" >> ${Runlog}
+echo "#!/bin/bash" >> ${ComRun}
+echo "export PYTHONUNBUFFERED=1" >> ${ComRun}
+echo "${CommandToRun}" >> ${ComRun}
+chmod 777 ${ComRun}
+
+# ComRunSet="cd ${MasterRunLogFolder}; echo ${CommandToRun} >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 777 ${ComRun}"
+
+# -- Check that $ComRun is set properly
+echo ""; if [ ! -f "${ComRun}" ]; then reho " ERROR: ${ComRun} file not found. Check your inputs"; echo ""; return 1; fi
+ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
+echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho " ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
+
+ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep '${SuccessCheck}' &> ${CompletionCheck}"
 ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo '  ===> Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
-ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
+
+# -- Combine commands
+ComRunAll="${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
 # -- Run the commands locally
 if [[ "$Cluster" == 1 ]]; then
@@ -362,7 +381,7 @@ if [[ "$Cluster" == 1 ]]; then
     geho "   Command log:     ${Runlog}  "
     geho "   Function output: ${ComlogTmp} "
     echo ""
-    eval ${ComRunAll}
+    eval "${ComRunAll}"
 fi
 # -- Run the commands via scheduler
 if [[ "$Cluster" == 2 ]]; then
@@ -383,47 +402,31 @@ fi
 # ---------------------------------------------------------------------------------------------------------------
 
 runTurnkey() {
-# -- Echo command
-geho "Full command:"; echo ""
-echo "${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh \
---batchfile='${BATCH_PARAMETERS_FILENAME}' \
---path='${STUDY_PATH}' \
---workingdir='${workdir}' \
---rawdatainput='${RawDataInputPath}' \
---turnkeytype='${TURNKEY_TYPE}' \
---turnkeysteps='${TURNKEY_STEPS}' \
---projectname='${PROJECT_NAME}' \
---overwritestep='${OVERWRITE_STEP}' \
---overwritesubject='${OVERWRITE_SUBJECT}' \
---overwriteproject='${OVERWRITE_PROJECT}' \
---overwriteprojectforce='${OVERWRITE_PROJECT_FORCE}' \
---mappingfile='${SCAN_MAPPING_FILENAME}' \
---xnatsessionlabels='${XNAT_SESSION_LABELS}' \
---xnatprojectid='${XNAT_PROJECT_ID}' \
---xnathost='${XNAT_HOST_NAME}' \
---xnatuser='${XNAT_USER_NAME}' \
---xnatpass='${XNAT_PASSWORD}'"
-echo ""
 # -- Specify command variable
+unset CommandToRun
 CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh \
---batchfile='${BATCH_PARAMETERS_FILENAME}' \
---path='${STUDY_PATH}' \
---workingdir='${workdir}' \
---rawdatainput='${RawDataInputPath}' \
---turnkeytype='${TURNKEY_TYPE}' \
---turnkeysteps='${TURNKEY_STEPS}' \
---projectname='${PROJECT_NAME}' \
---overwritestep='${OVERWRITE_STEP}' \
---overwritesubject='${OVERWRITE_SUBJECT}' \
---overwriteproject='${OVERWRITE_PROJECT}' \
---overwriteprojectforce='${OVERWRITE_PROJECT_FORCE}' \
---mappingfile='${SCAN_MAPPING_FILENAME}' \
---xnatsessionlabels='${XNAT_SESSION_LABELS}' \
---xnatprojectid='${XNAT_PROJECT_ID}' \
---xnathost='${XNAT_HOST_NAME}' \
---xnatuser='${XNAT_USER_NAME}' \
---xnatpass='${XNAT_PASSWORD}'"
-
+--subjects='"${CASES}"' \
+--batchfile='"${BATCH_PARAMETERS_FILENAME}"' \
+--path='"${STUDY_PATH}"' \
+--workingdir='"${workdir}"' \
+--rawdatainput='"${RawDataInputPath}"' \
+--turnkeytype='"${TURNKEY_TYPE}"' \
+--turnkeysteps='"${TURNKEY_STEPS}"' \
+--projectname='"${PROJECT_NAME}"' \
+--overwritestep='"${OVERWRITE_STEP}"' \
+--overwritesubject='"${OVERWRITE_SUBJECT}"' \
+--overwriteproject='"${OVERWRITE_PROJECT}"' \
+--overwriteprojectforce='"${OVERWRITE_PROJECT_FORCE}"' \
+--mappingfile='"${SCAN_MAPPING_FILENAME}"' \
+--xnatsessionlabels='"${XNAT_SESSION_LABELS}"' \
+--xnatprojectid='"${XNAT_PROJECT_ID}"' \
+--xnathost='"${XNAT_HOST_NAME}"' \
+--xnatuser='"${XNAT_USER_NAME}"' \
+--xnatpass='"${XNAT_PASSWORD}"' \
+--customqc='"${QCPreprocCustom}"' \
+--qcplotimages='"${QCPlotImages}"' \
+--qcplotelements='"${QCPlotElements}"' \
+--qcplotmasks='"${QCPlotMasks}"'"
 # -- Connector execute function
 connectorExec
 }
@@ -458,17 +461,26 @@ if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
     echo ""
     exit 0
 fi
+
 # -- Check if inbox missing or is empty
-if [ ! -d ${SubjectsFolder}/${CASE}/inbox ]; then
-    reho "===> ${SubjectsFolder}/${CASE}/inbox/ not found. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
-    exit 1
-else
-    InboxCheck=`ls ${SubjectsFolder}/${CASE}/inbox/`
-    if [[ ${InboxCheck} == "" ]]; then
-        reho "===> ${SubjectsFolder}/${CASE}/inbox/ found but empty. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
+if [ ! -d ${SubjectsFolder}/${CASE}/dicom ]; then
+    reho "===> ${SubjectsFolder}/${CASE}/dicom folder not found. Checking for ${SubjectsFolder}/${CASE}/inbox/"; echo ""
+    if [ ! -d ${SubjectsFolder}/${CASE}/inbox ]; then
+        reho "===> ${SubjectsFolder}/${CASE}/inbox not found. Make sure your DICOMs are present inside ${SubjectsFolder}/${CASE}/inbox/"; echo ""
         exit 1
     fi
 fi
+if [ -d ${SubjectsFolder}/${CASE}/dicom ]; then
+     DicomCheck=`ls ${SubjectsFolder}/${CASE}/dicom/`
+     InboxCheck=`ls ${SubjectsFolder}/${CASE}/inbox/`
+     if [[ ${InboxCheck} != "" ]]; then
+         reho "===> ${SubjectsFolder}/${CASE}/dicom/ found and data exists."; echo ""
+         if [[ ${InboxCheck} == "" ]]; then
+             reho "===> ${SubjectsFolder}/${CASE}/inbox/ found but empty. Will re-run sortDicom from ${SubjectsFolder}/${CASE}/dicom"; echo ""
+         fi
+    fi
+fi
+
 # -- Specify command variable
 unset CommandToRun
 ComA="cd ${SubjectsFolder}/${CASE}"
@@ -755,21 +767,6 @@ T1wDiffFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
 FieldMapFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/FieldMap_strc
 LogFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/log
 Overwrite="$Overwrite"
-
-# -- Echo command
-geho "Full Command:"; echo ""
-geho "${TOOLS}/${MNAPREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
---subjectsfolder=${SubjectsFolder} \
---subject=${CASE} \
---scanner=${Scanner} \
---usefieldmap=${UseFieldmap} \
---PEdir=${PEdir} \
---echospacing=${EchoSpacing} \
---TE=${TE} \
---unwarpdir=${UnwarpDir} \
---diffdatasuffix=${DiffDataSuffix} \
---overwrite=${Overwrite} "
-echo ""
 
 # -- Specify command variable
 CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
@@ -1104,10 +1101,6 @@ fi
 # -- Check type of connectivity calculation is seed
 if [ ${Calculation} == "seed" ]; then
     echo ""
-    # -- Echo command
-    geho "Full Command:"; echo ""
-    geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --outname=${OutName} --flist=${FileList} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --roinfo=${ROIInfo} --options=${FCCommand} --method=${Method} --targetf=${OutPath} --mask=${MaskFrames} --covariance=${Covariance}"
-    echo ""
     # -- Specify command variable
     CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
@@ -1132,10 +1125,6 @@ if [ ${Calculation} == "seed" ]; then
 fi
 # -- Check type of connectivity calculation is gbc
 if [ ${Calculation} == "gbc" ]; then
-    echo ""
-    # -- Echo command
-    geho "Full Command:"; echo ""
-    geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --extractdata=${ExtractData} --flist=${FileList} --outname=${OutName} --overwrite=${Overwrite} --ignore=${IgnoreFrames} --target=${TargetROI} --command=${GBCCommand} --targetf=${OutPath} --mask=${MaskFrames} --rsmooth=${RadiusSmooth} --rdilate=${RadiusDilate} --verbose=${Verbose} --time=${ComputeTime} --vstep=${VoxelStep} --covariance=${Covariance}"
     echo ""
     # -- Specify command variable
     CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
@@ -1165,10 +1154,6 @@ if [ ${Calculation} == "gbc" ]; then
 fi
 # -- Check type of connectivity calculation is seed
 if [ ${Calculation} == "dense" ]; then
-    echo ""
-    # -- Echo command
-    geho "Full Command:"; echo ""
-    geho "${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --subjectsfolder=${SubjectsFolder} --calculation=${Calculation} --runtype=${RunType} --subjects=${CASE} --inputfiles=${InputFiles} --inputpath=${InputPath} --outname=${OutName} --overwrite=${Overwrite} --targetf=${OutPath} --covariance=${Covariance} --mem-limit=${MemLimit}"
     echo ""
     # -- Specify command variable
     CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
@@ -2561,15 +2546,35 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
     if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
     if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
-    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]]; then
-       reho "Error. Raw data input flag missing "
+    
+    # -- Check if subject input is a parameter file instead of list of cases
+    echo ""
+    if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
+    if [[ ${CASES} == *.txt ]]; then
+        SubjectParamFile="$CASES"
+        echo ""
+        echo "Using $SubjectParamFile for input."
+        echo ""
+        CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
     fi
-    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${PROJECT_NAME} ]]; then
-       reho "Error. Project name flag missing "
+    
+    # -- Check that all inputs are provided
+    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]] && [[ ${TURNKEY_STEPS} == "all" ]] || [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
+       reho "Error. Raw data input flag missing "; return 1
     fi
-    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${workdir} ]]; then
-       reho "Error. Working directory name flag missing "
+    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${PROJECT_NAME} ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
+       reho "Error. Project name flag missing "; return 1
     fi
+    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${workdir} ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
+       reho "Error. Working directory name flag missing "; return 1
+    fi
+    
+    if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
+        StudyFolder="${STUDY_PATH}"
+        SubjectsFolder="${STUDY_PATH}"
+        mnap_studyfolder="${STUDY_PATH}"
+    fi
+    
     if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
        if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/${workdir}/${PROJECT_NAME}"; reho "Note: Study path missing. Setting to: $STUDY_PATH"; echo ''; fi
        if [ -z "$CASES" ]; then
@@ -2595,7 +2600,9 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
            CASES="$XNAT_SESSION_LABELS"
        fi
     fi
-
+    
+    if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
+    
     if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
         if [[ ${TURNKEY_STEPS} == "mapRawData" ]] || [[ ${TURNKEY_STEPS} == "all" ]]; then
             if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
@@ -2613,37 +2620,47 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
         if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
         if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; echo ''; fi
     fi
+    
     if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
     if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
     if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
     
-    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
+    if [ -z "$QCPreprocCustom" ] || [ "$QCPreprocCustom" == "no" ]; then QCPreprocCustom=""; MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocCustom/}"`; fi
+    if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then 
+        DWILegacy=""
+        QCPreprocDWILegacy=""
+        MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//hcpdLegacy/}"`
+        MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocDWILegacy/}"`
+    fi
+    
+    # -- Define additional variables
+    if [[ -z ${workdir} ]] && [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" != "xnat" ]] && [ -z "$StudyFolder" ]; then
+             workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
+             STUDY_PATH="${workdir}/${ROJECT_NAME}"
+    fi
+    if [[ -z ${workdir} ]] && [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" == "xnat" ]] && [ -z "$StudyFolder" ]; then
+             workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
+             STUDY_PATH="${workdir}/${XNAT_PROJECT_ID}"    
+    fi
+    
+    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
+        if [[ -z ${PROJECT_NAME} ]]; then reho "Error: project name parameter required when createStudy specified!"; echo ""; exit 1; fi
+        if [[ -z ${workdir} ]]; then reho "Error: working directory parameter required when createStudy specified!"; echo ""; exit 1; fi
         STUDY_PATH="${workdir}/${PROJECT_NAME}"
         StudyFolder="${workdir}/${PROJECT_NAME}"
         SubjectsFolder="${workdir}/${PROJECT_NAME}/subjects"
     fi
-    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
-        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'mapHCPFiles'` ]]; then
+            if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
     fi
-    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ ${TURNKEY_STEPS} == "getHCPReady" ]]; then
-        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+    if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'getHCPReady'` ]]; then
+            if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
     fi
     
-    StudyFolder="${STUDY_PATH}"
-    SubjectsFolder="${STUDY_PATH}/subjects"
-    
-    # -- Define additional variables
-    if [ -z "$workdir" ]; then workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''; fi
-    if [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" == "xnat" ]]; then
-        workdir="/output"
-        mnap_studyfolder="${workdir}/${XNAT_PROJECT_ID}"
-    else
-        mnap_studyfolder="${STUDY_PATH}"
-    fi
-    mnap_subjectsfolder="${mnap_studyfolder}/subjects"
+    mnap_subjectsfolder="${STUDY_PATH}/subjects"
     mnap_workdir="${mnap_subjectsfolder}/${XNAT_SESSION_LABELS}"
-    logdir="${mnap_studyfolder}/processing/logs"
-    specsdir="${mnap_subjectsfolder}/specs"
+    logdir="${STUDY_PATH}/processing/logs"
+    specsdir="${STUDY_PATH}/specs"
     rawdir="${mnap_workdir}/inbox"
     rawdir_temp="${mnap_workdir}/inbox_temp"
     processingdir="${mnap_studyfolder}/processing"
@@ -2655,7 +2672,7 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
     if [ "$TURNKEY_TYPE" != "xnat" ]; then
        project_batch_file="${processingdir}/${PROJECT_NAME}_batch_params.txt"
     fi
-    
+   
     MNAPTurnkeyWorkflow=`more ${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh | grep 'MNAPTurnkeyWorkflow="' | sed 's/\MNAPTurnkeyWorkflow=//g' | sed 's/\"//g'`
 
     # -- Report parameters
