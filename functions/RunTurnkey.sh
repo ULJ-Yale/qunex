@@ -789,7 +789,7 @@ fi
            ${MNAPCOMMAND} hcp2 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
            CleanupFiles=" talairach_with_skull.log lh.white.deformed.out lh.pial.deformed.out rh.white.deformed.out rh.pial.deformed.out"
            for CleanupFile in ${CleanupFiles}; do 
-               cp ${logdir}/${CleanupFile} ${mnap_subjectsfolder}/${CASES}/hcp/pb0986/T1w/${CASES}/scripts/
+               cp ${logdir}/${CleanupFile} ${mnap_subjectsfolder}/${CASES}/hcp/pb0986/T1w/${CASES}/scripts/ 2>/dev/null
                rm -rf ${logdir}/${CleanupFile}
            done
        }
@@ -800,33 +800,27 @@ fi
        }
        # -- QCPreprocT1W (after hcp3)
        turnkey_QCPreprocT1w() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for T1w data ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/T1w" --modality="T1w" --overwrite="${OVERWRITE_STEP}"
-           if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-              CheckLogQCT1w=""
-           else
-              CheckLogQCT1w=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-           fi
+           Modality="T1w"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
+           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreprocT1w ${logdir}/comlogs/${QCPreprocLog}
        }
        # -- QCPreprocT2W (after hcp3)
        turnkey_QCPreprocT2w() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for T2w data ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/T2w" --modality="T2w" --overwrite="${OVERWRITE_STEP}"
-           if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-              CheckLogQCT2w=""
-           else
-              CheckLogQCT2w=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-           fi
+           Modality="T2w"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
+           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreprocT2w ${logdir}/comlogs/${QCPreprocLog}
        }
        # -- QCPreprocMyelin (after hcp3)
        turnkey_QCPreprocMyelin() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for myelin data .. "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/myelin" --modality="myelin" --overwrite="${OVERWRITE_STEP}"
-           if [ -z `ls -t1 *_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-              CheckLogQCMyelin=""
-           else
-              CheckLogQCMyelin=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-           fi
+           Modality="myelin"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
+           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreprocMyelin ${logdir}/comlogs/${QCPreprocLog}
        }
        # -- fMRIVolume
        turnkey_hcp4() {
@@ -842,23 +836,23 @@ fi
        }
        # -- QCPreprocBOLD (after hcp5)
        turnkey_QCPreprocBOLD() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for BOLD data ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/BOLD" --modality="BOLD" --overwrite="${OVERWRITE_STEP}" --boldsuffix="_Atlas"
-           if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-              CheckLogQCTBOLD=""
-           else
-              CheckLogQCTBOLD=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
+           Modality="BOLD"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
+           if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
+           if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
+           if [ -z "${BOLDS}" ]; then
+                BOLDS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'}`
            fi
+           for BOLD in ${BOLDS}; do
+               ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLD}"
+               QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+               rename QCPreproc QCPreprocBOLD${BOLD} ${logdir}/comlogs/${QCPreprocLog}
+           done
        }
        # -- Diffusion HCP (after hcp1)
        turnkey_hcpd() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_Diffusion) ..."; echo ""
            ${MNAPCOMMAND} hcpd --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}"
-           if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-              CheckLogQCDWI=""
-           else
-              CheckLogQCDWI=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-           fi
        }
        # -- Diffusion Legacy (after hcp1)
        turnkey_hcpdLegacy() {
@@ -867,23 +861,19 @@ fi
        }
        # -- QCPreprocDWILegacy (after hcpd)
        turnkey_QCPreprocDWILegacy() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI Legacy HCP processing ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}"
-           if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-              QCPreprocDWILegacy=""
-           else
-              QCPreprocDWILegacy=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-           fi
+           Modality="DWI"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} legacy data ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}"
+           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreprocDWILegacy ${logdir}/comlogs/${QCPreprocLog}
        }
        # -- QCPreprocDWI (after hcpd)
        turnkey_QCPreprocDWI() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI HCP processing ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion"
-           if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-              QCPreprocDWI=""
-           else
-              QCPreprocDWI=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-           fi
+           Modality="DWI"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} HCP processing ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${logdir}" 
+           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreprocDWI ${logdir}/comlogs/${QCPreprocLog}
        }
        # -- eddyQC processing steps
        turnkey_eddyQC() {
@@ -908,8 +898,11 @@ fi
        }
        # -- QCPreprocDWIeddyQC (after eddyQC)
        turnkey_QCPreprocDWIeddyQC() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI eddyQC ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes"
+           Modality="DWI"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} eddyQC ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes"
+           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreprocDWIeddyQC ${logdir}/comlogs/${QCPreprocLog}
        }
     #
     # --------------- HCP Processing and relevant QC end -----------------------
@@ -932,13 +925,19 @@ fi
        }
        # -- QCPreprocDWIDTIFIT (after FSLDtifit)
        turnkey_QCPreprocDWIDTIFIT() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI FSL's dtifit analyses ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" 
+           Modality="DWI"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} FSL's dtifit analyses ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" 
+           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreprocDWIDTIFIT ${logdir}/comlogs/${QCPreprocLog}
        }
        # -- QCPreprocDWIBedpostX (after FSLBedpostxGPU)
        turnkey_QCPreprocDWIBedpostX() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for DWI FSL's BedpostX analyses ... "; echo ""
-           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="DWI" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes"
+           Modality="DWI"
+           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} FSL's BedpostX analyses ... "; echo ""
+           ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes"
+           QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+           rename QCPreproc QCPreprocDWIBedpostX ${logdir}/comlogs/${QCPreprocLog}
        }
        # -- probtrackxGPUDense for DWI data (after FSLBedpostxGPU)
        turnkey_probtrackxGPUDense() {
@@ -994,27 +993,11 @@ fi
           for Modality in ${Modalities}; do
               if [[ ${Modality} == "BOLD" ]]; then
                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
-                  if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-                     CheckLogQCBOLDCustom=""
-                  else
-                     CheckLogQCBOLDCustom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-                  fi
               fi
               if [[ ${Modality} == "DWI" ]]; then
                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
-                  if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-                     CheckLogQCDWICustom=""
-                  else
-                     CheckLogQCDWICustom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-                  fi
               else
                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
-                  CheckLogQC${Modality}Custom=`ls -t1 *_${QCPreproc}*log | head -n 1`
-                  if [ -z `ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log 2>/dev/null | head -n 1` ]; then 
-                     CheckLogQC${Modality}Custom=""
-                  else
-                     CheckLogQC${Modality}Custom=`ls -t1 ${logdir}/comlogs/*_${QCPreproc}*log | head -n 1`
-                  fi
               fi
           done
       }
@@ -1236,15 +1219,15 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
     if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log | head -n 1`
-        if [ -z ${CheckRunLog} ]; then
+        if [ -z "${CheckRunLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
            reho " ===> ERROR: Runlog file not found!"; echo ""
         fi
-        if [ ! -z ${CheckRunLog} ]; then
+        if [ ! -z "${CheckRunLog}" ]; then
            geho " ===> Runlog file: ${CheckRunLog} "; echo ""
            CheckRunLogOut=`cat ${CheckRunLog} | grep '===> Successful completion'`
         fi
-        if [ -z ${CheckRunLogOut} ]; then
+        if [ -z "${CheckRunLogOut}" ]; then
                TURNKEY_STEP_ERRORS="yes"
                reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
            else
@@ -1254,17 +1237,17 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     fi
     # -- Specific checks for all other functions
     if [ ! -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
-        if [ -z `ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then
-           CheckLog=""
-           reho " ===> ERROR: Comlog file not found!"; echo ""
+           CheckComLog=`ls -t1 ${logdir}/comlogs/done_${TURNKEY_STEP}*log | head -n 1`
+        if [ -z "${CheckComLog}" ]; then
+           TURNKEY_STEP_ERRORS="yes"
+           reho " ===> ERROR: Completed ComLog file not found!"; echo ""
         fi
-        if [ ! -z `ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log 2>/dev/null | head -n 1` ]; then
-            CheckLog=`ls -t1 ${logdir}/comlogs/*_${TURNKEY_STEP}*log | head -n 1`
-            chmod 777 ${CheckLog} 2>/dev/null
-            geho " ===> Comlog file: ${CheckLog}"
+        if [ ! -z "${CheckComLog}" ]; then
+           geho " ===> Comlog file: ${CheckComLog}"
+           chmod 777 ${CheckLog} 2>/dev/null
         fi
-        if [ -z `echo "${CheckLog}" | grep 'done'` ]; then
-            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${CheckLog}."
+        if [ -z `echo "${CheckComLog}" | grep 'done'` ]; then
+            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed. Check ${CheckComLog}."
             TURNKEY_STEP_ERRORS="yes"
         else
             echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""

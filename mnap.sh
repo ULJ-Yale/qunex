@@ -350,7 +350,7 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 SuccessCheck="Successful completion"
 ComRunSet="cd ${MasterRunLogFolder}; echo '${CommandToRun}' >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 770 ${ComRun}"
 ComRunExec="${ComRun} 2>&1 | tee -a ${ComlogTmp}"
-ComComplete="cat ${ComlogTmp} | grep ${SuccessCheck} &> ${CompletionCheck}"
+ComComplete="cat ${ComlogTmp} | grep '${SuccessCheck}' &> ${CompletionCheck}"
 ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo '  ===> Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
 ComRunAll="${ComRunSet}; ${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
@@ -1929,7 +1929,6 @@ Overwrite="$Overwrite"
 Cluster="$RunMethod"
 SceneZip="$SceneZip"
 ProcessCustomQC="$ProcessCustomQC"
-
 # -- DWI Parameters
 DWIPath="$DWIPath"
 DWIData="$DWIData"
@@ -1951,11 +1950,6 @@ fi
 # -- Check T1w output folders for QC
 if [ ! -d ${OutPath} ]; then
     mkdir -p ${OutPath} &> /dev/null
-fi
-# -- Define log folder
-LogFolder=${OutPath}/qclog
-if [ ! -d ${LogFolder} ]; then
-    mkdir -p ${LogFolder}  &> /dev/null
 fi
 # -- Echo full command
 echo ""
@@ -2344,6 +2338,11 @@ if [[ "$setflag" =~ .*-.* ]]; then
     if [ -z "$STUDY_PATH" ]; then
          STUDY_PATH=${StudyFolder}
     fi
+    # -- If logfolder flag set then set it and set master log
+    if [ -z "$LogFolder" ]; then
+        LogFolder="${StudyFolder}/processing/logs"
+    fi
+    
     # -- Set additional general flags
     CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
@@ -2759,7 +2758,7 @@ if [ "$FunctionToRun" == "organizeDicom" ]; then
     echo "   Gzip DICOM files: ${Gzip}"
     echo "   Report verbose run: ${VerboseRun}"
     echo "   Cores to use: ${Cores}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo ""
     echo "--------------------------------------------------------------"
     # -- Loop through all the cases
@@ -2849,6 +2848,7 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
         if [ -z "$BOLDPrefix" ]; then BOLDPrefix=""; echo "Input BOLD Prefix not specified. Assuming no BOLD name prefix."; fi
         if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "Processed BOLD Suffix not specified. Assuming no BOLD output suffix."; fi
     fi
+    
     # -- Report parameters
     echo ""
     echo "Running $FunctionToRun processing with the following parameters:"
@@ -2857,7 +2857,7 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subject Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Custom QC requested: ${ProcessCustomQC}"
     echo "   Omit default QC: ${OmitDefaults}"
     echo "   QC Modality: ${Modality}"
@@ -2942,7 +2942,7 @@ if [ "$FunctionToRun" == "eddyQC" ]; then
             echo "   StudyFolder: ${StudyFolder}"
             echo "   Subjects Folder: ${SubjectsFolder}"
             echo "   Subject: ${CASE}"
-            echo "   Study Log Folder: ${MasterLogFolder}"
+            echo "   Study Log Folder: ${LogFolder}"
             echo "   Report Type: ${Report}"
             echo "   Eddy QC Input Path: ${EddyPath}"
             echo "   Eddy QC Output Path: ${OutputDir}"
@@ -2968,7 +2968,7 @@ if [ "$FunctionToRun" == "eddyQC" ]; then
         echo "--------------------------------------------------------------"
         echo "   Study Folder: ${StudyFolder}"
         echo "   Subjects Folder: ${SubjectsFolder}"
-        echo "   Study Log Folder: ${MasterLogFolder}"
+        echo "   Study Log Folder: ${LogFolder}"
         echo "   Report Type: ${Report}"
         echo "   Eddy QC Input Path: ${EddyPath}"
         echo "   Eddy QC Output Path: ${OutputDir}"
@@ -3003,7 +3003,7 @@ if [ "$FunctionToRun" == "mapHCPFiles" ]; then
     echo "Study Folder: ${StudyFolder}"
     echo "Subjects Folder: ${SubjectsFolder}"
     echo "Subjects: ${CASES}"
-    echo "Study Log Folder: ${MasterLogFolder}"
+    echo "Study Log Folder: ${LogFolder}"
     echo "--------------------------------------------------------------"
     echo ""
     for CASE in ${CASES}; do
@@ -3036,7 +3036,7 @@ if [ "$FunctionToRun" == "dataSync" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
@@ -3125,7 +3125,7 @@ if [ "$FunctionToRun" == "createLists" ]; then
         echo "   Study Folder: ${StudyFolder}"
         echo "   Subjects Folder: ${SubjectsFolder}"
         echo "   Subjects: ${CASES}"
-        echo "   Study Log Folder: ${MasterLogFolder}"
+        echo "   Study Log Folder: ${LogFolder}"
         echo "   List to generate: ${ListGenerate}"
         echo "   List path: ${ListPath}"
         echo "   List name: ${ListName}"
@@ -3170,7 +3170,7 @@ if [ "$FunctionToRun" == "createLists" ]; then
             echo "   Study Folder: ${StudyFolder}"
             echo "   Subjects Folder: ${SubjectsFolder}"
             echo "   Subjects: ${CASES}"
-            echo "   Study Log Folder: ${MasterLogFolder}"
+            echo "   Study Log Folder: ${LogFolder}"
             echo "   List to generate: ${ListGenerate}"
             echo "   Scheduler Name and Options: $Scheduler"
             echo "   Overwrite prior run: ${Overwrite}"
@@ -3207,7 +3207,7 @@ if [ "$FunctionToRun" == "FSLDtifit" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler Name and Options: $Scheduler"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "--------------------------------------------------------------"
@@ -3238,7 +3238,7 @@ if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Number of Fibers: ${Fibers}"
     echo "   Model Type: ${Model}"
     echo "   Burnin Period: ${Burnin}"
@@ -3281,7 +3281,7 @@ if [ "$FunctionToRun" == "hcpdLegacy" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Scanner: ${Scanner}"
     echo "   Using FieldMap: ${UseFieldmap}"
     echo "   Echo Spacing: ${EchoSpacing}"
@@ -3324,7 +3324,7 @@ if [ "$FunctionToRun" == "structuralParcellation" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   ParcellationFile: ${ParcellationFile}"
     echo "   Parcellated Data Output Name: ${OutName}"
     echo "   Input Data Type: ${InputDataType}"
@@ -3396,7 +3396,7 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
     echo "Running $FunctionToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Output Path: ${OutPathFC}"
     echo "   Extract data in CSV format: ${ExtractData}"
     echo "   Type of fc calculation: ${Calculation}"
@@ -3489,7 +3489,7 @@ if [ "$FunctionToRun" == "BOLDParcellation" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Input File: ${InputFile}"
     echo "   Input Path: ${InputPath}"
     echo "   Single Input File: ${SingleInputFile}"
@@ -3539,7 +3539,7 @@ if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Matrix version used for input: ${MatrixVersion}"
     echo "   File to use for parcellation: ${ParcellationFile}"
     echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
@@ -3582,7 +3582,7 @@ if [ "$FunctionToRun" == "ROIExtract" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Input File: ${InputFile}"
     echo "   Output File Name: ${OutName}"
     echo "   Single Input File: ${SingleInputFile}"
@@ -3626,7 +3626,7 @@ if [ "$FunctionToRun" == "DWISeedTractography" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Matrix version used for input: ${MatrixVersion}"
     echo "   Dense dconn seed reduction: ${SeedFile}"
     echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
@@ -3662,7 +3662,7 @@ if [ "$FunctionToRun" == "autoPtx" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   BedpostX Folder: ${BedPostXFolder} "
     echo "--------------------------------------------------------------"
     echo ""
@@ -3691,7 +3691,7 @@ if [ "$FunctionToRun" == "pretractographyDense" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "--------------------------------------------------------------"
     echo ""
     for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
@@ -3726,7 +3726,7 @@ if [ "$FunctionToRun" == "probtrackxGPUDense" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler: ${Scheduler}"
     echo "   Compute Matrix1: ${MatrixOne}"
     echo "   Compute Matrix3: ${MatrixThree}"
@@ -3758,7 +3758,7 @@ if [ "$FunctionToRun" == "AWSHCPSync" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
-    echo "   Study Log Folder: ${MasterLogFolder}"
+    echo "   Study Log Folder: ${LogFolder}"
     echo "   Run Method: ${RunMethod}"
     echo "   Modality: ${Modality}"
     echo "   AWS URI Path: ${Awsuri}"
