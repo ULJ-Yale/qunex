@@ -52,12 +52,12 @@ def useOrSkipBOLD(sinfo, options, r=None):
     if "all" not in btargets:
         bskip = [(n, b, t) for n, b, t in bolds if t not in btargets]
         bolds = [(n, b, t) for n, b, t in bolds if t in btargets]
+        bskip.sort()
         if r is not None:
             if len(bskip) > 0:
                 r += "\n\nSkipping the following BOLD images:"
                 for n, b, t in bskip:
-                    r += "\n...  %s [%s]" % (b, t)
-        bskip.sort()
+                    r += "\n...  %-6s [%s]" % (b, t)
     bolds.sort()
 
     return bolds, bskip, len(bskip), r
