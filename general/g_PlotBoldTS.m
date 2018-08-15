@@ -287,11 +287,10 @@ for n = 1:nelements
 		end
 		sz.Var = sz.Var + elements(n).size;
 		if verbose, fprintf('\n ---> added %s of size %d', elements(n).name, elements(n).size); end
-	end
 
 	% ----> preprocess stats entry
 
-	if strcmp(elements(n).type, 'stats')
+	elseif strcmp(elements(n).type, 'stats')
 		for s = 1:length(elements(n).stats)
 
 			id = elements(n).stats(s).imageindex;
@@ -326,7 +325,11 @@ for n = 1:nelements
 			elements(n).size = sz.Stat;
 		end
 		sz.Fix = sz.Fix + sz.Stat;
+	
+	else
+		error('ERROR: Unknown element type! [%s]', elements(n).type);
 	end
+
 end
 
 
@@ -445,6 +448,8 @@ end
 
 % ----> Title
 
+if verbose, fprintf('\n ---> creating title'); end
+
 txt = regexp(images, ';', 'split');
 for t = 1:length(txt)
 	[p, b, e] = fileparts(txt{t});
@@ -457,6 +462,8 @@ sp = subplot('Position', [sz.HPad  1 - sz.VTop 1 - 2 * sz.HPad sz.VTop]);
 set(sp, 'YLim', [0 3]);
 text(0, 0, {['\bf\fontsize{16}BOLD Timeseries Plot \rm|\color{red} ' subjid], ['\rm\fontsize{12}\color{black}' txt]}, 'VerticalAlignment', 'bottom');
 set(sp, 'Visible', 'off');
+
+if verbose, fprintf('\n ---> saving figure'); end
 
 saveas(f, filename);
 % print(f,'-dpdf', '-r72', [filename '-print' '.pdf']);
