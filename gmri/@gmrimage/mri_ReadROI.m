@@ -183,7 +183,7 @@ if strcmp('none', roif1) || isempty(roif1)
     roi1 = [];
 else
     if roif1(1) ~= '/';
-        roif1 = fullfile(fileparts(roinfo), roif1);
+        roif1 = fullfile(fileparts(roiinfo), roif1);
     end
     roi1 = gmrimage(roif1);
     roi1.data = roi1.image2D;
