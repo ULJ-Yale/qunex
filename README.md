@@ -308,6 +308,7 @@ Change Log
 * 0.19.24 [mnaptools connector] Updates to RunTurnkey
 * 0.19.25 [mnaptools connector] Updates to RunTurnkey QCPreproc and log handling
 * 0.19.26 [matlab] Fixed cleanup bug
+* 0.19.27 [niutilities matlab] Removed -nojvm from MNAPMCOMMAND and added parameter checking for PlotBoldTS
 
 =======
 [Mind and Brain Lab]: http://mblab.si
