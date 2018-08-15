@@ -306,6 +306,7 @@ Change Log
 * 0.19.22 [niutilities] More robust handling of parameters
 * 0.19.23 [mnaptools connector] Updates to RunTurnkey
 * 0.19.24 [mnaptools connector] Updates to RunTurnkey
+* 0.19.25 [mnaptools connector] Updates to RunTurnkey QCPreproc and log handling
 
 =======
 [Mind and Brain Lab]: http://mblab.si
