@@ -2546,7 +2546,6 @@ fi
 if [ "$FunctionToRun" == "runTurnkey" ]; then
     # -- Check all the user-defined parameters:
     if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
     if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
     
     # -- Check if subject input is a parameter file instead of list of cases
@@ -3487,11 +3486,17 @@ if [ "$FunctionToRun" == "BOLDParcellation" ]; then
             if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
     fi
     # -- Check optional parameters if not specified
-    if [ -z "$UseWeights" ]; then 
-        UseWeights="no"; WeightsFile="no"; 
-    else
-        if [ -z "$WeightsFile" ]; then reho "Error: Weights file to use is missing"; echo ""; exit 1; fi
+    if [ -z ${UseWeights} ]; then
+        UseWeights="no"
+        WeightsFile="no"
+        reho "Note: Weights file not used."
     fi
+    if [ -z ${WeightsFile} ]; then
+        UseWeights="no"
+        WeightsFile="no"
+        reho "Note: Weights file not used."
+    fi
+
     if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
     if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
     if [ -z "$ExtractData" ]; then ExtractData="no"; fi

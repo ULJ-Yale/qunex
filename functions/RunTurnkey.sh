@@ -591,6 +591,7 @@ fi
     #
        # -- Create study hieararchy and generate subject folders
        turnkey_createStudy() {
+           
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStudy ..."; echo ""
            TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
            createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
@@ -601,13 +602,30 @@ fi
            if [ ! -d ${workdir} ]; then
                mkdir -p ${workdir} &> /dev/null
            fi
+           
            if [ ! -d ${mnap_studyfolder} ]; then
+               reho " -- Note: ${mnap_studyfolder} not found. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
+               echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
                ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
                mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
                createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            else
-               createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
                geho " -- Study folder ${mnap_studyfolder} already exits!" 2>&1 | tee -a ${createStudy_ComlogTmp}
+               if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+                   if [[ ${OVERWRITE_PROJECT_XNAT} == "yes" ]]; then
+                       reho "    Overwrite set to 'yes' for XNAT run. Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
+                       rm -rf ${mnap_studyfolder}/ &> /dev/null
+                       reho " -- Note: ${mnap_studyfolder} removed. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
+                       echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
+                       ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
+                       mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
+                       createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+                   fi
+               fi
+           fi
+           if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
+               reho "Note. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
+               ${MNAPCOMMAND}  createStudy "${mnap_studyfolder}"
            fi
            
            mkdir -p ${mnap_workdir} &> /dev/null
@@ -632,6 +650,7 @@ fi
            
            rm ${createStudy_ComlogTmp}
        }
+       
        # -- Get data from original location & organize DICOMs
        turnkey_mapRawData() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: mapRawData ..."; echo ""
@@ -642,11 +661,11 @@ fi
            fi
            if [ ! -d ${mnap_studyfolder} ]; then
                reho "Note. ${mnap_studyfolder} not found. Regenerating now..."; echo "";
-               gmri createStudy "${mnap_studyfolder}"
+               ${MNAPCOMMAND}  createStudy "${mnap_studyfolder}"
            fi
            if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
                reho "Note. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
-               gmri createStudy "${mnap_studyfolder}"
+               ${MNAPCOMMAND}  createStudy "${mnap_studyfolder}"
            fi
            if [ ! -d ${mnap_subjectsfolder} ]; then
                reho "Error. ${mnap_subjectsfolder} not found."; echo ""; exit 1
@@ -1004,7 +1023,7 @@ fi
            if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
            if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
            # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
+           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
            if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
            for MatrixVersion in $MatrixVersions; do
                ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
@@ -1065,28 +1084,41 @@ fi
        turnkey_BOLDParcellation() {
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation ... "; echo ""
            # -- Defaults if not specified:
-           if [ -z "$InputFile" ]; then InputFile="bold1_Atlas_g7_hpss_res-VWMWB_lpss"; fi
-           if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
+        unset BOLDRUNS
+        if [ -z ${BOLDRUNS} ]; then
+            BOLDRUNS="1"
+        fi
+        unset BOLDRUN
+        for BOLDRUN in ${BOLDRUNS}; do
+           if [ -z "$InputFile" ]; then InputFile="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss"; fi
+           if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
+           if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
            # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
+           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
            if [ -z "$OutName" ]; then OutName="BOLD-CAB-NP-v1.0"; fi
+           if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
+           if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
+           if [ -z "$OutPath" ]; then OutPath="/images/functional/"; fi
            if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
            if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
-           if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
            # -- Command
-           ${MNAPCOMMAND} BOLDParcellation \
-           --subjects="${CASES}" \
+           RunCommand="${MNAPCOMMAND} BOLDParcellation --subjects='${CASES}' \
+           --subjectsfolder="${mnap_subjectsfolder}" \
            --inputfile='${InputFile}' \
+           --singleinputfile='${SingleInputFile}' \
            --inputpath='${InputPath}' \
            --inputdatatype='${InputDataType}' \
            --parcellationfile='${ParcellationFile}' \
-           --overwrite='${OVERWRITE_STEP}' \
+           --overwrite='${Overwrite}' \
            --outname='${OutName}' \
            --outpath='${OutPath}' \
-           --useweights='${UseWeights}' \
-           --weightsfile='${WeightsFile}' \
+           --computepconn='${ComputePConn}' \
            --extractdata='${ExtractData}' \
-           --computepconn='${ComputePConn}'
+           --useweights='${UseWeights}' \
+           --weightsfile='${WeightsFile}'"
+           echo " -- Command: ${RunCommand}"
+           eval ${RunCommand}
+        done
        }
        # -- Map HCP processed outputs for further FC BOLD analyses
        turnkey_mapHCPData() {
@@ -1159,7 +1191,7 @@ fi
            InputFiles="bold1_Atlas_g7_hpss_res-VWMWB_lpss.dtseries.nii"
            OutName="GBC_bold1_Atlas_g7_hpss_res-VWMWB_lpss"
            ${MNAPCOMMAND} computeBOLDfc \
-           --subjectsfolder=${mnap_subjectsfolder} \
+           --subjectsfolder="${mnap_subjectsfolder}" \
            --calculation="gbc" \
            --runtype="individual" \
            --subjects="${CASE}" \
@@ -1236,8 +1268,8 @@ fi
           if [ -z ${output_name} ]; then
               output_name="${CASES}_BOLD_GreyPlot_CIFTI.pdf"
           fi
-          if [ -z ${BOLDSRUNS} ]; then
-              BOLDSRUNS="1"
+          if [ -z ${BOLDRUNS} ]; then
+              BOLDRUNS="1"
           fi
           echo " -- Log folder: ${logdir}/comlogs/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
           echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
@@ -1248,9 +1280,10 @@ fi
           echo "   QC Plot image folder: ${images_folder}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
           echo "   QC Plot output folder: ${output_folder}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
           echo "   QC Plot output name: ${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-          echo "   QC Plot BOLDS runs: ${BOLDSRUNS}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+          echo "   QC Plot BOLDS runs: ${BOLDRUNS}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
 
-          for BOLDRUN in ${BOLDSRUNS}; do 
+          unset BOLDRUN
+          for BOLDRUN in ${BOLDRUNS}; do 
              cd ${images_folder} 
              if [ -z ${QCPlotImages} ]; then
                  QCPlotImages="bold${BOLDRUN}.nii.gz;bold${BOLDRUN}_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii"
@@ -1271,7 +1304,7 @@ fi
                  echo " -- Found ${mnap_subjectsfolder}/QC/BOLD/${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                  echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                  g_PlotBoldTS_Check="pass"
-            else
+             else
                  echo " -- Result ${mnap_subjectsfolder}/QC/BOLD/${output_name} missing!" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                  echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                  g_PlotBoldTS_Check="fail"

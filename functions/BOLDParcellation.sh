@@ -108,7 +108,7 @@ geho() {
 # ------------------------------------------------------------------------------
 
 if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
-	usage
+    usage
 fi
 
 # ------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ fi
 # The data should be in the folder relative to the master study folder, specified by the inputfile
 # Mandatory input parameters:
     # SubjectsFolder # e.g. /gpfs/project/fas/n3/Studies/Connectome
-    # Subject	  # e.g. 100206
+    # Subject      # e.g. 100206
     # InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
     # InputPath # e.g. /images/functional/
     # InputDataType # e.g.dtseries
@@ -247,36 +247,36 @@ done
 
 # -- Check required parameters
 if [ -z ${SingleInputFile} ]; then
-		if [ -z ${SubjectsFolder} ]; then
-		    usage
-		    reho "ERROR: <subjects-folder-path> not specified>"
-		    echo ""
-		    exit 1
-		fi
-		if [ -z ${CASE} ]; then
-		    usage
-		    reho "ERROR: <subject-id> not specified"
-		    echo ""
-		    exit 1
-		fi
-		if [ -z ${InputFile} ]; then
-		    usage
-		    reho "ERROR: <file_to_compute_parcellation_on> not specified"
-		    echo ""
-		    exit 1
-		fi
-		if [ -z ${InputPath} ]; then
-		    usage
-		    reho "ERROR: <path_for_input_file> not specified"
-		    echo ""
-		    exit 1
-		fi
+        if [ -z ${SubjectsFolder} ]; then
+            usage
+            reho "ERROR: <subjects-folder-path> not specified>"
+            echo ""
+            exit 1
+        fi
+        if [ -z ${CASE} ]; then
+            usage
+            reho "ERROR: <subject-id> not specified"
+            echo ""
+            exit 1
+        fi
+        if [ -z ${InputFile} ]; then
+            usage
+            reho "ERROR: <file_to_compute_parcellation_on> not specified"
+            echo ""
+            exit 1
+        fi
+        if [ -z ${InputPath} ]; then
+            usage
+            reho "ERROR: <path_for_input_file> not specified"
+            echo ""
+            exit 1
+        fi
 fi
 if [ -z ${InputDataType} ]; then
-	usage
-	reho "ERROR: <type_of_dense_data_for_input_file"
-	echo ""
-	exit 1
+    usage
+    reho "ERROR: <type_of_dense_data_for_input_file"
+    echo ""
+    exit 1
 fi
 if [ -z ${ParcellationFile} ]; then
     usage
@@ -297,7 +297,13 @@ if [ -z ${OutPath} ]; then
 fi
 if [ -z ${UseWeights} ]; then
     UseWeights="no"
-    exit 1
+    WeightsFile="no"
+    reho "Note: Weights file not used."
+fi
+if [ -z ${WeightsFile} ]; then
+    UseWeights="no"
+    WeightsFile="no"
+    reho "Note: Weights file not used."
 fi
 
 # -- Set StudyFolder
@@ -341,196 +347,196 @@ echo ""
 
 # -- Define all inputs and outputs depending on data type input
 if [ "$InputDataType" == "dtseries" ]; then 
-	echo "      Working with dtseries files..."
-	echo ""
-	# -- Define extension 
-	InputFileExt="dtseries.nii"
-	OutFileExt="ptseries.nii"
-	if [ -z "$SingleInputFile" ]; then
-		# -- Define input
-		BOLDInput="$SubjectsFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
-		# -- Define output
-		BOLDOutput="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
-	else
-		# -- Define input
-		BOLDInput="$InputPath/${SingleInputFile}.${InputFileExt}"
-		# -- Define output
-		BOLDOutput="$OutPath/${SingleInputFile}_${OutName}.${OutFileExt}"
-	fi
-	echo "      Dense BOLD Input:              ${BOLDInput}"
-	echo ""
-	echo "      Parcellated BOLD Output:       ${BOLDOutput}"
-	echo ""
+    echo "      Working with dtseries files..."
+    echo ""
+    # -- Define extension 
+    InputFileExt="dtseries.nii"
+    OutFileExt="ptseries.nii"
+    if [ -z "$SingleInputFile" ]; then
+        # -- Define input
+        BOLDInput="$SubjectsFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
+        # -- Define output
+        BOLDOutput="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
+    else
+        # -- Define input
+        BOLDInput="$InputPath/${SingleInputFile}.${InputFileExt}"
+        # -- Define output
+        BOLDOutput="$OutPath/${SingleInputFile}_${OutName}.${OutFileExt}"
+    fi
+    echo "      Dense BOLD Input:              ${BOLDInput}"
+    echo ""
+    echo "      Parcellated BOLD Output:       ${BOLDOutput}"
+    echo ""
 fi
 if [ "$InputDataType" == "dscalar" ]; then 
-	echo "       Working with dscalar files..."
-	echo ""
-	# -- Define extension 
-	InputFileExt="dscalar.nii"
-	OutFileExt="pscalar.nii"
-	if [ -z "$SingleInputFile" ]; then
-		# -- Define input
-		BOLDInput="$SubjectsFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
-		# -- Define output
-		BOLDOutput="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
-	else
-		# -- Define input
-		BOLDInput="$InputPath/${SingleInputFile}.${InputFileExt}"
-		# -- Define output
-		BOLDOutput="$OutPath/${SingleInputFile}_${OutName}.${OutFileExt}"
-	fi
+    echo "       Working with dscalar files..."
+    echo ""
+    # -- Define extension 
+    InputFileExt="dscalar.nii"
+    OutFileExt="pscalar.nii"
+    if [ -z "$SingleInputFile" ]; then
+        # -- Define input
+        BOLDInput="$SubjectsFolder/$CASE/$InputPath/${InputFile}.${InputFileExt}"
+        # -- Define output
+        BOLDOutput="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}.${OutFileExt}"
+    else
+        # -- Define input
+        BOLDInput="$InputPath/${SingleInputFile}.${InputFileExt}"
+        # -- Define output
+        BOLDOutput="$OutPath/${SingleInputFile}_${OutName}.${OutFileExt}"
+    fi
 
-	echo "      Dense BOLD Input:              ${BOLDInput}"
-	echo ""
-	echo "      Parcellated BOLD Output:       ${BOLDOutput}"
-	echo ""
+    echo "      Dense BOLD Input:              ${BOLDInput}"
+    echo ""
+    echo "      Parcellated BOLD Output:       ${BOLDOutput}"
+    echo ""
 fi
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-	reho "--- Deleting prior $BOLDOutput..."
-	echo ""
-	rm -f "$BOLDOutput" > /dev/null 2>&1
+    reho "--- Deleting prior $BOLDOutput..."
+    echo ""
+    rm -f "$BOLDOutput" > /dev/null 2>&1
 fi
 
 # -- Check if parcellation was completed
 echo "--- Checking if parcellation was completed..."
 echo ""
 if [ -f "$BOLDOutput" ]; then
-	geho "Parcellation data found: "
-	echo ""
-	echo "      $BOLDOutput"
-	echo ""
-	exit 1
+    geho "Parcellation data found: "
+    echo ""
+    echo "      $BOLDOutput"
+    echo ""
+    exit 1
 else
-	reho "Parcellation data not found."
-	echo ""
-	geho "-- Computing parcellation on $BOLDInput..."
-	echo ""
-	# -- First parcellate by COLUMN and save a parcellated file
-	wb_command -cifti-parcellate "$BOLDInput" "$ParcellationFile" COLUMN "$BOLDOutput"
-	# -- Check if specified file was a *dtseries and compute a pconn file as well 
-	if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
-		# Check if pconn calculation is requested
-		if [ "$ComputePConn" == "yes" ]; then
-			# -- Specify pconn file outputs for correlation (r) value and covariance 
-			OutPConnFileExtR="r.pconn.nii"
-			OutPConnFileExtRfZ="r_Fz.pconn.nii"
-			OutPConnFileExtCov="cov.pconn.nii"
-			PConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
-			PConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtRfZ}"
-			PConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
-			# -- Check if weights file is specified
-			geho "-- Using weights: $UseWeights"
-			echo ""
-			if [ "$UseWeights" == "yes" ]; then
-				WeightsFile="${SubjectsFolder}/${CASE}/${WeightsFile}"
-				geho "Using $WeightsFile to weight the calculations..."
-				echo ""
-				# -- Compute pconn using correlation
-				geho "-- Computing pconn using correlation..."
-				echo ""
-				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -weights "$WeightsFile"
-				# -- Compute pconn using covariance
-				geho "-- Computing pconn using covariance..."
-				echo ""
-				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance -weights "$WeightsFile"
-				# -- Compute pconn using fisher-z correlation
-				geho "-- Computing pconn using correlation w/ fisher-z transform..."
-				echo ""
-				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z -weights "$WeightsFile"
-			fi
-			if [ "$UseWeights" == "no" ]; then
-				# -- Compute pconn using correlation
-				geho "-- Computing pconn using correlation..."
-				echo ""
-				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR"
-				# -- Compute pconn using covariance
-				geho "-- Computing pconn using covariance..."
-				echo ""
-				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance
-				# -- Compute pconn using fisher-z correlation
-				geho "-- Computing pconn using correlation w/ fisher-z transform..."
-				echo ""
-				wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z
-			fi
-		fi
-	fi
+    reho "Parcellation data not found."
+    echo ""
+    geho "-- Computing parcellation on $BOLDInput..."
+    echo ""
+    # -- First parcellate by COLUMN and save a parcellated file
+    wb_command -cifti-parcellate "$BOLDInput" "$ParcellationFile" COLUMN "$BOLDOutput"
+    # -- Check if specified file was a *dtseries and compute a pconn file as well 
+    if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
+        # Check if pconn calculation is requested
+        if [ "$ComputePConn" == "yes" ]; then
+            # -- Specify pconn file outputs for correlation (r) value and covariance 
+            OutPConnFileExtR="r.pconn.nii"
+            OutPConnFileExtRfZ="r_Fz.pconn.nii"
+            OutPConnFileExtCov="cov.pconn.nii"
+            PConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
+            PConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtRfZ}"
+            PConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
+            # -- Check if weights file is specified
+            geho "-- Using weights: $UseWeights"
+            echo ""
+            if [ "$UseWeights" == "yes" ]; then
+                WeightsFile="${SubjectsFolder}/${CASE}/${WeightsFile}"
+                geho "Using $WeightsFile to weight the calculations..."
+                echo ""
+                # -- Compute pconn using correlation
+                geho "-- Computing pconn using correlation..."
+                echo ""
+                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -weights "$WeightsFile"
+                # -- Compute pconn using covariance
+                geho "-- Computing pconn using covariance..."
+                echo ""
+                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance -weights "$WeightsFile"
+                # -- Compute pconn using fisher-z correlation
+                geho "-- Computing pconn using correlation w/ fisher-z transform..."
+                echo ""
+                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z -weights "$WeightsFile"
+            fi
+            if [ "$UseWeights" == "no" ]; then
+                # -- Compute pconn using correlation
+                geho "-- Computing pconn using correlation..."
+                echo ""
+                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR"
+                # -- Compute pconn using covariance
+                geho "-- Computing pconn using covariance..."
+                echo ""
+                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance
+                # -- Compute pconn using fisher-z correlation
+                geho "-- Computing pconn using correlation w/ fisher-z transform..."
+                echo ""
+                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z
+            fi
+        fi
+    fi
 fi
 if [ "$ExtractData" == "yes" ]; then 
-	geho "--- Requested extraction of data in CSV format."
-	echo ""
-	if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ] && [ "$ComputePConn" == "yes" ]; then
-		geho "--- Saving out the parcellated dtseries data in a CSV file..."
-		echo ""
-		# -- Specify pconn file outputs for correlation (r) value and covariance 
-		CSVOutPConnFileExtR="r.csv"
-		CSVOutPConnFileExtCov="cov.csv"
-		CSVPConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtR}"
-		CSVPConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtCov}"
-		rm -f ${CSVPConnBOLDOutputR} > /dev/null 2>&1
-		rm -f ${CSVPConnBOLDOutputCov} > /dev/null 2>&1
-		wb_command -nifti-information -print-matrix "$PConnBOLDOutputR" >> "$CSVPConnBOLDOutputR"
-		wb_command -nifti-information -print-matrix "$PConnBOLDOutputCov" >> "$CSVPConnBOLDOutputCov"
-	fi
-	if [ "$InputDataType" == "dscalar" ]; then
-		geho "--- Saving out the parcellated dscalar data in a CSV file..."
-		echo ""
-		if [ -z "$SingleInputFile" ]; then
-			DscalarFileExtCSV=".csv"
-			CSVDPScalarBoldOut="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${DscalarFileExtCSV}"
-		else
-			CSVDPScalarBoldOut="$OutPath/${SingleInputFile}_${OutName}_${DscalarFileExtCSV}"
-		fi
-		rm -f "$CSVDPScalarBoldOut" /dev/null 2>&1
-		wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDPScalarBoldOut"
-	fi
-	if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ]; then
-		geho "--- Saving out the parcellated single file dtseries data in a CSV file..."
-		echo ""
-		CSVDTseriesFileExtCSV=".csv"
-		CSVDTseriesFileExtCSV="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVDTseriesFileExtCSV}"
-		rm -f "$CSVDTseriesFileExtCSV" /dev/null 2>&1
-		wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDTseriesFileExtCSV"
-	fi
+    geho "--- Requested extraction of data in CSV format."
+    echo ""
+    if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ] && [ "$ComputePConn" == "yes" ]; then
+        geho "--- Saving out the parcellated dtseries data in a CSV file..."
+        echo ""
+        # -- Specify pconn file outputs for correlation (r) value and covariance 
+        CSVOutPConnFileExtR="r.csv"
+        CSVOutPConnFileExtCov="cov.csv"
+        CSVPConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtR}"
+        CSVPConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtCov}"
+        rm -f ${CSVPConnBOLDOutputR} > /dev/null 2>&1
+        rm -f ${CSVPConnBOLDOutputCov} > /dev/null 2>&1
+        wb_command -nifti-information -print-matrix "$PConnBOLDOutputR" >> "$CSVPConnBOLDOutputR"
+        wb_command -nifti-information -print-matrix "$PConnBOLDOutputCov" >> "$CSVPConnBOLDOutputCov"
+    fi
+    if [ "$InputDataType" == "dscalar" ]; then
+        geho "--- Saving out the parcellated dscalar data in a CSV file..."
+        echo ""
+        if [ -z "$SingleInputFile" ]; then
+            DscalarFileExtCSV=".csv"
+            CSVDPScalarBoldOut="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${DscalarFileExtCSV}"
+        else
+            CSVDPScalarBoldOut="$OutPath/${SingleInputFile}_${OutName}_${DscalarFileExtCSV}"
+        fi
+        rm -f "$CSVDPScalarBoldOut" /dev/null 2>&1
+        wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDPScalarBoldOut"
+    fi
+    if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ]; then
+        geho "--- Saving out the parcellated single file dtseries data in a CSV file..."
+        echo ""
+        CSVDTseriesFileExtCSV=".csv"
+        CSVDTseriesFileExtCSV="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVDTseriesFileExtCSV}"
+        rm -f "$CSVDTseriesFileExtCSV" /dev/null 2>&1
+        wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDTseriesFileExtCSV"
+    fi
 fi
 
 # -- Perform completion checks
 geho "--- Checking outputs..."
 echo ""
 if [ -f "$BOLDOutput" ]; then
-	geho "Parcellated BOLD file:           $BOLDOutput"
-	echo ""
+    geho "Parcellated BOLD file:           $BOLDOutput"
+    echo ""
 else
-	reho "--- Parcellated BOLD file $BOLDOutput is missing. Something went wrong."
-	echo ""
-	exit 1
+    reho "--- Parcellated BOLD file $BOLDOutput is missing. Something went wrong."
+    echo ""
+    exit 1
 fi
 if [ "$ComputePConn" == "yes" ]; then
-	if [ -f "$PConnBOLDOutputR" ]; then
-		geho "Parcellated connectivity (pconn) BOLD file using correlation:           $PConnBOLDOutputR"
-		echo ""
-	else
-		reho "Parcellated connectivity (pconn) BOLD file using correlation $PConnBOLDOutputR is missing. Something went wrong."
-		echo ""
-		exit 1
-	fi
-	if [ -f "$PConnBOLDOutputCov" ]; then
-		geho "Parcellated connectivity (pconn) BOLD file using covariance:           $PConnBOLDOutputCov"
-		echo ""
-	else
-		reho "Parcellated connectivity (pconn) BOLD file using covariance $PConnBOLDOutputCov is missing. Something went wrong."
-		echo ""
-		exit 1
-	fi
-	if [ -f "$PConnBOLDOutputRfZ" ]; then
-		geho "Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform:           $PConnBOLDOutputRfZ"
-		echo ""
-	else
-		reho "Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform $PConnBOLDOutputRfZ is missing. Something went wrong."
-		echo ""
-		exit 1
-	fi
+    if [ -f "$PConnBOLDOutputR" ]; then
+        geho "Parcellated connectivity (pconn) BOLD file using correlation:           $PConnBOLDOutputR"
+        echo ""
+    else
+        reho "Parcellated connectivity (pconn) BOLD file using correlation $PConnBOLDOutputR is missing. Something went wrong."
+        echo ""
+        exit 1
+    fi
+    if [ -f "$PConnBOLDOutputCov" ]; then
+        geho "Parcellated connectivity (pconn) BOLD file using covariance:           $PConnBOLDOutputCov"
+        echo ""
+    else
+        reho "Parcellated connectivity (pconn) BOLD file using covariance $PConnBOLDOutputCov is missing. Something went wrong."
+        echo ""
+        exit 1
+    fi
+    if [ -f "$PConnBOLDOutputRfZ" ]; then
+        geho "Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform:           $PConnBOLDOutputRfZ"
+        echo ""
+    else
+        reho "Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform $PConnBOLDOutputRfZ is missing. Something went wrong."
+        echo ""
+        exit 1
+    fi
 fi
 
 geho "--- BOLD Parcellation completed. Check output log for outputs and errors."
@@ -545,3 +551,4 @@ echo ""
 # ---------------------------------------------------------
 
 main $@
+
