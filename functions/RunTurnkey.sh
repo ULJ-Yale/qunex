@@ -149,6 +149,7 @@ usage() {
     echo "    --overwritestep=<specify_step_to_overwrite>                Specify <yes> or <no> for delete of prior workflow step. Default is [no]."
     echo "    --overwritesubject=<specify_subject_overwrite>             Specify <yes> or <no> for delete of prior subject run. Default is [no]."
     echo "    --overwriteproject=<specify_project_overwrite>             Specify <yes> or <no> for delete of entire project prior to run. Default is [no]."
+    echo "    --overwriteprojectxnat=<specify_xnat_project_overwrite>    Specify <yes> or <no> for delete of entire XNAT project folder prior to run. Default is [no]."
     echo "    --cleanupsubject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of subject folder after steps are done. Default is [no]."
     echo "    --cleanupproject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of entire project after steps are done. Default is [no]."
     echo ""
@@ -219,6 +220,7 @@ unset BATCH_PARAMETERS_FILENAME
 unset OVERWRITE_STEP
 unset OVERWRITE_PROJECT
 unset OVERWRITE_PROJECT_FORCE
+unset OVERWRITE_PROJECT_XNAT
 unset OVERWRITE_SUBJECT
 unset SCAN_MAPPING_FILENAME
 unset XNAT_ACCSESSION_ID
@@ -253,6 +255,7 @@ OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
 OVERWRITE_PROJECT_FORCE=`opts_GetOpt "--overwriteprojectforce" $@`
+OVERWRITE_PROJECT_XNAT=`opts_GetOpt "--overwriteprojectxnat" $@`
 BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
 XNAT_ACCSESSION_ID=`opts_GetOpt "--xnataccsessionid" $@`
@@ -377,9 +380,6 @@ QCPlotMasks=`opts_GetOpt "--qcplotmasks" $@`
 # -- Define script name
 scriptName=$(basename ${0})
 
-if [[ -z ${CleanupProject} ]]; then CleanupProject="no"; fi
-if [[ -z ${CleanupSubject} ]]; then CleanupSubject="no"; fi
-
 # -- Check if subject input is a parameter file instead of list of cases
 echo ""
 if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
@@ -455,6 +455,9 @@ fi
 if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
 if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
+if [[ -z "$OVERWRITE_PROJECT_XNAT" ]]; then OVERWRITE_PROJECT_XNAT="no"; fi
+if [[ -z ${CleanupProject} ]]; then CleanupProject="no"; fi
+if [[ -z ${CleanupSubject} ]]; then CleanupSubject="no"; fi
 
 if [ -z "$QCPreprocCustom" ] || [ "$QCPreprocCustom" == "no" ]; then QCPreprocCustom=""; MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocCustom/}"`; fi
 if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then 
@@ -527,6 +530,7 @@ echo "   MNAP Subject-specific working folder: ${rawdir}"
 echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
 echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
+echo "   Overwrite for the entire XNAT project: ${OVERWRITE_PROJECT_XNAT}"
 echo "   Cleanup for subject set to: ${CleanupSubject}"
 echo "   Cleanup for project set to: ${CleanupProject}"
 echo "   Custom QC requested: ${QCPreprocCustom}"
@@ -550,6 +554,10 @@ if [[ ${OVERWRITE_PROJECT_FORCE} == "yes" ]]; then
         if [[ ${ManualOverwrite} == "yes" ]]; then
             rm -rf ${mnap_studyfolder}/ &> /dev/null
         fi
+fi
+if [[ ${OVERWRITE_PROJECT_XNAT} == "yes" ]]; then
+        reho "    Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
+        rm -rf ${mnap_studyfolder}/ &> /dev/null
 fi
 if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "all" ]]; then
     if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABELS" ]]; then
@@ -633,10 +641,12 @@ fi
                reho "Error. ${workdir} not found."; echo ""; exit 1
            fi
            if [ ! -d ${mnap_studyfolder} ]; then
-               reho "Error. ${mnap_studyfolder} not found."; echo ""; exit 1
+               reho "Note. ${mnap_studyfolder} not found. Regenerating now..."; echo "";
+               gmri createStudy "${mnap_studyfolder}"
            fi
            if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
-               reho "Error. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Re-run createStudy function."; echo ""; exit 1
+               reho "Note. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
+               gmri createStudy "${mnap_studyfolder}"
            fi
            if [ ! -d ${mnap_subjectsfolder} ]; then
                reho "Error. ${mnap_subjectsfolder} not found."; echo ""; exit 1

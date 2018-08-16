@@ -416,6 +416,7 @@ CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh \
 --overwritestep='"${OVERWRITE_STEP}"' \
 --overwritesubject='"${OVERWRITE_SUBJECT}"' \
 --overwriteproject='"${OVERWRITE_PROJECT}"' \
+--overwriteprojectxnat='"${OVERWRITE_PROJECT_XNAT}"' \
 --overwriteprojectforce='"${OVERWRITE_PROJECT_FORCE}"' \
 --mappingfile='"${SCAN_MAPPING_FILENAME}"' \
 --xnatsessionlabels='"${XNAT_SESSION_LABELS}"' \
@@ -2357,6 +2358,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
     OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
     OVERWRITE_PROJECT_FORCE=`opts_GetOpt "${setflag}overwriteprojectforce" $@`
+    OVERWRITE_PROJECT_XNAT=`opts_GetOpt "${setflag}overwriteprojectxnat" $@`
     OVERWRITE_STEP=`opts_GetOpt "${setflag}overwritestep" $@`
     BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
@@ -2622,7 +2624,10 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
     if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
     if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
     if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
-    
+    if [[ -z "$OVERWRITE_PROJECT_XNAT" ]]; then OVERWRITE_PROJECT_XNAT="no"; fi
+    if [[ -z ${CleanupProject} ]]; then CleanupProject="no"; fi
+    if [[ -z ${CleanupSubject} ]]; then CleanupSubject="no"; fi
+
     if [ -z "$QCPreprocCustom" ] || [ "$QCPreprocCustom" == "no" ]; then QCPreprocCustom=""; MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocCustom/}"`; fi
     if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then 
         DWILegacy=""
