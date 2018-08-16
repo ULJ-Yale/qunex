@@ -2569,11 +2569,9 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
        reho "Error. Working directory name flag missing "; return 1
     fi
     
-    if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
-        StudyFolder="${STUDY_PATH}"
-        SubjectsFolder="${STUDY_PATH}"
-        mnap_studyfolder="${STUDY_PATH}"
-    fi
+     StudyFolder="${STUDY_PATH}"
+     SubjectsFolder="${STUDY_PATH}"
+     mnap_studyfolder="${STUDY_PATH}"
     
     if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
        if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/${workdir}/${PROJECT_NAME}"; reho "Note: Study path missing. Setting to: $STUDY_PATH"; echo ''; fi
