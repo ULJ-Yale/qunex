@@ -382,15 +382,17 @@ scriptName=$(basename ${0})
 
 # -- Check workdir and STUDY_PATH
 if [[ -z ${workdir} ]]; then 
-         workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
+    workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
 fi
 
 # -- Check and set turnkey type
-if [[ -z ${TURNKEY_TYPE} ]]; then TURNKEY_TYPE="xnat"; reho "Note: Turnkey type not specified. Setting default turnkey type to: $TURNKEY_TYPE"; echo ''; fi
+if [[ -z ${TURNKEY_TYPE} ]]; then 
+    TURNKEY_TYPE="xnat"; reho "Note: Turnkey type not specified. Setting default turnkey type to: $TURNKEY_TYPE"; echo ''
+fi
 
 # -- Check and set non-XNAT or XNAT specific parameters
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then 
-   if [[ -z ${PROJECT_NAME} ]]; then reho "Error: Project name is missing."; exit 1; echo ''
+   if [[ -z ${PROJECT_NAME} ]]; then reho "Error: Project name is missing."; exit 1; echo ''; fi
    if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${PROJECT_NAME}; fi
 fi
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
