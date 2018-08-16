@@ -311,6 +311,7 @@ Change Log
 * 0.19.27 [niutilities matlab] Removed -nojvm from MNAPMCOMMAND and added parameter checking for PlotBoldTS
 * 0.19.28 [matlab library] Fixed an ReadROI bug and changed .names files in the library to use relative image paths to ensure transferrability to other systems
 * 0.19.29 [mnaptools connector] Updates to RunTurnkey
+* 0.19.30 [mnaptools connector library] Updates to RunTurnkey. Added example XNAT json file to library/etc
 
 =======
 [Mind and Brain Lab]: http://mblab.si
