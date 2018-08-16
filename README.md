@@ -313,6 +313,7 @@ Change Log
 * 0.19.29 [mnaptools connector] Updates to RunTurnkey
 * 0.19.30 [mnaptools connector library] Updates to RunTurnkey. Added example XNAT json file to library/etc
 * 0.20.00 [mnaptools connector] Major stable RunTurnkey upgrade to suite
+* 0.20.01 [mnaptools connector] Improved RunTurnkey input handling
 
 =======
 [Mind and Brain Lab]: http://mblab.si
