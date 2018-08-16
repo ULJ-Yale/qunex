@@ -42,7 +42,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are BOLD from previous processing
-# * These may be stored in: "$SubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
+# * These may be stored in: "$mnap_subjectsfolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
@@ -238,6 +238,7 @@ unset PROJECT_NAME
 unset PlotElements
 unset CleanupSubject
 unset CleanupProject
+unset STUDY_PATH
 
 # =-=-=-=-=-= GENERAL OPTIONS =-=-=-=-=-=
 #
@@ -248,8 +249,7 @@ PROJECT_NAME=`opts_GetOpt "--projectname" $@`
 CleanupSubject=`opts_GetOpt "--cleanupsubject" $@`
 CleanupProject=`opts_GetOpt "--cleanupproject" $@`
 RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
-StudyFolder=`opts_GetOpt "--path" $@`
-SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
+mnap_subjectsfolder=`opts_GetOpt "--subjectsfolder" $@`
 CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "${CASES}" | sed 's/,/ /g;s/|/ /g'`
 OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
@@ -380,9 +380,31 @@ QCPlotMasks=`opts_GetOpt "--qcplotmasks" $@`
 # -- Define script name
 scriptName=$(basename ${0})
 
+# -- Check workdir and STUDY_PATH
+if [[ -z ${workdir} ]]; then 
+         workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
+fi
+
+# -- Check and set turnkey type
+if [[ -z ${TURNKEY_TYPE} ]]; then TURNKEY_TYPE="xnat"; reho "Note: Turnkey type not specified. Setting default turnkey type to: $TURNKEY_TYPE"; echo ''; fi
+
+# -- Check and set non-XNAT or XNAT specific parameters
+if [[ ${TURNKEY_TYPE} != "xnat" ]]; then 
+   if [[ -z ${PROJECT_NAME} ]]; then reho "Error: Project name is missing."; exit 1; echo ''
+   if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${PROJECT_NAME}; fi
+fi
+if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+    if [[ -z ${XNAT_PROJECT_ID} ]]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_HOST_NAME} ]]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_USER_NAME} ]]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_PASSWORD} ]]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${XNAT_PROJECT_ID}; fi
+fi
+
+# -- Check TURNKEY_STEPS
+if [[ -z ${TURNKEY_STEPS} ]]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
+
 # -- Check if subject input is a parameter file instead of list of cases
-echo ""
-if [ -z "$TURNKEY_TYPE" ]; then TURNKEY_TYPE="xnat"; reho "Note: Setting turnkey to: $TURNKEY_TYPE"; echo ''; fi
 if [[ ${CASES} == *.txt ]]; then
     SubjectParamFile="$CASES"
     echo ""
@@ -391,23 +413,23 @@ if [[ ${CASES} == *.txt ]]; then
     CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
 fi
 
-# -- Check that all inputs are provided
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]] && [[ ${TURNKEY_STEPS} == "all" ]] || [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
-   reho "Error. Raw data input flag missing "; return 1
+# -- Check and set mapRawData, mapHCPFiles, getHCPReady which rely on BATCH_PARAMETERS_FILENAME and SCAN_MAPPING_FILENAME
+if [[ `echo ${TURNKEY_STEPS} | grep 'mapRawData'` ]]; then
+    if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
 fi
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${PROJECT_NAME} ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
-   reho "Error. Project name flag missing "; return 1
+if [[ `echo ${TURNKEY_STEPS} | grep 'mapHCPFiles'` ]]; then
+    if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
 fi
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${workdir} ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
-   reho "Error. Working directory name flag missing "; return 1
+if [[ `echo ${TURNKEY_STEPS} | grep 'getHCPReady'` ]]; then
+    if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+fi
+if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]] && [[ `echo ${TURNKEY_STEPS} | grep 'mapRawData'` ]]; then
+   reho "Error. Raw data input flag missing "; exit 1
 fi
 
-StudyFolder="${STUDY_PATH}"
-SubjectsFolder="${STUDY_PATH}"
-mnap_studyfolder="${STUDY_PATH}"
-
+# -- Check and align CASES and XNAT_SESSION_LABELS
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
-   if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/${workdir}/${PROJECT_NAME}"; reho "Note: Study path missing. Setting to: $STUDY_PATH"; echo ''; fi
    if [ -z "$CASES" ]; then
        if [ -z "$XNAT_SESSION_LABELS" ]; then
            reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ""
@@ -432,34 +454,18 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
    fi
 fi
 
-if [ -z "$TURNKEY_STEPS" ]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
-
-if [[ "$TURNKEY_TYPE" == "xnat" ]]; then
-    if [[ ${TURNKEY_STEPS} == "mapRawData" ]] || [[ ${TURNKEY_STEPS} == "all" ]]; then
-        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
-    fi
-    if [[ ${TURNKEY_STEPS} == "mapHCPFiles" ]]; then
-        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    fi
-    if [[ ${TURNKEY_STEPS} == "getHCPReady" ]]; then
-        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
-    fi
-    if [ -z "$XNAT_PROJECT_ID" ]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    if [ -z "$XNAT_HOST_NAME" ]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    if [ -z "$XNAT_USER_NAME" ]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
-    if [ -z "$XNAT_PASSWORD" ]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
-    if [ -z "$STUDY_PATH" ]; then STUDY_PATH="/output/${XNAT_PROJECT_ID}"; reho "Note: Study path missing. Setting defaults: $STUDY_PATH"; echo ''; fi
-fi
-
+# -- Check and set overwrites
 if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
 if [ -z "$OVERWRITE_SUBJECT" ]; then OVERWRITE_SUBJECT="no"; fi
 if [ -z "$OVERWRITE_PROJECT" ]; then OVERWRITE_PROJECT="no"; fi
 if [[ -z "$OVERWRITE_PROJECT_XNAT" ]]; then OVERWRITE_PROJECT_XNAT="no"; fi
-if [[ -z ${CleanupProject} ]]; then CleanupProject="no"; fi
-if [[ -z ${CleanupSubject} ]]; then CleanupSubject="no"; fi
+if [[ -z "$CleanupProject" ]]; then CleanupProject="no"; fi
+if [[ -z "$CleanupSubject" ]]; then CleanupSubject="no"; fi
 
+# -- Check and set QCPreprocCustom
 if [ -z "$QCPreprocCustom" ] || [ "$QCPreprocCustom" == "no" ]; then QCPreprocCustom=""; MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocCustom/}"`; fi
+
+# -- Check and set DWILegacy
 if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then 
     DWILegacy=""
     QCPreprocDWILegacy=""
@@ -467,38 +473,15 @@ if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then
     MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocDWILegacy/}"`
 fi
 
-# -- Define additional variables
-if [[ -z ${workdir} ]] && [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" != "xnat" ]] && [ -z "$StudyFolder" ]; then
-         workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
-         STUDY_PATH="${workdir}/${ROJECT_NAME}"
-fi
-if [[ -z ${workdir} ]] && [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" == "xnat" ]] && [ -z "$StudyFolder" ]; then
-         workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
-         STUDY_PATH="${workdir}/${XNAT_PROJECT_ID}"
-         mnap_studyfolder="${STUDY_PATH}"
-fi
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
-    if [[ -z ${PROJECT_NAME} ]]; then reho "Error: project name parameter required when createStudy specified!"; echo ""; exit 1; fi
-    if [[ -z ${workdir} ]]; then reho "Error: working directory parameter required when createStudy specified!"; echo ""; exit 1; fi
-    STUDY_PATH="${workdir}/${PROJECT_NAME}"
-    StudyFolder="${workdir}/${PROJECT_NAME}"
-    SubjectsFolder="${workdir}/${PROJECT_NAME}/subjects"
-fi
-
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'mapHCPFiles'` ]]; then
-        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-fi
-if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'getHCPReady'` ]]; then
-        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
-fi
-
+# -- Define final variable set
+mnap_studyfolder="${STUDY_PATH}"
 mnap_subjectsfolder="${STUDY_PATH}/subjects"
-mnap_workdir="${mnap_subjectsfolder}/${XNAT_SESSION_LABELS}"
+mnap_workdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABELS}"
+processingdir="${STUDY_PATH}/processing"
 logdir="${STUDY_PATH}/processing/logs"
-specsdir="${mnap_subjectsfolder}/specs"
-rawdir="${mnap_workdir}/inbox"
-rawdir_temp="${mnap_workdir}/inbox_temp"
-processingdir="${mnap_studyfolder}/processing"
+specsdir="${STUDY_PATH}/subjects/specs"
+rawdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABELS}/inbox"
+rawdir_temp="${STUDY_PATH}/subjects/${XNAT_SESSION_LABELS}/inbox_temp"
 MNAPCOMMAND="${TOOLS}/${MNAPREPO}/connector/mnap.sh"
 
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
@@ -508,16 +491,11 @@ if [ "$TURNKEY_TYPE" != "xnat" ]; then
    project_batch_file="${processingdir}/${PROJECT_NAME}_batch_params.txt"
 fi
 
-StudyFolder="${STUDY_PATH}"
-SubjectsFolder="${STUDY_PATH}"
-mnap_studyfolder="${STUDY_PATH}"
-
 # -- Report options
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   "
 echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
-    CASES="$XNAT_SESSION_LABELS"
     echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
     echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
     echo "   XNAT Session Label: ${XNAT_SESSION_LABELS}"
@@ -685,7 +663,7 @@ fi
                   rm -f ${mnap_workdir}/inbox/* &> /dev/null
            fi
            CheckInbox=`ls -1A ${rawdir} | wc -l`
-           if [[ ${CheckInbox} == "0" ]] && [[ ${OVERWRITE_STEP} == "no" ]]; then
+           if [[ ${CheckInbox} != "0" ]] && [[ ${OVERWRITE_STEP} == "no" ]]; then
                   reho "Error. ${mnap_workdir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
                   reho "Set overwrite to 'yes' and re-run..."
                   echo ""
@@ -823,7 +801,7 @@ fi
            if [[ ${OVERWRITE_STEP} == "yes" ]]; then
               echo "  -- Removing prior hard link mapping..."; echo ""
               rm -rf ${project_batch_file} &> /dev/null
-              HLinks=`ls ${SubjectsFolder}/${CASES}/hcp/${CASES}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
+              HLinks=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
            fi
            Command="${MNAPCOMMAND} mapHCPFiles --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}""
            echo ""; echo " -- Executed command:"; echo "   $Command"; echo ""
@@ -1043,14 +1021,14 @@ fi
                # Thalamus SomatomotorSensory
                SeedFile="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii" 
                OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
-               ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${SubjectsFolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+               ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
                # Thalamus Prefrontal
                SeedFile="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii" 
                OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
-               ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${SubjectsFolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+               ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
            fi
            OutNameGBC="DWI_GBC"
-           ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${SubjectsFolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
+           ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
        }
     #
     # --------------- DWI Processing and analyses end --------------------------
