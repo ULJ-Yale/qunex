@@ -606,7 +606,7 @@ fi
            if [ ! -d ${mnap_studyfolder} ]; then
                reho " -- Note: ${mnap_studyfolder} not found. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
                echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
-               ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
+               ${MNAPCOMMAND} createStudy "${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
                mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
                createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            else
@@ -617,7 +617,7 @@ fi
                        rm -rf ${mnap_studyfolder}/ &> /dev/null
                        reho " -- Note: ${mnap_studyfolder} removed. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
                        echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
-                       ${MNAPCOMMAND} createStudy --studyfolder="${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
+                       ${MNAPCOMMAND} createStudy "${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
                        mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
                        createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
                    fi
@@ -625,7 +625,7 @@ fi
            fi
            if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
                reho "Note. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
-               ${MNAPCOMMAND}  createStudy "${mnap_studyfolder}"
+               ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
            fi
            
            mkdir -p ${mnap_workdir} &> /dev/null
@@ -661,11 +661,11 @@ fi
            fi
            if [ ! -d ${mnap_studyfolder} ]; then
                reho "Note. ${mnap_studyfolder} not found. Regenerating now..."; echo "";
-               ${MNAPCOMMAND}  createStudy "${mnap_studyfolder}"
+               ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
            fi
            if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
                reho "Note. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
-               ${MNAPCOMMAND}  createStudy "${mnap_studyfolder}"
+               ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
            fi
            if [ ! -d ${mnap_subjectsfolder} ]; then
                reho "Error. ${mnap_subjectsfolder} not found."; echo ""; exit 1
@@ -1080,10 +1080,47 @@ fi
 
     # --------------- BOLD FC Processing and analyses start --------------------
     #
+    BOLDfcLogCheck() {
+    # # -- Specific checks for BOLD Fc functions
+    cd ${logdir}/comlogs/
+    ComLogName=`ls -t1 ./*${FunctionName}*log | head -1 | xargs -n 1 basename 2> /dev/null`
+    if [ ! -z ${ComLogName} ]; then echo " ===> Comlog: $ComLogName"; echo ""; fi
+    rename ${FunctionName} ${TURNKEY_STEP} ${logdir}/comlogs/${ComLogName} 2> /dev/null
+
+    cd ${logdir}/runlogs/
+    RunLogName=`ls -t1 ./Log-${FunctionName}*log | head -1 | xargs -n 1 basename 2> /dev/null`
+    if [ ! -z ${ComLogName} ]; then echo " ===> RunLog: $RunLogName"; echo ""; fi
+    rename ${FunctionName} ${TURNKEY_STEP} ${logdir}/runlogs/${RunLogName} 2> /dev/null
+    
+    geho " -- Looking for incomplete/failed process ..."; echo ""
+    
+    CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+    CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+    
+    if [ -z "${CheckComLog}" ]; then
+       TURNKEY_STEP_ERRORS="yes"
+       reho " ===> ERROR: Completed ComLog file not found!"
+    fi
+    if [ ! -z "${CheckComLog}" ]; then
+       geho " ===> Comlog file: ${CheckComLog}"
+       chmod 777 ${CheckComLog} 2>/dev/null
+       cp ${CheckComLog} ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
+       cp ${CheckRunLog} ${mnap_subjectsfolder}/${CASES}/logs/runlog 2> /dev/null
+    fi
+    if [ -z `echo "${CheckComLog}" | grep 'done'` ]; then
+        echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed."
+        TURNKEY_STEP_ERRORS="yes"
+    else
+        echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
+        TURNKEY_STEP_ERRORS="no"
+    fi
+    }
+
        # -- BOLD Parcellation 
        turnkey_BOLDParcellation() {
-           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation ... "; echo ""
-           # -- Defaults if not specified:
+        FunctionName="BOLDParcellation"
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation ... "; echo ""
+        # -- Defaults if not specified:
         unset BOLDRUNS
         if [ -z ${BOLDRUNS} ]; then
             BOLDRUNS="1"
@@ -1118,6 +1155,7 @@ fi
            --weightsfile='${WeightsFile}'"
            echo " -- Command: ${RunCommand}"
            eval ${RunCommand}
+           BOLDfcLogCheck
         done
        }
        # -- Map HCP processed outputs for further FC BOLD analyses
@@ -1185,64 +1223,109 @@ fi
        }
        # -- Compute GBC
        turnkey_computeBOLDfcGBC() {
+       FunctionName="computeBOLDfc"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for GBC ... "; echo ""
-           ExtractData="yes"
-           Covariance="true"
-           InputFiles="bold1_Atlas_g7_hpss_res-VWMWB_lpss.dtseries.nii"
-           OutName="GBC_bold1_Atlas_g7_hpss_res-VWMWB_lpss"
-           ${MNAPCOMMAND} computeBOLDfc \
-           --subjectsfolder="${mnap_subjectsfolder}" \
-           --calculation="gbc" \
-           --runtype="individual" \
-           --subjects="${CASE}" \
-           --inputfiles="${InputFiles}" \
-           --inputpath="${InputPath}" \
-           --extractdata="${ExtractData}" \
-           --outname="${OutName}" \
-           --flist="${FileList}" \
-           --overwrite="${OVERWRITE_STEP}" \
-           --ignore="${IgnoreFrames}" \
-           --target="${TargetROI}" \
-           --command="${GBCCommand}" \
-           --targetf="${OutPath}" \
-           --mask="${MaskFrames}" \
-           --rsmooth="${RadiusSmooth}" \
-           --rdilate="${RadiusDilate}" \
-           --verbose="${Verbose}" \
-           --time="${ComputeTime}" \
-           --vstep="${VoxelStep}" \
-           --covariance="${Covariance}"
+           unset BOLDRUNS
+           if [ -z ${BOLDRUNS} ]; then
+               BOLDRUNS="1"
+           fi
+           unset BOLDRUN
+           for BOLDRUN in ${BOLDRUNS}; do
+                if [ -z "$InputFile" ]; then InputFile="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; fi
+                if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
+                if [ -z "$ExtractData" ]; then ExtractData=""; fi
+                if [ -z "$OutName" ]; then OutName="GBC_bold${BOLDRUN}_Atlas_g7_hpss_res-VWMWB_lpss"; fi
+                if [ -z "$FileList" ]; then FileList=""; fi
+                if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="yes"; fi
+                if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
+                if [ -z "$TargetROI" ]; then TargetROI=""; fi
+                if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
+                if [ -z "$OutPath" ]; then OutPath="/images/functional"; fi
+                if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
+                if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
+                if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
+                if [ -z "$Verbose" ]; then Verbose="true"; fi
+                if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
+                if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
+                if [ -z "$Covariance" ]; then Covariance="true"; fi
+                RunCommand="${MNAPCOMMAND} computeBOLDfc \
+                --subjectsfolder='${mnap_subjectsfolder}' \
+                --calculation='gbc' \
+                --runtype='individual' \
+                --subjects='${CASES}' \
+                --inputfiles='${InputFile}' \
+                --inputpath='${InputPath}' \
+                --extractdata='${ExtractData}' \
+                --outname='${OutName}' \
+                --flist='${FileList}' \
+                --overwrite='${OVERWRITE_STEP}' \
+                --ignore='${IgnoreFrames}' \
+                --target='${TargetROI}' \
+                --command='${GBCCommand}' \
+                --targetf='${OutPath}' \
+                --mask='${MaskFrames}' \
+                --rsmooth='${RadiusSmooth}' \
+                --rdilate='${RadiusDilate}' \
+                --verbose='${Verbose}' \
+                --time='${ComputeTime}' \
+                --vstep='${VoxelStep}' \
+                --covariance='${Covariance}'"
+                echo " -- Command: ${RunCommand}"
+                eval ${RunCommand}
+                BOLDfcLogCheck
+            done 
        }
        # -- Compute Seed FC for relevant ROIs
        turnkey_computeBOLDfcSeed() {
+       FunctionName="computeBOLDfc"
            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for Seed FC ... "; echo ""
            if [ -z ${ROIInfo} ]; then
               ROINames="${TOOLS}/${MNAPREPO}/library/data/roi/seeds_cifti.names ${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thal.FSL.MNI152.CIFTI.Atlas.AllSurfaceZero.names"
            else
               ROINames=${ROIInfo}
            fi
-           for ROIInfo in ${ROINames}; do
-              ExtractData="yes"
-              Covariance="true"
-              InputFiles="bold1_Atlas_g7_hpss_res-VWMWB_lpss.dtseries.nii"
-              ${MNAPCOMMAND} computeBOLDfc \
-              --subjectsfolder="${mnap_subjectsfolder}" \
-              --calculation="seed" \
-              --runtype="individual" \
-              --subjects="${CASE}" \
-              --inputfiles="${InputFiles}" \
-              --inputpath="${InputPath}" \
-              --extractdata="${ExtractData}" \
-              --outname="${OutName}" \
-              --overwrite="${OVERWRITE_STEP}" \
-              --ignore="${IgnoreFrames}" \
-              --roinfo="${ROIInfo}" \
-              --options="${FCCommand}" \
-              --method="${Method}" \
-              --targetf="${OutPath}" \
-              --mask="${MaskFrames}" \
-              --covariance="${Covariance}"
+        for ROIInfo in ${ROINames}; do
+              unset BOLDRUNS
+              if [ -z ${BOLDRUNS} ]; then
+                  BOLDRUNS="1"
+              fi
+              unset BOLDRUN
+              for BOLDRUN in ${BOLDRUNS}; do
+                if [ -z "$InputFile" ]; then InputFile="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; fi
+                if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
+                if [ -z "$ExtractData" ]; then ExtractData=""; fi
+                if [ -z "$OutName" ]; then OutName="seed_bold${BOLDRUN}_Atlas_g7_hpss_res-VWMWB_lpss"; fi
+                if [ -z "$FileList" ]; then FileList=""; fi
+                if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="yes"; fi
+                if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
+                if [ -z "$Method" ]; then Method="mean"; fi
+                if [ -z "$FCCommand" ]; then FCCommand="all"; fi
+                if [ -z "$OutPath" ]; then OutPath="/images/functional"; fi
+                if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
+                if [ -z "$Verbose" ]; then Verbose="true"; fi
+                if [ -z "$Covariance" ]; then Covariance="true"; fi
+                RunCommand="${MNAPCOMMAND} computeBOLDfc \
+                --subjectsfolder='${mnap_subjectsfolder}' \
+                --calculation='seed' \
+                --runtype='individual' \
+                --subjects='${CASES}' \
+                --inputfiles='${InputFile}' \
+                --inputpath='${InputPath}' \
+                --extractdata='${ExtractData}' \
+                --outname='${OutName}' \
+                --overwrite='${OVERWRITE_STEP}' \
+                --ignore='${IgnoreFrames}' \
+                --roinfo='${ROIInfo}' \
+                --options='${FCCommand}' \
+                --method='${Method}' \
+                --targetf='${OutPath}' \
+                --mask='${MaskFrames}' \
+                --covariance='${Covariance}'"
+                echo " -- Command: ${RunCommand}"
+                eval ${RunCommand}
+                BOLDfcLogCheck 
            done
+        done
        }
        # -- Compute g_PlotBoldTS ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
        turnkey_g_PlotBoldTS() {
@@ -1286,7 +1369,7 @@ fi
           for BOLDRUN in ${BOLDRUNS}; do 
              cd ${images_folder} 
              if [ -z ${QCPlotImages} ]; then
-                 QCPlotImages="bold${BOLDRUN}.nii.gz;bold${BOLDRUN}_Atlas_scrub_g7_hpss_res-VWMWB_lpss.dtseries.nii"
+                 QCPlotImages="bold${BOLDRUN}.nii.gz;bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"
              fi
              echo "   QC Plot images: ${QCPlotImages}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
              echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
@@ -1369,12 +1452,13 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     done
 
     # -- Check for completion of turnkey function
-    geho " -- Looking for incomplete/failed process ..."; echo ""
     # -- Specific checks for NIUtilities functions that run on multiple jobs
+    ConnectorBOLDFunctions="BOLDParcellation computeBOLDfcGBC computeBOLDfcSeed"
     NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
-    if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
+    if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
+    geho " -- Looking for incomplete/failed process ..."; echo ""
        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
-       CheckComLog=`ls -t1 ${logdir}/comlogs/done_${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+       CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
         if [ -z "${CheckRunLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
            reho " ===> ERROR: Runlog file not found!"; echo ""
@@ -1394,8 +1478,9 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
         fi
     fi
     # -- Specific checks for all other functions
-    if [ ! -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ]; then
-           CheckComLog=`ls -t1 ${logdir}/comlogs/done_${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+    if [ ! -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
+    geho " -- Looking for incomplete/failed process ..."; echo ""
+           CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
            CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"

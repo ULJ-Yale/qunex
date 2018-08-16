@@ -767,12 +767,20 @@ if [ ${Calculation} != "dense" ]; then
         FinalInput=${FileList}
     fi
     # -- Check if FC seed run is specified
+        if [ -z "$ExtractData" ]; then ExtractData=""; fi
+        if [ -z "$Covariance" ]; then Covariance="true"; fi
+        if [ -z "$Verbose" ]; then Verbose="true"; fi
+        if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
+        if [ -z "$OutPath" ]; then OutPath="/images/functional"; fi
+        if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
     if [ ${Calculation} == "seed" ]; then
         # -- run FC seed command: 
         # Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
         # Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
         # Example with string input --> ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
-        ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        if [ -z "$Method" ]; then Method="mean"; fi
+        if [ -z "$FCCommand" ]; then FCCommand="all"; fi
+        ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
     fi
     # -- Check if GBC seed run is specified
     if [ ${Calculation} == "gbc" ]; then
@@ -780,7 +788,13 @@ if [ ${Calculation} != "dense" ]; then
         # Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
         # Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
         # Example with string input --> ${MNAPMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
-        ${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        if [ -z "$TargetROI" ]; then TargetROI=""; fi
+        if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
+        if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
+        if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
+        if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
+        if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
+        ${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
     fi
     # -- Remove temp lists
     echo ""
@@ -869,22 +883,22 @@ if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]]; then
     fi
 fi
 # -- Perform completion checks
-if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
-    for INPUTCASE in ${INPUTCASES}; do
-        if [[ -f ${OutPath}/${OutName}*.nii ]]; then
-            echo ""
-            geho "--- Connectivity calculation completed for ${INPUTCASE}"
-            echo ""
-        else
-            echo ""
-            reho "--- Result for ${INPUTCASE} not found. Something went wrong."
-            echo ""
-            RunError="yes"
-        fi
-    done
-fi
 if [[ ${RunType} == "group" ]] && [[ ${Calculation} != "dense" ]]; then
-    if [[ -f ${OutPath}/${OutName}*.nii ]]; then
+    CheckRun=`ls -t1 ${OutPath}/${OutName}*.nii 2> /dev/null | head -n 1`
+   if [[ ! -z ${CheckRun} ]]; then
+        echo ""
+        geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
+        echo ""
+    else
+        echo ""
+        reho "--- Result for ${OutPath}/${OutName} not found. Something went wrong."
+        echo ""
+        RunError="yes"
+    fi
+fi
+if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
+    CheckRun=`ls -t1 ${OutPath}/${OutName}*.nii 2> /dev/null | head -n 1`
+   if [[ ! -z ${CheckRun} ]]; then
         echo ""
         geho "--- Connectivity calculation completed for ${OutPath}/${OutName}."
         echo ""

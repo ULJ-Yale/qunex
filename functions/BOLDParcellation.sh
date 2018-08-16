@@ -406,63 +406,68 @@ if [ -f "$BOLDOutput" ]; then
     geho "Parcellation data found: "
     echo ""
     echo "      $BOLDOutput"
+if [[ ${Overwrite} == "no" ]]; then 
     echo ""
-    exit 1
+    echo "Overwrite set to no. Exiting. Set --overwrite='yes' to re-run."
+    exit 0
+fi
 else
     reho "Parcellation data not found."
     echo ""
-    geho "-- Computing parcellation on $BOLDInput..."
-    echo ""
-    # -- First parcellate by COLUMN and save a parcellated file
-    wb_command -cifti-parcellate "$BOLDInput" "$ParcellationFile" COLUMN "$BOLDOutput"
-    # -- Check if specified file was a *dtseries and compute a pconn file as well 
-    if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
-        # Check if pconn calculation is requested
-        if [ "$ComputePConn" == "yes" ]; then
-            # -- Specify pconn file outputs for correlation (r) value and covariance 
-            OutPConnFileExtR="r.pconn.nii"
-            OutPConnFileExtRfZ="r_Fz.pconn.nii"
-            OutPConnFileExtCov="cov.pconn.nii"
-            PConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
-            PConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtRfZ}"
-            PConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
-            # -- Check if weights file is specified
-            geho "-- Using weights: $UseWeights"
+fi
+
+geho "-- Computing parcellation on $BOLDInput..."
+echo ""
+# -- First parcellate by COLUMN and save a parcellated file
+wb_command -cifti-parcellate "$BOLDInput" "$ParcellationFile" COLUMN "$BOLDOutput"
+# -- Check if specified file was a *dtseries and compute a pconn file as well 
+if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
+    # Check if pconn calculation is requested
+    if [ "$ComputePConn" == "yes" ]; then
+        # -- Specify pconn file outputs for correlation (r) value and covariance 
+        OutPConnFileExtR="r.pconn.nii"
+        OutPConnFileExtRfZ="r_Fz.pconn.nii"
+        OutPConnFileExtCov="cov.pconn.nii"
+        PConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
+        PConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtRfZ}"
+        PConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
+        # -- Check if weights file is specified
+        geho "-- Using weights: $UseWeights"
+        echo ""
+        if [ "$UseWeights" == "yes" ]; then
+            WeightsFile="${SubjectsFolder}/${CASE}/${WeightsFile}"
+            geho "Using $WeightsFile to weight the calculations..."
             echo ""
-            if [ "$UseWeights" == "yes" ]; then
-                WeightsFile="${SubjectsFolder}/${CASE}/${WeightsFile}"
-                geho "Using $WeightsFile to weight the calculations..."
-                echo ""
-                # -- Compute pconn using correlation
-                geho "-- Computing pconn using correlation..."
-                echo ""
-                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -weights "$WeightsFile"
-                # -- Compute pconn using covariance
-                geho "-- Computing pconn using covariance..."
-                echo ""
-                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance -weights "$WeightsFile"
-                # -- Compute pconn using fisher-z correlation
-                geho "-- Computing pconn using correlation w/ fisher-z transform..."
-                echo ""
-                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z -weights "$WeightsFile"
-            fi
-            if [ "$UseWeights" == "no" ]; then
-                # -- Compute pconn using correlation
-                geho "-- Computing pconn using correlation..."
-                echo ""
-                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR"
-                # -- Compute pconn using covariance
-                geho "-- Computing pconn using covariance..."
-                echo ""
-                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance
-                # -- Compute pconn using fisher-z correlation
-                geho "-- Computing pconn using correlation w/ fisher-z transform..."
-                echo ""
-                wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z
-            fi
+            # -- Compute pconn using correlation
+            geho "-- Computing pconn using correlation..."
+            echo ""
+            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -weights "$WeightsFile"
+            # -- Compute pconn using covariance
+            geho "-- Computing pconn using covariance..."
+            echo ""
+            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance -weights "$WeightsFile"
+            # -- Compute pconn using fisher-z correlation
+            geho "-- Computing pconn using correlation w/ fisher-z transform..."
+            echo ""
+            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z -weights "$WeightsFile"
+        fi
+        if [ "$UseWeights" == "no" ]; then
+            # -- Compute pconn using correlation
+            geho "-- Computing pconn using correlation..."
+            echo ""
+            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR"
+            # -- Compute pconn using covariance
+            geho "-- Computing pconn using covariance..."
+            echo ""
+            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance
+            # -- Compute pconn using fisher-z correlation
+            geho "-- Computing pconn using correlation w/ fisher-z transform..."
+            echo ""
+            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z
         fi
     fi
 fi
+
 if [ "$ExtractData" == "yes" ]; then 
     geho "--- Requested extraction of data in CSV format."
     echo ""
