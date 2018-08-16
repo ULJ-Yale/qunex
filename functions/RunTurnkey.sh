@@ -474,7 +474,8 @@ if [[ -z ${workdir} ]] && [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" != "xnat"
 fi
 if [[ -z ${workdir} ]] && [[ -z ${STUDY_PATH} ]] && [[ "$TURNKEY_TYPE" == "xnat" ]] && [ -z "$StudyFolder" ]; then
          workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
-         STUDY_PATH="${workdir}/${XNAT_PROJECT_ID}"    
+         STUDY_PATH="${workdir}/${XNAT_PROJECT_ID}"
+         mnap_studyfolder="${STUDY_PATH}"
 fi
 if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
     if [[ -z ${PROJECT_NAME} ]]; then reho "Error: project name parameter required when createStudy specified!"; echo ""; exit 1; fi
@@ -506,6 +507,10 @@ fi
 if [ "$TURNKEY_TYPE" != "xnat" ]; then
    project_batch_file="${processingdir}/${PROJECT_NAME}_batch_params.txt"
 fi
+
+StudyFolder="${STUDY_PATH}"
+SubjectsFolder="${STUDY_PATH}"
+mnap_studyfolder="${STUDY_PATH}"
 
 # -- Report options
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
@@ -606,7 +611,7 @@ fi
            if [ ! -d ${mnap_studyfolder} ]; then
                reho " -- Note: ${mnap_studyfolder} not found. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
                echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
-               ${MNAPCOMMAND} createStudy "${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
+               ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
                mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
                createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
            else
@@ -617,7 +622,7 @@ fi
                        rm -rf ${mnap_studyfolder}/ &> /dev/null
                        reho " -- Note: ${mnap_studyfolder} removed. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
                        echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
-                       ${MNAPCOMMAND} createStudy "${mnap_studyfolder}" 2>&1 | tee -a ${createStudy_ComlogTmp}
+                       ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
                        mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
                        createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
                    fi
@@ -664,7 +669,7 @@ fi
                ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
            fi
            if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
-               reho "Note. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
+               reho "Note. ${mnap_studyfolder} mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
                ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
            fi
            if [ ! -d ${mnap_subjectsfolder} ]; then
@@ -1056,7 +1061,7 @@ fi
       # # -- Check if Custom QC was requested
       turnkey_QCPreprocCustom() {
           echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreprocCustom ... "; echo ""
-          Modalities="T1w, T2w, myelin, BOLD, DWI"
+          Modalities="T1w T2w myelin BOLD DWI"
           for Modality in ${Modalities}; do
               if [[ ${Modality} == "BOLD" ]]; then
                   ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
@@ -1446,7 +1451,7 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     # -- Generate single subject log folders
     mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
     mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/runlog 2> /dev/null
-    Modalities="T1w, T2w, myelin, BOLD, DWI"
+    Modalities="T1w T2w myelin BOLD DWI"
     for Modality in ${Modalities}; do
         mkdir -p ${mnap_subjectsfolder}/${CASES}/QC/${Modality} 2> /dev/null
     done
