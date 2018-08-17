@@ -560,8 +560,8 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     reho "===> Mapping existing data into place to support the first turnkey step: ${firstStep}"
     echo "---> Creating study folder structure"
     ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
-    echo "---> Running: rsync -avzH ${includeStatement} ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
-    rsync -avzH ${includeStatement} ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}/
+    echo "---> Running: rsync -avzH ${includeStatement} --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
+    rsync -avzH ${includeStatement} --exclude="*" ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}/
 fi
 
 
