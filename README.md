@@ -315,6 +315,7 @@ Change Log
 * 0.20.00 [mnaptools connector] Major stable RunTurnkey upgrade to suite
 * 0.20.01 [mnaptools connector] Improved RunTurnkey input handling
 * 0.20.02 [hcpmodified] Rolled back recent edits and moved them to a separate branch
+* 0.20.03 [connector] Added mapping of previous XNAT session data
 
 =======
 [Mind and Brain Lab]: http://mblab.si
