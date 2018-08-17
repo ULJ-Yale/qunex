@@ -1522,6 +1522,11 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     fi
 done
 
+if [ ${TURNKEY_TYPE} == "xnat" ] && [ -d "${mnap_workdir}/dicom" ]; then
+    reho "---> Cleaning up: removing dicom folder"
+    rm -rf ${mnap_workdir}/dicom &> /dev/null
+fi
+
 if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
     echo ""
     reho " ===> Appears some RunTurnkey steps have failed."
