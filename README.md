@@ -319,6 +319,7 @@ Change Log
 * 0.20.04 [connector] Added dicom cleanup for xnat
 * 0.20.05 [connector] Adjusted rsync to only map needed XNAT data.
 * 0.20.06 [hcpmodified] Brought back changes to DWI processing.
+* 0.20.07 [connector] RunTurnkey adopted to rsync from whole study folder
 
 =======
 [Mind and Brain Lab]: http://mblab.si
