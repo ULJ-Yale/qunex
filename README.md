@@ -318,6 +318,7 @@ Change Log
 * 0.20.03 [connector] Added mapping of previous XNAT session data
 * 0.20.04 [connector] Added dicom cleanup for xnat
 * 0.20.05 [connector] Adjusted rsync to only map needed XNAT data.
+* 0.20.06 [hcpmodified] Brought back changes to DWI processing.
 
 =======
 [Mind and Brain Lab]: http://mblab.si
