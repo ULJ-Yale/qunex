@@ -53,7 +53,7 @@ ADD . /opt/mnaptools
 WORKDIR /opt/mnaptools
 
 # Set Python path 
-ENV PTYHONPATH="/usr/local/bin/python2.7:$PTYHONPATH"
+ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH"
 
 # Set MNAP tools path
 ENV TOOLS="/opt"
@@ -85,13 +85,13 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
 # This code to install libraries is needed in this section because mnap_dep updates libraries
 # This reverts back to the libraries needed by FS
 # Manually install libraries needed for FS run
-     wget --progress=bar:force -O /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/h/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
-     rpm -i /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm --force && \
-     wget --progress=bar:force -O /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/n/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
-     rpm -i /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
+    wget --progress=bar:force -O /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/h/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
+    rpm -i /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm --force && \
+    wget --progress=bar:force -O /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm http://dl.fedoraproject.org/pub/epel/6/x86_64/Packages/n/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
+    rpm -i /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
 # Clean up binary package files
-     rm /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
-     rm /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
+    rm /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
+    rm /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
 # Clean the environment and go to mnap folder
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \

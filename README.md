@@ -324,6 +324,7 @@ Change Log
 * 0.20.09 [connector] Updated output parameters for rsync
 * 0.20.10 [library] Added latest XNAT JSON definitions
 * 0.20.11 [connector] Refinements to RunTurnkey
+* 0.20.12 [mnaptools] Edit Dockerfile to compile Octave with 64-bit enabled
 
 =======
 [Mind and Brain Lab]: http://mblab.si

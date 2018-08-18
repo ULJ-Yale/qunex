@@ -11,26 +11,28 @@
 
 ##
 # Build:
-# docker build -t ztamayo/mnap_os:latest .
-##
-
-##
-# Create:
-# docker container run -it --name mnap_os ztamayo/mnap_os
-##
-
-##
-# Connect with bash
-# docker exec -it mnap_os bash
+# docker build -f Dockerfile_mnap_OS -t ztamayo/mnap_os:latest .
 ##
 
 # Pull base image
 FROM centos:7
 
+# Set environment
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
+ENV TZ=America/New_York
+ENV SCREEN_RESOLUTION 1024x768
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Update CentOS 7
 RUN yum update -y && yum upgrade -y && \
-# Install EPEL Repository
-    yum install -y epel-release && \
+# Install EPEL and CentOS SCLo RH Repository
+    yum install -y epel-release centos-release-scl-rh && \
+    yum --enablerepo=centos-sclo-rh-testing install -y devtoolset-3-gcc \
+                                                       devtoolset-3-gcc-c++ \
+                                                       devtoolset-3-gcc-gfortran \
+                                                       devtoolset-6-gcc && \
 # Install packages
     yum install -y yum-utils \
                    bzip2 \
@@ -38,9 +40,9 @@ RUN yum update -y && yum upgrade -y && \
                    curl \
                    unzip \
                    cmake \
+                   git \
                    gcc \
                    gcc-c++ \
-                   git \
                    make \
                    pigz \
                    wget \
@@ -52,7 +54,6 @@ RUN yum update -y && yum upgrade -y && \
                    wget \
                    tmux \
                    patch \
-                   centos-release-scl-rh \
                    qt5-qtbase-devel \
                    mesa-libOSMesa-devel \
                    gl2ps-devel \
@@ -87,17 +88,20 @@ RUN yum update -y && yum upgrade -y && \
                    ghostscript \
                    python-devel \
                    openssl-devel \
+                   libtool \
+                   automake \
+                   autoconf \
+                   dh-autoreconf \
                    zlib-devel && \
 # Install REMI Repository
-     wget --progress=bar:force -O /tmp/remi-release-7.rpm http://rpms.famillecollet.com/enterprise/remi-release-7.rpm && \
-     rpm -Uvh /tmp/remi-release-7.rpm && \
+    wget --progress=bar:force -O /tmp/remi-release-7.rpm http://rpms.famillecollet.com/enterprise/remi-release-7.rpm && \
+    rpm -Uvh /tmp/remi-release-7.rpm && \
 # Install nux-dextop-release Repository
     wget --progress=bar:force -O /tmp/nux-dextop-release-0-2.el6.nux.noarch.rpm http://li.nux.ro/download/nux/dextop/el6/x86_64/nux-dextop-release-0-2.el6.nux.noarch.rpm && \
     rpm -Uvh /tmp/nux-dextop-release-0-2.el6.nux.noarch.rpm && \
 # Fix for an Octave 4.2.1 error
     ln -s /usr/lib64/atlas/libtatlas.so /usr/lib64/libatlas.so && \
-# Install devtoolset-6-gcc rpm package and packages fro Octave
-    yum --enablerepo=centos-sclo-rh-testing install -y devtoolset-6-gcc && \
+# Install packages for Octave
     yum --enablerepo=epel-testing install -y plotutils && \
     yum --enablerepo=remi install -y gd-last && \
     yum install -y chrome-deps-stable && \

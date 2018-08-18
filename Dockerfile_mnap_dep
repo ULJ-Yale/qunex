@@ -58,7 +58,7 @@ RUN yum update -y  && \
     tar -xzvf /tmp/Python-2.7.14.tgz -C /tmp/Python-2.7.14 --strip-components 1 && \
     cd /tmp/Python-2.7.14 && \
     ./configure --prefix=/usr/local --enable-optimizations --enable-unicode=ucs4 --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib" && \
-    make && make altinstall && \
+    make -j$(nproc) && make altinstall && \
     alias python="python2.7" && \
     echo "alias python='python2.7'" >> ~/.bashrc && \
     echo "Installing pip for Python 2.7..." && \
@@ -138,17 +138,14 @@ RUN echo "Installing R packages..." && \
     R CMD INSTALL /tmp/ggplot2_3.0.0.tar.gz
 # Install Octave 4.2.1
 RUN echo "Installing Ocatve 4.2.1..." && \
-    mkdir -p /tmp/octave-4.2.1 && \
-    wget --progress=bar:force -O /tmp/octave-4.2.1.tar.gz ftp://ftp.gnu.org/gnu/octave/octave-4.2.1.tar.gz && \
-    tar -xzvf /tmp/octave-4.2.1.tar.gz -C /tmp/octave-4.2.1 --strip-components 1 && \
-    cd /tmp/octave-4.2.1 && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
-    ./configure --prefix=/usr/local --with-qt=5 && \
-    make -j4 && \
-    make check && \
-    make install && \
-    alias octave="/usr/local/bin/octave" && \
-    echo "alias octave='/usr/local/bin/octave'" >> ~/.bashrc && \
+    mkdir -p /opt/Octave && \
+    cd /opt/Octave && \
+    git clone https://github.com/ztamayo/octave-enable64.git && \
+    cd octave-enable64 && \
+    scl enable devtoolset-3 -- make -j$(nproc) && \
+    alias octave="/opt/Octave/install/bin/octave" && \
+    echo "alias octave='/opt/Octave/install/bin/octave'" >> ~/.bashrc && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
     octave --no-gui --eval "pkg install -verbose -forge -auto general" && \
@@ -177,7 +174,7 @@ RUN echo "Downloading dcm2niix..." && \
     cd /tmp && \
     cmake -DUSE_OPENJPEG=ON . && \
     mkdir -p /opt/dcm2niix && \
-    make && \
+    make -j$(nproc) && \
     mv bin/ /opt/dcm2niix && \
     cd / && \
     rm -rf /tmp/* && \
@@ -252,19 +249,19 @@ RUN wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://d
     rm -rf ~/.cache/pip
 
 # Create Octave Sym Links
-RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
-    mkdir -p /opt/Octave/4.2.1 && \
-    mkdir -p /opt/olib && \
-    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave/4.2.1 && \
-    ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
-    ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
-    ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
-    mkdir -p /opt/octavepkg && \
-    ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
-    ln -fs /bin/epstool /opt/olib && \
-    ln -sf /bin/fig2dev /opt/olib && \
-    ln -sf /bin/pstoedit /opt/olib && \
-    ln -sf /usr/bin/hdf5 /opt/olib && \
+RUN ln -fs /opt/Octave/install/bin/octave /usr/bin/octave && \
+#    mkdir -p /opt/Octave/4.2.1 && \
+#    mkdir -p /opt/olib && \
+#    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave/4.2.1 && \
+#    ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
+#    ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
+#    ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
+#    mkdir -p /opt/octavepkg && \
+#    ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
+#    ln -fs /bin/epstool /opt/olib && \
+#    ln -sf /bin/fig2dev /opt/olib && \
+#    ln -sf /bin/pstoedit /opt/olib && \
+#    ln -sf /usr/bin/hdf5 /opt/olib && \
 # Set up Python Sym Links
     ln -fs /usr/local/bin/python2.7 /opt/python && \
     mkdir -p /opt/pylib/lib/python2.7 && \
