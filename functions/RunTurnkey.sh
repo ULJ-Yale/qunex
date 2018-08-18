@@ -535,33 +535,41 @@ echo ""
 
 # ---- Map the data from input to output when in XNAT workflow
 
-if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ; then
 
-    firstStep=`echo ${TURNKEY_STEPS} | awk '{print $1;}'`
-
-    case ${firstStep} in
-        organizeDicom)
-            includeStatement=" --include='inbox/***'"
-            break
-            ;;
-        getHCPReady|mapHCPFiles)
-            includeStatement=" --include='subject*' --include='nii/***'"
-            break
-            ;;
-        hcp1|hcp2|hcp3|hcp4|hcp5|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin|QCPreprocBOLD|hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom|BOLDParcellation|mapHCPData)
-            includeStatement=" --include='subject*' --include='hcp/***'"
-            break
-            ;;
-        createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|computeBOLDfcGBC|computeBOLDfcSeed)
-            includeStatement=" --include='subject*' --include='images/***'"
-            ;;
-    esac
+    # --- create a study folder
 
     reho "===> Mapping existing data into place to support the first turnkey step: ${firstStep}"
     echo "---> Creating study folder structure"
     ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
-    echo "---> Running: rsync -avzH ${includeStatement} --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
-    rsync -avzH ${includeStatement} --exclude="*" ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}/
+
+    # --- specify what to map
+
+    firstStep=`echo ${TURNKEY_STEPS} | awk '{print $1;}'`
+
+    subjectid=${XNAT_SESSION_LABELS}
+
+    case ${firstStep} in
+        organizeDicom)
+            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
+            rsync -avzH --include='/subjects' --include="$subjectid" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}
+            break
+            ;;
+        getHCPReady|mapHCPFiles)
+            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
+            rsync -avzH --include='/subjects' --include="$subjectid" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}
+            break
+            ;;
+        hcp1|hcp2|hcp3|hcp4|hcp5|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin|QCPreprocBOLD|hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom|BOLDParcellation|mapHCPData)
+            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
+            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}
+            break
+            ;;
+        createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|computeBOLDfcGBC|computeBOLDfcSeed)
+            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
+            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}
+            ;;
+    esac
 fi
 
 
