@@ -323,6 +323,7 @@ Change Log
 * 0.20.08 [connector] Updated input parameters for rsync
 * 0.20.09 [connector] Updated output parameters for rsync
 * 0.20.10 [library] Added latest XNAT JSON definitions
+* 0.20.11 [connector] Refinements to RunTurnkey
 
 =======
 [Mind and Brain Lab]: http://mblab.si
