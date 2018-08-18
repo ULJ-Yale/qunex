@@ -551,23 +551,23 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
 
     case ${firstStep} in
         organizeDicom)
-            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}"
-            rsync -avzH --include='/subjects' --include="$subjectid" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}
+            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            rsync -avzH --include='/subjects' --include="$subjectid" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}
             break
             ;;
         getHCPReady|mapHCPFiles)
-            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}"
-            rsync -avzH --include='/subjects' --include="$subjectid" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}
+            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            rsync -avzH --include='/subjects' --include="$subjectid" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}
             break
             ;;
         hcp1|hcp2|hcp3|hcp4|hcp5|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin|QCPreprocBOLD|hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom|BOLDParcellation|mapHCPData)
-            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}"
-            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}
+            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}
             break
             ;;
         createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|computeBOLDfcGBC|computeBOLDfcSeed)
-            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}"
-            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}
+            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}
             ;;
     esac
 fi
