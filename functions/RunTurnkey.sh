@@ -133,7 +133,7 @@ usage() {
     echo "    --xnathost=<XNAT_site_URL>                    Specify the XNAT site hostname URL to push data to."
     echo "    --xnatsessionlabels=<session_id>              Name of session within XNAT for a given subject id. If not provided then --subjects is needed."
     echo "    --xnatsubjectid=<subject_id>                  Name of XNAT database subject IDs Default is []."
-    echo "    --xnatsessioninputpath=<path>                 The path to the previously generated session data as mounted for the container. Default is /input/RESOURCES/mnap_session"
+    echo "    --xnatstudyinputpath=<path>                   The path to the previously generated session data as mounted for the container. Default is /input/RESOURCES/mnap_session"
     echo "    --xnatuser=<xnat_host_user_name>              Specify XNAT username."
     echo "    --xnatpass=<xnat_host_user_pass>              Specify XNAT password."
     echo ""
@@ -266,7 +266,7 @@ XNAT_SUBJECT_ID=`opts_GetOpt "--xnatsubjectid" $@`
 XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
 XNAT_USER_NAME=`opts_GetOpt "--xnatuser" $@`
 XNAT_PASSWORD=`opts_GetOpt "--xnatpass" $@`
-XNAT_SESSION_INPUT_PATH=`opts_GetOpt "--xnatsessioninputpath" $@`
+XNAT_STUDY_INPUT_PATH=`opts_GetOpt "--xnatstudyinputpath" $@`
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 
@@ -403,7 +403,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -z ${XNAT_USER_NAME} ]]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${XNAT_PASSWORD} ]]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${XNAT_PROJECT_ID}; fi
-    if [[ -z ${XNAT_SESSION_INPUT_PATH} ]]; then XNAT_SESSION_INPUT_PATH=/input/RESOURCES/mnap_session; reho "Note: XNAT Session Input Path is not defined. Setting default path to: $XNAT_SESSION_INPUT_PATH"; fi
+    if [[ -z ${XNAT_STUDY_INPUT_PATH} ]]; then XNAT_STUDY_INPUT_PATH=/input/RESOURCES/mnap_study; reho "Note: XNAT Session Input Path is not defined. Setting default path to: $XNAT_STUDY_INPUT_PATH"; fi
 fi
 
 # -- Check TURNKEY_STEPS
@@ -551,23 +551,23 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
 
     case ${firstStep} in
         organizeDicom)
-            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
-            rsync -avzH --include='/subjects' --include="$subjectid" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}
+            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}"
+            rsync -avzH --include='/subjects' --include="$subjectid" --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}
             break
             ;;
         getHCPReady|mapHCPFiles)
-            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
-            rsync -avzH --include='/subjects' --include="$subjectid" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}
+            echo "---> Running: rsync -avzH --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}"
+            rsync -avzH --include='/subjects' --include="$subjectid" --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}
             break
             ;;
         hcp1|hcp2|hcp3|hcp4|hcp5|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin|QCPreprocBOLD|hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom|BOLDParcellation|mapHCPData)
-            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
-            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}
+            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}"
+            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}
             break
             ;;
         createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|computeBOLDfcGBC|computeBOLDfcSeed)
-            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}"
-            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_SESSION_INPUT_PATH}/ ${mnap_workdir}
+            echo "---> Running: rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include=\"$subjectid\" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}"
+            rsync -avzH --include='/processing' --include='scenes/***' --include='/subjects' --include="$subjectid" --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_workdir}
             ;;
     esac
 fi
