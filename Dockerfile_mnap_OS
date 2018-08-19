@@ -92,6 +92,7 @@ RUN yum update -y && yum upgrade -y && \
                    automake \
                    autoconf \
                    dh-autoreconf \
+                   nettle-devel \
                    zlib-devel && \
 # Install REMI Repository
     wget --progress=bar:force -O /tmp/remi-release-7.rpm http://rpms.famillecollet.com/enterprise/remi-release-7.rpm && \

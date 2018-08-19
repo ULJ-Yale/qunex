@@ -73,69 +73,12 @@ RUN yum update -y  && \
 # Install R
     echo "Installing R..." && \
     yum install -y R
-                
+    pip install rpy2==2.8.6 && \
 # Install R package
-RUN echo "Installing R packages..." && \
-    wget --progress=bar:force -O /tmp/digest_0.6.15.tar.gz https://cran.r-project.org/src/contrib/digest_0.6.15.tar.gz && \
-    R CMD INSTALL /tmp/digest_0.6.15.tar.gz && \
-    wget --progress=bar:force -O /tmp/gtable_0.2.0.tar.gz https://cran.r-project.org/src/contrib/gtable_0.2.0.tar.gz && \
-    R CMD INSTALL /tmp/gtable_0.2.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/lazyeval_0.2.1.tar.gz https://cran.r-project.org/src/contrib/lazyeval_0.2.1.tar.gz && \
-    R CMD INSTALL /tmp/lazyeval_0.2.1.tar.gz && \
-    wget --progress=bar:force -O /tmp/Rcpp_0.12.18.tar.gz https://cran.r-project.org/src/contrib/Rcpp_0.12.18.tar.gz && \
-    R CMD INSTALL /tmp/Rcpp_0.12.18.tar.gz && \
-    wget --progress=bar:force -O /tmp/plyr_1.8.4.tar.gz https://cran.r-project.org/src/contrib/plyr_1.8.4.tar.gz && \
-    R CMD INSTALL /tmp/plyr_1.8.4.tar.gz && \
-    wget --progress=bar:force -O /tmp/glue_1.3.0.tar.gz https://cran.r-project.org/src/contrib/glue_1.3.0.tar.gz && \
-    R CMD INSTALL /tmp/glue_1.3.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/magrittr_1.5.tar.gz https://cran.r-project.org/src/contrib/magrittr_1.5.tar.gz && \
-    R CMD INSTALL /tmp/magrittr_1.5.tar.gz && \
-    wget --progress=bar:force -O /tmp/stringi_1.2.4.tar.gz https://cran.r-project.org/src/contrib/stringi_1.2.4.tar.gz && \
-    R CMD INSTALL /tmp/stringi_1.2.4.tar.gz && \
-    wget --progress=bar:force -O /tmp/stringr_1.3.1.tar.gz https://cran.r-project.org/src/contrib/stringr_1.3.1.tar.gz && \
-    R CMD INSTALL /tmp/stringr_1.3.1.tar.gz && \
-    wget --progress=bar:force -O /tmp/reshape2_1.4.3.tar.gz https://cran.r-project.org/src/contrib/reshape2_1.4.3.tar.gz && \
-    R CMD INSTALL /tmp/reshape2_1.4.3.tar.gz && \
-    wget --progress=bar:force -O /tmp/rlang_0.2.1.tar.gz https://cran.r-project.org/src/contrib/rlang_0.2.1.tar.gz && \
-    R CMD INSTALL /tmp/rlang_0.2.1.tar.gz && \
-    wget --progress=bar:force -O /tmp/viridisLite_0.3.0.tar.gz https://cran.r-project.org/src/contrib/viridisLite_0.3.0.tar.gz && \
-    R CMD INSTALL /tmp/viridisLite_0.3.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/RColorBrewer_1.1-2.tar.gz https://cran.r-project.org/src/contrib/RColorBrewer_1.1-2.tar.gz && \
-    R CMD INSTALL /tmp/RColorBrewer_1.1-2.tar.gz && \
-    wget --progress=bar:force -O /tmp/R6_2.2.2.tar.gz https://cran.r-project.org/src/contrib/R6_2.2.2.tar.gz && \
-    R CMD INSTALL /tmp/R6_2.2.2.tar.gz && \
-    wget --progress=bar:force -O /tmp/labeling_0.3.tar.gz https://cran.r-project.org/src/contrib/labeling_0.3.tar.gz && \
-    R CMD INSTALL /tmp/labeling_0.3.tar.gz && \
-    wget --progress=bar:force -O /tmp/colorspace_1.3-2.tar.gz https://cran.r-project.org/src/contrib/colorspace_1.3-2.tar.gz && \
-    R CMD INSTALL /tmp/colorspace_1.3-2.tar.gz && \
-    wget --progress=bar:force -O /tmp/munsell_0.5.0.tar.gz https://cran.r-project.org/src/contrib/munsell_0.5.0.tar.gz && \
-    R CMD INSTALL /tmp/munsell_0.5.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/dichromat_2.0-0.tar.gz https://cran.r-project.org/src/contrib/dichromat_2.0-0.tar.gz && \
-    R CMD INSTALL /tmp/dichromat_2.0-0.tar.gz && \
-    wget --progress=bar:force -O /tmp/scales_1.0.0.tar.gz https://cran.r-project.org/src/contrib/scales_1.0.0.tar.gz && \
-    R CMD INSTALL /tmp/scales_1.0.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/crayon_1.3.4.tar.gz https://cran.r-project.org/src/contrib/crayon_1.3.4.tar.gz && \
-    R CMD INSTALL /tmp/crayon_1.3.4.tar.gz && \
-    wget --progress=bar:force -O /tmp/praise_1.0.0.tar.gz https://cran.r-project.org/src/contrib/praise_1.0.0.tar.gz && \
-    R CMD INSTALL /tmp/praise_1.0.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/assertthat_0.2.0.tar.gz https://cran.r-project.org/src/contrib/assertthat_0.2.0.tar.gz && \
-    R CMD INSTALL /tmp/assertthat_0.2.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/cli_1.0.0.tar.gz https://cran.r-project.org/src/contrib/cli_1.0.0.tar.gz && \
-    R CMD INSTALL /tmp/cli_1.0.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/fansi_0.2.3.tar.gz https://cran.r-project.org/src/contrib/fansi_0.2.3.tar.gz && \
-    R CMD INSTALL /tmp/fansi_0.2.3.tar.gz && \
-    wget --progress=bar:force -O /tmp/utf8_1.1.4.tar.gz https://cran.r-project.org/src/contrib/utf8_1.1.4.tar.gz && \
-    R CMD INSTALL /tmp/utf8_1.1.4.tar.gz && \
-    wget --progress=bar:force -O /tmp/pillar_1.3.0.tar.gz https://cran.r-project.org/src/contrib/pillar_1.3.0.tar.gz && \
-    R CMD INSTALL /tmp/pillar_1.3.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/tibble_1.4.2.tar.gz https://cran.r-project.org/src/contrib/tibble_1.4.2.tar.gz && \
-    R CMD INSTALL /tmp/tibble_1.4.2.tar.gz && \
-    wget --progress=bar:force -O /tmp/withr_2.1.2.tar.gz https://cran.r-project.org/src/contrib/withr_2.1.2.tar.gz && \
-    R CMD INSTALL /tmp/withr_2.1.2.tar.gz && \
-    wget --progress=bar:force -O /tmp/testthat_2.0.0.tar.gz https://cran.r-project.org/src/contrib/testthat_2.0.0.tar.gz && \
-    R CMD INSTALL /tmp/testthat_2.0.0.tar.gz && \
-    wget --progress=bar:force -O /tmp/ggplot2_3.0.0.tar.gz https://cran.r-project.org/src/contrib/ggplot2_3.0.0.tar.gz && \
-    R CMD INSTALL /tmp/ggplot2_3.0.0.tar.gz
+    echo "Installing R packages..." && \
+    echo "r <- getOption('repos'); r['CRAN'] <- 'http://cran.us.r-project.org'; options(repos = r);" > ~/.Rprofile && \
+    Rscript -e "install.packages('ggplot2')"
+
 # Install Octave 4.2.1
 RUN echo "Installing Ocatve 4.2.1..." && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
@@ -144,20 +87,20 @@ RUN echo "Installing Ocatve 4.2.1..." && \
     git clone https://github.com/ztamayo/octave-enable64.git && \
     cd octave-enable64 && \
     scl enable devtoolset-3 -- make -j$(nproc) && \
-    alias octave="/opt/Octave/install/bin/octave" && \
-    echo "alias octave='/opt/Octave/install/bin/octave'" >> ~/.bashrc && \
+    alias octave="/usr/local/bin/octave" && \
+    echo "alias octave='/usr/local/bin/octave'" >> ~/.bashrc && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto general" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto control" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto image" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto nan" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto signal" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto io" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto statistics" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto miscellaneous" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto struct" && \
-    octave --no-gui --eval "pkg install -verbose -forge -auto optim" && \                                  
+    octave --no-gui --eval "pkg install -verbose -forge general" && \
+    octave --no-gui --eval "pkg install -verbose -forge control" && \
+    octave --no-gui --eval "pkg install -verbose -forge image" && \
+    octave --no-gui --eval "pkg install -verbose -forge nan" && \
+    octave --no-gui --eval "pkg install -verbose -forge signal" && \
+    octave --no-gui --eval "pkg install -verbose -forge io" && \
+    octave --no-gui --eval "pkg install -verbose -forge statistics" && \
+    octave --no-gui --eval "pkg install -verbose -forge miscellaneous" && \
+    octave --no-gui --eval "pkg install -verbose -forge struct" && \
+    octave --no-gui --eval "pkg install -verbose -forge optim" && \                                  
 # Clear yum cache and other empty folders
     yum clean all && \
     rm -rf /var/lib/yum/lists/* /var/cache/yum/ /tmp/* /var/tmp/* /boot /media /mnt /srv && \
@@ -249,19 +192,18 @@ RUN wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://d
     rm -rf ~/.cache/pip
 
 # Create Octave Sym Links
-RUN ln -fs /opt/Octave/install/bin/octave /usr/bin/octave && \
-#    mkdir -p /opt/Octave/4.2.1 && \
-#    mkdir -p /opt/olib && \
-#    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave/4.2.1 && \
-#    ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
-#    ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
-#    ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
+RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
+    mkdir -p /opt/olib && \
+    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave && \
+    ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
+    ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
+    ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
 #    mkdir -p /opt/octavepkg && \
 #    ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
-#    ln -fs /bin/epstool /opt/olib && \
-#    ln -sf /bin/fig2dev /opt/olib && \
-#    ln -sf /bin/pstoedit /opt/olib && \
-#    ln -sf /usr/bin/hdf5 /opt/olib && \
+    ln -fs /bin/epstool /opt/olib && \
+    ln -sf /bin/fig2dev /opt/olib && \
+    ln -sf /bin/pstoedit /opt/olib && \
+    ln -sf /usr/bin/hdf5 /opt/olib && \
 # Set up Python Sym Links
     ln -fs /usr/local/bin/python2.7 /opt/python && \
     mkdir -p /opt/pylib/lib/python2.7 && \
@@ -270,6 +212,7 @@ RUN ln -fs /opt/Octave/install/bin/octave /usr/bin/octave && \
     ln -fs /usr/lib64/python2.7/site-packages /opt/pylib/lib64/python2.7 && \
     ln -fs /usr/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
     ln -fs /usr/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel
+
 
 CMD ["bash"]
 
