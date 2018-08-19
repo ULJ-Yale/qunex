@@ -325,6 +325,7 @@ Change Log
 * 0.20.10 [library] Added latest XNAT JSON definitions
 * 0.20.11 [connector] Refinements to RunTurnkey
 * 0.20.12 [mnaptools] Edit Dockerfile to compile Octave with 64-bit enabled
+* 0.20.13 [connector] Updates to BOLDParcellate and RunTurnkey
 
 =======
 [Mind and Brain Lab]: http://mblab.si
