@@ -72,7 +72,7 @@ RUN yum update -y  && \
     pip install numpy pydicom scipy nibabel && \
 # Install R
     echo "Installing R..." && \
-    yum install -y R
+    yum install -y R && \
     pip install rpy2==2.8.6 && \
 # Install R package
     echo "Installing R packages..." && \
@@ -192,14 +192,20 @@ RUN wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://d
     rm -rf ~/.cache/pip
 
 # Create Octave Sym Links
+# Link octave install to /usr/bin
 RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
-    mkdir -p /opt/olib && \
-    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave && \
     ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
     ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
     ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
-#    mkdir -p /opt/octavepkg && \
-#    ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
+# Link octave install to /opt/Octave
+    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave && \
+    ln -fs /usr/local/bin/octave-config-4.2.1 /opt/Octave && \
+    ln -fs /usr/local/bin/octave-cli-4.2.1 /opt/Octave && \
+    ln -fs /usr/local/bin/mkoctfile-4.2.1 /opt/Octave && \
+# Create directory in $TOOLS for octave packages and libraries and add sym links
+    mkdir -p /opt/octavepkg && \
+    ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
+    mkdir -p /opt/olib && \
     ln -fs /bin/epstool /opt/olib && \
     ln -sf /bin/fig2dev /opt/olib && \
     ln -sf /bin/pstoedit /opt/olib && \
