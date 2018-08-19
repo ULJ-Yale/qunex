@@ -49,8 +49,7 @@ ENV PATH="/opt" \
     PATH="/opt/pylib/pydicom:$PATH"
 
 # Run yum update
-RUN yum update -y  && \
-    yum clean all && \
+RUN yum clean all && \
 # Install Python 2.7
     echo "Installing Python 2.7.14..." && \
     mkdir /tmp/Python-2.7.14 && \
@@ -131,7 +130,6 @@ RUN echo "Downloading dcm2niix..." && \
 
 # Install FreeSurfer 6.0
 RUN echo "Downloading FreeSurfer 6.0..." && \
-    yum update -y && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     mkdir -p /opt/freesurfer-6.0 && \
