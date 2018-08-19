@@ -127,7 +127,7 @@ usage() {
     echo ""
     echo "  -- XNAT HOST & PROJECT PARMETERS:"
     echo ""
-    echo "    --batch=<batch_file>                          Batch file with processing parameters which exist as a project-level resource on XNAT"
+    echo "    --batchfile=<batch_file>                      Batch file with processing parameters which exist as a project-level resource on XNAT"
     echo "    --mappingfile=<mapping_file>                  File for mapping into desired file structure, e.g. hcp, which exist as a project-level resource on XNAT"
     echo "    --xnatprojectid=<name_of_xnat_project_id>     Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title."
     echo "    --xnathost=<XNAT_site_URL>                    Specify the XNAT site hostname URL to push data to."
@@ -147,6 +147,8 @@ usage() {
     echo "                                                                    Default is [] for the XNAT type run as host is used to pull data."
     echo "    --workingdir=<specify_directory_where_study_is_located>    Specify where the study folder is to be created or resides. Default is [/output]."
     echo "    --projectname=<specify_project_name>                       Specify name of the project on local file system if XNAT is not specified."
+    echo "    --local_batchfile=<batch_file>                             Absolute path to local batch file with pre-configured processing parameters. Not supported for XNAT run." 
+    echo "                                                                 Default is ~/<project_name>/processing/<project_name>_batch_params.txt"
     echo "    --overwritestep=<specify_step_to_overwrite>                Specify <yes> or <no> for delete of prior workflow step. Default is [no]."
     echo "    --overwritesubject=<specify_subject_overwrite>             Specify <yes> or <no> for delete of prior subject run. Default is [no]."
     echo "    --overwriteproject=<specify_project_overwrite>             Specify <yes> or <no> for delete of entire project prior to run. Default is [no]."
@@ -240,6 +242,7 @@ unset PlotElements
 unset CleanupSubject
 unset CleanupProject
 unset STUDY_PATH
+unset LOCAL_BATCH_FILE
 
 # =-=-=-=-=-= GENERAL OPTIONS =-=-=-=-=-=
 #
@@ -257,7 +260,8 @@ OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
 OVERWRITE_PROJECT_FORCE=`opts_GetOpt "--overwriteprojectforce" $@`
 OVERWRITE_PROJECT_XNAT=`opts_GetOpt "--overwriteprojectxnat" $@`
-BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
+BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--local_batchfile" $@`
+LOCAL_BATCH_FILE=`opts_GetOpt "--local_batchfile" $@`
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
 XNAT_ACCSESSION_ID=`opts_GetOpt "--xnataccsessionid" $@`
 XNAT_SESSION_LABELS=`opts_GetOpt "--xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
@@ -492,8 +496,10 @@ MNAPCOMMAND="${TOOLS}/${MNAPREPO}/connector/mnap.sh"
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
    project_batch_file="${processingdir}/${XNAT_PROJECT_ID}_batch_params.txt"
 fi
-if [ "$TURNKEY_TYPE" != "xnat" ]; then
+if [ "$TURNKEY_TYPE" != "xnat" ] && [ -z "$LOCAL_BATCH_FILE" ]; then
    project_batch_file="${processingdir}/${PROJECT_NAME}_batch_params.txt"
+else
+   project_batch_file="${LOCAL_BATCH_FILE}"
 fi
 
 # -- Report options
@@ -556,9 +562,15 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp1|hcp2|hcp3|hcp4|hcp5|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin|QCPreprocBOLD|hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom|mapHCPData)
+        hcp1|hcp2|hcp3|hcp4|hcp5|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin|QCPreprocBOLD|hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        mapHCPData)
+            # --- rsync relevant dependencies if and mapHCPData is starting point
+            RsyncCommand="rsync -avzHn --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
@@ -1059,7 +1071,7 @@ fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
         # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
+        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevic_Network_Partition/final_LR_subcortex_atlas_v8_parcels_labelled.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
             ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
@@ -1314,7 +1326,7 @@ fi
            if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
            if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
            # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/Cole_GlasserNetworkAssignment_Final/final_LR_partition_modified_v2_filled.dlabel.nii"; fi
+           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevic_Network_Partition/final_LR_subcortex_atlas_v8_parcels_labelled.dlabel.nii"; fi
            if [ -z "$OutName" ]; then OutName="BOLD-CAB-NP-v1.0"; fi
            if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
            if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
@@ -1323,7 +1335,7 @@ fi
            if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
            # -- Command
            RunCommand="${MNAPCOMMAND} BOLDParcellation --subjects='${CASES}' \
-           --subjectsfolder="${mnap_subjectsfolder}" \
+           --subjectsfolder='${mnap_subjectsfolder}' \
            --inputfile='${InputFile}' \
            --singleinputfile='${SingleInputFile}' \
            --inputpath='${InputPath}' \
@@ -1445,7 +1457,7 @@ fi
             echo " -- Command: ${RunCommand}"
             eval ${RunCommand}
             BOLDfcLogCheck
-        done 
+        done
    }
 #
 # --------------- BOLD FC Processing and analyses end ----------------------
@@ -1558,4 +1570,3 @@ fi
 }
 
 main $@
-

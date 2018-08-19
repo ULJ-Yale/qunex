@@ -431,6 +431,12 @@ if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
         PConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtR}"
         PConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtRfZ}"
         PConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutPConnFileExtCov}"
+        OutGBCFileExtR="r_GBC.pscalar.nii"
+        OutGBCFileExtRfZ="r_Fz_GBC.pscalar.nii"
+        OutGBCFileExtCov="cov_GBC.pscalar.nii"
+        GBCBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtR}"
+        GBCBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtRfZ}"
+        GBCBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${OutGBCFileExtCov}"
         # -- Check if weights file is specified
         geho "-- Using weights: $UseWeights"
         echo ""
@@ -442,28 +448,34 @@ if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
             geho "-- Computing pconn using correlation..."
             echo ""
             wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -weights "$WeightsFile"
+            wb_command -cifti-reduce ${PConnBOLDOutputR} MEAN ${GBCBOLDOutputR}
             # -- Compute pconn using covariance
             geho "-- Computing pconn using covariance..."
             echo ""
             wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance -weights "$WeightsFile"
+            wb_command -cifti-reduce ${PConnBOLDOutputCov} MEAN ${GBCBOLDOutputCov}
             # -- Compute pconn using fisher-z correlation
             geho "-- Computing pconn using correlation w/ fisher-z transform..."
             echo ""
             wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z -weights "$WeightsFile"
+            wb_command -cifti-reduce ${PConnBOLDOutputRfZ} MEAN ${GBCBOLDOutputRfZ}
         fi
         if [ "$UseWeights" == "no" ]; then
             # -- Compute pconn using correlation
             geho "-- Computing pconn using correlation..."
             echo ""
             wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR"
+            wb_command -cifti-reduce ${PConnBOLDOutputR} MEAN ${GBCBOLDOutputR}
             # -- Compute pconn using covariance
             geho "-- Computing pconn using covariance..."
             echo ""
             wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance
+            wb_command -cifti-reduce ${PConnBOLDOutputCov} MEAN ${GBCBOLDOutputCov}
             # -- Compute pconn using fisher-z correlation
             geho "-- Computing pconn using correlation w/ fisher-z transform..."
             echo ""
             wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z
+            wb_command -cifti-reduce ${PConnBOLDOutputRfZ} MEAN ${GBCBOLDOutputRfZ}
         fi
     fi
 fi
