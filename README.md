@@ -55,7 +55,7 @@ Updating the MNAP Suite
 
 * To update the main MNAP Suite repository and all the submodules run:
 
-`mnapupdateall --branch="<name_of_branch_you_wish_to_update>"`
+`gitmnap --command="pull" --branch="<branch_name>" --branchpath="<absolute_path_to_mnap_repo_folder>" --submodules="all"`
 
 * For this to work you need to have an active git account and read access across the MNAP Suite.
 
@@ -331,6 +331,7 @@ Change Log
 * 0.20.16 [connector] Rsync fix in RunTurnkey
 * 0.20.17 [connector] Minor improvements to BOLDParcellation
 * 0.20.18 [connector] Fixed bugs in RunTurnkey and QCProcessing
+* 0.20.19 [library] Updated --environment printout to reflect latest changes
 
 =======
 [Mind and Brain Lab]: http://mblab.si
