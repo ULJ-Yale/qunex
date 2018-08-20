@@ -327,6 +327,7 @@ Change Log
 * 0.20.12 [mnaptools] Edit Dockerfile to compile Octave with 64-bit enabled
 * 0.20.13 [connector] Updates to BOLDParcellate and RunTurnkey
 * 0.20.14 [connector] Bug fix in RunTurnkey
+* 0.20.15 [connector] Bug fix in RunTurnkey
 
 =======
 [Mind and Brain Lab]: http://mblab.si
