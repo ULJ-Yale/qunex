@@ -571,7 +571,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             ;;
         mapHCPData)
             # --- rsync relevant dependencies if and mapHCPData is starting point
-            RsyncCommand="rsync -avzHn --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
