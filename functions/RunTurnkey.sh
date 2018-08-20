@@ -498,7 +498,8 @@ if [ "$TURNKEY_TYPE" == "xnat" ]; then
 fi
 if [ "$TURNKEY_TYPE" != "xnat" ] && [ -z "$LOCAL_BATCH_FILE" ]; then
    project_batch_file="${processingdir}/${PROJECT_NAME}_batch_params.txt"
-else
+fi
+if [ "$TURNKEY_TYPE" != "xnat" ] && [ ! -z "$LOCAL_BATCH_FILE" ]; then
    project_batch_file="${LOCAL_BATCH_FILE}"
 fi
 
