@@ -328,6 +328,7 @@ Change Log
 * 0.20.13 [connector] Updates to BOLDParcellate and RunTurnkey
 * 0.20.14 [connector] Bug fix in RunTurnkey
 * 0.20.15 [connector] Bug fix in RunTurnkey
+* 0.20.16 [connector] Rsync fix in RunTurnkey
 
 =======
 [Mind and Brain Lab]: http://mblab.si
