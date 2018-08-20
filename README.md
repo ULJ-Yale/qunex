@@ -329,6 +329,7 @@ Change Log
 * 0.20.14 [connector] Bug fix in RunTurnkey
 * 0.20.15 [connector] Bug fix in RunTurnkey
 * 0.20.16 [connector] Rsync fix in RunTurnkey
+* 0.20.17 [connector] Minor improvements to BOLDParcellation
 
 =======
 [Mind and Brain Lab]: http://mblab.si
