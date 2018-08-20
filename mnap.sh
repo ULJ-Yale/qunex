@@ -1167,7 +1167,7 @@ if [ ${Calculation} == "dense" ]; then
     --outname=${OutName} \
     --overwrite=${Overwrite} \
     --targetf=${OutPath} \
-    --covariance=${Covariance} \"
+    --covariance=${Covariance} \
     --mem-limit=${MemLimit} "
     # -- Connector execute function
     connectorExec
@@ -1904,31 +1904,6 @@ echo ""
 # -------------------------------------------------------------------------------------------------------------------------------
 
 QCPreproc() {
-# -- General parameters
-StudyFolder="$StudyFolder"
-SubjectsFolder="$SubjectsFolder"
-CASE="$CASE"
-Modality="$Modality"
-OutPath="$OutPath"
-scenetemplatefolder="$scenetemplatefolder"
-Overwrite="$Overwrite"
-Cluster="$RunMethod"
-SceneZip="$SceneZip"
-ProcessCustomQC="$ProcessCustomQC"
-# -- DWI Parameters
-DWIPath="$DWIPath"
-DWIData="$DWIData"
-DWILegacy="$DWILegacy"
-DtiFitQC="$DtiFitQC"
-BedpostXQC="$BedpostXQC"
-EddyQCStats="$EddyQCStats"
-# -- BOLD Parameters
-BOLDS="$BOLDS"
-BOLDPrefix="$BOLDPrefix"
-BOLDSuffix="$BOLDSuffix"
-SkipFrames="$SkipFrames"
-SNROnly="$SNROnly"
-
 # -- Check general output folders for QC
 if [ ! -d ${SubjectsFolder}/QC ]; then
     mkdir -p ${SubjectsFolder}/QC &> /dev/null
@@ -1937,33 +1912,6 @@ fi
 if [ ! -d ${OutPath} ]; then
     mkdir -p ${OutPath} &> /dev/null
 fi
-# -- Echo full command
-echo ""
-geho "Full Command:"
-geho "${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
---subjectsfolder=${SubjectsFolder} \
---subjects=${CASE} \
---outpath=${OutPath} \
---overwrite=${Overwrite} \
---scenetemplatefolder=${scenetemplatefolder} \
---modality=${Modality} \
---processcustom=${ProcessCustomQC} \
---omitdefaults=${OmitDefaults} \
---dwipath=${DWIPath} \
---dwidata=${DWIData} \
---dwilegacy=${DWILegacy} \
---dtifitqc=${DtiFitQC} \
---bedpostxqc=${BedpostXQC} \
---eddyqcstats=${EddyQCStats} \
---bolddata='${BOLDS}' \
---boldprefix=${BOLDPrefix} \
---boldsuffix=${BOLDSuffix} \
---skipframes=${SkipFrames} \
---snronly=${SNROnly} \
---timestamp=${TimeStamp} \
---suffix=${Suffix} \
---scenezip=${SceneZip} "
-echo ""
 # -- Command to run
 CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --subjectsfolder='${SubjectsFolder}' \
@@ -1972,7 +1920,7 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --overwrite='${Overwrite}' \
 --scenetemplatefolder='${scenetemplatefolder}' \
 --modality='${Modality}' \
---processcustom=${ProcessCustomQC} \
+--customqc=${QCPreprocCustom} \
 --omitdefaults=${OmitDefaults} \
 --dwipath='${DWIPath}' \
 --dwidata='${DWIData}' \
@@ -2485,7 +2433,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
     UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
     Modality=`opts_GetOpt "${setflag}modality" $@`
-    ProcessCustomQC=`opts_GetOpt "${setflag}processcustom" $@`
+    QCPreprocCustom=`opts_GetOpt "${setflag}customqc" $@`
     OmitDefaults=`opts_GetOpt "${setflag}omitdefaults" $@`
     DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
     DWIData=`opts_GetOpt "${setflag}dwidata" $@`
@@ -2493,19 +2441,15 @@ if [[ "$setflag" =~ .*-.* ]]; then
     BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
     EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
     DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
-    BOLDDATA=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
-    BOLDRUNS=`opts_GetOpt "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
-    BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
-    if [[ ! -z $BOLDDATA ]]; then
-        if [[ -z $BOLDS ]]; then
-            BOLDS=$BOLDDATA
-        fi
+    BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+    if [ -z "${BOLDS}" ]; then
+        BOLDS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
     fi
-    if [[ ! -z $BOLDRUNS ]]; then
-        if [[ -z $BOLDS ]]; then
-            BOLDS=$BOLDRUNS
-        fi
+    if [ -z "${BOLDS}" ]; then
+        BOLDS=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
     fi
+    BOLDRUNS="${BOLDS}"
+    BOLDDATA="${BOLDS}"
     BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
     BOLDPrefix=`opts_GetOpt "${setflag}boldprefix" $@`
     SkipFrames=`opts_GetOpt "${setflag}skipframes" $@`
@@ -2796,7 +2740,8 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
-    if [ -z "$ProcessCustomQC" ]; then ProcessCustomQC="no"; fi
+    if [ -z "$QCPreprocCustom" ]; then QCPreprocCustom="no"; fi
+    if [ "$QCPreprocCustom" == "yes" ]; then scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"; fi
     if [ -z "$OmitDefaults" ]; then OmitDefaults="no"; fi
     Cluster="$RunMethod"
     if [ "$Cluster" == "2" ]; then
@@ -2877,7 +2822,17 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
     echo "   Subject Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
-    echo "   Custom QC requested: ${ProcessCustomQC}"
+    echo "   Custom QC requested: ${QCPreprocCustom}"
+    if [ "$QCPreprocCustom" == "yes" ]; then
+        echo "   Custom QC modalities: ${Modality}"
+    fi
+    if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
+        if [[ ! -z ${BOLDRUNS} ]]; then
+            echo "   BOLD runs requested: ${BOLDRUNS}"
+        else
+            echo "   BOLD runs requested: all"
+        fi
+    fi
     echo "   Omit default QC: ${OmitDefaults}"
     echo "   QC Modality: ${Modality}"
     echo "   QC Output Path: ${OutPath}"

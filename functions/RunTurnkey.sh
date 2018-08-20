@@ -352,24 +352,17 @@ DtiFitQC=`opts_GetOpt "--dtifitqc" $@`
 BedpostXQC=`opts_GetOpt "--bedpostxqc" $@`
 EddyQCStats=`opts_GetOpt "--eddyqcstats" $@`
 DWILegacy=`opts_GetOpt "--dwilegacy" $@`
-BOLDDATA=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
-BOLDRUNS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
+
 BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
-if [[ ! -z $BOLDDATA ]]; then
-    if [[ -z $BOLDS ]]; then
-        BOLDS=$BOLDDATA
-    fi
+if [ -z "${BOLDS}" ]; then
+    BOLDS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 fi
-if [[ ! -z $BOLDRUNS ]]; then
-    if [[ -z $BOLDS ]]; then
-        BOLDS=$BOLDRUNS
-    fi
+if [ -z "${BOLDS}" ]; then
+    BOLDS=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 fi
-if [[ ! -z $BOLDS ]]; then
-    if [[ -z $BOLDRUNS ]]; then
-        BOLDRUNS=$BOLDS
-    fi
-fi
+BOLDRUNS="${BOLDS}"
+BOLDDATA="${BOLDS}"
+
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
 BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
 SkipFrames=`opts_GetOpt "--skipframes" $@`
@@ -378,6 +371,7 @@ TimeStamp=`opts_GetOpt "--timestamp" $@`
 Suffix=`opts_GetOpt "--suffix" $@`
 SceneZip=`opts_GetOpt "--scenezip" $@`
 QCPreprocCustom=`opts_GetOpt "--customqc" $@`
+
 # -- g_PlotsBoldTS input flags
 QCPlotElements=`opts_GetOpt "--qcplotelements" $@`
 QCPlotImages=`opts_GetOpt "--qcplotimages" $@`
@@ -529,6 +523,16 @@ echo "   Overwrite for the entire XNAT project: ${OVERWRITE_PROJECT_XNAT}"
 echo "   Cleanup for subject set to: ${CleanupSubject}"
 echo "   Cleanup for project set to: ${CleanupProject}"
 echo "   Custom QC requested: ${QCPreprocCustom}"
+if [ "$QCPreprocCustom" == "yes" ]; then
+    echo "   Custom QC modalities: ${Modality}"
+fi
+if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
+    if [[ ! -z ${BOLDRUNS} ]]; then
+        echo "   BOLD runs requested: ${BOLDRUNS}"
+    else
+        echo "   BOLD runs requested: all"
+    fi
+fi
 if [ "$TURNKEY_STEPS" == "all" ]; then
     echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
 else
@@ -880,7 +884,7 @@ fi
     
     QCPreproc_Finalize() {
         QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-        QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc-*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+        QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
         rename QCPreproc QCPreproc${QCLogName} ${logdir}/comlogs/${QCPreprocComLog} 2> /dev/null
         rename QCPreproc QCPreproc${QCLogName} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
         mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
@@ -956,13 +960,15 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
         if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
         if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
-        if [ -z "${BOLDS}" ]; then
-             BOLDS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+        if [ -z "${BOLDRUNS}" ]; then
+             BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
         fi
-        for BOLD in ${BOLDS}; do
-            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLD}"
-            QCPreprocLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            rename QCPreproc QCPreprocBOLD${BOLD} ${logdir}/comlogs/${QCPreprocLog}
+        for BOLDRUN in ${BOLDRUNS}; do
+            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}"
+            QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            rename QCPreproc QCPreprocBOLD${BOLD} ${logdir}/comlogs/${QCPreprocComLog}
+            rename QCPreproc QCPreprocBOLD${BOLD} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
         done
     }
     # -- Diffusion HCP (after hcp1)
@@ -1104,21 +1110,42 @@ fi
     # 
     # -- Check if Custom QC was requested
     turnkey_QCPreprocCustom() {
+        unset RunCommand
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreprocCustom ... "; echo ""
-        Modalities="T1w T2w myelin BOLD DWI"
+        
+        if [ -z "${Modality}" ]; then
+            Modalities="T1w T2w myelin BOLD DWI"
+            reho " --> Note: No modality specified. Trying all modalities: ${Modalities} "
+        else
+            Modalities="${Modality}"
+            geho " --> User requested modalities: ${Modalities} "
+        fi
         for Modality in ${Modalities}; do
+            geho " --> Running modality: ${Modality} "; echo ""
             if [[ ${Modality} == "BOLD" ]]; then
-                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --boldsuffix="Atlas" --processcustom="yes" --omitdefaults="yes"
-                QCLogName="Custom" 
-                QCPreproc_Finalize
-            fi
-            if [[ ${Modality} == "DWI" ]]; then
-                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --processcustom="yes" --omitdefaults="yes"
-                QCLogName="Custom" 
+                if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
+                if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
+                if [ -z "${BOLDRUNS}" ]; then
+                     BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+                     geho " --> BOLDs not explicitly requested. Will run all available data: ${BOLDRUNS} "
+                fi
+                echo "====> Looping through these BOLDRUNS: ${BOLDRUNS}"
+                for BOLDRUN in ${BOLDRUNS}; do
+                    echo "----> Now working on BOLDRUN: ${BOLDRUN}"
+                    ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes'
+                    QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+                    QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+                    rename QCPreproc QCPreprocCustomBOLD${BOLD} ${logdir}/comlogs/${QCPreprocComLog}
+                    rename QCPreproc QCPreprocCustomBOLD${BOLD} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
+                done
+            elif [[ ${Modality} == "DWI" ]]; then
+                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes"
+                QCLogName="Custom${Modality}"
                 QCPreproc_Finalize
             else
-                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --processcustom="yes" --omitdefaults="yes"
-                QCLogName="Custom" 
+                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes"
+                QCLogName="Custom${Modality}"
+                if [[ ${Modality} == "myelin" ]]; then QCLogName="CustomMyelin"; fi
                 QCPreproc_Finalize
             fi
         done
@@ -1296,7 +1323,7 @@ fi
                g_PlotBoldTS_Check="fail"
            fi
         done
-        
+
         if [[ ${g_PlotBoldTS_Check} == "pass" ]]; then
             echo "" >> ${g_PlotBoldTS_ComlogTmp}
             echo "------------------------- Successful completion of work --------------------------------" >> ${g_PlotBoldTS_ComlogTmp}
@@ -1323,12 +1350,12 @@ fi
         fi
         unset BOLDRUN
         for BOLDRUN in ${BOLDRUNS}; do
-           if [ -z "$InputFile" ]; then InputFile="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss"; fi
+           if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss"; else InputFileParcellation="${InputFile}"; fi
            if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
            if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
            # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
            if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevic_Network_Partition/final_LR_subcortex_atlas_v8_parcels_labelled.dlabel.nii"; fi
-           if [ -z "$OutName" ]; then OutName="BOLD-CAB-NP-v1.0"; fi
+           if [ -z "$OutName" ]; then OutNameParcelation="BOLD-CAB-NP-v1.0"; else OutNameParcelation="${OutName}"; fi
            if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
            if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
            if [ -z "$OutPath" ]; then OutPath="/images/functional/"; fi
@@ -1337,13 +1364,13 @@ fi
            # -- Command
            RunCommand="${MNAPCOMMAND} BOLDParcellation --subjects='${CASES}' \
            --subjectsfolder='${mnap_subjectsfolder}' \
-           --inputfile='${InputFile}' \
+           --inputfile='${InputFileParcellation}' \
            --singleinputfile='${SingleInputFile}' \
            --inputpath='${InputPath}' \
            --inputdatatype='${InputDataType}' \
            --parcellationfile='${ParcellationFile}' \
            --overwrite='${Overwrite}' \
-           --outname='${OutName}' \
+           --outname='${OutNameParcelation}' \
            --outpath='${OutPath}' \
            --computepconn='${ComputePConn}' \
            --extractdata='${ExtractData}' \
@@ -1370,10 +1397,10 @@ fi
               fi
               unset BOLDRUN
               for BOLDRUN in ${BOLDRUNS}; do
-                if [ -z "$InputFile" ]; then InputFile="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; fi
+                if [ -z "$InputFile" ]; then InputFileSeed="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileSeed="${InputFile}"; fi
                 if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
                 if [ -z "$ExtractData" ]; then ExtractData=""; fi
-                if [ -z "$OutName" ]; then OutName="seed_bold${BOLDRUN}_Atlas_g7_hpss_res-VWMWB_lpss"; fi
+                if [ -z "$OutName" ]; then OutNameSeed="seed_bold${BOLDRUN}_Atlas_g7_hpss_res-VWMWB_lpss"; else OutNameSeed="${OutName}"; fi
                 if [ -z "$FileList" ]; then FileList=""; fi
                 if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="yes"; fi
                 if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
@@ -1388,10 +1415,10 @@ fi
                 --calculation='seed' \
                 --runtype='individual' \
                 --subjects='${CASES}' \
-                --inputfiles='${InputFile}' \
+                --inputfiles='${InputFileSeed}' \
                 --inputpath='${InputPath}' \
                 --extractdata='${ExtractData}' \
-                --outname='${OutName}' \
+                --outname='${OutNameSeed}' \
                 --overwrite='${OVERWRITE_STEP}' \
                 --ignore='${IgnoreFrames}' \
                 --roinfo='${ROIInfo}' \
@@ -1416,10 +1443,10 @@ fi
        fi
        unset BOLDRUN
        for BOLDRUN in ${BOLDRUNS}; do
-            if [ -z "$InputFile" ]; then InputFile="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; fi
+            if [ -z "$InputFile" ]; then InputFileGBC="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileGBC="${InputFile}"; fi
             if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
             if [ -z "$ExtractData" ]; then ExtractData=""; fi
-            if [ -z "$OutName" ]; then OutName="GBC_bold${BOLDRUN}_Atlas_g7_hpss_res-VWMWB_lpss"; fi
+            if [ -z "$OutName" ]; then OutNameGBC="GBC_bold${BOLDRUN}_Atlas_g7_hpss_res-VWMWB_lpss"; else OutNameGBC="${OutName}"; fi
             if [ -z "$FileList" ]; then FileList=""; fi
             if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="yes"; fi
             if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
@@ -1438,10 +1465,10 @@ fi
             --calculation='gbc' \
             --runtype='individual' \
             --subjects='${CASES}' \
-            --inputfiles='${InputFile}' \
+            --inputfiles='${InputFileGBC}' \
             --inputpath='${InputPath}' \
             --extractdata='${ExtractData}' \
-            --outname='${OutName}' \
+            --outname='${OutNameGBC}' \
             --flist='${FileList}' \
             --overwrite='${OVERWRITE_STEP}' \
             --ignore='${IgnoreFrames}' \

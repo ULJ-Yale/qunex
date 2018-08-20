@@ -260,7 +260,7 @@ unset SNROnly # --snronly
 unset TimeStamp # --timestamp
 unset Suffix # --suffix
 unset SceneZip # --scenezip
-unset ProcessCustomQC # --processcustom
+unset QCPreprocCustom # --processcustom
 unset OmitDefaults # --omitdefault
 
 runcmd=""
@@ -274,7 +274,7 @@ scenetemplatefolder=`opts_GetOpt "--scenetemplatefolder" $@`
 Modality=`opts_GetOpt "--modality" $@`
 UserSceneFile=`opts_GetOpt "--userscenefile" $@`
 UserScenePath=`opts_GetOpt "--userscenepath" $@`
-ProcessCustomQC=`opts_GetOpt "--processcustom" $@`
+QCPreprocCustom=`opts_GetOpt "--customqc" $@`
 OmitDefaults=`opts_GetOpt "--omitdefaults" $@`
 
 # -- Parse DWI arguments
@@ -285,19 +285,15 @@ BedpostXQC=`opts_GetOpt "--bedpostxqc" $@`
 EddyQCStats=`opts_GetOpt "--eddyqcstats" $@`
 DWILegacy=`opts_GetOpt "--dwilegacy" $@`
 # -- Parse BOLD arguments
-BOLDDATA=`opts_GetOpt "--bolddata" "$@"` #| sed 's/,/ /g;s/|/ /g'`; BOLDDATA=`echo "$BOLDDATA" | sed 's/,/ /g;s/|/ /g'`
-BOLDRUNS=`opts_GetOpt "--boldruns" "$@"` #| sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
-BOLDS=`opts_GetOpt "--bolds" "$@"` #| sed #'s/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
-if [[ ! -z $BOLDDATA ]]; then
-    if [[ -z $BOLDS ]]; then
-        BOLDS="${BOLDDATA}"
-    fi
+BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+if [ -z "${BOLDS}" ]; then
+    BOLDS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 fi
-if [[ ! -z $BOLDRUNS ]]; then
-    if [[ -z $BOLDS ]]; then
-        BOLDS="${BOLDDATA}"
-    fi
+if [ -z "${BOLDS}" ]; then
+    BOLDS=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 fi
+BOLDRUNS="${BOLDS}"
+BOLDDATA="${BOLDS}"
 
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
 BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
@@ -333,9 +329,13 @@ if [ -z ${Modality} ]; then
     reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; echo ""
     exit 1
 fi
-if [ -z "$ProcessCustomQC" ]; then 
-    ProcessCustomQC="no"; 
+if [ -z "$QCPreprocCustom" ]; then 
+    QCPreprocCustom="no"; 
 fi
+if [ "$QCPreprocCustom" == "yes" ]; then 
+    scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
+fi
+
 if [ -z "$OmitDefaults" ]; then 
     OmitDefaults="no"; 
 fi
@@ -444,7 +444,17 @@ echo "  Subject Folder: ${SubjectsFolder}"
 echo "  Subjects: ${CASES}"
 echo "  QC Modality: ${Modality}"
 echo "  QC Output Path: ${OutPath}"
-echo "  Custom QC requested: ${ProcessCustomQC}"
+echo "  Custom QC requested: ${QCPreprocCustom}"
+if [ "$QCPreprocCustom" == "yes" ]; then
+    echo "   Custom QC modalities: ${Modality}"
+fi
+if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
+    if [[ ! -z ${BOLDS} ]]; then
+        echo "   BOLD runs requested: ${BOLDS}"
+    else
+        echo "   BOLD runs requested: all"
+    fi
+fi
 echo "  Omit default QC: ${OmitDefaults} "
 echo "  QC Scene Template Folder: ${scenetemplatefolder}"
 echo "  QC User-defined Scene: ${UserSceneFile}"
@@ -496,10 +506,12 @@ if [ ! -z "$UserSceneFile" ]; then
     TemplateSceneFile"${UserSceneFile}"
     WorkingSceneFile="${CASE}.${Modality}.${UserSceneFile}"
 fi
-if [ "$ProcessCustomQC" == "yes" ]; then
-    Customscenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
-    CustomTemplateSceneFiles=`ls ${Customscenetemplatefolder}/*.scene`
-    geho " ===> Custom scenes requested from ${Customscenetemplatefolder}"; echo ""
+
+if [ "$QCPreprocCustom" == "yes" ]; then
+    scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
+    CustomTemplateSceneFiles=`ls -f ${scenetemplatefolder}/*.scene | xargs -n 1 basename`
+    geho " ===> Custom scenes requested from ${scenetemplatefolder}"; echo ""
+    geho "      ${CustomTemplateSceneFiles}"; echo ""
 fi
 
 # -- Check if subject_hcp.txt is present:
@@ -564,6 +576,31 @@ else
     geho "    Output path: ${OutPath}"
     echo ""
 fi
+
+# Perform checks if scene has proper info: 
+DummyVariable_Check () {
+if [[ ${Modality} != "BOLD" ]]; then
+    DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYTIMESTAMP"
+fi
+if [[ ${Modality} == "BOLD" ]]; then
+   DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYBOLDDATA _DUMMYBOLDSUFFIX DUMMYTIMESTAMP DUMMYBOLDANNOT"
+fi
+    for DUMMYVARIABLE in ${DUMMYVARIABLES}; do
+        echo ""; echo "Checking $DUMMYVARIABLE is present in scene ${scenetemplatefolder}/${TemplateSceneFile} "; echo ""
+        if [ -z `cat ${scenetemplatefolder}/${TemplateSceneFile} | grep "${DUMMYVARIABLE}"` ]; then
+            echo ""
+            reho " ---> ${DUMMYVARIABLE} variable not defined in ${scenetemplatefolder}/${TemplateSceneFile} "
+            reho "      Fix the scene and re-run!"
+            echo ""
+            exit 1
+        else
+            echo ""
+            geho " ---> ${DUMMYVARIABLE} variable found in ${scenetemplatefolder}/${TemplateSceneFile} "
+            reho "      Proceeding..."
+            echo ""
+        fi
+    done
+}
 
 # -------------------------------------------
 # -- Completion checks
@@ -662,7 +699,7 @@ if [[ ${Modality} == "BOLD" ]]; then
                     echo ""
                     reho "--- Scene zip generation failed. Check work."; echo ""
                     CompletionCheck="fail"
-                    return 1                    
+                    return 1
                 fi
             fi
         fi
@@ -702,7 +739,7 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
         if [ ! -z "$BOLDPrefix" ]; then 
             echo ""
             BOLD="$BOLDPrefix_$BOLD"
-            geho "-- BOLD Prefix specified. Appending to BOLD number: $BOLD"
+            geho "--- BOLD Prefix specified. Appending to BOLD number: $BOLD"
             echo ""
         else
             # -- Check if BOLD folder with the given number contains additional prefix info and return an exit code if yes
@@ -710,11 +747,11 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
             NoBOLDDirPreffix=`ls -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/*${BOLD}`
             NoBOLDPreffix=`ls -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/*${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
             if [[ ! -z ${NoBOLDDirPreffix} ]]; then
-                reho "-- A directory with the BOLD number is found but containing a prefix, yet no prefix was specified: "
+                reho "--- A directory with the BOLD number is found but containing a prefix, yet no prefix was specified: "
                 reho "   --> ${NoBOLDDirPreffix}"
-                reho "-- Setting BOLD prefix to: $NoBOLDPreffix "
+                reho "--- Setting BOLD prefix to: $NoBOLDPreffix "
                 echo ""
-                reho "-- If this is not correct please re-run with correct --boldprefix flag to ensure correct BOLDs are specified."
+                reho "--- If this is not correct please re-run with correct --boldprefix flag to ensure correct BOLDs are specified."
                 echo ""
                 BOLD=${NoBOLDPreffix}
             fi
@@ -778,27 +815,8 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
                 ComRunBoldQUEUE="$ComQueue; $ComRunBold1; $ComRunBold2; $ComRunBold3; $ComRunBold4; $ComRunBold5; $ComRunBold6; $ComRunBoldPngNameGSMap; $ComRunBoldPngNameGStimeseries; $ComRunBold7; $ComRunBold8; $ComRunBold9"
             fi
         }
-        # Perform checks if scene has proper info: 
-        BOLDDummyVariable_Check () {
-            BOLDDUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYBOLDDATA _DUMMYBOLDSUFFIX DUMMYTIMESTAMP DUMMYBOLDANNOT"
-            for DUMMYVARIABLE in ${BOLDDUMMYVARIABLES}; do
-                DUMMYVARIABLE_TEST=`echo ${scenetemplatefolder}/${TemplateSceneFile} | grep '${DUMMYVARIABLE}'`
-                if [ -z $DUMMYVARIABLE_TEST ]; then
-                    echo ""
-                    reho " ---> ${DUMMYVARIABLE} variable not defined in ${Customscenetemplatefolder}/${TemplateSceneFile}."
-                    reho "      Fix the scene and re-run!"
-                    echo ""
-                    return 1
-                else
-                    echo ""
-                    geho " ---> ${DUMMYVARIABLE} variable found in ${Customscenetemplatefolder}/${TemplateSceneFile}."
-                    reho "      Proceeding..."
-                    echo ""
-                fi
-            done
-        }
         # -- Check if running defaults w/o UserSceneFile
-        if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ]; then
+        if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ] && [ "$QCPreprocCustom" != "yes" ]; then
             Modality="BOLD"
             TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
             scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
@@ -869,15 +887,13 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
         completionCheck
         fi
         # -- Check if custom QC was specified
-        if [ "$ProcessCustomQC" == "yes" ]; then
-            Customscenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
-            CustomTemplateSceneFiles=`ls ${StudyFolder}/processing/scenes/QC/${Modality}/*.scene`
-            scenetemplatefolder=${Customscenetemplatefolder}
+        if [ "$QCPreprocCustom" == "yes" ]; then
             for TemplateSceneFile in ${CustomTemplateSceneFiles}; do
                 WorkingSceneFile="${CASE}.${Modality}.${BOLD}.${TemplateSceneFile}"
-                BOLDDummyVariable_Check
-                Com1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
-                Com2="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
+                DummyVariable_Check
+                # -- Rsync over template files for a given BOLD
+                Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/"
+                Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null "
                 ComQueue="$Com1; $Com2"
                 runscene_BOLD
                 CustomRunQUEUE=${ComRunBoldQUEUE}
@@ -890,23 +906,23 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
             done
         completionCheck
         fi
-        # -- Check if user specific scene path was provided
-        if [ ! -z "$UserSceneFile" ]; then
-            WorkingSceneFile="${CASE}.${Modality}.${BOLD}.${UserSceneFile}"
-            Com1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
-            Com2="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
-            ComQueue="$Com1; $Com2"
-            BOLDDummyVariable_Check
-            runscene_BOLD
-            UserRunQUEUE=${ComRunBoldQUEUE}
-            # -- Clean up prior conflicting scripts, generate script and set permissions
-            rm -f "$QCPreprocLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
-            echo "$UserRunQUEUE" >> "$QCPreprocLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-            chmod 770 "$QCPreprocLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-            # -- Run script
-            "$QCPreprocLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$QCPreprocLogFolder"/QC_"$CASE"_UserRunQUEUE_"$Modality"_"$TimeStamp".log
-        completionCheck
-        fi
+        # # -- Check if user specific scene path was provided
+        # if [ ! -z "$UserSceneFile" ]; then
+        #     WorkingSceneFile="${CASE}.${Modality}.${BOLD}.${UserSceneFile}"
+        #     Com1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"
+        #     Com2="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
+        #     ComQueue="$Com1; $Com2"
+        #     DummyVariable_Check
+        #     runscene_BOLD
+        #     UserRunQUEUE=${ComRunBoldQUEUE}
+        #     # -- Clean up prior conflicting scripts, generate script and set permissions
+        #     rm -f "$QCPreprocLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
+        #     echo "$UserRunQUEUE" >> "$QCPreprocLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
+        #     chmod 770 "$QCPreprocLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
+        #     # -- Run script
+        #     "$QCPreprocLogFolder"/${CASE}_UserRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$QCPreprocLogFolder"/QC_"$CASE"_UserRunQUEUE_"$Modality"_"$TimeStamp".log
+        # completionCheck
+        # fi
     done
 fi
 
@@ -1288,30 +1304,10 @@ if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ]; then
     completionCheck
 fi
 
-# Perform checks if scene has proper info: 
-DummyVariable_Check () {
-    DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYTIMESTAMP"
-    for DUMMYVARIABLES in ${BOLDDUMMYVARIABLES}; do
-        DUMMYVARIABLE_TEST=`echo ${scenetemplatefolder}/${TemplateSceneFile} | grep '${DUMMYVARIABLE}'`
-        if [ -z $DUMMYVARIABLE_TEST ]; then
-            echo ""
-            reho " ---> ${DUMMYVARIABLE} variable not defined in ${Customscenetemplatefolder}/${TemplateSceneFile}."
-            reho "      Fix the scene and re-run!"
-            echo ""
-            return 1
-        else
-            echo ""
-            geho " ---> ${DUMMYVARIABLE} variable found in ${Customscenetemplatefolder}/${TemplateSceneFile}."
-            reho "      Proceeding..."
-            echo ""
-        fi
-    done
-}
-
 # -- Check if custom QC was specified
-if [ "$ProcessCustomQC" == "yes" ]; then
+if [ "$QCPreprocCustom" == "yes" ]; then
     echo ""
-    reho "====================== Process custom scenes: $ProcessCustomQC ============================="
+    reho "====================== Process custom scenes: $QCPreprocCustom ============================="
     echo ""
     Customscenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
     CustomTemplateSceneFiles=`ls ${StudyFolder}/processing/scenes/QC/${Modality}/*.scene | xargs -n 1 basename`

@@ -818,8 +818,8 @@ if [ ${Calculation} == "dense" ]; then
         for InputFile in ${InputFiles}; do
             dtseriesCheck=`echo ${InputFile} | grep ".dtseries.nii"`
             if [[ ! -z ${dtseriesCheck} ]]; then
-                InputFileName=`echo '${InputFile}' | sed 's/.dtseries.nii//'`
-                BOLDNumber=`echo '${InputFile}' | egrep -o [0-9]+ | head -n1`
+                InputFileName=`echo ${InputFile} | sed 's/.dtseries.nii//'`
+                BOLDNumber=`echo ${InputFile} | egrep -o [0-9]+ | head -n1`
             else
                 reho " ---> Requesting ${InputFile}. This is not a valid .dtseries.nii file"
                 return 1
