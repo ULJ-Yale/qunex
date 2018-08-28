@@ -332,6 +332,7 @@ Change Log
 * 0.20.17 [connector] Minor improvements to BOLDParcellation
 * 0.20.18 [connector] Fixed bugs in RunTurnkey and QCProcessing
 * 0.20.19 [library] Updated --environment printout to reflect latest changes
+* 0.20.20 [connector] Misc minor improvements
 
 =======
 [Mind and Brain Lab]: http://mblab.si
