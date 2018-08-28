@@ -554,7 +554,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
             # --- running the stats
 
-            scrub = "radius:%d|fdt:%.2f|dvarsmt:%.2f|dvarsme:%.2f|after:%d|before:%d|reject:%s" % (options['mov_radius'], options['mov_fd'], options['mov_dvars'], options['mov_dvarsme'], options['mov_after'], options['mov_before'], options['mov_bad'])
+            scrub = "radius:%d|fdt:%.2f|dvarsmt:%.2f|dvarsmet:%.2f|after:%d|before:%d|reject:%s" % (options['mov_radius'], options['mov_fd'], options['mov_dvars'], options['mov_dvarsme'], options['mov_after'], options['mov_before'], options['mov_bad'])
             comm = "%s \"try g_ComputeBOLDStats('%s', '', '%s', 'same', '%s', true); catch ME, g_ReportError(ME); exit(1), end; exit\"" % (mcommand, f['bold'], d['s_bold_mov'], scrub)
             if options['print_command'] == "yes":
                 r += '\n\nRunning\n' + comm + '\n'
@@ -2165,6 +2165,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     concroot = options['boldname'] + '_' + options['image_target'] + '_'
     report = ''
 
+    failed = 0
     if len(concs) != len(fidls):
         r += "\nERROR: Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls))
 
@@ -2193,6 +2194,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
                     else:
                         r += '\n... ERROR: Conc data file (%s) does not exist in the expected locations! Skipping this conc bundle.' % (tconc)
+                        failed += 1
                         continue
                 else:
                     r += '\n... conc data present'
@@ -2209,6 +2211,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                             shutil.copy2(tf, f_fidl)
                         else:
                             r += '\n... ERROR: Event data file (%s) does not exist in the expected locations! Skipping this conc bundle.' % (tfidl)
+                            failed += 1
                             continue
                     else:
                         r += '\n... event data present'
@@ -2226,6 +2229,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
                 if len(conc) == 0:
                     r += '\n... ERROR: No valid image files in conc file (%s)! Skipping this conc bundle.' % (f_conc)
+                    failed += 1
                     continue
 
                 for c in conc:
@@ -2298,6 +2302,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 if not rstatus:
                     r += '\nERROR: Due to missing data we are skipping this conc bundle!'
                     report += " => missing data"
+                    failed += 1
                     continue
 
                 writeConc(f_conc, nconc)
@@ -2343,27 +2348,25 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                         os.remove(done)
                     if status:
                         report += " => processed ok"
-                        failed = 0
                     else:
                         report += " => processing failed"
-                        failed = 1
+                        failed += 1
                 else:
                     if os.path.exists(done):
                         report += " => already done"
-                        failed = 0
                     else:
                         report += " => ready"
-                        failed = 0
+                        failed += 1
 
             except (ExternalFailed, NoSourceFolder), errormessage:
                 r += str(errormessage)
                 report += " => processing failed"
-                failed = 1
+                failed += 1
             except:
                 report += " => processing failed"
                 r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
                 time.sleep(5)
-                failed = 1
+                failed += 1
 
     r += "\n\nConc preprocessing (v2) completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
