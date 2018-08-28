@@ -175,8 +175,10 @@ if (sreport != ""){
 first <- TRUE
 dvfirst <- TRUE
 nframes <- 0
+boldnames <- c()
 for (b in bolds){
     m <- paste(rname, b)
+    boldnames <- c(boldnames, m)
 
     if (verbose) cat("\n\nBOLD", b, "\n---> reading data")
 
@@ -400,7 +402,9 @@ if (plot) {
 
     if (verbose) cat("\n     ... _cor.pdf")
     pdf(file=paste(folder, paste(rname, '_', pref, plotr, "_cor.pdf", sep=""), sep="/"), width=10, height=3.3*nruns)
-    print(qplot(frame, value, data = d, colour=variable, fill=variable, geom="line") + facet_grid( run ~ .) + labs(title=paste("Movement correction parameters", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("mm / deg"))
+    d$run <- factor(as.character(d$run), levels=boldnames, labels=boldnames, ordered=TRUE)
+    with(d, levels(run))
+    print(qplot(frame, value, data = d, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement correction parameters", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("mm / deg"))
     dev.off()
     if (verbose) cat(" ... ok")
 
@@ -416,11 +420,15 @@ if (plot) {
     dbadm <- dbadm[dbadm$value > 0, ]
     ylim <- max(dfd$value)
     ylim <- 10
-    p <- qplot(frame, abs(value), data = dfd, colour=variable, fill=variable, geom="line") + facet_grid( run ~ .) + labs(title=paste("Movement and signal change (dvars) across frames", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("") + geom_hline(aes(yintercept=movt), color="black", alpha=0.3) + geom_hline(aes(yintercept=dvarst), color="black", alpha=0.3)
+    dfd$run <- factor(as.character(dfd$run), levels=boldnames, labels=boldnames, ordered=TRUE)    
+    dbadm$run <- factor(as.character(dbadm$run), levels=boldnames, labels=boldnames, ordered=TRUE)
+    with(dfd, levels(run))
+    with(dbadm, levels(run))
+    p <- qplot(frame, abs(value), data=dfd, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement and signal change (dvars) across frames", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("") + geom_hline(aes(yintercept=movt), color="black", alpha=0.3) + geom_hline(aes(yintercept=dvarst), color="black", alpha=0.3)
     if (dim(dbadm)[1] > 0){
         print(p + geom_rect(aes(xmin = frame-0.5, xmax = frame + 0.5, ymin = 0, ymax = value/value*dvarst), data=dbadm, colour=alpha("blue", alpha=0), fill=alpha("blue", alpha=0.3)) + scale_y_continuous("", limits=c(0,ylim)))
     } else {
-        print(p + scale_y_continuous("", limits=c(0,ylim)))
+        print(p + scale_y_continuous("", limits=c(0, ylim)))
     }
     dev.off()
     if (verbose) cat(" ... ok")
@@ -430,11 +438,15 @@ if (plot) {
     dbadme <- dbadme[dbadme$value > 0, ]
     ylim <- max(dad$value)
     ylim <- 6
-    p <- qplot(frame, value, data = dad, colour=variable, fill=variable, geom="line") + facet_grid( run ~ .) + labs(title=paste("Movement and signal change (dvarme) across frames", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("") + geom_hline(aes(yintercept=movt), color="black", alpha=0.3) + geom_hline(aes(yintercept=dvarsmet), color="black", alpha=0.3)
+    dad$run <- factor(as.character(dad$run), levels=boldnames, labels=boldnames, ordered=TRUE)
+    dbadme$run <- factor(as.character(dbadme$run), levels=boldnames, labels=boldnames, ordered=TRUE)
+    with(dad, levels(run))
+    with(dbadme, levels(run))
+    p <- qplot(frame, value, data=dad, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement and signal change (dvarme) across frames", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("") + geom_hline(aes(yintercept=movt), color="black", alpha=0.3) + geom_hline(aes(yintercept=dvarsmet), color="black", alpha=0.3)
     if (dim(dbadme)[1] > 0){
-        print(p + geom_rect(aes(xmin = frame-0.5, xmax = frame + 0.5, ymin = 0, ymax = value/value*dvarsmet), data=dbadme, colour=alpha("blue", alpha=0), fill=alpha("blue", alpha=0.3)) + scale_y_continuous("", limits=c(0,ylim)))
+        print(p + geom_rect(aes(xmin = frame-0.5, xmax = frame + 0.5, ymin = 0, ymax = value/value*dvarsmet), data=dbadme, colour=alpha("blue", alpha=0), fill=alpha("blue", alpha=0.3)) + scale_y_continuous("", limits=c(0, ylim)))
     } else {
-        print(p + scale_y_continuous("", limits=c(0,ylim)))
+        print(p + scale_y_continuous("", limits=c(0, ylim)))
     }
     dev.off()
     if (verbose) cat(" ... ok")
