@@ -274,7 +274,7 @@ echo ""
 # -- First check if .xnat credentials exist:
 # ------------------------------------------------------------------------------
 
-if [ ${ResetCredential} == "yes" ]; then
+if [[ "${ResetCredential}" == "yes" ]]; then
 	echo ""
 	reho " -- Reseting XNAT credentials in ${HOME}/.xnat "
 	echo ""
@@ -327,9 +327,9 @@ START=$(date +"%s")
 XNAT_CREDENTIALS=$(cat ${HOME}/.xnat)
 
 ## -- Open JSESSION to the XNAT Site
-JSESSION=$(curl -k -X POST -u "$XNAT_CREDENTIALS" "$XNAT_HOST_NAME/data/JSESSION" )
+JSESSION=$(curl -k -X POST -u "$XNAT_CREDENTIALS" "${XNAT_HOST_NAME}/data/JSESSION" )
 echo ""
-geho "-- JSESSION created: $JSESSION"
+geho "-- JSESSION created: ${JSESSION}"
 COUNTER=1
 ## -- Clean prior temp folders
 rm -r ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working &> /dev/null
@@ -343,13 +343,17 @@ rm -r ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working &> /dev/null
 
 cd ${SubjectsFolder}
 for CASE in ${CASES}; do
+	unset XNATSubjectID
+	unset XNAT_SESSION_LABEL
 	## -- If XNAT_SESSION_LABEL is empty set it to CASE
 	if [ -z ${XNAT_SESSION_LABEL} ]; then
 		XNAT_SESSION_LABEL="$CASE"
+		echo "-- Setting XNAT session label to: $XNAT_SESSION_LABEL"
 	fi
 	## -- If XNATSubjectID is empty set it to CASE
 	if [ -z ${XNATSubjectID} ]; then
 		XNATSubjectID="$CASE"
+		echo "-- Setting XNAT subject id to: $XNATSubjectID"
 	fi
 	## -- First check if data drop is present or if inbox is populated
 	cd ${SubjectsFolder}/${CASE}/dicom
@@ -408,8 +412,8 @@ for CASE in ${CASES}; do
 				## -------------------------------------------------------------
 				
 				## -- Upload individual dicom files:
-				echo curl -k -b "JSESSIONID=$JSESSION" -X POST "$XNAT_HOST_NAME/data/services/import?import-handler=gradual-DICOM&XNAT_PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${CASE}&EXPT_LABEL=${XNAT_SESSION_LABEL}" -F "${DCM}=@${DCM}"
-				PREARCPATH=$(curl -k -b "JSESSIONID=$JSESSION" -X POST "$XNAT_HOST_NAME/data/services/import?import-handler=gradual-DICOM&XNAT_PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${CASE}&EXPT_LABEL=${XNAT_SESSION_LABEL}" -F "${DCM}=@${DCM}")
+				echo curl -k -b "JSESSIONID=$JSESSION" -X POST "${XNAT_HOST_NAME}/data/services/import?import-handler=gradual-DICOM&XNAT_PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${XNAT_SESSION_LABEL}&EXPT_LABEL=${XNAT_SESSION_LABEL}" -F "${DCM}=@${DCM}"
+				PREARCPATH=$(curl -k -b "JSESSIONID=$JSESSION" -X POST "${XNAT_HOST_NAME}/data/services/import?import-handler=gradual-DICOM&XNAT_PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${XNAT_SESSION_LABEL}&EXPT_LABEL=${XNAT_SESSION_LABEL}" -F "${DCM}=@${DCM}")
 			done
 		echo ""
 		geho "-- PREARCHIVE XNAT PATH: ${PREARCPATH}"
@@ -419,7 +423,7 @@ for CASE in ${CASES}; do
 		TIMESTAMP=$(echo ${PREARCPATH} | cut -d'/' -f 6 | tr -d '/')
 		PATTERN="[0-9]_[0-9]"
 		if [[ ${TIMESTAMP} =~ ${PATTERN} ]]; then
-			PREARCPATHFINAL="/data/prearchive/projects/${XNAT_PROJECT_ID}/${TIMESTAMP}/${CASE}"
+			PREARCPATHFINAL="/data/prearchive/projects/${XNAT_PROJECT_ID}/${TIMESTAMP}/${XNAT_SESSION_LABEL}"
 			geho "-- Debug PAF is ${PREARCPATHFINAL}"
 		else
 			reho `date` "- Debug TS doesn't pass! ${TIMESTAMP}"
@@ -467,12 +471,12 @@ for CASE in ${CASES}; do
 				echo ""
 				## -- Clean existing nii session if requested
 				if [ "$OVERWRITE" == "yes" ]; then
-					curl -k -b "JSESSIONID=${JSESSION}" -X DELETE "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii"
+					curl -k -b "JSESSIONID=${JSESSION}" -X DELETE "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii"
 				fi
 				## -- Create a folder for nii scans
-				curl -k -b "JSESSIONID=${JSESSION}" -X PUT "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii"
+				curl -k -b "JSESSIONID=${JSESSION}" -X PUT "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii"
 				## -- Upload a specific nii session
-				curl -k -b "JSESSIONID=${JSESSION}" -X POST "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${CASE}/experiments/${CASE}/scans/${SCANCOUNTER}/resources/nii/files/${NIFTIFILEUPLOAD}?inbody=true&overwrite=delete" --data-binary "@${NIFTIFILEUPLOAD}"
+				curl -k -b "JSESSIONID=${JSESSION}" -X POST "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABEL}/experiments/${XNAT_SESSION_LABEL}/scans/${SCANCOUNTER}/resources/nii/files/${NIFTIFILEUPLOAD}?inbody=true&overwrite=delete" --data-binary "@${NIFTIFILEUPLOAD}"
 			done
 			geho "-- NIFTI series $NIFTIFILE upload completed"
 		done
