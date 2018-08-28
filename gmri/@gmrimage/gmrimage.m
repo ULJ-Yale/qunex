@@ -99,7 +99,7 @@ classdef gmrimage
         output = mri_Smooth(obj, fwhm,  verbose, ftype, ksize, projection, mask, wb_path, hcpatlas, timeSeries, frames)
         output = mri_Stats(obj, doIt, exclude)
         output = mri_StatsDiff(obj, obj2, doIt, exclude)
-        output = mri_ComputeScrub(obj, doIt)
+        [output param] = mri_ComputeScrub(obj, doIt)
         output = mri_GetXYZ(obj, ijk)
         output = mri_GetIJK(obj, xyz)
         output = mri_CreateROIFrompeaksIn(obj, peaksIn)

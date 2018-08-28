@@ -66,6 +66,8 @@ function [] = g_ComputeBOLDStats(img, mask, target, store, scrub, verbose);
 %            - Updated documentation
 %   2018-06-20 Grega Repovš
 %            - Added more detailed reporting of parameters used.
+%   2018-08-24 Grega Repovš
+%            - Saving parameters to *.scrub file
 %
 
 if nargin < 6, verbose = false; end
@@ -176,7 +178,7 @@ img.fstats(:,8) = stats.dvarsme;
 
 if ~strcmp(scrub, 'none')
     if verbose, fprintf(' ... scrubbing'); end
-    img = img.mri_ComputeScrub(scrub);
+    [img, parameters] = img.mri_ComputeScrub(scrub);
 end
 
 
@@ -216,7 +218,9 @@ if ext
 
     if ~strcmp(scrub, 'none')
         if verbose, fprintf(' ... saving scrubbing data'); end
-        g_WriteTable(fullfile(target, [fname '.scrub']), [img.scrub img.use'], [img.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ');
+
+        pre = sprintf('# Parameters used\n# radius:   %d\n# fdt:      %.2f\n# dvarsmt:  %.2f\n# dvarsmet: %.2f\n# after:    %d\n# before:   %d\n# reject:   %s', parameters.radius, parameters.fdt, parameters.dvarsmt, parameters.dvarsmet, parameters.after, parameters.before, parameters.reject);
+        g_WriteTable(fullfile(target, [fname '.scrub']), [img.scrub img.use'], [img.scrub_hdr, 'use'], 'sum|%', '%-8s|%-8d|%-8d|%-7s', ' ', pre);
 
         scr = fopen(fullfile(target, [fname '.use']), 'w');
         fprintf(scr, '%d\n', img.use);

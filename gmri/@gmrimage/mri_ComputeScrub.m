@@ -1,6 +1,6 @@
-function [img] = mri_ComputeScrub(img, comm)
+function [img, param] = mri_ComputeScrub(img, comm)
 
-%function [img] = mri_ComputeScrub(img, comm)
+%function [img, param] = mri_ComputeScrub(img, comm)
 %
 %   Method that computes image scrubbing parameters.
 %
@@ -23,12 +23,13 @@ function [img] = mri_ComputeScrub(img, comm)
 %                            - idvarsme ... both fdt and dvarsmet are exceeded
 %                            - udvarsme ... either fdt or udvarsmet are exceeded
 %   OUTPUT
-%       img  - gmrimage image object with scrubbing data embedded:
-%              ... img.scrub_hdr - a cell array of strings listing variables computed
-%              ... img.scrub     - a nframes x nvariables matrix where 0 denotes threshold was not exceeded,
-%                                  1 threshold was exceeded
-%              ... img.use       - a vector denoting for each image frame whether it should be used (1) on not (0)
-%                                  based on whether the specified threshold / condition was exceeded or not
+%       img   - gmrimage image object with scrubbing data embedded:
+%               ... img.scrub_hdr - a cell array of strings listing variables computed
+%               ... img.scrub     - a nframes x nvariables matrix where 0 denotes threshold was not exceeded,
+%                                   1 threshold was exceeded
+%               ... img.use       - a vector denoting for each image frame whether it should be used (1) on not (0)
+%                                   based on whether the specified threshold / condition was exceeded or not
+%       param - a structure holding the parameters used
 %
 %   USE
 %   The method is used on an gmrimage img object that has both movement parameters data (img.mov) and
@@ -63,6 +64,7 @@ function [img] = mri_ComputeScrub(img, comm)
 %
 %   Change log
 %   2016-11-29 - Grega Repovs - Updated documentation
+%   2018-08-24 - Grega Repovs - Now also returning the parameters used
 %
 %   ToDo
 %   - Add computation of frame statistics if they are not already present.
