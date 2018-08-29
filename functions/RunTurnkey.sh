@@ -172,7 +172,20 @@ usage() {
     echo "                                                 Only set if g_PlotBoldTS is requested. If not set then the default is: "
     echo "        ${QCPlotElements}"
     echo ""
-    echo "  -- EXAMPLE:"
+    echo "-- EXAMPLES:"
+    echo ""
+    echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+    echo ""
+    reho "           * NOTE: --scheduler is not available via direct script call."
+    echo ""
+    echo "   --> Run via mnap runTurnkey --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+    echo ""
+    geho "           * NOTE: scheduler is available via mnap call:"
+    echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+    echo ""
+    echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+    echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+    echo ""
     echo ""
     echo "  RunTurnkey.sh \ "
     echo "   --turnkeytype=<turnkey_run_type> \ "
@@ -295,6 +308,18 @@ VoxelStep=`opts_GetOpt "--vstep" $@`
 ROIInfo=`opts_GetOpt "--roinfo" $@`
 FCCommand=`opts_GetOpt "--options" $@`
 Method=`opts_GetOpt "--method" $@`
+# -- BOLDParcellation input flags
+InputFile=`opts_GetOpt "--inputfile" $@`
+InputPath=`opts_GetOpt "--inputpath" $@`
+InputDataType=`opts_GetOpt "--inputdatatype" $@`
+SingleInputFile=`opts_GetOpt "--singleinputfile" $@`
+OutPath=`opts_GetOpt "--outpath" $@`
+OutName=`opts_GetOpt "--outname" $@`
+ExtractData=`opts_GetOpt "--extractdata" $@`
+ComputePConn=`opts_GetOpt "--computepconn" $@`
+UseWeights=`opts_GetOpt "--useweights" $@`
+WeightsFile=`opts_GetOpt "--weightsfile" $@`
+ParcellationFile=`opts_GetOpt "--parcellationfile" $@`
 
 # =-=-=-=-=-= DIFFUSION OPTIONS =-=-=-=-=-=
 #
@@ -909,9 +934,15 @@ fi
         ${MNAPCOMMAND} hcp2 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}"
         CleanupFiles=" talairach_with_skull.log lh.white.deformed.out lh.pial.deformed.out rh.white.deformed.out rh.pial.deformed.out"
         for CleanupFile in ${CleanupFiles}; do 
-            cp ${logdir}/${CleanupFile} ${mnap_subjectsfolder}/${CASES}/hcp/pb0986/T1w/${CASES}/scripts/ 2>/dev/null
+            cp ${logdir}/${CleanupFile} ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/${CASES}/scripts/ 2>/dev/null
             rm -rf ${logdir}/${CleanupFile}
         done
+        rm -rf ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/fsaverage 2>/dev/null
+        rm -rf ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/rh.EC_average 2>/dev/null
+        rm -rf ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/lh.EC_average 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/lh.EC_average ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/ 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/fsaverage ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/ 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/rh.EC_average ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/ 2>/dev/null
     }
     # -- PostFreeSurfer
     turnkey_hcp3() {
@@ -1350,7 +1381,7 @@ fi
         fi
         unset BOLDRUN
         for BOLDRUN in ${BOLDRUNS}; do
-           if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss"; else InputFileParcellation="${InputFile}"; fi
+           if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
            if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
            if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
            # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)

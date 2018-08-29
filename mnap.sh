@@ -404,7 +404,7 @@ fi
 runTurnkey() {
 # -- Specify command variable
 unset CommandToRun
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --subjects='${CASE}' ${runTurnkeyArguments}"
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --subjects='${CASE}' ${runTurnkeyArguments} --turnkeysteps='${TURNKEY_STEPS}'"
 connectorExec
 }
 
@@ -1235,21 +1235,6 @@ echo ""
 
 BOLDParcellation() {
 # -- Parse general parameters
-QUEUE="$QUEUE"
-SubjectsFolder="$SubjectsFolder"
-CASE=${CASE}
-InputFile="$InputFile"
-InputPath="$InputPath"
-InputDataType="$InputDataType"
-SingleInputFile="$SingleInputFile"
-OutPath="$OutPath"
-OutName="$OutName"
-ComputePConn="$ComputePConn"
-UseWeights="$UseWeights"
-WeightsFile="$WeightsFile"
-ParcellationFile="$ParcellationFile"
-Cluster="$RunMethod"
-ExtractData="$ExtractData"
 if [ -z ${SingleInputFile} ]; then
     BOLDOutput="${SubjectsFolder}/${CASE}/${OutPath}"
 else
@@ -1258,7 +1243,7 @@ fi
 # -- Command to run
 CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/BOLDParcellation.sh \
 --subjectsfolder='${SubjectsFolder}' \
---subject='${CASE}' \
+--subjects='${CASE}' \
 --inputfile='${InputFile}' \
 --singleinputfile='${SingleInputFile}' \
 --inputpath='${InputPath}' \
@@ -1275,69 +1260,8 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/BOLDParcellation.sh \
 connectorExec
 }
 show_usage_BOLDParcellation() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function implements parcellation on the BOLD dense files using a whole-brain parcellation [ e.g.Glasser parcellation with subcortical labels included ] "
-echo ""
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                             Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run"
-echo "--inputfile=<file_to_compute_parcellation_on>          Specify the name of the file you want to use for parcellation [ e.g. bold1_Atlas_MSMAll_hp2000_clean ]"
-echo "--inputpath=<path_for_input_file>                      Specify path of the file you want to use for parcellation relative to the master study folder and subject directory [ e.g. /images/functional/ ]"
-echo "--inputdatatype=<type_of_dense_data_for_input_file>    Specify the type of data for the input file [ e.g. dscalar or dtseries ]"
-echo "--parcellationfile=<dlabel_file_for_parcellation>      Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
-echo "--outname=<name_of_output_pconn_file>                  Specify the suffix output name of the pconn file"
-echo "--outpath=<path_for_output_file>                       Specify the output path name of the pconn file relative to the master study folder [ e.g. /images/functional/ ]"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                       e.g. for SLURM the string would look like this: "
-echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "-- OPTIONAL PARMETERS:"
-echo ""
-echo "--singleinputfile=<parcellate_single_file>                     Parcellate only a single file in any location using an absolute path point to this file. Individual flags are not needed [ --subject, --studyfolder, -inputfile, --inputpath ]"
-echo "--overwrite=<clean_prior_run>                                  Delete prior run"
-echo "--computepconn=<specify_parcellated_connectivity_calculation>     Specify if a parcellated connectivity file should be computed <pconn>. This is done using covariance and correlation [ e.g. yes; default is set to no ]"
-echo "--useweights=<clean_prior_run>                                 If computing a  parcellated connectivity file you can specify which frames to omit [ e.g. yes' or no; default is set to no ] "
-echo "--weightsfile=<location_and_name_of_weights_file>              Specify the location of the weights file relative to the master study folder [ e.g. /images/functional/movement/bold1.use ]"
-echo "--extractdata=<save_out_the_data_as_as_csv>                    Specify if you want to save out the matrix as a CSV file"
-echo ""
-echo "-- Example with flagged parameters for a local run:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='BOLDParcellation' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--inputfile='<name_of_input_file' \ "
-echo "--inputpath='/images/functional/' \ "
-echo "--inputdatatype='dtseries' \ "
-echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
-echo "--overwrite='no' \ "
-echo "--outname='<name_of_output_pconn_file>' \ "
-echo "--outpath='/images/functional/' \ "
-echo "--computepconn='yes' \ "
-echo "--extractdata='yes' \ "
-echo "--useweights='no' \ "
-echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='BOLDParcellation' \ "
-echo "--subjects='100206' \ "
-echo "--inputfile='bold1_Atlas_MSMAll_hp2000_clean' \ "
-echo "--inputpath='/images/functional/' \ "
-echo "--inputdatatype='dtseries' \ "
-echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
-echo "--overwrite='no' \ "
-echo "--outname='<name_of_output_pconn_file>' \ "
-echo "--outpath='/images/functional/' \ "
-echo "--computepconn='yes' \ "
-echo "--extractdata='yes' \ "
-echo "--useweights='no' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${MNAPREPO}/connector/functions/BOLDParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2259,6 +2183,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     fi
     
     # -- Set additional general flags
+    TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" $@`
     CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
     PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
@@ -2451,12 +2376,14 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    if [ "$Cluster" == "2" ]; then
            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
    fi
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=||g' | sed "s|${CASES}||g"` 
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=||g' | sed "s|${TURNKEY_STEPS}||g"`
    echo ""
    echo "Running $FunctionToRun processing with the following parameters:"
    echo ""
    echo "--------------------------------------------------------------"
    echo ""
-   echo " Turnkey Parameters: ${runTurnkeyArguments}"
+   echo " Turnkey Parameters: --subjects='${CASES}' ${runTurnkeyArguments} --turnkeysteps='${TURNKEY_STEPS}' "
    echo ""
    echo "--------------------------------------------------------------"
     # -- Loop through all the cases

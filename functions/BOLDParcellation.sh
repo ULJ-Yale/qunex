@@ -57,7 +57,7 @@ usage() {
      echo "-- REQUIRED PARMETERS:"
      echo ""
      echo "     --subjectsfolder=<folder_with_subjects>             Path to study folder that contains subjects"
-     echo "     --subject=<list_of_cases>                           List of subjects to run"
+     echo "     --subjects=<list_of_cases>                           List of subjects to run"
      echo "     --inputfile=<file_to_compute_parcellation_on>       Specify the name of the file you want to use for parcellation (e.g. bold1_Atlas_MSMAll_hp2000_clean)"
      echo "     --inputpath=<path_for_input_file>                   Specify path of the file you want to use for parcellation relative to the master study folder and subject directory (e.g. /images/functional/)"
      echo "     --inputdatatype=<type_of_dense_data_for_input_file> Specify the type of data for the input file (e.g. dscalar or dtseries)"
@@ -74,7 +74,20 @@ usage() {
      echo "     --weightsfile=<location_and_name_of_weights_file>   Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)"
      echo "     --extractdata=<save_out_the_data_as_as_csv>         Specify if you want to save out the matrix as a CSV file"
      echo ""
-     echo "-- Example:"
+     echo "-- EXAMPLES:"
+     echo ""
+     echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/BOLDParcellation.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo ""
+     reho "           * NOTE: --scheduler is not available via direct script call."
+     echo ""
+     echo "   --> Run via mnap BOLDParcellation --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo ""
+     geho "           * NOTE: scheduler is available via mnap call:"
+     echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+     echo ""
+     echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+     echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+     echo ""
      echo ""
      echo "BOLDParcellation.sh --subjectsfolder='<folder_with_subjects>' \ "
      echo "--subject='<subj_id>' \ "
@@ -184,7 +197,7 @@ while [ ${index} -lt ${numArgs} ]; do
             SubjectsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subject=*)
+        --subjects=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -274,7 +287,7 @@ if [ -z ${SingleInputFile} ]; then
 fi
 if [ -z ${InputDataType} ]; then
     usage
-    reho "ERROR: <type_of_dense_data_for_input_file"
+    reho "ERROR: <type_of_dense_data_for_input_file> not specified"
     echo ""
     exit 1
 fi
@@ -346,10 +359,13 @@ echo "--- Establishing paths for all input and output folders:"
 echo ""
 
 # -- Define all inputs and outputs depending on data type input
-if [ "$InputDataType" == "dtseries" ]; then 
+if [ "$InputDataType" == "dtseries" ]; then
     echo "      Working with dtseries files..."
     echo ""
-    # -- Define extension 
+    # -- Define extension
+    if [ `echo ${InputFile} | grep '.dtseries.nii'` ]; then 
+        InputFile=`echo ${InputFile} | sed 's|.dtseries.nii||g'`
+    fi
     InputFileExt="dtseries.nii"
     OutFileExt="ptseries.nii"
     if [ -z "$SingleInputFile" ]; then
@@ -372,6 +388,9 @@ if [ "$InputDataType" == "dscalar" ]; then
     echo "       Working with dscalar files..."
     echo ""
     # -- Define extension 
+    if [ `echo ${InputFile} | grep '.dscalar.nii'` ]; then 
+        InputFile=`echo ${InputFile} | sed 's|.dscalar.nii||g'`
+    fi
     InputFileExt="dscalar.nii"
     OutFileExt="pscalar.nii"
     if [ -z "$SingleInputFile" ]; then
