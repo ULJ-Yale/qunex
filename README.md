@@ -336,6 +336,7 @@ Change Log
 * 0.20.21 [niutilities matlab] Fixed a reporting bug in preprocessConc and updated BOLD stats and scrub reporting
 * 0.20.22 [niutilities hcpmodified] Enabled use of custom brain masks and cerebellum edits in FS
 * 0.20.23 [connector] Improved handling of runTurnkey via mnap.sh and removed softlinks for hcp2 via RunTurnkey
+* 0.20.24 [connector] Improved handling of runTurnkey via mnap.sh, fixed recursive turnkey permissions and added curl to push logs
 
 =======
 [Mind and Brain Lab]: http://mblab.si
