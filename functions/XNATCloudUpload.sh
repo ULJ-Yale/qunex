@@ -397,7 +397,7 @@ for CASE in ${CASES}; do
 				## 
 				##    -b "JSESSIONID=$JSESSION" --> XNAT Site Open Session Variable
 				##    -X --> Here $XNAT_HOST_NAME corresponds to the XNAT URL; 
-				##       --> XNAT_PROJECT_ID corresponds to the XNAT Project ID in the Site URL; 
+				##       --> PROJECT_ID corresponds to the XNAT Project ID in the Site URL; 
 				##           if not defined or not found then data goes into prearchive and left unassigned
 				##       --> SUBJECT_ID corresponds to the XNAT Subject ID that is unique to that subject and project within the XNAT Site
 				##       --> SUBJECT_LABEL corresponds to what a given 
@@ -412,8 +412,8 @@ for CASE in ${CASES}; do
 				## -------------------------------------------------------------
 				
 				## -- Upload individual dicom files:
-				echo curl -k -b "JSESSIONID=$JSESSION" -X POST "${XNAT_HOST_NAME}/data/services/import?import-handler=gradual-DICOM&XNAT_PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${XNAT_SESSION_LABEL}&EXPT_LABEL=${XNAT_SESSION_LABEL}" -F "${DCM}=@${DCM}"
-				PREARCPATH=$(curl -k -b "JSESSIONID=$JSESSION" -X POST "${XNAT_HOST_NAME}/data/services/import?import-handler=gradual-DICOM&XNAT_PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${XNAT_SESSION_LABEL}&EXPT_LABEL=${XNAT_SESSION_LABEL}" -F "${DCM}=@${DCM}")
+				echo curl -k -b "JSESSIONID=$JSESSION" -X POST "${XNAT_HOST_NAME}/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${XNAT_SESSION_LABEL}&EXPT_LABEL=${XNAT_SESSION_LABEL}" -F "${DCM}=@${DCM}"
+				PREARCPATH=$(curl -k -b "JSESSIONID=$JSESSION" -X POST "${XNAT_HOST_NAME}/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${XNAT_SESSION_LABEL}&EXPT_LABEL=${XNAT_SESSION_LABEL}" -F "${DCM}=@${DCM}")
 			done
 		echo ""
 		geho "-- PREARCHIVE XNAT PATH: ${PREARCPATH}"

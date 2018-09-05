@@ -122,6 +122,7 @@ usage() {
     echo "                                                       If empty default is set to: [xnat]."
     echo "    --path=<study_path>                                Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
     echo "    --subjects=<comma_separated_list_of_cases>         List of subjects to run locally if --xnatsessionlabels and --xnatsubjectid missing."
+    echo "    --subjid=<comma_separated_list_of_subject_ids>     List of ids to select for a run via gMRI engine from the batch file"
     echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
     echo "                                                       Supported:   ${MNAPTurnkeyWorkflow} "
     echo ""
@@ -268,6 +269,7 @@ CleanupProject=`opts_GetOpt "--cleanupproject" $@`
 RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
 mnap_subjectsfolder=`opts_GetOpt "--subjectsfolder" $@`
 CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "${CASES}" | sed 's/,/ /g;s/|/ /g'`
+SUBJID=`opts_GetOpt "--subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SUBJID=`echo "${SUBJID}" | sed 's/,/ /g;s/|/ /g'`
 OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
@@ -548,9 +550,11 @@ echo "   Overwrite for the entire XNAT project: ${OVERWRITE_PROJECT_XNAT}"
 echo "   Cleanup for subject set to: ${CleanupSubject}"
 echo "   Cleanup for project set to: ${CleanupProject}"
 echo "   Custom QC requested: ${QCPreprocCustom}"
+
 if [ "$QCPreprocCustom" == "yes" ]; then
     echo "   Custom QC modalities: ${Modality}"
 fi
+
 if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
     if [[ ! -z ${BOLDRUNS} ]]; then
         echo "   BOLD runs requested: ${BOLDRUNS}"
@@ -558,6 +562,11 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
         echo "   BOLD runs requested: all"
     fi
 fi
+
+if [[ ! -z "${SUBJID}" ]]; then 
+echo "   Subjid parameter: ${SUBJID}"
+fi
+
 if [ "$TURNKEY_STEPS" == "all" ]; then
     echo "   Turnkey workflow steps: ${MNAPTurnkeyWorkflow}"
 else
@@ -1232,7 +1241,8 @@ fi
         --subjects="${project_batch_file}" \
         --subjectsfolder="${mnap_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}"
+        --logfolder="${logdir}" \
+        --subjid="${SUBJID}"
     }
     # -- Generate brain masks for de-noising
     turnkey_createBOLDBrainMasks() {
@@ -1241,7 +1251,8 @@ fi
         --subjects="${project_batch_file}" \
         --subjectsfolder="${mnap_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}"
+        --logfolder="${logdir}" \
+        --subjid="${SUBJID}"
     }
     # -- Compute BOLD statistics
     turnkey_computeBOLDStats() {
@@ -1250,7 +1261,8 @@ fi
         --subjects="${project_batch_file}" \
         --subjectsfolder="${mnap_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}"
+        --logfolder="${logdir}" \
+        --subjid="${SUBJID}"
     }
     # -- Create final BOLD statistics report
     turnkey_createStatsReport() {
@@ -1259,7 +1271,8 @@ fi
         --subjects="${project_batch_file}" \
         --subjectsfolder="${mnap_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}"
+        --logfolder="${logdir}" \
+        --subjid="${SUBJID}"
     }
     # -- Extract nuisance signal for further de-noising
     turnkey_extractNuisanceSignal() {
@@ -1268,7 +1281,8 @@ fi
         --subjects="${project_batch_file}" \
         --subjectsfolder="${mnap_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}"
+        --logfolder="${logdir}" \
+        --subjid="${SUBJID}"
     }
     # -- Process BOLDs
     turnkey_preprocessBold() {
@@ -1277,7 +1291,8 @@ fi
         --subjects="${project_batch_file}" \
         --subjectsfolder="${mnap_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}"
+        --logfolder="${logdir}" \
+        --subjid="${SUBJID}"
     }
     # -- Process via CONC file
     turnkey_preprocessConc() {
@@ -1286,7 +1301,8 @@ fi
         --subjects="${project_batch_file}" \
         --subjectsfolder="${mnap_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}"
+        --logfolder="${logdir}" \
+        --subjid="${SUBJID}"
     }
     # -- Compute g_PlotBoldTS ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
     turnkey_g_PlotBoldTS() {
@@ -1610,7 +1626,17 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
 done
 
 if [ ${TURNKEY_TYPE} == "xnat" ]; then
-    reho "---> Cleaning up: removing dicom folder"
+    geho "---> Setting recursive r+w+x permissions on ${mnap_studyfolder}"
+    chmod -R 777 ${mnap_studyfolder} &> /dev/null
+    echo ""
+    geho "---> Uploading all logs to ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABELS}/experiments/${XNAT_SESSION_LABELS}/resources/MNAP_LOGS"
+    cd ${processingdir}
+    zip -r logs logs
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABELS}/experiments/${XNAT_SESSION_LABELS}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip
+    rm -rf ${processingdir}/logs.zip &> /dev/null
+    popd
+    echo ""
+    geho "---> Cleaning up: removing dicom folder"
     rm -rf ${mnap_workdir}/dicom &> /dev/null
 fi
 

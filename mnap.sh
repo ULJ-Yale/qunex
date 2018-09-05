@@ -404,7 +404,7 @@ fi
 runTurnkey() {
 # -- Specify command variable
 unset CommandToRun
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --subjects='${CASE}' ${runTurnkeyArguments} --turnkeysteps='${TURNKEY_STEPS}'"
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --subjects='${CASE}' ${runTurnkeyArguments} --turnkeysteps='${TURNKEY_STEPS}' --subjid='${SUBJID}'"
 connectorExec
 }
 
@@ -2088,6 +2088,7 @@ unset ClusterName
 unset setflag
 unset doubleflag
 unset singleflag
+unset SUBJID
 
 # -- Check if first parameter is missing flags and parse it as FunctionToRun
 if [ -z `echo "$1" | grep '-'` ]; then
@@ -2185,6 +2186,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     # -- Set additional general flags
     TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" $@`
     CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    SUBJID=`opts_GetOpt "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SUBJID=`echo "$SUBJID" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
     PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
     Scheduler=`opts_GetOpt "${setflag}scheduler" $@`  # Specify the type of scheduler to use
@@ -2376,14 +2378,17 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    if [ "$Cluster" == "2" ]; then
            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
    fi
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=||g' | sed "s|${CASES}||g"` 
+   
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=||g' | sed "s|${CASES}||g"`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=||g' | sed "s|${TURNKEY_STEPS}||g"`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjid=||g' | sed "s|${SUBJID}||g"`
+   
    echo ""
    echo "Running $FunctionToRun processing with the following parameters:"
    echo ""
    echo "--------------------------------------------------------------"
    echo ""
-   echo " Turnkey Parameters: --subjects='${CASES}' ${runTurnkeyArguments} --turnkeysteps='${TURNKEY_STEPS}' "
+   echo " Turnkey steps: ${TURNKEY_STEPS} "
    echo ""
    echo "--------------------------------------------------------------"
     # -- Loop through all the cases
