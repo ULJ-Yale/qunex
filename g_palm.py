@@ -24,9 +24,9 @@ import niutilities
 import niutilities.g_exceptions as ge
 import re
 
-def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'):
+def runPALM(image, design=None, args=None, root=None, options=None, cores=None, overwrite='no'):
     '''
-    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [cores=<number of cores to use in parallel>]  [overwite=no]
+    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [cores=<number of cores to use in parallel>]  [overwite=no]
 
     USE
     ===
@@ -198,7 +198,10 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
 
     Additional optional parameters
     ------------------------------
-
+    
+    * options   : a | separate string of additional options to be passed to the
+                  command, e.g. specify 'surface' if only left and right surfaces
+                  from dtseries or dscalar files are to be analysed
     * root      : optional root name for the result images, design name is used
                   if the optional parameter is not specified
     * cores     : number of cores to use in parallel for grayordinate
@@ -233,8 +236,10 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
              - Added cleaning of preexisting image files.
     2018-03-06 Grega Repovš
             - Correction to documentation
-    2018-07-026 Grega Repovš
+    2018-07-26 Grega Repovš
             - Corrected for new locations of templates
+    2018-09-10 Grega Repovš
+            - Added additional options and surface only processing
     '''
 
     print "Running PALM\n============"
@@ -312,11 +317,16 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
     #     print "WARNING: The following design files are missing and will be omitted: %s." % (", ".join(missing))
     #     return
 
+    if options is None:
+        options = []
+    else:
+        options = [e.strip() for e in options.split('|')]
+
 
     # --- setup and run
 
     toclean   = [];
-    cnum = re.compile('.*_c([0-9]+).nii')
+    cnum = re.compile('.*_c([0-9]+).gii')
     mnum = re.compile('.*_m([0-9]+)_')
 
     try:
@@ -343,18 +353,26 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
                 toclean.append(simage)
                 iformat = 'ptseries'
 
-            elif '.dtseries.nii' in image:
+            elif '.dtseries.nii' in image or '.dscalar.nii' in image:
                 print " --> decomposing %s" % (image)
-                command = ['wb_command', '-cifti-separate', image, 'COLUMN',
-                    '-volume-all', troot + '_volume.nii',                     # , '-roi', 'cifti_volume_mask.nii'
-                    '-metric', 'CORTEX_LEFT', troot + '_left.func.gii',
-                    '-metric', 'CORTEX_RIGHT', troot + '_right.func.gii']
+                if 'surface' in options:
+                    command = ['wb_command', '-cifti-separate', image, 'COLUMN',
+                        '-metric', 'CORTEX_LEFT', troot + '_left.func.gii',
+                        '-metric', 'CORTEX_RIGHT', troot + '_right.func.gii']
+                else:
+                    command = ['wb_command', '-cifti-separate', image, 'COLUMN',
+                        '-volume-all', troot + '_volume.nii',                     # , '-roi', 'cifti_volume_mask.nii'
+                        '-metric', 'CORTEX_LEFT', troot + '_left.func.gii',
+                        '-metric', 'CORTEX_RIGHT', troot + '_right.func.gii']
 
                 print " --> running:", " ".join(command)
                 if subprocess.call(command):
                     print "ERROR: Command failed: %s" % (" ".join(command))
                     raise ValueError("ERROR: Command failed: %s" % (" ".join(command)))
-                toclean += [troot + e for e in ['_volume.nii', '_left.func.gii', '_right.func.gii']]
+                if 'surface' in options:
+                    toclean += [troot + e for e in ['_left.func.gii', '_right.func.gii']]
+                else:
+                    toclean += [troot + e for e in ['_volume.nii', '_left.func.gii', '_right.func.gii']]
                 iformat = 'dtseries'
 
             elif '.nii' in image:
@@ -428,16 +446,17 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
                 raise ge.CommandFailed("runPALM", "PALM failed", "The PALM command failed to run: %s" % (" ".join(command)), "Please check your settings!")
 
         else:
-            print " --> setting up PALM for dtseries CIFTI input"
+            print " --> setting up PALM for dtseries/dscalar CIFTI input"
             calls = []
 
-            print "     ... Volume"
-            infiles = setInFiles(root, 'volume.nii', nimages)
-            inargs  = ['-m', os.path.join(atlas, 'HCP', 'masks', 'volume.cifti.mask.nii')]
-            command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
-            calls.append({'name': 'PALM Volume', 'args': command, 'sout': root + '_volume.log'})
-            if '-T' in command and t3set is not None:
-                command += [t3set]
+            if not 'surface' in options:
+                print "     ... Volume"
+                infiles = setInFiles(root, 'volume.nii', nimages)
+                inargs  = ['-m', os.path.join(atlas, 'HCP', 'masks', 'volume.cifti.mask.nii')]
+                command = ['palm'] + infiles + inargs + dargs + sargs + ['-o', root + '_volume']
+                calls.append({'name': 'PALM Volume', 'args': command, 'sout': root + '_volume.log'})
+                if '-T' in command and t3set is not None:
+                    command += [t3set]
 
             print "     ... Left Surface"
             infiles = setInFiles(root, 'left.func.gii', nimages)
@@ -493,25 +512,32 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
                         rleftsurfaces.sort()
                         rrightsurfaces.sort()
 
-                        if rvolumes:
-                            if len(rvolumes) != len(rleftsurfaces) or len(rvolumes) != len(rrightsurfaces):
-                                print "     ... WARNING: Nonmatching number of resulting volume and surface files, please check PALM log for errors!"
-                                continue
+                        if 'surface' in options:
+                            if rleftsurfaces:
+                                if len(rleftsurfaces) != len(rrightsurfaces):
+                                    print "     ... WARNING: Nonmatching number of resulting surface files, please check PALM log for errors!"
+                                    continue    
+                        else:
+                            if rvolumes:
+                                if len(rvolumes) != len(rleftsurfaces) or len(rvolumes) != len(rrightsurfaces):
+                                    print "     ... WARNING: Nonmatching number of resulting volume and surface files, please check PALM log for errors!"
+                                    continue
 
-                        while rvolumes:
-                            rvolume       = rvolumes.pop(0)
+                        while rleftsurfaces:
+                            if 'surface' not in options:
+                                rvolume       = rvolumes.pop(0)
                             rleftsurface  = rleftsurfaces.pop(0)
                             rrightsurface = rrightsurfaces.pop(0)
 
                             # --- get the contrast number
-                            C = cnum.match(rvolume)
+                            C = cnum.match(rleftsurface)
                             if C is None:
                                 C = '0'
                             else:
                                 C = C.group(1)
 
                             # --- get the modality number
-                            M = mnum.match(rvolume)
+                            M = mnum.match(rleftsurface)
                             if M is None:
                                 M = ''
                             else:
@@ -527,16 +553,22 @@ def runPALM(image, design=None, args=None, root=None, cores=None, overwrite='no'
                             rleftsurface = rleftsurface.replace('.gii', '.func.gii')
                             rrightsurface = rrightsurface.replace('.gii', '.func.gii')
 
-                            command = ['wb_command', '-cifti-create-dense-scalar', targetfile,
-                                       '-volume', rvolume, os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'Atlas_ROIs.2.nii.gz'),
-                                       '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
-                                       '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
+                            if 'surface' in options:
+                                command = ['wb_command', '-cifti-create-dense-scalar', targetfile,
+                                           '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
+                                           '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
+                            else:
+                                command = ['wb_command', '-cifti-create-dense-scalar', targetfile,
+                                           '-volume', rvolume, os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'Atlas_ROIs.2.nii.gz'),
+                                           '-left-metric', rleftsurface, '-roi-left', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'L.atlasroi.32k_fs_LR.shape.gii'),
+                                           '-right-metric', rrightsurface, '-roi-right', os.path.join(atlas, 'HCP', 'standard_mesh_atlases', 'R.atlasroi.32k_fs_LR.shape.gii')]
                             if subprocess.call(command):
                                 raise ge.CommandFailed("runPALM", "Create cifti failed", "wb_command creating cifti file failed", "The command ran: %s" % (" ".join(command)))
 
                             if os.path.exists(targetfile):
                                 print "... done!"
-                                os.remove(rvolume)
+                                if not 'surface' in options:
+                                    os.remove(rvolume)
                                 os.remove(rleftsurface)
                                 os.remove(rrightsurface)
                             else:
