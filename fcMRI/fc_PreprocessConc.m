@@ -7,7 +7,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   INPUTS
 %       subjectf ... A path to the subject's folder with images and data.
 %       bolds    ... A vector of bold runs in the order of the conc file.
-%       do       ... Which steps to perform and in what order ['shrcl']:
+%       doIt     ... Which steps to perform and in what order ['s,h,r,c,l']:
 %           s - spatial smoothing
 %           h - highpass temporal filter
 %           r - GLM estimation and regression of nuisance signals, with an
@@ -144,7 +144,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   c ... Saving of resulting beta coefficients (allways to follow 'r').
 %   l ... Low-pass filtering.
 %
-%   So the default 'shrcl' do parameter would lead to the image files
+%   So the default 's,h,r,c,l' do parameter would lead to the image files
 %   first being smoothed, then high-pass filtered. Next a regression step
 %   would follow in which nuisance signal and/or task related signal would
 %   be estimated and regressed out, then the related beta estimates would
@@ -405,11 +405,11 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %
 %   Activation analysis
 %
-%   >>> fc_PreprocessConc(subjects/OP234', [1 2 4 5], 'src', 2.5, 0, 'e', [], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', '', false, '.nii.gz', '', 'hipass=keep|regress=keep|lopass=keep', 'glm_name:M1');
+%   >>> fc_PreprocessConc(subjects/OP234', [1 2 4 5], 's,r,c', 2.5, 0, 'e', [], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', '', false, '.nii.gz', '', 'hipass=keep|regress=keep|lopass=keep', 'glm_name:M1');
 %
 %   Functional connectivity preprocessing
 %
-%   >>> fc_PreprocessConc(subjects/OP234', [1 2 4 5], 'shr', 2.5, 0, 'm,V,WM,WB,1d,e', [], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', '', false, '.nii.gz', '', 'hipass=linear|regress=ignore|lopass=linear');
+%   >>> fc_PreprocessConc(subjects/OP234', [1 2 4 5], 's,h,r', 2.5, 0, 'm,V,WM,WB,1d,e', [], 'flanker.fidl', 'block:boynton|target:9|target:9>target_rt:1:within:z', '', false, '.nii.gz', '', 'hipass=linear|regress=ignore|lopass=linear');
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %   Written by Grega Repovs
@@ -494,6 +494,8 @@ options = g_ParseOptions([], options, default);
 g_PrintStruct(options, 'Options used');
 
 TS = [];
+doIt = repace(doIt, ",", "");
+doIt = repace(doIt, " ", "");
 
 % ======================================================
 %                          ----> prepare basic variables

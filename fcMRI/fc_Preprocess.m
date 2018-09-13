@@ -8,8 +8,8 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %       subjectf ... The subject's folder with images and data.
 %       bold     ... The number of the bold file to process.
 %       omit     ... The number of frames to omit at the start of each bold [].
-%       do       ... A string specifying, which steps to perform and in what
-%                    order ['shrcl];:
+%       doIt     ... A string specifying, which steps to perform and in what
+%                    order ['s,h,r,c,l];:
 %                    s - spatial smoothing
 %                    h - highpass temporal filter
 %                    r - regression of nuisance signal
@@ -87,7 +87,7 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %  c ... Saving of resulting beta coefficients (allways to follow 'r').
 %  l ... Low-pass filtering.
 %
-%  So the default 'shrcl' do input parameter would lead to the files
+%  So the default 's,h,r,c,l' do input parameter would lead to the files
 %  first being smoothed, then high-pass filtered. Next a regression step
 %  would follow in which nuisance signal and/or task related signal would
 %  be estimated and regressed out, then the related beta estimates would
@@ -344,7 +344,7 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %   EXAMPLE USE
 %   ===========
 %
-%   >>> fc_Preprocess('subjects/OP234', 3, 4, 'shr', 'm,V,WM,WB,1d', '', '', 2.5, '', '', true, '', 'udvarsme', 'hipass:linear|regress=ignore|lopass=linear');
+%   >>> fc_Preprocess('subjects/OP234', 3, 4, 's,h,r', 'm,V,WM,WB,1d', '', '', 2.5, '', '', true, '', 'udvarsme', 'hipass:linear|regress=ignore|lopass=linear');
 %
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %
@@ -463,6 +463,8 @@ end
 rgsse = strrep(strrep(strrep(strrep(rgss, ',', ''), ' ', ''), ';', ''), '|', '');
 rgss  = regexp(rgss, ',|;| |\|', 'split');
 
+doIt = repace(doIt, ",", "");
+doIt = repace(doIt, " ", "");
 
 
 % ======================================================
