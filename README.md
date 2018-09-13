@@ -338,6 +338,7 @@ Change Log
 * 0.20.23 [connector] Improved handling of runTurnkey via mnap.sh and removed softlinks for hcp2 via RunTurnkey
 * 0.20.24 [connector] Improved handling of runTurnkey via mnap.sh, fixed recursive turnkey permissions and added curl to push logs
 * 0.20.25 [niutilities] Enabled use of .dscalar and surface only cifti in runPALM
+* 0.20.26 [niutilties matlab] Deprecated -c help option and added commas to bold_actions parameter.
 
 =======
 [Mind and Brain Lab]: http://mblab.si
