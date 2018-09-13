@@ -40,30 +40,6 @@ else:
     mcommand = os.environ['MNAPMCOMMAND']
 
 
-def useOrSkipBOLD(sinfo, options, r=None):
-    """
-    useOrSkipBOLD
-    Internal function to determine which bolds to use and which to skip.
-    """
-    bsearch  = re.compile('bold([0-9]+)')
-    btargets = options['bold_preprocess'].split("|")
-    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task']) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
-    bskip    = []
-    if "all" not in btargets:
-        bskip = [(n, b, t) for n, b, t in bolds if t not in btargets]
-        bolds = [(n, b, t) for n, b, t in bolds if t in btargets]
-        bskip.sort()
-        if r is not None:
-            if len(bskip) > 0:
-                r += "\n\nSkipping the following BOLD images:"
-                for n, b, t in bskip:
-                    r += "\n...  %-6s [%s]" % (b, t)
-    bolds.sort()
-
-    return bolds, bskip, len(bskip), r
-
-
-
 def getBOLDData(sinfo, options, overwrite=False, thread=0):
     """
     getBOLDData - documentation not yet available.
@@ -244,7 +220,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    for boldnum, boldname, boldtask in bolds:
+    for boldnum, boldname, boldtask, boldinfo in bolds:
 
         r += "\n\nWorking on: " + boldname
 
@@ -522,7 +498,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    for boldnum, boldname, boldtask in bolds:
+    for boldnum, boldname, boldtask, boldinfo in bolds:
 
         r += "\n\nWorking on: " + boldname + " ..."
 
@@ -817,7 +793,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
 
         bolds, bskip, preport['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-        for boldnum, boldname, boldtask in bolds:
+        for boldnum, boldname, boldtask, boldinfo in bolds:
 
             r += "\n\nWorking on: " + boldname + " ..."
 
@@ -1127,7 +1103,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    for boldnum, boldname, boldtask in bolds:
+    for boldnum, boldname, boldtask, boldinfo in bolds:
 
         r += "\n\nWorking on: " + boldname + " ..."
 
@@ -1613,14 +1589,14 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     report = {'done': [], 'processed': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
-    report['skipped'] = [str(n) for n, b, t in bskip]
+    report['skipped'] = [str(n) for n, b, t, v in bskip]
 
     if options['hcp_bold_variant'] == "":
         options['bold_variant'] = ''
     else:
         options['bold_variant'] = '.' + options['hcp_bold_variant'] 
 
-    for boldnum, boldname, boldtask in bolds:
+    for boldnum, boldname, boldtask, boldinfo in bolds:
 
         boldnum = str(boldnum)
 

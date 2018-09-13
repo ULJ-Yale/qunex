@@ -34,7 +34,6 @@ from g_img import *
 import os
 import os.path
 import shutil
-import re
 import glob
 import sys
 import traceback
@@ -1516,12 +1515,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
 
-        btargets = options['bold_preprocess'].split("|")
-        bolds = [v for (k, v) in sinfo.iteritems() if k.isdigit()]
-        bolds = [(int(e['name'].lower().replace('bold', '')), e) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
-        if "all" not in btargets:
-            bolds = [(n, v) for n, v in bolds if v['task'] in btargets]
-        bolds.sort()
+        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        if report['boldskipped']:
+            report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Loop through bolds
 
@@ -1535,7 +1531,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         r += "\n"
 
-        for bold, boldinfo in bolds:
+        for bold, boldname, boldtask, boldinfo in bolds:
 
             try:
 
@@ -1759,7 +1755,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             r += "\n     ... DONE!"
 
         rep = []
-        for k in ['done', 'failed', 'ready', 'not ready']:
+        for k in ['done', 'failed', 'ready', 'not ready', 'skipped']:
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
         report = (sinfo['id'], "HCP fMRI Volume: bolds " + "; ".join(rep), len(report['failed']) + len(report['not ready']))
@@ -1937,17 +1933,13 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         # --- Get sorted bold numbers
 
-        btargets = options['bold_preprocess'].split("|")
-        bolds = [v for (k, v) in sinfo.iteritems() if k.isdigit()]
-        bolds = [(int(e['name'].lower().replace('bold', '')), e) for e in bolds if 'bold' in e['name'].lower() and 'boldref' not in e['name'].lower()]
-        if "all" not in btargets:
-            bolds = [(n, v) for n, v in bolds if v['task'] in btargets]
-        bolds.sort()
-
+        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        if report['boldskipped']:
+            report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Loop through bolds
 
-        for bold, boldinfo in bolds:
+        for bold, boldname, boldtask, boldinfo in bolds:
 
             try:
                 r += "\n---> Processing BOLD %d" % (bold)
@@ -2023,7 +2015,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
             r += "\n     ... DONE!"
 
         rep = []
-        for k in ['done', 'failed', 'ready', 'not ready']:
+        for k in ['done', 'failed', 'ready', 'not ready', 'skipped']:
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
         report = (sinfo['id'], "HCP fMRI Surface: bolds " + "; ".join(rep), len(report['failed']) + len(report['not ready']))
@@ -2267,8 +2259,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     2018-07-17 - Grega Repovš - Added hcp_bold_variant option.
     """
 
-    bsearch = re.compile('bold([0-9]+)')
-
+    
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
@@ -2372,103 +2363,93 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' cifti tail\n" % (", ".join(options['bold_preprocess'].split("|")), options['hcp_cifti_tail'])
 
-    btargets = options['bold_preprocess'].split("|")
-
     report['boldok'] = 0
     report['boldfail'] = 0
     report['boldskipped'] = 0
-    skipped = []
 
     if options['hcp_bold_variant'] == "":
         bvar = ''
     else:
         bvar = '.' + options['hcp_bold_variant']    
 
-    for (k, v) in sinfo.iteritems():
-        if k.isdigit():
-            bnum = bsearch.match(v['name'])
-            if bnum:
-                if v['task'] in btargets or options['bold_preprocess'] == 'all':
+    bolds, skipped, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-                    boldname = v['name']
-                    r += "\n ... " + boldname
-                    bnum = bnum.group(1)
+    for boldnum, boldname, boldtask, boldinfo in bolds:
 
-                    # --- filenames
-                    options['image_target'] = 'nifti'        # -- needs to be set to correctly copy volume files
-                    f.update(getBOLDFileNames(sinfo, boldname, options))
+        r += "\n ... " + boldname
 
-                    status = True
-                    bname  = ""
+        # --- filenames
+        options['image_target'] = 'nifti'        # -- needs to be set to correctly copy volume files
+        f.update(getBOLDFileNames(sinfo, boldname, options))
 
-                    try:
-                        if 'bold' in v:
-                            bname = v['bold']
-                        else:
-                            for posb in ["%s", "bold%s", "BOLD%s", "BOLD_%s"]:
-                                if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'Results' + bvar, posb % (bnum))):
-                                    bname = posb % (bnum)
-                                    break
-                            if bname == "":
-                                r += "\n     ... ERROR: could not find sourcefile for %s!" % (boldname)
-                                status = False
-                                raise NoSourceFolder(r)
-                        boldpath = os.path.join(d['hcp'], 'MNINonLinear', 'Results', bname)
+        status = True
+        bname  = ""
 
-                        if os.path.exists(f['bold']) and not overwrite:
-                            r += "\n     ... volume image ready"
-                        else:
-                            status, r = linkOrCopy(os.path.join(boldpath, bname + '.nii.gz'), f['bold'], r, status, "volume image", "\n     ... ")
+        try:
+            if 'bold' in boldinfo:
+                bname = boldinfo['bold']
+            else:
+                for posb in ["%d", "bold%d", "BOLD%d", "BOLD_%d"]:
+                    if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'Results' + bvar, posb % (boldnum))):
+                        bname = posb % (boldnum)
+                        break
+                if bname == "":
+                    r += "\n     ... ERROR: could not find sourcefile for %s!" % (boldname)
+                    status = False
+                    raise NoSourceFolder(r)
+            boldpath = os.path.join(d['hcp'], 'MNINonLinear', 'Results', bname)
 
-                        if os.path.exists(f['bold_dts']) and not overwrite:
-                            r += "\n     ... grayordinate image ready"
-                        else:
-                            r += "\n     ... linking %s to %s" % (os.path.join(boldpath, bname + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
-                            status, r = linkOrCopy(os.path.join(boldpath, bname + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'], r, status, "grayordinate image", "\n     ... ")
+            if os.path.exists(f['bold']) and not overwrite:
+                r += "\n     ... volume image ready"
+            else:
+                status, r = linkOrCopy(os.path.join(boldpath, bname + '.nii.gz'), f['bold'], r, status, "volume image", "\n     ... ")
 
-                        if os.path.exists(f['bold_mov']) and not overwrite:
-                            r += "\n     ... movement data ready"
-                        else:
-                            if os.path.exists(os.path.join(boldpath, 'Movement_Regressors.txt')):
-                                mdata = [line.strip().split() for line in open(os.path.join(boldpath, 'Movement_Regressors.txt'))]
-                                mfile = open(f['bold_mov'], 'w')
-                                print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
-                                c = 0
-                                for mline in mdata:
-                                    c += 1
-                                    mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
-                                    print >> mfile, mline.replace(' -', '-')
-                                mfile.close()
-                                r += "\n     ... movement data prepared"
-                            else:
-                                r += "\n     ... ERROR: could not prepare movement data, source does not exist: %s" % os.path.join(boldpath, 'Movement_Regressors.txt')
-                                failed += 1
-                                status = False
+            if os.path.exists(f['bold_dts']) and not overwrite:
+                r += "\n     ... grayordinate image ready"
+            else:
+                r += "\n     ... linking %s to %s" % (os.path.join(boldpath, bname + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'])
+                status, r = linkOrCopy(os.path.join(boldpath, bname + options['hcp_cifti_tail'] + '.dtseries.nii'), f['bold_dts'], r, status, "grayordinate image", "\n     ... ")
 
-                        if status:
-                            r += "\n     ---> Data ready!\n"
-                            report['boldok'] += 1
-                        else:
-                            r += "\n     ---> ERROR: Data missing, please check source!\n"
-                            report['boldfail'] += 1
-                            failed += 1
-
-                    except (ExternalFailed, NoSourceFolder), errormessage:
-                        r += str(errormessage)
-                        report['boldfail'] += 1
-                        failed += 1
-                    except:
-                        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
-                        time.sleep(3)
-                        failed += 1
+            if os.path.exists(f['bold_mov']) and not overwrite:
+                r += "\n     ... movement data ready"
+            else:
+                if os.path.exists(os.path.join(boldpath, 'Movement_Regressors.txt')):
+                    mdata = [line.strip().split() for line in open(os.path.join(boldpath, 'Movement_Regressors.txt'))]
+                    mfile = open(f['bold_mov'], 'w')
+                    print >> mfile, "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)"
+                    c = 0
+                    for mline in mdata:
+                        c += 1
+                        mline = "%6d   %s" % (c, "   ".join(mline[0:6]))
+                        print >> mfile, mline.replace(' -', '-')
+                    mfile.close()
+                    r += "\n     ... movement data prepared"
                 else:
-                    skipped.append((v['name'], v['task']))
-                    report['boldskipped'] += 1
+                    r += "\n     ... ERROR: could not prepare movement data, source does not exist: %s" % os.path.join(boldpath, 'Movement_Regressors.txt')
+                    failed += 1
+                    status = False
+
+            if status:
+                r += "\n     ---> Data ready!\n"
+                report['boldok'] += 1
+            else:
+                r += "\n     ---> ERROR: Data missing, please check source!\n"
+                report['boldfail'] += 1
+                failed += 1
+
+        except (ExternalFailed, NoSourceFolder), errormessage:
+            r += str(errormessage)
+            report['boldfail'] += 1
+            failed += 1
+        except:
+            r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+            time.sleep(3)
+            failed += 1
 
     if len(skipped) > 0:
         r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bold_preprocess=\"%s\"':\n" % (options['bold_preprocess'])
-        for bname, btask in skipped:
-            r += "\n ... %s [name: '%s']" % (bname, btask)
+        for boldnum, boldname, boldtask, boldinfo in skipped:
+            r += "\n ... %s [name: '%s']" % (boldname, boldtask)
 
     r += "\n\nHCP data mapping completed on %s\n---------------------------------------------------------------- \n" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d, bolds skipped: %(boldskipped)d" % (report)

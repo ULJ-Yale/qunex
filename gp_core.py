@@ -94,6 +94,31 @@ def root4dfp(filename):
     return filename
 
 
+def useOrSkipBOLD(sinfo, options, r=None):
+    """
+    useOrSkipBOLD
+    Internal function to determine which bolds to use and which to skip.
+    """
+    bsearch  = re.compile('bold([0-9]+)')
+    btargets = options['bold_preprocess'].split("|")
+    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
+    bskip    = []
+    if "all" not in btargets:
+        bskip = [(n, b, t, v) for n, b, t, v in bolds if t not in btargets and str(n) not in btargets]
+        bolds = [(n, b, t, v) for n, b, t, v in bolds if t in btargets or str(n) in btargets]
+        bskip.sort()
+        if r is not None:
+            if len(bskip) > 0:
+                r += "\n\nSkipping the following BOLD images:"
+                for n, b, t, v in bskip:
+                    r += "\n...  %-6s [%s]" % (b, t)
+                r += "\n"
+    bolds.sort()
+
+    return bolds, bskip, len(bskip), r
+
+
+
 def getExactFile(candidate):
     g = glob.glob(candidate)
     if len(g) == 1:
