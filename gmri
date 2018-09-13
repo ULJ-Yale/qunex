@@ -166,35 +166,45 @@ listed below. The key parameters with their default values are:
                              specific command to run successfully
 
 Please note that each of the commands can be run by specifying its short 
-(listed first) or full (listed second) name. 
+(listed first) or full (listed second) name followed by specfication of
+processing options. 
 
 HCP preprocessing commands
 --------------------------
-hcp1  hcp_PreFS        [preprocessing options] [preprocessing options] ...
-hcp2  hcp_FS           [preprocessing options] [preprocessing options] ...
-hcp3  hcp_PostFS       [preprocessing options] [preprocessing options] ...
-hcp4  hcp_fMRIVolume   [preprocessing options] [preprocessing options] ...
-hcp5  hcp_fMRISurface  [preprocessing options] [preprocessing options] ...
-hcpd  hcp_Diffusion    [preprocessing options] [preprocessing options] ...
-hcpdf hcp_DTIFit       [preprocessing options] [preprocessing options] ...
-hcpdb hcp_Bedpostx     [preprocessing options] [preprocessing options] ...
+hcp1  hcp_PreFS        Run HCP Pre FreeSurfer pipeline.
+hcp2  hcp_FS           Run HCP FreeSurfer pipeline.
+hcp3  hcp_PostFS       Run HCP Post FreeSurfer pipeline.
+hcp4  hcp_fMRIVolume   Run HCP fMRI Volume pipeline.
+hcp5  hcp_fMRISurface  Run HCP fMRI Surface pipeline.
+hcpd  hcp_Diffusion    Run HCP DWI pipeline.
+hcpdf hcp_DTIFit       Run FSL DTI fit.
+hcpdb hcp_Bedpostx     Run FSL Bedpostx GPU.
 
 
 Functional connectivity preprocessing commands
 ----------------------------------------------
-mhd  mapHCPData              [preprocessing options] [preprocessing options] ...
-bbm  createBOLDBrainMasks    [preprocessing options] [preprocessing options] ...
-cbs  computeBOLDStats        [preprocessing options] [preprocessing options] ...
-csr  createStatsReport       [preprocessing options] [preprocessing options] ...
-ens  extractNuisanceSignal   [preprocessing options] [preprocessing options] ...
-bpp  preprocessBold          [preprocessing options] [preprocessing options] ...
-cpp  preprocessConc          [preprocessing options] [preprocessing options] ...
+mhd  mapHCPData              Map HCP preprocessed data to subjects' image folder.
+bbm  createBOLDBrainMasks    Create brain masks for BOLD runs.
+cbs  computeBOLDStats        Compute BOLD movement and signal statistics.
+csr  createStatsReport       Create BOLD movement statistic reports and plots.
+ens  extractNuisanceSignal   Extract nuisance signal from BOLD images.
+bpp  preprocessBold          Preprocess single BOLD images.
+cpp  preprocessConc          Preprocess conc bundles of BOLD images.
 
 
 General purpose commands
 ------------------------
 
-rsc  runShellScript   [preprocessing options] [preprocessing options] ...
+rsc  runShellScript   Runs the specified script.
+
+
+Legacy commands
+---------------
+
+seg    runBasicSegmentation     Run basic structural image segmentation using BET and FAST.
+gfs    getFSData                Copy existing FreeSurfer data to subjects' images folder.
+fss    runSubcorticalFS         Run subcortical freesurfer segmentation.
+fsf    runFullFS                Run full freesurfer segmentation
 
 
 Matlab functions
@@ -400,22 +410,6 @@ def printHelp(com):
         for line in gp.flaglist:
             if len(line) == 4:
                 print "  --%-24s %s" % (line[0], line[3])
-            elif len(line) > 0:
-                print "\n\n" + line[0] + '\n'
-            else:
-                print
-        print
-
-    # --- print list of processing options and flags
-    elif com in ['c']:
-        print "================================================================================"
-        print ""
-        print "General magnetic resonance Imaging (gmri) utilities for processing and analysis."
-        print "\nuse: gmri <command> [option=value] [option=value] ..."
-        print "\nList of processing commands \n"
-        for line in gp.calist + [[]] + gp.salist:
-            if len(line) == 4:
-                print "   %-6s %-24s %s" % (line[0], line[1], line[3])
             elif len(line) > 0:
                 print "\n\n" + line[0] + '\n'
             else:
