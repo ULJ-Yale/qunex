@@ -1270,7 +1270,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --bold_preprocess  ... A pipe ('|') separated list of bold files to process.
     --event_file       ... The name of the fidl file to be used with each bold.
     --bold_actions     ... A string specifying which actions, and in what sequence
-                           to perform [shrcl]
+                           to perform [s,h,r,c,l]
     --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
@@ -1312,7 +1312,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     c ... Saving of resulting beta coefficients (allways to follow 'r').
     l ... Low-pass filtering.
 
-    So the default 'shrcl' --bold_actions parameter would lead to the files
+    So the default 's,h,r,c,l' --bold_actions parameter would lead to the files
     first being smoothed, then high-pass filtered. Next a regression step
     would follow in which nuisance signal and/or task related signal would
     be estimated and regressed out, then the related beta estimates would
@@ -1584,7 +1584,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri preprocessBold subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bold_preprocess=rest bold_actions=shrcl \\
+         overwrite=no cores=10 bold_preprocess=rest bold_actions="s,h,r,c,l" \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
          nprocess=0
@@ -1805,7 +1805,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     --event_file       ... A pipe ('|') separated list of fidl names to use, that
                            matches the conc list.
     --bold_actions     ... A string specifying which actions, and in what sequence
-                           to perform [shrcl]
+                           to perform [s,h,r,c,l]
     --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
                            specified, the BOLD images in                            
                            `images/functional.<hcp_bold_variant>` will be
@@ -1836,7 +1836,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     c ... Saving of resulting beta coefficients (allways to follow 'r').
     l ... Low-pass filtering.
 
-    So the default 'shrcl' --bold_actions parameter would lead to the files
+    So the default 's,h,r,c,l' --bold_actions parameter would lead to the files
     first being smoothed, then high-pass filtered. Next a regression step
     would follow in which nuisance signal and/or task related signal would
     be estimated and regressed out, then the related beta estimates would
@@ -2122,7 +2122,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     gmri preprocessConc subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bold_preprocess=SRT event_file=SRT glm_name=-M1 \\
-         bold_actions=src bold_nuisance=e mov_bad=none \\
+         bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
          glm_matrix=both glm_residuals=none nprocess=0 \\
          pignore="hipass=keep|regress=keep|lopass=keep"
@@ -2131,7 +2131,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     gmri preprocessConc subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bold_preprocess=SRT event_file=SRT glm_name=-FC \\
-         bold_actions=shrcl bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
+         bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\
          glm_matrix=none glm_residuals=save nprocess=0 \\
          pignore="hipass=linear|regress=ignore|lopass=linear"
