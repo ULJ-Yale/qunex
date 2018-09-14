@@ -386,6 +386,9 @@ calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,         
           ['rsc',     'runShellScript',              gp_simple.runShellScript,                       "Runs the specified script."],
           ]
 
+lalist = [['lfs',     'longitudinalFS',              gp_HCP.longitudinalFS,                          "Runs longitudinal FreeSurfer across sessions."]
+          ]
+
 salist = [['cbl',     'createBoldList',              gp_simple.createBoldList,                       'createBoldList'],
           ['ccl',     'createConcList',              gp_simple.createConcList,                       'createConcList'],
           ['lsi',     'listSubjectInfo',             gp_simple.listSubjectInfo,                      'listSubjectInfo']
@@ -402,11 +405,23 @@ for line in calist:
         pactions[line[0]] = line[2]
         pactions[line[1]] = line[2]
 
+lactions = {}
+for line in lalist:
+    if len(line) == 4:
+        lactions[line[0]] = line[2]
+        lactions[line[1]] = line[2]
+
+plactions = pactions.copy()
+plactions.update(lactions)
+
 sactions = {}
 for line in salist:
     if len(line) == 4:
         sactions[line[0]] = line[2]
         sactions[line[1]] = line[2]
+
+allactions = plactions.copy()
+allactions.update(sactions)
 
 flist = {}
 for line in flaglist:
@@ -445,6 +460,22 @@ def run(command, args):
         options['filter'] = args['filter']
 
     subjects, gpref = g_core.getSubjectList(options['subjects'], sfilter=options['filter'], subjid=options['subjid'], verbose=False)
+
+    # --- check if we are running across subjects rather than sessions
+
+    if command in lactions:
+        subjectList = []
+        subjectInfo = {}
+        for subject in subjects:
+            if 'subject' not in subject:
+                raise ge.CommandFailed(command, "Missing subject information", "%s batch file does not provide subject information for session id %s." % (options['subjects'], subject['id']), "Please check the batch file!", "Aborting processing!")
+            if subject['subject'] not in subjectList:
+                subjectList.append(subject['subject'])
+                subjectInfo[subject['subject']] = {'id': subject['subject'], 'sessions': []}
+            subjectInfo[subject['subject']]['sessions'].append(subject)
+        subjects = [subjectInfo[e] for e in subjectList]
+
+    # --- take parameters from batch file
 
     for (k, v) in gpref.iteritems():
         options[k] = v
@@ -581,8 +612,8 @@ def run(command, args):
         result = []
         c = 0
         if cores == 1 or options['run'] == 'test':
-            if command in pactions:
-                todo = pactions[command]
+            if command in plactions:
+                todo = plactions[command]
                 for subject in subjects:
                     if len(subject['id']) > 1:
                         if options['run'] == 'test':
@@ -604,8 +635,8 @@ def run(command, args):
 
         else:
             c = 0
-            if command in pactions:
-                todo = pactions[command]
+            if command in plactions:
+                todo = plactions[command]
                 for subject in subjects:
                     if len(subject['id']) > 1:
                         print "Adding processing of subject %s to the pool at %s" % (subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))

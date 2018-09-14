@@ -274,10 +274,10 @@ def runCommand(command, args):
 
     if command in commands:
         pass
-    elif command in gp.pactions or command in gp.sactions:
+    elif command in gp.allactions:
         gp.run(command, args)
         return
-    elif command in gm.functions:
+    elif command in gm.functios:
         if 'scheduler' in args:
             niu.g_scheduler.runThroughScheduler(command, subjects=None, args=args, cores=1, logfolder=folders['logfolder'])
         else:
@@ -383,6 +383,11 @@ def printHelp(com):
             if len(l):
                 print l[0]
                 print l[1]
+        # -> longitudinal processing commands
+        for l in gp.lalist:
+            if len(l):
+                print l[0]
+                print l[1]
         # -> simple processing commands
         for l in gp.salist:
             if len(l):
@@ -420,13 +425,9 @@ def printHelp(com):
     elif com in commands:
         print "\ngmri", commands[com]['com'].__doc__.strip(), "\n"
 
-    # --- print help for processing paralelised actions
-    elif com in gp.pactions:
-        print "\ngmri", gp.pactions[com].__doc__.strip(), "\n"
-
-    # --- print help for processing serial actions
-    elif com in gp.sactions:
-        print "\ngmri", gp.sactions[com].__doc__.strip(), "\n"
+    # --- print help for processing actions
+    elif com in gp.allactions:
+        print "\ngmri", gp.allactions[com].__doc__.strip(), "\n"
 
     # --- print help for matlab functions
     elif com in gm.functions:
