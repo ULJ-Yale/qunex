@@ -28,7 +28,6 @@ import niutilities.g_exceptions as ge
 import niutilities
 import zipfile
 import gzip
-import zlib
 import csv
 
 try:
@@ -37,6 +36,10 @@ except:
     import dicom.filereader as dfr
 
 
+if "MNAPMCOMMAND" not in os.environ:
+    mcommand = "matlab -nojvm -nodisplay -nosplash -r"
+else:
+    mcommand = os.environ['MNAPMCOMMAND']
 
 
 def readPARInfo(filename):
@@ -757,10 +760,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     provided subject folder (folder). It expects to find each image within a
     separate subfolder. It then converts the found images to NIfTI format and
     places them in the nii folder within the subject folder. To reduce the space
-    used it can then gzip the dicom or .REC files (gzip). To speed the process
-    up, it can run multiple dcm2niix processes in parallel (cores).
-
-    This version of the command uses dcm2niix.
+    used it can then gzip the dicom or .REC files (gzip). For dicom files the 
+    conversion is done using dcm2niix, for PAR/REC files, dicm2nii is used if
+    MNAP is set to use Matlab, otherwise also PAR/REC files are converted using
+    dcm2niix. To speed the process up, the command can run it can run multiple 
+    dcm2niix (or dicm2nii) processes in parallel. The number of processes to run
+    in parallel is specified using cores parameter.
 
     Before running, the command check for presence of existing NIfTI files. The
     behavior when finding them is defined by clean parameter. If set to 'ask',
@@ -847,12 +852,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     information (number of frames, TE, TR) might not be reported if that
     information was not present or couldn't be found in the DICOM file.
 
-    dcm2niix log files
-    ------------------
+    log files
+    ---------
 
-    For each image conversion attempt a dcm2nii_[N].log file will be created
-    that holds the output of the dcm2nii command that was run to convert the
-    DICOM files to a NIfTI image.
+    For each image conversion attempt a dcm2nii_[N] (or dicm2nii_[N].log) file
+    will be created that holds the output of the command that was run to convert 
+    the DICOM or PAR/REC files to a NIfTI image.
 
     MULTIPLE SUBJECTS AND SCHEDULING
     ================================
@@ -898,6 +903,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     2018-07-03 Grega Repovš
              - Changed to work with readDICOMInfo and readPARInfo, and to
                support PAR/REC files.
+    2018-07-03 Grega Repovš
+             - Changed to use dicm2nii for PAR/REC files and to save both
+               magnitude and real image in case of Philips fieldmap files.
     '''
 
     print "Running dicom2niix\n=================="
@@ -1053,7 +1061,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
         niiid = str(niinum)
         if par:
-            calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+            if 'matlab' in mcommand:
+                calls.append({'name': 'dicm2nii: ' + niiid, 'args': mcommand.split(' ') + ["try dicm2nii('%s', '%s'); catch ME, g_ReportError(ME); exit(1), end; exit" % (folder, folder)], 'sout': os.path.join(os.path.split(folder)[0], 'dicm2nii_' + niiid + '.log')})                
+            else:
+                print '---> Using dcm2niix for PAR/REC as Matlab is not available!'
+                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
         else:
             calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
         files.append([niinum, folder, info['volumes'], info['slices']])
@@ -1071,31 +1083,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
         tfname = False
         imgs = glob.glob(os.path.join(folder, "*.nii*"))
-        if debug:
-            print "     --> found nifti files: %s" % ("\n                            ".join(imgs))
-        for img in imgs:
-            if not os.path.exists(img):
-                continue
-            if debug:
-                print "     --> processing: %s [%s]" % (img, os.path.basename(img))
-            if img[-3:] == 'nii':
-                if debug:
-                    print "     --> gzipping: %s" % (img)
-                subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
-                img += '.gz'
-
-            tfname = os.path.join(imgf, "%d.nii.gz" % (niinum))
-            if debug:
-                print "         ... moving '%s' to '%s'" % (img, tfname)
-            os.rename(img, tfname)
-
-            # --- check also for .bval and .bvec files
-
-            for dwiextra in ['.bval', '.bvec']:
-                dwisrc = img.replace('.nii.gz', dwiextra)
-                if os.path.exists(dwisrc):
-                    os.rename(dwisrc, os.path.join(imgf, "%d%s" % (niinum, dwiextra)))
-
+        imgs.sort()
 
         # --- check if resulting nifti is present
 
@@ -1108,36 +1096,68 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
             print >>r, ""
             print ""
 
-        # --- check final geometry
+            nimg = len(imgs)
+            if debug:
+                print "     --> found %s nifti file(s): %s" % (nimg, "\n                            ".join(imgs))
+            for img in imgs:
+                if not os.path.exists(img):
+                    continue
+                if debug:
+                    print "     --> processing: %s [%s]" % (img, os.path.basename(img))
+                if img[-3:] == 'nii':
+                    if debug:
+                        print "     --> gzipping: %s" % (img)
+                    subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
+                    img += '.gz'
 
-        if tfname:
-            hdr = niutilities.g_img.niftihdr(tfname)
+                suffix = ""
+                if 'magnitude' in img:
+                    suffix = ""
+                elif 'real' in img:
+                    suffix = "_real"
 
-            if hdr.sizez > hdr.sizey:
-                print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
-                if verbose:
-                    print "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+                tfname = os.path.join(imgf, "%d%s.nii.gz" % (niinum, suffix))
+                if debug:
+                    print "         ... moving '%s' to '%s'" % (img, tfname)
+                os.rename(img, tfname)
 
-            if nframes > 1:
-                if hdr.frames != nframes:
-                    print >> r, "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
+                # --- check also for .bval and .bvec files
+
+                for dwiextra in ['.bval', '.bvec']:
+                    dwisrc = img.replace('.nii.gz', dwiextra)
+                    if os.path.exists(dwisrc):
+                        os.rename(dwisrc, os.path.join(imgf, "%d%s" % (niinum, dwiextra)))
+
+            # --- check final geometry
+
+            if tfname:
+                hdr = niutilities.g_img.niftihdr(tfname)
+
+                if hdr.sizez > hdr.sizey:
+                    print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
                     if verbose:
-                        print "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
-                    if nslices > 0:
-                        gframes = int(hdr.sizez / nslices)
-                        if gframes > 1:
-                            print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                            if verbose:
-                                print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                            niutilities.g_NIfTI.reslice(tfname, nslices)
-                        else:
-                            print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
-                            if verbose:
-                                print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
-                    else:
-                        print >> r, "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
+                        print "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+
+                if nframes > 1:
+                    if hdr.frames != nframes:
+                        print >> r, "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
                         if verbose:
-                            print "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
+                            print "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
+                        if nslices > 0:
+                            gframes = int(hdr.sizez / nslices)
+                            if gframes > 1:
+                                print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
+                                if verbose:
+                                    print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
+                                niutilities.g_NIfTI.reslice(tfname, nslices)
+                            else:
+                                print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
+                                if verbose:
+                                    print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
+                        else:
+                            print >> r, "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
+                            if verbose:
+                                print "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
 
     r.close()
     stxt.close()
