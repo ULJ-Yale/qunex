@@ -340,6 +340,7 @@ Change Log
 * 0.20.25 [niutilities] Enabled use of .dscalar and surface only cifti in runPALM
 * 0.20.26 [niutilties matlab] Deprecated -c help option and added commas to bold_actions parameter.
 * 0.20.27 [niutilities] bold_preprocess now accepts bold numbers, improved bold selection and reporting in HCP commands
+* 0.20.28 [niutilities] Added scaffolding for cross session commands, dicm2nii processing of PAR/REC files, saving of real image from fieldmap sequences
 
 =======
 [Mind and Brain Lab]: http://mblab.si
