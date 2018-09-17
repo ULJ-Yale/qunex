@@ -371,9 +371,10 @@ DwellTime="$EchoSpacing" #same variable as EchoSpacing - if you have in-plane ac
 DwellTimeSec=`echo "scale=6; $DwellTime/1000" | bc` # set the dwell time to seconds
 
 # -- Establish global directory paths
-reho "--- Establishing paths for all input and output folders:"
+geho "--- Establishing paths for all input and output folders:"
 echo ""
 
+# -- Establish global directory paths
 T1wFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w
 DiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/Diffusion
 T1wDiffFolder="$SubjectsFolder"/"$CASE"/hcp/"$CASE"/T1w/T1wDiffusion_"$DiffDataSuffix"
@@ -402,22 +403,22 @@ if [ "$Overwrite" == "yes" ]; then
 fi
 
 # -- Make sure output directories exist
-mkdir -p "$DiffFolder" > /dev/null 2>&1
-mkdir -p "$DiffFolder"/"$DiffDataSuffix" /dev/null 2>&1
-mkdir -p "$T1wDiffFolder" > /dev/null 2>&1
-mkdir -p "$LogFolder" > /dev/null 2>&1
-mkdir -p "$DiffFolderOut" > /dev/null 2>&1
-mkdir -p "$DiffFolder"/"$DiffDataSuffix"/rawdata > /dev/null 2>&1
-mkdir -p "$DiffFolder"/"$DiffDataSuffix"/eddy > /dev/null 2>&1
-mkdir -p "$DiffFolder"/"$DiffDataSuffix"/reg > /dev/null 2>&1
-mkdir -p "$DiffFolder"/"$DiffDataSuffix"/fieldmap > /dev/null 2>&1
-mkdir -p "$DiffFolder"/"$DiffDataSuffix"/acqparams > /dev/null 2>&1
+mkdir -p "$DiffFolder" 2> /dev/null
+mkdir -p "$DiffFolder"/"$DiffDataSuffix" 2> /dev/null
+mkdir -p "$T1wDiffFolder" 2> /dev/null
+mkdir -p "$LogFolder" 2> /dev/null
+mkdir -p "$DiffFolderOut" 2> /dev/null
+mkdir -p "$DiffFolder"/"$DiffDataSuffix"/rawdata 2> /dev/null
+mkdir -p "$DiffFolder"/"$DiffDataSuffix"/eddy 2> /dev/null
+mkdir -p "$DiffFolder"/"$DiffDataSuffix"/reg 2> /dev/null
+mkdir -p "$DiffFolder"/"$DiffDataSuffix"/fieldmap 2> /dev/null
+mkdir -p "$DiffFolder"/"$DiffDataSuffix"/acqparams 2> /dev/null
 
 #########################################
 # STEP 1 - setup acquisition parameters
 #########################################
 
-reho "--- Setting up acquisition parameters:"
+geho "--- Setting up acquisition parameters:"
 echo ""
 # -- Make subject-specific and acquisition-specific parameter folder
 mkdir "$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData" > /dev/null 2>&1
@@ -446,7 +447,7 @@ echo ""
 ############################################
 
 if [ ${UseFieldmap} == "yes" ]; then
-    reho "--- Preparing FieldMaps and T1w images..."
+    geho "--- Preparing FieldMaps and T1w images..."
     echo ""
     geho "Running conservative BET on the FieldMap Magnitude image..."
     echo ""
@@ -458,7 +459,7 @@ if [ ${UseFieldmap} == "yes" ]; then
     echo ""
 else 
     echo ""
-    reho "--- Omitting FieldMap step..."
+    geho "--- Omitting FieldMap step..."
     echo ""
 fi
 
@@ -472,7 +473,7 @@ bet "$DiffFolder"/"$DiffDataSuffix"/rawdata/"$DiffData"_nodif "$DiffFolder"/"$Di
 echo ""
 
 # -- Check if PreFreeSurfer was completed to use existing inputs and avoid re-running BET
-reho "--- Checking if PreFreeSurfer was completed to obtain inputs for epi_reg..."
+geho "--- Checking if PreFreeSurfer was completed to obtain inputs for epi_reg..."
 echo ""
 
 if [ -f "$T1wFolder"/T1w_acpc_dc_restore_brain.nii.gz ]; then
@@ -536,17 +537,21 @@ fi
     
     # -- Performs eddy call with --fwhm=10,0,0,0,0  --ff=10 -- this performs an initial FWHM smoothing for the first step of registration, then re-run with 4 more iterations without smoothing; the --ff flag adds a fat factor for angular smoothing. 
     # -- For best possible results you want opposing diff directions but in practice we distribute directions on the sphere. Instead we look at 'cones'. This does not smooth the data but rather the predictions to allow best possible estimation via EDDY.
-    reho "--- Running eddy_cuda..."    
+    geho "--- Running eddy_cuda..."    
     echo ""
     geho "Using the following eddy_cuda binary:    ${EDDYCUDADIR}/${eddy_cuda}"
     echo ""
     
     # -- Eddy call with cuda with extra QC options
-    ${EDDYCUDADIR}/${eddy_cuda} --imain="$DiffFolder"/"$DiffData" --mask="$DiffFolder"/"$DiffDataSuffix"/rawdata/"$DiffData"_nodif_brain_mask --acqp="$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/acqparams.txt --index="$DiffFolder"/"$DiffDataSuffix"/acqparams/"$DiffData"/index.txt --bvecs="$DiffFolder"/"$DiffData".bvec --bvals="$DiffFolder"/"$DiffData".bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out="$DiffFolder"/"$DiffDataSuffix"/eddy/"$DiffData"_eddy_corrected --data_is_shelled --repol -v
-    
+    echo "Running command:"
+    echo ""
+    geho "${EDDYCUDADIR}/${eddy_cuda} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v"
+    echo ""
+    ${EDDYCUDADIR}/${eddy_cuda} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v
+
 ############################################
 # STEP 4 - Run epi_reg w/fieldmap correction
-############################################    
+############################################
 
 # -- Performs registration on the DWI EPI raw B0 image to T1w while using the Fieldmap. 
 # -- This gives the EPI --> T1 transformation given the FieldMap. 
@@ -554,12 +559,12 @@ fi
 
 if [ ${UseFieldmap} == "yes" ]; then
     echo ""
-    reho "--- Running epi_reg for EPI--T1 data with fieldmap specification..." 
+    geho "--- Running epi_reg for EPI--T1 data with fieldmap specification..." 
     echo ""
     epi_reg --epi="$DiffFolder"/"$DiffDataSuffix"/rawdata/"$DiffData"_nodif_brain --t1="$T1wImage" --t1brain="$T1wBrainImage" --out="$DiffFolder"/"$DiffDataSuffix"/reg/"$DiffData"_nodif2T1 --fmap="$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_fmap_rads --wmseg="$WMSegImage" --fmapmag="$FieldMapFolder"/"$CASE"_strc_FieldMap_Magnitude --fmapmagbrain="$DiffFolder"/"$DiffDataSuffix"/fieldmap/"$CASE"_strc_FieldMap_Magnitude_brain --echospacing="$DwellTimeSec" --pedir="$UnwarpDir" -v
 else
     echo ""
-    reho "--- Running epi_reg for EPI--T1 data without fieldmap specification..." 
+    geho "--- Running epi_reg for EPI--T1 data without fieldmap specification..." 
     echo ""
     epi_reg --epi="$DiffFolder"/"$DiffDataSuffix"/rawdata/"$DiffData"_nodif_brain --t1="$T1wImage" --t1brain="$T1wBrainImage" --out="$DiffFolder"/"$DiffDataSuffix"/reg/"$DiffData"_nodif2T1 --wmseg="$WMSegImage" --echospacing="$DwellTimeSec" --pedir="$UnwarpDir" -v
 fi
@@ -570,7 +575,7 @@ fi
 
 # -- Registers the eddy_corrected DWI data to T1w space
 echo ""
-reho "--- Registering the eddy_corrected DWI data to T1w space..."
+geho "--- Registering the eddy_corrected DWI data to T1w space..."
 echo ""
 # -- First create a downsampled T1w image to use a target
 DiffRes=`fslval "$DiffFolder"/"$DiffData" pixdim1`
@@ -610,15 +615,15 @@ fslmaths "$DiffFolderOut"/"$DiffData"_data.nii.gz -mul "$DiffFolderOut"/"$CASE"_
 
 echo ""
 # -- Aligns the BVECS and BVALS using HCP 
-reho "--- Aligning BVECS to T1 space using HCP code"
+geho "--- Aligning BVECS to T1 space using HCP code"
 echo ""
 $HCPPIPEDIR_Global/Rotate_bvecs.sh "$DiffFolder"/"$DiffData".bvec "$DiffFolder"/"$DiffDataSuffix"/reg/"$DiffData"_nodif2T1.mat "$DiffFolderOut"/bvecs
 cp "$DiffFolder"/"$DiffData".bval "$DiffFolderOut"/bvals
 echo ""
-    
-# -- Perform completion checks
 
-reho "--- Checking outputs..."
+# -- Perform completion checks
+unset RunError
+geho "--- Checking outputs..."
 echo ""
 if [ -f "$T1wDiffFolder"/"$CASE"_T1w_downsampled2diff_"$DiffDataSuffix"_"$DiffResExt".nii.gz ]; then
     OutFile="$T1wDiffFolder"/"$CASE"_T1w_downsampled2diff_"$DiffDataSuffix"_"$DiffResExt".nii.gz
@@ -627,7 +632,7 @@ if [ -f "$T1wDiffFolder"/"$CASE"_T1w_downsampled2diff_"$DiffDataSuffix"_"$DiffRe
 else
     reho "T1w data in DWI resolution missing. Something went wrong."
     echo ""
-    exit 1
+    RunError="yes"
 fi
 if [ -f "$DiffFolderOut"/"$DiffData"_data.nii.gz ]; then
     OutFile="$DiffFolderOut"/"$DiffData"_data.nii.gz
@@ -636,7 +641,7 @@ if [ -f "$DiffFolderOut"/"$DiffData"_data.nii.gz ]; then
 else
     reho "DWI final processed data missing. Something went wrong."
     echo ""
-    exit 1
+    RunError="yes"
 fi
 if [ -f  "$DiffFolderOut"/"$DiffData"_data_brain_masked_with_T1orDWI.nii.gz ]; then
     OutFile="$DiffFolderOut"/"$DiffData"_data_brain_masked_with_T1orDWI.nii.gz 
@@ -645,7 +650,7 @@ if [ -f  "$DiffFolderOut"/"$DiffData"_data_brain_masked_with_T1orDWI.nii.gz ]; t
 else
     reho "DWI brain-masked data missing. Something went wrong."
     echo ""
-    exit 1
+    RunError="yes"
 fi
 if [ -f  "$DiffFolderOut"/bvecs ]; then
     OutFile="$DiffFolderOut"/_bvecs
@@ -654,7 +659,7 @@ if [ -f  "$DiffFolderOut"/bvecs ]; then
 else
     reho "BVECS in $DiffFolderOut missing. Something went wrong."
     echo ""
-    exit 1
+    RunError="yes"
 fi
 if [ -f  "$DiffFolderOut"/bvals ]; then
     OutFile="$DiffFolderOut"/bvals
@@ -663,14 +668,21 @@ if [ -f  "$DiffFolderOut"/bvals ]; then
 else
     reho "BVALS in $DiffFolderOut missing. Something went wrong."
     echo ""
-    exit 1
+    RunError="yes"
 fi
 
-geho "--- DWI preprocessing successfully completed"
-echo ""
-echo ""
-geho "------------------------- Successful completion of work --------------------------------"
-echo ""
+if [[ -z ${RunError} ]]; then 
+    echo ""
+    geho "--- DWI preprocessing successfully completed"
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
+else
+    echo ""
+    reho "--- Results missing. Something went wrong with calculation."
+    echo ""
+    exit 1
+fi
 
 }
 

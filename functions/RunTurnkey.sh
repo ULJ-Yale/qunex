@@ -76,6 +76,7 @@ BLUE_F="\033[34m"; BLUE_B="\033[44m"
 MAGENTA_F="\033[35m"; MAGENTA_B="\033[45m"
 CYAN_F="\033[36m"; CYAN_B="\033[46m"
 WHITE_F="\033[37m"; WHITE_B="\033[47m"
+
 reho() {
     echo -e "$RED_F$1 \033[0m"
 }

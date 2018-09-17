@@ -372,7 +372,6 @@ ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone};
 # -- Combine commands
 ComRunAll="${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
-
 # -- Run the commands locally
 if [[ "$Cluster" == 1 ]]; then
     echo "--------------------------------------------------------------"
@@ -725,25 +724,6 @@ hcpdLegacy() {
 
 # -- Unique requirements for this function:
 #      Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
-#
-# -- Parse general parameters
-EchoSpacing="$EchoSpacing" #EPI Echo Spacing for data (in msec); e.g. 0.69
-PEdir="$PEdir" #Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior
-TE="$TE" #delta TE in ms for field map or "NONE" if not used
-UnwarpDir="$UnwarpDir" # direction along which to unwarp
-DiffData="$DiffDataSuffix" # Diffusion data suffix name - e.g. if the data is called <SubjectID>_DWI_dir91_LR.nii.gz - you would enter DWI_dir91_LR
-CUDAQUEUE="$QUEUE" # Cluster queue name with GPU nodes - e.g. anticevic-gpu
-DwellTime="$EchoSpacing" #same variable as EchoSpacing - if you have in-plane acceleration then this value needs to be divided by the GRAPPA or SENSE factor (miliseconds)
-DwellTimeSec=`echo "scale=6; $DwellTime/1000" | bc` # set the dwell time to seconds
-Scanner="$Scanner" #Scanner manufacturer (siemens or ge)
-UseFieldmap="$UseFieldmap" #Whether or not to use standard fieldmap (yes/no)
-# -- Establish global directory paths
-T1wFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w
-DiffFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion
-T1wDiffFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
-FieldMapFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/FieldMap_strc
-LogFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/log
-Overwrite="$Overwrite"
 
 # -- Specify command variable
 CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
@@ -1346,58 +1326,18 @@ echo ""
 # ------------------------------------------------------------------------------------------------------
 
 FSLDtifit() {
-# -- Check if overwrite flag was set
-minimumfilesize=100000
-if [ "$Overwrite" == "yes" ]; then
-    echo ""
-    reho "Removing existing dtifit run for $CASE..."
-    echo ""
-    rm -rf ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_* > /dev/null 2>&1
-fi
-# -- Check file presence
-if [ -a ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz ]; then
-    actualfilesize=$(wc -c <${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/dti_FA.nii.gz)
-else
-    actualfilesize="0"
-fi
-if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
-    echo ""
-    echo "--- DTI Fit completed for $CASE ---"
-    echo ""
-    exit 0
-fi
 # -- Command to run
-CommandToRun="dtifit --data=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./data --out=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./dti --mask=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./nodif_brain_mask --bvecs=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvecs --bvals=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion/./bvals"
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLDtifit.sh \
+--subjectsfolder='${SubjectsFolder}' \
+--subject='${CASE}' \
+--overwrite='${Overwrite}' "
 # -- Connector execute function
 connectorExec
 }
+
 show_usage_FSLDtifit() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function runs the FSL dtifit processing locally or via a scheduler."
-echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
-echo ""
-echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                           Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>              Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>           List of subjects to run"
-echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                     e.g. for SLURM the string would look like this: "
-echo "                                                     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "-- EXAMPLE:"
-echo ""
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--function='FSLDtifit' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo "--overwrite='yes'"
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLDtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1405,115 +1345,23 @@ echo ""
 # ------------------------------------------------------------------------------------------------------
 
 FSLBedpostxGPU() {
-# -- Establish global directory paths
-T1wDiffFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion
-BedPostXFolder=${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX
-LogFolder="$BedPostXFolder"/logs
-Overwrite="$Overwrite"
-# -- Check if overwrite flag was set
-if [ "$Overwrite" == "yes" ]; then
-    echo ""
-    reho "Removing existing Bedpostx run for $CASE..."
-    echo ""
-    rm -rf "$BedPostXFolder" > /dev/null 2>&1
-fi
-geho "Checking if Bedpostx was completed on $CASE..."
-# Set file depending on model specification
-if [ "$Model" == 2 ]; then
-    CheckFile="mean_d_stdsamples.nii.gz"
-fi
-if [ "$Model" == 3 ]; then
-    CheckFile="mean_Rsamples.nii.gz"
-fi
-if [ "$Rician" == "no" ] || [ "$Rician" == "NO" ]; then
-    echo ""
-    geho "Omitting --rician flag"
-    RicianFlag=""
-    echo ""
-else
-    echo ""
-    geho "Setting --rician flag"
-    RicianFlag="--rician"
-    echo ""
-fi
-# -- Check if the file even exists
-if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"$CheckFile" ]; then
-    # -- Set file sizes to check for completion
-    minimumfilesize=20000000
-    actualfilesize=`wc -c < ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
-    filecount=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
-fi
-# -- Then check if run is complete based on file count
-if [ "$filecount" == 9 ]; then > /dev/null 2>&1
-    echo ""
-    cyaneho " --> $filecount merged samples for $CASE found."
-    # -- Then check if run is complete based on file size
-    if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
-        echo ""
-        cyaneho " --> Bedpostx outputs found and completed for $CASE"
-        echo ""
-        cyaneho "Check prior output logs here: $LogFolder"
-        echo ""
-        echo "--------------------------------------------------------------"
-        echo ""
-        exit 0
-    else
-        echo ""
-        reho " --> Bedpostx outputs missing or incomplete for $CASE"
-        echo ""
-        reho "--------------------------------------------------------------"
-        echo ""
-    fi
-fi
-reho "Prior BedpostX run not found or incomplete for $CASE. Setting up new run..."
-echo ""
-# -- Generate log folder
-mkdir ${BedPostXFolder} > /dev/null 2>&1
 # -- Command to run
-if [ -f "$T1wDiffFolder"/grad_dev.nii.gz ]; then
-    CommandToRun="${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} -g ${RicianFlag}"
-else
-    CommandToRun="${FSLGPUBinary}/bedpostx_gpu_noscheduler ${T1wDiffFolder}/. -n ${Fibers} -model ${Model} -b ${Burnin} ${RicianFlag}"
-fi
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
+--subjectsfolder='${SubjectsFolder}' \
+--subject='${CASE}' \
+--fibers='${Fibers}' \
+--model='${Model}' \
+--burnin='${Burnin}' \
+--jumps='${Jumps}' \
+--rician='${Rician}' \
+--overwrite='${Overwrite}' "
 # -- Connector execute function
 connectorExec
 }
 
 show_usage_FSLBedpostxGPU() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function runs the FSL bedpostx_gpu processing using a GPU-enabled node or via a GPU-enabled queue if using the scheduler option."
-echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion processing: "
-echo ""
-echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>            List of subjects to run"
-echo "--fibers=<number_of_fibers>                           Number of fibres per voxel, default 3"
-echo "--model=<deconvolution_model>                         Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities <default>, 3: with zeppelins"
-echo "--burnin=<burnin_period_value>                        Burnin period, default 1000"
-echo "--rician=<set_rician_value>                           <yes> or <no>. Default is yes"
-echo "--overwrite=<clean_prior_run>                         Delete prior run for a given subject"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>   A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                        e.g. for SLURM the string would look like this: "
-echo "                                                         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo "                                                           * Note: You need to specify a GPU-enabled queue or partition"
-echo ""
-echo "-- EXAMPLE"
-echo ""
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--function='FSLBedpostxGPU' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--fibers='3' \ "
-echo "--burnin='3000' \ "
-echo "--model='3' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo "--overwrite='yes'"
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLBedpostxGPU.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -2920,7 +2768,7 @@ if [ "$FunctionToRun" == "FSLDtifit" ]; then
     echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
-    echo "   Scheduler Name and Options: $Scheduler"
+    echo "   Scheduler Name and Options: ${Scheduler}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "--------------------------------------------------------------"
     echo ""
@@ -2955,7 +2803,7 @@ if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
     echo "   Model Type: ${Model}"
     echo "   Burnin Period: ${Burnin}"
     echo "   Rician flag: ${Rician}"
-    echo "   Scheduler Name and Options: ${{Scheduler}"
+    echo "   Scheduler Name and Options: ${Scheduler}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "--------------------------------------------------------------"
     echo ""
