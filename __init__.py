@@ -1,4 +1,5 @@
 import g_dicom
+import g_bids
 import g_core
 import g_HCP
 import g_NIfTI
@@ -15,5 +16,4 @@ import gp_workflow
 import gp_simple
 import gp_FS
 
-
-__all__ = ["g_dicom", "g_core", "g_HCP", "g_NIfTI", "g_img", "g_utilities", "g_fidl", "g_4dfp", "g_palm", 'g_process', 'gp_core', 'gp_HCP', 'gp_workflow', 'gp_simple', 'gp_FS', 'g_scheduler']
+__all__ = ["g_dicom", "g_bids", "g_core", "g_HCP", "g_NIfTI", "g_img", "g_utilities", "g_fidl", "g_4dfp", "g_palm", 'g_process', 'gp_core', 'gp_HCP', 'gp_workflow', 'gp_simple', 'gp_FS', 'g_scheduler']
