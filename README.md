@@ -342,6 +342,7 @@ Change Log
 * 0.20.27 [niutilities] bold_preprocess now accepts bold numbers, improved bold selection and reporting in HCP commands
 * 0.20.28 [niutilities] Added scaffolding for cross session commands, dicm2nii processing of PAR/REC files, saving of real image from fieldmap sequences
 * 0.21.00 [niutilities] Initial version of BIDSImport.
+* 0.21.01 [connector, niutilities] Updated handling of DTIFIT and BedpostX with new Turnkey support.
 
 =======
 [Mind and Brain Lab]: http://mblab.si
