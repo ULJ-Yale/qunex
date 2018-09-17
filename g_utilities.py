@@ -88,12 +88,14 @@ def createStudy(studyfolder=None):
         ├── inbox
         │   ├── MR
         │   ├── EEG
+        │   ├── BIDS
         │   ├── behavior
         │   ├── concs
         │   └── events
         ├── archive
         │   ├── MR
         │   ├── EEG
+        │   ├── BIDS
         │   └── behavior
         ├── specs
         └── QC
@@ -120,6 +122,8 @@ def createStudy(studyfolder=None):
              - Changed templates to *_example.txt.
     2018-07-24 Grega Repovs
              - Expanded folders to include QC scenes
+    2018-09-17 Grega Repovs
+             - Added BIDS folders
     '''
 
     print "Running createStudy\n==================="
@@ -130,8 +134,8 @@ def createStudy(studyfolder=None):
     folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'logs', 'comlogs'], ['processing', 'logs', 'runlogs'], ['processing', 'lists'], ['processing', 'scripts'],
                ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
                ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
-               ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
-               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'behavior'], ['subjects', 'specs'], ['subjects', 'QC']]
+               ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'BIDS'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
+               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'BIDS'], ['subjects', 'archive', 'behavior'], ['subjects', 'specs'], ['subjects', 'QC']]
 
     print "\nCreating study folder structure:"
     for folder in folders:
