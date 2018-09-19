@@ -128,7 +128,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
 
-def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, existing, prefix):
+def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
@@ -160,19 +160,13 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, existing, prefix):
     elif session not in sessions['list']:
         sessions['list'].append(session)
         if os.path.exists(folder):
-            if existing == 'clean':
+            if overwrite == 'yes':
                 print prefix + "--> bids for session %s already exists: cleaning session" % (session)
                 shutil.rmtree(folder)                    
                 sessions['clean'].append(session)
-            elif existing == 'skip':
+            else:
                 sessions['skip'].append(session)
                 print prefix + "--> bids for session %s already exists: skipping session" % (session)
-            elif existing == 'append':
-                sessions['append'].append(session)
-                print prefix + "--> bids for session %s already exists: appending files" % (session)
-            elif existing == 'replace':
-                sessions['replace'].append(session)
-                print prefix + "--> bids for session %s already exists: replacing files" % (session)
         else:
             sessions['map'].append(session)
         
@@ -190,47 +184,14 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, existing, prefix):
 
 
 
-def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', archive='move', bidsname=None):
+def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', archive='move', bidsname=None):
     '''
-    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [existing=skip] [archive=move] [bidsname=<inbox folder name>]
+    gmri BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
     
     USE
     ===
 
-    The command is used to map BIDS dataset to MNAP file structure. The command
-    consists of two steps:
-
-    First, the path as specified in the `inbox` parameter is inspected for a 
-    BIDS compliant dataset. The path can point to either a folder with extracted
-    BIDS dataset, a `.zip` or `.tar.gz` archive or a folder containing one or 
-    more `.zip` or `.tar.gz` archives. In the initial step, each file found will
-    be assigned either to a specific session or the overall study. 
-
-    The files assigned to the study will be saved in the following location:
-
-    <study folder>/info/bids/<bids dataset name>
-
-    <bids dataset name> can be provided as a `bidsname` parameter to the command
-    call. If not provided, the name will set to the name of the parent folder or
-    the name of the compressed archive.
-
-    The files identified as belonging to a specific subject will be mapped to: 
-    
-    <subjectsfolder>/<subject>_<session>/bids
-
-    folder. The `<subject>_<session>` string will be used as the identifier for
-    the session in all the following steps. If no session is specified in bids,
-    `session` will be the same as `session`. If the folder for the session does
-    not exist, it will be created.
-    
-    When the files are mapped, their filenames will be perserved and the correct
-    folder structure will be reconstructed if it was previously flattened.
-
-    Second, for each session separately, images from the `bids` folder are 
-    mapped to the `nii` folder and appropriate `subject.txt` file is created.
-
-    The second step is achieved by running mapBIDS2nii on each session folder.
-    For detailed information about this step, please review its inline help.
+    The command is used to map a BIDS dataset to the MNAP Suite file structure. 
 
     PARAMETERS
     ==========
@@ -238,80 +199,142 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', 
     --subjectsfolder    The subjects folder where all the sessions are to be 
                         mapped to. It should be a folder within the 
                         <study folder>. [.]
+
     --inbox             The location of the BIDS dataset. It can be the dataset
                         top folder, a folder that contains the dataset, a 
                         compressed `.zip` or `.tar.gz` package or a folder that
                         contains a compressed package. 
                         [<subjectsfolder>/inbox/BIDS]
-    --action            How to map the files to MNAP structure. One of :
+
+    --action            How to map the files to MNAP structure. One of:
+                        
                         - link: The files will be mapped by creating hard links
                                 if possible, otherwise they will be copied.
                         - copy: The files will be copied.                    
                         - move: The files will be moved.
+
                         The default is 'link'
-    --existing          The parameter specifies what should be done with 
+
+    --overwrite         The parameter specifies what should be done with 
                         data that already exists in the locations to which bids
                         data would be mapped to. Options are:
-                        skip    - skip processing of the session
-                        clean   - remove exising files in `nii` folder and redo 
-                                  the mapping
-                        append  - do not overwrite the existing files, just add 
-                                  new files that would be generated
-                        replace - leave the existing files in place and 
-                                  overwrite those that would be generated anew
+
+                        no   - do not overwrite the data and skip processing of
+                               the session
+                        yes  - remove exising files in `nii` folder and redo 
+                               the mapping
         
-                        The default option is 'skip'. The use of options other 
-                        than 'skip' and 'clean' is discouraged as with new data 
-                        mapping can change and the results might be inconsistent!
+                        The default option is 'no'. 
+
     --archive           What to do with the files after they were mapped. 
                         Options are:
+
+                        leave   - leave the specified archive where it is
                         move    - move the specified archive to 
                                   <subjectsfolder>/archive/BIDS
                         copy    - copy the specified archive to 
                                   <subjectsfolder>/archive/BIDS
                         delete  - delete the archive after processing if no 
                                   errors were identified
+
                         The default is 'move'. Please note that there can be an
                         interactio with the `action` parameter. If files are
                         moved during action, they will be missing if `archive` 
                         is set to 'move' or 'copy'.
+
     --bidsname          The optional name of the BIDS dataset. Id not provided
                         it will be set to the inbox folder or compressed package
                         name.
+
+    PROCESS OF BIDS MAPPING
+    =======================
+    
+    The BIDSImport command consists of two steps:
+    
+    ==> Step 1 -- Mapping BIDS dataset to MNAP Suite folder structure
+    
+    The `inbox` parameter specifies the location of the BIDS dataset. This path 
+    is inspected for a BIDS compliant dataset. The path can point to either a 
+    folder with extracted BIDS dataset, a `.zip` or `.tar.gz` archive or a 
+    folder containing one or more `.zip` or `.tar.gz` archives. In the initial 
+    step, each file found will be assigned either to a specific session or the 
+    overall study. 
+
+    The BIDS files assigned to the study will be saved in the following 
+    location:
+
+        <study_folder>/info/bids/<bids_dataset_name>
+
+    <bids_dataset_name> can be provided as a `bidsname` parameter to the command
+    call. If `bidsname` is not provided, the name will be set to the name of the 
+    parent folder or the name of the compressed archive.
+
+    The files identified as belonging to a specific subject will be mapped to 
+    folder: 
+    
+        <subjects_folder>/<subject>_<session>/bids
+
+    The `<subject>_<session>` string will be used as the identifier for the 
+    session in all the following steps. If no session is specified in BIDS,
+    `session` will be the same as `subject`. If the folder for the `session` 
+    does not exist, it will be created.
+    
+    When the files are mapped, their filenames will be perserved and the correct
+    folder structure will be reconstructed if it was previously flattened.
+
+    ==> Step 2 -- Mapping image files to MNAP Suite `nii` folder
+    
+    For each session separately, images from the `bids` folder are 
+    mapped to the `nii` folder and appropriate `subject.txt` file is created per
+    standard MNAP specification.
+
+    The second step is achieved by running `mapBIDS2nii` on each session folder.
+    This step is run automatically, but can be invoked indepdendently if mapping 
+    of bids dataset to MNAP Suite folder structure was already completed. For 
+    detailed information about this step, please review `mapBIDS2nii` inline 
+    help.
+    
     
     RESULTS
     =======
 
-    After running the command the BIDS dataset will be mapped to the MNAP 
-    structure with original session data in:
+    After running the `BIDSImport` command the BIDS dataset will be mapped 
+    to the MNAP folder structure and image files will be prepared for further
+    processing along with required metadata.
 
-    <subjectsfolder>/<subject_session>/bids
+    * Files pertaining to the study and not specific subject / session are
+      stored in:
+        <study folder>/info/bids/<bids bame>
+    
+    * The original BIDS session-level data is stored in:
 
-    image files mapped to new names in:
+        <subjectsfolder>/<subject_session>/bids
 
-    <subjectsfolder>/<subject_session>/nii
+    * Image files mapped to new names for MNAP are stored in:
 
-    description of the mapped files in:
+        <subjects_folder>/<subject_session>/nii
 
-    <subjectsfolder>/<subject_session>/subject.txt
+    * The full description of the mapped files is in:
 
-    log of mapping in 
+        <subjects_folder>/<subject_session>/subject.txt
 
-    <subjectsfolder>/<subject_session>/bids/bids2nii.log
+    * The output log of BIDS mapping is in: 
 
-    and study level bids files in:
+        <subjects_folder>/<subject_session>/bids/bids2nii.log
 
-    <study folder>/<info>/bids/<bidsname>
+    * The study-level BIDS files are in:
 
-    CAVEATS AND MISSING FUNCTIONALITY
-    =================================
+        <study_folder>/<info>/bids/<bidsname>
 
-    Please see mapBIDS2nii inline documentation!
+    NOTES
+    =====
+
+    Please see `mapBIDS2nii` inline documentation!
 
     EXAMPLE USE
     ===========
 
-    gmri BIDSImport subjectsfolder=myStudy existing=clean bidsname=swga
+    gmri BIDSImport subjectsfolder=myStudy overwrite=yes bidsname=swga
 
     ----------------
     Written by Grega Repovš
@@ -319,19 +342,20 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', 
     Changelog
     2018-09-17 Grega Repovš
              - Initial version
-
+    2018-09-19 Grega Repovš, Alan Anticevic
+             - Updated documentation, changed handling of previous data
     '''
 
     print "Running BIDSImport\n=================="
 
     if action not in ['link', 'copy', 'move']:
-        ge.CommandError("BIDSImport", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
+        raise ge.CommandError("BIDSImport", "Invalid action specified", "%s is not a valid action!" % (action), "Please specify one of: copy, link, move!")
 
-    if existing not in ['skip', 'clean', 'append', 'replace']:
-        ge.CommandError("BIDSImport", "Invalid option for existing files specified", "%s is not a valid option for existing files!" % (existing), "Please specify one of: skip, clean, append, replace!")
+    if overwrite not in ['yes', 'no']:
+        raise ge.CommandError("BIDSImport", "Invalid option for overwrite", "%s is not a valid option for overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
-    if archive not in ['move', 'copy', 'delete']:
-        ge.CommandError("BIDSImport", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
+    if archive not in ['leave', 'move', 'copy', 'delete']:
+        raise ge.CommandError("BIDSImport", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
 
     if subjectsfolder is None:
         subjectsfolder = os.path.abspath(".")
@@ -344,7 +368,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', 
         bidsname = re.sub('.zip$|.gz$', '', bidsname)
         bidsname = re.sub('.tar$', '', bidsname)
 
-    sessions = {'list': [], 'clean': [], 'skip': [], 'replace': [], 'append': [], 'map': []}
+    sessions = {'list': [], 'clean': [], 'skip': [], 'map': []}
     allOk    = True
     errors   = ""
 
@@ -354,14 +378,18 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', 
 
     sourceFiles = []
 
-    if os.path.isfile(inbox):
-        sourceFiles = [inbox]
-    elif os.path.isdir(inbox):
-        for path, dirs, files in os.walk(inbox):
-            for file in files:
-                sourceFiles.append(os.path.join(path, file))
+    if os.path.exists(inbox):
+        if os.path.isfile(inbox):
+            sourceFiles = [inbox]
+        elif os.path.isdir(inbox):
+            for path, dirs, files in os.walk(inbox):
+                for file in files:
+                    sourceFiles.append(os.path.join(path, file))
+        else:
+            raise ge.CommandFailed("BIDSImport", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
-        ge.CommandError("BIDSImport", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
+        raise ge.CommandFailed("BIDSImport", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
+
 
     # ---> mapping data to subjects' folders
 
@@ -373,8 +401,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', 
 
             z = zipfile.ZipFile(file, 'r')
             for sf in z.infolist():
-                if sf.file_size > 0:
-                    tfile = mapToMNAPBids(sf.filename, subjectsfolder, bidsname, sessions, existing, "        ")
+                if sf.filename[-1] != '/':
+                    tfile = mapToMNAPBids(sf.filename, subjectsfolder, bidsname, sessions, overwrite, "        ")
                     if tfile:
                         fdata = z.read(sf)
                         fout = open(tfile, 'wb')
@@ -389,7 +417,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', 
             tar = tarfile.open(file)
             for member in tar.getmembers():
                 if member.isfile():
-                    tfile = mapToMNAPBids(member.name, subjectsfolder, bidsname, sessions, existing, "        ")
+                    tfile = mapToMNAPBids(member.name, subjectsfolder, bidsname, sessions, overwrite, "        ")
                     if tfile:
                         fobj  = tar.extractfile(member)
                         fdata = fobj.read()
@@ -401,7 +429,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', 
             print "        -> done!"
 
         else:
-            tfile = mapToMNAPBids(file, subjectsfolder, bidsname, sessions, existing, "    ")
+            tfile = mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, "    ")
             if tfile:
                 status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
                 allOk = allOk and status
@@ -452,20 +480,23 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', existing='skip', 
     # ---> mapping data to MNAP nii folder
 
     report = []
-    for execute in ['map', 'clean', 'replace', 'append']:
+    for execute in ['map', 'clean']:
         for session in sessions[execute]:
             if session != 'bids':
-                if execute == 'map':
-                    do = 'skip'
-                else:
-                    do = execute
-                print
+                
+                subject   = session.split('_')[0]
+                sessionid = (session.split('_') + [''])[1]
+                info      = 'subject ' + subject
+                if sessionid:
+                    info += ", session " + sessionid
+
                 try:
-                    mapBIDS2nii(os.path.join(subjectsfolder, session), do)
-                    report.append('session %s completed ok' % (session))
+                    print
+                    mapBIDS2nii(os.path.join(subjectsfolder, session), overwrite)
+                    report.append('%s completed ok' % (info))
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
-                    report.append('session %s failed' % (session))
+                    report.append('%s failed' % (info))
                     allOk = False
 
     print "\nFinal report\n============"
@@ -559,9 +590,9 @@ def processBIDS(bfolder):
         
 
 
-def mapBIDS2nii(sfolder='.', existing='skip'):
+def mapBIDS2nii(sfolder='.', overwrite='no'):
     '''
-    mapBIDS2nii [sfolder='.'] [existing='skip']
+    mapBIDS2nii [sfolder='.'] [overwrite='no']
 
     USE
     ===
@@ -590,21 +621,16 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
 
     --sfolder    The base subject folder in which bids folder with data and
                  files for the session is present. [.]
-    --existing   Parameter that specifes what should be done in cases where
+    
+    --overwrite  Parameter that specifes what should be done in cases where
                  there are existing data stored in `nii` folder. The options
                  are:
 
-                 skip    - skip processing
-                 clean   - remove exising files in `nii` folder and redo the
+                 no      - do not overwrite the data, skip session
+                 yes     - remove exising files in `nii` folder and redo the
                            mapping
-                 append  - do not overwrite the existing files, just add new
-                           files that would be generated
-                 replace - leave the existing files in place and overwrite
-                           those that would be generated anew
 
-                 The default option is 'skip'. The use of options other than
-                 'skip' and 'clean' is discouraged as with new data mapping
-                 can change and the results might be inconsistent!
+                 The default option is 'no'. 
 
     RESULTS
     =======
@@ -688,12 +714,6 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
     version the files will be organized so that fieldmaps will precede the 
     files to which they correspond, according to HCP processing expectations.
 
-    Existing files
-    --------------
-
-    Due to their inherent problems, `append` and `replace` flags will most 
-    probably be deprecated.
-
     .bvec and .bval files
     ---------------------
 
@@ -710,7 +730,7 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
     EXAMPLE USE
     ===========
 
-    gmri mapBIDS2nii folder=. existing=clean
+    gmri mapBIDS2nii folder=. overwrite=yes
 
     ----------------
     Written by Grega Repovš
@@ -718,6 +738,8 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
     Changelog
     2018-09-17 Grega Repovš
              - Initial version
+    2018-09-19 Grega Repovš
+             - Simplified dealing with preexisting data
 
     '''
 
@@ -727,13 +749,20 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
 
     session = os.path.basename(sfolder)
     subject = session.split('_')[0]
+    sessionid = (session.split('_') + [''])[1]
 
-    splash = "Running mapBIDS2nii for session %s" % (session)
+    info = 'subject ' + subject
+    if sessionid:
+        info += ", session " + sessionid
+
+    print 'info:', info
+
+    splash = "Running mapBIDS2nii for %s" % (info)
     print splash
     print "".join(['=' for e in range(len(splash))])
 
-    if existing not in ['skip', 'clean', 'append', 'replace']:
-        ge.CommandError("mapBIDS2nii", "Invalid option for existing files specified", "%s is not a valid option for existing files!" % (existing), "Please specify one of: skip, clean, append, replace!")
+    if overwrite not in ['yes', 'no']:
+        raise ge.CommandError("mapBIDS2nii", "Invalid option for overwrite specified", "%s is not a valid option for the overwrite parameter!" % (overwrite), "Please specify one of: yes, no!")
 
     # --- process bids folder
 
@@ -748,9 +777,9 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
     if os.path.exists(nfolder):
         nfiles = glob.glob(os.path.join(nfolder, '*.nii*'))
         if nfiles > 0:
-            if existing == 'skip':
-                raise ge.CommandFailed("mapBIDS2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (nfolder), "Please check or set parameter 'existing' to clean, replace or append!")
-            elif existing == 'clean':
+            if overwrite == 'no':
+                raise ge.CommandFailed("mapBIDS2nii", "Existing files present!", "There are existing files in the nii folder [%s]" % (nfolder), "Please check or set parameter 'overwrite' to yes!")
+            else:
                 shutil.rmtree(nfolder)
                 os.makedirs(nfolder)
                 print "--> cleaned nii folder, removed existing files"
@@ -761,11 +790,11 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
 
     sfile = os.path.join(sfolder, 'subject.txt')
     if os.path.exists(sfile):
-        if existing in ['clean', 'append', 'replace']:
+        if overwrite == 'yes':
             os.remove(sfile)
             print "--> removed existing subject.txt file"
         else:
-            raise ge.CommandFailed("mapBIDS2nii", "subject.txt file already present!", "A subject.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'existing' to clean, replace or append to rebuild it!")
+            raise ge.CommandFailed("mapBIDS2nii", "subject.txt file already present!", "A subject.txt file alredy exists [%s]" % (sfile), "Please check or set parameter 'overwrite' to 'yes' to rebuild it!")
 
     sout = open(sfile, 'w')
     print >> sout, 'id:', session
@@ -776,7 +805,7 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
 
     # --- open bids2nii log file
 
-    if existing == 'clean':
+    if overwrite == 'yes':
         mode = 'w'
     else:
         mode = 'a'
@@ -793,16 +822,6 @@ def mapBIDS2nii(sfolder='.', existing='skip'):
         imgn += 1
         tfile = os.path.join(nfolder, "%02d.nii.gz" % (imgn))
         
-        if os.path.exists(tfile):
-            if existing == 'append':
-                print >> sout, "%02d: %s" % (imgn, bidsData['images']['info'][image]['tag'])
-                print >> bout, "%s => %s [file already existed, not mapped again]" % (bidsData['images']['info'][image]['filepath'], tfile)
-                print "--> %02d.nii.gz already exists, skipping %s" % (imgn, bidsData['images']['info'][image]['filename'])
-                continue
-            elif existing == 'replace':
-                os.remove(tfile)
-                print "--> removed %02d.nii.gz " % (imgn)
-
         status = moveLinkOrCopy(bidsData['images']['info'][image]['filepath'], tfile, action='link')
         if status:
             print "--> linked %02d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename'])
