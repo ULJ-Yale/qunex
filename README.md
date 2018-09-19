@@ -343,6 +343,7 @@ Change Log
 * 0.20.28 [niutilities] Added scaffolding for cross session commands, dicm2nii processing of PAR/REC files, saving of real image from fieldmap sequences
 * 0.21.00 [niutilities] Initial version of BIDSImport.
 * 0.21.01 [connector, niutilities] Updated handling of DTIFIT and BedpostX with new Turnkey support.
+* 0.21.02 [niutilities] BIDS: updated documentation, changed overwrite options, optimized reporting
 
 =======
 [Mind and Brain Lab]: http://mblab.si
