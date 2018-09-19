@@ -200,11 +200,13 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
                         mapped to. It should be a folder within the 
                         <study folder>. [.]
 
-    --inbox             The location of the BIDS dataset. It can be the dataset
-                        top folder, a folder that contains the dataset, a 
-                        compressed `.zip` or `.tar.gz` package or a folder that
-                        contains a compressed package. 
-                        [<subjectsfolder>/inbox/BIDS]
+    --inbox             The location of the BIDS dataset. It can be any of the
+                        following: the BIDS dataset top folder, a folder that 
+                        contains the BIDS dataset, a path to the compressed 
+                        `.zip` or `.tar.gz` package with the BIDS dataset or a
+                        folder that contains a compressed package. The default
+                        location where the command will look for a BIDS dataset
+                        is [<subjectsfolder>/inbox/BIDS]
 
     --action            How to map the files to MNAP structure. One of:
                         
@@ -242,9 +244,9 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
                         moved during action, they will be missing if `archive` 
                         is set to 'move' or 'copy'.
 
-    --bidsname          The optional name of the BIDS dataset. Id not provided
-                        it will be set to the inbox folder or compressed package
-                        name.
+    --bidsname          The optional name of the BIDS dataset. If not provided
+                        it will be set to the name of the inbox folder or the 
+                        name of the compressed package.
 
     PROCESS OF BIDS MAPPING
     =======================
@@ -254,10 +256,10 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
     ==> Step 1 -- Mapping BIDS dataset to MNAP Suite folder structure
     
     The `inbox` parameter specifies the location of the BIDS dataset. This path 
-    is inspected for a BIDS compliant dataset. The path can point to either a 
-    folder with extracted BIDS dataset, a `.zip` or `.tar.gz` archive or a 
-    folder containing one or more `.zip` or `.tar.gz` archives. In the initial 
-    step, each file found will be assigned either to a specific session or the 
+    is inspected for a BIDS compliant dataset. The path can point to a folder 
+    with extracted BIDS dataset, a `.zip` or `.tar.gz` archive or a folder 
+    containing one or more `.zip` or `.tar.gz` archives. In the initial step, 
+    each file found will be assigned either to a specific session or the 
     overall study. 
 
     The BIDS files assigned to the study will be saved in the following 
