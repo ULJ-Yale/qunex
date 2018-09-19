@@ -673,7 +673,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 else:
                     r += "\n---> ERROR: Could not find T2w image file."
                     run = False
-
+        
         # -> Pre FS results
 
         if os.path.exists(os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')):
@@ -1590,7 +1590,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     r += "\n%s HCP fMRI Volume registration" % (action("Running", options['run']))
 
     run    = True
-    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
 
@@ -1698,7 +1698,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         spinTwo   = "NONE"  # PA or RL
         refimg    = "NONE"
         futureref = "NONE"
-        dciNew    = True
 
         r += "\n"
 
@@ -2042,7 +2041,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     r += "\n%s HCP fMRI Surface registration" % (action("Running", options['run']))
 
     run    = True
-    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
 
