@@ -283,7 +283,7 @@ def runCommand(command, args):
     elif command in gp.allactions:
         gp.run(command, args)
         return
-    elif command in gm.functios:
+    elif command in gm.functions:
         if 'scheduler' in args:
             niu.g_scheduler.runThroughScheduler(command, subjects=None, args=args, cores=1, logfolder=folders['logfolder'])
         else:
