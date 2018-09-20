@@ -345,6 +345,7 @@ Change Log
 * 0.21.01 [connector, niutilities] Updated handling of DTIFIT and BedpostX with new Turnkey support.
 * 0.21.02 [niutilities] BIDS: updated documentation, changed overwrite options, optimized reporting
 * 0.21.03 [niutilities] Fixed reporting bug in HCP fMRIVolume and fMRISurface
+* 0.21.04 [niutilities matlab] Minor bug fixes
 
 =======
 [Mind and Brain Lab]: http://mblab.si
