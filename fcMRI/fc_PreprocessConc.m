@@ -494,8 +494,8 @@ options = g_ParseOptions([], options, default);
 g_PrintStruct(options, 'Options used');
 
 TS = [];
-doIt = repace(doIt, ",", "");
-doIt = repace(doIt, " ", "");
+doIt = strrep(doIt, ",", "");
+doIt = strrep(doIt, " ", "");
 
 % ======================================================
 %                          ----> prepare basic variables

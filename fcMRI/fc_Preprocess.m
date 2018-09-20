@@ -463,8 +463,8 @@ end
 rgsse = strrep(strrep(strrep(strrep(rgss, ',', ''), ' ', ''), ';', ''), '|', '');
 rgss  = regexp(rgss, ',|;| |\|', 'split');
 
-doIt = repace(doIt, ",", "");
-doIt = repace(doIt, " ", "");
+doIt = strrep(doIt, ",", "");
+doIt = strrep(doIt, " ", "");
 
 
 % ======================================================
