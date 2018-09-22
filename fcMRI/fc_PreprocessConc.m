@@ -452,6 +452,8 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %              - Changed to pretty struct printing.
 %              - Added option to support hcp_bold variant processing.
 %
+%   2018-09-22 Grega Repovs (v0.9.13)
+%              - Fixed an issue with conversion of doIt from char to string
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 16, done = [];                                  end
@@ -496,6 +498,7 @@ g_PrintStruct(options, 'Options used');
 TS = [];
 doIt = strrep(doIt, ",", "");
 doIt = strrep(doIt, " ", "");
+
 
 % ======================================================
 %                          ----> prepare basic variables
@@ -770,8 +773,9 @@ for b = 1:nbolds
 end
 
 dor      = true;
+fprintf("--> starting the loop\n")
 
-for current = doIt
+for current = char(doIt)
 
     saveconc = true;
 

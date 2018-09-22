@@ -401,6 +401,9 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %   2018-06-26 Grega Repovs (v0.9.15)
 %              - Changed to pretty struct printing.
 %              - Added option to support hcp_bold variant processing.
+%
+%   2018-09-22 Grega Repovs (v0.9.13)
+%              - Fixed an issue with conversion of doIt from char to string
 %   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 15, options = '';       end
@@ -622,7 +625,7 @@ ext  = '';
 img = gmrimage();
 
 
-for current = doIt
+for current = char(doIt)
 
     % --- set the source and target filename
 
