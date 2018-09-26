@@ -440,6 +440,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     2018-04-01 Grega Repovš
              - Updated documentation with information on running for multiple
                subjects and scheduling
+    2018-09-26 Grega Repovš
+             - Added checking for existence of dicom folder
     '''
 
     print "Running dicom2nii\n================="
@@ -449,6 +451,11 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     null = open(os.devnull, 'w')
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
+
+    # check if dicom folder existis
+
+    if not os.path.exists(dmcf):
+        raise ge.CommandFailed("dicom2nii", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sortDicom command!")
 
     # check for existing .gz files
 
@@ -906,6 +913,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     2018-07-03 Grega Repovš
              - Changed to use dicm2nii for PAR/REC files and to save both
                magnitude and real image in case of Philips fieldmap files.
+    2018-09-26 Grega Repovš
+             - Added checking for existence of dicom folder
     '''
 
     print "Running dicom2niix\n=================="
@@ -916,6 +925,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     null = open(os.devnull, 'w')
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
+
+    # check if dicom folder existis
+
+    if not os.path.exists(dmcf):
+        raise ge.CommandFailed("dicom2nii", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sortDicom command!")
 
     # check for existing .gz files
 
