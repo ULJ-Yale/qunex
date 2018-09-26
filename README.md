@@ -347,6 +347,7 @@ Change Log
 * 0.21.03 [niutilities] Fixed reporting bug in HCP fMRIVolume and fMRISurface
 * 0.21.04 [niutilities matlab] Minor bug fixes
 * 0.21.05 [matlab] Fixed an issue with conversion of char to string due to changes in Matlab
+* 0.21.06 [connector] Improved QCPreproc and curl checks for XNAT file downloads
 
 =======
 [Mind and Brain Lab]: http://mblab.si
