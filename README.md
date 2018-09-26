@@ -348,6 +348,7 @@ Change Log
 * 0.21.04 [niutilities matlab] Minor bug fixes
 * 0.21.05 [matlab] Fixed an issue with conversion of char to string due to changes in Matlab
 * 0.21.06 [connector] Improved QCPreproc and curl checks for XNAT file downloads
+* 0.21.07 [niutilities] Added checking for existence od dicom folder in dicom2nii(x) commands
 
 =======
 [Mind and Brain Lab]: http://mblab.si
