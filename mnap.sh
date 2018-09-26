@@ -1676,7 +1676,7 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --dtifitqc='${DtiFitQC}' \
 --bedpostxqc='${BedpostXQC}' \
 --eddyqcstats='${EddyQCStats}' \
---bolddata='${BOLDS}' \
+--bolddata='${BOLDLIST}' \
 --boldprefix='${BOLDPrefix}' \
 --boldsuffix='${BOLDSuffix}' \
 --skipframes='${SkipFrames}' \
@@ -2073,7 +2073,6 @@ if [[ "$setflag" =~ .*-.* ]]; then
     ListName=`opts_GetOpt "${setflag}listname" $@`
     HeaderBatch=`opts_GetOpt "${setflag}headerbatch" $@`
     ListFunction=`opts_GetOpt "${setflag}listfunction" $@`
-    BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
     ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
     FileType=`opts_GetOpt "${setflag}filetype" $@`
     BoldSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
@@ -2174,15 +2173,21 @@ if [[ "$setflag" =~ .*-.* ]]; then
     BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
     EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
     DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
-    BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+    BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     if [ -z "${BOLDS}" ]; then
-        BOLDS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+        BOLDS=`opts_GetOpt "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     fi
     if [ -z "${BOLDS}" ]; then
-        BOLDS=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+        BOLDS=`opts_GetOpt "${setflag}bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     fi
     BOLDRUNS="${BOLDS}"
     BOLDDATA="${BOLDS}"
+    
+    if [ -z "${BOLDLIST}" ]; then BOLDLIST=`opts_GetOpt "${setflag}bolddata" "$@"`; fi
+    if [ -z "${BOLDLIST}" ]; then BOLDLIST=`opts_GetOpt "${setflag}bolds" "$@"`; fi
+    if [ -z "${BOLDLIST}" ]; then BOLDLIST=`opts_GetOpt "${setflag}boldruns" "$@"`; fi
+    BOLDLIST=`echo "${BOLDLIST}" | sed 's/ /,/g;s/|/ /g'`
+    
     BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
     BOLDPrefix=`opts_GetOpt "${setflag}boldprefix" $@`
     SkipFrames=`opts_GetOpt "${setflag}skipframes" $@`
