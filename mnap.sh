@@ -403,7 +403,7 @@ fi
 runTurnkey() {
 # -- Specify command variable
 unset CommandToRun
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --subjects='${CASE}' ${runTurnkeyArguments} --turnkeysteps='${TURNKEY_STEPS}' --subjid='${SUBJID}'"
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh ${runTurnkeyArguments} --subjects='${CASE}' --turnkeysteps='${TURNKEY_STEPS}' --subjid='${SUBJID}'"
 connectorExec
 }
 
@@ -1967,6 +1967,9 @@ fi
 if [ "$FunctionToRun" == "runTurnkey" ]; then
     runTurnkeyArguments="$@"
     runTurnkeyArguments=`printf '%s\n' "${runTurnkeyArguments//runTurnkey/}"`
+    #echo ""
+    #geho "Turnkey Arguments: ${runTurnkeyArguments}"
+    #echo ""
 fi
 
 # -- Next check if any additional flags are set
@@ -2031,8 +2034,34 @@ if [[ "$setflag" =~ .*-.* ]]; then
         LogFolder="${StudyFolder}/processing/logs"
     fi
     
-    # -- Set additional general flags
+    # -- Set turnkey flags
+    TURNKEY_TYPE=`opts_GetOpt "${setflag}turnkeytype" $@`
     TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" $@`
+    STUDY_PATH=`opts_GetOpt "${setflag}path" $@`
+    workdir=`opts_GetOpt "${setflag}workingdir" $@`
+    PROJECT_NAME=`opts_GetOpt "${setflag}projectname" $@`
+    CleanupSubject=`opts_GetOpt "${setflag}cleanupsubject" $@`
+    CleanupProject=`opts_GetOpt "${setflag}cleanupproject" $@`
+    RawDataInputPath=`opts_GetOpt "${setflag}rawdatainput" $@`
+    mnap_subjectsfolder=`opts_GetOpt "${setflag}subjectsfolder" $@`
+    OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
+    OVERWRITE_STEP=`opts_GetOpt "${setflag}overwritestep" $@`
+    OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
+    OVERWRITE_PROJECT_FORCE=`opts_GetOpt "${setflag}overwriteprojectforce" $@`
+    OVERWRITE_PROJECT_XNAT=`opts_GetOpt "${setflag}overwriteprojectxnat" $@`
+    BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
+    LOCAL_BATCH_FILE=`opts_GetOpt "${setflag}local_batchfile" $@`
+    SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
+    XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
+    XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
+    XNAT_PROJECT_ID=`opts_GetOpt "${setflag}xnatprojectid" $@`
+    XNAT_SUBJECT_ID=`opts_GetOpt "${setflag}xnatsubjectid" $@`
+    XNAT_HOST_NAME=`opts_GetOpt "${setflag}xnathost" $@`
+    XNAT_USER_NAME=`opts_GetOpt "${setflag}xnatuser" $@`
+    XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
+    XNAT_STUDY_INPUT_PATH=`opts_GetOpt "${setflag}xnatstudyinputpath" $@`
+
+    # -- General flags
     CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     SUBJID=`opts_GetOpt "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SUBJID=`echo "$SUBJID" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
@@ -2231,10 +2260,10 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    if [ "$Cluster" == "2" ]; then
            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
    fi
-   
+   runTurnkeyArgumentsInput="${runTurnkeyArguments}"
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=||g' | sed "s|${CASES}||g"`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=||g' | sed "s|${TURNKEY_STEPS}||g"`
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjid=||g' | sed "s|${SUBJID}||g"`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjid=||g'`
    
    echo ""
    echo "Running $FunctionToRun processing with the following parameters:"
@@ -2242,6 +2271,7 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    echo "--------------------------------------------------------------"
    echo ""
    echo " Turnkey steps: ${TURNKEY_STEPS} "
+   echo " Turnkey arguments: ${runTurnkeyArguments} "
    echo ""
    echo "--------------------------------------------------------------"
     # -- Loop through all the cases
