@@ -350,6 +350,7 @@ Change Log
 * 0.21.06 [connector] Improved QCPreproc and curl checks for XNAT file downloads
 * 0.21.07 [niutilities] Added checking for existence od dicom folder in dicom2nii(x) commands
 * 0.21.08 [connector] Improved runTurnkey connector variable handling
+* 0.21.09 [niutilities] Added checking for validity of log file directories in scheduler
 
 =======
 [Mind and Brain Lab]: http://mblab.si
