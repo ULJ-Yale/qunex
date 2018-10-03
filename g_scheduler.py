@@ -221,6 +221,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                  Added options to redirect job output to log files.
     2018-10-03 - Grega Repovs
                  Added checking for validity of log file directories.
+    2018-10-04 - Grega Repovs
+                 Excluded log validity checking for 'return'.
     '''
 
     # --- check inputs
@@ -281,7 +283,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     if output is not None:
         for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
-            if not os.path.exists(os.path.dirname(v)):
+            if not os.path.exists(os.path.dirname(v)) and k != 'return':
                 raise ge.CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
             outputs[k] = v
 
