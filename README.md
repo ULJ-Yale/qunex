@@ -351,6 +351,7 @@ Change Log
 * 0.21.07 [niutilities] Added checking for existence od dicom folder in dicom2nii(x) commands
 * 0.21.08 [connector] Improved runTurnkey connector variable handling
 * 0.21.09 [niutilities] Added checking for validity of log file directories in scheduler
+* 0.21.10 [niutilities] Excluded log validity checking for 'return'
 
 =======
 [Mind and Brain Lab]: http://mblab.si
