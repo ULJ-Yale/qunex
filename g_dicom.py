@@ -755,9 +755,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     return
 
 
-def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None, verbose=True, cores=1, debug=False):
+def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None, verbose=True, cores=1, debug=False, tool='auto'):
     '''
-    dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1]
+    dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1] [tool='auto']
 
     USE
     ===
@@ -767,12 +767,15 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     provided subject folder (folder). It expects to find each image within a
     separate subfolder. It then converts the found images to NIfTI format and
     places them in the nii folder within the subject folder. To reduce the space
-    used it can then gzip the dicom or .REC files (gzip). For dicom files the 
-    conversion is done using dcm2niix, for PAR/REC files, dicm2nii is used if
-    MNAP is set to use Matlab, otherwise also PAR/REC files are converted using
-    dcm2niix. To speed the process up, the command can run it can run multiple 
-    dcm2niix (or dicm2nii) processes in parallel. The number of processes to run
-    in parallel is specified using cores parameter.
+    used it can then gzip the dicom or .REC files (gzip). The tool to be used 
+    for the conversion can be specified explicitly or determined automatically.
+    It can be one of 'dcm2niix', 'dcm2nii', 'dicm2nii' or 'auto'. If set to 
+    'auto', for dicom files the conversion is done using dcm2niix, and for 
+    PAR/REC files, dicm2nii is used if MNAP is set to use Matlab, otherwise 
+    also PAR/REC files are converted using dcm2niix. If set explicitly, the 
+    command will try to use the tool specified. To speed the process up, the 
+    command can run it can run multiple conversion processes in parallel. The 
+    number of processes to run in parallel is specified using cores parameter.
 
     Before running, the command check for presence of existing NIfTI files. The
     behavior when finding them is defined by clean parameter. If set to 'ask',
@@ -802,6 +805,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     --cores     How many parallel processes to run dcm2nii conversion with. The
                 number is one by defaults, if specified as 'all', the number of
                 available cores is utilized.
+    --tool      What tool to use for the conversion [auto]. It can be one of:
+                - auto     ... determine best tool based on heuristics
+                - dcm2niix
+                - dcm2nii
+                - dicm2nii
 
     RESULTS
     =======
@@ -915,6 +923,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                magnitude and real image in case of Philips fieldmap files.
     2018-09-26 Grega Repovš
              - Added checking for existence of dicom folder
+    2018-10-06 Grega Repovš
+             - Added tool parameter to specify the tool for nifti conversion
     '''
 
     print "Running dicom2niix\n=================="
@@ -926,10 +936,15 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
 
+    # check tool setting
+
+    if tool not in ['auto', 'dcm2niix', 'dcm2nii', 'dicm2nii']:
+        raise ge.CommandError('dicom2niix', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
+
     # check if dicom folder existis
 
     if not os.path.exists(dmcf):
-        raise ge.CommandFailed("dicom2nii", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sortDicom command!")
+        raise ge.CommandFailed("dicom2niix", "No existing dicom folder", "Dicom folder with sorted dicom files does not exist at the expected location:", "[%s]." % (dmcf), "Please check your data!", "If inbox folder with dicom files exist, you first need to use sortDicom command!")
 
     # check for existing .gz files
 
@@ -986,6 +1001,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
         os.makedirs(imgf)
 
     first = True
+    setdi = True
     c     = 0
     calls = []
     logs  = []
@@ -1074,14 +1090,38 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
             print >> stxt, "%4d: %s" % (niinum, info['seriesDescription'])
 
         niiid = str(niinum)
-        if par:
+
+        if tool == 'auto':
+            if par:
+                utool = 'dicm2nii'
+                print '---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available!'
+            else:
+                utool = 'dcm2niix'
+                print '---> Using dcm2niix for conversion to NIfTI!'
+        else:
+            utool = tool
+
+        if utool == 'dicm2nii':            
             if 'matlab' in mcommand:
+                if setdi:
+                    print '---> Setting up dicm2nii settings ...'
+                    subprocess.call("matlab -nodisplay -r \"setpref('dicm2nii_gui_para', 'save_patientName', true); setpref('dicm2nii_gui_para', 'save_json', true); setpref('dicm2nii_gui_para', 'use_parfor', true); setpref('dicm2nii_gui_para', 'use_seriesUID', true); setpref('dicm2nii_gui_para', 'lefthand', true); setpref('dicm2nii_gui_para', 'scale_16bit', false); exit\" ", shell=True, stdout=null, stderr=null)
+                    print '     done!'
+                    setdi = False
                 calls.append({'name': 'dicm2nii: ' + niiid, 'args': mcommand.split(' ') + ["try dicm2nii('%s', '%s'); catch ME, g_ReportError(ME); exit(1), end; exit" % (folder, folder)], 'sout': os.path.join(os.path.split(folder)[0], 'dicm2nii_' + niiid + '.log')})                
             else:
-                print '---> Using dcm2niix for PAR/REC as Matlab is not available!'
+                print '---> Using dcm2niix for conversion as Matlab is not available!'
                 calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+        elif tool == 'dcm2nii':
+            if par:
+                calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
+            else:
+                calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
         else:
-            calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+            if par:
+                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+            else:
+                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
         files.append([niinum, folder, info['volumes'], info['slices']])
 
     niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
@@ -1500,9 +1540,9 @@ def splitDicom(folder=None):
     return
 
 
-def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, cores=1, logfile=None, archive='move', verbose='yes'):
+def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool='auto', cores=1, logfile=None, archive='move', verbose='yes'):
     '''
-    processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [cores=1] [logfile=""] [archive=move] [verbose=yes]
+    processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [verbose=yes] 
 
     USE
     ===
@@ -1534,13 +1574,15 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
 
     After the files have been copied or extracted to the inbox folder, a
     sortDicom command is run on that folder and all the DICOM or PAR/REC files
-    are sorted and moved to the dicom folder. After that is done, a dicom2niix
+    are sorted and moved to the dicom folder. After that is done, a conversion
     command is run to convert the DICOM images or PAR/REC files to the NIfTI
-    format and move them to the nii folder. The DICOM or PAR/REC files are
-    preserved and gzipped to save space. To speed up the conversion the cores
-    parameter is passed to the dicom2niix command. subject.txt and
-    DICOM-Report.txt files are created as well. Please, check the help for
-    sortDicom and dicom2niix commands for the specifics.
+    format and move them to the nii folder. The specific tool to do the 
+    conversion can be specified explicitly using the `tool` parameter or left 
+    for the command to decide if set to 'auto' or let to default. The DICOM or 
+    PAR/REC files are preserved and gzipped to save space. To speed up the 
+    conversion the cores parameter is passed to the dicom2niix command. 
+    subject.txt and DICOM-Report.txt files are created as well. Please, check 
+    the help for sortDicom and dicom2niix commands for the specifics.
 
     PARAMETERS
     ==========
@@ -1554,9 +1596,14 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
                inbox are identified and listed. [yes]
     --pattern  The pattern to use to extract subject codes.
                [".*?(OP[0-9.-]+).*\.zip"]
+    --tool     What tool to use for the conversion [auto]. It can be one of:
+               - auto     ... determine best tool based on heuristics
+               - dcm2niix
+               - dcm2nii
+               - dicm2nii
     --cores    The number of parallel processes to use when running dcm2nii
                command. If specified as 'all', all the avaliable cores will
-               be utilized. [1]
+               be utilized. [1]               
     --logfile  A string specifying the location of the log file and the columns
                in which sessionid and subjectid information is stored. The
                string should specify:
@@ -1584,9 +1631,16 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
     2018-07-03 Grega Repovš
              - Changed to work with readDICOMInfo and readPARInfo, and to
                support PAR/REC files.
+    2018-10-06 Grega Repovš
+             - Added tool parameter to specify the tool for nifti conversion.
     '''
 
     print "Running processInbox\n===================="
+
+    # check tool setting
+
+    if tool not in ['auto', 'dcm2niix', 'dcm2nii', 'dicm2nii']:
+        raise ge.CommandError('processInbox', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
 
     verbose = verbose == 'yes'
 
@@ -1794,7 +1848,7 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, core
             # ===> run dicom to nii
 
             print
-            dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, cores=cores, verbose=True)
+            dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, tool=tool, cores=cores, verbose=True)
 
             # ===> archive
 
