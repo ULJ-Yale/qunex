@@ -352,6 +352,7 @@ Change Log
 * 0.21.08 [connector] Improved runTurnkey connector variable handling
 * 0.21.09 [niutilities] Added checking for validity of log file directories in scheduler
 * 0.21.10 [niutilities] Excluded log validity checking for 'return'
+* 0.21.11 [niutilities] Added tool parameter to specify the tool for nifti conversion
 
 =======
 [Mind and Brain Lab]: http://mblab.si
