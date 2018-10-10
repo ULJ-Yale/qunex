@@ -644,6 +644,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     r += "\n\n%s HCP FreeSurfer Pipeline ...\n" % (action("Running", options['run']))
 
     run    = True
+    status = True
     report = "Error"
 
     try:
@@ -786,9 +787,14 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                         shutil.rmtree(hcp['FS_folder'])
                     for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
                         if os.path.lexists(os.path.join(hcp['T1w_folder'], toremove)):
-                            os.remove(os.path.join(hcp['T1w_folder'], toremove))
-                r += runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
-                r, status = checkForFile(r, tfile, 'ERROR: HCP FS failed running command: %s' % (comm))
+                            try:
+                                os.remove(os.path.join(hcp['T1w_folder'], toremove))
+                            except:
+                                r += "\n---> WARNING: Could not remove preexisting file: %s! Please check your data!" % (os.path.join(hcp['T1w_folder'], toremove))
+                                status = False
+                if status:
+                    r += runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                    r, status = checkForFile(r, tfile, 'ERROR: HCP FS failed running command: %s' % (comm))
                 if status:
                     report = "FS Done"
                     failed = 0

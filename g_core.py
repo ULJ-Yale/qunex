@@ -326,11 +326,15 @@ def runExternalParallel(calls, cores=None, prepend=''):
                 else:
                     sout = open(os.devnull, 'w')
                 print >> sout, "Starting log for %s at %s\nThe command being run: \n>> %s\n" % (call['name'], str(datetime.datetime.now()).split('.')[0], " ".join(call['args']))
-                running.append({'call': call, 'sout': sout, 'p': subprocess.Popen(call['args'], stdout=sout, stderr=sout, bufsize=0)})
-                if call['sout']:
-                    print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.datetime.now()).split('.')[0], call['sout'])
-                else:
-                    print prepend + "started running %s at %s" % (call['name'], str(datetime.datetime.now()).split('.')[0])
+                try:
+                    running.append({'call': call, 'sout': sout, 'p': subprocess.Popen(call['args'], stdout=sout, stderr=sout, bufsize=0)})
+                    if call['sout']:
+                        print prepend + "started running %s at %s, track progress in %s" % (call['name'], str(datetime.datetime.now()).split('.')[0], call['sout'])
+                    else:
+                        print prepend + "started running %s at %s" % (call['name'], str(datetime.datetime.now()).split('.')[0])
+                except:
+                    print prepend + "failed to start running %s. Please check your environment!" % (call['name'])
+                    completed.append({'exit': -9, 'name': call['name'], 'log': call['sout'], 'args': call['args']})
                 continue
 
         # --- check if a process finished
