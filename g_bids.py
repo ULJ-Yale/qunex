@@ -374,6 +374,16 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
     allOk    = True
     errors   = ""
 
+    # ---> Check for folders
+
+    if not os.path.exists(os.path.join(subjectsfolder, 'inbox', 'BIDS')):
+        os.makedirs(os.path.join(subjectsfolder, 'inbox', 'BIDS'))
+        print "--> creating inbox BIDS folder"
+
+    if not os.path.exists(os.path.join(subjectsfolder, 'archive', 'BIDS')):
+        os.makedirs(os.path.join(subjectsfolder, 'archive', 'BIDS'))
+        print "--> creating archive BIDS folder"
+
     # ---> identification of files
 
     print "--> identifying files in %s" % (inbox)
