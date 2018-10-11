@@ -355,6 +355,7 @@ Change Log
 * 0.21.11 [niutilities] Added tool parameter to specify the tool for nifti conversion
 * 0.21.12 [niutilities] Added additional error reporting when running external programms and cleaning FS folder
 * 0.21.13 [niutilities] Updated FS code to delete previous symlinks or folders.
+* 0.21.14 [niutilities] BIDS inbox and archive folders are created if they do not yet exist
 
 =======
 [Mind and Brain Lab]: http://mblab.si
