@@ -786,12 +786,15 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                         r += "\n --> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
                         shutil.rmtree(hcp['FS_folder'])
                     for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
-                        if os.path.lexists(os.path.join(hcp['T1w_folder'], toremove)):
-                            try:
-                                os.remove(os.path.join(hcp['T1w_folder'], toremove))
-                            except:
-                                r += "\n---> WARNING: Could not remove preexisting file: %s! Please check your data!" % (os.path.join(hcp['T1w_folder'], toremove))
-                                status = False
+                        rmtarget = os.path.join(hcp['T1w_folder'], toremove)
+                        try:
+                            if os.path.islink(rmtarget) or os.path.isfile(rmtarget):
+                                os.remove(rmtarget)
+                            elif os.path.isdir(rmtarget):
+                                shutil.rmtree(rmtarget)
+                        except:
+                            r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
+                            status = False
                 if status:
                     r += runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
                     r, status = checkForFile(r, tfile, 'ERROR: HCP FS failed running command: %s' % (comm))
