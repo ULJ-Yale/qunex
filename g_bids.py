@@ -153,6 +153,10 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
             optional = part
         elif part in bids['modalities']:
             modality = part
+        else:
+            for targetModality in bids['modalities']:
+                if part in bids[targetModality]['label']:
+                    modality = targetModality 
 
     session = "_".join([e for e in [subject, session] if e])
     if session:
