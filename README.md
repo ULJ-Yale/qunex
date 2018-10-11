@@ -356,6 +356,7 @@ Change Log
 * 0.21.12 [niutilities] Added additional error reporting when running external programms and cleaning FS folder
 * 0.21.13 [niutilities] Updated FS code to delete previous symlinks or folders.
 * 0.21.14 [niutilities] BIDS inbox and archive folders are created if they do not yet exist
+* 0.21.15 [niutilities] Made BIDSImport more robust to BIDS folder structure violations
 
 =======
 [Mind and Brain Lab]: http://mblab.si
