@@ -132,6 +132,11 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
+    try:
+        if subjectsfolder[-1] == '/':
+            subjectsfolder = subjectsfolder[:-1]
+    except:
+        pass
 
     folder   = os.path.join(os.path.dirname(subjectsfolder), 'info', 'bids', bidsname)
     subject  = ""
