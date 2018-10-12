@@ -149,7 +149,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
     inf   = niutilities.g_core.readSubjectData(os.path.join(sfolder, sfile))[0][0]
     basef = os.path.join(sfolder, tfolder, inf['id'])
-    rawf  = inf['raw_data']
+    rawf  = inf.get('raw_data', None)
     sid   = inf['id']
     bolds = collections.defaultdict(dict)
     nT1w  = 0
@@ -167,7 +167,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
     # -> does raw data exist
 
-    if not os.path.exists(rawf):
+    if rawf is None or not os.path.exists(rawf):
         raise ge.CommandFailed("setupHCP", "Data folder does not exist", "raw_data folder for %s does not exist!" % (sid), "Please check specified path [%s]" % (rawf))
 
     print "===> Setting up HCP folder structure for %s\n" % (sid)

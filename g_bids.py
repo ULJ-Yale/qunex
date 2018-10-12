@@ -672,6 +672,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     id: 06_retest
     subject: 06
     bids: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/bids
+    raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/nii
     hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/subjects/06_retest/hcp
     
     01: T1w
@@ -821,6 +822,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     print >> sout, 'id:', session
     print >> sout, 'subject:', subject
     print >> sout, 'bids:', bfolder
+    print >> sout, 'raw_data:', nfolder
     print >> sout, 'hcp:', os.path.join(sfolder, 'hcp')
     print >> sout
 
