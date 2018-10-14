@@ -358,6 +358,8 @@ Change Log
 * 0.21.14 [niutilities] BIDS inbox and archive folders are created if they do not yet exist
 * 0.21.15 [niutilities] Made BIDSImport more robust to BIDS folder structure violations
 * 0.21.16 [niutilities] Added raw_data info to subject.txt at BIDSImport
+* 0.22.00 [connector] Added QCnifti function to allow visual inspection of raw NIFTI files in <subjects_folder>/<case>/nii
+* 0.23.00 [connector, dependencies] Improved QCPreproc to handle scalar and pconn BOLD FC processed data. Dependency: Workbench 1.3 or later.
 
 =======
 [Mind and Brain Lab]: http://mblab.si
