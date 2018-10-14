@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCPreproc runTurnkey commandExecute showVersion"
+MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCnifti QCPreproc runTurnkey commandExecute showVersion"
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -184,6 +184,7 @@ echo ""
 echo "QC functions"
 echo "------------"
 echo " eddyQC ...... run quality control on diffusion datasets following eddy outputs"
+echo " QCnifti ...... run visual qc for raw nifti data in <subjects_folder>/<case>/nii"
 echo " QCPreproc ...... run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
 echo ""
 echo "DWI processing, analyses & probabilistic tractography functions"
@@ -403,7 +404,7 @@ fi
 runTurnkey() {
 # -- Specify command variable
 unset CommandToRun
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh ${runTurnkeyArguments} --subjects='${CASE}' --turnkeysteps='${TURNKEY_STEPS}' --subjid='${SUBJID}'"
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --bolds='${BOLDS}' ${runTurnkeyArguments} --subjects='${CASE}' --turnkeysteps='${TURNKEY_STEPS}' --subjid='${SUBJID}'"
 connectorExec
 }
 
@@ -462,6 +463,7 @@ unset CommandToRun
 ComA="cd ${SubjectsFolder}/${CASE}"
 ComB="gmri sortDicom folder=. " 
 ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
+ComD="slicesdir ${SubjectsFolder}/${CASE}/nii/*.nii*"
 CommandToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
 # -- Connector execute function
 connectorExec
@@ -471,7 +473,7 @@ show_usage_organizeDicom() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
 echo ""
-echo "This function expects a set of raw DICOMs in <study_folder>/<case>/inbox."
+echo "This function expects a set of raw DICOMs in <subjects_folder>/<case>/inbox "
 echo "DICOMs are organized, gzipped and converted to NIFTI format for additional processing."
 echo "subject.txt files will be generated with id and subject matching the <case>."
 echo ""
@@ -506,6 +508,49 @@ echo "--subjects='<comma_separarated_list_of_cases>' "
 echo "--scheduler='<name_of_scheduler_and_options>'"
 echo ""
 }
+
+# ---------------------------------------------------------------------------------------------------------------
+#  QCnifti - QC nifti files following organizeDicom
+# ---------------------------------------------------------------------------------------------------------------
+
+QCnifti() {
+
+# -- Specify command variable
+unset CommandToRun
+Com1="slicesdir ${SubjectsFolder}/${CASE}/nii/*.nii*"
+Com2="if [ -f ${SubjectsFolder}/${CASE}/nii/slicesdir/index.html ]; then echo ''; geho '------------------------- Successful completion of work --------------------------------'; else echo ''; reho 'Something went wrong. Check output: ${SubjectsFolder}/${CASE}/nii/slicesdir/'; fi"
+CommandToRun="${Com1}; ${Com2}"
+# -- Connector execute function
+connectorExec
+
+}
+
+show_usage_QCnifti() {
+echo ""
+echo "-- DESCRIPTION for $UsageInput"
+echo ""
+echo "This function performs QC for raw NIFTI images in <subjects_folder>/<case>/nii "
+echo ""
+echo ""
+echo "-- REQUIRED PARMETERS:"
+echo ""
+echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects. If missing then optional paramater --folder needs to be provided."
+echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run. If missing then --folder needs to be provided for a single-session run."
+echo ""
+echo "-- OPTIONAL PARAMETERS: "
+echo ""
+echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+echo "                                                       e.g. for SLURM the string would look like this: "
+echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+echo ""
+echo "-- EXAMPLE:"
+echo ""
+echo "mnap niftiQC --subjectsfolder='<folder_with_subjects>' \ "
+echo "--subjects='<comma_separarated_list_of_cases>' "
+echo "--scheduler='<name_of_scheduler_and_options>'"
+echo ""
+}
+
 
 # ------------------------------------------------------------------------------------------------------
 #  mapHCPFiles - Setup the HCP File Structure to be fed to the Yale HCP
@@ -1683,6 +1728,9 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --snronly='${SNROnly}' \
 --timestamp='${TimeStamp}' \
 --scenezip='${SceneZip}' \
+--boldfc='${BOLDfc}' \
+--boldfcinput='${BOLDfcInput}' \
+--boldfcpath='${BOLDfcPath}' \
 --suffix='${Suffix}'"
 # -- Connector execute function
 connectorExec
@@ -2202,6 +2250,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
     BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
     EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
     DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
+    
+    # -- Code block for BOLDs
     BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
     if [ -z "${BOLDS}" ]; then
         BOLDS=`opts_GetOpt "${setflag}boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
@@ -2211,19 +2261,23 @@ if [[ "$setflag" =~ .*-.* ]]; then
     fi
     BOLDRUNS="${BOLDS}"
     BOLDDATA="${BOLDS}"
+    BOLDfc=`opts_GetOpt "${setflag}boldfc" $@`
+    BOLDfcInput=`opts_GetOpt "${setflag}boldfcinput" $@`
+    BOLDfcPath=`opts_GetOpt "${setflag}boldfcpath" $@`
     
     if [ -z "${BOLDLIST}" ]; then BOLDLIST=`opts_GetOpt "${setflag}bolddata" "$@"`; fi
     if [ -z "${BOLDLIST}" ]; then BOLDLIST=`opts_GetOpt "${setflag}bolds" "$@"`; fi
     if [ -z "${BOLDLIST}" ]; then BOLDLIST=`opts_GetOpt "${setflag}boldruns" "$@"`; fi
     BOLDLIST=`echo "${BOLDLIST}" | sed 's/ /,/g;s/|/ /g'`
-    
     BOLDSuffix=`opts_GetOpt "${setflag}boldsuffix" $@`
     BOLDPrefix=`opts_GetOpt "${setflag}boldprefix" $@`
+    
     SkipFrames=`opts_GetOpt "${setflag}skipframes" $@`
     SNROnly=`opts_GetOpt "${setflag}snronly" $@`
     TimeStamp=`opts_GetOpt "${setflag}timestamp" $@`
     Suffix=`opts_GetOpt "${setflag}suffix" $@`
     SceneZip=`opts_GetOpt "${setflag}scenezip" $@`
+    
     # -- Check if subject input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
         SubjectParamFile="$CASES"
@@ -2264,6 +2318,9 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=||g' | sed "s|${CASES}||g"`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=||g' | sed "s|${TURNKEY_STEPS}||g"`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjid=||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolds=||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolddata=||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--boldruns=||g'`
    
    echo ""
    echo "Running $FunctionToRun processing with the following parameters:"
@@ -2345,6 +2402,34 @@ if [ "$FunctionToRun" == "organizeDicom" ]; then
     echo "   Study Log Folder: ${LogFolder}"
     echo ""
     echo "--------------------------------------------------------------"
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+fi
+
+# ------------------------------------------------------------------------------
+#  niftiQC function loop
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "QCnifti" ]; then
+   if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+   if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+   if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+   # -- Check if cluster options are set
+   Cluster="$RunMethod"
+   if [ "$Cluster" == "2" ]; then
+           if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+   fi
+   
+   echo ""
+   echo "Running $FunctionToRun processing with the following parameters:"
+   echo ""
+   echo "--------------------------------------------------------------"
+   echo ""
+   echo "   StudyFolder: ${StudyFolder}"
+   echo "   Subjects Folder: ${SubjectsFolder}"
+   echo "   Subject: ${CASE}"
+   echo ""
+   echo "--------------------------------------------------------------"
     # -- Loop through all the cases
     for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
@@ -2476,6 +2561,11 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
         echo "   Skip Initial Frames: ${SkipFrames}"
         echo "   Compute SNR Only: ${SNROnly}"
         if [ "$SNROnly" == "yes" ]; then echo ""; echo "   BOLD SNR only specified. Will skip QC images"; echo ""; fi
+        if [[ ! -z ${BOLDfc} ]]; then
+            echo "   BOLD FC requested: ${BOLDfc}"
+            echo "   BOLD FC input: ${BOLDfcInput}"
+            echo "   BOLD FC path: ${BOLDfcPath}"
+        fi
     fi
     echo "--------------------------------------------------------------"
     # -- Loop through all the cases

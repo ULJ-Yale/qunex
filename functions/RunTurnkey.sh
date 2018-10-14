@@ -380,6 +380,9 @@ DtiFitQC=`opts_GetOpt "--dtifitqc" $@`
 BedpostXQC=`opts_GetOpt "--bedpostxqc" $@`
 EddyQCStats=`opts_GetOpt "--eddyqcstats" $@`
 DWILegacy=`opts_GetOpt "--dwilegacy" $@`
+BOLDfc=`opts_GetOpt "--boldfc" $@`
+BOLDfcInput=`opts_GetOpt "--boldfcinput" $@`
+BOLDfcPath=`opts_GetOpt "--boldfcpath" $@`
 
 BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 if [ -z "${BOLDS}" ]; then
@@ -561,6 +564,11 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
         echo "   BOLD runs requested: ${BOLDRUNS}"
     else
         echo "   BOLD runs requested: all"
+    fi
+    if [[ ! -z ${BOLDfc} ]]; then
+        echo "   BOLD FC requested: ${BOLDfc}"
+        echo "   BOLD FC input: ${BOLDfcInput}"
+        echo "   BOLD FC path: ${BOLDfcPath}"
     fi
 fi
 
@@ -1017,13 +1025,15 @@ fi
     turnkey_QCPreprocBOLD() {
         Modality="BOLD"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
-        if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
-        if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
+        if [ -z "${BOLDfc}" ]; then
+            if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
+            if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
+        fi
         if [ -z "${BOLDRUNS}" ]; then
              BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
         fi
         for BOLDRUN in ${BOLDRUNS}; do
-            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}"
+            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}"
             QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             rename QCPreproc QCPreprocBOLD${BOLD} ${logdir}/comlogs/${QCPreprocComLog}
