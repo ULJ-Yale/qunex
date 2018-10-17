@@ -361,6 +361,7 @@ Change Log
 * 0.22.00 [connector] Added QCnifti function to allow visual inspection of raw NIFTI files in <subjects_folder>/<case>/nii
 * 0.23.00 [connector, dependencies] Improved QCPreproc to handle scalar and pconn BOLD FC processed data. Dependency: Workbench 1.3 or later.
 * 0.23.01 [connector] Improved QCnifti documentation
+* 0.23.02 [niutilities] Additional scaffolding for FSLongitudinal
 
 =======
 [Mind and Brain Lab]: http://mblab.si
