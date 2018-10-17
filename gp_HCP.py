@@ -32,6 +32,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 from gp_core import *
 from g_img import *
 import os
+import re
 import os.path
 import shutil
 import glob
@@ -749,6 +750,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         else:
             t2w = os.path.join(hcp['T1w_folder'], 'T2w_acpc_dc_restore.nii.gz')
 
+        # identify template if longitudional run
+
+        if options['hcp_fs_longitudinal'] == 'yes':
+            templatename = os.path.join(options['subjectsfolder']+ '_FSLongitudinal', sinfo['id'], 'hcp', sinfo['id'] + options['hcp_suffix'], 'T1w/')
+        else:
+            templatename = ""
 
         comm = '%(script)s \
             --subject="%(subject)s" \
@@ -762,7 +769,9 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             --FSLoadHPCModule="%(FSLoadHPCModule)s" \
             --t1="%(t1)s" \
             --t1brain="%(t1brain)s" \
-            --t2="%(t2)s"' % {
+            --t2="%(t2)s" \
+            --LTTemplateName="%(templatename)s" \
+            --longitudinal="%(fslongitudinal)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'subjectDIR'        : hcp['T1w_folder'],
@@ -775,7 +784,9 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 'FSBrainMask'       : options['hcp_fs_brainmask'],
                 't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                 't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
-                't2'                : t2w}
+                't2'                : t2w,
+                'templatename'      : templatename,
+                'fslongitudinal'    : options['hcp_fs_longitudinal']}
 
         if run:
             if options['run'] == "run":
@@ -932,57 +943,139 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
     run    = True
     report = "Error"
+    sessionsid = []
 
     try:
 
         # --- check that we have data for all sessions
 
-        sessionids = [s['id'] for s in sinfo['sessions']]
-        
+        r += "\n---> Checking sessions for subject %s" % (sinfo['id'])
+
+        for session in sinfo['sessions']:
+            r += "\n     => session %s" % (session['id'])
+            sessionsid.append(session['id'] + options['hcp_suffix'])
+            sessionStatus = True
+
+            try:
+
+                hcp = getHCPPaths(session, options)
+
+                # --- run checks
+
+                if 'hcp' not in session:
+                    r += "\n       -> ERROR: There is no hcp info for session %s in batch file" % (session['id'])
+                    sessionStatus = False
+
+                # --- check for T1w and T2w images
+
+                for tfile in hcp['T1w'].split("@"):
+                    if os.path.exists(tfile):
+                        r += "\n       -> T1w image file present."
+                    else:
+                        r += "\n       -> ERROR: Could not find T1w image file."
+                        sessionStatus = False
+
+                if hcp['T2w'] == 'NONE':
+                    r += "\n       -> Not using T2w image."
+                else:
+                    for tfile in hcp['T2w'].split("@"):
+                        if os.path.exists(tfile):
+                            r += "\n       -> T2w image file present."
+                        else:
+                            r += "\n       -> ERROR: Could not find T2w image file."
+                            sessionStatus = False
+
+                # -> Pre FS results
+
+                if os.path.exists(os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')):
+                    r += "\n       -> PreFS results present."
+                else:
+                    r += "\n       -> ERROR: Could not find PreFS processing results."
+                    sessionStatus = False
+
+                # -> FS results
+
+                if os.path.exists(os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')):
+                    r += "\n       -> FS results present."
+                else:
+                    r += "\n       -> ERROR: Could not find Freesurfer processing results."
+                    sessionStatus = False
+
+                if sessionStatus:
+                    r += "\n     => data check for session completed successfully!\n"
+                else:
+                    r += "\n     => data check for session failed!\n"
+                    run = False
+            except:
+                r += "\n     => data check for session failed!\n"
+
+        if run:
+            r += "\n===> OK: Sessions check completed with success!"
+        else:
+            r += "\n===> ERROR: Sessions check failed. Please check your data before proceeding!"
+
+        if hcp['T2w'] == 'NONE':
+            t2w = 'NONE'
+        else:
+            t2w = 'T2w_acpc_dc_restore.nii.gz'
+       
         # --- set up command
 
-        # comm = '%(script)s \
-        #     --subject="%(subject)s" \
-        #     --subjectDIR="%(subjectDIR)s" \
-        #     --ExpertFile="%(ExpertFile)s" \
-        #     --ControlPoints="%(ControlPoints)s" \
-        #     --WMEdits="%(WMEdits)s" \
-        #     --AutoTopoFixOff="%(AutoTopoFixOff)s" \
-        #     --FSBrainMask="%(FSBrainMask)s" \
-        #     --FreeSurferHome="%(FreeSurferHome)s" \
-        #     --FSLoadHPCModule="%(FSLoadHPCModule)s" \
-        #     --t1="%(t1)s" \
-        #     --t1brain="%(t1brain)s" \
-        #     --t2="%(t2)s"' % {
-        #         'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
-        #         'subject'           : sinfo['id'] + options['hcp_suffix'],
-        #         'subjectDIR'        : hcp['T1w_folder'],
-        #         'FreeSurferHome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
-        #         'FSLoadHPCModule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
-        #         'ExpertFile'        : options['hcp_expert_file'],
-        #         'ControlPoints'     : options['hcp_control_points'],
-        #         'WMEdits'           : options['hcp_wm_edits'],
-        #         'AutoTopoFixOff'    : options['hcp_autotopofix_off'],
-        #         'FSBrainMask'       : options['hcp_fs_brainmask'],
-        #         't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
-        #         't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
-        #         't2'                : t2w}
+        comm = '%(script)s \
+            --subject="%(subject)s" \
+            --subjectDIR="%(subjectDIR)s" \
+            --ExpertFile="%(ExpertFile)s" \
+            --ControlPoints="%(ControlPoints)s" \
+            --WMEdits="%(WMEdits)s" \
+            --AutoTopoFixOff="%(AutoTopoFixOff)s" \
+            --FSBrainMask="%(FSBrainMask)s" \
+            --FreeSurferHome="%(FreeSurferHome)s" \
+            --FSLoadHPCModule="%(FSLoadHPCModule)s" \
+            --t1="%(t1)s" \
+            --t1brain="%(t1brain)s" \
+            --t2="%(t2)s" \
+            --timepoints="%(timepoints)s" \
+            --LTTemplateName="%(templatename)s" \
+            --longitudinal="YES"' % {
+                'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
+                'subject'           : sinfo['id'] + options['hcp_suffix'],
+                'subjectDIR'        : os.path.join(options['subjectsfolder']+ '_FSLongitudinal', sinfo['id'], 'hcp', sinfo['id'] +  options['hcp_suffix'], 'T1w/'),
+                'FreeSurferHome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
+                'FSLoadHPCModule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
+                'ExpertFile'        : options['hcp_expert_file'],
+                'ControlPoints'     : options['hcp_control_points'],
+                'WMEdits'           : options['hcp_wm_edits'],
+                'AutoTopoFixOff'    : options['hcp_autotopofix_off'],
+                'FSBrainMask'       : options['hcp_fs_brainmask'],
+                't1'                : 'T1w_acpc_dc_restore.nii.gz',
+                't1brain'           : 'T1w_acpc_dc_restore_brain.nii.gz',
+                't2'                : t2w,
+                'timepoints'        : ",".join(sessionsid),
+                'templatename'      : sinfo['id']}
 
         # run command
 
         if run:
             if options['run'] == "run":
-                r += "\n---> The command would be run on sessions: %s" % (", ".join(sessionids))
+                r += "\n---> The command would be run on sessions: %s" % (", ".join(sessionsid))
                 report = "Command would be run"
                 failed = 0
 
             else:
-                r += "\n---> The command would be tested on sessions: %s" % (", ".join(sessionids))
-                report = "Command would be tested"
+                r += "\n---> The command was tested for sessions: %s" % (", ".join(sessionsid))
+                r += "\n---> If run, the following command would be executed:\n"
+                rcomm = re.sub(r" +", r" ", comm)
+                rcomm = re.sub(r"--", r"\n  --", rcomm)
+                r += "\n%s\n\n" % rcomm
+                report = "Command can be run"
                 failed = 0
                 
         else:
-            r += "\n---> The command cound not be run on sessions: %s" % (", ".join(sessionids))
+            r += "\n---> The command could not be run on sessions: %s" % (", ".join(sessionsid))
+            r += "\n---> If run, the following command would be executed:\n"
+            rcomm = re.sub(r" +", r" ", comm)
+            rcomm = re.sub(r"--", r"\n  --", rcomm)
+            r += "\n%s\n\n" % rcomm
             report = "Command can not be run"
             failed = 1
 
