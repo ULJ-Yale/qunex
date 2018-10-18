@@ -86,6 +86,7 @@ def readPARInfo(filename):
     info['volumes']            = max(info['frames'], info['directions'])
     info['slices']             = int(info['Max. number of slices/locations'])
     info['datetime']           = info['Examination date/time']
+    info['ImageType']          = [""]
 
     return info
 
@@ -209,6 +210,13 @@ def readDICOMInfo(filename):
         info['SOPInstanceUID'] = d.SOPInstanceUID
     except:
         info['SOPInstanceUID'] = None
+
+    # --- ImageType
+
+    try:
+        info['ImageType'] = d[0x0008, 0x0008].value
+    except:
+        info['ImageType'] = ""
 
     # --- dicom header
 
@@ -755,9 +763,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     return
 
 
-def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None, verbose=True, cores=1, debug=False, tool='auto'):
+def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None, verbose=True, cores=1, debug=False, tool='auto', options=""):
     '''
-    dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1] [tool='auto']
+    dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1] [tool='auto'] [options=""]
 
     USE
     ===
@@ -810,6 +818,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 - dcm2niix
                 - dcm2nii
                 - dicm2nii
+    --options   A pipe separated string that lists additional options as a 
+                "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
+                processing dicom or PAR/REC files. Currently it supports:
+                - addImageType  ... Adds image type information to the sequence
+                                    name (Siemens scanners). Possible settings
+                                    are yes or no [no]
 
     RESULTS
     =======
@@ -925,6 +939,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
              - Added checking for existence of dicom folder
     2018-10-06 Grega Repovš
              - Added tool parameter to specify the tool for nifti conversion
+    2018-10-18 Grega Repovš
+             - Added options parameter and adding Image Type to sequence names
     '''
 
     print "Running dicom2niix\n=================="
@@ -935,6 +951,18 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     null = open(os.devnull, 'w')
     dmcf = os.path.join(folder, 'dicom')
     imgf = os.path.join(folder, 'nii')
+
+    # check options
+
+    optionstr = options
+    options = {'addImageType': 'no'}
+
+    try:
+        for k, v in [e.split(':') for e in optionstr.split('|')]:
+            options[k.strip()] = v.strip()
+    except:
+        raise ge.CommandError('dicom2niix', "Misspecified options string", "The options string is not valid! [%s]" % (optionstr), "Please check command instructions!")
+
 
     # check tool setting
 
@@ -1044,6 +1072,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 print "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
                 continue
 
+        if options['addImageType'] in ['yes', 'Yes', 'YES']:
+            imageType = info['ImageType'][-1]
+            if len(imageType) > 0:
+                info['seriesDescription'] += ' ' + imageType
+
         c += 1
         if first:
             first = False
@@ -1094,10 +1127,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
         if tool == 'auto':
             if par:
                 utool = 'dicm2nii'
-                print '---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available!'
+                print '---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available! [%s: %s]' % (niid, info['seriesDescription'])
             else:
                 utool = 'dcm2niix'
-                print '---> Using dcm2niix for conversion to NIfTI!'
+                print '---> Using dcm2niix for conversion to NIfTI! [%s: %s]' % (niid, info['seriesDescription'])
         else:
             utool = tool
 
@@ -1110,7 +1143,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                     setdi = False
                 calls.append({'name': 'dicm2nii: ' + niiid, 'args': mcommand.split(' ') + ["try dicm2nii('%s', '%s'); catch ME, g_ReportError(ME); exit(1), end; exit" % (folder, folder)], 'sout': os.path.join(os.path.split(folder)[0], 'dicm2nii_' + niiid + '.log')})                
             else:
-                print '---> Using dcm2niix for conversion as Matlab is not available!'
+                print '---> Using dcm2niix for conversion as Matlab is not available! [%s: %s]' % (niid, info['seriesDescription'])
                 calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
         elif tool == 'dcm2nii':
             if par:
@@ -1540,9 +1573,9 @@ def splitDicom(folder=None):
     return
 
 
-def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool='auto', cores=1, logfile=None, archive='move', verbose='yes'):
+def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool='auto', cores=1, logfile=None, archive='move', options="", verbose='yes'):
     '''
-    processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [verbose=yes] 
+    processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [verbose=yes]  
 
     USE
     ===
@@ -1614,6 +1647,12 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
                * copy:   copy the package to the default archive folder
                * leave:  keep the package in the inbox folder
                * delete: delete the package after it has been processed
+    --options   A pipe separated string that lists additional options as a 
+                "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
+                processing dicom or PAR/REC files. Currently it supports:
+                - addImageType  ... Adds image type information to the sequence
+                                    name (Siemens scanners). Possible settings
+                                    are yes or no [no]
     --verbose  Whether to provide detailed report also of packets that could
                not be identified and/or are not matched with log file.
 
@@ -1633,6 +1672,8 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
                support PAR/REC files.
     2018-10-06 Grega Repovš
              - Added tool parameter to specify the tool for nifti conversion.
+    2018-10-18 Grega Repovš
+             - Added options to parameters
     '''
 
     print "Running processInbox\n===================="
@@ -1848,7 +1889,7 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
             # ===> run dicom to nii
 
             print
-            dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, tool=tool, cores=cores, verbose=True)
+            dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, tool=tool, cores=cores, options=options, verbose=True)
 
             # ===> archive
 
