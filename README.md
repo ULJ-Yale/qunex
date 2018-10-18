@@ -362,6 +362,7 @@ Change Log
 * 0.23.00 [connector, dependencies] Improved QCPreproc to handle scalar and pconn BOLD FC processed data. Dependency: Workbench 1.3 or later.
 * 0.23.01 [connector] Improved QCnifti documentation
 * 0.23.02 [niutilities] Additional scaffolding for FSLongitudinal
+* 0.23.03 [niutilities] Added options parameter to dicom2niix and an option to add ImageType to sequence name
 
 =======
 [Mind and Brain Lab]: http://mblab.si
