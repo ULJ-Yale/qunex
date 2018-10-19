@@ -1,6 +1,6 @@
-function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, handleEM)
+function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, check)
 
-%function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore)
+%function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, check)
 %
 %   Create task regressors for each bold run.
 %
@@ -31,7 +31,7 @@ function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, handleEM)
 %       -> 'ignore' (ignore those frames)
 %       -> 'specify' (create a separate regressor)
 %       -> 'both' (ignore and specify)
-%   - handleEM - how to handle event mismatch between fidlf and model ['warning']
+%   - check  - how to handle event mismatch between fidlf and model ['warning']
 %       -> 'ignore' (don't do anything)
 %       -> 'warning' (throw a warning)
 %       -> 'error' (throw an error)
@@ -79,9 +79,9 @@ function [model] = g_CreateTaskRegressors(fidlf, concf, model, ignore, handleEM)
 % ---> set variables
 
 if nargin < 4 || isempty(ignore),   ignore   = 'no';      end
-if nargin < 5 || isempty(handleEM), handleEM = 'warning'; end
-if ~any(strcmpi({'ignore','warning','error'},handleEM))
-    error('\nERROR: Option [%s] for handleEM argument is invalid! Valid options are ''ignore'', ''warning'' and ''error''.\n',handleEM);
+if nargin < 5 || isempty(check), check = 'warning'; end
+if ~any(strcmpi({'ignore','warning','error'},check))
+    error('\nERROR: Option [%s] for handleEM argument is invalid! Valid options are ''ignore'', ''warning'' and ''error''.\n',check);
 end
 
 % ---> get event data
@@ -112,7 +112,7 @@ for m = 1:nregressors
         model.regressor(m).code = find(ismember(events.events, model.regressor(m).event)) - 1;
     end
     if ~any(strcmp(events.events,model.regressor(m).name))
-        switch lower(handleEM)
+        switch lower(check)
             case 'warning'
                 warning('\ng_CreateTaskRegressors: Event [%s] from the model not found in the fidl file!\n', model.regressor(m).name);
             case 'error'

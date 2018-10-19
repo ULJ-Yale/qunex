@@ -87,7 +87,7 @@ classdef gmrimage
         %ifh = mri_ReadIFH(file)
         [files boldn sfolder] = mri_ReadConcFile(file)
         img   = mri_ReadConcImage(file, dtype, frames, verbose)
-        roi   = mri_ReadROI(roiinfo, roif2)
+        roi   = mri_ReadROI(roiinfo, roif2, checks)
         mri_SaveConcFile(file, files)
         mri_SaveNIfTImx(filename, hdr, data, meta, doswap, verbose)
         [hdr, data, meta, doswap] = mri_ReadNIfTImx(filename, verbose)

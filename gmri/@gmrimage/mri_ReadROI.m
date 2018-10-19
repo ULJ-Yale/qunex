@@ -1,13 +1,17 @@
-function [img] = mri_ReadROI(roiinfo, roi2)
+function [img] = mri_ReadROI(roiinfo, roi2, check)
 
-%function [img] = mri_ReadROI(roiinfo, roi2)
+%function [img] = mri_ReadROI(roiinfo, roi2, check)
 %
 %	Reads in an ROI file, if a second file is provided, it uses it to mask the first one.
 %
 %   INPUT
 %       roiinfo - A .names formated ROI information file.
 %       roi2    - A path to the second ROI image file matching ROI codes
-%                 specified in the third column of the .names file. []
+%                  specified in the third column of the .names file. []
+%       check   - how to handle unknown integer codes from the .names file ['warning']
+%         -> 'ignore' (don't do anything)
+%         -> 'warning' (throw a warning)
+%         -> 'error' (throw an error)
 %
 %   OUTPUT
 %       image   - A gmrimage object with ROI coded using integer values and
@@ -86,6 +90,7 @@ function [img] = mri_ReadROI(roiinfo, roi2)
 %   2015-12-08 Grega Repovs - added option for named region codes
 %   2017-03-04 Grega Repovs - updated documentatio
 %   2017-09-29 Grega Repovs - enabled relative paths to roi image
+%   2018-10-19 Aleksij Kraljic - added ROI checking functionality
 
 
 %   ---- Named region codes
@@ -124,7 +129,11 @@ rcodes.gray   = [rcodes.cgray rcodes.subc rcodes.cerc 702];
 
 %   ---- Go on ...
 
-if nargin < 2 || isempty(roi2), roi2 = 'none'; end
+if nargin < 2 || isempty(roi2),     roi2 = 'none';        end
+if nargin < 3 || isempty(check), check = 'warning'; end
+if ~any(strcmpi({'ignore','warning','error'},check))
+    error('\nERROR: Option [%s] for handleUI argument is invalid! Valid options are ''ignore'', ''warning'' and ''error''.\n',check);
+end
 
 % ----> Read the ROI info
 
@@ -159,19 +168,19 @@ end
 
 c = 0;
 while feof(rois) == 0
-	s = fgetl(rois);
+    s = fgetl(rois);
     if length(s) < 3 || s(1) == '#'
         continue
     end
-	c = c + 1;
-
+    c = c + 1;
+    
     relements   = regexp(s, '\|', 'split');
     if length(relements) == 3
         roinames{c}  = relements{1};
         roicodes1{c} = getCodes(relements{2}, rcodes);
         roicodes2{c} = getCodes(relements{3}, rcodes);
     else
-        fprintf('\n WARNING: Not all fields present in ROI definition: ''%s'' — skipping ROI.', s);
+        fprintf('\n WARNING: Not all fields present in ROI definition: ''%s'' ??? skipping ROI.', s);
     end
 end
 nroi = c;
@@ -213,26 +222,55 @@ else
     img = roi2.zeroframes(nroi);
 end
 
+% ---> Check whether ROI codes from .names file exist in images
 
+if isa(roi1, 'gmrimage')
+    for i=1:length(roicodes1)
+        for j=1:length(roicodes1{i})
+            if ~any(roi1.data == roicodes1{i}(j))
+                switch lower(check)
+                    case 'warning'
+                        warning('\nmri_ReadROI: Code [%d] does not exist in %s!\n',roicodes1{i}(j),roif1);
+                    case 'error'
+                        error('\nERROR: Code [%d] does not exist in %s!\n',roicodes1{i}(j),roif1);
+                end
+            end
+        end
+    end
+end
 
+if isa(roi2, 'gmrimage')
+    for i=1:length(roicodes2)
+        for j=1:length(roicodes2{i})
+            if ~any(roi2.data == roicodes2{i}(j))
+                switch lower(check)
+                    case 'warning'
+                        warning('\nmri_ReadROI: Code [%d] does not exist in %s!\n',roicodes2{i}(j),roif2);
+                    case 'error'
+                        error('\nERROR: Code [%d] does not exist in %s!\n',roicodes2{i}(j),roif2);
+                end
+            end
+        end
+    end
+end
 
 % ----> Process ROI
 
 for n = 1:nroi
-
+    
     if ((length(roicodes1{n}) == 0 || isempty(roi1)) & (~isempty(roi2)))
-	    rmask = roi2.mri_ROIMask(roicodes2{n});
-	elseif ((length(roicodes2{n}) == 0 || isempty(roi2)) & (~isempty(roi1)))
+        rmask = roi2.mri_ROIMask(roicodes2{n});
+    elseif ((length(roicodes2{n}) == 0 || isempty(roi2)) & (~isempty(roi1)))
         rmask = roi1.mri_ROIMask(roicodes1{n});
     elseif ((~isempty(roi2)) & (~isempty(roi1)));
-	    rmask = roi1.mri_ROIMask(roicodes1{n}) & roi2.mri_ROIMask(roicodes2{n});
-	else
-	    rmask = [];
-	end
-
+        rmask = roi1.mri_ROIMask(roicodes1{n}) & roi2.mri_ROIMask(roicodes2{n});
+    else
+        rmask = [];
+    end
+    
     img.data(rmask==1, n) = n;
     img.roi.nvox(n) = sum(rmask==1);
-
+    
 end
 
 % ----> Collapse to a single volume when there is no overlap between ROI
@@ -255,17 +293,17 @@ img.roi.roifile2  = roif2;
 
 function [codes] = getCodes(s, rcodes)
 
-    codes = [];
-    s = strtrim(regexp(s, ',', 'split'));
-    for n = 1:length(s)
-        if ~isempty(s{n})
-            if min(isstrprop(s{n}, 'digit'))
-                codes = [codes str2num(s{n})];
-            elseif isfield(rcodes, s{n})
-                codes = [codes rcodes.(s{n})];
-            else
-                fprintf('\n WARNING: Ignoring unknown region code name: ''%s''!', s{n});
-            end
+codes = [];
+s = strtrim(regexp(s, ',', 'split'));
+for n = 1:length(s)
+    if ~isempty(s{n})
+        if min(isstrprop(s{n}, 'digit'))
+            codes = [codes str2num(s{n})];
+        elseif isfield(rcodes, s{n})
+            codes = [codes rcodes.(s{n})];
+        else
+            fprintf('\n WARNING: Ignoring unknown region code name: ''%s''!', s{n});
         end
     end
+end
 
