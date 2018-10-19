@@ -1039,7 +1039,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             --longitudinal="YES"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'subjectDIR'        : os.path.join(options['subjectsfolder']+ '_FSLongitudinal', sinfo['id'], 'hcp', sinfo['id'] +  options['hcp_suffix'], 'T1w/'),
+                'subjectDIR'        : os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['id'] + options['hcp_suffix']),
                 'FreeSurferHome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
                 'FSLoadHPCModule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
                 'ExpertFile'        : options['hcp_expert_file'],
