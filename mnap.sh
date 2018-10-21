@@ -303,6 +303,56 @@ if [[ ! -f ${StudyFolder}/.mnapstudy ]]; then
     gmri createStudy "${StudyFolder}"
 fi
 
+
+# -- Check is part of the MNAP file hierarchy is missing
+#
+# --- analysis subfolder
+# /analysis/scripts
+# --- processing subfolders
+# /processing/logs/comlogs
+# /processing/logs/runlogs
+# /processing/lists
+# /processing/scripts
+# /processing/scenes/QC/T1w
+# /processing/scenes/QC/T2w
+# /processing/scenes/QC/myelin
+# /processing/scenes/QC/BOLD
+# /processing/scenes/QC/DWI
+# --- demographics subfolders
+# /info/demographics
+# /info/tasks
+# /info/stimuli
+# /info/BIDS
+# --- subjects subfolders
+# /subjects/inbox/MR
+# /subjects/inbox/EEG
+# /subjects/inbox/BIDS
+# /subjects/inbox/behavior
+# /subjects/inbox/concs
+# /subjects/inbox/events
+# /subjects/archive/MR
+# /subjects/archive/EEG
+# /subjects/archive/BIDS
+# /subjects/archive/behavior
+# /subjects/specs
+# /subjects/QC
+# 
+MNAPFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/tasks info/stimuli info/BIDS subjects/inbox/MR subjects/inbox/EEG subjects/inbox/BIDS subjects/inbox/behavior subjects/inbox/concs subjects/inbox/events subjects/archive/MR subjects/archive/EEG subjects/archive/BIDS subjects/archive/behavior subjects/specs subjects/QC"
+for MNAPFolder in ${MNAPFolders}; do
+    if [[ ! -d ${StudyFolder}/${MNAPFolder} ]]; then
+          echo "MNAP folder ${StudyFolder}/${MNAPFolder} not found. Generating now..."; echo ""
+          mkdir -p ${StudyFolder}/${MNAPFolder} &> /dev/null
+    fi
+done
+# -- Add check in case the subjects folder is distinct from the default name
+MNAPSubjectsFolders="${SubjectsFolder}/inbox/MR ${SubjectsFolder}/inbox/EEG ${SubjectsFolder}/inbox/BIDS ${SubjectsFolder}/inbox/behavior ${SubjectsFolder}/inbox/concs ${SubjectsFolder}/inbox/events ${SubjectsFolder}/archive/MR ${SubjectsFolder}/archive/EEG ${SubjectsFolder}/archive/BIDS ${SubjectsFolder}/archive/behavior ${SubjectsFolder}/specs ${SubjectsFolder}/QC"
+for MNAPSubjectsFolder in ${MNAPSubjectsFolders}; do
+    if [[ ! -d ${MNAPSubjectsFolder} ]]; then
+          echo "MNAP folder ${MNAPSubjectsFolder} not found. Generating now..."; echo ""
+          mkdir -p ${MNAPSubjectsFolder} &> /dev/null
+    fi
+done
+
 # -- If logfolder flag set then set it and set master log
 if [ -z "$LogFolder" ]; then
     MasterLogFolder="${StudyFolder}/processing/logs"
