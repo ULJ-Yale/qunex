@@ -368,6 +368,7 @@ Change Log
 * 0.23.06 [library] Updated NUMPY module loading version for HPC environment
 * 0.23.07 [connector] Updated QCPreproc to support --hcp_suffix flag for flexible specification of ~/hcp/ subfolders
 * 0.23.08 [connector] Added granularity to rsync commands for pulling data from XNAT within RunTurnkey
+* 0.23.09 [connector] Added MNAP folder check in the connectorExec function
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
