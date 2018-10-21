@@ -366,6 +366,7 @@ Change Log
 * 0.23.04 [niutilities] Added options parameter to dicom2niix and an option to add ImageType to sequence name
 * 0.23.05 [matlab] Added an option for handling ROI codes between .names file and group/subject masks in mri_ReadROI.
 * 0.23.06 [library] Updated NUMPY module loading version for HPC environment
+* 0.23.07 [connector] Updated QCPreproc to support --hcp_suffix flag for flexible specification of ~/hcp/ subfolders
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
