@@ -102,7 +102,7 @@ weho() {
 source $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
 $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
 
-MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 QCPreprocT1W QCPreprocT2W QCPreprocMyelin hcp4 hcp5 QCPreprocBOLD hcpd QCPreprocDWI hcpdLegacy QCPreprocDWILegacy eddyQC QCPreprocDWIeddyQC FSLDtifit QCPreprocDWIDTIFIT FSLBedpostxGPU QCPreprocDWIProcess QCPreprocDWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC"
+MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 QCPreprocT1W QCPreprocT2W QCPreprocMyelin hcp4 hcp5 QCPreprocBOLD hcpd QCPreprocDWI hcpdLegacy QCPreprocDWILegacy eddyQC QCPreprocDWIeddyQC FSLDtifit QCPreprocDWIDTIFIT FSLBedpostxGPU QCPreprocDWIProcess QCPreprocDWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC QCPreprocBOLDfc"
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 
 # ------------------------------------------------------------------------------
@@ -611,19 +611,37 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp1|hcp2|hcp3|hcp4|hcp5|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin|QCPreprocBOLD|hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom)
+        hcp1|hcp2|hcp3|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        hcp4|hcp5|QCPreprocBOLD)
+            # --- rsync relevant dependencies if and hcp or QC step is starting point
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/' --include='BOLD*/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom)
+            # --- rsync relevant dependencies if and hcp or QC step is starting point
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        QCPreprocCustom)
+            # --- rsync relevant dependencies if and hcp or QC step is starting point
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         mapHCPData)
             # --- rsync relevant dependencies if and mapHCPData is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|BOLDParcellation|computeBOLDfcGBC|computeBOLDfcSeed)
+        createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|BOLDParcellation|computeBOLDfcGBC|computeBOLDfcSeed|QCPreprocBOLDfc)
             # --- rsync relevant dependencies if any BOLD fc step is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
@@ -1034,7 +1052,7 @@ fi
              BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
         fi
         for BOLDRUN in ${BOLDRUNS}; do
-            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
+            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
             QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             rename QCPreproc QCPreprocBOLD${BOLD} ${logdir}/comlogs/${QCPreprocComLog}
@@ -1564,6 +1582,21 @@ fi
             BOLDfcLogCheck
         done
    }
+   # -- QCPreprocBOLD FC (after GBC/FC/PCONN)
+    turnkey_QCPreprocBOLDfc() {
+        Modality="BOLD"
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} FC ... "; echo ""
+        if [ -z "${BOLDRUNS}" ]; then
+             BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+        fi
+        for BOLDRUN in ${BOLDRUNS}; do
+            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
+            QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            rename QCPreproc QCPreprocBOLDfc${BOLD} ${logdir}/comlogs/${QCPreprocComLog}
+            rename QCPreproc QCPreprocBOLDfc${BOLD} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
+        done
+    }
 #
 # --------------- BOLD FC Processing and analyses end ----------------------
 
