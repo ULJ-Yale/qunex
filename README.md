@@ -367,6 +367,7 @@ Change Log
 * 0.23.05 [matlab] Added an option for handling ROI codes between .names file and group/subject masks in mri_ReadROI.
 * 0.23.06 [library] Updated NUMPY module loading version for HPC environment
 * 0.23.07 [connector] Updated QCPreproc to support --hcp_suffix flag for flexible specification of ~/hcp/ subfolders
+* 0.23.08 [connector] Added granularity to rsync commands for pulling data from XNAT within RunTurnkey
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
