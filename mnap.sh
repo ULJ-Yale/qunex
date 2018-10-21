@@ -1735,7 +1735,9 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --boldfc='${BOLDfc}' \
 --boldfcinput='${BOLDfcInput}' \
 --boldfcpath='${BOLDfcPath}' \
---suffix='${Suffix}'"
+--suffix='${Suffix}' \
+--hcp_suffix='${HCPSuffix}'"
+
 # -- Connector execute function
 connectorExec
 }
@@ -2248,6 +2250,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     Modality=`opts_GetOpt "${setflag}modality" $@`
     QCPreprocCustom=`opts_GetOpt "${setflag}customqc" $@`
     OmitDefaults=`opts_GetOpt "${setflag}omitdefaults" $@`
+    HCPSuffix=`opts_GetOpt "${setflag}hcp_suffix" $@`
     DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
     DWIData=`opts_GetOpt "${setflag}dwidata" $@`
     DtiFitQC=`opts_GetOpt "${setflag}dtifitqc" $@`
@@ -2446,10 +2449,10 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
     # -- Check all the user-defined parameters:
     TimeStampQCPreproc=`date +%Y-%m-%d-%H-%M-%S`
     if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-    if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing."; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing."; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing."; exit 1; fi
+    if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing."; exit 1; fi
     if [ -z "$QCPreprocCustom" ]; then QCPreprocCustom="no"; fi
     if [ "$QCPreprocCustom" == "yes" ]; then scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"; fi
     if [ -z "$OmitDefaults" ]; then OmitDefaults="no"; fi
@@ -2531,8 +2534,11 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Subject Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
+    echo "   QC Modality: ${Modality}"
+    echo "   QC Output Path: ${OutPath}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Custom QC requested: ${QCPreprocCustom}"
+    echo "   HCP folder suffix: ${HCPSuffix}"
     if [ "$QCPreprocCustom" == "yes" ]; then
         echo "   Custom QC modalities: ${Modality}"
     fi
@@ -2544,8 +2550,6 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
         fi
     fi
     echo "   Omit default QC: ${OmitDefaults}"
-    echo "   QC Modality: ${Modality}"
-    echo "   QC Output Path: ${OutPath}"
     echo "   QC Scene Template Folder: ${scenetemplatefolder}"
     echo "   QC User-defined Scene: ${UserSceneFile}"
     echo "   Overwrite prior run: ${Overwrite}"

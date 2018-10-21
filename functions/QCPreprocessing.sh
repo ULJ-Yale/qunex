@@ -103,8 +103,10 @@ usage() {
      echo ""
      echo "-- OPTIONAL PARMETERS:"
      echo "" 
-     echo "--overwrite=<clean_prior_run>                                    Delete prior QC run"
-     echo "--scenetemplatefolder=<path_for_the_template_folder>                  Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/scenes/qc)"
+     echo "--overwrite=<clean_prior_run>                                    Delete prior QC run: yes/no [Default: no]"
+     echo "--hcp_suffix=<specify_hcp_suffix_folder_name>                    Allows user to specify subject id suffix if running HCP preprocessing variants []"
+     echo "                                                                  e.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' would be specified as --hcp_suffix='run2' "
+     echo "--scenetemplatefolder=<path_for_the_template_folder>             Specify the absolute path name of the template folder (default: $TOOLS/${MNAPREPO}/library/data/scenes/qc)"
      echo "                                                                 Note: relevant scene template data has to be in the same folder as the template scenes"
      echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
      echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
@@ -287,6 +289,7 @@ unset Suffix # --suffix
 unset SceneZip # --scenezip
 unset QCPreprocCustom # --processcustom
 unset OmitDefaults # --omitdefault
+unset HCPSuffix # --hcp_suffix
 
 runcmd=""
 
@@ -301,6 +304,7 @@ UserSceneFile=`opts_GetOpt "--userscenefile" $@`
 UserScenePath=`opts_GetOpt "--userscenepath" $@`
 QCPreprocCustom=`opts_GetOpt "--customqc" $@`
 OmitDefaults=`opts_GetOpt "--omitdefaults" $@`
+HCPSuffix=`opts_GetOpt "--hcp_suffix" $@`
 
 # -- Parse DWI arguments
 DWIPath=`opts_GetOpt "--dwipath" $@`
@@ -424,6 +428,10 @@ if [ -z ${SceneZip} ]; then
     echo "Generation of scene zip file not explicitly provided. Using defaults: ${SceneZip}"; echo ""
 fi
 
+if [ -z "$HCPSuffix" ]; then 
+    echo "hcp_suffix flag not explicitly provided. Using defaults: ${HCPSuffix}"; echo ""
+fi
+
 # -- DWI modality-specific settings:
 if [ "$Modality" = "DWI" ]; then
     if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; echo ""; fi
@@ -481,6 +489,7 @@ echo "  Subjects: ${CASES}"
 echo "  QC Modality: ${Modality}"
 echo "  QC Output Path: ${OutPath}"
 echo "  Custom QC requested: ${QCPreprocCustom}"
+echo "  HCP suffix: ${HCPSuffix}"
 if [ "$QCPreprocCustom" == "yes" ]; then
     echo "   Custom QC modalities: ${Modality}"
 fi
@@ -537,6 +546,12 @@ main() {
 get_options "$@"
 
 for CASE in ${CASES}; do
+
+if [ ! -z "$HCPSuffix" ]; then 
+    SetHCPSuffix="-${HCPSuffix}"
+    geho " ===> HCP suffix specified ${HCPSuffix}"; echo ""
+    geho "      Setting hcp folder to: ${StudyFolder}/subjects/${CASE}/hcp/${CASE}${SetHCPSuffix}"; echo ""
+fi
 
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then Modality="BOLD"; fi
     if [ "$Modality" == "DWI" ] || [ "$Modality" == "dwi" ]; then Modality="DWI"; fi
@@ -843,9 +858,9 @@ for CASE in ${CASES}; do
             TSNRReportBOLD="${OutPath}/${CASE}_${BOLD}_TSNR_Report_${TimeStamp}.txt"
             # -- Check completion
             if [[ ${Overwrite} == "yes" ]]; then
-                 rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt &> /dev/null
-                 rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii &> /dev/null
-                 rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii &> /dev/null
+                 rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt &> /dev/null
+                 rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii &> /dev/null
+                 rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii &> /dev/null
                  rm -f ${OutPath}/${CASE}_${BOLD}_TSNR_Report_*
             fi
             if [[ ${Overwrite} == "no" ]]; then 
@@ -858,31 +873,31 @@ for CASE in ${CASES}; do
                 fi
             fi
             # -- Reduce dtseries
-            wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii TSNR \
-            ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii -exclude-outliers 4 4
+            wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii TSNR \
+            ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii -exclude-outliers 4 4
             # -- Compute SNR
-            TSNR=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
+            TSNR=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii -reduce MEAN`
             # -- Record values 
-            TSNRLog="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
+            TSNRLog="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_TSNR.dscalar.nii: ${TSNR}"
             # -- Get values for plotting GS chart & Compute the GS scalar series file --> TR
-            TR=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
+            TR=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
             # -- Regenerate outputs
-            wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii MEAN ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
-            wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt
+            wb_command -cifti-reduce ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii MEAN ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -direction COLUMN
+            wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.dtseries.nii -reduce MEAN >> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt
             # -- Check skipped frames
             if [ ${SkipFrames} > 0 ]; then 
-                rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt &> /dev/null
-                tail -n +${SkipFrames} ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt >> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt
-                TR=`cat ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt | wc -l` 
-                wb_command -cifti-create-scalar-series ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
+                rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt &> /dev/null
+                tail -n +${SkipFrames} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt >> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt
+                TR=`cat ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt | wc -l` 
+                wb_command -cifti-create-scalar-series ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS_omit_initial_${SkipFrames}_TRs.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
                 xmax="$TR"
             else
-                wb_command -cifti-create-scalar-series ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
-                xmax=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
+                wb_command -cifti-create-scalar-series ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
+                xmax=`fslval ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
             fi
             # -- Get mix/max stats
-            ymax=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`
-            ymin=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
+            ymax=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`
+            ymin=`wb_command -cifti-stats ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
             printf "${TSNRLog}\n" >> ${TSNRReport}
             printf "${TSNRLog}\n" >> ${TSNRReportBOLD}
             completionCheck
@@ -924,21 +939,21 @@ for CASE in ${CASES}; do
             # -- Generate Scene Zip File if set to YES
             if [ "$SceneZip" == "yes" ]; then
                 geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
-                geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+                geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
                 echo ""
                 geho "--- The zip file will be saved to: "
                 geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
                 echo ""
-                RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
+                RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
                 ComRunBoldfc8="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip &> /dev/null "
-                ComRunBoldfc9="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
-                ComRunBoldfc10="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-                ComRunBoldfc11="cp ${BOLDfcPath}/${BOLDfcInput} ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc"
-                ComRunBoldfc12="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}"
-                ComRunBoldfc13="sed -i -e 's|$BOLDfcPath|./qc/|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}" 
-                ComRunBoldfc14="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-                ComRunBoldfc15="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}"
-                ComRunBoldfc16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+                ComRunBoldfc9="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
+                ComRunBoldfc10="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
+                ComRunBoldfc11="cp ${BOLDfcPath}/${BOLDfcInput} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc"
+                ComRunBoldfc12="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}"
+                ComRunBoldfc13="sed -i -e 's|$BOLDfcPath|./qc/|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}" 
+                ComRunBoldfc14="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+                ComRunBoldfc15="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}"
+                ComRunBoldfc16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
             fi
             # -- Combine all the calls into a single command
             if [ "$SceneZip" == "yes" ]; then
@@ -981,19 +996,19 @@ for CASE in ${CASES}; do
             # -- Generate Scene Zip File if set to YES
             if [ "$SceneZip" == "yes" ]; then
                 geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped with the following base folder:" 
-                geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+                geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
                 echo ""
                 geho "--- The zip file will be saved to: "
                 geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
                 echo ""
-                RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-                ComRunBold10="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+                RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+                ComRunBold10="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
                 ComRunBold11="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip &> /dev/null "
-                ComRunBold12="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}" 
-                ComRunBold13="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-                ComRunBold14="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}"
-                ComRunBold15="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-                ComRunBold16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+                ComRunBold12="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}" 
+                ComRunBold13="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+                ComRunBold14="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}"
+                ComRunBold15="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
+                ComRunBold16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
             fi
             # -- Combine all the calls into a single command
             if [ "$SceneZip" == "yes" ]; then
@@ -1048,8 +1063,8 @@ for CASE in ${CASES}; do
                 else
                     # -- Check if BOLD folder with the given number contains additional prefix info and return an exit code if yes
                     echo ""
-                    NoBOLDDirPreffix=`ls -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/*${BOLD}`
-                    NoBOLDPreffix=`ls -d ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/*${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
+                    NoBOLDDirPreffix=`ls -d ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/*${BOLD}`
+                    NoBOLDPreffix=`ls -d ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/*${BOLD} | sed 's:/*$::' | sed 's:.*/::'`
                     if [[ ! -z ${NoBOLDDirPreffix} ]]; then
                         reho " --- A directory with the BOLD number is found but containing a prefix, yet no prefix was specified: "
                         reho "   --> ${NoBOLDDirPreffix}"
@@ -1062,10 +1077,10 @@ for CASE in ${CASES}; do
                     fi
                 fi
                 # -- Check if BOLD exists and skip if not it does not
-                if [[ ! -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii ]]; then
+                if [[ ! -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii ]]; then
                     echo ""
                     reho "--- BOLD data specified for BOLD ${BOLD} not found: "
-                    reho "     --> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii "
+                    reho "     --> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/Results/${BOLD}/${BOLD}${BOLDSuffix}.dtseries.nii "
                     echo ""
                     reho "--- Check presence of your inputs for ${CASE} and BOLD ${BOLD} and re-run! Proceeding to next BOLD run."
                     echo ""
@@ -1177,10 +1192,10 @@ for CASE in ${CASES}; do
         # -- Perform checks if modality is T1w
         if [ "$Modality" == "T1w" ]; then
             # -- Check if Preprocessed T1w files are present
-            if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/T1w_restore.nii.gz ]; then
+            if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/T1w_restore.nii.gz ]; then
                 echo ""
                 reho "--- Preprocessed T1w data not found: "
-                reho "    --> ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}.nii.gz "
+                reho "    --> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}.nii.gz "
                 echo ""
                 reho "Check presence of your T1w inputs and re-run!"
                 CompletionCheck="fail"
@@ -1188,7 +1203,7 @@ for CASE in ${CASES}; do
                 return 1
             else
                 echo ""
-                geho "--- T1w inputs found: ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/T1w_restore.nii.gz"
+                geho "--- T1w inputs found: ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/T1w_restore.nii.gz"
                 echo ""
             fi
         fi
@@ -1212,10 +1227,10 @@ for CASE in ${CASES}; do
                 geho "--- T2w mapping found: ${SubjectsFolder}/${CASE}/subject_hcp.txt. Checking for T2w data next..."
                 echo ""
                 # -- If subject_hcp.txt mapping file present check if Preprocessed T2w files are present
-                if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/T2w_restore.nii.gz ]; then
+                if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/T2w_restore.nii.gz ]; then
                     echo ""
                     reho "--- Preprocessed T2w data not found: "
-                    reho "    --> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/T2w_restore.nii.gz "
+                    reho "    --> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/T2w_restore.nii.gz "
                     echo ""
                     reho "Check presence of your T2w inputs and re-run!"
                     CompletionCheck="fail"
@@ -1223,7 +1238,7 @@ for CASE in ${CASES}; do
                     return 1
                 else
                     echo ""
-                    geho "--- T2w inputs found: ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/T2w_restore.nii.gz"
+                    geho "--- T2w inputs found: ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/T2w_restore.nii.gz"
                     echo ""
                 fi
             fi
@@ -1236,10 +1251,10 @@ for CASE in ${CASES}; do
         # -- Perform checks if modality is Myelin
         if [ "$Modality" == "Myelin" ]; then
             # -- Check if Preprocessed Myelin files are present
-            if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/${CASE}.L.SmoothedMyelinMap.164k_fs_LR.func.gii ] || [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/${CASE}.R.SmoothedMyelinMap.164k_fs_LR.func.gii ]; then
+            if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/${CASE}.L.SmoothedMyelinMap.164k_fs_LR.func.gii ] || [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/${CASE}.R.SmoothedMyelinMap.164k_fs_LR.func.gii ]; then
                 echo ""
                 reho "--- Preprocessed Smoothed Myelin data not found: "
-                reho "    --> ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/${CASE}.*.SmoothedMyelinMap.164k_fs_LR.func.gii  "
+                reho "    --> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/${CASE}.*.SmoothedMyelinMap.164k_fs_LR.func.gii  "
                 echo ""
                 reho "---- Check presence of your Myelin inputs and re-run!"
                 CompletionCheck="fail"
@@ -1247,8 +1262,8 @@ for CASE in ${CASES}; do
                 return 1
             else
                 echo ""
-                geho "--- Myelin L hemisphere input found: ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/${CASE}.L.SmoothedMyelinMap.164k_fs_LR.func.gii "
-                geho "--- Myelin R hemisphere input found: ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/${CASE}.R.SmoothedMyelinMap.164k_fs_LR.func.gii "
+                geho "--- Myelin L hemisphere input found: ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/${CASE}.L.SmoothedMyelinMap.164k_fs_LR.func.gii "
+                geho "--- Myelin R hemisphere input found: ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/MNINonLinear/${CASE}.R.SmoothedMyelinMap.164k_fs_LR.func.gii "
                 echo ""
             fi
         fi
@@ -1263,30 +1278,30 @@ for CASE in ${CASES}; do
             # -- Check if legacy setting is YES
             if [ "$DWILegacy" == "yes" ]; then
                 DWIName="${CASE}_${DWIData}"
-                NoDiffBrainMask=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/*T1w_brain_mask_downsampled2diff*` &> /dev/null
+                NoDiffBrainMask=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/*T1w_brain_mask_downsampled2diff*` &> /dev/null
             else
                 DWIName="${DWIData}"
-                NoDiffBrainMask="${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/nodif_brain_mask.nii.gz"
+                NoDiffBrainMask="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/nodif_brain_mask.nii.gz"
             fi
             # -- Check if Preprocessed DWI files are present
-            if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}.nii.gz ]; then
+            if [ -z ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}.nii.gz ]; then
                 echo ""
                 reho "--- Preprocessed DWI data not found: "
-                reho "    --> ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}.nii.gz "
+                reho "    --> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}.nii.gz "
                 echo ""
                 reho "--- Check presence of your DWI inputs and re-run!"
                 echo ""
                 exit 1
             else
                 echo ""
-                geho "--- DWI inputs found: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}.nii.gz "
+                geho "--- DWI inputs found: ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}.nii.gz "
                 echo ""
                 # -- Split the data and setup 1st and 2nd volumes for visualization
-                Com4a="fslsplit ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split -t"
-                Com4b="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split0000.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_frame1_brain"
-                Com4c="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split0010.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/data_frame10_brain"
+                Com4a="fslsplit ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}.nii.gz ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}_split -t"
+                Com4b="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}_split0000.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/data_frame1_brain"
+                Com4c="fslmaths ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}_split0010.nii.gz -mul ${NoDiffBrainMask} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/data_frame10_brain"
                 # -- Clean split volumes
-                Com4d="rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/${DWIName}_split* &> /dev/null"
+                Com4d="rm -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/${DWIName}_split* &> /dev/null"
                 # -- Setup naming conventions for DWI before generating scene
                 Com4e="sed -i -e 's|DUMMYDWIPATH|$DWIPath|g' ${OutPath}/${WorkingSceneFile}"
                 Com4="$Com4; $Com4a; $Com4b; $Com4c; $Com4d; $Com4e"
@@ -1305,14 +1320,14 @@ for CASE in ${CASES}; do
                     echo ""
                     # -- Check if dtifit is done
                     minimumfilesize=100000
-                    if [ -a ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/dti_FA.nii.gz ]; then 
-                        actualfilesize=$(wc -c <${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/dti_FA.nii.gz)
+                    if [ -a ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/dti_FA.nii.gz ]; then 
+                        actualfilesize=$(wc -c <${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/dti_FA.nii.gz)
                     else
                         actualfilesize="0"
                     fi
                     if [ $(echo "$actualfilesize" | bc) -gt $(echo "$minimumfilesize" | bc) ]; then
                         echo ""
-                        geho "    --> FSL dtifit results found here: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/"
+                        geho "    --> FSL dtifit results found here: ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/"
                         echo ""
                         # -- Replace DWI scene specifications with the dtifit results
                         Com4g1="cp ${OutPath}/${WorkingSceneFile} ${OutPath}/${WorkingDTISceneFile}"
@@ -1326,7 +1341,7 @@ for CASE in ${CASES}; do
                         Com4="$Com4; $Com4g"
                     else
                         reho "    --> FSL dtifit not found for $CASE. Skipping dtifit QC request for upcoming QC calls. Check dtifit results: "
-                        reho "        ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${DWIPath}/ "
+                        reho "        ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/${DWIPath}/ "
                     fi
                 fi
                 # -- If bedpostx qc is selected then generate bedpostx scene
@@ -1340,17 +1355,17 @@ for CASE in ${CASES}; do
                     geho "--- QC for FSL BedpostX requested. Checking if BedpostX was completed..."
                     echo ""
                     # -- Check if the file even exists
-                    if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz ]; then
+                    if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz ]; then
                         # -- Set file sizes to check for completion
                         minimumfilesize=20000000
-                        actualfilesize=`wc -c < ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1          
-                        filecount=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
+                        actualfilesize=`wc -c < ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1          
+                        filecount=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
                         # -- Then check if run is complete based on file count
                         if [ "$filecount" == 9 ]; then
                             # -- Then check if run is complete based on file size
                             if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
                                 echo ""
-                                geho "    --> BedpostX outputs found and completed here: ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/"
+                                geho "    --> BedpostX outputs found and completed here: ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/Diffusion.bedpostX/"
                                 echo ""
                                 # -- Replace DWI scene specifications with the dtifit results
                                 Com4h1="cp ${OutPath}/${WorkingSceneFile} ${OutPath}/${WorkingBedpostXSceneFile}"
@@ -1367,7 +1382,7 @@ for CASE in ${CASES}; do
                     else 
                         echo ""
                         reho "    --> FSLBedpostX outputs missing or incomplete for $CASE. Skipping BedpostX QC request for upcoming QC calls. Check BedpostX results: "
-                        reho "         ${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX/ "
+                        reho "         ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/T1w/Diffusion.bedpostX/ "
                         echo ""
                         BedpostXQC="no"
                     fi
@@ -1378,21 +1393,21 @@ for CASE in ${CASES}; do
                     geho "--- QC Stats for FSL EDDY requested. Checking if EDDY QC was completed..."
                     echo ""
                     # -- Then check if eddy qc is completed
-                    if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
+                    if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
                         geho "    --> EDDY QC outputs found and completed here: "; echo ""
                             # -- Regenerate the qc_mot_abs if missing
-                            if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt ]; then
-                                echo "        ${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt"
+                            if [ -f ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt ]; then
+                                echo "        ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt"
                             else
-                                echo "        ${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt not found. Regenerating... "
-                                more ${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt
+                                echo "        ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt not found. Regenerating... "
+                                more ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt
                             fi
                         echo ""
-                        echo "        ${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"
+                        echo "        ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"
                         echo ""
                         # -- Run links and printing to reports
-                        ln ${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASE}.${Modality}.eddy.QC.pdf
-                        printf "${SubjectsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt\n" >> ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampQCPreproc}.txt
+                        ln ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASE}.${Modality}.eddy.QC.pdf
+                        printf "${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/Diffusion/eddy/eddy_unwarped_images.qc/${CASE}_qc_mot_abs.txt\n" >> ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampQCPreproc}.txt
                         
                         geho "--- Completed EDDY QC stats for ${CASE}"
                         geho "    Final report can be found here: ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampQCPreproc}.txt"; echo ""
@@ -1447,57 +1462,57 @@ for CASE in ${CASES}; do
         if [ "$SceneZip" == "yes" ]; then
             echo ""
             geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
-            geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+            geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
             echo ""
             geho "--- The zip file will be saved to: "
             geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
             echo ""
-            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-            Com10a="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+            Com10a="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
             Com10b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
-            Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}" 
-            Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-            Com10e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}"
-            Com10f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-            Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+            Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}" 
+            Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+            Com10e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}"
+            Com10f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
+            Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
             Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
         fi
         # -- Generate Zip files for dtifit scenes if requested
         if [ "$DtiFitQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
             echo ""
             geho "--- Scene zip set to: $SceneZip. DtiFitQC set to: $DtiFitQC. Relevant scene files will be zipped using the following base folder:" 
-            geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+            geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
             echo ""
             geho "--- The zip file will be saved to: "
             geho "    ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip"
             echo ""
-            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-            Com11a="cp ${OutPath}/${WorkingDTISceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+            Com11a="cp ${OutPath}/${WorkingDTISceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
             Com11b="rm ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip &> /dev/null"
-            Com11c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingDTISceneFile}" 
-            Com11d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingDTISceneFile} ${WorkingDTISceneFile}.${TimeStamp} ${WorkingDTISceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-            Com11e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingDTISceneFile}"
-            Com11f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-            Com11g="cp ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+            Com11c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingDTISceneFile}" 
+            Com11d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingDTISceneFile} ${WorkingDTISceneFile}.${TimeStamp} ${WorkingDTISceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+            Com11e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingDTISceneFile}"
+            Com11f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
+            Com11g="cp ${OutPath}/${WorkingDTISceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
             Com11="$Com11a; $Com11b; $Com11c; $Com11d; $Com11e; $Com11f; $Com11g"
         fi
         # -- Generate Zip files for bedpostx scenes if requested
         if [ "$BedpostXQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then
             echo ""
             geho "--- Scene zip set to: $SceneZip. BedpostXQC set to: $BedpostXQC. Relevant scene files will be zipped using the following base folder:" 
-            geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+            geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
             echo ""
             geho "--- The zip file will be saved to: "
             geho "    ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip"
             echo ""
-            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-            Com12a="cp ${OutPath}/${WorkingBedpostXSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+            Com12a="cp ${OutPath}/${WorkingBedpostXSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
             Com12b="rm ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip &> /dev/null"
-            Com12c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingBedpostXSceneFile}" 
-            Com12d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingBedpostXSceneFile} ${WorkingBedpostXSceneFile}.${TimeStamp} ${WorkingBedpostXSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-            Com12e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingBedpostXSceneFile}"
-            Com12f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-            Com12g="cp ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+            Com12c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingBedpostXSceneFile}" 
+            Com12d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingBedpostXSceneFile} ${WorkingBedpostXSceneFile}.${TimeStamp} ${WorkingBedpostXSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+            Com12e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingBedpostXSceneFile}"
+            Com12f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
+            Com12g="cp ${OutPath}/${WorkingBedpostXSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
             Com12="$Com12a; $Com12b; $Com12c; $Com12d; $Com12e; $Com12f; $Com12g"
         fi
         # -- Combine all the calls into a single command based on various specifications
@@ -1559,19 +1574,19 @@ for CASE in ${CASES}; do
             if [ "$SceneZip" == "yes" ]; then
                 echo ""
                 geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
-                geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+                geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
                 echo ""
                 geho "--- The zip file will be saved to: "
                 geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
                 echo ""
-                RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-                QCPreprocCustom10="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+                RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+                QCPreprocCustom10="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
                 QCPreprocCustom11="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
-                QCPreprocCustom12="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}" 
-                QCPreprocCustom13="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-                QCPreprocCustom14="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}"
-                QCPreprocCustom15="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-                QCPreprocCustom16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+                QCPreprocCustom12="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}" 
+                QCPreprocCustom13="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+                QCPreprocCustom14="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}"
+                QCPreprocCustom15="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
+                QCPreprocCustom16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
                 CustomRunQUEUE="$QCPreprocCustom1; $QCPreprocCustom2; $QCPreprocCustom3; $QCPreprocCustom4; $QCPreprocCustom5; $ComRunBoldPngNameGSMap; $QCPreprocCustom6; $QCPreprocCustom7; $QCPreprocCustom8; $QCPreprocCustom9; $QCPreprocCustom10; $QCPreprocCustom11; $QCPreprocCustom12; $QCPreprocCustom13; $QCPreprocCustom14; $QCPreprocCustom15; $QCPreprocCustom16"
             fi
             # -- Clean up prior conflicting scripts, generate script and set permissions
@@ -1606,19 +1621,19 @@ for CASE in ${CASES}; do
         UserRunQUEUE="$QCPreprocUser1; $QCPreprocUser2; $QCPreprocUser3; $QCPreprocUser4; $QCPreprocUser5; $ComRunBoldPngNameGSMap; $QCPreprocUser6; $QCPreprocUser7; $QCPreprocUser8; $QCPreprocUser9"
         if [ "$SceneZip" == "yes" ]; then
             geho "--- Scene zip set to: $SceneZip. Relevant scene files will be zipped using the following base folder:" 
-            geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}"
+            geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
             echo ""
             geho "--- The zip file will be saved to: "
             geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
             echo ""
-            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}"
-            QCPreprocUser10="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}/"
+            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+            QCPreprocUser10="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
             QCPreprocUser11="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
-            QCPreprocUser12="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}" 
-            QCPreprocUser13="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}"
-            QCPreprocUser14="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/${WorkingSceneFile}"
-            QCPreprocUser15="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc &> /dev/null"
-            QCPreprocUser16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}/qc/"
+            QCPreprocUser12="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}" 
+            QCPreprocUser13="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+            QCPreprocUser14="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}"
+            QCPreprocUser15="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
+            QCPreprocUser16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
             UserRunQUEUE="$QCPreprocCustom1; $QCPreprocCustom2; $QCPreprocCustom3; $QCPreprocCustom4; $QCPreprocCustom5; $ComRunBoldPngNameGSMap; $QCPreprocCustom6; $QCPreprocCustom7; $QCPreprocCustom8; $QCPreprocCustom9; $QCPreprocCustom10; $QCPreprocCustom11; $QCPreprocCustom12; $QCPreprocCustom13; $QCPreprocCustom14; $QCPreprocCustom15; $QCPreprocCustom16"
         fi
         # -- Clean up prior conflicting scripts, generate script and set permissions
