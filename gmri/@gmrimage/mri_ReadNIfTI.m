@@ -234,6 +234,7 @@ end
 
 ext = double(typecast(fmeta(1:4), 'int8'));
 mi  = 0;
+try
 if ext(1) > 0
     pt = 4;
     while length(fmeta) >= pt + 8
@@ -248,6 +249,11 @@ if ext(1) > 0
         end
         pt = pt + img.meta(mi).size;
     end
+end
+catch
+    if verbose, fprintf('---> WARNING: Could not read metadata!\n'); end
+    img.meta = [];
+    mi = 0;
 end
 
 
