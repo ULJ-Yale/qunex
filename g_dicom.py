@@ -957,11 +957,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     optionstr = options
     options = {'addImageType': 'no'}
 
-    try:
-        for k, v in [e.split(':') for e in optionstr.split('|')]:
-            options[k.strip()] = v.strip()
-    except:
-        raise ge.CommandError('dicom2niix', "Misspecified options string", "The options string is not valid! [%s]" % (optionstr), "Please check command instructions!")
+    if optionstr:
+        try:
+            for k, v in [e.split(':') for e in optionstr.split('|')]:
+                options[k.strip()] = v.strip()
+        except:
+            raise ge.CommandError('dicom2niix', "Misspecified options string", "The options string is not valid! [%s]" % (optionstr), "Please check command instructions!")
 
 
     # check tool setting
