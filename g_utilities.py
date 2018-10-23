@@ -332,11 +332,18 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
 
     # -- get list of subject folders
 
+    missing = 0
+
     if subjects is not None:
         subjects, gopts = gc.getSubjectList(subjects, sfilter=sfilter, verbose=False)
         files = []
         for subject in subjects:
-            files += glob.glob(os.path.join(subjectsfolder, subject['id'], sfile))
+            nfiles = glob.glob(os.path.join(subjectsfolder, subject['id'], sfile))
+            if nfiles:
+                files += nfiles
+            else:
+                print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, subject['id'], os.path.join(subjectsfolder, subject['id'], sfile))
+                missing += 1
     else:
         files = glob.glob(os.path.join(os.path.abspath(subjectsfolder), '*', sfile))
 
@@ -357,6 +364,9 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
     # --- close file
 
     jfile.close()
+
+    if missing:
+        raise ge.CommandFailed("createBatch", "Not all subjects specified added to the batch file!", "%s was missing for %d subject(s)!" % (sfile, missing), "Please check your data!")
 
 
 
