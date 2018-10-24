@@ -370,6 +370,7 @@ Change Log
 * 0.23.08 [connector] Added granularity to rsync commands for pulling data from XNAT within RunTurnkey
 * 0.23.09 [connector] Added MNAP folder check in the connectorExec function
 * 0.23.10 [matlab niutilities] Added additional error checking, made nifti reading more robust, and resolved options string processing bug
+* 0.23.11 [niutilities] Added error reporting to readConc and generic function for forming error strings
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
