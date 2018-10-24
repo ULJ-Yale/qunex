@@ -20,7 +20,7 @@ import subprocess
 
 if "MNAPMCOMMAND" not in os.environ:
     print "WARNING: MNAPMCOMMAND environment variable not set. Matlab will be run by default!"
-    mcommand = "matlab -nojvm -nodisplay -nosplash -r"
+    mcommand = "matlab -nodisplay -nosplash -r"
 else:
     mcommand = os.environ['MNAPMCOMMAND']
 
@@ -150,5 +150,7 @@ def run(command, args):
 
     if ret:
         print "\n\nERROR: %s failed! Please check output / log!\n" % (command)
+    else:
+        print "\n\n===> Successful completion of task\n"
 
 

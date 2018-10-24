@@ -20,11 +20,6 @@ Changelog
 
 """
 
-import sys
-import time
-import getopt
-import subprocess
-import gp_core
 import g_core
 import gp_HCP
 import gp_workflow
@@ -35,6 +30,7 @@ import os
 import os.path
 from multiprocessing import Pool
 from datetime import datetime
+import niutilities.g_exceptions as ge
 
 
 # =======================================================================
@@ -72,12 +68,22 @@ def procResponse(r):
     procResponse(r)
     It processes the response returned from the utilities functions
     called. It splits it into the report string and status tuple. If
-    no status tupple is present, it adds an "Unknown" tupple.
+    no status tupple is present, it adds an "Unknown" tupple. If the 
+    third element is missing, it assumes it ran ok and sets it to
+    0.
     '''
     if type(r) is tuple:
-        return r
+        if len(r) == 2:
+            if len(r[1]) == 2:
+                return (r[0], (r[1][0], r[1][1], None))
+            elif len(r[1]) == 3:
+                return r
+            else:
+                return("Unknown", ("Unknown", "Unknown", None))
+        else:
+            return("Unknown", ("Unknown", "Unknown", None))
     else:
-        return (r, ("Unknown", "Unknown"))
+        return (r, ("Unknown", "Unknown", None))
 
 
 def torf(s):
@@ -156,6 +162,7 @@ arglist = [['# ---- Basic settings'],
            ['subjects',           'batch.txt',                                   str,    "The file with subject information."],
            ['subjectsfolder',     '',                                            os.path.abspath, 'The path to study subjects folder.'],
            ['logfolder',          '',                                            isNone, 'The path to log folder.'],
+           ['logtag',             '',                                            str,    'An optional additional tag to add to the log file after the command name.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
            ['nprocess',           '0',                                           int,    'How many subjects to process (0 - all).'],
@@ -175,6 +182,7 @@ arglist = [['# ---- Basic settings'],
            ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
            ['bold_preprocess',    'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
            ['boldname',           'bold',                                        str,    "the default name for the bold files"],
+           ['bold_prefix',        '',                                            str,    "an optional prefix to place in front of processing name extensions in the resulting files"],
            ['pignore',            '',                                            str,    "what to do with frames marked as bad"],
            ['event_file',         '',                                            str,    "the root name of the fidl event file for task regression"],
            ['event_string',       '' ,                                           str,    "string specifying what and how of task to regress out"],
@@ -193,7 +201,7 @@ arglist = [['# ---- Basic settings'],
 
            ['# ---- GLM related options'],
            ['glm_matrix',          'none',                                        str,    "Whether to save GLM regressor matrix in text (text), image (image) or both (both) formats, or not (none)."],
-           ['glm_residuals',       'save',                                        str,    "Whether to save GLM residuals (save) or not (forget)."],
+           ['glm_residuals',       'save',                                        str,    "Whether to save GLM residuals (save) or not (none)."],
            ['glm_name',            '',                                            str,    "Additional name to the residuals and coefficient file to distinguish between different posible models."],
 
            ['# ---- Movement thresholding and report options'],
@@ -207,7 +215,7 @@ arglist = [['# ---- Basic settings'],
            ['mov_post',            'udvarsme',                                    str,    "which column to use for generating post-scrubbing movement report or none"],
            ['mov_before',          '0',                                           int,    "how many frames preceeding bad frames to also exclude"],
            ['mov_after',           '0',                                           int,    "how many frames following bad frames to also exclude"],
-           ['mov_bad',             'udvarsme',                                    str,    "what scrub column to use to mark bad frames"],
+           ['mov_bad',             'udvarsme',                                    str,    "what scrub column to use to mark bad frames (one of mov, dvars, dvarsme, idvars, udvars, idvarsme, udvarsme--see documentation on motion scrubbing)"],
            ['mov_mreport',         'movement_report.txt',                         str,    "the name of the movement report file"],
            ['mov_preport',         'movement_report_post.txt',                    str,    "the name of the post scrub movement report file"],
            ['mov_sreport',         'movement_scrubbing_report.txt',               str,    "the name of the scrubbing report file"],
@@ -268,6 +276,7 @@ arglist = [['# ---- Basic settings'],
            ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file to use when mapping data from the HCP MNINonLinear/Results folder."],
            ['hcp_bold_sequencetype',  'single',                                   str,    "The type of the sequence used: multi(band) vs single(band)"],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use for bold working folders and results"],
+           ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default"],
            ['hcp_bold_echospacing',   '0.00035',                                  str,    "Echo Spacing or Dwelltime of fMRI image"],
            ['hcp_bold_correct',       'TOPUP',                                    str,    "BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE"],
            ['hcp_bold_ref',           'NONE',                                     str,    "Whether BOLD image Reference images should be recorded - NONE or USE"],
@@ -275,6 +284,9 @@ arglist = [['# ---- Basic settings'],
            ['hcp_expert_file',        '',                                         str,    "Name of the read-in expert options file for FreeSurfer"],
            ['hcp_control_points',     '',                                         str,    "Whether to run with manual control points"],
            ['hcp_wm_edits',           '',                                         str,    "Whether to run with manually edited WM mask file"],
+           ['hcp_autotopofix_off',    '',                                         str,    "YES to turn off the automatic topologic fix step in FS and compute WM surface deterministically from manual WM mask (empty)"],
+           ['hcp_fs_brainmask',       '',                                         str,    "Specify 'original' to keep the masked original brainimage; 'manual' to use the manually edited brainmask file; default 'fs'uses the brainmask generated by mri_watershed [fs]."],
+           ['hcp_fs_longitudinal',    '',                                         str,    "Is this FreeSurfer run to be based on longitudional data? YES or NO, [NO]"],
            ['hcp_bold_unwarpdir',     'y',                                        str,    "The direction of unwarping, can be specified separately for LR/RL : 'LR=x|RL=-x|x'"],
            ['hcp_bold_res',           '2',                                        str,    "Target image resolution 2mm recommended"],
            ['hcp_bold_gdcoeffs',      'NONE',                                     str,    "Gradient distorsion correction coefficients or NONE"],
@@ -369,10 +381,13 @@ calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,         
           ['hcp5',    'hcp_fMRISurface',             gp_HCP.hcpfMRISurface,                          "Run HCP fMRI Surface pipeline."],
           [],
           ['hcpd',    'hcp_Diffusion',               gp_HCP.hcpDiffusion,                            "Run HCP DWI pipeline."],
-          ['hcpdf',   'hcp_DTIFit',                  gp_HCP.hcpDTIFit,                               "Run FSL DTI fit."],
-          ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."],
+          # ['hcpdf',   'hcp_DTIFit',                  gp_HCP.hcpDTIFit,                               "Run FSL DTI fit."],
+          # ['hcpdb',   'hcp_Bedpostx',                gp_HCP.hcpBedpostx,                             "Run FSL Bedpostx GPU."],
           [],
           ['rsc',     'runShellScript',              gp_simple.runShellScript,                       "Runs the specified script."],
+          ]
+
+lalist = [['lfs',     'longitudinalFS',              gp_HCP.longitudinalFS,                          "Runs longitudinal FreeSurfer across sessions."]
           ]
 
 salist = [['cbl',     'createBoldList',              gp_simple.createBoldList,                       'createBoldList'],
@@ -391,11 +406,23 @@ for line in calist:
         pactions[line[0]] = line[2]
         pactions[line[1]] = line[2]
 
+lactions = {}
+for line in lalist:
+    if len(line) == 4:
+        lactions[line[0]] = line[2]
+        lactions[line[1]] = line[2]
+
+plactions = pactions.copy()
+plactions.update(lactions)
+
 sactions = {}
 for line in salist:
     if len(line) == 4:
         sactions[line[0]] = line[2]
         sactions[line[1]] = line[2]
+
+allactions = plactions.copy()
+allactions.update(sactions)
 
 flist = {}
 for line in flaglist:
@@ -416,7 +443,7 @@ def run(command, args):
     # --------------------------------------------------------------------------
     #                                                            Parsing options
 
-    options = {}
+    options = {'command_ran': command}
 
     # --- set up default options
 
@@ -435,6 +462,22 @@ def run(command, args):
 
     subjects, gpref = g_core.getSubjectList(options['subjects'], sfilter=options['filter'], subjid=options['subjid'], verbose=False)
 
+    # --- check if we are running across subjects rather than sessions
+
+    if command in lactions:
+        subjectList = []
+        subjectInfo = {}
+        for subject in subjects:
+            if 'subject' not in subject:
+                raise ge.CommandFailed(command, "Missing subject information", "%s batch file does not provide subject information for session id %s." % (options['subjects'], subject['id']), "Please check the batch file!", "Aborting processing!")
+            if subject['subject'] not in subjectList:
+                subjectList.append(subject['subject'])
+                subjectInfo[subject['subject']] = {'id': subject['subject'], 'sessions': []}
+            subjectInfo[subject['subject']]['sessions'].append(subject)
+        subjects = [subjectInfo[e] for e in subjectList]
+
+    # --- take parameters from batch file
+
     for (k, v) in gpref.iteritems():
         options[k] = v
 
@@ -450,7 +493,11 @@ def run(command, args):
 
     for line in arglist:
         if len(line) == 4:
-            options[line[0]] = line[2](options[line[0]])
+            try:
+                options[line[0]] = line[2](options[line[0]])
+            except:
+                raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
+
 
     # ---- Take care of mapping
 
@@ -491,7 +538,7 @@ def run(command, args):
     options['logfolder'] = logfolder
 
     # --------------------------------------------------------------------------
-    #                                                          start writing log
+    #                                                       start writing runlog
 
     for cfolder in [runlogfolder, comlogfolder]:
         if not os.path.exists(cfolder):
@@ -566,8 +613,8 @@ def run(command, args):
         result = []
         c = 0
         if cores == 1 or options['run'] == 'test':
-            if command in pactions:
-                todo = pactions[command]
+            if command in plactions:
+                todo = plactions[command]
                 for subject in subjects:
                     if len(subject['id']) > 1:
                         if options['run'] == 'test':
@@ -589,8 +636,8 @@ def run(command, args):
 
         else:
             c = 0
-            if command in pactions:
-                todo = pactions[command]
+            if command in plactions:
+                todo = plactions[command]
                 for subject in subjects:
                     if len(subject['id']) > 1:
                         print "Adding processing of subject %s to the pool at %s" % (subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -614,12 +661,28 @@ def run(command, args):
         for e in log:
             print >> f, e
 
-        print "\n\n===> Final report\n"
-        print >> f, "\n\n===> Final report\n"
-        for sid, status in stati:
+        print "\n\n===> Final report for command", options['command_ran']
+        print >> f, "\n\n===> Final report for command", options['command_ran']
+        failedTotal = 0
+
+        for sid, report, failed in stati:
             if "Unknown" not in sid:
-                print "... %s ---> %s" % (sid, status)
-                print >> f, "... %s ---> %s" % (sid, status)
+                print "... %s ---> %s" % (sid, report)
+                print >> f, "... %s ---> %s" % (sid, report)
+                if failed is None:
+                    failedTotal = None
+                else:
+                    if failedTotal is not None:
+                        failedTotal += failed
+        if failedTotal is None:
+            print "===> Success status not reported for some or all tasks"
+            print >> f, "===> Success status not reported for some or all tasks"
+        elif failedTotal > 0:
+            print "===> Not all tasks completed fully!"
+            print >> f, "===> Not all tasks completed fully!"
+        else:
+            print "===> Successful completion of all tasks"
+            print >> f, "===> Successful completion of all tasks"
 
         f.close()
 

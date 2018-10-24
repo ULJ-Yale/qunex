@@ -14,6 +14,7 @@ import datetime
 import shutil
 import niutilities.g_process as gp
 import niutilities.g_core as gc
+import niutilities.g_exceptions as ge
 import getpass
 import re
 
@@ -68,7 +69,16 @@ def createStudy(studyfolder=None):
     │   └── scripts
     ├── processing
     │   ├── logs
+    │   │   ├── comlogs
+    │   │   └── runlogs
     │   ├── lists
+    │   ├── scenes
+    │   │   └── QC
+    │   │       ├── T1w
+    │   │       ├── T2w
+    │   │       ├── myelin
+    │   │       ├── BOLD
+    │   │       └── DWI
     │   └── scripts
     ├── info
     │   ├── demographics
@@ -78,12 +88,14 @@ def createStudy(studyfolder=None):
         ├── inbox
         │   ├── MR
         │   ├── EEG
+        │   ├── BIDS
         │   ├── behavior
         │   ├── concs
         │   └── events
         ├── archive
         │   ├── MR
         │   ├── EEG
+        │   ├── BIDS
         │   └── behavior
         ├── specs
         └── QC
@@ -108,15 +120,22 @@ def createStudy(studyfolder=None):
              - Added creation of .mnapstudy file.
     2018-06-02 Grega Repovs
              - Changed templates to *_example.txt.
+    2018-07-24 Grega Repovs
+             - Expanded folders to include QC scenes
+    2018-09-17 Grega Repovs
+             - Added BIDS folders
     '''
 
-    if studyfolder is None:
-        raise ValueError("ERROR: studyfolder parameter has to be provided!")
+    print "Running createStudy\n==================="
 
-    folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'lists'], ['processing', 'scripts'],
+    if studyfolder is None:
+        raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
+
+    folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'logs', 'comlogs'], ['processing', 'logs', 'runlogs'], ['processing', 'lists'], ['processing', 'scripts'],
+               ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
                ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
-               ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
-               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'behavior'], ['subjects', 'specs'], ['subjects', 'QC']]
+               ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'BIDS'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
+               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'BIDS'], ['subjects', 'archive', 'behavior'], ['subjects', 'specs'], ['subjects', 'QC']]
 
     print "\nCreating study folder structure:"
     for folder in folders:
@@ -164,8 +183,6 @@ def createStudy(studyfolder=None):
         print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
         mark.close()
 
-    print "\nDone.\n"
-
 
 def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
     '''
@@ -189,9 +206,11 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
     - no:     abort creating the file
     - append: append subjects to the existing file
 
-    If overwrite is set to "append", the parameters will not be changed, however,
-    any subjects that are not yet present in the batch file will be appended at
-    the end of the batch file.
+    Note that if If a batch file already exists then parameter file will not be 
+    added to the header of the batch unless --overwrite is set to "yes". If 
+    --overwrite is set to "append", then the parameters will not be changed, 
+    however, any subjects that are not yet present in the batch file will be 
+    appended at the end of the batch file.
 
     The command will also look for a parameter file. If it exists, it will
     prepend its content at the beginning of the batch.txt file. If no paramfile
@@ -221,7 +240,11 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
              - Added the option to specify subjects to add explicitly.
     2018-07-16 Grega Repovš
              - Renamed to createBatch from compileBatch
+    2018-07-20 Grega Repovš
+             - Fixed adding paramfile and updated documentation
     '''
+
+    print "Running createBatch\n==================="
 
     if subjects in ['None', 'none', 'NONE']:
         subjects = None
@@ -235,8 +258,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
         tfile = os.path.join(os.path.dirname(os.path.abspath(subjectsfolder)), 'processing', 'batch.txt')
 
     if os.path.exists(tfile):
-        print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
         if overwrite == 'ask':
+            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
             s = raw_input("         Do you want to overwrite it (o), cancel command (c), or append to the file (a)? [o/c/a]: ")
             if s == 'o':
                 print "         Overwriting exisiting file."
@@ -245,15 +268,15 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
                 print "         Appending to exisiting file."
                 overwrite = 'append'
             else:
-                print "         Aborting."
-                return
+                raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(tfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
         elif overwrite == 'yes':
+            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
             print "         Overwriting exisiting file."
         elif overwrite == 'append':
+            print "WARNING: target file %s already exists!" % (os.path.abspath(tfile))
             print "         Appending to exisiting file."
         elif overwrite == 'no':
-            print "         Aborting."
-            return
+            raise ge.CommandFailed("createBatch", "Target file exists", "A file with the specified path already exists [%s]" % (os.path.abspath(tfile)), "Please use set overwrite to `yes` or `append` for apropriate action" )
     else:
         overwrite = 'yes'
 
@@ -263,6 +286,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
         os.makedirs(targetFolder)
 
     # --- open target file
+
+    preexist = os.path.exists(tfile)
 
     if overwrite == 'yes':
         print "---> Creating file %s" % (os.path.basename(tfile))
@@ -276,11 +301,13 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
         slist, parameters = gc.getSubjectList(tfile)
         slist = [e['id'] for e in slist]
         print "---> Appending to file %s" % (os.path.basename(tfile))
+        if paramfile and preexist:
+            print "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!"
         jfile = open(tfile, 'a')
 
     # --- check for param file
 
-    if overwrite == 'yes':
+    if overwrite == 'yes' or not preexist:
         if paramfile is None:
             paramfile = os.path.join(subjectsfolder, 'specs', 'batch_parameters.txt')
             if not os.path.exists(paramfile):
@@ -294,22 +321,29 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
                         print >> pfile, "#\n# " + line[0] + '\n#'
                 pfile.close()
 
-            if os.path.exists(paramfile):
-                print "---> appending parameter file [%s]." % (paramfile)
-                print >> jfile, "# Parameter file: %s\n#" % (paramfile)
-                with open(paramfile) as f:
-                    for line in f:
-                        print >> jfile, line,
-            else:
-                print "---> parameter files does not exist, skipping [%s]." % (paramfile)
+        if os.path.exists(paramfile):
+            print "---> appending parameter file [%s]." % (paramfile)
+            print >> jfile, "# Parameter file: %s\n#" % (paramfile)
+            with open(paramfile) as f:
+                for line in f:
+                    print >> jfile, line,
+        else:
+            print "---> parameter files does not exist, skipping [%s]." % (paramfile)
 
     # -- get list of subject folders
+
+    missing = 0
 
     if subjects is not None:
         subjects, gopts = gc.getSubjectList(subjects, sfilter=sfilter, verbose=False)
         files = []
         for subject in subjects:
-            files += glob.glob(os.path.join(subjectsfolder, subject['id'], sfile))
+            nfiles = glob.glob(os.path.join(subjectsfolder, subject['id'], sfile))
+            if nfiles:
+                files += nfiles
+            else:
+                print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, subject['id'], os.path.join(subjectsfolder, subject['id'], sfile))
+                missing += 1
     else:
         files = glob.glob(os.path.join(os.path.abspath(subjectsfolder), '*', sfile))
 
@@ -329,8 +363,10 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subject
 
     # --- close file
 
-    print "===> Done"
     jfile.close()
+
+    if missing:
+        raise ge.CommandFailed("createBatch", "Not all subjects specified added to the batch file!", "%s was missing for %d subject(s)!" % (sfile, missing), "Please check your data!")
 
 
 
@@ -479,6 +515,8 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
 
     """
 
+    print "Running createList\n=================="
+
     def checkFile(fileName):
         if check == 'no':
             pass
@@ -486,11 +524,7 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
             if check == 'warn':
                 print "WARNING: File does not exist [%s]!" % (fileName)
             else:
-                print "ERROR: File does not exist [%s]!" % (fileName)
-                print "       Aborting."
-                exit()
-
-    print "Running createList\n=================="
+                raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
 
     # --- check subjects
 
@@ -528,15 +562,13 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
                 print "         Appending to exisiting file."
                 overwrite = 'append'
             else:
-                print "         Aborting."
-                return
+                raise ge.CommandFailed("createList", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
         elif overwrite == 'yes':
             print "         Overwriting the exisiting file."
         elif overwrite == 'append':
             print "         Appending to the exisiting file."
         elif overwrite == 'no':
-            print "         Aborting."
-            return
+            raise ge.CommandFailed("createList", "File exists", "The specified list file already exists [%s]" % (listfile), "Please check paths or set `overwrite` to `yes` or `append` for apropriate action")
     else:
         overwrite = 'yes'
 
@@ -619,7 +651,6 @@ def createList(subjectsfolder=".", subjects=None, sfilter=None, listfile=None, b
         print >> lfile, line
 
     lfile.close()
-    print "===> Done"
 
 
 def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
@@ -773,8 +804,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
         boldtags = [e for e in bolds if not e.isdigit()]
         boldnums = [e for e in bolds if e.isdigit()]
     else:
-        print "ERROR: No bolds specified to be included in the conc files.\n         Aborting."
-        return
+        raise ge.CommandError("createConc", "No bolds specified to be included in the conc files")
 
     bsearch  = re.compile('bold([0-9]+)')
 
@@ -800,6 +830,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
     # --- generate list entries
 
+    error = False
     for subject in subjects:
 
         print "---> Processing subject %s" % (subject['id'])
@@ -831,6 +862,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
         if not complete and check == 'yes':
             print "     WARNING: Due to missing source files conc file was not created!"
+            error = True
             continue
 
         if os.path.exists(concfile):
@@ -847,6 +879,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
                 print "              Overwriting the exisiting file."
             elif overwrite == 'no':
                 print "              Skipping this conc file."
+                error = True
                 continue
         else:
             overwrite = 'yes'
@@ -863,4 +896,5 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
             cfile.close()
 
-    print "===> Done"
+    if error:
+        raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details!")

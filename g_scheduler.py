@@ -9,7 +9,7 @@ Created by Grega Repovs on 2017-06-17.
 Copyright (c) Grega Repovs. All rights reserved.
 """
 
-import sys
+import niutilities.g_exceptions as ge
 import subprocess
 import os
 import os.path
@@ -219,18 +219,22 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                  Added additional options to scheduling LSF jobs.
     2017-09-30 - Grega Repovs
                  Added options to redirect job output to log files.
+    2018-10-03 - Grega Repovs
+                 Added checking for validity of log file directories.
+    2018-10-04 - Grega Repovs
+                 Excluded log validity checking for 'return'.
     '''
 
     # --- check inputs
 
     if command is None and script is None:
-        raise ValueError("       Either command or script need to be provided to run scheduler!")
+        raise ge.CommandError("schedule", "Missing parameter", "Either command or script need to be specified to run scheduler!")
 
     if command is not None and script is not None:
-        raise ValueError("       Only command or script need to be provided to run scheduler!")
+        raise ge.CommandError("schedule", "Parameter conflict", "Only command or script need to be provided to run scheduler!")
 
     if settings is None:
-        raise ValueError("       Settings need to be provided to run scheduler!")
+        raise ge.CommandError("schedule", "Missing parameter", "Settings need to be provided to run scheduler!")
 
     # --- parse settings
 
@@ -242,27 +246,26 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         comname   = setDict.pop('comname', "")
         jobnum    = setDict.pop('jobnum', "1")
     except:
-        raise ValueError("       Could not parse the settings string: \"%s\".\n       Please check the documentation for correct scheduler settings string format (gmri ?schedule)." % settings)
+        raise ge.CommandError("schedule", "Misspecified parameter", "Could not parse the settings string:", settings)
 
     if scheduler not in ['PBS', 'LSF', 'SLURM']:
-        raise ValueError("       First value in the settings string has to specify one of PBS, LSF, SLURM!\n       The settings string submitted was: '%s'.\n       Please check the documentation for correct scheduler settings string format (gmri ?schedule)." % (settings))
-
+        raise ge.CommandError("schedule", "Misspecified parameter", "First value in the settings string has to specify one of PBS, LSF, SLURM!", "The settings string submitted was:", settings)
 
     # --- compile command to pass
 
     if command is None:
         if not os.path.exists(script):
-            raise ValueError("       The referenced script does not exist!")
+            raise ge.CommandFailed("schedule", "File not found", "The specified script does not exist! [%s]" % (script))
         command = file(script).read()
 
     if workdir is not None:
         if not os.path.exists(workdir):
-            raise ValueError("       The referenced working directory does not exist!")
+            raise ge.CommandFailed("schedule", "Folder does not exist", "The specified working directory does not exist! [%s]" % (workdir))
         command = "cd %s\n" % (workdir) + command
 
     if environment is not None:
         if not os.path.exists(environment):
-            raise ValueError("       The referenced environment script does not exist!")
+            raise ge.CommandFailed("schedule", "File not found", "The specified environment script does not exist! [%s]" % (environment))
         command = file(environment).read() + "\n" + command
 
     # --- do search replace
@@ -280,6 +283,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     if output is not None:
         for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
+            if not os.path.exists(os.path.dirname(v)) and k != 'return':
+                raise ge.CommandFailed("schedule", "Folder does not exist", "The specified folder for the '%s' log file does not exist! [%s]" % (k, os.path.dirname(v)), "Please check your paths!")
             outputs[k] = v
 
     if outputs['both'] is not None:

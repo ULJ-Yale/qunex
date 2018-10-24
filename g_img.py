@@ -14,6 +14,7 @@ import struct
 import re
 import gzip
 import os.path
+import niutilities.g_exceptions as ge
 
 niftiDataTypes = {1: 'b', 2: 'u1', 4: 'i2', 8: 'i4', 16: 'f4', 32: 'c8', 64: 'f8', 128: 'u1,u1,u1', 256: 'i1', 512: 'u2', 768: 'u4', 1025: 'i8', 1280: 'u8', 1536: 'f16', 2304: 'u1,u1,u1,u1'}
 niftiBytesPerVoxel = {1: 1, 2: 1, 4: 2, 8: 4, 16: 4, 32: 8, 64: 8, 128: 3, 256: 1, 512: 2, 768: 4, 1025: 8, 1280: 8, 1536: 16, 2304: 4}
@@ -60,24 +61,38 @@ def getImgFormat(filename):
 
 
 def readConc(filename, boldname=None):
-    s = readTextFileToLines(filename)
+    if os.path.exists(filename):
+        s = readTextFileToLines(filename)
+    else:
+        raise ge.CommandFailed("readConc", "File does not exist", "The specified conc file does not exist:", "[%s]" % (filename), "Please check your data!")
 
     if boldname is None:
         boldname = 'bold'
 
-    f = []
-    nfiles = int(s[0].split(":")[1])
-    boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles + 1]]
+    try:
+        f = []
+        nfiles = int(s[0].split(":")[1])
+        boldfiles = [e.split(":")[1].strip() for e in s[1:nfiles + 1]]
+    except:
+        raise ge.CommandFailed("readConc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
 
+    missing = []
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
             print "===> WARNING: image does not exist! (%s)" % (boldfile)
+            missing.append(boldfile)
+
+    if missing:
+        raise ge.CommandFailed("readConc", "File does not exist", "%d bold files specified in conc file do not exist!" % (len(missing)), "Conc file: %s" % (filename), "Please check your data!", "Missing bold files:", *missing)
 
     m = re.compile(".*?([0-9]+).*")
 
-    for boldfile in boldfiles:
-        bnum = m.match(boldfile.split('/')[-1]).group(1)
-        f.append((boldfile, bnum))
+    try:
+        for boldfile in boldfiles:
+            bnum = m.match(boldfile.split('/')[-1]).group(1)
+            f.append((boldfile, bnum))
+    except:
+        raise ge.CommandFailed("readConc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
 
     return f
 

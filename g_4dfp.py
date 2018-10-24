@@ -14,13 +14,12 @@ Use gmri to run the commands from the terminal.
 
 import os
 import niutilities
-import collections
 import subprocess
-import niutilities.g_gimg as g
 import os.path
 import glob
 import re
 import datetime
+import niutilities.g_exceptions as ge
 
 
 template = '''@ economy = 5
@@ -108,7 +107,10 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
         return
 
     for s in do:
-        runAvi(s, overwrite, sfile)
+        try:
+            runNIL(s, overwrite, sfile)
+        except:
+            print "---> Failed running NIL preprocessing on", s
 
     print "\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder)
 
@@ -147,8 +149,7 @@ def runNIL(folder=".", overwrite=None, sfile=None):
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
     if not info:
-        print "===> no data in subject.txt, skipping processing!"
-        return
+        raise ValueError("ERROR: No data in subject.txt! [%s]!" % (sfile))
 
     for k, v in info[0].iteritems():
         if k == 'raw_data':
@@ -290,7 +291,7 @@ def map2PALS(volume, metric, atlas='711-2C', method='interpolated', mapping='afm
         volume = volume.replace('.img', '').replace('.ifh', '').replace('.4dfp', '') + '.4dfp.ifh'
         for structure in ['LEFT', 'RIGHT']:
             print "---> mapping %s to PALS %s [%s %s %s]" % (volume, structure, atlas, method, " ".join(mapping))
-            r = subprocess.call(['caret_command', '-volume-map-to-surface-pals', metric, metric, atlas, structure, method, volume] + mapping)
+            subprocess.call(['caret_command', '-volume-map-to-surface-pals', metric, metric, atlas, structure, method, volume] + mapping)
 
 
 
@@ -306,15 +307,13 @@ def map2HCP(volume, method='trilinear'):
     '''
 
     if not "HCPATLAS" in os.environ:
-        print "ERROR: HCPATLAS environment variable not set. Can not find HCP Template files!"
-        return
+        raise ge.CommandError("map2HCP", "HCPATLAS environment variable not set.", "Can not find HCP Template files!", "Please check your environment settings!")
 
     apath = os.environ["HCPATLAS"]
     tpath = os.path.join(apath, '91282_Greyordinates')
 
     if method not in ['trilinear', 'enclosing', 'cubic', 'ribbon-constrained']:
-        print "ERROR: Unrecognised mapping method [%s]!" % (method)
-        return
+        raise ge.CommandError("map2HCP", "Unrecognised mapping method [%s]!" % (method))
     method = "-" + method
 
     volumes = volume.split()
@@ -322,8 +321,8 @@ def map2HCP(volume, method='trilinear'):
         target = volume.replace('.nii', '').replace('.gz', '') + '.dscalar.nii'
         print "---> mapping %s to %s using %s" % (volume, target, method,)
         for structure in ['L', 'R']:
-            r = subprocess.call(['wb_command', '-volume-to-surface-mapping', volume, os.path.join(apath, "Q1-Q6_R440.%s.midthickness.32k_fs_LR.surf.gii" % (structure)), "tmp.%s.func.gii" % (structure), method])
-        r = subprocess.call(['wb_command', '-cifti-create-dense-scalar', target, '-volume', volume, os.path.join(tpath, 'Atlas_ROIs.2.nii.gz'),
+            subprocess.call(['wb_command', '-volume-to-surface-mapping', volume, os.path.join(apath, "Q1-Q6_R440.%s.midthickness.32k_fs_LR.surf.gii" % (structure)), "tmp.%s.func.gii" % (structure), method])
+        subprocess.call(['wb_command', '-cifti-create-dense-scalar', target, '-volume', volume, os.path.join(tpath, 'Atlas_ROIs.2.nii.gz'),
             '-left-metric', 'tmp.L.func.gii', '-roi-left', os.path.join(tpath, 'L.atlasroi.32k_fs_LR.shape.gii'),
             '-right-metric', 'tmp.R.func.gii', '-roi-right', os.path.join(tpath, 'R.atlasroi.32k_fs_LR.shape.gii')])
         os.remove('tmp.L.func.gii')

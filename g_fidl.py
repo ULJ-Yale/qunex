@@ -7,8 +7,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 """
 
 import niutilities.g_img as g
-import sys
-import getopt
+import niutilities.g_exceptions as ge
 import re
 import os
 import os.path
@@ -90,9 +89,9 @@ def readConc(concf, TR):
     return bolds
 
 
-def joinFidl(concfile, fidlroot, outfolder=None):
+def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
     '''
-    joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern>
+    joinFidl concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidl name>]
 
     Combines all the fild files matching root based on the information in conc file.
     - concfile:  the conc file to use as reference
@@ -104,6 +103,9 @@ def joinFidl(concfile, fidlroot, outfolder=None):
 
     # ---> find all fidl files, sort them, read them, get TR info
 
+    if fidlname is None:
+        fidlname = ""
+
     fidlf = glob.glob(fidlroot + '*.fidl')
     fidlf.sort()
     fidldata = [readFidl(f) for f in fidlf]
@@ -111,10 +113,9 @@ def joinFidl(concfile, fidlroot, outfolder=None):
         TR = fidldata[0]['TR']
     except:
         if len(fidldata) == 0:
-            print "===> WARNING: No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot)
+            raise ge.CommandFailed("joinFidl", "No fidl files", "No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
         else:
-            print "===> WARNING: Error in processing concfile: %s, fidlroot: %s!" % (concfile, fidlroot)
-        return
+            raise ge.CommandFailed("joinFidl", "Error processing files", "Error in processing concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
 
     # ---> read the conc file, check if the number matches
 
@@ -123,7 +124,7 @@ def joinFidl(concfile, fidlroot, outfolder=None):
 
     if len(fidldata) != len(bolddata):
         print "\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata]))
-        return False
+        raise ge.CommandFailed("joinFidl", "File number mismatch", "Number of fidl [%d] and bold [%d] files do not match!" % (len(fidldata), len(bolddata)), "Please check report!")
 
     # ---> start the matching loop
 
@@ -158,8 +159,11 @@ def joinFidl(concfile, fidlroot, outfolder=None):
         tfidl = tfidl + [[e[0] + bold[1]] + e[1:] for e in sfidl['events'] if e[0] < bold[2]]
         c += 1
 
-    jointfile = fidlroot + '.fidl'
+    jointfile = fidlroot + fidlname + '.fidl'
     if outfolder is not None:
+        if not os.path.exists(outfolder):
+            print "--> Creating output folder:", outfolder
+            os.makedirs(outfolder)
         jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 
     out = open(jointfile, 'w')
@@ -169,10 +173,10 @@ def joinFidl(concfile, fidlroot, outfolder=None):
         print >> out, "%g\t%s" % (l[0], "\t".join(l[1:]))
 
     out.close()
-    return True
+    return 
 
 
-def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
+def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     '''
     joinFidlFolder concfolder=<folder_with_conc_files> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder in which to save joint files>]
 
@@ -192,9 +196,20 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None):
 
     concfiles = glob.glob(concfolder + '/*.conc')
 
+    failed = []
     for concfile in concfiles:
-        root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ''))
-        joinFidl(concfile, root, outfolder)
+        root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ""))
+        try:
+            joinFidl(concfile, root, outfolder, fidlname)
+        except ge.CommandFailed as e:
+            failed.append([concfolder, e.error])
+
+    if failed:
+        print "ERROR: Joining fidls failed for the following conc files:"
+        for concfile, error in failed:
+            print "       - %s [%s]" % (concfile, error)
+
+        raise ge.CommandFailed("joinFidlFolder", "Processing of %d subject(s) failed" % (len(failed)), "Please check report!")
 
 
 def splitFidl(concfile, fidlfile, outfolder=None):
@@ -215,10 +230,9 @@ def splitFidl(concfile, fidlfile, outfolder=None):
         TR = fidldata['TR']
     except:
         if len(fidldata) == 0:
-            print "===> WARNING: No fidl files correspond to %s!" % (concfile)
+            raise ge.CommandFailed("splitFidl", "No fidl file", "No fidl files correspond to %s!" % (concfile))
         else:
-            print "===> WARNING: Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile)
-        return
+            raise ge.CommandFailed("splitFidl", "Processing error", "Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile))
 
     bolddata = readConc(concfile, TR)
 
@@ -255,12 +269,12 @@ def splitFidl(concfile, fidlfile, outfolder=None):
 
         bstart = bend
 
-    return True
+    return
 
 
 def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     '''
-    gmri checkFidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]
+    checkFidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false] [verbose=true]
 
     Prints figures showing fidl events and their duration.
 
@@ -268,13 +282,14 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     - fidlfolder: The folder from which to plot the fidl files.
     - plotfile:   The name of the file to save the plot to. Only makes sense if fidlfile is specified.
     - allcodes:   Whether to plot line for all fidl codes even if no event has a particular code.
+    - verbose:    Whether to report progress
 
     Example use:
     gmri checkFidl fidlfolder=jfidls
     '''
 
-    command = ['g_CheckFidl.R']
-    command.append('-fidlfolder="%s"' % (fidlfolder))
+    command = ['Rscript', os.path.join(os.environ['MNAPPATH'], 'niutilities', 'g_CheckFidl.R')]
+    command.append('-fidlfolder=%s' % (fidlfolder))
 
     if fidlfile is not None:
         command.append("-fidlfile=" + fidlfile)
@@ -283,9 +298,9 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     if allcodes is not None:
         command.append("-allcodes")
 
-    if subprocess.call(command, shell=True):
-        raise ValueError("ERROR: Running checkFidl.R failed! Call: %s" % (" ".join(command)))
+    if subprocess.call(command):
+        raise ge.CommandFailed("checkFidl", "Running checkFidl.R failed", "Call: %s" % (" ".join(command)))
 
-    return True
+    return
 
 

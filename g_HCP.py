@@ -20,7 +20,7 @@ import glob
 import shutil
 import niutilities
 import collections
-import niutilities.g_gimg as g
+import niutilities.g_exceptions as ge
 import os.path
 import g_core
 
@@ -145,9 +145,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                hcp ready and what to do with existing files
     '''
 
+    print "Running setupHCP\n================"
+
     inf   = niutilities.g_core.readSubjectData(os.path.join(sfolder, sfile))[0][0]
     basef = os.path.join(sfolder, tfolder, inf['id'])
-    rawf  = inf['raw_data']
+    rawf  = inf.get('raw_data', None)
     sid   = inf['id']
     bolds = collections.defaultdict(dict)
     nT1w  = 0
@@ -159,18 +161,16 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
     if inf.get('hcpready', 'no') != 'true':
         if check == 'yes':
-            print "ERROR: Subject %s is not marked ready for HCP. Please check or run with check=no! Aborting setupHCP.\n" % (sid)
-            return
+            raise ge.CommandFailed("setupHCP", "Subject not ready", "Subject %s is not marked ready for HCP" % (sid), "Please check or run with check=no!")
         else:
             print "WARNING: Subject %s is not marked ready for HCP. Processing anyway." % (sid)
 
     # -> does raw data exist
 
-    if not os.path.exists(rawf):
-        print "ERROR: raw_data folder for %s does not exist! Check your paths [%s]! Aborting setupHCP.\n" % (sid, rawf)
-        return
+    if rawf is None or not os.path.exists(rawf):
+        raise ge.CommandFailed("setupHCP", "Data folder does not exist", "raw_data folder for %s does not exist!" % (sid), "Please check specified path [%s]" % (rawf))
 
-    print " ---===== Setting up HCP folder structure for %s =====---\n" % (sid)
+    print "===> Setting up HCP folder structure for %s\n" % (sid)
 
     # -> does hcp folder already exist?
 
@@ -182,8 +182,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
         elif existing == 'add':
             print " ---> Base folder %s already exist! Adding any new files specified! " % (basef)
         else:
-            print "ERROR: Base folder %s already exist! Please check or run with exisiting=add or exisiting=clear! Aborting setupHCP.\n" % (basef)
-            return
+            raise ge.CommandFailed("setupHCP", "Base folder exists", "Base folder %s already exist!" % (basef), "Please check or specify `exisiting` as `add` or `clear` for desired action!")
     else:
         print " ---> Creating base folder %s " % (basef)
         os.makedirs(basef)
@@ -287,9 +286,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 # print " ---> %s already exists, replacing it with %s " % (tfile, sfile)
                 # os.remove(os.path.join(basef,tfold,tfile))
                 # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
-
-    print "\n ---=====         DONE          =====---\n"
-    return "completed ok"
+    
+    return
 
 
 def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="interactive"):
@@ -344,6 +342,8 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
     '''
 
     # list all possible sbjfiles and check them
+    
+    print "Running setupHCPFolder\n======================"
 
     sbjf   = sfile
     sfiles = glob.glob(os.path.join(subjectsfolder, "*", sbjf))
@@ -528,14 +528,15 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
              - Added the option to map sequence names.
     '''
 
+    print "Running getHCPReady\n==================="
+
     if mapping is None:
         mapping = os.path.join(subjectsfolder, 'specs', 'hcp_mapping.txt')
 
     # -- get mapping ready
 
     if not os.path.exists(mapping):
-        print "ERROR: No HCP mapping file found. Aborting."
-        return
+        raise ge.CommandFailed("getHCPReady", "No HCP mapping file", "The expected HCP mapping file does not exist!", "Please check the specified path [%s]" % (mapping))
 
     print " ... Reading HCP mapping from %s" % (mapping)
 
@@ -544,6 +545,9 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
     mapping = [[f.strip() for f in e] for e in mapping if len(e) == 2]
     mappingNumber = dict([[int(e[0]), e[1]] for e in mapping if e[0].isdigit()])
     mappingName   = dict([e for e in mapping if not e[0].isdigit()])
+
+    if not mapping:
+        raise ge.CommandFailed("getHCPReady", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
 
     # -- get list of subject folders
 
@@ -622,5 +626,6 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
             fout = open(stfile, 'w')
             for line in nlines:
                 print >> fout, line
-
+    
+    return
 

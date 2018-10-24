@@ -94,6 +94,31 @@ def root4dfp(filename):
     return filename
 
 
+def useOrSkipBOLD(sinfo, options, r=None):
+    """
+    useOrSkipBOLD
+    Internal function to determine which bolds to use and which to skip.
+    """
+    bsearch  = re.compile('bold([0-9]+)')
+    btargets = options['bold_preprocess'].split("|")
+    bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
+    bskip    = []
+    if "all" not in btargets:
+        bskip = [(n, b, t, v) for n, b, t, v in bolds if t not in btargets and str(n) not in btargets]
+        bolds = [(n, b, t, v) for n, b, t, v in bolds if t in btargets or str(n) in btargets]
+        bskip.sort()
+        if r is not None:
+            if len(bskip) > 0:
+                r += "\n\nSkipping the following BOLD images:"
+                for n, b, t, v in bskip:
+                    r += "\n...  %-6s [%s]" % (b, t)
+                r += "\n"
+    bolds.sort()
+
+    return bolds, bskip, len(bskip), r
+
+
+
 def getExactFile(candidate):
     g = glob.glob(candidate)
     if len(g) == 1:
@@ -367,6 +392,11 @@ def getSubjectFolders(sinfo, options):
     else:
         d['s_source'] = sinfo['data']
 
+    if options['hcp_bold_variant'] == "":
+        bvar = ''
+    else:
+        bvar = '.' + options['hcp_bold_variant']
+
     if "hcp" in sinfo:
         d['hcp'] = os.path.join(sinfo['hcp'], sinfo['id'])
 
@@ -374,14 +404,14 @@ def getSubjectFolders(sinfo, options):
     d['s_images']           = os.path.join(d['s_base'], 'images')
     d['s_struc']            = os.path.join(d['s_images'], 'structural')
     d['s_seg']              = os.path.join(d['s_images'], 'segmentation')
-    d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks')
-    d['s_bold']             = os.path.join(d['s_images'], 'functional')
+    d['s_boldmasks']        = os.path.join(d['s_seg'], 'boldmasks' + bvar)
+    d['s_bold']             = os.path.join(d['s_images'], 'functional' + bvar)
     d['s_bold_mov']         = os.path.join(d['s_bold'], 'movement')
     d['s_bold_events']      = os.path.join(d['s_bold'], 'events')
     d['s_bold_concs']       = os.path.join(d['s_bold'], 'concs')
     d['s_bold_glm']         = os.path.join(d['s_bold'], 'glm')
     d['s_roi']              = os.path.join(d['s_images'], 'ROI')
-    d['s_nuisance']         = os.path.join(d['s_roi'], 'nuisance')
+    d['s_nuisance']         = os.path.join(d['s_roi'], 'nuisance' + bvar)
     d['s_fs']               = os.path.join(d['s_seg'], 'freesurfer')
     d['s_hcp']              = os.path.join(d['s_seg'], 'hcp')
     d['s_s32k']             = os.path.join(d['s_hcp'], 'fsaverage_LR32k')
@@ -391,7 +421,7 @@ def getSubjectFolders(sinfo, options):
     d['inbox']              = os.path.join(options['subjectsfolder'], 'inbox')
 
     d['qc']                 = os.path.join(options['subjectsfolder'], 'QC')
-    d['qc_mov']             = os.path.join(d['qc'], 'movement')
+    d['qc_mov']             = os.path.join(d['qc'], 'movement' + bvar)
 
     if not os.path.exists(d['s_source']) and options['source_folder']:
         print "WARNING: Source folder not found, waiting 15s to give it a chance to come online!"
@@ -568,21 +598,25 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
             return (False, "%s%sERROR: %s could not be copied, source file does not exist [%s]! " % (r, prefix, name, source))
 
 
-def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None, logfolder=""):
+def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None, logfolder="", logtags=""):
     """
     runExternalForFile - documentation not yet available.
     """
     if overwrite or not os.path.exists(checkfile):
-        if task is None:
-            task = ""
-        else:
-            task = task + "_"
+
         r = '\n%s' % (description)
 
+        if isinstance(logtags, basestring):
+            logtags = [logtags]
+
         logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-        tmplogfile = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
-        donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
-        errlogfile = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
+        logname  = [task] + logtags + [thread, logstamp]
+        logname  = [e for e in logname if e]
+        logname  = "_".join(logname)
+
+        tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+        donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
+        errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
 
         nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
@@ -605,6 +639,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             shutil.move(tmplogfile, errlogfile)
             raise ExternalFailed(r)
 
+        print >> nf, "\n\n===> Successful completion of task\n"
         nf.close()
         if remove:
             os.remove(tmplogfile)
@@ -621,22 +656,24 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     return r
 
 
-def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder=""):
+def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags=""):
     """
     runExternalForFileShell - documentation not yet available.
     """
     if overwrite or not os.path.exists(checkfile):
-        if task is None:
-            task = ""
-        else:
-            task = task + "_"
         r = '\n\n%s' % (description)
-        # nf = open('/dev/null', 'w')
+
+        if isinstance(logtags, basestring) or logtags is None:
+            logtags = [logtags]
 
         logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-        tmplogfile = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
-        donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
-        errlogfile = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
+        logname  = [task] + logtags + [thread, logstamp]
+        logname  = [e for e in logname if e]
+        logname  = "_".join(logname)
+
+        tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+        donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
+        errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
 
         nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
@@ -652,6 +689,7 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
             nf.close()
             shutil.move(tmplogfile, errlogfile)
         else:
+            print >> nf, "\n\n===> Successful completion of task\n"
             nf.close()
             if remove:
                 os.remove(tmplogfile)
@@ -660,28 +698,31 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
             r += ' --- done'
     else:
         if os.path.getsize(checkfile) < 100:
-            r = runExternalForFileShell(checkfile, run, description, overwrite=True, thread=thread)
+            r = runExternalForFileShell(checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags)
         else:
             r = '\n%s --- already completed' % (description)
 
     return r
 
 
-def runScriptThroughShell(run, description, thread="0", remove=True, task=None, logfolder=""):
+def runScriptThroughShell(run, description, thread="0", remove=True, task=None, logfolder="", logtags=""):
     """
     runScriptThroughShell - documentation not yet available.
     """
-    if task is None:
-        task = ""
-    else:
-        task = task + "_"
-
+    
     r = '\n\n%s' % (description)
 
-    logstamp    = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-    tmplogfile  = os.path.join(logfolder, "tmp_%s%s_%s.log" % (task, thread, logstamp))
-    donelogfile = os.path.join(logfolder, "done_%s%s_%s.log" % (task, thread, logstamp))
-    errlogfile  = os.path.join(logfolder, "error_%s%s_%s.log" % (task, thread, logstamp))
+    if isinstance(logtags, basestring):
+        logtags = [logtags]
+
+    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logname  = [task] + logtags + [thread, logstamp]
+    logname  = [e for e in logname if e]
+    logname  = "_".join(logname)
+
+    tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
+    donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
+    errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
 
     nf = open(tmplogfile, 'w')
     print >> nf, "\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description)
@@ -693,6 +734,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
         shutil.move(tmplogfile, errlogfile)
         raise ExternalFailed(r)
     else:
+        print >> nf, "\n\n===> Successful completion of task\n"
         nf.close()
         if remove:
             os.remove(tmplogfile)
