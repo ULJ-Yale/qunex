@@ -38,3 +38,16 @@ class CommandFailed(Exception):
         self.report   = (error,) + hints
 
 
+def reportCommandFailed(comm, e):
+    if e.function == comm:
+        eString = "\n===> ERROR in completing %s:\n     %s\n" % (comm, "\n     ".join(e.report))
+    else:
+        eString = "\n===> ERROR in completing %s at %s:\n     %s\n" % (comm, e.function, "\n     ".join(e.report))
+    return eString
+
+def reportCommandError(comm, e):
+    if e.function == comm:
+        eString = "\nERROR in running %s:\n%s" % (comm, "\n".join(e.report))
+    else:
+        eString =  "\nERROR in running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
+    return eString

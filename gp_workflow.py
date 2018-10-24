@@ -31,6 +31,7 @@ import re
 import traceback
 from datetime import datetime
 import time
+import niutilities.g_exceptions as ge
 
 
 if "MNAPMCOMMAND" not in os.environ:
@@ -2334,6 +2335,14 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                         report += " => ready"
                         failed += 1
 
+            except ge.CommandFailed, e:
+                r += "\n" + ge.reportCommandFailed('preprocessConc', e)
+                report += " => processing failed"
+                failed += 1
+            except ge.CommandError, e:
+                r += "\n" + ge.reportCommandError('preprocessConc', e)
+                report += " => processing failed"
+                failed += 1
             except (ExternalFailed, NoSourceFolder), errormessage:
                 r += str(errormessage)
                 report += " => processing failed"
