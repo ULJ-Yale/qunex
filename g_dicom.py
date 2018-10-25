@@ -1128,10 +1128,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
         if tool == 'auto':
             if par:
                 utool = 'dicm2nii'
-                print '---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available! [%s: %s]' % (niid, info['seriesDescription'])
+                print '---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available! [%s: %s]' % (niiid, info['seriesDescription'])
             else:
                 utool = 'dcm2niix'
-                print '---> Using dcm2niix for conversion to NIfTI! [%s: %s]' % (niid, info['seriesDescription'])
+                print '---> Using dcm2niix for conversion to NIfTI! [%s: %s]' % (niiid, info['seriesDescription'])
         else:
             utool = tool
 
