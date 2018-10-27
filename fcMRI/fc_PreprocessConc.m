@@ -496,8 +496,8 @@ options = g_ParseOptions([], options, default);
 g_PrintStruct(options, 'Options used');
 
 TS = [];
-doIt = strrep(doIt, ",", "");
-doIt = strrep(doIt, " ", "");
+doIt = strrep(doIt, ',', '');
+doIt = strrep(doIt, ' ', '');
 
 
 % ======================================================
@@ -773,7 +773,7 @@ for b = 1:nbolds
 end
 
 dor      = true;
-fprintf("--> starting the loop\n")
+fprintf('--> starting the loop\n')
 
 for current = char(doIt)
 
