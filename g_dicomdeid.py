@@ -17,13 +17,12 @@ import base64
 import struct
 import shutil
 import collections
+import niutilities.g_exceptions as ge
 
 try:
     import pydicom
-    print "===> Imported pydicom"    
 except:
     import dicom as pydicom
-    print "===> Imported dicom"    
 
 try:
     import pydicom.filereader as dfr
@@ -336,9 +335,66 @@ def write_field_dict(output_file, limit):
             writer.writerow(row)
 
 
-def run_scanning(folder_to_scan, output_file, limit=None):
-    discoverDICOM(folder_to_scan, dicom_scan)
-    write_field_dict(output_file, limit)
+def getDICOMFields(folder=".", tfile="dicomFields.txt", limit="20"):
+    '''
+    getDICOMFields [folder=.] [tfile=dicomFields.txt] [limit=20]
+
+    USE
+    ===
+
+    The command is used to get an overview of DICOM fields across all the DICOM
+    files in the study with example values, to identify those fields that might
+    carry personally identifiable information.
+
+    PARAMETERS
+    ==========
+
+    --folder    The base folder from which the search for DICOM files should
+                start. The command will try to locate all valid DICOM files
+                within the specified folder and its subfolders. [.]
+    --tfile     The name (and path) of the file in which the information is to 
+                stored. [dicomFields.txt]
+    --limit     The maximum number of example values to provide for each of the
+                DICOM fields. [20]
+
+    RESULTS
+    =======
+
+    After running, the command will inspect all the valid DICOM files (including
+    gzip compressed ones) in the specified folder and its subfolders. It will 
+    generate a report file that will list all the DICOM fields found across all 
+    the DICOM files, and for each of the fields list example values up to the
+    specified limit.
+
+    This file can be used to identify the fields that might carry personally
+    identifiable information and therefore need to be processed appropriately. 
+
+    EXAMPLE USE
+    ===========
+
+    gmri getDICOMFields folder=. clean=yes unzip=yes gzip=yes cores=3
+
+    ----------------
+    Written by Antonija Kolobarič
+
+    Changelog
+    2018-10-24 Grega Repovš
+             - Updated documentation
+             – Changed parameter names to match the convention and use elsewhere
+             - Added input parameter checks
+    '''
+
+    if not os.path.exists(folder):
+        raise ge.CommandFailed("getDICOMFields", "Folder not found", "The specified folder with DICOM files to analyse was not found:", "%s" % (folder), "Please check your paths!")
+
+    try:
+        f = open(tfile, "w")
+        f.close()
+    except:
+        raise ge.CommandFailed("getDICOMFields", "Could not create target file", "The specifed target file could not be created:", "%s" % (tfile), "Please check your paths and permissions!")
+
+    discoverDICOM(folder, dicom_scan)
+    write_field_dict(tfile, limit)
 
 
 #######################
@@ -351,8 +407,7 @@ def run_scanning(folder_to_scan, output_file, limit=None):
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
 
-def run_deid(folder_to_scan, param_file, archive_file, output_folder=None, rename_files=False, extension="",
-             replacement_date=None):
+def changeDICOMs(folder_to_scan, param_file, archive_file, output_folder=None, rename_files=False, extension="", replacement_date=None):
     if output_folder is not None:
         try:
             shutil.rmtree(output_folder)
@@ -789,13 +844,13 @@ def date_removal_func(node_id, node_path, node, target_date, replace_date):
 """
 
 if __name__ == "__main__":
-    run_scanning("/Users/antonijakolobaric/Desktop/0702/dicoms",
+    getDICOMFields("/Users/antonijakolobaric/Desktop/0702/dicoms",
                  "/Users/antonijakolobaric/Desktop/0702/dicoms/Output.csv",
                  20)
 
 
 if __name__ == "__main__":
-    run_deid("/Users/antonijakolobaric/Desktop/0702/dicoms",
+    changeDICOMs("/Users/antonijakolobaric/Desktop/0702/dicoms",
              "/Users/antonijakolobaric/Desktop/0702/dicoms/test_config",
              "/Users/antonijakolobaric/Desktop/0702/dicoms/archive.csv",
              "/Users/antonijakolobaric/Desktop/0702/dicoms_output")
