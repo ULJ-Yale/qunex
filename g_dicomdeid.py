@@ -335,9 +335,9 @@ def write_field_dict(output_file, limit):
             writer.writerow(row)
 
 
-def getDICOMFields(folder=".", tfile="dicomFields.txt", limit="20"):
+def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
     '''
-    getDICOMFields [folder=.] [tfile=dicomFields.txt] [limit=20]
+    getDICOMFields [folder=.] [tfile=dicomFields.csv] [limit=20]
 
     USE
     ===
@@ -353,7 +353,7 @@ def getDICOMFields(folder=".", tfile="dicomFields.txt", limit="20"):
                 start. The command will try to locate all valid DICOM files
                 within the specified folder and its subfolders. [.]
     --tfile     The name (and path) of the file in which the information is to 
-                stored. [dicomFields.txt]
+                stored. [dicomFields.csv]
     --limit     The maximum number of example values to provide for each of the
                 DICOM fields. [20]
 
@@ -364,7 +364,8 @@ def getDICOMFields(folder=".", tfile="dicomFields.txt", limit="20"):
     gzip compressed ones) in the specified folder and its subfolders. It will 
     generate a report file that will list all the DICOM fields found across all 
     the DICOM files, and for each of the fields list example values up to the
-    specified limit.
+    specified limit. The list will be saved as a comma separated values (csv)
+    file.
 
     This file can be used to identify the fields that might carry personally
     identifiable information and therefore need to be processed appropriately. 
