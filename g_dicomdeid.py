@@ -103,15 +103,13 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
     :return: None
     """
     if output_folder is None and rename_files:
-        raise RuntimeError("Files can only be renamed if they are being saved"
-                           " in a different location.  Please provide output_folder"
-                           " as an argument.")
+        raise ge.CommandFailed("discoverDICOM", "Output folder not specified", "Files can only be renamed if they are being saved in a different location.", "Please provide output_folder as an argument!")
 
     for (dirpath, dirnames, filenames) in os.walk(folder):
         for filename in filenames:
             full_filename = os.path.join(dirpath, filename)
 
-            print "---> Inspecting", full_filename
+            print "---> Inspecting", full_filename, 
 
             opened_dicom = None
 
@@ -120,7 +118,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                 opened_dicom = readDICOMBase(full_filename)
 
                 if opened_dicom:
-                    print "     ... read as dicom"
+                    print " ... read as dicom"
 
                 modified_dicom = deid_function(opened_dicom)
 
@@ -145,7 +143,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     file.close()
 
                     if opened_dicom:
-                        print "     ... read as gzipped dicom"
+                        print " ... read as gzipped dicom"
 
                     if output_folder is None:
                         file = gzip.open(full_filename, mode='wb')
@@ -170,7 +168,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     file.close()
 
                     if opened_dicom:
-                        print "     ... extracted as a zip file"
+                        print " ... extracted as a zip file"
 
                     opened_dicom = True
 
@@ -203,7 +201,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     file.close()
 
                     if opened_dicom:
-                        print "     ... extracted as a tar file"
+                        print " ... extracted as a tar file"
 
                     opened_dicom = True
 
@@ -230,7 +228,8 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     pass  # File was not a tar archive
 
             if opened_dicom is None:
-                logging.warning("Unable to identify %s as a dicom file or zip archive to search.", full_filename)
+                print "... not a dicom file ... skipping"
+                # logging.warning("Unable to identify %s as a dicom file or zip archive to search.", full_filename)
                 continue
 
 
@@ -267,7 +266,7 @@ def field_dict_modifier(node_id, node_path, node):
     field_dict[(node_id, node_path)] = value_list
 
 
-def recurse_tree(dataset, node_func, parent_id=None, parent_path=None):
+def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=False):
     """Recursively step through the levels of the dicom dataset, calling node_func on each DataElement found with its
     id and path
 
@@ -284,7 +283,8 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None):
     """
     # order the dicom tags
 
-    print "     ... recursing tree"
+    if debug:
+        print "     ... recursing tree"
 
     for data_element in dataset:
         if data_element.name == "Pixel Data":
@@ -303,21 +303,26 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None):
                 data_element_name = from_tag(data_element.tag)
             node_path = parent_path + "/" + data_element_name
 
-        print "         > node id:", node_id, "node path:", node_path, 
-        print "> checking element type", 
+        if debug:
+            print "         > node id:", node_id, "node path:", node_path, 
+            print "> checking element type", 
 
         if isinstance(data_element.value, pydicom.Sequence):   # a sequence
-            print "> a sequence"
+            if debug:
+                print "> a sequence"
             for dataset in data_element.value:
                 recurse_tree(dataset, node_func, node_id, node_path)
         elif isinstance(data_element.value, pydicom.Dataset):
-            print "> a dataset"
+            if debug:
+                print "> a dataset"
             recurse_tree(data_element.value, node_func, node_id, node_path)
         else:
-            print "> an element"
+            if debug:
+                print "> an element"
             node_func(node_id, node_path, data_element)
 
-    print "     ... end recursing"
+    if debug:
+        print "     ... end recursing"
 
 
 def dicom_scan(opened_dicom):
@@ -407,17 +412,91 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
 
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
+def changeDICOMFiles(folder=".", paramfile=None, archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
+    '''
+    changeDICOMFiles [folder=.] [tfile=dicomFields.csv] [limit=20]
 
-def changeDICOMs(folder_to_scan, param_file, archive_file, output_folder=None, rename_files=False, extension="", replacement_date=None):
-    if output_folder is not None:
+    USE
+    ===
+
+    The command is used to change all the dicom files in the specified folder
+    according to directions provided in the `paramfile`. The values to be 
+    archived are saved (appended) to `archivefile` as a comma separated values 
+    formated file. The files can be either changed in place or saved to the 
+    specified `outputfolder` and optionally renamed by adding the specified
+    `extension`.
+
+    # ------ #
+
+    PARAMETERS
+    ==========
+
+    --folder    The base folder from which the search for DICOM files should
+                start. The command will try to locate all valid DICOM files
+                within the specified folder and its subfolders. [.]
+    --tfile     The name (and path) of the file in which the information is to 
+                stored. [dicomFields.csv]
+    --limit     The maximum number of example values to provide for each of the
+                DICOM fields. [20]
+
+    RESULTS
+    =======
+
+    After running, the command will inspect all the valid DICOM files (including
+    gzip compressed ones) in the specified folder and its subfolders. It will 
+    generate a report file that will list all the DICOM fields found across all 
+    the DICOM files, and for each of the fields list example values up to the
+    specified limit. The list will be saved as a comma separated values (csv)
+    file.
+
+    This file can be used to identify the fields that might carry personally
+    identifiable information and therefore need to be processed appropriately. 
+
+    EXAMPLE USE
+    ===========
+
+    gmri getDICOMFields folder=. clean=yes unzip=yes gzip=yes cores=3
+
+    ----------------
+    Written by Antonija Kolobarič
+
+    Changelog
+    2018-10-24 Grega Repovš
+             - Updated documentation
+             – Changed parameter names to match the convention and use elsewhere
+             - Added input parameter checks
+
+    '''
+
+    if extension:
+        renamefiles = True
+    else:
+        renamefiles = False
+
+    if not os.path.exists(folder):
+        raise ge.CommandFailed("changeDICOMFiles", "Folder not found", "The specified folder with DICOM files to change was not found:", "%s" % (folder), "Please check your paths!")
+
+    if not paramfile:
+        raise ge.CommandError("changeDICOMFiles", "No parameter file specified", "No parameter file information was provided.", "Please provide a parameter file that describes the changes to be made!")
+
+    if not os.path.exists(paramfile):
+        raise ge.CommandFailed("changeDICOMFiles", "Parameter file not found", "The specified parameter file was not found:", "%s" % (folder), "Please check your paths!")
+
+    try:
+        f = open(archivefile, "a")
+        f.close()
+    except:
+        raise ge.CommandFailed("changeDICOMFiles", "Could not create archive file", "The specifed archive file could not be created:", "%s" % (tfile), "Please check your paths and permissions!")
+
+    if outputfolder is not None:
         try:
-            shutil.rmtree(output_folder)
+            shutil.rmtree(outputfolder)
         except:
             pass
-        os.mkdir(output_folder)
-    manipulate_file = functools.partial(deid_and_date_removal, param_file=param_file, archive_file=archive_file,
-                                        replacement_date=replacement_date)
-    discoverDICOM(folder_to_scan, manipulate_file, output_folder, rename_files, extension)
+        os.mkdir(outputfolder)
+
+    manipulate_file = functools.partial(deid_and_date_removal, param_file=paramfile, archive_file=archivefile, replacement_date=replacementdate)
+    discoverDICOM(folder, manipulate_file, outputfolder, renamefiles, extension)
 
 
 def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None):
@@ -851,7 +930,7 @@ if __name__ == "__main__":
 
 
 if __name__ == "__main__":
-    changeDICOMs("/Users/antonijakolobaric/Desktop/0702/dicoms",
+    changeDICOMFiles("/Users/antonijakolobaric/Desktop/0702/dicoms",
              "/Users/antonijakolobaric/Desktop/0702/dicoms/test_config",
              "/Users/antonijakolobaric/Desktop/0702/dicoms/archive.csv",
              "/Users/antonijakolobaric/Desktop/0702/dicoms_output")

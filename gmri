@@ -118,6 +118,7 @@ createBatch  [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.
 createList   [subjectsfolder=.] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 createConc   [subjectsfolder=.] [subjects=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 
+
 Fidl file utilities
 -------------------
 joinFidl       concfile=<reference_conc_file> fidlroot=<fidl_files_root_pattern> [fidlname=<optional fidlname to append>]
@@ -270,7 +271,7 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'createWSPALMDesign'   : {'com': niu.g_palm.createWSPALMDesign,      'args': ('factors', 'nsubjects', 'root')},
             'schedule'             : {'com': niu.g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
             'getDICOMFields'       : {'com': niu.g_dicomdeid.getDICOMFields,     'args': ('folder', 'tfile', 'limit')},
-            'changeDICOMs'         : {'com': niu.g_dicomdeid.changeDICOMs,       'args': ('folder', 'param_file', 'archive_file', 'output_folder', 'rename_files', 'extension')}
+            'changeDICOMFiles'     : {'com': niu.g_dicomdeid.changeDICOMFiles,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')}
 
             }
 
