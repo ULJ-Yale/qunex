@@ -378,7 +378,15 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
     EXAMPLE USE
     ===========
 
-    gmri getDICOMFields folder=. clean=yes unzip=yes gzip=yes cores=3
+    gmri getDICOMFields
+
+    gmri getDICOMFields \
+         --folder=/data/studies/WM/subjects/inbox/MR 
+
+    gmri getDICOMFields \
+         --folder=/data/studies/WM/subjects/inbox/MR/original \
+         --tfile=/data/studies/WM/subjects/specs/dicomFields.csv \
+         --limit=10
 
     ----------------
     Written by Antonija Kolobarič
@@ -412,7 +420,7 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
 
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
-def changeDICOMFiles(folder=".", paramfile=None, archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
+def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
     '''
     changeDICOMFiles [folder=.] [tfile=dicomFields.csv] [limit=20]
 
@@ -422,46 +430,101 @@ def changeDICOMFiles(folder=".", paramfile=None, archivefile="archive.csv", outp
     The command is used to change all the dicom files in the specified folder
     according to directions provided in the `paramfile`. The values to be 
     archived are saved (appended) to `archivefile` as a comma separated values 
-    formated file. The files can be either changed in place or saved to the 
-    specified `outputfolder` and optionally renamed by adding the specified
+    formatted file. The dicom files can be either changed in place or saved to 
+    the specified `outputfolder` and optionally renamed by adding the specified
     `extension`.
 
-    # ------ #
 
     PARAMETERS
     ==========
 
-    --folder    The base folder from which the search for DICOM files should
-                start. The command will try to locate all valid DICOM files
-                within the specified folder and its subfolders. [.]
-    --tfile     The name (and path) of the file in which the information is to 
-                stored. [dicomFields.csv]
-    --limit     The maximum number of example values to provide for each of the
-                DICOM fields. [20]
+    --folder            The base folder from which the search for DICOM files 
+                        should start. The command will try to locate all valid 
+                        DICOM files within the specified folder and its 
+                        subfolders. [.]
+    --paramfile         The path to the parameter file that specifies, what 
+                        actions to perform on the dicom fields. [deidparam.txt]
+    --archivefile       The path to the file in which values to be archived are 
+                        to be stored. [archive.csv]
+    --outputfolder      The optional path to the folder to which the modified 
+                        dicom files are to be saved. If not specified, the dicom 
+                        files are changed in place (overwriten). []
+    --extension         An optional extension to be added to each modified dicom 
+                        file name. The extension can be applied only when files 
+                        are copied to the `outputfolder`. []
+    --replacementdate   The date relative to which the dates in the dicom files
+                        are to be recomputed. []
 
-    RESULTS
-    =======
 
-    After running, the command will inspect all the valid DICOM files (including
-    gzip compressed ones) in the specified folder and its subfolders. It will 
-    generate a report file that will list all the DICOM fields found across all 
-    the DICOM files, and for each of the fields list example values up to the
-    specified limit. The list will be saved as a comma separated values (csv)
-    file.
+    PARAMETER FILE
+    ==============
 
-    This file can be used to identify the fields that might carry personally
-    identifiable information and therefore need to be processed appropriately. 
+    Parameter file is a text file that specifies the operations that are to be 
+    performed on the fields in the dicom files. The default name for the 
+    parameter file is `deidparam.txt`, however any other name can be used. The
+    operations to be performed are specifed one dicom filed per line in the
+    format:
+
+    <dicom field>  > <action>[:<parameter>], <action>[:<parameter>]
+
+    Dicom field can be either the name of the field or it's hexdecimal code. The
+    list of actions is a comma separated list of commands and their optional 
+    parameters. The possible actions are:
+
+    archive  ... Archive the original value in the archive file.
+    hash     ... Replace the original value with the hashed value. An optional
+                 salt can be specified.
+    replace  ... Replace the original value with the specified value.
+    delete   ... Delete the field from the dicom file.
+    
+    If multiple actions are specified, they are carried out in the above order
+    (archive, hash, replace, delete). When hashing, to prevent the possibility
+    of reconstructing the original value by hashing candidate values, a salt 
+    is used. By default a random salt is generated each time changeDICOMFiles 
+    is run, however, a specific salt can be provided as the optional parameter
+    to the `hash` command. A random salt can also be explictly specified by 
+    setting the optinal parameter to 'random'.
+
+    Lines in the parmeter file that start with '#' or do not specify a mapping 
+    (i.e. lack '>') are ignored.
+
+    Example spec file:
+    ------------------
+
+    0x80005    > archive, delete
+    fieldname3 > hash: sdh2083uddoqew
+    fieldname5 > archive, hash:random
+    fieldname7 > hash: sdh2083uddoqew
+
+    0x80005  > delete
+    0x100010 > delete
+    0x80012  > delete, archive
+    0x82112  > hash, archive
+    0x180022 > hash:qrklejwrlke, archive
+    0x180032 > replace:20070101
+
 
     EXAMPLE USE
     ===========
 
-    gmri getDICOMFields folder=. clean=yes unzip=yes gzip=yes cores=3
+    gmri changeDICOMFiles \
+         --folder=. 
+
+    gmri changeDICOMFiles \
+         --folder=/data/studies/WM/subjects/inbox/MR \
+         --paramfile=/data/studies/WM/subjects/specs/deid.txt
+
+    gmri changeDICOMFiles \
+         --folder=/data/studies/WM/subjects/inbox/MR/original \
+         --paramfile=/data/studies/WM/subjects/specs/deidv1.txt \
+         --outputfolder=/data/studies/WM/subjects/MR/deid \
+         --extension="_v1"
 
     ----------------
-    Written by Antonija Kolobarič
+    Written by Antonija Kolobarič & Grega Repovš
 
     Changelog
-    2018-10-24 Grega Repovš
+    2018-11-10 Grega Repovš
              - Updated documentation
              – Changed parameter names to match the convention and use elsewhere
              - Added input parameter checks
