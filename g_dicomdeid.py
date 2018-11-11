@@ -348,17 +348,17 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
     ===
 
     The command is used to get an overview of DICOM fields across all the DICOM
-    files in the study with example values, to identify those fields that might
-    carry personally identifiable information.
+    files in the study with example values, with the goal of identifying
+    those fields that might carry personally identifiable information.
 
     PARAMETERS
     ==========
 
-    --folder    The base folder from which the search for DICOM files should
-                start. The command will try to locate all valid DICOM files
+    --folder    The base folder to search for DICOM files. 
+                The command will try to locate all valid DICOM files
                 within the specified folder and its subfolders. [.]
-    --tfile     The name (and path) of the file in which the information is to 
-                stored. [dicomFields.csv]
+    --tfile     The name (and path) of the file to store the information
+                in. [dicomFields.csv]
     --limit     The maximum number of example values to provide for each of the
                 DICOM fields. [20]
 
@@ -368,9 +368,9 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
     After running, the command will inspect all the valid DICOM files (including
     gzip compressed ones) in the specified folder and its subfolders. It will 
     generate a report file that will list all the DICOM fields found across all 
-    the DICOM files, and for each of the fields list example values up to the
-    specified limit. The list will be saved as a comma separated values (csv)
-    file.
+    the DICOM files. For each of the fields, the command will list example values
+    up to the specified limit. The list will be saved as a comma separated values
+    (csv) file.
 
     This file can be used to identify the fields that might carry personally
     identifiable information and therefore need to be processed appropriately. 
@@ -389,7 +389,7 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
          --limit=10
 
     ----------------
-    Written by Antonija Kolobarič
+    Written by Antonija Kolobarić
 
     Changelog
     2018-10-24 Grega Repovš
@@ -422,7 +422,7 @@ DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
 def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
     '''
-    changeDICOMFiles [folder=.] [tfile=dicomFields.csv] [limit=20]
+    changeDICOMFiles [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]
 
     USE
     ===
@@ -442,7 +442,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
                         should start. The command will try to locate all valid 
                         DICOM files within the specified folder and its 
                         subfolders. [.]
-    --paramfile         The path to the parameter file that specifies, what 
+    --paramfile         The path to the parameter file that specifies what 
                         actions to perform on the dicom fields. [deidparam.txt]
     --archivefile       The path to the file in which values to be archived are 
                         to be stored. [archive.csv]
@@ -452,8 +452,8 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     --extension         An optional extension to be added to each modified dicom 
                         file name. The extension can be applied only when files 
                         are copied to the `outputfolder`. []
-    --replacementdate   The date relative to which the dates in the dicom files
-                        are to be recomputed. []
+    --replacementdate   The date to replace all instances of StudyDate in the
+                        file. []
 
 
     PARAMETER FILE
@@ -462,14 +462,15 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     Parameter file is a text file that specifies the operations that are to be 
     performed on the fields in the dicom files. The default name for the 
     parameter file is `deidparam.txt`, however any other name can be used. The
-    operations to be performed are specifed one dicom filed per line in the
+    operations to be performed are specifed one dicom field per line in the
     format:
 
     <dicom field>  > <action>[:<parameter>], <action>[:<parameter>]
 
-    Dicom field can be either the name of the field or it's hexdecimal code. The
-    list of actions is a comma separated list of commands and their optional 
-    parameters. The possible actions are:
+    Dicom field is the hexdecimal code of the field, which can be found in
+    the first column of the readDICOMfields output csv. The list of actions
+    is a comma separated list of commands and their optional parameters. 
+    The possible actions are:
 
     archive  ... Archive the original value in the archive file.
     hash     ... Replace the original value with the hashed value. An optional
@@ -521,7 +522,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
          --extension="_v1"
 
     ----------------
-    Written by Antonija Kolobarič & Grega Repovš
+    Written by Antonija Kolobarić & Grega Repovš
 
     Changelog
     2018-11-10 Grega Repovš
@@ -982,20 +983,3 @@ def date_removal_func(node_id, node_path, node, target_date, replace_date):
     """
     if isinstance(node.value, str):
         node.value = node.value.replace(target_date, replace_date)
-
-
-"""
-
-if __name__ == "__main__":
-    getDICOMFields("/Users/antonijakolobaric/Desktop/0702/dicoms",
-                 "/Users/antonijakolobaric/Desktop/0702/dicoms/Output.csv",
-                 20)
-
-
-if __name__ == "__main__":
-    changeDICOMFiles("/Users/antonijakolobaric/Desktop/0702/dicoms",
-             "/Users/antonijakolobaric/Desktop/0702/dicoms/test_config",
-             "/Users/antonijakolobaric/Desktop/0702/dicoms/archive.csv",
-             "/Users/antonijakolobaric/Desktop/0702/dicoms_output")
-
-"""
