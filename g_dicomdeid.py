@@ -88,7 +88,7 @@ def get_dicom_name(opened_dicom, extension="dcm"):
     return filename
 
 
-def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False, extension=""):
+def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False):
     """
     Given a folder name, looks for DICOMs in nested subfolders, zip files, gzip files
     and tar files and runs the function deid_function on each dicom it finds
@@ -122,16 +122,17 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
                 modified_dicom = deid_function(opened_dicom)
 
-                if output_folder is None:
-                    output_file = full_filename
-                else:
-                    if rename_files:
-                        output_file = os.path.join(output_folder, get_dicom_name(modified_dicom), "dcm"+extension)
+                if save:
+                    if output_folder is None:
+                        output_file = full_filename
                     else:
-                        relative_filepath = os.path.relpath(full_filename, folder)
-                        output_file = os.path.join(output_folder, relative_filepath)
+                        if rename_files:
+                            output_file = os.path.join(output_folder, get_dicom_name(modified_dicom), "dcm"+extension)
+                        else:
+                            relative_filepath = os.path.relpath(full_filename, folder)
+                            output_file = os.path.join(output_folder, relative_filepath)
 
-                modified_dicom.save_as(output_file)
+                    modified_dicom.save_as(output_file)
             except Exception as e:
                	pass  # file was not a dicom
 
@@ -145,17 +146,18 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     if opened_dicom:
                         print " ... read as gzipped dicom"
 
-                    if output_folder is None:
-                        file = gzip.open(full_filename, mode='wb')
-                    else:
-                        if rename_files:
-                            new_filepath = os.path.join(dirpath, get_dicom_name(modified_dicom), "dcm.gz"+extension)
+                    if save:
+                        if output_folder is None:
+                            file = gzip.open(full_filename, mode='wb')
                         else:
-                            relative_filepath = os.path.relpath(full_filename, folder)
-                            new_filepath = os.path.join(output_folder, relative_filepath)
-                        file = gzip.open(new_filepath, mode='wb')
+                            if rename_files:
+                                new_filepath = os.path.join(dirpath, get_dicom_name(modified_dicom), "dcm.gz"+extension)
+                            else:
+                                relative_filepath = os.path.relpath(full_filename, folder)
+                                new_filepath = os.path.join(output_folder, relative_filepath)
+                            file = gzip.open(new_filepath, mode='wb')
 
-                    modified_dicom.save_as(file)
+                        modified_dicom.save_as(file)
 
                 except Exception as e:
                     pass  # file was not a gzipped DICOM
@@ -172,20 +174,22 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
                     opened_dicom = True
 
-                    discoverDICOM(temp_directory, deid_function, output_folder, rename_files, extension)
+                    discoverDICOM(temp_directory, deid_function, output_folder, rename_files, extension, save=save)
 
-                    if output_folder is None:
-                        file = zipfile.ZipFile(full_filename, mode='w')
-                    else:
-                        relative_filepath = os.path.relpath(full_filename, folder)
-                        new_filepath = os.path.join(output_folder, relative_filepath)
-                        file = zipfile.ZipFile(new_filepath, mode='w')
+                    if save:
 
-                    for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_directory):
-                        for filename_2 in filenames_2:
-                            full_path_2 = os.path.join(dirpath_2, filename_2)
-                            relative_filepath_2 = os.path.relpath(full_path_2, temp_directory)
-                            file.write(full_path_2, relative_filepath_2)
+                        if output_folder is None:
+                            file = zipfile.ZipFile(full_filename, mode='w')
+                        else:
+                            relative_filepath = os.path.relpath(full_filename, folder)
+                            new_filepath = os.path.join(output_folder, relative_filepath)
+                            file = zipfile.ZipFile(new_filepath, mode='w')
+
+                        for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_directory):
+                            for filename_2 in filenames_2:
+                                full_path_2 = os.path.join(dirpath_2, filename_2)
+                                relative_filepath_2 = os.path.relpath(full_path_2, temp_directory)
+                                file.write(full_path_2, relative_filepath_2)
 
                     shutil.rmtree(temp_directory)
 
@@ -205,22 +209,23 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
                     opened_dicom = True
 
-                    discoverDICOM(temp_directory, deid_function, output_folder, rename_files, extension)
+                    discoverDICOM(temp_directory, deid_function, output_folder, rename_files, extension, save=save)
 
-                    mode2 = 'w' + mode[1:]
+                    if save:
+                        mode2 = 'w' + mode[1:]
 
-                    if output_folder is None:
-                        file = tarfile.open(full_filename, mode=mode2)
-                    else:
-                        relative_filepath = os.path.relpath(full_filename, folder)
-                        new_filepath = os.path.join(output_folder, relative_filepath)
-                        file = tarfile.open(new_filepath, mode2)
+                        if output_folder is None:
+                            file = tarfile.open(full_filename, mode=mode2)
+                        else:
+                            relative_filepath = os.path.relpath(full_filename, folder)
+                            new_filepath = os.path.join(output_folder, relative_filepath)
+                            file = tarfile.open(new_filepath, mode2)
 
-                    for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_directory):
-                        for filename_2 in filenames_2:
-                            full_path_2 = os.path.join(dirpath_2, filename_2)
-                            relative_filepath_2 = os.path.relpath(full_path_2, temp_directory)
-                            file.write(full_path_2, relative_filepath_2)
+                        for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_directory):
+                            for filename_2 in filenames_2:
+                                full_path_2 = os.path.join(dirpath_2, filename_2)
+                                relative_filepath_2 = os.path.relpath(full_path_2, temp_directory)
+                                file.write(full_path_2, relative_filepath_2)
 
                     shutil.rmtree(temp_directory)
 
@@ -407,7 +412,10 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
     except:
         raise ge.CommandFailed("getDICOMFields", "Could not create target file", "The specifed target file could not be created:", "%s" % (tfile), "Please check your paths and permissions!")
 
-    discoverDICOM(folder, dicom_scan)
+
+    field_dict = {}
+
+    discoverDICOM(folder, dicom_scan, save=False)
     write_field_dict(tfile, limit)
 
 
