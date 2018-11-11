@@ -401,6 +401,8 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
              - Updated documentation
              – Changed parameter names to match the convention and use elsewhere
              - Added input parameter checks
+    2018-11-11 Grega Repovš
+             - The command does not change/save the files anymore
     '''
 
     if not os.path.exists(folder):
