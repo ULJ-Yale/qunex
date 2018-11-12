@@ -44,23 +44,45 @@ def _at_frame(tag, VR, length):
 
 def readDICOMBase(filename):
     # try partial read
+    gz = False
     try:
         if '.gz' in filename:
             f = gzip.open(filename, 'r')
+            gz = True
         else:
             f = open(filename, 'r')
         d = dfr.read_partial(f, stop_when=_at_frame)
         f.close()
-        return d
+        if not d:
+            raise ValueError
+        return d, gz
     except:
-        # return None
-        # print " ===> WARNING: Could not partial read dicom file, attempting full read! [%s]" % (filename)
         try:
-            d = dfr.read_file(filename, stop_before_pixels=True)
-            return d
+            if '.gz' in filename:
+                f = gzip.open(filename, 'r')
+                gz = True
+            else:
+                f = open(filename, 'r')
+            d = dfr.read_file(f, stop_before_pixels=True)
+            return d, gz
         except:
-            # print " ===> ERROR: Could not read dicom file, aborting. Please check file: %s" % (filename)
-            return None
+            return None, None
+
+
+def readDICOMFull(filename):
+    # read the full dicom file
+    try:
+        if '.gz' in filename:
+            f = gzip.open(filename, 'r')
+            gz = True
+        else:
+            f = open(filename, 'r')
+            gz = False
+        d = dfr.read_file(f)
+        f.close()
+        return d, gz
+    except:
+        return None
 
 
 def get_dicom_name(opened_dicom, extension="dcm"):
@@ -72,8 +94,14 @@ def get_dicom_name(opened_dicom, extension="dcm"):
         s_id = opened_dicom.PatientID
     elif "StudyID" in opened_dicom:
         s_id = opened_dicom.StudyID
+    else:
+        s_id = "NA"
 
-    sequence_id = str(opened_dicom.SeriesNumber)
+    if "SeriesNumber" in opened_dicom:
+        sequence_id = str(opened_dicom.SeriesNumber)
+    else:
+        sequence_id = "NA"
+
     try:
         sop = opened_dicom.SOPInstanceUID
     except:
@@ -115,10 +143,15 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
 
             try:
                 # opened_dicom = pydicom.dcmread(full_filename, stop_before_pixels=True)
-                opened_dicom = readDICOMBase(full_filename)
+                if save:
+                    opened_dicom, gz = readDICOMFull(full_filename)
+                else:    
+                    opened_dicom, gz = readDICOMBase(full_filename)
 
                 if opened_dicom:
                     print " ... read as dicom"
+                else:
+                    print opened_dicom, gz
 
                 modified_dicom = deid_function(opened_dicom)
 
@@ -127,71 +160,56 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                         output_file = full_filename
                     else:
                         if rename_files:
-                            output_file = os.path.join(output_folder, get_dicom_name(modified_dicom), "dcm"+extension)
+                            if gz:
+                                output_file = os.path.join(output_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm.gz"))
+                            else:
+                                output_file = os.path.join(output_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm"))
                         else:
                             relative_filepath = os.path.relpath(full_filename, folder)
                             output_file = os.path.join(output_folder, relative_filepath)
 
-                    modified_dicom.save_as(output_file)
+                    if gz:
+                        file = gzip.open(output_file, mode='wb')
+                    else:
+                        file = open(output_file, mode='wb')
+
+                    print "     -> saving to", output_file
+                    modified_dicom.save_as(file)
+                    file.close()
+
             except Exception as e:
                	pass  # file was not a dicom
 
             if opened_dicom is None:
                 try:
-                    file = gzip.open(full_filename, mode='rb')
-                    opened_dicom = pydicom.dcmread(file, stop_before_pixels=True)
-                    modified_dicom = deid_function(opened_dicom)
-                    file.close()
-
-                    if opened_dicom:
-                        print " ... read as gzipped dicom"
-
-                    if save:
-                        if output_folder is None:
-                            file = gzip.open(full_filename, mode='wb')
-                        else:
-                            if rename_files:
-                                new_filepath = os.path.join(dirpath, get_dicom_name(modified_dicom), "dcm.gz"+extension)
-                            else:
-                                relative_filepath = os.path.relpath(full_filename, folder)
-                                new_filepath = os.path.join(output_folder, relative_filepath)
-                            file = gzip.open(new_filepath, mode='wb')
-
-                        modified_dicom.save_as(file)
-
-                except Exception as e:
-                    pass  # file was not a gzipped DICOM
-
-            if opened_dicom is None:
-                try:
                     file = zipfile.ZipFile(full_filename)
                     temp_directory = tempfile.mkdtemp("_".join(full_filename.split("/")))
+                    temp_out_directory = tempfile.mkdtemp("_".join(full_filename.split("/")))
                     file.extractall(temp_directory)
                     file.close()
 
-                    if opened_dicom:
-                        print " ... extracted as a zip file"
+                    print " ... extracted as a zip file"
 
-                    opened_dicom = True
-
-                    discoverDICOM(temp_directory, deid_function, output_folder, rename_files, extension, save=save)
+                    discoverDICOM(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save)
 
                     if save:
+                        target_file = full_filename
 
-                        if output_folder is None:
-                            file = zipfile.ZipFile(full_filename, mode='w')
-                        else:
-                            relative_filepath = os.path.relpath(full_filename, folder)
-                            new_filepath = os.path.join(output_folder, relative_filepath)
-                            file = zipfile.ZipFile(new_filepath, mode='w')
+                        if output_folder:
+                            relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
+                            target_file = os.path.join(output_folder, relative_filepath)
+                        
+                        print "     -> zipping to", target_file
+                        file = zipfile.ZipFile(target_file, mode='w')
 
-                        for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_directory):
+                        for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_out_directory):
                             for filename_2 in filenames_2:
                                 full_path_2 = os.path.join(dirpath_2, filename_2)
-                                relative_filepath_2 = os.path.relpath(full_path_2, temp_directory)
+                                relative_filepath_2 = os.path.relpath(full_path_2, temp_out_directory)
                                 file.write(full_path_2, relative_filepath_2)
 
                     shutil.rmtree(temp_directory)
+                    shutil.rmtree(temp_out_directory)
 
                 except:
                     pass  # File was not a zip archive
@@ -219,7 +237,9 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                         else:
                             relative_filepath = os.path.relpath(full_filename, folder)
                             new_filepath = os.path.join(output_folder, relative_filepath)
-                            file = tarfile.open(new_filepath, mode2)
+                        
+                        print "     -> archiving to", new_filepath
+                        file = tarfile.open(new_filepath, mode2)
 
                         for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_directory):
                             for filename_2 in filenames_2:
@@ -403,6 +423,7 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
              - Added input parameter checks
     2018-11-11 Grega Repovš
              - The command does not change/save the files anymore
+             - More robust checking of parameters             
     '''
 
     if not os.path.exists(folder):
@@ -539,7 +560,11 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
              - Updated documentation
              – Changed parameter names to match the convention and use elsewhere
              - Added input parameter checks
-
+    
+    2018-11-11 Grega Repovš
+             - Stores the correct renamed and processed files in the zip package
+             - urlsafe hash encoding
+             - More robust field checking
     '''
 
     if extension:
@@ -570,7 +595,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
         os.mkdir(outputfolder)
 
     manipulate_file = functools.partial(deid_and_date_removal, param_file=paramfile, archive_file=archivefile, replacement_date=replacementdate)
-    discoverDICOM(folder, manipulate_file, outputfolder, renamefiles, extension)
+    discoverDICOM(folder, manipulate_file, outputfolder, renamefiles, extension, save=True)
 
 
 def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None):
@@ -837,7 +862,7 @@ def hash_one_value(value, salt):
     :rtype: str
     """
     hashed = hashlib.pbkdf2_hmac('sha256', bytearray(value), bytearray(salt), 100000)
-    return base64.b64encode(hashed)
+    return base64.urlsafe_b64encode(hashed)[:-1]
 
 
 def hash(target_dicom, tag, field_id, filename, hasher_map):
@@ -953,7 +978,14 @@ def strip_dates(dicom_file, replacement_date=None):
     :return: None
     :rtype: None
     """
-    target_date = dicom_file.StudyDate
+
+    if "StudyDate" in dicom_file:
+        target_date = dicom_file.StudyDate
+    elif "SeriesDate" in dicom_file:
+        target_date = dicom_file.SeriesDate
+    else:
+        print "     -> WARNING: No StudyDate field present"
+        return
 
     if replacement_date is None:
         year = random.randint(1970, 2015)
@@ -974,6 +1006,7 @@ def strip_dates(dicom_file, replacement_date=None):
 
     recurse_tree(dicom_file, modified_removal_func)
     recurse_tree(dicom_file.file_meta, modified_removal_func)
+
 
 
 def date_removal_func(node_id, node_path, node, target_date, replace_date):
