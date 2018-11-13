@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import re
 import os
 import gzip
+import glob
 import logging
 import tempfile
 import zipfile
 import tarfile
 import csv
 import hashlib
-import json
 import random
 import string
 import functools
@@ -116,7 +117,7 @@ def get_dicom_name(opened_dicom, extension="dcm"):
     return filename
 
 
-def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False):
+def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False, extension="", save=False, archive_file=""):
     """
     Given a folder name, looks for DICOMs in nested subfolders, zip files, gzip files
     and tar files and runs the function deid_function on each dicom it finds
@@ -137,7 +138,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
         for filename in filenames:
             full_filename = os.path.join(dirpath, filename)
 
-            print "---> Inspecting", full_filename, 
+            print "---> Inspecting", full_filename
 
             opened_dicom = None
 
@@ -149,32 +150,49 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                     opened_dicom, gz = readDICOMBase(full_filename)
 
                 if opened_dicom:
-                    print " ... read as dicom"
-                else:
-                    print opened_dicom, gz
+                    print "     ... read as dicom"
 
-                modified_dicom = deid_function(opened_dicom)
+                modified_dicom = deid_function(opened_dicom, filename=os.path.relpath(full_filename, folder))
+                print "     ... processed"
 
                 if save:
                     if output_folder is None:
                         output_file = full_filename
                     else:
                         if rename_files:
+                            relative_folder = os.path.dirname(os.path.relpath(full_filename, folder))
+                            target_folder = os.path.join(output_folder, relative_folder)
+                            if not os.path.exists(target_folder):
+                                os.makedirs(target_folder)
                             if gz:
-                                output_file = os.path.join(output_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm.gz"))
+                                output_file = os.path.join(target_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm.gz"))
                             else:
-                                output_file = os.path.join(output_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm"))
+                                output_file = os.path.join(target_folder, get_dicom_name(modified_dicom, extension=extension + ".dcm"))
+
+                            archive_writer = csv.writer(open(archive_file, mode='a'))
+                            archive_writer.writerow([os.path.relpath(full_filename, folder), 'filename', os.path.relpath(output_file, output_folder)])
+
                         else:
+                            relative_folder = os.path.dirname(os.path.relpath(full_filename, folder))
+                            target_folder = os.path.join(output_folder, relative_folder)
+                            if not os.path.exists(target_folder):
+                                os.makedirs(target_folder)
                             relative_filepath = os.path.relpath(full_filename, folder)
                             output_file = os.path.join(output_folder, relative_filepath)
 
                     if gz:
-                        file = gzip.open(output_file, mode='wb')
+                        file = tempfile.TemporaryFile()                        
                     else:
                         file = open(output_file, mode='wb')
 
                     print "     -> saving to", output_file
                     modified_dicom.save_as(file)
+
+                    if gz:
+                        gzfile = gzip.open(output_file, mode='wb')
+                        file.seek(0)
+                        gzfile.write(file.read())
+                        gzfile.close()
                     file.close()
 
             except Exception as e:
@@ -183,14 +201,14 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
             if opened_dicom is None:
                 try:
                     file = zipfile.ZipFile(full_filename)
-                    temp_directory = tempfile.mkdtemp("_".join(full_filename.split("/")))
-                    temp_out_directory = tempfile.mkdtemp("_".join(full_filename.split("/")))
+                    temp_directory = tempfile.mkdtemp()
+                    temp_out_directory = tempfile.mkdtemp()
                     file.extractall(temp_directory)
                     file.close()
 
                     print " ... extracted as a zip file"
 
-                    discoverDICOM(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save)
+                    discoverDICOM(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
 
                     if save:
                         target_file = full_filename
@@ -199,7 +217,7 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                             relative_filepath = os.path.relpath(target_file.replace('.zip', "." + extension + '.zip'), folder)
                             target_file = os.path.join(output_folder, relative_filepath)
                         
-                        print "     -> zipping to", target_file
+                        print "===> zipping to", target_file
                         file = zipfile.ZipFile(target_file, mode='w')
 
                         for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_out_directory):
@@ -207,6 +225,8 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                                 full_path_2 = os.path.join(dirpath_2, filename_2)
                                 relative_filepath_2 = os.path.relpath(full_path_2, temp_out_directory)
                                 file.write(full_path_2, relative_filepath_2)
+
+                        file.close()
 
                     shutil.rmtree(temp_directory)
                     shutil.rmtree(temp_out_directory)
@@ -218,36 +238,37 @@ def discoverDICOM(folder, deid_function, output_folder=None, rename_files=False,
                 try:
                     file = tarfile.open(full_filename)
                     mode = file.mode
-                    temp_directory = tempfile.mkdtemp("_".join(full_filename.split("/")))
+                    temp_directory = tempfile.mkdtemp()
+                    temp_out_directory = tempfile.mkdtemp()
                     file.extractall(temp_directory)
                     file.close()
 
-                    if opened_dicom:
-                        print " ... extracted as a tar file"
+                    print " ... extracted as a tar file"                    
 
                     opened_dicom = True
 
-                    discoverDICOM(temp_directory, deid_function, output_folder, rename_files, extension, save=save)
+                    discoverDICOM(temp_directory, deid_function, temp_out_directory, rename_files, extension, save=save, archive_file=archive_file)
 
                     if save:
+                        target_file = full_filename
                         mode2 = 'w' + mode[1:]
 
-                        if output_folder is None:
-                            file = tarfile.open(full_filename, mode=mode2)
-                        else:
-                            relative_filepath = os.path.relpath(full_filename, folder)
-                            new_filepath = os.path.join(output_folder, relative_filepath)
-                        
-                        print "     -> archiving to", new_filepath
-                        file = tarfile.open(new_filepath, mode2)
+                        if output_folder:
+                            tarext = re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", full_filename).group(0)
+                            relative_filepath = os.path.relpath(target_file.replace(tarext, "." + extension + tarext), folder)
+                            target_file = os.path.join(output_folder, relative_filepath)
 
-                        for (dirpath_2, dirnames_2, filenames_2) in os.walk(temp_directory):
-                            for filename_2 in filenames_2:
-                                full_path_2 = os.path.join(dirpath_2, filename_2)
-                                relative_filepath_2 = os.path.relpath(full_path_2, temp_directory)
-                                file.write(full_path_2, relative_filepath_2)
+                        print "====> archiving to", target_file
+                        file = tarfile.open(target_file, mode2)                                                
+
+                        for item in glob.glob(os.path.join(temp_out_directory, '*')):
+                            relative_filepath = os.path.relpath(item, temp_out_directory)
+                            file.add(item, relative_filepath)
+
+                        file.close()
 
                     shutil.rmtree(temp_directory)
+                    shutil.rmtree(temp_out_directory)
 
                 except:
                     pass  # File was not a tar archive
@@ -350,7 +371,7 @@ def recurse_tree(dataset, node_func, parent_id=None, parent_path=None, debug=Fal
         print "     ... end recursing"
 
 
-def dicom_scan(opened_dicom):
+def dicom_scan(opened_dicom, filename=""):
     recurse_tree(opened_dicom, field_dict_modifier)
     recurse_tree(opened_dicom.file_meta, field_dict_modifier)
     return opened_dicom
@@ -438,7 +459,7 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
 
     field_dict = {}
 
-    discoverDICOM(folder, dicom_scan, save=False)
+    discoverDICOM(folder, dicom_scan, save=False, archive_file="")
     write_field_dict(tfile, limit)
 
 
@@ -595,11 +616,11 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
         os.mkdir(outputfolder)
 
     manipulate_file = functools.partial(deid_and_date_removal, param_file=paramfile, archive_file=archivefile, replacement_date=replacementdate)
-    discoverDICOM(folder, manipulate_file, outputfolder, renamefiles, extension, save=True)
+    discoverDICOM(folder, manipulate_file, outputfolder, renamefiles, extension, save=True, archive_file=archivefile)
 
 
-def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None):
-    deid(opened_dicom, param_file, archive_file)
+def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None, filename=""):
+    deid(opened_dicom, param_file, archive_file, filename)
     strip_dates(opened_dicom, replacement_date)
     return opened_dicom
 
@@ -648,7 +669,7 @@ def get_group(full_id):
         raise e
 
 
-def deid(opened_dicom, param_file="", archive_file=""):
+def deid(opened_dicom, param_file="", archive_file="", filename=""):
     action_dict, replace_map, hasher_map = read_spec_file(param_file)
 
     archive_writer = csv.writer(open(archive_file, mode='a'))
@@ -668,9 +689,9 @@ def deid(opened_dicom, param_file="", archive_file=""):
 
             group = get_group(key)
             if group == 0x02:
-                apply_action_from_field_id(opened_dicom.file_meta, key, apply_func)
+                apply_action_from_field_id(opened_dicom.file_meta, key, apply_func, filename)
             else:
-                apply_action_from_field_id(opened_dicom, key, apply_func)
+                apply_action_from_field_id(opened_dicom, key, apply_func, filename)
 
     return opened_dicom
 
@@ -746,53 +767,6 @@ def read_spec_file(spec_file):
 
     for key in action_dict:
         action_dict[key] = [e for e in actionOrder if e in action_dict[key]]
-
-    return action_dict, replace_map, hasher_map
-
-def read_param_file(param_file):
-    """Reads the parameter file which specifies the actions to take
-
-    Example param file:
-    {
-      "0x80005": "delete",
-      "0x100010": [ "delete" ],
-      "0x80012": [
-        "delete",
-        "archive"
-      ],
-      "0x82112/0x81150": [
-        "hash",
-        "archive"
-      ],
-      "0x180022": [
-        "hash:qrklejwrlke",
-        "archive"
-      ],
-      "0x180022": "replace:20070101",
-    }
-
-    Single operations may be in a list or not.  Operations are applied in this order:
-    archive, hash, replace, delete
-
-    :param param_file: the path to the param file
-    :return: (action_dict, replace_map, hasher_map), action_dict is a mapping of keys to a set of actions,
-    replace_map is a mapping of keys to the value to replace their value with, hasher map is a map of keys
-    to the salt to use for the hash function
-    """
-    file_dict = json.load(open(param_file))
-
-    action_dict = {}
-    replace_map = {}
-    hasher_map = {}
-
-    for key, value in file_dict.items():
-        if isinstance(value, str):
-            action_resolver(key, value, action_dict, replace_map, hasher_map)
-        elif isinstance(value, list):
-            for elt in value:
-                action_resolver(key, elt, action_dict, replace_map, hasher_map)
-        else:
-            raise RuntimeError(param_file + " is improperly structured.")
 
     return action_dict, replace_map, hasher_map
 
@@ -931,7 +905,7 @@ def archive(target_dicom, tag, field_id, filename, archive_csv_writer):
         archive_csv_writer.writerow([filename, field_id, value])
 
 
-def apply_action_from_field_id(opened_dicom, field_id, apply_func):
+def apply_action_from_field_id(opened_dicom, field_id, apply_func, filename):
     """Apply the apply_func to the data element/s at the field id specified in the dicom provided
 
     :param opened_dicom: the opened dicom file
@@ -966,7 +940,7 @@ def apply_action_from_field_id(opened_dicom, field_id, apply_func):
         targets = new_targets
 
     for target in targets:
-        apply_func(target, field_path_int[-1], field_id, opened_dicom.filename)
+        apply_func(target, field_path_int[-1], field_id, filename)
 
 
 def strip_dates(dicom_file, replacement_date=None):
