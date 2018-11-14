@@ -92,12 +92,12 @@ usage() {
      echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
      echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
      echo ""
-     echo "-- BOLD FC PARMETERS (Requires --boldfc='<pconn or scalar>',--boldfcinput=<image_input>, --bolddata or --boldruns or --bolds"
+     echo "-- BOLD FC PARMETERS (Requires --boldfc='<pconn or pscalar>',--boldfcinput=<image_input>, --bolddata or --boldruns or --bolds"
      echo ""
-     echo "--boldfc=<compute_qc_for_bold_fc>                                Specify if you wish to compute BOLD QC for FC-type BOLD results. Supported: scalar or pconn. Default is []"
+     echo "--boldfc=<compute_qc_for_bold_fc>                                Specify if you wish to compute BOLD QC for FC-type BOLD results. Supported: pscalar or pconn. Default is []"
      echo "--boldfcpath=<path_for_bold_fc>                                  Specify path for input FC data. Default is [ <study_folder>/subjects/<subject_id>/images/functional ]"
      echo "--boldfcinput=<data_input_for_bold_fc>                           Required. If no --boldfcpath is provided then specify only data input name after bold<Number>_ which is searched for in <study_folder>/subjects/<subject_id>/images/functional "
-     echo "                                                                 ==> scalar FC: Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz_GBC.pscalar.nii" 
+     echo "                                                                 ==> pscalar FC: Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz_GBC.pscalar.nii" 
      echo "                                                                 ==> pconn FC:  Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz.pconn.nii"
      echo ""
      echo ""
@@ -197,13 +197,13 @@ usage() {
      echo "--boldsuffix='Atlas' \ "
      echo "--overwrite='yes'"
      echo ""
-     echo "# -- BOLD FC QC [scalar or pconn]"
+     echo "# -- BOLD FC QC [pscalar or pconn]"
      echo "mnap QCPreproc \ "
      echo "--overwritestep='yes' \ "
      echo "--subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subjects='<comma_separated_list_of_cases>' \ "
      echo "--modality='BOLD' \ "
-     echo "--boldfc='<scalar_or_pconn>' \ "
+     echo "--boldfc='<pscalar_or_pconn>' \ "
      echo "--boldfcinput='<data_input_for_bold_fc>' \ "
      echo "--bolddata='1' \ "
      echo "--overwrite='yes' "
@@ -1030,8 +1030,8 @@ fi
                 echo " --- Working on BOLD FC QC scene..."; echo ""
                 # Inputs
                 Modality="BOLD"
-                if [[ ${BOLDfc} == "scalar" ]]; then
-                    TemplateSceneFile="TEMPLATE.SCALAR.${Modality}.QC.wb.scene"
+                if [[ ${BOLDfc} == "pscalar" ]]; then
+                    TemplateSceneFile="TEMPLATE.PSCALAR.${Modality}.QC.wb.scene"
                 fi
                 if [[ ${BOLDfc} == "pconn" ]]; then
                     TemplateSceneFile="TEMPLATE.PCONN.${Modality}.QC.wb.scene"

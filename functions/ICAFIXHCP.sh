@@ -355,6 +355,8 @@ main() {
 # -- Get Command Line Options
 get_options $@
 
+
+
 # -- Define inputs and output
 echo "--- Establishing paths for all input and output folders:"
 echo ""

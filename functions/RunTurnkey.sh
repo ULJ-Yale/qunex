@@ -1408,7 +1408,7 @@ fi
            echo " -- Copying ${output_folder}/${output_name} to ${mnap_subjectsfolder}/QC/BOLD/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            cp ${output_folder}/${output_name} ${mnap_subjectsfolder}/QC/BOLD/
-           if [ -f ${mnap_subjectsfolder}/QC/BOLD/${output_name} ]; then
+           if [[ -f ${mnap_subjectsfolder}/QC/BOLD/${output_name} ]]; then
                echo " -- Found ${mnap_subjectsfolder}/QC/BOLD/${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                g_PlotBoldTS_Check="pass"
