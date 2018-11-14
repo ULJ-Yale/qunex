@@ -484,7 +484,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     archived are saved (appended) to `archivefile` as a comma separated values 
     formatted file. The dicom files can be either changed in place or saved to 
     the specified `outputfolder` and optionally renamed by adding the specified
-    `extension`.
+    `extension`. 
 
 
     PARAMETERS
@@ -557,6 +557,36 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     0x180032 > replace:20070101
 
 
+    DATE REPLACEMENT
+    ================
+
+    The date the dicom was recorded is taken from the StudyDate or SeriesDate
+    field. The date found is then replaced either by a randomly generated date 
+    or the date specified by the `replacementdate` parameter. Any occurence of 
+    the date in any of the other fields in dicom is also replaced by the same
+    randomly generated or specified date. Please note that any other dates 
+    (e.g. participant's birth date) are not automatically replaced. These need
+    to be either deleted, replaced or hashed explicitly.
+
+
+    DEIDENTIFICATION EFFECTIVENESS
+    ==============================
+
+    Please note the folowing:
+
+    1/ Only the fields explicitly set to be removed, replaced or hashed will
+       be changed. It is the resposibility of the user to make sure that no
+       dicom fields with identifiable information are left unchanged.
+    2/ Only valid dicom fields can be accessed and changed using this tool. Any 
+       vendor specific metadata that is not stored in regular dicom fields will
+       not be changed. Please make sure that no such information is present in 
+       your dicom files.
+    3/ Only metadata stored in dicom fields can be processed using this tool.
+       If any informatio is "burnt in" into the image data itself, it can not
+       be identified and changed using this tool. Please make sure that no
+       such information is present in your dicom files.
+
+
     EXAMPLE USE
     ===========
 
@@ -586,6 +616,11 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
              - Stores the correct renamed and processed files in the zip package
              - urlsafe hash encoding
              - More robust field checking
+
+    2018-11-13 Grega Repovš
+             - Fixed in place processing of tar and zip archives
+             - Fixed saving of gzipped dicom files
+             - Expanded documentation
     '''
 
     if extension:
