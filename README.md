@@ -373,6 +373,7 @@ Change Log
 * 0.23.11 [niutilities] Added error reporting to readConc and generic function for forming error strings
 * 0.23.12 [niutilities] Fixed a typo in dicom2niix
 * 0.23.13 [matlab] Fixed double quotes in preprocessConc
+* 0.24.00 [connector, library] Fixed error in QCPreprocessing, renamed and updated XNATUpload.sh, updated environment code.
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
