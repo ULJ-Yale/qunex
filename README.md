@@ -376,6 +376,7 @@ Change Log
 * 0.24.00 [connector, library] Fixed error in QCPreprocessing, renamed and updated XNATUpload.sh, updated environment code.
 * 0.25.00 [niutilities] Added dicom deidentification commands
 * 0.25.01 [niutilities] Added study folder structure test to gmri commands
+* 0.25.02 [matlab] Added an error message to g_PlotBoldTS when running with Octave
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
