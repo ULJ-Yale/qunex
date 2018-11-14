@@ -176,6 +176,10 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %
 %  ---- initializing
 
+if isOctave
+    error('ERROR: g_PlotBoldTS is currently not supported with GNU Octave!');
+end
+
 if nargin < 7 || isempty(verbose), verbose = false; end
 if nargin < 6 || isempty(verbose), subjid = []; end
 if nargin < 5 || isempty(skip), skip = 0; end
@@ -472,7 +476,15 @@ close(f);
 if verbose, fprintf('\n DONE\n'); end
 
 
+% Return: true if the environment is Octave.
+function [retval] = isOctave()
+  persistent cacheval;  % speeds up repeated calls
 
+  if isempty(cacheval)
+    cacheval = (exist('OCTAVE_VERSION', 'builtin') > 0);
+  end
+
+  retval = cacheval;
 
 function [s] = strjoin(c, d)
     s = [];
