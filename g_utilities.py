@@ -57,6 +57,85 @@ parameterTemplateHeader = '''#  Batch parameters file
 
 
 
+def manageStudy(studyfolder=None, action="create"):
+    '''
+    manageStudy studyfolder=None action="create"
+
+    A helper function called by createStudy and checkStudy that does the
+    actual checking of the study folder and generating missing content.
+
+    studyfolder  : the location of the study folder
+    action       : whether to create a new study folder (create) or check
+                   an existing study folder (check)
+    '''
+
+    create = action == "create"
+
+    folders = [['analysis'], ['analysis', 'scripts'], 
+               ['processing'], 
+               ['processing', 'logs'], ['processing', 'logs', 'comlogs'], ['processing', 'logs', 'runlogs'], 
+               ['processing', 'lists'], 
+               ['processing', 'scripts'],
+               ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
+               ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'], ['info', 'bids'],
+               ['subjects'], 
+               ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'BIDS'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
+               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'BIDS'], ['subjects', 'archive', 'behavior'], 
+               ['subjects', 'specs'], 
+               ['subjects', 'QC']]
+
+    if create:
+        print "\nCreating study folder structure:"
+
+    for folder in folders:
+        tfolder = os.path.join(*[studyfolder] + folder)
+
+        if os.path.exists(tfolder):                
+            if create:
+                print " ... folder exists:", tfolder
+        else:
+            if create:
+                print " ... creating:", tfolder
+            os.makedirs(tfolder)
+
+    if create:
+        TemplateFolder = os.environ['TemplateFolder']
+        print "\nPreparing template files:"
+
+        paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters_example.txt')
+        if not os.path.exists(paramFile):
+            print " ... batch_parameters_example.txt"
+            pfile = open(paramFile, 'w')
+            print >> pfile, parameterTemplateHeader
+            for line in gp.arglist:
+                if len(line) == 4:
+                    print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
+                elif len(line) > 0:
+                    print >> pfile, "#\n# " + line[0] + '\n#'
+            pfile.close()
+        else:
+            print " ... batch_parameters_example.txt file already exists"
+
+        mapFile = os.path.join(studyfolder, 'subjects', 'specs', 'hcp_mapping_example.txt')
+        if os.path.exists(mapFile):
+            print " ... hcp_mapping_example.txt file already exists"
+        else:
+            print " ... hcp_mapping_example.txt"
+            shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), mapFile)
+
+        markFile = os.path.join(studyfolder, '.mnapstudy')
+        if os.path.exists(markFile):
+            print " ... .mnapstudy file already exists"
+        else:
+            mark = open(markFile, 'w')
+            try:
+                username = getpass.getuser()
+            except:
+                username = "unknown user"
+            print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
+            mark.close()
+
+
 def createStudy(studyfolder=None):
     '''
     createStudy studyfolder=<path to study base folder>
@@ -81,6 +160,7 @@ def createStudy(studyfolder=None):
     │   │       └── DWI
     │   └── scripts
     ├── info
+    │   ├── bids
     │   ├── demographics
     │   ├── tasks
     │   └── stimuli
@@ -124,6 +204,8 @@ def createStudy(studyfolder=None):
              - Expanded folders to include QC scenes
     2018-09-17 Grega Repovs
              - Added BIDS folders
+    2018-11-14 Grega Repovs
+             - Moved the processing to manageStudy function
     '''
 
     print "Running createStudy\n==================="
@@ -131,57 +213,36 @@ def createStudy(studyfolder=None):
     if studyfolder is None:
         raise ge.CommandError("createStudy", "No studyfolder specified", "Please provide path for the new study folder using studyfolder parameter!")
 
-    folders = [['analysis'], ['analysis', 'scripts'], ['processing'], ['processing', 'logs'], ['processing', 'logs', 'comlogs'], ['processing', 'logs', 'runlogs'], ['processing', 'lists'], ['processing', 'scripts'],
-               ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
-               ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'],
-               ['subjects'], ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'BIDS'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
-               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'BIDS'], ['subjects', 'archive', 'behavior'], ['subjects', 'specs'], ['subjects', 'QC']]
+    manageStudy(studyfolder=studyfolder, action="create")
 
-    print "\nCreating study folder structure:"
-    for folder in folders:
-        tfolder = os.path.join(*[studyfolder] + folder)
 
-        if os.path.exists(tfolder):
-            print " ... folder exists:", tfolder
-        else:
-            print " ... creating:", tfolder
-            os.makedirs(tfolder)
+def checkStudy(startfolder="."):
+    '''
+    checkStudy startfolder="."
 
-    TemplateFolder = os.environ['TemplateFolder']
-    print "\nPreparing template files:"
+    The function looks for the path to the study folder in the hierarchy 
+    starting from the provided startfolder. If found it checks that all the
+    standard folders are present and creates any missing ones. It returns
+    the path to the study folder. If the study folder can not be identified, 
+    it returns None.
 
-    paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters_example.txt')
-    if not os.path.exists(paramFile):
-        print " ... batch_parameters_example.txt"
-        pfile = open(paramFile, 'w')
-        print >> pfile, parameterTemplateHeader
-        for line in gp.arglist:
-            if len(line) == 4:
-                print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
-            elif len(line) > 0:
-                print >> pfile, "#\n# " + line[0] + '\n#'
-        pfile.close()
-    else:
-        print " ... batch_parameters_example.txt file already exists"
+    ---
+    Written by Grega Repovš, 2018-11-14
+    '''
 
-    mapFile = os.path.join(studyfolder, 'subjects', 'specs', 'hcp_mapping_example.txt')
-    if os.path.exists(mapFile):
-        print " ... hcp_mapping_example.txt file already exists"
-    else:
-        print " ... hcp_mapping_example.txt"
-        shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), mapFile)
+    studyfolder = None
+    testfolder  = os.path.abspath(startfolder)
 
-    markFile = os.path.join(studyfolder, '.mnapstudy')
-    if os.path.exists(markFile):
-        print " ... .mnapstudy file already exists"
-    else:
-        mark = open(markFile, 'w')
-        try:
-            username = getpass.getuser()
-        except:
-            username = "unknown user"
-        print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
-        mark.close()
+    while os.path.dirname(testfolder) and os.path.dirname(testfolder) != '/':
+        if os.path.exists(os.path.join(testfolder, '.mnapstudy')):
+            studyfolder = testfolder
+            break
+        testfolder = os.path.dirname(testfolder)
+
+    if studyfolder:
+        manageStudy(studyfolder=studyfolder, action="check")
+
+    return studyfolder  
 
 
 def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
