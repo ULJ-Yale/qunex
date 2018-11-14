@@ -505,7 +505,9 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
                         file name. The extension can be applied only when files 
                         are copied to the `outputfolder`. []
     --replacementdate   The date to replace all instances of StudyDate in the
-                        file. []
+                        file. Looks at all DICOM fields with string values, and
+                        replaces the substring matching StudyDate with either
+                        a provided date, or a randomly generated date. []
 
 
     PARAMETER FILE
