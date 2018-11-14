@@ -546,11 +546,6 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     Example spec file:
     ------------------
 
-    0x80005    > archive, delete
-    fieldname3 > hash: sdh2083uddoqew
-    fieldname5 > archive, hash:random
-    fieldname7 > hash: sdh2083uddoqew
-
     0x80005  > delete
     0x100010 > delete
     0x80012  > delete, archive
@@ -584,7 +579,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
        not be changed. Please make sure that no such information is present in 
        your dicom files.
     3/ Only metadata stored in dicom fields can be processed using this tool.
-       If any informatio is "burnt in" into the image data itself, it can not
+       If any information is "burnt in" into the image data itself, it can not
        be identified and changed using this tool. Please make sure that no
        such information is present in your dicom files.
 
@@ -603,7 +598,7 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
          --folder=/data/studies/WM/subjects/inbox/MR/original \
          --paramfile=/data/studies/WM/subjects/specs/deidv1.txt \
          --outputfolder=/data/studies/WM/subjects/MR/deid \
-         --extension="_v1"
+         --extension="v1"
 
     ----------------
     Written by Antonija Kolobarić & Grega Repovš
