@@ -17,7 +17,8 @@ Copyright (c) Grega Repovs. All rights reserved.
 Changelog
 2017-07-10 Grega Repovs
          - Simplified scheduler interface, now uses g_scheduler
-
+2018-14-11 Jure Demsar
+         - Added threads parameter for bold parallelization
 """
 
 import g_core
@@ -28,7 +29,8 @@ import gp_FS
 import g_scheduler
 import os
 import os.path
-from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor
+
 from datetime import datetime
 import niutilities.g_exceptions as ge
 
@@ -165,6 +167,7 @@ arglist = [['# ---- Basic settings'],
            ['logtag',             '',                                            str,    'An optional additional tag to add to the log file after the command name.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
+           ['threads',            '1',                                           int,    'How many threads to use for bold processing.'],
            ['nprocess',           '0',                                           int,    'How many subjects to process (0 - all).'],
            ['datainfo',           'False',                                       torf,   'Whether to print information.'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
@@ -524,6 +527,7 @@ def run(command, args):
 
     overwrite    = options['overwrite']
     cores        = options['cores']
+    threads      = options['threads']
     nprocess     = options['nprocess']
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
@@ -608,8 +612,10 @@ def run(command, args):
 
     if options['scheduler'] == 'local' or options['run'] == 'test':
 
+        consoleLog = ""
+
         print "---- Running local"
-        pool = Pool(processes=cores)
+        processPoolExecutor = ProcessPoolExecutor(threads)
         result = []
         c = 0
         if cores == 1 or options['run'] == 'test':
@@ -621,9 +627,10 @@ def run(command, args):
                             action = 'testing'
                         else:
                             action = 'processing'
-                        print "Starting %s of subject %s at %s" % (action, subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        consoleLog += "\nStarting %s of subject %s at %s" % (action, subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
                         r, status = procResponse(todo(subject, options, overwrite, c + 1))
                         writelog(r)
+                        consoleLog += r
                         stati.append(status)
                         c += 1
                         if nprocess and c >= nprocess:
@@ -636,23 +643,31 @@ def run(command, args):
 
         else:
             c = 0
+
             if command in plactions:
                 todo = plactions[command]
                 for subject in subjects:
                     if len(subject['id']) > 1:
-                        print "Adding processing of subject %s to the pool at %s" % (subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        result.append(pool.apply_async(todo, (subject, options, overwrite, c + 1), callback=writelog))
+                        consoleLog += "\nAdding processing of subject %s to the pool at %s" % (subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+                        future = processPoolExecutor.submit(todo, subject, options, overwrite, c + 1)
+                        res = future.result()
+                        result.append(res)
+                        writelog(res)
+
+                        consoleLog += res[0]
+
                         c += 1
                         if nprocess and c >= nprocess:
                             break
-
+                
             if command in sactions:
                 todo = sactions[command]
                 r, status = procResponse(todo(subjects, options, overwrite))
                 writelog(r)
 
-            pool.close()
-            pool.join()
+        # print console log
+        print consoleLog
 
         # --- Create log
 

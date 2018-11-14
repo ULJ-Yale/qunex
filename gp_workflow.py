@@ -21,6 +21,11 @@ from the command line using `gmri` command. Help is available through:
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
+
+---
+Changelog
+2018-14-11 Jure Demsar
+         - Parallel createBOLDBrainMasks implementation.
 """
 
 from gp_core import *
@@ -32,6 +37,8 @@ import traceback
 from datetime import datetime
 import time
 import niutilities.g_exceptions as ge
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 
 
 if "MNAPMCOMMAND" not in os.environ:
@@ -159,6 +166,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --cores            ... How many cores to utilize [1].
+    --threads          ... How many threads to utilize for bold processing per subject [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bold_preprocess  ... Which bold images (as they are specified in the
@@ -182,7 +190,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri createBOLDBrainMasks subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all
+         overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all threads=8
 
     ----------------
     Written by Grega Repovš
@@ -195,6 +203,8 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     2018-06-16 Grega Repovs
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
+    2018-14-11 Jure Demsar
+            - Parallel implementation.
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
@@ -221,86 +231,132 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
-    for boldnum, boldname, boldtask, boldinfo in bolds:
+    threads = options['threads']
+    r += "\nCreating BOLD brain masks on %d threads" % (threads)
 
-        r += "\n\nWorking on: " + boldname
+    # run serial
+    if threads == 1:
+        for b in bolds:
+            # process
+            result = executeCreateBOLDBrainMasks(sinfo, options, overwrite, b)
 
-        try:
-            # --- filenames
+            # merge r
+            r += result['r']
 
-            f = getFileNames(sinfo, options)
-            if options['image_target'] == 'cifti':
-                options['image_target'] = 'nifti'
-            f.update(getBOLDFileNames(sinfo, boldname, options))
+            # merge report
+            tempReport = result['report']
+            report['bolddone'] += tempReport['bolddone']
+            report['boldok'] += tempReport['boldok']
+            report['boldfail'] += tempReport['boldfail']
+            report['boldmissing'] += tempReport['boldmissing']
+    # run parallel        
+    else:
+        # create a multiprocessing Pool
+        processPoolExecutor = ProcessPoolExecutor(threads)
+        # process 
+        f = partial(executeCreateBOLDBrainMasks, sinfo, options, overwrite)
+        results = processPoolExecutor.map(f, bolds)
 
-            # --- copy over bold data
+        # merge r and report
+        for result in results:
+            r += result['r']
+            tempReport = result['report']
+            report['bolddone'] += tempReport['bolddone']
+            report['boldok'] += tempReport['boldok']
+            report['boldfail'] += tempReport['boldfail']
+            report['boldmissing'] += tempReport['boldmissing']
 
-            # --- bold
-            r, status = checkForFile2(r, f['bold'], '\n    ... bold data present', '\n    ... bold data missing, skipping bold', status=True)
-            if not status:
-                print "Looked for:", f['bold']
-                report['boldmissing'] += 1
-                continue
-
-            # --- extract first bold frame
-
-            if not os.path.exists(f['bold1']) or overwrite:
-                sliceImage(f['bold'], f['bold1'], 1)
-                if os.path.exists(f['bold1']):
-                    r += '\n    ... sliced first frame from %s' % (os.path.basename(f['bold']))
-                else:
-                    r += '\n    ... WARNING: failed slicing first frame from %s' % (os.path.basename(f['bold']))
-                    report['boldfail'] += 1
-                    continue
-            else:
-                r += '\n    ... first %s frame already present' % (os.path.basename(f['bold']))
-
-            # --- convert to NIfTI
-
-            bsource  = f['bold1']
-            bbtarget = f['bold1_brain'].replace(getImgFormat(f['bold1_brain']), '.nii.gz')
-            bmtarget = f['bold1_brain_mask'].replace(getImgFormat(f['bold1_brain_mask']), '.nii.gz')
-            if getImgFormat(f['bold1']) == '.4dfp.img':
-                bsource = f['bold1'].replace('.4dfp.img', '.nii.gz')
-                r += runExternalForFile(bsource, 'g_FlipFormat %s %s' % (f['bold1'], bsource), '    ... converting %s to nifti' % (f['bold1']), overwrite, thread=sinfo['id'], task='FlipFormat' % (boldnum), logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
-            #    r += runExternalForFile(bsource, 'caret_command -file-convert -vc %s %s' % (f['bold1'].replace('img', 'ifh'), bsource), 'converting %s to nifti' % (f['bold1']), overwrite, sinfo['id'], logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
-
-            # --- run BET
-
-            if os.path.exists(bbtarget) and not overwrite:
-                r += '\n    ... bet on %s already run' % (os.path.basename(bsource))
-                report['bolddone'] += 1
-            else:
-                r += runExternalForFile(bbtarget, "bet %s %s %s" % (bsource, bbtarget, options['betboldmask']), "    ... running BET on %s with options %s" % (os.path.basename(bsource), options['betboldmask']), overwrite, sinfo['id'], task='bet', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
-                report['boldok'] += 1
-
-            if options['image_target'] == '4dfp':
-                # --- convert nifti to 4dfp
-                r += runExternalForFile(bbtarget, 'gunzip -f %s.gz' % (bbtarget), '    ... gunzipping %s.gz' % (os.path.basename(bbtarget)), overwrite, sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
-                r += runExternalForFile(bmtarget, 'gunzip -f %s.gz' % (bmtarget), '    ... gunzipping %s.gz' % (os.path.basename(bmtarget)), overwrite, sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
-                r += runExternalForFile(f['bold1_brain'], 'g_FlipFormat %s %s' % (bbtarget, f['bold1_brain'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_nifti']), overwrite, sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
-                r += runExternalForFile(f['bold1_brain_mask'], 'g_FlipFormat %s %s' % (bmtarget, f['bold1_brain_mask'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_mask_nifti']), overwrite, sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
-
-            else:
-                # --- link a template
-                if not os.path.exists(f['bold_template']):
-                    # r += '\n ... link %s to %s' % (f['bold1_brain'], f['bold_template'])
-                    os.link(f['bold1_brain'], f['bold_template'])
-
-        except (ExternalFailed, NoSourceFolder), errormessage:
-            r += str(errormessage)
-            report['boldfail'] += 1
-        except:
-            report['boldfail'] += 1
-            r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
-            time.sleep(1)
 
     r += "\n\nBold mask creation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d" % (report)
 
-    print r
     return (r, (sinfo['id'], rstatus, report['boldmissing'] + report['boldfail']))
 
+
+def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
+    # extract data
+    boldnum = boldData[0]
+    boldname = boldData[1]
+    boldtask = boldData[2]
+    boldinfo = boldData[3]
+
+    # prepare return variables
+    r = ""
+    report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0}
+
+    r += "\n\nWorking on: " + boldname
+
+    try:
+        # --- filenames
+
+        f = getFileNames(sinfo, options)
+        if options['image_target'] == 'cifti':
+            options['image_target'] = 'nifti'
+        f.update(getBOLDFileNames(sinfo, boldname, options))
+
+        # --- copy over bold data
+
+        # --- bold
+        r, status = checkForFile2(r, f['bold'], '\n    ... bold data present', '\n    ... bold data missing, skipping bold', status=True)
+        if not status:
+            r += "\nLooked for:" + f['bold']
+            report['boldmissing'] += 1
+            return {'r': r, 'report': report}
+
+        # --- extract first bold frame
+
+        if not os.path.exists(f['bold1']) or overwrite:
+            sliceImage(f['bold'], f['bold1'], 1)
+            if os.path.exists(f['bold1']):
+                r += '\n    ... sliced first frame from %s' % (os.path.basename(f['bold']))
+            else:
+                r += '\n    ... WARNING: failed slicing first frame from %s' % (os.path.basename(f['bold']))
+                report['boldfail'] += 1
+                return {'r': r, 'report': report}
+        else:
+            r += '\n    ... first %s frame already present' % (os.path.basename(f['bold']))
+
+        # --- convert to NIfTI
+
+        bsource  = f['bold1']
+        bbtarget = f['bold1_brain'].replace(getImgFormat(f['bold1_brain']), '.nii.gz')
+        bmtarget = f['bold1_brain_mask'].replace(getImgFormat(f['bold1_brain_mask']), '.nii.gz')
+        if getImgFormat(f['bold1']) == '.4dfp.img':
+            bsource = f['bold1'].replace('.4dfp.img', '.nii.gz')
+            r += runExternalForFile(bsource, 'g_FlipFormat %s %s' % (f['bold1'], bsource), '    ... converting %s to nifti' % (f['bold1']), overwrite, thread=sinfo['id'], task='FlipFormat' % (boldnum), logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
+        #    r += runExternalForFile(bsource, 'caret_command -file-convert -vc %s %s' % (f['bold1'].replace('img', 'ifh'), bsource), 'converting %s to nifti' % (f['bold1']), overwrite, sinfo['id'], logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
+
+        # --- run BET
+
+        if os.path.exists(bbtarget) and not overwrite:
+            r += '\n    ... bet on %s already run' % (os.path.basename(bsource))
+            report['bolddone'] += 1
+        else:
+            r += runExternalForFile(bbtarget, "bet %s %s %s" % (bsource, bbtarget, options['betboldmask']), "    ... running BET on %s with options %s" % (os.path.basename(bsource), options['betboldmask']), overwrite, sinfo['id'], task='bet', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
+            report['boldok'] += 1
+
+        if options['image_target'] == '4dfp':
+            # --- convert nifti to 4dfp
+            r += runExternalForFile(bbtarget, 'gunzip -f %s.gz' % (bbtarget), '    ... gunzipping %s.gz' % (os.path.basename(bbtarget)), overwrite, sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
+            r += runExternalForFile(bmtarget, 'gunzip -f %s.gz' % (bmtarget), '    ... gunzipping %s.gz' % (os.path.basename(bmtarget)), overwrite, sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
+            r += runExternalForFile(f['bold1_brain'], 'g_FlipFormat %s %s' % (bbtarget, f['bold1_brain'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_nifti']), overwrite, sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
+            r += runExternalForFile(f['bold1_brain_mask'], 'g_FlipFormat %s %s' % (bmtarget, f['bold1_brain_mask'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_mask_nifti']), overwrite, sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum])
+
+        else:
+            # --- link a template
+            if not os.path.exists(f['bold_template']):
+                # r += '\n ... link %s to %s' % (f['bold1_brain'], f['bold_template'])
+                os.link(f['bold1_brain'], f['bold_template'])
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += str(errormessage)
+        report['boldfail'] += 1
+    except:
+        report['boldfail'] += 1
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        time.sleep(1)
+
+    return {'r': r, 'report': report}
 
 
 def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
