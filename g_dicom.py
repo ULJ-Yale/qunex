@@ -27,6 +27,7 @@ import niutilities.g_gimg as gimg
 import niutilities.g_exceptions as ge
 import niutilities
 import zipfile
+import tarfile
 import gzip
 import csv
 
@@ -1583,8 +1584,8 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
 
     The command is used to automatically process packets with individual
     subject's DICOM or PAR/REC files all the way to, and including, generation
-    of NIfTI files. Packet can be either a zip file or a folder that contains
-    DICOM or PAR/REC files.
+    of NIfTI files. Packet can be either a zip file, a tar archive or a folder 
+    that contains DICOM or PAR/REC files.
 
     The command first looks into provided inbox folder (inbox; by default
     `inbox/MR`) and finds any packets that match the specified regex pattern
@@ -1595,9 +1596,9 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
     set to 'no', it will just start processing them.
 
     For each found packet, the command will generate a new subject folder, its
-    name set to the subject id extracted. It will then copy or unzip all the
-    files in the packet into an inbox folder created within the subject folder.
-    Once all the files are extracted or copied, depending on the archive
+    name set to the subject id extracted. It will then copy, unzip or untar all 
+    the files in the packet into an inbox folder created within the subject 
+    folder. Once all the files are extracted or copied, depending on the archive
     parameter, the packet is then either moved or copied to the
     `study/subjects/archive/MR` folder, left as is, or deleted. If the archive
     folder does not yet exist, it is created.
@@ -1675,6 +1676,8 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
              - Added tool parameter to specify the tool for nifti conversion.
     2018-10-18 Grega Repovš
              - Added options to parameters
+    2018-11-15 Grega Repovš
+             - Added the ability to process tar packages.
     '''
 
     print "Running processInbox\n===================="
@@ -1875,6 +1878,55 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
                         fout.close()
 
                 z.close()
+                print "     -> done!"
+
+            elif re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", p):
+
+                ptype = "tar"
+
+                # --- create the inbox folder for dicoms
+                os.makedirs(dfol)
+
+                print "...  untarring %s" % (os.path.basename(p))
+                dnum = 0
+                fnum = 0
+
+                tar = tarfile.open(p, 'r')
+                for tarinfo in tar:
+                    if tarinfo.isfile():
+                        if fnum % 1000 == 0:
+                            dnum += 1
+                            os.makedirs(os.path.join(dfol, str(dnum)))
+                        fnum += 1
+
+                        print "...  extracting:", tarinfo.name, tarinfo.size
+
+                        fdata = tar.extractfile(tarinfo)
+
+                        # --- do we have par / rec / log
+
+                        if tarinfo.name.split('.')[-1].lower() in ['par', 'rec', 'log']:
+                            tfile = os.path.basename(tarinfo.name)
+                            for ext in ['rec', 'par']:
+                                if tfile.split('.')[-1] == ext:
+                                    tfile = tfile[:-3] + ext.upper()
+                        else:
+                            if igz.match(tarinfo.name):
+                                gzname = os.path.join(dfol, str(dnum), str(fnum) + ".gz")
+                                fout = open(gzname, 'wb')
+                                fout.write(fdata)
+                                fout.close()
+                                fin = gzip.open(gzname, 'rb')
+                                fdata = fin.read()
+                                fin.close()
+                                os.remove(gzname)
+                            tfile = str(fnum)
+
+                        fout = open(os.path.join(dfol, str(dnum), tfile), 'wb')
+                        fout.write(fdata.read())
+                        fout.close()
+
+                tar.close()
                 print "     -> done!"
 
             else:
