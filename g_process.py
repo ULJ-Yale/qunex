@@ -29,10 +29,11 @@ import gp_FS
 import g_scheduler
 import os
 import os.path
-from concurrent.futures import ProcessPoolExecutor
 
 from datetime import datetime
 import niutilities.g_exceptions as ge
+
+from concurrent.futures import ProcessPoolExecutor
 
 
 # =======================================================================
