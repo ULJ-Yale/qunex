@@ -21,11 +21,6 @@ from the command line using `gmri` command. Help is available through:
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
 Copyright (c) Grega Repovs. All rights reserved.
-
----
-Changelog
-2018-14-11 Jure Demsar
-         - Parallel createBOLDBrainMasks implementation.
 """
 
 from gp_core import *
@@ -276,8 +271,6 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
     # extract data
     boldnum = boldData[0]
     boldname = boldData[1]
-    boldtask = boldData[2]
-    boldinfo = boldData[3]
 
     # prepare return variables
     r = ""
@@ -526,6 +519,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     2018-06-16 Grega Repovs
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
+    2018-16-11 Jure Demsar
+        - Parallel implementation.
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -599,8 +594,6 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
     # extract data
     boldnum = boldData[0]
     boldname = boldData[1]
-    boldtask = boldData[2]
-    boldinfo = boldData[3]
 
     # prepare return variables
     r = ""
@@ -1175,6 +1168,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     2018-06-16 Grega Repovs
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
+    2018-16-11 Jure Demsar
+        - Parallel implementation.
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1248,8 +1243,6 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
     # extract data
     boldnum = boldData[0]
     boldname = boldData[1]
-    boldtask = boldData[2]
-    boldinfo = boldData[3]
 
     # prepare return variables
     r = ""
@@ -1719,6 +1712,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     2018-06-16 Grega Repovs
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
+    2018-16-11 Jure Demsar
+        - Parallel implementation.
     """
 
     r = "\n---------------------------------------------------------"
@@ -1788,8 +1783,6 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
     # extract data
     boldnum = boldData[0]
     boldname = boldData[1]
-    boldtask = boldData[2]
-    boldinfo = boldData[3]
 
     # prepare return variables
     r = ""

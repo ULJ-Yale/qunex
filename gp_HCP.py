@@ -2136,6 +2136,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     Changelog
     2017-02-06 Grega Repovš
              - Updated documentation.
+    2018-16-11 Jure Demsar
+        - Parallel implementation.
     '''
 
     r = "\n----------------------------------------------------------------"
@@ -2209,83 +2211,40 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         if report['boldskipped']:
             report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
-        # --- Loop through bolds
+        threads = options['threads']
+        r += "\nCreating BOLD brain masks on %d threads" % (threads)
 
-        for bold, boldname, boldtask, boldinfo in bolds:
+        if threads == 1:
+            for b in bolds:
+                # process
+                result = executehcpfMRISurface(sinfo, options, overwrite, b)
 
-            try:
-                r += "\n---> Processing BOLD %d" % (bold)
-                boldok = True
+                # merge r
+                r += result['r']
 
-                # --- check for bold image
+                # merge report
+                tempReport = result['report']
+                report['done'] += tempReport['done']
+                report['failed'] += tempReport['failed']
+                report['ready'] += tempReport['ready']
+                report['not ready'] += tempReport['not ready']
+        # run parallel        
+        else:
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(threads)
+            # process 
+            f = partial(executehcpfMRISurface, sinfo, options, overwrite)
+            results = processPoolExecutor.map(f, bolds)
 
-                boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
-                r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
-
-                comm = '%(script)s \
-                    --path="%(path)s" \
-                    --subject="%(subject)s" \
-                    --fmriname="%(prefix)s%(boldn)d" \
-                    --lowresmesh="%(lowresmesh)s" \
-                    --fmrires="%(fmrires)s" \
-                    --smoothingFWHM="%(smoothingFWHM)s" \
-                    --grayordinatesres="%(grayordinatesres)d" \
-                    --regname"%(regname)s" \
-                    --printcom"%(printcom)s"' % {
-                        'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
-                        'path'              : sinfo['hcp'],
-                        'subject'           : sinfo['id'] + options['hcp_suffix'],
-                        'prefix'            : options['hcp_bold_prefix'],
-                        'boldn'             : bold,
-                        'lowresmesh'        : options['hcp_lowresmesh'],
-                        'fmrires'           : options['hcp_bold_res'],
-                        'smoothingFWHM'     : options['hcp_bold_smoothFWHM'],
-                        'grayordinatesres'  : options['hcp_grayordinatesres'],
-                        'regname'           : options['hcp_regname'],
-                        'printcom'          : options['hcp_printcom']}
-
-
-                if run and boldok:
-                    tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
-                    if options['run'] == "run":
-                        if overwrite and os.path.exists(tfile):
-                            os.remove(tfile)
-                        r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRISurface', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
-                        r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRISurface failed running command: %s' % (comm))
-                        if status:
-                            report['done'].append(str(bold))
-                        else:
-                            report['failed'].append(str(bold))
-                    else:
-                        if os.path.exists(tfile):
-                            r += "\n     ... HCP fMRISurface done"
-                            report['done'].append(str(bold))
-                        else:
-                            r += "\n     ... HCP fMRISurface can be run"
-                            report['ready'].append(str(bold))
-                elif run:
-                    report['not ready'].append(str(bold))
-                    if options['run'] == "run":
-                        r += "\n     ... ERROR: images missing, skipping this BOLD!"
-                    else:
-                        r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
-                else:
-                    report['not ready'].append(str(bold))
-                    if options['run'] == "run":
-                        r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
-                    else:
-                        r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
-
-            except (ExternalFailed, NoSourceFolder), errormessage:
-                r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
-                r += str(errormessage)
-                report['failed'].append(str(bold))
-            except:
-                r += "\n ---  Failed during processing of bold %d with error:\n %s\n" % (bold, traceback.format_exc())
-                report['failed'].append(str(bold))
-
-            r += "\n     ... DONE!"
-
+            # merge r and report
+            for result in results:
+                r += result['r']
+                tempReport = result['report']
+                report['done'] += tempReport['done']
+                report['failed'] += tempReport['failed']
+                report['ready'] += tempReport['ready']
+                report['not ready'] += tempReport['not ready']
+            
         rep = []
         for k in ['done', 'failed', 'ready', 'not ready', 'skipped']:
             if len(report[k]) > 0:
@@ -2303,6 +2262,88 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     print r
     return (r, report)
+
+def executehcpfMRISurface(sinfo, options, overwrite, boldData):
+    # extract data
+    boldnum = boldData[0]
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    try:
+        r += "\n---> Processing BOLD %d" % (bold)
+        boldok = True
+
+        # --- check for bold image
+
+        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
+        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+
+        comm = '%(script)s \
+            --path="%(path)s" \
+            --subject="%(subject)s" \
+            --fmriname="%(prefix)s%(boldn)d" \
+            --lowresmesh="%(lowresmesh)s" \
+            --fmrires="%(fmrires)s" \
+            --smoothingFWHM="%(smoothingFWHM)s" \
+            --grayordinatesres="%(grayordinatesres)d" \
+            --regname"%(regname)s" \
+            --printcom"%(printcom)s"' % {
+                'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
+                'path'              : sinfo['hcp'],
+                'subject'           : sinfo['id'] + options['hcp_suffix'],
+                'prefix'            : options['hcp_bold_prefix'],
+                'boldn'             : bold,
+                'lowresmesh'        : options['hcp_lowresmesh'],
+                'fmrires'           : options['hcp_bold_res'],
+                'smoothingFWHM'     : options['hcp_bold_smoothFWHM'],
+                'grayordinatesres'  : options['hcp_grayordinatesres'],
+                'regname'           : options['hcp_regname'],
+                'printcom'          : options['hcp_printcom']}
+
+        if run and boldok:
+            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+                r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRISurface', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
+                r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRISurface failed running command: %s' % (comm))
+                if status:
+                    report['done'].append(str(bold))
+                else:
+                    report['failed'].append(str(bold))
+            else:
+                if os.path.exists(tfile):
+                    r += "\n     ... HCP fMRISurface done"
+                    report['done'].append(str(bold))
+                else:
+                    r += "\n     ... HCP fMRISurface can be run"
+                    report['ready'].append(str(bold))
+        elif run:
+            report['not ready'].append(str(bold))
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+        else:
+            report['not ready'].append(str(bold))
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
+        r += str(errormessage)
+        report['failed'].append(str(bold))
+    except:
+        r += "\n ---  Failed during processing of bold %d with error:\n %s\n" % (bold, traceback.format_exc())
+        report['failed'].append(str(bold))
+
+    r += "\n     ... DONE!"
+
+    return {'r': r, 'report': report}
 
 
 def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
