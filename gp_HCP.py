@@ -1805,7 +1805,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         if threads == 1: # serial execution
             for b in bolds:
                 # process
-                result = executehcpfMRIVolume(sinfo, options, overwrite, b, hcp, unwarpdirs, sepresent, sepairs)
+                result = executehcpfMRIVolume(sinfo, options, overwrite, b, hcp, unwarpdirs, sepresent, sepairs, run)
 
                 # merge r
                 r += result['r']
@@ -1825,7 +1825,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 # process first one
                 b = bolds[0]
                 # process
-                result = executehcpfMRIVolume(sinfo, options, overwrite, b, hcp, unwarpdirs, sepresent, sepairs)
+                result = executehcpfMRIVolume(sinfo, options, overwrite, b, hcp, unwarpdirs, sepresent, sepairs, run)
 
                 # merge r
                 r += result['r']
@@ -1871,7 +1871,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     print r
     return (r, report)
 
-def executehcpfMRIVolume(sinfo, options, overwrite, boldData, hcp, unwarpdirs, sepresent, sepairs):
+def executehcpfMRIVolume(sinfo, options, overwrite, boldData, hcp, unwarpdirs, sepresent, sepairs, run):
     spinP     = 0
     spinN     = 0
     spinOne   = "NONE"  # AP or LR
@@ -2286,7 +2286,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         if threads == 1: # serial execution
             for b in bolds:
                 # process
-                result = executehcpfMRISurface(sinfo, options, overwrite, b, hcp)
+                result = executehcpfMRISurface(sinfo, options, overwrite, b, hcp, run)
 
                 # merge r
                 r += result['r']
@@ -2301,7 +2301,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
             # create a multiprocessing Pool
             processPoolExecutor = ProcessPoolExecutor(threads)
             # process 
-            f = partial(executehcpfMRISurface, sinfo, options, overwrite, hcp)
+            f = partial(executehcpfMRISurface, sinfo, options, overwrite, hcp, run)
             results = processPoolExecutor.map(f, bolds)
 
             # merge r and report
@@ -2331,7 +2331,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     print r
     return (r, report)
 
-def executehcpfMRISurface(sinfo, options, overwrite, boldData, hcp):
+def executehcpfMRISurface(sinfo, options, overwrite, boldData, hcp, run):
     # extract data
     bold = boldData[0]
 
