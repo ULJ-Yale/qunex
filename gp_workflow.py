@@ -228,7 +228,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
     threads = options['threads']
-    r += "\nCreating BOLD brain masks on %d threads" % (threads)
+    r += "\nProcessing BOLD on %d threads" % (threads)
 
     if threads == 1: # serial execution
         for b in bolds:
@@ -550,7 +550,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
     threads = options['threads']
-    r += "\nCreating BOLD brain masks on %d threads" % (threads)
+    r += "\nProcessing BOLD on %d threads" % (threads)
 
     if threads == 1: # serial execution
         for b in bolds:
@@ -1198,7 +1198,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
 
     threads = options['threads']
-    r += "\nCreating BOLD brain masks on %d threads" % (threads)
+    r += "\nProcessing BOLD on %d threads" % (threads)
 
     if threads == 1: # serial execution
         for b in bolds:
@@ -1711,7 +1711,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
     2018-16-11 Jure Demsar
-        - Parallel implementation.
+             - Parallel implementation.
     """
 
     r = "\n---------------------------------------------------------"
@@ -1733,7 +1733,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
         options['bold_variant'] = '.' + options['hcp_bold_variant'] 
 
     threads = options['threads']
-    r += "\nCreating BOLD brain masks on %d threads" % (threads)
+    r += "\nProcessing BOLD on %d threads" % (threads)
 
     if threads == 1: # serial execution
         for b in bolds:
