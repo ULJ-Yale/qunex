@@ -230,8 +230,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     threads = options['threads']
     r += "\nCreating BOLD brain masks on %d threads" % (threads)
 
-    # run serial
-    if threads == 1:
+    if threads == 1: # serial execution
         for b in bolds:
             # process
             result = executeCreateBOLDBrainMasks(sinfo, options, overwrite, b)
@@ -245,8 +244,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
             report['boldok'] += tempReport['boldok']
             report['boldfail'] += tempReport['boldfail']
             report['boldmissing'] += tempReport['boldmissing']
-    # run parallel        
-    else:
+    else: # parallel execution
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(threads)
         # process 
@@ -554,8 +552,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     threads = options['threads']
     r += "\nCreating BOLD brain masks on %d threads" % (threads)
 
-    # run serial
-    if threads == 1:
+    if threads == 1: # serial execution
         for b in bolds:
             # process
             result = executeComputeBOLDStats(sinfo, options, overwrite, b)
@@ -568,9 +565,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
             report['bolddone'] += tempReport['bolddone']
             report['boldok'] += tempReport['boldok']
             report['boldfail'] += tempReport['boldfail']
-            report['boldmissing'] += tempReport['boldmissing']
-    # run parallel        
-    else:
+            report['boldmissing'] += tempReport['boldmissing']     
+    else: # parallel execution
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(threads)
         # process 
@@ -1204,8 +1200,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     threads = options['threads']
     r += "\nCreating BOLD brain masks on %d threads" % (threads)
 
-    # run serial
-    if threads == 1:
+    if threads == 1: # serial execution
         for b in bolds:
             # process
             result = executeExtractNuisanceSignal(sinfo, options, overwrite, b)
@@ -1218,9 +1213,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
             report['bolddone'] += tempReport['bolddone']
             report['boldok'] += tempReport['boldok']
             report['boldfail'] += tempReport['boldfail']
-            report['boldmissing'] += tempReport['boldmissing']
-    # run parallel        
-    else:
+            report['boldmissing'] += tempReport['boldmissing']   
+    else: # parallel execution
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(threads)
         # process 
@@ -1365,7 +1359,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
-    --threads          ... How many threads to utilize for bold processing per subject [1].
+    --threads         ... How many threads to utilize for bold processing per subject [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname        ... The default name of the bold files in the images
@@ -1741,7 +1735,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     threads = options['threads']
     r += "\nCreating BOLD brain masks on %d threads" % (threads)
 
-    if threads == 1:
+    if threads == 1: # serial execution
         for b in bolds:
             # process
             result = executePreprocessBold(sinfo, options, overwrite, b)
@@ -1755,9 +1749,8 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
             report['processed'] += tempReport['processed']
             report['failed'] += tempReport['failed']
             report['ready'] += tempReport['ready']
-            report['not ready'] += tempReport['not ready']
-    # run parallel        
-    else:
+            report['not ready'] += tempReport['not ready']      
+    else: # parallel execution
         # create a multiprocessing Pool
         processPoolExecutor = ProcessPoolExecutor(threads)
         # process 
