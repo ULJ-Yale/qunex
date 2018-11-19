@@ -429,6 +429,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --cores            ... How many cores to utilize [1].
+    --threads          ... How many threads to utilize for bold processing per subject [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bold_preprocess  ... Which bold images (as they are specified in the
@@ -1102,6 +1103,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
     --cores            ... How many cores to utilize [1].
+    --threads          ... How many threads to utilize for bold processing per subject [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
     --bold_preprocess  ... Which bold images (as they are specified in the
@@ -1363,6 +1365,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
+    --threads          ... How many threads to utilize for bold processing per subject [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --boldname        ... The default name of the bold files in the images
