@@ -378,6 +378,7 @@ Change Log
 * 0.25.01 [niutilities] Added study folder structure test to gmri commands
 * 0.25.02 [matlab] Added an error message to g_PlotBoldTS when running with Octave
 * 0.25.03 [niutilities] Added the ability for processInbox to process tar archives
+* 0.26.00 [connector, hcpmodified, library] Introduced ICA FIX function, fixed bug in probtrackxGPUDense and updated environment script
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
