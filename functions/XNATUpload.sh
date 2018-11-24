@@ -344,21 +344,17 @@ uploadDICOMSCurl() {
         echo ""
         echo "------------------------------------------------------------------------"
         echo ""
-        
+        # -- Set file count check to 0
         FileCount=0
-
         ## -- Loop over DICOM files
         for DCM in ${UPLOADDICOMS}; do
-        
             if [[ -z `ls ${DICOMPath}/${DCM}` ]]; then
                 reho "--> ERROR: File not found ${DICOMPath}/${DCM}"
                 exit 1
             fi
-            
             echo ""
             geho "    -- Working on: ${DICOMPath}/${DCM}"
             echo ""
-            
             ## -- DESCRIPTION OF XNAT Site Variables for the curl command:
             ## 
             ##    -b "JSESSIONID=$JSESSION" --> XNAT Site Open Session Variable
@@ -371,18 +367,17 @@ uploadDICOMSCurl() {
             ##    -F "${DCM}=@${DCM}"       --> What you are sending to the XNAT Site
             ##
             ## -------------------------------------------------------------
-            
-            ## -- Upload individual dicom files:
-            
+            ##
+            ## -- Next upload individual dicom files
+            ## -- Curl call echoed to screen
             echo curl -k -b "JSESSIONID=$JSESSION" -X POST "${XNAT_HOST_NAME}/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${XNAT_SESSION_LABEL}&EXPT_LABEL=${XNAT_EXPT_LABEL}" -F "${DCM}=@${DCM}"
-            
+            ## -- Curl captured in variable
             PREARCPATH=$(curl -k -b "JSESSIONID=$JSESSION" -X POST "${XNAT_HOST_NAME}/data/services/import?import-handler=gradual-DICOM&PROJECT_ID=${XNAT_PROJECT_ID}&SUBJECT_ID=${XNAT_SESSION_LABEL}&EXPT_LABEL=${XNAT_EXPT_LABEL}" -F "${DCM}=@${DCM}")
-            
+            ## -- Increase file counter
             FileCount=$((FileCount+1))
-        
         done
     echo ""
-    ## -- Perform DICOM count check and report PREARCHIVE Path
+    ## -- Perform DICOM count check and report
     CountCheck="${DICOMPath} ===> Uploaded DICOMS=${FileCount}"
     if [[ ${FileCount} == ${DICOMCount} ]]; then
         CountOKList="${CountOKList}\n${CountCheck}"
@@ -394,8 +389,9 @@ uploadDICOMSCurl() {
         reho "-- Total uploaded DICOMs ${FileCount} does not match input DICOM count ${DICOMCount}. Check and re-run."; echo ""
     fi
     echo ""
+    ## -- Report PREARCHIVE XNAT path
     echo ""
-    geho "-- PREARCHIVE XNAT PATH: ${PREARCPATH}"
+    geho "-- PREARCHIVE XNAT path: ${PREARCPATH}"
     echo ""
 }
 

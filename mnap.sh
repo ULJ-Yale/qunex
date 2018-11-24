@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCnifti QCPreproc runTurnkey commandExecute showVersion"
+MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCnifti QCPreproc runTurnkey commandExecute showVersion"
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -198,6 +198,7 @@ echo "                          whole brain connectomes"
 echo ""
 echo "Misc. functions and analyses"
 echo "---------------------------"
+echo " ICAFIXhcp ...... ICA FIX for HCP minimally processed data"
 echo " computeBOLDfc ...... computes seed or GBC BOLD functional connectivity"
 echo " structuralParcellation ...... parcellate myelin or thickness"
 echo " BOLDParcellation ...... parcellate BOLD data and generate pconn files"
@@ -1109,6 +1110,30 @@ echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#  ICAFIXhcp - Function for computing ICA FIX + PostFIX on HCP minimally processed BOLD data
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+ICAFIXhcp() {
+
+# -- Specify command variable
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ICAFIXhcp.sh \
+--subjectsfolder=${SubjectsFolder} \
+--subjects=${CASES} \
+--bolds=${BOLDS} \
+--movcorr=${MovCorr} \
+--icafixfunction=${ICAFIXFunction} \
+--hpfilter=${HPFilter} \
+--overwrite=${Overwrite}"
+
+# -- Connector execute function
+connectorExec
+}
+show_usage_hcpdLegacy() {
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${MNAPREPO}/connector/functions/ICAFIXhcp.sh
+}
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #  computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the MNAP connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1546,6 +1571,7 @@ echo ""
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
 probtrackxGPUDense() {
+
 # -- Parse general parameters
 ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/Tractography_gpu_scripts"
 ResultsFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"
@@ -1608,12 +1634,13 @@ for MNum in $MNumber; do
         geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
         echo ""
         # -- Command to run
-        CommandToRun="{ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}"
+        CommandToRun="${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}"
         # -- Connector execute function
         connectorExec
     fi
 done
 }
+
 show_usage_probtrackxGPUDense() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
@@ -2307,6 +2334,10 @@ if [[ "$setflag" =~ .*-.* ]]; then
     BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
     EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
     DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
+    # -- ICAFIXhcp input flags
+    ICAFIXFunction=`opts_GetOpt "${setflag}icafixfunction" $@`
+    HPFilter=`opts_GetOpt "${setflag}hpfilter" $@`
+    MovCorr=`opts_GetOpt "${setflag}movcorr" $@`
     
     # -- Code block for BOLDs
     BOLDS=`opts_GetOpt "${setflag}bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`
@@ -2925,8 +2956,83 @@ if [ "$FunctionToRun" == "createLists" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  FIXICA function loop # --> under development
+#  ICAFIXhcp function loop
 # ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "ICAFIXhcp" ]; then
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$BOLDS" ]; then reho "ERROR: <bolds_to_compute_fixica_and_postfix> not specified"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Check optional parameters if not specified
+    if [ -z ${ICAFIXFunction} ]; then ICAFIXFunction="all"; fi
+    if [ -z ${Overwrite} ]; then Overwrite="no"; fi
+    if [ -z ${HPFilter} ]; then Overwrite="2000"; fi
+    if [ -z ${MovCorr} ]; then Overwrite="TRUE"; fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   SubjectsFolder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   BOLDs to work on: ${BOLDS}"
+    echo "   Function to run: ${ICAFIXFunction}"
+    echo "   Filter: ${HPFilter}"
+    echo "   Movement correction requested: ${MovCorr}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+fi
+
+# ------------------------------------------------------------------------------
+#  structuralParcellation function loop
+# ------------------------------------------------------------------------------
+
+if [ "$FunctionToRun" == "structuralParcellation" ]; then
+    # -- Check all the user-defined parameters:
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
+    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
+    if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
+    if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
+    if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
+    Cluster="$RunMethod"
+    if [ "$Cluster" == "2" ]; then
+            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
+    fi
+    # -- Check optional parameters if not specified
+    if [ -z "$ExtractData" ]; then ExtractData="no"; fi
+    if [ -z "$Overwrite" ]; then Overwrite="no"; fi
+    # -- Report parameters
+    echo ""
+    echo "Running $FunctionToRun with the following parameters:"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo "   Study Folder: ${StudyFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
+    echo "   Subjects: ${CASES}"
+    echo "   Study Log Folder: ${LogFolder}"
+    echo "   ParcellationFile: ${ParcellationFile}"
+    echo "   Parcellated Data Output Name: ${OutName}"
+    echo "   Input Data Type: ${InputDataType}"
+    echo "   Extract data in CSV format: ${ExtractData}"
+    echo "   Overwrite prior run: ${Overwrite}"
+    echo "--------------------------------------------------------------"
+    echo ""
+    # -- Loop through all the cases
+    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+fi
 
 # ------------------------------------------------------------------------------
 #  FSLDtifit function loop

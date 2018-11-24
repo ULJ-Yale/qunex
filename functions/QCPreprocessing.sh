@@ -96,7 +96,7 @@ usage() {
      echo ""
      echo "--boldfc=<compute_qc_for_bold_fc>                                Specify if you wish to compute BOLD QC for FC-type BOLD results. Supported: pscalar or pconn. Default is []"
      echo "--boldfcpath=<path_for_bold_fc>                                  Specify path for input FC data. Default is [ <study_folder>/subjects/<subject_id>/images/functional ]"
-     echo "--boldfcinput=<data_input_for_bold_fc>                           Required. If no --boldfcpath is provided then specify only data input name after bold<Number>_ which is searched for in <study_folder>/subjects/<subject_id>/images/functional "
+     echo "--boldfcinput=<data_input_for_bold_fc>                           Required. If no --boldfcpath is provided then specify only data input name after bold<Number>_ which is searched for in <subjects_folder>/<subject_id>/images/functional "
      echo "                                                                 ==> pscalar FC: Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz_GBC.pscalar.nii" 
      echo "                                                                 ==> pconn FC:  Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz.pconn.nii"
      echo ""
@@ -666,7 +666,8 @@ fi
     completionCheck() {
     
         if [[ ${Modality} != "BOLD" ]]; then
-            if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ] ; then
+            LogError=`cat ${FinalLog} | grep "ERROR"`
+            if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ] && [[ ${LogError} == "" ]]; then
                 echo ""
                 geho "--- Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
                 echo ""
@@ -747,7 +748,8 @@ fi
             # BOLD FC completion check
             if [[ ! -z ${BOLDfc} ]]; then
                  CompletionCheck=""
-                 if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ]; then
+                 LogError=`cat ${FinalLog} | grep "ERROR"`
+                 if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ] && [[ ${LogError} == "" ]]; then
                      echo ""
                      geho "--- Scene file and PNG file found and generated: ${OutPath}/${WorkingSceneFile}"
                      echo ""
@@ -778,7 +780,8 @@ fi
                 if [[ ${SNROnly} == "yes" ]]; then
                     CompletionCheck=""
                     # -- Echo completion & Check SNROnly flag
-                    if [ -f ${TSNRReportBOLD} ]; then
+                    LogError=`cat ${FinalLog} | grep "ERROR"`
+                    if [ -f ${TSNRReportBOLD} ] && [[ ${LogError} == "" ]]; then
                                echo ""
                                geho "---  SNR calculation requested. SNR completed." 
                                geho "     Subject specific report can be found here: ${TSNRReportBOLD}"
@@ -793,7 +796,8 @@ fi
                 # -- BOLD raw scene completion check w/o TSNR
                 if [[ ${SNROnly} != "yes" ]]; then
                     CompletionCheck=""
-                    if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ]; then
+                    LogError=`cat ${FinalLog} | grep "ERROR"`
+                    if [ -f ${OutPath}/${WorkingSceneFile} ] && [ -f ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png ] && [[ ${LogError} == "" ]]; then
                         echo ""
                         geho "--- Scene file found and generated: ${OutPath}/${WorkingSceneFile}"
                         echo ""
@@ -906,9 +910,9 @@ fi
         # -- Function to run BOLD FC
         runscene_BOLDfc() {
             if [ -z "$BOLDfcPath" ]; then 
-               BOLDfcPath="${StudyFolder}/subjects/${CASE}/images/functional"
+               BOLDfcPath="${SubjectsFolder}/${CASE}/images/functional"
                echo ""
-               reho "--- Flag --boldfcpath not provided. Setting default: ${BOLDfcPath}"
+               reho "--- Flag --boldfcpath not provided. Setting now: ${BOLDfcPath}"
                echo ""
             fi
             if [[ ${Overwrite} == "no" ]]; then
@@ -1050,6 +1054,7 @@ fi
                 chmod 770 "$QCPreprocLogFolder"/${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${BOLD}_${TimeStamp}.sh
                 # -- Run script
                 "$QCPreprocLogFolder"/${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$QCPreprocLogFolder"/QC_"$CASE"_ComQUEUE_"$BOLDfc"_"$Modality"_"$TimeStamp".log
+                 FinalLog="$QCPreprocLogFolder"/QC_"$CASE"_ComQUEUE_"$BOLDfc"_"$Modality"_"$TimeStamp".log
                 rm ${OutPath}/${TemplateSceneFile} &> /dev/null
                 completionCheck
             else
@@ -1116,6 +1121,7 @@ fi
                            # -- Run script
                            "$QCPreprocLogFolder"/${CASE}_ComQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$QCPreprocLogFolder"/QC_"$CASE"_ComQUEUE_"$Modality"_"$TimeStamp".log
                            rm ${OutPath}/${TemplateSceneFile} &> /dev/null
+                           FinalLog="${QCPreprocLogFolder}/QC_${CASE}_ComQUEUE_${Modality}_${TimeStamp}.log"
                            completionCheck
                        fi
                     fi
@@ -1137,6 +1143,7 @@ fi
                             chmod 770 "$QCPreprocLogFolder"/${CASE}_CustomRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
                             # -- Run script
                             "$QCPreprocLogFolder"/${CASE}_CustomRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a "$QCPreprocLogFolder"/QC_"$CASE"_CustomRunQUEUE_"$Modality"_"$TimeStamp".log
+                            FinalLog="${QCPreprocLogFolder}/QC_${CASE}_CustomRunQUEUE_${Modality}_${TimeStamp}.log"
                         done
                         completionCheck
                     fi
