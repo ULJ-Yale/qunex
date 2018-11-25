@@ -752,41 +752,57 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
         # identify template if longitudional run
 
-        if options['hcp_fs_longitudinal'] == 'yes':
-            templatename = os.path.join(options['subjectsfolder']+ '_FSLongitudinal', sinfo['id'], 'hcp', sinfo['id'] + options['hcp_suffix'], 'T1w/')
-        else:
-            templatename = ""
+        lttemplate     = ""
+        fslongitudinal = ""
+
+        if options['hcp_fs_longitudinal']:
+            if 'subject' not in sinfo:
+                r += "\n     ... 'subject' field not defined in batch file, can not run longitudinal FS"
+                run = False
+            elif sinfo['subject'] == sinfo['id']:
+                r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
+                run = False
+            else:
+                lttemplate = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
+                lresults = os.path.join(hcp['T1w_folder'], "%s.long.%s" % (sinfo['id'], options['hcp_fs_longitudinal']), 'label', 'rh.entorhinal_exvivo.label')
+                if not os.path.exists(lresults):
+                    r += "\n     ... ERROR: Results of the longitudinal run not present [%s]" % (lresults)
+                    r += "\n                Please check your data and settings!" % (lresults)
+                    run = False   
+                else:
+                    r += "\n     ... longitudinal template present"
+                    fslongitudinal = "run"
 
         comm = '%(script)s \
             --subject="%(subject)s" \
             --subjectDIR="%(subjectDIR)s" \
-            --ExpertFile="%(ExpertFile)s" \
-            --ControlPoints="%(ControlPoints)s" \
-            --WMEdits="%(WMEdits)s" \
-            --AutoTopoFixOff="%(AutoTopoFixOff)s" \
-            --FSBrainMask="%(FSBrainMask)s" \
-            --FreeSurferHome="%(FreeSurferHome)s" \
-            --FSLoadHPCModule="%(FSLoadHPCModule)s" \
+            --expertfile="%(expertfile)s" \
+            --controlpoints="%(controlpoints)s" \
+            --wmedits="%(wmedits)s" \
+            --autotopofixoff="%(autotopofixoff)s" \
+            --fsbrainmask="%(fsbrainmask)s" \
+            --freesurferhome="%(freesurferhome)s" \
+            --fsloadhpcmodule="%(fsloadhpcmodule)s" \
             --t1="%(t1)s" \
             --t1brain="%(t1brain)s" \
             --t2="%(t2)s" \
-            --LTTemplateName="%(templatename)s" \
-            --longitudinal="%(fslongitudinal)s"' % {
+            --lttemplate="%(lttemplate)s" \
+            --longitudinal="%(longitudinal)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'subjectDIR'        : hcp['T1w_folder'],
-                'FreeSurferHome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
-                'FSLoadHPCModule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
-                'ExpertFile'        : options['hcp_expert_file'],
-                'ControlPoints'     : options['hcp_control_points'],
-                'WMEdits'           : options['hcp_wm_edits'],
-                'AutoTopoFixOff'    : options['hcp_autotopofix_off'],
-                'FSBrainMask'       : options['hcp_fs_brainmask'],
+                'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
+                'fsloadhpcmodule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
+                'expertfile'        : options['hcp_expert_file'],
+                'controlpoints'     : options['hcp_control_points'],
+                'wmedits'           : options['hcp_wm_edits'],
+                'autotopofixoff'    : options['hcp_autotopofix_off'],
+                'fsbrainmask'       : options['hcp_fs_brainmask'],
                 't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                 't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
                 't2'                : t2w,
-                'templatename'      : templatename,
-                'fslongitudinal'    : options['hcp_fs_longitudinal']}
+                'lttemplate'        : lttemplate,
+                'longitudinal'      : fslongitudinal}
 
         if run:
             if options['run'] == "run":
@@ -1024,43 +1040,60 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
         comm = '%(script)s \
             --subject="%(subject)s" \
             --subjectDIR="%(subjectDIR)s" \
-            --ExpertFile="%(ExpertFile)s" \
-            --ControlPoints="%(ControlPoints)s" \
-            --WMEdits="%(WMEdits)s" \
-            --AutoTopoFixOff="%(AutoTopoFixOff)s" \
-            --FSBrainMask="%(FSBrainMask)s" \
-            --FreeSurferHome="%(FreeSurferHome)s" \
-            --FSLoadHPCModule="%(FSLoadHPCModule)s" \
+            --expertfile="%(expertfile)s" \
+            --controlpoints="%(controlpoints)s" \
+            --wmedits="%(wmedits)s" \
+            --autotopofixoff="%(autotopofixoff)s" \
+            --fsbrainmask="%(fsbrainmask)s" \
+            --freesurferhome="%(freesurferhome)s" \
+            --fsloadhpcmodule="%(fsloadhpcmodule)s" \
             --t1="%(t1)s" \
             --t1brain="%(t1brain)s" \
             --t2="%(t2)s" \
             --timepoints="%(timepoints)s" \
-            --LTTemplateName="%(templatename)s" \
-            --longitudinal="YES"' % {
+            --longitudinal="template"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'subjectDIR'        : os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['id'] + options['hcp_suffix']),
-                'FreeSurferHome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
-                'FSLoadHPCModule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
-                'ExpertFile'        : options['hcp_expert_file'],
-                'ControlPoints'     : options['hcp_control_points'],
-                'WMEdits'           : options['hcp_wm_edits'],
-                'AutoTopoFixOff'    : options['hcp_autotopofix_off'],
-                'FSBrainMask'       : options['hcp_fs_brainmask'],
-                't1'                : 'T1w_acpc_dc_restore.nii.gz',
-                't1brain'           : 'T1w_acpc_dc_restore_brain.nii.gz',
-                't2'                : t2w,
-                'timepoints'        : ",".join(sessionsid),
-                'templatename'      : sinfo['id']}
+                'subject'           : options['hcp_fs_longitudinal'],
+                'subjectDIR'        : os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['id']),
+                'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
+                'fsloadhpcmodule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
+                'expertfile'        : options['hcp_expert_file'],
+                'controlpoints'     : options['hcp_control_points'],
+                'wmedits'           : options['hcp_wm_edits'],
+                'autotopofixoff'    : options['hcp_autotopofix_off'],
+                'fsbrainmask'       : options['hcp_fs_brainmask'],
+                't1'                : "",
+                't1brain'           : "",
+                't2'                : "",
+                'timepoints'        : ",".join(sessionsid)}
 
         # run command
 
         if run:
             if options['run'] == "run":
-                r += "\n---> The command would be run on sessions: %s" % (", ".join(sessionsid))
-                report = "Command would be run"
-                failed = 0
+                lttemplate = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['id'], options['hcp_fs_longitudinal'])
+                tfile      = os.path.join(options['subjectsfolder'], sinfo['sessions'][-1]['id'], 'hcp', sessionsid[-1], 'T1w', "%s.long.%s" % (sessionsid[-1], options['hcp_fs_longitudinal']), 'label', 'rh.entorhinal_exvivo.label')
+                if overwrite or not os.path.exists(tfile):
+                    try:
+                        if os.path.exists(lttemplate):
+                            rmfolder = lttemplate
+                            shutil.rmtree(lttemplate)
+                        for session in sessionsid:
+                            rmfolder = os.path.join(options['subjectsfolder'], sinfo['sessions'][-1]['id'], 'hcp', sessionsid[-1], 'T1w', "%s.long.%s" % (sessionsid[-1], options['hcp_fs_longitudinal']))
+                            if os.path.exists(rmfolder):
+                                shutil.rmtree(rmfolder)
+                    except:
+                        r += "\n---> WARNING: Could not remove preexisting folder: %s! Please check your data!" % (rmfolder)
+                        status = False
 
+                    r += runExternalForFileShell(tfile, comm, '... running HCP FS Longitudinal', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                    r, status = checkForFile(r, tfile, 'ERROR: HCP FS Longitudinal failed running command: %s' % (comm))
+
+                    if status:
+                        r += "\n---> Command successfully ran on sessions: %s" % (", ".join(sessionsid))
+                        failed = 0
+                    else:
+                        failed = 1
             else:
                 r += "\n---> The command was tested for sessions: %s" % (", ".join(sessionsid))
                 r += "\n---> If run, the following command would be executed:\n"
@@ -1235,6 +1268,30 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: Could not find Freesurfer processing results."
             run = False
 
+        # identify template if longitudional run
+
+        lttemplate     = ""
+        fslongitudinal = ""
+
+        if options['hcp_fs_longitudinal']:
+            if 'subject' not in sinfo:
+                r += "\n     ... 'subject' field not defined in batch file, can not run longitudinal FS"
+                run = False
+            elif sinfo['subject'] == sinfo['id']:
+                r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
+                run = False
+            else:
+                lttemplate = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
+                lresults = os.path.join(hcp['T1w_folder'], "%s.long.%s" % (sinfo['id'], options['hcp_fs_longitudinal']), 'label', 'rh.entorhinal_exvivo.label')
+                if not os.path.exists(lresults):
+                    r += "\n     ... ERROR: Results of the longitudinal run not present [%s]" % (lresults)
+                    r += "\n                Please check your data and settings!" % (lresults)
+                    run = False   
+                else:
+                    r += "\n     ... longitudinal template present"
+                    fslongitudinal = "run"
+
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
@@ -1249,7 +1306,9 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             --mcsigma="%(mcsigma)s" \
             --regname"%(regname)s" \
             --inflatescale"%(inflatescale)s" \
-            --regname"%(regname)s"' % {
+            --regname"%(regname)s" \
+            --lttemplate="%(lttemplate)s" \
+            --longitudinal="%(longitudinal)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh'),
                 'path'              : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
@@ -1264,7 +1323,9 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                 'mcsigma'           : options['hcp_mcsigma'],
                 'regname'           : options['hcp_regname'],
                 'inflatescale'      : options['hcp_inflatescale'],
-                'mppversion'        : options['hcp_mppversion']}
+                'mppversion'        : options['hcp_mppversion'],
+                'lttemplate'        : lttemplate,
+                'longitudinal'      : fslongitudinal}
 
         if run:
             # tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
