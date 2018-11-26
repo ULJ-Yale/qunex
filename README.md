@@ -379,6 +379,7 @@ Change Log
 * 0.25.02 [matlab] Added an error message to g_PlotBoldTS when running with Octave
 * 0.25.03 [niutilities] Added the ability for processInbox to process tar archives
 * 0.26.00 [connector, hcpmodified, library] Introduced ICA FIX function, fixed bug in probtrackxGPUDense and updated environment script
+* 0.26.01 [mnaptools, library] Add PALM112 install to container image and add PALM path to Octave 
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
