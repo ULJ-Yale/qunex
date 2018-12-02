@@ -68,8 +68,13 @@ usage() {
      echo "-- REQUIRED GENERAL PARMETERS:"
      echo ""
      echo "--subjectsfolder=<folder_with_subjects>                         Path to study folder that contains subjects"
-     echo "--subjects=<list_of_cases>                                       List of subjects to run, separated by commas"
-     echo "--modality=<input_modality_for_qc>                              Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI]"
+     echo "--subjects=<list_of_cases>                                      List of subjects to run, separated by commas"
+     echo "--modality=<input_modality_for_qc>                              Specify the modality to perform QC on [Supported: T1w, T2w, myelin, BOLD, DWI, genera]"
+     echo "                                                                      Note: If using 'genera' modality, then visualization is $TOOLS/$MNAPREPO/library/data/scenes/qc/TEMPLATE.general.QC.wb.scene"
+     echo "                                                                      This will work on any input file within the subject-specific data hierarchy."
+     echo "     --datapath=<path_for_general_scene>                                  * Required ==> Specify path for input path relative to the <subjects_folder> if scene is 'general'."
+     echo "     --datafile=<data_input_for_general_scene>                            * Required ==> Specify input data file name"
+     echo ""
      echo ""
      echo "-- DWI PARMETERS"
      echo ""
@@ -290,6 +295,8 @@ unset SceneZip # --scenezip
 unset QCPreprocCustom # --processcustom
 unset OmitDefaults # --omitdefault
 unset HCPSuffix # --hcp_suffix
+unset GeneralSceneDataFile # --datafile
+unset GeneralSceneDataPath # --datapath
 
 runcmd=""
 
@@ -305,6 +312,9 @@ UserScenePath=`opts_GetOpt "--userscenepath" $@`
 QCPreprocCustom=`opts_GetOpt "--customqc" $@`
 OmitDefaults=`opts_GetOpt "--omitdefaults" $@`
 HCPSuffix=`opts_GetOpt "--hcp_suffix" $@`
+# -- Parameters if requesting 'general' scene type
+GeneralSceneDataFile=`opts_GetOpt "--datafile" $@`
+GeneralSceneDataPath=`opts_GetOpt "--datapath" $@`
 
 # -- Parse DWI arguments
 DWIPath=`opts_GetOpt "--dwipath" $@`
@@ -474,6 +484,12 @@ if [ "$Modality" = "BOLD" ]; then
     fi
 fi
 
+# -- General modality settings:
+if [ "$Modality" = "general" ] || [ "$Modality" = "General" ] || [ "$Modality" = "GENERAL" ] ; then
+    if [ -z "$GeneralSceneDataFile" ]; then reho "Data input not specified"; echo ""; exit 1; fi
+    if [ -z "$GeneralSceneDataPath" ]; then reho "Data input path not specified"; echo ""; exit 1; fi
+fi
+
 # -- Set StudyFolder
 cd $SubjectsFolder/../ &> /dev/null
 StudyFolder=`pwd` &> /dev/null
@@ -531,6 +547,10 @@ if [ "$Modality" = "BOLD" ]; then
         echo "  BOLD FC path: ${BOLDfcPath}"
     fi
 fi
+if [ "$Modality" = "general" ]; then
+    echo "  Data input path: ${GeneralSceneDataPath}"
+    echo "  Data input: ${GeneralSceneDataFile}"
+fi
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of work --------------------------------"
@@ -555,6 +575,8 @@ fi
 
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then Modality="BOLD"; fi
     if [ "$Modality" == "DWI" ] || [ "$Modality" == "dwi" ]; then Modality="DWI"; fi
+    if [ "$Modality" == "general" ] || [ "$Modality" == "General" ] || [ "$Modality" == "GENERAL" ]; then Modality="general"; fi
+
     TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
     WorkingSceneFile="${CASE}.${Modality}.QC.wb.scene"
     
@@ -640,6 +662,9 @@ fi
        DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYBOLDDATA _DUMMYBOLDSUFFIX DUMMYTIMESTAMP DUMMYBOLDANNOT"
     fi
     if [[ ${Modality} == "BOLD" ]] && [[ ! -z ${BOLDfc} ]]; then
+       DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYIMAGEPATH DUMMYIMAGEFILE DUMMYTIMESTAMP"
+    fi
+    if [[ ${Modality} == "general" ]]; then
        DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYIMAGEPATH DUMMYIMAGEFILE DUMMYTIMESTAMP"
     fi
         for DUMMYVARIABLE in ${DUMMYVARIABLES}; do
@@ -1191,7 +1216,35 @@ fi
         Com2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
         Com3="sed -i -e 's|DUMMYPATH|$SubjectsFolder|g' ${OutPath}/${WorkingSceneFile}" 
         Com4="sed -i -e 's|DUMMYCASE|$CASE|g' ${OutPath}/${WorkingSceneFile}"
-    
+
+        # -------------------------------------------
+        # -- General QC
+        # -------------------------------------------
+        
+        # -- Perform checks if modality is general
+        if [ "$Modality" == "general" ]; then
+            GeneralPathCheck="${SubjectsFolder}/${CASE}/${GeneralSceneDataPath}/${GeneralSceneDataFile}"
+            # -- Check if Preprocessed T1w files are present
+            if [ ! -f ${GeneralPathCheck} ]; then
+                echo ""
+                reho "--- Data requested not found: "
+                reho "    --> ${GeneralPathCheck} "
+                echo ""
+                reho "Check presence of your inputs and re-run!"
+                CompletionCheck="fail"
+                echo ""
+                return 1
+            else
+                echo ""
+                geho "--- Data inputs found: ${GeneralPathCheck}"
+                echo ""
+                # -- Setup naming conventions for general inputs before generating scene
+                Com4a="sed -i -e 's|DUMMYIMAGEPATH|$GeneralSceneDataPath|g' ${OutPath}/${WorkingSceneFile}"
+                Com4b="sed -i -e 's|DUMMYIMAGEFILE|$GeneralSceneDataFile|g' ${OutPath}/${WorkingSceneFile}"
+                Com4="$Com4; $Com4a; $Com4b"
+            fi
+        fi
+        
         # -------------------------------------------
         # -- T1w QC
         # -------------------------------------------
@@ -1438,6 +1491,9 @@ fi
         Com5="$Com5; $ComRunPngName"
         # -- Output image of the scene
         Com6="wb_command -show-scene ${OutPath}/${WorkingSceneFile} 1 ${OutPath}/${WorkingSceneFile}.${TimeStamp}.png 1194 539"
+        echo ""
+        echo "$Com6"
+        echo ""
         
         # -- Check if dtifit is requested
         if [ "$DtiFitQC" == "yes" ]; then
@@ -1474,15 +1530,37 @@ fi
             geho "--- The zip file will be saved to: "
             geho "    ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip "
             echo ""
-            RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
-            Com10a="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
-            Com10b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
-            Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}" 
-            Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
-            Com10e="rm ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}"
-            Com10f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
-            Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
-            Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
+            if [[ ${Modality} == "general" ]]; then
+                 geho "--- ${Modality} scene type requested. Outputs will be set relative to: "
+                 geho "    ${SubjectsFolder}/${CASE}"
+                 echo ""
+                 RemoveScenePath="${SubjectsFolder}/${CASE}"
+                 Com10a="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/"
+                 Com10b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
+                 Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/${WorkingSceneFile}" 
+                 Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip"
+                 echo ""
+                 echo "$Com10d"
+                 echo ""
+                 Com10e="echo ${SubjectsFolder}/${CASE}/${WorkingSceneFile}"
+                 Com10f="mkdir -p ${SubjectsFolder}/${CASE}/qc &> /dev/null"
+                 Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/qc/"
+                 Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
+
+            else
+                 geho "--- ${Modality} scene type requested. Outputs will be set relative to: "
+                 geho "    ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+                 echo ""
+                 RemoveScenePath="${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+                 Com10a="cp ${OutPath}/${WorkingSceneFile} ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/"
+                 Com10b="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip  &> /dev/null"
+                 Com10c="sed -i -e 's|$RemoveScenePath|.|g' ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}" 
+                 Com10d="cd ${OutPath}; wb_command -zip-scene-file ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}"
+                 Com10e="echo ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/${WorkingSceneFile}"
+                 Com10f="mkdir -p ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc &> /dev/null"
+                 Com10g="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${SubjectsFolder}/${CASE}/hcp/${CASE}${SetHCPSuffix}/qc/"
+                 Com10="$Com10a; $Com10b; $Com10c; $Com10d; $Com10e; $Com10f; $Com10g"
+            fi
         fi
         # -- Generate Zip files for dtifit scenes if requested
         if [ "$DtiFitQC" == "yes" ] && [ "$SceneZip" == "yes" ]; then

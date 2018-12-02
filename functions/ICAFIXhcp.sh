@@ -398,33 +398,33 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 # BOLDHardLinkFIXICA() {
 # BOLDCount=0
 # for BOLD in $BOLDS
-# 	do
-# 		BOLDCount=$((BOLDCount+1))
-# 		echo "Setting up hard links following FIX ICA for BOLD# $BOLD for $CASE... "
-# 		# -- Setup folder strucrture if missing
-# 		mkdir ${SubjectsFolder}/${CASE}/images    &> /dev/null
-# 		mkdir ${SubjectsFolder}/${CASE}/images/functional	    &> /dev/null
-# 		mkdir ${SubjectsFolder}/${CASE}/images/functional/movement    &> /dev/null
-# 		# -- Setup hard links for images
-# 		rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".dtseries.nii     &> /dev/null
-# 		rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".nii.gz     &> /dev/null
-# 		ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".dtseries.nii
-# 		ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_hp2000_clean.nii.gz ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".nii.gz
-# 		ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas.dtseries.nii ${SubjectsFolder}/${CASE}/images/functional/bold"$BOLD".dtseries.nii
-# 		ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz ${SubjectsFolder}/${CASE}/images/functional/bold"$BOLD".nii.gz
-# 		#rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICArfMRI_REST*     &> /dev/null
-# 		#rm ${SubjectsFolder}/${CASE}/images/functional/boldrfMRI_REST*     &> /dev/null
-# 		echo "Setting up hard links for movement data for BOLD# $BOLD for $CASE... "
-# 		# -- Clean up movement regressor file to match dofcMRIp convention and copy to movement directory
-# 		export PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH     &> /dev/null
-# 		rm ${SubjectsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD"_mov.dat     &> /dev/null
-# 		rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
-# 		cp ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt
-# 		sed -i.bak -E 's/.{67}$//' ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt
-# 		nl ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt > ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt
-# 		sed -i.bak '1i\#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)' ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"//Movement_Regressors_edit_fin.txt
-# 		cp ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt ${SubjectsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD"_mov.dat
-# 		rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
+#     do
+#         BOLDCount=$((BOLDCount+1))
+#         echo "Setting up hard links following FIX ICA for BOLD# $BOLD for $CASE... "
+#         # -- Setup folder strucrture if missing
+#         mkdir ${SubjectsFolder}/${CASE}/images    &> /dev/null
+#         mkdir ${SubjectsFolder}/${CASE}/images/functional        &> /dev/null
+#         mkdir ${SubjectsFolder}/${CASE}/images/functional/movement    &> /dev/null
+#         # -- Setup hard links for images
+#         rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".dtseries.nii     &> /dev/null
+#         rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".nii.gz     &> /dev/null
+#         ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas_hp2000_clean.dtseries.nii ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".dtseries.nii
+#         ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_hp2000_clean.nii.gz ${SubjectsFolder}/${CASE}/images/functional/boldFIXICA"$BOLD".nii.gz
+#         ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD"_Atlas.dtseries.nii ${SubjectsFolder}/${CASE}/images/functional/bold"$BOLD".dtseries.nii
+#         ln -f ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/"$BOLD".nii.gz ${SubjectsFolder}/${CASE}/images/functional/bold"$BOLD".nii.gz
+#         #rm ${SubjectsFolder}/${CASE}/images/functional/boldFIXICArfMRI_REST*     &> /dev/null
+#         #rm ${SubjectsFolder}/${CASE}/images/functional/boldrfMRI_REST*     &> /dev/null
+#         echo "Setting up hard links for movement data for BOLD# $BOLD for $CASE... "
+#         # -- Clean up movement regressor file to match dofcMRIp convention and copy to movement directory
+#         export PATH=/usr/local/opt/gnu-sed/libexec/gnubin:$PATH     &> /dev/null
+#         rm ${SubjectsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD"_mov.dat     &> /dev/null
+#         rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
+#         cp ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors.txt ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt
+#         sed -i.bak -E 's/.{67}$//' ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt
+#         nl ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit.txt > ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt
+#         sed -i.bak '1i\#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)' ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"//Movement_Regressors_edit_fin.txt
+#         cp ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit_fin.txt ${SubjectsFolder}/${CASE}/images/functional/movement/boldFIXICA"$BOLD"_mov.dat
+#         rm ${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/"$BOLD"/Movement_Regressors_edit*     &> /dev/null
 # done
 # }
 
@@ -434,23 +434,23 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 # 
 # FIXICAInsertMean() {
 # for BOLD in $BOLDS; do
-# 	cd ${SubjectsFolder}/${CASE}/images/functional/
-# 	# -- First check if the boldFIXICA file has the mean inserted
-# 	3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
-# 	ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
-# 	if [ $(echo " $ImgMean > 1000" | bc) -eq 1 ]; then
-# 	echo "1st frame mean=$ImgMean Mean inserted OK for subject $CASE and bold# $BOLD. Skipping to next..."
-# 		else
-# 		# -- Next check if the boldFIXICA file has the mean inserted twice by accident
-# 		if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
-# 		echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."
-# 			else
-# 			# -- Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
-# 			echo "Re-inserting mean image on the mapped $BOLD data for $CASE... "
-# 			${MNAPMCOMMAND} "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldFIXICA' num2str($BOLD) '.nii.gz']),quit()"
-# 		fi
-# 	fi
-# 	rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
+#     cd ${SubjectsFolder}/${CASE}/images/functional/
+#     # -- First check if the boldFIXICA file has the mean inserted
+#     3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
+#     ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
+#     if [ $(echo " $ImgMean > 1000" | bc) -eq 1 ]; then
+#     echo "1st frame mean=$ImgMean Mean inserted OK for subject $CASE and bold# $BOLD. Skipping to next..."
+#         else
+#         # -- Next check if the boldFIXICA file has the mean inserted twice by accident
+#         if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
+#         echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."
+#             else
+#             # -- Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
+#             echo "Re-inserting mean image on the mapped $BOLD data for $CASE... "
+#             ${MNAPMCOMMAND} "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldFIXICA' num2str($BOLD) '.nii.gz']),quit()"
+#         fi
+#     fi
+#     rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
 # done
 # }
 
@@ -460,23 +460,23 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 
 # FIXICARemoveMean() {
 # for BOLD in $BOLDS; do
-# 	cd ${SubjectsFolder}/${CASE}/images/functional/
-# 	# First check if the boldFIXICA file has the mean inserted
-# 	#3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
-# 	#ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
-# 	#if [ $(echo " $ImgMean < 1000" | bc) -eq 1 ]; then
-# 	#echo "1st frame mean=$ImgMean Mean removed OK for subject $CASE and bold# $BOLD. Skipping to next..."
-# 	#	else
-# 		# Next check if the boldFIXICA file has the mean inserted twice by accident
-# 	#	if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
-# 	#	echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."
-# 	#		else
-# 			# Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
-# 			echo "Removing mean image on the mapped CIFTI FIX ICA $BOLD data for $CASE... "
-# 			${MNAPMCOMMAND} "g_RemoveMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA_demean' num2str($BOLD) '.dtseries.nii']),quit()"
-# 		#fi
-# 	#fi
-# 	#rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
+#     cd ${SubjectsFolder}/${CASE}/images/functional/
+#     # First check if the boldFIXICA file has the mean inserted
+#     #3dBrickStat -mean -non-zero boldFIXICA"$BOLD".nii.gz[1] >> boldFIXICA"$BOLD"_mean.txt
+#     #ImgMean=`cat boldFIXICA"$BOLD"_mean.txt`
+#     #if [ $(echo " $ImgMean < 1000" | bc) -eq 1 ]; then
+#     #echo "1st frame mean=$ImgMean Mean removed OK for subject $CASE and bold# $BOLD. Skipping to next..."
+#     #    else
+#         # Next check if the boldFIXICA file has the mean inserted twice by accident
+#     #    if [ $(echo " $ImgMean > 15000" | bc) -eq 1 ]; then
+#     #    echo "1st frame mean=$ImgMean ERROR: Mean has been inserted twice for $CASE and $BOLD."
+#     #        else
+#             # Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
+#             echo "Removing mean image on the mapped CIFTI FIX ICA $BOLD data for $CASE... "
+#             ${MNAPMCOMMAND} "g_RemoveMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA_demean' num2str($BOLD) '.dtseries.nii']),quit()"
+#         #fi
+#     #fi
+#     #rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
 # done
 # }
 

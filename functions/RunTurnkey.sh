@@ -383,6 +383,8 @@ DWILegacy=`opts_GetOpt "--dwilegacy" $@`
 BOLDfc=`opts_GetOpt "--boldfc" $@`
 BOLDfcInput=`opts_GetOpt "--boldfcinput" $@`
 BOLDfcPath=`opts_GetOpt "--boldfcpath" $@`
+GeneralSceneDataFile=`opts_GetOpt "--datafile" $@`
+GeneralSceneDataPath=`opts_GetOpt "--datapath" $@`
 
 BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 if [ -z "${BOLDS}" ]; then
@@ -571,6 +573,11 @@ if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
         echo "   BOLD FC input: ${BOLDfcInput}"
         echo "   BOLD FC path: ${BOLDfcPath}"
     fi
+fi
+
+if [ "$Modality" = "general" ]; then
+    echo "  Data input path: ${GeneralSceneDataPath}"
+    echo "  Data input: ${GeneralSceneDataFile}"
 fi
 
 if [[ ! -z "${SUBJID}" ]]; then 

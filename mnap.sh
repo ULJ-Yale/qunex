@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense probtrackxGPUDense AWSHCPSync QCnifti QCPreproc runTurnkey commandExecute showVersion"
+MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense ProbtrackxGPUDense AWSHCPSync QCnifti QCPreproc runTurnkey commandExecute showVersion"
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -193,7 +193,7 @@ echo " hcpdLegacy ...... diffusion image processing for data with or without sta
 echo " FSLDtifit ...... run FSL's dtifit tool (cluster usable)"
 echo " FSLBedpostxGPU ...... run fsl bedpostx w/gpu"
 echo " pretractographyDense ...... generates space for whole-brain dense connectomes"
-echo " probtrackxGPUDense ...... run FSL's probtrackx for whole brain & generates dense "
+echo " ProbtrackxGPUDense ...... run FSL's probtrackx for whole brain & generates dense "
 echo "                          whole brain connectomes"
 echo ""
 echo "Misc. functions and analyses"
@@ -1567,152 +1567,28 @@ echo ""
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
-#  probtrackxGPUDense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
+#  ProbtrackxGPUDense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
-probtrackxGPUDense() {
-
-# -- Parse general parameters
-ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/Tractography_gpu_scripts"
-ResultsFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"
-RunFolder="${SubjectsFolder}/${CASE}/hcp/"
-NsamplesMatrixOne="$NsamplesMatrixOne"
-NsamplesMatrixThree="$NsamplesMatrixThree"
-minimumfilesize=100000000
-# -- Generate the results and log folders
-mkdir "$ResultsFolder"  &> /dev/null
-
-# -------------------------------------------------
-# -- Check if Matrix 1 or 3 flag set
-# -------------------------------------------------
-if [ "$MatrixOne" == "yes" ]; then
-    MNumber="1"
-    if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixOne=10000; fi
-fi
-if [ "$MatrixThree" == "yes" ]; then
-    MNumber="3"
-    if [ "$NsamplesMatrixOne" == "" ];then NsamplesMatrixThree=3000; fi
-fi
-if [ "$MatrixOne" == "yes" ] && [ "$MatrixThree" == "yes" ]; then
-    MNumber="1 3"
-fi
-
-# -------------------------------------------------
-# -- Do work for Matrix 1 or 3
-# -------------------------------------------------
-for MNum in $MNumber; do
-    if [ "$MNum" == "1" ]; then NSamples="$NsamplesMatrixOne"; fi
-    if [ "$MNum" == "3" ]; then NSamples="$NsamplesMatrixThree"; fi
-    # -- Check of overwrite flag was set
-    if [ "$Overwrite" == "yes" ]; then
-        echo ""
-        reho " --- Removing existing Probtrackxgpu Matrix${MNum} dense run for $CASE..."
-        echo ""
-        rm -f "$ResultsFolder"/Conn${MNum}.dconn.nii.gz &> /dev/null
-    fi
-    # -- Check for Matrix completion
-    echo ""
-    geho "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
-    echo ""
-    # -- Check if the file even exists
-    if [ -f "$ResultsFolder"/Conn${MNum}.dconn.nii.gz ]; then
-        # -- Set file sizes to check for completion
-        actualfilesize=`wc -c < "$ResultsFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1
-        # -- Then check if Matrix run is complete based on size
-        if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
-            echo ""
-            cyaneho "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for $CASE"
-            cyaneho "To re-run set overwrite flag to 'yes'"
-            cyaneho "Check prior output logs here: $LogFolder"
-            echo ""
-            echo "--------------------------------------------------------------"
-            echo ""
-        fi
-    else
-        # -- If run is incomplete perform run for Matrix
-        echo ""
-        geho "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
-        echo ""
-        # -- Command to run
-        CommandToRun="${ScriptsFolder}/RunMatrix${MNum}_NoScheduler.sh ${RunFolder} ${CASE} ${Nsamples} ${SchedulerType}"
-        # -- Connector execute function
-        connectorExec
-    fi
-done
+ProbtrackxGPUDense() {
+# -- Command to run
+CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/ProbtrackxGPUDense.sh \
+--subjectsfolder='${SubjectsFolder}' \
+--scriptsfolder='${ScriptsFolder}' \
+--infolder='${InFolder}' \
+--outfolder='${OutFolder}' \
+--omatrix1='${MatrixOne}' \
+--omatrix3='${MatrixThree}' \
+--nsamplesmatrix1='${NsamplesMatrixOne}' \
+--nsamplesmatrix3='${NsamplesMatrixThree}' \
+--overwrite='${Overwrite}' "
+# -- Connector execute function
+connectorExec
 }
 
-show_usage_probtrackxGPUDense() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function runs the probtrackxgpu dense whole-brain connectome generation by calling $ScriptsFolder/RunMatrix1.sh or $ScriptsFolder/RunMatrix3.sh"
-echo "Note that this function needs to send work to a GPU-enabled queue or you need to run it locally from a GPU-equiped machine"
-echo "It explicitly assumes the Human Connectome Project folder structure and completed FSLBedpostxGPU and pretractographyDense functions processing:"
-echo ""
-echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion            ---> Processed DWI data needs to be here"
-echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX   ---> BedpostX output data needs to be here"
-echo " <study_folder>/<case>/hcp/<case>/MNINonLinear             ---> T1w images need to be in MNINonLinear space here"
-echo ""
-echo "Outputs will be here:"
-echo ""
-echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Conn1.dconn.nii.gz   ---> Dense Connectome CIFTI Results in MNI space for Matrix1"
-echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Conn3.dconn.nii.gz   ---> Dense Connectome CIFTI Results in MNI space for Matrix3"
-echo ""
-echo "-- Note on waytotal normalization and log transformation of streamline counts:"
-echo ""
-echo "  waytotal normalization is computed automatically as part of the run prior to any inter-subject or group comparisons"
-echo "  to account for individual differences in geometry and brain size. The function divides the "
-echo "  dense connectome by the waytotal value, turning absolute streamline counts into relative "
-echo "  proportions of the total streamline count in each subject. "
-echo ""
-echo "  Next, a log transformation is computed on the waytotal normalized data, "
-echo "  which will yield stronger connectivity values for longe-range projections. "
-echo "  Log-transformation accounts for algorithmic distance bias in tract generation "
-echo "  (path probabilities drop with distance as uncertainty is accumulated)."
-echo "  See Donahue et al. • The Journal of Neuroscience, June 22, 2016 • 36(25):6758 – 6770. "
-echo "      DOI: https://doi.org/10.1523/JNEUROSCI.0493-16.2016"
-echo ""
-echo "  The outputs for these files will be in:"
-echo ""
-echo "     /<path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm.dconn.nii"
-echo "     /<path_to_study_subjects_folder>/<subject_id>/hcp/<subject_id>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm_log.dconn.nii"
-echo ""
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>            List of subjects to run"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                               e.g. for SLURM the string would look like this: "
-echo "                                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo "--overwrite=<clean_prior_run>                         Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
-echo "--omatrix1=<matrix1_model>                            Specify if you wish to run matrix 1 model [yes or omit flag]"
-echo "--omatrix3=<matrix3_model>                            Specify if you wish to run matrix 3 model [yes or omit flag]"
-echo "--nsamplesmatrix1=<Number_of_Samples_for_Matrix1>     Number of samples - default=10000"
-echo "--nsamplesmatrix3=<Number_of_Samples_for_Matrix3>     Number of samples - default=3000"
-echo ""
-echo "-- GENERIC PARMETERS SET BY DEFAULT:"
-echo ""
-echo "--loopcheck --forcedir --fibthresh=0.01 -c 0.2 --sampvox=2 --randfib=1 -S 2000 --steplength=0.5"
-echo ""
-echo "** The function calls either of these based on the --omatrix1 and --omatrix3 flags: "
-echo ""
-echo "    $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix1.sh"
-echo "    $HCPPIPEDIR_dMRITracFull/Tractography_gpu_scripts/RunMatrix3.sh"
-echo ""
-echo "    --> both are cluster-aware and send the jobs to the GPU-enabled queue. They do not work interactively."
-echo ""
-echo "-- EXAMPLE with flagged parameters for submission to the scheduler (needs to be GPU-enabled):"
-echo ""
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--function='probtrackxGPUDense' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo "--omatrix1='yes' \ "
-echo "--nsamplesmatrix1='10000' \ "
-echo "--overwrite='no'"
-echo ""
+show_usage_ProbtrackxGPUDense() {
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${MNAPREPO}/connector/functions/ProbtrackxGPUDense.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1794,6 +1670,8 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --overwrite='${Overwrite}' \
 --scenetemplatefolder='${scenetemplatefolder}' \
 --modality='${Modality}' \
+--datapath='${GeneralSceneDataPath}' \
+--datafile='${GeneralSceneDataFile}' \
 --customqc=${QCPreprocCustom} \
 --omitdefaults=${OmitDefaults} \
 --dwipath='${DWIPath}' \
@@ -2312,11 +2190,14 @@ if [[ "$setflag" =~ .*-.* ]]; then
     Burnin=`opts_GetOpt "${setflag}burnin" $@`
     Jumps=`opts_GetOpt "${setflag}jumps" $@`
     Rician=`opts_GetOpt "${setflag}rician" $@`
-    # -- probtrackxGPUDense input flags
+    # -- ProbtrackxGPUDense input flags
     MatrixOne=`opts_GetOpt "${setflag}omatrix1" $@`
     MatrixThree=`opts_GetOpt "${setflag}omatrix3" $@`
     NsamplesMatrixOne=`opts_GetOpt "${setflag}nsamplesmatrix1" $@`
     NsamplesMatrixThree=`opts_GetOpt "${setflag}nsamplesmatrix3" $@`
+    ScriptsFolder=`opts_GetOpt "${setflag}scriptsfolder" $@`
+    InFolder=`opts_GetOpt "${setflag}infolder" $@`
+    OutFolder=`opts_GetOpt "${setflag}outfolder" $@`
     # -- AWSHCPSync input flags
     Awsuri=`opts_GetOpt "${setflag}awsuri" $@`
     # -- QCPreproc input flags
@@ -2334,6 +2215,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
     BedpostXQC=`opts_GetOpt "${setflag}bedpostxqc" $@`
     EddyQCStats=`opts_GetOpt "${setflag}eddyqcstats" $@`
     DWILegacy=`opts_GetOpt "${setflag}dwilegacy" $@`
+    GeneralSceneDataFile=`opts_GetOpt "${setflag}datafile" $@`
+    GeneralSceneDataPath=`opts_GetOpt "${setflag}datapath" $@`
     # -- ICAFIXhcp input flags
     ICAFIXFunction=`opts_GetOpt "${setflag}icafixfunction" $@`
     HPFilter=`opts_GetOpt "${setflag}hpfilter" $@`
@@ -2606,6 +2489,11 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
         if [ -z "$BOLDPrefix" ]; then BOLDPrefix=""; echo "Input BOLD Prefix not specified. Assuming no BOLD name prefix."; fi
         if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "Processed BOLD Suffix not specified. Assuming no BOLD output suffix."; fi
     fi
+    # -- General modality settings:
+    if [ "$Modality" = "general" ] || [ "$Modality" = "General" ] || [ "$Modality" = "GENERAL" ] ; then
+        if [ -z "$GeneralSceneDataFile" ]; then reho "Data input not specified"; echo ""; exit 1; fi
+        if [ -z "$GeneralSceneDataPath" ]; then reho "Data input path not specified"; echo ""; exit 1; fi
+    fi
     
     # -- Report parameters
     echo ""
@@ -2655,6 +2543,10 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
             echo "   BOLD FC input: ${BOLDfcInput}"
             echo "   BOLD FC path: ${BOLDfcPath}"
         fi
+    fi
+    if [ "$Modality" = "general" ]; then
+        echo "  Data input path: ${GeneralSceneDataPath}"
+        echo "  Data input: ${GeneralSceneDataFile}"
     fi
     echo "--------------------------------------------------------------"
     # -- Loop through all the cases
@@ -3553,10 +3445,10 @@ if [ "$FunctionToRun" == "pretractographyDense" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  probtrackxGPUDense function loop
+#  ProbtrackxGPUDense function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "probtrackxGPUDense" ]; then
+if [ "$FunctionToRun" == "ProbtrackxGPUDense" ]; then
     # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
     if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -3573,6 +3465,12 @@ if [ "$FunctionToRun" == "probtrackxGPUDense" ]; then
     if [ "$Cluster" == "2" ]; then
         if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
     fi
+    # -- Optional parameters
+    if [ -z ${ScriptsFolder} ]; then ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/Tractography_gpu_scripts"; fi
+    if [ -z ${OutFolder} ]; then OutFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography"; fi
+    if [ -z ${InFolder} ]; then InFolder="${SubjectsFolder}/${CASE}/hcp"; fi
+    minimumfilesize="100000000"
+
     # -- Report parameters
     echo ""
     echo "Running $FunctionToRun with the following parameters:"
@@ -3583,6 +3481,9 @@ if [ "$FunctionToRun" == "probtrackxGPUDense" ]; then
     echo "   Subjects: ${CASES}"
     echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler: ${Scheduler}"
+    echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"
+    echo "   Input HCP folder: ${InFolder}"
+    echo "   Output folder for probtrackX results: ${OutFolder}"
     echo "   Compute Matrix1: ${MatrixOne}"
     echo "   Compute Matrix3: ${MatrixThree}"
     echo "   Number of samples for Matrix1: ${NsamplesMatrixOne}"

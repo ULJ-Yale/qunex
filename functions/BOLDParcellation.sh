@@ -70,7 +70,7 @@ usage() {
      echo "     --singleinputfile=<parcellate_single_file>          Parcellate only a single file in any location. Individual flags are not needed (--subject, --subjectsfolder, --inputfile)."
      echo "     --overwrite=<clean_prior_run>                       Delete prior run"
      echo "     --computepconn=<specify_parcellated_connectivity_calculation>       Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no)."
-     echo "     --useweights=<clean_prior_run>                      If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
+     echo "     --useweights=<specify_yes_or_no>                    If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no) "
      echo "     --weightsfile=<location_and_name_of_weights_file>   Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)"
      echo "     --extractdata=<save_out_the_data_as_as_csv>         Specify if you want to save out the matrix as a CSV file"
      echo ""
@@ -424,11 +424,17 @@ echo ""
 if [ -f "$BOLDOutput" ]; then
     geho "Parcellation data found: "
     echo ""
-    echo "      $BOLDOutput"
+    geho "      $BOLDOutput"
     echo ""
 if [[ ${Overwrite} == "no" ]]; then 
     echo ""
-    echo "Overwrite set to no. Exiting. Set --overwrite='yes' to re-run."
+    echo " --> Overwrite set to no. If you wish to overwrite, set --overwrite='yes' and re-run."
+    echo ""
+    echo ""
+    geho "--- BOLD Parcellation completed. Check output log for outputs and errors."
+    echo ""
+    geho "------------------------- Successful completion of work --------------------------------"
+    echo ""
     exit 0
 fi
 else
