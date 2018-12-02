@@ -473,6 +473,8 @@ def run(command, args):
             if subject['subject'] not in subjectList:
                 subjectList.append(subject['subject'])
                 subjectInfo[subject['subject']] = {'id': subject['subject'], 'sessions': []}
+            if subject['subject'] == subject['id']:
+                raise ge.CommandFailed(command, "Session id matches subject id", "Session id [%s] is the same as subject id [%s]!" % (subject['id'], subject['subject']), "Please check the batch file!", "Aborting processing!")
             subjectInfo[subject['subject']]['sessions'].append(subject)
         subjects = [subjectInfo[e] for e in subjectList]
 
