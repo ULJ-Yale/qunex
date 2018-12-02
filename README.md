@@ -380,6 +380,7 @@ Change Log
 * 0.25.03 [niutilities] Added the ability for processInbox to process tar archives
 * 0.26.00 [connector, hcpmodified, library] Introduced ICA FIX function, fixed bug in probtrackxGPUDense and updated environment script
 * 0.26.01 [mnaptools, library] Add PALM112 install to container image and add PALM path to Octave 
+* 0.27.00 [library] Add bin directory for general purpose code. Added example code for running MNAP Singularity via SLURM.
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
