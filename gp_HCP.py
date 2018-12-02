@@ -1011,7 +1011,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
                 # -> FS results
 
-                if os.path.exists(os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')):
+                if os.path.exists(os.path.join(hcp['T1w_folder'], session['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')):
                     r += "\n       -> FS results present."
                 else:
                     r += "\n       -> ERROR: Could not find Freesurfer processing results."
