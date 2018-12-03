@@ -92,6 +92,9 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
 # Clean up binary package files
     rm /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
     rm /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
+# Octave testing on Singularity
+    rm /opt/PALM/palm-alpha112o/fileio/@nifti/private/write_hdr_raw.m && \
+    cp /opt/mnaptools/library/etc/write_hdr_raw.m /opt/PALM/palm-alpha112o/fileio/@nifti/private && \
 # Clean the environment and go to mnap folder
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \
