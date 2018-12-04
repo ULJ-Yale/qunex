@@ -77,6 +77,10 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
     rm mri_SaveNIfTImx.cpp && \
     rm g_nifti.o && \
     rm znzlib.o && \
+# Set location for Octave to read octaverc file
+    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/site/m/startup/octaverc && \
+    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/4.2.1/m/startup/octaverc && \
+    octave --no-gui --eval "source('/opt/mnaptools/library/.octaverc')" && \
 # Move libhdf5.so.8 to /opt/olib for Octave to compute BOLD
     cd /usr/lib64/ && \
     mkdir hdf5 && \
