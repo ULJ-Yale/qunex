@@ -81,13 +81,13 @@ RUN yum clean all && \
 # Install Octave 4.2.1
 RUN echo "Installing Ocatve 4.2.1..." && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
-    mkdir -p /opt/Octave && \
-    cd /opt/Octave && \
+    mkdir -p /opt/Octave/4.2.1/bin && \
+    cd /opt/Octave/4.2.1/bin && \
     git clone https://github.com/ztamayo/octave-enable64.git && \
     cd octave-enable64 && \
     scl enable devtoolset-3 -- make -j$(nproc) && \
-    alias octave="/usr/local/bin/octave --no-init-file" && \
-    echo "alias octave='/usr/local/bin/octave --no-init-file'" >> ~/.bashrc && \
+    alias octave="/usr/local/bin/octave-4.2.1 --no-init-file" && \
+    echo "alias octave='/usr/local/bin/octave-4.2.1 --no-init-file'" >> ~/.bashrc && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
     octave --no-gui --eval "pkg install -verbose -forge general" && \
@@ -213,11 +213,11 @@ RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
     ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
     ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
     ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
-# Link octave install to /opt/Octave
-    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave && \
-    ln -fs /usr/local/bin/octave-config-4.2.1 /opt/Octave && \
-    ln -fs /usr/local/bin/octave-cli-4.2.1 /opt/Octave && \
-    ln -fs /usr/local/bin/mkoctfile-4.2.1 /opt/Octave && \
+# Link octave install to /opt/Octave/4.2.1/bin
+    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave/4.2.1/bin && \
+    ln -fs /usr/local/bin/octave-config-4.2.1 /opt/Octave/4.2.1/bin && \
+    ln -fs /usr/local/bin/octave-cli-4.2.1 /opt/Octave/4.2.1/bin && \
+    ln -fs /usr/local/bin/mkoctfile-4.2.1 /opt/Octave/4.2.1/bin && \
 # Create directory in $TOOLS for octave packages and libraries and add sym links
     mkdir -p /opt/octavepkg && \
     ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
@@ -233,8 +233,12 @@ RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
     ln -fs /usr/lib/python2.7/site-packages /opt/pylib/lib/python2.7 && \
     ln -fs /usr/lib64/python2.7/site-packages /opt/pylib/lib64/python2.7 && \
     ln -fs /usr/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
-    ln -fs /usr/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel
-
+    ln -fs /usr/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel && \
+# Set Octave links
+    cd /opt/Octave/4.2.1/bin && \
+    ln -fs octave-config-4.2.1 octave-config && \
+    ln -fs octave-cli-4.2.1 octave-cli && \
+    ln -fs mkoctfile-4.2.1 mkoctfile
 
 CMD ["bash"]
 
