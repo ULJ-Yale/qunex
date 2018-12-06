@@ -2336,7 +2336,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         if threads == 1: # serial execution
             for b in bolds:
                 # process
-                result = executeHcpfMRISurface(sinfo, options, overwrite, b, hcp, run)
+                result = executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, b)
 
                 # merge r
                 r += result['r']
@@ -2381,7 +2381,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     print r
     return (r, report)
 
-def executeHcpfMRISurface(sinfo, options, overwrite, boldData, hcp, run):
+def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     # extract data
     bold = boldData[0]
 
