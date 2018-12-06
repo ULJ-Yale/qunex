@@ -1953,7 +1953,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 report['not ready'] += tempReport['not ready']
         else: # parallel execution
             # if moveref equals first and seimage equals independent (complex scenario)
-            r += "\nMOVREF = %s, SEIMG = %s" % (options['hcp_bold_movref'], options['hcp_bold_seimg'])
             if (options['hcp_bold_movref'] == 'first') and (options['hcp_bold_seimg'] == 'independent'):
                 # loop over bolds to prepare processing pools
                 boldsPool = []
@@ -1969,7 +1968,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 # if moveref equals first then process first one in serial
                 if options['hcp_bold_movref'] == 'first':
                     # process first one
-                    b = bolds[0]
+                    b = boldsData[0]
                     r, report = executeSingleHcpfMRIVolume(sinfo, options, overwrite, hcp, b, r, report)
                     
                     # remove first one from array then process others in parallel
