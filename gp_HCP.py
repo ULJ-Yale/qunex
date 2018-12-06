@@ -1953,7 +1953,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 report['not ready'] += tempReport['not ready']
         else: # parallel execution
             # if moveref equals first and seimage equals independent (complex scenario)
-            if (options['hcp_bold_movref'] == 'first') and (options['hcp_bhcp_bold_seimg'] == 'independent'):
+            if (options['hcp_bold_movref'] == 'first') and (options['hcp_bold_seimg'] == 'independent'):
                 # loop over bolds to prepare processing pools
                 boldsPool = []
                 for b in boldsData:
