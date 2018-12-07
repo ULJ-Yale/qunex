@@ -1964,6 +1964,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                         r, report = executeSingleHcpfMRIVolume(sinfo, options, overwrite, hcp, b, r, report)
                     else: # else add to pool
                         boldsPool.append(b)
+
+                # execute remaining pool
+                r, report = executeMultipleHcpfMRIVolume(sinfo, options, overwrite, hcp, boldsPool, r, report)                      
             else:
                 # if moveref equals first then process first one in serial
                 if options['hcp_bold_movref'] == 'first':
