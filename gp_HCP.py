@@ -75,24 +75,39 @@ def getHCPPaths(sinfo, options):
 
     d['hcp_caret7dir']      = os.path.join(base, 'global', 'binaries', 'caret7', 'bin_rh_linux64')
 
-    # ----
+    # ---- Key folder in the hcp folder structure
 
     hcpbase                 = os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'])
 
     d['base']               = hcpbase
     d['hcp_nonlin']         = os.path.join(hcpbase, 'MNINonLinear')
     d['T1w_folder']         = os.path.join(hcpbase, 'T1w')
-    # d['T1w']                = os.path.join(hcpbase, 'T1w', sinfo['id'] + '_strc_T1w_MPR1.nii.gz')
     d['T1w']                = "@".join(glob.glob(os.path.join(d['T1w_folder'], '*T1w_MPR*')))
     d['DWI_folder']         = os.path.join(hcpbase, 'Diffusion')
     d['FS_folder']          = os.path.join(hcpbase, 'T1w', sinfo['id'] + options['hcp_suffix'])
+    
+
+    # --- longitudinal FS related paths
+
+    if options['hcp_fs_longitudinal']:
+        d['FS_long_template'] = os.path.join(hcpbase, 'T1w', options['hcp_fs_longitudinal'])
+        d['FS_long_results']  = os.path.join(hcpbase, 'T1w', "%s.long.%s" % (sinfo['id'] + options['hcp_suffix'], options['hcp_fs_longitudinal']))
+        d['FS_long_subject_template'] = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
+    else:
+        d['FS_long_template']         = ""
+        d['FS_long_results']          = ""
+        d['FS_long_subject_template'] = ""
+
+
+    # --- T2w related paths
 
     if options['hcp_t2'] == 'NONE':
         d['T2w'] = 'NONE'
     else:
-        # d['T2w'] = os.path.join(hcpbase, 'T2w', sinfo['id'] + '_strc_T2w_SPC1.nii.gz')
-        d['T2w']                = "@".join(glob.glob(os.path.join(hcpbase, 'T2w', sinfo['id'] + '_strc_T2w_SPC*.nii.gz')))
+        d['T2w'] = "@".join(glob.glob(os.path.join(hcpbase, 'T2w', sinfo['id'] + '_strc_T2w_SPC*.nii.gz')))
 
+
+    # --- Fieldmap related paths
 
     d['fmapmag']   = 'NONE'
     d['fmapphase'] = 'NONE'
@@ -739,8 +754,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # tfile = os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab')
         # --------------------------------------------------------------------------------------------------------------
 
-        tfiles = {'6.0': os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'BA_exvivo.thresh.ctab'),
-                  '5.3-HCP': os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'label', 'rh.entorhinal_exvivo.label')}
+        tfiles = {'6.0':     os.path.join(hcp['FS_folder'], 'label', 'BA_exvivo.thresh.ctab'),
+                  '5.3-HCP': os.path.join(hcp['FS_folder'], 'label', 'rh.entorhinal_exvivo.label')}
         tfile = tfiles[fsversion]
 
         # --- set up T2 NONE if needed
@@ -752,7 +767,6 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
         # identify template if longitudional run
 
-        lttemplate     = ""
         fslongitudinal = ""
 
         if options['hcp_fs_longitudinal']:
@@ -763,15 +777,18 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
                 run = False
             else:
-                lttemplate = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
-                lresults = os.path.join(hcp['T1w_folder'], "%s.long.%s" % (sinfo['id'], options['hcp_fs_longitudinal']), 'label', 'rh.entorhinal_exvivo.label')
+                lresults = os.path.join(hcp['FS_long_template'], 'label', 'rh.entorhinal_exvivo.label')                
                 if not os.path.exists(lresults):
-                    r += "\n     ... ERROR: Results of the longitudinal run not present [%s]" % (lresults)
+                    r += "\n     ... ERROR: Longitudinal template not present! [%s]" % (lresults)
+                    r += "\n                Please chesk the results of longitudinalFS command!"
                     r += "\n                Please check your data and settings!" % (lresults)
                     run = False   
                 else:
                     r += "\n     ... longitudinal template present"
                     fslongitudinal = "run"
+                    tfiles = {'6.0':     os.path.join(hcp['FS_long_results'], 'label', 'BA_exvivo.thresh.ctab'),
+                              '5.3-HCP': os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')}
+                    tfile = tfiles[fsversion]
 
         comm = '%(script)s \
             --subject="%(subject)s" \
@@ -792,7 +809,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'subjectDIR'        : hcp['T1w_folder'],
                 'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
-                'fsloadhpcmodule'   : options['hcp_freesurfer_module'],   # -- Alan added option for --hcp_freesurfer_module flag passing
+                'fsloadhpcmodule'   : options['hcp_freesurfer_module'],    # -- Alan added option for --hcp_freesurfer_module flag passing
                 'expertfile'        : options['hcp_expert_file'],
                 'controlpoints'     : options['hcp_control_points'],
                 'wmedits'           : options['hcp_wm_edits'],
@@ -801,7 +818,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                 't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
                 't2'                : t2w,
-                'lttemplate'        : lttemplate,
+                'lttemplate'        : d['FS_long_subject_template'],
                 'longitudinal'      : fslongitudinal}
 
         if run:
@@ -809,19 +826,34 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.lexists(tfile):
                     os.remove(tfile)
                 if overwrite or not os.path.exists(tfile):
-                    if os.path.lexists(hcp['FS_folder']):
-                        r += "\n --> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
-                        shutil.rmtree(hcp['FS_folder'])
-                    for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
-                        rmtarget = os.path.join(hcp['T1w_folder'], toremove)
-                        try:
-                            if os.path.islink(rmtarget) or os.path.isfile(rmtarget):
-                                os.remove(rmtarget)
-                            elif os.path.isdir(rmtarget):
-                                shutil.rmtree(rmtarget)
-                        except:
-                            r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
-                            status = False
+                    if options['hcp_fs_longitudinal']:
+                        if os.path.lexists(hcp['FS_long_results']):
+                            r += "\n --> removing preexisting folder with longitudinal results [%s]" % (hcp['FS_long_results'])
+                            shutil.rmtree(hcp['FS_long_results'])
+                        # for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
+                        #     rmtarget = os.path.join(hcp['T1w_folder'], toremove)
+                        #     try:
+                        #         if os.path.islink(rmtarget) or os.path.isfile(rmtarget):
+                        #             os.remove(rmtarget)
+                        #         elif os.path.isdir(rmtarget):
+                        #             shutil.rmtree(rmtarget)
+                        #     except:
+                        #         r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
+                        #         status = False
+                    else:
+                        if os.path.lexists(hcp['FS_folder']):
+                            r += "\n --> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
+                            shutil.rmtree(hcp['FS_folder'])
+                        for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
+                            rmtarget = os.path.join(hcp['T1w_folder'], toremove)
+                            try:
+                                if os.path.islink(rmtarget) or os.path.isfile(rmtarget):
+                                    os.remove(rmtarget)
+                                elif os.path.isdir(rmtarget):
+                                    shutil.rmtree(rmtarget)
+                            except:
+                                r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
+                                status = False
                 if status:
                     r += runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
                     r, status = checkForFile(r, tfile, 'ERROR: HCP FS failed running command: %s' % (comm))
@@ -960,6 +992,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     run    = True
     report = "Error"
     sessionsid = []
+    sessionspaths = []
 
     try:
 
@@ -975,7 +1008,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             try:
 
                 hcp = getHCPPaths(session, options)
-
+                sessionspaths.append(os.path.join(hcp['T1w_folder'], session['id'] + options['hcp_suffix']))
                 # --- run checks
 
                 if 'hcp' not in session:
@@ -1065,7 +1098,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                 't1'                : "",
                 't1brain'           : "",
                 't2'                : "",
-                'timepoints'        : ",".join(sessionsid)}
+                'timepoints'        : ",".join(sessionspaths)}
 
         # run command
 
@@ -1073,6 +1106,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 lttemplate = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['id'], options['hcp_fs_longitudinal'])
                 tfile      = os.path.join(options['subjectsfolder'], sinfo['sessions'][-1]['id'], 'hcp', sessionsid[-1], 'T1w', "%s.long.%s" % (sessionsid[-1], options['hcp_fs_longitudinal']), 'label', 'rh.entorhinal_exvivo.label')
+                
                 if overwrite or not os.path.exists(tfile):
                     try:
                         if os.path.exists(lttemplate):
