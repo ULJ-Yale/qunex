@@ -1561,7 +1561,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
-    --threads         ... How many threads to utilize for bold processing per subject [1].
+    --threads         ... How many threads to utilize for bold processing
+                          per subject [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -2207,7 +2208,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
-    --threads         ... How many threads to utilize for bold processing per subject [1].
+    --threads         ... How many threads to utilize for bold processing
+                          per subject [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
