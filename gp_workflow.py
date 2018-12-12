@@ -2125,7 +2125,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
              - Added ability to work with ptseries images.
     2018-12-12 Jure Demsar
              - preprocessConc function uses the conc_use parameter for
-               abosolute or relative path interpretation from conc files.         
+               absolute or relative path interpretation from conc files.         
     """
 
     r = "\n---------------------------------------------------------"
@@ -2236,6 +2236,10 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     elif options['image_target'] == 'ptseries':
                         f['bold'] = f['bold_pts']
                         f['bold_final'] = f['bold_pts_final']
+
+                    # if absolute path flag use also exact filename (extension)
+                    if (options['conc_use'] == 'absolute'):
+                        f['bold'] = c[0]
 
                     # --- check for data availability
 

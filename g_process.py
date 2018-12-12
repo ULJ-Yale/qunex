@@ -18,7 +18,7 @@ Changelog
 2017-07-10 Grega Repovs
          - Simplified scheduler interface, now uses g_scheduler
 2018-12-12 Jure Demsar
-         - Added conc_use parameter for abosolute or relative path
+         - Added conc_use parameter for absolute or relative path
            interpretation from conc files.
 """
 
