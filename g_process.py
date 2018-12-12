@@ -17,7 +17,9 @@ Copyright (c) Grega Repovs. All rights reserved.
 Changelog
 2017-07-10 Grega Repovs
          - Simplified scheduler interface, now uses g_scheduler
-
+2018-12-12 Jure Demsar
+         - Added conc_use parameter for abosolute or relative path
+           interpretation from conc files.
 """
 
 import g_core
@@ -198,6 +200,7 @@ arglist = [['# ---- Basic settings'],
            ['image_source',       'hcp',                                         str,    "what is the target source file format / structure (4dfp, hcp)"],
            ['image_target',       'nifti',                                       str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        'cifti',                                       str,    "what is the target atlas (711, cifti)"],
+           ['conc_use',           'relative',                                    str,    "how the paths in the .conc file will be used (relative, absolute)"],
 
            ['# ---- GLM related options'],
            ['glm_matrix',          'none',                                        str,    "Whether to save GLM regressor matrix in text (text), image (image) or both (both) formats, or not (none)."],

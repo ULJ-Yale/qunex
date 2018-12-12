@@ -2123,6 +2123,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
              - Added additional documentation.
     2017-08-11 Grega Repovš
              - Added ability to work with ptseries images.
+    2018-12-12 Jure Demsar
+             - preprocessConc function uses the conc_use parameter for
+               abosolute or relative path interpretation from conc files.         
     """
 
     r = "\n---------------------------------------------------------"
@@ -2214,6 +2217,12 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     boldnum  = c[1]
                     boldname = "bold" + boldnum
                     bolds.append(boldnum)
+
+                    # if absolute path flag use subject folder from conc file
+                    if (options['conc_use'] == 'absolute'):
+                        # extract subject folder from conc file
+                        options['subjectsfolder'] = (c[0].split(sinfo['id']))[0]
+                        d['s_base'] = options['subjectsfolder'] + sinfo['id']
 
                     r += "\n\nLooking up: " + boldname + " ..."
 
