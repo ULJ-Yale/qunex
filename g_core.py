@@ -262,12 +262,14 @@ def deduceFolders(args):
     logfolder  = args.get('logfolder')
     basefolder = args.get('basefolder')
     subjectsfolder = args.get('subjectsfolder')
+    sfolder = args.get('sfolder')
+    folder = args.get('folder')
 
     if basefolder is None:
         if subjectsfolder:
             basefolder = os.path.dirname(subjectsfolder)
         else:
-            for f in [os.path.abspath(e) for e in [logfolder, "."] if e]:
+            for f in [os.path.abspath(e) for e in [logfolder, sfolder, folder, "."] if e]:
                 if f and not basefolder:
                     while os.path.dirname(f) and os.path.dirname(f) != '/':
                         f = os.path.dirname(f)

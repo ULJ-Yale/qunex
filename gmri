@@ -280,6 +280,9 @@ def runCommand(command, args):
 
     folders = gc.deduceFolders(args)
 
+    if folders['basefolder']:
+        niu.g_utilities.checkStudy(folders['basefolder'])
+
     # --- sort commands by type
 
     if command in commands:
