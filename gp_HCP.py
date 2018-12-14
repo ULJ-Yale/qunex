@@ -1674,13 +1674,28 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     hcp_FS) to have been run and finished successfully. It also tests for the
     presence of fieldmap or spin-echo images if they were specified. It does
     not make a thorough check for PreFS and FS steps due to the large number
-    of files.
+    of files. If `hcp_fs_longitudinal` is specified, it also checks for 
+    presence of the specifed longitudinal data.
 
     RESULTS
     =======
 
     The results of this step will be present in the MNINonLinear folder in the
-    subject's root hcp folder.
+    subject's root hcp folder. In case a longitudinal FS template is used, the
+    results will be stored in a `MNINonlinear_<FS longitudinal template name>`
+    folder:
+
+    study
+    └─ subjects
+       └─ subject1_session1
+          └─ hcp
+             └─ subject1_session1
+               ├─ MNINonlinear
+               │  └─ Results
+               │     └─ BOLD_1
+               └─ MNINonlinear_TemplateA
+                  └─ Results
+                     └─ BOLD_1
 
     RELEVANT PARAMETERS
     ===================
@@ -1707,6 +1722,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
+
+    use of FS longitudinal template
+    ----------------------------------------
+
+    --hcp_fs_longitudinal    ... The name of the FS longitudinal template if one
+                                 was created and is to be used in this step.
 
     naming options
     --------------
@@ -1824,10 +1845,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Updated documentation.
     2017-09-02 Grega Repovs
              - Changed looking for relevant SE images
-    2018-17-11 Jure Demsar
+    2018-11-17 Jure Demsar
             - Parallel implementation.
-    2018-20-11 Jure Demsar
+    2018-11-20 Jure Demsar
             - Optimized parallelization that now covers all scenarios.
+    2018-12-14
+            - Added FS longitudinal option and documentation
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1880,18 +1903,35 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         # -> FS results
 
-        if os.path.exists(os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')):
+        if options['hcp_fs_longitudinal']:
+            tfolder = hcp['FS_long_results']
+        else:
+            tfolder = hcp['FS_Folder']
+
+        if os.path.exists(os.path.join(tfolder, 'mri', 'aparc+aseg.mgz')):
             r += "\n---> FS results present."
         else:
             r += "\n---> ERROR: Could not find Freesurfer processing results."
+            if options['hcp_fs_longitudinal']:
+                r += "\n--->        Please check that you have run FS longitudinal as specified,"
+                r += "\n--->        and that %s template was successfully generated." % (options['hcp_fs_longitudinal'])
+
             run = False
 
         # -> PostFS results
 
-        if os.path.exists(os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')):
+        if options['hcp_fs_longitudinal']:
+            tfolder = hcp['hcp_long_nonlin']
+        else:
+            tfolder = hcp['hcp_nonlin']
+
+        if os.path.exists(os.path.join(tfolder, 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')):
             r += "\n---> PostFS results present."
         else:
             r += "\n---> ERROR: Could not find PostFS processing results."
+            if options['hcp_fs_longitudinal']:
+                r += "\n--->        Please check that you have run PostFS on FS longitudinal as specified,"
+                r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
             run = False
 
         # -> Check for SE images
@@ -2217,6 +2257,7 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
             --gdcoeffs="%(gdcoeffs)s" \
             --topupconfig="%(topupconfig)s" \
             --printcom="%(printcom)s" \
+            --lttemplate="%(lttemplate)s" \
             --doslicetime="%(doslicetime)s" \
             --slicetimedir="%(slicetimedir)s" \
             --slicetimeodd="%(slicetimeodd)s" \
@@ -2247,6 +2288,7 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
                 'gdcoeffs'          : options['hcp_bold_gdcoeffs'],
                 'topupconfig'       : os.path.join(hcp['hcp_Config'], 'b02b0.cnf'),
                 'printcom'          : options['hcp_printcom'],
+                'lttemplate'        : options['hcp_fs_longitudinal'],
                 'doslicetime'       : options['hcp_bold_stcorr'].upper(),
                 'slicetimedir'      : hcp_bold_stcorrdir,
                 'slicetimeodd'      : hcp_bold_stcorrint,
@@ -2259,7 +2301,12 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
                 'usemask'           : options['hcp_bold_usemask']}
 
         if run and boldok:
-            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
+            if options['hcp_fs_longitudinal']:
+                tfolder = hcp['hcp_long_nonlin']
+            else:
+                tfolder = hcp['hcp_nonlin']
+
+            tfile = os.path.join(tfolder, 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
@@ -2327,7 +2374,21 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     =======
 
     The results of this step will be present in the MNINonLinear folder in the
-    subject's root hcp folder.
+    subject's root hcp folder. In case a longitudinal FS template is used, the
+    results will be stored in a `MNINonlinear_<FS longitudinal template name>`
+    folder:
+
+    study
+    └─ subjects
+       └─ subject1_session1
+          └─ hcp
+             └─ subject1_session1
+               ├─ MNINonlinear
+               │  └─ Results
+               │     └─ BOLD_1
+               └─ MNINonlinear_TemplateA
+                  └─ Results
+                     └─ BOLD_1
 
     RELEVANT PARAMETERS
     ===================
@@ -2354,6 +2415,12 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
+
+    use of FS longitudinal template
+    ----------------------------------------
+
+    --hcp_fs_longitudinal    ... The name of the FS longitudinal template if one
+                                 was created and is to be used in this step.
 
     naming options
     --------------
@@ -2395,8 +2462,11 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     Changelog
     2017-02-06 Grega Repovš
              - Updated documentation.
-    2018-17-11 Jure Demsar
+    2018-11-17 Jure Demsar
             - Parallel implementation.
+    2018-12-14 Grega Repovš
+            - FS Longitudinal implementation and documentation
+
     '''
 
     r = "\n----------------------------------------------------------------"
@@ -2450,18 +2520,35 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         # -> FS results
 
-        if os.path.exists(os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')):
+        if options['hcp_fs_longitudinal']:
+            tfolder = hcp['FS_long_results']
+        else:
+            tfolder = hcp['FS_Folder']
+
+        if os.path.exists(os.path.join(tfolder, 'mri', 'aparc+aseg.mgz')):
             r += "\n---> FS results present."
         else:
             r += "\n---> ERROR: Could not find Freesurfer processing results."
+            if options['hcp_fs_longitudinal']:
+                r += "\n--->        Please check that you have run FS longitudinal as specified,"
+                r += "\n--->        and that %s template was successfully generated." % (options['hcp_fs_longitudinal'])
+
             run = False
 
         # -> PostFS results
 
-        if os.path.exists(os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')):
+        if options['hcp_fs_longitudinal']:
+            tfolder = hcp['hcp_long_nonlin']
+        else:
+            tfolder = hcp['hcp_nonlin']
+
+        if os.path.exists(os.path.join(tfolder, 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')):
             r += "\n---> PostFS results present."
         else:
             r += "\n---> ERROR: Could not find PostFS processing results."
+            if options['hcp_fs_longitudinal']:
+                r += "\n--->        Please check that you have run PostFS on FS longitudinal as specified,"
+                r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
             run = False
 
         # --- Get sorted bold numbers
@@ -2547,6 +2634,7 @@ def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             --smoothingFWHM="%(smoothingFWHM)s" \
             --grayordinatesres="%(grayordinatesres)d" \
             --regname"%(regname)s" \
+            --lttemplate="%(lttemplate)s" \
             --printcom"%(printcom)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
                 'path'              : sinfo['hcp'],
@@ -2558,10 +2646,16 @@ def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
                 'smoothingFWHM'     : options['hcp_bold_smoothFWHM'],
                 'grayordinatesres'  : options['hcp_grayordinatesres'],
                 'regname'           : options['hcp_regname'],
+                'lttemplate'        : options['hcp_fs_longitudinal'],
                 'printcom'          : options['hcp_printcom']}
 
         if run and boldok:
-            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
+            if options['hcp_fs_longitudinal']:
+                tfolder = hcp['hcp_long_nonlin']
+            else:
+                tfolder = hcp['hcp_nonlin']
+                
+            tfile = os.path.join(tfolder, 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
