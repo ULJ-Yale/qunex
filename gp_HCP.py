@@ -93,10 +93,12 @@ def getHCPPaths(sinfo, options):
         d['FS_long_template'] = os.path.join(hcpbase, 'T1w', options['hcp_fs_longitudinal'])
         d['FS_long_results']  = os.path.join(hcpbase, 'T1w', "%s.long.%s" % (sinfo['id'] + options['hcp_suffix'], options['hcp_fs_longitudinal']))
         d['FS_long_subject_template'] = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
+        d['hcp_long_nonlin']          = os.path.join(hcpbase, 'MNINonLinear_' + options['hcp_fs_longitudinal'])
     else:
         d['FS_long_template']         = ""
         d['FS_long_results']          = ""
         d['FS_long_subject_template'] = ""
+        d['hcp_long_nonlin']          = ""
 
 
     # --- T2w related paths
@@ -291,17 +293,15 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation.
     2017-08-17 Grega Repovš
              - Added checking for field map images.
+    2018-12-14 Grega Repovš
+             - Cleaned up 
     '''
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PreFreeSurfer Pipeline ...\n" % (action("Running", options['run']))
 
-    # print "---> Setting up hcp"
-
     hcp = getHCPPaths(sinfo, options)
-
-    # print "---> Setting up command"
 
     run    = True
     report = "Error"
@@ -333,7 +333,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> ERROR: Could not find T2w image file. [%s]" % (tfile)
                     run = False
 
-
         # --- do we need spinecho images
 
         sepos       = 'NONE'
@@ -352,7 +351,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                         topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_topupconfig'])
                         if not os.path.exists(topupconfig):
                             r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_topupconfig'])
-                            # raise AssertionError('Could not find TOPUP configuration file!')
                             run = False
                         else:
                             r += "\n---> TOPUP configuration file present."
@@ -389,7 +387,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 gdcoeffs = os.path.join(hcp['hcp_Config'], options['hcp_gdcoeffs'])
                 if not os.path.exists(gdcoeffs):
                     r += "\n---> ERROR: Could not find gradient distorsion coefficients file: %s." % (options['hcp_gdcoeffs'])
-                    # raise AssertionError('Could not find gradient distorsion coefficients file!')
                     run = False
                 else:
                     r += "\n---> Gradient distorsion coefficients file present."
@@ -494,16 +491,14 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 'mppversion'        : options['hcp_mppversion']}
 
         tfile = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')
-        # tfile = os.path.join(hcp['T1w_folder'], '_PreFS.done')
 
         if run:
             if options['run'] == "run":
-                # print "---> Running HCP Pre FS"
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
                 r += runExternalForFileShell(tfile, comm, '... running HCP PreFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP PreFS failed running command: %s' % (comm))
-                # print "---> Done with Pre FS"
+
                 if status:
                     report = "Pre FS Done" 
                     failed = 0
@@ -513,32 +508,26 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             else:
                 if os.path.exists(tfile):
                     r += "\n---> HCP PreFS completed"
-                    # print "---> HCP PreFS completed"
                     report = "Pre FS done"
                     failed = 0
                 else:
                     r += "\n---> HCP PreFS can be run"
-                    # print "---> HCP PreFS can be run"
                     report = "Pre FS can be run"
                     failed = 0
         else:
             r += "\n---> Due to missing files subject can not be processed."
-            # print "---> Due to missing files subject can not be processed."
             report = "Files missing, PreFS can not be run"
             failed = 1
 
     except (ExternalFailed, NoSourceFolder), errormessage:
-        # print "---> External failed"
         r += str(errormessage)
         report = "PreFS failed"
         failed = 1
     except:
-        # print "---> Unknown error"
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
         report = "PreFS failed"
         failed = 1
 
-    # print "---> Completed %s HCP Pre FS" % (action("running", options['run']))
     r += "\n\nHCP PreFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
@@ -602,36 +591,45 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix               ... Specifies a suffix to the subject id if multiple
-                                   variants are run, empty otherwise [].
-    --hcp_t2                   ... NONE if no T2w image is available and the
-                                   preprocessing should be run without them,
-                                   anything else otherwise [t2].
-    --hcp_expert_file          ... Path to the read-in expert options file for
-                                   FreeSurfer if one is prepared and should be used
-                                   empty otherwise [].
-    --hcp_control_points       ... Specify YES to use manual control points or
-                                   empty otherwise [].
-    --hcp_wm_edits             ... Specify YES to use manually edited WM mask or
-                                   empty otherwise [].
-    --hcp_fs_brainmask         ... Specify 'original' to keep the masked original brain
-                                   image; 'manual' to use the manually edited brainmask  
-                                   file; default 'fs' uses the brainmask generated by 
-                                   mri_watershed [fs].
-    --hcp_autotopofix_off      ... Specify YES to turn off the automatic topologic fix 
-                                   step in FS and compute WM surface deterministically 
-                                   from manual WM mask, or empty otherwise [].                             
-    --hcp_freesurfer_home      ... Path for FreeSurfer home folder can be manually
-                                   specified to override default environment variable
-                                   to ensure backwards compatiblity and hcp2 customization
-    --hcp_freesurfer_module    ... Whether to load FreeSurfer as a module on the cluster
-                                   You can specify using YES or empty otherwise [].
-                                   to ensure backwards compatiblity and hcp2 customization
+    --hcp_suffix            ... Specifies a suffix to the subject id if multiple
+                                variants are run, empty otherwise [].
+    --hcp_t2                ... NONE if no T2w image is available and the
+                                preprocessing should be run without them,
+                                anything else otherwise [t2].
+    --hcp_expert_file       ... Path to the read-in expert options file for
+                                FreeSurfer if one is prepared and should be used
+                                empty otherwise [].
+    --hcp_control_points    ... Specify YES to use manual control points or
+                                empty otherwise [].
+    --hcp_wm_edits          ... Specify YES to use manually edited WM mask or
+                                empty otherwise [].
+    --hcp_fs_brainmask      ... Specify 'original' to keep the masked original 
+                                brain image; 'manual' to use the manually edited
+                                brainmask file; default 'fs' uses the brainmask 
+                                generated by mri_watershed [fs].
+    --hcp_autotopofix_off   ... Specify YES to turn off the automatic topologic 
+                                fix step in FS and compute WM surface 
+                                deterministically from manual WM mask, or empty 
+                                otherwise [].                             
+    --hcp_freesurfer_home   ... Path for FreeSurfer home folder can be manually
+                                specified to override default environment 
+                                variable to ensure backwards compatiblity and 
+                                hcp2 customization.
+    --hcp_freesurfer_module ... Whether to load FreeSurfer as a module on the 
+                                cluster. You can specify using YES or empty 
+                                otherwise []. To ensure backwards compatiblity 
+                                and hcp2 customization.
+    --hcp_fs_longitudinal   ... The name of the FS longitudinal template if one
+                                was created and is to be used in this step.
+
     EXAMPLE USE
     ===========
 
     gmri hcp_FS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
+
+    gmri hcp_FS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+         overwrite=no cores=10 hcp_fs_longitudinal=TemplateA
 
     gmri hcp2 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
@@ -651,8 +649,14 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation.
     2017-03-20 Alan Anticevic
              - Updated documentation.
-    2018-05-05 Grega Repovs
+    2018-05-05 Grega Repovš
              - Optimized version checking.
+    2018-12-09 Grega Repovš
+             - Integrated changes from Lisa Ji
+             - Optimized folder construction
+             - Adapted removal of preexisting data for longitudinal run
+    2018-12-14 Grega Repovš
+             - Cleaned up, updated documentation
     '''
 
     r = "\n---------------------------------------------------------"
@@ -830,16 +834,6 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                         if os.path.lexists(hcp['FS_long_results']):
                             r += "\n --> removing preexisting folder with longitudinal results [%s]" % (hcp['FS_long_results'])
                             shutil.rmtree(hcp['FS_long_results'])
-                        # for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
-                        #     rmtarget = os.path.join(hcp['T1w_folder'], toremove)
-                        #     try:
-                        #         if os.path.islink(rmtarget) or os.path.isfile(rmtarget):
-                        #             os.remove(rmtarget)
-                        #         elif os.path.isdir(rmtarget):
-                        #             shutil.rmtree(rmtarget)
-                        #     except:
-                        #         r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
-                        #         status = False
                     else:
                         if os.path.lexists(hcp['FS_folder']):
                             r += "\n --> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
@@ -899,16 +893,40 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    Runs longitudinal FreeSurfer ...
+    Runs longitudinal FreeSurfer processing in cases when multiple sessions with
+    structural data exist for a single subjects
 
     REQUIREMENTS
     ============
 
-    The code expects the FreeSurfer Pipeline (hcp_PreFS) to have run successfully 
-    on all subject's session.
+    The code expects the FreeSurfer Pipeline (hcp_PreFS) to have run 
+    successfully on all subject's session. In the batch file, there need to be 
+    clear separation between session id (`id` parameter) and and subject id 
+    (`subject` parameter). So that the command can identify which sessions 
+    belong to which subject
 
     RESULTS
     =======
+
+    The result is a longitudinal FreeSurfer template that is created in 
+    `FSTemplates` folder for each subject in a subfolder with the template name, 
+    but is also copied to each session's hcp folder in the T1w folder as
+    sessionid.long.TemplateA. An example is shown below:
+
+    study
+    └─ subjects
+       ├─ subject1_session1
+       │  └─ hcp
+       │     └─ subject1_session1
+       │       └─ T1w
+       │          ├─ subject1_session1 (FS folder - original)
+       │          └─ subject1_session1.long.TemplateA (FS folder - longitudinal)
+       ├─ subject1_session2
+       ├─ ...
+       └─ FSTemplates
+          ├─ subject1
+          │  └─ TemplateA
+          └─ ...
 
 
     RELEVANT PARAMETERS
@@ -938,31 +956,39 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix               ... Specifies a suffix to the subject id if multiple
-                                   variants are run, empty otherwise [].
-    --hcp_t2                   ... NONE if no T2w image is available and the
-                                   preprocessing should be run without them,
-                                   anything else otherwise [t2].
-    --hcp_expert_file          ... Path to the read-in expert options file for
-                                   FreeSurfer if one is prepared and should be used
-                                   empty otherwise [].
-    --hcp_control_points       ... Specify YES to use manual control points or
-                                   empty otherwise [].
-    --hcp_wm_edits             ... Specify YES to use manually edited WM mask or
-                                   empty otherwise [].
-    --hcp_fs_brainmask         ... Specify 'original' to keep the masked original brain
-                                   image; 'manual' to use the manually edited brainmask  
-                                   file; default 'fs' uses the brainmask generated by 
-                                   mri_watershed [fs].
-    --hcp_autotopofix_off      ... Specify YES to turn off the automatic topologic fix 
-                                   step in FS and compute WM surface deterministically 
-                                   from manual WM mask, or empty otherwise [].                             
-    --hcp_freesurfer_home      ... Path for FreeSurfer home folder can be manually
-                                   specified to override default environment variable
-                                   to ensure backwards compatiblity and hcp2 customization
-    --hcp_freesurfer_module    ... Whether to load FreeSurfer as a module on the cluster
-                                   You can specify using YES or empty otherwise [].
-                                   to ensure backwards compatiblity and hcp2 customization
+    --hcp_suffix            ... Specifies a suffix to the subject id if multiple
+                                variants are run, empty otherwise [].
+    --hcp_t2                ... NONE if no T2w image is available and the
+                                preprocessing should be run without them,
+                                anything else otherwise [t2].
+    --hcp_expert_file       ... Path to the read-in expert options file for
+                                FreeSurfer if one is prepared and should be used
+                                empty otherwise [].
+    --hcp_control_points    ... Specify YES to use manual control points or
+                                empty otherwise [].
+    --hcp_wm_edits          ... Specify YES to use manually edited WM mask or
+                                empty otherwise [].
+    --hcp_fs_brainmask      ... Specify 'original' to keep the masked original 
+                                brain image; 'manual' to use the manually edited
+                                brainmask file; default 'fs' uses the brainmask 
+                                generated by mri_watershed [fs].
+    --hcp_autotopofix_off   ... Specify YES to turn off the automatic topologic 
+                                fix step in FS and compute WM surface 
+                                deterministically from manual WM mask, or empty 
+                                otherwise [].                             
+    --hcp_freesurfer_home   ... Path for FreeSurfer home folder can be manually
+                                specified to override default environment 
+                                variable to ensure backwards compatiblity and 
+                                hcp2 customization.
+    --hcp_freesurfer_module ... Whether to load FreeSurfer as a module on the 
+                                cluster. You can specify using YES or empty 
+                                otherwise []. To ensure backwards compatiblity 
+                                and hcp2 customization.
+    --hcp_fs_longitudinal   ... The name of the FS longitudinal template to
+                                be used for the template resulting from this 
+                                command call.
+
+
     EXAMPLE USE
     ===========
 
@@ -983,16 +1009,21 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     Changelog
     2018-09-14 Grega Repovš
              - Initial test version
+    2018-12-09 Grega Repovš
+             - Adjusted paths creation
+    2018-12-14 Grega Repovš
+             - Updated documentation
     '''
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\n%s Longitudinal FreeSurfer Pipeline ...\n" % (action("Running", options['run']))
 
-    run    = True
-    report = "Error"
-    sessionsid = []
+    run           = True
+    report        = "Error"
+    sessionsid    = []
     sessionspaths = []
+    resultspaths  = []
 
     try:
 
@@ -1008,7 +1039,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             try:
 
                 hcp = getHCPPaths(session, options)
-                sessionspaths.append(os.path.join(hcp['T1w_folder'], session['id'] + options['hcp_suffix']))
+                sessionspaths.append(hcp['FS_folder'])
+                resultspaths.append(hcp['FS_long_results'])
                 # --- run checks
 
                 if 'hcp' not in session:
@@ -1044,7 +1076,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
                 # -> FS results
 
-                if os.path.exists(os.path.join(hcp['T1w_folder'], session['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')):
+                if os.path.exists(os.path.join(hcp['FS_folder'], 'mri', 'aparc+aseg.mgz')):
                     r += "\n       -> FS results present."
                 else:
                     r += "\n       -> ERROR: Could not find Freesurfer processing results."
@@ -1104,16 +1136,15 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
         if run:
             if options['run'] == "run":
-                lttemplate = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['id'], options['hcp_fs_longitudinal'])
-                tfile      = os.path.join(options['subjectsfolder'], sinfo['sessions'][-1]['id'], 'hcp', sessionsid[-1], 'T1w', "%s.long.%s" % (sessionsid[-1], options['hcp_fs_longitudinal']), 'label', 'rh.entorhinal_exvivo.label')
+                lttemplate = hcp['FS_long_subject_template']
+                tfile      = os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')
                 
                 if overwrite or not os.path.exists(tfile):
                     try:
                         if os.path.exists(lttemplate):
                             rmfolder = lttemplate
                             shutil.rmtree(lttemplate)
-                        for session in sessionsid:
-                            rmfolder = os.path.join(options['subjectsfolder'], sinfo['sessions'][-1]['id'], 'hcp', sessionsid[-1], 'T1w', "%s.long.%s" % (sessionsid[-1], options['hcp_fs_longitudinal']))
+                        for rmfolder in resultspaths:                            
                             if os.path.exists(rmfolder):
                                 shutil.rmtree(rmfolder)
                     except:
@@ -1157,8 +1188,6 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
     print r
     return (r, (sinfo['id'], report, failed))
-
-
 
 
 
@@ -1231,6 +1260,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     --hcp_regname          ... The registration used, currently only FS [FS].
     --hcp_mcsigma          ... Correction sigma used for metric smooting [sqrt(200)].
     --hcp_inflatescale     ... Inflate extra scale parameter [1].
+    --hcp_fs_longitudinal  ... The name of the FS longitudinal template if one
+                               was created and is to be used in this step.
 
     EXAMPLE USE
     ===========
@@ -1249,6 +1280,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Updated documentation.
     2018-04-23 Grega Repovš
              - Added new options and updated documentation.
+    2018-12-13 Grega Repovš
+             - Updated test files and documentation
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1296,7 +1329,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
         # -> FS results
 
-        if os.path.exists(os.path.join(hcp['T1w_folder'], sinfo['id'] + options['hcp_suffix'], 'mri', 'aparc+aseg.mgz')):
+        if os.path.exists(os.path.join(hcp['FS_folder'], 'mri', 'aparc+aseg.mgz')):
             r += "\n---> FS results present."
         else:
             r += "\n---> ERROR: Could not find Freesurfer processing results."
@@ -1315,8 +1348,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                 r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
                 run = False
             else:
-                lttemplate = os.path.join(options['subjectsfolder'], 'FSTemplates', sinfo['subject'], options['hcp_fs_longitudinal'])
-                lresults = os.path.join(hcp['T1w_folder'], "%s.long.%s" % (sinfo['id'], options['hcp_fs_longitudinal']), 'label', 'rh.entorhinal_exvivo.label')
+                lttemplate = hcp['FS_long_subject_template']
+                lresults = os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')
                 if not os.path.exists(lresults):
                     r += "\n     ... ERROR: Results of the longitudinal run not present [%s]" % (lresults)
                     r += "\n                Please check your data and settings!" % (lresults)
@@ -1362,9 +1395,16 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                 'longitudinal'      : fslongitudinal}
 
         if run:
-            # tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
-            # tfile = os.path.join(hcp['T1w_folder'], '_PostFS.done')
-            tfile = os.path.join(hcp['T1w_folder'], 'ribbon.nii.gz')
+            if fslongitudinal:
+                tfolder = d['hcp_long_nonlin']
+            else:
+                tfolder = d['hcp_nonlin']
+
+            if hcp['T2w'] == 'NONE':
+                tfile = os.path.join(tfolder, 'ribbon.nii.gz')
+            else:
+                tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')       
+
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
