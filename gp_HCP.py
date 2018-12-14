@@ -41,6 +41,8 @@ import traceback
 from datetime import datetime
 import time
 
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 
 # -------------------------------------------------------------------
 #
@@ -1694,6 +1696,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
+    --threads         ... How many threads to utilize for bold processing
+                          per subject [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -1820,6 +1824,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Updated documentation.
     2017-09-02 Grega Repovs
              - Changed looking for relevant SE images
+    2018-17-11 Jure Demsar
+            - Parallel implementation.
+    2018-20-11 Jure Demsar
+            - Optimized parallelization that now covers all scenarios.
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1830,7 +1838,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     report = {'done': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
 
     try:
-
         # --- Base settings
 
         hcp = getHCPPaths(sinfo, options)
@@ -1927,7 +1934,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         if report['boldskipped']:
             report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
-        # --- Loop through bolds
+        # --- Preprocess
 
         spinP     = 0
         spinN     = 0
@@ -1938,228 +1945,176 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         r += "\n"
 
+        boldsData = []
+
         for bold, boldname, boldtask, boldinfo in bolds:
 
-            try:
+            # --- set unwarpdir
 
-                # --- set unwarpdir
+            if "o" in boldinfo:
+                orient    = "_" + boldinfo['o']
+                unwarpdir = unwarpdirs[boldinfo['o']]
+            else:
+                orient = ""
+                unwarpdir = unwarpdirs['default']
 
-                if "o" in boldinfo:
-                    orient    = "_" + boldinfo['o']
-                    unwarpdir = unwarpdirs[boldinfo['o']]
-                else:
-                    orient = ""
-                    unwarpdir = unwarpdirs['default']
+            # --- set reference
+            #
+            # !!!! Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
+            # - have to keep track of whether an old topup in the same direction exists
+            #
 
-                # --- set reference
-                #
-                # !!!! Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
-                # - have to keep track of whether an old topup in the same direction exists
-                #
+            r += "\n---> %s BOLD %d" % (action("Preprocessing settings (refimage, moveref, seimage) for ", options['run']), bold)
+            boldok = True
 
+            # --- check for bold image
 
-                r += "\n---> %s BOLD %d" % (action("Processing", options['run']), bold)
-                boldok = True
+            boldimg = os.path.join(hcp['base'], "BOLD_%d%s_fncb" % (bold, orient), "%s_fncb_BOLD_%d%s.nii.gz" % (sinfo['id'], bold, orient))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image present', '\n     ... ERROR: bold image missing!', status=boldok)
 
-                # --- check for bold image
+            # --- check for ref image
 
-                boldimg = os.path.join(hcp['base'], "BOLD_%d%s_fncb" % (bold, orient), "%s_fncb_BOLD_%d%s.nii.gz" % (sinfo['id'], bold, orient))
-                r, boldok = checkForFile2(r, boldimg, '\n     ... bold image present', '\n     ... ERROR: bold image missing!', status=boldok)
+            if options['hcp_bold_ref'].lower() == 'use':
+                refimg = os.path.join(hcp['base'], "BOLD_%d%s_SBRef_fncb" % (bold, orient), "%s_fncb_BOLD_%d%s_SBRef.nii.gz" % (sinfo['id'], bold, orient))
+                r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
 
-                # --- check for ref image
+            # --- check for spin-echo-fieldmap image
 
-                if options['hcp_bold_ref'].lower() == 'use':
-                    refimg = os.path.join(hcp['base'], "BOLD_%d%s_SBRef_fncb" % (bold, orient), "%s_fncb_BOLD_%d%s_SBRef.nii.gz" % (sinfo['id'], bold, orient))
-                    r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
-
-                # --- check for spin-echo-fieldmap image
-
-                if options['hcp_bold_correct'].lower() == 'topup':
-                    if not sepresent:
-                        r += '\n     ... ERROR: No spin echo fieldmap set images present!'
-                        boldok = False
-
-                    elif options['hcp_bold_seimg'] == 'first':
-                        spinN = sepresent[0]
-                        spinOne = sepairs[spinN]['spinOne']
-                        spinTwo = sepairs[spinN]['spinTwo']
-                        r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
-
-                    else:
-                        spinN = False
-                        for sen in sepresent:
-                            if sen <= bold:
-                                spinN = sen
-                            elif not spinN:
-                                spinN = sen
-                        spinOne = sepairs[spinN]['spinOne']
-                        spinTwo = sepairs[spinN]['spinTwo']
-                        r += "\n     ... using spin echo fieldmap set %d" % (spinN)
-
-                    # -- are we using a new SE image?
-
-                    if spinN != spinP:
-                        spinP = spinN
-                        futureref = "NONE"
-
-
-                # --- check for Siemens double TE-fieldmap image
-
-                elif options['hcp_bold_correct'].lower() in ['fieldmap', 'siemensfieldmap']:
-                    fieldok = True
-                    r, fieldok = checkForFile2(r, hcp['fmapmag'], '\n     ... Siemens fieldmap magnitude image present ', '\n     ... ERROR: Siemens fieldmap magnitude image missing!', status=fieldok)
-                    r, fieldok = checkForFile2(r, hcp['fmapphase'], '\n     ... Siemens fieldmap phase image present ', '\n     ... ERROR: Siemens fieldmap phase image missing!', status=fieldok)
-                    if not is_number(options['hcp_bold_echospacing']):
-                        fieldok = False
-                        r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (options['hcp_bold_echospacing'])
-                    if not is_number(options['hcp_bold_echodiff']):
-                        fieldok = False
-                        r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (options['hcp_bold_echodiff'])
-                    boldok = boldok and fieldok
-
-                # --- check for GE fieldmap image
-
-                elif options['hcp_bold_correct'].lower() in ['generalelectricfieldmap']:
-                    fieldok = True
-                    r, fieldok = checkForFile2(r, hcp['fmapge'], '\n     ... GeneralElectric fieldmap image present ', '\n     ... ERROR: GeneralElectric fieldmap image missing!', status=fieldok)
-                    boldok = boldok and fieldok
-
-                # --- NO DC used
-
-                elif options['hcp_bold_correct'].lower() in ['none']:
-                    r += '\n     ... No distortion correction used '
-
-                # --- ERROR
-
-                else:
-                    r += '\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!' % (options['hcp_bold_correct'])
+            if options['hcp_bold_correct'].lower() == 'topup':
+                if not sepresent:
+                    r += '\n     ... ERROR: No spin echo fieldmap set images present!'
                     boldok = False
 
+                elif options['hcp_bold_seimg'] == 'first':
+                    spinN = sepresent[0]
+                    spinOne = sepairs[spinN]['spinOne']
+                    spinTwo = sepairs[spinN]['spinTwo']
+                    r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
 
-                # --- set movement reference image
-
-                fmriref = futureref
-                if options['hcp_bold_movref'] == 'first':
-                    if futureref == "NONE":
-                        futureref = "%s%d" % (options['hcp_bold_prefix'], bold)
-
-                # --- are we using previous reference
-
-                if fmriref is not "NONE":
-                    r += '\n     ... using %s as movement correction reference' % (fmriref)
-
-
-                # --- process additional parameters
-
-                hcp_bold_stcorrdir = ''
-                hcp_bold_stcorrint = ''
-
-                if options['hcp_bold_stcorr'].lower() == 'true':
-                    if options['hcp_bold_stcorrdir'] == 'down':
-                        hcp_bold_stcorrdir = '--down'
-                    if options['hcp_bold_stcorrint'] == 'odd':
-                        hcp_bold_stcorrint = "--odd"
-
-                comm = '%(script)s \
-                    --path="%(path)s" \
-                    --subject="%(subject)s" \
-                    --fmriname="%(prefix)s%(boldn)d" \
-                    --fmritcs="%(boldimg)s" \
-                    --fmriscout="%(refimg)s" \
-                    --SEPhaseNeg="%(spinOne)s" \
-                    --SEPhasePos="%(spinTwo)s" \
-                    --fmapmag="%(fmapmag)s" \
-                    --fmapphase="%(fmapphase)s" \
-                    --fmapgeneralelectric="%(fmapge)s" \
-                    --echospacing="%(echospacing)s" \
-                    --echodiff="%(echodiff)s" \
-                    --unwarpdir="%(unwarpdir)s" \
-                    --fmrires="%(fmrires)s" \
-                    --dcmethod="%(dcmethod)s" \
-                    --gdcoeffs="%(gdcoeffs)s" \
-                    --topupconfig="%(topupconfig)s" \
-                    --printcom="%(printcom)s" \
-                    --doslicetime="%(doslicetime)s" \
-                    --slicetimedir="%(slicetimedir)s" \
-                    --slicetimeodd="%(slicetimeodd)s" \
-                    --sequencetype="%(sequencetype)s" \
-                    --fmriref="%(fmriref)s" \
-                    --usemask="%(usemask)s" \
-                    --preregister="%(preregister)s" \
-                    --refreg="%(refreg)s" \
-                    --movreg="%(movreg)s" \
-                    --tr="%(tr)f"' % {
-                        'script'            : os.path.join(hcp['hcp_base'], 'fMRIVolume', 'GenericfMRIVolumeProcessingPipeline.sh'),
-                        'path'              : sinfo['hcp'],
-                        'subject'           : sinfo['id'] + options['hcp_suffix'],
-                        'prefix'            : options['hcp_bold_prefix'],
-                        'boldn'             : bold,
-                        'boldimg'           : boldimg,
-                        'refimg'            : refimg,
-                        'spinOne'           : spinOne,
-                        'spinTwo'           : spinTwo,
-                        'fmapmag'           : hcp['fmapmag'],
-                        'fmapphase'         : hcp['fmapphase'],
-                        'fmapge'            : hcp['fmapge'],
-                        'echospacing'       : options['hcp_bold_echospacing'],
-                        'echodiff'          : options['hcp_bold_echodiff'],
-                        'unwarpdir'         : unwarpdir,
-                        'fmrires'           : options['hcp_bold_res'],
-                        'dcmethod'          : options['hcp_bold_correct'],
-                        'gdcoeffs'          : options['hcp_bold_gdcoeffs'],
-                        'topupconfig'       : os.path.join(hcp['hcp_Config'], 'b02b0.cnf'),
-                        'printcom'          : options['hcp_printcom'],
-                        'doslicetime'       : options['hcp_bold_stcorr'].upper(),
-                        'slicetimedir'      : hcp_bold_stcorrdir,
-                        'slicetimeodd'      : hcp_bold_stcorrint,
-                        'tr'                : options['TR'],
-                        'sequencetype'      : options['hcp_bold_sequencetype'],
-                        'preregister'       : options['hcp_bold_preregister'],
-                        'refreg'            : options['hcp_bold_refreg'],
-                        'movreg'            : options['hcp_bold_movreg'],
-                        'fmriref'           : fmriref,
-                        'usemask'           : options['hcp_bold_usemask']}
-
-                if run and boldok:
-                    tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
-                    if options['run'] == "run":
-                        if overwrite and os.path.exists(tfile):
-                            os.remove(tfile)
-                        r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRIVolume', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
-                        r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRIVolume failed running command: %s' % (comm))
-                        if status:
-                            report['done'].append(str(bold))
-                        else:
-                            report['failed'].append(str(bold))
-                    else:
-                        if os.path.exists(tfile):
-                            r += "\n     ... HCP fMRIVolume done"
-                            report['done'].append(str(bold))
-                        else:
-                            r += "\n     ... HCP fMRIVolume can be run"
-                            report['ready'].append(str(bold))
-                elif run:
-                    report['not ready'].append(str(bold))
-                    if options['run'] == "run":
-                        r += "\n     ... ERROR: images or data parameters missing, skipping this BOLD!"
-                    else:
-                        r += "\n     ... ERROR: images or data parameters missing, this BOLD would be skipped!"
                 else:
-                    report['not ready'].append(str(bold))
-                    if options['run'] == "run":
-                        r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
-                    else:
-                        r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
+                    spinN = False
+                    for sen in sepresent:
+                        if sen <= bold:
+                            spinN = sen
+                        elif not spinN:
+                            spinN = sen
+                    spinOne = sepairs[spinN]['spinOne']
+                    spinTwo = sepairs[spinN]['spinTwo']
+                    r += "\n     ... using spin echo fieldmap set %d" % (spinN)
 
-            except (ExternalFailed, NoSourceFolder), errormessage:
-                r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
-                r += str(errormessage)
-                report['failed'].append(str(bold))
-            except:
-                r += "\n ---  Failed during processing of bold %d with error:\n %s\n" % (bold, traceback.format_exc())
-                report['failed'].append(str(bold))
+                # -- are we using a new SE image?
 
-            r += "\n     ... DONE!"
+                if spinN != spinP:
+                    spinP = spinN
+                    futureref = "NONE"
+
+
+            # --- check for Siemens double TE-fieldmap image
+
+            elif options['hcp_bold_correct'].lower() in ['fieldmap', 'siemensfieldmap']:
+                fieldok = True
+                r, fieldok = checkForFile2(r, hcp['fmapmag'], '\n     ... Siemens fieldmap magnitude image present ', '\n     ... ERROR: Siemens fieldmap magnitude image missing!', status=fieldok)
+                r, fieldok = checkForFile2(r, hcp['fmapphase'], '\n     ... Siemens fieldmap phase image present ', '\n     ... ERROR: Siemens fieldmap phase image missing!', status=fieldok)
+                if not is_number(options['hcp_bold_echospacing']):
+                    fieldok = False
+                    r += '\n     ... ERROR: hcp_bold_echospacing not defined correctly: "%s"!' % (options['hcp_bold_echospacing'])
+                if not is_number(options['hcp_bold_echodiff']):
+                    fieldok = False
+                    r += '\n     ... ERROR: hcp_bold_echodiff not defined correctly: "%s"!' % (options['hcp_bold_echodiff'])
+                boldok = boldok and fieldok
+
+            # --- check for GE fieldmap image
+
+            elif options['hcp_bold_correct'].lower() in ['generalelectricfieldmap']:
+                fieldok = True
+                r, fieldok = checkForFile2(r, hcp['fmapge'], '\n     ... GeneralElectric fieldmap image present ', '\n     ... ERROR: GeneralElectric fieldmap image missing!', status=fieldok)
+                boldok = boldok and fieldok
+
+            # --- NO DC used
+
+            elif options['hcp_bold_correct'].lower() in ['none']:
+                r += '\n     ... No distortion correction used '
+
+            # --- ERROR
+
+            else:
+                r += '\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!' % (options['hcp_bold_correct'])
+                boldok = False
+
+
+            # --- set movement reference image
+
+            fmriref = futureref
+            if options['hcp_bold_movref'] == 'first':
+                if futureref == "NONE":
+                    futureref = "%s%d" % (options['hcp_bold_prefix'], bold)
+
+            # --- are we using previous reference
+
+            if fmriref is not "NONE":
+                r += '\n     ... using %s as movement correction reference' % (fmriref)
+
+            # store required data
+            b = {'bold': bold,
+                'run': run,
+                'boldok': boldok,
+                'boldimg': boldimg,
+                'refimg': refimg,
+                'unwarpdir': unwarpdir,
+                'spinOne': spinOne,
+                'spinTwo': spinTwo,
+                'fmriref': fmriref}
+            boldsData.append(b)
+
+        # --- Process
+        r += "\n"
+
+        threads = options['threads']
+        r += "\nProcessing BOLD on %d threads" % (threads)
+
+        if (threads == 1): # serial execution
+            # loop over bolds
+            for b in boldsData:
+                # process
+                result = executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b)
+
+                # merge r
+                r += result['r']
+
+                # merge report
+                tempReport = result['report']
+                report['done'] += tempReport['done']
+                report['failed'] += tempReport['failed']
+                report['ready'] += tempReport['ready']
+                report['not ready'] += tempReport['not ready']
+        else: # parallel execution
+            # if moveref equals first and seimage equals independent (complex scenario)
+            if (options['hcp_bold_movref'] == 'first') and (options['hcp_bold_seimg'] == 'independent'):
+                # loop over bolds to prepare processing pools
+                boldsPool = []
+                for b in boldsData:
+                    fmriref = b['fmriref']
+                    if (fmriref == "NONE"): # if fmriref is "NONE" then process the previous pool followed by this one as single
+                        r, report = executeMultipleHcpfMRIVolume(sinfo, options, overwrite, hcp, boldsPool, r, report)
+                        boldsPool = []
+                        r, report = executeSingleHcpfMRIVolume(sinfo, options, overwrite, hcp, b, r, report)
+                    else: # else add to pool
+                        boldsPool.append(b)
+
+                # execute remaining pool
+                r, report = executeMultipleHcpfMRIVolume(sinfo, options, overwrite, hcp, boldsPool, r, report)                      
+            else:
+                # if moveref equals first then process first one in serial
+                if options['hcp_bold_movref'] == 'first':
+                    # process first one
+                    b = boldsData[0]
+                    r, report = executeSingleHcpfMRIVolume(sinfo, options, overwrite, hcp, b, r, report)
+                    
+                    # remove first one from array then process others in parallel
+                    boldsData.pop(0)
+
+                # process the rest in parallel
+                r, report = executeMultipleHcpfMRIVolume(sinfo, options, overwrite, hcp, boldsData, r, report)
 
         rep = []
         for k in ['done', 'failed', 'ready', 'not ready', 'skipped']:
@@ -2178,6 +2133,173 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     print r
     return (r, report)
+
+def executeSingleHcpfMRIVolume(sinfo, options, overwrite, hcp, b, r, report):
+    # process
+    result = executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b)
+
+    # merge r
+    r += result['r']
+
+    # merge report
+    tempReport = result['report']
+    report['done'] += tempReport['done']
+    report['failed'] += tempReport['failed']
+    report['ready'] += tempReport['ready']
+    report['not ready'] += tempReport['not ready']
+
+    return r, report
+
+def executeMultipleHcpfMRIVolume(sinfo, options, overwrite, hcp, boldsData, r, report):
+    # create a multiprocessing Pool
+    processPoolExecutor = ProcessPoolExecutor(options['threads'])
+
+    # partial function
+    f = partial(executeHcpfMRIVolume, sinfo, options, overwrite, hcp)
+    results = processPoolExecutor.map(f, boldsData)
+
+    # merge r and report
+    for result in results:
+        r += result['r']
+        tempReport = result['report']
+        report['done'] += tempReport['done']
+        report['failed'] += tempReport['failed']
+        report['ready'] += tempReport['ready']
+        report['not ready'] += tempReport['not ready']
+
+    return r, report
+
+def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
+    # extract data
+    bold = b['bold']
+    run = b['run']
+    boldok = b['boldok']
+    boldimg = b['boldimg']
+    refimg = b['refimg']
+    unwarpdir = b['unwarpdir']
+    spinOne = b['spinOne']
+    spinTwo = b['spinTwo']
+    fmriref = b['fmriref']
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    try:
+
+        # --- process additional parameters
+
+        hcp_bold_stcorrdir = ''
+        hcp_bold_stcorrint = ''
+
+        if options['hcp_bold_stcorr'].lower() == 'true':
+            if options['hcp_bold_stcorrdir'] == 'down':
+                hcp_bold_stcorrdir = '--down'
+            if options['hcp_bold_stcorrint'] == 'odd':
+                hcp_bold_stcorrint = "--odd"
+
+        comm = '%(script)s \
+            --path="%(path)s" \
+            --subject="%(subject)s" \
+            --fmriname="%(prefix)s%(boldn)d" \
+            --fmritcs="%(boldimg)s" \
+            --fmriscout="%(refimg)s" \
+            --SEPhaseNeg="%(spinOne)s" \
+            --SEPhasePos="%(spinTwo)s" \
+            --fmapmag="%(fmapmag)s" \
+            --fmapphase="%(fmapphase)s" \
+            --fmapgeneralelectric="%(fmapge)s" \
+            --echospacing="%(echospacing)s" \
+            --echodiff="%(echodiff)s" \
+            --unwarpdir="%(unwarpdir)s" \
+            --fmrires="%(fmrires)s" \
+            --dcmethod="%(dcmethod)s" \
+            --gdcoeffs="%(gdcoeffs)s" \
+            --topupconfig="%(topupconfig)s" \
+            --printcom="%(printcom)s" \
+            --doslicetime="%(doslicetime)s" \
+            --slicetimedir="%(slicetimedir)s" \
+            --slicetimeodd="%(slicetimeodd)s" \
+            --sequencetype="%(sequencetype)s" \
+            --fmriref="%(fmriref)s" \
+            --usemask="%(usemask)s" \
+            --preregister="%(preregister)s" \
+            --refreg="%(refreg)s" \
+            --movreg="%(movreg)s" \
+            --tr="%(tr)f"' % {
+                'script'            : os.path.join(hcp['hcp_base'], 'fMRIVolume', 'GenericfMRIVolumeProcessingPipeline.sh'),
+                'path'              : sinfo['hcp'],
+                'subject'           : sinfo['id'] + options['hcp_suffix'],
+                'prefix'            : options['hcp_bold_prefix'],
+                'boldn'             : bold,
+                'boldimg'           : boldimg,
+                'refimg'            : refimg,
+                'spinOne'           : spinOne,
+                'spinTwo'           : spinTwo,
+                'fmapmag'           : hcp['fmapmag'],
+                'fmapphase'         : hcp['fmapphase'],
+                'fmapge'            : hcp['fmapge'],
+                'echospacing'       : options['hcp_bold_echospacing'],
+                'echodiff'          : options['hcp_bold_echodiff'],
+                'unwarpdir'         : unwarpdir,
+                'fmrires'           : options['hcp_bold_res'],
+                'dcmethod'          : options['hcp_bold_correct'],
+                'gdcoeffs'          : options['hcp_bold_gdcoeffs'],
+                'topupconfig'       : os.path.join(hcp['hcp_Config'], 'b02b0.cnf'),
+                'printcom'          : options['hcp_printcom'],
+                'doslicetime'       : options['hcp_bold_stcorr'].upper(),
+                'slicetimedir'      : hcp_bold_stcorrdir,
+                'slicetimeodd'      : hcp_bold_stcorrint,
+                'tr'                : options['TR'],
+                'sequencetype'      : options['hcp_bold_sequencetype'],
+                'preregister'       : options['hcp_bold_preregister'],
+                'refreg'            : options['hcp_bold_refreg'],
+                'movreg'            : options['hcp_bold_movreg'],
+                'fmriref'           : fmriref,
+                'usemask'           : options['hcp_bold_usemask']}
+
+        if run and boldok:
+            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+                r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRIVolume', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
+                r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRIVolume failed running command: %s' % (comm))
+                if status:
+                    report['done'].append(str(bold))
+                else:
+                    report['failed'].append(str(bold))
+            else:
+                if os.path.exists(tfile):
+                    r += "\n     ... HCP fMRIVolume done"
+                    report['done'].append(str(bold))
+                else:
+                    r += "\n     ... HCP fMRIVolume can be run"
+                    report['ready'].append(str(bold))
+        elif run:
+            report['not ready'].append(str(bold))
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images or data parameters missing, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: images or data parameters missing, this BOLD would be skipped!"
+        else:
+            report['not ready'].append(str(bold))
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
+        r += str(errormessage)
+        report['failed'].append(str(bold))
+    except:
+        r += "\n ---  Failed during processing of bold %d with error:\n %s\n" % (bold, traceback.format_exc())
+        report['failed'].append(str(bold))
+
+    r += "\n     ... DONE!"
+
+    return {'r': r, 'report': report}
 
 
 def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
@@ -2221,6 +2343,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
+    --threads         ... How many threads to utilize for bold processing
+                          per subject [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -2271,6 +2395,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     Changelog
     2017-02-06 Grega Repovš
              - Updated documentation.
+    2018-17-11 Jure Demsar
+            - Parallel implementation.
     '''
 
     r = "\n----------------------------------------------------------------"
@@ -2344,83 +2470,39 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         if report['boldskipped']:
             report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
-        # --- Loop through bolds
+        threads = options['threads']
+        r += "\nProcessing BOLD on %d threads" % (threads)
 
-        for bold, boldname, boldtask, boldinfo in bolds:
+        if threads == 1: # serial execution
+            for b in bolds:
+                # process
+                result = executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, b)
 
-            try:
-                r += "\n---> Processing BOLD %d" % (bold)
-                boldok = True
+                # merge r
+                r += result['r']
 
-                # --- check for bold image
+                # merge report
+                tempReport = result['report']
+                report['done'] += tempReport['done']
+                report['failed'] += tempReport['failed']
+                report['ready'] += tempReport['ready']
+                report['not ready'] += tempReport['not ready']      
+        else: # parallel execution
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(threads)
+            # process 
+            f = partial(executeHcpfMRISurface, sinfo, options, overwrite, hcp, run)
+            results = processPoolExecutor.map(f, bolds)
 
-                boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
-                r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
-
-                comm = '%(script)s \
-                    --path="%(path)s" \
-                    --subject="%(subject)s" \
-                    --fmriname="%(prefix)s%(boldn)d" \
-                    --lowresmesh="%(lowresmesh)s" \
-                    --fmrires="%(fmrires)s" \
-                    --smoothingFWHM="%(smoothingFWHM)s" \
-                    --grayordinatesres="%(grayordinatesres)d" \
-                    --regname"%(regname)s" \
-                    --printcom"%(printcom)s"' % {
-                        'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
-                        'path'              : sinfo['hcp'],
-                        'subject'           : sinfo['id'] + options['hcp_suffix'],
-                        'prefix'            : options['hcp_bold_prefix'],
-                        'boldn'             : bold,
-                        'lowresmesh'        : options['hcp_lowresmesh'],
-                        'fmrires'           : options['hcp_bold_res'],
-                        'smoothingFWHM'     : options['hcp_bold_smoothFWHM'],
-                        'grayordinatesres'  : options['hcp_grayordinatesres'],
-                        'regname'           : options['hcp_regname'],
-                        'printcom'          : options['hcp_printcom']}
-
-
-                if run and boldok:
-                    tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
-                    if options['run'] == "run":
-                        if overwrite and os.path.exists(tfile):
-                            os.remove(tfile)
-                        r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRISurface', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
-                        r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRISurface failed running command: %s' % (comm))
-                        if status:
-                            report['done'].append(str(bold))
-                        else:
-                            report['failed'].append(str(bold))
-                    else:
-                        if os.path.exists(tfile):
-                            r += "\n     ... HCP fMRISurface done"
-                            report['done'].append(str(bold))
-                        else:
-                            r += "\n     ... HCP fMRISurface can be run"
-                            report['ready'].append(str(bold))
-                elif run:
-                    report['not ready'].append(str(bold))
-                    if options['run'] == "run":
-                        r += "\n     ... ERROR: images missing, skipping this BOLD!"
-                    else:
-                        r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
-                else:
-                    report['not ready'].append(str(bold))
-                    if options['run'] == "run":
-                        r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
-                    else:
-                        r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
-
-            except (ExternalFailed, NoSourceFolder), errormessage:
-                r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
-                r += str(errormessage)
-                report['failed'].append(str(bold))
-            except:
-                r += "\n ---  Failed during processing of bold %d with error:\n %s\n" % (bold, traceback.format_exc())
-                report['failed'].append(str(bold))
-
-            r += "\n     ... DONE!"
-
+            # merge r and report
+            for result in results:
+                r += result['r']
+                tempReport = result['report']
+                report['done'] += tempReport['done']
+                report['failed'] += tempReport['failed']
+                report['ready'] += tempReport['ready']
+                report['not ready'] += tempReport['not ready']
+            
         rep = []
         for k in ['done', 'failed', 'ready', 'not ready', 'skipped']:
             if len(report[k]) > 0:
@@ -2438,6 +2520,88 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     print r
     return (r, report)
+
+def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
+    # extract data
+    bold = boldData[0]
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    try:
+        r += "\n---> Processing BOLD %d" % (bold)
+        boldok = True
+
+        # --- check for bold image
+
+        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
+        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+
+        comm = '%(script)s \
+            --path="%(path)s" \
+            --subject="%(subject)s" \
+            --fmriname="%(prefix)s%(boldn)d" \
+            --lowresmesh="%(lowresmesh)s" \
+            --fmrires="%(fmrires)s" \
+            --smoothingFWHM="%(smoothingFWHM)s" \
+            --grayordinatesres="%(grayordinatesres)d" \
+            --regname"%(regname)s" \
+            --printcom"%(printcom)s"' % {
+                'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
+                'path'              : sinfo['hcp'],
+                'subject'           : sinfo['id'] + options['hcp_suffix'],
+                'prefix'            : options['hcp_bold_prefix'],
+                'boldn'             : bold,
+                'lowresmesh'        : options['hcp_lowresmesh'],
+                'fmrires'           : options['hcp_bold_res'],
+                'smoothingFWHM'     : options['hcp_bold_smoothFWHM'],
+                'grayordinatesres'  : options['hcp_grayordinatesres'],
+                'regname'           : options['hcp_regname'],
+                'printcom'          : options['hcp_printcom']}
+
+        if run and boldok:
+            tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+                r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRISurface', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
+                r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRISurface failed running command: %s' % (comm))
+                if status:
+                    report['done'].append(str(bold))
+                else:
+                    report['failed'].append(str(bold))
+            else:
+                if os.path.exists(tfile):
+                    r += "\n     ... HCP fMRISurface done"
+                    report['done'].append(str(bold))
+                else:
+                    r += "\n     ... HCP fMRISurface can be run"
+                    report['ready'].append(str(bold))
+        elif run:
+            report['not ready'].append(str(bold))
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+        else:
+            report['not ready'].append(str(bold))
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
+        r += str(errormessage)
+        report['failed'].append(str(bold))
+    except:
+        r += "\n ---  Failed during processing of bold %d with error:\n %s\n" % (bold, traceback.format_exc())
+        report['failed'].append(str(bold))
+
+    r += "\n     ... DONE!"
+
+    return {'r': r, 'report': report}
 
 
 def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
@@ -2863,5 +3027,3 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     print r
     return (r, (sinfo['id'], rstatus, failed))
-
-
