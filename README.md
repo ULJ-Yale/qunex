@@ -382,6 +382,7 @@ Change Log
 * 0.26.01 [mnaptools, library] Add PALM112 install to container image and add PALM path to Octave 
 * 0.27.00 [library] Add bin directory for general purpose code. Added example code for running MNAP Singularity via SLURM.
 * 0.27.01 [niutilities] Added runchecks to folder structure
+* 0.27.02 [library] Changed module loads to load defaults R and ggplot2
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
