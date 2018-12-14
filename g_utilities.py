@@ -73,7 +73,7 @@ def manageStudy(studyfolder=None, action="create"):
 
     folders = [['analysis'], ['analysis', 'scripts'], 
                ['processing'], 
-               ['processing', 'logs'], ['processing', 'logs', 'comlogs'], ['processing', 'logs', 'runlogs'], 
+               ['processing', 'logs'], ['processing', 'logs', 'comlogs'], ['processing', 'logs', 'runlogs'], ['processing', 'logs', 'runchecks'], 
                ['processing', 'lists'], 
                ['processing', 'scripts'],
                ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
@@ -149,6 +149,7 @@ def createStudy(studyfolder=None):
     ├── processing
     │   ├── logs
     │   │   ├── comlogs
+    │   │   ├── runchecks
     │   │   └── runlogs
     │   ├── lists
     │   ├── scenes
