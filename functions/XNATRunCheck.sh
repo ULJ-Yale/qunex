@@ -18,18 +18,12 @@
 #
 # ## LICENSE
 #
-# * The XNATUpload.sh = the "Software"
+# * The XNATRunCheck.sh = the "Software"
 # * This Software conforms to the license outlined in the MNAP Suite:
 # * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
 #
 # ## TODO
 #
-# --> Add functionality to take in all data types into the XNAT database
-# --> Add functionality to loop over --xnatsubjectids for each --subject
-#     Here need to check if variable lenghts are the same
-#     Here need to take positional xnatsubjectid for each CASE within the CASES loop.
-#     Do the same for session ID
-#     Right now -sessionid is a SINGLE variable that is assumed to be the same for all CASES
 #
 # ## DESCRIPTION 
 #   
@@ -41,12 +35,11 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./XNATUpload.sh --help
+# See output of usage function: e.g. $./XNATCloudUpload.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
-# * The necessary input files are data stored in the following format
-# * These data are stored in: "$SubjectsFolder/$CASE/
+# * Completed container run on a given XNAT server
 #
 #~ND~END~
 
@@ -58,7 +51,7 @@ usage() {
     echo ""
     echo "-- DESCRIPTION:"
     echo ""
-    echo "This function implements syncing to the XNAT cloud XNAT_HOST_NAME via the CURL REST API."
+    echo "This function implements a check for a given MNAP step on an XNAT server."
     echo ""
     echo "Note: To invoke this function you need a credential file in your home folder: " 
     echo ""
@@ -95,13 +88,11 @@ usage() {
     echo "          --xnatsessionlabel=<session_id>                        Name of session within XNAT for a given subject id. Default []. Assuming it matches --subjects. "
     echo "                                                                 Use if you wish to upload multiple distinct sessions per subject id."
     echo "                                                                 If you wish to upload a new session for this subject id please supply this flag."
-    echo "          --niftiupload=<specify_nifti_upload>                   Specify <yes> or <no> for NIFTI upload. Default is [no]"
-    echo "          --overwrite=<specify_overwrite>                        Specify <yes> or <no> for cleanup of prior upload on the host server. Default is [yes]"
     echo "          --resetcredentials=<reset_credentials_for_xnat_site_>  Specify <yes> if you wish to reset your XNAT site user and password. Default is [no]"
     echo ""
     echo "-- Example:"
     echo ""
-    echo "XNATUpload.sh --subjectsfolder='<absolute_path_to_subjects_folder>' \ "
+    echo "XNATRunCheck.sh --subjectsfolder='<absolute_path_to_subjects_folder>' \ "
     echo "--subjects='<subject_IDs_on_local_server>' \ "
     echo "--xnatprojectid='<name_of_xnat_project_id>' \ "
     echo "--xnathost='<XNAT_site_URL>' "
@@ -163,10 +154,7 @@ unset CASES
 unset XNAT_SUBJECT_IDS
 unset XNAT_SESSION_LABEL
 unset XNAT_EXPT_LABEL
-unset NIFTIUPLOAD
-unset OVERWRITE
 unset ResetCredentials
-unset DICOMPath
 
 # -- Parse arguments
 SubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
@@ -177,81 +165,71 @@ CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CAS
 XNAT_SUBJECT_IDS=`opts_GetOpt "--xnatsubjectids" $@`
 XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabel" $@`
 XNAT_EXPT_LABEL=`opts_GetOpt "--xnatexperiment" $@`
-NIFTIUPLOAD=`opts_GetOpt "--niftiupload" $@`
-OVERWRITE=`opts_GetOpt "--overwrite" $@`
-DICOMPath=`opts_GetOpt "--dicompath" $@`
 
 # -- Check required parameters
 
-if [ -z ${DICOMPath} ]; then
-    ## -- Check subject folder if DICOMPath is not set
-    if [ -z ${SubjectsFolder} ]; then
-        usage
-        reho "ERROR: <folder-with-subjects> not specified"
-        echo ""
-        exit 1
-    fi
-    ## -- Check requested subjects if DICOMPath is not set
-    if [ -z ${CASES} ]; then
-        usage
-        reho "ERROR: --subjects flag not specified"
-        echo ""
-        exit 1
-    fi
-    ## -- Check XNAT session label if DICOMPath is not set
-    if [ -z ${XNAT_SESSION_LABEL} ]; then
-        XNAT_SESSION_LABEL=""
-        echo ""
-        reho "Note: --xnatsessionlabel flag omitted. Assuming specified subject names match --xnatsessionlabel in XNAT."
-        reho "    If you wish to upload a new session for this subject id please supply this flag."
-        echo ""
-    fi
-    ## -- Check XNAT experiment label if DICOMPath is not set
-    if [ -z ${XNAT_EXPT_LABEL} ]; then
-        XNAT_EXPT_LABEL=""
-        echo ""
-        reho "Note: --xnatexperiment flag omitted. Assuming specified subject names match --xnatexperiment in XNAT."
-        reho "    If you wish to upload a new session for this subject id please supply this flag."
-        echo ""
-    fi
-    ## -- Check XNAT subject IDs if DICOMPath is not set
-    if [ -z ${XNAT_SUBJECT_IDS} ]; then
-        XNAT_SUBJECT_IDS="$CASES"
-        echo ""
-        reho "Note: --xnatsubjectids flag omitted. Assuming --subjects flag matches --xnatsubjectids in XNAT."
-        reho "    If your XNAT database subject id is distinct from your local server subject id then please supply this flag."
-        echo ""
-    fi
-    
-else 
-    ## -- Generic DICOM path is set outside of MNAP hierarchy
-    reho "Note: --dicompath=${DICOMPath} specified, which assumes DICOM location for a single XNAT upload."; echo ""
-    ## -- Check XNAT session label if DICOMPath is set
-    if [ -z ${XNAT_SESSION_LABEL} ]; then
-        XNAT_SESSION_LABEL=""
-        echo ""
-        reho "Note: --xnatsessionlabel flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
-        reho "    If you wish to upload a new session for this subject id please supply this flag."
-        echo ""
-    fi
-    ## -- Check XNAT experiment label if DICOMPath is set
-    if [ -z ${XNAT_EXPT_LABEL} ]; then
-        XNAT_EXPT_LABEL=""
-        echo ""
-        reho "Note: --xnatexperiment flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
-        reho "    If you wish to upload a new session for this subject id please supply this flag."
-        echo ""
-    fi
-    ## -- Check XNAT subject IDs if DICOMPath is set
-    if [ -z ${XNAT_SUBJECT_IDS} ]; then
-        XNAT_SUBJECT_IDS=""
-        echo ""
-        reho "Note: --xnatsubjectids flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
-        reho "    If your XNAT database subject id is distinct from your local server subject id then please supply this flag."
-        echo ""
-    fi
+## -- Check subject folder if DICOMPath is not set
+if [ -z ${SubjectsFolder} ]; then
+    usage
+    reho "ERROR: <folder-with-subjects> not specified"
+    echo ""
+    exit 1
 fi
-
+## -- Check requested subjects if DICOMPath is not set
+if [ -z ${CASES} ]; then
+    usage
+    reho "ERROR: --subjects flag not specified"
+    echo ""
+    exit 1
+fi
+## -- Check XNAT session label if DICOMPath is not set
+if [ -z ${XNAT_SESSION_LABEL} ]; then
+    XNAT_SESSION_LABEL=""
+    echo ""
+    reho "Note: --xnatsessionlabel flag omitted. Assuming specified subject names match --xnatsessionlabel in XNAT."
+    reho "    If you wish to upload a new session for this subject id please supply this flag."
+    echo ""
+fi
+## -- Check XNAT experiment label if DICOMPath is not set
+if [ -z ${XNAT_EXPT_LABEL} ]; then
+    XNAT_EXPT_LABEL=""
+    echo ""
+    reho "Note: --xnatexperiment flag omitted. Assuming specified subject names match --xnatexperiment in XNAT."
+    reho "    If you wish to upload a new session for this subject id please supply this flag."
+    echo ""
+fi
+## -- Check XNAT subject IDs if DICOMPath is not set
+if [ -z ${XNAT_SUBJECT_IDS} ]; then
+    XNAT_SUBJECT_IDS="$CASES"
+    echo ""
+    reho "Note: --xnatsubjectids flag omitted. Assuming --subjects flag matches --xnatsubjectids in XNAT."
+    reho "    If your XNAT database subject id is distinct from your local server subject id then please supply this flag."
+    echo ""
+fi
+## -- Check XNAT session label if DICOMPath is set
+if [ -z ${XNAT_SESSION_LABEL} ]; then
+    XNAT_SESSION_LABEL=""
+    echo ""
+    reho "Note: --xnatsessionlabel flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
+    reho "    If you wish to upload a new session for this subject id please supply this flag."
+    echo ""
+fi
+## -- Check XNAT experiment label if DICOMPath is set
+if [ -z ${XNAT_EXPT_LABEL} ]; then
+    XNAT_EXPT_LABEL=""
+    echo ""
+    reho "Note: --xnatexperiment flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
+    reho "    If you wish to upload a new session for this subject id please supply this flag."
+    echo ""
+fi
+## -- Check XNAT subject IDs if DICOMPath is set
+if [ -z ${XNAT_SUBJECT_IDS} ]; then
+    XNAT_SUBJECT_IDS=""
+    echo ""
+    reho "Note: --xnatsubjectids flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
+    reho "    If your XNAT database subject id is distinct from your local server subject id then please supply this flag."
+    echo ""
+fi
 ## -- Check XNAT Host variable
 if [ -z ${XNAT_HOST_NAME} ]; then
     usage
@@ -266,34 +244,20 @@ if [ -z ${XNAT_PROJECT_ID} ]; then
     reho "      Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
     echo ""
 fi
-## -- Check if NIFTI upload is requested
-if [ -z ${NIFTIUPLOAD} ]; then
-    NIFTIUPLOAD="no"
-fi
 ## -- Check if reseting credentials is requested
 if [ -z ${ResetCredentials} ]; then
     ResetCredentials="no"
-fi
-## -- Check if overwrite is requested
-if [ -z ${OVERWRITE} ]; then
-    OVERWRITE="yes"
 fi
   
 # -- Report all requested options
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    if [ -z ${DICOMPath} ]; then
-        echo "   Folder with all subjects: ${SubjectsFolder}"
-        echo "   Subjects to process: ${CASES}"
-    else
-        echo "   Folder DICOMs : ${DICOMPath}"
-    fi
+    echo "   Folder with all subjects: ${SubjectsFolder}"
+    echo "   Subjects to process: ${CASES}"
     echo "   XNAT IDs for subjects (in order matching subjects to process): ${XNAT_SUBJECT_IDS}"
     echo "   XNAT Session Label: ${XNAT_SESSION_LABEL}"
     echo "   XNAT Experiment: ${XNAT_EXPT_LABEL}"
-    echo "   NIFTI upload: ${NIFTIUPLOAD}"
-    echo "   OVERWRITE set to: ${OVERWRITE}"
     echo "   Reset XNAT site credentials: ${ResetCredentials}"
     echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
     echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
@@ -312,7 +276,7 @@ TimeStamp=`date +%Y-%m-%d-%H-%M-%S`
 
 echo ""
 ceho "       ********************************************"
-ceho "       ****** Setting up XNAT cloud upload ********"
+ceho "       ******   Setting up XNAT Run Check  ********"
 ceho "       ********************************************"
 echo ""
 

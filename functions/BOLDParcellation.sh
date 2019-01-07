@@ -311,12 +311,12 @@ fi
 if [ -z ${UseWeights} ]; then
     UseWeights="no"
     WeightsFile="no"
-    reho "Note: Weights file not used."
+    echo "Note: Weights file not used."
 fi
 if [ -z ${WeightsFile} ]; then
     UseWeights="no"
     WeightsFile="no"
-    reho "Note: Weights file not used."
+    echo "Note: Weights file not used."
 fi
 
 # -- Set StudyFolder
@@ -413,13 +413,13 @@ fi
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-    reho "--- Deleting prior $BOLDOutput..."
+    echo "-- Deleting prior $BOLDOutput..."
     echo ""
     rm -f "$BOLDOutput" > /dev/null 2>&1
 fi
 
 # -- Check if parcellation was completed
-echo "--- Checking if parcellation was completed..."
+echo "-- Checking if parcellation was completed..."
 echo ""
 if [ -f "$BOLDOutput" ]; then
     geho "Parcellation data found: "
@@ -438,8 +438,13 @@ if [[ ${Overwrite} == "no" ]]; then
     exit 0
 fi
 else
-    reho "Parcellation data not found."
-    echo ""
+    if [ "$Overwrite" == "yes" ]; then
+        echo "-- Note: Prior parcellation data not found because you requested to overwrite."
+        echo ""
+    else
+        echo "-- Note: Prior parcellation data not found."
+        echo ""
+    fi
 fi
 
 geho "-- Computing parcellation on $BOLDInput..."
@@ -563,13 +568,13 @@ if [ "$ExtractData" == "yes" ]; then
 fi
 
 # -- Perform completion checks
-geho "--- Checking outputs..."
+geho "-- Checking outputs..."
 echo ""
 if [ -f "$BOLDOutput" ]; then
     geho "Parcellated BOLD file:           $BOLDOutput"
     echo ""
 else
-    reho "--- Parcellated BOLD file $BOLDOutput is missing. Something went wrong."
+    reho "ERROR: Parcellated BOLD file $BOLDOutput is missing. Something went wrong."
     echo ""
     exit 1
 fi
@@ -578,7 +583,7 @@ if [ "$ComputePConn" == "yes" ]; then
         geho "Parcellated connectivity (pconn) BOLD file using correlation:           $PConnBOLDOutputR"
         echo ""
     else
-        reho "Parcellated connectivity (pconn) BOLD file using correlation $PConnBOLDOutputR is missing. Something went wrong."
+        reho "ERROR: Parcellated connectivity (pconn) BOLD file using correlation $PConnBOLDOutputR is missing. Something went wrong."
         echo ""
         exit 1
     fi
@@ -586,7 +591,7 @@ if [ "$ComputePConn" == "yes" ]; then
         geho "Parcellated connectivity (pconn) BOLD file using covariance:           $PConnBOLDOutputCov"
         echo ""
     else
-        reho "Parcellated connectivity (pconn) BOLD file using covariance $PConnBOLDOutputCov is missing. Something went wrong."
+        reho "ERROR: Parcellated connectivity (pconn) BOLD file using covariance $PConnBOLDOutputCov is missing. Something went wrong."
         echo ""
         exit 1
     fi
@@ -594,7 +599,7 @@ if [ "$ComputePConn" == "yes" ]; then
         geho "Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform:           $PConnBOLDOutputRfZ"
         echo ""
     else
-        reho "Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform $PConnBOLDOutputRfZ is missing. Something went wrong."
+        reho "ERROR: Parcellated connectivity (pconn) BOLD file using correlation w/ fisher-z transform $PConnBOLDOutputRfZ is missing. Something went wrong."
         echo ""
         exit 1
     fi

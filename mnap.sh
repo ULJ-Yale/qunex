@@ -305,7 +305,7 @@ if [[ ! -f ${StudyFolder}/.mnapstudy ]]; then
 fi
 
 
-# -- Check is part of the MNAP file hierarchy is missing
+# -- Check if part of the MNAP file hierarchy is missing
 #
 # --- analysis subfolder
 # /analysis/scripts
@@ -338,6 +338,7 @@ fi
 # /subjects/specs
 # /subjects/QC
 # 
+
 MNAPFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/tasks info/stimuli info/BIDS subjects/inbox/MR subjects/inbox/EEG subjects/inbox/BIDS subjects/inbox/behavior subjects/inbox/concs subjects/inbox/events subjects/archive/MR subjects/archive/EEG subjects/archive/BIDS subjects/archive/behavior subjects/specs subjects/QC"
 for MNAPFolder in ${MNAPFolders}; do
     if [[ ! -d ${StudyFolder}/${MNAPFolder} ]]; then
@@ -395,11 +396,11 @@ CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.
 
 # -- Code for debugging
 echo ""
-cyaneho "---- Commands to run: -----"
+cyaneho "--------------------- Command to run: -----------------------"
 echo ""
 cyaneho "${CommandToRun}"
 echo ""
-cyaneho "---------------------------"
+cyaneho "--------------------------------------------------------------"
 echo ""
 echo ""
 
@@ -420,17 +421,19 @@ echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho " ERROR: ${C
 
 ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep '${SuccessCheck}' &> ${CompletionCheck}"
-ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo '  ===> Check final log output:'; echo ''; echo '${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo '--- ERROR. Check error log output:'; echo ''; echo '${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
+ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${FunctionToRun}. Check final MNAP log output:'; echo ''; geho '    ${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${FunctionToRun}. Check final MNAP error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
 # -- Combine commands
 ComRunAll="${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
 
 # -- Run the commands locally
 if [[ "$Cluster" == 1 ]]; then
-    echo "--------------------------------------------------------------"
+    geho "--------------------------------------------------------------"
     echo ""
     geho "   Running ${FunctionToRun} locally on `hostname`"
     geho "   Command log:     ${Runlog}  "
     geho "   Function output: ${ComlogTmp} "
+    echo ""
+    geho "--------------------------------------------------------------"
     echo ""
     eval "${ComRunAll}"
 fi
@@ -438,12 +441,14 @@ fi
 if [[ "$Cluster" == 2 ]]; then
     cd ${MasterRunLogFolder}
     gmri schedule command="${ComRunAll}" settings="${Scheduler}"
-    echo "---------------------------------------------------------------------------------"
+    geho "--------------------------------------------------------------"
     echo ""
     geho "   Data successfully submitted to scheduler"
     geho "   Scheduler details: ${Scheduler}"
     geho "   Command log:     ${Runlog}  "
     geho "   Function output: ${ComlogTmp} "
+    echo ""
+    geho "--------------------------------------------------------------"
     echo ""
 fi
 }
@@ -2060,6 +2065,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     OVERWRITE_PROJECT_XNAT=`opts_GetOpt "${setflag}overwriteprojectxnat" $@`
     BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
     LOCAL_BATCH_FILE=`opts_GetOpt "${setflag}local_batchfile" $@`
+    SubjectBatchFile=`opts_GetOpt "--batchfile" $@`
     SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
     XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
@@ -2251,11 +2257,11 @@ if [[ "$setflag" =~ .*-.* ]]; then
     
     # -- Check if subject input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
-        SubjectParamFile="$CASES"
+        SubjectBatchFile="$CASES"
         echo ""
-        echo "Using $SubjectParamFile for input."
+        echo "Using $SubjectBatchFile for input."
         echo ""
-        CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
+        CASES=`more ${SubjectBatchFile} | grep "id:"| cut -d " " -f 2`
     fi
 fi
 

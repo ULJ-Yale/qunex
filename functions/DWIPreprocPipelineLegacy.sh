@@ -547,7 +547,7 @@ fi
     echo ""
     geho "${EDDYCUDADIR}/${eddy_cuda} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v"
     echo ""
-    ${EDDYCUDADIR}/${eddy_cuda} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v
+    ${EDDYCUDADIR}/${eddy_cuda} --imain=${DiffFolder}/${DiffData} --mask=${DiffFolder}/${DiffDataSuffix}/rawdata/${DiffData}_nodif_brain_mask --acqp=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/acqparams.txt --index=${DiffFolder}/${DiffDataSuffix}/acqparams/${DiffData}/index.txt --bvecs=${DiffFolder}/${DiffData}.bvec --bvals=${DiffFolder}/${DiffData}.bval --fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --out=${DiffFolder}/${DiffDataSuffix}/eddy/${DiffData}_eddy_corrected --data_is_shelled --repol -v --cnr_maps
 
 ############################################
 # STEP 4 - Run epi_reg w/fieldmap correction
