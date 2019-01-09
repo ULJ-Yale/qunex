@@ -80,7 +80,7 @@ RUN yum clean all && \
     Rscript -e "install.packages('ggplot2')"
 
 # Install Octave 4.2.1
-RUN echo "Installing Ocatve 4.2.1..." && \
+RUN echo "Installing Ocatve 4.4.1..." && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
     mkdir -p /opt/Octave/4.4.1/bin && \
     cd /opt/Octave/4.4.1/bin && \
