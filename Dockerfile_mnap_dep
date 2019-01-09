@@ -46,7 +46,8 @@ ENV PATH="/opt" \
     NIBABELDIR="/opt/pylib/nibabel" \
     PATH="/opt/pylib/nibabel:$PATH" \
     PYDICOMDIR="/opt/pylib/pydicom" \
-    PATH="/opt/pylib/pydicom:$PATH"
+    PATH="/opt/pylib/pydicom:$PATH" \
+    LD_LIBRARY_PATH="/usr/local/install/lib/octave/4.4.1/:$LD_LIBRARY_PATH"
 
 # Run yum update
 RUN yum clean all && \
@@ -68,7 +69,7 @@ RUN yum clean all && \
     echo "alias pip='pip2.7'" >> ~/.bashrc && \
 # Install Python packages
     echo "Installing Python packages..." && \
-    pip install numpy pydicom scipy nibabel && \
+    pip install numpy pydicom scipy nibabel futures && \
 # Install R
     echo "Installing R..." && \
     yum install -y R && \
@@ -81,15 +82,19 @@ RUN yum clean all && \
 # Install Octave 4.2.1
 RUN echo "Installing Ocatve 4.2.1..." && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
-    mkdir -p /opt/Octave/4.2.1/bin && \
-    cd /opt/Octave/4.2.1/bin && \
+    mkdir -p /opt/Octave/4.4.1/bin && \
+    cd /opt/Octave/4.4.1/bin && \
     git clone https://github.com/ztamayo/octave-enable64.git && \
     cd octave-enable64 && \
     scl enable devtoolset-3 -- make -j$(nproc) && \
-    alias octave="/usr/local/bin/octave-4.2.1 --no-init-file" && \
-    echo "alias octave='/usr/local/bin/octave-4.2.1 --no-init-file'" >> ~/.bashrc && \
+    alias octave="/usr/local/bin/octave --no-init-file" && \
+    echo "alias octave='/usr/local/bin/octave --no-init-file'" >> ~/.bashrc && \
 # Install Octave packages
     echo "Installing Octave packages..." && \
+    export LD_LIBRARY_PATH=/usr/local/install/lib/octave/4.4.1/:LD_LIBRARY_PATH && \
+    export LIBRARY_PATH=/usr/local/install/lib/octave/4.4.1/:LIBRARY_PATH && \
+    ln -s /usr/local/install/lib/octave/4.4.1/liboctave.so /usr/lib64/ && \
+    ln -s /usr/local/install/lib/octave/4.4.1/liboctinterp.so /usr/lib64/ && \
     octave --no-gui --eval "pkg install -verbose -forge general" && \
     octave --no-gui --eval "pkg install -verbose -forge control" && \
     octave --no-gui --eval "pkg install -verbose -forge image" && \
@@ -120,13 +125,20 @@ RUN echo "Downloading dcm2niix..." && \
     mv bin/ /opt/dcm2niix && \
     cd / && \
     rm -rf /tmp/* && \
-# Install FSL
+# Install FSL 5.0.9
     echo "Downloading FSL 5.0.9..." && \
     mkdir -p /opt/fsl-5.0.9 && \
     wget --progress=bar:force -O /tmp/fsl-5.0.9-centos6_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-5.0.9-centos6_64.tar.gz && \
     tar -xzvf /tmp/fsl-5.0.9-centos6_64.tar.gz -C /opt/fsl-5.0.9 --strip-components 1 && \
     rm /tmp/fsl-5.0.9-centos6_64.tar.gz && \
-    rm -R /opt/fsl-5.0.9/data/first/
+    rm -R /opt/fsl-5.0.9/data/first/ && \
+# Install FSL 6.0.0
+    echo "Downloading FSL 6.0.0..." && \
+    mkdir -p /opt/fsl-6.0.0 && \
+    wget --progress=bar:force -O /tmp/fsl-6.0.0-centos7_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/FSLVm7_64.zip && \
+    tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl-6.0.0 --strip-components 1 && \
+    rm /tmp/fsl-6.0.0-centos7_64.tar.gz && \
+    rm -R /opt/fsl-6.0.0/data/first/
 
 # Install FreeSurfer 6.0
 RUN echo "Downloading FreeSurfer 6.0..." && \
@@ -160,6 +172,9 @@ RUN echo "Installing PALM..." && \
     cd /opt/PALM/palm-alpha112o/fileio/@gifti/private && \
     ./compile.sh && \
     mv zstream.m x-zstream.m && \
+    cd /opt/PALM/palm-alpha112o/fileio/@nifti/private && \
+    mkoctfile --mex nifti_stats.c nifti_stats_mex.c -O && \
+    mv nifti_stats.m x_nifti_stats.m && \
     cd /opt/PALM/palm-alpha112o/fileio/@xmltree/private && \
     cp /opt/PALM/palm-alpha112o/fileio/@file_array/private/compile.sh . && \
     cp /opt/PALM/palm-alpha112o/fileio/@file_array/private/Makefile.var . && \
@@ -209,15 +224,15 @@ RUN wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://d
 
 # Create Octave Sym Links
 # Link octave install to /usr/bin
-RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
-    ln -fs /usr/local/bin/octave-config-4.2.1 /usr/bin/octave-config && \
-    ln -fs /usr/local/bin/octave-cli-4.2.1 /usr/bin/octave-cli && \
-    ln -fs /usr/local/bin/mkoctfile-4.2.1 /usr/bin/mkoctfile && \
+RUN ln -fs /usr/local/bin/octave /usr/bin/octave && \
+    ln -fs /usr/local/bin/octave-config-4.4.1 /usr/bin/octave-config && \
+    ln -fs /usr/local/bin/octave-cli-4.4.1 /usr/bin/octave-cli && \
+    ln -fs /usr/local/bin/mkoctfile-4.4.1 /usr/bin/mkoctfile && \
 # Link octave install to /opt/Octave/4.2.1/bin
-    ln -fs /usr/local/bin/octave-4.2.1 /opt/Octave/4.2.1/bin && \
-    ln -fs /usr/local/bin/octave-config-4.2.1 /opt/Octave/4.2.1/bin && \
-    ln -fs /usr/local/bin/octave-cli-4.2.1 /opt/Octave/4.2.1/bin && \
-    ln -fs /usr/local/bin/mkoctfile-4.2.1 /opt/Octave/4.2.1/bin && \
+    ln -fs /usr/local/bin/octave /opt/Octave/4.2.1/bin && \
+    ln -fs /usr/local/bin/octave-config-4.4.1 /opt/Octave/4.2.1/bin && \
+    ln -fs /usr/local/bin/octave-cli-4.4.1 /opt/Octave/4.2.1/bin && \
+    ln -fs /usr/local/bin/mkoctfile-4.4.1 /opt/Octave/4.2.1/bin && \
 # Create directory in $TOOLS for octave packages and libraries and add sym links
     mkdir -p /opt/octavepkg && \
     ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
@@ -235,10 +250,10 @@ RUN ln -fs /usr/local/bin/octave-4.2.1 /usr/bin/octave && \
     ln -fs /usr/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
     ln -fs /usr/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel && \
 # Set Octave links
-    cd /opt/Octave/4.2.1/bin && \
-    ln -fs octave-config-4.2.1 octave-config && \
-    ln -fs octave-cli-4.2.1 octave-cli && \
-    ln -fs mkoctfile-4.2.1 mkoctfile
+    cd /opt/Octave/4.4.1/bin && \
+    ln -fs octave-config-4.4.1 octave-config && \
+    ln -fs octave-cli-4.4.1 octave-cli && \
+    ln -fs mkoctfile-4.4.1 mkoctfile
 
 CMD ["bash"]
 
