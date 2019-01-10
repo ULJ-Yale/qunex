@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense ProbtrackxGPUDense AWSHCPSync QCnifti QCPreproc runTurnkey commandExecute showVersion"
+MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense ProbtrackxGPUDense AWSHCPSync QCnifti QCPreproc runTurnkey commandExecute showVersion environment"
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -237,6 +237,102 @@ echo "To obtain a full listing of all MNAP-supported Matlab tools run: "
 echo "   'mnap matlabHelp' "
 echo ""
 }
+
+
+# ------------------------------------------------------------------------------
+#  Print out environment
+# ------------------------------------------------------------------------------
+
+environment() {
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo " MNAP Environment"
+    echo ""
+    echo " Environment variables"
+    echo ""
+    echo "                  MNAPVer = $MNAPVer"    
+    echo "                    TOOLS = $TOOLS"
+    echo "                 MNAPREPO = $MNAPREPO"
+    echo "                 MNAPPATH = $MNAPPATH"
+    echo "           TemplateFolder = $TemplateFolder"
+    echo ""
+    echo "               FSL_FIXDIR = $FSL_FIXDIR"
+    echo "            POSTFIXICADIR = $POSTFIXICADIR"
+    echo "          FREESURFER_HOME = $FREESURFER_HOME"
+    echo "               FSDIR53HCP = $FSDIR53HCP"
+    echo "              FSDIRLATEST = $FSDIRLATEST"
+    echo "     FREESURFER_SCHEDULER = $FREESURFER_SCHEDULER"
+    echo "             WORKBENCHDIR = $WORKBENCHDIR"
+    echo "                 AFNIPATH = $AFNIPATH"
+    echo "                   DCMNII = $DCMNII"
+    echo "                  DICMNII = $DICMNII"
+    echo "                OCTAVEDIR = $OCTAVEDIR"
+    echo "             OCTAVEPKGDIR = $OCTAVEPKGDIR"
+    echo "               OCTAVEPATH = $OCTAVEPATH"
+    echo "                   FSLDIR = $FSLDIR"
+    echo "                FSLGPUDIR = $FSLGPUDIR"
+    echo "                 PALMPATH = $PALMPATH"
+    echo "            GRADUNWARPDIR = $GRADUNWARPDIR"
+    echo "               NIBABELDIR = $NIBABELDIR"
+    echo "               PYDICOMDIR = $PYDICOMDIR"
+    echo "             MNAPMCOMMAND = $MNAPMCOMMAND"
+    echo "                     PATH = $PATH"
+    echo "               PYTHONPATH = $PYTHONPATH"
+    echo "               MATLABPATH = $MATLABPATH"
+    echo ""
+    echo "               HCPPIPEDIR = $HCPPIPEDIR"
+    echo "                CARET7DIR = $CARET7DIR"
+    echo "            GRADUNWARPDIR = $GRADUNWARPDIR"
+    echo "     HCPPIPEDIR_Templates = $HCPPIPEDIR_Templates"
+    echo "           HCPPIPEDIR_Bin = $HCPPIPEDIR_Bin"
+    echo "        HCPPIPEDIR_Config = $HCPPIPEDIR_Config"
+    echo "         HCPPIPEDIR_PreFS = $HCPPIPEDIR_PreFS"
+    echo "            HCPPIPEDIR_FS = $HCPPIPEDIR_FS"
+    echo "        HCPPIPEDIR_PostFS = $HCPPIPEDIR_PostFS"
+    echo "      HCPPIPEDIR_fMRISurf = $HCPPIPEDIR_fMRISurf"
+    echo "       HCPPIPEDIR_fMRIVol = $HCPPIPEDIR_fMRIVol"
+    echo "         HCPPIPEDIR_tfMRI = $HCPPIPEDIR_tfMRI"
+    echo "          HCPPIPEDIR_dMRI = $HCPPIPEDIR_dMRI"
+    echo "     HCPPIPEDIR_dMRITract = $HCPPIPEDIR_dMRITract"
+    echo "        HCPPIPEDIR_Global = $HCPPIPEDIR_Global"
+    echo " HCPPIPEDIR_tfMRIAnalysis = $HCPPIPEDIR_tfMRIAnalysis"
+    echo "                   MSMBin = $MSMBin"
+    echo "  HCPPIPEDIR_dMRITracFull = $HCPPIPEDIR_dMRITracFull"
+    echo "    HCPPIPEDIR_dMRILegacy = $HCPPIPEDIR_dMRILegacy"
+    echo "            AutoPtxFolder = $AutoPtxFolder"
+    echo "             FSLGPUBinary = $FSLGPUBinary"
+    echo "              EDDYCUDADIR = $EDDYCUDADIR"
+    echo ""
+    echo " Binary locations"
+    echo ""
+    echo "        FSL : $(which fsl)"   
+    echo " FreeSurfer : $(which freesurfer)"   
+    echo "       afni : $(which afni)"   
+    echo "   dcm2niix : $(which dcm2niix)"   
+    echo "        fix : $(which fix)"   
+    echo "     octave : $(which octave)"   
+    echo " wb_command : $(which wb_command)"   
+    echo ""   
+    echo "Software versions"   
+    echo ""   
+    echo "        FSL : $(cat $FSLDIR/etc/fslversion)"   
+    echo " FreeSurfer :$(freesurfer | tail -n 2)"   
+    echo "       afni : $(afni --version)"   
+    echo "   dcm2niix : $(dcm2niix -v | head -1)"   
+    echo "        fix : $(fix -v | grep FMRIB)"   
+    if [ -f ~/.mnapuseoctave ]; then
+        echo "     octave : $(octave -q --eval "v=version;fprintf('%s', v);")"  
+    else
+        echo "     matlab : $(matlab -nodisplay -nosplash -r "v=version;fprintf('%s', v);" | tail -1)"  
+    fi
+    echo "       PALM : $(cat $PALMPATH/palm_version.txt)"
+    echo " wb_command : $(wb_command | head -1)"
+    echo ""   
+    echo "--------------------------------------------------------------"
+    echo ""
+}
+
+
 
 # ========================================================================================
 # ===================== SPECIFIC FUNCTIONS START HERE ====================================
@@ -1928,6 +2024,10 @@ if [ -z "$2" ]; then
     # -- Check if input part of function list
     isMNAPFunction $UsageInput
     showVersion
+    if [ "$UsageInput" == "environment" ]; then
+        environment
+        exit 0
+    fi
     show_usage_"$UsageInput"
     exit 0
 fi
@@ -3529,3 +3629,6 @@ if [ "$FunctionToRun" == "AWSHCPSync" ]; then
     # -- Loop through all the cases
     for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
+
+
+
