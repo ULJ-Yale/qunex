@@ -824,7 +824,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                 't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
                 't2'                : t2w,
-                'lttemplate'        : d['FS_long_subject_template'],
+                'lttemplate'        : hcp['FS_long_subject_template'],
                 'longitudinal'      : fslongitudinal}
 
         if run:
@@ -1398,15 +1398,18 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
         if run:
             if fslongitudinal:
-                tfolder = d['hcp_long_nonlin']
+                tfolder = hcp['hcp_long_nonlin']
+            	if hcp['T2w'] == 'NONE':
+               	    tfile = os.path.join(tfolder, 'ribbon.nii.gz')
+            	else:
+                    #tfile = os.path.join(tfolder, sinfo['id'] + '.long.' + hcp['FS_long_subject_template'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+                    tfile = os.path.join(tfolder, sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
             else:
-                tfolder = d['hcp_nonlin']
-
-            if hcp['T2w'] == 'NONE':
-                tfile = os.path.join(tfolder, 'ribbon.nii.gz')
-            else:
-                tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')       
-
+                tfolder = hcp['hcp_nonlin']
+            	if hcp['T2w'] == 'NONE':
+               	    tfile = os.path.join(tfolder, 'ribbon.nii.gz')
+            	else:
+                    tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
@@ -1922,10 +1925,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         if options['hcp_fs_longitudinal']:
             tfolder = hcp['hcp_long_nonlin']
+            tfile = os.path.join('fsaverage_LR32k', sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
         else:
             tfolder = hcp['hcp_nonlin']
+            tfile = os.path.join('fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
 
-        if os.path.exists(os.path.join(tfolder, 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')):
+        if os.path.exists(os.path.join(tfolder, tfile)):
             r += "\n---> PostFS results present."
         else:
             r += "\n---> ERROR: Could not find PostFS processing results."
@@ -2303,10 +2308,10 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
         if run and boldok:
             if options['hcp_fs_longitudinal']:
                 tfolder = hcp['hcp_long_nonlin']
+                tfile = os.path.join(tfolder, 'Results', "%s%d_%s" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']), "%s%d_%s.nii.gz" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']))
             else:
                 tfolder = hcp['hcp_nonlin']
-
-            tfile = os.path.join(tfolder, 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
+                tfile = os.path.join(tfolder, 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
@@ -2539,10 +2544,12 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         if options['hcp_fs_longitudinal']:
             tfolder = hcp['hcp_long_nonlin']
+            tfile = os.path.join('fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + '.32k_fs_LR.wb.spec')
         else:
             tfolder = hcp['hcp_nonlin']
+            tfile = os.path.join('fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
 
-        if os.path.exists(os.path.join(tfolder, 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')):
+        if os.path.exists(os.path.join(tfolder, tfile)):
             r += "\n---> PostFS results present."
         else:
             r += "\n---> ERROR: Could not find PostFS processing results."
@@ -2652,10 +2659,10 @@ def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         if run and boldok:
             if options['hcp_fs_longitudinal']:
                 tfolder = hcp['hcp_long_nonlin']
+                tfile = os.path.join(tfolder, 'Results', "%s%d_%s" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']), "%s%d_%s_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']))
             else:
                 tfolder = hcp['hcp_nonlin']
-                
-            tfile = os.path.join(tfolder, 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
+                tfile = os.path.join(tfolder, 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
