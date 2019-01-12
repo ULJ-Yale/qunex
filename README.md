@@ -386,6 +386,7 @@ Change Log
 * 0.28.00 [niutilities] Added within command BOLD processing parallelization and alternative handling of .conc file for preprocessConc
 * 0.28.01 [connector] Fixed bug in QCPreprocessing and added --cnr_maps flag to DWIPreprocPipelineLegacy.sh
 * 0.28.02 [mnaptools] Added FSL 6.0.0 install to Docker container
+* 0.28.03 [niutilities] Added conc_use parameter and functionality to specify absolute vs. relative use of file paths and file names in conc files
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
