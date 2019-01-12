@@ -659,6 +659,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Adapted removal of preexisting data for longitudinal run
     2018-12-14 Grega Repovš
              - Cleaned up, updated documentation
+    2019-01-12 Grega Repovš
+             - Cleaned up furher, added updates by Lisa Ji
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1284,6 +1286,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Added new options and updated documentation.
     2018-12-13 Grega Repovš
              - Updated test files and documentation
+    2019-01-12 Grega Repovš
+             - Cleaned up, added updates by Lisa Ji
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1360,7 +1364,6 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... longitudinal template present"
                     fslongitudinal = "run"
 
-
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
@@ -1399,17 +1402,14 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
         if run:
             if fslongitudinal:
                 tfolder = hcp['hcp_long_nonlin']
-            	if hcp['T2w'] == 'NONE':
-               	    tfile = os.path.join(tfolder, 'ribbon.nii.gz')
-            	else:
-                    #tfile = os.path.join(tfolder, sinfo['id'] + '.long.' + hcp['FS_long_subject_template'] + '.corrThickness.164k_fs_LR.dscalar.nii')
-                    tfile = os.path.join(tfolder, sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+                tfile = os.path.join(tfolder, sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
             else:
                 tfolder = hcp['hcp_nonlin']
-            	if hcp['T2w'] == 'NONE':
-               	    tfile = os.path.join(tfolder, 'ribbon.nii.gz')
-            	else:
-                    tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+                tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')
+
+            if hcp['T2w'] == 'NONE':
+                tfile = os.path.join(tfolder, 'ribbon.nii.gz')
+
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
@@ -1852,8 +1852,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             - Parallel implementation.
     2018-11-20 Jure Demsar
             - Optimized parallelization that now covers all scenarios.
-    2018-12-14
+    2018-12-14 Grega Repovš
             - Added FS longitudinal option and documentation
+    2019-01-12 Grega Repovš
+             - Cleaned up, added updates by Lisa Ji
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1924,13 +1926,11 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         # -> PostFS results
 
         if options['hcp_fs_longitudinal']:
-            tfolder = hcp['hcp_long_nonlin']
-            tfile = os.path.join('fsaverage_LR32k', sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
+            tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
         else:
-            tfolder = hcp['hcp_nonlin']
-            tfile = os.path.join('fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
+            tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
 
-        if os.path.exists(os.path.join(tfolder, tfile)):
+        if os.path.exists(tfile):
             r += "\n---> PostFS results present."
         else:
             r += "\n---> ERROR: Could not find PostFS processing results."
@@ -2100,15 +2100,15 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 r += '\n     ... using %s as movement correction reference' % (fmriref)
 
             # store required data
-            b = {'bold': bold,
-                'run': run,
-                'boldok': boldok,
-                'boldimg': boldimg,
-                'refimg': refimg,
+            b = {'bold':     bold,
+                'run':       run,
+                'boldok':    boldok,
+                'boldimg':   boldimg,
+                'refimg':    refimg,
                 'unwarpdir': unwarpdir,
-                'spinOne': spinOne,
-                'spinTwo': spinTwo,
-                'fmriref': fmriref}
+                'spinOne':   spinOne,
+                'spinTwo':  spinTwo,
+                'fmriref':  fmriref}
             boldsData.append(b)
 
         # --- Process
@@ -2132,6 +2132,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 report['failed'] += tempReport['failed']
                 report['ready'] += tempReport['ready']
                 report['not ready'] += tempReport['not ready']
+
         else: # parallel execution
             # if moveref equals first and seimage equals independent (complex scenario)
             if (options['hcp_bold_movref'] == 'first') and (options['hcp_bold_seimg'] == 'independent'):
@@ -2148,6 +2149,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
                 # execute remaining pool
                 r, report = executeMultipleHcpfMRIVolume(sinfo, options, overwrite, hcp, boldsPool, r, report)                      
+            
             else:
                 # if moveref equals first then process first one in serial
                 if options['hcp_bold_movref'] == 'first':
@@ -2165,6 +2167,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         for k in ['done', 'failed', 'ready', 'not ready', 'skipped']:
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
+        
         report = (sinfo['id'], "HCP fMRI Volume: bolds " + "; ".join(rep), len(report['failed']) + len(report['not ready']))
 
     except (ExternalFailed, NoSourceFolder), errormessage:
@@ -2187,10 +2190,10 @@ def executeSingleHcpfMRIVolume(sinfo, options, overwrite, hcp, b, r, report):
     r += result['r']
 
     # merge report
-    tempReport = result['report']
-    report['done'] += tempReport['done']
-    report['failed'] += tempReport['failed']
-    report['ready'] += tempReport['ready']
+    tempReport           = result['report']
+    report['done']      += tempReport['done']
+    report['failed']    += tempReport['failed']
+    report['ready']     += tempReport['ready']
     report['not ready'] += tempReport['not ready']
 
     return r, report
@@ -2206,25 +2209,25 @@ def executeMultipleHcpfMRIVolume(sinfo, options, overwrite, hcp, boldsData, r, r
     # merge r and report
     for result in results:
         r += result['r']
-        tempReport = result['report']
-        report['done'] += tempReport['done']
-        report['failed'] += tempReport['failed']
-        report['ready'] += tempReport['ready']
+        tempReport           = result['report']
+        report['done']      += tempReport['done']
+        report['failed']    += tempReport['failed']
+        report['ready']     += tempReport['ready']
         report['not ready'] += tempReport['not ready']
 
     return r, report
 
 def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
     # extract data
-    bold = b['bold']
-    run = b['run']
-    boldok = b['boldok']
-    boldimg = b['boldimg']
-    refimg = b['refimg']
+    bold      = b['bold']
+    run       = b['run']
+    boldok    = b['boldok']
+    boldimg   = b['boldimg']
+    refimg    = b['refimg']
     unwarpdir = b['unwarpdir']
-    spinOne = b['spinOne']
-    spinTwo = b['spinTwo']
-    fmriref = b['fmriref']
+    spinOne   = b['spinOne']
+    spinTwo   = b['spinTwo']
+    fmriref   = b['fmriref']
 
     # prepare return variables
     r = ""
@@ -2307,11 +2310,9 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         if run and boldok:
             if options['hcp_fs_longitudinal']:
-                tfolder = hcp['hcp_long_nonlin']
-                tfile = os.path.join(tfolder, 'Results', "%s%d_%s" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']), "%s%d_%s.nii.gz" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']))
+                tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s%d_%s" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']), "%s%d_%s.nii.gz" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']))
             else:
-                tfolder = hcp['hcp_nonlin']
-                tfile = os.path.join(tfolder, 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
+                tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d.nii.gz" % (options['hcp_bold_prefix'], bold))
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
@@ -2471,6 +2472,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
             - Parallel implementation.
     2018-12-14 Grega Repovš
             - FS Longitudinal implementation and documentation
+    2019-01-12 Grega Repovš
+             - Cleaned furher, added updates by Lisa Ji
 
     '''
 
@@ -2543,13 +2546,11 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         # -> PostFS results
 
         if options['hcp_fs_longitudinal']:
-            tfolder = hcp['hcp_long_nonlin']
-            tfile = os.path.join('fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + '.32k_fs_LR.wb.spec')
+            tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.long.' + options['hcp_fs_longitudinal'] + '.32k_fs_LR.wb.spec')
         else:
-            tfolder = hcp['hcp_nonlin']
-            tfile = os.path.join('fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
+            tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
 
-        if os.path.exists(os.path.join(tfolder, tfile)):
+        if os.path.exists(tfile):
             r += "\n---> PostFS results present."
         else:
             r += "\n---> ERROR: Could not find PostFS processing results."
@@ -2576,11 +2577,12 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                 r += result['r']
 
                 # merge report
-                tempReport = result['report']
-                report['done'] += tempReport['done']
-                report['failed'] += tempReport['failed']
-                report['ready'] += tempReport['ready']
+                tempReport           = result['report']
+                report['done']      += tempReport['done']
+                report['failed']    += tempReport['failed']
+                report['ready']     += tempReport['ready']
                 report['not ready'] += tempReport['not ready']      
+
         else: # parallel execution
             # create a multiprocessing Pool
             processPoolExecutor = ProcessPoolExecutor(threads)
@@ -2590,17 +2592,18 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
             # merge r and report
             for result in results:
-                r += result['r']
-                tempReport = result['report']
-                report['done'] += tempReport['done']
-                report['failed'] += tempReport['failed']
-                report['ready'] += tempReport['ready']
+                r                   += result['r']
+                tempReport           = result['report']
+                report['done']      += tempReport['done']
+                report['failed']    += tempReport['failed']
+                report['ready']     += tempReport['ready']
                 report['not ready'] += tempReport['not ready']
             
         rep = []
         for k in ['done', 'failed', 'ready', 'not ready', 'skipped']:
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
+
         report = (sinfo['id'], "HCP fMRI Surface: bolds " + "; ".join(rep), len(report['failed']) + len(report['not ready']))
 
     except (ExternalFailed, NoSourceFolder), errormessage:
@@ -2658,11 +2661,10 @@ def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
 
         if run and boldok:
             if options['hcp_fs_longitudinal']:
-                tfolder = hcp['hcp_long_nonlin']
-                tfile = os.path.join(tfolder, 'Results', "%s%d_%s" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']), "%s%d_%s_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']))
+                tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s%d_%s" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']), "%s%d_%s_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']))
             else:
-                tfolder = hcp['hcp_nonlin']
-                tfile = os.path.join(tfolder, 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
+                tfile = os.path.join(hcp['hcp_nonlin'], 'Results', "%s%d" % (options['hcp_bold_prefix'], bold), "%s%d_Atlas.dtseries.nii" % (options['hcp_bold_prefix'], bold))
+
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
