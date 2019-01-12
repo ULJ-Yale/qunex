@@ -267,14 +267,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r += "\n\nBold mask creation completed on %s\n---------------------------------------------------------" % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     rstatus = "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d" % (report)
 
-<<<<<<< HEAD
-            f = getFileNames(sinfo, options)
-            if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
-                options['image_target'] = 'nifti'
-            f.update(getBOLDFileNames(sinfo, boldname, options))
-=======
     return (r, (sinfo['id'], rstatus, report['boldmissing'] + report['boldfail']))
->>>>>>> master
 
 def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
     # extract data
@@ -291,7 +284,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         # --- filenames
 
         f = getFileNames(sinfo, options)
-        if options['image_target'] == 'cifti':
+        if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
 
@@ -1814,11 +1807,13 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
     try:
 
         # --- define the tail
+        
         options['bold_tail'] = ""
-        if options['image_target'] in ['cifti', 'dtseries', 'ptseries']
+        if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['bold_tail'] = options['hcp_cifti_tail']
 
         # --- filenames and folders
+
         f = getFileNames(sinfo, options)
         f.update(getBOLDFileNames(sinfo, boldname, options))
         d = getSubjectFolders(sinfo, options)
@@ -2446,7 +2441,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
                     # --- define the tail
                     options['bold_tail'] = ""
-                    if options['image_target'] in ['cifti', 'dtseries', 'ptseries']
+                    if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
                         options['bold_tail'] = options['hcp_cifti_tail']
 
                     # if absolute path flag use subject folder from conc file
