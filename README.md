@@ -387,6 +387,7 @@ Change Log
 * 0.28.01 [connector] Fixed bug in QCPreprocessing and added --cnr_maps flag to DWIPreprocPipelineLegacy.sh
 * 0.28.02 [mnaptools] Added FSL 6.0.0 install to Docker container
 * 0.28.03 [niutilities] Added conc_use parameter and functionality to specify absolute vs. relative use of file paths and file names in conc files
+* 0.28.04 [connector, library] Updated environment settings and reporting, isolated container environment from user environment
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
