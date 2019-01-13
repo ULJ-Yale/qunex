@@ -388,6 +388,7 @@ Change Log
 * 0.28.02 [mnaptools] Added FSL 6.0.0 install to Docker container
 * 0.28.03 [niutilities] Added conc_use parameter and functionality to specify absolute vs. relative use of file paths and file names in conc files
 * 0.28.04 [connector, library] Updated environment settings and reporting, isolated container environment from user environment
+* 0.29.00 [connector, library] Major update to environment variables, environment checking and addition of mnap environment function
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu

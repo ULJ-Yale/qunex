@@ -13,24 +13,60 @@
 
 ## -- Dependency paths -- https://bitbucket.org/hidradev/mnaptools/wiki/Overview/Installation.md
 #
-## -----------------------------------------------------------------------------
+# The MNAP Suite assumes a set default folder names for dependencies if undefined by user environment.
+# These are defined relative to the ${TOOLS} folder which should be set as a global system variable.
 #
-#  $TOOLS                           # -- the base folder for the installation
-#  ├── afni                         # Env. Variable = $AFNIDIR            # -- AFNI: Analysis of Functional NeuroImages (https://github.com/afni/afni)
-#  ├── dcm2niix                     # Env. Variable = $DCM2NIIDIR         # -- dcm2niix (https://github.com/rordenlab/dcm2niix)
-#  ├── fix                          # Env. Variable = $FIXICAFolder       # -- FIX ICA (https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIX/UserGuide)
-#  ├── freesurfer-5.3-HCP           # Env. Variable = $FSDIR53HCP         # -- FreeSurfer (v5.3-HCP version for HCP-compatible data; http://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/)
-#  ├── freesurfer-<LATEST_VERSION>  # Env. Variable = $FSDIRLATEST        # -- FreeSurfer (v6.0 or later stable for all other data; https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall)
-#  ├── fsl-<VERSION>                # Env. Variable = $FSLFolder          # -- FSL (v5.0.9 or above with GPU-enabled DWI tools; https://fsl.fmrib.ox.ac.uk/fsl/fslwiki)
-#  ├── mnaptools                    # Env. Variable = $MNAPREPO           # -- All MNAP Suite repositories (https://bitbucket.org/hidradev/mnaptools)
-#  ├── octave                       # Env. Variable = $OCTAVEDIR          # -- Octave v.4.2.1 or higher. If Octave is installed system-wide then a symlink is created here
-#  ├── octavepkg                    # Env. Variable = $OCTAVEPKGDIR       # -- If Octave packages need manual deployment then the installed packages go here
-#  ├── PALM/palm-<VERSION>          # Env. Variable = $PALMDIR            # -- PALM: Permutation Analysis of Linear Models (https://github.com/andersonwinkler/PALM)
-#  ├── pylib                        # Env. Variable = $PYLIBDIR           # -- All python libraries and tools
-#  │   ├── gradunwarp               # Env. Variable = $GRADUNWARPDIR      # -- HCP version of gradunwarp (https://github.com/Washington-University/gradunwarp)         
-#  │   ├── nibabel                  # Env. Variable = $NIBABELDIR         # -- NiBabel (http://nipy.org/nibabel/)
-#  │   └── pydicom                  # Env. Variable = $PYDICOMDIR         # -- pydicom (v1.1.0 or later; https://pydicom.github.io) 
-#  └── workbench                    # Env. Variable = $HCPWBDIR           # -- Connectome Workbench (v1.0 or above; https://www.humanconnectome.org/software/connectome-workbench)
+# TOOLS                              --> The base folder for the dependency installation 
+# │ 
+# ├── mnaptools                       --> Env. Variable => MNAPREPO -- All MNAP Suite repositories (https://bitbucket.org/hidradev/mnaptools) 
+# │ 
+# ├── HCPpipelines                    --> Human Connectome Pipelines Folder (https://github.com/Washington-University/HCPpipelines) 
+# │   ├── HCPpipelines-stable         --> Env. Variable => HCPPIPEDIR  Note: Only Human Connectome Pipelines Stable Branch is set by default 
+# │   ├── HCPpipelines-<VERSION>      --> Point any other desired version point to HCPPIPEDIR 
+# │   └── HCPpipelinesRunUtils        --> Env. Variable => HCPPIPERUNUTILS 
+# │ 
+# ├── fmriprep                        --> fMRIPrep Pipelines (https://github.com/poldracklab/fmriprep) 
+# │   └── fmriprep-<VERSION>          --> Env. Variable => FMRIPREP 
+# │ 
+# ├── afni                            --> AFNI: Analysis of Functional NeuroImages (https://github.com/afni/afni) 
+# │   └── afni-<VERSION>              --> Env. Variable => AFNIDIR 
+# │ 
+# ├── dcm2niix                        --> dcm2niix conversion tool (https://github.com/rordenlab/dcm2niix) 
+# │   └── dcm2niix-<VERSION>          --> Env. Variable => DCMNII 
+# │ 
+# ├── dicm2nii                        --> dicm2nii conversion tool (https://github.com/xiangruili/dicm2nii) 
+# │   └── dicm2nii-latest             --> Env. Variable => DICMNII 
+# │ 
+# ├── freesurfer                      --> FreeSurfer (http://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/) 
+# │   └── freesurfer-5.3-HCP          --> Env. Variable => FSDIR53HCP (v5.3-HCP version for HCP-compatible data) 
+# │   └── freesurfer-<VERSION>        --> Env. Variable => FSDIRLATEST (v6.0 or later stable for all other data 
+# │   └── FreeSurferScheduler         --> Env. Variable => FreeSurferSchedulerDIR 
+# │ 
+# ├── fsl                             --> FSL (v5.0.9 or above with GPU-enabled DWI tools; https://fsl.fmrib.ox.ac.uk/fsl/fslwiki) 
+# │   └── fsl-<VERSION>               --> Env. Variable => FSLDIR 
+# │   └── fix-<VERSION>               --> Env. Variable => FSL_FIXDIR -- ICA FIX (https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIX/UserGuide) 
+# │ 
+# ├── Octave/Octave-<VERSION>         --> Octave v.4.4.1 or higher. If Octave is installed system-wide then a symlink is created here 
+# │   └── Octave-<VERSION>            --> Env. Variable => OCTAVEDIR 
+# │ 
+# ├── octavepkg                       --> Env. Variable => OCTAVEPKGDIR -- If Octave packages need manual deployment then the installed packages go here 
+# │ 
+# ├── PALM/palm-<VERSION>             --> PALM: Permutation Analysis of Linear Models (https://github.com/andersonwinkler/PALM) 
+# │   └── palm-latest-o               --> Env. Variable => PALMDIR (If using Octave) 
+# │   └── palm-latest-m               --> Env. Variable => PALMDIR (If using Matlab) 
+# │   └── palm-<VERSION>              --> Set any other version to PALMDIR  
+# │ 
+# ├── pylib                           --> Env. Variable => PYLIBDIR      -- All MNAP python libraries and tools 
+# │   ├── gradunwarp                  --> Env. Variable => GRADUNWARPDIR -- HCP version of gradunwarp (https://github.com/Washington-University/gradunwarp) 
+# │   ├── nibabel                     --> Env. Variable => NIBABELDIR    -- NiBabel (http://nipy.org/nibabel/) 
+# │   └── pydicom                     --> Env. Variable => PYDICOMDIR    -- pydicom (v1.1.0 or later; https://pydicom.github.io) 
+# │ 
+# └── workbench/workbench-<VERSION>   Connectome Workbench (v1.0 or above; https://www.humanconnectome.org/software/connectome-workbench) 
+#     └── workbench-<VERSION>         Env. Variable = HCPWBDIR 
+#
+# These defaults can be redefined if the above paths are declared as global variables in the .bash_profile profile after loading the MNAP environment.
+#
+# ==> For full environment report run 'mnap environment'
 #
 ## -----------------------------------------------------------------------------
 
@@ -82,8 +118,8 @@ RUN yum clean all && \
 # Install Octave 4.2.1
 RUN echo "Installing Ocatve 4.4.1..." && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
-    mkdir -p /opt/Octave/4.4.1/bin && \
-    cd /opt/Octave/4.4.1/bin && \
+    mkdir -p /opt/Octave/Octave-4.4.1/bin && \
+    cd /opt/Octave/Octave-4.4.1/bin && \
     git clone https://github.com/ztamayo/octave-enable64.git && \
     cd octave-enable64 && \
     scl enable devtoolset-3 -- make -j$(nproc) && \
@@ -120,42 +156,42 @@ RUN echo "Downloading dcm2niix..." && \
     tar -xzvf /tmp/dcm2niix.tar.gz -C /tmp/ --strip-components 1 && \
     cd /tmp && \
     cmake -DUSE_OPENJPEG=ON . && \
-    mkdir -p /opt/dcm2niix && \
+    mkdir -p /opt/dcm2niix/dcm2niix-latest && \
     make -j$(nproc) && \
-    mv bin/ /opt/dcm2niix && \
+    mv bin/ /opt/dcm2niix/dcm2niix-latest && \
     cd / && \
     rm -rf /tmp/* && \
 # Install FSL 5.0.9
     echo "Downloading FSL 5.0.9..." && \
-    mkdir -p /opt/fsl-5.0.9 && \
+    mkdir -p /opt/fsl/fsl-5.0.9 && \
     wget --progress=bar:force -O /tmp/fsl-5.0.9-centos6_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-5.0.9-centos6_64.tar.gz && \
-    tar -xzvf /tmp/fsl-5.0.9-centos6_64.tar.gz -C /opt/fsl-5.0.9 --strip-components 1 && \
+    tar -xzvf /tmp/fsl-5.0.9-centos6_64.tar.gz -C /opt/fsl/fsl-5.0.9 --strip-components 1 && \
     rm /tmp/fsl-5.0.9-centos6_64.tar.gz && \
-    rm -R /opt/fsl-5.0.9/data/first/ && \
+    rm -R /opt/fsl/fsl-5.0.9/data/first/ && \
 # Install FSL 6.0.0
     echo "Downloading FSL 6.0.0..." && \
-    mkdir -p /opt/fsl-6.0.0 && \
+    mkdir -p /opt/fsl/fsl-6.0.0 && \
     wget --progress=bar:force -O /tmp/fsl-6.0.0-centos7_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/FSLVm7_64.zip && \
-    tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl-6.0.0 --strip-components 1 && \
+    tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl/fsl-6.0.0 --strip-components 1 && \
     rm /tmp/fsl-6.0.0-centos7_64.tar.gz && \
-    rm -R /opt/fsl-6.0.0/data/first/
+    rm -R /opt/fsl/fsl-6.0.0/data/first/
 
 # Install FreeSurfer 6.0
 RUN echo "Downloading FreeSurfer 6.0..." && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    mkdir -p /opt/freesurfer-6.0 && \
+    mkdir -p /opt/freesurfer/freesurfer-6.0 && \
     wget --progress=bar:force -O /tmp/recon-all-freesurfer6-3.min.tgz https://dl.dropbox.com/s/nnzcfttc41qvt31/recon-all-freesurfer6-3.min.tgz && \ 
-    tar -xzvf /tmp/recon-all-freesurfer6-3.min.tgz -C /opt/freesurfer-6.0 --strip-components 1 && \
+    tar -xzvf /tmp/recon-all-freesurfer6-3.min.tgz -C /opt/freesurfer/freesurfer-6.0 --strip-components 1 && \
     rm /tmp/recon-all-freesurfer6-3.min.tgz && \
-    rm -R /opt/freesurfer-6.0/trctrain && \
+    rm -R /opt/freesurfer/freesurfer-6.0/trctrain && \
 # Install FreeSurfer 5.3-HCP
     echo "Downloading FreeSurfer-5.3-HCP..." && \
-    mkdir -p /opt/freesurfer-5.3-HCP/ && \
+    mkdir -p /opt/freesurfer/freesurfer-5.3-HCP/ && \
     wget --progress=bar:force -O /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz ftp://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
-    tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer-5.3-HCP/ --strip-components 1 && \
+    tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer/freesurfer-5.3-HCP/ --strip-components 1 && \
     rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
-    rm -R /opt/freesurfer-5.3-HCP/trctrain
+    rm -R /opt/freesurfer/freesurfer-5.3-HCP/trctrain
 
 # Install PALM
 RUN echo "Installing PALM..." && \
@@ -164,20 +200,20 @@ RUN echo "Installing PALM..." && \
     tar -xzvf /tmp/palm-alpha112.tar.gz -C /opt/PALM && \
     rm /tmp/palm-alpha112.tar.gz && \
     cd /opt/PALM && \
-    mv palm-alpha112/ palm-alpha112o/ && \
-    cd /opt/PALM/palm-alpha112o/fileio/@file_array/private && \
+    mv palm-alpha112/ palm-latest-o/ && \
+    cd /opt/PALM/palm-latest-o/fileio/@file_array/private && \
     ./compile.sh && \
     mv file2mat.m x-file2mat.m && \
     mv init.m x-init.m && \
-    cd /opt/PALM/palm-alpha112o/fileio/@gifti/private && \
+    cd /opt/PALM/palm-latest-o/fileio/@gifti/private && \
     ./compile.sh && \
     mv zstream.m x-zstream.m && \
-    cd /opt/PALM/palm-alpha112o/fileio/@nifti/private && \
+    cd /opt/PALM/palm-latest-o/fileio/@nifti/private && \
     mkoctfile --mex nifti_stats.c nifti_stats_mex.c -O && \
     mv nifti_stats.m x_nifti_stats.m && \
-    cd /opt/PALM/palm-alpha112o/fileio/@xmltree/private && \
-    cp /opt/PALM/palm-alpha112o/fileio/@file_array/private/compile.sh . && \
-    cp /opt/PALM/palm-alpha112o/fileio/@file_array/private/Makefile.var . && \
+    cd /opt/PALM/palm-latest-o/fileio/@xmltree/private && \
+    cp /opt/PALM/palm-latest-o/fileio/@file_array/private/compile.sh . && \
+    cp /opt/PALM/palm-latest-o/fileio/@file_array/private/Makefile.var . && \
     sed -e 's|^include ../../src/Makefile.var|include Makefile.var|' < Makefile > /tmp/Makefile && mv /tmp/Makefile Makefile && \
     ./compile.sh && \
     mv xml_findstr.m x-xml_findstr.m && \
@@ -185,7 +221,19 @@ RUN echo "Installing PALM..." && \
     mkdir -p /opt/pylib && \
     cd /opt/pylib && \
     echo "Downloading Gradunwarp..." && \
-    git clone https://github.com/Washington-University/gradunwarp.git
+    git clone https://github.com/Washington-University/gradunwarp.git && \
+# Install fMRIPrep
+    mkdir -p /opt/fmriprep/fmriprep-latest && \
+    cd /opt/fmriprep/fmriprep-latest && \
+    echo "Downloading fMRIPrep..." && \
+    git clone https://github.com/poldracklab/fmriprep.git /opt/fmriprep/fmriprep-latest && \
+# Install HCP Pipelines and HCPpipelinesRunUtils
+    mkdir -p /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest && \
+    cd /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest  && \
+    echo "Downloading HCP Pipelines freesurfer_v6_latest..." && \
+    git clone --single-branch --branch feature/freesurfer_v6_latest https://github.com/Washington-University/HCPpipelines.git /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest && \
+    cd /opt/HCPpipelines && \
+    git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git 
 
 WORKDIR /opt/pylib/gradunwarp/
 
@@ -255,12 +303,16 @@ RUN ln -fs /usr/local/bin/octave /usr/bin/octave && \
     ln -fs octave-cli-4.4.1 octave-cli && \
     ln -fs mkoctfile-4.4.1 mkoctfile
 
+# Add .container file to the /opt folder
+RUN touch /opt/.container
+
+
 CMD ["bash"]
 
 
 # Install FIX
 #RUN wget --progress=bar:force -O /tmp/fix.tar.gz http://www.fmrib.ox.ac.uk/~steve/ftp/fix.tar.gz && \
-#    tar -xzvf /tmp/fix.tar.gz -C /opt && \
+#    tar -xzvf /tmp/fix.tar.gz -C /opt/fix/fix-latest && \
 #    rm /tmp/fix.tar.gz
 
 # Install AFNI
