@@ -22,6 +22,9 @@ Changelog
 2018-12-12 Jure Demsar
          - Added conc_use parameter for absolute or relative path
            interpretation from conc files.
+2019-01-13 Jure Demsar
+         - Fixed a bug that disabled cores parameter with the
+           introduction of the threads parameter.
 """
 
 import g_core
@@ -36,7 +39,7 @@ import os.path
 from datetime import datetime
 import niutilities.g_exceptions as ge
 
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # =======================================================================
@@ -619,8 +622,6 @@ def run(command, args):
         consoleLog = ""
 
         print "---- Running local"
-        processPoolExecutor = ProcessPoolExecutor(threads)
-        result = []
         c = 0
         if cores == 1 or options['run'] == 'test':
             if command in plactions:
@@ -647,24 +648,24 @@ def run(command, args):
 
         else:
             c = 0
-
+            threadPoolExecutor = ThreadPoolExecutor(cores)
+            futures = []
             if command in plactions:
                 todo = plactions[command]
                 for subject in subjects:
                     if len(subject['id']) > 1:
                         consoleLog += "\nAdding processing of subject %s to the pool at %s" % (subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-
-                        future = processPoolExecutor.submit(todo, subject, options, overwrite, c + 1)
-                        res = future.result()
-                        result.append(res)
-                        writelog(res)
-
-                        consoleLog += res[0]
-
+                        future = threadPoolExecutor.submit(todo, subject, options, overwrite, c + 1)
+                        futures.append(future)
                         c += 1
                         if nprocess and c >= nprocess:
                             break
-                
+
+                for future in as_completed(futures):
+                    result = future.result()
+                    writelog(result)
+                    consoleLog += result[0]
+
             if command in sactions:
                 todo = sactions[command]
                 r, status = procResponse(todo(subjects, options, overwrite))
