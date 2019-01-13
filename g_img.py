@@ -60,7 +60,7 @@ def getImgFormat(filename):
     return 'unknown'
 
 
-def readConc(filename, boldname=None):
+def readConc(filename, boldname=None, check=False):
     if os.path.exists(filename):
         s = readTextFileToLines(filename)
     else:
@@ -76,14 +76,14 @@ def readConc(filename, boldname=None):
     except:
         raise ge.CommandFailed("readConc", "Conc file error", "The conc file is misspecified!", "Conc file: %s" % (filename), "Please check your data!")
 
-    missing = []
-    for boldfile in boldfiles:
-        if not os.path.exists(boldfile):
-            print "===> WARNING: image does not exist! (%s)" % (boldfile)
-            missing.append(boldfile)
-
-    if missing:
-        raise ge.CommandFailed("readConc", "File does not exist", "%d bold files specified in conc file do not exist!" % (len(missing)), "Conc file: %s" % (filename), "Please check your data!", "Missing bold files:", *missing)
+    if check:
+        missing = []
+        for boldfile in boldfiles:
+            if not os.path.exists(boldfile):
+                missing.append(boldfile)
+    
+        if missing:
+            raise ge.CommandFailed("readConc", "File does not exist", "%d bold files specified in conc file do not exist!" % (len(missing)), "Conc file: %s" % (filename), "Please check your data!", "Missing bold files:", *missing)
 
     m = re.compile(".*?([0-9]+).*")
 

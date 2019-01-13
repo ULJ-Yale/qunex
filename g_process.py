@@ -17,8 +17,11 @@ Copyright (c) Grega Repovs. All rights reserved.
 Changelog
 2017-07-10 Grega Repovs
          - Simplified scheduler interface, now uses g_scheduler
-2018-14-11 Jure Demsar
+2018-11-14 Jure Demsar
          - Added threads parameter for bold parallelization
+2018-12-12 Jure Demsar
+         - Added conc_use parameter for absolute or relative path
+           interpretation from conc files.
 """
 
 import g_core
@@ -191,7 +194,6 @@ arglist = [['# ---- Basic settings'],
            ['event_file',         '',                                            str,    "the root name of the fidl event file for task regression"],
            ['event_string',       '' ,                                           str,    "string specifying what and how of task to regress out"],
            ['source_folder',      'True',                                        torf,   "hould we check for source folder (yes/no)"],
-           ['bold_prefix',        '',                                            str,    "what prefix to add at the start of the generated files"],
            ['wbmask',             '',                                            str,    "mask specifying what ROI to exclude from WB mask"],
            ['sbjroi',             '',                                            str,    "a mask used to specify subject specific WB"],
            ['nroi',               '',                                            str,    "additional nuisance regressors ROI and which not to mask by brain mask (e.g. 'nroi.names|eyes,scull')"],
@@ -202,6 +204,7 @@ arglist = [['# ---- Basic settings'],
            ['image_source',       'hcp',                                         str,    "what is the target source file format / structure (4dfp, hcp)"],
            ['image_target',       'nifti',                                       str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        'cifti',                                       str,    "what is the target atlas (711, cifti)"],
+           ['conc_use',           'relative',                                    str,    "how the paths in the .conc file will be used (relative, absolute)"],
 
            ['# ---- GLM related options'],
            ['glm_matrix',          'none',                                        str,    "Whether to save GLM regressor matrix in text (text), image (image) or both (both) formats, or not (none)."],

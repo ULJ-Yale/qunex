@@ -256,9 +256,10 @@ def getBOLDFileNames(sinfo, boldname, options):
     d = getSubjectFolders(sinfo, options)
     f = {}
 
-    root = options['boldname']
-    boldnumber = boldname.replace('bold', '')
-    boldname = root + boldnumber
+    if 'bold_tail' not in options:
+        options['bold_tail'] = ""
+
+    boldnumber = boldname.replace(options['boldname'], '')
     ext = getExtension(options['image_target'])
 
     # print "root", root, "--- options boldname", options['boldname'], '--- boldname', boldname, '--- ext', ext
@@ -294,7 +295,7 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # --- movement files
 
-    movname = boldname.replace('bold', 'mov')
+    movname = boldname.replace(options['boldname'], 'mov')
     if 'path_' + movname in options:
         f['bold_mov_o']        = getExactFile(os.path.join(d['s_source'], options['path_' + movname]))
     else:
@@ -312,15 +313,8 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     # --- bold preprocessed files
 
-    f['bold']                   = os.path.join(d['s_bold'], boldname + ext)
-    f['bold_final']             = f['bold'].replace(ext, options['bold_prefix'] + ext)
-
-    f['bold_dts']               = os.path.join(d['s_bold'], boldname + options['hcp_cifti_tail'] + '.dtseries.nii')
-    f['bold_dts_final']         = os.path.join(d['s_bold'], boldname + options['hcp_cifti_tail'] + options['bold_prefix'] + '.dtseries.nii')
-
-    f['bold_pts']               = os.path.join(d['s_bold'], boldname + options['hcp_cifti_tail'] + '.ptseries.nii')
-    f['bold_pts_final']         = os.path.join(d['s_bold'], boldname + options['hcp_cifti_tail'] + options['bold_prefix'] + '.ptseries.nii')
-
+    f['bold']                   = os.path.join(d['s_bold'], boldname + options['bold_tail'] + ext)
+    f['bold_final']             = os.path.join(d['s_bold'], boldname + options['bold_prefix'] + options['bold_tail'] + ext)
     f['bold_stats']             = os.path.join(d['s_bold_mov'], boldname + '.bstats')
     f['bold_nuisance']          = os.path.join(d['s_bold_mov'], boldname + '.nuisance')
     f['bold_scrub']             = os.path.join(d['s_bold_mov'], boldname + '.scrub')
@@ -328,24 +322,14 @@ def getBOLDFileNames(sinfo, boldname, options):
     for ch in options['bold_actions']:
         if ch == 's':
             f['bold_final'] = f['bold_final'].replace(ext, '_g7' + ext)
-            f['bold_dts_final'] = f['bold_dts_final'].replace('.dtseries.nii', '_g7' + '.dtseries.nii')
-            f['bold_pts_final'] = f['bold_pts_final'].replace('.ptseries.nii', '_g7' + '.ptseries.nii')
         elif ch == 'h':
             f['bold_final'] = f['bold_final'].replace(ext, '_hpss' + ext)
-            f['bold_dts_final'] = f['bold_dts_final'].replace('.dtseries.nii', '_hpss' + '.dtseries.nii')
-            f['bold_pts_final'] = f['bold_pts_final'].replace('.ptseries.nii', '_hpss' + '.ptseries.nii')
         elif ch == 'c':
             f['bold_coef']  = f['bold_final'].replace(ext, '_coeff' + ext)
-            f['bold_dts_coef']  = f['bold_dts_final'].replace('.dtseries.nii', '_coeff' + '.dtseries.nii')
-            f['bold_pts_coef']  = f['bold_pts_final'].replace('.ptseries.nii', '_coeff' + '.ptseries.nii')
         elif ch == 'r':
             f['bold_final'] = f['bold_final'].replace(ext, '_res-' + rgss + options['glm_name'] + ext)
-            f['bold_dts_final'] = f['bold_dts_final'].replace('.dtseries.nii', '_res-' + rgss + options['glm_name'] + '.dtseries.nii')
-            f['bold_pts_final'] = f['bold_pts_final'].replace('.ptseries.nii', '_res-' + rgss + options['glm_name'] + '.ptseries.nii')
         elif ch == 'l':
             f['bold_final'] = f['bold_final'].replace(ext, '_lpss' + ext)
-            f['bold_dts_final'] = f['bold_dts_final'].replace('.dtseries.nii', '_lpss' + '.dtseries.nii')
-            f['bold_pts_final'] = f['bold_pts_final'].replace('.ptseries.nii', '_lpss' + '.ptseries.nii')
 
     return f
 
