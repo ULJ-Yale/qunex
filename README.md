@@ -390,6 +390,7 @@ Change Log
 * 0.28.04 [connector, library] Updated environment settings and reporting, isolated container environment from user environment
 * 0.29.00 [connector, library] Major update to environment variables, environment checking and addition of mnap environment function
 * 0.29.01 [niutilities, library] Added mnapSingularity standalone command, fixed parallelization bug.
+* 0.30.00 [niutilities, hcpmodified] Added support for FSLongitudinal
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
