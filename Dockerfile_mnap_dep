@@ -221,19 +221,13 @@ RUN echo "Installing PALM..." && \
     mkdir -p /opt/pylib && \
     cd /opt/pylib && \
     echo "Downloading Gradunwarp..." && \
-    git clone https://github.com/Washington-University/gradunwarp.git && \
+    git clone https://github.com/Washington-University/gradunwarp.git
+
 # Install fMRIPrep
-    mkdir -p /opt/fmriprep/fmriprep-latest && \
-    cd /opt/fmriprep/fmriprep-latest && \
-    echo "Downloading fMRIPrep..." && \
-    git clone https://github.com/poldracklab/fmriprep.git /opt/fmriprep/fmriprep-latest && \
-# Install HCP Pipelines and HCPpipelinesRunUtils
-    mkdir -p /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest && \
-    cd /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest  && \
-    echo "Downloading HCP Pipelines freesurfer_v6_latest..." && \
-    git clone --single-branch --branch feature/freesurfer_v6_latest https://github.com/Washington-University/HCPpipelines.git /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest && \
-    cd /opt/HCPpipelines && \
-    git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git 
+#    mkdir -p /opt/fmriprep/fmriprep-latest && \
+#    cd /opt/fmriprep/fmriprep-latest && \
+#    echo "Downloading fMRIPrep..." && \
+#    git clone https://github.com/poldracklab/fmriprep.git /opt/fmriprep/fmriprep-latest && \
 
 WORKDIR /opt/pylib/gradunwarp/
 
@@ -272,40 +266,36 @@ RUN wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://d
 
 # Create Octave Sym Links
 # Link octave install to /usr/bin
-RUN ln -fs /usr/local/bin/octave /usr/bin/octave && \
-    ln -fs /usr/local/bin/octave-config-4.4.1 /usr/bin/octave-config && \
-    ln -fs /usr/local/bin/octave-cli-4.4.1 /usr/bin/octave-cli && \
-    ln -fs /usr/local/bin/mkoctfile-4.4.1 /usr/bin/mkoctfile && \
+RUN ln -sf /usr/local/bin/octave /usr/bin/octave && \
+    ln -sf /usr/local/bin/octave-config-4.4.1 /usr/bin/octave-config && \
+    ln -sf /usr/local/bin/octave-cli-4.4.1 /usr/bin/octave-cli && \
+    ln -sf /usr/local/bin/mkoctfile-4.4.1 /usr/bin/mkoctfile && \
 # Link octave install to /opt/Octave/4.2.1/bin
-    ln -fs /usr/local/bin/octave /opt/Octave/4.2.1/bin && \
-    ln -fs /usr/local/bin/octave-config-4.4.1 /opt/Octave/4.2.1/bin && \
-    ln -fs /usr/local/bin/octave-cli-4.4.1 /opt/Octave/4.2.1/bin && \
-    ln -fs /usr/local/bin/mkoctfile-4.4.1 /opt/Octave/4.2.1/bin && \
+    ln -sf /usr/local/bin/octave /opt/Octave/4.2.1/bin && \
+    ln -sf /usr/local/bin/octave-config-4.4.1 /opt/Octave/4.2.1/bin && \
+    ln -sf /usr/local/bin/octave-cli-4.4.1 /opt/Octave/4.2.1/bin && \
+    ln -sf /usr/local/bin/mkoctfile-4.4.1 /opt/Octave/4.2.1/bin && \
 # Create directory in $TOOLS for octave packages and libraries and add sym links
     mkdir -p /opt/octavepkg && \
-    ln -fs /usr/local/share/octave/packages /opt/octavepkg && \
+    ln -sf /usr/local/share/octave/packages /opt/octavepkg && \
     mkdir -p /opt/olib && \
-    ln -fs /bin/epstool /opt/olib && \
+    ln -sf /bin/epstool /opt/olib && \
     ln -sf /bin/fig2dev /opt/olib && \
     ln -sf /bin/pstoedit /opt/olib && \
     ln -sf /usr/bin/hdf5 /opt/olib && \
 # Set up Python Sym Links
-    ln -fs /usr/local/bin/python2.7 /opt/python && \
+    ln -sf /usr/local/bin/python2.7 /opt/python && \
     mkdir -p /opt/pylib/lib/python2.7 && \
     mkdir -p /opt/pylib/lib64/python2.7 && \
-    ln -fs /usr/lib/python2.7/site-packages /opt/pylib/lib/python2.7 && \
-    ln -fs /usr/lib64/python2.7/site-packages /opt/pylib/lib64/python2.7 && \
-    ln -fs /usr/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
-    ln -fs /usr/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel && \
+    ln -sf /usr/lib/python2.7/site-packages /opt/pylib/lib/python2.7 && \
+    ln -sf /usr/lib64/python2.7/site-packages /opt/pylib/lib64/python2.7 && \
+    ln -sf /usr/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
+    ln -sf /usr/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel && \
 # Set Octave links
     cd /opt/Octave/4.4.1/bin && \
-    ln -fs octave-config-4.4.1 octave-config && \
-    ln -fs octave-cli-4.4.1 octave-cli && \
-    ln -fs mkoctfile-4.4.1 mkoctfile
-
-# Add .container file to the /opt folder
-RUN touch /opt/.container
-
+    ln -sf octave-config-4.4.1 octave-config && \
+    ln -sf octave-cli-4.4.1 octave-cli && \
+    ln -sf mkoctfile-4.4.1 mkoctfile
 
 CMD ["bash"]
 
