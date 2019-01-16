@@ -200,8 +200,10 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     2018-06-16 Grega Repovs
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
-    2018-14-11 Jure Demsar
+    2018-11-14 Jure Demsar
             - Parallel implementation.
+    2019-01-12 Grega Repovš
+             - More robust identification of cifti files
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
@@ -282,7 +284,7 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         # --- filenames
 
         f = getFileNames(sinfo, options)
-        if options['image_target'] == 'cifti':
+        if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
 
@@ -521,8 +523,10 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     2018-06-16 Grega Repovs
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
-    2018-16-11 Jure Demsar
-        - Parallel implementation.
+    2018-11-16 Jure Demsar
+             - Parallel implementation.
+    2019-01-12 Grega Repovš
+             - More robust identification of cifti files
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -590,6 +594,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     print r
     return (r, (sinfo['id'], rstatus, report['boldmissing'] + report['boldfail']))
 
+
 def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
     # extract data
     boldnum = boldData[0]
@@ -604,8 +609,9 @@ def executeComputeBOLDStats(sinfo, options, overwrite, boldData):
     try:
 
         # --- filenames
+
         f = getFileNames(sinfo, options)
-        if options['image_target'] == 'cifti':
+        if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
         d = getSubjectFolders(sinfo, options)
@@ -1170,8 +1176,10 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     2018-06-16 Grega Repovs
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
-    2018-16-11 Jure Demsar
-        - Parallel implementation.
+    2018-11-16 Jure Demsar
+            - Parallel implementation.
+    2019-01-12 Grega Repovš
+             - More robust identification of cifti files
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1239,6 +1247,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     print r
     return (r, (sinfo['id'], rstatus, report['boldmissing'] + report['boldfail']))
 
+
 def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
     # extract data
     boldnum = boldData[0]
@@ -1254,7 +1263,7 @@ def executeExtractNuisanceSignal(sinfo, options, overwrite, boldData):
 
         # --- filenames
         f = getFileNames(sinfo, options)
-        if options['image_target'] == 'cifti':
+        if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
             options['image_target'] = 'nifti'
         f.update(getBOLDFileNames(sinfo, boldname, options))
         d = getSubjectFolders(sinfo, options)
@@ -1714,8 +1723,10 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     2018-06-16 Grega Repovs
              - Changed to include boldnumber in log and to use useOrSkipBOLD
                to identify and report, which bolds to run on.
-    2018-16-11 Jure Demsar
+    2018-11-16 Jure Demsar
              - Parallel implementation.
+    2019-01-12 Grega Repovš
+             - Changed how bold_tail is identified
     """
 
     r = "\n---------------------------------------------------------"
@@ -1795,16 +1806,16 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
 
     try:
 
-        # --- filenames
+        # --- define the tail
+        
+        options['bold_tail'] = ""
+        if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
+            options['bold_tail'] = options['hcp_cifti_tail']
+
+        # --- filenames and folders
+
         f = getFileNames(sinfo, options)
         f.update(getBOLDFileNames(sinfo, boldname, options))
-        if options['image_target'] in ['cifti', 'dtseries']:
-            f['bold'] = f['bold_dts']
-            f['bold_final'] = f['bold_dts_final']
-        elif options['image_target'] in ['ptseries']:
-            f['bold'] = f['bold_pts']
-            f['bold_final'] = f['bold_pts_final']
-
         d = getSubjectFolders(sinfo, options)
 
         # --- check for data availability
@@ -1857,7 +1868,7 @@ def executePreprocessBold(sinfo, options, overwrite, boldData):
             boldow = 'false'
 
         scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(hcp_cifti_tail)s|bold_variant=%(bold_variant)s" % (options)
+        opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s" % (options)
 
         mcomm = 'fc_Preprocess(\'%s\', %s, %d, \'%s\', \'%s\', %s, \'%s\', %f, \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\')' % (
             d['s_base'],                        # --- subject folder
@@ -1971,6 +1982,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
                            bold3<bold_prefix>_g7_hpss.nii.gz [].
+    --conc_use         ... Whether to use information in the conc file as 
+                           relative or absolute ['relative'].
+
 
     The two names give the bases for searching for the appropriate .conc and
     .fidl files. Both are first searched for in images/functional/concs and
@@ -1999,6 +2013,29 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     would follow in which nuisance signal and/or task related signal would
     be estimated and regressed out, then the related beta estimates would
     be saved. Lastly the BOLDs would be also low-pass filtered.
+
+    **Relative vs. absolute use of conc files.**  
+    
+    If `conc_use` is set to relative (the default), then the only information 
+    taken from the conc files will be the bold numbers. The actual location of 
+    the bold files will be constructed from the information on the location of 
+    the subject's sesion folder present in the batch file, and the 
+    `hcp_bold_variant` setting, whereas the specific bold file name and file 
+    format (e.g. .nii.gz vs. .dtseries.nii) to use will depend on `boldname`, 
+    `image_target`, and `hcp_cifti_tail` settings. This allows flexible use
+    of conc files. That is the same conc files can be used for NIfTI and CIFTI 
+    versions of bold files, across bold variants and even when the actual 
+    study location changes, e.g. when moving the study from one server to 
+    another. In most cases this use will be prefered.
+
+    If the information in the conc file is to be used literally, e.g. in 
+    cases when you want to work with a specific preprocessed version of the
+    BOLD files, then `conc_use` should be set to `absolute`. In this case
+    both the specific location as well as the specific filename specified in 
+    the conc file will be used exactly as specified. In this case, do check
+    and make sure that the information in the conc file is valid and that
+    it matches with `boldname` and `image_target` parameters!
+
 
     SCRUBBING
     =========
@@ -2304,6 +2341,12 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
              - Added additional documentation.
     2017-08-11 Grega Repovš
              - Added ability to work with ptseries images.
+    2018-12-12 Jure Demsar
+             - preprocessConc function uses the conc_use parameter for
+               absolute or relative path interpretation from conc files. 
+    2019-01-12 Grega Repovš
+             - Changed how bold_tail is identified        
+             - Updated documentation
     """
 
     r = "\n---------------------------------------------------------"
@@ -2393,8 +2436,20 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 for c in conc:
                     # print "c from conc:", c
                     boldnum  = c[1]
-                    boldname = "bold" + boldnum
+                    boldname = options['boldname'] + boldnum
                     bolds.append(boldnum)
+
+                    # --- define the tail
+                    options['bold_tail'] = ""
+                    if options['image_target'] in ['cifti', 'dtseries', 'ptseries']:
+                        options['bold_tail'] = options['hcp_cifti_tail']
+
+                    # if absolute path flag use subject folder from conc file
+                    if (options['conc_use'] == 'absolute'):
+                        # extract subject folder from conc file
+                        options['subjectsfolder'] = (c[0].split(sinfo['id']))[0]
+                        d['s_base'] = options['subjectsfolder'] + sinfo['id']
+                        options['bold_tail'] = (c[0].split(boldname))[1].replace(getExtension(options['image_target']), "")
 
                     r += "\n\nLooking up: " + boldname + " ..."
 
@@ -2402,12 +2457,9 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                     f = getFileNames(sinfo, options)
                     f.update(getBOLDFileNames(sinfo, boldname, options))
 
-                    if options['image_target'] in ['cifti', 'dtseries']:
-                        f['bold'] = f['bold_dts']
-                        f['bold_final'] = f['bold_dts_final']
-                    elif options['image_target'] == 'ptseries':
-                        f['bold'] = f['bold_pts']
-                        f['bold_final'] = f['bold_pts_final']
+                    # if absolute path flag use also exact filename (extension)
+                    if (options['conc_use'] == 'absolute'):
+                        f['bold'] = c[0]
 
                     # --- check for data availability
 
@@ -2475,7 +2527,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 done = f['conc_final'] + ".ok"
 
                 scrub = "radius:%(mov_radius)d|fdt:%(mov_fd).2f|dvarsmt:%(mov_dvars).2f|dvarsmet:%(mov_dvarsme).2f|after:%(mov_after)d|before:%(mov_before)d|reject:%(mov_bad)s" % (options)
-                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(hcp_cifti_tail)s|bold_variant=%(bold_variant)s" % (options)
+                opts  = "boldname=%(boldname)s|surface_smooth=%(surface_smooth)f|volume_smooth=%(volume_smooth)f|voxel_smooth=%(voxel_smooth)f|hipass_filter=%(hipass_filter)f|lopass_filter=%(lopass_filter)f|omp_threads=%(omp_threads)d|framework_path=%(framework_path)s|wb_command_path=%(wb_command_path)s|smooth_mask=%(smooth_mask)s|dilate_mask=%(dilate_mask)s|glm_matrix=%(glm_matrix)s|glm_residuals=%(glm_residuals)s|glm_name=%(glm_name)s|bold_tail=%(bold_tail)s|bold_variant=%(bold_variant)s" % (options)
 
                 mcomm = 'fc_PreprocessConc(\'%s\', [%s], \'%s\', %.3f,  %d, \'%s\', [], \'%s.fidl\', \'%s\', \'%s\', %s, \'%s\', \'%s\', \'%s\', \'%s\', \'%s\')' % (
                     d['s_base'],                        # --- subject folder

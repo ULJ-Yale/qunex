@@ -17,8 +17,14 @@ Copyright (c) Grega Repovs. All rights reserved.
 Changelog
 2017-07-10 Grega Repovs
          - Simplified scheduler interface, now uses g_scheduler
-2018-14-11 Jure Demsar
+2018-11-14 Jure Demsar
          - Added threads parameter for bold parallelization
+2018-12-12 Jure Demsar
+         - Added conc_use parameter for absolute or relative path
+           interpretation from conc files.
+2019-01-13 Jure Demsar
+         - Fixed a bug that disabled cores parameter with the
+           introduction of the threads parameter.
 """
 
 import g_core
@@ -33,7 +39,7 @@ import os.path
 from datetime import datetime
 import niutilities.g_exceptions as ge
 
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # =======================================================================
@@ -191,7 +197,6 @@ arglist = [['# ---- Basic settings'],
            ['event_file',         '',                                            str,    "the root name of the fidl event file for task regression"],
            ['event_string',       '' ,                                           str,    "string specifying what and how of task to regress out"],
            ['source_folder',      'True',                                        torf,   "hould we check for source folder (yes/no)"],
-           ['bold_prefix',        '',                                            str,    "what prefix to add at the start of the generated files"],
            ['wbmask',             '',                                            str,    "mask specifying what ROI to exclude from WB mask"],
            ['sbjroi',             '',                                            str,    "a mask used to specify subject specific WB"],
            ['nroi',               '',                                            str,    "additional nuisance regressors ROI and which not to mask by brain mask (e.g. 'nroi.names|eyes,scull')"],
@@ -202,6 +207,7 @@ arglist = [['# ---- Basic settings'],
            ['image_source',       'hcp',                                         str,    "what is the target source file format / structure (4dfp, hcp)"],
            ['image_target',       'nifti',                                       str,    "what is the target file format (4dfp, nifti, dtseries, ptseries)"],
            ['image_atlas',        'cifti',                                       str,    "what is the target atlas (711, cifti)"],
+           ['conc_use',           'relative',                                    str,    "how the paths in the .conc file will be used (relative, absolute)"],
 
            ['# ---- GLM related options'],
            ['glm_matrix',          'none',                                        str,    "Whether to save GLM regressor matrix in text (text), image (image) or both (both) formats, or not (none)."],
@@ -618,8 +624,6 @@ def run(command, args):
         consoleLog = ""
 
         print "---- Running local"
-        processPoolExecutor = ProcessPoolExecutor(threads)
-        result = []
         c = 0
         if cores == 1 or options['run'] == 'test':
             if command in plactions:
@@ -646,24 +650,24 @@ def run(command, args):
 
         else:
             c = 0
-
+            threadPoolExecutor = ThreadPoolExecutor(cores)
+            futures = []
             if command in plactions:
                 todo = plactions[command]
                 for subject in subjects:
                     if len(subject['id']) > 1:
                         consoleLog += "\nAdding processing of subject %s to the pool at %s" % (subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-
-                        future = processPoolExecutor.submit(todo, subject, options, overwrite, c + 1)
-                        res = future.result()
-                        result.append(res)
-                        writelog(res)
-
-                        consoleLog += res[0]
-
+                        future = threadPoolExecutor.submit(todo, subject, options, overwrite, c + 1)
+                        futures.append(future)
                         c += 1
                         if nprocess and c >= nprocess:
                             break
-                
+
+                for future in as_completed(futures):
+                    result = future.result()
+                    writelog(result)
+                    consoleLog += result[0]
+
             if command in sactions:
                 todo = sactions[command]
                 r, status = procResponse(todo(subjects, options, overwrite))
