@@ -392,6 +392,7 @@ Change Log
 * 0.29.01 [niutilities, library] Added mnapSingularity standalone command, fixed parallelization bug.
 * 0.30.00 [niutilities, hcpmodified] Added support for FSLongitudinal
 * 0.30.01 [mnaptools] Added HCPpipelines install to Dockerfile_mnap_suite
+* 0.30.02 [library] Added pylib to PYTHONPATH
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
