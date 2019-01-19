@@ -240,8 +240,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     --hcp_t2samplespacing  ... T2 image sample spacing, NONE if not used [NONE].
     --hcp_gdcoeffs         ... Path to a file containing gradient distortion
                                coefficients, set to "NONE", if not used [NONE].
-    --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction in PreFS
-                               step (YES or NONE) [NONE].
     --hcp_bfsigma          ... Bias Field Smoothing Sigma (optional) [].
     --hcp_avgrdcmethod     ... Averaging and readout distortion correction
                                method. Can take the following values:
@@ -271,12 +269,22 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                Map (x, y or NONE) [NONE].
     --hcp_topupconfig      ... Path to a configuration file for TOPUP method
                                or "NONE" if not used [NONE].
+
+    HCP modified specific parameters:
+    ---------------------------------
+
+    Please note, that these settings will only be used when hcpmodified code is
+    used. They are currently not yet implemented in HCP Pipelines.
+
+    --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction in PreFS
+                               step (YES or NONE) [NONE].
     --hcp_prefs_brainmask  ... Whether to only run the final registration using
                                either a custom prepared brain mask (MASK) or to
                                run the full set of processing steps (NONE). [NONE]
                                If a mask is to be used (MASK) then a "
                                custom_acpc_dc_restore_mask.nii.gz" image needs
                                to be placed in the T1w folder.
+
 
     EXAMPLE USE
     ===========
@@ -297,6 +305,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Added checking for field map images.
     2018-12-14 Grega Repovš
              - Cleaned up 
+    2019-01-16 Grega Repovš
+             - HCP Pipelines compatible
     '''
 
     r = "\n---------------------------------------------------------"
@@ -421,6 +431,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         # --- Set up the command
 
+        # Notes:
+        # hcpmodified maps hcp_dwelltime to echospacing, hcp to seechospacing ... currently both are passed
+
+
         comm = '%(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
@@ -442,7 +456,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             --echodiff="%(echodiff)s" \
             --SEPhaseNeg="%(SEPhaseNeg)s" \
             --SEPhasePos="%(SEPhasePos)s" \
-            --echospacing="%(echospacing)s" \
+            --echospacing="%(seechospacing)s" \
+            --seechospacing="%(seechospacing)s" \
             --seunwarpdir="%(seunwarpdir)s" \
             --t1samplespacing="%(t1samplespacing)s" \
             --t2samplespacing="%(t2samplespacing)s" \
@@ -477,7 +492,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 'echodiff'          : options['hcp_echodiff'],
                 'SEPhaseNeg'        : seneg,
                 'SEPhasePos'        : sepos,
-                'echospacing'       : options['hcp_dwelltime'],
+                'seechospacing'     : options['hcp_dwelltime'],
                 'seunwarpdir'       : options['hcp_seunwarpdir'],
                 't1samplespacing'   : options['hcp_t1samplespacing'],
                 't2samplespacing'   : options['hcp_t2samplespacing'],
@@ -587,11 +602,44 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     --log             ... Whether to keep ('keep') or remove ('remove') the
                           temporary logs once jobs are completed ['keep']
 
-    specific parameters
+    
+    specific paramaters
     -------------------
 
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
+
+
+    HCP Pipelines specific parameters
+    ---------------------------------
+
+    These are optional parameters. Please note that they will only be used
+    when HCP Pipelines are used. They are not implemented in hcpmodified!
+    
+    --hcp_fs_seed             ... Recon-all seed value. If not specified, none
+                                  will be used. []
+    --hcp_fs_existing_subject ... Indicates that the command is to be run on
+                                  top of an already existing analysis/subject.
+                                  This excludes the `-i` flag from the 
+                                  invocation of recon-all. If set, the
+                                  user needs to specify which recon-all stages
+                                  to run using the --hcp_fs_extra_reconall
+                                  parameter. Accepted values are TRUE and 
+                                  FALSE [FALSE]
+    --hcp_fs_extra_reconall   ... A string with extra parameters to pass to 
+                                  FreeSurfer recon-all. The extra parameters are
+                                  to be listed in a pipe ('|') separated string. 
+                                  Parameters and their values need to be listed
+                                  separately. E.g. to pass `-norm3diters 3` to 
+                                  reconall, the string has to be: 
+                                  "-norm3diters|3" []
+
+    HCP modified specific parameters:
+    ---------------------------------
+
+    Please note, that these settings will only be used when hcpmodified code is 
+    used. They are currently not yet implemented in HCP Pipelines!
+
 
     --hcp_suffix            ... Specifies a suffix to the subject id if multiple
                                 variants are run, empty otherwise [].
@@ -623,6 +671,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 and hcp2 customization.
     --hcp_fs_longitudinal   ... The name of the FS longitudinal template if one
                                 was created and is to be used in this step.
+
 
     EXAMPLE USE
     ===========
@@ -661,6 +710,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Cleaned up, updated documentation
     2019-01-12 Grega Repovš
              - Cleaned up furher, added updates by Lisa Ji
+    2019-01-16 Grega Repovš
+             - Added HCP Pipelines options
     '''
 
     r = "\n---------------------------------------------------------"
@@ -797,37 +848,66 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     tfiles = {'6.0':     os.path.join(hcp['FS_long_results'], 'label', 'BA_exvivo.thresh.ctab'),
                               '5.3-HCP': os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')}
                     tfile = tfiles[fsversion]
+        
+        # --> when running HCP modified code
 
-        comm = '%(script)s \
-            --subject="%(subject)s" \
-            --subjectDIR="%(subjectDIR)s" \
-            --expertfile="%(expertfile)s" \
-            --controlpoints="%(controlpoints)s" \
-            --wmedits="%(wmedits)s" \
-            --autotopofixoff="%(autotopofixoff)s" \
-            --fsbrainmask="%(fsbrainmask)s" \
-            --freesurferhome="%(freesurferhome)s" \
-            --fsloadhpcmodule="%(fsloadhpcmodule)s" \
-            --t1="%(t1)s" \
-            --t1brain="%(t1brain)s" \
-            --t2="%(t2)s" \
-            --lttemplate="%(lttemplate)s" \
-            --longitudinal="%(longitudinal)s"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'subjectDIR'        : hcp['T1w_folder'],
-                'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
-                'fsloadhpcmodule'   : options['hcp_freesurfer_module'],    # -- Alan added option for --hcp_freesurfer_module flag passing
-                'expertfile'        : options['hcp_expert_file'],
-                'controlpoints'     : options['hcp_control_points'],
-                'wmedits'           : options['hcp_wm_edits'],
-                'autotopofixoff'    : options['hcp_autotopofix_off'],
-                'fsbrainmask'       : options['hcp_fs_brainmask'],
-                't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
-                't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
-                't2'                : t2w,
-                'lttemplate'        : hcp['FS_long_subject_template'],
-                'longitudinal'      : fslongitudinal}
+        if 'hcpmodified' in hcp['hcp_base']:
+            comm = '%(script)s \
+                --subject="%(subject)s" \
+                --subjectDIR="%(subjectDIR)s" \
+                --expertfile="%(expertfile)s" \
+                --controlpoints="%(controlpoints)s" \
+                --wmedits="%(wmedits)s" \
+                --autotopofixoff="%(autotopofixoff)s" \
+                --fsbrainmask="%(fsbrainmask)s" \
+                --freesurferhome="%(freesurferhome)s" \
+                --fsloadhpcmodule="%(fsloadhpcmodule)s" \
+                --t1="%(t1)s" \
+                --t1brain="%(t1brain)s" \
+                --t2="%(t2)s" \
+                --lttemplate="%(lttemplate)s" \
+                --longitudinal="%(longitudinal)s"' % {
+                    'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
+                    'subject'           : sinfo['id'] + options['hcp_suffix'],
+                    'subjectDIR'        : hcp['T1w_folder'],
+                    'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
+                    'fsloadhpcmodule'   : options['hcp_freesurfer_module'],    # -- Alan added option for --hcp_freesurfer_module flag passing
+                    'expertfile'        : options['hcp_expert_file'],
+                    'controlpoints'     : options['hcp_control_points'],
+                    'wmedits'           : options['hcp_wm_edits'],
+                    'autotopofixoff'    : options['hcp_autotopofix_off'],
+                    'fsbrainmask'       : options['hcp_fs_brainmask'],
+                    't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
+                    't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
+                    't2'                : t2w,
+                    'lttemplate'        : hcp['FS_long_subject_template'],
+                    'longitudinal'      : fslongitudinal}
+        
+        # --> when running HCP Pipelines code
+
+        else:
+            comm = '%(script)s \
+                --subjectDIR="%(subjectDIR)s" \
+                --subject="%(subject)s" \
+                --t1="%(t1)s" \
+                --t1brain="%(t1brain)s" \
+                --t2="%(t2)s"' % {
+                    'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
+                    'subject'           : sinfo['id'] + options['hcp_suffix'],
+                    'subjectDIR'        : hcp['T1w_folder'],
+                    't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
+                    't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
+                    't2'                : t2w}
+
+            if options['hcp_fs_seed']:
+                comm += ' --seed="%s"' % (options['hcp_fs_seed'])
+
+            if options['hcp_fs_existing_subject']:
+                comm += ' -existing_subject'
+
+            if options['hcp_fs_extra_reconall']:
+                for f in options['hcp_fs_extra_reconall'].split('|'):
+                    comm += ' --extra-reconall-arg="%s"' % (f)
 
         if run:
             if options['run'] == "run":
@@ -1546,7 +1626,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
 
     ----------------
-    Written by Alan Anticevic
+    Written by Grega Repovš
 
     Changelog
     2018-01-14 Alan Anticevic wrote inline documentation
@@ -1726,11 +1806,19 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
 
-    use of FS longitudinal template
-    ----------------------------------------
+    HCP Pipelines specific parameters
+    ---------------------------------
 
-    --hcp_fs_longitudinal    ... The name of the FS longitudinal template if one
-                                 was created and is to be used in this step.
+    --hcp_bold_biascorrection   ... Whether to perform bias correction for BOLD 
+                                    images. NONE or Legacy. [NONE]
+    --hcp_bold_usejacobian      ... Whether to apply the jacobian of the 
+                                    distortion correction to fMRI data.
+
+    use of FS longitudinal template
+    -------------------------------
+
+    --hcp_fs_longitudinal (*) ... The name of the FS longitudinal template if one
+                                  was created and is to be used in this step.
 
     naming options
     --------------
@@ -1745,12 +1833,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     image acquisition details
     -------------------------
 
-    --hcp_bold_sequencetype  ... The type of the sequence used: multi(band) vs
-                                 single(band). [multi]
-    --hcp_bold_echospacing   ... Echo Spacing or Dwelltime of BOLD images.
-                                 [0.00035]
-    --hcp_bold_ref           ... Whether BOLD Reference images should be used
-                                 - NONE or USE. [NONE]
+    --hcp_bold_sequencetype (*) ... The type of the sequence used: multi(band) vs
+                                    single(band). [multi]
+    --hcp_bold_echospacing      ... Echo Spacing or Dwelltime of BOLD images.
+                                    [0.00035]
+    --hcp_bold_ref (*)          ... Whether BOLD Reference images should be used
+                                    - NONE or USE. [NONE]
 
     distortion correction details
     -----------------------------
@@ -1769,34 +1857,36 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     slice timing correction
     -----------------------
 
-    --hcp_bold_stcorr        ... Whether to do slice timing correction TRUE or
+    --hcp_bold_stcorr (*)    ... Whether to do slice timing correction TRUE or
                                  NONE. [TRUE]
-    --hcp_bold_stcorrdir     ... The direction of slice acquisition ('up' or
+    --hcp_bold_stcorrdir (*) ... The direction of slice acquisition ('up' or
                                  'down'. [up]
-    --hcp_bold_stcorrint     ... Whether slices were acquired in an interleaved
+    --hcp_bold_stcorrint (*) ... Whether slices were acquired in an interleaved
                                  fashion (odd) or not (empty). [odd]
 
     motion correction and atlas registration
     ----------------------------------------
 
-    --hcp_bold_preregister   ... What code to use to preregister BOLDs before
-                                 FSL BBR is run, epi_reg (default) or flirt.
-                                 [epi_reg]
-    --hcp_bold_movreg        ... Whether to use FLIRT (default and best for
-                                 multiband images) or McFLIRT for motion
-                                 correction. [FLIRT]
-    --hcp_bold_movref        ... What reference to use for movement correction
-                                 (independent, first). [independent]
-    --hcp_bold_seimg         ... What image to use for spin-echo distorsion
-                                 correction (independent, first). [independent]
-    --hcp_bold_refreg        ... Whether to use only linaer (default) or also
-                                 nonlinear registration of motion corrected bold
-                                 to reference. [linear]
-    --hcp_bold_usemask       ... What mask to use for the bold images (T1: mask
-                                 based on the T1 image, BOLD: mask based on bet
-                                 brain identification of the scout image,
-                                 DILATED: dilated MNI brain mask, NONE: do not
-                                 use a mask). [T1]
+    --hcp_bold_preregister (*) ... What code to use to preregister BOLDs before
+                                   FSL BBR is run, epi_reg (default) or flirt.
+                                   [epi_reg]
+    --hcp_bold_movreg          ... Whether to use FLIRT (default and best for
+                                   multiband images) or McFLIRT for motion
+                                   correction. [FLIRT]
+    --hcp_bold_movref (*)      ... What reference to use for movement correction
+                                   (independent, first). [independent]
+    --hcp_bold_seimg (*)       ... What image to use for spin-echo distorsion
+                                   correction (independent, first). [independent]
+    --hcp_bold_refreg (*)      ... Whether to use only linaer (default) or also
+                                   nonlinear registration of motion corrected bold
+                                   to reference. [linear]
+    --hcp_bold_usemask (*)     ... What mask to use for the bold images (T1: mask
+                                   based on the T1 image, BOLD: mask based on bet
+                                   brain identification of the scout image,
+                                   DILATED: dilated MNI brain mask, NONE: do not
+                                   use a mask). [T1]
+
+    (*) These parameters are only used when running HCP Modified code!
 
     These last parameters enable fine-tuning of preprocessing and deserve
     additional information. In general the defaults should be appropriate for
@@ -1856,6 +1946,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             - Added FS longitudinal option and documentation
     2019-01-12 Grega Repovš
              - Cleaned up, added updates by Lisa Ji
+    2019-01-16 Grega Repovš
+             - HCP Pipelines compatible.
     '''
 
     r = "\n---------------------------------------------------------"
@@ -2262,9 +2354,11 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
             --unwarpdir="%(unwarpdir)s" \
             --fmrires="%(fmrires)s" \
             --dcmethod="%(dcmethod)s" \
+            --biascorrection="%(biascorrection)s" \
             --gdcoeffs="%(gdcoeffs)s" \
             --topupconfig="%(topupconfig)s" \
             --printcom="%(printcom)s" \
+            --usejacobian="%(usejacobian)s" \
             --lttemplate="%(lttemplate)s" \
             --doslicetime="%(doslicetime)s" \
             --slicetimedir="%(slicetimedir)s" \
@@ -2275,6 +2369,7 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
             --preregister="%(preregister)s" \
             --refreg="%(refreg)s" \
             --movreg="%(movreg)s" \
+            --mctype="%(movreg)s" \
             --tr="%(tr)f"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'fMRIVolume', 'GenericfMRIVolumeProcessingPipeline.sh'),
                 'path'              : sinfo['hcp'],
@@ -2293,9 +2388,11 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
                 'unwarpdir'         : unwarpdir,
                 'fmrires'           : options['hcp_bold_res'],
                 'dcmethod'          : options['hcp_bold_correct'],
+                'biascorrection'    : options['hcp_bold_biascorrection'],
                 'gdcoeffs'          : options['hcp_bold_gdcoeffs'],
                 'topupconfig'       : os.path.join(hcp['hcp_Config'], 'b02b0.cnf'),
                 'printcom'          : options['hcp_printcom'],
+                'usejacobian'       : options['hcp_bold_usejacobian'],
                 'lttemplate'        : options['hcp_fs_longitudinal'],
                 'doslicetime'       : options['hcp_bold_stcorr'].upper(),
                 'slicetimedir'      : hcp_bold_stcorrdir,

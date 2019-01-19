@@ -381,6 +381,10 @@ def record(response):
 
     ---
     Written by Grega Repovš, 2018-03-31
+
+    Change log:
+    2019-01-17 - Grega Repovš
+                 Fixed the correct response
     '''
 
     global results
@@ -395,9 +399,9 @@ def record(response):
             see = "."
 
         if result:
-            print "%s%s finished successfully%s" % (prepend, name, see)
-        else:
             print "%s%s failed%s" % (prepend, name, see)
+        else:
+            print "%s%s finished successfully%s" % (prepend, name, see)
 
 
 
