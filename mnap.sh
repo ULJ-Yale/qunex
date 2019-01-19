@@ -1766,7 +1766,7 @@ showVersion() {
 #  Parse Command Line Options
 # ------------------------------------------------------------------------------
 
-# -- Check if general help requested in three redundant ways (AP, AP --help or AP help)
+# -- Check if version was requested
 if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ]; then
     showVersion
     echo ""
