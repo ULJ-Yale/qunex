@@ -361,9 +361,16 @@ uploadDICOMSCurl() {
             ##    -X --> Here $XNAT_HOST_NAME corresponds to the XNAT URL; 
             ##       --> PROJECT_ID corresponds to the XNAT Project ID in the Site URL; 
             ##           if not defined or not found then data goes into prearchive and left unassigned
-            ##       --> SUBJECT_ID    Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-            ##       --> SUBJECT_LABEL Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
-            ##       --> EXPT_LABEL    MR Session:        A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
+            ##
+            ##       --> SUBJECT_ID    ==> EXAMPLE in XML    ==>  <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+            ##                         ==> EXAMPLE in Web UI ==> Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
+            ##         
+            ##       --> SUBJECT_LABEL ==> EXAMPLE in XML    ==> <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+            ##                         ==> EXAMPLE in Web UI ==> Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
+            ##                     
+            ##       --> EXPT_LABEL    ==> EXAMPLE in XML    ==> <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+            ##                         ==> EXAMPLE in Web UI ==> MR Session:        A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
+            ##       
             ##    -F "${DCM}=@${DCM}"       --> What you are sending to the XNAT Site
             ##
             ## -------------------------------------------------------------

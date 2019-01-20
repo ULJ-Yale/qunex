@@ -1717,13 +1717,15 @@ ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh
 # ------------------------------------------------------------------------------
 #  Load relevant libraries for logging and parsing options
 # ------------------------------------------------------------------------------
-source $HCPPIPEDIR/global/scripts/log.shlib  # -- Logging related functions
-source $HCPPIPEDIR/global/scripts/opts.shlib # -- Command line option functions
+if [[ ! -z $HCPPIPEDIR ]]; then
+    source $HCPPIPEDIR/global/scripts/log.shlib  # -- Logging related functions
+    source $HCPPIPEDIR/global/scripts/opts.shlib # -- Command line option functions
+fi
 
 # ------------------------------------------------------------------------------
 #  Establish tool name for logging
 # ------------------------------------------------------------------------------
-log_SetToolName "mnap.sh"
+# log_SetToolName "mnap.sh"
 
 # ------------------------------------------------------------------------------
 #  Load Core Functions
