@@ -100,12 +100,25 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
 # Octave testing on Singularity
     rm /opt/PALM/palm-alpha112o/fileio/@nifti/private/write_hdr_raw.m && \
     cp /opt/mnaptools/library/etc/write_hdr_raw.m /opt/PALM/palm-alpha112o/fileio/@nifti/private && \
-# Install HCP Pipelines and HCPpipelinesRunUtils
-    mkdir -p /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest && \
-    cd /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest  && \
-    echo "Downloading HCP Pipelines freesurfer_v6_latest..." && \
-    git clone --single-branch --branch feature/freesurfer_v6_latest https://github.com/Washington-University/HCPpipelines.git /opt/HCPpipelines/HCPpipelines-freesurfer_v6_latest && \
-    cd /opt/HCPpipelines && \
+# Install HCP Pipelines
+RUN mkdir -p /opt/HCP/Pipelines && \
+    wget --progress=bar:force -O /tmp/freesurfer_v6_latest.tar.gz https://github.com/Washington-University/HCPpipelines/archive/feature/freesurfer_v6_latest.tar.gz && \
+    tar -xzvf /tmp/freesurfer_v6_latest.tar.gz -C /opt/HCP/Pipelines --strip-components=1 && \
+    rm /tmp/freesurfer_v6_latest.tar.gz && \
+    ln -sf /opt/HCP/gradient_coefficient_files/3TPrisma_coeff_AS82_trunc.grad /opt/HCP/Pipelines/global/config/3TPrisma_coeff_AS82_trunc.grad && \
+    ln -sf /opt/HCP/gradient_coefficient_files/coeff_SC72C_Skyra.grad /opt/HCP/Pipelines/global/config/coeff_SC72C_Skyra.grad && \
+    ln -sf /opt/HCP/gradient_coefficient_files/trunc.CMRR_7TAS_coeff_SC72CD.grad /opt/HCP/Pipelines/global/config/trunc.CMRR_7TAS_coeff_SC72CD.grad && \
+    ln -sf /opt/HCP/gradient_coefficient_files/CMRR_3TPrisma_coeff_AS82_trunc.grad /opt/HCP/Pipelines/global/config/CMRR_3TPrisma_coeff_AS82_trunc.grad && \
+    ln -sf /opt/HCP/gradient_coefficient_files/Prisma_3T_coeff_AS82.grad /opt/HCP/Pipelines/global/config/Prisma_3T_coeff_AS82.grad && \
+# CUSTOM: recon-all.v6.hires
+    cp /opt/HCP/Pipelines/FreeSurferCustomizations/recon-all.v6.hires /opt/freesurfer/freesurfer-6.0/bin/recon-all.v6.hires && \
+    chmod 775 /opt/freesurfer/freesurfer-6.0/bin/recon-all.v6.hires && \
+# CUSTOM: conf2hires
+    cp /opt/HCP/Pipelines/FreeSurferCustomizations/conf2hires /opt/freesurfer/freesurfer-6.0/bin/conf2hires && \
+    chmod 775 /opt/freesurfer/freesurfer-6.0/bin/conf2hires && \
+# CUSTOM: longmc
+    cp /opt/HCP/Pipelines/FreeSurferCustomizations/longmc /opt/freesurfer/freesurfer-6.0/bin/longmc && \
+    chmod 775 /opt/freesurfer/freesurfer-6.0/bin/longmc && \    
     git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git 
 # Clean the environment and go to mnap folder
     yum clean all && \
