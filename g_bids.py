@@ -22,6 +22,7 @@ import zipfile
 import tarfile
 import glob
 import datetime
+import gzip
 
 bids = {
     'modalities': ['anat', 'func', 'dwi', 'fmap'],
@@ -51,6 +52,7 @@ bids = {
         'tag':   ['label', 'dir', 'acq', 'run']
     }
 }
+
 
 
 def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
@@ -120,6 +122,20 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
                     return False
                 else:
                     return (False, "%s%sERROR: %s could not be moved, check permissions! " % (r, prefix, name))
+
+        if action == 'gzip':
+            try:
+                with open(source, 'rb') as f_in, gzip.open(target, 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                if r is None:
+                    return status
+                else:
+                    return (status, "%s%s%s copied and gzipped" % (r, prefix, name))
+            except:
+                if r is None:
+                    return False
+                else:
+                    return (False, "%s%sERROR: %s could not be copied and gzipped, check permissions! " % (r, prefix, name))
 
     else:
         if r is None:
@@ -426,7 +442,11 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
                     tfile = mapToMNAPBids(sf.filename, subjectsfolder, bidsname, sessions, overwrite, "        ")
                     if tfile:
                         fdata = z.read(sf)
-                        fout = open(tfile, 'wb')
+                        if tfile.endswith('.nii'):
+                            tfile += ".gz"
+                            fout = gzip.open(tfile, 'wb')
+                        else:
+                            fout = open(tfile, 'wb')                            
                         fout.write(fdata)
                         fout.close()
             z.close()
@@ -443,7 +463,11 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
                         fobj  = tar.extractfile(member)
                         fdata = fobj.read()
                         fobj.close()
-                        fout = open(tfile, 'wb')
+                        if tfile.endswith('.nii'):
+                            tfile += ".gz"
+                            fout = gzip.open(tfile, 'wb')
+                        else:
+                            fout = open(tfile, 'wb')
                         fout.write(fdata)
                         fout.close()
             tar.close()
@@ -452,7 +476,12 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
         else:
             tfile = mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, "    ")
             if tfile:
-                status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
+                if tfile.endswith('.nii'):
+                    tfile += ".gz"
+                    status, msg = moveLinkOrCopy(file, tfile, 'gzip', r="", prefix='    .. ')
+                else:
+                    status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')                    
+
                 allOk = allOk and status
                 if not status:
                     errors += msg
@@ -843,6 +872,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     imgn = 0
     for image in bidsData['images']['list']:
         imgn += 1
+
         tfile = os.path.join(nfolder, "%02d.nii.gz" % (imgn))
         
         status = moveLinkOrCopy(bidsData['images']['info'][image]['filepath'], tfile, action='link')
