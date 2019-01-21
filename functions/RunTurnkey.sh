@@ -122,8 +122,8 @@ usage() {
     echo "    --turnkeytype=<turnkey_run_type>                   Specify type turnkey run. Options are: local or xnat"
     echo "                                                       If empty default is set to: [xnat]."
     echo "    --path=<study_path>                                Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
-    echo "    --subjects=<comma_separated_list_of_cases>         List of subjects to run locally if --xnatsessionlabels is missing."
-    echo "    --subjid=<comma_separated_list_of_subject_ids>     List of ids to select for a run via gMRI engine from the batch file"
+    echo "    --subjects=<subjects_to_run_turnkey_on>            Subjects to run locally if --xnatsessionlabels is missing."
+    echo "    --subjids=<comma_separated_list_of_subject_ids>    Ids to select for a run via gMRI engine from the batch file"
     echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
     echo "                                                       Supported:   ${MNAPTurnkeyWorkflow} "
     echo ""
@@ -200,7 +200,7 @@ usage() {
     echo "   --batchfile=<batch_file> \ "
     echo "   --overwritestep=yes \ "
     echo "   --mappingfile=<mapping_file> \ "
-    echo "   --xnatsessionlabels=<XNAT_SESSION_LABELS> \ "
+    echo "   --xnatsessionlabels=<XNAT_SESSION_LABEL> \ "
     echo "   --xnatprojectid=<name_of_xnat_project_id> \ "
     echo "   --xnathostname=<XNAT_site_URL> \ "
     echo "   --xnatuser=<xnat_host_user_name> \ "
@@ -240,6 +240,7 @@ done
 
 # -- Clear variables
 unset BATCH_PARAMETERS_FILENAME
+unset CASE
 unset OVERWRITE_STEP
 unset OVERWRITE_PROJECT
 unset OVERWRITE_PROJECT_FORCE
@@ -247,7 +248,7 @@ unset OVERWRITE_PROJECT_XNAT
 unset OVERWRITE_SUBJECT
 unset SCAN_MAPPING_FILENAME
 unset XNAT_ACCSESSION_ID
-unset XNAT_SESSION_LABELS
+unset XNAT_SESSION_LABEL
 unset XNAT_PROJECT_ID
 unset XNAT_SUBJECT_ID
 unset XNAT_HOST_NAME
@@ -280,8 +281,17 @@ CleanupSubject=`opts_GetOpt "--cleanupsubject" $@`
 CleanupProject=`opts_GetOpt "--cleanupproject" $@`
 RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
 mnap_subjectsfolder=`opts_GetOpt "--subjectsfolder" $@`
-CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "${CASES}" | sed 's/,/ /g;s/|/ /g'`
-SUBJID=`opts_GetOpt "--subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SUBJID=`echo "${SUBJID}" | sed 's/,/ /g;s/|/ /g'`
+
+#CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "${CASES}" | sed 's/,/ /g;s/|/ /g'`
+CASE=`opts_GetOpt "--subjects" "$@"`
+if [ -z "$CASE" ]; then
+CASE=`opts_GetOpt "--subject" "$@"`
+fi
+SUBJID=`opts_GetOpt "--subjids"`
+if [ -z "$SUBJID" ]; then
+SUBJID=`opts_GetOpt "--subjid"`
+fi
+
 OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
 OVERWRITE_STEP=`opts_GetOpt "--overwritestep" $@`
 OVERWRITE_PROJECT=`opts_GetOpt "--overwriteproject" $@`
@@ -291,7 +301,13 @@ BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
 LOCAL_BATCH_FILE=`opts_GetOpt "--local_batchfile" $@`
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
 XNAT_ACCSESSION_ID=`opts_GetOpt "--xnataccsessionid" $@`
-XNAT_SESSION_LABELS=`opts_GetOpt "--xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
+
+#XNAT_SESSION_LABELS=`opts_GetOpt "--xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
+XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabels" "$@"`
+if [ -z "$XNAT_SESSION_LABEL" ]; then
+XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabel" "$@"`
+fi
+
 XNAT_EXPT_LABEL=`opts_GetOpt "--xnatexperimentlabel" $@`
 XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
 XNAT_SUBJECT_ID=`opts_GetOpt "--xnatsubjectid" $@`
@@ -452,6 +468,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         if [[ -z ${XNAT_EXPT_LABEL} ]]; then reho "Error: --xnatexperimentlabel flag missing. Please specify experiment labe and re-run."; echo ''; exit 1; fi
     else
         if [[ -z ${XNAT_STUDY_INPUT_PATH} ]]; then XNAT_STUDY_INPUT_PATH=/input/RESOURCES/mnap_study; reho "Note: XNAT session input path is not defined. Setting default path to: $XNAT_STUDY_INPUT_PATH"; fi
+        if [[ -z ${XNAT_EXPT_LABEL} ]];then reho "Note. --xnatexperimentlabel flag missing. Assuming it matches --xnatsessionlabel."; XNAT_EXPT_LABEL="${XNAT_SESSION_LABEL}"; echo ''; fi
     fi
 fi
 
@@ -459,13 +476,13 @@ fi
 if [[ -z ${TURNKEY_STEPS} ]]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
 
 # -- Check if subject input is a parameter file instead of list of cases
-if [[ ${CASES} == *.txt ]]; then
-    SubjectParamFile="$CASES"
-    echo ""
-    echo "Using $SubjectParamFile for input."
-    echo ""
-    CASES=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
-fi
+# if [[ ${CASE} == *.txt ]]; then
+#     SubjectParamFile="$CASE"
+#     echo ""
+#     echo "Using $SubjectParamFile for input."
+#     echo ""
+#     CASE=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
+# fi
 
 # -- Check and set mapRawData, mapHCPFiles, getHCPReady which rely on BATCH_PARAMETERS_FILENAME and SCAN_MAPPING_FILENAME
 if [[ `echo ${TURNKEY_STEPS} | grep 'mapRawData'` ]]; then
@@ -482,32 +499,32 @@ if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]] && [[ `echo $
    reho "Error. Raw data input flag missing "; exit 1
 fi
 
-# -- Check and align CASES and XNAT_SESSION_LABELS
+# -- Check and align CASE and XNAT_SESSION_LABEL
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
-   if [ -z "$CASES" ]; then
-       if [ -z "$XNAT_SESSION_LABELS" ]; then
+   if [ -z "$CASE" ]; then
+       if [ -z "$XNAT_SESSION_LABEL" ]; then
            reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ""
            exit 1
        else
-           CASES="$XNAT_SESSION_LABELS"
+           CASE="$XNAT_SESSION_LABEL"
            reho "Note: --xnatsessionlabels only is specified. Assuming --subjects info matches --xnatsessionlabels."; echo ""
        fi
    else
-       XNAT_SESSION_LABELS="$CASES"
+       XNAT_SESSION_LABEL="$CASE"
        reho "Note: --subjects only is specified. Assuming --xnatsessionlabels info matches --subjects."; echo ""
    fi
 fi
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-   if [ -z "$XNAT_SESSION_LABELS" ]; then
-       if [ -z "$CASES" ]; then
+   if [ -z "$XNAT_SESSION_LABEL" ]; then
+       if [ -z "$CASE" ]; then
            reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ""
            exit 1
        else
-        XNAT_SESSION_LABELS="$CASES"
+        XNAT_SESSION_LABEL="$CASE"
         reho "Note: --subjects only is specified. Assuming --xnatsessionlabels info matches --subjects."; echo ""
        fi
    else
-       CASES="$XNAT_SESSION_LABELS"
+       CASE="$XNAT_SESSION_LABEL"
        reho "Note: --subjects only is specified. Assuming --xnatsessionlabels info matches --subjects."; echo ""
    fi
 fi
@@ -537,16 +554,21 @@ mnap_subjectsfolder="${STUDY_PATH}/subjects"
 if [[ ${BIDSFormat} == "yes" ]]; then
     # -- Setup EXP_LABEL without the 'MR' prefix and define CASE name
     BIDS_EXPT_LABEL=`echo ${XNAT_EXPT_LABEL} | sed 's|MR||g'`
-    mnap_workdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABELS}_${BIDS_EXPT_LABEL}"
+    mnap_workdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABEL}_${BIDS_EXPT_LABEL}"
+    CASE="${XNAT_SESSION_LABEL}_${BIDS_EXPT_LABEL}"
+    XNAT_SESSION_LABEL_ORIG="${XNAT_SESSION_LABEL}"
+    XNAT_SESSION_LABEL="${XNAT_SESSION_LABEL}_${BIDS_EXPT_LABEL}"
+    reho "Note: --bidsformat='yes' --> Combining subject and experiment label into unified subject name: ${CASE}"; echo ""
 else
-    mnap_workdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABELS}"
+    mnap_workdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABEL}"
+    CASE="${XNAT_SESSION_LABEL}"
 fi
 
 processingdir="${STUDY_PATH}/processing"
 logdir="${STUDY_PATH}/processing/logs"
 specsdir="${STUDY_PATH}/subjects/specs"
-rawdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABELS}/inbox"
-rawdir_temp="${STUDY_PATH}/subjects/${XNAT_SESSION_LABELS}/inbox_temp"
+rawdir="${mnap_workdir}/inbox"
+rawdir_temp="${mnap_workdir}/inbox_temp"
 MNAPCOMMAND="${TOOLS}/${MNAPREPO}/connector/mnap.sh"
 
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
@@ -566,7 +588,11 @@ echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
     echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
     echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
-    echo "   XNAT Session Labels: ${XNAT_SESSION_LABELS}"
+if [ "$BIDSFormat" == "yes" ]; then
+    echo "   XNAT Session Labels: ${XNAT_SESSION_LABEL_ORIG}"
+else
+    echo "   XNAT Session Labels: ${XNAT_SESSION_LABEL}"
+fi
     echo "   XNAT Experiment Label(s): ${XNAT_EXPT_LABEL}"
     echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
     echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
@@ -578,6 +604,7 @@ fi
 
 if [ "$BIDSFormat" == "yes" ]; then
     echo "   BIDS format input specified: ${BIDSFormat}"
+    echo "   Combined BIDS-formatted subject label: ${CASE}"
 fi
 
 echo "   Project-specific Batch file: ${project_batch_file}"
@@ -642,49 +669,49 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
     case ${firstStep} in
         organizeDicom)
             # --- rsync relevant dependencies if organizeDicom is starting point 
-            RsyncCommand="rsync -avzH --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         getHCPReady|mapHCPFiles)
             # --- rsync relevant dependencies if getHCPReady or mapHCPFiles is starting point 
-            RsyncCommand="rsync -avzH --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp1|hcp2|hcp3|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp4|hcp5|QCPreprocBOLD)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/' --include='BOLD*/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='hcp/' --include='BOLD*/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         QCPreprocCustom)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         mapHCPData)
             # --- rsync relevant dependencies if and mapHCPData is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|BOLDParcellation|computeBOLDfcGBC|computeBOLDfcSeed|QCPreprocBOLDfc)
             # --- rsync relevant dependencies if any BOLD fc step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/subjects' --include='${XNAT_SESSION_LABELS}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
@@ -707,22 +734,22 @@ if [[ ${OVERWRITE_PROJECT_XNAT} == "yes" ]]; then
         rm -rf ${mnap_studyfolder}/ &> /dev/null
 fi
 if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "all" ]]; then
-    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABELS" ]]; then
-        reho " -- ${XNAT_SESSION_LABELS} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABEL" ]]; then
+        reho " -- ${XNAT_SESSION_LABEL} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
         reho "    Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
         rm -rf ${mnap_studyfolder}/ &> /dev/null
     else
-        reho " -- There are more than ${XNAT_SESSION_LABELS} directories ${mnap_studyfolder}."
+        reho " -- There are more than ${XNAT_SESSION_LABEL} directories ${mnap_studyfolder}."
         reho "    Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
     fi
 fi
 if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
-    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABELS" ]]; then
-        reho " -- ${XNAT_SESSION_LABELS} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABEL" ]]; then
+        reho " -- ${XNAT_SESSION_LABEL} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
         reho "    Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
         rm -rf ${mnap_studyfolder}/ &> /dev/null
     else
-        reho " -- There are more than ${XNAT_SESSION_LABELS} directories ${mnap_studyfolder}."
+        reho " -- There are more than ${XNAT_SESSION_LABEL} directories ${mnap_studyfolder}."
         reho "    Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
     fi
 fi
@@ -742,9 +769,9 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStudy ..."; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
-        createStudy_ComlogTmp="${workdir}/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
-        createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
-        createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+        createStudy_ComlogTmp="${workdir}/tmp_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
+        createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
+        createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
         geho " -- Checking for and generating study folder ${mnap_studyfolder}"; echo ""
         if [ ! -d ${workdir} ]; then
             mkdir -p ${workdir} &> /dev/null
@@ -754,7 +781,7 @@ fi
             echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
             ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
             mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
-            createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+            createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
         else
             geho " -- Study folder ${mnap_studyfolder} already exits!" 2>&1 | tee -a ${createStudy_ComlogTmp}
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -765,7 +792,7 @@ fi
                     echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
                     ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
                     mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
-                    createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+                    createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
                 fi
             fi
         fi
@@ -839,9 +866,9 @@ fi
            
         # -- Define specific logs
         mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${TimeStamp}.log"
-        mapRawData_ComlogTmp="${logdir}/comlogs/tmp_mapRawData_${CASES}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
-        mapRawData_ComlogError="${logdir}/comlogs/error_mapRawData_${CASES}_${TimeStamp}.log"
-        mapRawData_ComlogDone="${logdir}/comlogs/done_mapRawData_${CASES}_${TimeStamp}.log"
+        mapRawData_ComlogTmp="${logdir}/comlogs/tmp_mapRawData_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
+        mapRawData_ComlogError="${logdir}/comlogs/error_mapRawData_${CASE}_${TimeStamp}.log"
+        mapRawData_ComlogDone="${logdir}/comlogs/done_mapRawData_${CASE}_${TimeStamp}.log"
         
         # -- Map data from XNAT
         if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -861,7 +888,7 @@ fi
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}""
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}""
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip"
-
+            echo ""
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${BATCH_PARAMETERS_FILENAME}"" >> ${mapRawData_ComlogTmp}
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}"" >> ${mapRawData_ComlogTmp}
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip"  >> ${mapRawData_ComlogTmp}
@@ -870,26 +897,35 @@ fi
             curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/MNAP_PROC/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME}
             curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip
                
-            # -- Transfer data from XNAT HOST
+            # -- Verify and unzip custom QC scene files
             if [ -f ${processingdir}/scenes/QC/scene_qc_files.zip ]; then
                 echo ""; geho " -- Custom scene files found ${processingdir}/scenes/QC/scene_qc_files.zip "
-                geho " Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
-                echo "" >> ${mapRawData_ComlogTmp}
-                cd ${processingdir}/scenes/QC; echo ""
-                unzip scene_qc_files.zip; echo ""
-                CustomQCModalities="T1w T2w myelin DWI BOLD"
-                for CustomQCModality in ${CustomQCModalities}; do
-                    mkdir -p ${processingdir}/scenes/QC/${CustomQCModality} &> /dev/null
-                    cp ${processingdir}/scenes/QC/${XNAT_PROJECT_ID}/resources/scenes_qc/files/${CustomQCModality}/*.scene ${processingdir}/scenes/QC/${CustomQCModality}/ &> /dev/null
-                    CopiedSceneFile=`ls ${processingdir}/scenes/QC/${CustomQCModality}/*scene 2> /dev/null`
-                    if [ ! -z ${CopiedSceneFile} ]; then
-                        geho " -- Copied: $CopiedSceneFile"; echo ""
-                        echo " Copied the following scenes from ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc:" >> ${mapRawData_ComlogTmp}
-                        echo " ${CopiedSceneFile}" >> ${mapRawData_ComlogTmp}
-                    fi
-                done
-                rm -rf ${processingdir}/scenes/QC/${XNAT_PROJECT_ID} &> /dev/null
-                echo "" >> ${mapRawData_ComlogTmp}
+                echo ""; geho " -- Checking ZIP integrity for ${processingdir}/scenes/QC/scene_qc_files.zip "
+                CheckCustomQCScene=`zip -T ${processingdir}/scenes/QC/scene_qc_files.zip | grep "error"`
+                if [[ ! -z ${CheckCustomQCScene} ]]; then
+                    echo "" >> ${mapRawData_ComlogTmp}
+                    reho " -- ERROR: ZIP file not validated. Custom scene may be missing or is corrupted." >> ${mapRawData_ComlogTmp}
+                    echo "" >> ${mapRawData_ComlogTmp}
+                    echo ""; reho " -- ERROR: ZIP file not validated. Custom scene may be missing or is corrupted."; echo ""
+                else
+                    geho " Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
+                    echo "" >> ${mapRawData_ComlogTmp}
+                    cd ${processingdir}/scenes/QC; echo ""
+                    unzip scene_qc_files.zip; echo ""
+                    CustomQCModalities="T1w T2w myelin DWI BOLD"
+                    for CustomQCModality in ${CustomQCModalities}; do
+                        mkdir -p ${processingdir}/scenes/QC/${CustomQCModality} &> /dev/null
+                        cp ${processingdir}/scenes/QC/${XNAT_PROJECT_ID}/resources/scenes_qc/files/${CustomQCModality}/*.scene ${processingdir}/scenes/QC/${CustomQCModality}/ &> /dev/null
+                        CopiedSceneFile=`ls ${processingdir}/scenes/QC/${CustomQCModality}/*scene 2> /dev/null`
+                        if [ ! -z ${CopiedSceneFile} ]; then
+                            geho " -- Copied: $CopiedSceneFile"; echo ""
+                            echo " Copied the following scenes from ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc:" >> ${mapRawData_ComlogTmp}
+                            echo " ${CopiedSceneFile}" >> ${mapRawData_ComlogTmp}
+                        fi
+                    done
+                    rm -rf ${processingdir}/scenes/QC/${XNAT_PROJECT_ID} &> /dev/null
+                    echo "" >> ${mapRawData_ComlogTmp}
+                fi
            else
                 geho " No custom scene files found as an XNAT resources. If this is an error check your project resources in the XNAT web interface." >> ${mapRawData_ComlogTmp}
                 echo "" >> ${mapRawData_ComlogTmp}
@@ -944,10 +980,6 @@ fi
                 
                 # -- Perform mapping for BIDS
                 
-                # -- Setup EXP_LABEL without the 'MR' prefix and define CASE name
-                BIDS_EXPT_LABEL=`echo ${XNAT_EXPT_LABEL} | sed 's|MR||g'`
-                CASE="${XNAT_SESSION_LABELS}_${BIDS_EXPT_LABEL}"
-                
                 # -- IF overwrite requested clean prior mapping
                 rm -r ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp &> /dev/null
                 mkdir ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp &> /dev/null
@@ -957,11 +989,11 @@ fi
                 curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv
                 
                 # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_EXPT_ID (i.e. MR Session lablel) for the specific XNAT_SESSION_LABEL (i.e. subject)
-                XNAT_SUBJECT_ID=`more ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SESSION_LABELS}" | awk  -F, '{print $1}'` 
-                XNAT_EXPT_ID=`more ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SESSION_LABELS}" | grep "${XNAT_EXPT_LABEL}" | awk  -F, '{print $1}'`
+                XNAT_SUBJECT_ID=`more ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SESSION_LABEL_ORIG}" | awk  -F, '{print $1}'` 
+                XNAT_EXPT_ID=`more ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SESSION_LABEL_ORIG}" | grep "${XNAT_EXPT_LABEL}" | awk  -F, '{print $1}'`
                 
                 # -- Get the BIDS data in ZIP format via curl
-                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_EXPT_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${XNAT_SESSION_LABELS}_${BIDS_EXPT_LABEL}.zip
+                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_EXPT_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip
      
                 # -- Clean up temp curl call info
                 cd ${mnap_subjectsfolder}/inbox/BIDS
@@ -971,6 +1003,10 @@ fi
             
             # -- Perform mapping of BIDS file structure into MNAP
             ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS" --action=copy --overwrite=yes --archive=delete >> ${mapRawData_ComlogTmp}
+            
+            echo ""
+            geho " --> BIDSImport done"
+            echo ""
             
             # -- Run BIDS completion checks on mapped data
             FILESEXPECTED=`more ${mnap_subjectsfolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l`
@@ -1021,8 +1057,8 @@ fi
     turnkey_organizeDicom() {
         if [[ ${BIDSFormat} != "yes" ]]; then 
             echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: organizeDicom ..."; echo ""
-            ${MNAPCOMMAND} organizeDicom --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}"
-            cd ${mnap_subjectsfolder}/${CASES}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done
+            ${MNAPCOMMAND} organizeDicom --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}"
+            cd ${mnap_subjectsfolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done
             if [ ${TURNKEY_TYPE} == "xnat" ]; then
                 reho "---> Cleaning up: removing inbox folder"
                 rm -rf ${mnap_workdir}/inbox &> /dev/null
@@ -1036,16 +1072,16 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..."; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady${TimeStamp}.log"
-        getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
-        getHCPReady_ComlogError="${logdir}/comlogs/error_getHCPReady_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
-        getHCPReady_ComlogDone="${logdir}/comlogs/done_getHCPReady_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+        getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${XNAT_SESSION_LABEL}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
+        getHCPReady_ComlogError="${logdir}/comlogs/error_getHCPReady_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
+        getHCPReady_ComlogDone="${logdir}/comlogs/done_getHCPReady_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
         if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
-            rm -rf ${mnap_subjectsfolder}/${CASES}/subject_hcp.txt &> /dev/null
+            rm -rf ${mnap_subjectsfolder}/${CASE}/subject_hcp.txt &> /dev/null
         fi
         if [ -f ${mnap_subjectsfolder}/subject_hcp.txt ]; then
             echo ""; geho " ===> ${mnap_subjectsfolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run."; echo ""; return 0
         fi
-        Command="${MNAPCOMMAND} getHCPReady --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --mapping="${specsdir}/${SCAN_MAPPING_FILENAME}""
+        Command="${MNAPCOMMAND} getHCPReady --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --mapping="${specsdir}/${SCAN_MAPPING_FILENAME}""
         echo ""; echo " -- Executed command:"; echo "   $Command"; echo ""
         eval ${Command}  2>&1 | tee -a ${getHCPReady_ComlogTmp}
         if [[ ! -z `cat ${getHCPReady_ComlogTmp} | grep 'Successful completion'` ]]; then ORGANIZEDICOMCHECK="pass"; else ORGANIZEDICOMCHECK="fail"; fi
@@ -1063,9 +1099,9 @@ fi
         if [[ ${OVERWRITE_STEP} == "yes" ]]; then
            echo "  -- Removing prior hard link mapping..."; echo ""
            rm -rf ${project_batch_file} &> /dev/null
-           HLinks=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
+           HLinks=`ls ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
         fi
-        Command="${MNAPCOMMAND} mapHCPFiles --subjectsfolder='${mnap_subjectsfolder}' --subjects='${CASES}' --overwrite='${OVERWRITE_STEP}'"
+        Command="${MNAPCOMMAND} mapHCPFiles --subjectsfolder='${mnap_subjectsfolder}' --subjects='${CASE}' --overwrite='${OVERWRITE_STEP}'"
         echo ""; echo " -- Executed command:"; echo "   $Command"; echo ""
         eval ${Command}
         geho " -- Generating ${project_batch_file}"; echo ""
@@ -1075,17 +1111,17 @@ fi
     # --------------- Intial study and file organization end -------------------
     
     QCPreproc_Finalize() {
-        QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+        QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
         QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
         rename QCPreproc QCPreproc${QCLogName} ${logdir}/comlogs/${QCPreprocComLog} 2> /dev/null
         rename QCPreproc QCPreproc${QCLogName} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
-        mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
-        mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/runlog 2> /dev/null
-        mkdir -p ${mnap_subjectsfolder}/${CASES}/QC/${Modality} 2> /dev/null
-        cp ${logdir}/comlogs/${QCPreprocComLog} ${mnap_subjectsfolder}/${CASES}/logs/comlog/ 2> /dev/null
-        cp ${logdir}/comlogs/${QCPreprocRunLog} ${mnap_subjectsfolder}/${CASES}/logs/comlog/ 2> /dev/null
-        cp ${mnap_subjectsfolder}/subjects/QC/${Modality}/*${CASES}*scene ${mnap_subjectsfolder}/${CASES}/QC/${Modality}/ 2> /dev/null
-        cp ${mnap_subjectsfolder}/subjects/QC/${Modality}/*${CASES}*zip ${mnap_subjectsfolder}/${CASES}/QC/${Modality}/ 2> /dev/null
+        mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
+        mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
+        mkdir -p ${mnap_subjectsfolder}/${CASE}/QC/${Modality} 2> /dev/null
+        cp ${logdir}/comlogs/${QCPreprocComLog} ${mnap_subjectsfolder}/${CASE}/logs/comlog/ 2> /dev/null
+        cp ${logdir}/comlogs/${QCPreprocRunLog} ${mnap_subjectsfolder}/${CASE}/logs/comlog/ 2> /dev/null
+        cp ${mnap_subjectsfolder}/subjects/QC/${Modality}/*${CASE}*scene ${mnap_subjectsfolder}/${CASE}/QC/${Modality}/ 2> /dev/null
+        cp ${mnap_subjectsfolder}/subjects/QC/${Modality}/*${CASE}*zip ${mnap_subjectsfolder}/${CASE}/QC/${Modality}/ 2> /dev/null
     }
 
     # --------------- HCP Processing and relevant QC start ---------------------
@@ -1101,15 +1137,15 @@ fi
         ${MNAPCOMMAND} hcp2 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
         CleanupFiles=" talairach_with_skull.log lh.white.deformed.out lh.pial.deformed.out rh.white.deformed.out rh.pial.deformed.out"
         for CleanupFile in ${CleanupFiles}; do 
-            cp ${logdir}/${CleanupFile} ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/${CASES}/scripts/ 2>/dev/null
+            cp ${logdir}/${CleanupFile} ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/${CASE}/scripts/ 2>/dev/null
             rm -rf ${logdir}/${CleanupFile}
         done
-        rm -rf ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/fsaverage 2>/dev/null
-        rm -rf ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/rh.EC_average 2>/dev/null
-        rm -rf ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/lh.EC_average 2>/dev/null
-        cp -r $FREESURFER_HOME/subjects/lh.EC_average ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/ 2>/dev/null
-        cp -r $FREESURFER_HOME/subjects/fsaverage ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/ 2>/dev/null
-        cp -r $FREESURFER_HOME/subjects/rh.EC_average ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/T1w/ 2>/dev/null
+        rm -rf ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/fsaverage 2>/dev/null
+        rm -rf ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/rh.EC_average 2>/dev/null
+        rm -rf ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/lh.EC_average 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/lh.EC_average ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/fsaverage ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/rh.EC_average ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
     }
     # -- PostFreeSurfer
     turnkey_hcp3() {
@@ -1120,7 +1156,7 @@ fi
     turnkey_QCPreprocT1w() {
         Modality="T1w"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
-        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
+        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
         QCLogName="T1w"
         QCPreproc_Finalize
     }
@@ -1128,7 +1164,7 @@ fi
     turnkey_QCPreprocT2w() {
         Modality="T2w"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
-        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
+        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
         QCLogName="T2w"
         QCPreproc_Finalize
     }
@@ -1136,7 +1172,7 @@ fi
     turnkey_QCPreprocMyelin() {
         Modality="myelin"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
-        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
+        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
         QCLogName="Myelin"
         QCPreproc_Finalize
     }
@@ -1161,11 +1197,11 @@ fi
             if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
         fi
         if [ -z "${BOLDRUNS}" ]; then
-             BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+             BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
         fi
         for BOLDRUN in ${BOLDRUNS}; do
-            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
-            QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
+            QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             rename QCPreproc QCPreprocBOLD${BOLD} ${logdir}/comlogs/${QCPreprocComLog}
             rename QCPreproc QCPreprocBOLD${BOLD} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
@@ -1185,7 +1221,7 @@ fi
     turnkey_QCPreprocDWILegacy() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} legacy data ... "; echo ""
-        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}" --hcp_suffix="${HCPSuffix}"
+        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWILegacy"
         QCPreproc_Finalize
     }
@@ -1193,7 +1229,7 @@ fi
     turnkey_QCPreprocDWI() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} HCP processing ... "; echo ""
-        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
+        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWI"
         QCPreproc_Finalize
     }
@@ -1216,13 +1252,13 @@ fi
         # --bvecsfile='DWI_dir74_AP_b1000b2500.bvec' 
         # --mask='DWI_dir74_AP_b1000b2500_nodif_brain_mask.nii.gz' 
         #
-        ${MNAPCOMMAND} eddyQC --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
+        ${MNAPCOMMAND} eddyQC --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
     }
     # -- QCPreprocDWIeddyQC (after eddyQC)
     turnkey_QCPreprocDWIeddyQC() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} eddyQC ... "; echo ""
-        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
+        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIeddyQC"
         QCPreproc_Finalize
     }
@@ -1234,7 +1270,7 @@ fi
     # -- FSLDtifit (after hcpd or hcpdLegacy)
     turnkey_FSLDtifit() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : FSLDtifit for DWI... "; echo ""
-        ${MNAPCOMMAND} FSLDtifit --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}"
+        ${MNAPCOMMAND} FSLDtifit --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}"
     }
     # -- FSLBedpostxGPU (after FSLDtifit)
     turnkey_FSLBedpostxGPU() {
@@ -1243,13 +1279,13 @@ fi
         if [ -z "$Model" ]; then Model="3"; fi
         if [ -z "$Burnin" ]; then Burnin="3000"; fi
         if [ -z "$Rician" ]; then Rician="yes"; fi
-        ${MNAPCOMMAND} FSLBedpostxGPU --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
+        ${MNAPCOMMAND} FSLBedpostxGPU --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
     }
     # -- QCPreprocDWIDTIFIT (after FSLDtifit)
     turnkey_QCPreprocDWIDTIFIT() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} FSL's dtifit analyses ... "; echo ""
-        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
+        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIDTIFIT" 
         QCPreproc_Finalize
     }
@@ -1257,19 +1293,19 @@ fi
     turnkey_QCPreprocDWIBedpostX() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc steps for ${Modality} FSL's BedpostX analyses ... "; echo ""
-        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
+        ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${mnap_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIBedpostX" 
         QCPreproc_Finalize
     }
     # -- probtrackxGPUDense for DWI data (after FSLBedpostxGPU)
     turnkey_probtrackxGPUDense() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: probtrackxGPUDense ... "; echo ""
-        ${MNAPCOMMAND} probtrackxGPUDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+        ${MNAPCOMMAND} probtrackxGPUDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
     # -- pretractographyDense for DWI data (after FSLBedpostxGPU)
     turnkey_pretractographyDense() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: pretractographyDense ... "; echo ""
-        ${MNAPCOMMAND} pretractographyDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+        ${MNAPCOMMAND} pretractographyDense --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
     # -- DWIDenseParcellationfor DWI data (after pretractographyDense)
     turnkey_DWIDenseParcellation() {
@@ -1281,7 +1317,7 @@ fi
         if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevic_Network_Partition/final_LR_subcortex_atlas_v8_parcels_labelled.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
-            ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
+            ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
         done
     }
     # -- DWISeedTractography for DWI data (after pretractographyDense)
@@ -1293,14 +1329,14 @@ fi
             # Thalamus SomatomotorSensory
             SeedFile="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii" 
             OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
-            ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
             # Thalamus Prefrontal
             SeedFile="${TOOLS}/${MNAPREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii" 
             OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
-            ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
         fi
         OutNameGBC="DWI_GBC"
-        ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
+        ${MNAPCOMMAND} DWISeedTractography --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
     }
     #
     # --------------- DWI Processing and analyses end --------------------------
@@ -1326,24 +1362,24 @@ fi
                 if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
                 if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
                 if [ -z "${BOLDRUNS}" ]; then
-                     BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+                     BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
                      geho " --> BOLDs not explicitly requested. Will run all available data: ${BOLDRUNS} "
                 fi
                 echo "====> Looping through these BOLDRUNS: ${BOLDRUNS}"
                 for BOLDRUN in ${BOLDRUNS}; do
                     echo "----> Now working on BOLDRUN: ${BOLDRUN}"
-                    ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
-                    QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+                    ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
+                    QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
                     QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
                     rename QCPreproc QCPreprocCustomBOLD${BOLD} ${logdir}/comlogs/${QCPreprocComLog}
                     rename QCPreproc QCPreprocCustomBOLD${BOLD} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
                 done
             elif [[ ${Modality} == "DWI" ]]; then
-                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
+                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
                 QCLogName="Custom${Modality}"
                 QCPreproc_Finalize
             else
-                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
+                ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
                 QCLogName="Custom${Modality}"
                 if [[ ${Modality} == "myelin" ]]; then QCLogName="CustomMyelin"; fi
                 QCPreproc_Finalize
@@ -1372,10 +1408,10 @@ fi
         
         CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
         CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
-        mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
-        mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/runlog 2> /dev/null
-        cp ${CheckComLog} ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
-        cp ${CheckRunLog} ${mnap_subjectsfolder}/${CASES}/logs/runlog 2> /dev/null
+        mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
+        mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
+        cp ${CheckComLog} ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
+        cp ${CheckRunLog} ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
            
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
@@ -1469,24 +1505,24 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: g_PlotBoldTS QC plotting ... "; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         g_PlotBoldTS_Runlog="${logdir}/runlogs/Log-g_PlotBoldTS_${TimeStamp}.log"
-        g_PlotBoldTS_ComlogTmp="${logdir}/comlogs/tmp_g_PlotBoldTS_${XNAT_SESSION_LABELS}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
-        g_PlotBoldTS_ComlogError="${logdir}/comlogs/error_g_PlotBoldTS_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
-        g_PlotBoldTS_ComlogDone="${logdir}/comlogs/done_g_PlotBoldTS_${XNAT_SESSION_LABELS}_${TimeStamp}.log"
+        g_PlotBoldTS_ComlogTmp="${logdir}/comlogs/tmp_g_PlotBoldTS_${XNAT_SESSION_LABEL}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
+        g_PlotBoldTS_ComlogError="${logdir}/comlogs/error_g_PlotBoldTS_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
+        g_PlotBoldTS_ComlogDone="${logdir}/comlogs/done_g_PlotBoldTS_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
         
         if [ -z ${QCPlotElements} ]; then
               QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
         fi
         if [ -z ${QCPlotMasks} ]; then
-              QCPlotMasks="${mnap_subjectsfolder}/${CASES}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz"
+              QCPlotMasks="${mnap_subjectsfolder}/${CASE}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz"
         fi
         if [ -z ${images_folder} ]; then
-            images_folder="${mnap_subjectsfolder}/$CASES/images/functional"
+            images_folder="${mnap_subjectsfolder}/$CASE/images/functional"
         fi
         if [ -z ${output_folder} ]; then
-            output_folder="${mnap_subjectsfolder}/$CASES/images/functional/movement"
+            output_folder="${mnap_subjectsfolder}/$CASE/images/functional/movement"
         fi
         if [ -z ${output_name} ]; then
-            output_name="${CASES}_BOLD_GreyPlot_CIFTI.pdf"
+            output_name="${CASE}_BOLD_GreyPlot_CIFTI.pdf"
         fi
         if [ -z ${BOLDRUNS} ]; then
             BOLDRUNS="1"
@@ -1513,10 +1549,10 @@ fi
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo " -- Command: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "${MNAPCOMMAND} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASES}" --verbose="true"" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+           echo "${MNAPCOMMAND} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASE}" --verbose="true"" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            
-           ${MNAPCOMMAND} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASES}" --verbose="true"
+           ${MNAPCOMMAND} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASE}" --verbose="true"
            echo " -- Copying ${output_folder}/${output_name} to ${mnap_subjectsfolder}/QC/BOLD/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            cp ${output_folder}/${output_name} ${mnap_subjectsfolder}/QC/BOLD/
@@ -1569,7 +1605,7 @@ fi
            if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
            if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
            # -- Command
-           RunCommand="${MNAPCOMMAND} BOLDParcellation --subjects='${CASES}' \
+           RunCommand="${MNAPCOMMAND} BOLDParcellation --subjects='${CASE}' \
            --subjectsfolder='${mnap_subjectsfolder}' \
            --inputfile='${InputFileParcellation}' \
            --singleinputfile='${SingleInputFile}' \
@@ -1621,7 +1657,7 @@ fi
                 --subjectsfolder='${mnap_subjectsfolder}' \
                 --calculation='seed' \
                 --runtype='individual' \
-                --subjects='${CASES}' \
+                --subjects='${CASE}' \
                 --inputfiles='${InputFileSeed}' \
                 --inputpath='${InputPath}' \
                 --extractdata='${ExtractData}' \
@@ -1671,7 +1707,7 @@ fi
             --subjectsfolder='${mnap_subjectsfolder}' \
             --calculation='gbc' \
             --runtype='individual' \
-            --subjects='${CASES}' \
+            --subjects='${CASE}' \
             --inputfiles='${InputFileGBC}' \
             --inputpath='${InputPath}' \
             --extractdata='${ExtractData}' \
@@ -1699,11 +1735,11 @@ fi
         Modality="BOLD"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} FC ... "; echo ""
         if [ -z "${BOLDRUNS}" ]; then
-             BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASES}/hcp/${CASES}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+             BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
         fi
         for BOLDRUN in ${BOLDRUNS}; do
-            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASES}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
-            QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASES}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            ${MNAPCOMMAND} QCPreproc --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --outpath="${mnap_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
+            QCPreprocComLog=`ls -t1 ${logdir}/comlogs/*_QCPreproc_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             QCPreprocRunLog=`ls -t1 ${logdir}/runlogs/Log-QCPreproc_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             rename QCPreproc QCPreprocBOLDfc${BOLD} ${logdir}/comlogs/${QCPreprocComLog}
             rename QCPreproc QCPreprocBOLDfc${BOLD} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
@@ -1746,14 +1782,14 @@ for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     # -- Generate single subject log folders
     CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
     CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
-    mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
-    mkdir -p ${mnap_subjectsfolder}/${CASES}/logs/runlog 2> /dev/null
-    cp ${CheckComLog} ${mnap_subjectsfolder}/${CASES}/logs/comlog 2> /dev/null
-    cp ${CheckRunLog} ${mnap_subjectsfolder}/${CASES}/logs/runlog 2> /dev/null
+    mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
+    mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
+    cp ${CheckComLog} ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
+    cp ${CheckRunLog} ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
     
     Modalities="T1w T2w myelin BOLD DWI"
     for Modality in ${Modalities}; do
-        mkdir -p ${mnap_subjectsfolder}/${CASES}/QC/${Modality} 2> /dev/null
+        mkdir -p ${mnap_subjectsfolder}/${CASE}/QC/${Modality} 2> /dev/null
     done
 
     # -- Specific sets of functions for logging
@@ -1803,16 +1839,28 @@ done
 if [ ${TURNKEY_TYPE} == "xnat" ]; then
     geho "---> Setting recursive r+w+x permissions on ${mnap_studyfolder}"
     chmod -R 777 ${mnap_studyfolder} &> /dev/null
-    echo ""
-    geho "---> Uploading all logs to ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABELS}/experiments/${XNAT_SESSION_LABELS}/resources/MNAP_LOGS"
     cd ${processingdir}
     zip -r logs logs
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABELS}/experiments/${XNAT_SESSION_LABELS}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip
-    rm -rf ${processingdir}/logs.zip &> /dev/null
-    popd
+    if [[ ${BIDSFormat} == "yes" ]]; then
+        # -- Revert XNAT_SESSION_LABEL without the BIDS_EXPT_LABEL suffix
+        XNAT_SESSION_LABEL="${XNAT_SESSION_LABEL_ORIG}"
+        XNAT_EXPT_LABEL_FINAL="${XNAT_SESSION_LABEL}_${XNAT_EXPT_LABEL}"
+    else
+        XNAT_EXPT_LABEL_FINAL="${XNAT_EXPT_LABEL}"
+    fi
     echo ""
-    geho "---> Cleaning up: removing dicom folder"
-    rm -rf ${mnap_workdir}/dicom &> /dev/null
+    geho "---> Uploading all logs to ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABEL}/experiments/${XNAT_EXPT_LABEL_FINAL}/resources/MNAP_LOGS"
+    echo ""
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABEL}/experiments/${XNAT_EXPT_LABEL_FINAL}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip
+    echo ""
+    rm -rf ${processingdir}/logs.zip &> /dev/null
+    popd 2> /dev/null
+    if [[ ${BIDSFormat} != "yes" ]]; then
+        echo ""
+        geho "---> Cleaning up: removing dicom folder"
+        rm -rf ${mnap_workdir}/dicom &> /dev/null
+        echo ""
+    fi
 fi
 
 if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
