@@ -52,13 +52,19 @@ FROM ztamayo/mnap_dep:latest
 ADD . /opt/mnaptools
 WORKDIR /opt/mnaptools
 
-# Set Python path 
+# Set MNAP environment variables 
 ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
-    TOOLS="/opt"
+    TOOLS="/opt" \
+    MNAPREPO="/opt/mnaptools" \
+    OCTAVEDIR="/opt/Octave/Octave-4.4.1" \
+    PALMDIR="/opt/PALM/palm-latest-o" \
+    HCPWBDIR="/opt/workbench" \
+    OCTAVEPKGDIR="/opt/octavepkg" \
+    FSLDIR="/opt/fsl/fsl-6.0.0"
 
 # Copy over FreeSurfer license
-ADD library/etc/license.txt /opt/freesurfer-6.0/
-ADD library/etc/license.txt /opt/freesurfer-5.3-HCP/
+ADD library/etc/license.txt /opt/freesurfer/freesurfer-6.0/
+ADD library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/
 
 
 # Set environment
@@ -78,10 +84,10 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
     rm g_nifti.o && \
     rm znzlib.o && \
 # Set location for Octave to read octaverc file
-    rm /usr/local/share/octave/site/m/startup/octaverc && \
-    rm /usr/local/share/octave/4.4.1/m/startup/octaverc && \
-    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/site/m/startup/octaverc && \
-    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/4.4.1/m/startup/octaverc && \
+#    rm /usr/local/share/octave/site/m/startup/octaverc && \
+#    rm /usr/local/share/octave/4.4.1/m/startup/octaverc && \
+#    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/site/m/startup/octaverc && \
+#    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/4.4.1/m/startup/octaverc && \
 # Move libhdf5.so.8 to /opt/olib for Octave to compute BOLD
     cd /usr/lib64/ && \
     mkdir hdf5 && \

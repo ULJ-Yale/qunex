@@ -16,3 +16,6 @@
 [submodule "hcpextendedpull"]
 	path = hcpextendedpull
 	url = git@bitbucket.org:hidradev/hcpextendedpull.git
+[submodule "mnapcontainer"]
+	path = mnapcontainer
+	url = git@bitbucket.org:hidradev/mnapcontainer.git
