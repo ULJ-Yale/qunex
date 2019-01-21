@@ -56,16 +56,15 @@ WORKDIR /opt/mnaptools
 ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
     TOOLS="/opt" \
     MNAPREPO="/opt/mnaptools" \
-    OCTAVEDIR="/opt/Octave/Octave-4.4.1" \
-    PALMDIR="/opt/PALM/palm-latest-o" \
-    HCPWBDIR="/opt/workbench" \
-    OCTAVEPKGDIR="/opt/octavepkg" \
-    FSLDIR="/opt/fsl/fsl-6.0.0"
+    OCTAVEDIR="/opt/Octave/Octave-latest" \
+    palmDIR="/opt/palm/palm-latest-o" \
+    HCPWBDIR="/opt/workbench/workbench-latest" \
+    OCTAVEPKGDIR="/opt/octave/octavepkg" \
+    FSLDIR="/opt/fsl/fsl-5.0.9"
 
 # Copy over FreeSurfer license
 ADD library/etc/license.txt /opt/freesurfer/freesurfer-6.0/
 ADD library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/
-
 
 # Set environment
 RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
@@ -104,8 +103,8 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
     rm /tmp/netcdf-4.1.1-3.el6.5.x86_64.rpm && \
     rm /tmp/hdf5-1.8.5.patch1-10.el6.x86_64.rpm && \
 # Octave testing on Singularity
-    rm /opt/PALM/palm-alpha112o/fileio/@nifti/private/write_hdr_raw.m && \
-    cp /opt/mnaptools/library/etc/write_hdr_raw.m /opt/PALM/palm-alpha112o/fileio/@nifti/private && \
+    rm /opt/palm/palm-latest-o/fileio/@nifti/private/write_hdr_raw.m && \
+    cp /opt/mnaptools/library/etc/write_hdr_raw.m /opt/palm/palm-latest-o/fileio/@nifti/private && \
 # Install HCP Pipelines
 RUN mkdir -p /opt/HCP/Pipelines && \
     wget --progress=bar:force -O /tmp/freesurfer_v6_latest.tar.gz https://github.com/Washington-University/HCPpipelines/archive/feature/freesurfer_v6_latest.tar.gz && \
@@ -125,7 +124,7 @@ RUN mkdir -p /opt/HCP/Pipelines && \
 # CUSTOM: longmc
     cp /opt/HCP/Pipelines/FreeSurferCustomizations/longmc /opt/freesurfer/freesurfer-6.0/bin/longmc && \
     chmod 775 /opt/freesurfer/freesurfer-6.0/bin/longmc && \    
-    git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git 
+    git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git && \ 
 # Clean the environment and go to mnap folder
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \

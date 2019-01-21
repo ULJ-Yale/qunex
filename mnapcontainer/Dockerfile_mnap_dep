@@ -7,7 +7,7 @@
 ##
 # Tag: ztamayo/mnap_dep
 # Dockerfile for dependencies needed to run MNAP suite
-# Installs dependencies Python (+pkgs), R (+pkgs), Octave (+pkgs), Workbench, FreeSurfer 5.3-HCP, PALM, and Gradunwarp, FIX (removed), AFNI (removed)
+# Installs dependencies Python (+pkgs), R (+pkgs), octave (+pkgs), Workbench, FreeSurfer 5.3-HCP, palm, and Gradunwarp, FIX (removed), AFNI (removed)
 ##
 ##
 
@@ -20,9 +20,9 @@
 # │ 
 # ├── mnaptools                       --> Env. Variable => MNAPREPO -- All MNAP Suite repositories (https://bitbucket.org/hidradev/mnaptools) 
 # │ 
-# ├── HCPpipelines                    --> Human Connectome Pipelines Folder (https://github.com/Washington-University/HCPpipelines) 
-# │   ├── HCPpipelines-stable         --> Env. Variable => HCPPIPEDIR  Note: Only Human Connectome Pipelines Stable Branch is set by default 
-# │   ├── HCPpipelines-<VERSION>      --> Point any other desired version point to HCPPIPEDIR 
+# ├── HCP                             --> Human Connectome Pipelines Folder (https://github.com/Washington-University/HCPpipelines) 
+# │   ├── Pipelines-stable            --> Env. Variable => HCPPIPEDIR  Note: Only Human Connectome Pipelines Stable Branch is set by default 
+# │   ├── Pipelines-<VERSION>         --> Point any other desired version point to HCPPIPEDIR 
 # │   └── HCPpipelinesRunUtils        --> Env. Variable => HCPPIPERUNUTILS 
 # │ 
 # ├── fmriprep                        --> fMRIPrep Pipelines (https://github.com/poldracklab/fmriprep) 
@@ -46,15 +46,16 @@
 # │   └── fsl-<VERSION>               --> Env. Variable => FSLDIR 
 # │   └── fix-<VERSION>               --> Env. Variable => FSL_FIXDIR -- ICA FIX (https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIX/UserGuide) 
 # │ 
-# ├── Octave/Octave-<VERSION>         --> Octave v.4.4.1 or higher. If Octave is installed system-wide then a symlink is created here 
-# │   └── Octave-<VERSION>            --> Env. Variable => OCTAVEDIR 
+# ├── octave/octave-<VERSION>         --> octave v.4.4.1 or higher. If octave is installed system-wide then a symlink is created here 
+# │   └── octave-<VERSION>            --> Env. Variable => octaveDIR 
+# │   └── octavepkg                   --> Env. Variable => octavePKGDIR -- If octave packages need manual deployment then the installed packages go here 
+# │   └── olib                        --> All MNAP octave libraries
+# | 
 # │ 
-# ├── octavepkg                       --> Env. Variable => OCTAVEPKGDIR -- If Octave packages need manual deployment then the installed packages go here 
-# │ 
-# ├── PALM/palm-<VERSION>             --> PALM: Permutation Analysis of Linear Models (https://github.com/andersonwinkler/PALM) 
-# │   └── palm-latest-o               --> Env. Variable => PALMDIR (If using Octave) 
-# │   └── palm-latest-m               --> Env. Variable => PALMDIR (If using Matlab) 
-# │   └── palm-<VERSION>              --> Set any other version to PALMDIR  
+# ├── palm/palm-<VERSION>             --> palm: Permutation Analysis of Linear Models (https://github.com/andersonwinkler/palm) 
+# │   └── palm-latest-o               --> Env. Variable => palmDIR (If using octave) 
+# │   └── palm-latest-m               --> Env. Variable => palmDIR (If using Matlab) 
+# │   └── palm-<VERSION>              --> Set any other version to palmDIR  
 # │ 
 # ├── pylib                           --> Env. Variable => PYLIBDIR      -- All MNAP python libraries and tools 
 # │   ├── gradunwarp                  --> Env. Variable => GRADUNWARPDIR -- HCP version of gradunwarp (https://github.com/Washington-University/gradunwarp) 
@@ -116,17 +117,17 @@ RUN yum clean all && \
     Rscript -e "install.packages('ggplot2')"
 
 # Install Octave 4.4.1
-RUN echo "Installing Ocatve 4.4.1..." && \
+RUN echo "Installing Octave 4.4.1..." && \
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
-    mkdir -p /opt/Octave/Octave-4.4.1/bin && \
-    cd /opt/Octave/Octave-4.4.1/bin && \
+    mkdir -p /opt/octave/octave-4.4.1/bin && \
+    cd /opt/octave/octave-4.4.1/bin && \
     git clone https://github.com/ztamayo/octave-enable64.git && \
     cd octave-enable64 && \
     scl enable devtoolset-3 -- make -j$(nproc) && \
     alias octave="/usr/local/bin/octave --no-init-file" && \
     echo "alias octave='/usr/local/bin/octave --no-init-file'" >> ~/.bashrc && \
-# Install Octave packages
-    echo "Installing Octave packages..." && \
+# Install octave packages
+    echo "Installing octave packages..." && \
     export LD_LIBRARY_PATH=/usr/local/install/lib/octave/4.4.1/:LD_LIBRARY_PATH && \
     export LIBRARY_PATH=/usr/local/install/lib/octave/4.4.1/:LIBRARY_PATH && \
     ln -s /usr/local/install/lib/octave/4.4.1/liboctave.so /usr/lib64/ && \
@@ -168,14 +169,16 @@ RUN echo "Downloading dcm2niix..." && \
     tar -xzvf /tmp/fsl-5.0.9-centos6_64.tar.gz -C /opt/fsl/fsl-5.0.9 --strip-components 1 && \
     rm /tmp/fsl-5.0.9-centos6_64.tar.gz && \
     rm -R /opt/fsl/fsl-5.0.9/data/first/ && \
+    ln -sf /opt/fsl/fsl-5.0.9/ /opt/fsl/fsl-latest && \
+    export FSLDIR=/opt/fsl/fsl-latest && \
 # Install FSL 6.0.0
     echo "Downloading FSL 6.0.0..." && \
     mkdir -p /opt/fsl/fsl-6.0.0 && \
     wget --progress=bar:force -O /tmp/fsl-6.0.0-centos7_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.0-sources.tar.gz && \
     tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl/fsl-6.0.0 --strip-components 1 && \
     rm /tmp/fsl-6.0.0-centos7_64.tar.gz && \
-    rm -Rf /opt/fsl/fsl-6.0.0/data/first/ && \
-    export FSLDIR=/opt/fsl/fsl-6.0.0
+    rm -Rf /opt/fsl/fsl-6.0.0/data/first/ 
+    #export FSLDIR=/opt/fsl/fsl-6.0.0
     #. ${FSLDIR}/etc/fslconf/fsl.sh && \
     #$FSLDIR/etc/fslconf/post_install.sh -f $FSLDIR && \
 
@@ -194,29 +197,30 @@ RUN echo "Downloading FreeSurfer 6.0..." && \
     wget --progress=bar:force -O /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz ftp://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
     tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer/freesurfer-5.3-HCP/ --strip-components 1 && \
     rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
-    rm -R /opt/freesurfer/freesurfer-5.3-HCP/trctrain
+    rm -R /opt/freesurfer/freesurfer-5.3-HCP/trctrain && \
+    export FREESURFERDIR="/opt/freesurfer/freesurfer-5.3-HCP
 
 # Install PALM
 RUN echo "Installing PALM..." && \
-    mkdir -p /opt/PALM && \
+    mkdir -p /opt/palm && \
     wget --progress=bar:force -O /tmp/palm-alpha112.tar.gz https://s3-us-west-2.amazonaws.com/andersonwinkler/palm/palm-alpha112.tar.gz && \
-    tar -xzvf /tmp/palm-alpha112.tar.gz -C /opt/PALM && \
+    tar -xzvf /tmp/palm-alpha112.tar.gz -C /opt/palm && \
     rm /tmp/palm-alpha112.tar.gz && \
-    cd /opt/PALM && \
+    cd /opt/palm && \
     mv palm-alpha112/ palm-latest-o/ && \
-    cd /opt/PALM/palm-latest-o/fileio/@file_array/private && \
+    cd /opt/palm/palm-latest-o/fileio/@file_array/private && \
     ./compile.sh && \
     mv file2mat.m x-file2mat.m && \
     mv init.m x-init.m && \
-    cd /opt/PALM/palm-latest-o/fileio/@gifti/private && \
+    cd /opt/palm/palm-latest-o/fileio/@gifti/private && \
     ./compile.sh && \
     mv zstream.m x-zstream.m && \
-    cd /opt/PALM/palm-latest-o/fileio/@nifti/private && \
+    cd /opt/palm/palm-latest-o/fileio/@nifti/private && \
     mkoctfile --mex nifti_stats.c nifti_stats_mex.c -O && \
     mv nifti_stats.m x_nifti_stats.m && \
-    cd /opt/PALM/palm-latest-o/fileio/@xmltree/private && \
-    cp /opt/PALM/palm-latest-o/fileio/@file_array/private/compile.sh . && \
-    cp /opt/PALM/palm-latest-o/fileio/@file_array/private/Makefile.var . && \
+    cd /opt/palm/palm-latest-o/fileio/@xmltree/private && \
+    cp /opt/palm/palm-latest-o/fileio/@file_array/private/compile.sh . && \
+    cp /opt/palm/palm-latest-o/fileio/@file_array/private/Makefile.var . && \
     sed -e 's|^include ../../src/Makefile.var|include Makefile.var|' < Makefile > /tmp/Makefile && mv /tmp/Makefile Makefile && \
     ./compile.sh && \
     mv xml_findstr.m x-xml_findstr.m && \
@@ -225,12 +229,6 @@ RUN echo "Installing PALM..." && \
     cd /opt/pylib && \
     echo "Downloading Gradunwarp..." && \
     git clone https://github.com/Washington-University/gradunwarp.git
-
-# Install fMRIPrep
-#    mkdir -p /opt/fmriprep/fmriprep-latest && \
-#    cd /opt/fmriprep/fmriprep-latest && \
-#    echo "Downloading fMRIPrep..." && \
-#    git clone https://github.com/poldracklab/fmriprep.git /opt/fmriprep/fmriprep-latest && \
 
 WORKDIR /opt/pylib/gradunwarp/
 
@@ -256,6 +254,7 @@ RUN echo "Installing nibabel..." && \
     rm /tmp/workbench-rh_linux64.zip && \
     cd /opt/workbench && \
     mv workbench/ workbench-1.3.2/ && \
+    ln -sf /opt/workbench/workbench-1.3.2/ /opt/workbench/workbench-latest && \ 
     cd /opt/workbench/workbench-1.3.2/libs_rh_linux64 &&  \
     ln -s /usr/lib64/libz.so.1 && \
     cd /
@@ -271,24 +270,38 @@ RUN wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://d
     rm -rf ~/.cache/pip
 
 # Create Octave Sym Links
-# Link octave install to /usr/bin
+# Link Octave install to /usr/bin
 RUN ln -sf /usr/local/bin/octave /usr/bin/octave && \
     ln -sf /usr/local/bin/octave-config-4.4.1 /usr/bin/octave-config && \
     ln -sf /usr/local/bin/octave-cli-4.4.1 /usr/bin/octave-cli && \
     ln -sf /usr/local/bin/mkoctfile-4.4.1 /usr/bin/mkoctfile && \
-# Link octave install to /opt/Octave/4.2.1/bin
-    ln -sf /usr/local/bin/octave /opt/Octave/Octave-4.4.1/bin && \
-    ln -sf /usr/local/bin/octave-config-4.4.1 /opt/Octave/Octave-4.4.1/bin && \
-    ln -sf /usr/local/bin/octave-cli-4.4.1 /opt/Octave/Octave-4.4.1/bin && \
-    ln -sf /usr/local/bin/mkoctfile-4.4.1 /opt/Octave/Octave-4.4.1/bin && \
+# Link Octave install to /opt/octave/octave-4.4.1/bin
+    mkdir -p /opt/octave/octave-latest/bin && \
+    ln -sf /usr/local/bin/octave /opt/octave/octave-4.4.1/bin && \
+    ln -sf /usr/local/bin/octave /opt/octave/octave-latest/bin && \
+    ln -sf /usr/local/bin/octave-config-4.4.1 /opt/octave/octave-4.4.1/bin && \
+    ln -sf /usr/local/bin/octave-cli-4.4.1 /opt/octave/octave-4.4.1/bin && \
+    ln -sf /usr/local/bin/mkoctfile-4.4.1 /opt/octave/octave-4.4.1/bin && \
+    ln -sf /usr/local/bin/octave-config-4.4.1 /opt/octave/octave-latest/bin && \
+    ln -sf /usr/local/bin/octave-cli-4.4.1 /opt/octave/octave-latest/bin && \
+    ln -sf /usr/local/bin/mkoctfile-4.4.1 /opt/octave/octave-latest/bin && \
 # Create directory in $TOOLS for octave packages and libraries and add sym links
     mkdir -p /opt/octavepkg && \
-    ln -sf /usr/local/share/octave/packages /opt/octavepkg && \
-    mkdir -p /opt/olib && \
-    ln -sf /bin/epstool /opt/olib && \
-    ln -sf /bin/fig2dev /opt/olib && \
-    ln -sf /bin/pstoedit /opt/olib && \
-    ln -sf /usr/bin/hdf5 /opt/olib && \
+    ln -sf /usr/local/share/octave/packages/general-2.1.0 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/control-3.1.0 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/image-2.10.0 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/nan-3.1.4 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/signal-1.4.0 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/io-2.4.12 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/statistics-1.4.0 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/miscellaneous-1.2.1 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/struct-1.0.15 /opt/octave/octavepkg && \
+    ln -sf /usr/local/share/octave/packages/optim-1.5.3 /opt/octave/octavepkg && \
+    mkdir -p /opt/octave/olib && \
+    ln -sf /bin/epstool /opt/octave/olib && \
+    ln -sf /bin/fig2dev /opt/octave/olib && \
+    ln -sf /bin/pstoedit /opt/octave/olib && \
+    ln -sf /usr/bin/hdf5 /opt/octave/olib && \
 # Set up Python Sym Links
     ln -sf /usr/local/bin/python2.7 /opt/python && \
     mkdir -p /opt/pylib/lib/python2.7 && \
@@ -298,7 +311,11 @@ RUN ln -sf /usr/local/bin/octave /usr/bin/octave && \
     ln -sf /usr/lib/python2.7/site-packages/pydicom /opt/pylib/pydicom && \
     ln -sf /usr/lib/python2.7/site-packages/nibabel /opt/pylib/nibabel && \
 # Set Octave links
-    cd /opt/Octave/Octave-4.4.1/bin && \
+    cd /opt/octave/octave-4.4.1/bin && \
+    ln -sf octave-config-4.4.1 octave-config && \
+    ln -sf octave-cli-4.4.1 octave-cli && \
+    ln -sf mkoctfile-4.4.1 mkoctfile && \
+    cd /opt/octave/octave-latest/bin && \
     ln -sf octave-config-4.4.1 octave-config && \
     ln -sf octave-cli-4.4.1 octave-cli && \
     ln -sf mkoctfile-4.4.1 mkoctfile
