@@ -1795,12 +1795,7 @@ if [ "$1" == "--envsetup" ] || [ "$1" == "-envsetup" ] || [ "$1" == "envsetup" ]
     echo ""
     echo "Printing help call for $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh"
     echo ""
-    ${TOOLS}/$MNAPREPO/library/environment/mnap_environment.sh --help
-    exit 0
-fi
-
-if [ "$1" == "environment" ] || [ "$1" == "--environment" ] || [ "$1" == "-environment" ]; then
-    ${TOOLS}/$MNAPREPO/library/environment/mnap_environment.sh --environment
+    bash ${TOOLS}/$MNAPREPO/library/environment/mnap_environment.sh --help
     exit 0
 fi
 

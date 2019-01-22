@@ -133,20 +133,21 @@ usage() {
     echo "    --mappingfile=<mapping_file>                     File for mapping into desired file structure, e.g. hcp, which exist as a project-level resource on XNAT"
     echo "    --xnatprojectid=<name_of_xnat_project_id>        Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title."
     echo "    --xnathost=<xnat_host_url>                       Specify the XNAT site hostname URL to push data to."
-    echo "    --xnatsessionlabels=<xnat_subject_session_ids>   Name of subject session IDs within XNAT. If not provided then --subjects is needed."
-    echo "    --xnatexperimentlabel=<xnat_experiment_label>    Name of XNAT database experiemnt label Default is []. Parameter is Non-optional if --bidsformat='yes' "
-    echo "    --xnatstudyinputpath=<path>                      The path to the previously generated session data as mounted for the container. Default is /input/RESOURCES/mnap_session"
     echo "    --xnatuser=<xnat_host_user_name>                 Specify XNAT username."
-    echo "    --xnatpass=<xnat_host_user_pass>                 Specify XNAT password."
+    echo "    --xnatpass=<xnat_host_user_pass>                 Specify XNAT password."    
     echo ""
-    echo "  -- XNAT HOST OPTIONAL PARMETERS:"
+    echo "    --xnatsubjectlabel=<xnat_subject_label>            Subject label within a project for the XNAT database."
+    echo "    --xnatsubjectid=<xnat_subject_id>                  Subject ID across the entire XNAT database."
+    echo "    --xnataccsessionid=<xnat_session_accesession_id>   Session ID for subject-specific experiment across the entire XNAT project."
+    echo "    --xnatsessionlabel=<xnat_session_label>            Session label within XNAT, which may be general across multiple subjects (e.g. rest). Parameter is Non-optional if --bidsformat='yes'"
+    # echo "    --xnatexperimentlabel=<xnat_experiment_label>      Name of XNAT database experiment label Default is [].  "
+    echo "    --xnatstudyinputpath=<path>                        The path to the previously generated session data as mounted for the container. Default is /input/RESOURCES/mnap_session"
     echo ""
-    echo "    --xnataccsessionid=<accesession_id>           Identifier of a subject across the entire XNAT database."
     echo ""
     echo "  -- GENERAL PARMETERS:"
     echo ""
     echo "    --bidsformat=<specify_bids_input>                          Specify if input data is in BIDS format (yes/no). Default is [no]"
-    echo "                                                               Note: If --bidsformat='yes' and XNAT run is requested then --xnatexperimentlabel is required."
+    echo "                                                               Note: If --bidsformat='yes' and XNAT run is requested then --xnatsessionlabel is required."
     echo "                                                                     If --bidsformat='yes' and XNAT run is NOT requested then "
     echo "                                                                          BIDS data expected in --> <subjects_folder/inbox/BIDS"
     echo ""
@@ -247,13 +248,18 @@ unset OVERWRITE_PROJECT_FORCE
 unset OVERWRITE_PROJECT_XNAT
 unset OVERWRITE_SUBJECT
 unset SCAN_MAPPING_FILENAME
-unset XNAT_ACCSESSION_ID
-unset XNAT_SESSION_LABEL
-unset XNAT_PROJECT_ID
-unset XNAT_SUBJECT_ID
+
 unset XNAT_HOST_NAME
 unset XNAT_USER_NAME
 unset XNAT_PASSWORD
+unset XNAT_PROJECT_ID
+
+unset XNAT_ACCSESSION_ID
+unset XNAT_SUBJECT_ID
+unset XNAT_SUBJECT_LABEL
+unset XNAT_SESSION_LABEL
+unset XNAT_EXPT_LABEL
+
 unset TURNKEY_TYPE
 unset TURNKEY_STEPS
 unset workdir
@@ -264,7 +270,6 @@ unset CleanupSubject
 unset CleanupProject
 unset STUDY_PATH
 unset LOCAL_BATCH_FILE
-unset XNAT_EXPT_LABEL
 unset BIDSFormat
 
 echo ""
@@ -300,21 +305,40 @@ OVERWRITE_PROJECT_XNAT=`opts_GetOpt "--overwriteprojectxnat" $@`
 BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
 LOCAL_BATCH_FILE=`opts_GetOpt "--local_batchfile" $@`
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
-XNAT_ACCSESSION_ID=`opts_GetOpt "--xnataccsessionid" $@`
 
+#
+# project               --xnatprojectid        #  --> mapping in MNAP: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id
+#   │ 
+#   └──subject          --xnatsubjectid        #  --> mapping in MNAP: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Subject Accession ID corresponding to subject-level ID
+#        │              --xnatsubjectlabel     #  --> mapping in MNAP: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject-level XML label
+#        │ 
+#        └──experiment  --xnataccsessionid     #  --> mapping in MNAP: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Accession ID corresponding to session-level ID
+#                       --xnatsessionlabel     #  --> mapping in MNAP: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session-level XML label
+#                       --xnatexperimentlabel  #  --> mapping in MNAP: XNAT_EXPT_LABEL     --> mapping in JSON spec: #EXPT#           --> Corresponding to session-level XML label
+#
+
+XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
+XNAT_SUBJECT_ID=`opts_GetOpt "--xnatsubjectid" $@`
+XNAT_SUBJECT_LABEL=`opts_GetOpt "--xnatsubjectlabels" "$@"`
+
+if [ -z "$XNAT_SUBJECT_LABEL" ]; then
+XNAT_SUBJECT_LABEL=`opts_GetOpt "--xnatsubjectlabel" "$@"`
+fi
+XNAT_EXPT_LABEL=`opts_GetOpt "--xnatexperimentlabel" $@`
+XNAT_ACCSESSION_ID=`opts_GetOpt "--xnataccsessionid" $@`
 #XNAT_SESSION_LABELS=`opts_GetOpt "--xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
 XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabels" "$@"`
 if [ -z "$XNAT_SESSION_LABEL" ]; then
 XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabel" "$@"`
 fi
-
 XNAT_EXPT_LABEL=`opts_GetOpt "--xnatexperimentlabel" $@`
-XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
-XNAT_SUBJECT_ID=`opts_GetOpt "--xnatsubjectid" $@`
+
+
 XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
 XNAT_USER_NAME=`opts_GetOpt "--xnatuser" $@`
 XNAT_PASSWORD=`opts_GetOpt "--xnatpass" $@`
 XNAT_STUDY_INPUT_PATH=`opts_GetOpt "--xnatstudyinputpath" $@`
+
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
@@ -966,7 +990,7 @@ fi
                 ##                     
                 ##       --> EXPT_LABEL    ==> EXAMPLE in XML    ==> <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
                 ##                         ==> EXAMPLE in Web UI ==> MR Session:        A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
-                
+                ##
                 # -- Required variables for the BIDS XNAT download and MNAP mapping:
                 #
                 #  XNAT_USER_NAME
@@ -1001,8 +1025,13 @@ fi
 
             fi
             
+            # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
+            # if [[ CHECK FOR XNAT INPUT ]]; then 
+               # map 
+            # else 
             # -- Perform mapping of BIDS file structure into MNAP
             ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS" --action=copy --overwrite=yes --archive=delete >> ${mapRawData_ComlogTmp}
+            # fi
             
             echo ""
             geho " --> BIDSImport done"
