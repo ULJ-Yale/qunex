@@ -198,7 +198,7 @@ RUN echo "Downloading FreeSurfer 6.0..." && \
     tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer/freesurfer-5.3-HCP/ --strip-components 1 && \
     rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
     rm -R /opt/freesurfer/freesurfer-5.3-HCP/trctrain && \
-    export FREESURFERDIR="/opt/freesurfer/freesurfer-5.3-HCP
+    export FREESURFER_HOME="/opt/freesurfer/freesurfer-5.3-HCP"
 
 # Install PALM
 RUN echo "Installing PALM..." && \
@@ -224,6 +224,7 @@ RUN echo "Installing PALM..." && \
     sed -e 's|^include ../../src/Makefile.var|include Makefile.var|' < Makefile > /tmp/Makefile && mv /tmp/Makefile Makefile && \
     ./compile.sh && \
     mv xml_findstr.m x-xml_findstr.m && \
+    export PALMDIR="/opt/palm/palm-latest-o" && \
 # Git clone Gradunwarp
     mkdir -p /opt/pylib && \
     cd /opt/pylib && \
@@ -257,6 +258,7 @@ RUN echo "Installing nibabel..." && \
     ln -sf /opt/workbench/workbench-1.3.2/ /opt/workbench/workbench-latest && \ 
     cd /opt/workbench/workbench-1.3.2/libs_rh_linux64 &&  \
     ln -s /usr/lib64/libz.so.1 && \
+    export WORKBENCHDIR="/opt/workbench/workbench-latest" && \
     cd /
 # Install CUDA
 RUN wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-7.5-18.x86_64.rpm && \
@@ -286,7 +288,7 @@ RUN ln -sf /usr/local/bin/octave /usr/bin/octave && \
     ln -sf /usr/local/bin/octave-cli-4.4.1 /opt/octave/octave-latest/bin && \
     ln -sf /usr/local/bin/mkoctfile-4.4.1 /opt/octave/octave-latest/bin && \
 # Create directory in $TOOLS for octave packages and libraries and add sym links
-    mkdir -p /opt/octavepkg && \
+    mkdir -p /opt/octave/octavepkg && \
     ln -sf /usr/local/share/octave/packages/general-2.1.0 /opt/octave/octavepkg && \
     ln -sf /usr/local/share/octave/packages/control-3.1.0 /opt/octave/octavepkg && \
     ln -sf /usr/local/share/octave/packages/image-2.10.0 /opt/octave/octavepkg && \
@@ -318,7 +320,11 @@ RUN ln -sf /usr/local/bin/octave /usr/bin/octave && \
     cd /opt/octave/octave-latest/bin && \
     ln -sf octave-config-4.4.1 octave-config && \
     ln -sf octave-cli-4.4.1 octave-cli && \
-    ln -sf mkoctfile-4.4.1 mkoctfile
+    ln -sf mkoctfile-4.4.1 mkoctfile && \
+# Set R Sym Link
+    mkdir -p /opt/R && \
+    ln -sf /usr/bin/R /opt/R && \
+    mv R R-latest
 
 CMD ["bash"]
 

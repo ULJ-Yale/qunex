@@ -49,16 +49,16 @@
 FROM ztamayo/mnap_dep:latest
 
 # Define where the mnaptools repo resides on the image
-ADD . /opt/mnaptools
-WORKDIR /opt/mnaptools
+#ADD . /opt/mnaptools
+#WORKDIR /opt/mnaptools
 
 # Set MNAP environment variables 
 ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
     TOOLS="/opt" \
     MNAPREPO="/opt/mnaptools" \
-    OCTAVEDIR="/opt/Octave/Octave-latest" \
-    palmDIR="/opt/palm/palm-latest-o" \
-    HCPWBDIR="/opt/workbench/workbench-latest" \
+    OCTAVEBINDIR="/opt/octave/octave-latest/bin" \
+    PALMDIR="/opt/palm/palm-latest-o" \
+    WORKBENCHDIR="/opt/workbench/workbench-latest" \
     OCTAVEPKGDIR="/opt/octave/octavepkg" \
     FSLDIR="/opt/fsl/fsl-5.0.9"
 
@@ -66,8 +66,15 @@ ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
 ADD library/etc/license.txt /opt/freesurfer/freesurfer-6.0/
 ADD library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/
 
+# Clone MNAP repository
+RUN cd /opt && \
+    git clone git@bitbucket.org:hidradev/mnaptools.git && \
+    git submodule init && \
+    git pull --recurse-submodules && git submodule update --recursive && \
+    git submodule foreach git pull origin master && \
 # Set environment
-RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
+    chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
+    source /opt/mnaptools/library/environment/mnap_environment.sh && \
     ln /opt/mnaptools/library/environment/mnap_environment.sh /etc/profile.d/mnap_environment.sh && \
 # Add .container file to the /opt folder
     touch /opt/.container && \
@@ -106,7 +113,7 @@ RUN chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
     rm /opt/palm/palm-latest-o/fileio/@nifti/private/write_hdr_raw.m && \
     cp /opt/mnaptools/library/etc/write_hdr_raw.m /opt/palm/palm-latest-o/fileio/@nifti/private && \
 # Install HCP Pipelines
-RUN mkdir -p /opt/HCP/Pipelines && \
+    mkdir -p /opt/HCP/Pipelines && \
     wget --progress=bar:force -O /tmp/freesurfer_v6_latest.tar.gz https://github.com/Washington-University/HCPpipelines/archive/feature/freesurfer_v6_latest.tar.gz && \
     tar -xzvf /tmp/freesurfer_v6_latest.tar.gz -C /opt/HCP/Pipelines --strip-components=1 && \
     rm /tmp/freesurfer_v6_latest.tar.gz && \
