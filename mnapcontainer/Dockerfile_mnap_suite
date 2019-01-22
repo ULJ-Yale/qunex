@@ -68,7 +68,8 @@ ADD library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/
 
 # Clone MNAP repository
 RUN cd /opt && \
-    git clone git@bitbucket.org:hidradev/mnaptools.git && \
+    git clone https://ztamayo:4Dv5xFYwhKJhW2HzJbUK@bitbucket.org/hidradev/mnaptools.git && \
+    cd mnaptools/ && \
     git submodule init && \
     git pull --recurse-submodules && git submodule update --recursive && \
     git submodule foreach git pull origin master && \
