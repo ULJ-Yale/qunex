@@ -62,23 +62,27 @@ ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
     OCTAVEPKGDIR="/opt/octave/octavepkg" \
     FSLDIR="/opt/fsl/fsl-5.0.9"
 
-# Copy over FreeSurfer license
-ADD library/etc/license.txt /opt/freesurfer/freesurfer-6.0/
-ADD library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/
-
-# Clone MNAP repository
+# Git clone MNAP repositiory
 RUN cd /opt && \
-    git clone https://ztamayo:4Dv5xFYwhKJhW2HzJbUK@bitbucket.org/hidradev/mnaptools.git && \
+    git clone https://ztamayo:jqNNVL9GqnyRBVsSGWHh@bitbucket.org/hidradev/mnaptools.git && \
     cd mnaptools/ && \
-    git submodule init && \
-    git pull --recurse-submodules && git submodule update --recursive && \
-    git submodule foreach git pull origin master && \
+    git clone https://ztamayo:jqNNVL9GqnyRBVsSGWHh@bitbucket.org/hidradev/connector.git && \
+    git clone https://ztamayo:jqNNVL9GqnyRBVsSGWHh@bitbucket.org/hidradev/library.git && \
+    git clone https://ztamayo:jqNNVL9GqnyRBVsSGWHh@bitbucket.org/hidradev/niutilities.git && \
+    git clone https://ztamayo:jqNNVL9GqnyRBVsSGWHh@bitbucket.org/hidradev/matlab.git && \
+    git clone https://ztamayo:jqNNVL9GqnyRBVsSGWHh@bitbucket.org/hidradev/hcpmodified.git && \
+    git clone https://ztamayo:jqNNVL9GqnyRBVsSGWHh@bitbucket.org/hidradev/hcpextendedpull.git && \
 # Set environment
     chmod a+x /opt/mnaptools/library/etc/cs-wrapper.sh && \
-    source /opt/mnaptools/library/environment/mnap_environment.sh && \
+    echo "source /opt/mnaptools/library/environment/mnap_environment.sh" >> /etc/profile && \
+    echo "TOOLS='/opt'" >> /etc/profile && \
+    echo "export $TOOLS" >> /etc/profile && \
     ln /opt/mnaptools/library/environment/mnap_environment.sh /etc/profile.d/mnap_environment.sh && \
 # Add .container file to the /opt folder
     touch /opt/.container && \
+# Copy over FreeSurfer license
+    cp /opt/mnaptools/library/etc/license.txt /opt/freesurfer/freesurfer-6.0/ && \
+    cp /opt/mnaptools/library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/ && \
 # Set Octave as default
     touch ~/.mnapuseoctave && \
     cd matlab/gmri/\@gmrimage && \
@@ -91,10 +95,10 @@ RUN cd /opt && \
     rm g_nifti.o && \
     rm znzlib.o && \
 # Set location for Octave to read octaverc file
-#    rm /usr/local/share/octave/site/m/startup/octaverc && \
-#    rm /usr/local/share/octave/4.4.1/m/startup/octaverc && \
-#    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/site/m/startup/octaverc && \
-#    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/4.4.1/m/startup/octaverc && \
+    rm /usr/local/share/octave/site/m/startup/octaverc && \
+    rm /usr/local/share/octave/4.4.1/m/startup/octaverc && \
+    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/site/m/startup/octaverc && \
+    cp /opt/mnaptools/library/.octaverc /usr/local/share/octave/4.4.1/m/startup/octaverc && \
 # Move libhdf5.so.8 to /opt/olib for Octave to compute BOLD
     cd /usr/lib64/ && \
     mkdir hdf5 && \
@@ -136,7 +140,9 @@ RUN cd /opt && \
 # Clean the environment and go to mnap folder
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \
-    rm -rf ~/.cache/pip && \
-    cd /opt/mnaptools
+    rm -rf ~/.cache/pip
+
+# Set mnaptools as working directory
+WORKDIR /opt/mnaptools
 
 CMD ["bash"]

@@ -84,7 +84,8 @@ ENV PATH="/opt" \
     PATH="/opt/pylib/nibabel:$PATH" \
     PYDICOMDIR="/opt/pylib/pydicom" \
     PATH="/opt/pylib/pydicom:$PATH" \
-    LD_LIBRARY_PATH="/usr/local/install/lib/octave/4.4.1/:$LD_LIBRARY_PATH"
+    LD_LIBRARY_PATH="/usr/local/install/lib/octave/4.4.1/:$LD_LIBRARY_PATH" \
+    PATH="/opt/dcm2niix/dcm2niix-latest/bin:$PATH"
 
 # Run yum update
 RUN yum clean all && \
@@ -124,8 +125,8 @@ RUN echo "Installing Octave 4.4.1..." && \
     git clone https://github.com/ztamayo/octave-enable64.git && \
     cd octave-enable64 && \
     scl enable devtoolset-3 -- make -j$(nproc) && \
-    alias octave="/usr/local/bin/octave --no-init-file" && \
-    echo "alias octave='/usr/local/bin/octave --no-init-file'" >> ~/.bashrc && \
+#    alias octave="/usr/local/bin/octave --no-init-file" && \
+#    echo "alias octave='/usr/local/bin/octave --no-init-file'" >> ~/.bashrc && \
 # Install octave packages
     echo "Installing octave packages..." && \
     export LD_LIBRARY_PATH=/usr/local/install/lib/octave/4.4.1/:LD_LIBRARY_PATH && \
@@ -146,9 +147,6 @@ RUN echo "Installing Octave 4.4.1..." && \
     yum clean all && \
     rm -rf /var/lib/yum/lists/* /var/cache/yum/ /tmp/* /var/tmp/* /boot /media /mnt /srv && \
     rm -rf ~/.cache/pip
-    
-# Set dcm2niix path
-ENV PATH="/opt/dcm2niix/dcm2niix-latest/bin:$PATH" 
 
 # Install dcm2niix
 RUN echo "Downloading dcm2niix..." && \
@@ -178,9 +176,9 @@ RUN echo "Downloading dcm2niix..." && \
     tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl/fsl-6.0.0 --strip-components 1 && \
     rm /tmp/fsl-6.0.0-centos7_64.tar.gz && \
     rm -Rf /opt/fsl/fsl-6.0.0/data/first/ 
-    #export FSLDIR=/opt/fsl/fsl-6.0.0
-    #. ${FSLDIR}/etc/fslconf/fsl.sh && \
-    #$FSLDIR/etc/fslconf/post_install.sh -f $FSLDIR && \
+#    export FSLDIR=/opt/fsl/fsl-6.0.0
+#    . ${FSLDIR}/etc/fslconf/fsl.sh && \
+#    $FSLDIR/etc/fslconf/post_install.sh -f $FSLDIR && \
 
 # Install FreeSurfer 6.0
 RUN echo "Downloading FreeSurfer 6.0..." && \
@@ -229,24 +227,21 @@ RUN echo "Installing PALM..." && \
     mkdir -p /opt/pylib && \
     cd /opt/pylib && \
     echo "Downloading Gradunwarp..." && \
-    git clone https://github.com/Washington-University/gradunwarp.git
-
-WORKDIR /opt/pylib/gradunwarp/
-
+    git clone https://github.com/Washington-University/gradunwarp.git && \
+    cd /opt/pylib/gradunwarp/ && \
 # Install Gradunwarp
-RUN echo "Installing Gradunwarp..." && \
+    echo "Installing Gradunwarp..." && \
     python setup.py install && \
 # Download nibabel
     echo "Downloading nibabel..." && \
     wget --progress=bar:force -O /tmp/nibabel-1.2.0.dev.tar.gz https://github.com/downloads/ksubramz/gradunwarp/nibabel-1.2.0.dev.tar.gz && \
     tar -xzvf /tmp/nibabel-1.2.0.dev.tar.gz -C /opt/pylib && \
-    rm /tmp/nibabel-1.2.0.dev.tar.gz 
-
-WORKDIR /opt/pylib/nibabel-1.2.0.dev/
-
+    rm /tmp/nibabel-1.2.0.dev.tar.gz && \
+    cd /opt/pylib/nibabel-1.2.0.dev/ && \
 # Install nibabel
-RUN echo "Installing nibabel..." && \
-    python setup.py install && \
+    echo "Installing nibabel..." && \
+    python setup.py install
+
 # Install Workbench
     echo "Downloading workbench..." && \
     mkdir -p /opt/workbench && \
@@ -259,9 +254,9 @@ RUN echo "Installing nibabel..." && \
     cd /opt/workbench/workbench-1.3.2/libs_rh_linux64 &&  \
     ln -s /usr/lib64/libz.so.1 && \
     export WORKBENCHDIR="/opt/workbench/workbench-latest" && \
-    cd /
+    cd / && \
 # Install CUDA
-RUN wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-7.5-18.x86_64.rpm && \
+    wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-7.5-18.x86_64.rpm && \
     rpm -i /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm && \
     yum clean all expire-cache &&\
     yum -y update mesa-libGL && \
@@ -324,7 +319,11 @@ RUN ln -sf /usr/local/bin/octave /usr/bin/octave && \
 # Set R Sym Link
     mkdir -p /opt/R && \
     ln -sf /usr/bin/R /opt/R && \
-    mv R R-latest
+    cd /opt/R && \
+    mv R R-latest && \
+    cd /opt
+
+WORKDIR /opt
 
 CMD ["bash"]
 
