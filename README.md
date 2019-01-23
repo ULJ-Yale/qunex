@@ -398,6 +398,7 @@ Change Log
 * 0.31.01 [niutilities] Added on the fly gzipping of bids files
 * 0.31.02 [library connector] Cleaning up environment settings
 * 0.31.03 [library connector] Futher improvements in the environment management
+* 0.31.04 [hcpmodified] Bugfix with subjectfolder in fMRIVolume
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
