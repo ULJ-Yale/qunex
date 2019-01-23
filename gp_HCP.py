@@ -356,7 +356,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         if options['hcp_avgrdcmethod'] == 'TOPUP':
 
             try:
-                T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] = 'T1w'][0]
+                T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
                 senum = T1v.get('se', None)
                 if senum:
                     tufolder = os.path.join(hcp['base', 'SpinEchoFieldMap%d_fncb' % (senum)])
@@ -2145,7 +2145,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     boldok = False
 
                 elif options['hcp_bold_seimg'] == 'first':
-                    if firstSE not None:
+                    if firstSE is None:
                         spinN = sepresent[0]
                         r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
                     else:
