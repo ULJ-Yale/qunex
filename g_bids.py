@@ -195,7 +195,7 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
 
 def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', archive='move', bidsname=None):
     '''
-    gmri BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
+    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
     
     USE
     ===
@@ -212,8 +212,11 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
     --inbox             The location of the BIDS dataset. It can be any of the
                         following: the BIDS dataset top folder, a folder that 
                         contains the BIDS dataset, a path to the compressed 
-                        `.zip` or `.tar.gz` package with the BIDS dataset or a
-                        folder that contains a compressed package. The default
+                        `.zip` or `.tar.gz` package that can contain a single 
+                        subject or a multi-subject dataset, or a folder that 
+                        contains a compressed package. For instance the user 
+                        can specify "<path>/<bids_file>.zip" or "<path>" to
+                        a folder that contains multiple packages. The default 
                         location where the command will look for a BIDS dataset
                         is [<subjectsfolder>/inbox/BIDS]
 

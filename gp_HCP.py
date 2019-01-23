@@ -350,28 +350,45 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         sepos       = 'NONE'
         seneg       = 'NONE'
         topupconfig = 'NONE'
+        senum       = None
+        tufolder    = None
 
         if options['hcp_avgrdcmethod'] == 'TOPUP':
-            try:
-                tufolder = glob.glob(os.path.join(hcp['base'], 'SpinEchoFieldMap*'))
-                tufolder = tufolder[0]
-                sepos    = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "_*"))[0]
-                seneg    = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "_*"))[0]
 
-                if options['hcp_topupconfig'] != 'NONE':
-                    if not os.path.exists(options['hcp_topupconfig']):
-                        topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_topupconfig'])
-                        if not os.path.exists(topupconfig):
-                            r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_topupconfig'])
-                            run = False
+            try:
+                T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] = 'T1w'][0]
+                senum = T1v.get('se', None)
+                if senum:
+                    tufolder = os.path.join(hcp['base', 'SpinEchoFieldMap%d_fncb' % (senum)])
+            except:
+                pass
+
+            if senum is None:
+                try:
+                    tufolder = glob.glob(os.path.join(hcp['base'], 'SpinEchoFieldMap*'))
+                    tufolder = tufolder[0]
+                except:
+                    r += "\n---> ERROR: Could not find folder with files for TOPUP processing of subject %s." % (sinfo['id'])
+                    run = False
+            
+            if tufolder:
+                try:
+                    sepos    = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "_*"))[0]
+                    seneg    = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "_*"))[0]
+
+                    if options['hcp_topupconfig'] != 'NONE':
+                        if not os.path.exists(options['hcp_topupconfig']):
+                            topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_topupconfig'])
+                            if not os.path.exists(topupconfig):
+                                r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_topupconfig'])
+                                run = False
+                            else:
+                                r += "\n---> TOPUP configuration file present."
                         else:
                             r += "\n---> TOPUP configuration file present."
-                    else:
-                        r += "\n---> TOPUP configuration file present."
-            except:
-                r += "\n---> ERROR: Could not find files for TOPUP processing of subject %s." % (sinfo['id'])
-                # raise
-                run = False
+                except:
+                    r += "\n---> ERROR: Could not find files for TOPUP processing of subject %s." % (sinfo['id'])
+                    run = False    
 
         elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap':
             if os.path.exists(hcp['fmapge']):
@@ -2084,12 +2101,17 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         boldsData = []
 
+        firstSE = bolds[0][3].get('se', None)
+
         for bold, boldname, boldtask, boldinfo in bolds:
 
             # --- set unwarpdir
 
             if "o" in boldinfo:
                 orient    = "_" + boldinfo['o']
+                unwarpdir = unwarpdirs[boldinfo['o']]
+            if 'fenc' in boldinfo:
+                orient    = "_" + boldinfo['fenc']
                 unwarpdir = unwarpdirs[boldinfo['o']]
             else:
                 orient = ""
@@ -2123,18 +2145,25 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     boldok = False
 
                 elif options['hcp_bold_seimg'] == 'first':
-                    spinN = sepresent[0]
+                    if firstSE not None:
+                        spinN = sepresent[0]
+                        r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
+                    else:
+                        spinN = firstSE
+                        r += "\n     ... using the spin echo fieldmap set for the first bold run, %d" % (spinN)
                     spinOne = sepairs[spinN]['spinOne']
                     spinTwo = sepairs[spinN]['spinTwo']
-                    r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
 
                 else:
                     spinN = False
-                    for sen in sepresent:
-                        if sen <= bold:
-                            spinN = sen
-                        elif not spinN:
-                            spinN = sen
+                    if 'se' in boldinfo:
+                        spinN = boldinfo['se']
+                    else:
+                        for sen in sepresent:
+                            if sen <= bold:
+                                spinN = sen
+                            elif not spinN:
+                                spinN = sen
                     spinOne = sepairs[spinN]['spinOne']
                     spinTwo = sepairs[spinN]['spinTwo']
                     r += "\n     ... using spin echo fieldmap set %d" % (spinN)
@@ -2144,7 +2173,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 if spinN != spinP:
                     spinP = spinN
                     futureref = "NONE"
-
 
             # --- check for Siemens double TE-fieldmap image
 
@@ -2199,8 +2227,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 'refimg':    refimg,
                 'unwarpdir': unwarpdir,
                 'spinOne':   spinOne,
-                'spinTwo':  spinTwo,
-                'fmriref':  fmriref}
+                'spinTwo':   spinTwo,
+                'fmriref':   fmriref}
             boldsData.append(b)
 
         # --- Process

@@ -81,24 +81,45 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                         frequency readout direction
     DWI             ... Diffusion weighted image
 
+    
+    In addition to these parameters, it is also possible to optionally specify, 
+    which spin-echo image to use for distortion correction, by adding 
+    `:se(<number of se image>)` to the line, as well as frequency encoding
+    direction by adding `:fenc(<direction>)` to the line. In case of 
+    spin-echo images themselves, the number denotes the number of the
+    image itself.
+    
+    If these information are not provided the spin-echo image to use will be
+    deduced based on the order of images, and frequency encoding direction 
+    will be taken as default from the relevant HCP processing parameters
+    (e.g `--hcp_bold_unwarpdir='y'`). 
+
+    Do note that if you provide `se` information for the spin-echo image,
+    you have to also provide it for all the images that are to use the
+    spin-echo pair and vice-versa. If not, the matching algorithm will have
+    incomplete information and might fail.
+
+
     Example definition
     ------------------
 
     hcpready: true
     01:                 :Survey
-    02: T1w             :T1w 0.7mm N1
-    03: T2w             :T2w 0.7mm N1
+    02: T1w             :T1w 0.7mm N1             : se(1)
+    03: T2w             :T2w 0.7mm N1             : se(1)
     04:                 :Survey
-    05: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P
-    06: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A
-    07: bold1:WM        :BOLD 3mm 48 2.5s
-    08: bold2:WM        :BOLD 3mm 48 2.5s
-    09: bold3:WM        :BOLD 3mm 48 2.5s
-    10: bold4:WM        :BOLD 3mm 48 2.5s
-    11: bold5:WM        :BOLD 3mm 48 2.5s
-    12: bold6:WM        :BOLD 3mm 48 2.5s
-    13: bold7:rest      :RSBOLD 3mm 48 2.5s
-    14: bold8:rest      :RSBOLD 3mm 48 2.5s
+    05: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P  : se(1)
+    06: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A  : se(1)
+    07: bold1:WM        :BOLD 3mm 48 2.5s         : se(1) :fenc(AP)
+    08: bold2:WM        :BOLD 3mm 48 2.5s         : se(1) :fenc(AP)
+    09: bold3:WM        :BOLD 3mm 48 2.5s         : se(1) :fenc(AP)    
+    10: bold4:WM        :BOLD 3mm 48 2.5s         : se(1) :fenc(AP)
+    11: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P  : se(2)
+    12: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A  : se(2)
+    13: bold5:WM        :BOLD 3mm 48 2.5s         : se(2) :fenc(AP)
+    14: bold6:WM        :BOLD 3mm 48 2.5s         : se(2) :fenc(AP)
+    15: bold7:rest      :RSBOLD 3mm 48 2.5s       : se(2) :fenc(AP)
+    16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :fenc(PA)
 
 
     MULTIPLE SUBJECTS AND SCHEDULING
@@ -240,19 +261,35 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
         elif v['name'] == "SE-FM-AP":
             sfile = k + ".nii.gz"
             tfile = sid + "_fncb_BOLD_AP_SB_SE.nii.gz"
-            tfold = "SpinEchoFieldMap" + boldn + "_fncb"
+            if 'se' in v:
+                senum = v['se']
+            else:
+                senum = boldn
+            tfold = "SpinEchoFieldMap" + senum + "_fncb"
         elif v['name'] == "SE-FM-PA":
             sfile = k + ".nii.gz"
             tfile = sid + "_fncb_BOLD_PA_SB_SE.nii.gz"
-            tfold = "SpinEchoFieldMap" + boldn + "_fncb"
+            if 'se' in v:
+                senum = v['se']
+            else:
+                senum = boldn
+            tfold = "SpinEchoFieldMap" + senum + "_fncb"
         elif v['name'] == "SE-FM-LR":
             sfile = k + ".nii.gz"
             tfile = sid + "_fncb_BOLD_LR_SB_SE.nii.gz"
-            tfold = "SpinEchoFieldMap" + boldn + "_fncb"
+            if 'se' in v:
+                senum = v['se']
+            else:
+                senum = boldn
+            tfold = "SpinEchoFieldMap" + senum + "_fncb"
         elif v['name'] == "SE-FM-RL":
             sfile = k + ".nii.gz"
             tfile = sid + "_fncb_BOLD_RL_SB_SE.nii.gz"
-            tfold = "SpinEchoFieldMap" + boldn + "_fncb"
+            if 'se' in v:
+                senum = v['se']
+            else:
+                senum = boldn
+            tfold = "SpinEchoFieldMap" + senum + "_fncb"
         elif v['name'] == "DWI":
             sfile = [k + e for e in ['.nii.gz', '.bval', '.bvec']]
             tbase = "_".join([sid, 'DWI', v['task']])

@@ -82,6 +82,13 @@ dicom2niix   [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [ver
 processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [verbose=yes]
 getDICOMInfo dicomfile=<dicom_file> [scanner=siemens]
 
+import utilities
+----------------
+BIDSImport   [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
+mapBIDS2nii  [sfolder='.'] [overwrite='no']
+HCPLSImport  [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
+mapHCPLS2nii [sfolder='.'] [overwrite='no']
+
 
 WUSTL NIL pipeline utilities
 ----------------------------
@@ -243,6 +250,8 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'getDICOMInfo'         : {'com': niu.g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
             'BIDSImport'           : {'com': niu.g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'action', 'overwrite', 'archive', 'bidsName')},
             'mapBIDS2nii'          : {'com': niu.g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite')},
+            'HCPLSImport'          : {'com': niu.g_hcpls.HCPLSImport,            'args': ('subjectsfolder', 'inbox', 'action', 'overwrite', 'archive', 'hcplsName')},
+            'mapHCPLS2nii'         : {'com': niu.g_hcpls.mapHCPLS2nii,           'args': ('sfolder', 'overwrite')},
             'runNILFolder'         : {'com': niu.g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'sfile')},
             'runNIL'               : {'com': niu.g_4dfp.runNIL,                  'args': ('folder', 'overwite', 'sfile')},
             'fz2zf'                : {'com': niu.g_NIfTI.fz2zf,                  'args': ('inf', 'outf')},
