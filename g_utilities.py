@@ -77,10 +77,10 @@ def manageStudy(studyfolder=None, action="create"):
                ['processing', 'lists'], 
                ['processing', 'scripts'],
                ['processing', 'scenes'], ['processing', 'scenes', 'QC'], ['processing', 'scenes', 'QC', 'T1w'], ['processing', 'scenes', 'QC', 'T2w'], ['processing', 'scenes', 'QC', 'myelin'], ['processing', 'scenes', 'QC', 'BOLD'], ['processing', 'scenes', 'QC', 'DWI'],
-               ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'], ['info', 'bids'],
+               ['info'], ['info', 'demographics'], ['info', 'tasks'], ['info', 'stimuli'], ['info', 'bids'], ['info', 'hcpls'],
                ['subjects'], 
-               ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'BIDS'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
-               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'BIDS'], ['subjects', 'archive', 'behavior'], 
+               ['subjects', 'inbox'], ['subjects', 'inbox', 'MR'], ['subjects', 'inbox', 'EEG'], ['subjects', 'inbox', 'BIDS'], ['subjects', 'inbox', 'HCPLS'], ['subjects', 'inbox', 'behavior'], ['subjects', 'inbox', 'concs'], ['subjects', 'inbox', 'events'],
+               ['subjects', 'archive'], ['subjects', 'archive', 'MR'], ['subjects', 'archive', 'EEG'], ['subjects', 'archive', 'BIDS'], ['subjects', 'archive', 'HCPLS'], ['subjects', 'archive', 'behavior'], 
                ['subjects', 'specs'], 
                ['subjects', 'QC']]
 
@@ -163,6 +163,7 @@ def createStudy(studyfolder=None):
     ├── info
     │   ├── bids
     │   ├── demographics
+    │   ├── hcpls
     │   ├── tasks
     │   └── stimuli
     └── subjects
@@ -172,12 +173,14 @@ def createStudy(studyfolder=None):
         │   ├── BIDS
         │   ├── behavior
         │   ├── concs
-        │   └── events
+        │   ├── events
+        │   └── HCPLS
         ├── archive
         │   ├── MR
         │   ├── EEG
         │   ├── BIDS
-        │   └── behavior
+        │   ├── behavior
+        │   └── HCPLS
         ├── specs
         └── QC
 
@@ -207,6 +210,8 @@ def createStudy(studyfolder=None):
              - Added BIDS folders
     2018-11-14 Grega Repovs
              - Moved the processing to manageStudy function
+    2018-11-14 Grega Repovs
+             - Added HCPLS folders
     '''
 
     print "Running createStudy\n==================="
