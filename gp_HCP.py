@@ -2020,7 +2020,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         if options['hcp_fs_longitudinal']:
             tfolder = hcp['FS_long_results']
         else:
-            tfolder = hcp['FS_Folder']
+            tfolder = hcp['FS_folder']
 
         if os.path.exists(os.path.join(tfolder, 'mri', 'aparc+aseg.mgz')):
             r += "\n---> FS results present."
@@ -2042,11 +2042,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         if os.path.exists(tfile):
             r += "\n---> PostFS results present."
         else:
-            r += "\n---> ERROR: Could not find PostFS processing results."
+            r += "\n---> WARNING: Could not find PostFS processing results."
             if options['hcp_fs_longitudinal']:
                 r += "\n--->        Please check that you have run PostFS on FS longitudinal as specified,"
                 r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
-            run = False
 
         # -> Check for SE images
 
@@ -2475,7 +2474,7 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
         r += "\n ---  Failed during processing of bold %d with error:\n %s\n" % (bold, traceback.format_exc())
         report['failed'].append(str(bold))
 
-    r += "\n     ... DONE!"
+    # r += "\n     ... DONE!"
 
     return {'r': r, 'report': report}
 
@@ -2656,7 +2655,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         if options['hcp_fs_longitudinal']:
             tfolder = hcp['FS_long_results']
         else:
-            tfolder = hcp['FS_Folder']
+            tfolder = hcp['FS_folder']
 
         if os.path.exists(os.path.join(tfolder, 'mri', 'aparc+aseg.mgz')):
             r += "\n---> FS results present."
