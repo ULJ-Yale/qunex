@@ -60,7 +60,6 @@ ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
     PALMDIR="/opt/palm/palm-latest-o" \
     WORKBENCHDIR="/opt/workbench/workbench-latest" \
     OCTAVEPKGDIR="/opt/octave/octavepkg" \
-    FSLDIR="/opt/fsl/fsl-5.0.9"
 
 # Git clone MNAP repositiory
 RUN cd /opt && \
@@ -80,6 +79,7 @@ RUN cd /opt && \
     ln /opt/mnaptools/library/environment/mnap_environment.sh /etc/profile.d/mnap_environment.sh && \
 # Add .container file to the /opt folder
     touch /opt/.container && \
+    touch /opt/.hcppipelines && \
 # Copy over FreeSurfer license
     cp /opt/mnaptools/library/etc/license.txt /opt/freesurfer/freesurfer-6.0/ && \
     cp /opt/mnaptools/library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/ && \
@@ -136,7 +136,11 @@ RUN cd /opt && \
 # CUSTOM: longmc
     cp /opt/HCP/Pipelines/FreeSurferCustomizations/longmc /opt/freesurfer/freesurfer-6.0/bin/longmc && \
     chmod 775 /opt/freesurfer/freesurfer-6.0/bin/longmc && \    
-    git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git && \ 
+    git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git && \
+# FS / FSL interaction
+     unset FSL_DIR && \
+     export FREESURFER_HOME="/opt/freesurfer/freesurfer-6.0" && \
+     mnap_envset && \ 
 # Clean the environment and go to mnap folder
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \

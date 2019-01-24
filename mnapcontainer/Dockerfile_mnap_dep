@@ -167,38 +167,37 @@ RUN echo "Downloading dcm2niix..." && \
     tar -xzvf /tmp/fsl-5.0.9-centos6_64.tar.gz -C /opt/fsl/fsl-5.0.9 --strip-components 1 && \
     rm /tmp/fsl-5.0.9-centos6_64.tar.gz && \
     rm -R /opt/fsl/fsl-5.0.9/data/first/ && \
-    ln -sf /opt/fsl/fsl-5.0.9/ /opt/fsl/fsl-latest && \
-    export FSLDIR=/opt/fsl/fsl-latest && \
 # Install FSL 6.0.0
     echo "Downloading FSL 6.0.0..." && \
     mkdir -p /opt/fsl/fsl-6.0.0 && \
     wget --progress=bar:force -O /tmp/fsl-6.0.0-centos7_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.0-sources.tar.gz && \
     tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl/fsl-6.0.0 --strip-components 1 && \
     cd /opt/fsl/fsl-6.0.0 && \
+    sed -i -e ’s/\(meshclass\|fslvtkio\|warpfns\|bint\|shapeModel\|MVdisc\|fslsurface\|libmeshutils\|newmesh\|DiscreteOpt\|FastPDlib\|MSMRegLib\|avwutils\|bet2\|cluster\|fast4\|feat5\|film\|filmbabe\|flirt\|fabber\|mcflirt\|melodic\|miscvis\|mm\|gps\|randomise\|siena\|slicetimer\|susan\|tbss\|fnirt\|fugue\|asl_mfree\|fdt\|first\|possum\|flameo\|oxford_asl\|qboot\|topup\|ptx2\|lesions\|MSM\|mist-clean)//g’ build && \
     ./build && \
     rm /tmp/fsl-6.0.0-centos7_64.tar.gz && \
-    rm -Rf /opt/fsl/fsl-6.0.0/data/first/ 
-#    export FSLDIR=/opt/fsl/fsl-6.0.0
-#    . ${FSLDIR}/etc/fslconf/fsl.sh && \
-#    $FSLDIR/etc/fslconf/post_install.sh -f $FSLDIR && \
+    rm -Rf /opt/fsl/fsl-6.0.0/data/first/ && \
+    ln -sf /opt/fsl/fsl-6.0.0/ /opt/fsl/fsl-latest && \
+    export FSLDIR=/opt/fsl/fsl-latest
 
 # Install FreeSurfer 6.0
 RUN echo "Downloading FreeSurfer 6.0..." && \
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     mkdir -p /opt/freesurfer/freesurfer-6.0 && \
-    wget --progress=bar:force -O /tmp/recon-all-freesurfer6-3.min.tgz https://dl.dropbox.com/s/nnzcfttc41qvt31/recon-all-freesurfer6-3.min.tgz && \ 
-    tar -xzvf /tmp/recon-all-freesurfer6-3.min.tgz -C /opt/freesurfer/freesurfer-6.0 --strip-components 1 && \
-    rm /tmp/recon-all-freesurfer6-3.min.tgz && \
+    wget --progress=bar:force -O /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz && \
+    tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz -C /opt/freesurfer/freesurfer-6.0 --strip-components 1 && \
+    rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz && \
     rm -R /opt/freesurfer/freesurfer-6.0/trctrain && \
+    unset FSL_DIR && \
+    export FREESURFER_HOME="/opt/freesurfer/freesurfer-6.0" && \
 # Install FreeSurfer 5.3-HCP
     echo "Downloading FreeSurfer-5.3-HCP..." && \
     mkdir -p /opt/freesurfer/freesurfer-5.3-HCP/ && \
     wget --progress=bar:force -O /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz ftp://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
     tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer/freesurfer-5.3-HCP/ --strip-components 1 && \
     rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
-    rm -R /opt/freesurfer/freesurfer-5.3-HCP/trctrain && \
-    export FREESURFER_HOME="/opt/freesurfer/freesurfer-5.3-HCP"
+    rm -R /opt/freesurfer/freesurfer-5.3-HCP/trctrain
 
 # Install PALM
 RUN echo "Installing PALM..." && \
@@ -245,7 +244,7 @@ RUN echo "Installing PALM..." && \
     python setup.py install
 
 # Install Workbench
-    echo "Downloading workbench..." && \
+RUN echo "Downloading workbench..." && \
     mkdir -p /opt/workbench && \
     wget --progress=bar:force -O /tmp/workbench-rh_linux64.zip https://ftp.humanconnectome.org/workbench/workbench-rh_linux64-v1.3.2.zip && \
     unzip /tmp/workbench-rh_linux64.zip -d /opt/workbench && \
@@ -323,7 +322,6 @@ RUN ln -sf /usr/local/bin/octave /usr/bin/octave && \
     ln -sf /usr/bin/R /opt/R && \
     cd /opt/R && \
     mv R R-latest && \
-    cd /opt
 
 WORKDIR /opt
 
