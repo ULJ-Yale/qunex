@@ -127,21 +127,23 @@ usage() {
     echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
     echo "                                                       Supported:   ${MNAPTurnkeyWorkflow} "
     echo ""
-    echo "  -- XNAT HOST & PROJECT PARMETERS:"
+    echo "  -- XNAT HOST, PROJECT and USER PARMETERS:"
     echo ""
-    echo "    --batchfile=<batch_file>                         Batch file with processing parameters which exist as a project-level resource on XNAT"
-    echo "    --mappingfile=<mapping_file>                     File for mapping into desired file structure, e.g. hcp, which exist as a project-level resource on XNAT"
-    echo "    --xnatprojectid=<name_of_xnat_project_id>        Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title."
     echo "    --xnathost=<xnat_host_url>                       Specify the XNAT site hostname URL to push data to."
+    echo "    --xnatprojectid=<name_of_xnat_project_id>        Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title."
     echo "    --xnatuser=<xnat_host_user_name>                 Specify XNAT username."
     echo "    --xnatpass=<xnat_host_user_pass>                 Specify XNAT password."    
     echo ""
-    echo "    --xnatsubjectlabel=<xnat_subject_label>            Subject label within a project for the XNAT database."
-    echo "    --xnatsubjectid=<xnat_subject_id>                  Subject ID across the entire XNAT database."
-    echo "    --xnataccsessionid=<xnat_session_accesession_id>   Session ID for subject-specific experiment across the entire XNAT project."
-    echo "    --xnatsessionlabel=<xnat_session_label>            Session label within XNAT, which may be general across multiple subjects (e.g. rest). Parameter is Non-optional if --bidsformat='yes'"
-    # echo "    --xnatexperimentlabel=<xnat_experiment_label>      Name of XNAT database experiment label Default is [].  "
+    echo "  -- XNAT SUBJECT AND SESSION PARAMETERS:"
+    echo ""
+    echo "    --xnatsubjectid=<xnat_subject_id>                  ID for subject across the entire XNAT database. * Required or --xnatsubjectlabel needs to be set."
+    echo "    --xnatsubjectlabel=<xnat_subject_label>            Label for subject within a project for the XNAT database. * Required or --xnatsubjectid needs to be set."
+    echo "    --xnataccsessionid=<xnat_accesession_id>           ID for subject-specific session within the XNAT project. * Derived from XNAT but can be set manually."
+    echo "    --xnatsessionlabel=<xnat_session_label>            Label for session within XNAT project. Note: may be general across multiple subjects (e.g. rest). * Required."
+    echo ""
     echo "    --xnatstudyinputpath=<path>                        The path to the previously generated session data as mounted for the container. Default is /input/RESOURCES/mnap_session"
+    echo "    --batchfile=<batch_file>                           Batch file with processing parameters which exist as a project-level resource on XNAT"
+    echo "    --mappingfile=<mapping_file>                       File for mapping into desired file structure, e.g. hcp, which exist as a project-level resource on XNAT"
     echo ""
     echo ""
     echo "  -- GENERAL PARMETERS:"
@@ -201,7 +203,8 @@ usage() {
     echo "   --batchfile=<batch_file> \ "
     echo "   --overwritestep=yes \ "
     echo "   --mappingfile=<mapping_file> \ "
-    echo "   --xnatsessionlabels=<XNAT_SESSION_LABEL> \ "
+    echo "   --xnatsubjectlabel=<XNAT_SUBJECT_LABEL> \ "
+    echo "   --xnatsessionlabel=<XNAT_SESSION_LABEL> \ "
     echo "   --xnatprojectid=<name_of_xnat_project_id> \ "
     echo "   --xnathostname=<XNAT_site_URL> \ "
     echo "   --xnatuser=<xnat_host_user_name> \ "
@@ -258,7 +261,6 @@ unset XNAT_ACCSESSION_ID
 unset XNAT_SUBJECT_ID
 unset XNAT_SUBJECT_LABEL
 unset XNAT_SESSION_LABEL
-unset XNAT_EXPT_LABEL
 
 unset TURNKEY_TYPE
 unset TURNKEY_STEPS
@@ -306,38 +308,38 @@ BATCH_PARAMETERS_FILENAME=`opts_GetOpt "--batchfile" $@`
 LOCAL_BATCH_FILE=`opts_GetOpt "--local_batchfile" $@`
 SCAN_MAPPING_FILENAME=`opts_GetOpt "--mappingfile" $@`
 
+XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
+XNAT_USER_NAME=`opts_GetOpt "--xnatuser" $@`
+XNAT_PASSWORD=`opts_GetOpt "--xnatpass" $@`
+XNAT_STUDY_INPUT_PATH=`opts_GetOpt "--xnatstudyinputpath" $@`
+#  
+#     INFO ON XNAT VARIABLE MAPPING FROM MNAP --> JSON --> XML specification
 #
-# project               --xnatprojectid        #  --> mapping in MNAP: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id
+# project               --xnatprojectid        #  --> mapping in MNAP: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
 #   │ 
-#   └──subject          --xnatsubjectid        #  --> mapping in MNAP: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Subject Accession ID corresponding to subject-level ID
-#        │              --xnatsubjectlabel     #  --> mapping in MNAP: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject-level XML label
+#   └──subject          --xnatsubjectid        #  --> mapping in MNAP: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+#        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
+#        │              --xnatsubjectlabel     #  --> mapping in MNAP: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+#        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
 #        │ 
-#        └──experiment  --xnataccsessionid     #  --> mapping in MNAP: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Accession ID corresponding to session-level ID
-#                       --xnatsessionlabel     #  --> mapping in MNAP: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session-level XML label
-#                       --xnatexperimentlabel  #  --> mapping in MNAP: XNAT_EXPT_LABEL     --> mapping in JSON spec: #EXPT#           --> Corresponding to session-level XML label
+#        └──experiment  --xnataccsessionid     #  --> mapping in MNAP: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
+#                       --xnatsessionlabel     #  --> mapping in MNAP: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#                                                                                                                                                                                                                           EXAMPLE in Web UI    MR Session:   A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
 #
-
 XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
 XNAT_SUBJECT_ID=`opts_GetOpt "--xnatsubjectid" $@`
 XNAT_SUBJECT_LABEL=`opts_GetOpt "--xnatsubjectlabels" "$@"`
-
 if [ -z "$XNAT_SUBJECT_LABEL" ]; then
 XNAT_SUBJECT_LABEL=`opts_GetOpt "--xnatsubjectlabel" "$@"`
 fi
-XNAT_EXPT_LABEL=`opts_GetOpt "--xnatexperimentlabel" $@`
 XNAT_ACCSESSION_ID=`opts_GetOpt "--xnataccsessionid" $@`
 #XNAT_SESSION_LABELS=`opts_GetOpt "--xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
 XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabels" "$@"`
 if [ -z "$XNAT_SESSION_LABEL" ]; then
 XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabel" "$@"`
 fi
-XNAT_EXPT_LABEL=`opts_GetOpt "--xnatexperimentlabel" $@`
 
-
-XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
-XNAT_USER_NAME=`opts_GetOpt "--xnatuser" $@`
-XNAT_PASSWORD=`opts_GetOpt "--xnatpass" $@`
-XNAT_STUDY_INPUT_PATH=`opts_GetOpt "--xnatstudyinputpath" $@`
 
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
@@ -477,10 +479,13 @@ if [[ -z ${TURNKEY_TYPE} ]]; then
     TURNKEY_TYPE="xnat"; reho "Note: Turnkey type not specified. Setting default turnkey type to: $TURNKEY_TYPE"; echo ''
 fi
 
+########################  XNAT SPECIFIC CHECKS  ################################
+#
 # -- Check and set non-XNAT or XNAT specific parameters
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then 
    if [[ -z ${PROJECT_NAME} ]]; then reho "Error: Project name is missing."; exit 1; echo ''; fi
    if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${PROJECT_NAME}; fi
+   if [[ -z ${CASE} ]]; then reho "Error: Requesting local run but --subject flag is missing."; exit 1; echo ''; fi
 fi
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -z ${XNAT_PROJECT_ID} ]]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
@@ -488,25 +493,79 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -z ${XNAT_USER_NAME} ]]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${XNAT_PASSWORD} ]]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${XNAT_PROJECT_ID}; fi
-    if [[ ${BIDSFormat} == "yes" ]]; then
-        if [[ -z ${XNAT_EXPT_LABEL} ]]; then reho "Error: --xnatexperimentlabel flag missing. Please specify experiment labe and re-run."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "Error: --xnatsubjectid or --xnatsubjectlabel flags are missing. Please specify either subject id or subject label and re-run."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ ! -z ${XNAT_SUBJECT_LABEL} ]]; then reho "Note: --xnatsubjectid is not set. Using --xnatsubjectlabel to query XNAT."; echo ''; fi
+    if [[ ! -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "Note: --xnatsubjectlabel is not set. Using --xnatsubjectid to query XNAT."; echo ''; fi
+    if [[ -z ${XNAT_SESSION_LABEL} ]]; then reho "Error: --xnatsessionlabel flag missing. Please specify session label and re-run."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_STUDY_INPUT_PATH} ]]; then XNAT_STUDY_INPUT_PATH=/input/RESOURCES/mnap_study; reho "Note: XNAT session input path is not defined. Setting default path to: $XNAT_STUDY_INPUT_PATH"; fi
+    
+    # -- Curl calls to set correct subject and session variables at start of RunTurnkey
+    
+    # -- Clean prior mapping
+    rm -r ${HOME}/xnatInfoTmp &> /dev/null
+    mkdir ${HOME}/xnatInfoTmp &> /dev/null
+    XNATINFOTMP="${HOME}/xnatInfoTmp"
+    
+    # -- Obtain temp info on subjects and experiments in the project
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv
+    
+    # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
+    if [[ -z ${XNAT_SUBJECT_ID} ]]; then XNAT_SUBJECT_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`; fi
+    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SUBJECT_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`; fi
+    if [[ -z ${XNAT_ACCSESSION_ID} ]]; then XNAT_ACCSESSION_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`; fi
+    if [[ -z ${XNAT_SESSION_LABEL} ]]; then XNAT_SESSION_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`; fi
+
+    # -- Clean up temp curl call info
+    rm -r ${HOME}/xnatInfoTmp &> /dev/null
+
+    # -- Report error if variables remain undefined
+    if [[ -z ${XNAT_SUBJECT_ID} ]] || [[ -z ${XNAT_SUBJECT_LABEL} ]] || [[ -z ${XNAT_ACCSESSION_ID} ]] || [[ -z ${XNAT_SESSION_LABEL} ]]; then 
+        reho "Some or all of XNAT database variables were not set correctly: "
+        echo ""
+        reho "  --> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
+        reho "  --> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
+        reho "  --> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
+        reho "  --> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL "
+        echo ""        
+        exit 1
     else
-        if [[ -z ${XNAT_STUDY_INPUT_PATH} ]]; then XNAT_STUDY_INPUT_PATH=/input/RESOURCES/mnap_study; reho "Note: XNAT session input path is not defined. Setting default path to: $XNAT_STUDY_INPUT_PATH"; fi
-        if [[ -z ${XNAT_EXPT_LABEL} ]];then reho "Note. --xnatexperimentlabel flag missing. Assuming it matches --xnatsessionlabel."; XNAT_EXPT_LABEL="${XNAT_SESSION_LABEL}"; echo ''; fi
+        geho "Successfully read all XNAT database variables: "
+        echo ""
+        geho "  --> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
+        geho "  --> XNAT_SUBJECT_LABEL  :  $XNAT_SUBJECT_LABEL "
+        geho "  --> XNAT_ACCSESSION_ID  :  $XNAT_ACCSESSION_ID "
+        geho "  --> XNAT_SESSION_LABEL  :  $XNAT_SESSION_LABEL "
+        echo ""
+    fi
+
+    # -- Define final variable set
+    if [[ ${BIDSFormat} == "yes" ]]; then
+        # -- Setup CASE without the 'MR' prefix in the XNAT_SESSION_LABEL
+        #    Eventually deprecate once fixed in XNAT
+        CASE=`echo ${XNAT_SESSION_LABEL} | sed 's|MR||g'`
+        reho "Note: --bidsformat='yes' " 
+        reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for MNAP run: ${CASE}"
+        echo ""
+    else
+        CASE="${XNAT_SUBJECT_LABEL}"
     fi
 fi
+#
+################################################################################
+
 
 # -- Check TURNKEY_STEPS
 if [[ -z ${TURNKEY_STEPS} ]]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
 
-# -- Check if subject input is a parameter file instead of list of cases
-# if [[ ${CASE} == *.txt ]]; then
-#     SubjectParamFile="$CASE"
-#     echo ""
-#     echo "Using $SubjectParamFile for input."
-#     echo ""
-#     CASE=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
-# fi
+    # -- Check if subject input is a parameter file instead of list of cases
+    # if [[ ${CASE} == *.txt ]]; then
+    #     SubjectParamFile="$CASE"
+    #     echo ""
+    #     echo "Using $SubjectParamFile for input."
+    #     echo ""
+    #     CASE=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
+    # fi
 
 # -- Check and set mapRawData, mapHCPFiles, getHCPReady which rely on BATCH_PARAMETERS_FILENAME and SCAN_MAPPING_FILENAME
 if [[ `echo ${TURNKEY_STEPS} | grep 'mapRawData'` ]]; then
@@ -523,35 +582,45 @@ if [[ ${TURNKEY_TYPE} != "xnat" ]] && [[ -z ${RawDataInputPath} ]] && [[ `echo $
    reho "Error. Raw data input flag missing "; exit 1
 fi
 
-# -- Check and align CASE and XNAT_SESSION_LABEL
-if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
-   if [ -z "$CASE" ]; then
-       if [ -z "$XNAT_SESSION_LABEL" ]; then
-           reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ""
-           exit 1
-       else
-           CASE="$XNAT_SESSION_LABEL"
-           reho "Note: --xnatsessionlabels only is specified. Assuming --subjects info matches --xnatsessionlabels."; echo ""
-       fi
-   else
-       XNAT_SESSION_LABEL="$CASE"
-       reho "Note: --subjects only is specified. Assuming --xnatsessionlabels info matches --subjects."; echo ""
-   fi
-fi
-if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-   if [ -z "$XNAT_SESSION_LABEL" ]; then
-       if [ -z "$CASE" ]; then
-           reho "Error: --xnatsessionlabels or --subjects flag missing. Specify one."; echo ""
-           exit 1
-       else
-        XNAT_SESSION_LABEL="$CASE"
-        reho "Note: --subjects only is specified. Assuming --xnatsessionlabels info matches --subjects."; echo ""
-       fi
-   else
-       CASE="$XNAT_SESSION_LABEL"
-       reho "Note: --subjects only is specified. Assuming --xnatsessionlabels info matches --subjects."; echo ""
-   fi
-fi
+########################  ALIGN SUBJECT INFORMATION  ###########################
+#
+#                    **** DEPRECATED AFTER BIDS UPGRADES *****
+#
+# -- non-XNAT run: Check and align CASE and XNAT_SUBJECT_LABEL variables
+#
+#   if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
+#      if [ -z "$CASE" ]; then
+#          if [ -z "$XNAT_SUBJECT_LABEL" ]; then
+#              reho "Error: --xnatsubjectlabel and --subject flag missing. Specify one."; echo ""
+#              exit 1
+#          else
+#              CASE="$XNAT_SUBJECT_LABEL"
+#              reho "Note: --xnatsubjectlabel is specified. Assuming --subject info matches on local file system."; echo ""
+#          fi
+#      else
+#          XNAT_SUBJECT_LABEL="$CASE"
+#          reho "Note: --subject is specified. Assuming --xnatsubjectlabel info matches in XNAT database."; echo ""
+#      fi
+#   fi
+#   #
+#   # -- XNAT run: Align CASE and XNAT_SUBJECT_LABEL using XNAT_SUBJECT_LABEL or XNAT_SUBJECT_ID
+#   #
+#   if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+#      if [ -z "$XNAT_SUBJECT_LABEL" ]; then
+#          if [ -z "$CASE" ]; then
+#              reho "Error: --xnatsubjectlabel and --subject flag missing. Specify one."; echo ""
+#              exit 1
+#          else
+#              XNAT_SUBJECT_LABEL="$CASE"
+#              reho "Note: --subject is specified. Assuming --xnatsubjectlabel info matches in XNAT database."; echo ""
+#          fi
+#      else
+#          CASE="$XNAT_SUBJECT_LABEL"
+#          reho "Note: --xnatsubjectlabel is specified. Assuming --subject info matches on local file system."; echo ""
+#      fi
+#   fi
+#
+################################################################################
 
 # -- Check and set overwrites
 if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="no"; fi
@@ -572,22 +641,9 @@ if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then
     MNAPTurnkeyWorkflow=`printf '%s\n' "${MNAPTurnkeyWorkflow//QCPreprocDWILegacy/}"`
 fi
 
-# -- Define final variable set
 mnap_studyfolder="${STUDY_PATH}"
 mnap_subjectsfolder="${STUDY_PATH}/subjects"
-if [[ ${BIDSFormat} == "yes" ]]; then
-    # -- Setup EXP_LABEL without the 'MR' prefix and define CASE name
-    BIDS_EXPT_LABEL=`echo ${XNAT_EXPT_LABEL} | sed 's|MR||g'`
-    mnap_workdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABEL}_${BIDS_EXPT_LABEL}"
-    CASE="${XNAT_SESSION_LABEL}_${BIDS_EXPT_LABEL}"
-    XNAT_SESSION_LABEL_ORIG="${XNAT_SESSION_LABEL}"
-    XNAT_SESSION_LABEL="${XNAT_SESSION_LABEL}_${BIDS_EXPT_LABEL}"
-    reho "Note: --bidsformat='yes' --> Combining subject and experiment label into unified subject name: ${CASE}"; echo ""
-else
-    mnap_workdir="${STUDY_PATH}/subjects/${XNAT_SESSION_LABEL}"
-    CASE="${XNAT_SESSION_LABEL}"
-fi
-
+mnap_workdir="${STUDY_PATH}/subjects/${CASE}"
 processingdir="${STUDY_PATH}/processing"
 logdir="${STUDY_PATH}/processing/logs"
 specsdir="${STUDY_PATH}/subjects/specs"
@@ -609,28 +665,28 @@ fi
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   "
 echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
+
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
     echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
     echo "   XNAT Project ID: ${XNAT_PROJECT_ID}"
-if [ "$BIDSFormat" == "yes" ]; then
-    echo "   XNAT Session Labels: ${XNAT_SESSION_LABEL_ORIG}"
-else
-    echo "   XNAT Session Labels: ${XNAT_SESSION_LABEL}"
-fi
-    echo "   XNAT Experiment Label(s): ${XNAT_EXPT_LABEL}"
+    echo "   XNAT Subject Label: ${XNAT_SUBJECT_LABEL}"
+    echo "   XNAT Subject ID: ${XNAT_SUBJECT_ID}"
+    echo "   XNAT Session Label: ${XNAT_SESSION_LABEL}"
+    echo "   XNAT Session ID: ${XNAT_ACCSESSION_ID}"
     echo "   XNAT Resource Mapping file: ${XNAT_HOST_NAME}"
     echo "   XNAT Resource Batch file: ${BATCH_PARAMETERS_FILENAME}"
+    if [ "$BIDSFormat" == "yes" ]; then
+        echo "   BIDS format input specified: ${BIDSFormat}"
+        echo "   Combined BIDS-formatted subject name: ${CASE}"
+    else 
+        echo "   MNAP Subject variable name: ${CASE}" 
+    fi
 fi
 if [ "$TURNKEY_TYPE" != "xnat" ]; then
     echo "   Local project name: ${PROJECT_NAME}"
     echo "   Raw data input path: ${RawDataInputPath}"
+    echo "   MNAP Subject variable name: ${CASE}" 
 fi
-
-if [ "$BIDSFormat" == "yes" ]; then
-    echo "   BIDS format input specified: ${BIDSFormat}"
-    echo "   Combined BIDS-formatted subject label: ${CASE}"
-fi
-
 echo "   Project-specific Batch file: ${project_batch_file}"
 echo "   MNAP Study folder: ${mnap_studyfolder}"
 echo "   MNAP Log folder: ${logdir}"
@@ -674,7 +730,7 @@ if [ "$TURNKEY_STEPS" == "all" ]; then
 else
     echo "   Turnkey workflow steps: ${TURNKEY_STEPS}"
 fi
-echo
+echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of MNAP Turnkey Workflow --------------------------------"
@@ -693,49 +749,49 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
     case ${firstStep} in
         organizeDicom)
             # --- rsync relevant dependencies if organizeDicom is starting point 
-            RsyncCommand="rsync -avzH --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         getHCPReady|mapHCPFiles)
             # --- rsync relevant dependencies if getHCPReady or mapHCPFiles is starting point 
-            RsyncCommand="rsync -avzH --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp1|hcp2|hcp3|QCPreprocT1W|QCPreprocT2W|QCPreprocMyelin)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp4|hcp5|QCPreprocBOLD)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='hcp/' --include='BOLD*/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='BOLD*/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcpd|QCPreprocDWI|hcpdLegacy|QCPreprocDWILegacy|eddyQC|QCPreprocDWIeddyQC|FSLDtifit|QCPreprocDWIDTIFIT|FSLBedpostxGPU|QCPreprocDWIProcess|QCPreprocDWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|QCPreprocCustom)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         QCPreprocCustom)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         mapHCPData)
             # --- rsync relevant dependencies if and mapHCPData is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|BOLDParcellation|computeBOLDfcGBC|computeBOLDfcSeed|QCPreprocBOLDfc)
             # --- rsync relevant dependencies if any BOLD fc step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/subjects' --include='${XNAT_SESSION_LABEL}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${mnap_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
@@ -758,22 +814,22 @@ if [[ ${OVERWRITE_PROJECT_XNAT} == "yes" ]]; then
         rm -rf ${mnap_studyfolder}/ &> /dev/null
 fi
 if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "all" ]]; then
-    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABEL" ]]; then
-        reho " -- ${XNAT_SESSION_LABEL} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$CASE" ]]; then
+        reho " -- ${CASE} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
         reho "    Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
         rm -rf ${mnap_studyfolder}/ &> /dev/null
     else
-        reho " -- There are more than ${XNAT_SESSION_LABEL} directories ${mnap_studyfolder}."
+        reho " -- ${CASE} is not the only folder in ${mnap_studyfolder}."
         reho "    Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
     fi
 fi
 if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
-    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$XNAT_SESSION_LABEL" ]]; then
-        reho " -- ${XNAT_SESSION_LABEL} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${mnap_subjectsfolder}` == "$CASE" ]]; then
+        reho " -- ${CASE} is the only folder in ${mnap_subjectsfolder}. OK to proceed!"
         reho "    Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
         rm -rf ${mnap_studyfolder}/ &> /dev/null
     else
-        reho " -- There are more than ${XNAT_SESSION_LABEL} directories ${mnap_studyfolder}."
+        reho " -- ${CASE} is not the only folder in ${mnap_studyfolder}."
         reho "    Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
     fi
 fi
@@ -793,9 +849,9 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStudy ..."; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
-        createStudy_ComlogTmp="${workdir}/tmp_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
-        createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
-        createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
+        createStudy_ComlogTmp="${workdir}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
+        createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${CASE}_${TimeStamp}.log"
+        createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${CASE}_${TimeStamp}.log"
         geho " -- Checking for and generating study folder ${mnap_studyfolder}"; echo ""
         if [ ! -d ${workdir} ]; then
             mkdir -p ${workdir} &> /dev/null
@@ -805,7 +861,7 @@ fi
             echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
             ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
             mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
-            createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
+            createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
         else
             geho " -- Study folder ${mnap_studyfolder} already exits!" 2>&1 | tee -a ${createStudy_ComlogTmp}
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -816,7 +872,7 @@ fi
                     echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
                     ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
                     mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
-                    createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
+                    createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
                 fi
             fi
         fi
@@ -975,73 +1031,33 @@ fi
         
         # -- Check if BIDS format requested
         if [[ ${BIDSFormat} == "yes" ]]; then
-        
             # -- NOTE: IF XNAT run is not requested then it assumed that zipped BIDS data is prepared in $mnap_subjectsfolder/inbox/BIDS/*zip
-
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-    
-                ## --------------- INFO ON XNAT VARIABLE CONVENTION ----------------
-                ##
-                ##       --> SUBJECT_ID    ==> EXAMPLE in XML    ==>  <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
-                ##                         ==> EXAMPLE in Web UI ==> Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-                ##         
-                ##       --> SUBJECT_LABEL ==> EXAMPLE in XML    ==> <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
-                ##                         ==> EXAMPLE in Web UI ==> Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
-                ##                     
-                ##       --> EXPT_LABEL    ==> EXAMPLE in XML    ==> <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
-                ##                         ==> EXAMPLE in Web UI ==> MR Session:        A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
-                ##
-                # -- Required variables for the BIDS XNAT download and MNAP mapping:
-                #
-                #  XNAT_USER_NAME
-                #  XNAT_PASSWORD
-                #  mnap_subjectsfolder
-                #  TimeStamp
-                #  XNAT_PROJECT_ID
-                #  XNAT_SESSION_LABEL
-                #  XNAT_EXPT_LABEL
-                #  XNAT_HOST_NAME
-                
-                # -- Perform mapping for BIDS
-                
-                # -- IF overwrite requested clean prior mapping
-                rm -r ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp &> /dev/null
-                mkdir ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp &> /dev/null
-                
-                # -- Obtain temp info on subjects and experiments in the project
-                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv
-                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv
-                
-                # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_EXPT_ID (i.e. MR Session lablel) for the specific XNAT_SESSION_LABEL (i.e. subject)
-                XNAT_SUBJECT_ID=`more ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SESSION_LABEL_ORIG}" | awk  -F, '{print $1}'` 
-                XNAT_EXPT_ID=`more ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SESSION_LABEL_ORIG}" | grep "${XNAT_EXPT_LABEL}" | awk  -F, '{print $1}'`
-                
-                # -- Get the BIDS data in ZIP format via curl
-                curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_EXPT_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip
-     
-                # -- Clean up temp curl call info
-                cd ${mnap_subjectsfolder}/inbox/BIDS
-                rm -r ${mnap_subjectsfolder}/inbox/BIDS/xnatTmp &> /dev/null
-
+                # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
+                if [[ -d ${RawDataInputPath} ]]; then
+                   if [[ `find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" | grep "json" &> /dev/null` ]] && [[ `find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" | grep "nii" &> /dev/null` ]]; then 
+                       echo ""; echo " -- BIDS JSON and NII data found"; echo ""
+                       mkdir ${mnap_subjectsfolder}/inbox/BIDS/${CASE} &> /dev/null
+                       cp -r ${RawDataInputPath}/* ${mnap_subjectsfolder}/inbox/BIDS/${CASE}/
+                   else
+                       echo ""; reho " -- BIDS JSON and NII data not found! Will attempt curl call."; echo ""
+                       curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip
+                   fi
+                else
+                    # -- Get the BIDS data in ZIP format via curl
+                    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip
+                fi
             fi
-            
-            # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
-            # if [[ CHECK FOR XNAT INPUT ]]; then 
-               # map 
-            # else 
             # -- Perform mapping of BIDS file structure into MNAP
             ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS" --action=copy --overwrite=yes --archive=delete >> ${mapRawData_ComlogTmp}
-            # fi
-            
+            # -- Report completion
             echo ""
             geho " --> BIDSImport done"
             echo ""
-            
             # -- Run BIDS completion checks on mapped data
             FILESEXPECTED=`more ${mnap_subjectsfolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l`
             FILEFOUND=`ls ${mnap_subjectsfolder}/${CASE}/nii/* | wc -l`
             if [[ ! -z `more ${mapRawData_ComlogTmp} | grep 'Successful completion of task'` ]] && [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
-
         fi
         
         # -- Check if mapping and batch files exist
@@ -1101,9 +1117,9 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..."; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady${TimeStamp}.log"
-        getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${XNAT_SESSION_LABEL}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
-        getHCPReady_ComlogError="${logdir}/comlogs/error_getHCPReady_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
-        getHCPReady_ComlogDone="${logdir}/comlogs/done_getHCPReady_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
+        getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${CASE}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
+        getHCPReady_ComlogError="${logdir}/comlogs/error_getHCPReady_${CASE}_${TimeStamp}.log"
+        getHCPReady_ComlogDone="${logdir}/comlogs/done_getHCPReady_${CASE}_${TimeStamp}.log"
         if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
             rm -rf ${mnap_subjectsfolder}/${CASE}/subject_hcp.txt &> /dev/null
         fi
@@ -1534,9 +1550,9 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: g_PlotBoldTS QC plotting ... "; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         g_PlotBoldTS_Runlog="${logdir}/runlogs/Log-g_PlotBoldTS_${TimeStamp}.log"
-        g_PlotBoldTS_ComlogTmp="${logdir}/comlogs/tmp_g_PlotBoldTS_${XNAT_SESSION_LABEL}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
-        g_PlotBoldTS_ComlogError="${logdir}/comlogs/error_g_PlotBoldTS_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
-        g_PlotBoldTS_ComlogDone="${logdir}/comlogs/done_g_PlotBoldTS_${XNAT_SESSION_LABEL}_${TimeStamp}.log"
+        g_PlotBoldTS_ComlogTmp="${logdir}/comlogs/tmp_g_PlotBoldTS_${CASE}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
+        g_PlotBoldTS_ComlogError="${logdir}/comlogs/error_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
+        g_PlotBoldTS_ComlogDone="${logdir}/comlogs/done_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
         
         if [ -z ${QCPlotElements} ]; then
               QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
@@ -1869,18 +1885,11 @@ if [ ${TURNKEY_TYPE} == "xnat" ]; then
     geho "---> Setting recursive r+w+x permissions on ${mnap_studyfolder}"
     chmod -R 777 ${mnap_studyfolder} &> /dev/null
     cd ${processingdir}
-    zip -r logs logs
-    if [[ ${BIDSFormat} == "yes" ]]; then
-        # -- Revert XNAT_SESSION_LABEL without the BIDS_EXPT_LABEL suffix
-        XNAT_SESSION_LABEL="${XNAT_SESSION_LABEL_ORIG}"
-        XNAT_EXPT_LABEL_FINAL="${XNAT_SESSION_LABEL}_${XNAT_EXPT_LABEL}"
-    else
-        XNAT_EXPT_LABEL_FINAL="${XNAT_EXPT_LABEL}"
-    fi
+    zip -r logs logs &> /dev/null
     echo ""
-    geho "---> Uploading all logs to ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABEL}/experiments/${XNAT_EXPT_LABEL_FINAL}/resources/MNAP_LOGS"
+    geho "---> Uploading all logs: curl -u XNAT_USER_NAME:XNAT_PASSWORD -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" "
     echo ""
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SESSION_LABEL}/experiments/${XNAT_EXPT_LABEL_FINAL}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip 
     echo ""
     rm -rf ${processingdir}/logs.zip &> /dev/null
     popd 2> /dev/null
