@@ -55,11 +55,7 @@ FROM ztamayo/mnap_dep:latest
 # Set MNAP environment variables 
 ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
     TOOLS="/opt" \
-    MNAPREPO="/opt/mnaptools" \
-    OCTAVEBINDIR="/opt/octave/octave-latest/bin" \
-    PALMDIR="/opt/palm/palm-latest-o" \
-    WORKBENCHDIR="/opt/workbench/workbench-latest" \
-    OCTAVEPKGDIR="/opt/octave/octavepkg"
+    MNAPREPO="mnaptools" \
 
 # Git clone MNAP repositiory
 RUN cd /opt && \
