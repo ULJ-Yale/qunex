@@ -325,7 +325,7 @@ RUN ln -sf /usr/local/bin/octave /usr/bin/octave && \
     mkdir -p /opt/R && \
     ln -sf /usr/bin/R /opt/R && \
     cd /opt/R && \
-    mv R R-latest && \
+    mv R R-latest
 
 WORKDIR /opt
 

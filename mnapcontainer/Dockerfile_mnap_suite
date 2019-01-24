@@ -59,7 +59,7 @@ ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
     OCTAVEBINDIR="/opt/octave/octave-latest/bin" \
     PALMDIR="/opt/palm/palm-latest-o" \
     WORKBENCHDIR="/opt/workbench/workbench-latest" \
-    OCTAVEPKGDIR="/opt/octave/octavepkg" \
+    OCTAVEPKGDIR="/opt/octave/octavepkg"
 
 # Git clone MNAP repositiory
 RUN cd /opt && \
@@ -138,9 +138,9 @@ RUN cd /opt && \
     chmod 775 /opt/freesurfer/freesurfer-6.0/bin/longmc && \    
     git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git && \
 # FS / FSL interaction
-     unset FSL_DIR && \
-     export FREESURFER_HOME="/opt/freesurfer/freesurfer-6.0" && \
-     mnap_envset && \ 
+#     unset FSL_DIR && \
+#     export FREESURFER_HOME="/opt/freesurfer/freesurfer-6.0" && \
+#     mnap_envset && \ 
 # Clean the environment and go to mnap folder
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \
