@@ -400,6 +400,14 @@ Change Log
 * 0.31.03 [library connector] Futher improvements in the environment management
 * 0.31.04 [hcpmodified] Bugfix with subjectfolder in fMRIVolume
 * 0.32.00 [niutilities library] Added support for HCPPipelines and hcpls datasets
+* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
+* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
+* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
+* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
+* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
+* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
+* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
+* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
