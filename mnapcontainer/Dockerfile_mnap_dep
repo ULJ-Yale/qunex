@@ -169,15 +169,18 @@ RUN echo "Downloading dcm2niix..." && \
     rm -R /opt/fsl/fsl-5.0.9/data/first/ && \
 # Install FSL 6.0.0
     echo "Downloading FSL 6.0.0..." && \
-    mkdir -p /opt/fsl/fsl-6.0.0 && \
-    wget --progress=bar:force -O /tmp/fsl-6.0.0-centos7_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.0-sources.tar.gz && \
-    tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl/fsl-6.0.0 --strip-components 1 && \
-    cd /opt/fsl/fsl-6.0.0 && \
-    sed -i '7,13d' build && \
-    sed -i '6s/\s\\/"/' build && \ 
-    ./build && \
-    rm /tmp/fsl-6.0.0-centos7_64.tar.gz && \
+#    mkdir -p /opt/fsl/fsl-6.0.0 && \
+#    wget --progress=bar:force -O /tmp/fsl-6.0.0-centos7_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.0-sources.tar.gz && \
+#    tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl/fsl-6.0.0 --strip-components 1 && \
+    cd /opt/fsl && \
+    wget --progress=bar:force https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py && \
+    python fslinstaller.py -V 6.0.0 -d /opt/fsl/fsl-6.0.0 && \
+#    sed -i '7,13d' build && \
+#    sed -i '6s/\s\\/"/' build && \ 
+#    ./build && \
+#    rm /tmp/fsl-6.0.0-centos7_64.tar.gz && \
     rm -Rf /opt/fsl/fsl-6.0.0/data/first/ && \
+    rm -f /opt/fsl/fslinstaller.py && \
     ln -sf /opt/fsl/fsl-6.0.0/ /opt/fsl/fsl-latest && \
     export FSLDIR=/opt/fsl/fsl-6.0.0
 
