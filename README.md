@@ -408,6 +408,7 @@ Change Log
 * 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
 * 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
 * 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
+* 0.33.00 [connector library] Upgraded RunTurnkey for better XNAT API variable compliance
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
