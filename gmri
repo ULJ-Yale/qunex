@@ -326,7 +326,7 @@ def runCommand(command, args):
     if eargs:
         bad = []
         for k, v in eargs.items():
-            if k not in ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder']:
+            if k not in ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder']:
                 bad.append(k)
                 print "ERROR: Extra argument %s is not valid! Please check your command!" % (k)
         if bad:
