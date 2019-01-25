@@ -439,42 +439,49 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
         if file.endswith('.zip'):
             print "    --> processing zip package [%s]" % (file)
 
-            z = zipfile.ZipFile(file, 'r')
-            for sf in z.infolist():
-                if sf.filename[-1] != '/':
-                    tfile = mapToMNAPBids(sf.filename, subjectsfolder, bidsname, sessions, overwrite, "        ")
-                    if tfile:
-                        fdata = z.read(sf)
-                        if tfile.endswith('.nii'):
-                            tfile += ".gz"
-                            fout = gzip.open(tfile, 'wb')
-                        else:
-                            fout = open(tfile, 'wb')                            
-                        fout.write(fdata)
-                        fout.close()
-            z.close()
-            print "        -> done!"
+            try:
+                z = zipfile.ZipFile(file, 'r')
+                for sf in z.infolist():
+                    if sf.filename[-1] != '/':
+                        tfile = mapToMNAPBids(sf.filename, subjectsfolder, bidsname, sessions, overwrite, "        ")
+                        if tfile:
+                            fdata = z.read(sf)
+                            if tfile.endswith('.nii'):
+                                tfile += ".gz"
+                                fout = gzip.open(tfile, 'wb')
+                            else:
+                                fout = open(tfile, 'wb')                            
+                            fout.write(fdata)
+                            fout.close()
+                z.close()
+                print "        -> done!"
+            except:
+                print "        => Error: Processing of zip package failed. Please check the package!"
 
         elif '.tar' in file:
             print "   --> processing tar package [%s]" % (file)
 
-            tar = tarfile.open(file)
-            for member in tar.getmembers():
-                if member.isfile():
-                    tfile = mapToMNAPBids(member.name, subjectsfolder, bidsname, sessions, overwrite, "        ")
-                    if tfile:
-                        fobj  = tar.extractfile(member)
-                        fdata = fobj.read()
-                        fobj.close()
-                        if tfile.endswith('.nii'):
-                            tfile += ".gz"
-                            fout = gzip.open(tfile, 'wb')
-                        else:
-                            fout = open(tfile, 'wb')
-                        fout.write(fdata)
-                        fout.close()
-            tar.close()
-            print "        -> done!"
+            try:
+                tar = tarfile.open(file)
+                for member in tar.getmembers():
+                    if member.isfile():
+                        tfile = mapToMNAPBids(member.name, subjectsfolder, bidsname, sessions, overwrite, "        ")
+                        if tfile:
+                            fobj  = tar.extractfile(member)
+                            fdata = fobj.read()
+                            fobj.close()
+                            if tfile.endswith('.nii'):
+                                tfile += ".gz"
+                                fout = gzip.open(tfile, 'wb')
+                            else:
+                                fout = open(tfile, 'wb')
+                            fout.write(fdata)
+                            fout.close()
+                tar.close()
+                print "        -> done!"
+            except:
+                print "        => Error: Processing of tar package failed. Please check the package!"
+
 
         else:
             tfile = mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, "    ")

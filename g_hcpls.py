@@ -457,34 +457,40 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
         if file.endswith('.zip'):
             print "    --> processing zip package [%s]" % (file)
 
-            z = zipfile.ZipFile(file, 'r')
-            for sf in z.infolist():
-                if sf.filename[-1] != '/':
-                    tfile = mapToMNAPHcpls(sf.filename, subjectsfolder, hcplsname, sessions, overwrite, "        ")
-                    if tfile:
-                        fdata = z.read(sf)
-                        fout = open(tfile, 'wb')
-                        fout.write(fdata)
-                        fout.close()
-            z.close()
-            print "        -> done!"
+            try:
+                z = zipfile.ZipFile(file, 'r')
+                for sf in z.infolist():
+                    if sf.filename[-1] != '/':
+                        tfile = mapToMNAPHcpls(sf.filename, subjectsfolder, hcplsname, sessions, overwrite, "        ")
+                        if tfile:
+                            fdata = z.read(sf)
+                            fout = open(tfile, 'wb')
+                            fout.write(fdata)
+                            fout.close()
+                z.close()
+                print "        -> done!"
+            except:
+                print "        => Error: Processing of zip package failed. Please check the package!"
 
         elif '.tar' in file:
             print "   --> processing tar package [%s]" % (file)
 
-            tar = tarfile.open(file)
-            for member in tar.getmembers():
-                if member.isfile():
-                    tfile = mapToMNAPHcpls(member.name, subjectsfolder, hcplsname, sessions, overwrite, "        ")
-                    if tfile:
-                        fobj  = tar.extractfile(member)
-                        fdata = fobj.read()
-                        fobj.close()
-                        fout = open(tfile, 'wb')
-                        fout.write(fdata)
-                        fout.close()
-            tar.close()
-            print "        -> done!"
+            try:
+                tar = tarfile.open(file)
+                for member in tar.getmembers():
+                    if member.isfile():
+                        tfile = mapToMNAPHcpls(member.name, subjectsfolder, hcplsname, sessions, overwrite, "        ")
+                        if tfile:
+                            fobj  = tar.extractfile(member)
+                            fdata = fobj.read()
+                            fobj.close()
+                            fout = open(tfile, 'wb')
+                            fout.write(fdata)
+                            fout.close()
+                tar.close()
+                print "        -> done!"
+            except:
+                print "        => Error: Processing of tar package failed. Please check the package!"
 
         else:
             tfile = mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ")
