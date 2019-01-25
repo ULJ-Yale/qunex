@@ -24,9 +24,9 @@ import niutilities
 import niutilities.g_exceptions as ge
 import re
 
-def runPALM(image, design=None, args=None, root=None, options=None, cores=None, overwrite='no'):
+def runPALM(image, design=None, args=None, root=None, options=None, cores=None, overwrite='no', cleanup='yes'):
     '''
-    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [cores=<number of cores to use in parallel>]  [overwite=no]
+    runPALM image=<image file(s)> [design=<design string>] [args=<arguments string>] [root=<root name for the output>] [options=<options string>] [cores=<number of cores to use in parallel>] [overwite=no] [cleanup=yes]
 
     USE
     ===
@@ -210,6 +210,8 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
     * overwrite : whether to remove preexisting image files, if they exists, the
                   command will exit with a warning if there are preexiting files
                   and overwrite is set to 'no' (the default)
+    * cleanup   : should the command clean all the temporary generated files or
+                  not before the command exits [yes]
 
     Example use
     -----------
@@ -240,6 +242,8 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
             - Corrected for new locations of templates
     2018-09-10 Grega Repovš
             - Added additional options and surface only processing
+    2019-01-25 Grega Repovš
+            - Added cleanup option
     '''
 
     print "Running PALM\n============"
@@ -575,16 +579,18 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
                                 print "... ops! File was not created!"
 
     except:
-        for f in toclean:
-            if os.path.exists(f):
-                os.remove(f)
+        if cleanup == "yes":
+            for f in toclean:
+                if os.path.exists(f):
+                    os.remove(f)
         raise
 
     # ---- cleanup
 
-    for f in toclean:
-        if os.path.exists(f):
-            os.remove(f)
+    if cleanup == "yes":
+        for f in toclean:
+            if os.path.exists(f):
+                os.remove(f)
 
 
 def setInFiles(root, tail, nimages):
