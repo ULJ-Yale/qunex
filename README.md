@@ -401,16 +401,10 @@ Change Log
 * 0.31.04 [hcpmodified] Bugfix with subjectfolder in fMRIVolume
 * 0.32.00 [niutilities library] Added support for HCPPipelines and hcpls datasets
 * 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
-* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
-* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
-* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
-* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
-* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
-* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
-* 0.32.01 [hcpmodified niutilities] Fixed MNAPDev paths and added subjectsfolder as valid extra variable
 * 0.33.00 [connector library] Upgraded RunTurnkey for better XNAT API variable compliance
 * 0.33.01 [niutilities] Added ability to run scripts through mnapSingularity
 * 0.33.02 [hcpmodified] Removed forced module loading
+* 0.22.03 [niutilities] Added cleanup to runPALM and made BIDS/HCPLSImport more robust to bad packages
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
