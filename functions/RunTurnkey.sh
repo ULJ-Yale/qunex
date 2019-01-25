@@ -122,7 +122,7 @@ usage() {
     echo "    --turnkeytype=<turnkey_run_type>                   Specify type turnkey run. Options are: local or xnat"
     echo "                                                       If empty default is set to: [xnat]."
     echo "    --path=<study_path>                                Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
-    echo "    --subjects=<subjects_to_run_turnkey_on>            Subjects to run locally if --xnatsessionlabels is missing."
+    echo "    --subjects=<subjects_to_run_turnkey_on>            Subjects to run locally on the file system if not an XNAT run."
     echo "    --subjids=<comma_separated_list_of_subject_ids>    Ids to select for a run via gMRI engine from the batch file"
     echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
     echo "                                                       Supported:   ${MNAPTurnkeyWorkflow} "
