@@ -78,7 +78,7 @@ RUN cd /opt && \
     touch /opt/.hcppipelines && \
 # Copy over FreeSurfer license
     cp /opt/mnaptools/library/etc/license.txt /opt/freesurfer/freesurfer-6.0/ && \
-    cp /opt/mnaptools/library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/ && \
+#    cp /opt/mnaptools/library/etc/license.txt /opt/freesurfer/freesurfer-5.3-HCP/ && \
 # Set Octave as default
     touch ~/.mnapuseoctave && \
     cd matlab/gmri/\@gmrimage && \
@@ -133,10 +133,8 @@ RUN cd /opt && \
     cp /opt/HCP/Pipelines/FreeSurferCustomizations/longmc /opt/freesurfer/freesurfer-6.0/bin/longmc && \
     chmod 775 /opt/freesurfer/freesurfer-6.0/bin/longmc && \    
     git clone https://github.com/Washington-University/HCPpipelinesRunUtils.git && \
-# FS / FSL interaction
-#     unset FSL_DIR && \
-#     export FREESURFER_HOME="/opt/freesurfer/freesurfer-6.0" && \
-#     mnap_envset && \ 
+# HCP1 fix --> will move to OS Dockerfile at later time
+    yum install -y openblas-devel.x86_64 && \
 # Clean the environment and go to mnap folder
     yum clean all && \
     rm -rf /var/lib/apt/lists/* /var/cache/yum /tmp/* /var/tmp/* /boot /media /mnt /srv && \

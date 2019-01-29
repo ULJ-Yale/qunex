@@ -161,15 +161,15 @@ RUN echo "Downloading dcm2niix..." && \
     cd / && \
     rm -rf /tmp/* && \
 # Install FSL 5.0.9
-    echo "Downloading FSL 5.0.9..." && \
-    mkdir -p /opt/fsl/fsl-5.0.9 && \
-    wget --progress=bar:force -O /tmp/fsl-5.0.9-centos6_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-5.0.9-centos6_64.tar.gz && \
-    tar -xzvf /tmp/fsl-5.0.9-centos6_64.tar.gz -C /opt/fsl/fsl-5.0.9 --strip-components 1 && \
-    rm /tmp/fsl-5.0.9-centos6_64.tar.gz && \
-    rm -R /opt/fsl/fsl-5.0.9/data/first/ && \
+#    echo "Downloading FSL 5.0.9..." && \
+#    mkdir -p /opt/fsl/fsl-5.0.9 && \
+#    wget --progress=bar:force -O /tmp/fsl-5.0.9-centos6_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-5.0.9-centos6_64.tar.gz && \
+#    tar -xzvf /tmp/fsl-5.0.9-centos6_64.tar.gz -C /opt/fsl/fsl-5.0.9 --strip-components 1 && \
+#    rm /tmp/fsl-5.0.9-centos6_64.tar.gz && \
+#    rm -R /opt/fsl/fsl-5.0.9/data/first/ && \
 # Install FSL 6.0.0
     echo "Downloading FSL 6.0.0..." && \
-#    mkdir -p /opt/fsl/fsl-6.0.0 && \
+    mkdir -p /opt/fsl && \
 #    wget --progress=bar:force -O /tmp/fsl-6.0.0-centos7_64.tar.gz https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.0-sources.tar.gz && \
 #    tar -xzvf /tmp/fsl-6.0.0-centos7_64.tar.gz -C /opt/fsl/fsl-6.0.0 --strip-components 1 && \
     cd /opt/fsl && \
@@ -194,14 +194,14 @@ RUN echo "Downloading FreeSurfer 6.0..." && \
     rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz && \
     rm -R /opt/freesurfer/freesurfer-6.0/trctrain && \
     unset FSL_DIR && \
-    export FREESURFER_HOME="/opt/freesurfer/freesurfer-6.0" && \
+    export FREESURFER_HOME="/opt/freesurfer/freesurfer-6.0"
 # Install FreeSurfer 5.3-HCP
-    echo "Downloading FreeSurfer-5.3-HCP..." && \
-    mkdir -p /opt/freesurfer/freesurfer-5.3-HCP/ && \
-    wget --progress=bar:force -O /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz ftp://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
-    tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer/freesurfer-5.3-HCP/ --strip-components 1 && \
-    rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
-    rm -R /opt/freesurfer/freesurfer-5.3-HCP/trctrain
+#    echo "Downloading FreeSurfer-5.3-HCP..." && \
+#    mkdir -p /opt/freesurfer/freesurfer-5.3-HCP/ && \
+#    wget --progress=bar:force -O /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz ftp://ftp.nmr.mgh.harvard.edu/pub/dist/freesurfer/5.3.0-HCP/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
+#    tar -xzvf /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz -C /opt/freesurfer/freesurfer-5.3-HCP/ --strip-components 1 && \
+#    rm /tmp/freesurfer-Linux-centos6_x86_64-stable-pub-v5.3.0-HCP.tar.gz && \
+#    rm -R /opt/freesurfer/freesurfer-5.3-HCP/trctrain
 
 # Install PALM
 RUN echo "Installing PALM..." && \
@@ -215,6 +215,7 @@ RUN echo "Installing PALM..." && \
     ./compile.sh && \
     mv file2mat.m x-file2mat.m && \
     mv init.m x-init.m && \
+    mv mat2file.m x_mat2file.m && \
     cd /opt/palm/palm-latest-o/fileio/@gifti/private && \
     ./compile.sh && \
     mv zstream.m x-zstream.m && \
@@ -260,6 +261,16 @@ RUN echo "Downloading workbench..." && \
     ln -s /usr/lib64/libz.so.1 && \
     export WORKBENCHDIR="/opt/workbench/workbench-latest" && \
     cd / && \
+# Install miniconda for FSL 6.0 compatability
+#    mkdir -p /opt/miniconda && \
+    wget --progress=bar:force -O /tmp/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    export PATH=/opt/miniconda/bin:${PATH} && \
+    bash /tmp/miniconda.sh -b -p /opt/miniconda && \
+    conda create -y --name singlepython3 python=3 && \
+    source activate singlepython3 && \
+    conda install -y -c requests pyqt anaconda libopenblas && \
+#    conda install -y pyqt && \
+#    conda install -y -c anaconda libopenblas && \
 # Install CUDA
     wget --progress=bar:force -O /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-repo-rhel7-7.5-18.x86_64.rpm && \
     rpm -i /tmp/cuda-repo-rhel7-7.5-18.x86_64.rpm && \
