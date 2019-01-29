@@ -471,6 +471,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 print "        -> done!"
             except:
                 print "        => Error: Processing of zip package failed. Please check the package!"
+                errors += "\n    .. Processing of package %s failed!" % (file)
 
         elif '.tar' in file:
             print "   --> processing tar package [%s]" % (file)
@@ -491,6 +492,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 print "        -> done!"
             except:
                 print "        => Error: Processing of tar package failed. Please check the package!"
+                errors += "\n    .. Processing of package %s failed!" % (file)
 
         else:
             tfile = mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ")

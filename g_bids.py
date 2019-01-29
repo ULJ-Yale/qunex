@@ -457,6 +457,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
                 print "        -> done!"
             except:
                 print "        => Error: Processing of zip package failed. Please check the package!"
+                errors += "\n    .. Processing of package %s failed!" % (file)
 
         elif '.tar' in file:
             print "   --> processing tar package [%s]" % (file)
@@ -481,6 +482,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
                 print "        -> done!"
             except:
                 print "        => Error: Processing of tar package failed. Please check the package!"
+                errors += "\n    .. Processing of package %s failed!" % (file)
 
 
         else:
