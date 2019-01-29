@@ -404,7 +404,8 @@ Change Log
 * 0.33.00 [connector library] Upgraded RunTurnkey for better XNAT API variable compliance
 * 0.33.01 [niutilities] Added ability to run scripts through mnapSingularity
 * 0.33.02 [hcpmodified] Removed forced module loading
-* 0.22.03 [niutilities] Added cleanup to runPALM and made BIDS/HCPLSImport more robust to bad packages
+* 0.33.03 [niutilities] Added cleanup to runPALM and made BIDS/HCPLSImport more robust to bad packages
+* 0.34.00 [niutilities, library] Switched to conda python environment management
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
