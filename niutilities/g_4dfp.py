@@ -1,4 +1,4 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python2.7
 # encoding: utf-8
 """
 This file holds code for running 4dfp NIL preprocessing commands and volume to
