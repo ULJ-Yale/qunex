@@ -2058,14 +2058,14 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             if os.path.exists(os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_AP_SB_SE.nii.gz" % (sinfo['id']))):
                 spinok  = True
-                r += "\n     ... Found an AP SE preceeding bold %d." % (bold)
+                r += "\n     ... Found an AP SE number %d." % (bold)
                 spinOne = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_AP_SB_SE.nii.gz" % (sinfo['id']))
                 spinTwo = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_PA_SB_SE.nii.gz" % (sinfo['id']))
                 r, spinok = checkForFile2(r, spinTwo, '\n         PA spin echo fildmap pair image present', '\n         ERROR: PA spin echo fildmap pair image missing!', status=spinok)
 
             elif os.path.exists(os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_LR_SB_SE.nii.gz" % (sinfo['id']))):
                 spinok  = True
-                r += "\n     ... Found a LR SE preceeding bold %d." % (bold)
+                r += "\n     ... Found a LR SE number %d." % (bold)
                 spinOne = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_LR_SB_SE.nii.gz" % (sinfo['id']))
                 spinTwo = os.path.join(hcp['base'], "SpinEchoFieldMap%d_fncb" % (bold), "%s_fncb_BOLD_RL_SB_SE.nii.gz" % (sinfo['id']))
                 r, spinok = checkForFile2(r, spinTwo, '\n         RL spin echo fildmap pair image present', '\n         ERROR: RL spin echo fildmap pair image missing!', status=spinok)
@@ -2073,7 +2073,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             if spinok:
                 sepresent.append(bold)
                 sepairs[bold] = {'spinOne': spinOne, 'spinTwo': spinTwo}
-
 
         # --- Process unwarp direction
 
@@ -2156,7 +2155,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 else:
                     spinN = False
                     if 'se' in boldinfo:
-                        spinN = boldinfo['se']
+                        spinN = int(boldinfo['se'])
                     else:
                         for sen in sepresent:
                             if sen <= bold:
