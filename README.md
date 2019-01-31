@@ -408,6 +408,7 @@ Change Log
 * 0.34.00 [niutilities, library] Switched to conda python environment management
 * 0.34.01 [library] Improvements to conda management
 * 0.34.02 [niutilities] Fixed a bug in accessing the relevant spin echo image
+* 0.34.03 [niutilities] Improved frequency encoding and unwarp direction processing
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
