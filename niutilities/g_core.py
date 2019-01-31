@@ -75,11 +75,15 @@ def readSubjectData(filename, verbose=False):
                 if line[0].isdigit():
                     image = {}
                     image['ima'] = line[0]
+                    remove = []
                     for e in line:
                         m = nsearch.match(e)
                         if m:
                             image[m.group(1)] = m.group(2)
-                            line.remove(e)
+                            remove.append(e)
+                    
+                    for e in remove:
+                        line.remove(e)
 
                     ni = len(line)
                     if ni > 1:
