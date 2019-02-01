@@ -288,6 +288,7 @@ arglist = [['# ---- Basic settings'],
            ['hcp_fs_existing_subject','FALSE',                                    torf,   "Indicates that the command is to be run on top of an already existing analysis/subject. This excludes the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run using the --hcp_fs_extra_reconall parameter. Accepted values are TRUE and FALSE [FALSE]. HCP Pipelines specific!"],
            ['hcp_fs_extra_reconall',  '',                                         str,    "A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
            ['hcp_fs_check',           'last',                                     str,    "Whether to check the results of FreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
+           ['hcp_fslong_check',       'last',                                     str,    "Whether to check the results of FreeSurferLongitudinal pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
            ['hcp_postfs_check',       'last',                                     str,    "Whether to check the results of PostFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
            ['hcp_grayordinatesres',   '2',                                        int,    "Usually 2mm"],
            ['hcp_hiresmesh',          '164',                                      int,    "Usually 164 vertices"],
@@ -551,14 +552,13 @@ def run(command, args):
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
 
-    logfolder    = g_core.deduceFolders(options)['logfolder']
-
-    runlogfolder = os.path.join(logfolder, 'runlogs')
-    comlogfolder = os.path.join(logfolder, 'comlogs')
+    options.update(g_core.deduceFolders(options))
+    
+    runlogfolder = os.path.join(options['logfolder'], 'runlogs')
+    comlogfolder = os.path.join(options['logfolder'], 'comlogs')
 
     options['runlogs']   = runlogfolder
     options['comlogs']   = comlogfolder
-    options['logfolder'] = logfolder
 
     # --------------------------------------------------------------------------
     #                                                       start writing runlog

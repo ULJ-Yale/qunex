@@ -601,6 +601,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
         donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
         errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
+        endlog      = None
 
         nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
@@ -614,6 +615,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         except:
             nf.close()
             shutil.move(tmplogfile, errlogfile)
+            endlog = errlogfile
             r = "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information: \n%s\n" % (run)
             raise ExternalFailed(r)
 
@@ -621,6 +623,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             r = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
             nf.close()
             shutil.move(tmplogfile, errlogfile)
+            endlog = errlogfile
             raise ExternalFailed(r)
 
         print >> nf, "\n\n===> Successful completion of task\n"
@@ -629,6 +632,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             os.remove(tmplogfile)
         else:
             shutil.move(tmplogfile, donelogfile)
+            endlog = donelogfile
         r += ' --- done'
 
     else:
@@ -637,7 +641,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         # else:
         r = '\n%s --- already completed' % (description)
 
-    return r
+    return r, endlog
 
 
 def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags=""):
@@ -657,7 +661,8 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
 
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
         donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
-        errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
+        errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))  
+        endlog      = None      
 
         nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
@@ -667,11 +672,13 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
             r = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
             nf.close()
             shutil.move(tmplogfile, errlogfile)
+            endlog = errlogfile
             raise ExternalFailed(r)
         elif not os.path.exists(checkfile):
             r += "\n\nWARNING: Expected file [%s] not present after running the external command!\nTry running the command directly for more detailed error information:\n--> %s\n" % (checkfile, run)
             nf.close()
             shutil.move(tmplogfile, errlogfile)
+            endlog = errlogfile
         else:
             print >> nf, "\n\n===> Successful completion of task\n"
             nf.close()
@@ -679,14 +686,15 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
                 os.remove(tmplogfile)
             else:
                 shutil.move(tmplogfile, donelogfile)
+                endlog = donelogfile
             r += ' --- done'
     else:
         if os.path.getsize(checkfile) < 100:
-            r = runExternalForFileShell(checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags)
+            r, endlog = runExternalForFileShell(checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags)
         else:
             r = '\n%s --- already completed' % (description)
 
-    return r
+    return r, endlog
 
 
 def runScriptThroughShell(run, description, thread="0", remove=True, task=None, logfolder="", logtags=""):
@@ -707,6 +715,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
     tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
     donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
     errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
+    endlog      = None
 
     nf = open(tmplogfile, 'w')
     print >> nf, "\n#-------------------------------\n# Running: %s\n#-------------------------------" % (description)
@@ -716,6 +725,7 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
         r += "\n\nERROR: Failed with error %s\n" % (ret)
         nf.close()
         shutil.move(tmplogfile, errlogfile)
+        endlog = errlogfile
         raise ExternalFailed(r)
     else:
         print >> nf, "\n\n===> Successful completion of task\n"
@@ -724,9 +734,10 @@ def runScriptThroughShell(run, description, thread="0", remove=True, task=None, 
             os.remove(tmplogfile)
         else:
             shutil.move(tmplogfile, donelogfile)
+            endlog = donelogfile
         r += ' --- done'
 
-    return r
+    return r, endlog
 
 
 
