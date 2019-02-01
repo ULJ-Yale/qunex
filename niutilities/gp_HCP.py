@@ -2103,27 +2103,44 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         for bold, boldname, boldtask, boldinfo in bolds:
 
+            r += "\n---> %s BOLD %d" % (action("preprocessing settings (unwarpdir, refimage, moveref, seimage) for ", options['run']), bold)
+            boldok = True
+
             # --- set unwarpdir
 
             if "o" in boldinfo:
                 orient    = "_" + boldinfo['o']
-                unwarpdir = unwarpdirs[boldinfo['o']]
-            if 'fenc' in boldinfo:
+                unwarpdir = unwarpdirs.get(boldinfo['o'])
+                if unwarpdir is None:
+                    r += '\n     ... ERROR: No unwarpdir is define for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['o'])
+                    boldok = False
+            elif 'fenc' in boldinfo:
                 orient    = "_" + boldinfo['fenc']
-                unwarpdir = unwarpdirs[boldinfo['o']]
+                unwarpdir = unwarpdirs.get(boldinfo['fenc'])
+                if unwarpdir is None:
+                    r += '\n     ... ERROR: No unwarpdir is define for %s! Please check hcp_bold_unwarpdir parameter!' % (boldinfo['o'])
+                    boldok = False
             else:
                 orient = ""
-                unwarpdir = unwarpdirs['default']
+                unwarpdir = unwarpdirs.get('default')
+                if unwarpdir is None:
+                    r += '\n     ... ERROR: No default unwarpdir is set! Please check hcp_bold_unwarpdir parameter!'
+                    boldok = False
+
+            if orient:
+                r += "\n     ... frequency encoding direction: %s" % (orient[1:])
+            else:
+                r += "\n     ... frequency encoding direction not specified"
+                
+            r += "\n     ... unwarp direction: %s" % (unwarpdir)
+
 
             # --- set reference
             #
             # !!!! Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
             # - have to keep track of whether an old topup in the same direction exists
             #
-
-            r += "\n---> %s BOLD %d" % (action("Preprocessing settings (refimage, moveref, seimage) for ", options['run']), bold)
-            boldok = True
-
+            
             # --- check for bold image
 
             boldimg = os.path.join(hcp['base'], "BOLD_%d%s_fncb" % (bold, orient), "%s_fncb_BOLD_%d%s.nii.gz" % (sinfo['id'], bold, orient))
@@ -2134,6 +2151,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             if options['hcp_bold_ref'].lower() == 'use':
                 refimg = os.path.join(hcp['base'], "BOLD_%d%s_SBRef_fncb" % (bold, orient), "%s_fncb_BOLD_%d%s_SBRef.nii.gz" % (sinfo['id'], bold, orient))
                 r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
+            else:
+                r += "\n     ... reference image not used"
 
             # --- check for spin-echo-fieldmap image
 

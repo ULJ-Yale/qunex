@@ -216,6 +216,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
         v = inf[k]
         if 'o' in v:
             orient = "_" + v['o']
+        elif 'fenc' in v:
+            orient = "_" + v['fenc']
         else:
             orient = ""
         if v['name'] == 'T1w':
