@@ -94,3 +94,6 @@ ENV/
 *.swp
 
 \.DS_Store
+
+# VSCoder
+.vscode/
