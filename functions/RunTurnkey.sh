@@ -117,7 +117,7 @@ usage() {
     echo "  It operates on a local server or cluster or within the XNAT Docker engine."
     echo ""
     echo ""
-    echo "  -- PARMETERS:"
+    echo "  -- GENERAL PARMETERS:"
     echo ""
     echo "    --turnkeytype=<turnkey_run_type>                   Specify type turnkey run. Options are: local or xnat"
     echo "                                                       If empty default is set to: [xnat]."
@@ -127,12 +127,18 @@ usage() {
     echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
     echo "                                                       Supported:   ${MNAPTurnkeyWorkflow} "
     echo ""
+    echo "  -- ACCEPTANCE TESTING PARAMETERS:"
+    echo ""
+    echo "    --acceptancetest=<request_acceptance_test>         Specify if you wish to run a final acceptance test after each unit of processing. Default is [no]"
+    echo "                                                       If --acceptancetest='yes', then --turnkeysteps must be provided and will be executed first."
+    echo "                                                       If --acceptancetest='<turnkey_step>', then acceptance test will be run but step won't be executed."
+    echo ""
     echo "  -- XNAT HOST, PROJECT and USER PARMETERS:"
     echo ""
     echo "    --xnathost=<xnat_host_url>                       Specify the XNAT site hostname URL to push data to."
     echo "    --xnatprojectid=<name_of_xnat_project_id>        Specify the XNAT site project id. This is the Project ID in XNAT and not the Project Title."
     echo "    --xnatuser=<xnat_host_user_name>                 Specify XNAT username."
-    echo "    --xnatpass=<xnat_host_user_pass>                 Specify XNAT password."    
+    echo "    --xnatpass=<xnat_host_user_pass>                 Specify XNAT password."
     echo ""
     echo "  -- XNAT SUBJECT AND SESSION PARAMETERS:"
     echo ""
@@ -146,7 +152,7 @@ usage() {
     echo "    --mappingfile=<mapping_file>                       File for mapping into desired file structure, e.g. hcp, which exist as a project-level resource on XNAT"
     echo ""
     echo ""
-    echo "  -- GENERAL PARMETERS:"
+    echo "  -- MISC. PARMETERS:"
     echo ""
     echo "    --bidsformat=<specify_bids_input>                          Specify if input data is in BIDS format (yes/no). Default is [no]"
     echo "                                                               Note: If --bidsformat='yes' and XNAT run is requested then --xnatsessionlabel is required."
@@ -166,7 +172,7 @@ usage() {
     echo "    --cleanupsubject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of subject folder after steps are done. Default is [no]."
     echo "    --cleanupproject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of entire project after steps are done. Default is [no]."
     echo ""
-    echo "  -- OPTIONAL CUSTOM QC PARAMETER:"
+    echo "  -- OPTIONAL CUSTOM QC PARAMETERS:"
     echo ""
     echo "    --customqc=<yes/no>     Default is [no]. If set to 'yes' then the script looks into: "
     echo "                            ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes."
@@ -182,6 +188,7 @@ usage() {
     echo "                                                 Only set if g_PlotBoldTS is requested. If not set then the default is: "
     echo "        ${QCPlotElements}"
     echo ""
+    echo "" 
     echo "-- EXAMPLES:"
     echo ""
     echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
@@ -273,6 +280,7 @@ unset CleanupProject
 unset STUDY_PATH
 unset LOCAL_BATCH_FILE
 unset BIDSFormat
+unset AcceptanceTest
 
 echo ""
 echo " -- Reading inputs... "
@@ -340,10 +348,10 @@ if [ -z "$XNAT_SESSION_LABEL" ]; then
 XNAT_SESSION_LABEL=`opts_GetOpt "--xnatsessionlabel" "$@"`
 fi
 
-
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
+AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTest=`echo "${AcceptanceTest}" | sed 's/,/ /g;s/|/ /g'`
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
 #
@@ -471,12 +479,17 @@ scriptName=$(basename ${0})
 
 # -- Check workdir and STUDY_PATH
 if [[ -z ${workdir} ]]; then 
-    workdir="/output"; reho "Note: Working directory where study is located is missing. Setting defaults: $workdir"; echo ''
+    workdir="/output"; reho " -- Note: Working directory where study is located is missing. Setting defaults: ${workdir}"; echo ''
 fi
 
 # -- Check and set turnkey type
 if [[ -z ${TURNKEY_TYPE} ]]; then 
-    TURNKEY_TYPE="xnat"; reho "Note: Turnkey type not specified. Setting default turnkey type to: $TURNKEY_TYPE"; echo ''
+    TURNKEY_TYPE="xnat"; reho " -- Note: Turnkey type not specified. Setting default turnkey type to: ${TURNKEY_TYPE}"; echo ''
+fi
+
+# -- Check and set AcceptanceTest type
+if [[ -z ${AcceptanceTest} ]]; then 
+    AcceptanceTest="no"; reho " -- Note: Acceptance Test type not specified. Setting default turnkey type to: ${AcceptanceTest}"; echo ''
 fi
 
 ########################  XNAT SPECIFIC CHECKS  ################################
@@ -494,35 +507,36 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -z ${XNAT_PASSWORD} ]]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${XNAT_PROJECT_ID}; fi
     if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "Error: --xnatsubjectid or --xnatsubjectlabel flags are missing. Please specify either subject id or subject label and re-run."; echo ''; exit 1; fi
-    if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ ! -z ${XNAT_SUBJECT_LABEL} ]]; then reho "Note: --xnatsubjectid is not set. Using --xnatsubjectlabel to query XNAT."; echo ''; fi
-    if [[ ! -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "Note: --xnatsubjectlabel is not set. Using --xnatsubjectid to query XNAT."; echo ''; fi
+    if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ ! -z ${XNAT_SUBJECT_LABEL} ]]; then reho " -- Note: --xnatsubjectid is not set. Using --xnatsubjectlabel to query XNAT."; echo ''; fi
+    if [[ ! -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho " -- Note: --xnatsubjectlabel is not set. Using --xnatsubjectid to query XNAT."; echo ''; fi
     if [[ -z ${XNAT_SESSION_LABEL} ]]; then reho "Error: --xnatsessionlabel flag missing. Please specify session label and re-run."; echo ''; exit 1; fi
-    if [[ -z ${XNAT_STUDY_INPUT_PATH} ]]; then XNAT_STUDY_INPUT_PATH=/input/RESOURCES/mnap_study; reho "Note: XNAT session input path is not defined. Setting default path to: $XNAT_STUDY_INPUT_PATH"; fi
+    if [[ -z ${XNAT_STUDY_INPUT_PATH} ]]; then XNAT_STUDY_INPUT_PATH=/input/RESOURCES/mnap_study; reho " -- Note: XNAT session input path is not defined. Setting default path to: $XNAT_STUDY_INPUT_PATH"; echo ""; fi
     
     # -- Curl calls to set correct subject and session variables at start of RunTurnkey
     
     # -- Clean prior mapping
-    rm -r ${HOME}/xnatInfoTmp &> /dev/null
-    mkdir ${HOME}/xnatInfoTmp &> /dev/null
-    XNATINFOTMP="${HOME}/xnatInfoTmp"
-    TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+    rm -r ${HOME}/xnatlogs &> /dev/null
+    mkdir ${HOME}/xnatlogs &> /dev/null
+    XNATINFOTMP="${HOME}/xnatlogs"
+    TimeStampCurl=`date +%Y-%m-%d_%H.%M.%10N`
     
     # -- Obtain temp info on subjects and experiments in the project
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv
+    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/experiments?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv
     
     # -- Define XNAT_SUBJECT_ID (i.e. Accession number) and XNAT_SESSION_LABEL (i.e. MR Session lablel) for the specific XNAT_SUBJECT_LABEL (i.e. subject)
-    if [[ -z ${XNAT_SUBJECT_ID} ]]; then XNAT_SUBJECT_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`; fi
-    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SUBJECT_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`; fi
+    if [[ -z ${XNAT_SUBJECT_ID} ]]; then XNAT_SUBJECT_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | awk  -F, '{print $1}'`; fi
+    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SUBJECT_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_ID}" | awk  -F, '{print $3}'`; fi
     # -- Re-obtain the label from the database just in case it was mis-specified
-    XNAT_SESSION_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`
-    if [[ -z ${XNAT_ACCSESSION_ID} ]]; then XNAT_ACCSESSION_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`; fi
+    if [[ -z ${XNAT_SUBJECT_LABEL} ]]; then XNAT_SESSION_LABEL=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $5}'`; fi
+    if [[ -z ${XNAT_ACCSESSION_ID} ]]; then XNAT_ACCSESSION_ID=`more ${XNATINFOTMP}/${XNAT_PROJECT_ID}_experiments_${TimeStampCurl}.csv | grep "${XNAT_SUBJECT_LABEL}" | grep "${XNAT_SESSION_LABEL}" | awk  -F, '{print $1}'`; fi
 
     # -- Clean up temp curl call info
     rm -r ${HOME}/xnatInfoTmp &> /dev/null
 
     # -- Report error if variables remain undefined
     if [[ -z ${XNAT_SUBJECT_ID} ]] || [[ -z ${XNAT_SUBJECT_LABEL} ]] || [[ -z ${XNAT_ACCSESSION_ID} ]] || [[ -z ${XNAT_SESSION_LABEL} ]]; then 
+        echo ""
         reho "Some or all of XNAT database variables were not set correctly: "
         echo ""
         reho "  --> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
@@ -532,6 +546,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         echo ""        
         exit 1
     else
+        echo ""
         geho "Successfully read all XNAT database variables: "
         echo ""
         geho "  --> XNAT_SUBJECT_ID     :  $XNAT_SUBJECT_ID "
@@ -546,7 +561,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         # -- Setup CASE without the 'MR' prefix in the XNAT_SESSION_LABEL
         #    Eventually deprecate once fixed in XNAT
         CASE=`echo ${XNAT_SESSION_LABEL} | sed 's|MR||g'`
-        reho "Note: --bidsformat='yes' " 
+        reho " -- Note: --bidsformat='yes' " 
         reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for MNAP run: ${CASE}"
         echo ""
     else
@@ -558,7 +573,13 @@ fi
 
 
 # -- Check TURNKEY_STEPS
-if [[ -z ${TURNKEY_STEPS} ]]; then reho "Turnkey steps flag missing. Specify turnkey steps:"; geho " ===> ${MNAPTurnkeyWorkflow}"; echo ''; exit 1; fi
+if [[ -z ${TURNKEY_STEPS} ]] && [ ! -z "${MNAPTurnkeyWorkflow##*${AcceptanceTest}*}" ]; then 
+    reho "ERROR: Turnkey steps flag missing. Specify supported turnkey steps:"
+    echo "-------------------------------------------------------------------"
+    echo " ${MNAPTurnkeyWorkflow}"
+    echo ''
+    exit 1
+fi
 
     # -- Check if subject input is a parameter file instead of list of cases
     # if [[ ${CASE} == *.txt ]]; then
@@ -597,11 +618,11 @@ fi
 #              exit 1
 #          else
 #              CASE="$XNAT_SUBJECT_LABEL"
-#              reho "Note: --xnatsubjectlabel is specified. Assuming --subject info matches on local file system."; echo ""
+#              reho " -- Note: --xnatsubjectlabel is specified. Assuming --subject info matches on local file system."; echo ""
 #          fi
 #      else
 #          XNAT_SUBJECT_LABEL="$CASE"
-#          reho "Note: --subject is specified. Assuming --xnatsubjectlabel info matches in XNAT database."; echo ""
+#          reho " -- Note: --subject is specified. Assuming --xnatsubjectlabel info matches in XNAT database."; echo ""
 #      fi
 #   fi
 #   #
@@ -614,11 +635,11 @@ fi
 #              exit 1
 #          else
 #              XNAT_SUBJECT_LABEL="$CASE"
-#              reho "Note: --subject is specified. Assuming --xnatsubjectlabel info matches in XNAT database."; echo ""
+#              reho " -- Note: --subject is specified. Assuming --xnatsubjectlabel info matches in XNAT database."; echo ""
 #          fi
 #      else
 #          CASE="$XNAT_SUBJECT_LABEL"
-#          reho "Note: --xnatsubjectlabel is specified. Assuming --subject info matches on local file system."; echo ""
+#          reho " -- Note: --xnatsubjectlabel is specified. Assuming --subject info matches on local file system."; echo ""
 #      fi
 #   fi
 #
@@ -732,10 +753,16 @@ if [ "$TURNKEY_STEPS" == "all" ]; then
 else
     echo "   Turnkey workflow steps: ${TURNKEY_STEPS}"
 fi
+echo "   Acceptance test requested: ${AcceptanceTest}"
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 geho "------------------------- Start of MNAP Turnkey Workflow --------------------------------"
+echo ""
+
+# --- Report the environment variables for MNAP Turnkey run: 
+echo ""
+bash ${TOOLS}/${MNAPREPO}/library/environment/mnap_envStatus.sh --envstatus
 echo ""
 
 # ---- Map the data from input to output when in XNAT workflow
@@ -879,7 +906,7 @@ fi
             fi
         fi
         if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
-            reho "Note. ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
+            reho " -- Note: ${mnap_studyfolder}mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
             ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
         fi
         
@@ -916,19 +943,19 @@ fi
             mkdir -p ${workdir} &> /dev/null
         fi
         if [ ! -d ${mnap_studyfolder} ]; then
-            reho "Note. ${mnap_studyfolder} not found. Regenerating now..."; echo "";
+            reho " -- Note: ${mnap_studyfolder} not found. Regenerating now..."; echo "";
             ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
         fi
         if [ ! -f ${mnap_studyfolder}/.mnapstudy ]; then
-            reho "Note. ${mnap_studyfolder} mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
+            reho " -- Note: ${mnap_studyfolder} mnapstudy file not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
             ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
         fi
         if [ ! -d ${mnap_subjectsfolder} ]; then
-            reho "Note. ${mnap_subjectsfolder} folder not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
+            reho " -- Note: ${mnap_subjectsfolder} folder not found. Not a proper MNAP file hierarchy. Regenerating now..."; echo "";
             ${MNAPCOMMAND} createStudy "${mnap_studyfolder}"
         fi
         if [ ! -f ${mnap_workdir} ]; then
-            reho "Note. ${mnap_workdir} not found. Creating one now..."; echo ""
+            reho " -- Note: ${mnap_workdir} not found. Creating one now..."; echo ""
             mkdir -p ${mnap_workdir} &> /dev/null
             mkdir -p ${mnap_workdir}/inbox &> /dev/null
             mkdir -p ${mnap_workdir}/inbox_temp &> /dev/null
@@ -940,7 +967,7 @@ fi
         fi
         CheckInbox=`ls -1A ${rawdir} | wc -l`
         if [[ ${CheckInbox} != "0" ]] && [[ ${OVERWRITE_STEP} == "no" ]]; then
-               reho "Error. ${mnap_workdir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
+               reho "Error: ${mnap_workdir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
                reho "Set overwrite to 'yes' and re-run..."
                echo ""
                exit 1
@@ -986,9 +1013,9 @@ fi
                 CheckCustomQCScene=`zip -T ${processingdir}/scenes/QC/scene_qc_files.zip | grep "error"`
                 if [[ ! -z ${CheckCustomQCScene} ]]; then
                     echo "" >> ${mapRawData_ComlogTmp}
-                    reho " -- ERROR: ZIP file not validated. Custom scene may be missing or is corrupted." >> ${mapRawData_ComlogTmp}
+                    reho " -- Note: QC scene zip file not validated. Custom scene may be missing or is corrupted." >> ${mapRawData_ComlogTmp}
                     echo "" >> ${mapRawData_ComlogTmp}
-                    echo ""; reho " -- ERROR: ZIP file not validated. Custom scene may be missing or is corrupted."; echo ""
+                    echo ""; reho " -- Note: QC scene zip file not validated. Custom scene may be missing or is corrupted."; echo ""
                 else
                     geho " Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
                     echo "" >> ${mapRawData_ComlogTmp}
@@ -1037,37 +1064,48 @@ fi
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
                 # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
                 if [[ -d ${RawDataInputPath} ]]; then
-                   if [[ `find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" | grep "json" &> /dev/null` ]] && [[ `find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" | grep "nii" &> /dev/null` ]]; then 
+                   if [[ `find ${RawDataInputPath} -type f -name "*.json" | wc -l` -gt 0 ]] && [[ `find ${RawDataInputPath} -type f -name "*.nii" | wc -l` -gt 0 ]]; then 
                        echo ""; echo " -- BIDS JSON and NII data found"; echo ""
                        mkdir ${mnap_subjectsfolder}/inbox/BIDS/${CASE} &> /dev/null
                        cp -r ${RawDataInputPath}/* ${mnap_subjectsfolder}/inbox/BIDS/${CASE}/
                    else
                        echo ""
                        geho " -- Running:  "
-                       geho "              curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip "; echo ""
+                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip "; echo ""
                        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip
                    fi
                 else
                     # -- Get the BIDS data in ZIP format via curl
                     echo ""
                     geho " -- Running:  "
-                    geho "              curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip "; echo ""
+                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip "; echo ""
                     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip
                 fi
             fi
             # -- Perform mapping of BIDS file structure into MNAP
             echo ""
             geho " -- Running:  "
-            geho "               ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS" --action=copy --overwrite=no --archive=delete "; echo ""
-            ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS" --action=copy --overwrite=no --archive=delete >> ${mapRawData_ComlogTmp}
-            # -- Report completion
-            echo ""
-            geho " --> BIDSImport done"
-            echo ""
+            geho "  ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action=copy --overwrite=yes --archive=delete "; echo ""
+            ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action=copy --overwrite=yes --archive=delete >> ${mapRawData_ComlogTmp}
+            
             # -- Run BIDS completion checks on mapped data
-            FILESEXPECTED=`more ${mnap_subjectsfolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l`
-            FILEFOUND=`ls ${mnap_subjectsfolder}/${CASE}/nii/* | wc -l`
-            if [[ ! -z `more ${mapRawData_ComlogTmp} | grep 'Successful completion of task'` ]] && [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
+            if [ -f ${mnap_subjectsfolder}/${CASE}/bids/bids2nii.log ]; then
+                 FILESEXPECTED=`more ${mnap_subjectsfolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
+            else
+                 FILECHECK="fail"
+            fi
+            FILEFOUND=`ls ${mnap_subjectsfolder}/${CASE}/nii/* | wc -l 2> /dev/null`
+            if [ -z ${FILEFOUND} ]; then
+                FILECHECK="fail"
+            fi
+            if [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then
+                echo ""
+                geho " -- BIDSImport successful. Expected $FILESEXPECTED files and found $FILEFOUND files."
+                echo ""
+                FILECHECK="pass"
+            else
+                FILECHECK="fail"
+            fi
         fi
         
         # -- Check if mapping and batch files exist
@@ -1104,7 +1142,6 @@ fi
             echo "" >> ${mapRawData_ComlogTmp}
             mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogError}
             mapRawData_Comlog=${mapRawData_ComlogError}
-            exit 1
         fi
     }
     
@@ -1786,7 +1823,7 @@ fi
         done
    }
    # -- QCPreprocBOLD FC (after GBC/FC/PCONN)
-    turnkey_QCPreprocBOLDfc() {
+   turnkey_QCPreprocBOLDfc() {
         Modality="BOLD"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} FC ... "; echo ""
         if [ -z "${BOLDRUNS}" ]; then
@@ -1800,116 +1837,201 @@ fi
             rename QCPreproc QCPreprocBOLDfc${BOLD} ${logdir}/runlogs/${QCPreprocRunLog} 2> /dev/null
         done
     }
-#
-# --------------- BOLD FC Processing and analyses end ----------------------
-
-#
-# =-=-=-=-=-=-= TURNKEY COMMANDS END =-=-=-=-=-=-= 
-
-# -- Check turnkey steps and execute
-if [ "$TURNKEY_STEPS" == "all" ]; then
-    echo ""; 
-    geho "  ---------------------------------------------------------------------"
-    echo ""
-    geho "   ===> EXECUTING all MNAP turkey workflow steps: ${MNAPTurnkeyWorkflow}"
-    echo ""
-    geho "  ---------------------------------------------------------------------"
-    echo ""
-    TURNKEY_STEPS=${MNAPTurnkeyWorkflow}
-fi
-if [ "$TURNKEY_STEPS" != "all" ]; then
-    echo ""; 
-    geho "  ---------------------------------------------------------------------"
-    echo ""
-    geho "   ===> EXECUTING specific MNAP turkey workflow steps: ${TURNKEY_STEPS}"
-    echo ""
-    geho "  ---------------------------------------------------------------------"
-    echo ""
-fi
-
-# -- Lopp through specified Turnkey steps
-unset TURNKEY_STEP_ERRORS
-for TURNKEY_STEP in ${TURNKEY_STEPS}; do
     
-    # -- Execute turnkey
-    turnkey_${TURNKEY_STEP}
-    
-    # -- Generate single subject log folders
-    CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
-    CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
-    mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-    mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
-    cp ${CheckComLog} ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-    cp ${CheckRunLog} ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
-    
-    Modalities="T1w T2w myelin BOLD DWI"
-    for Modality in ${Modalities}; do
-        mkdir -p ${mnap_subjectsfolder}/${CASE}/QC/${Modality} 2> /dev/null
-    done
+    #
+    # --------------- BOLD FC Processing and analyses end ----------------------
 
-    # -- Specific sets of functions for logging
-    ConnectorBOLDFunctions="BOLDParcellation computeBOLDfcGBC computeBOLDfcSeed"
-    NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
 
-    # -- Check for completion of turnkey function for NIUtilities
-    if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
-    geho " -- Looking for incomplete/failed process ..."; echo ""
-        if [ -z "${CheckRunLog}" ]; then
-           TURNKEY_STEP_ERRORS="yes"
-           reho " ===> ERROR: Runlog file not found!"; echo ""
-        fi
-        if [ ! -z "${CheckRunLog}" ]; then
-           geho " ===> Runlog file: ${CheckRunLog} "; echo ""
-           CheckRunLogOut=`cat ${CheckRunLog} | grep '===> Successful completion'`
-        fi
-        if [ -z "${CheckRunLogOut}" ]; then
-               TURNKEY_STEP_ERRORS="yes"
-               reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
-           else
-               echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
-               TURNKEY_STEP_ERRORS="no"
-        fi
-    fi
-    # -- Specific checks for all other functions
-    if [ ! -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
-    geho " -- Looking for incomplete/failed process ..."; echo ""
-        if [ -z "${CheckComLog}" ]; then
-           TURNKEY_STEP_ERRORS="yes"
-           reho " ===> ERROR: Completed ComLog file not found!"
-        fi
-        if [ ! -z "${CheckComLog}" ]; then
-           geho " ===> Comlog file: ${CheckComLog}"
-           chmod 777 ${CheckComLog} 2>/dev/null
-        fi
-        if [ -z `echo "${CheckComLog}" | grep 'done'` ]; then
-            echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed."
-            TURNKEY_STEP_ERRORS="yes"
+    # --------------- Run Completion Check start ---------------------------
+    
+    # -- RunAcceptanceTest for a given step in XNAT
+    #
+    RunAcceptanceTestFunction() {
+    
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: Acceptance Test Function ... "; echo ""
+        
+        if [[ -z "$TURNKEY_STEPS" ]] && [[ ! -z "$AcceptanceTest" ]] && [[ "$AcceptanceTest" != "yes" ]] && [[ ${TURNKEY_TYPE} == "xnat" ]]; then 
+            for UnitTest in ${AcceptanceTest}; do
+                RunCommand="MNAPAcceptanceTest.sh \
+                --studyfolder='${mnap_studyfolder}' \
+                --subjectsfolder='${mnap_subjectsfolder}' \
+                --subjects='${CASE}' \
+                --runtype='local' \
+                --acceptancetest='${UnitTest}'"
+                echo " -- Command: ${RunCommand}"
+                eval ${RunCommand}
+            done
         else
-            echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
-            TURNKEY_STEP_ERRORS="no"
+            RunCommand="MNAPAcceptanceTest.sh \
+            --studyfolder='${mnap_studyfolder}' \
+            --subjectsfolder='${mnap_subjectsfolder}' \
+            --subjects='${CASE}' \
+            --runtype='local' \
+            --acceptancetest='${UnitTest}'"
+           echo " -- Command: ${RunCommand}"
+           eval ${RunCommand}
+        fi
+        
+       # -- XNAT Call -- not supported currently. 
+       #
+       #    RunCommand="MNAPAcceptanceTest.sh \
+       #    --xnatuser='${XNAT_USER_NAME}' \
+       #    --xnatpass='${XNAT_PASSWORD}' \
+       #    --xnatprojectid='${XNAT_PROJECT_ID}' \
+       #    --xnathost='${XNAT_HOST_NAME} \
+       #    --subjects='${XNAT_SUBJECT_LABEL}' \
+       #    --xnataccsessionid='${XNAT_ACCSESSION_ID}'
+       #    --runtype='xnat' \
+       #    --acceptancetest='${UnitTest}' \
+       #    --bidsformat='${BIDSFormat}' \
+       #    --xnatarchivecommit='session' "
+    }
+    #
+    # --------------- Run Completion Check end ----------------------
+
+#
+# =-=-=-=-=-=-= TURNKEY COMMANDS END =-=-=-=-=-=-=
+
+
+# =-=-=-=-=-=-= RUN SPECIFIC COMMANDS START =-=-=-=-=-=-=
+
+if [ -z "$TURNKEY_STEPS" ] && [ ! -z "$AcceptanceTest" ] && [ "$AcceptanceTest" != "yes" ]; then
+    echo ""; 
+    geho "  ---------------------------------------------------------------------"
+    echo ""
+    geho "   ===> Performing completion check on specific MNAP turnkey units: ${AcceptanceTest}"
+    echo ""
+    geho "  ---------------------------------------------------------------------"
+    echo ""
+    
+    # --------------------------------------------------------------------------
+    # -- Only perform completion checks
+    # --------------------------------------------------------------------------
+    
+    RunAcceptanceTestFunction
+
+else
+    
+    # --------------------------------------------------------------------------
+    # -- Check turnkey steps and execute in a loop
+    # --------------------------------------------------------------------------
+
+    if [ "$TURNKEY_STEPS" == "all" ]; then
+        echo ""; 
+        geho "  ---------------------------------------------------------------------"
+        echo ""
+        geho "   ===> Executing all MNAP turkey workflow steps: ${MNAPTurnkeyWorkflow}"
+        echo ""
+        geho "  ---------------------------------------------------------------------"
+        echo ""
+        TURNKEY_STEPS=${MNAPTurnkeyWorkflow}
+    fi
+    if [ "$TURNKEY_STEPS" != "all" ]; then
+        echo ""; 
+        geho "  ---------------------------------------------------------------------"
+        echo ""
+        geho "   ===> Executing specific MNAP turkey workflow steps: ${TURNKEY_STEPS}"
+        echo ""
+        geho "  ---------------------------------------------------------------------"
+        echo ""
+    fi
+
+    # -- Loop through specified Turnkey steps if requested
+    unset TURNKEY_STEP_ERRORS
+    for TURNKEY_STEP in ${TURNKEY_STEPS}; do
+        
+        # -- Execute turnkey
+        turnkey_${TURNKEY_STEP}
+        
+        # -- Generate single subject log folders
+        CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+        mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
+        mkdir -p ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
+        cp ${CheckComLog} ${mnap_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
+        cp ${CheckRunLog} ${mnap_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
+        
+        Modalities="T1w T2w myelin BOLD DWI"
+        for Modality in ${Modalities}; do
+            mkdir -p ${mnap_subjectsfolder}/${CASE}/QC/${Modality} 2> /dev/null
+        done
+    
+        # -- Specific sets of functions for logging
+        ConnectorBOLDFunctions="BOLDParcellation computeBOLDfcGBC computeBOLDfcSeed"
+        NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
+    
+        # -- Check for completion of turnkey function for NIUtilities
+        if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
+        geho " -- Looking for incomplete/failed process ..."; echo ""
+            if [ -z "${CheckRunLog}" ]; then
+               TURNKEY_STEP_ERRORS="yes"
+               reho " ===> ERROR: Runlog file not found!"; echo ""
+            fi
+            if [ ! -z "${CheckRunLog}" ]; then
+               geho " ===> Runlog file: ${CheckRunLog} "; echo ""
+               CheckRunLogOut=`cat ${CheckRunLog} | grep '===> Successful completion'`
+            fi
+            if [ -z "${CheckRunLogOut}" ]; then
+                   TURNKEY_STEP_ERRORS="yes"
+                   reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
+               else
+                   echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
+                   TURNKEY_STEP_ERRORS="no"
+            fi
+        fi
+        # -- Specific checks for all other functions
+        if [ ! -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
+        geho " -- Looking for incomplete/failed process ..."; echo ""
+            if [ -z "${CheckComLog}" ]; then
+               TURNKEY_STEP_ERRORS="yes"
+               reho " ===> ERROR: Completed ComLog file not found!"
+            fi
+            if [ ! -z "${CheckComLog}" ]; then
+               geho " ===> Comlog file: ${CheckComLog}"
+               chmod 777 ${CheckComLog} 2>/dev/null
+            fi
+            if [ -z `echo "${CheckComLog}" | grep 'done'` ]; then
+                echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step failed."
+                TURNKEY_STEP_ERRORS="yes"
+            else
+                echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
+                TURNKEY_STEP_ERRORS="no"
+            fi
+        fi
+        
+        # -- Run acceptance tests for specific MNAP units
+        if [[ AcceptanceTest == "yes" ]]; then
+            UnitTest="${TURNKEY_STEP}"
+            RunAcceptanceTestFunction
+        fi
+    done
+    
+    if [ ${TURNKEY_TYPE} == "xnat" ]; then
+        geho "---> Setting recursive r+w+x permissions on ${mnap_studyfolder}"
+        chmod -R 777 ${mnap_studyfolder} &> /dev/null
+        cd ${processingdir}
+        zip -r logs logs &> /dev/null
+        echo ""
+        geho "---> Uploading all logs: curl -u XNAT_USER_NAME:XNAT_PASSWORD -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" "
+        echo ""
+        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip &> /dev/null
+        echo ""
+        rm -rf ${processingdir}/logs.zip &> /dev/null
+        popd 2> /dev/null
+        if [[ ${BIDSFormat} != "yes" ]]; then
+            echo ""
+            geho "---> Cleaning up: removing dicom folder"
+            rm -rf ${mnap_workdir}/dicom &> /dev/null
+            echo ""
         fi
     fi
-done
-
-if [ ${TURNKEY_TYPE} == "xnat" ]; then
-    geho "---> Setting recursive r+w+x permissions on ${mnap_studyfolder}"
-    chmod -R 777 ${mnap_studyfolder} &> /dev/null
-    cd ${processingdir}
-    zip -r logs logs &> /dev/null
-    echo ""
-    geho "---> Uploading all logs: curl -u XNAT_USER_NAME:XNAT_PASSWORD -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" "
-    echo ""
-    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip 
-    echo ""
-    rm -rf ${processingdir}/logs.zip &> /dev/null
-    popd 2> /dev/null
-    if [[ ${BIDSFormat} != "yes" ]]; then
-        echo ""
-        geho "---> Cleaning up: removing dicom folder"
-        rm -rf ${mnap_workdir}/dicom &> /dev/null
-        echo ""
-    fi
 fi
+
+# =-=-=-=-=-=-= RUN SPECIFIC COMMANDS END =-=-=-=-=-=-=
+
+# ------------------------------------------------------------------------------
+# -- Report final error checks
+# ------------------------------------------------------------------------------
 
 if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
     echo ""
@@ -1925,5 +2047,9 @@ else
 fi
 
 }
+
+# ------------------------------------------------------------------------------
+# -- Execute overall function and read arguments
+# ------------------------------------------------------------------------------
 
 main $@
