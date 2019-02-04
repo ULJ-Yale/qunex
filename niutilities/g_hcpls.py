@@ -225,16 +225,16 @@ def mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix)
                 print prefix + "--> hcpls for session %s already exists: cleaning session" % (sessionid)
                 shutil.rmtree(tfolder)                    
                 sessions['clean'].append(sessionid)
-            elif not os.path.exists(os.path.join(folder, 'hcpfs2nii.log')):
+            elif not os.path.exists(os.path.join(tfolder, 'hcpfs2nii.log')):
                 print prefix + "--> incomplete hcpls for session %s already exists: cleaning session" % (session)
-                shutil.rmtree(folder)                    
+                shutil.rmtree(tfolder)                    
                 sessions['clean'].append(session)
             else:
                 sessions['skip'].append(session)
                 print prefix + "--> hcpls for session %s already exists: skipping session" % (session)
                 print prefix + "    files previously mapped:"
-                with open(os.path.join(folder, 'hcpfs2nii.log')) as bidsLog:
-                    for logline in bidsLog:
+                with open(os.path.join(tfolder, 'hcpfs2nii.log')) as hcplsLog:
+                    for logline in hcplsLog:
                         if 'HCPFS to nii mapping report' in logline:
                             continue
                         elif '=>' in logline:                            
