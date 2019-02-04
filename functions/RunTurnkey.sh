@@ -1068,6 +1068,8 @@ fi
                        echo ""; echo " -- BIDS JSON and NII data found"; echo ""
                        mkdir ${mnap_subjectsfolder}/inbox/BIDS/${CASE} &> /dev/null
                        cp -r ${RawDataInputPath}/* ${mnap_subjectsfolder}/inbox/BIDS/${CASE}/
+                       cd ${mnap_subjectsfolder}/inbox/BIDS
+                       zip -r ${CASE} ${CASE} 2> /dev/null
                    else
                        echo ""
                        geho " -- Running:  "
@@ -1087,6 +1089,8 @@ fi
             geho " -- Running:  "
             geho "  ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action=copy --overwrite=yes --archive=delete "; echo ""
             ${MNAPCOMMAND} BIDSImport --subjectsfolder="${mnap_subjectsfolder}" --inbox="${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action=copy --overwrite=yes --archive=delete >> ${mapRawData_ComlogTmp}
+            popd 2> /dev/null
+            rm -rf ${mnap_subjectsfolder}/inbox/BIDS/${CASE}* &> /dev/null
             
             # -- Run BIDS completion checks on mapped data
             if [ -f ${mnap_subjectsfolder}/${CASE}/bids/bids2nii.log ]; then
@@ -2008,13 +2012,13 @@ else
     
     if [ ${TURNKEY_TYPE} == "xnat" ]; then
         geho "---> Setting recursive r+w+x permissions on ${mnap_studyfolder}"
-        chmod -R 777 ${mnap_studyfolder} &> /dev/null
+        chmod -R 777 ${mnap_studyfolder} 2> /dev/null
         cd ${processingdir}
-        zip -r logs logs &> /dev/null
+        zip -r logs logs 2> /dev/null
         echo ""
         geho "---> Uploading all logs: curl -u XNAT_USER_NAME:XNAT_PASSWORD -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" "
         echo ""
-        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip &> /dev/null
+        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true" -F file=@logs.zip
         echo ""
         rm -rf ${processingdir}/logs.zip &> /dev/null
         popd 2> /dev/null
