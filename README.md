@@ -412,6 +412,7 @@ Change Log
 * 0.34.04 [niutilities] Improved processing of existing bids/hcpls sessions
 * 0.35.00 [connector] Upgraded acceptance testing and Turnkey functionality
 * 0.36.00 [connector,mnapcontainer] Small tweaks to Turnkey functionality, removed mnapcontainer submodule
+* 0.36.01 [library] Small cosmetic fixes to the mnap_environment.sh code
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
