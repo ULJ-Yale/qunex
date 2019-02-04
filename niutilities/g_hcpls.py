@@ -225,20 +225,35 @@ def mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix)
                 print prefix + "--> hcpls for session %s already exists: cleaning session" % (sessionid)
                 shutil.rmtree(tfolder)                    
                 sessions['clean'].append(sessionid)
+            elif not os.path.exists(os.path.join(folder, 'hcpfs2nii.log')):
+                print prefix + "--> incomplete hcpls for session %s already exists: cleaning session" % (session)
+                shutil.rmtree(folder)                    
+                sessions['clean'].append(session)
             else:
-                sessions['skip'].append(sessionid)
-                print prefix + "--> hcpls for session %s already exists: skipping session" % (sessionid)
+                sessions['skip'].append(session)
+                print prefix + "--> hcpls for session %s already exists: skipping session" % (session)
+                print prefix + "    files previously mapped:"
+                with open(os.path.join(folder, 'hcpfs2nii.log')) as bidsLog:
+                    for logline in bidsLog:
+                        if 'HCPFS to nii mapping report' in logline:
+                            continue
+                        elif '=>' in logline:                            
+                            mappedFile = logline.split('=>')[0].strip()
+                            print prefix + "    ... %s" % (os.path.basename(mappedFile))
         else:
             print prefix + "--> creating hcpl session %s" % (sessionid)
             sessions['map'].append(sessionid)
         
     if os.path.exists(tfile):
-        if sessionid in sessions['append']:
+        if sessionid in sessions['skip']:
             return False
         else:
             os.remove(tfile)
     elif not os.path.exists(os.path.dirname(tfile)):
         os.makedirs(os.path.dirname(tfile))
+
+    if session in sessions['skip']:
+        return False
 
     return tfile
 
@@ -416,7 +431,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
         hcplsname = re.sub('.zip$|.gz$', '', hcplsname)
         hcplsname = re.sub('.tar$', '', hcplsname)
 
-    sessions = {'list': [], 'clean': [], 'skip': [], 'map': [], 'append': []}
+    sessions = {'list': [], 'clean': [], 'skip': [], 'map': []}
     allOk    = True
     errors   = ""
 
