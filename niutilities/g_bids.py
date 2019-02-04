@@ -189,21 +189,37 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
                 print prefix + "--> bids for session %s already exists: cleaning session" % (session)
                 shutil.rmtree(folder)                    
                 sessions['clean'].append(session)
+            elif not os.path.exists(os.path.join(folder, 'bids2nii.log')):
+                print prefix + "--> incomplete bids for session %s already exists: cleaning session" % (session)
+                shutil.rmtree(folder)                    
+                sessions['clean'].append(session)
             else:
                 sessions['skip'].append(session)
                 print prefix + "--> bids for session %s already exists: skipping session" % (session)
+                print prefix + "    files previously mapped:"
+                with open(os.path.join(folder, 'bids2nii.log')) as bidsLog:
+                    for logline in bidsLog:
+                        if 'BIDS to nii mapping report' in logline:
+                            continue
+                        elif '=>' in logline:                            
+                            mappedFile = logline.split('=>')[0].strip()
+                            print prefix + "    ... %s" % (os.path.basename(mappedFile))
         else:
+            print prefix + "--> creating bids session %s" % (session)
             sessions['map'].append(session)
         
     tfile = os.path.join(folder, optional, modality, os.path.basename(file))
 
     if os.path.exists(tfile):
-        if session in sessions['append']:
+        if session in sessions['skip']:
             return False
         else:
             os.remove(tfile)
     elif not os.path.exists(os.path.dirname(tfile)):
         os.makedirs(os.path.dirname(tfile))
+
+    if session in sessions['skip']:
+        return False
 
     return tfile
 
@@ -397,8 +413,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
         bidsname = os.path.basename(inbox)
         bidsname = re.sub('.zip$|.gz$', '', bidsname)
         bidsname = re.sub('.tar$', '', bidsname)
-
-    sessions = {'list': [], 'clean': [], 'skip': [], 'map': []}
+    
+    sessions = {'list': [], 'clean': [], 'skip': [], 'map': [], 'append': []}
     allOk    = True
     errors   = ""
 
@@ -458,6 +474,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
             except:
                 print "        => Error: Processing of zip package failed. Please check the package!"
                 errors += "\n    .. Processing of package %s failed!" % (file)
+                raise
 
         elif '.tar' in file:
             print "   --> processing tar package [%s]" % (file)
