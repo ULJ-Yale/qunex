@@ -410,6 +410,7 @@ Change Log
 * 0.34.02 [niutilities] Fixed a bug in accessing the relevant spin echo image
 * 0.34.03 [niutilities] Improved frequency encoding and unwarp direction processing
 * 0.34.04 [niutilities] Improved processing of existing bids/hcpls sessions
+* 0.35.00 [connector] Upgraded acceptance testing and Turnkey functionality
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu

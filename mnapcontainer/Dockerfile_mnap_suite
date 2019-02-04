@@ -55,7 +55,7 @@ FROM ztamayo/mnap_dep:latest
 # Set MNAP environment variables 
 ENV PYTHONPATH="/usr/local/bin/python2.7:$PYTHONPATH" \
     TOOLS="/opt" \
-    MNAPREPO="mnaptools" \
+    MNAPREPO="mnaptools"
 
 # Git clone MNAP repositiory
 RUN cd /opt && \

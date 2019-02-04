@@ -225,30 +225,32 @@ main() {
         echo -e " -- Importing data into ${StudyFolder} for ${CASE} \n" 2>&1 | tee -a ${LogFile}
         ${MNAPCOMMAND} HCPLSImport --subjectsfolder="${SubjectsFolder}" --inbox="${InputDataLocation}/${CASE}" --action="link" --overwrite="no" --archive="leave" 2>&1 | tee -a ${LogFile}
         
-        # -> Revert from BIDS folder naming convention
-        CASEBIDSName=`ls ${SubjectsFolder} | grep "${CASE}"`
-        mv ${SubjectsFolder}/${CASEBIDSName} ${SubjectsFolder}/${CASE}
-        sed -i "s/$CASEBIDSName/$CASE/g" ${SubjectsFolder}/${CASE}/subject_hcp.txt
+        # -> Get full session folder name
+        SessionNames=`ls ${SubjectsFolder} | grep "${CASE}"`
+        echo -e " -- Identified the following session(s) for subject ${CASE}: ${SessionNames} \n" 2>&1 | tee -a ${LogFile}
+
+        for SessionName in ${SessionNames}; do
         
-        # -> Map data to be ready for HCP processing
-        echo -e " -- Running setupHCP for ${CASE}... \n" 2>&1 | tee -a ${LogFile}
-        ${MNAPCOMMAND} setupHCP --subjectsfolder="${SubjectsFolder}" --subjects="HCA*" 2>&1 | tee -a ${LogFile}
-        
-        # -> Create a batch file with the parameters and subject's information
-        echo -e " -- Running createBatch for ${CASE}... \n" 2>&1 | tee -a ${LogFile}
-        echo "  ${MNAPCOMMAND} createBatch --subjectsfolder="${SubjectsFolder}" --subjects="${CASE}" --overwrite="append" --tfile="${BatchFile}"   "
-        ${MNAPCOMMAND} createBatch --subjectsfolder="${SubjectsFolder}" --subjects="${CASE}" --overwrite="append" --tfile="${BatchFile}" 2>&1 | tee -a ${LogFile}
-        
-        # -> Run HCP proccessing on a single case
-        echo -e " -- Running PreFreeSurfer on ${CASE}... \n" 2>&1 | tee -a ${LogFile}
-        ${MNAPCOMMAND} hcp1 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${CASE}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
-        
-        # -- Not acceptance tested
-        # ${MNAPCOMMAND} hcp2 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${CASE}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
-        # ${MNAPCOMMAND} hcp3 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${CASE}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
-        # ${MNAPCOMMAND} hcp4 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${CASE}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
-        # ${MNAPCOMMAND} hcp5 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${CASE}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
-        
+            # -> Map data to be ready for HCP processing
+            echo -e " -- Running setupHCP for session ${SessionName}... \n" 2>&1 | tee -a ${LogFile}
+            ${MNAPCOMMAND} setupHCP --subjectsfolder="${SubjectsFolder}" --subjects="${SessionName}" 2>&1 | tee -a ${LogFile}
+            
+            # -> Create a batch file with the parameters and subject's information
+            echo -e " -- Running createBatch for session ${SessionName}... \n" 2>&1 | tee -a ${LogFile}
+            echo "  ${MNAPCOMMAND} createBatch --subjectsfolder="${SubjectsFolder}" --subjects="${SessionName}" --overwrite="append" --tfile="${BatchFile}"   "
+            ${MNAPCOMMAND} createBatch --subjectsfolder="${SubjectsFolder}" --subjects="${SessionName}" --overwrite="append" --tfile="${BatchFile}" 2>&1 | tee -a ${LogFile}
+            
+            # -> Run HCP proccessing on a single case
+            echo -e " -- Running PreFreeSurfer on session ${SessionName}... \n" 2>&1 | tee -a ${LogFile}
+            ${MNAPCOMMAND} hcp1 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${SessionName}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
+            
+            # -- Not acceptance tested
+            # ${MNAPCOMMAND} hcp2 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${SessionName}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
+            # ${MNAPCOMMAND} hcp3 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${SessionName}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
+            # ${MNAPCOMMAND} hcp4 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${SessionName}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
+            # ${MNAPCOMMAND} hcp5 --subjectsfolder="${SubjectsFolder}" --subjects="${BatchFile}" --subjid="${SessionName}" --overwrite="${Overwrite}" --nprocess="0" --cores="${cores}" 2>&1 | tee -a ${LogFile}
+        done
+
     done
 }
 
