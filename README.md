@@ -414,6 +414,7 @@ Change Log
 * 0.36.00 [connector,mnapcontainer] Small tweaks to Turnkey functionality, removed mnapcontainer submodule
 * 0.36.01 [library] Small cosmetic fixes to the mnap_environment.sh code
 * 0.36.02 [library] Reintroduce PYTHONPATH for the correct Docker environment
+* 0.36.03 [library] Made conda use and PYTHONPATH conditional on version of Pipelines
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
