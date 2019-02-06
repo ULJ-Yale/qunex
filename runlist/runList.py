@@ -91,14 +91,14 @@ def runList(filename, listName):
                     if lineSplit[0] == "list":
                         if lineSplit[1] == listName:
                             listFound = True
-                            break
+                        break
                     else:
                         print "\n\n=====================================================\nERROR: expeciting list name, found: [%s]" % (line)
                         raise ValueError("ERROR: expeciting list name, found: [%s]" % (line))
 
         if not listFound:
             print "\n\n=====================================================\nERROR: listName does not exist [%s]" % (listName)
-            raise ValueError("ERROR: listName file not found: %s" % (listName))
+            raise ValueError("ERROR: list not found: %s" % (listName))
 
         # parse list parameters
         while len(ls) > 0:
@@ -158,7 +158,7 @@ def runList(filename, listName):
             print "\n"
 
     except:
-        print "\n\n=====================================================\nERROR: There was an error with the runList file: \n%s\n\n--------\nError raised:\n" % (line)
+        print "\n\n=====================================================\nERROR: There was an error with the runList file: \n%s\n\n--------\nError raised:\n" % (filename)
         raise
 
 def stripQuotes(string):
@@ -166,4 +166,4 @@ def stripQuotes(string):
     string = string.strip("'")
     return string
 
-runList("/Users/jure/Documents/niutilities/runlist/runList.txt", "map_preprocess_fn_data")
+runList("/Users/jure/Documents/niutilities/runlist/runList.txt", "test_list2")
