@@ -1,0 +1,45 @@
+# runlist text example
+
+# global settings
+cores=4
+subjects="/Volumes/tigr/MBLab/fMRI/NeuroVac/processing/batch.txt"
+overwrite="no"
+
+# 1st list
+---
+list="map_preprocess_fn_data"
+    cores=6
+
+    command="mapHCPData"
+
+    command="createBOLDBrainMasks"
+        bold_preprocess="all"
+
+    command="computeBOLDStats"
+        bold_preprocess="all"
+        log=remove
+
+    command="createStatsReport"
+        cores=1
+        overwrite="yes"
+
+    command="extractNuisanceSignal"
+        bold_preprocess="all"
+
+    command="preprocessBold"
+        bold_actions="shrc"
+        glm_residuals="save"
+        bold_nuisance="m,V,WM,WB,1d"
+        pignore="hipass=linear|regress=spline|lopass=linear"
+        overwrite="yes"
+        bold_preprocess="rest"
+        image_target=nifti
+        hcp_cifti_tail=""
+
+# 2nd list
+---
+list="test_list"
+    command="mapHCPData"
+
+    command="createBOLDBrainMasks"
+        bold_preprocess="all"
