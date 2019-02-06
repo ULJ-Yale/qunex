@@ -670,9 +670,9 @@ echo ""
                             cd ${RunAcceptanceTestDir}
                             echo ""
                             geho "---> Uploading ${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt to ${XNAT_HOST_NAME} "
-                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_ACCEPT/files?extract=true&overwrite=true&inbody=true" -d ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt "
+                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_ACCEPT/files?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt "
                             echo ""
-                            curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_ACCEPT/files?extract=true&overwrite=true&inbody=true" -d ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt &> /dev/null
+                            curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_ACCEPT/files?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt &> /dev/null
                             echo ""
                             if ( curl -k -b "JSESSIONID=$JSESSION" -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/MNAP_ACCEPT/files/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt ); then 
                                 geho "-- ${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt uploaded to ${XNAT_HOST_NAME}"
@@ -703,9 +703,9 @@ echo ""
              RunAcceptanceTestOutFile=$(basename $RunAcceptanceTestOut)
              echo ""
              geho "---> Uploading ${RunAcceptanceTestOut} to ${XNAT_HOST_NAME} "
-             geho "     curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files?extract=true&overwrite=true&inbody=true" -d ${RunAcceptanceTestOut} "
+             geho "     curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} "
              echo ""
-             curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files?extract=true&overwrite=true&inbody=true" -d ${RunAcceptanceTestOut} &> /dev/null
+             curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} &> /dev/null
              echo ""
              if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files/${RunAcceptanceTestOutFile} ); then 
                  geho "-- ${RunAcceptanceTestOutFile} to ${XNAT_HOST_NAME}"
