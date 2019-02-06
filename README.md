@@ -418,6 +418,7 @@ Change Log
 * 0.36.04 [hcpmodified] Added c_ras.mat correction to PostFS step
 * 0.36.05 [hcpmodified] Fixed a typo in c_ras.mat correction in PostFS step
 * 0.36.06 [connector] Changed curl calls
+* 0.36.07 [connector] Reverted changes to curl calls in MNAPAcceptanceTest
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
