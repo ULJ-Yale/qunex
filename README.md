@@ -417,6 +417,7 @@ Change Log
 * 0.36.03 [library] Made conda use and PYTHONPATH conditional on version of Pipelines
 * 0.36.04 [hcpmodified] Added c_ras.mat correction to PostFS step
 * 0.36.05 [hcpmodified] Fixed a typo in c_ras.mat correction in PostFS step
+* 0.36.06 [connector] Changed curl calls
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
