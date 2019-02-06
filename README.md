@@ -419,6 +419,7 @@ Change Log
 * 0.36.05 [hcpmodified] Fixed a typo in c_ras.mat correction in PostFS step
 * 0.36.06 [connector] Changed curl calls
 * 0.36.07 [connector] Reverted changes to curl calls in MNAPAcceptanceTest
+* 0.36.08 [connector] Fixed incomplete rsync command for hcp4 & hcp5
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
