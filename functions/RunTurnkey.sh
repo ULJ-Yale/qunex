@@ -1289,7 +1289,7 @@ fi
         Modality="BOLD"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
         if [ -z "${BOLDfc}" ]; then
-            if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
+            # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi   --- default for bold prefix is now ""
             if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
         fi
         if [ -z "${BOLDRUNS}" ]; then
@@ -1455,7 +1455,7 @@ fi
         for Modality in ${Modalities}; do
             geho " --> Running modality: ${Modality} "; echo ""
             if [[ ${Modality} == "BOLD" ]]; then
-                if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
+                # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi    --- default for bold prefix is now ""
                 if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
                 if [ -z "${BOLDRUNS}" ]; then
                      BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
