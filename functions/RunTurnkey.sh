@@ -1280,7 +1280,7 @@ fi
     }
     # -- fMRISurface
     turnkey_hcp5() {
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRISurface) ... "; echo ""
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp5 (hcp_fMRISurface) ... "; echo ""
         HCPLogName="hcpfMRISurface"
         ${MNAPCOMMAND} hcp5 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
     }
@@ -1305,7 +1305,7 @@ fi
     }
     # -- Diffusion HCP (after hcp1)
     turnkey_hcpd() {
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_Diffusion) ..."; echo ""
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcpd (hcp_Diffusion) ..."; echo ""
         ${MNAPCOMMAND} hcpd --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
     }
     # -- Diffusion Legacy (after hcp1)
