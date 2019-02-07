@@ -422,6 +422,7 @@ Change Log
 * 0.36.08 [connector] Fixed incomplete rsync command for hcp4 & hcp5
 * 0.36.09 [connector] Corrected reporting of which step is being run in RunTurnkey
 * 0.36.10 [connector niutilities] Added volume and dtseries specification for mapHCPData and changed BOLDPrefix default to "" in RunTurnkey
+* 0.37.00 [connector] Updated MNAPAcceptanceTest connector function to allow running a loop on sessions
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
