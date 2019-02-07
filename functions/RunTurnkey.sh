@@ -1280,7 +1280,7 @@ fi
     }
     # -- fMRISurface
     turnkey_hcp5() {
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRISurface) ... "; echo ""
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp5 (hcp_fMRISurface) ... "; echo ""
         HCPLogName="hcpfMRISurface"
         ${MNAPCOMMAND} hcp5 --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
     }
@@ -1289,7 +1289,7 @@ fi
         Modality="BOLD"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
         if [ -z "${BOLDfc}" ]; then
-            if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
+            # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi   --- default for bold prefix is now ""
             if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
         fi
         if [ -z "${BOLDRUNS}" ]; then
@@ -1305,7 +1305,7 @@ fi
     }
     # -- Diffusion HCP (after hcp1)
     turnkey_hcpd() {
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_Diffusion) ..."; echo ""
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcpd (hcp_Diffusion) ..."; echo ""
         ${MNAPCOMMAND} hcpd --subjectsfolder="${mnap_subjectsfolder}" --subjects="${project_batch_file}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
     }
     # -- Diffusion Legacy (after hcp1)
@@ -1455,7 +1455,7 @@ fi
         for Modality in ${Modalities}; do
             geho " --> Running modality: ${Modality} "; echo ""
             if [[ ${Modality} == "BOLD" ]]; then
-                if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi
+                # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi    --- default for bold prefix is now ""
                 if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
                 if [ -z "${BOLDRUNS}" ]; then
                      BOLDRUNS=`ls ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
