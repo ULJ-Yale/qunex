@@ -420,6 +420,7 @@ Change Log
 * 0.36.06 [connector] Changed curl calls
 * 0.36.07 [connector] Reverted changes to curl calls in MNAPAcceptanceTest
 * 0.36.08 [connector] Fixed incomplete rsync command for hcp4 & hcp5
+* 0.36.09 [connector] Corrected reporting of which step is being run in RunTurnkey
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
