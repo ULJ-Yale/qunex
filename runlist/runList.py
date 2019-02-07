@@ -1,34 +1,36 @@
 import os.path
 import re
+import subprocess
+import sys
 
-def runList(filename, listName):
+def runlist(filename, runlistName):
     """
     USE AND RESULTS
     ===============
 
-    runList takes a runList file and a list name and executes the commands defined
-    in that list. The runList files contains commands that should be run and their
+    runlist takes a runlist file and a list name and executes the commands defined
+    in that list. The runlist files contains commands that should be run and their
     parameters.
 
     RELEVANT PARAMETERS
 
     ===================
 
-    --filename  ... The runList.txt file containing runLists and their parameters.
-    --listName  ... Name of the list inside runList.txt to run.
+    --filename  ... The runlist.txt file containing runlists and their parameters.
+    --runlistName  ... Name of the list inside runlist.txt to run.
 
     EXAMPLE USE
     ===========
 
-    runList filename="/Users/john/Documents/runList.txt" listName="map_preprocess_fn_data"
+    runlist filename="/Users/john/Documents/runlist.txt" runlistName="map_preprocess_fn_data"
 
     ---
     Written by Jure Demšar.
     """
 
     if not os.path.exists(filename):
-        print "\n\n=====================================================\nERROR: runList file does not exist [%s]" % (filename)
-        raise ValueError("ERROR: runList file not found: %s" % (filename))
+        print "\n\n=====================================================\nERROR: runlist file does not exist [%s]" % (filename)
+        raise RuntimeError("ERROR: runlist file not found: %s" % (filename))
 
     s = file(filename).read()
 
@@ -89,7 +91,7 @@ def runList(filename, listName):
                     lineSplit[1] = stripQuotes(lineSplit[1])
                     # list found?
                     if lineSplit[0] == "list":
-                        if lineSplit[1] == listName:
+                        if lineSplit[1] == runlistName:
                             listFound = True
                         break
                     else:
@@ -97,8 +99,8 @@ def runList(filename, listName):
                         raise ValueError("ERROR: expeciting list name, found: [%s]" % (line))
 
         if not listFound:
-            print "\n\n=====================================================\nERROR: listName does not exist [%s]" % (listName)
-            raise ValueError("ERROR: list not found: %s" % (listName))
+            print "\n\n=====================================================\nERROR: runlistName does not exist [%s]" % (runlistName)
+            raise ValueError("ERROR: list not found: %s" % (runlistName))
 
         # parse list parameters
         while len(ls) > 0:
@@ -151,14 +153,35 @@ def runList(filename, listName):
 
         # process commands
         for c in commands:
+            # build command
             command = c["name"]
             for key in c["parameters"]:
                 command += " " + key + "=" + c["parameters"][key]
-            print command
-            print "\n"
+            
+            # run
+            print "\n===> Running command\n%s" % c["name"]
+
+            process = subprocess.Popen("mnap " + command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            # Poll process for new output until finished
+            while True:
+                nextline = process.stdout.readline()
+                if nextline == '' and process.poll() is not None:
+                    break
+                sys.stdout.write(nextline)
+                sys.stdout.flush()
+
+            returnCode = process.returncode
+            if returnCode:
+                print "\n\n=====================================================\nERROR: Failed with error %s" % (returnCode)
+                raise subprocess.CalledProcessError("ERROR: Failed with error %s" % (returnCode), command)
+            else:
+                print "\n===> Successful completion of command %s" % c["name"]
+
+        print "\n===> Successful completion of runlist %s" % runlistName
 
     except:
-        print "\n\n=====================================================\nERROR: There was an error with the runList file: \n%s\n\n--------\nError raised:\n" % (filename)
+        print "\n\n=====================================================\nERROR: There was an error with the runlist file: \n%s\n\n--------\nError raised:\n" % (filename)
         raise
 
 def stripQuotes(string):
@@ -166,4 +189,4 @@ def stripQuotes(string):
     string = string.strip("'")
     return string
 
-runList("/Users/jure/Documents/niutilities/runlist/runList.txt", "test_list2")
+runlist("/Users/jure/Documents/niutilities/runlist/runlist.txt", "test_list")
