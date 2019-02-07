@@ -1,3 +1,6 @@
+#!/usr/bin/env python2.7
+# encoding: utf-8
+
 import os.path
 import re
 import subprocess
@@ -159,9 +162,9 @@ def runlist(filename, runlistName):
                 command += " " + key + "=" + c["parameters"][key]
             
             # run
-            print "\n===> Running command\n%s" % c["name"]
-
-            process = subprocess.Popen("mnap " + command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            command = "gmri " + command
+            print "\n===> Running command\n%s" % command
+            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             # Poll process for new output until finished
             while True:
@@ -181,7 +184,7 @@ def runlist(filename, runlistName):
         print "\n===> Successful completion of runlist %s" % runlistName
 
     except:
-        print "\n\n=====================================================\nERROR: There was an error with the runlist file: \n%s\n\n--------\nError raised:\n" % (filename)
+        print "\n\n=====================================================\nERROR when running the runlist [%s] from: %s\n" % (runlistName, filename)
         raise
 
 def stripQuotes(string):
