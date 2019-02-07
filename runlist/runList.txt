@@ -1,4 +1,4 @@
-# runlist text example
+# runlist example
 
 # global settings
 cores=4
