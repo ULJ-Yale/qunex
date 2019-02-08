@@ -104,6 +104,7 @@ $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
 
 MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 QCPreprocT1W QCPreprocT2W QCPreprocMyelin hcp4 hcp5 QCPreprocBOLD hcpd QCPreprocDWI hcpdLegacy QCPreprocDWILegacy eddyQC QCPreprocDWIeddyQC FSLDtifit QCPreprocDWIDTIFIT FSLBedpostxGPU QCPreprocDWIProcess QCPreprocDWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC QCPreprocBOLDfc"
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
+SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5"
 
 # ------------------------------------------------------------------------------
 # -- General usage
@@ -574,6 +575,7 @@ fi
 
 # -- Check TURNKEY_STEPS
 if [[ -z ${TURNKEY_STEPS} ]] && [ ! -z "${MNAPTurnkeyWorkflow##*${AcceptanceTest}*}" ]; then 
+    echo ""
     reho "ERROR: Turnkey steps flag missing. Specify supported turnkey steps:"
     echo "-------------------------------------------------------------------"
     echo " ${MNAPTurnkeyWorkflow}"
@@ -581,14 +583,76 @@ if [[ -z ${TURNKEY_STEPS} ]] && [ ! -z "${MNAPTurnkeyWorkflow##*${AcceptanceTest
     exit 1
 fi
 
-    # -- Check if subject input is a parameter file instead of list of cases
-    # if [[ ${CASE} == *.txt ]]; then
-    #     SubjectParamFile="$CASE"
-    #     echo ""
-    #     echo "Using $SubjectParamFile for input."
-    #     echo ""
-    #     CASE=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
-    # fi
+# -- Check TURNKEY_STEPS test flag
+unset FoundSupported
+echo ""
+geho "--> Checking that requested ${c} are supported..."
+echo ""
+TurnkeyTestStepChecks="${TURNKEY_STEPS}"
+unset TurnkeyTestSteps
+for TurnkeyTestStep in ${TurnkeyTestStepsChecks}; do
+   if [ ! -z "${MNAPTurnkeyWorkflow##*${TurnkeyTestStep}*}" ]; then
+       echo ""
+       reho "--> ${TurnkeyTestStep} is not supported. Will remove from requested list."
+       echo ""
+   else
+       echo ""
+       geho "--> ${TurnkeyTestStep} is supported."
+       echo ""
+       FoundSupported="yes"
+       TurnkeyTestSteps="${TurnkeyTestSteps} ${TurnkeyTestStep}"
+   fi
+done
+if [[ -z ${FoundSupported} ]]; then 
+    usage
+    echo ""
+    reho "ERROR: None of the requested acceptance tests are currently supported."; echo "";
+    reho "Supported: ${MNAPTurnkeyWorkflow}"; echo "";
+    exit 1
+else
+    TURNKEY_STEPS="${TurnkeyTestSteps}"
+    echo ""
+    geho "--> Verified list of supported Turnkey steps to be run: ${TURNKEY_STEPS}"
+    echo ""
+fi
+
+# -- Check acceptance test flag
+if [[ ! -z ${AcceptanceTestSteps} ]]; then 
+    # -- Run checks for supported steps
+    unset FoundSupported
+    echo ""
+    geho "--> Checking that requested ${AcceptanceTestSteps} are supported..."
+    echo ""
+    AcceptanceTestStepsChecks="${AcceptanceTestSteps}"
+    unset AcceptanceTestSteps
+    for AcceptanceTestStep in ${AcceptanceTestStepsChecks}; do
+       if [ ! -z "${SupportedAcceptanceTestSteps##*${AcceptanceTestStep}*}" ]; then
+           echo ""
+           reho "--> ${AcceptanceTestStep} is not supported. Will remove from requested list."
+           echo ""
+       else
+           echo ""
+           geho "--> ${AcceptanceTestStep} is supported."
+           echo ""
+           FoundSupported="yes"
+           AcceptanceTestSteps="${AcceptanceTestSteps} ${AcceptanceTestStep}"
+       fi
+    done
+    if [[ -z ${FoundSupported} ]]; then 
+        usage
+        reho "ERROR: None of the requested acceptance tests are currently supported."; echo "";
+        reho "Supported: ${SupportedAcceptanceTestSteps}"; echo "";
+    fi
+fi
+
+# -- Check if subject input is a parameter file instead of list of cases
+# if [[ ${CASE} == *.txt ]]; then
+#     SubjectParamFile="$CASE"
+#     echo ""
+#     echo "Using $SubjectParamFile for input."
+#     echo ""
+#     CASE=`more ${SubjectParamFile} | grep "id:"| cut -d " " -f 2`
+# fi
 
 # -- Check and set mapRawData, mapHCPFiles, getHCPReady which rely on BATCH_PARAMETERS_FILENAME and SCAN_MAPPING_FILENAME
 if [[ `echo ${TURNKEY_STEPS} | grep 'mapRawData'` ]]; then
@@ -1410,7 +1474,7 @@ fi
         if [ -z "$WayTotal" ]; then WayTotal="standard"; fi
         if [ -z "$MatrixVersion" ]; then MatrixVersions="1"; fi
         # Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevic_Network_Partition/final_LR_subcortex_atlas_v8_parcels_labelled.dlabel.nii"; fi
+        if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
             ${MNAPCOMMAND} DWIDenseParcellation --subjectsfolder="${mnap_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
@@ -1693,7 +1757,7 @@ fi
            if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
            if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
            # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevic_Network_Partition/final_LR_subcortex_atlas_v8_parcels_labelled.dlabel.nii"; fi
+           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
            if [ -z "$OutName" ]; then OutNameParcelation="BOLD-CAB-NP-v1.0"; else OutNameParcelation="${OutName}"; fi
            if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
            if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
