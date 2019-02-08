@@ -423,6 +423,7 @@ Change Log
 * 0.36.09 [connector] Corrected reporting of which step is being run in RunTurnkey
 * 0.36.10 [connector niutilities] Added volume and dtseries specification for mapHCPData and changed BOLDPrefix default to "" in RunTurnkey
 * 0.37.00 [connector] Updated MNAPAcceptanceTest connector function to allow running a loop on sessions
+* 0.37.01 [connector library] Updated RunTurnkey to allow smoke test for requested steps and added missing library files
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
