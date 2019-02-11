@@ -386,6 +386,7 @@ def runCommand(command, args):
             else:
                 result = 'completed'
             print "%s %s %s [log: %s]" % (prepend, name, result, targetLog)
+            return 1
         if ok:
             print "\n===> Successful completion of task\n"
 
