@@ -1013,86 +1013,34 @@ def runlist(filename, runlistName):
     # split to settings and list
     s = s.split("---")
 
-    try:
-        # parameters string
-        ps = s[0].split("\n")
-        parameters = {}
-        for line in ps:
-            line = line.strip()
+    # parameters string
+    ps = s[0].split("\n")
+    parameters = {}
+    for line in ps:
+        line = line.strip()
 
-            # skip comments and empty lines
-            if line=="" or line[0]=="#":
-                continue
-            
-            # split line to setting and value
-            lineSplit = line.split("=", 1)
-            if len(lineSplit) != 2:
-                raise ge.CommandFailed("ERROR: cannot parse line [%s]" % (line))
-            else:
-                parameters[lineSplit[0]] = lineSplit[1]
+        # skip comments and empty lines
+        if line=="" or line[0]=="#":
+            continue
+        
+        # split line to setting and value
+        lineSplit = line.split("=", 1)
+        if len(lineSplit) != 2:
+            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist [%s] file" % filename)
+        else:
+            parameters[lineSplit[0]] = lineSplit[1]
 
-        # find the list
-        listFound = False
-        for i in range(1, len(s)):
-            # appropriate list already found
-            if listFound:
-                break
+    # find the list
+    listFound = False
+    for i in range(1, len(s)):
+        # appropriate list already found
+        if listFound:
+            break
 
-            # list string
-            ls = s[i].split("\n")
+        # list string
+        ls = s[i].split("\n")
 
-            # find list name
-            while len(ls) > 0:
-                line = ls[0]
-                ls.remove(line)
-                line = line.strip()
-
-                # skip comments and empty lines
-                if line=="" or line[0]=="#":
-                    continue
-
-                # split line to setting and value
-                lineSplit = line.split("=", 1)
-                if len(lineSplit) != 2:
-                    raise ge.CommandFailed("ERROR: cannot parse line [%s]" % (line))
-                else:
-                    lineSplit[0] = stripQuotes(lineSplit[0])
-                    lineSplit[1] = stripQuotes(lineSplit[1])
-                    # list found?
-                    if lineSplit[0] == "list":
-                        if lineSplit[1] == runlistName:
-                            listFound = True
-                        break
-                    else:
-                        raise ge.CommandFailed("ERROR: expeciting list name, found: [%s]" % (line))
-
-        if not listFound:
-            raise ge.CommandFailed("ERROR: list not found: %s" % (runlistName))
-
-        # parse list parameters
-        while len(ls) > 0:
-            line = ls[0]
-            lineStrip = line.strip()
-
-            # skip comments and empty lines
-            if lineStrip=="" or lineStrip[0]=="#":
-                continue
-
-            # split line to setting and value
-            lineSplit = lineStrip.split("=", 1)
-            if len(lineSplit) != 2:
-                raise ge.CommandFailed("ERROR: cannot parse line [%s]" % (line))
-            else:
-                # parameter or command?
-                if lineSplit[0] != "command":
-                    parameters[lineSplit[0]] = lineSplit[1]
-                    ls.remove(line)
-                else:
-                    break
-
-        # parse commands
-        commands = []
-        # parse list parameters
+        # find list name
         while len(ls) > 0:
             line = ls[0]
             ls.remove(line)
@@ -1105,48 +1053,97 @@ def runlist(filename, runlistName):
             # split line to setting and value
             lineSplit = line.split("=", 1)
             if len(lineSplit) != 2:
-                raise ge.CommandFailed("ERROR: cannot parse line [%s]" % (line))
+                raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist [%s] file" % filename)
             else:
-                # parameter or command
-                if lineSplit[0] == "command":
-                    lineSplit[0] = stripQuotes(lineSplit[0])
-                    lineSplit[1] = stripQuotes(lineSplit[1])
-                    command = { "name":lineSplit[1], "parameters":parameters.copy() }
-                    commands.append(command)
-                else:
-                    commands[-1]["parameters"][lineSplit[0]] = lineSplit[1]
-
-        # process commands
-        for c in commands:
-            # build command
-            command = c["name"]
-            for key in c["parameters"]:
-                command += " " + key + "=" + c["parameters"][key]
-            
-            # run
-            command = "gmri " + command
-            print "\n===> Running runlist command\n%s\n" % command
-            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-            # Poll process for new output until finished
-            while True:
-                nextline = process.stdout.readline()
-                if nextline == '' and process.poll() is not None:
+                lineSplit[0] = stripQuotes(lineSplit[0])
+                lineSplit[1] = stripQuotes(lineSplit[1])
+                # list found?
+                if lineSplit[0] == "list":
+                    if lineSplit[1] == runlistName:
+                        listFound = True
                     break
-                sys.stdout.write(nextline)
-                sys.stdout.flush()
+                else:
+                    raise ge.CommandFailed("runlist", "Cannot parse file", "Expecting list name, found [%s]" % (line), "Please check the runlist [%s] file" % filename)
 
-            returnCode = process.returncode
-            if returnCode:
-                raise subprocess.CalledProcessError("ERROR: Failed with error %s" % (returnCode), command)
+    if not listFound:
+        raise ge.CommandFailed("runlist", "List not found", "List with name [%s] not found" % (runlistName), "Please check the runlist [%s] file" % filename)
+
+    # parse list parameters
+    while len(ls) > 0:
+        line = ls[0]
+        lineStrip = line.strip()
+
+        # skip comments and empty lines
+        if lineStrip=="" or lineStrip[0]=="#":
+            continue
+
+        # split line to setting and value
+        lineSplit = lineStrip.split("=", 1)
+        if len(lineSplit) != 2:
+            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist [%s] file" % filename)
+        else:
+            # parameter or command?
+            if lineSplit[0] != "command":
+                parameters[lineSplit[0]] = lineSplit[1]
+                ls.remove(line)
             else:
-                print "\n===> Successful completion of command %s\n\n\n" % c["name"]
+                break
 
-        print "\n===> Successful completion of the %s runlist" % runlistName
+    # parse commands
+    commands = []
+    # parse list parameters
+    while len(ls) > 0:
+        line = ls[0]
+        ls.remove(line)
+        line = line.strip()
 
-    except:
-        print "\n\n=====================================================\nERROR when running the runlist [%s] from: %s\n" % (runlistName, filename)
-        raise
+        # skip comments and empty lines
+        if line=="" or line[0]=="#":
+            continue
+
+        # split line to setting and value
+        lineSplit = line.split("=", 1)
+        if len(lineSplit) != 2:
+            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist [%s] file" % filename)
+        else:
+            # parameter or command
+            if lineSplit[0] == "command":
+                lineSplit[0] = stripQuotes(lineSplit[0])
+                lineSplit[1] = stripQuotes(lineSplit[1])
+                command = { "name":lineSplit[1], "parameters":parameters.copy() }
+                commands.append(command)
+            else:
+                commands[-1]["parameters"][lineSplit[0]] = lineSplit[1]
+
+    # process commands
+    for c in commands:
+        # build command
+        command = c["name"]
+        for key in c["parameters"]:
+            command += " " + key + "=" + c["parameters"][key]
+        
+        # run
+        command = "gmri " + command
+        print "\n===> Running runlist command\n%s\n" % command
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        # Poll process for new output until finished
+        error = True
+        while True:
+            nextline = process.stdout.readline()
+            if nextline == '' and process.poll() is not None:
+                break
+            sys.stdout.write(nextline)
+            if "Successful completion of task" in nextline:
+                error = False
+            sys.stdout.flush()
+
+        if error:
+            raise ge.CommandFailed("runlist", "Command inside runlist failed", "%s" % (command), "See errors above for details")
+        else:
+            print "\n===> Successful completion of runlist command %s\n\n\n" % c["name"]
+
+    print "\n===> Successful completion of the %s runlist" % runlistName
 
 def stripQuotes(string):
     """
