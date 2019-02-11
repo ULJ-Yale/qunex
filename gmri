@@ -124,6 +124,7 @@ createStudy  studyfolder=<path to study base folder>
 createBatch  [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 createList   [subjectsfolder=.] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 createConc   [subjectsfolder=.] [subjects=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+runlist  filename=<path to runlist file> runlistName=<name of the list inside runlist.txt to run.>
 
 
 Fidl file utilities
@@ -280,8 +281,8 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'createWSPALMDesign'   : {'com': niu.g_palm.createWSPALMDesign,      'args': ('factors', 'nsubjects', 'root')},
             'schedule'             : {'com': niu.g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
             'getDICOMFields'       : {'com': niu.g_dicomdeid.getDICOMFields,     'args': ('folder', 'tfile', 'limit')},
-            'changeDICOMFiles'     : {'com': niu.g_dicomdeid.changeDICOMFiles,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')}
-
+            'changeDICOMFiles'     : {'com': niu.g_dicomdeid.changeDICOMFiles,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')},
+            'runlist'              : {'com': niu.g_utilities.runlist,            'args': ('filename', 'runlistName')}
             }
 
 
