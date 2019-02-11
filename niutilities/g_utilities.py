@@ -1142,7 +1142,7 @@ def runlist(filename, runlistName):
             else:
                 print "\n===> Successful completion of command %s" % c["name"]
 
-        print "\n===> Successful completion of runlist %s" % runlistName
+        print "\n===> Successful completion of runlist %s\n\n" % runlistName
 
     except:
         print "\n\n=====================================================\nERROR when running the runlist [%s] from: %s\n" % (runlistName, filename)
