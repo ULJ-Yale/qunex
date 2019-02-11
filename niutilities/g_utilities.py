@@ -1140,9 +1140,9 @@ def runlist(filename, runlistName):
             if returnCode:
                 raise subprocess.CalledProcessError("ERROR: Failed with error %s" % (returnCode), command)
             else:
-                print "\n===> Successful completion of command %s" % c["name"]
+                print "===> Successful completion of command %s\n\n\n" % c["name"]
 
-        print "\n===> Successful completion of runlist %s\n\n" % runlistName
+        print "\n===> Successful completion of runlist %s" % runlistName
 
     except:
         print "\n\n=====================================================\nERROR when running the runlist [%s] from: %s\n" % (runlistName, filename)
