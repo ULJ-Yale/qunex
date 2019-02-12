@@ -2099,7 +2099,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         boldsData = []
 
-        firstSE = bolds[0][3].get('se', None)
+        if bolds:
+            firstSE = bolds[0][3].get('se', None)
 
         for bold, boldname, boldtask, boldinfo in bolds:
 
