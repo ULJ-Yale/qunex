@@ -3216,7 +3216,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                     raise NoSourceFolder(r)
             boldpath = os.path.join(d['hcp'], 'MNINonLinear', 'Results', bname)
 
-            if os.path.exists(f['bold']) and not overwrite:
+            if os.path.exists(f['bold_vol']) and not overwrite:
                 r += "\n     ... volume image ready"
             else:
                 status, r = linkOrCopy(os.path.join(boldpath, bname + '.nii.gz'), f['bold'], r, status, "volume image", "\n     ... ")
