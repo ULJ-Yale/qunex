@@ -425,6 +425,8 @@ Change Log
 * 0.37.00 [connector] Updated MNAPAcceptanceTest connector function to allow running a loop on sessions
 * 0.37.01 [connector library] Updated RunTurnkey to allow smoke test for requested steps and added missing library files
 * 0.37.02 [niutilities] Fixed and error in hcp4 where no bolds are present
+* 0.37.03 [connector] Updated MNAPAcceptanceTest connector function to allow downloading QC results and fixed curl calls in RunTurnkey.sh
+
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
