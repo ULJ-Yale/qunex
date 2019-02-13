@@ -291,11 +291,11 @@ unset BedpostXQC # --bedpostxqc
 unset EddyQCStats # --eddyqcstats
 unset DWILegacy # --dwilegacy
 unset BOLDS # --bolddata
+unset BOLDRUNS # --bolddata
+unset BOLDDATA # --bolddata
 unset BOLDfc # --boldfc
 unset BOLDfcInput # --boldfcinput
 unset BOLDfcPath #boldfcpath
-unset BOLDRUNS # --bolddata
-unset BOLDDATA # --bolddata
 unset BOLDPrefix # --boldprefix
 unset BOLDSuffix # --boldsuffix
 unset SkipFrames # --skipframes

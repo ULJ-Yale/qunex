@@ -2080,9 +2080,9 @@ else
         cd ${processingdir}
         zip -r logs logs 2> /dev/null
         echo ""
-        geho "---> Uploading all logs: curl -u XNAT_USER_NAME:XNAT_PASSWORD -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true&inbody=true" -d logs.zip "
+        geho "---> Uploading all logs: curl -u XNAT_USER_NAME:XNAT_PASSWORD -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files/logs.zip?extract=true&overwrite=true&inbody=true" -d logs.zip "
         echo ""
-        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files?extract=true&overwrite=true&inbody=true" -d logs.zip
+        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_LOGS/files/logs.zip?extract=true&overwrite=true&inbody=true" -d logs.zip
         echo ""
         rm -rf ${processingdir}/logs.zip &> /dev/null
         popd 2> /dev/null
