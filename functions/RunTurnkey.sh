@@ -102,9 +102,10 @@ weho() {
 source $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
 $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh &> /dev/null
 
-MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 QCPreprocT1W QCPreprocT2W QCPreprocMyelin hcp4 hcp5 QCPreprocBOLD hcpd QCPreprocDWI hcpdLegacy QCPreprocDWILegacy eddyQC QCPreprocDWIeddyQC FSLDtifit QCPreprocDWIDTIFIT FSLBedpostxGPU QCPreprocDWIProcess QCPreprocDWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC QCPreprocBOLDfc"
+MNAPTurnkeyWorkflow="createStudy mapRawData organizeDicom getHCPReady mapHCPFiles hcp1 hcp2 hcp3 QCPreprocT1W QCPreprocT2W QCPreprocMyelin hcp4 hcp5 QCPreprocBOLD hcpd QCPreprocDWI hcpdLegacy QCPreprocDWILegacy eddyQC QCPreprocDWIeddyQC FSLDtifit QCPreprocDWIDTIFIT FSLBedpostxGPU QCPreprocDWIProcess QCPreprocDWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography QCPreprocCustom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC QCPreprocBOLDfc MNAPClean"
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5"
+MNAPTurnkeyClean="hcp4"
 
 # ------------------------------------------------------------------------------
 # -- General usage
@@ -127,6 +128,8 @@ usage() {
     echo "    --subjids=<comma_separated_list_of_subject_ids>    Ids to select for a run via gMRI engine from the batch file"
     echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
     echo "                                                       Supported:   ${MNAPTurnkeyWorkflow} "
+    echo "    --turnkeyclean=<clean_intermediate worlflow_steps> Specify specific turnkey steps you wish to clean up intermediate files for:"
+    echo "                                                       Supported:   ${MNAPTurnkeyClean}"
     echo ""
     echo "  -- ACCEPTANCE TESTING PARAMETERS:"
     echo ""
@@ -272,6 +275,7 @@ unset XNAT_SESSION_LABEL
 
 unset TURNKEY_TYPE
 unset TURNKEY_STEPS
+unset TURNKEY_CLEAN
 unset workdir
 unset RawDataInputPath
 unset PROJECT_NAME
@@ -351,6 +355,8 @@ fi
 
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
+TURNKEY_CLEAN=`opts_GetOpt "--turnkeyclean" $@`
+
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTest=`echo "${AcceptanceTest}" | sed 's/,/ /g;s/|/ /g'`
 
@@ -491,6 +497,11 @@ fi
 # -- Check and set AcceptanceTest type
 if [[ -z ${AcceptanceTest} ]]; then 
     AcceptanceTest="no"; reho " -- Note: Acceptance Test type not specified. Setting default turnkey type to: ${AcceptanceTest}"; echo ''
+fi
+
+# -- Check and set turnkey clean
+if [[ -z ${TURNKEY_CLEAN} ]]; then 
+    TURNKEY_CLEAN="no"; reho " -- Note: Turnkey cleaning not specified. Setting default to: ${TURNKEY_CLEAN}"; echo ''
 fi
 
 ########################  XNAT SPECIFIC CHECKS  ################################
@@ -752,6 +763,7 @@ fi
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   "
 echo "   MNAP Turnkey run type: ${TURNKEY_TYPE}"
+echo "   MNAP Turnkey clean interim files: ${TURNKEY_CLEAN}"
 
 if [ "$TURNKEY_TYPE" == "xnat" ]; then
     echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
@@ -774,6 +786,7 @@ if [ "$TURNKEY_TYPE" != "xnat" ]; then
     echo "   Raw data input path: ${RawDataInputPath}"
     echo "   MNAP Subject variable name: ${CASE}" 
 fi
+
 echo "   Project-specific Batch file: ${project_batch_file}"
 echo "   MNAP Study folder: ${mnap_studyfolder}"
 echo "   MNAP Log folder: ${logdir}"
@@ -1910,8 +1923,8 @@ fi
     # --------------- BOLD FC Processing and analyses end ----------------------
 
 
-    # --------------- Run Completion Check start ---------------------------
-    
+    # --------------- RunAcceptanceTest start ---------------------------
+    #
     # -- RunAcceptanceTest for a given step in XNAT
     #
     RunAcceptanceTestFunction() {
@@ -1955,7 +1968,19 @@ fi
        #    --xnatarchivecommit='session' "
     }
     #
-    # --------------- Run Completion Check end ----------------------
+    # --------------- RunAcceptanceTest end ----------------------
+
+    # --------------- MNAPTurnkeyCleanFunction start -------------
+    #
+    MNAPTurnkeyCleanFunction() {
+        # -- Currently supporting hcp4 but this can be exanded
+        if [[ -z "$TURNKEY_STEP" == "hcp4"]]; then
+            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: MNAPClean Function for $TURNKEY_STEP ... "; echo ""
+            rm -rf ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/[0-9]* &> /dev/null
+        fi
+    }
+    #
+    # --------------- MNAPTurnkeyCleanFunction end ----------------
 
 #
 # =-=-=-=-=-=-= TURNKEY COMMANDS END =-=-=-=-=-=-=
@@ -2071,6 +2096,18 @@ else
         if [[ AcceptanceTest == "yes" ]]; then
             UnitTest="${TURNKEY_STEP}"
             RunAcceptanceTestFunction
+        fi
+        
+        # -- Run MNAP cleaning for specific unit
+        #    Currently supporting hcp4
+        if [[ ${TURNKEY_CLEAN} == "yes" ]]; then
+           if [[ "${TURNKEY_STEP}" == "hcp4" ]]; then
+               if [[ "${TURNKEY_STEP_ERRORS}" == "no" ]]; then
+                   MNAPTurnkeyCleanFunction
+               else
+                   echo ""; reho " ===> ERROR: ${TURNKEY_STEP} step did not complete. Skipping cleaning for debugging purposes."; echo ""
+               fi
+           fi
         fi
     done
     
