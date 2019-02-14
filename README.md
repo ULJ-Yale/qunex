@@ -428,6 +428,7 @@ Change Log
 * 0.37.03 [connector] Updated MNAPAcceptanceTest connector function to allow downloading QC results and fixed curl calls in RunTurnkey.sh
 * 0.37.04 [library] Added R packages environment test
 * 0.38.00 [connector] Added ability to clean intermediate steps to RunTurnkey.sh with support for hcp4
+* 0.38.01 [connector] Tweaked flag name to --turnkeycleanstep in RunTurnkey.sh
 
 
 [Mind and Brain Lab]: http://mblab.si
