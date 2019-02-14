@@ -121,15 +121,15 @@ usage() {
     echo ""
     echo "  -- GENERAL PARMETERS:"
     echo ""
-    echo "    --turnkeytype=<turnkey_run_type>                   Specify type turnkey run. Options are: local or xnat"
-    echo "                                                       If empty default is set to: [xnat]."
-    echo "    --path=<study_path>                                Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
-    echo "    --subjects=<subjects_to_run_turnkey_on>            Subjects to run locally on the file system if not an XNAT run."
-    echo "    --subjids=<comma_separated_list_of_subject_ids>    Ids to select for a run via gMRI engine from the batch file"
-    echo "    --turnkeysteps=<turnkey_worlflow_steps>            Specify specific turnkey steps you wish to run:"
-    echo "                                                       Supported:   ${MNAPTurnkeyWorkflow} "
-    echo "    --turnkeyclean=<clean_intermediate worlflow_steps> Specify specific turnkey steps you wish to clean up intermediate files for:"
-    echo "                                                       Supported:   ${MNAPTurnkeyClean}"
+    echo "    --turnkeytype=<turnkey_run_type>                          Specify type turnkey run. Options are: local or xnat"
+    echo "                                                              If empty default is set to: [xnat]."
+    echo "    --path=<study_path>                                       Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
+    echo "    --subjects=<subjects_to_run_turnkey_on>                   Subjects to run locally on the file system if not an XNAT run."
+    echo "    --subjids=<comma_separated_list_of_subject_ids>           Ids to select for a run via gMRI engine from the batch file"
+    echo "    --turnkeysteps=<turnkey_worlflow_steps>                   Specify specific turnkey steps you wish to run:"
+    echo "                                                              Supported:   ${MNAPTurnkeyWorkflow} "
+    echo "    --turnkeycleanstep=<clean_intermediate worlflow_steps>    Specify specific turnkey steps you wish to clean up intermediate files for:"
+    echo "                                                              Supported:   ${MNAPTurnkeyClean}"
     echo ""
     echo "  -- ACCEPTANCE TESTING PARAMETERS:"
     echo ""
@@ -355,7 +355,7 @@ fi
 
 TURNKEY_STEPS=`opts_GetOpt "--turnkeysteps" "$@" | sed 's/,/ /g;s/|/ /g'`; TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/,/ /g;s/|/ /g'`
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
-TURNKEY_CLEAN=`opts_GetOpt "--turnkeyclean" $@`
+TURNKEY_CLEAN=`opts_GetOpt "--turnkeycleanstep" $@`
 
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTest=`echo "${AcceptanceTest}" | sed 's/,/ /g;s/|/ /g'`
