@@ -427,6 +427,7 @@ Change Log
 * 0.37.02 [niutilities] Fixed and error in hcp4 where no bolds are present
 * 0.37.03 [connector] Updated MNAPAcceptanceTest connector function to allow downloading QC results and fixed curl calls in RunTurnkey.sh
 * 0.37.04 [library] Added R packages environment test
+* 0.38.00 [connector] Added ability to clean intermediate steps to RunTurnkey.sh with support for hcp4
 
 
 [Mind and Brain Lab]: http://mblab.si
