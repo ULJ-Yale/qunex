@@ -431,6 +431,7 @@ Change Log
 * 0.38.01 [connector] Tweaked flag name to --turnkeycleanstep in RunTurnkey.sh
 * 0.38.02 [connector] Fixed a bug in MNAPTurnkeyCleanFunction
 * 0.38.03 [connector] Further MNAPTurnkeyCleanFunction bug fix
+* 0.38.04 [connector] Further RunTurnkey.sh bug fix
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
