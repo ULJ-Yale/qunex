@@ -1974,7 +1974,7 @@ fi
     #
     MNAPTurnkeyCleanFunction() {
         # -- Currently supporting hcp4 but this can be exanded
-        if [[ -z "$TURNKEY_STEP" == "hcp4" ]]; then
+        if [[ "$TURNKEY_STEP" == "hcp4" ]]; then
             echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: MNAPClean Function for $TURNKEY_STEP ... "; echo ""
             rm -rf ${mnap_subjectsfolder}/${CASE}/hcp/${CASE}/[0-9]* &> /dev/null
         fi
