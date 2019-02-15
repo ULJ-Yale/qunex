@@ -597,11 +597,11 @@ fi
 # -- Check TURNKEY_STEPS test flag
 unset FoundSupported
 echo ""
-geho "--> Checking that requested ${c} are supported..."
+geho "--> Checking that requested ${TURNKEY_STEPS} are supported..."
 echo ""
 TurnkeyTestStepChecks="${TURNKEY_STEPS}"
 unset TurnkeyTestSteps
-for TurnkeyTestStep in ${TurnkeyTestStepsChecks}; do
+for TurnkeyTestStep in ${TurnkeyTestStepChecks}; do
    if [ ! -z "${MNAPTurnkeyWorkflow##*${TurnkeyTestStep}*}" ]; then
        echo ""
        reho "--> ${TurnkeyTestStep} is not supported. Will remove from requested list."
