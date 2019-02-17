@@ -48,7 +48,7 @@
 # -- General help usage function
 # ------------------------------------------------------------------------------
 
-SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5"
+SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5 BOLDImages"
 
 usage() {
     echo ""
@@ -107,7 +107,7 @@ usage() {
     echo ""
     echo "    --xnatgetqc=<download_qc_images_locally>               Specify if you wish to download QC PNG images and/or scene files for a given acceptance unit where QC is available. Default is [no]"
     echo "                                                           Options: "
-    echo "                                                                     --xnatgetqc='image'     --> download only the image files "
+    echo "                                                                     --xnatgetqc='image'   --> download only the image files "
     echo "                                                                     --xnatgetqc='scene'   --> download only the scene files" 
     echo "                                                                     --xnatgetqc='all'     --> download both png images and scene files"
     echo ""
@@ -124,6 +124,9 @@ usage() {
     echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
     echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
     echo ""    
+    echo "--boldimages=<bold_run_numbers>                                  Specify a list of required BOLD images separated by comma or pipe. Where the number of the bold image would be, indicate by '{N}', e.g:"
+    echo "                                                                   --boldimages='bold{N}_Atlas.dtseries.nii|seed_bold{N}_Atlas_g7_hpss_res-VWMWB_lpss_LR-Thal.dtseriesnii' "
+    echo "                                                                   When running the test, '{N}' will be replaced by the bold numbers given in --bolddata "
     echo ""
     echo "-- Example:"
     echo ""
@@ -196,6 +199,7 @@ unset SESSION_LABELS
 unset BOLDS # --bolddata
 unset BOLDRUNS # --bolddata
 unset BOLDDATA # --bolddata
+unset BOLDImages # --boldimages
 
 unset XNAT_HOST_NAME
 unset XNAT_USER_NAME
@@ -216,6 +220,8 @@ unset XNATResetCredentials
 unset AcceptanceTestSteps
 unset BIDSFormat
 unset RUN_TYPE
+
+
 
 # -- Parse general arguments
 StudyFolder=`opts_GetOpt "--studyfolder" $@`
@@ -242,6 +248,7 @@ BOLDRUNS="${BOLDS}"
 BOLDDATA="${BOLDS}"
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
 BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
+BOLDImages=`opts_GetOpt "--boldimages" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDImages=`echo "${BOLDImages}" | sed 's/,/ /g;s/|/ /g'`
 
 # -- If data is in BIDS format on XNAT
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
@@ -519,6 +526,9 @@ fi
     echo "   MNAP Acceptance test steps: ${AcceptanceTestSteps}"
     if [[ -z ${BOLDS} ]]; then 
         echo "   BOLD runs: ${BOLDS}"
+        if [[ -z ${BOLDImages} ]]; then 
+            echo "   BOLD Images: ${BOLDImages}"
+        fi
     fi
     echo "   MNAP Acceptance test output log: ${RunAcceptanceTestOut}"
     echo ""
@@ -740,15 +750,20 @@ echo ""
                     echo ""
                     echo "  -- Checking ${UnitTest} for $CASE " >> ${RunAcceptanceTestOut}
                     ## -- Check units that may have multiple bolds
-                    if [[ ${UnitTest} == "hcp4" ]] || [[ ${UnitTest} == "hcp5" ]] || [[ ${UnitTest} == "preprocessBold" ]] || [[ ${UnitTest} == "computeBOLDfcSeed" ]] || [[ ${UnitTest} == "computeBOLDfcGBC" ]]; then
+                    if [[ ${UnitTest} == "hcp4" ]] || [[ ${UnitTest} == "hcp5" ]] || [[ ${UnitTest} == "preprocessBold" ]] || [[ ${UnitTest} == "computeBOLDfcSeed" ]] || [[ ${UnitTest} == "computeBOLDfcGBC" ]] || [[ ${UnitTest} == "BOLDImages" ]]; then
                         echo ""
                         if [[ ! -z ${BOLDS} ]]; then
                             for BOLD in ${BOLDS}; do
-                               if [[ ${UnitTest} == "hcp4" ]];    then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
-                               elif [[ ${UnitTest} == "hcp5" ]];    then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_Atlas.dtseries.nii"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
-                               elif [[ ${UnitTest} == "preprocessBold" ]]; then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${DenoiseData}"; UnitTestQCFolders="movement"; UnitTestDataCheck
-                               elif [[ ${UnitTest} == "computeBOLDfcSeed" ]] || [[ ${UnitTest} == "computeBOLDfcGBC" ]];      then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${FCData}"; UnitTestQCFolders=""; UnitTestDataCheck
-                               fi
+                                if   [[ ${UnitTest} == "hcp4" ]];           then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
+                                elif [[ ${UnitTest} == "hcp5" ]];           then UnitTestData="hcp/${CASE}/MNINonLinear/Results/${BOLD}/${BOLD}_Atlas.dtseries.nii"; UnitTestQCFolders="BOLD"; UnitTestDataCheck
+                                elif [[ ${UnitTest} == "preprocessBold" ]]; then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${DenoiseData}"; UnitTestQCFolders="movement"; UnitTestDataCheck
+                                elif [[ ${UnitTest} == "computeBOLDfcSeed" ]] || [[ ${UnitTest} == "computeBOLDfcGBC" ]];      then UnitTestData="hcp/${CASE}/images/functional/bold${BOLD}_${FCData}"; UnitTestQCFolders=""; UnitTestDataCheck
+                                elif [[ ${UnitTest} == "BOLDImages" ]]; then
+                                    for BOLDImage in ${BOLDImages}; do
+                                        BOLDImage=`echo ${BOLDImage} | sed "s/{N}/${BOLD}/g"`
+                                        UnitTestData="images/functional/${BOLDImage}"; UnitTestQCFolders=""; UnitTestDataCheck
+                                    done
+                                fi
                             done
                         else
                              echo "  -- Requested ${UnitTest} for ${CASE} but no BOLDS specified." >> ${RunAcceptanceTestOut}
