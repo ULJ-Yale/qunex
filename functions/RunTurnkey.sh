@@ -1760,11 +1760,11 @@ fi
         FunctionName="BOLDParcellation"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation ... "; echo ""
         # -- Defaults if not specified:
-        unset BOLDRUNS
+        # unset BOLDRUNS
         if [ -z ${BOLDRUNS} ]; then
             BOLDRUNS="1"
         fi
-        unset BOLDRUN
+        # unset BOLDRUN
         for BOLDRUN in ${BOLDRUNS}; do
            if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
            if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
@@ -1807,11 +1807,11 @@ fi
            ROINames=${ROIInfo}
         fi
         for ROIInfo in ${ROINames}; do
-              unset BOLDRUNS
+              # unset BOLDRUNS
               if [ -z ${BOLDRUNS} ]; then
                   BOLDRUNS="1"
               fi
-              unset BOLDRUN
+              # unset BOLDRUN
               for BOLDRUN in ${BOLDRUNS}; do
                 if [ -z "$InputFile" ]; then InputFileSeed="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileSeed="${InputFile}"; fi
                 if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
@@ -1853,11 +1853,11 @@ fi
    turnkey_computeBOLDfcGBC() {
    FunctionName="computeBOLDfc"
        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for GBC ... "; echo ""
-       unset BOLDRUNS
+       # unset BOLDRUNS
        if [ -z ${BOLDRUNS} ]; then
            BOLDRUNS="1"
        fi
-       unset BOLDRUN
+       #unset BOLDRUN
        for BOLDRUN in ${BOLDRUNS}; do
             if [ -z "$InputFile" ]; then InputFileGBC="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileGBC="${InputFile}"; fi
             if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
