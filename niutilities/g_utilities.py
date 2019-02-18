@@ -15,11 +15,11 @@ import shutil
 import niutilities.g_process as gp
 import niutilities.g_core as gc
 import niutilities.g_exceptions as ge
+import niutilities
 import getpass
 import re
 import subprocess
 import sys
-
 
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================
@@ -969,7 +969,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
         raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details!")
 
 
-def runlist(filename, runlistName):
+def runlist(filename, runlistName, logfolder=None):
     """
     USE AND RESULTS
     ===============
@@ -978,22 +978,29 @@ def runlist(filename, runlistName):
     in that list. The runlist files contains commands that should be run and their
     parameters.
 
-    RELEVANT PARAMETERS
 
+    RELEVANT PARAMETERS
     ===================
 
     --filename ... The runlist.txt file containing runlists and their parameters.
     --runlistName ... Name of the list inside runlist.txt to run.
+
 
     EXAMPLE USE
     ===========
 
     runlist filename="/Users/john/Documents/runlist.txt" runlistName="map_preprocess_fn_data"
 
+
+    EXAMPLE LIST
+    ===========
+
+    TODO AT THE END
+
     ---
     Written by Jure Demšar.
     """
-
+    
     if filename is None:
         raise ge.CommandError("filename", "No filename specified", "Please provide path to the runlist file!")
 
@@ -1001,7 +1008,14 @@ def runlist(filename, runlistName):
         raise ge.CommandError("runlistName", "No runlistName specified", "Please provide runlist name!")
 
     if not os.path.exists(filename):
-        raise ge.CommandError("ERROR: runlist file not found: %s" % (filename))
+        raise ge.CommandError(("filename", "Runlist file not found [%s]" % filename))
+
+    # prep log
+    if logfolder is None:
+        logfolder = gc.deduceFolders({})["logfolder"]
+    runlogfolder = os.path.join(logfolder, 'runlogs')
+    logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logname = os.path.join(runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
     s = file(filename).read()
 
@@ -1020,13 +1034,13 @@ def runlist(filename, runlistName):
         line = line.strip()
 
         # skip comments and empty lines
-        if line=="" or line[0]=="#":
+        if line == "" or line[0] == "#":
             continue
         
         # split line to setting and value
-        lineSplit = line.split("=", 1)
+        lineSplit = line.split(":", 1)
         if len(lineSplit) != 2:
-            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist [%s] file" % filename)
+            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
         else:
             parameters[lineSplit[0]] = lineSplit[1]
 
@@ -1047,13 +1061,13 @@ def runlist(filename, runlistName):
             line = line.strip()
 
             # skip comments and empty lines
-            if line=="" or line[0]=="#":
+            if line == "" or line[0] == "#":
                 continue
 
             # split line to setting and value
-            lineSplit = line.split("=", 1)
+            lineSplit = line.split(":", 1)
             if len(lineSplit) != 2:
-                raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist [%s] file" % filename)
+                raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
             else:
                 lineSplit[0] = stripQuotes(lineSplit[0])
                 lineSplit[1] = stripQuotes(lineSplit[1])
@@ -1063,10 +1077,10 @@ def runlist(filename, runlistName):
                         listFound = True
                     break
                 else:
-                    raise ge.CommandFailed("runlist", "Cannot parse file", "Expecting list name, found [%s]" % (line), "Please check the runlist [%s] file" % filename)
-
+                    raise ge.CommandFailed("runlist", "Cannot parse file", "Expecting list name, found [%s]" % (line), "Please check the runlist file [%s]" % filename)
+    
     if not listFound:
-        raise ge.CommandFailed("runlist", "List not found", "List with name [%s] not found" % (runlistName), "Please check the runlist [%s] file" % filename)
+        raise ge.CommandFailed("runlist", "List not found", "List with name [%s] not found" % (runlistName), "Please check the runlist file [%s]" % filename)
 
     # parse list parameters
     while len(ls) > 0:
@@ -1074,13 +1088,13 @@ def runlist(filename, runlistName):
         lineStrip = line.strip()
 
         # skip comments and empty lines
-        if lineStrip=="" or lineStrip[0]=="#":
+        if lineStrip == "" or lineStrip[0] == "#":
             continue
 
         # split line to setting and value
-        lineSplit = lineStrip.split("=", 1)
+        lineSplit = lineStrip.split(":", 1)
         if len(lineSplit) != 2:
-            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist [%s] file" % filename)
+            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
         else:
             # parameter or command?
             if lineSplit[0] != "command":
@@ -1090,7 +1104,7 @@ def runlist(filename, runlistName):
                 break
 
     # parse commands
-    commands = []
+    runlistCommands = []
     # parse list parameters
     while len(ls) > 0:
         line = ls[0]
@@ -1098,52 +1112,103 @@ def runlist(filename, runlistName):
         line = line.strip()
 
         # skip comments and empty lines
-        if line=="" or line[0]=="#":
+        if line == "" or line[0] == "#":
             continue
 
         # split line to setting and value
-        lineSplit = line.split("=", 1)
+        lineSplit = line.split(":", 1)
+
+        # test parameter
+        if len(lineSplit) == 1 and lineSplit[0] == "test":
+            lineSplit.append("")
+
+        # if test allow no value parameter
         if len(lineSplit) != 2:
-            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist [%s] file" % filename)
+            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
         else:
             # parameter or command
+            lineSplit[0] = stripQuotes(lineSplit[0])          
             if lineSplit[0] == "command":
-                lineSplit[0] = stripQuotes(lineSplit[0])
                 lineSplit[1] = stripQuotes(lineSplit[1])
-                command = { "name":lineSplit[1], "parameters":parameters.copy() }
-                commands.append(command)
+                commandParameters = parameters.copy()
+ 
+                # remove unallowed parameters 
+                if (lineSplit[1] in niutilities.g_commands.commands):
+                    allowedParameters = niutilities.g_commands.commands.get(lineSplit[1])["args"]
+                    for p in parameters:
+                        if p not in allowedParameters:
+                            del commandParameters[p]
+
+                command = { "name":lineSplit[1], "parameters":commandParameters }
+                runlistCommands.append(command)
             else:
-                commands[-1]["parameters"][lineSplit[0]] = lineSplit[1]
+                # is the parameter allowed?
+                if (runlistCommands[-1]["name"] in niutilities.g_commands.commands):
+                    allowedParameters = niutilities.g_commands.commands.get(runlistCommands[-1]["name"])["args"]
+                    if lineSplit[0] in allowedParameters:
+                        runlistCommands[-1]["parameters"][lineSplit[0]] = lineSplit[1]
+                else:
+                    runlistCommands[-1]["parameters"][lineSplit[0]] = lineSplit[1]
 
     # process commands
-    for c in commands:
+    log = open(logname, "w")
+    print >> log, "\n\n============================== LOG ==============================\n"
+    summary = ""
+
+    for c in runlistCommands:
         # build command
         command = c["name"]
+
         for key in c["parameters"]:
-            command += " " + key + "=" + c["parameters"][key]
+            if key == "test":
+                command += " " + key
+            else:
+                command += " " + key + "=" + c["parameters"][key]
         
         # run
         command = "gmri " + command
         print "\n===> Running runlist command\n%s\n" % command
+        print >> log, "\n\n============================ COMMAND ============================"
+        print >> log, "\n%s\n" % command
+        
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # Poll process for new output until finished
         error = True
+        logging = False
         while True:
             nextline = process.stdout.readline()
             if nextline == '' and process.poll() is not None:
                 break
             sys.stdout.write(nextline)
-            if "Successful completion of task" in nextline:
+            if "Successful completion" in nextline:
                 error = False
+            if "Final report" in nextline:
+                logging = True
+
+            # print           
             sys.stdout.flush()
+            if logging:
+                print >> log, nextline,
 
         if error:
+            summary += "\n%-50s FAILED" % (c["name"])
+            print >> log, "\n\n============================ SUMMARY ============================"
+            print >> log, "\n===> Runlist %s not completed successfully" % runlistName
+            print >> log, summary
+            log.close()
             raise ge.CommandFailed("runlist", "Command inside runlist failed", "%s" % (command), "See errors above for details")
         else:
+            summary += "\n%-50s OK" % (c["name"])
             print "\n===> Successful completion of runlist command %s\n\n\n" % c["name"]
 
+            
     print "\n===> Successful completion of the %s runlist" % runlistName
+    print >> log, "\n\n============================ SUMMARY ============================"
+    print >> log, "\n===> Successful completion of the %s runlist" % runlistName
+    print >> log, summary
+
+    log.close()
 
 def stripQuotes(string):
     """

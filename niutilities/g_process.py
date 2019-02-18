@@ -541,7 +541,6 @@ def run(command, args):
 
     overwrite    = options['overwrite']
     cores        = options['cores']
-    threads      = options['threads']
     nprocess     = options['nprocess']
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
