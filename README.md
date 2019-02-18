@@ -434,6 +434,7 @@ Change Log
 * 0.38.04 [connector] Further RunTurnkey.sh bug fix
 * 0.38.05 [library] Added ColeAnticevicNetPartition
 * 0.38.06 [library connector] Turned off irrelevant octave wornings, added BOLDImages to acceptance testing
+* 0.38.07 [connector] Fixed uset BOLDRUNS in RunTurnkey
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
