@@ -174,7 +174,8 @@ usage() {
     echo "    --overwriteproject=<specify_project_overwrite>             Specify <yes> or <no> for delete of entire project prior to run. Default is [no]."
     echo "    --overwriteprojectxnat=<specify_xnat_project_overwrite>    Specify <yes> or <no> for delete of entire XNAT project folder prior to run. Default is [no]."
     echo "    --cleanupsubject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of subject folder after steps are done. Default is [no]."
-    echo "    --cleanupproject=<specify_subject_clean>                   Specify <yes> or <no> for cleanup of entire project after steps are done. Default is [no]."
+    echo "    --cleanupproject=<specify_project_clean>                   Specify <yes> or <no> for cleanup of entire project after steps are done. Default is [no]."
+    echo "    --cleanupoldfiles=<specify_old_clean>                      Specify <yes> or <no> for cleanup of files that are older than start of run (XNAT run only). Default is [no]."
     echo ""
     echo "  -- OPTIONAL CUSTOM QC PARAMETERS:"
     echo ""
@@ -286,6 +287,7 @@ unset STUDY_PATH
 unset LOCAL_BATCH_FILE
 unset BIDSFormat
 unset AcceptanceTest
+unset CleanupOldFiles
 
 echo ""
 echo " -- Reading inputs... "
@@ -299,6 +301,7 @@ workdir=`opts_GetOpt "--workingdir" $@`
 PROJECT_NAME=`opts_GetOpt "--projectname" $@`
 CleanupSubject=`opts_GetOpt "--cleanupsubject" $@`
 CleanupProject=`opts_GetOpt "--cleanupproject" $@`
+CleanupOldFiles=`opts_GetOpt "--cleanupoldfiles" $@`
 RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
 mnap_subjectsfolder=`opts_GetOpt "--subjectsfolder" $@`
 
@@ -525,12 +528,19 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -z ${XNAT_STUDY_INPUT_PATH} ]]; then XNAT_STUDY_INPUT_PATH=/input/RESOURCES/mnap_study; reho " -- Note: XNAT session input path is not defined. Setting default path to: $XNAT_STUDY_INPUT_PATH"; echo ""; fi
     
     # -- Curl calls to set correct subject and session variables at start of RunTurnkey
-    
+
     # -- Clean prior mapping
     rm -r ${HOME}/xnatlogs &> /dev/null
     mkdir ${HOME}/xnatlogs &> /dev/null
     XNATINFOTMP="${HOME}/xnatlogs"
     TimeStampCurl=`date +%Y-%m-%d_%H.%M.%10N`
+
+    if [[ ${CleanupOldFiles} == "yes" ]]; then 
+        if [ ! -d ${workdir} ]; then
+            mkdir -p ${workdir} &> /dev/null
+        fi
+        touch ${workdir}/_startfile
+    fi
     
     # -- Obtain temp info on subjects and experiments in the project
     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/subjects?project=${XNAT_PROJECT_ID}&format=csv" > ${XNATINFOTMP}/${XNAT_PROJECT_ID}_subjects_${TimeStampCurl}.csv
@@ -2132,6 +2142,12 @@ else
         fi
         geho "     - removing stray xml catalog files"
         find ${mnap_studyfolder} -name *catalog.xml -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
+
+        if [[ ${CleanupOldFiles} == "yes" ]]; then 
+            geho "     - removing files older than run"
+            find ${mnap_studyfolder} ! -newer ${workdir}/_startfile -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
+            rm ${workdir}/_startfile
+        fi
     fi
 fi
 
