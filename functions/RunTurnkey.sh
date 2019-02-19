@@ -2123,12 +2123,15 @@ else
         echo ""
         rm -rf ${processingdir}/logs.zip &> /dev/null
         popd 2> /dev/null
+        geho "---> Cleaning up:"
         if [[ ${BIDSFormat} != "yes" ]]; then
             echo ""
-            geho "---> Cleaning up: removing dicom folder"
+            geho "     - removing dicom folder"
             rm -rf ${mnap_workdir}/dicom &> /dev/null
             echo ""
         fi
+        geho "     - removing stray xml catalog files"
+        find ${mnap_studyfolder} -name *catalog.xml -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
     fi
 fi
 
