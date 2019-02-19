@@ -435,6 +435,7 @@ Change Log
 * 0.38.05 [library] Added ColeAnticevicNetPartition
 * 0.38.06 [library connector] Turned off irrelevant octave wornings, added BOLDImages to acceptance testing
 * 0.38.07 [connector] Fixed uset BOLDRUNS in RunTurnkey
+* 0.38.08 [connector hcpmodified] Added removal of stray catalog.xml files and fixed a hardcoded path
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
