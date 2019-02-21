@@ -989,13 +989,63 @@ def runlist(filename, runlistName, logfolder=None):
     EXAMPLE USE
     ===========
 
-    runlist filename="/Users/john/Documents/runlist.txt" runlistName="map_preprocess_fn_data"
+    runlist filename="/Users/john/Documents/runlist.txt" runlistName="additional_preprocessing"
 
 
     EXAMPLE LIST
     ===========
 
-    TODO AT THE END
+    # global settings
+    subjectsfolder:"/Volumes/tigr/MBLab/fMRI/jd_test/subjects"
+    overwrite:"yes"
+
+    ---
+    list:"preparation"
+        subjects:"OP*"
+
+        command:"processInbox"
+            pattern:".*?_(OP[0-9]+).*.zip"
+
+        command:"getHCPReady"
+
+        command:"setupHCP"
+            sfolder:"/Volumes/tigr/MBLab/fMRI/jd_test/subjects"
+            sfile:"/Volumes/tigr/MBLab/fMRI/jd_test/processing/batch.txt"
+
+        command:"createBatch"
+
+    ---
+    list:"additional_preprocessing"
+        cores:6
+        subjects:"/Volumes/tigr/MBLab/fMRI/jd_test/processing/batch.txt"
+
+        command:"mapHCPData"
+            test
+            
+        command:"createBOLDBrainMasks"
+            bold_preprocess:"all"
+
+        command:"computeBOLDStats"
+            bold_preprocess:"all"
+            log:remove
+
+        command:"createStatsReport"
+            cores:1
+            overwrite:"yes"
+
+        command:"extractNuisanceSignal"
+            bold_preprocess:"all"
+
+        command:"preprocessBold"
+            bold_actions:"shrc"
+            glm_residuals:"save"
+            bold_nuisance:"m,V,WM,WB,1d"
+            pignore:"hipass=linear|regress=spline|lopass=linear"
+            overwrite:"yes"
+            bold_preprocess:"rest"
+            image_target:nifti
+            hcp_cifti_tail:""
+
 
     ---
     Written by Jure Demšar.
