@@ -591,8 +591,8 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     if [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv ] && [ -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv ]; then
        echo ""
        geho "  --> Downloaded XNAT project info: "; echo ""
-       geho "      {XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv"
-       geho "      {XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv"
+       geho "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv"
+       geho "      ${XNATInfoPath}/${XNAT_PROJECT_ID}_experiments_${TimeStamp}.csv"
        echo ""
     else
        if [ ! -f ${XNATInfoPath}/${XNAT_PROJECT_ID}_subjects_${TimeStamp}.csv ]; then
