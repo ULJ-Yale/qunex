@@ -438,6 +438,7 @@ Change Log
 * 0.38.08 [connector hcpmodified] Added removal of stray catalog.xml files and fixed a hardcoded path
 * 0.38.09 [connector] Added option to remove files older than run
 * 0.38.10 [connector] Fixed QCPreprocT1w, QCPreprocT2w names
+* 0.38.11 [library, niutilities] Changed mnapSingularity to mnapContainer and extended functionality, fixed a bug in bidsImport
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
