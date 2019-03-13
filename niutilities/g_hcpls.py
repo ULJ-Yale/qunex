@@ -101,6 +101,13 @@ hcpls = {
 
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
+dirTag = {None: "Unknown", 'i': 'RL', 'j': 'PA', 'i-': 'LR', 'j-': 'AP'}
+
+#
+#   Notes:  SeriesNumber could be used for orderig scans
+#           N of directions could be taken out of the bval (n bval -1)
+#
+
 
 
 def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
@@ -966,7 +973,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
                 # --T1w and T2w
                 if fileInfo['parts'][0] in ['T1w', 'T2w']:
-                    print >> sout, "%02d: %-20s: %-30s: se(%d): DwellTime(%.10f)" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']), folder['senum'], fileInfo['json'].get('DwellTime', -9.))
+                    print >> sout, "%02d: %-20s: %-30s: se(%d): DwellTime(%.10f): rodir(%s)" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']), folder['senum'], fileInfo['json'].get('DwellTime', -9.), fileInfo['json'].get('ReadoutDirection', -9.))
 
                     print >> rout, "\n" + fileInfo['parts'][0]
                     print >> rout, "".join(['-' for e in range(len(fileInfo['parts'][0]))])
@@ -976,9 +983,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
                 # -- BOLDS
                 elif fileInfo['parts'][0] in ['tfMRI', 'rfMRI']:
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['parts'][2], fileInfo['json'].get('EffectiveEchoSpacing', -9.))
+                        print >> sout, "%02d: %-20s: %-30s: se(%d): pedir(%s): EchoSpacing(%.10f)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['json'].get('PhaseEncodingDirection', "NA"), fileInfo['json'].get('EffectiveEchoSpacing', -9.))
                     else:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['parts'][2], fileInfo['json'].get('EffectiveEchoSpacing', -9.))
+                        print >> sout, "%02d: %-20s: %-30s: se(%d): pedir(%s): EchoSpacing(%.10f)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['json'].get('PhaseEncodingDirection', "NA"), fileInfo['json'].get('EffectiveEchoSpacing', -9.))
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -987,7 +994,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
                 # -- SE
                 elif fileInfo['parts'][0] == 'SpinEchoFieldMap':
-                    print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['parts'][1], fileInfo['json'].get('EffectiveEchoSpacing', -9.))
+                    print >> sout, "%02d: %-20s: %-30s: se(%d): pedir(%s): EchoSpacing(%.10f)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['json'].get('PhaseEncodingDirection', "NA"), fileInfo['json'].get('EffectiveEchoSpacing', -9.))
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -998,9 +1005,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
                 # -- dMRI
                 elif fileInfo['parts'][0] == 'dMRI':
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: fenc(%s): EchoSpacing(%.10f)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], fileInfo['parts'][2]), "_".join(fileInfo['parts']), fileInfo['parts'][2], fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                        print >> sout, "%02d: %-20s: %-30s: pedir(%s): EchoSpacing(%.10f)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], fileInfo['parts'][2]), "_".join(fileInfo['parts']), fileInfo['json'].get('PhaseEncodingDirection', "NA"), fileInfo['json'].get('EffectiveEchoSpacing', -9.))
                     else:    
-                        print >> sout, "%02d: %-20s: %-30s: fenc(%s): EchoSpacing(%.10f)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], fileInfo['parts'][2]), "_".join(fileInfo['parts']), fileInfo['parts'][2], fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                        print >> sout, "%02d: %-20s: %-30s: pedir(%s): EchoSpacing(%.10f)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], dirTag.fileInfo['parts'][2]), "_".join(fileInfo['parts']), fileInfo['json'].get('PhaseEncodingDirection', "NA"), fileInfo['json'].get('EffectiveEchoSpacing', -9.))
 
                         print >> rout, "\n" + "_".join(fileInfo['parts'])
                         print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
