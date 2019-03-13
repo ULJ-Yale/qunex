@@ -439,6 +439,7 @@ Change Log
 * 0.38.09 [connector] Added option to remove files older than run
 * 0.38.10 [connector] Fixed QCPreprocT1w, QCPreprocT2w names
 * 0.38.11 [library, niutilities] Changed mnapSingularity to mnapContainer and extended functionality, fixed a bug in bidsImport
+* 0.38.12 [library] Resolved an issue calling commands against Docker container
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
