@@ -441,5 +441,12 @@ Change Log
 * 0.38.11 [library, niutilities] Changed mnapSingularity to mnapContainer and extended functionality, fixed a bug in bidsImport
 * 0.38.12 [library] Resolved an issue calling commands against Docker container
 
+Stable Container Tag Log
+========================
+---
+
+* ztamayo/mnap_suite:0_38_10_btrx [BlackThorn stable tag]
+* ztamayo/mnap_suite:fsl_test [WashU stable tag]
+
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
