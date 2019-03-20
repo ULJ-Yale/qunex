@@ -396,6 +396,7 @@ ComputePConn=`opts_GetOpt "--computepconn" $@`
 UseWeights=`opts_GetOpt "--useweights" $@`
 WeightsFile=`opts_GetOpt "--weightsfile" $@`
 ParcellationFile=`opts_GetOpt "--parcellationfile" $@`
+RunParcellations=`opts_GetOpt "--runparcellations" $@`
 
 # =-=-=-=-=-= DIFFUSION OPTIONS =-=-=-=-=-=
 #
@@ -1770,42 +1771,104 @@ fi
         FunctionName="BOLDParcellation"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation ... "; echo ""
         # -- Defaults if not specified:
-        # unset BOLDRUNS
+
         if [ -z ${BOLDRUNS} ]; then
             BOLDRUNS="1"
         fi
-        # unset BOLDRUN
-        for BOLDRUN in ${BOLDRUNS}; do
-           if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
-           if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
-           if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
-           # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
-           if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
-           if [ -z "$OutName" ]; then OutNameParcelation="BOLD-CAB-NP-v1.0"; else OutNameParcelation="${OutName}"; fi
-           if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
-           if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
-           if [ -z "$OutPath" ]; then OutPath="/images/functional/"; fi
-           if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
-           if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
-           # -- Command
-           RunCommand="${MNAPCOMMAND} BOLDParcellation --subjects='${CASE}' \
-           --subjectsfolder='${mnap_subjectsfolder}' \
-           --inputfile='${InputFileParcellation}' \
-           --singleinputfile='${SingleInputFile}' \
-           --inputpath='${InputPath}' \
-           --inputdatatype='${InputDataType}' \
-           --parcellationfile='${ParcellationFile}' \
-           --overwrite='${Overwrite}' \
-           --outname='${OutNameParcelation}' \
-           --outpath='${OutPath}' \
-           --computepconn='${ComputePConn}' \
-           --extractdata='${ExtractData}' \
-           --useweights='${UseWeights}' \
-           --weightsfile='${WeightsFile}'"
-           echo " -- Command: ${RunCommand}"
-           eval ${RunCommand}
-           BOLDfcLogCheck
-        done
+
+        if [ -z ${RunParcellations} ]; then
+
+            for BOLDRUN in ${BOLDRUNS}; do
+               if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
+               if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
+               if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
+               # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
+               if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
+               if [ -z "$OutName" ]; then OutNameParcelation="BOLD-CAB-NP-v1.0"; else OutNameParcelation="${OutName}"; fi
+               if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
+               if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
+               if [ -z "$OutPath" ]; then OutPath="/images/functional/"; fi
+               if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
+               if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
+               # -- Command
+               RunCommand="${MNAPCOMMAND} BOLDParcellation --subjects='${CASE}' \
+               --subjectsfolder='${mnap_subjectsfolder}' \
+               --inputfile='${InputFileParcellation}' \
+               --singleinputfile='${SingleInputFile}' \
+               --inputpath='${InputPath}' \
+               --inputdatatype='${InputDataType}' \
+               --parcellationfile='${ParcellationFile}' \
+               --overwrite='${Overwrite}' \
+               --outname='${OutNameParcelation}' \
+               --outpath='${OutPath}' \
+               --computepconn='${ComputePConn}' \
+               --extractdata='${ExtractData}' \
+               --useweights='${UseWeights}' \
+               --weightsfile='${WeightsFile}'"
+               echo " -- Command: ${RunCommand}"
+               eval ${RunCommand}
+               BOLDfcLogCheck
+            done
+
+        else
+
+            if [[ ${RunParcellations} == "all" ]] || [[ ${RunParcellations} == "ALL" ]]; then
+                RunParcellations="CANP HCP YEO7 YEO17"
+            fi
+            RunParcellations=`echo ${RunParcellations} | sed 's/,/ /g;s/|/ /g'`
+
+            echo ""; reho " ===> The following parcellations will be run: ${RunParcellations}"; echo ""
+
+            for Parcellation in ${RunParcellations}; do
+                if [ ${Parcellation} == "CANP" ]; then
+                    ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"
+                    OutNameParcelation="BOLD-CAB-NP-v1.0"
+                elif [ ${Parcellation} == "HCP" ]; then
+                    ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/GlasserParcellation/Q1-Q6_RelatedParcellation210.LR.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii"
+                    OutNameParcelation="HCP-210"
+                elif [ ${Parcellation} == "YEO17" ]; then
+                    ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_17networks_networks_MWfix.dlabel.nii"
+                    OutNameParcelation="YEO17"
+                elif [ ${Parcellation} == "YEO7" ]; then
+                    ParcellationFile="${TOOLS}/${MNAPREPO}/library/data/parcellations/RSN_Yeo_Buckner_Choi_Cortex_Cerebellum_Striatum/rsn_yeo-cortex_buckner-cerebellum_choi-striatum_thalamus_7networks_networks_MWfix.dlabel.nii"
+                    OutNameParcelation="YEO7"
+                else
+                    reho " ===> ERROR: ${Parcellation} not recognized as a valid parcellation name! Skipping";
+                    continue
+                fi
+
+                echo ""; reho " ===> Now running parcellation ${Parcellation}"; echo ""
+
+                for BOLDRUN in ${BOLDRUNS}; do
+                   if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
+                   if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
+                   if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
+                   if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
+                   if [ -z "$InputPath" ]; then InputPath="/images/functional/"; fi
+                   if [ -z "$OutPath" ]; then OutPath="/images/functional/"; fi
+                   if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
+                   if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
+                   # -- Command
+                   RunCommand="${MNAPCOMMAND} BOLDParcellation --subjects='${CASE}' \
+                   --subjectsfolder='${mnap_subjectsfolder}' \
+                   --inputfile='${InputFileParcellation}' \
+                   --singleinputfile='${SingleInputFile}' \
+                   --inputpath='${InputPath}' \
+                   --inputdatatype='${InputDataType}' \
+                   --parcellationfile='${ParcellationFile}' \
+                   --overwrite='${Overwrite}' \
+                   --outname='${OutNameParcelation}' \
+                   --outpath='${OutPath}' \
+                   --computepconn='${ComputePConn}' \
+                   --extractdata='${ExtractData}' \
+                   --useweights='${UseWeights}' \
+                   --weightsfile='${WeightsFile}'"
+                   echo " -- Command: ${RunCommand}"
+                   eval ${RunCommand}
+                   BOLDfcLogCheck
+                done
+            done
+        fi
     }
     # -- Compute Seed FC for relevant ROIs
     turnkey_computeBOLDfcSeed() {
