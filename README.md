@@ -444,6 +444,7 @@ Change Log
 * 0.38.14 [niutilities] Fixed an incomplete BIDSImport fix
 * 0.38.15 [connector] Fixed an issue with no session info in BIDS for RunTurnkey XNAT processing
 * 0.38.16 [niutilities] Made creation of BIDS sidecar an explicit request to dcm2niix
+* 0.38.17 [niutilities] Now reporting also mapping of bvec and bval files
 
 Stable Container Tag Log
 ========================
