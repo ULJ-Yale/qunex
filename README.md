@@ -443,12 +443,13 @@ Change Log
 * 0.38.13 [connector] Added the option to run multiple parcellations in RunTurnkey
 * 0.38.14 [niutilities] Fixed an incomplete BIDSImport fix
 * 0.38.15 [connector] Fixed an issue with no session info in BIDS for RunTurnkey XNAT processing
+* 0.38.16 [niutilities] Made creation of BIDS sidecar an explicit request to dcm2niix
 
 Stable Container Tag Log
 ========================
 ---
 
-* ztamayo/mnap_suite:0_38_10_btrx [BlackThorn stable tag]
+* ztamayo/mnap_suite:0_38_15_btrx [BlackThorn stable tag]
 * ztamayo/mnap_suite:fsl_test [WashU stable tag]
 
 [Mind and Brain Lab]: http://mblab.si
