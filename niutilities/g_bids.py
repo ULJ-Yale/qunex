@@ -632,7 +632,7 @@ def processBIDS(bfolder):
                 bidsData[session][modality] = []
     
             info = dict(zip(bids[modality]['info'], [None for e in range(len(bids[modality]['info']))]))
-            info.update(dict([(i, part.split('-')[1]) for part in parts for i in bids[modality]['info'] if '-' in part and i == part.split('-')]))
+            info.update(dict([(i, part.split('-')[1]) for part in parts for i in bids[modality]['info'] if '-' in part and i == part.split('-')[0]]))
             info['filepath'] = sfile
             info['filename'] = os.path.basename(sfile)
     
