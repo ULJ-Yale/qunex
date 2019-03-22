@@ -441,6 +441,7 @@ Change Log
 * 0.38.11 [library, niutilities] Changed mnapSingularity to mnapContainer and extended functionality, fixed a bug in bidsImport
 * 0.38.12 [library] Resolved an issue calling commands against Docker container
 * 0.38.13 [connector] Added the option to run multiple parcellations in RunTurnkey
+* 0.38.14 [niutilities] Fixed an incomplete BIDSImport fix
 
 Stable Container Tag Log
 ========================
