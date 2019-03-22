@@ -915,8 +915,20 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
 
         status = True
         if bidsData['images']['info'][image]['label'] == 'dwi':
-            status = moveLinkOrCopy(bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
-            status = moveLinkOrCopy(bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link', status=status)
+            sbvec = bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bvec')
+            tbvec = tfile.replace('.nii.gz', '.bvec')
+            if moveLinkOrCopy(sbvec, tbvec, action='link')
+                print >> bout, "%s => %s" % (sbvec, tbvec)
+            else:
+                status = False
+
+            sbval = bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bval')
+            tbval = tfile.replace('.nii.gz', '.bval')
+            if moveLinkOrCopy(sbval, tbval, action='link', status=status)
+                print >> bout, "%s => %s" % (sbval, tbval)
+            else:
+                status = False
+
             if not status:
                 print "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn)
                 print "==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec'))
