@@ -446,6 +446,7 @@ Change Log
 * 0.38.16 [niutilities] Made creation of BIDS sidecar an explicit request to dcm2niix
 * 0.38.17 [niutilities] Now reporting also mapping of bvec and bval files
 * 0.38.18 [niutilities] Fixed missing colons
+* 0.38.19 [library] Updated mnapContainer and mnap_environment.sh
 
 Stable Container Tag Log
 ========================
