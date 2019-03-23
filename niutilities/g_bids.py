@@ -917,14 +917,14 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
         if bidsData['images']['info'][image]['label'] == 'dwi':
             sbvec = bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bvec')
             tbvec = tfile.replace('.nii.gz', '.bvec')
-            if moveLinkOrCopy(sbvec, tbvec, action='link')
+            if moveLinkOrCopy(sbvec, tbvec, action='link'):
                 print >> bout, "%s => %s" % (sbvec, tbvec)
             else:
                 status = False
 
             sbval = bidsData['images']['info'][image]['filepath'].replace('.nii.gz', '.bval')
             tbval = tfile.replace('.nii.gz', '.bval')
-            if moveLinkOrCopy(sbval, tbval, action='link', status=status)
+            if moveLinkOrCopy(sbval, tbval, action='link', status=status):
                 print >> bout, "%s => %s" % (sbval, tbval)
             else:
                 status = False
