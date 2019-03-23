@@ -448,6 +448,7 @@ Change Log
 * 0.38.18 [niutilities] Fixed missing colons
 * 0.38.19 [library] Updated mnapContainer and mnap_environment.sh
 * 0.38.20 [library] Fixed envars processing in mnapContainer
+* 0.38.21 [library] Fixed subjid selection in mnapContainer
 
 Stable Container Tag Log
 ========================
