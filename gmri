@@ -337,7 +337,7 @@ def runCommand(command, args):
         results = gc.runInParallel(calls, cores=cores, prepend="     ... ")
 
         ok = True
-        print "\n===> Summary Report"       
+        print "\n===> Final report for command", command
         results.sort(key=lambda x: x[0])
         for name, result, targetLog, prepend in results:
             if result:                
