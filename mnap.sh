@@ -460,7 +460,7 @@ fi
 runTurnkey() {
 # -- Specify command variable
 unset CommandToRun
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --bolds='${BOLDS}' ${runTurnkeyArguments} --subjects='${CASE}' --turnkeysteps='${TURNKEY_STEPS}' --subjid='${SUBJID}'"
+CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --subjid=\"${SUBJID}\""
 connectorExec
 }
 
@@ -2294,12 +2294,12 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
    fi
    runTurnkeyArgumentsInput="${runTurnkeyArguments}"
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=||g' | sed "s|${CASES}||g"`
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=||g' | sed "s|${TURNKEY_STEPS}||g"`
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjid=||g'`
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolds=||g'`
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolddata=||g'`
-   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--boldruns=||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=.[^-]*||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=.[^-]*||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjid=.[^-]*||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolds=.[^-]*||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolddata=.[^-]*||g'`
+   runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--boldruns=.[^-]*||g'`
    
    echo ""
    echo "Running $FunctionToRun processing with the following parameters:"
@@ -2311,7 +2311,7 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    echo ""
    echo "--------------------------------------------------------------"
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${FunctionToRun} ; done
 fi
 
 # ------------------------------------------------------------------------------

@@ -460,6 +460,9 @@ BOLDfcPath=`opts_GetOpt "--boldfcpath" $@`
 GeneralSceneDataFile=`opts_GetOpt "--datafile" $@`
 GeneralSceneDataPath=`opts_GetOpt "--datapath" $@`
 
+
+
+
 BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
 if [ -z "${BOLDS}" ]; then
     BOLDS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
@@ -1127,11 +1130,23 @@ fi
                 geho " No custom scene files found as an XNAT resources. If this is an error check your project resources in the XNAT web interface." >> ${mapRawData_ComlogTmp}
                 echo "" >> ${mapRawData_ComlogTmp}
            fi
-        fi
-            
-        if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
+        else
             geho " --> Running turnkey via local: `hostname`"; echo ""
             RawDataInputPath="${RawDataInputPath}"
+            if [ ! -f ${specsdir}/${BATCH_PARAMETERS_FILENAME} ]; then
+                if [ -f ${RawDataInputPath}/${BATCH_PARAMETERS_FILENAME} ]; then
+                    cp ${RawDataInputPath}/${BATCH_PARAMETERS_FILENAME} ${specsdir}/${BATCH_PARAMETERS_FILENAME}
+                else
+                    echo " ==> ERROR: Batch parameters file ${BATCH_PARAMETERS_FILENAME} not found in ${RawDataInputPath}!"
+                fi
+            fi
+            if [ ! -f ${specsdir}/${SCAN_MAPPING_FILENAME} ]; then
+                if [ -f ${RawDataInputPath}/${SCAN_MAPPING_FILENAME} ]; then
+                    cp ${RawDataInputPath}/${SCAN_MAPPING_FILENAME} ${specsdir}/${SCAN_MAPPING_FILENAME}
+                else
+                    echo " ==> ERROR: HCP scan mapping file ${SCAN_MAPPING_FILENAME} not found in ${RawDataInputPath}!"
+                fi                
+            fi
         fi
         
         if [[ ${BIDSFormat} != "yes" ]]; then
@@ -1171,7 +1186,10 @@ fi
                     geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip "; echo ""
                     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip
                 fi
+            else
+                cp -r ${RawDataInputPath}/${CASE}.zip ${mnap_subjectsfolder}/inbox/BIDS/${CASE}.zip
             fi
+
             # -- Perform mapping of BIDS file structure into MNAP
             echo ""
             geho " -- Running:  "
@@ -1375,7 +1393,7 @@ fi
     # -- QCPreprocBOLD (after hcp5)
     turnkey_QCPreprocBOLD() {
         Modality="BOLD"
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... "; echo ""
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QCPreproc step for ${Modality} data ... BOLDS: ${BOLDRUNS} "; echo ""
         if [ -z "${BOLDfc}" ]; then
             # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi   --- default for bold prefix is now ""
             if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
