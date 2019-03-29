@@ -449,6 +449,7 @@ Change Log
 * 0.38.19 [library] Updated mnapContainer and mnap_environment.sh
 * 0.38.20 [library] Fixed envars processing in mnapContainer
 * 0.38.21 [library] Fixed subjid selection in mnapContainer
+* 0.38.22 [connector] Made runTurnkey more robust, added copying of bids packages from raw input folder
 
 Stable Container Tag Log
 ========================
