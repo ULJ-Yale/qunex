@@ -15,6 +15,7 @@ import shutil
 import niutilities.g_process as gp
 import niutilities.g_core as gc
 import niutilities.g_exceptions as ge
+import niutilities.g_commands as gcom
 import niutilities
 import getpass
 import re
@@ -969,96 +970,154 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
         raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details!")
 
 
-def runlist(filename, runlistName, logfolder=None):
+def runList(filename, runlists, logfolder=None):
     """
+    runList filename=<path to runlist file> runlistname=<name of the list to run> [logfolder=None]
+
+
     USE AND RESULTS
     ===============
 
-    runlist takes a runlist file and a list name and executes the commands defined
-    in that list. The runlist files contains commands that should be run and their
-    parameters.
+    runlist takes a `runlist` file and a runlitlistname and executes the 
+    commands defined in that list. The runlist file contains commands that 
+    should be run and parameters that it should use.
 
 
     RELEVANT PARAMETERS
     ===================
 
-    --filename ... The runlist.txt file containing runlists and their parameters.
-    --runlistName ... Name of the list inside runlist.txt to run.
+    --filename     ... The runlist.txt file containing runlists and their 
+                       parameters.
+    --runlists     ... A comma, space or pipe separated list of lists specified 
+                       within runlist.txt to run.
+    --logfolder    ... The folder within which to save the log.
+
+
+    RUNLIST FILE
+    ============
+
+    At the top of the runlist.txt file global settings are defined in the form
+    of key: value pairs. These are the settings that will be used as defaults 
+    throughout the list and individual commands defined in the rest of the 
+    runlist.txt file.
+
+    Each list starts with a line that consists of three dashes "---" only. The
+    next line should define the name of the list by specifying:
+    `list: <listname>`. The list name is the one referenced in the runList 
+    command. After the definition of the list, the default parameters for the
+    list can be specified as a <key>:<value> pairs. These values will be taken
+    as the default for the list. They have priority over the runlist.txt 
+    definition in that values that are defined within a specific list will be 
+    used rather than values defined at the higher level. It is recommended for
+    readibility purposes for the content of the list to be indented by four 
+    spaces.
+
+    Each list then consists of commands. Commands are defined by the:
+    `command: <command name>` lines. Each `command: <command name>` specifies
+    a command to be run, where <command name> is a valid mnap command. The 
+    command within a list will be executed in the order they are listed. 
+
+    Each command can then list additional parameters to be provided to the
+    command in the form of `<parameter>:<value>` pairs. The values provided
+    here will take priority over the values specified at the beginning of the
+    list as well as over the default values provided at the beginning of the
+    runlist.txt file. For readibility puposes it is advised that the 
+    <parameter>:<value> pairs are further indented for additional four spaces.
+
+    If a specific parameter specified at a higher level is not to be used at
+    this level or below, it can be listed prefixed by a dash / minus sign.
+
+    EXAMPLE RUNLIST FILE
+    ====================
+
+    ```
+    # global settings
+    subjectsfolder : /Volumes/tigr/MBLab/fMRI/jd_test/subjects
+    overwrite      : yes
+
+    ---
+    list: preparation
+        subjects: OP*
+
+        command: processInbox
+            pattern: ".*?_(OP[0-9]+).*.zip"
+
+        command: getHCPReady
+
+        command: setupHCP
+            -subjects
+            sfolder : /Volumes/tigr/MBLab/fMRI/jd_test/subjects/OP315
+            sfile   : subject_test.txt
+
+        command: createBatch
+
+    ---
+    list: additional_preprocessing
+        cores    : 6
+        subjects : /Volumes/tigr/MBLab/fMRI/jd_test/processing/batch.txt
+
+        command: mapHCPData
+            test
+            
+        command: createBOLDBrainMasks
+            bold_preprocess: all
+
+        command: computeBOLDStats
+            bold_preprocess : all
+            log             : remove
+
+        command : createStatsReport
+            cores     : 1
+            overwrite : yes
+
+        command: extractNuisanceSignal
+            bold_preprocess: all
+
+        command: preprocessBold
+            bold_actions     : shrc
+            glm_residuals    : save
+            bold_nuisance    : m,V,WM,WB,1d
+            pignore          : hipass=linear|regress=spline|lopass=linear
+            overwrite        : yes
+            bold_preprocess  : rest
+            image_target     : nifti
+            hcp_cifti_tail   : 
+
+        command: preprocessBold
+            bold_actions     : shrc
+            glm_residuals    : save
+            bold_nuisance    : m,V,WM,WB,1d
+            pignore          : hipass=linear|regress=spline|lopass=linear
+            overwrite        : yes
+            bold_preprocess  : rest
+            image_target     : cifti
+            hcp_cifti_tail   : _Atlas
 
 
     EXAMPLE USE
     ===========
 
-    runlist filename="/Users/john/Documents/runlist.txt" runlistName="additional_preprocessing"
-
-
-    EXAMPLE LIST
-    ===========
-
-    # global settings
-    subjectsfolder:"/Volumes/tigr/MBLab/fMRI/jd_test/subjects"
-    overwrite:"yes"
+    gmri runlist filename="/Users/john/Documents/runlist.txt" runlistName="additional_preprocessing"
 
     ---
-    list:"preparation"
-        subjects:"OP*"
+    Written by Jure Demšar 2019-02-11.
 
-        command:"processInbox"
-            pattern:".*?_(OP[0-9]+).*.zip"
+    Change log
+    2019-03-29 Grega Repovš
+             - Updated documentation, implemented running multiple lists
 
-        command:"getHCPReady"
-
-        command:"setupHCP"
-            sfolder:"/Volumes/tigr/MBLab/fMRI/jd_test/subjects"
-            sfile:"/Volumes/tigr/MBLab/fMRI/jd_test/processing/batch.txt"
-
-        command:"createBatch"
-
-    ---
-    list:"additional_preprocessing"
-        cores:6
-        subjects:"/Volumes/tigr/MBLab/fMRI/jd_test/processing/batch.txt"
-
-        command:"mapHCPData"
-            test
-            
-        command:"createBOLDBrainMasks"
-            bold_preprocess:"all"
-
-        command:"computeBOLDStats"
-            bold_preprocess:"all"
-            log:remove
-
-        command:"createStatsReport"
-            cores:1
-            overwrite:"yes"
-
-        command:"extractNuisanceSignal"
-            bold_preprocess:"all"
-
-        command:"preprocessBold"
-            bold_actions:"shrc"
-            glm_residuals:"save"
-            bold_nuisance:"m,V,WM,WB,1d"
-            pignore:"hipass=linear|regress=spline|lopass=linear"
-            overwrite:"yes"
-            bold_preprocess:"rest"
-            image_target:nifti
-            hcp_cifti_tail:""
-
-
-    ---
-    Written by Jure Demšar.
     """
     
+    flags = ['test']
+
     if filename is None:
-        raise ge.CommandError("filename", "No filename specified", "Please provide path to the runlist file!")
+        raise ge.CommandError("runList", "Filename not specified", "No runlist filename specified", "Please provide path to the runlist file!")
 
     if runlistName is None:
-        raise ge.CommandError("runlistName", "No runlistName specified", "Please provide runlist name!")
+        raise ge.CommandError("runList", "RunlistName not specified ", "No runlistName specified", "Please provide runlist name!")
 
     if not os.path.exists(filename):
-        raise ge.CommandError(("filename", "Runlist file not found [%s]" % filename))
+        raise ge.CommandFailed("runList", "Funlist file does not exist", "Runlist file not found [%s]" % (filename), "Please check your paths!")
 
     # prep log
     if logfolder is None:
@@ -1067,196 +1126,132 @@ def runlist(filename, runlistName, logfolder=None):
     logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
     logname = os.path.join(runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
-    s = file(filename).read()
 
-    # cleanup
-    s = s.replace("\r", "\n")
-    s = s.replace("\n\n", "\n")
-    s = re.sub("^#.*?\n", "", s)
+    # -- parse runlist file
 
-    # split to settings and list
-    s = s.split("---")
+    runList = {'parameters': {},
+               'list':{}}
 
-    # parameters string
-    ps = s[0].split("\n")
-    parameters = {}
-    for line in ps:
-        line = line.strip()
+    parameters = runList['parameters']
 
-        # skip comments and empty lines
-        if line == "" or line[0] == "#":
-            continue
-        
-        # split line to setting and value
-        lineSplit = line.split(":", 1)
-        if len(lineSplit) != 2:
-            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
-        else:
-            parameters[lineSplit[0]] = lineSplit[1]
+    with open(filename, 'r') as file:
+        for line in file:
+            try:
+                line = line.strip()
+                if line.startswith('#') or line.startswith('---') or line.strip() == "":
+                    continue
+                elif line.startswith('list'):
+                    listName = stripQuotes(line.split(':')[1].strip())
+                    runList['lists'] = {listName: {'parameters': runList['parameters'].copy(), 'commands': []}}
+                    parameters = runList['lists'][listName]['parameters']
+                elif line.startswith('command'):
+                    commandName = stripQuotes(line.split(':')[1].strip())
+                    parameters = runList['lists'][listName]['parameters'].copy()
+                    runList['lists'][listName]['commands'].append({'name': commandName, 'parameters': parameters})
+                elif ':' in line:
+                    parameter, value = [stripQuotes(e.strip()) for e in line.split(":", 1)]
+                    parameters[parameter] = value
+                elif line.strip() in flags:
+                    parameters[line.strip()] = "flag"
+                elif line.strip().startswith('-'):
+                    keyToRemove = line.strip()[1:] 
+                    if keyToRemove in parameters:
+                        del parameters[keyToRemove]
+            except:
+                ge.CommandFailed("runList", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
 
-    # find the list
-    listFound = False
-    for i in range(1, len(s)):
-        # appropriate list already found
-        if listFound:
-            break
 
-        # list string
-        ls = s[i].split("\n")
+    # -- run through lists
 
-        # find list name
-        while len(ls) > 0:
-            line = ls[0]
-            ls.remove(line)
-            line = line.strip()
-
-            # skip comments and empty lines
-            if line == "" or line[0] == "#":
-                continue
-
-            # split line to setting and value
-            lineSplit = line.split(":", 1)
-            if len(lineSplit) != 2:
-                raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
-            else:
-                lineSplit[0] = stripQuotes(lineSplit[0])
-                lineSplit[1] = stripQuotes(lineSplit[1])
-                # list found?
-                if lineSplit[0] == "list":
-                    if lineSplit[1] == runlistName:
-                        listFound = True
-                    break
-                else:
-                    raise ge.CommandFailed("runlist", "Cannot parse file", "Expecting list name, found [%s]" % (line), "Please check the runlist file [%s]" % filename)
-    
-    if not listFound:
-        raise ge.CommandFailed("runlist", "List not found", "List with name [%s] not found" % (runlistName), "Please check the runlist file [%s]" % filename)
-
-    # parse list parameters
-    while len(ls) > 0:
-        line = ls[0]
-        lineStrip = line.strip()
-
-        # skip comments and empty lines
-        if lineStrip == "" or lineStrip[0] == "#":
-            continue
-
-        # split line to setting and value
-        lineSplit = lineStrip.split(":", 1)
-        if len(lineSplit) != 2:
-            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
-        else:
-            # parameter or command?
-            if lineSplit[0] != "command":
-                parameters[lineSplit[0]] = lineSplit[1]
-                ls.remove(line)
-            else:
-                break
-
-    # parse commands
-    runlistCommands = []
-    # parse list parameters
-    while len(ls) > 0:
-        line = ls[0]
-        ls.remove(line)
-        line = line.strip()
-
-        # skip comments and empty lines
-        if line == "" or line[0] == "#":
-            continue
-
-        # split line to setting and value
-        lineSplit = line.split(":", 1)
-
-        # test parameter
-        if len(lineSplit) == 1 and lineSplit[0] == "test":
-            lineSplit.append("")
-
-        # if test allow no value parameter
-        if len(lineSplit) != 2:
-            raise ge.CommandFailed("runlist", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
-        else:
-            # parameter or command
-            lineSplit[0] = stripQuotes(lineSplit[0])          
-            if lineSplit[0] == "command":
-                lineSplit[1] = stripQuotes(lineSplit[1])
-                commandParameters = parameters.copy()
- 
-                # remove unallowed parameters 
-                if (lineSplit[1] in niutilities.g_commands.commands):
-                    allowedParameters = niutilities.g_commands.commands.get(lineSplit[1])["args"]
-                    for p in parameters:
-                        if p not in allowedParameters:
-                            del commandParameters[p]
-
-                command = { "name":lineSplit[1], "parameters":commandParameters }
-                runlistCommands.append(command)
-            else:
-                # is the parameter allowed?
-                if (runlistCommands[-1]["name"] in niutilities.g_commands.commands):
-                    allowedParameters = niutilities.g_commands.commands.get(runlistCommands[-1]["name"])["args"]
-                    if lineSplit[0] in allowedParameters:
-                        runlistCommands[-1]["parameters"][lineSplit[0]] = lineSplit[1]
-                else:
-                    runlistCommands[-1]["parameters"][lineSplit[0]] = lineSplit[1]
-
-    # process commands
-    log = open(logname, "w")
-    print >> log, "\n\n============================== LOG ==============================\n"
+    runLists = re.split(' ?, ?| ?\| ?| +|', runlists)
     summary = ""
 
-    for c in runlistCommands:
-        # build command
-        command = c["name"]
+    log = open(logname, "w")
+    print >> log, "\n\n============================== RUNLIST LOG ==============================\n"
+    print "===> Running commands from the following lists:", ",".join(runLists)
+    print >> log, "===> Running commands from the following lists:", ",".join(runLists), "\n"
 
-        for key in c["parameters"]:
-            if key == "test":
-                command += " " + key
+    for runListName in runLists:
+        if runListName not in runList['list']
+            raise ge.CommandFailed("runList", "List not found", "List with name [%s] not found" % (runListName), "Please check the runlist file [%s]" % filename)
+
+        summary += "\n\n===> list: %s" % (runlitlistname)
+
+        print "===> Running commands from list:", runListName
+        print >> log, "\n----------==================== LIST ====================---------\n"
+        print >> log, "===> Running commands from list:", runListName, "\n"
+
+        commandsToRun = list(runList['list'][runListName]['commands'])
+        
+        for runCommand in commandsToRun:
+            commandName = runCommand['name']
+            commandParameters = runCommand['parameters']
+
+            # -- remove parameters not allowed
+
+            if commandName in niutilities.g_commands.commands:
+                allowedParameters = niutilities.g_commands.commands.get(commandName)["args"] + gcom.extraParameters
+                for param in commandParameters.keys():
+                    if param not in allowedParameters:
+                        del commandParameters[param]
+
+            # -- setup command 
+
+            command = commandName
+            commandr = "---> mnap " + commandName
+            for param, value in commandParameters.iteritems():
+                if param in flags:
+                    command += ' --%s' % (param)
+                    commandr += " \\\n          --%s" % (param)
+                else:
+                    command += ' --%s="%s"' % (param, value)
+                    commandr += ' \\\n          --%s="%s"' % (param, value)
+
+            print commandr
+
+            print >> log, "\n----------------------------- COMMAND ----------------------------\n"
+            print >> log, commandr
+
+            # -- run command
+       
+            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            # Poll process for new output until finished
+            error = True
+            logging = False
+
+            while True:
+                nextline = process.stdout.readline()
+                if nextline == '' and process.poll() is not None:
+                    break
+                sys.stdout.write(nextline)
+                if "Successful completion" in nextline:
+                    error = False
+                if "Final report" in nextline:
+                    logging = True
+
+                # print           
+                sys.stdout.flush()
+                if logging:
+                    print >> log, nextline,
+
+            if error:
+                summary += "\n---> command %-20s FAILED" % (commandName)
+                print >> log, "\n\n============================ SUMMARY ============================"
+                print >> log, "\n---> Running lists not completed successfully: failed at list %s" % runlistName
+                print >> log, summary
+                log.close()
+                raise ge.CommandFailed("runlist", "Runlist command failed", "Command inside runlist failed", "%s" % (commandName), "See errors above for details")
             else:
-                command += " " + key + "=" + c["parameters"][key]
-        
-        # run
-        command = "gmri " + command
-        print "\n===> Running runlist command\n%s\n" % command
-        print >> log, "\n\n============================ COMMAND ============================"
-        print >> log, "\n%s\n" % command
-        
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                summary += "\n---> command %-20s OK" % (commandName)
+                print "\n===> Successful completion of runlist command %s\n\n\n" % (commandName)
 
-        # Poll process for new output until finished
-        error = True
-        logging = False
-        while True:
-            nextline = process.stdout.readline()
-            if nextline == '' and process.poll() is not None:
-                break
-            sys.stdout.write(nextline)
-            if "Successful completion" in nextline:
-                error = False
-            if "Final report" in nextline:
-                logging = True
-
-            # print           
-            sys.stdout.flush()
-            if logging:
-                print >> log, nextline,
-
-        if error:
-            summary += "\n%-50s FAILED" % (c["name"])
-            print >> log, "\n\n============================ SUMMARY ============================"
-            print >> log, "\n===> Runlist %s not completed successfully" % runlistName
-            print >> log, summary
-            log.close()
-            raise ge.CommandFailed("runlist", "Command inside runlist failed", "%s" % (command), "See errors above for details")
-        else:
-            summary += "\n%-50s OK" % (c["name"])
-            print "\n===> Successful completion of runlist command %s\n\n\n" % c["name"]
-
-            
-    print "\n===> Successful completion of the %s runlist" % runlistName
     print >> log, "\n\n============================ SUMMARY ============================"
-    print >> log, "\n===> Successful completion of the %s runlist" % runlistName
+    print >> log, "\n===> Successful completion of task: runLists %s" % (",".join(runLists))
     print >> log, summary
+
+    print "\n===> Successful completion of runLists %s" % (",".join(runLists))
+    print summary
 
     log.close()
 

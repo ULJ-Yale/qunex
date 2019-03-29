@@ -60,5 +60,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'schedule'             : {'com': g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
             'getDICOMFields'       : {'com': g_dicomdeid.getDICOMFields,     'args': ('folder', 'tfile', 'limit')},
             'changeDICOMFiles'     : {'com': g_dicomdeid.changeDICOMFiles,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')},
-            'runlist'              : {'com': g_utilities.runlist,            'args': ('filename', 'runlistName')}
+            'runlist'              : {'com': g_utilities.runList,            'args': ('filename', 'runlistName', 'logfolder')}
             }
+
+extraParameters = ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder']
