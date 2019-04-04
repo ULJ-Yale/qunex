@@ -13,6 +13,6 @@
 [submodule "connector"]
 	path = connector
 	url = git@bitbucket.org:hidradev/connector.git
-[submodule "hcpextendedpull"]
-	path = hcpextendedpull
-	url = git@bitbucket.org:hidradev/hcpextendedpull.git
+# [submodule "hcpextendedpull"]
+#	path = hcpextendedpull
+#	url = git@bitbucket.org:hidradev/hcpextendedpull.git
