@@ -450,6 +450,7 @@ Change Log
 * 0.38.20 [library] Fixed envars processing in mnapContainer
 * 0.38.21 [library] Fixed subjid selection in mnapContainer
 * 0.38.22 [connector] Made runTurnkey more robust, added copying of bids packages from raw input folder
+* 0.38.23 [niutilities] A number of improvements to robustness and reporting when converting DICOMs and creating subject_hcp.txt files
 
 Stable Container Tag Log
 ========================
