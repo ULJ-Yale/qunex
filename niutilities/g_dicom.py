@@ -113,7 +113,12 @@ def readDICOMInfo(filename):
     as 'dicom'.
 
     ----------------
-    Written by Grega Repovš, 2018-07-03'''
+    Written by Grega Repovš, 2018-07-03
+
+    Changelog
+    2019-04-07 Grega Repovš
+             - Made reading of SeriesDescription more robust also to Anonymous value
+    '''
 
     if not os.path.exists(filename):
         raise ValueError('DICOM file %s does not exist!' % (filename))
@@ -140,15 +145,12 @@ def readDICOMInfo(filename):
     except:
         info['seriesNumber'] = None
 
-    # --- seriesDescription
+    # --- seriesDescription -- multiple possibilities
 
-    try:
-        info['seriesDescription'] = d.SeriesDescription
-    except:
-        try:
-            info['seriesDescription'] = d.ProtocolName
-        except:
-            info['seriesDescription'] = "None"
+    for keyName in ['SeriesDescription', 'ProtocolName', 'SequenceName']:
+        info['seriesDescription'] = d.get(keyName, 'anonymous')
+        if info['seriesDescription'].lower() != 'anonymous':
+            break
 
     # --- TR, TE
 
@@ -942,6 +944,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
              - Added tool parameter to specify the tool for nifti conversion
     2018-10-18 Grega Repovš
              - Added options parameter and adding Image Type to sequence names
+    2019-04-07 Grega Repovš
+             - Added copying of json files
     '''
 
     print "Running dicom2niix\n=================="
@@ -1216,6 +1220,13 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                     dwisrc = img.replace('.nii.gz', dwiextra)
                     if os.path.exists(dwisrc):
                         os.rename(dwisrc, os.path.join(imgf, "%d%s" % (niinum, dwiextra)))
+
+                # --- check also for .json
+
+                for jsonextra in ['.json', '.JSON']:
+                    jsonsrc = img.replace('.nii.gz', jsonextra)
+                    if os.path.exists(jsonsrc):
+                        os.rename(jsonsrc, os.path.join(imgf, "%d%s" % (niinum, '.json')))
 
             # --- check final geometry
 
