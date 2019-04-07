@@ -946,6 +946,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
              - Added options parameter and adding Image Type to sequence names
     2019-04-07 Grega Repovš
              - Added copying of json files
+             - Added error when no DICOM files are found to process
     '''
 
     print "Running dicom2niix\n=================="
@@ -1162,6 +1163,13 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
             else:
                 calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
         files.append([niinum, folder, info['volumes'], info['slices']])
+
+    if not calls:
+        r.close()
+        stxt.close()
+        os.remove(os.path.join(dmcf, "DICOM-Report.txt"))
+        os.remove(os.path.join(folder, "subject.txt"))
+        raise ge.CommandFailed("dicom2niix", "No source DICOM files", "No source DICOM files were found to process!", "Please check your data and paths!")
 
     niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 

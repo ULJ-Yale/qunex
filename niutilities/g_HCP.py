@@ -565,6 +565,8 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
              - Added the option to explicitly specify the subjects to process.
              - Adjusted and expanded help string.
              - Added the option to map sequence names.
+    2019-04-07 Grega Repovš
+             - Added more detailed report with explicit failure in case of missing source files.
     '''
 
     print "Running getHCPReady\n==================="
@@ -599,19 +601,28 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
             print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(subjectsfolder, subject['id']))
         sfolders += newSet
 
+    # -- check if we have any
+
+    if not sfolders:
+        raise ge.CommandFailed("getHCPReady", "No subjects found to process", "No subjects were found to process!", "Please check the data and subjects parameter!")
+
     # -- loop through subject folders
 
+    report = {'missing source': [], 'pre-existing target': [], 'pre-processed source': [], 'processed': []}
+    
     for sfolder in sfolders:
 
         ssfile = os.path.join(sfolder, sfile)
         stfile = os.path.join(sfolder, tfile)
 
         if not os.path.exists(ssfile):
+            report['missing source'].append(sfolder)
             continue
         print " ... Processing folder %s" % (sfolder)
 
         if os.path.exists(stfile) and overwrite != "yes":
             print "     ... Target file already exists, skipping! [%s]" % (stfile)
+            report['pre-existing target'].append(sfolder)
             continue
 
         lines = [line.strip() for line in open(ssfile)]
@@ -660,11 +671,26 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
 
         if hcpok:
             print "     ... %s already HCP ready" % (sfile)
+            if sfile != tfile:
+                shutil.copyfile(sfile, tfile)
+            report['pre-processed source'].append(sfolder)
         else:
             print "     ... writing %s" % (tfile)
             fout = open(stfile, 'w')
             for line in nlines:
                 print >> fout, line
+            report['processed'].append(sfolder)
     
+    print "\n===> Final report"
+
+    for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source']:
+        if report[status]:
+            print "\n---> sessions with %s file:" % (status)
+            for session in report[status]:
+                print "     -> %s " % (os.path.basename(session))
+
+    if report['missing source']:
+        raise ge.CommandFailed("getHCPReady", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sfile), "Please check the data and parameters!")
+
     return
 
