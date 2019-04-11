@@ -1642,8 +1642,8 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
     PARAMETERS
     ==========
 
-    --folder   The base study subjects folder (e.g. WM44/subjects) where the
-               inbox and individual subject folders are. [.]
+    --subjectsfolder   The base study subjects folder (e.g. WM44/subjects) where
+                       the inbox and individual subject folders are. [.]
     --inbox    The inbox folder with packages to process. By default inbox is
                in base study folder: inbox/MR. If the packages are elsewhere
                the location can be specified here. [<folder>/inbox/MR]
