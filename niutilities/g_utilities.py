@@ -14,6 +14,7 @@ import datetime
 import shutil
 import niutilities.g_process as gp
 import niutilities.g_core as gc
+import niutilities.gp_core as gpc
 import niutilities.g_exceptions as ge
 import getpass
 import re
@@ -965,3 +966,46 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
 
     if error:
         raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details!")
+
+
+
+def batchTag2Num(filename=None, subjid=None, bolds=None):
+    """
+    batchTag2Num filename=<path to batch file> subjid=<session id> bolds=<bold specification string>
+
+    The function reads the batch file, extracts the data for the specified 
+    session and returns the list of bold numbers that correspond to bolds
+    specified using the `bolds` parameter.
+
+    --filename      ... Path to batch.txt file.
+    --subjid        ... Subject id to look up.
+    --bolds         ... Which bold images (as they are specified in the
+                        batch.txt file) to process. It can be a single
+                        type (e.g. 'task'), a pipe separated list (e.g.
+                        'WM|Control|rest') or 'all' to process all.
+    """
+
+    if filename is None:
+        raise ge.CommandError("batchTag2Num", "No batch file specified!")
+
+    if subjid is None:
+        raise ge.CommandError("batchTag2Num", "No session id specified!")
+
+    if bolds is None:
+        raise ge.CommandError("batchTag2Num", "No bolds specified!")
+
+    subjects, _ = gc.getSubjectList(filename, subjid=subjid)
+
+    if not subjects:
+        raise ge.CommandFailed("batchTag2Num", "Session id not found", "Session id %s is not present in the batch file [%s]" % (subjid, filename), "Please check your data!")
+
+    if len(subjects) > 1:
+        raise ge.CommandFailed("batchTag2Num", "More than one session id found", "More than one [%s] instance of session id [%s] is present in the batch file [%s]" % (len(subjects), subjid, filename), "Please check your data!")
+
+    subject = subjects[0]
+
+    bolds, _, _, _ = gpc.useOrSkipBOLD(subject, {'bolds': bolds})
+    
+    bolds = [str(e[0]) for e in bolds]
+
+    print "BOLDS:%s" % (",".join(bolds))

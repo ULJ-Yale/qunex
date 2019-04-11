@@ -100,7 +100,7 @@ def useOrSkipBOLD(sinfo, options, r=None):
     Internal function to determine which bolds to use and which to skip.
     """
     bsearch  = re.compile('bold([0-9]+)')
-    btargets = options['bold_preprocess'].split("|")
+    btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
     bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
     bskip    = []
     if "all" not in btargets:

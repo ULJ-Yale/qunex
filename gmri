@@ -268,6 +268,7 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyfolder', )},
             'createList'           : {'com': niu.g_utilities.createList,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
             'createConc'           : {'com': niu.g_utilities.createConc,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
+            'batchTag2Num'         : {'com': niu.g_utilities.batchTag2Num,       'args': ('filename', 'subjid', 'bolds')},
             'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
             'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder', 'fidlname')},
             'splitFidl'            : {'com': niu.g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},
@@ -281,7 +282,6 @@ commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,             
             'schedule'             : {'com': niu.g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
             'getDICOMFields'       : {'com': niu.g_dicomdeid.getDICOMFields,     'args': ('folder', 'tfile', 'limit')},
             'changeDICOMFiles'     : {'com': niu.g_dicomdeid.changeDICOMFiles,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')}
-
             }
 
 
