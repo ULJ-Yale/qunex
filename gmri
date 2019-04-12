@@ -296,7 +296,7 @@ def runCommand(command, args):
 
     subjects = None
     if 'subjects' in eargs:
-        if not any([e in gcom.commands[command]['args'] for e in ['sfolder', 'folder']]):
+        if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sfolder', 'folder']]):
             raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple subjects!" % (command))
         if folders['subjectsfolder'] is None:
             folders['subjectsfolder'] = "."
@@ -323,6 +323,7 @@ def runCommand(command, args):
         print "\n===> Running %s through a list of subjects using %d cores" % (command, cores)
 
         calls = []
+
         for subject in subjects:
             targs   = dict(bargs)
             name    = command + ": " + subject['id']
@@ -332,6 +333,14 @@ def runCommand(command, args):
             for targ in ['sfolder', 'folder']:
                 if targ in gcom.commands[command]['args']:
                     targs[targ] = sfolder
+
+            # if runList command also pass extra arguments
+            if command == "runList":
+                targs['eargs'] = {}
+                targs['eargs']['subjects'] = subject['id']
+                targs['eargs']['folder'] = sfolder
+                targs['eargs']['sfolder'] = sfolder
+
             calls.append({'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
 
         results = gc.runInParallel(calls, cores=cores, prepend="     ... ")

@@ -969,7 +969,7 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
         raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details!")
 
 
-def runList(listfile=None, runlists=None, logfolder=None):
+def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
     """
     runList listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
@@ -1045,7 +1045,7 @@ def runList(listfile=None, runlists=None, logfolder=None):
 
         command: setupHCP
             -subjects
-            sfolder : /Volumes/tigr/MBLab/fMRI/jd_test/subjects/OP315
+            sfolder : /Volumes/tigr/MBLab/fMRI/jd_test/subjects/
             sfile   : subject_test.txt
 
         command: createBatch
@@ -1106,7 +1106,7 @@ def runList(listfile=None, runlists=None, logfolder=None):
              - Updated documentation, implemented running multiple lists
 
     """
-    
+
     flags = ['test']
 
     if listfile is None:
@@ -1141,12 +1141,14 @@ def runList(listfile=None, runlists=None, logfolder=None):
                     continue
                 elif line.startswith('list'):
                     listName = stripQuotes(line.split(':')[1].strip())
-                    runList['lists'][listName] = {'parameters': runList['parameters'].copy(), 'commands': []}
+                    runList['lists'][listName] = {'parameters': runList['parameters'].copy(), 'commands': [], 'removed_parameters': []}
                     parameters = runList['lists'][listName]['parameters']
+                    removedParameters = runList['lists'][listName]['removed_parameters']
                 elif line.startswith('command'):
                     commandName = stripQuotes(line.split(':')[1].strip())
                     parameters = runList['lists'][listName]['parameters'].copy()
-                    runList['lists'][listName]['commands'].append({'name': commandName, 'parameters': parameters})
+                    removedParameters = list(runList['lists'][listName]['removed_parameters'])
+                    runList['lists'][listName]['commands'].append({'name': commandName, 'parameters': parameters, 'removed_parameters': removedParameters})
                 elif ':' in line:
                     parameter, value = [stripQuotes(e.strip()) for e in line.split(":", 1)]
                     parameters[parameter] = value
@@ -1155,6 +1157,7 @@ def runList(listfile=None, runlists=None, logfolder=None):
                 elif line.strip().startswith('-'):
                     keyToRemove = line.strip()[1:] 
                     if keyToRemove in parameters:
+                        removedParameters.append(keyToRemove)
                         del parameters[keyToRemove]
             except:
                 raise ge.CommandFailed("runList", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % listfile)
@@ -1198,16 +1201,25 @@ def runList(listfile=None, runlists=None, logfolder=None):
                     if param not in allowedParameters:
                         del commandParameters[param]
 
+            # -- override params with those from eargs (passed because of parallelization on a higher level)
+
+            if eargs is not None:
+                removedParameters = runCommand['removed_parameters']
+                for k in eargs:
+                    if k not in removedParameters:
+                        commandParameters[k] = eargs[k]
+
             # -- setup command 
 
-            command = "mnap.sh " + commandName
+            command = ["mnap.sh"]
+            command.append(commandName)
             commandr = "---> mnap.sh " + commandName
             for param, value in commandParameters.iteritems():
                 if param in flags:
-                    command += ' --%s' % (param)
+                    command.append('--%s' % (param))
                     commandr += " \\\n          --%s" % (param)
                 else:
-                    command += ' --%s="%s"' % (param, value)
+                    command.append('--%s=%s' % (param, value))
                     commandr += ' \\\n          --%s="%s"' % (param, value)
 
             print commandr
@@ -1216,27 +1228,22 @@ def runList(listfile=None, runlists=None, logfolder=None):
             print >> log, commandr
 
             # -- run command
-       
-            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1)
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
 
             # Poll process for new output until finished
             error = True
             logging = False
 
-            while True:
-                nextline = process.stdout.readline()
-                if nextline == '' and process.poll() is not None:
-                    break
-                sys.stdout.write(nextline)
-                if "Successful completion" in nextline:
+            for line in iter(process.stdout.readline, b''):
+                print line,
+                if "Successful completion" in line:
                     error = False
-                if "Final report" in nextline:
+                if "Final report" in line:
                     logging = True
 
-                # print           
-                sys.stdout.flush()
+                # print
                 if logging:
-                    print >> log, nextline,
+                    print >> log, line,
                     log.flush()
 
             if error:
