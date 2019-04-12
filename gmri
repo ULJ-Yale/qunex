@@ -123,9 +123,9 @@ Miscellaneous file utilities
 ----------------------------
 createStudy  studyfolder=<path to study base folder>
 createBatch  [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
-createList   [subjectsfolder=.] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-createConc   [subjectsfolder=.] [subjects=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-runlist  filename=<path to runlist file> runlistName=<name of the list inside runlist.txt to run.>
+createList  [subjectsfolder=.] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+createConc  [subjectsfolder=.] [subjects=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
 
 Fidl file utilities
@@ -337,9 +337,11 @@ def runCommand(command, args):
             # if runList command also pass extra arguments
             if command == "runList":
                 targs['eargs'] = {}
-                targs['eargs']['subjects'] = subject['id']
-                targs['eargs']['folder'] = sfolder
+                targs['eargs']['subjects'] = eargs['subjects']
+                targs['eargs']['subjid'] = subject['id']
+                targs['eargs']['subjectsfolder'] = folders['subjectsfolder']
                 targs['eargs']['sfolder'] = sfolder
+                targs['eargs']['folder'] = sfolder
 
             calls.append({'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
 

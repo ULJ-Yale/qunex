@@ -1096,7 +1096,7 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
     EXAMPLE USE
     ===========
 
-    gmri runlist filename="/Users/john/Documents/runlist.txt" runlistName="additional_preprocessing"
+    gmri runList listfile=/Users/john/Documents/runlist.txt runlists=additional_preprocessing
 
     ---
     Written by Jure Demšar 2019-02-11.
@@ -1110,7 +1110,7 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
     flags = ['test']
 
     if listfile is None:
-        raise ge.CommandError("runList", "Filename not specified", "No runlist filename specified", "Please provide path to the runlist file!")
+        raise ge.CommandError("runList", "listfile not specified", "No runlist file specified", "Please provide path to the runlist file!")
 
     if runlists is None:
         raise ge.CommandError("runList", "runlists not specified ", "No runlists specified", "Please provide list of list names to run!")
@@ -1155,10 +1155,16 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
                 elif line.strip() in flags:
                     parameters[line.strip()] = "flag"
                 elif line.strip().startswith('-'):
-                    keyToRemove = line.strip()[1:] 
+                    keyToRemove = line.strip()[1:]
                     if keyToRemove in parameters:
+                        # mark parameter as removed
                         removedParameters.append(keyToRemove)
                         del parameters[keyToRemove]
+                    # also remove arguments that come from eargs
+                    elif eargs is not None and keyToRemove in eargs:
+                        # mark parameter as removed
+                        removedParameters.append(keyToRemove)
+
             except:
                 raise ge.CommandFailed("runList", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % listfile)
 
@@ -1193,21 +1199,22 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
             commandName = runCommand['name']
             commandParameters = runCommand['parameters']
 
-            # -- remove parameters not allowed
+            # -- override params with those from eargs (passed because of parallelization on a higher level)
+
+            if eargs is not None:
+                # do not add parameter if it is flagged as removed
+                removedParameters = runCommand['removed_parameters']
+                for k in eargs:
+                    if k not in removedParameters:
+                        commandParameters[k] = eargs[k]
+
+            # -- remove parameters that are not allowed
 
             if commandName in niutilities.g_commands.commands:
                 allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"]) + niutilities.g_commands.extraParameters
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
                         del commandParameters[param]
-
-            # -- override params with those from eargs (passed because of parallelization on a higher level)
-
-            if eargs is not None:
-                removedParameters = runCommand['removed_parameters']
-                for k in eargs:
-                    if k not in removedParameters:
-                        commandParameters[k] = eargs[k]
 
             # -- setup command 
 
