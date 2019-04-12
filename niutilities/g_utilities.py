@@ -15,7 +15,6 @@ import shutil
 import niutilities.g_process as gp
 import niutilities.g_core as gc
 import niutilities.g_exceptions as ge
-import niutilities.g_commands as gcom
 import niutilities
 import getpass
 import re
@@ -970,9 +969,9 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
         raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details!")
 
 
-def runList(filename, runlists, logfolder=None):
+def runList(listfile=None, runlists=None, logfolder=None):
     """
-    runList filename=<path to runlist file> runlistname=<name of the list to run> [logfolder=None]
+    runList listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
 
     USE AND RESULTS
@@ -986,7 +985,7 @@ def runList(filename, runlists, logfolder=None):
     RELEVANT PARAMETERS
     ===================
 
-    --filename     ... The runlist.txt file containing runlists and their 
+    --listfile     ... The runlist.txt file containing runlists and their 
                        parameters.
     --runlists     ... A comma, space or pipe separated list of lists specified 
                        within runlist.txt to run.
@@ -1110,18 +1109,18 @@ def runList(filename, runlists, logfolder=None):
     
     flags = ['test']
 
-    if filename is None:
+    if listfile is None:
         raise ge.CommandError("runList", "Filename not specified", "No runlist filename specified", "Please provide path to the runlist file!")
 
-    if runlistName is None:
-        raise ge.CommandError("runList", "RunlistName not specified ", "No runlistName specified", "Please provide runlist name!")
+    if runlists is None:
+        raise ge.CommandError("runList", "runlists not specified ", "No runlists specified", "Please provide list of list names to run!")
 
-    if not os.path.exists(filename):
-        raise ge.CommandFailed("runList", "Funlist file does not exist", "Runlist file not found [%s]" % (filename), "Please check your paths!")
+    if not os.path.exists(listfile):
+        raise ge.CommandFailed("runList", "Funlist file does not exist", "Runlist file not found [%s]" % (listfile), "Please check your paths!")
 
     # prep log
     if logfolder is None:
-        logfolder = gc.deduceFolders({})["logfolder"]
+        logfolder = gc.deduceFolders({'reference': listfile})["logfolder"]
     runlogfolder = os.path.join(logfolder, 'runlogs')
     logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
     logname = os.path.join(runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
@@ -1130,11 +1129,11 @@ def runList(filename, runlists, logfolder=None):
     # -- parse runlist file
 
     runList = {'parameters': {},
-               'list':{}}
+               'lists':{}}
 
     parameters = runList['parameters']
 
-    with open(filename, 'r') as file:
+    with open(listfile, 'r') as file:
         for line in file:
             try:
                 line = line.strip()
@@ -1142,7 +1141,7 @@ def runList(filename, runlists, logfolder=None):
                     continue
                 elif line.startswith('list'):
                     listName = stripQuotes(line.split(':')[1].strip())
-                    runList['lists'] = {listName: {'parameters': runList['parameters'].copy(), 'commands': []}}
+                    runList['lists'][listName] = {'parameters': runList['parameters'].copy(), 'commands': []}
                     parameters = runList['lists'][listName]['parameters']
                 elif line.startswith('command'):
                     commandName = stripQuotes(line.split(':')[1].strip())
@@ -1158,7 +1157,7 @@ def runList(filename, runlists, logfolder=None):
                     if keyToRemove in parameters:
                         del parameters[keyToRemove]
             except:
-                ge.CommandFailed("runList", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % filename)
+                raise ge.CommandFailed("runList", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % listfile)
 
 
     # -- run through lists
@@ -1166,22 +1165,26 @@ def runList(filename, runlists, logfolder=None):
     runLists = re.split(' ?, ?| ?\| ?| +|', runlists)
     summary = ""
 
-    log = open(logname, "w")
+    try:
+        log = open(logname, "w", buffering=0)
+    except:
+        raise ge.CommandFailed("runList", "Cannot open log", "Unable to open log [%s]" % (logname), "Please check the paths!")
+
     print >> log, "\n\n============================== RUNLIST LOG ==============================\n"
-    print "===> Running commands from the following lists:", ",".join(runLists)
-    print >> log, "===> Running commands from the following lists:", ",".join(runLists), "\n"
+    print "===> Running commands from the following lists:", ", ".join(runLists)
+    print >> log, "===> Running commands from the following lists:", ", ".join(runLists), "\n"
 
     for runListName in runLists:
-        if runListName not in runList['list']
-            raise ge.CommandFailed("runList", "List not found", "List with name [%s] not found" % (runListName), "Please check the runlist file [%s]" % filename)
+        if runListName not in runList['lists']:
+            raise ge.CommandFailed("runList", "List not found", "List with name %s not found" % (runListName), "Please check the runlist file [%s]" % listfile)
 
-        summary += "\n\n===> list: %s" % (runlitlistname)
+        summary += "\n\n===> list: %s" % (runListName)
 
         print "===> Running commands from list:", runListName
         print >> log, "\n----------==================== LIST ====================---------\n"
         print >> log, "===> Running commands from list:", runListName, "\n"
 
-        commandsToRun = list(runList['list'][runListName]['commands'])
+        commandsToRun = list(runList['lists'][runListName]['commands'])
         
         for runCommand in commandsToRun:
             commandName = runCommand['name']
@@ -1190,15 +1193,15 @@ def runList(filename, runlists, logfolder=None):
             # -- remove parameters not allowed
 
             if commandName in niutilities.g_commands.commands:
-                allowedParameters = niutilities.g_commands.commands.get(commandName)["args"] + gcom.extraParameters
+                allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"]) + niutilities.g_commands.extraParameters
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
                         del commandParameters[param]
 
             # -- setup command 
 
-            command = commandName
-            commandr = "---> mnap " + commandName
+            command = "mnap.sh " + commandName
+            commandr = "---> mnap.sh " + commandName
             for param, value in commandParameters.iteritems():
                 if param in flags:
                     command += ' --%s' % (param)
@@ -1214,7 +1217,7 @@ def runList(filename, runlists, logfolder=None):
 
             # -- run command
        
-            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1)
 
             # Poll process for new output until finished
             error = True
@@ -1234,11 +1237,12 @@ def runList(filename, runlists, logfolder=None):
                 sys.stdout.flush()
                 if logging:
                     print >> log, nextline,
+                    log.flush()
 
             if error:
                 summary += "\n---> command %-20s FAILED" % (commandName)
                 print >> log, "\n\n============================ SUMMARY ============================"
-                print >> log, "\n---> Running lists not completed successfully: failed at list %s" % runlistName
+                print >> log, "\n---> Running lists not completed successfully: failed at list %s" % runListName
                 print >> log, summary
                 log.close()
                 raise ge.CommandFailed("runlist", "Runlist command failed", "Command inside runlist failed", "%s" % (commandName), "See errors above for details")

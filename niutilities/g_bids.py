@@ -23,6 +23,7 @@ import tarfile
 import glob
 import datetime
 import gzip
+import sys
 
 bids = {
     'modalities': ['anat', 'func', 'dwi', 'fmap'],
