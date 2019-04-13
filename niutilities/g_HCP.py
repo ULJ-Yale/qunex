@@ -661,7 +661,7 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
 
     for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source']:
         if report[status]:
-            print "\n---> sessions with %s file:" % (status)
+            print "---> sessions with %s file:" % (status)
             for session in report[status]:
                 print "     -> %s " % (os.path.basename(session))
 

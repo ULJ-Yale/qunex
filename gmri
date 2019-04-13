@@ -123,9 +123,9 @@ Miscellaneous file utilities
 ----------------------------
 createStudy  studyfolder=<path to study base folder>
 createBatch  [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
-createList   [subjectsfolder=.] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-createConc   [subjectsfolder=.] [subjects=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-runlist  filename=<path to runlist file> runlistName=<name of the list inside runlist.txt to run.>
+createList  [subjectsfolder=.] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+createConc  [subjectsfolder=.] [subjects=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
 
 Fidl file utilities
@@ -294,7 +294,7 @@ def runCommand(command, args):
 
     subjects = None
     if 'subjects' in eargs:
-        if not any([e in gcom.commands[command]['args'] for e in ['sfolder', 'folder']]):
+        if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sfolder', 'folder']]):
             raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple subjects!" % (command))
         if folders['subjectsfolder'] is None:
             folders['subjectsfolder'] = "."
@@ -302,35 +302,95 @@ def runCommand(command, args):
 
     logname = eargs.get('logname')
 
-    cores = int(eargs.get('cores', '1'))
+    calls = []
 
-    # -- are we using a scheduler
+    # -- runList specifics
 
-    if 'scheduler' in eargs:
-        niu.g_scheduler.runThroughScheduler(command, subjects=subjects, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+    if command == "runList":
+        if subjects and 'sperlist' in eargs:
 
-    # -- a basic call
+            if 'scheduler' in eargs:
 
-    elif subjects is None:
-        gcom.commands[command]['com'](**args)
-        print "\n===> Successful completion of task\n"
+                # -- define number of subjects to run in each runList
+                cores = eargs['sperlist']
+                args['cores'] = cores
+                if 'ignore' in args:
+                    args['ignore'] += 'scheduler'
+                else:
+                    args['ignore'] = 'scheduler'
+                del args['sperlist']
 
-    # -- subjects loop
+                niu.g_scheduler.runThroughScheduler(command, subjects=subjects, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+            
+            else:
 
+                # -- define number of subjects to run in each runList
+                sperlist = args['sperlist']                
+                del args['sperlist']
+
+                # -- define number of runLists to run in parallel
+                cores = eargs.get('runinpar', 1)
+                args['cores'] = cores
+                if 'runinpar' in args:
+                    del args['runinpar']
+
+                c = 0
+                while subjects:
+                    c += 1
+                    largs = args.copy()
+
+                    # -- set up a list of sessions to run in each runList
+
+                    slist = [subjects.pop(0)['id'] for e in range(sperlist) if subjects]
+                    largs['subjid'] = "|".join(slist)
+
+                    calls.append({'name': 'runList_%d' % (c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
+
+        else:
+            bargs['eargs'] = eargs
+            gcom.commands[command]['com'](**bargs)
+            print "\n===> Successful completion of task"
+
+    # -- all other commands    
     else:
-        print "\n===> Running %s through a list of subjects using %d cores" % (command, cores)
 
-        calls = []
-        for subject in subjects:
-            targs   = dict(bargs)
-            name    = command + ": " + subject['id']
-            sfolder = os.path.join(folders['subjectsfolder'], subject['id'])
-            if folders['logfolder']:
-                logfile = os.path.join(folders['logfolder'], 'comlogs', "%s_%s.log" % (command, subject['id']))
-            for targ in ['sfolder', 'folder']:
-                if targ in gcom.commands[command]['args']:
-                    targs[targ] = sfolder
-            calls.append({'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
+        cores = int(eargs.get('cores', '1'))
+
+        # -- are we using a scheduler
+
+        if 'scheduler' in eargs:
+            niu.g_scheduler.runThroughScheduler(command, subjects=subjects, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+
+        # -- a basic call
+
+        elif subjects is None:
+            gcom.commands[command]['com'](**args)
+            print "\n===> Successful completion of task"
+
+        # -- subjects loop
+
+        else:
+
+            for subject in subjects:
+                targs   = dict(bargs)
+                name    = command + ": " + subject['id']
+                sfolder = os.path.join(folders['subjectsfolder'], subject['id'])
+                if folders['logfolder']:
+                    logfile = os.path.join(folders['logfolder'], 'comlogs', "%s_%s.log" % (command, subject['id']))
+                for targ in ['sfolder', 'folder']:
+                    if targ in gcom.commands[command]['args']:
+                        targs[targ] = sfolder
+
+                calls.append({'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
+
+    # -- Have we set up calls to run in parallel?
+    if calls:
+
+        callInfo = "Running %s" % (command)
+        callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
+        print callInfo
+        
+        print "\n===> Running %s through a list of subjects using %d cores" % (command, cores)
 
         results = gc.runInParallel(calls, cores=cores, prepend="     ... ")
 
@@ -344,7 +404,7 @@ def runCommand(command, args):
                 result = 'completed'
             print "%s %s %s [log: %s]" % (prepend, name, result, targetLog)
         if ok:
-            print "\n===> Successful completion of task\n"
+            print "\n===> Successful completion of task"
 
 
 def printHelp(com):

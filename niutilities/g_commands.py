@@ -27,7 +27,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'dicom2niix'           : {'com': g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'subjectid', 'verbose', 'cores', 'debug', 'tool', 'options')},
             'processInbox'         : {'com': g_dicom.processInbox,           'args': ('subjectsfolder', 'inbox', 'check', 'pattern', 'tool', 'cores', 'logfile', 'archive', 'options', 'verbose')},
             'getDICOMInfo'         : {'com': g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
-            'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'action', 'overwrite', 'archive', 'bidsName')},
+            'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'subjects', 'action', 'overwrite', 'archive', 'bidsName')},
             'mapBIDS2nii'          : {'com': g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite')},
             'HCPLSImport'          : {'com': g_hcpls.HCPLSImport,            'args': ('subjectsfolder', 'inbox', 'action', 'overwrite', 'archive', 'hcplsName')},
             'mapHCPLS2nii'         : {'com': g_hcpls.mapHCPLS2nii,           'args': ('sfolder', 'overwrite')},
@@ -47,6 +47,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'createStudy'          : {'com': g_utilities.createStudy,        'args': ('studyfolder', )},
             'createList'           : {'com': g_utilities.createList,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
             'createConc'           : {'com': g_utilities.createConc,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
+            'batchTag2Num'         : {'com': g_utilities.batchTag2Num,       'args': ('filename', 'subjid', 'bolds')},
             'joinFidl'             : {'com': g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
             'joinFidlFolder'       : {'com': g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder', 'fidlname')},
             'splitFidl'            : {'com': g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},
@@ -60,7 +61,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'schedule'             : {'com': g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
             'getDICOMFields'       : {'com': g_dicomdeid.getDICOMFields,     'args': ('folder', 'tfile', 'limit')},
             'changeDICOMFiles'     : {'com': g_dicomdeid.changeDICOMFiles,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')},
-            'runlist'              : {'com': g_utilities.runList,            'args': ('filename', 'runlistName', 'logfolder')}
+            'runList'              : {'com': g_utilities.runList,            'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')}
             }
 
-extraParameters = ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder']
+extraParameters = ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder', 'sperlist', 'runinpar', 'ignore']
