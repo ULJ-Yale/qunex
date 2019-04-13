@@ -451,7 +451,8 @@ Change Log
 * 0.38.21 [library] Fixed subjid selection in mnapContainer
 * 0.38.22 [connector] Made runTurnkey more robust, added copying of bids packages from raw input folder
 * 0.38.23 [niutilities] A number of improvements to robustness and reporting when converting DICOMs and creating subject_hcp.txt files
-* 0.39.00 [connector niutilities library] Extended mnapContainer command, added runList command, added mnap symlink to mnap.sh, enabled conda management
+* 0.39.00 [connector niutilities library] Extended mnapContainer command, added runList command, added mnap symlink to mnap.sh, enabled conda management, changed bold_preprocess to bold, addedbatchTag2Num command
+* 0.39.01 [niutilities] fixed minor bugs
 
 Stable Container Tag Log
 ========================
