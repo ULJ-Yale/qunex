@@ -254,9 +254,9 @@ def checkStudy(startfolder="."):
     return studyfolder  
 
 
-def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="ask", paramfile=None):
+def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, subjects=None, sfilter=None, overwrite="no", paramfile=None):
     '''
-    createBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+    createBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=no] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
 
     Combines all the sfile in all subject folders in subjectsfolder to
     generate a joint batch file and save it as tfile. If only specific subjects
@@ -970,47 +970,150 @@ def createConc(subjectsfolder=".", subjects=None, sfilter=None, concfolder=None,
         raise ge.CommandFailed("createConc", "Incomplete execution", ".conc files for some subjects were not generated", "Please check report for details!")
 
 
-def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
+def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=None):
     """
-    runList listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
+    runList listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None] [verbose=no] [<extra arguments>]
 
 
     USE AND RESULTS
     ===============
 
-    runlist takes a `runlist` file and a runlitlistname and executes the 
-    commands defined in that list. The runlist file contains commands that 
+    runlist takes a `runlist` file and a `runlists` list of lists and executes
+    the commands defined in each list. The runlist file contains commands that 
     should be run and parameters that it should use.
 
 
-    RELEVANT PARAMETERS
-    ===================
+    CORE PARAMETERS
+    ===============
 
     --listfile     ... The runlist.txt file containing runlists and their 
                        parameters.
     --runlists     ... A comma, space or pipe separated list of lists specified 
                        within runlist.txt to run.
     --logfolder    ... The folder within which to save the log.
+    --verbose      ... Whether to record in a log a full verbose report of the 
+                       output of each command that was run ('yes') or only a
+                       summary success report of each command ran. ['no']
+
+
+    EXTRA PARAMETERS
+    ================
+
+    Multiple runList invocations
+    ----------------------------
+    
+    These parameters allow spreading processing of multiple subjects across 
+    multiple runList invocations:
+
+    --subjects          ... Either a string with pipe `|` or comma separated 
+                            list of subjects (sessions ids) to be processed
+                            (use of grep patterns is possible), e.g. 
+                            "OP128,OP139,ER*", or a path to a batch.txt or
+                            *list file with a list of session ids.
+    --subjid            ... An optional parameter explicitly specifying, which
+                            of the subjects from the list provided by the 
+                            `subjects` parameter are to be processed in this
+                            call. If not specified, all subjects will be 
+                            processed.
+    --sperlist          ... An optional parameter specifying, how many sessions
+                            to run per individual runList invocation. If not 
+                            specified, all sessions will be run through the 
+                            same runList invocation. 
+    --runinpar          ... If multiple runList invocations are to be run, how 
+                            many should be run in parallel. The default is 1.
+    --scheduler         ... An optional scheduler settings description string. 
+                            If provided, each runList invocation will be 
+                            scheduled to run on a separate cluster node. For 
+                            details about the settings string specification see 
+                            the inline help for the `schedule` command.
+
+    If these parameters are provided, the processing of the subjects will
+    be split so that `sperlist` subjects will be processed by each separate
+    runList invocation. If `scheduler` is specified, each runList invocation
+    will be scheduled as a separate job on a cluster. 
+
+    When processing is spread across multiple runList invocations, the 
+    `sperlist` parameter will be passed forward as `cores` parameter on each
+    separate invocation (see the next section). Similarly `subjid` will be
+    passed on, adjusted for the sessions to be run with the specific runList
+    invocation (see the next section).
+
+    Please take note that if `runList` command is ran using a scheduler, any
+    scheduler specification within the `listfile` will be ignored to avoid the
+    attempts to spawn new cluster jobs when `runList` instance is already 
+    running on a cluster node.
+
+    Importantly, if `scheduler` is specified in the `runlist.txt` file, do bear 
+    in mind, that all the commands in the list will be scheduled at the same 
+    time, and not in a succession, as `runList` can not track execution of jobs
+    on individual cluster nodes.
+
+
+    Parameters to pass on or ignore
+    -------------------------------
+
+    Sometimes the parameters specified in the `listfile` need to be adjusted
+    in a runList invocation. If the following parameters are listed, they will
+    take precedence over parameters specified within the `listfile`: 
+
+    --cores     ... An optional parameter specifying how many cores to utilize 
+                    within a runList invocation. If cores parameter is already 
+                    specified within the `listfile`, then the lower value will 
+                    take precedence.
+    --threads   ... An optional parameter specifying how many threads to utilize
+                    within each of parallel jobs (their number) defined by 
+                    `cores` parameter in a runList invocation. If threads 
+                    parameter is already specified within the `listfile`, then 
+                    the lower value will take precedence.
+    --subjid    ... An optional parameter specifying which subjects are to be 
+                    processed within this runList invocation. If `subjid` is 
+                    specified within the listfile, then the value passed to 
+                    runList will take precedence.
+
+    Sometimes one would wish to ignore a parameter specified in a list when
+    running a list. The parameters to ignore can be specified using:
+
+    --ignore    ... An optional comma or pipe separated list of parameters to 
+                    ignore when running any of the specified lists.
+
+
+    LOGS AND FAILURES
+    =================
+
+    The log of the commands ran will be by default stored in 
+    `<study>/processing/logs/runlogs` stamped with date and time that the 
+    log was started. If a study folder is not yet created, please provide a 
+    valid folder to save the logs to. If the log can not be created the 
+    `runList` command will exit with a failure.
+
+    `runList` is checking for a successfull completion of commands that it runs.
+    If any of the commands fail to complete successfully, the execution of the
+    commands will stop and the failure will be reported both in stdout as well
+    as the log.
+
+    Individual commands that are run can generate their own logs, the presence
+    and location of those logs depend on the specific command and settings 
+    specified in the runlist file.
 
 
     RUNLIST FILE
     ============
 
     At the top of the runlist.txt file global settings are defined in the form
-    of key: value pairs. These are the settings that will be used as defaults 
-    throughout the list and individual commands defined in the rest of the 
-    runlist.txt file.
+    of `<parameter>: <value>` pairs. These are the settings that will be used as 
+    defaults throughout the list and individual commands defined in the rest of 
+    the runlist.txt file.
 
     Each list starts with a line that consists of three dashes "---" only. The
     next line should define the name of the list by specifying:
     `list: <listname>`. The list name is the one referenced in the runList 
     command. After the definition of the list, the default parameters for the
-    list can be specified as a <key>:<value> pairs. These values will be taken
-    as the default for the list. They have priority over the runlist.txt 
-    definition in that values that are defined within a specific list will be 
-    used rather than values defined at the higher level. It is recommended for
-    readibility purposes for the content of the list to be indented by four 
-    spaces.
+    list can be specified as a <parameter>:<value> pairs. These values will be 
+    taken as the default for the list. They have priority over the general 
+    runlist.txt definition in that values that are defined within a specific 
+    list will be used rather than values defined at the higher level. It is 
+    recommended for readibility purposes for the content of the list to be 
+    indented by four spaces.
 
     Each list then consists of commands. Commands are defined by the:
     `command: <command name>` lines. Each `command: <command name>` specifies
@@ -1032,46 +1135,72 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
 
     ```
     # global settings
-    subjectsfolder : /Volumes/tigr/MBLab/fMRI/jd_test/subjects
+    subjectsfolder : /data/testStudy/subjects
     overwrite      : yes
+    subjects       : *_baseline
+
 
     ---
-    list: preparation
-        subjects: OP*
+    list: dataImport
 
-        command: processInbox
-            pattern: ".*?_(OP[0-9]+).*.zip"
+        command: BIDSImport
+            inbox   : /data/datalake/EMBARC/inbox/BIDS
+            archive : leave
+
+    ---
+    list: prepareHCP
 
         command: getHCPReady
 
-        command: setupHCP
-            -subjects
-            sfolder : /Volumes/tigr/MBLab/fMRI/jd_test/subjects/
-            sfile   : subject_test.txt
-
         command: createBatch
+            tfile : /data/testStudy/processing/batch_baseline.txt
+
+        command: setupHCP
 
     ---
-    list: additional_preprocessing
+    list: doHCP
+        
+        subjects  : /data/testStudy/processing/batch_baseline.txt
+        cores     : 4
+
+        command: hcp1
+
+        command: hcp2
+
+        command: hcp3
+
+        command: hcp4
+            cores     : 1
+            threads   : 4
+
+        command: hcp5
+            cores     : 1
+            threads   : 4
+
+    ---
+    list: prepareFCPreprocessing
         cores    : 6
-        subjects : /Volumes/tigr/MBLab/fMRI/jd_test/processing/batch.txt
+        subjects : /data/testStudy/processing/batch_baseline.txt
+        bolds    : all
 
         command: mapHCPData
-            test
             
         command: createBOLDBrainMasks
-            bold_preprocess: all
 
         command: computeBOLDStats
-            bold_preprocess : all
-            log             : remove
+            log : remove
 
         command : createStatsReport
-            cores     : 1
-            overwrite : yes
+            cores : 1
 
         command: extractNuisanceSignal
-            bold_preprocess: all
+
+    ---
+    list: runFCPreprocessing
+        
+        cores     : 6
+        subjects  : /data/testStudy/processing/batch_baseline.txt
+        scheduler : "SLURM,jobname=doHCP,time=00-02:00:00,ntasks=6,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
         command: preprocessBold
             bold_actions     : shrc
@@ -1079,7 +1208,7 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
             bold_nuisance    : m,V,WM,WB,1d
             pignore          : hipass=linear|regress=spline|lopass=linear
             overwrite        : yes
-            bold_preprocess  : rest
+            bolds            : rest
             image_target     : nifti
             hcp_cifti_tail   : 
 
@@ -1089,15 +1218,57 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
             bold_nuisance    : m,V,WM,WB,1d
             pignore          : hipass=linear|regress=spline|lopass=linear
             overwrite        : yes
-            bold_preprocess  : rest
+            bolds            : rest
             image_target     : cifti
             hcp_cifti_tail   : _Atlas
-
+    ```
 
     EXAMPLE USE
     ===========
 
-    gmri runList listfile=/Users/john/Documents/runlist.txt runlists=additional_preprocessing
+    ```
+    mnap runList \
+      --listfile="/data/settings/runlist.txt" \
+      --runlists="dataImport,prepareHCP"
+
+    mnap runList \
+      --listfile="/data/settings/runlist.txt" \
+      --runlists="doHCP" \
+      --subjects="/data/testStudy/processing/batch_baseline.txt" \
+      --sperlist=4 \
+      --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+
+    mnap runList \
+      --listfile="/data/settings/runlist.txt" \
+      --runlists="prepareFCPreprocessing" \
+      --subjects="/data/testStudy/processing/batch_baseline.txt" \
+      --sperlist=4 \
+      --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+
+    mnap runList
+      --listfile="/data/settings/runlist.txt" \
+      --runlists="runFCPreprocessing"
+    ```  
+
+    The first call will execute all the commands in lists `dataImport` and 
+    `prepareHCP` localy.
+
+    The second call will execute all the steps of the HCP preprocessing pipeline, 
+    in sequence. Execution will be spread across the nodes with each `runList` 
+    instance processing four sessions at a time. Based on the settings in the 
+    `runlist.txt` file, the first three HCP steps will be executed with four
+    sessions running in parallel, whereas the last two fMRI steps the sessions 
+    will be executed serially with four BOLDS from each session being processed in
+    parallel. 
+
+    The third call will again schedule muultiple `runList` invocations, each 
+    processing four subjects at a time (the lower number of `sperlist` and `cores`).
+    In this call, the initial steps will be performed on all BOLD images.
+
+    The last, fourth call will start a single `runList` instance localy, however,
+    this will submit both listed `preprocessBold` commands as jobs to be run with
+    six sessions per node in parallel. These two commands will be run only on BOLD
+    images tagged as `rest`. 
 
     ---
     Written by Jure Demšar 2019-02-11.
@@ -1105,8 +1276,15 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
     Change log
     2019-03-29 Grega Repovš
              - Updated documentation, implemented running multiple lists
-
+    2019-04-12 Jure Demšar
+             - Expanded parameter handling and parameter injection
+    2019-04-13 Grega Repovš
+             - Updated documentation
+             - Edited multiple runList invocation
+             - Added option to ignore parameters
     """
+
+    verbose = verbose.lower() == 'yes'
 
     flags = ['test']
 
@@ -1169,11 +1347,17 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
             except:
                 raise ge.CommandFailed("runList", "Cannot parse line", "Unable to parse line [%s]" % (line), "Please check the runlist file [%s]" % listfile)
 
+    # -- are there parameters to ignore
+
+    if 'ignore' in eargs:
+        ignore = [e.strip() for e in re.split(' ?, ?| ?\| ?| +|', eargs['ignore'])]
+    else:
+        ignore = None
 
     # -- run through lists
 
     runLists = re.split(' ?, ?| ?\| ?| +|', runlists)
-    summary = ""
+    summary = "\n----==== LISTS EXECUTION SUMMARY ====----"
 
     try:
         log = open(logname, "w", buffering=0)
@@ -1207,21 +1391,32 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
                 removedParameters = runCommand['removed_parameters']
                 for k in eargs:
                     if k not in removedParameters:
-                        commandParameters[k] = eargs[k]
+                        if k in ['cores', 'threads']:
+                            commandParameters[k] = str(min([int(e) for e in [eargs[k], commandParameters[k]]]))
+                        else:
+                            commandParameters[k] = eargs[k]
 
             # -- remove parameters that are not allowed
 
             if commandName in niutilities.g_commands.commands:
-                allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"]) + niutilities.g_commands.extraParameters
+                allowedParameters = list(niutilities.g_commands.commands.get(commandName)["args"]) 
+                if any([e in allowedParameters for e in ['sfolder', 'folder']]):
+                    allowedParameters += niutilities.g_commands.extraParameters
                 for param in commandParameters.keys():
                     if param not in allowedParameters:
                         del commandParameters[param]
 
+            # -- remove parameters set to ignore
+
+            if ignore:
+                for toIgnore in ignore:
+                    del commandParameters[toIgnore]
+
             # -- setup command 
 
-            command = ["mnap.sh"]
+            command = ["mnap"]
             command.append(commandName)
-            commandr = "---> mnap.sh " + commandName
+            commandr = "\n--------------------------------------------\n===> Running new command:\n---> mnap " + commandName
             for param, value in commandParameters.iteritems():
                 if param in flags:
                     command.append('--%s' % (param))
@@ -1229,10 +1424,8 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
                 else:
                     command.append('--%s=%s' % (param, value))
                     commandr += ' \\\n          --%s="%s"' % (param, value)
-
+                        
             print commandr
-
-            print >> log, "\n----------------------------- COMMAND ----------------------------\n"
             print >> log, commandr
 
             # -- run command
@@ -1240,13 +1433,15 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
 
             # Poll process for new output until finished
             error = True
-            logging = False
+            logging = verbose
 
             for line in iter(process.stdout.readline, b''):
                 print line,
                 if "Successful completion" in line:
                     error = False
                 if "Final report" in line:
+                    if not verbose:
+                        print >> log, ""
                     logging = True
 
                 # print
@@ -1256,20 +1451,20 @@ def runList(listfile=None, runlists=None, logfolder=None, eargs=None):
 
             if error:
                 summary += "\n---> command %-20s FAILED" % (commandName)
-                print >> log, "\n\n============================ SUMMARY ============================"
-                print >> log, "\n---> Running lists not completed successfully: failed at list %s" % runListName
+                summary += "\n\n----------==== END SUMMARY ====----------"
                 print >> log, summary
+                print >> log, "\n---> Running lists not completed successfully: failed running command '%s' in list '%s'" % (commandName, runListName)
                 log.close()
-                raise ge.CommandFailed("runlist", "Runlist command failed", "Command inside runlist failed", "%s" % (commandName), "See errors above for details")
+                raise ge.CommandFailed("runlist", "Runlist command failed", "Command '%s' inside list '%s' failed" % (commandName, runListName), "See errors above for details")
             else:
-                summary += "\n---> command %-20s OK" % (commandName)
-                print "\n===> Successful completion of runlist command %s\n\n\n" % (commandName)
-
-    print >> log, "\n\n============================ SUMMARY ============================"
-    print >> log, "\n===> Successful completion of task: runLists %s" % (",".join(runLists))
+                summary += "\n---> command %-20s OK" % (commandName)                
+                print "===> Successful completion of runlist command %s" % (commandName)
+    summary += "\n\n----------==== END SUMMARY ====----------"
+    
     print >> log, summary
+    print >> log, "\n===> Successful completion of task: runLists %s" % (", ".join(runLists))
 
-    print "\n===> Successful completion of runLists %s" % (",".join(runLists))
+    print "===> Successful completion of runLists %s" % (", ".join(runLists))
     print summary
 
     log.close()
