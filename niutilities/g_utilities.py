@@ -1392,7 +1392,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
                 for k in eargs:
                     if k not in removedParameters:
                         if k in ['cores', 'threads']:
-                            commandParameters[k] = str(min([int(e) for e in [eargs[k], commandParameters[k]]]))
+                            if k in commandParameters:
+                                commandParameters[k] = str(min([int(e) for e in [eargs[k], commandParameters[k]]]))
                         else:
                             commandParameters[k] = eargs[k]
 
@@ -1410,7 +1411,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
             if ignore:
                 for toIgnore in ignore:
-                    del commandParameters[toIgnore]
+                    if toIgnore in commandParameters:
+                        del commandParameters[toIgnore]
 
             # -- setup command 
 

@@ -312,8 +312,8 @@ def runCommand(command, args):
             if 'scheduler' in eargs:
 
                 # -- define number of subjects to run in each runList
-                cores = eargs['sperlist']
-                args['cores'] = cores
+                cores = int(eargs['sperlist'])
+                args['cores'] = eargs['sperlist']
                 if 'ignore' in args:
                     args['ignore'] += 'scheduler'
                 else:

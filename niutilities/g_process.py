@@ -526,11 +526,10 @@ def run(command, args):
                 print "\nWARNING: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
                 mapwarn = True
             print"       ... %s is now %s!" % (k, tomap[k])
-            options[topmap[k]] = v
+            options[tomap[k]] = v
     if mapwarn:
-        print "       Please correct the listed parameter names in command line or batch file!"
-        exit()
-
+        print "       Please correct the listed parameter names in command line or batch file!"        
+        
 
     # ---- Take care of variable expansion
 
