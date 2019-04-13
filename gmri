@@ -243,8 +243,6 @@ List of available functions:
 for mcom in gm.functionList:
     comlist += "\n" + mcom
 
-
-
 def runCommand(command, args):
 
     folders = gc.deduceFolders(args)
