@@ -40,7 +40,7 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
             if k.isdigit():
                 bnum = bsearch.match(v['name'])
                 if bnum:
-                    if v['task'] in options['bold_preprocess'].split("|"):
+                    if v['task'] in options['bolds'].split("|"):
                         bolds.append(v['name'])
         if len(bolds) > 0:
             f = getFileNames(subject, options)
@@ -60,7 +60,7 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
 
     bfile = open(os.path.join(options['subjectsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 
-    concs = options['bold_preprocess'].split("|")
+    concs = options['bolds'].split("|")
     fidls = options['event_file'].split("|")
 
     if len(concs) != len(fidls):

@@ -1813,6 +1813,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --cores           ... How many cores to utilize [1].
     --threads         ... How many threads to utilize for bold processing
                           per subject [1].
+    --bolds           ... Which bold images (as they are specified in the
+                          batch.txt file) to process. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to process all [all].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -1980,7 +1984,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
-        # btargets = options['bold_preprocess'].split("|")
+        # btargets = options['bolds'].split("|")
 
         # --- run checks
 
@@ -2555,6 +2559,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     --cores           ... How many cores to utilize [1].
     --threads         ... How many threads to utilize for bold processing
                           per subject [1].
+    --bolds           ... Which bold images (as they are specified in the
+                          batch.txt file) to process. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to process all [all].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -2634,7 +2642,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
-        # btargets = options['bold_preprocess'].split("|")
+        # btargets = options['bolds'].split("|")
 
         # --- run checks
 
@@ -3046,7 +3054,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                            [no].
     --hcp_cifti_tail   ... The tail (see above) that specifies, which version of
                            the cifti files to copy over [].
-    --bold_preprocess  ... Which bold images (as they are specified in the
+    --bolds            ... Which bold images (as they are specified in the
                            batch.txt file) to copy over. It can be a single
                            type (e.g. 'task'), a pipe separated list (e.g.
                            'WM|Control|rest') or 'all' to copy all [all].
@@ -3065,7 +3073,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri mapHCPData subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all
+         overwrite=no hcp_cifti_tail=_Atlas bolds=all
 
     ----------
     Written by Grega Repovš
@@ -3080,7 +3088,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
-    r += "\n   The command will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bold_preprocess parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bold_preprocess'].split("|")), options['hcp_cifti_tail'])
+    r += "\n   The command will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bolds parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bolds'].split("|")), options['hcp_cifti_tail'])
     if options['hcp_bold_variant']:
         r += "\n   As --hcp_bold_variant was set to '%s', the files will be copied/linked to 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
@@ -3178,7 +3186,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     # ------------------------------------------------------------------------------------------------------------
     #                                                                                          map functional data
 
-    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' cifti tail\n" % (", ".join(options['bold_preprocess'].split("|")), options['hcp_cifti_tail'])
+    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' cifti tail\n" % (", ".join(options['bolds'].split("|")), options['hcp_cifti_tail'])
 
     report['boldok'] = 0
     report['boldfail'] = 0
@@ -3264,7 +3272,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
             failed += 1
 
     if len(skipped) > 0:
-        r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bold_preprocess=\"%s\"':\n" % (options['bold_preprocess'])
+        r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n" % (options['bolds'])
         for boldnum, boldname, boldtask, boldinfo in skipped:
             r += "\n ... %s [name: '%s']" % (boldname, boldtask)
 

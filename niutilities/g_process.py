@@ -190,7 +190,7 @@ arglist = [['# ---- Basic settings'],
            ['omit',               '5',                                           int,    "how many frames to omit at the start of each bold run"],
            ['bold_actions',       'shrcl',                                       str,    "what processing steps to include in bold preprocessing"],
            ['bold_nuisance',      'm,V,WM,WB,1d',                                str,    "what regressors to include in nuisance removal"],
-           ['bold_preprocess',    'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
+           ['bolds',              'all',                                         str,    "which bolds to process (can be multiple joind with | )"],
            ['boldname',           'bold',                                        str,    "the default name for the bold files"],
            ['bold_prefix',        '',                                            str,    "an optional prefix to place in front of processing name extensions in the resulting files"],
            ['pignore',            '',                                            str,    "what to do with frames marked as bad"],
@@ -329,12 +329,13 @@ arglist = [['# ---- Basic settings'],
 #   parameters need to be mapped to a parameter with another name. The "tomap"
 #   dictionary specifies what is mapped to what.
 
-tomap = {'bppt':        'bold_preprocess',
-         'bppa':        'bold_actions',
-         'bppn':        'bold_nuisance',
-         'eventstring': 'event_string',
-         'eventfile':   'event_file',
-         'basefolder':  'subjectsfolder'}
+tomap = {'bppt':            'bolds',
+         'bppa':            'bold_actions',
+         'bppn':            'bold_nuisance',
+         'eventstring':     'event_string',
+         'eventfile':       'event_file',
+         'basefolder':      'subjectsfolder',
+         'bold_preprocess': 'bolds'}
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -522,11 +523,12 @@ def run(command, args):
     for k, v in options.iteritems():
         if k in tomap:
             if not mapwarn:
-                print "\nERROR: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
+                print "\nWARNING: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
                 mapwarn = True
             print"       ... %s is now %s!" % (k, tomap[k])
+            options[topmap[k]] = v
     if mapwarn:
-        print "       Please correct the listed parameter names in command line or batch file and run the command again!"
+        print "       Please correct the listed parameter names in command line or batch file!"
         exit()
 
 

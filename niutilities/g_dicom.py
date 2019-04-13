@@ -113,7 +113,12 @@ def readDICOMInfo(filename):
     as 'dicom'.
 
     ----------------
-    Written by Grega Repovš, 2018-07-03'''
+    Written by Grega Repovš, 2018-07-03
+
+    Changelog
+    2019-04-07 Grega Repovš
+             - Made reading of SeriesDescription more robust also to Anonymous value
+    '''
 
     if not os.path.exists(filename):
         raise ValueError('DICOM file %s does not exist!' % (filename))
@@ -140,15 +145,12 @@ def readDICOMInfo(filename):
     except:
         info['seriesNumber'] = None
 
-    # --- seriesDescription
+    # --- seriesDescription -- multiple possibilities
 
-    try:
-        info['seriesDescription'] = d.SeriesDescription
-    except:
-        try:
-            info['seriesDescription'] = d.ProtocolName
-        except:
-            info['seriesDescription'] = "None"
+    for keyName in ['SeriesDescription', 'ProtocolName', 'SequenceName']:
+        info['seriesDescription'] = d.get(keyName, 'anonymous')
+        if info['seriesDescription'].lower() != 'anonymous':
+            break
 
     # --- TR, TE
 
@@ -942,6 +944,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
              - Added tool parameter to specify the tool for nifti conversion
     2018-10-18 Grega Repovš
              - Added options parameter and adding Image Type to sequence names
+    2019-04-07 Grega Repovš
+             - Added copying of json files
+             - Added error when no DICOM files are found to process
+             - Added generation of json sidecars for all dcm2niix calls
     '''
 
     print "Running dicom2niix\n=================="
@@ -1146,7 +1152,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 calls.append({'name': 'dicm2nii: ' + niiid, 'args': mcommand.split(' ') + ["try dicm2nii('%s', '%s'); catch ME, g_ReportError(ME); exit(1), end; exit" % (folder, folder)], 'sout': os.path.join(os.path.split(folder)[0], 'dicm2nii_' + niiid + '.log')})                
             else:
                 print '---> Using dcm2niix for conversion as Matlab is not available! [%s: %s]' % (niid, info['seriesDescription'])
-                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
+                calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
         elif utool == 'dcm2nii':
             if par:
                 calls.append({'name': 'dcm2nii: ' + niiid, 'args': ['dcm2nii', '-c', '-v', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2nii_' + niiid + '.log')})
@@ -1158,6 +1164,13 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
             else:
                 calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
         files.append([niinum, folder, info['volumes'], info['slices']])
+
+    if not calls:
+        r.close()
+        stxt.close()
+        os.remove(os.path.join(dmcf, "DICOM-Report.txt"))
+        os.remove(os.path.join(folder, "subject.txt"))
+        raise ge.CommandFailed("dicom2niix", "No source DICOM files", "No source DICOM files were found to process!", "Please check your data and paths!")
 
     niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 
@@ -1216,6 +1229,13 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                     dwisrc = img.replace('.nii.gz', dwiextra)
                     if os.path.exists(dwisrc):
                         os.rename(dwisrc, os.path.join(imgf, "%d%s" % (niinum, dwiextra)))
+
+                # --- check also for .json
+
+                for jsonextra in ['.json', '.JSON']:
+                    jsonsrc = img.replace('.nii.gz', jsonextra)
+                    if os.path.exists(jsonsrc):
+                        os.rename(jsonsrc, os.path.join(imgf, "%d%s" % (niinum, '.json')))
 
             # --- check final geometry
 
@@ -1622,8 +1642,8 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
     PARAMETERS
     ==========
 
-    --folder   The base study subjects folder (e.g. WM44/subjects) where the
-               inbox and individual subject folders are. [.]
+    --subjectsfolder   The base study subjects folder (e.g. WM44/subjects) where
+                       the inbox and individual subject folders are. [.]
     --inbox    The inbox folder with packages to process. By default inbox is
                in base study folder: inbox/MR. If the packages are elsewhere
                the location can be specified here. [<folder>/inbox/MR]
