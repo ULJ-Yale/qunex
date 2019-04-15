@@ -454,6 +454,7 @@ Change Log
 * 0.39.00 [connector niutilities library] Extended mnapContainer command, added runList command, added mnap symlink to mnap.sh, enabled conda management, changed bold_preprocess to bold, addedbatchTag2Num command
 * 0.39.01 [niutilities] fixed minor bugs
 * 0.39.02 [library] Updated mnapContainer documentation and Docker use
+* 0.39.03 [library] Changed mnapContainer `image` parameter to `container`, fixed a bug in job submission
 
 Stable Container Tag Log
 ========================
