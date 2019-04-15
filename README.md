@@ -455,6 +455,7 @@ Change Log
 * 0.39.01 [niutilities] fixed minor bugs
 * 0.39.02 [library] Updated mnapContainer documentation and Docker use
 * 0.39.03 [library] Changed mnapContainer `image` parameter to `container`, fixed a bug in job submission
+* 0.39.05 [library] Fixed a value conversion bug in mnapContainer
 
 Stable Container Tag Log
 ========================
