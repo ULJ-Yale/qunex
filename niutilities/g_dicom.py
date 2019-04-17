@@ -1410,7 +1410,7 @@ def sortDicom(folder=".", **kwargs):
     for dcm in files:
         ext = dcm.split('.')[-1]
 
-        if os.path.basename(dcm)[0:2] in ["XX", "PS"]:
+        if os.path.basename(dcm)[0:4] in ["XX_0", "PS_0"]:
             continue
 
         elif ext == 'log':
@@ -1425,7 +1425,7 @@ def sortDicom(folder=".", **kwargs):
 
         else:
             try:
-                info = readDICOMInfo(dcm)
+                info = readDICOMInfo(dcm)                
             except:
                 continue
 
