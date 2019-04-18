@@ -97,7 +97,7 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
     except:
         r += '\n... ERROR getting the data! Please check paths and files!'
 
-    btargets = options['bold_preprocess'].split("|")
+    btargets = options['bolds'].split("|")
 
     for (k, v) in sinfo.iteritems():
         if k.isdigit():
@@ -166,7 +166,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
                            per subject [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
-    --bold_preprocess  ... Which bold images (as they are specified in the
+    --bolds            ... Which bold images (as they are specified in the
                            batch.txt file) to copy over. It can be a single
                            type (e.g. 'task'), a pipe separated list (e.g.
                            'WM|Control|rest') or 'all' to copy all [rest].
@@ -187,7 +187,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri createBOLDBrainMasks subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all threads=8
+         overwrite=no hcp_cifti_tail=_Atlas bolds=all threads=8
 
     ----------------
     Written by Grega Repovš
@@ -211,7 +211,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nCreating masks for bold runs ... \n"
-    r += "\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bold_preprocess parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed."
+    r += "\n   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bolds parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed."
     if options['hcp_bold_variant']:
         r += "\n   As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n   Bold masks will be saved in images/segmentation/boldmasks.%s" % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
@@ -225,7 +225,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nWorking on BOLD images in: " + d['s_images']
     r += "\nResulting masks will be in: " + d['s_boldmasks']
-    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bold_preprocess'].split("|")))
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (", ".join(options['bolds'].split("|")))
     r += "\nIf already present, existing masks %s be overwritten (see --overwrite).\n" % (ostatus)
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
@@ -434,7 +434,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
                            per subject [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
-    --bold_preprocess  ... Which bold images (as they are specified in the
+    --bolds            ... Which bold images (as they are specified in the
                            batch.txt file) to copy over. It can be a single
                            type (e.g. 'task'), a pipe separated list (e.g.
                            'WM|Control|rest') or 'all' to copy all [rest].
@@ -505,12 +505,12 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     Using the defaults:
 
     $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bold_preprocess=all
+         overwrite=no bolds=all
 
     Specifying additional parameters for identification of bad frames:
 
     $ gmri computeBOLDStats subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bold_preprocess=all mov_fd=0.9 mov_dvarsme=1.6 \\
+         overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
          mov_before=1 mov_after= 2
 
     ----------------
@@ -534,7 +534,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\nComputing BOLD image statistics ..."
-    r += "\n\n    The command will compute per frame statistics for each of the specified BOLD\n    files based on its movement correction parameter file and BOLD image analysis.\n    The results will be saved as *.bstat and *.bscrub files in the images/movement\n    subfolder. Only images specified using --bold_preprocess parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    target format, nifti volume image will be used to compute statistics."
+    r += "\n\n    The command will compute per frame statistics for each of the specified BOLD\n    files based on its movement correction parameter file and BOLD image analysis.\n    The results will be saved as *.bstat and *.bscrub files in the images/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    target format, nifti volume image will be used to compute statistics."
     r += "\n\n    Using parameters:\n\n    --mov_radius: %(mov_radius)s\n    --mov_fd: %(mov_fd)s\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_after: %(mov_after)s\n    --mov_before: %(mov_before)s\n    --mov_bad: %(mov_bad)s" % (options)
     r += "\n\n    for computing scrubbing information."
     if options['hcp_bold_variant']:
@@ -550,7 +550,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nWorking on BOLD images in: " + d['s_bold']
     r += "\nResulting files will be in: " + d['s_bold_mov']
-    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bold_preprocess'].split("|")))
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (", ".join(options['bolds'].split("|")))
     r += "\nIf already present, existing statistics %s be overwritten (see --overwrite)." % (ostatus)
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
@@ -725,7 +725,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     --cores            ... How many cores to utilize [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
-    --bold_preprocess  ... Which bold images (as they are specified in the
+    --bolds            ... Which bold images (as they are specified in the
                            batch.txt file) to copy over. It can be a single
                            type (e.g. 'task'), a pipe separated list (e.g.
                            'WM|Control|rest') or 'all' to copy all [rest].
@@ -828,13 +828,13 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri createStatsReport subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bold_preprocess=all cores=1
+         overwrite=no bolds=all cores=1
 
     gmri createStatsReport subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bold_preprocess=all cores=10
+         overwrite=no bolds=all cores=10
 
     gmri createStatsReport subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bold_preprocess=all cores=1 mov_plot=""
+         overwrite=no bolds=all cores=1 mov_plot=""
 
     ----------------
     Written by Grega Repovš
@@ -853,7 +853,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r = "\n---------------------------------------------------------"
         r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
         r += "\n\nCreating BOLD Movement and statistics report ..."
-        r += "\n\n    The command will use movement correction parameters and computed BOLD\n    statistics to create per subject plots, fidl snippets and group reports. Only\n    images specified using --bold_preprocess parameter will be processed. Please\n    see documentation for use of other relevant parameters!"
+        r += "\n\n    The command will use movement correction parameters and computed BOLD\n    statistics to create per subject plots, fidl snippets and group reports. Only\n    images specified using --bolds parameter will be processed. Please\n    see documentation for use of other relevant parameters!"
         r += "\n\n    Using parameters:\n\n    --mov_dvars: %(mov_dvars)s\n    --mov_dvarsme: %(mov_dvarsme)s\n    --mov_fd: %(mov_fd)s\n    --mov_radius: %(mov_radius)s\n    --mov_fidl: %(mov_fidl)s\n    --mov_post: %(mov_post)s\n    --mov_pref: %(mov_pref)s" % (options)
         if options['hcp_bold_variant']:
             r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n    Group results will be stored in <subjectsfolder>/QC/movement.%s." % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])    
@@ -869,7 +869,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
         r += "\n\nWorking on BOLD information images in: " + d['s_bold_mov']
         r += "\nResulting plots will be saved in: " + d['s_bold_mov']
 
-        r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bold_preprocess'].split("|")))
+        r += "\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (", ".join(options['bolds'].split("|")))
         r += "\nIf already present, existing results %s be overwritten (see --overwrite)." % (ostatus)
 
         procbolds = []
@@ -987,8 +987,8 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                 linkOrCopy(os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
                 r += '\n... copying %s to %s' % (os.path.join(d['s_bold_mov'], froot), os.path.join(tfolder, "%s-%s" % (sinfo['id'], froot)))
 
-        if options['mov_fidl'] in ['fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme'] and options['event_file'] != "" and options['bold_preprocess'] != "":
-            concf = os.path.join(d['s_bold_concs'], options['bold_preprocess'] + '.conc')
+        if options['mov_fidl'] in ['fd', 'dvars', 'dvarsme', 'udvars', 'udvarsme', 'idvars', 'idvarsme'] and options['event_file'] != "" and options['bolds'] != "":
+            concf = os.path.join(d['s_bold_concs'], options['bolds'] + '.conc')
             fidlf = os.path.join(d['s_bold_events'], options['event_file'] + '.fidl')
             ipatt = "_%s_scrub.fidl" % (options['mov_fidl'])
 
@@ -1111,7 +1111,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
                            per subject [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
-    --bold_preprocess  ... Which bold images (as they are specified in the
+    --bolds            ... Which bold images (as they are specified in the
                            batch.txt file) to copy over. It can be a single
                            type (e.g. 'task'), a pipe separated list (e.g.
                            'WM|Control|rest') or 'all' to copy all [rest].
@@ -1164,7 +1164,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri extractNuisanceSignal subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bold_preprocess=all cores=10
+         overwrite=no bolds=all cores=10
 
     ----------------
     Written by Grega Repovš
@@ -1187,7 +1187,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\nExtracting BOLD nuisance signal ..."
-    r += "\n\n    The command will extract nuisance signal from each of the specifie BOLD files.\n    The results will be saved as *.nuisance files in the images/movement\n    subfolder. Only images specified using --bold_preprocess parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal."
+    r += "\n\n    The command will extract nuisance signal from each of the specifie BOLD files.\n    The results will be saved as *.nuisance files in the images/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal."
     r += "\n\n    Using parameters:\n\n    --wbmask: %(wbmask)s\n    --sbjroi: %(sbjroi)s\n    --nroi: %(nroi)s\n    --shrinknsroi: %(shrinknsroi)s" % (options)
     r += "\n\n    when extracting nuisance signal."
     if options['hcp_bold_variant']:
@@ -1203,7 +1203,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     r += "\n\nWorking on BOLD images in: " + d['s_bold']
     r += "\nResulting files will be in: " + d['s_bold_mov']
-    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bold_preprocess)." % (", ".join(options['bold_preprocess'].split("|")))
+    r += "\n\nBased on the settings, %s BOLD files will be processed (see --bolds)." % (", ".join(options['bolds'].split("|")))
     r += "\nIf already present, existing nuisance files %s be overwritten (see --overwrite)." % (ostatus)
 
     bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
@@ -1390,7 +1390,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     There are a number of basic specific parameters for this command that are
     relevant for all or most of the actions:
 
-    --bold_preprocess  ... A pipe ('|') separated list of bold files to process.
+    --bolds            ... A pipe ('|') separated list of bold files to process.
     --event_file       ... The name of the fidl file to be used with each bold.
     --bold_actions     ... A string specifying which actions, and in what sequence
                            to perform [s,h,r,c,l]
@@ -1412,7 +1412,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     10: bold4:mirror      :BOLD mirror 3mm 48 2.5s
     11: bold5:rest        :RSBOLD 3mm 48 2.5s
 
-    With --bold_preprocess set to "blink|EC|rest", bold1, 3, and 5 would be
+    With --bolds set to "blink|EC|rest", bold1, 3, and 5 would be
     processed. If it were set to "all", all would be processed. As each bold
     gets processed independently and only one fidl file can be specified, you
     are advised to use preprocessConc when regressing task structure, and only
@@ -1707,7 +1707,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     ===========
 
     gmri preprocessBold subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bold_preprocess=rest bold_actions="s,h,r,c,l" \\
+         overwrite=no cores=10 bolds=rest bold_actions="s,h,r,c,l" \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
          nprocess=0
@@ -1731,7 +1731,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\nPreprocessing %s BOLD files as specified in --bold_preprocess." % (", ".join(options['bold_preprocess'].split("|")))
+    r += "\nPreprocessing %s BOLD files as specified in --bolds." % (", ".join(options['bolds'].split("|")))
     if options['hcp_bold_variant']:
         r += "\nAs --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
 
@@ -1970,7 +1970,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     There are a number of basic specific parameters for this command that are
     relevant for all or most of the actions:
 
-    --bold_preprocess  ... A pipe ('|') separated list of conc names to process.
+    --bolds            ... A pipe ('|') separated list of conc names to process.
     --event_file       ... A pipe ('|') separated list of fidl names to use, that
                            matches the conc list.
     --bold_actions     ... A string specifying which actions, and in what sequence
@@ -2316,7 +2316,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Activation analysis
 
     gmri preprocessConc subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bold_preprocess=SRT event_file=SRT glm_name=-M1 \\
+         overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-M1 \\
          bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
          glm_matrix=both glm_residuals=none nprocess=0 \\
@@ -2325,7 +2325,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Functional connectivity preprocessing
 
     gmri preprocessConc subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 bold_preprocess=SRT event_file=SRT glm_name=-FC \\
+         overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-FC \\
          bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\
          glm_matrix=none glm_residuals=save nprocess=0 \\
@@ -2360,7 +2360,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     else:
         options['bold_variant'] = '.' + options['hcp_bold_variant']  
 
-    concs = options['bold_preprocess'].split("|")
+    concs = options['bolds'].split("|")
     fidls = options['event_file'].split("|")
 
     concroot = options['boldname'] + '_' + options['image_target'] + '_'
@@ -2552,7 +2552,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                 if options['print_command'] == "yes":
                     r += '\n' + comm + '\n'
                 if options['run'] == "run":
-                    r += runExternalForFileShell(done, comm, 'running matlab/octave fc_PreprocessConc on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['bold_preprocess'], options['glm_name'], options['logtag']])
+                    r += runExternalForFileShell(done, comm, 'running matlab/octave fc_PreprocessConc on bolds [%s]' % (" ".join(bolds)), overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['bolds'], options['glm_name'], options['logtag']])
                     r, status = checkForFile(r, done, 'ERROR: Matlab/Octave has failed preprocessing BOLD using command: \n--> %s\n' % (mcomm))
                     if os.path.exists(done):
                         os.remove(done)

@@ -23,6 +23,7 @@ import tarfile
 import glob
 import datetime
 import gzip
+import sys
 
 bids = {
     'modalities': ['anat', 'func', 'dwi', 'fmap'],
@@ -225,9 +226,9 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
 
 
 
-def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', archive='move', bidsname=None):
+def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', overwrite='no', archive='move', bidsname=None):
     '''
-    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
+    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [subjects="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
     
     USE
     ===
@@ -251,6 +252,13 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
                         a folder that contains multiple packages. The default 
                         location where the command will look for a BIDS dataset
                         is [<subjectsfolder>/inbox/BIDS]
+
+    --subjects          An optional parameter that specifies a comma or pipe
+                        separated list of subjects / sessions from the inbox
+                        folder to be processed. Glob patterns can be used. If 
+                        provided, only packets or folders within the inbox that 
+                        match the list of subjects will be processed. If 
+                        `inbox` is a file `subjects` will not be applied.
 
     --action            How to map the files to MNAP structure. One of:
                         
@@ -390,6 +398,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
              - Initial version
     2018-09-19 Grega Repovš, Alan Anticevic
              - Updated documentation, changed handling of previous data
+    2019-04-13 Grega Repovš, Alan Anticevic
+             - Added the option to specify subjects
     '''
 
     print "Running BIDSImport\n=================="
@@ -438,9 +448,20 @@ def BIDSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', a
         if os.path.isfile(inbox):
             sourceFiles = [inbox]
         elif os.path.isdir(inbox):
-            for path, dirs, files in os.walk(inbox):
-                for file in files:
-                    sourceFiles.append(os.path.join(path, file))
+            if subjects:
+                subjects = [e.strip() for e in re.split(' +|\| *|, *', subjects)]
+            else:
+                subjects = ["*"]
+            candidates = []
+            for e in subjects:
+                candidates += glob.glob(os.path.join(inbox, e))
+            for candidate in candidates:
+                if os.path.isfile(candidate):
+                    sourceFiles.append(candidate)
+                elif os.path.isdir(candidate):
+                    for path, dirs, files in os.walk(canidate):
+                        for file in files:
+                            sourceFiles.append(os.path.join(path, file))
         else:
             raise ge.CommandFailed("BIDSImport", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
@@ -930,7 +951,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
                 status = False
 
             if not status:
-                print "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn)
+                print >> bout, "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz [%s]!" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec'))
                 print "==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, bidsData['images']['info'][image]['filename'].replace('.nii.gz', '.bval/.bvec'))
                 allOk = False
     

@@ -122,30 +122,6 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :fenc(PA)
 
 
-    MULTIPLE SUBJECTS AND SCHEDULING
-    ================================
-
-    The command can be run for multiple subjects by specifying `subjects` and
-    optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified subjects in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
-    can be used to filter subjects or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
-    automatically as each subject's folder. Commands will run in parallel by
-    utilizing the specified number of cores (1 by default).
-
-    If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `mnap ?schedule` for more information). If set in
-    combination with `subjects` parameter, subjects will be processed over
-    multiple nodes, `core` parameter specifying how many subjects to run per
-    node. Optional `scheduler_environment`, `scheduler_workdir`,
-    `scheduler_sleep`, and `nprocess` parameters can be set.
-
-    Set optional `logfolder` parameter to specify where the processing logs
-    should be stored. Otherwise the processor will make best guess, where the
-    logs should go.
-
-
     EXAMPLE USE
     ===========
 
@@ -565,6 +541,8 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
              - Added the option to explicitly specify the subjects to process.
              - Adjusted and expanded help string.
              - Added the option to map sequence names.
+    2019-04-07 Grega Repovš
+             - Added more detailed report with explicit failure in case of missing source files.
     '''
 
     print "Running getHCPReady\n==================="
@@ -599,19 +577,28 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
             print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(subjectsfolder, subject['id']))
         sfolders += newSet
 
+    # -- check if we have any
+
+    if not sfolders:
+        raise ge.CommandFailed("getHCPReady", "No subjects found to process", "No subjects were found to process!", "Please check the data and subjects parameter!")
+
     # -- loop through subject folders
 
+    report = {'missing source': [], 'pre-existing target': [], 'pre-processed source': [], 'processed': []}
+    
     for sfolder in sfolders:
 
         ssfile = os.path.join(sfolder, sfile)
         stfile = os.path.join(sfolder, tfile)
 
         if not os.path.exists(ssfile):
+            report['missing source'].append(sfolder)
             continue
         print " ... Processing folder %s" % (sfolder)
 
         if os.path.exists(stfile) and overwrite != "yes":
             print "     ... Target file already exists, skipping! [%s]" % (stfile)
+            report['pre-existing target'].append(sfolder)
             continue
 
         lines = [line.strip() for line in open(ssfile)]
@@ -660,11 +647,26 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
 
         if hcpok:
             print "     ... %s already HCP ready" % (sfile)
+            if sfile != tfile:
+                shutil.copyfile(sfile, tfile)
+            report['pre-processed source'].append(sfolder)
         else:
             print "     ... writing %s" % (tfile)
             fout = open(stfile, 'w')
             for line in nlines:
                 print >> fout, line
+            report['processed'].append(sfolder)
     
+    print "\n===> Final report"
+
+    for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source']:
+        if report[status]:
+            print "---> sessions with %s file:" % (status)
+            for session in report[status]:
+                print "     -> %s " % (os.path.basename(session))
+
+    if report['missing source']:
+        raise ge.CommandFailed("getHCPReady", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sfile), "Please check the data and parameters!")
+
     return
 
