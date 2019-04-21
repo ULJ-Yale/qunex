@@ -455,8 +455,9 @@ Change Log
 * 0.39.01 [niutilities] fixed minor bugs
 * 0.39.02 [library] Updated mnapContainer documentation and Docker use
 * 0.39.03 [library] Changed mnapContainer `image` parameter to `container`, fixed a bug in job submission
-* 0.39.05 [library] Fixed a value conversion bug in mnapContainer
-* 0.39.06 [niutilities] Made Philips extraneous dicom checking more specific
+* 0.39.04 [library] Fixed a value conversion bug in mnapContainer
+* 0.39.05 [niutilities] Made Philips extraneous dicom checking more specific
+* 0.39.06 [niutilities] Extended `processInbox` functionality
 
 Stable Container Tag Log
 ========================
