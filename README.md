@@ -458,6 +458,7 @@ Change Log
 * 0.39.04 [library] Fixed a value conversion bug in mnapContainer
 * 0.39.05 [niutilities] Made Philips extraneous dicom checking more specific
 * 0.39.06 [niutilities] Extended `processInbox` functionality
+* 0.39.07 [niutilities] Updated handling of multiple dcm2niix outputs and sequence naming
 
 Stable Container Tag Log
 ========================
