@@ -5,9 +5,14 @@ g_dicom.py
 
 Functions for processing dicom images and converting them to NIfTI format:
 
-* setupHCP        ... maps the data to a hcp folder
-* setupHCPFolder  ... runs setupHCP for all subject folders
-* getHCPReady     ... prepares subject.txt files for HCP mapping
+* readPARInfo     ... reads image info from Philips PAR/REC files
+* readDICOMInfo   ... reads image info from DICOM files
+* dicom2niiz      ... converts DICOM to NIfTI images
+* sortDicom       ... sorts the DICOM files into subfolders according to images
+* listDicom       ... list the information on DICOM files
+* splitDicom      ... split files from different sessions
+* processInbox    ... processes incoming data
+* getDICOMInfo    ... prints HCP relevant information from a DICOM file
 
 The commands are accessible from the terminal using gmri utility.
 
@@ -41,6 +46,20 @@ if "MNAPMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
     mcommand = os.environ['MNAPMCOMMAND']
+
+
+def matchAll(pattern, string):
+    '''matchAll
+
+    Function that checks if the pattern matches the whoe string.
+    '''
+
+    m = re.match(pattern, string)
+
+    if m:
+        return m.group() == string
+    else:
+        return False
 
 
 def readPARInfo(filename):
@@ -766,18 +785,18 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     return
 
 
-def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None, verbose=True, cores=1, debug=False, tool='auto', options=""):
+def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None, verbose=True, cores=1, debug=False, tool='auto', options=""):
     '''
-    dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [subjectid=None] [verbose=True] [cores=1] [tool='auto'] [options=""]
+    dicom2niix [folder=.] [clean=ask] [unzip=ask] [gzip=ask] [sessionid=None] [verbose=True] [cores=1] [tool='auto'] [options=""]
 
     USE
     ===
 
     The command is used to convert MR images from DICOM and PAR/REC files to
     NIfTI format. It searches for images within the a dicom subfolder within the
-    provided subject folder (folder). It expects to find each image within a
+    provided session folder (folder). It expects to find each image within a
     separate subfolder. It then converts the found images to NIfTI format and
-    places them in the nii folder within the subject folder. To reduce the space
+    places them in the nii folder within the session folder. To reduce the space
     used it can then gzip the dicom or .REC files (gzip). The tool to be used 
     for the conversion can be specified explicitly or determined automatically.
     It can be one of 'dcm2niix', 'dcm2nii', 'dicm2nii' or 'auto'. If set to 
@@ -802,31 +821,42 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     PARAMETERS
     ==========
 
-    --folder    The base subject folder with the dicom subfolder that holds
+    --folder    The base session folder with the dicom subfolder that holds
                 session numbered folders with dicom files. [.]
+
     --clean     Whether to remove preexisting NIfTI files (yes), leave them and
                 abort (no) or ask interactively (ask). [ask]
+
     --unzip     If the dicom files are gziped whether to unzip them (yes), leave
                 them be and abort (no) or ask interactively (ask). [ask]
+
     --gzip      After the dicom files were processed whether to gzip them (yes),
                 leave them ungzipped (no) or ask interactively (ask). [ask]
-    --subjectid The id code to use for this subject. If not provided, the
-                subject id is extracted from dicom files.
-    --verbose   Whether to be report on the progress (True) or not (False). [True]
+
+    --sessionid The id code to use for this session. If not provided, the
+                session id is extracted from dicom files.
+
+    --verbose   Whether to be report on the progress (True) or not (False). 
+                [True]
+
     --cores     How many parallel processes to run dcm2nii conversion with. The
                 number is one by defaults, if specified as 'all', the number of
                 available cores is utilized.
+
     --tool      What tool to use for the conversion [auto]. It can be one of:
-                - auto     ... determine best tool based on heuristics
-                - dcm2niix
-                - dcm2nii
-                - dicm2nii
+
+                * auto     ... determine best tool based on heuristics
+                * dcm2niix
+                * dcm2nii
+                * dicm2nii
+
     --options   A pipe separated string that lists additional options as a 
                 "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
                 processing dicom or PAR/REC files. Currently it supports:
                 - addImageType  ... Adds image type information to the sequence
-                                    name (Siemens scanners). Possible settings
-                                    are yes or no [no]
+                                    name (Siemens scanners). The value should
+                                    specify how many of the last image type 
+                                    labels to add. [0]
 
     RESULTS
     =======
@@ -839,12 +869,17 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     ----------------
 
     The subject.txt will be placed in the subject base folder. It will contain
-    the information about the subject id, location of folders and a list of
-    created NIfTI images with their description.
+    the information about the session id, subject id, location of folders and a 
+    list of created NIfTI images with their description.
+
+    Subject id will be extracted from the session id assuming the session id
+    formula: `<subject id>_<session id>`. If there is no underscore in the 
+    session id, the subject id is assumed to equal session id.
+    `
 
     An example subject.txt file would be:
 
-    id: OP169
+    id: OP169_baseline
     subject: OP169
     dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/dicom
     raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/subjects/OP169/nii
@@ -874,10 +909,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     DICOM-Report.txt file
     ---------------------
 
-    The DICOM-Report.txt file will be created and placed in the subject's dicom
+    The DICOM-Report.txt file will be created and placed in the session's dicom
     subfolder. The file will list the images it found, the information about
     their original sequence number and the resulting NIfTI file number, the name
-    of the sequence, the number of frames, TR and TE values, subject id, time of
+    of the sequence, the number of frames, TR and TE values, session id, time of
     acquisition, information and warnings about any additional processing it had
     to perform (e.g. recenter structural images, switch f and z dimensions,
     reslice due to premature end of recording, etc.). In some cases some of the
@@ -894,19 +929,19 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
     MULTIPLE SUBJECTS AND SCHEDULING
     ================================
 
-    The command can be run for multiple subjects by specifying `subjects` and
+    The command can be run for multiple sessions by specifying `subjects` and
     optionally `subjectsfolder` and `cores` parameters. In this case the command
     will be run for each of the specified subjects in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
-    can be used to filter subjects or limit them to just specified id codes.
+    can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
     automatically as each subject's folder. Commands will run in parallel by
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `mnap ?schedule` for more information). If set in
-    combination with `subjects` parameter, subjects will be processed over
-    multiple nodes, `core` parameter specifying how many subjects to run per
+    combination with `subjects` parameter, sessions will be processed over
+    multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
     `scheduler_sleep`, and `nprocess` parameters can be set.
 
@@ -948,12 +983,18 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
              - Added copying of json files
              - Added error when no DICOM files are found to process
              - Added generation of json sidecars for all dcm2niix calls
+    2019-04-21 Grega Repovš
+             - Changed subjectid to sessionid
+             - Added extraction of subject id
+    2019-04-22
+             - Changed addImageType option to specify the number of last labels to retain
     '''
 
     print "Running dicom2niix\n=================="
 
-    if subjectid in ['none', 'None', 'NONE']:
-        subjectid = None
+    if sessionid and sessionid.lower() == 'none':
+        sessionid = None
+
     base = folder
     null = open(os.devnull, 'w')
     dmcf = os.path.join(folder, 'dicom')
@@ -971,6 +1012,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
         except:
             raise ge.CommandError('dicom2niix', "Misspecified options string", "The options string is not valid! [%s]" % (optionstr), "Please check command instructions!")
 
+    try:
+        options['addImageType'] = int(options['addImageType'])
+    except:
+        raise ge.CommandError('dicom2niix', "Misspecified addImageType option", "The addImageType option value could not be converted to integer! [%s]" % (options['addImageType']), "Please check command instructions!")
 
     # check tool setting
 
@@ -986,7 +1031,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
 
     prior = []
     for tfolder in [imgf, dmcf]:
-        for ext in ['*.nii.gz', '*.bval', '*.bvec']:
+        for ext in ['*.nii.gz', '*.bval', '*.bvec', '*.json']:
             prior += glob.glob(os.path.join(tfolder, ext))
 
     if len(prior) > 0:
@@ -1080,23 +1125,31 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 print "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
                 continue
 
-        if options['addImageType'] in ['yes', 'Yes', 'YES']:
-            imageType = info['ImageType'][-1]
-            if len(imageType) > 0:
-                info['seriesDescription'] += ' ' + imageType
+        if options['addImageType'] > 0:
+            retain = min(len(info['ImageType']), options['addImageType'])
+            if retain > 0:
+                imageType = " ".join(info['ImageType'][-retain:])
+                if len(imageType) > 0:
+                    info['seriesDescription'] += ' ' + imageType
 
         c += 1
         if first:
             first = False
-            if subjectid is None:
-                subjectid = info['subjectid']
-            print >> r, "Report for %s (%s) scanned on %s\n" % (subjectid, info['subjectid'], info['datetime'])
+            if sessionid is None:
+                sessionid = info['subjectid']
+
+            if '_' in sessionid:
+                subjectid = sessionid.split('_')[0]
+            else:
+                subjectid = sessionid
+
+            print >> r, "Report for %s (%s) scanned on %s\n" % (sessionid, info['subjectid'], info['datetime'])
             if verbose:
-                print "\nProcessing images from %s (%s) scanned on %s" % (subjectid, info['subjectid'], info['datetime'])
+                print "\nProcessing images from %s (%s) scanned on %s" % (sessionid, info['subjectid'], info['datetime'])
 
             # --- setup subject.txt file
 
-            print >> stxt, "id:", subjectid
+            print >> stxt, "id:", sessionid
             print >> stxt, "subject:", subjectid
             print >> stxt, "dicom:", os.path.abspath(os.path.join(base, 'dicom'))
             print >> stxt, "raw_data:", os.path.abspath(os.path.join(base, 'nii'))
@@ -1206,17 +1259,32 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                     continue
                 if debug:
                     print "     --> processing: %s [%s]" % (img, os.path.basename(img))
-                if img[-3:] == 'nii':
+                if img.endswith(".nii"):
                     if debug:
                         print "     --> gzipping: %s" % (img)
                     subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
                     img += '.gz'
 
+                imgname = os.path.basename(img)
                 suffix = ""
-                if 'magnitude' in img:
+                if 'magnitude' in imgname:
                     suffix = ""
-                elif 'real' in img:
+                elif 'real' in imgname:
                     suffix = "_real"
+                elif 'phMag' in imgname:
+                    suffix = "_phaseAndMagnitudeMap"
+                elif 'ph' in imgname:
+                    suffix = "_phaseMap"
+                elif 'imaginary' in imgname:
+                    suffix = "_imaginary"
+                elif 'MoCo' in imgname:
+                    suffix = "_MoCo"
+
+                echo = re.match('.*_e([0-9]).nii.*', imgname)
+                if echo:
+                    echo = int(echo.group(1))
+                    if echo > 0:
+                        suffix = "_Echo%d" % (echo)
 
                 tfname = os.path.join(imgf, "%d%s.nii.gz" % (niinum, suffix))
                 if debug:
@@ -1233,9 +1301,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', subjectid=None,
                 # --- check also for .json
 
                 for jsonextra in ['.json', '.JSON']:
-                    jsonsrc = img.replace('.nii.gz', jsonextra)
+                    jsonsrc = img.replace('.gz', '')
+                    jsonsrc = jsonsrc.replace('.nii', '')
+                    jsonsrc += jsonextra
                     if os.path.exists(jsonsrc):
-                        os.rename(jsonsrc, os.path.join(imgf, "%d%s" % (niinum, '.json')))
+                        os.rename(jsonsrc, tfname.replace('.nii.gz', '.json'))
 
             # --- check final geometry
 
@@ -1595,9 +1665,9 @@ def splitDicom(folder=None):
     return
 
 
-def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool='auto', cores=1, logfile=None, archive='move', options="", verbose='yes'):
+def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pattern=None, tool='auto', cores=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes'):
     '''
-    processInbox [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [verbose=yes]  
+    processInbox [subjectsfolder=.] [sessions=""] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [verbose=yes]  
 
     USE
     ===
@@ -1607,6 +1677,21 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
     of NIfTI files. Packet can be either a zip file, a tar archive or a folder 
     that contains DICOM or PAR/REC files.
 
+    The commands can import packets either from a dedicated inbox folder and
+    create the necessary session folders within `subjectsfolder`, or it can
+    process the data already present in the session specific folder. 
+
+
+    Processing data from a dedicated inbox folder
+    ---------------------------------------------
+
+    This is the default operation. In this case the `inbox` parameter has to
+    provide a path to the folder with the incoming packets 
+    (`<subjectsfolder>/inbox/MR` by default). The subject/session id is 
+    identified by the use of the `pattern` parameter, and optionally the 
+    `logfile` parameter. The packages processed can be optionally specified by
+    the `sessions` parameter.
+
     The command first looks into provided inbox folder (inbox; by default
     `inbox/MR`) and finds any packets that match the specified regex pattern
     (pattern). The pattern has to be prepared to return as the first group
@@ -1615,68 +1700,156 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
     'yes', the command will ask whether to process the listed packets, if it is
     set to 'no', it will just start processing them.
 
-    For each found packet, the command will generate a new subject folder, its
-    name set to the subject id extracted. It will then copy, unzip or untar all 
-    the files in the packet into an inbox folder created within the subject 
-    folder. Once all the files are extracted or copied, depending on the archive
-    parameter, the packet is then either moved or copied to the
-    `study/subjects/archive/MR` folder, left as is, or deleted. If the archive
-    folder does not yet exist, it is created.
+    For each found packet, the command will generate a new session folder. 
+    Importantly, if the session is one of multiple sessions per subject, then 
+    the extracted name should have the form `<subject id>_<session name>`. In 
+    this case the `ID` and `session id` parameters in the `subject.txt` file 
+    will be set correctly. If the extracted name has no underscore `_` 
+    character, then the function assumes there is just one session per subject 
+    and the extracted name is the subject id.
 
-    If a subject folder already exists, the related packet will not be processed
-    so that existing data is not changed. Either remove or rename the exisiting
-    folder(s) and rerun the command to process those packet(s) as well.
+    Alternatively, a path to a log file can be provided with the information on
+    which columns provide the following information:
+
+    * packetname   ... the extracted name of the packet
+    * subjectid    ... subject id of the packet
+    * sessionname  ... session id of the packet
+
+    At least `packetname` and `subjectid` have to be provided. If `sessionname` 
+    is omitted the function assumes there's only one session per subject. 
+
+    The command It will then copy, unzip or untar all the files in the packet 
+    into an inbox folder created within the session folder. Once all the files 
+    are extracted or copied, depending on the archive parameter, the packet is 
+    then either moved or copied to the `study/subjects/archive/MR` folder, left
+     as is, or deleted. If the archive folder does not yet exist, it is created.
+
+    If a subject folder already exists, then the related packet will not be 
+    processed so that existing data is not changed. Either remove or rename the 
+    exisiting folder(s) and rerun the command to process those packet(s) as 
+    well. 
+
+    If `sessions` parameter is set to yes, then only those packet names that 
+    match the list in `sessions` will be processed. The entries in the list can
+    be regex patterns, in which case all the packet names that match any of the
+    patterns will be processed.
+
+    
+    Processing data from a session folder
+    -------------------------------------
+
+    If the `inbox` parameter is set to "none", then the command assumes that 
+    the incoming data has already been saved to each session folder within the
+    `subjectsfolder`. In this case, the command will look into all folders that
+    match the list provided in the `sessions` parameter and process the data in
+    that folder. Each entry in the list can be a glob pattern matching with 
+    multitiple session folders.
+
+    The folders are expected to be named using the formula:
+    `<subject id>_<session name>`. If no underscore is found then the command 
+    assumes only one session exists for this subject and the session id equals
+    subject id.
+
+    The folders found are expected to have the data stored in the inbox folder
+    either as individual files or as a compressed package. If the latter is the
+    case, the files will be extracted to the inbox folder. If any results—e.g.
+    files in `dicom` or `nii` folders—already exists, the processing of the 
+    folder will be skipped.
+    
+
+    Futher processing
+    -----------------
 
     After the files have been copied or extracted to the inbox folder, a
-    sortDicom command is run on that folder and all the DICOM or PAR/REC files
+    `sortDicom` command is run on that folder and all the DICOM or PAR/REC files
     are sorted and moved to the dicom folder. After that is done, a conversion
     command is run to convert the DICOM images or PAR/REC files to the NIfTI
     format and move them to the nii folder. The specific tool to do the 
     conversion can be specified explicitly using the `tool` parameter or left 
     for the command to decide if set to 'auto' or let to default. The DICOM or 
     PAR/REC files are preserved and gzipped to save space. To speed up the 
-    conversion the cores parameter is passed to the dicom2niix command. 
-    subject.txt and DICOM-Report.txt files are created as well. Please, check 
-    the help for sortDicom and dicom2niix commands for the specifics.
+    conversion, the cores parameter is passed to the `dicom2niix` command. 
+    `subject.txt` and `DICOM-Report.txt` files are created as well. Please, 
+    check the help for `sortDicom` and `dicom2niix` commands for the specifics.
+
 
     PARAMETERS
     ==========
 
-    --subjectsfolder   The base study subjects folder (e.g. WM44/subjects) where
-                       the inbox and individual subject folders are. [.]
-    --inbox    The inbox folder with packages to process. By default inbox is
-               in base study folder: inbox/MR. If the packages are elsewhere
-               the location can be specified here. [<folder>/inbox/MR]
-    --check    Whether to ask for confirmation to proceed once zip packages in
-               inbox are identified and listed. [yes]
-    --pattern  The pattern to use to extract subject codes.
-               [".*?(OP[0-9.-]+).*\.zip"]
-    --tool     What tool to use for the conversion [auto]. It can be one of:
-               - auto     ... determine best tool based on heuristics
-               - dcm2niix
-               - dcm2nii
-               - dicm2nii
-    --cores    The number of parallel processes to use when running dcm2nii
-               command. If specified as 'all', all the avaliable cores will
-               be utilized. [1]               
-    --logfile  A string specifying the location of the log file and the columns
-               in which sessionid and subjectid information is stored. The
-               string should specify:
-               "path:<path to the log file>|subjectid:<the column with subjectid
-               information>|sessionid:<the column with sesion id information>"
-    --archive  What to do with a processed package. Options are:
-               * move:   move the package to the default archive folder
-               * copy:   copy the package to the default archive folder
-               * leave:  keep the package in the inbox folder
-               * delete: delete the package after it has been processed
-    --options   A pipe separated string that lists additional options as a 
-                "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
-                processing dicom or PAR/REC files. Currently it supports:
-                - addImageType  ... Adds image type information to the sequence
-                                    name (Siemens scanners). Possible settings
-                                    are yes or no [no]
-    --verbose  Whether to provide detailed report also of packets that could
-               not be identified and/or are not matched with log file.
+    --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
+                      the inbox and individual subject folders are. [.]
+    
+    --sessions        A comma delimited string that lists the sessions to 
+                      process. If dedicated inbox folder is used, the parameter 
+                      is optional and it can include regex patterns. If `inbox`
+                      is set to none, the list specifies the session folders to 
+                      process, and it can include glob patterns. [""]
+    
+    --inbox           The inbox folder with packages to process. By default 
+                      inbox is in base study folder: inbox/MR. If the packages 
+                      are elsewhere the location can be specified here. If set
+                      to "none", the data is assumed to already exist in the 
+                      individual sessions folders. [<folder>/inbox/MR]
+    
+    --check           The type of check to perform when packages or session  
+                      folders are identified. The possible values are:
+
+                      * yes  ... ask for interactive confirmation to proceed
+                      * no   ... report and continue w/o additional checks
+                      * any  ... continue if any packages are ready to process
+                                 report error otherwise
+                      [yes]
+
+    --pattern         The regex pattern to use to extract packet name.
+                      [".*?(OP[0-9.-]+).*\.zip"]
+
+    --tool            What tool to use for the conversion [auto]. It can be one 
+                      of:
+
+                      * auto     ... determine best tool based on heuristics
+                      * dcm2niix
+                      * dcm2nii
+                      * dicm2nii
+
+    --cores           The number of parallel processes to use when running 
+                      converting DICOM images to NIfTI files. If specified as 
+                      'all', all the avaliable cores will be utilized. [1]               
+
+    --logfile         A string specifying the location of the log file and the 
+                      columns in which packetname, sessionid and subjectid 
+                      information are stored. The string should specify:
+                      "path:<path to the log file>|packetname:<name of the 
+                      packet extracted by the pattern>|subjectid:<the column 
+                      with subjectid information>[|sessionid:<the column with 
+                      sesion id information>]". [""]
+
+    --archive         What to do with a processed package ['move']. Options are:
+
+                      * move:   move the package to the default archive folder
+                      * copy:   copy the package to the default archive folder
+                      * leave:  keep the package in the inbox folder
+                      * delete: delete the package after it has been processed
+                      
+                      In case of processing data from a sessions folder, the
+                      `archive` parameter is only valid for compressed packages.
+    
+    --options         A pipe separated string that lists additional options as a 
+                      "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
+                      processing dicom or PAR/REC files. Currently it supports:
+                      - addImageType  ... Adds image type information to the 
+                                         sequence name (Siemens scanners). The 
+                                         value should specify how many of the 
+                                         last image type labels to add. [0]
+
+    --unzip           Whether to unzip individual DICOM files that are gzipped.
+                      Valid options are 'yes', 'no', and 'ask'. ['yes']
+
+    --gzip            Whether to gzip individual DICOM files after they were
+                      processed. Valid options are 'yes', 'no', 'ask'. ['yes']
+
+    --verbose         Whether to provide detailed report also of packets that 
+                      could not be identified and/or are not matched with log 
+                      file. ['yes']
 
     ----------------
     Written by Grega Repovš
@@ -1698,21 +1871,20 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
              - Added options to parameters
     2018-11-15 Grega Repovš
              - Added the ability to process tar packages.
+    2019-04-20 Grega Repovs
+             - Extended for use with existing session folders
     '''
 
     print "Running processInbox\n===================="
 
-    # check tool setting
+    # check settings
 
     if tool not in ['auto', 'dcm2niix', 'dcm2nii', 'dicm2nii']:
         raise ge.CommandError('processInbox', "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
 
-    verbose = verbose == 'yes'
+    verbose = verbose.lower() == 'yes'
 
-    if check == 'no':
-        check = False
-    else:
-        check = True
+    # overwrite = overwrite.lower() == 'yes'
 
     if subjectsfolder is None:
         subjectsfolder = "."
@@ -1720,105 +1892,201 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
     if inbox is None:
         inbox = os.path.join(subjectsfolder, 'inbox', 'MR')
 
+    if inbox.lower() == 'none':
+        inbox = None
+        if sessions is None or sessions == "":
+            raise ge.CommandError('processInbox', "Sessions parameter not specified", "If `inbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
+
     if pattern is None:
         pattern = r".*?(OP[0-9.-]+).*\.zip"
 
     igz = re.compile(r'.*\.gz')
 
+    if sessions:
+        sessions = re.split(', *', sessions)
+
     # ---- check acquisition log if present:
 
-    sessions = None
+    sessionsInfo = None
 
     if logfile is not None and logfile != "":
+        log = dict([[f.strip() for f in e.split(':')] for e in logfile.split('|')])
+
+        if not all([e in log for e in ['path', 'subjectid', 'packetname']]):
+            raise ge.CommandFailed("processInbox", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
+
         try:
-            log = dict([[f.strip() for f in e.split(':')] for e in logfile.split('|')])
-            for key in ['subjectid', 'sessionid']:
+            for key in [e for e in log.keys() if e in ['packetname', 'subjectid', 'sessionname']]:
                 log[key] = int(log[key]) - 1
         except:
-            ge.CommandFailed("processInbox", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
+            raise ge.CommandFailed("processInbox", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
 
-        if not all([e in log for e in ['path', 'subjectid', 'sessionid']]):
-            ge.CommandFailed("processInbox", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
+        sessionname = 'sessionname' in log
 
-        if os.path.exists(log['path']):
-            print "---> Reading acquisition log [%s]." % (log['path'])
-            sessions = {}
-            with open(log['path']) as f:
-                if log['path'].split('.')[-1] == 'csv':
-                    reader = csv.reader(f, delimiter=',')
-                else:
-                    reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
-                for line in reader:
-                    try:
-                        sessions[line[log['sessionid']]] = line[log['subjectid']]
-                    except:
-                        pass
+        if not os.path.exists(log['path']):
+            raise ge.CommandFailed("processInbox", "Logfile does not exist", "The specified logfile does not exist:", log['path'], "Please check your paths!")
 
-    # ---- get file list
-
-    print "---> Checking for packets in %s ... using pattern '%s'" % (inbox, pattern)
-
-    files = glob.glob(os.path.join(inbox, '*'))
-    getop = re.compile(pattern)
-
-    okpackets  = []
-    nmpackets  = []
-    badpackets = []
-    expackets  = []
-    for file in files:
-        m = getop.search(os.path.basename(file))
-        if m:
-            if m.groups():
-                sid = m.group(1)
-                if sessions is not None:
-                    if sid in sessions:
-                        if os.path.exists(os.path.join(subjectsfolder, sessions[sid])):
-                            expackets.append((file, sessions[sid], sid))
-                        else:
-                            okpackets.append((file, sessions[sid], sid))
-                    else:
-                        nmpackets.append((file, sid))
-                else:
-                    if os.path.exists(os.path.join(subjectsfolder, sid)):
-                        expackets.append((file, sid, sid))
-                    else:
-                        okpackets.append((file, sid, sid))
+        print "---> Reading acquisition log [%s]." % (log['path'])
+        sessionsInfo = {}
+        with open(log['path']) as f:
+            if log['path'].split('.')[-1] == 'csv':
+                reader = csv.reader(f, delimiter=',')
             else:
-                badpackets.append(file)
+                reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
+            for line in reader:
+                try:
+                    if sessionname:
+                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subjectid']], 'sessionname': line[log['sessionname']], 'sessionid': "%s_%s" % (line[log['subjectid']], line[log['sessionname']]), 'packetname': line[log['packetname']]}
+                    else:
+                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subjectid']], 'sessionname': None, 'sessionid': line[log['subjectid']], 'packetname': line[log['packetname']]}
+                except:
+                    pass
 
-    if len(okpackets):
-        print "---> Found the following packets to process (subjectid <= session id : packet):"
-        for p, o, t in okpackets:
-            print "     %s <= %s : %s" % (o, t, os.path.basename(p))
+    # ---- set up lists
+
+    packets = {'ok': [], 'nolog': [], 'bad': [], 'exist': [], 'skip': [], 'invalid': []}
+    emptysession = {'subjectid': None, 'sessionname': None, 'sessionid': None, 'packetname': None}
+
+    # ---- get list of files / folders in inbox
+
+    if inbox:
+
+        reportSet = [('ok', '---> Found the following packets to process:'),
+                     ('nolog', "---> These packets do not match with the log and they won't be processed"),
+                     ('bad', "---> For these packets a packet name could not be identified and they won't be processed:"),
+                     ('invalid', "---> For these packets the packet name could not parsed and they won't be processed:"),
+                     ('exist', "---> The folder for these packages already exist:"),
+                     ('skip', "---> These packages do not match list of sessions and will be skipped:")]
+
+        print "---> Checking for packets in %s ... using pattern '%s'" % (os.path.abspath(inbox), pattern)
+
+        files = glob.glob(os.path.join(inbox, '*'))
+        getop = re.compile(pattern)
+
+        for file in files:
+            m = getop.search(os.path.basename(file))
+            if m:
+                if m.groups():
+                    pname = m.group(1)
+                    session = dict(emptysession)
+                    session['packetname'] = pname
+                    
+                    if sessionsInfo:                        
+                        if pname in sessionsInfo:
+                            session = dict(sessionsInfo[pname])
+                        else:
+                            packets['nolog'].append((file, dict(session)))
+                            continue
+                    else:
+                        session = dict(emptysession)
+                        session['packetname'] = pname
+                        sid = pname.split('_')
+
+                        if len(sid) > 2:                            
+                            packets['invalid'].append((file, session))
+                            continue
+
+                        if len(sid) > 1:
+                            session.update({'subjectid': sid[0], 'sessionname': sid[1], 'sessionid': pname})                            
+                        else:
+                            session.update({'subjectid': sid[0], 'sessionname': None, 'sessionid': pname})
+
+                    sfolder = os.path.join(subjectsfolder, session['sessionid'])
+
+                    if sessions:
+                        if not any([matchAll(e, session['sessionid']) for e in sessions]):
+                            packets['skip'].append((file, session))
+                            continue
+
+                    if os.path.exists(sfolder):
+                        packets['exist'].append((file, session))
+                        continue
+
+                    packets['ok'].append((file, session))
+
+                else:
+                    packets['bad'].append(file, dict(emptysession))
+
+
+    # ---- get list of session folders to process
+
     else:
-        print "---> No packets to process were found!"
 
-    if len(expackets) and verbose:
-        print "---> For these packets, subject folders already exist and they will be skipped (subjectid <= session id : packet):"
-        for p, o, t in expackets:
-            print "     %s <= %s : %s" % (o, t, os.path.basename(p))
-        print "     ... To process them, remove or rename the exisiting subject folders"
+        reportSet = [('ok', '---> Found the following folders to process:'),
+                     ('invalid', "---> For these folders the folder name could not parsed and they won't be processed:"),
+                     ('exist', "---> These folders have existing results:")]
 
-    if len(nmpackets) and verbose:
-        print "---> These packets do not match with the log and they won't be processed:"
-        for p, o in nmpackets:
-            print "     %s: %s" % (o, os.path.basename(p))
+        print "---> Checking for folders to process in '%s'" % (os.path.abspath(subjectsfolder))
 
-    if len(badpackets) and verbose:
-        print "---> For these packets subject id could not be identified and they won't be processed:"
-        for p in badpackets:
-            print "     %s" % (os.path.basename(p))
+        sfolders = []
+        for sessionid in sessions:
+            sfolders += glob.glob(os.path.join(subjectsfolder, sessionid))
+        sfolders = list(set(sfolders))
 
-    if len(okpackets):
-        if check:
+        for sfolder in sfolders:
+            session = dict(emptysession)
+            pname = os.path.basename(sfolder)
+            session['packetname'] = pname
+            sid = pname.split('_')
+
+            archives = []
+            for tarchive in ['*.zip', '*.tar', '*.tar.*']:
+                archives += glob.glob(os.path.join(sfolder, 'inbox', tarchive))
+            session['archives'] = list(archives)
+
+            if len(sid) > 2:
+                packets['invalid'].append((sfolder, session))
+                continue
+
+            if len(sid) > 1:
+                session.update({'subjectid': sid[0], 'sessionname': sid[1], 'sessionid': pname})                            
+            else:
+                session.update({'subjectid': sid[0], 'sessionname': None, 'sessionid': pname})
+
+            if glob.glob(os.path.join(sfolder, 'dicom')) or glob.glob(os.path.join(sfolder, 'nii')):
+                packets['exist'].append((sfolder, session)) 
+                continue                   
+
+            packets['ok'].append((sfolder, session))
+
+
+
+    # ---> Report
+
+    for tag, message in reportSet:
+        if packets[tag]:
+            print "\n", message
+            for file, session in packets[tag]:
+                if session['sessionid']:
+                    print "     %s <= %s <- %s" % (session['sessionid'], session['packetname'], os.path.basename(file))
+                elif session['packetname']:
+                    print "     %s <= %s <- %s" % ("????", session['packetname'], os.path.basename(file))
+                else:
+                    print "     %s <= %s <- %s" % ("????", "????", os.path.basename(file))
+
+            if tag == 'exist':
+                #if overwrite:
+                #    print "     ... The folders will be cleaned and replaced with new data"
+                #else:
+                #    print "     ... To process them, remove or rename the exisiting subject folders or set `overwrite` to 'yes'"
+                print "     ... To process them, remove or rename the exisiting session folders"
+
+    nToProcess = len(packets['ok'])
+    # if overwrite:
+    #     nToProcess += len(packets['exist'])
+
+    if nToProcess:
+        if check.lower() == 'yes':
             s = raw_input("\n===> Should I proceeed with processing the listed packages [y/n]: ")
             if s != "y":
                 print "---> Aborting operation!\n"
                 return
-        print "---> Starting to process %d packets ..." % (len(okpackets))
-    else:
-        print "---> DONE"
-        return
+    else:        
+        if check.lower() == 'any':
+            raise ge.CommandFailed("processInbox", "No packets found to process", "No packets were found to be processed in the inbox [%s]!" % (inbox), "Please check your data!")
+        else:
+            print "---> DONE"
+            return
 
 
     # ---- Ok, now loop through the packets
@@ -1830,193 +2098,229 @@ def processInbox(subjectsfolder=None, inbox=None, check=None, pattern=None, tool
 
     report = {'failed': [], 'ok': []}
 
-    for p, o, s in okpackets:
-        note = None
+    # ---> clean existing data if needed
+
+    #if overwrite:
+    #    if packets['exist']:
+    #        print "---> Cleaning exisiting data in folders:"
+    #        for file, session in packets['exist']:                
+    #            sfolder = os.path.join(subjectsfolder, session['sessionid'])
+    #            print "     ... %s" % (sfolder)
+    #            if inbox:
+    #                shutil.rmtree(sfolder)
+    #            else:
+    #                nfolder = os.path.join(sfolder, 'nii')
+    #                dfolder = os.path.join(sfolder, 'dicom')
+    #                for rmfolder in [nfolder, dfolder]:
+    #                    if os.path.exists(rmfolder):
+    #                        shutil.rmtree(rmfolder)
+    #
+    #    packets['ok'] += packets['exist']
+
+    # ---> process packets
+
+    print "---> Starting to process %d packets ..." % (len(packets['ok']))
+
+    for file, session in packets['ok']:
+        note = []
         try:
+
+            sfolder = os.path.join(subjectsfolder, session['sessionid'])
+            ifolder = os.path.join(sfolder, 'inbox')
+            dfolder = os.path.join(sfolder, 'dicom')
+
             # --- Big info
 
-            print "\n\n---=== PROCESSING %s ===---\n" % (o)
+            print "\n\n---=== PROCESSING %s ===---\n" % (session['sessionid'])
 
-            # --- create a new OP folder
-            opfolder = os.path.join(subjectsfolder, o)
+            if inbox:
+                os.makedirs(sfolder)
+                os.makedirs(ifolder)
+                files = [file]
 
-            if os.path.exists(opfolder):
-                print "---> WARNING: %s folder exists, skipping package %s" % (o, os.path.basename(p))
-                report["failed"].append((p, o, s, "Subject folder exists!"))
-                continue
+            else:
+                if session['archives']:
+                    files = session['archives']
+                else:
+                    files = [ifolder]
 
-            os.makedirs(opfolder)
-            dfol = os.path.join(opfolder, 'inbox')
+            for p in files:
 
             # --- unzip or copy the package
 
-            if p.split('.')[-1] == 'zip':
+                if p.endswith('zip'):
 
-                ptype = "zip"
+                    ptype = "zip"
 
-                # --- create the inbox folder for dicoms
-                os.makedirs(dfol)
+                    print "...  unzipping %s" % (os.path.basename(p))
+                    dnum = 0
+                    fnum = 0
 
-                print "...  unzipping %s" % (os.path.basename(p))
-                dnum = 0
-                fnum = 0
+                    z = zipfile.ZipFile(p, 'r')
+                    ilist = z.infolist()
+                    for sf in ilist:
+                        if sf.file_size > 0:
 
-                z = zipfile.ZipFile(p, 'r')
-                ilist = z.infolist()
-                for sf in ilist:
-                    if sf.file_size > 0:
+                            if fnum % 1000 == 0:
+                                dnum += 1
+                                if not os.path.exists(os.path.join(ifolder, str(dnum))):
+                                    os.makedirs(os.path.join(ifolder, str(dnum)))
+                            fnum += 1
 
-                        if fnum % 1000 == 0:
-                            dnum += 1
-                            os.makedirs(os.path.join(dfol, str(dnum)))
-                        fnum += 1
+                            print "...  extracting:", sf.filename, sf.file_size
 
-                        print "...  extracting:", sf.filename, sf.file_size
+                            fdata = z.read(sf)
 
-                        fdata = z.read(sf)
+                            # --- do we have par / rec / log
 
-                        # --- do we have par / rec / log
+                            if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
+                                tfile = os.path.basename(sf.filename)
+                                for ext in ['rec', 'par']:
+                                    if tfile.split('.')[-1] == ext:
+                                        tfile = tfile[:-3] + ext.upper()
+                            else:
+                                if igz.match(sf.filename):
+                                    gzname = os.path.join(ifolder, str(dnum), str(fnum) + ".gz")
+                                    fout = open(gzname, 'wb')
+                                    fout.write(fdata)
+                                    fout.close()
+                                    fin = gzip.open(gzname, 'rb')
+                                    fdata = fin.read()
+                                    fin.close()
+                                    os.remove(gzname)
+                                tfile = str(fnum)
+                            fout = open(os.path.join(ifolder, str(dnum), tfile), 'wb')
+                            fout.write(fdata)
+                            fout.close()
 
-                        if sf.filename.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                            tfile = os.path.basename(sf.filename)
-                            for ext in ['rec', 'par']:
-                                if tfile.split('.')[-1] == ext:
-                                    tfile = tfile[:-3] + ext.upper()
-                        else:
-                            if igz.match(sf.filename):
-                                gzname = os.path.join(dfol, str(dnum), str(fnum) + ".gz")
-                                fout = open(gzname, 'wb')
-                                fout.write(fdata)
-                                fout.close()
-                                fin = gzip.open(gzname, 'rb')
-                                fdata = fin.read()
-                                fin.close()
-                                os.remove(gzname)
-                            tfile = str(fnum)
-                        fout = open(os.path.join(dfol, str(dnum), tfile), 'wb')
-                        fout.write(fdata)
-                        fout.close()
+                    z.close()
+                    print "     -> done!"
 
-                z.close()
-                print "     -> done!"
+                elif re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", p):
 
-            elif re.search("\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", p):
+                    ptype = "tar"
 
-                ptype = "tar"
+                    print "...  untarring %s" % (os.path.basename(p))
+                    dnum = 0
+                    fnum = 0
 
-                # --- create the inbox folder for dicoms
-                os.makedirs(dfol)
+                    tar = tarfile.open(p, 'r')
+                    for tarinfo in tar:
+                        if tarinfo.isfile():
+                            if fnum % 1000 == 0:
+                                dnum += 1
+                                os.makedirs(os.path.join(ifolder, str(dnum)))
+                            fnum += 1
 
-                print "...  untarring %s" % (os.path.basename(p))
-                dnum = 0
-                fnum = 0
+                            print "...  extracting:", tarinfo.name, tarinfo.size
 
-                tar = tarfile.open(p, 'r')
-                for tarinfo in tar:
-                    if tarinfo.isfile():
-                        if fnum % 1000 == 0:
-                            dnum += 1
-                            os.makedirs(os.path.join(dfol, str(dnum)))
-                        fnum += 1
+                            fdata = tar.extractfile(tarinfo)
 
-                        print "...  extracting:", tarinfo.name, tarinfo.size
+                            # --- do we have par / rec / log
 
-                        fdata = tar.extractfile(tarinfo)
+                            if tarinfo.name.split('.')[-1].lower() in ['par', 'rec', 'log']:
+                                tfile = os.path.basename(tarinfo.name)
+                                for ext in ['rec', 'par']:
+                                    if tfile.split('.')[-1] == ext:
+                                        tfile = tfile[:-3] + ext.upper()
+                            else:
+                                if igz.match(tarinfo.name):
+                                    gzname = os.path.join(ifolder, str(dnum), str(fnum) + ".gz")
+                                    fout = open(gzname, 'wb')
+                                    fout.write(fdata)
+                                    fout.close()
+                                    fin = gzip.open(gzname, 'rb')
+                                    fdata = fin.read()
+                                    fin.close()
+                                    os.remove(gzname)
+                                tfile = str(fnum)
 
-                        # --- do we have par / rec / log
+                            fout = open(os.path.join(ifolder, str(dnum), tfile), 'wb')
+                            fout.write(fdata.read())
+                            fout.close()
 
-                        if tarinfo.name.split('.')[-1].lower() in ['par', 'rec', 'log']:
-                            tfile = os.path.basename(tarinfo.name)
-                            for ext in ['rec', 'par']:
-                                if tfile.split('.')[-1] == ext:
-                                    tfile = tfile[:-3] + ext.upper()
-                        else:
-                            if igz.match(tarinfo.name):
-                                gzname = os.path.join(dfol, str(dnum), str(fnum) + ".gz")
-                                fout = open(gzname, 'wb')
-                                fout.write(fdata)
-                                fout.close()
-                                fin = gzip.open(gzname, 'rb')
-                                fdata = fin.read()
-                                fin.close()
-                                os.remove(gzname)
-                            tfile = str(fnum)
+                    tar.close()
+                    print "     -> done!"
 
-                        fout = open(os.path.join(dfol, str(dnum), tfile), 'wb')
-                        fout.write(fdata.read())
-                        fout.close()
-
-                tar.close()
-                print "     -> done!"
-
-            else:
-                ptype = "folder"
-                print "...  copying %s dicom files" % (os.path.basename(p))
-                shutil.copytree(p, dfol)
+                else:
+                    ptype = "folder"
+                    if inbox:
+                        print "...  copying %s dicom files" % (os.path.basename(p))
+                        shutil.copytree(p, ifolder)
 
             # ===> run sort dicom
 
             print
-            sortDicom(folder=opfolder)
+            sortDicom(folder=sfolder)
 
             # ===> run dicom to nii
 
             print
-            dicom2niix(folder=opfolder, clean='no', unzip='yes', gzip='yes', subjectid=o, tool=tool, cores=cores, options=options, verbose=True)
+            dicom2niix(folder=sfolder, clean='no', unzip=unzip, gzip=gzip, sessionid=session['sessionid'], tool=tool, cores=cores, options=options, verbose=True)
 
             # ===> archive
 
-            archivetarget = os.path.join(afolder, os.path.basename(p))
+            if archive != 'leave':
+                s = "Processing packages: " + archive
+                print
+                print s
+                print "".join(['=' for e in range(len(s))])
 
-            # --- move package to archive
-            if archive == 'move':
-                if os.path.exists(archivetarget):
-                    print "...  WARNING: %s already exists in archive and it will not be moved!" % (os.path.basename(p))
-                    note = "WARNING: %s already exists in archive and it was not moved!" % (os.path.basename(p))
-                else:
-                    print "...  moving %s to archive" % (os.path.basename(p))
-                    shutil.move(p, archivetarget)
-                    print "     -> done!"
+            for p in files:
+                if inbox or re.search("\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", p):
+                    archivetarget = os.path.join(afolder, os.path.basename(p))
 
-            # --- copy package to archive
-            elif archive == 'copy':
-                if os.path.exists(archivetarget):
-                    print "...  WARNING: %s already exists in archive and it will not be copied!" % (os.path.basename(p))
-                    note = "WARNING: %s already exists in archive and it was not copied!" % (os.path.basename(p))
-                else:
-                    print "...  copying %s to archive" % (os.path.basename(p))
-                    if ptype == 'folder':
-                        shutil.copytree(p, archivetarget)
-                    else:
-                        shutil.copy2(p, afolder)
-                    print "     -> done!"
+                    # --- move package to archive
+                    if archive == 'move':
+                        if os.path.exists(archivetarget):
+                            print "...  WARNING: %s already exists in archive and it will not be moved!" % (os.path.basename(p))
+                            note.append("WARNING: %s already exists in archive and it was not moved!" % (os.path.basename(p)))
+                        else:
+                            print "...  moving %s to archive" % (os.path.basename(p))
+                            shutil.move(p, archivetarget)
+                            print "     -> done!"
 
-            # --- delete original package
-            elif archive == 'delete':
-                print "...  deleting packet [%s]" % (os.path.basename(p))
-                if ptype == 'folder':
-                    shutil.rmtree(p)
-                else:
-                    os.remove(p)
+                    # --- copy package to archive
+                    elif archive == 'copy':
+                        if os.path.exists(archivetarget):
+                            print "...  WARNING: %s already exists in archive and it will not be copied!" % (os.path.basename(p))
+                            note.append("WARNING: %s already exists in archive and it was not copied!" % (os.path.basename(p)))
+                        else:
+                            print "...  copying %s to archive" % (os.path.basename(p))
+                            if ptype == 'folder':
+                                shutil.copytree(p, archivetarget)
+                            else:
+                                shutil.copy2(p, afolder)
+                            print "     -> done!"
 
-            report['ok'].append((p, o, s, note))
+                    # --- delete original package
+                    elif archive == 'delete':
+                        print "...  deleting packet [%s]" % (os.path.basename(p))
+                        if ptype == 'folder':
+                            shutil.rmtree(p)
+                        else:
+                            os.remove(p)
+
+            report['ok'].append((file, dict(session), note))
+
         except ge.CommandFailed as e: 
-            report['failed'].append((p, o, s, "%s: %s" % (e.function, e.error)))
+            report['failed'].append((file, dict(session), ["%s: %s" % (e.function, e.error)]))
 
     print "\nFinal report\n============"
 
     if report["ok"]:
         print "\nSuccessfully processed:"
-        for p, o, s, note in report["ok"]:
-            if note:
-                print "... %s [%s] %s" % (s, p, note)
-            else:
-                print "... %s [%s]" % (s, p)
+        for file, session, notes in report["ok"]:
+            print "... %s [%s]" % (session['sessionid'], file)
+            for note in notes:
+                print "    %s" % (note)
 
     if report["failed"]:
         print "\nFailed to process:"
-        for p, o, s, note in report["failed"]:
-            print "... %s [%s] %s" % (s, p, note)
+        for file, session, notes in report["failed"]:
+            print "... %s [%s]" % (session['sessionid'], file)
+            for note in notes:
+                print "    %s" % (note)
         raise ge.CommandFailed("processInbox", "Some packages failed to process", "Please check report!")
 
     return
