@@ -459,6 +459,7 @@ Change Log
 * 0.39.05 [niutilities] Made Philips extraneous dicom checking more specific
 * 0.39.06 [niutilities] Extended `processInbox` functionality
 * 0.39.07 [niutilities] Updated handling of multiple dcm2niix outputs and sequence naming
+* 0.39.08 [niutilities] Updated checkFidl PDF printing
 
 Stable Container Tag Log
 ========================
