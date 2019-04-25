@@ -462,6 +462,7 @@ Change Log
 * 0.39.08 [niutilities] Updated checkFidl PDF printing
 * 0.39.09 [matlab] Added extraction of all voxels within a ROI to ExtractROITimeseriesMasked
 * 0.40.00 [nitools] Renamed matlab subrepository to nitools
+* 0.41.00 [niutilities] Changed subjects parameter to sessions, added CommandNull exception
 
 Stable Container Tag Log
 ========================
