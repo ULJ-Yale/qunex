@@ -854,8 +854,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
                 processing dicom or PAR/REC files. Currently it supports:
                 - addImageType  ... Adds image type information to the sequence
-                                    name (Siemens scanners). Possible settings
-                                    are yes or no [no]
+                                    name (Siemens scanners). The value should
+                                    specify how many of the last image type 
+                                    labels to add. [0]
 
     RESULTS
     =======
@@ -982,14 +983,16 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
              - Added copying of json files
              - Added error when no DICOM files are found to process
              - Added generation of json sidecars for all dcm2niix calls
-    2019-04-07 Grega Repovš
+    2019-04-21 Grega Repovš
              - Changed subjectid to sessionid
              - Added extraction of subject id
+    2019-04-22
+             - Changed addImageType option to specify the number of last labels to retain
     '''
 
     print "Running dicom2niix\n=================="
 
-    if sessionid.lower() == 'none':
+    if sessionid and sessionid.lower() == 'none':
         sessionid = None
 
     base = folder
@@ -1009,6 +1012,10 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
         except:
             raise ge.CommandError('dicom2niix', "Misspecified options string", "The options string is not valid! [%s]" % (optionstr), "Please check command instructions!")
 
+    try:
+        options['addImageType'] = int(options['addImageType'])
+    except:
+        raise ge.CommandError('dicom2niix', "Misspecified addImageType option", "The addImageType option value could not be converted to integer! [%s]" % (options['addImageType']), "Please check command instructions!")
 
     # check tool setting
 
@@ -1024,7 +1031,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     prior = []
     for tfolder in [imgf, dmcf]:
-        for ext in ['*.nii.gz', '*.bval', '*.bvec']:
+        for ext in ['*.nii.gz', '*.bval', '*.bvec', '*.json']:
             prior += glob.glob(os.path.join(tfolder, ext))
 
     if len(prior) > 0:
@@ -1118,10 +1125,12 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 print "===> WARNING: Could not read dicom file! Skipping folder %s" % (folder)
                 continue
 
-        if options['addImageType'] in ['yes', 'Yes', 'YES']:
-            imageType = info['ImageType'][-1]
-            if len(imageType) > 0:
-                info['seriesDescription'] += ' ' + imageType
+        if options['addImageType'] > 0:
+            retain = min(len(info['ImageType']), options['addImageType'])
+            if retain > 0:
+                imageType = " ".join(info['ImageType'][-retain:])
+                if len(imageType) > 0:
+                    info['seriesDescription'] += ' ' + imageType
 
         c += 1
         if first:
@@ -1250,17 +1259,32 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     continue
                 if debug:
                     print "     --> processing: %s [%s]" % (img, os.path.basename(img))
-                if img[-3:] == 'nii':
+                if img.endswith(".nii"):
                     if debug:
                         print "     --> gzipping: %s" % (img)
                     subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
                     img += '.gz'
 
+                imgname = os.path.basename(img)
                 suffix = ""
-                if 'magnitude' in img:
+                if 'magnitude' in imgname:
                     suffix = ""
-                elif 'real' in img:
+                elif 'real' in imgname:
                     suffix = "_real"
+                elif 'phMag' in imgname:
+                    suffix = "_phaseAndMagnitudeMap"
+                elif 'ph' in imgname:
+                    suffix = "_phaseMap"
+                elif 'imaginary' in imgname:
+                    suffix = "_imaginary"
+                elif 'MoCo' in imgname:
+                    suffix = "_MoCo"
+
+                echo = re.match('.*_e([0-9]).nii.*', imgname)
+                if echo:
+                    echo = int(echo.group(1))
+                    if echo > 0:
+                        suffix = "_Echo%d" % (echo)
 
                 tfname = os.path.join(imgf, "%d%s.nii.gz" % (niinum, suffix))
                 if debug:
@@ -1277,9 +1301,11 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 # --- check also for .json
 
                 for jsonextra in ['.json', '.JSON']:
-                    jsonsrc = img.replace('.nii.gz', jsonextra)
+                    jsonsrc = img.replace('.gz', '')
+                    jsonsrc = jsonsrc.replace('.nii', '')
+                    jsonsrc += jsonextra
                     if os.path.exists(jsonsrc):
-                        os.rename(jsonsrc, os.path.join(imgf, "%d%s" % (niinum, '.json')))
+                        os.rename(jsonsrc, tfname.replace('.nii.gz', '.json'))
 
             # --- check final geometry
 
@@ -1812,8 +1838,9 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
                       "<key1>:<value1>|<key2>:<value2>" pairs to be used when 
                       processing dicom or PAR/REC files. Currently it supports:
                       - addImageType  ... Adds image type information to the 
-                                         sequence name (Siemens scanners). 
-                                         Possible settings are yes or no [no]
+                                         sequence name (Siemens scanners). The 
+                                         value should specify how many of the 
+                                         last image type labels to add. [0]
 
     --unzip           Whether to unzip individual DICOM files that are gzipped.
                       Valid options are 'yes', 'no', and 'ask'. ['yes']
