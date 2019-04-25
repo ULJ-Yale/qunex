@@ -461,6 +461,7 @@ Change Log
 * 0.39.07 [niutilities] Updated handling of multiple dcm2niix outputs and sequence naming
 * 0.39.08 [niutilities] Updated checkFidl PDF printing
 * 0.39.09 [matlab] Added extraction of all voxels within a ROI to ExtractROITimeseriesMasked
+* 0.40.00 [nitools] Renamed matlab subrepository to nitools
 
 Stable Container Tag Log
 ========================
