@@ -203,10 +203,10 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     EXAMPLE USE
     ===========
 
-    gmri schedule command="bet t1.nii.gz brain.nii.gz" \\
+    mnap schedule command="bet t1.nii.gz brain.nii.gz" \\
                   settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
 
-    gmri schedule command="bet {{in}} {{out}}" \\
+    mnap schedule command="bet {{in}} {{out}}" \\
                   replace="in:t1.nii.gz|out:brain.nii.gz" \\
                   settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
                   workdir="/studies/WM/Subjects/AP23791/images/structural"
@@ -223,6 +223,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                  Added checking for validity of log file directories.
     2018-10-04 - Grega Repovs
                  Excluded log validity checking for 'return'.
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     # --- check inputs
@@ -384,7 +386,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 # -----------------------------------------------------------------------
 #                                                  general scheduler code
 
-def runThroughScheduler(command, subjects=None, args=[], cores=1, logfolder=None, logname=None):
+def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None, logname=None):
 
     # ---- setup options to pass to each job
 
@@ -427,9 +429,9 @@ def runThroughScheduler(command, subjects=None, args=[], cores=1, logfolder=None
         if k not in ['subjid', 'scheduler']:
             cBase += ' --%s="%s"' % (k, v)
 
-    # ---- if subjects is None
+    # ---- if sessions is None
 
-    if subjects is None:
+    if sessions is None:
         print "\n---> submitting %s" % (command)
         print cBase
         if flog:
@@ -440,7 +442,7 @@ def runThroughScheduler(command, subjects=None, args=[], cores=1, logfolder=None
         logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
         result    = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
 
-    # ---- if subject list is present
+    # ---- if session list is present
 
     else:
         settings  = settings.split(',')
@@ -450,14 +452,14 @@ def runThroughScheduler(command, subjects=None, args=[], cores=1, logfolder=None
 
         c = 0
 
-        while subjects:
+        while sessions:
 
             c += 1
 
-            # ---- get subjects subset
+            # ---- get session subset
 
             slist = []
-            [slist.append(subjects.pop(0)['id']) for e in range(cores) if subjects]   # might need to change to id
+            [slist.append(sessions.pop(0)['id']) for e in range(cores) if sessions]   # might need to change to id
 
             cStr = cBase + ' --subjid="%s"' % ("|".join(slist))
 

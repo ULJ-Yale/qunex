@@ -137,7 +137,7 @@ def readSubjectData(filename, verbose=False):
             for field in ['dicom', 'raw_data', 'data', 'hpc']:
                 if field in dic:
                     if not os.path.exists(dic[field]) and verbose:
-                        print "WARNING: subject %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
+                        print "WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
 
 
     except:

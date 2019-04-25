@@ -530,7 +530,7 @@ def readSubjectData(filename):
                 if "id" not in dic:
                     print "WARNING: There is a record missing an id field and is being omitted from processing.", dic
                 elif "data" not in dic and "hcp" not in dic:
-                    print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
+                    print "WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
 

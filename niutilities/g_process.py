@@ -168,19 +168,19 @@ def plist(s):
 
 
 arglist = [['# ---- Basic settings'],
-           ['subjects',           'batch.txt',                                   str,    "The file with subject information."],
+           ['sessions',           'batch.txt',                                   str,    "The file with sessions information."],
            ['subjectsfolder',     '',                                            os.path.abspath, 'The path to study subjects folder.'],
            ['logfolder',          '',                                            isNone, 'The path to log folder.'],
            ['logtag',             '',                                            str,    'An optional additional tag to add to the log file after the command name.'],
            ['overwrite',          'no',                                          torf,   'Whether to overwrite existing results.'],
            ['cores',              '1',                                           int,    'How many processor cores to use.'],
            ['threads',            '1',                                           int,    'How many threads to use for bold processing.'],
-           ['nprocess',           '0',                                           int,    'How many subjects to process (0 - all).'],
+           ['nprocess',           '0',                                           int,    'How many sessions to process (0 - all).'],
            ['datainfo',           'False',                                       torf,   'Whether to print information.'],
            ['printoptions',       'False',                                       torf,   'Whether to print options.'],
            ['filter',             '',                                            str,    'Filtering information.'],
            ['script',             'None',                                        isNone, 'The script to be executed.'],
-           ['subjid',              '',                                           str,  "list of | separated subject ids for which to run the command"],
+           ['subjid',              '',                                           str,  "list of | separated session ids for which to run the command"],
 
            ['# ---- Preprocessing options'],
            ['bet',                '-f 0.5',                                      str,    "options to be passed to BET in brain extraction"],
@@ -257,7 +257,7 @@ arglist = [['# ---- Basic settings'],
            ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder"],
            ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE"],
            ['hcp_Pipeline',           '',                                         str,    "path to pipeline base folder"],
-           ['hcp_suffix',             '',                                         str,    "subject id suffix if running HCP preprocessing variants"],
+           ['hcp_suffix',             '',                                         str,    "session id suffix if running HCP preprocessing variants"],
            ['hcp_brainsize',          '150',                                      int,    "human brain size in mm"],
            ['hcp_t2',                 't2',                                       str,    "whether T2 image is present - anything or NONE"],
            ['hcp_fmap',               'NONE',                                     str,    "DEPRECATED!!! whether hi-res structural fieldmap is present - SiemensFieldMap for Siemens Phase/Magnitude pair, GeneralElectricFieldMap for GE single B0 image, or NONE"],
@@ -335,6 +335,7 @@ tomap = {'bppt':            'bolds',
          'eventstring':     'event_string',
          'eventfile':       'event_file',
          'basefolder':      'subjectsfolder',
+         'subjects':        'sessions',
          'bold_preprocess': 'bolds'}
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
@@ -362,7 +363,7 @@ options = {}
 #   Commands are specified in the calist and salist lists. calist specifies
 #   commands that can be run in parallel, one instance per subeject. salist
 #   specifies commands that need to be run as a single process across all the
-#   subjects. Both are a list of commands in which each command is specified
+#   sessions. Both are a list of commands in which each command is specified
 #   as list of four values:
 #
 #   1/ command short name
@@ -373,13 +374,13 @@ options = {}
 #   Empty lists denote there should be a blank line when printing out a command
 #   list.
 
-calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,                              "Map HCP preprocessed data to subjects' image folder."],
+calist = [['mhd',     'mapHCPData',                  gp_HCP.mapHCPData,                              "Map HCP preprocessed data to sessions' image folder."],
           [],
           ['gbd',     'getBOLDData',                 gp_workflow.getBOLDData,                        "Copy functional data from 4dfp (NIL) processing pipeline."],
           ['bbm',     'createBOLDBrainMasks',        gp_workflow.createBOLDBrainMasks,               "Create brain masks for BOLD runs."],
           [],
           ['seg',     'runBasicSegmentation',        gp_FS.runBasicStructuralSegmentation,           "Run basic structural image segmentation."],
-          ['gfs',     'getFSData',                   gp_FS.checkForFreeSurferData,                   "Copy existing FreeSurfer data to subjects' image folder."],
+          ['gfs',     'getFSData',                   gp_FS.checkForFreeSurferData,                   "Copy existing FreeSurfer data to sessions' image folder."],
           ['fss',     'runSubcorticalFS',            gp_FS.runFreeSurferSubcorticalSegmentation,     "Run subcortical freesurfer segmentation."],
           ['fsf',     'runFullFS',                   gp_FS.runFreeSurferFullSegmentation,            "Run full freesurfer segmentation"],
           [],
@@ -469,30 +470,30 @@ def run(command, args):
 
     # --- read options from batch.txt
 
-    if 'subjects' in args:
-        options['subjects'] = args['subjects']
+    if 'sessions' in args:
+        options['sessions'] = args['sessions']
     if 'subjid' in args:
         options['subjid'] = args['subjid']
     if 'filter' in args:
         options['filter'] = args['filter']
 
-    subjects, gpref = g_core.getSubjectList(options['subjects'], sfilter=options['filter'], subjid=options['subjid'], verbose=False)
+    sessions, gpref = g_core.getSubjectList(options['sessions'], sfilter=options['filter'], subjid=options['subjid'], verbose=False)
 
     # --- check if we are running across subjects rather than sessions
 
     if command in lactions:
         subjectList = []
         subjectInfo = {}
-        for subject in subjects:
-            if 'subject' not in subject:
+        for session in sessions:
+            if 'subject' not in session:
                 raise ge.CommandFailed(command, "Missing subject information", "%s batch file does not provide subject information for session id %s." % (options['subjects'], subject['id']), "Please check the batch file!", "Aborting processing!")
-            if subject['subject'] not in subjectList:
+            if session['subject'] not in subjectList:
                 subjectList.append(subject['subject'])
-                subjectInfo[subject['subject']] = {'id': subject['subject'], 'sessions': []}
-            if subject['subject'] == subject['id']:
+                subjectInfo[session['subject']] = {'id': session['subject'], 'sessions': []}
+            if session['subject'] == session['id']:
                 raise ge.CommandFailed(command, "Session id matches subject id", "Session id [%s] is the same as subject id [%s]!" % (subject['id'], subject['subject']), "Please check the batch file!", "Aborting processing!")
-            subjectInfo[subject['subject']]['sessions'].append(subject)
-        subjects = [subjectInfo[e] for e in subjectList]
+            subjectInfo[session['subject']]['sessions'].append(session)
+        sessions = [subjectInfo[e] for e in subjectList]
 
     # --- take parameters from batch file
 
@@ -577,17 +578,17 @@ def run(command, args):
 
     # --- check if there are no subjects
 
-    if not subjects:
-        sout += "\nERROR: No subjects specified to process. Please check your batch file, filtering options or subjid parameter!"
+    if not sessions:
+        sout += "\nERROR: No sessions specified to process. Please check your batch file, filtering options or subjid parameter!"
         print sout
         writelog(sout)
         exit()
 
     elif options['run'] == 'run':
-        sout += "\nStarting multiprocessing subjects in %s with a pool of %d concurrent processes\n" % (options['subjects'], cores)
+        sout += "\nStarting multiprocessing sessions in %s with a pool of %d concurrent processes\n" % (options['sessions'], cores)
 
     else:
-        sout += "\nRunning test on %s ...\n" % (options['subjects'])
+        sout += "\nRunning test on %s ...\n" % (options['sessions'])
 
     print sout
     writelog(sout)
@@ -607,7 +608,7 @@ def run(command, args):
     #                                                              print info
 
     if printinfo:
-        print subjects
+        print sessions
 
 
     # =======================================================================
@@ -617,8 +618,8 @@ def run(command, args):
         os.mkdir(options['subjectsfolder'])
 
     if nprocess > 0:
-        nsubjects = [subjects.pop(0) for e in range(nprocess) if subjects]
-        subjects = nsubjects
+        nsessions = [sessions.pop(0) for e in range(nprocess) if sessions]
+        sessions = nsessions
 
 
     # -----------------------------------------------------------------------
@@ -633,14 +634,14 @@ def run(command, args):
         if cores == 1 or options['run'] == 'test':
             if command in plactions:
                 todo = plactions[command]
-                for subject in subjects:
-                    if len(subject['id']) > 1:
+                for session in sessions:
+                    if len(session['id']) > 1:
                         if options['run'] == 'test':
                             action = 'testing'
                         else:
                             action = 'processing'
-                        consoleLog += "\nStarting %s of subject %s at %s" % (action, subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        r, status = procResponse(todo(subject, options, overwrite, c + 1))
+                        consoleLog += "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        r, status = procResponse(todo(session, options, overwrite, c + 1))
                         writelog(r)
                         consoleLog += r
                         stati.append(status)
@@ -650,7 +651,7 @@ def run(command, args):
 
             if command in sactions:
                 todo = sactions[command]
-                r, status = procResponse(todo(subjects, options, overwrite))
+                r, status = procResponse(todo(sessions, options, overwrite))
                 writelog(r)
 
         else:
@@ -659,10 +660,10 @@ def run(command, args):
             futures = []
             if command in plactions:
                 todo = plactions[command]
-                for subject in subjects:
-                    if len(subject['id']) > 1:
-                        consoleLog += "\nAdding processing of subject %s to the pool at %s" % (subject['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        future = threadPoolExecutor.submit(todo, subject, options, overwrite, c + 1)
+                for session in sessions:
+                    if len(session['id']) > 1:
+                        consoleLog += "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        future = threadPoolExecutor.submit(todo, session, options, overwrite, c + 1)
                         futures.append(future)
                         c += 1
                         if nprocess and c >= nprocess:
@@ -675,7 +676,7 @@ def run(command, args):
 
             if command in sactions:
                 todo = sactions[command]
-                r, status = procResponse(todo(subjects, options, overwrite))
+                r, status = procResponse(todo(sessions, options, overwrite))
                 writelog(r)
 
         # print console log
@@ -718,5 +719,5 @@ def run(command, args):
     #                                                  general scheduler code
 
     else:
-        g_scheduler.runThroughScheduler(command, subjects=subjects, args=options, cores=cores, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
+        g_scheduler.runThroughScheduler(command, sessions=sessions, args=options, cores=cores, logfolder=os.path.join(logfolder, 'batchlogs'), logname=logname)
 

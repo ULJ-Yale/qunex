@@ -399,7 +399,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     EXAMPLE USE
     ===========
 
-    gmri HCPLSImport subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
+    $ mnap HCPLSImport subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
 
     ----------------
     Written by Grega Repovš
@@ -783,22 +783,22 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     files were mapped and the exact information about which specific file 
     from the `hcpls` folder was mapped to which file in the `nii` folder.
 
-    MULTIPLE SUBJECTS AND SCHEDULING
+    MULTIPLE SESSIONS AND SCHEDULING
     ================================
 
-    The command can be run for multiple subjects by specifying `subjects` and
+    The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified subjects in the subjectsfolder
+    will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
-    can be used to filter subjects or limit them to just specified id codes.
+    can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
-    automatically as each subject's folder. Commands will run in parallel by
+    automatically as each sessions's folder. Commands will run in parallel by
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `mnap ?schedule` for more information). If set in
-    combination with `subjects` parameter, subjects will be processed over
-    multiple nodes, `core` parameter specifying how many subjects to run per
+    combination with `sessions` parameter, sessions will be processed over
+    multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
     `scheduler_sleep`, and `nprocess` parameters can be set.
 
@@ -836,7 +836,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     EXAMPLE USE
     ===========
 
-    gmri mapHCPLS2nii folder=. overwrite=yes
+    mnap mapHCPLS2nii folder=. overwrite=yes
 
     ----------------
     Written by Grega Repovš
@@ -844,6 +844,8 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     Changelog
     2019-01-19 Grega Repovš
              - Initial version based on mapBIDS2nii
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     sfolder = os.path.abspath(sfolder)

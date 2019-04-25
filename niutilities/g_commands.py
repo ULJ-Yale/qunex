@@ -27,7 +27,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'dicom2niix'           : {'com': g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'cores', 'debug', 'tool', 'options')},
             'processInbox'         : {'com': g_dicom.processInbox,           'args': ('subjectsfolder', 'sessions', 'inbox', 'check', 'pattern', 'tool', 'cores', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose')},
             'getDICOMInfo'         : {'com': g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
-            'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'subjects', 'action', 'overwrite', 'archive', 'bidsName')},
+            'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsName')},
             'mapBIDS2nii'          : {'com': g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite')},
             'HCPLSImport'          : {'com': g_hcpls.HCPLSImport,            'args': ('subjectsfolder', 'inbox', 'action', 'overwrite', 'archive', 'hcplsName')},
             'mapHCPLS2nii'         : {'com': g_hcpls.mapHCPLS2nii,           'args': ('sfolder', 'overwrite')},
@@ -40,13 +40,13 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'nifti24dfp'           : {'com': g_NIfTI.nifti24dfp,             'args': ('inf', 'outf')},
             'setupHCP'             : {'com': g_HCP.setupHCP,                 'args': ('sfolder', 'tfolder', 'sfile', 'check', 'existing')},
             'setupHCPFolder'       : {'com': g_HCP.setupHCPFolder,           'args': ('subjectsfolder', 'tfolder', 'sfile', 'check')},
-            'getHCPReady'          : {'com': g_HCP.getHCPReady,              'args': ('subjects', 'subjectsfolder', 'sfile', 'tfile', 'mapping', 'sfilter', 'overwrite')},
+            'getHCPReady'          : {'com': g_HCP.getHCPReady,              'args': ('sessions', 'subjectsfolder', 'sfile', 'tfile', 'mapping', 'sfilter', 'overwrite')},
             'printniftihdr'        : {'com': g_img.printniftihdr,            'args': ('filename', )},
             'modniftihdr'          : {'com': g_gimg.modniftihdr,             'args': ('filename', 's')},
-            'createBatch'          : {'com': g_utilities.createBatch,        'args': ('subjectsfolder', 'sfile', 'tfile', 'subjects', 'sfilter', 'overwrite', 'paramfile')},
+            'createBatch'          : {'com': g_utilities.createBatch,        'args': ('subjectsfolder', 'sfile', 'tfile', 'sessions', 'sfilter', 'overwrite', 'paramfile')},
             'createStudy'          : {'com': g_utilities.createStudy,        'args': ('studyfolder', )},
-            'createList'           : {'com': g_utilities.createList,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
-            'createConc'           : {'com': g_utilities.createConc,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
+            'createList'           : {'com': g_utilities.createList,         'args': ('subjectsfolder', 'sessions', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
+            'createConc'           : {'com': g_utilities.createConc,         'args': ('subjectsfolder', 'sessions', 'sfilter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
             'batchTag2Num'         : {'com': g_utilities.batchTag2Num,       'args': ('filename', 'subjid', 'bolds')},
             'joinFidl'             : {'com': g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
             'joinFidlFolder'       : {'com': g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder', 'fidlname')},
@@ -64,4 +64,4 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'runList'              : {'com': g_utilities.runList,            'args': ('listfile', 'runlists', 'logfolder', 'verbose', 'eargs')}
             }
 
-extraParameters = ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder', 'sperlist', 'runinpar', 'ignore']
+extraParameters = ['sessions', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder', 'sperlist', 'runinpar', 'ignore']

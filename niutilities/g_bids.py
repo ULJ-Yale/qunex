@@ -8,7 +8,7 @@ Functions for importing and exporting BIDS data to MNAP file structure.
 * BIDSImport      ... maps BIDS data to MNAP structure
 * BIDSExport      ... exports MNAP data to BIDS structured folder
 
-The commands are accessible from the terminal using gmri utility.
+The commands are accessible from the terminal using mnap command.
 
 Copyright (c) Grega Repovs. All rights reserved.
 """
@@ -145,7 +145,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
 
-def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
+def mapToMNAPBids(file, subjectsfolder, bidsname, sessionsList, overwrite, prefix):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
@@ -181,21 +181,21 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
     else:
         session = 'bids'
 
-    if session in sessions['skip']:
+    if session in sessionsList['skip']:
         return False        
-    elif session not in sessions['list']:
-        sessions['list'].append(session)
+    elif session not in sessionsList['list']:
+        sessionsList['list'].append(session)
         if os.path.exists(folder):
             if overwrite == 'yes':
                 print prefix + "--> bids for session %s already exists: cleaning session" % (session)
                 shutil.rmtree(folder)                    
-                sessions['clean'].append(session)
+                sessionsList['clean'].append(session)
             elif not os.path.exists(os.path.join(folder, 'bids2nii.log')):
                 print prefix + "--> incomplete bids for session %s already exists: cleaning session" % (session)
                 shutil.rmtree(folder)                    
-                sessions['clean'].append(session)
+                sessionsList['clean'].append(session)
             else:
-                sessions['skip'].append(session)
+                sessionsList['skip'].append(session)
                 print prefix + "--> bids for session %s already exists: skipping session" % (session)
                 print prefix + "    files previously mapped:"
                 with open(os.path.join(folder, 'bids2nii.log')) as bidsLog:
@@ -207,28 +207,28 @@ def mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, prefix):
                             print prefix + "    ... %s" % (os.path.basename(mappedFile))
         else:
             print prefix + "--> creating bids session %s" % (session)
-            sessions['map'].append(session)
+            sessionsList['map'].append(session)
         
     tfile = os.path.join(folder, optional, modality, os.path.basename(file))
 
     if os.path.exists(tfile):
-        if session in sessions['skip']:
+        if session in sessionsList['skip']:
             return False
         else:
             os.remove(tfile)
     elif not os.path.exists(os.path.dirname(tfile)):
         os.makedirs(os.path.dirname(tfile))
 
-    if session in sessions['skip']:
+    if session in sessionsList['skip']:
         return False
 
     return tfile
 
 
 
-def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', overwrite='no', archive='move', bidsname=None):
+def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None):
     '''
-    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [subjects="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
+    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
     
     USE
     ===
@@ -253,12 +253,12 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
                         location where the command will look for a BIDS dataset
                         is [<subjectsfolder>/inbox/BIDS]
 
-    --subjects          An optional parameter that specifies a comma or pipe
-                        separated list of subjects / sessions from the inbox
-                        folder to be processed. Glob patterns can be used. If 
-                        provided, only packets or folders within the inbox that 
-                        match the list of subjects will be processed. If 
-                        `inbox` is a file `subjects` will not be applied.
+    --sessions          An optional parameter that specifies a comma or pipe
+                        separated list of sessions from the inbox folder to be 
+                        processed. Glob patterns can be used. If provided, only
+                        packets or folders within the inbox that match the list
+                        of sessions will be processed. If `inbox` is a file 
+                        `sessions` will not be applied.
 
     --action            How to map the files to MNAP structure. One of:
                         
@@ -323,7 +323,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
     call. If `bidsname` is not provided, the name will be set to the name of the 
     parent folder or the name of the compressed archive.
 
-    The files identified as belonging to a specific subject will be mapped to 
+    The files identified as belonging to a specific session will be mapped to 
     folder: 
     
         <subjects_folder>/<subject>_<session>/bids
@@ -388,7 +388,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
     EXAMPLE USE
     ===========
 
-    gmri BIDSImport subjectsfolder=myStudy overwrite=yes bidsname=swga
+    mnap BIDSImport subjectsfolder=myStudy overwrite=yes bidsname=swga
 
     ----------------
     Written by Grega Repovš
@@ -400,6 +400,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
              - Updated documentation, changed handling of previous data
     2019-04-13 Grega Repovš, Alan Anticevic
              - Added the option to specify subjects
+    2019-04-25 Grega Repovs
+             - Changed subjects to sessions
     '''
 
     print "Running BIDSImport\n=================="
@@ -424,9 +426,9 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
         bidsname = re.sub('.zip$|.gz$', '', bidsname)
         bidsname = re.sub('.tar$', '', bidsname)
     
-    sessions = {'list': [], 'clean': [], 'skip': [], 'map': [], 'append': []}
-    allOk    = True
-    errors   = ""
+    sessionsList = {'list': [], 'clean': [], 'skip': [], 'map': [], 'append': []}
+    allOk        = True
+    errors       = ""
 
     # ---> Check for folders
 
@@ -448,12 +450,12 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
         if os.path.isfile(inbox):
             sourceFiles = [inbox]
         elif os.path.isdir(inbox):
-            if subjects:
-                subjects = [e.strip() for e in re.split(' +|\| *|, *', subjects)]
+            if sessions:
+                sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
             else:
-                subjects = ["*"]
+                sessions = ["*"]
             candidates = []
-            for e in subjects:
+            for e in sessions:
                 candidates += glob.glob(os.path.join(inbox, e))
             for candidate in candidates:
                 if os.path.isfile(candidate):
@@ -468,7 +470,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
         raise ge.CommandFailed("BIDSImport", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
 
 
-    # ---> mapping data to subjects' folders
+    # ---> mapping data to sessions' folders
 
     print "--> mapping files to MNAP bids folders"
 
@@ -480,7 +482,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile = mapToMNAPBids(sf.filename, subjectsfolder, bidsname, sessions, overwrite, "        ")
+                        tfile = mapToMNAPBids(sf.filename, subjectsfolder, bidsname, sessionsList, overwrite, "        ")
                         if tfile:
                             fdata = z.read(sf)
                             if tfile.endswith('.nii'):
@@ -504,7 +506,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile = mapToMNAPBids(member.name, subjectsfolder, bidsname, sessions, overwrite, "        ")
+                        tfile = mapToMNAPBids(member.name, subjectsfolder, bidsname, sessionsList, overwrite, "        ")
                         if tfile:
                             fobj  = tar.extractfile(member)
                             fdata = fobj.read()
@@ -524,7 +526,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
 
 
         else:
-            tfile = mapToMNAPBids(file, subjectsfolder, bidsname, sessions, overwrite, "    ")
+            tfile = mapToMNAPBids(file, subjectsfolder, bidsname, sessionsList, overwrite, "    ")
             if tfile:
                 if tfile.endswith('.nii'):
                     tfile += ".gz"
@@ -581,7 +583,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, subjects=None, action='link', ov
 
     report = []
     for execute in ['map', 'clean']:
-        for session in sessions[execute]:
+        for session in sessionsList[execute]:
             if session != 'bids':
                 
                 subject   = session.split('_')[0]
@@ -718,7 +720,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     PARAMETERS
     ==========
 
-    --sfolder    The base subject folder in which bids folder with data and
+    --sfolder    The base session folder in which bids folder with data and
                  files for the session is present. [.]
     
     --overwrite  Parameter that specifes what should be done in cases where
@@ -775,22 +777,22 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     files were mapped and the exact information about which specific file 
     from the `bids` folder was mapped to which file in the `nii` folder.
 
-    MULTIPLE SUBJECTS AND SCHEDULING
+    MULTIPLE SESSIONS AND SCHEDULING
     ================================
 
-    The command can be run for multiple subjects by specifying `subjects` and
+    The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified subjects in the subjectsfolder
+    will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
-    can be used to filter subjects or limit them to just specified id codes.
+    can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
     automatically as each subject's folder. Commands will run in parallel by
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `mnap ?schedule` for more information). If set in
-    combination with `subjects` parameter, subjects will be processed over
-    multiple nodes, `core` parameter specifying how many subjects to run per
+    combination with `sessions` parameter, sessions will be processed over
+    multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
     `scheduler_sleep`, and `nprocess` parameters can be set.
 
@@ -830,7 +832,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     EXAMPLE USE
     ===========
 
-    gmri mapBIDS2nii folder=. overwrite=yes
+    mnap mapBIDS2nii folder=. overwrite=yes
 
     ----------------
     Written by Grega Repovš
@@ -840,6 +842,8 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
              - Initial version
     2018-09-19 Grega Repovš
              - Simplified dealing with preexisting data
+    2019-04-25
+             - Changed subjects to sessions
 
     '''
 

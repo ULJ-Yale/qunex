@@ -416,7 +416,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     DICOM-Report.txt file
     ---------------------
 
-    The DICOM-Report.txt file will be created and placed in the subject's dicom
+    The DICOM-Report.txt file will be created and placed in the sessions's dicom
     subfolder. The file will list the images it found, the information about
     their original sequence number and the resulting NIfTI file number, the name
     of the sequence, the number of frames, TR and TE values, subject id, time of
@@ -436,19 +436,19 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     MULTIPLE SUBJECTS AND SCHEDULING
     ================================
 
-    The command can be run for multiple subjects by specifying `subjects` and
+    The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified subjects in the subjectsfolder
+    will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
-    can be used to filter subjects or limit them to just specified id codes.
+    can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
-    automatically as each subject's folder. Commands will run in parallel by
+    automatically as each sessions's folder. Commands will run in parallel by
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `mnap ?schedule` for more information). If set in
-    combination with `subjects` parameter, subjects will be processed over
-    multiple nodes, `core` parameter specifying how many subjects to run per
+    combination with `sessions` parameter, sessions will be processed over
+    multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
     `scheduler_sleep`, and `nprocess` parameters can be set.
 
@@ -459,7 +459,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     EXAMPLE USE
     ===========
 
-    gmri dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    $ mnap dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
 
     ----------------
     Written by Grega Repovš
@@ -472,6 +472,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                subjects and scheduling
     2018-09-26 Grega Repovš
              - Added checking for existence of dicom folder
+    2019-04-25 Grega Repovs
+             - Changed subjects to sessions
     '''
 
     print "Running dicom2nii\n================="
@@ -868,7 +870,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     subject.txt file
     ----------------
 
-    The subject.txt will be placed in the subject base folder. It will contain
+    The subject.txt will be placed in the session base folder. It will contain
     the information about the session id, subject id, location of folders and a 
     list of created NIfTI images with their description.
 
@@ -926,21 +928,21 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     will be created that holds the output of the command that was run to convert 
     the DICOM or PAR/REC files to a NIfTI image.
 
-    MULTIPLE SUBJECTS AND SCHEDULING
+    MULTIPLE SESSIONS AND SCHEDULING
     ================================
 
-    The command can be run for multiple sessions by specifying `subjects` and
+    The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified subjects in the subjectsfolder
+    will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
     can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
-    automatically as each subject's folder. Commands will run in parallel by
+    automatically as each sessions's folder. Commands will run in parallel by
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `mnap ?schedule` for more information). If set in
-    combination with `subjects` parameter, sessions will be processed over
+    combination with `sessions` parameter, sessions will be processed over
     multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
     `scheduler_sleep`, and `nprocess` parameters can be set.
@@ -952,7 +954,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     EXAMPLE USE
     ===========
 
-    gmri dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    $ mnap dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
 
     ----------------
     Written by Grega Repovš
@@ -988,6 +990,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
              - Added extraction of subject id
     2019-04-22
              - Changed addImageType option to specify the number of last labels to retain
+    2019-04-25
+             - Changed subjects to sessions
     '''
 
     print "Running dicom2niix\n=================="
@@ -1364,7 +1368,7 @@ def sortDicom(folder=".", **kwargs):
     USE
     ===
 
-    The command looks for the inbox subfolder in the specified subject folder
+    The command looks for the inbox subfolder in the specified session folder
     (folder) and checks for presence of DICOM or PAR/REC files in the inbox
     folder and its subfolders. It inspects the found files, creates a dicom
     folder and for each image a numbered subfolder. It then moves the found
@@ -1376,25 +1380,25 @@ def sortDicom(folder=".", **kwargs):
     PARAMETERS
     ==========
 
-    --folder: The base subject folder that contains the inbox subfolder with
+    --folder: The base session folder that contains the inbox subfolder with
               the unsorted DICOM files.
 
-    MULTIPLE SUBJECTS AND SCHEDULING
+    MULTIPLE SESSIONS AND SCHEDULING
     ================================
 
-    The command can be run for multiple subjects by specifying `subjects` and
+    The command can be run for multiple sessions by specifying `sessions` and
     optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified subjects in the subjectsfolder
+    will be run for each of the specified sessions in the subjectsfolder
     (current directory by default). Optional `filter` and `subjid` parameters
-    can be used to filter subjects or limit them to just specified id codes.
+    can be used to filter sessions or limit them to just specified id codes.
     (for more information see online documentation). `sfolder` will be filled in
-    automatically as each subject's folder. Commands will run in parallel by
+    automatically as each sessions's folder. Commands will run in parallel by
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
     scheduler settings (see `mnap ?schedule` for more information). If set in
-    combination with `subjects` parameter, subjects will be processed over
-    multiple nodes, `core` parameter specifying how many subjects to run per
+    combination with `sessions` parameter, sessions will be processed over
+    multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
     `scheduler_sleep`, and `nprocess` parameters can be set.
 
@@ -1405,7 +1409,7 @@ def sortDicom(folder=".", **kwargs):
     EXAMPLE USE
     ===========
 
-    gmri sortDicom folder=OP667
+    $ mnap sortDicom folder=OP667
 
     ----------------
     Written by Grega Repovš
@@ -1422,6 +1426,8 @@ def sortDicom(folder=".", **kwargs):
     2018-07-20 Grega Repovš
              - Added more robust checking for and reporting of presence of image 
                files in sortDicom
+    2019-04-25
+             - Changed subjects to sessions
     '''
 
     # --- should we copy or move
@@ -1570,7 +1576,7 @@ def listDicom(folder=None):
     EXAMPLE USE
     ===========
 
-    gmri listDicom folder=OP269/dicom
+    $ mnap listDicom folder=OP269/dicom
 
     ----------------
     Written by Grega Repovš
@@ -1610,13 +1616,13 @@ def splitDicom(folder=None):
     USE
     ===
 
-    The command is used when DICOM images from different subjects are mixed in
+    The command is used when DICOM images from different sessions are mixed in
     the same folder and need to be sorted out. Specifically, the command
     inspects the specified folder (folder) and its subfolders for the presence
-    of DICOM files. For each DICOM file it finds, it checks, what subject id the
+    of DICOM files. For each DICOM file it finds, it checks, what session id the
     file belongs to. In the specified folder it then creates a subfolder for
-    each of the found subjects and moves all the DICOM files in the right
-    subject's subfolder.
+    each of the found sessions and moves all the DICOM files in the right
+    sessions's subfolder.
 
     PARAMETERS
     ==========
@@ -1626,7 +1632,7 @@ def splitDicom(folder=None):
     EXAMPLE USE
     ===========
 
-    gmri splitDicom folder=dicommess
+    $ mnap splitDicom folder=dicommess
 
     ----------------
     Written by Grega Repovš
@@ -1634,6 +1640,8 @@ def splitDicom(folder=None):
     Changelog
     2017-02-08 Grega Repovš
              - Updated documentation
+    2019-04-25
+             - Changed subjects to sessions
     '''
 
     if folder is None:
@@ -1656,7 +1664,7 @@ def splitDicom(folder=None):
             if sid not in subjects:
                 subjects.append(sid)
                 os.makedirs(os.path.join(folder, sid))
-                print "===> creating subfolder for subject %s" % (sid)
+                print "===> creating subfolder for session %s" % (sid)
             print "---> %s - %-6s %6d - %-30s scanned on %s" % (dcm, sid, d.SeriesNumber, d.SeriesDescription, time)
             os.rename(dcm, os.path.join(folder, sid, os.path.basename(dcm)))
         except:
@@ -1665,42 +1673,48 @@ def splitDicom(folder=None):
     return
 
 
-def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pattern=None, tool='auto', cores=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes'):
+def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, tool='auto', cores=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes'):
     '''
-    processInbox [subjectsfolder=.] [sessions=""] [inbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern=".*?(OP[0-9.-]+).*\.zip"] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [verbose=yes]  
+    processInbox [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(.*?)[.zip]"] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [verbose=yes]  
 
     USE
     ===
 
     The command is used to automatically process packets with individual
-    subject's DICOM or PAR/REC files all the way to, and including, generation
+    sessions's DICOM or PAR/REC files all the way to, and including, generation
     of NIfTI files. Packet can be either a zip file, a tar archive or a folder 
     that contains DICOM or PAR/REC files.
 
-    The commands can import packets either from a dedicated inbox folder and
-    create the necessary session folders within `subjectsfolder`, or it can
-    process the data already present in the session specific folder. 
+    The commands can import packets either from a dedicated masterinbox folder 
+    and create the necessary session folders within `subjectsfolder`, or it can
+    process the data already present in the session specific folders. 
 
 
-    Processing data from a dedicated inbox folder
-    ---------------------------------------------
+    Processing data from a dedicated masterinbox folder
+    ---------------------------------------------------
 
-    This is the default operation. In this case the `inbox` parameter has to
-    provide a path to the folder with the incoming packets 
+    This is the default operation. In this case the `masterinbox` parameter has 
+    to provide a path to the folder with the incoming packets 
     (`<subjectsfolder>/inbox/MR` by default). The subject/session id is 
     identified by the use of the `pattern` parameter, and optionally the 
-    `logfile` parameter. The packages processed can be optionally specified by
-    the `sessions` parameter.
+    `logfile` parameter. The packages processed can be optionally further 
+    filtered by the `sessions` parameter, so that only the packages that match
+    both with the pattern and sessions list are processed.
 
-    The command first looks into provided inbox folder (inbox; by default
-    `inbox/MR`) and finds any packets that match the specified regex pattern
-    (pattern). The pattern has to be prepared to return as the first group
-    found the subject id. Once all the packets have been found, it lists them
-    along with the extracted subject ids. If the check parameter is set to
-    'yes', the command will ask whether to process the listed packets, if it is
-    set to 'no', it will just start processing them.
+    The command first looks into provided master inbox folder (masterinbox; by 
+    default `<subjectsfolder>/inbox/MR`) and finds any packets that match the 
+    specified regex pattern (pattern). The pattern has to be prepared so that 
+    it returns as the first group found the session id. Once all the packets 
+    have been found, if the sessions parameter is specified, it will select to
+    process only those that match the patterns specified in the sessions 
+    parameter list. It then lists all the sessions to process along with the 
+    extracted subject ids and session names. If the check parameter is set to 
+    'yes', the command will ask whether to process the listed packets, if it is 
+    set to 'no', it will just start processing them, if it is set to `any`, it 
+    will start processing them but return an explicit error if no packets are 
+    found. 
 
-    For each found packet, the command will generate a new session folder. 
+    For each packet found, the command will generate a new session folder. 
     Importantly, if the session is one of multiple sessions per subject, then 
     the extracted name should have the form `<subject id>_<session name>`. In 
     this case the `ID` and `session id` parameters in the `subject.txt` file 
@@ -1722,28 +1736,28 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
     into an inbox folder created within the session folder. Once all the files 
     are extracted or copied, depending on the archive parameter, the packet is 
     then either moved or copied to the `study/subjects/archive/MR` folder, left
-     as is, or deleted. If the archive folder does not yet exist, it is created.
+    as is, or deleted. If the archive folder does not yet exist, it is created.
 
     If a subject folder already exists, then the related packet will not be 
     processed so that existing data is not changed. Either remove or rename the 
     exisiting folder(s) and rerun the command to process those packet(s) as 
     well. 
 
-    If `sessions` parameter is set to yes, then only those packet names that 
-    match the list in `sessions` will be processed. The entries in the list can
-    be regex patterns, in which case all the packet names that match any of the
-    patterns will be processed.
+    If `sessions` parameter is set, then only those packet names that match the 
+    list in `sessions` will be processed. The entries in the list can be regex 
+    patterns, in which case all the packet names that match any of the patterns 
+    will be processed.
 
     
     Processing data from a session folder
     -------------------------------------
 
-    If the `inbox` parameter is set to "none", then the command assumes that 
-    the incoming data has already been saved to each session folder within the
-    `subjectsfolder`. In this case, the command will look into all folders that
-    match the list provided in the `sessions` parameter and process the data in
-    that folder. Each entry in the list can be a glob pattern matching with 
-    multitiple session folders.
+    If the `masterinbox` parameter is set to "none", then the command assumes 
+    that the incoming data has already been saved to each session folder within 
+    the `subjectsfolder`. In this case, the command will look into all folders 
+    that match the list provided in the `sessions` parameter and process the 
+    data in that folder. Each entry in the list can be a glob pattern matching 
+    with multitiple session folders.
 
     The folders are expected to be named using the formula:
     `<subject id>_<session name>`. If no underscore is found then the command 
@@ -1777,19 +1791,25 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
     ==========
 
     --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
-                      the inbox and individual subject folders are. [.]
+                      the inbox and individual subject folders are. If not 
+                      specified, the current working folder will be taken as 
+                      the location of the subjectsfolder. [.]
     
     --sessions        A comma delimited string that lists the sessions to 
-                      process. If dedicated inbox folder is used, the parameter 
-                      is optional and it can include regex patterns. If `inbox`
-                      is set to none, the list specifies the session folders to 
-                      process, and it can include glob patterns. [""]
+                      process. If master inbox folder is used, the parameter 
+                      is optional and it can include regex patterns. In this 
+                      case only those sessions identified by the pattern that
+                      also match with any of the patterns in the sessions list
+                      will be processed. If `masterinbox` is set to none, the 
+                      list specifies the session folders to process, and it can 
+                      include glob patterns. [""]
     
-    --inbox           The inbox folder with packages to process. By default 
-                      inbox is in base study folder: inbox/MR. If the packages 
-                      are elsewhere the location can be specified here. If set
-                      to "none", the data is assumed to already exist in the 
-                      individual sessions folders. [<folder>/inbox/MR]
+    --masterinbox     The master inbox folder with packages to process. By 
+                      default masterinbox is in base study folder: 
+                      <subjectsfolder>/inbox/MR. If the packages are elsewhere 
+                      the location can be specified here. If set to "none", the 
+                      data is assumed to already exist in the individual 
+                      sessions folders. [<subjectsfolder>/inbox/MR]
     
     --check           The type of check to perform when packages or session  
                       folders are identified. The possible values are:
@@ -1801,7 +1821,7 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
                       [yes]
 
     --pattern         The regex pattern to use to extract packet name.
-                      [".*?(OP[0-9.-]+).*\.zip"]
+                      ["(.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"]
 
     --tool            What tool to use for the conversion [auto]. It can be one 
                       of:
@@ -1873,6 +1893,10 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
              - Added the ability to process tar packages.
     2019-04-20 Grega Repovs
              - Extended for use with existing session folders
+    2019-04-25 Grega Repovs
+             - Changed inbox to masterinbox
+             - Added no package/session reporting
+             - Changed the default pattern
     '''
 
     print "Running processInbox\n===================="
@@ -1889,16 +1913,16 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
     if subjectsfolder is None:
         subjectsfolder = "."
 
-    if inbox is None:
-        inbox = os.path.join(subjectsfolder, 'inbox', 'MR')
+    if masterinbox is None:
+        masterinbox = os.path.join(subjectsfolder, 'inbox', 'MR')
 
-    if inbox.lower() == 'none':
-        inbox = None
+    if masterinbox.lower() == 'none':
+        masterinbox = None
         if sessions is None or sessions == "":
-            raise ge.CommandError('processInbox', "Sessions parameter not specified", "If `inbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
+            raise ge.CommandError('processInbox', "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
 
     if pattern is None:
-        pattern = r".*?(OP[0-9.-]+).*\.zip"
+        pattern = r"(.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"
 
     igz = re.compile(r'.*\.gz')
 
@@ -1947,9 +1971,9 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
     packets = {'ok': [], 'nolog': [], 'bad': [], 'exist': [], 'skip': [], 'invalid': []}
     emptysession = {'subjectid': None, 'sessionname': None, 'sessionid': None, 'packetname': None}
 
-    # ---- get list of files / folders in inbox
+    # ---- get list of files / folders in masterinbox
 
-    if inbox:
+    if masterinbox:
 
         reportSet = [('ok', '---> Found the following packets to process:'),
                      ('nolog', "---> These packets do not match with the log and they won't be processed"),
@@ -1958,9 +1982,9 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
                      ('exist', "---> The folder for these packages already exist:"),
                      ('skip', "---> These packages do not match list of sessions and will be skipped:")]
 
-        print "---> Checking for packets in %s ... using pattern '%s'" % (os.path.abspath(inbox), pattern)
+        print "---> Checking for packets in %s ... using pattern '%s'" % (os.path.abspath(masterinbox), pattern)
 
-        files = glob.glob(os.path.join(inbox, '*'))
+        files = glob.glob(os.path.join(masterinbox, '*'))
         getop = re.compile(pattern)
 
         for file in files:
@@ -2133,7 +2157,7 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
 
             print "\n\n---=== PROCESSING %s ===---\n" % (session['sessionid'])
 
-            if inbox:
+            if masterinbox:
                 os.makedirs(sfolder)
                 os.makedirs(ifolder)
                 files = [file]
@@ -2267,7 +2291,7 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
                 print "".join(['=' for e in range(len(s))])
 
             for p in files:
-                if inbox or re.search("\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", p):
+                if masterinbox or re.search("\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$", p):
                     archivetarget = os.path.join(afolder, os.path.basename(p))
 
                     # --- move package to archive
@@ -2362,7 +2386,7 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
     EXAMPLE USE
     ===========
 
-    gmri getDICOMInfo dicomfile=ap308e727bxehd2.372.2342.42566.dcm
+    $ mnap getDICOMInfo dicomfile=ap308e727bxehd2.372.2342.42566.dcm
 
     ----------------
     Written by Grega Repovš
