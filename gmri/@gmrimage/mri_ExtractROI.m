@@ -15,6 +15,7 @@ function ts = mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 %      'threshold'  - average of all voxels above threshold
 %      'maxn'       - average of highest n voxels
 %      'weighted'   - weighted average across ROI voxels
+%      'all'        - all voxels within a ROI 
 %   weights         - image file with weights to use []
 %   criterium       - threshold or number of voxels to extract []
 %
@@ -25,6 +26,7 @@ function ts = mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
 %
 %   Grega Repovs, 2013-07-24 ... Adjusted to use multivolume ROI objects
 %   Grega Repovs, 2018-03-18 ... Added 'median' as an option for extraction method
+%   Grega Repovs, 2019-04-25 ... Added 'all' as an option for extraction method
 
 if nargin < 6; criterium = [];  end
 if nargin < 5; weights = [];    end
@@ -37,7 +39,7 @@ method = lower(method);
 
 % ---- check method
 
-if ~ismember(method, {'mean', 'pca', 'threshold', 'maxn', 'weighted', 'median'})
+if ~ismember(method, {'mean', 'pca', 'threshold', 'maxn', 'weighted', 'median', 'all'})
     error('ERROR: Unrecognized method of computing ROI mean!')
 end
 
@@ -100,13 +102,18 @@ end
 
 nrois = length(rcodes);
 target = obj.image2D;
-ts = zeros(nrois, obj.frames);
+
+if strcmp(method, 'all')
+    ts = {};
+else
+    ts = zeros(nrois, obj.frames);
+end
 
 for r = 1:nrois
 
     tmp = target(roi.mri_ROIMask(rcodes(r)), :);
 
-    if isempty(tmp)
+    if isempty(tmp) && not(strcmp(method, 'all'))
         ts(r, :) = 0;
         continue
     end
@@ -141,6 +148,9 @@ for r = 1:nrois
         case 'pca'
             [coeff, score] = princomp(tmp');
             ts(r, :) = score(:,1)';
+
+        case 'all'
+            ts{r} = tmp;
     end
 end
 

@@ -14,7 +14,7 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %       options     - A string defining which outputs to create ['m']:
 %                     -> t - create a tab delimited text file,
 %                     -> m - create a matlab file
-%       method      - Method for extracting timeseries - 'mean', 'median', 'pca' ['mean'].
+%       method      - Method for extracting timeseries - 'mean', 'median', 'pca', 'all' ['mean'].
 %       ignore      - do we omit frames to be ignored ['no']:
 %                     -> no:     do not ignore any additional frames
 %                     -> event:  ignore frames as marked in .fidl file
@@ -96,6 +96,8 @@ function [data] = fc_ExtractROITimeseriesMasked(flist, roiinfo, inmask, targetf,
 %   2017-04-25 Grega Repovs
 %            - Updated to allow multiple extractions using the same event string
 %              as fc_ComputeSeedMaps
+%   2019-04-25 Grega Repovs
+%            - Updated to allow extraction of all voxels within a ROI
 %
 
 if nargin < 10 || isempty(bmask),  bmask   = false;  end
@@ -306,13 +308,17 @@ if ismember('t', options)
 
     % ---> print data
 
-    for a = 1:nana
-        for is = 1:nsub
-            ts = data.(ana(a).name).timeseries{is};
-            tslen = size(ts, 2);
-            for it = 1:tslen
-                fprintf(fout, '\n%s\t%s\t%d', data.subjects{is}, ana(a).name, it);
-                fprintf(fout, '\t%.5f', ts(:,it));
+    if strcmp(method, 'all')
+        fprintf('WARNING: Export of textual data for all voxels in ROI not yet supported!');
+    else
+        for a = 1:nana
+            for is = 1:nsub
+                ts = data.(ana(a).name).timeseries{is};
+                tslen = size(ts, 2);
+                for it = 1:tslen
+                    fprintf(fout, '\n%s\t%s\t%d', data.subjects{is}, ana(a).name, it);
+                    fprintf(fout, '\t%.5f', ts(:,it));
+                end
             end
         end
     end
