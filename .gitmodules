@@ -13,3 +13,6 @@
 # [submodule "hcpextendedpull"]
 #	path = hcpextendedpull
 #	url = git@bitbucket.org:hidradev/hcpextendedpull.git
+[submodule "nitools"]
+	path = nitools
+	url = git@bitbucket.org:hidradev/nitools.git
