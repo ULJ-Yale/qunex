@@ -1760,10 +1760,11 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
                       process, and it can include glob patterns. [""]
     
     --inbox           The inbox folder with packages to process. By default 
-                      inbox is in base study folder: inbox/MR. If the packages 
-                      are elsewhere the location can be specified here. If set
-                      to "none", the data is assumed to already exist in the 
-                      individual sessions folders. [<folder>/inbox/MR]
+                      `inbox` is in base study folder: `<study>/subjects/inbox/MR.` 
+                      If the packages are elsewhere the location can be 
+                      specified here. If set to "none", the data is assumed to 
+                      already exist in the individual sessions folders. 
+                      [<subjectsfolder>/inbox/MR]
     
     --check           The type of check to perform when packages or session  
                       folders are identified. The possible values are:
@@ -1790,7 +1791,7 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
                       'all', all the avaliable cores will be utilized. [1]               
 
     --logfile         A string specifying the location of the log file and the 
-                      columns in which packetname, sessionid and subjectid 
+                      columns in which packetname, subject id and session name
                       information are stored. The string should specify:
                       "path:<path to the log file>|packetname:<name of the 
                       packet extracted by the pattern>|subjectid:<the column 
@@ -1846,6 +1847,8 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
              - Added the ability to process tar packages.
     2019-04-20 Grega Repovs
              - Extended for use with existing session folders
+    2019-04-25 Grega Repovs
+             - Report when no packets were processed
     '''
 
     print "Running processInbox\n===================="
@@ -2056,11 +2059,16 @@ def processInbox(subjectsfolder=None, sessions=None, inbox=None, check="yes", pa
                 return
     else:        
         if check.lower() == 'any':
-            raise ge.CommandFailed("processInbox", "No packets found to process", "No packets were found to be processed in the inbox [%s]!" % (inbox), "Please check your data!")
+            if inbox:
+                raise ge.CommandFailed("processInbox", "No packets found to process", "No packets were found to be processed in the inbox [%s]!" % (os.path.abspath(inbox)), "Please check your data!")                
+            else:
+                raise ge.CommandFailed("processInbox", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder)), "Please check your data!")                
         else:
-            print "---> DONE"
-            return
-
+            if inbox:
+                raise ge.CommandNull("processInbox", "No packets found to process", "No packets were found to be processed in the inbox [%s]!" % (os.path.abspath(inbox)))
+            else:
+                raise ge.CommandNull("processInbox", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder))) 
+                
 
     # ---- Ok, now loop through the packets
 
