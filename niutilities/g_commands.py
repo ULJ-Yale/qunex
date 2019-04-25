@@ -25,7 +25,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'sortDicom'            : {'com': g_dicom.sortDicom,              'args': ('folder', 'out_dir', 'files', 'copy')},
             'dicom2nii'            : {'com': g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores', 'debug')},
             'dicom2niix'           : {'com': g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'sessionid', 'verbose', 'cores', 'debug', 'tool', 'options')},
-            'processInbox'         : {'com': g_dicom.processInbox,           'args': ('subjectsfolder', 'sessions', 'inbox', 'check', 'pattern', 'tool', 'cores', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose')},
+            'processInbox'         : {'com': g_dicom.processInbox,           'args': ('subjectsfolder', 'sessions', 'masterinbox', 'check', 'pattern', 'tool', 'cores', 'logfile', 'archive', 'options', 'unzip', 'gzip', 'verbose')},
             'getDICOMInfo'         : {'com': g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
             'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsName')},
             'mapBIDS2nii'          : {'com': g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite')},

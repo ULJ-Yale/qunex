@@ -604,7 +604,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
     # --- check sessions
 
-    if sessions.lower() == 'none:
+    if sessions.lower() == 'none':
         sessions = None
 
     if sfilter.lower() == 'none':
@@ -872,7 +872,7 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
     if sessions.lower() == 'none':
         sessions = None
 
-    if sfilter.lower() == 'none:
+    if sfilter.lower() == 'none':
         sfilter = None
 
     # --- prepare parameters

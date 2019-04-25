@@ -2109,12 +2109,12 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     else:        
         if check.lower() == 'any':
             if inbox:
-                raise ge.CommandFailed("processInbox", "No packets found to process", "No packets were found to be processed in the inbox [%s]!" % (os.path.abspath(inbox)), "Please check your data!")                
+                raise ge.CommandFailed("processInbox", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
             else:
                 raise ge.CommandFailed("processInbox", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder)), "Please check your data!")                
         else:
-            if inbox:
-                raise ge.CommandNull("processInbox", "No packets found to process", "No packets were found to be processed in the inbox [%s]!" % (os.path.abspath(inbox)))
+            if masterinbox:
+                raise ge.CommandNull("processInbox", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)))
             else:
                 raise ge.CommandNull("processInbox", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder))) 
                 
