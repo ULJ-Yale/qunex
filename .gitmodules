@@ -1,9 +1,6 @@
 [submodule "niutilities"]
 	path = niutilities
 	url = git@bitbucket.org:hidradev/niutilities.git
-[submodule "matlab"]
-	path = matlab
-	url = git@bitbucket.org:hidradev/matlab.git
 [submodule "library"]
 	path = library
 	url = git@bitbucket.org:hidradev/library.git
