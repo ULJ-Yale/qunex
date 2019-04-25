@@ -517,17 +517,17 @@ def main(args=None):
                 opts[k] = True
         runCommand(comm, opts)
 
+
+    except ge.CommandNull as e:
+        print ge.reportCommandNull(comm, e)
+        print
+        sys.exit(0)
     except ge.CommandFailed as e:
-        if e.function == comm:
-            print "\n===> ERROR in completing %s:\n     %s\n" % (comm, "\n     ".join(e.report))
-        else:
-            print "\n===> ERROR in completing %s at %s:\n     %s\n" % (comm, e.function, "\n     ".join(e.report))
+        print ge.reportCommandFailed(comm, e)
+        print
         sys.exit(1)
     except ge.CommandError as e:
-        if e.function == comm:
-            print "\nERROR in running %s:\n%s" % (comm, "\n".join(e.report))
-        else:
-            print "\nERROR in running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
+        print ge.reportCommandError(comm, e)
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
         print "\nPlease run `gmri ?%s` to get help for the failed command.\n" % (comm)
         sys.exit(1)
