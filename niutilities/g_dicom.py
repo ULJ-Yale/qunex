@@ -1007,7 +1007,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     # check options
 
     optionstr = options
-    options = {'addImageType': 'no'}
+    options = {'addImageType': '0'}
 
     if optionstr:
         try:
