@@ -463,6 +463,7 @@ Change Log
 * 0.39.09 [matlab] Added extraction of all voxels within a ROI to ExtractROITimeseriesMasked
 * 0.40.00 [nitools] Renamed matlab subrepository to nitools
 * 0.41.00 [niutilities] Changed subjects parameter to sessions, added CommandNull exception
+* 0.41.01 [niutilities] Corrected default for addImageType
 
 Stable Container Tag Log
 ========================
