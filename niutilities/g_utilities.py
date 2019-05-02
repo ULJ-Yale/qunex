@@ -314,6 +314,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
              - Fixed adding paramfile and updated documentation
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-05-02 Grega Repovš
+             - Added subjectsfolder to getSubjectList call
     '''
 
     print "Running createBatch\n==================="
@@ -324,10 +326,12 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     if sfilter.lower() == 'none':
         sfilter = None
 
+    subjectsfolder = os.path.abspath(subjectsfolder)
+
     # --- prepare target file name and folder
 
     if tfile is None:
-        tfile = os.path.join(os.path.dirname(os.path.abspath(subjectsfolder)), 'processing', 'batch.txt')
+        tfile = os.path.join(os.path.dirname(subjectsfolder), 'processing', 'batch.txt')
 
     if os.path.exists(tfile):
         if overwrite == 'ask':
@@ -365,7 +369,7 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
         print "---> Creating file %s" % (os.path.basename(tfile))
         jfile = open(tfile, 'w')
         print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
-        print >> jfile, "# Subjects folder: %s" % (os.path.abspath(subjectsfolder))
+        print >> jfile, "# Subjects folder: %s" % (subjectsfolder)
         print >> jfile, "# Source files: %s" % (sfile)
         slist   = []
 
@@ -407,7 +411,7 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     missing = 0
 
     if sessions is not None:
-        sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False)
+        sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
         files = []
         for session in sessions:
             nfiles = glob.glob(os.path.join(subjectsfolder, session['id'], sfile))
@@ -417,7 +421,7 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
                 print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(subjectsfolder, session['id'], sfile))
                 missing += 1
     else:
-        files = glob.glob(os.path.join(os.path.abspath(subjectsfolder), '*', sfile))
+        files = glob.glob(os.path.join(subjectsfolder, '*', sfile))
 
     # --- loop trough session files
 
@@ -588,6 +592,8 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     Change log
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-05-02 Grega Repovš
+             - Added subjectsfolder to getSubjectList call
 
     """
 
@@ -603,6 +609,8 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
                 raise ge.CommandFailed("createList", "File does not exist", "A file to be included in the list does not exist [%s]" % (fileName), "Please check paths or set `check` to `no` to add the missing files anyway")
 
     # --- check sessions
+
+    subjectsfolder = os.path.abspath(subjectsfolder)
 
     if sessions.lower() == 'none':
         sessions = None
@@ -624,7 +632,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     # --- prepare target file name and folder
 
     if listfile is None:
-        listfile = os.path.join(os.path.dirname(os.path.abspath(subjectsfolder)), 'processing', 'lists', 'subjects.list')
+        listfile = os.path.join(os.path.dirname(subjectsfolder), 'processing', 'lists', 'subjects.list')
         print "WARNING: No target list file name specified.\n         The list will be created as: %s!" % (listfile)
 
     if os.path.exists(listfile):
@@ -661,7 +669,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False)
+    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
 
     # --- generate list entries
 
@@ -672,7 +680,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
         if boldnums:
             for boldnum in boldnums:
-                tfile = os.path.join(os.path.abspath(subjectsfolder), session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
                 checkFile(tfile)
                 lines.append("    file:" + tfile)
 
@@ -687,27 +695,27 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(os.path.abspath(subjectsfolder), session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
                 checkFile(tfile)
                 lines.append("    file:" + tfile)
 
         if roi:
-            tfile = os.path.join(os.path.abspath(subjectsfolder), session['id'], 'images', roi)
+            tfile = os.path.join(subjectsfolder, session['id'], 'images', roi)
             checkFile(tfile)
             lines.append("    roi:" + tfile)
 
         if glm:
-            tfile = os.path.join(os.path.abspath(subjectsfolder), session['id'], 'images', 'functional', glm)
+            tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', glm)
             checkFile(tfile)
             lines.append("    glm:" + tfile)
 
         if conc:
-            tfile = os.path.join(os.path.abspath(subjectsfolder), session['id'], 'images', 'functional', 'concs', conc)
+            tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', 'concs', conc)
             checkFile(tfile)
             lines.append("    conc:" + tfile)
 
         if fidl:
-            tfile = os.path.join(os.path.abspath(subjectsfolder), session['id'], 'images', 'functional', 'events', fidl)
+            tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', 'events', fidl)
             checkFile(tfile)
             lines.append("    fidl:" + tfile)
 
@@ -850,6 +858,8 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
     Change log
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-05-02 Grega Repovš
+             - Added subjectsfolder to getSubjectList call
 
     """
 
@@ -875,6 +885,8 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
     if sfilter.lower() == 'none':
         sfilter = None
 
+    subjectsfolder = os.path.abspath(subjectsfolder)
+
     # --- prepare parameters
 
     boldtags, boldnums = None, None
@@ -891,7 +903,7 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
     # --- prepare target file name and folder
 
     if concfolder is None:
-        concfolder = os.path.join(os.path.abspath(subjectsfolder), 'inbox', 'concs')
+        concfolder = os.path.join(subjectsfolder, 'inbox', 'concs')
         print "WARNING: No target conc folder specified.\n         The conc files will be created in folder: %s!" % (concfolder)
 
     if not os.path.exists(concfolder):
@@ -906,7 +918,7 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False)
+    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
 
     # --- generate list entries
 
@@ -919,7 +931,7 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
 
         if boldnums:
             for boldnum in boldnums:
-                tfile = os.path.join(os.path.abspath(subjectsfolder), session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
@@ -934,7 +946,7 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(os.path.abspath(subjectsfolder), session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
@@ -1531,3 +1543,323 @@ def batchTag2Num(filename=None, subjid=None, bolds=None):
     bolds = [str(e[0]) for e in bolds]
 
     print "BOLDS:%s" % (",".join(bolds))
+
+
+def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behavior.tsv", tfile=None, overwrite="no", check="yes", report="yes"):
+    """
+    gatherBehavior [subjectsfolder="."] [sessions=None] [sfilter=None] [sfile="behavior.tsv"] [tfile="<subjectsfolder>/inbox/behavior/behavior.tsv"] [overwrite="no"] [check="yes"]
+
+    The function gathers specified individual behavioral data from each 
+    session's behavior folder and compiles it into a specified group behavioral
+    file.
+
+    Parameters
+    ----------
+
+    --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
+                      the inbox and individual subject folders are. If not 
+                      specified, the current working folder will be taken as 
+                      the location of the subjectsfolder. [.]
+    
+    --sessions        Either a string with pipe `|` or comma separated list of 
+                      sessions (sessions ids) to be processed (use of grep 
+                      patterns is possible), e.g. "AP128,OP139,ER*", or a path
+                      to a batch.txt or *list file with a list of session ids.
+                      [*]
+
+    --sfilter         Optional parameter used to filter sessions to include. It
+                      is specifed as a string in format:
+    
+                      "<key>:<value>|<key>:<value>"
+
+                      Only the sessions for which all the specified keys match
+                      the specified values will be included in the list.
+
+    --sfile           A file or comma or pipe `|` separated list of files or
+                      grep patterns that define, which subject specific files 
+                      from the behavior folder to gather data from. 
+                      ['behavior.tsv']
+
+    --tfile           The path to the target file, a file that will contain
+                      the joined data from all the individual subject files.
+                      ['<subjectsfolder>/inbox/behavior.tsv']
+
+    --overwrite       Whether to overwrite an existing group behavioral file or
+                      not. ['no']
+
+    --check           Check whether all the identified sessions have data to 
+                      include in the compiled group file. The possible options
+                      are:
+
+                      * yes   ... Check and report an error if no behavioral
+                                  data exists for a session
+                      * warn  ... Warn and list the subjects for which the 
+                                  behavioral data was not found
+                      * no    ... Do not run a check, ignore sessions for which
+                                  no behavioral data was found
+
+    --report          Whether to include date when file was generated and the 
+                      final report in the compiled file ('yes') or not ('no'). 
+                      ['yes']
+
+    Use
+    ---
+    
+    The command will use the `subjectfolder`, `sessions` and `sfilter` 
+    parameters to create a list of sessions to process. For each session, the
+    command will use the `sfile` parameter to identify behavioral files from
+    which to compile the data from. If no file is found for a session and the
+    `check` parameter is set to `yes`, the command will exit with an error.
+
+    Once the files for each session are identified, the command will read all
+    the files and compile the data into a key:value dictionary for that session.
+    Once all the sessions are processed, a group file will be generated for 
+    all the values encountered across sessions. If any session is missing data,
+    the missing data will be identified as 'NA'
+
+    Group data will be saved to a file specified using `tfile` parameter. If no
+    path is specified, the default location will be used:
+
+    <subjectsfolder>/inbox/behavior/behavior.tsv
+
+    If a target file exists, it will be deleted and replaced, if the `overwrite`
+    parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
+    command will exit with an error.
+
+    
+    File format
+    -----------
+
+    Both the individual and the resulting group data is to be stored using a tab
+    separated value format files. Any line that starts with a hash `#` will be
+    ignored. The first valid line should hold the header, specifying the names
+    of the columns. All the following lines hold the values. Individual session
+    files should have a single line of data. The first column of the group file
+    will hold the session id.
+
+    In addition, the resulting file will start with a comment line stating the
+    date of creation and at the end, the 
+
+
+    Examples
+    --------
+
+    $ mnap gatherBehavior sessions="AP*"
+
+    The command will compile behavioral data present in `behavior.tsv` files 
+    present in all `<session id>/behavior` folder that match the "AP*" glob
+    pattern in the current folder. 
+
+    The resulting file will be save in the default location:
+
+    <current folder>/inbox/behavior
+
+    If any of the identified sessions do not include data or if errors are 
+    encountered when processing the data, the command will exit with an error.
+
+    $ mnap gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
+           sessions="AP*|OP*" sfile="*test*|*results*" \\
+           check="warn" overwrite="yes" report="no"
+
+    The command will find all the session folders within `/data/myStudy/subjects`
+    that have a `behavior` subfolder. It will then look for presence of any 
+    files that match "*test*" or "*results*" glob pattern. The compiled data 
+    will be saved in the default location. If a file alreadu exists, it will be
+    overwritten. If any errors are encountered, the command will not throw and 
+    error, however it also won't report a successful completion of the task.
+    The resulting file will not have information on file generation or 
+    processing report.
+
+    $ mnap gateherBehavior subjectsfolder="/data/myStudy/subjects" \\
+           sessions="/data/myStudy/processing/batch.txt" \\           
+           sfilter="group:controls|behavioral:yes" \\
+           sfile="*test*|*results*" \\
+           tfile="/data/myStudy/analysis/n-bridge/controls.tsv" \\
+           check="no" overwrite="yes"
+
+    The command will read the session information from the provided batch.txt 
+    file. It will then process only those sessions that have the following
+    lines in their description:
+
+    group: control
+    behavioral: yes
+
+    For those sessions it will inspect '<session id>/behavior' folder for 
+    presence of files that match either '*test*' or '*results*' glob pattern.
+    The compiled data will be saved to the specified target file. If the target
+    file exists, it will be overwritten. The command will print a full report 
+    of the processing, however, it will exit with reported success even if 
+    missing files or errors were encountered.
+
+    ----------------
+    Written by Grega Repovš 2019-05-02
+
+    """
+
+    # --- Support function
+
+    def addData(file, sdata, keys):
+
+        header = None
+        data   = None
+
+        with(open(file, 'r')) as f:
+            for line in f:
+                if line.startswith('#'):
+                    continue
+                elif header is None:
+                    header = [e.strip() for e in line.split('\t')]
+                elif data is None:
+                    data = [e.strip() for e in line.split('\t')]
+        
+        ndata   = len(data)
+        nheader = len(header)
+        if ndata != nheader:
+            return "Number of header [%d] and data [%d] fields do not match!" % (nheader, ndata)
+
+        for n in range(ndata):
+            if header[n] in sdata:
+                if sdata[header[n]] != data[n]:
+                    return "File [%s] has duplicate and nonmatching ['%s' vs '%s'] data for variable '%s'!" % (file, data[n], sdata[header[n]], header[n])
+            else:
+                sdata[header[n]] = data[n]
+                if header[n] not in keys:
+                    keys.append(header[n])
+
+
+    # --- Start it up
+
+    print "Running gatherBehavior\n======================"
+
+    # --- check subjects folder
+
+    subjectsfolder = os.path.abspath(subjectsfolder)
+
+    if not os.path.exists(subjectsfolder):
+        raise ge.CommandFailed("gatherBehavior", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (subjectsfolder), "Please check paths!")
+
+    # --- check target file
+
+    if tfile is None:
+        tfile = os.path.join(subjectsfolder, 'inbox', 'behavior', 'behavior.tsv')
+
+    overwrite = overwrite.lower() == 'yes'
+
+    if os.path.exists(tfile):
+        if overwrite:
+            try:
+                os.remove(tfile)
+            except:
+                raise ge.CommandFailed("gatherBehavior", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (tfile), "Please check your paths and authorizations!")        
+        else:
+            raise ge.CommandFailed("gatherBehavior", "Target file exists", "The specified target file already exists [%s]" % (tfile), "Please check your paths or set overwrite to 'yes'!")        
+
+    # --- check sessions
+
+    if sessions and sessions.lower() == 'none':
+        sessions = None
+
+    if sfilter and sfilter.lower() == 'none':
+        sfilter = None
+
+    report = report.lower() == 'yes'
+
+    # --- check sfile
+
+    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sfile)]
+
+    # --- check sessions
+
+    if sessions is None:
+        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
+        sessions = glob.glob(os.path.join(subjectsfolder, '*', 'behavior'))
+        sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
+        sessions = "|".join(sessions)
+
+    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+
+    # --- generate list entries
+
+    processReport = {'ok': [], 'missing': [], 'error': []}
+    data = {}
+    keys = []
+
+    for session in sessions:
+
+        files = []
+        for sfile in sfiles:
+            files += glob.glob(os.path.join(subjectsfolder, session['id'], 'behavior', sfile))
+
+        if not files:
+            processReport['missing'].append(session['id'])
+            continue
+
+        sdata = {}
+        for file in files:
+            error = addData(file, sdata, keys)
+            if error:
+                processReport['error'].append((session['id'], error))
+                break
+
+        if error:
+            continue
+
+        processReport['ok'].append(session['id'])
+        data[session['id']] = dict(sdata)
+
+
+    # --- save group data
+
+    try:
+        fout = open(tfile, 'w')
+    except:
+        raise ge.CommandFailed("gatherBehavior", "Could not create target file", "Target file could not be created at the specified location [%s]" % (tfile), "Please check your paths and authorizations!")        
+
+    header = ['session id'] + keys
+    if report:
+        print >> fout, "# Data compiled using gatherBehavior on %s" % (datetime.datetime.today())
+    print >> fout, "\t".join(header)
+
+    for sessionid in processReport['ok']:
+        sdata = data[sessionid]
+        line  = [sessionid]
+        for key in keys:
+            if key in sdata:
+                line.append(sdata[key])
+            else:
+                line.append('NA')
+        print >> fout, "\t".join(line)
+
+    # --- print report
+
+    reportit = [('ok', 'Successfully processed sessions:'), ('missing', 'Sessions for which no behavioral data was found'), ('error', 'Sessions for which an error was encountered')]
+
+    if any([processReport[status] for status, message in reportit]):
+        print "===> Final report"
+        for status, message in reportit:
+            if processReport[status]:
+                print '--->', message
+                if report and status != 'ok':
+                    print >> fout, '#', message
+                for info in processReport[status]:
+                    if status == 'error':
+                        print '     %s [%s]' % info
+                        if report:
+                            print >> fout, '# -> %s: %s' % info
+                    else:
+                        print '     %s' % (info)
+                        if report and status != 'ok':
+                            print >> fout, '# -> %s' % (info)
+
+    fout.close()
+
+    # --- exit
+
+    if processReport['error'] or processReport['missing']:
+        if check.lower() == 'yes':
+            raise ge.CommandFailed("gatherBehavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+        elif check.lower() == 'warn':
+            raise ge.CommandNull("gatherBehavior", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing behavioral data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+
+    if not processReport['ok']:
+        raise ge.CommandNull("gatherBehavior", "No files processed", "No valid data was found!")                
