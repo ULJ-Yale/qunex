@@ -464,6 +464,7 @@ Change Log
 * 0.40.00 [nitools] Renamed matlab subrepository to nitools
 * 0.41.00 [niutilities] Changed subjects parameter to sessions, added CommandNull exception
 * 0.41.01 [niutilities] Corrected default for addImageType
+* 0.41.02 [niutilities] Added gatherBehavior command
 
 Stable Container Tag Log
 ========================
