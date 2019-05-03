@@ -465,6 +465,14 @@ Change Log
 * 0.41.00 [niutilities] Changed subjects parameter to sessions, added CommandNull exception
 * 0.41.01 [niutilities] Corrected default for addImageType
 * 0.41.02 [niutilities] Added gatherBehavior command
+* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
+* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
+* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
+* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
+* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
+* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
+* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
+* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
 
 Stable Container Tag Log
 ========================
