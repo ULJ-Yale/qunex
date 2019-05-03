@@ -1545,9 +1545,9 @@ def batchTag2Num(filename=None, subjid=None, bolds=None):
     print "BOLDS:%s" % (",".join(bolds))
 
 
-def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behavior.tsv", tfile=None, overwrite="no", check="yes", report="yes"):
+def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behavior.txt", tfile=None, overwrite="no", check="yes", report="yes"):
     """
-    gatherBehavior [subjectsfolder="."] [sessions=None] [sfilter=None] [sfile="behavior.tsv"] [tfile="<subjectsfolder>/inbox/behavior/behavior.tsv"] [overwrite="no"] [check="yes"]
+    gatherBehavior [subjectsfolder="."] [sessions=None] [sfilter=None] [sfile="behavior.txt"] [tfile="<subjectsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]
 
     The function gathers specified individual behavioral data from each 
     session's behavior folder and compiles it into a specified group behavioral
@@ -1578,11 +1578,11 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     --sfile           A file or comma or pipe `|` separated list of files or
                       grep patterns that define, which subject specific files 
                       from the behavior folder to gather data from. 
-                      ['behavior.tsv']
+                      ['behavior.txt']
 
     --tfile           The path to the target file, a file that will contain
                       the joined data from all the individual subject files.
-                      ['<subjectsfolder>/inbox/behavior.tsv']
+                      ['<subjectsfolder>/inbox/behavior.txt']
 
     --overwrite       Whether to overwrite an existing group behavioral file or
                       not. ['no']
@@ -1620,7 +1620,7 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     Group data will be saved to a file specified using `tfile` parameter. If no
     path is specified, the default location will be used:
 
-    <subjectsfolder>/inbox/behavior/behavior.tsv
+    <subjectsfolder>/inbox/behavior/behavior.txt
 
     If a target file exists, it will be deleted and replaced, if the `overwrite`
     parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
@@ -1637,8 +1637,10 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     files should have a single line of data. The first column of the group file
     will hold the session id.
 
-    In addition, the resulting file will start with a comment line stating the
-    date of creation and at the end, the 
+    In addition, if `report` is set to 'yes' (the default), the resulting file 
+    will start with a comment line stating the date of creation, and at the end
+    additional comment lines will list the full report of missing files and 
+    errors encounterdd while gathering behavioral data from individual sessions.
 
 
     Examples
@@ -1646,7 +1648,7 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
 
     $ mnap gatherBehavior sessions="AP*"
 
-    The command will compile behavioral data present in `behavior.tsv` files 
+    The command will compile behavioral data present in `behavior.txt` files 
     present in all `<session id>/behavior` folder that match the "AP*" glob
     pattern in the current folder. 
 
@@ -1664,17 +1666,17 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     The command will find all the session folders within `/data/myStudy/subjects`
     that have a `behavior` subfolder. It will then look for presence of any 
     files that match "*test*" or "*results*" glob pattern. The compiled data 
-    will be saved in the default location. If a file alreadu exists, it will be
-    overwritten. If any errors are encountered, the command will not throw and 
+    will be saved in the default location. If a file already exists, it will be
+    overwritten. If any errors are encountered, the command will not throw an 
     error, however it also won't report a successful completion of the task.
     The resulting file will not have information on file generation or 
     processing report.
 
-    $ mnap gateherBehavior subjectsfolder="/data/myStudy/subjects" \\
+    $ mnap gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
            sessions="/data/myStudy/processing/batch.txt" \\           
            sfilter="group:controls|behavioral:yes" \\
            sfile="*test*|*results*" \\
-           tfile="/data/myStudy/analysis/n-bridge/controls.tsv" \\
+           tfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
            check="no" overwrite="yes"
 
     The command will read the session information from the provided batch.txt 
@@ -1741,7 +1743,7 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     # --- check target file
 
     if tfile is None:
-        tfile = os.path.join(subjectsfolder, 'inbox', 'behavior', 'behavior.tsv')
+        tfile = os.path.join(subjectsfolder, 'inbox', 'behavior', 'behavior.txt')
 
     overwrite = overwrite.lower() == 'yes'
 
