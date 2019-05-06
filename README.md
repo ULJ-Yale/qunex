@@ -466,13 +466,7 @@ Change Log
 * 0.41.01 [niutilities] Corrected default for addImageType
 * 0.41.02 [niutilities] Added gatherBehavior command
 * 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
-* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
-* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
-* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
-* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
-* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
-* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
-* 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
+* 0.41.04 [niutilities] Changed gmri to mnap in documentation
 
 Stable Container Tag Log
 ========================
