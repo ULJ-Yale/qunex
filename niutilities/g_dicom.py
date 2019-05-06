@@ -761,9 +761,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                             if verbose:
                                 print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                     else:
-                        print >> r, "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
+                        print >> r, "     WARNING: no slice number information, use mnap reslice manually to correct %s" % (tfname)
                         if verbose:
-                            print "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
+                            print "     WARNING: no slice number information, use mnap reslice manually to correct %s" % (tfname)
 
     if verbose:
         print "... done!"
@@ -1338,9 +1338,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                                 if verbose:
                                     print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                         else:
-                            print >> r, "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
+                            print >> r, "     WARNING: no slice number information, use mnap reslice manually to correct %s" % (tfname)
                             if verbose:
-                                print "     WARNING: no slice number information, use gmri reslice manually to correct %s" % (tfname)
+                                print "     WARNING: no slice number information, use mnap reslice manually to correct %s" % (tfname)
 
     r.close()
     stxt.close()

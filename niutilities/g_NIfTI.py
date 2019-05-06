@@ -87,7 +87,7 @@ def reslice(inf, slices, outf=None):
 
     If outf is not provided, it replaces the original file.
 
-    example: gmri reslice 07.nii.gz 48
+    example: mnap reslice 07.nii.gz 48
     '''
 
     slices = int(slices)

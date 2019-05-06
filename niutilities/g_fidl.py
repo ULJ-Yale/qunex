@@ -98,7 +98,7 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
     - fidlroot:  the root to use to find fild files
     - outfolder: the folder in which to save the results
 
-    example: gmri joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
+    example: mnap joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
     '''
 
     # ---> find all fidl files, sort them, read them, get TR info
@@ -185,7 +185,7 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     - fidlfolder:  the folder with fidl files - defaults to concfolder if not provided
     - outfolder:   the folder in which the joint files should be saved, defauts to fidlfolder if not provided
 
-    example gmri joinFidlFolder concfolder=concs fidlfolder=fidls
+    example mnap joinFidlFolder concfolder=concs fidlfolder=fidls
     '''
 
     if fidlfolder is None:
@@ -214,7 +214,7 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
 
 def splitFidl(concfile, fidlfile, outfolder=None):
     """
-    gmri splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
+    splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
 
     Splits a multi-bold fidl file into run specific bold files based on the sequence of bold files in conc file and their lengths.
 
@@ -285,7 +285,7 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     - verbose:    Whether to report progress
 
     Example use:
-    gmri checkFidl fidlfolder=jfidls
+    mnap checkFidl fidlfolder=jfidls
     '''
 
     command = ['Rscript', os.path.join(os.environ['MNAPPATH'], 'niutilities', 'g_CheckFidl.R')]

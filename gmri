@@ -23,13 +23,13 @@ print
 help = '''
 ================================================================================
 
-General magnetic resonance Imaging (gmri) utilities for processing and analysis.
+Neuro Imaging utilities (niutilities) for processing and analysis.
 
-usage: gmri <command> [option=value] [option=value] ...
-       gmri -h         (prints this help)
-       gmri -l         (list available commands)
-       gmri -o         (list available processing options)
-       gmri ?<command> (print help for a given command)
+usage: mnap <command> [option=value] [option=value] ...
+       mnap -h         (prints this help)
+       mnap -l         (list available commands)
+       mnap -o         (list available processing options)
+       mnap ?<command> (print help for a given command)
 
        -------------------------------------------------------------------------
        Note the following conventions used in help and documentation:
@@ -56,9 +56,9 @@ usage: gmri <command> [option=value] [option=value] ...
 comlist = '''
 ================================================================================
 
-General magnetic resonance Imaging (gmri) utilities for processing and analysis.
+General magnetic resonance Imaging (mnap) utilities for processing and analysis.
 
-use: gmri <command> [option=value] [option=value] ...
+use: mnap <command> [option=value] [option=value] ...
 
 --------------------------------------------------------------------------------
 Note the following conventions used in help and documentation:
@@ -223,9 +223,9 @@ fsf    runFullFS                Run full freesurfer segmentation
 
 Matlab functions
 ================
-A number of Matlab functions provided as part of MNAP/matlab package can be run.
+A number of Matlab functions provided as part of MNAP/nitools package can be run.
 A list of functions available is provided below. For more information on each
-function run `gmri ?<function name>`. Arguments can be specified in any order.
+function run `mnap ?<function name>`. Arguments can be specified in any order.
 Arguments that are not provided will be passed as empty strings / vectors to be
 processed with default values. Take care to embed vectors in square brackets
 (e.g. "[1 8 6 12]") and cell arrays in curly braces (e.g. "{'DLPFC', 'ACC',
@@ -439,10 +439,10 @@ def printHelp(com):
 
     # --- print list of processing options and flags
     elif com in ['o']:
-        print "================================================================================"
+        print "================================================================="
         print ""
-        print "General magnetic resonance Imaging (gmri) utilities for processing and analysis."
-        print "\nuse: gmri <command> [option=value] [option=value] ..."
+        print "Neuro Imaging utilities (niutilities) for processing and analysis"
+        print "\nuse: mnap <command> [option=value] [option=value] ..."
         print "\nList of processing options"
         for line in gp.arglist:
             if len(line) == 4:
@@ -463,11 +463,11 @@ def printHelp(com):
 
     # --- print help for gmri local commands
     elif com in gcom.commands:
-        print "\ngmri", gcom.commands[com]['com'].__doc__.strip(), "\n"
+        print "\nmnap", gcom.commands[com]['com'].__doc__.strip(), "\n"
 
     # --- print help for processing actions
     elif com in gp.allactions:
-        print "\ngmri", gp.allactions[com].__doc__.strip(), "\n"
+        print "\nmnap", gp.allactions[com].__doc__.strip(), "\n"
 
     # --- print help for matlab functions
     elif com in gm.functions:
@@ -528,21 +528,21 @@ def main(args=None):
         sys.exit(1)
     except ge.CommandError as e:
         print ge.reportCommandError(comm, e)
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
-        print "\nPlease run `gmri ?%s` to get help for the failed command.\n" % (comm)
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
+        print "\nPlease run `mnap ?%s` to get help for the failed command.\n" % (comm)
         sys.exit(1)
     except ValueError as e:
-        print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)
+        print "\n--------------------==== mnap failed! ====--------------------\nERROR: Execution of mnap command %s failed!" % (comm)
         print e
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
         print "--------------------------------------------------------------"
         sys.exit(1)
     except SystemExit as e:
         sys.exit(e)
     except:
-        print "\n--------------------==== gmri failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
-        print "       Please check documentation for the command (`gmri ?%s`)!" % (comm)
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
+        print "\n--------------------==== mnap failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
+        print "       Please check documentation for the command (`mnap ?%s`)!" % (comm)
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
         print "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
         raise
         print "\n--------------------------------------------------------------\n"
