@@ -467,7 +467,8 @@ Change Log
 * 0.41.02 [niutilities] Added gatherBehavior command
 * 0.41.03 [niutilities] Changed file type for gaterBehavior to .txt and updated documentation
 * 0.41.04 [niutilities] Changed gmri to mnap in documentation
-* 0.41.05 [niutilities] Now allways reports an error when no file was found to process
+* 0.41.05 [niutilities] Now always reports an error when no file was found to process
+* 0.41.06 [niutilities] Added pullSequenceNames command
 
 Stable Container Tag Log
 ========================
