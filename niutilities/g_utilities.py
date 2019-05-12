@@ -2042,25 +2042,31 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
 
     # --- Support function
 
-    def addData(file, sdata):
+    def addData(file, data):
 
         missingNames  = []
         sequenceNames = []
 
-        with(open(file, 'r')) as f:
-            for line in f:
-                if ':' in line:
-                    line = [e.strip() for e in line.split(':')]
-                    if line[0].isnumeric():
-                        if len(line) > 1:
-                            sequenceNames.append(line[1])
-                        else:
-                            misssingNames.append(line[0])
+        try:
+            f = open(file, 'r')
+        except:
+            return "Could not open %s for reading!" % (file)
+
+        for line in f:
+            line = line.decode('utf-8')
+            if ':' in line:
+                line = [e.strip() for e in line.split(':')]
+                if line[0].isnumeric():
+                    if len(line) > 1:
+                        sequenceNames.append(line[1])
+                    else:
+                        misssingNames.append(line[0])
+        f.close()
 
         if not sequenceNames:
             return "No sequence information found in file [%s]!" % (file)
 
-        sdata += sequenceNames
+        data += sequenceNames
 
         if missingNames:
             return "The following sequences had no names: %s!" % (", ".join(missingNames))
@@ -2122,7 +2128,7 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     # --- generate list entries
 
     processReport = {'ok': [], 'missing': [], 'error': []}
-    data = {}
+    data = []
 
     for session in sessions:
 
@@ -2134,9 +2140,8 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
             processReport['missing'].append(session['id'])
             continue
 
-        sdata = []
         for file in files:
-            error = addData(file, sdata)
+            error = addData(file, data)
             if error:
                 processReport['error'].append((session['id'], error))
                 break
@@ -2145,7 +2150,6 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
             continue
 
         processReport['ok'].append(session['id'])
-        data[session['id']] = list(sdata)
 
 
     # --- save group data
@@ -2155,14 +2159,12 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     except:
         raise ge.CommandFailed("pullSequenceNames", "Could not create target file", "Target file could not be created at the specified location [%s]" % (tfile), "Please check your paths and authorizations!")        
 
-    header = ['session id'] + keys
     if report:
         print >> fout, "# Data compiled using pullSequenceNames on %s" % (datetime.datetime.today())
-    print >> fout, "\t".join(header)
 
-    for sessionid in processReport['ok']:
-        for sname in data[sessionid]:
-            print >> fout, sname
+    data = sorted(set(data))
+    for sname in data:
+        print >> fout, sname
 
     # --- print report
 
