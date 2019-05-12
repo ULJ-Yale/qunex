@@ -48,6 +48,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'createList'           : {'com': g_utilities.createList,         'args': ('subjectsfolder', 'sessions', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
             'createConc'           : {'com': g_utilities.createConc,         'args': ('subjectsfolder', 'sessions', 'sfilter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
             'gatherBehavior'       : {'com': g_utilities.gatherBehavior,     'args': ('subjectsfolder', 'sessions', 'sfilter', 'sfile', 'tfile', 'overwrite', 'check', 'report')},
+            'pullSequenceNames'    : {'com': g_utilities.pullSequenceNames,  'args': ('subjectsfolder', 'sessions', 'sfilter', 'sfile', 'tfile', 'overwrite', 'check', 'report')},
             'batchTag2Num'         : {'com': g_utilities.batchTag2Num,       'args': ('filename', 'subjid', 'bolds')},
             'joinFidl'             : {'com': g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
             'joinFidlFolder'       : {'com': g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder', 'fidlname')},

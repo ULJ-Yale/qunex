@@ -1889,3 +1889,311 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
 
     if not processReport['ok']:
         raise ge.CommandNull("gatherBehavior", "No files processed", "No valid data was found!")                
+
+
+
+
+def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="subject.txt", tfile=None, overwrite="no", check="yes", report="yes"):
+    """
+    pullSequenceNames [subjectsfolder="."] [sessions=None] [sfilter=None] [sfile="subject.txt"] [tfile="<subjectsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]
+
+    The function gathers a list of all the sequence names across the sessions 
+    and saves it into a specified file.
+
+    Parameters
+    ----------
+
+    --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
+                      the inbox and individual subject folders are. If not 
+                      specified, the current working folder will be taken as 
+                      the location of the subjectsfolder. [.]
+    
+    --sessions        Either a string with pipe `|` or comma separated list of 
+                      sessions (sessions ids) to be processed (use of grep 
+                      patterns is possible), e.g. "AP128,OP139,ER*", or a path
+                      to a batch.txt or *list file with a list of session ids.
+                      [*]
+
+    --sfilter         Optional parameter used to filter sessions to include. It
+                      is specifed as a string in format:
+    
+                      "<key>:<value>|<key>:<value>"
+
+                      Only the sessions for which all the specified keys match
+                      the specified values will be included in the list.
+
+    --sfile           A file or comma or pipe `|` separated list of files or
+                      grep patterns that define, which session description 
+                      files to check. ['subject.txt']
+
+    --tfile           The path to the target file, a file that will contain
+                      the list of all the session names from all the individual
+                      session information files.
+                      ['<subjectsfolder>/inbox/MR/sequences.txt']
+
+    --overwrite       Whether to overwrite an existing file or not. ['no']
+
+    --check           Check whether all the identified sessions have the 
+                      specifed information files. The possible options:
+                      are:
+
+                      * yes   ... Check and report an error if no information
+                                  exists for a session
+                      * warn  ... Warn and list the sessions for which the 
+                                  neuroimaging information was not found
+                      * no    ... Do not run a check, ignore sessions for which
+                                  no imaging data was found
+
+    --report          Whether to include date when file was generated and the 
+                      final report in the compiled file ('yes') or not ('no'). 
+                      ['yes']
+
+    Use
+    ---
+    
+    The command will use the `subjectfolder`, `sessions` and `sfilter` 
+    parameters to create a list of sessions to process. For each session, the
+    command will use the `sfile` parameter to identify neuroimaging information 
+    files from which to genrate the list from. If no file is found for a session 
+    and the `check` parameter is set to `yes`, the command will exit with an 
+    error.
+
+    Once the files for each session are identified, the command will inspect the
+    files for imaging data and create a list of sequence names across all 
+    sessions. The list will be saved to a file specified using `tfile` 
+    parameter. If no path is specified, the default location will be used:
+
+    <subjectsfolder>/inbox/MR/sequences.txt
+
+    If a target file exists, it will be deleted and replaced, if the `overwrite`
+    parameter is set to 'yes'. If the overwrite parameter is set to 'no', the 
+    command will exit with an error.
+
+    
+    File formats
+    ------------
+
+    The command expects the neuroimaging data to be present in the standard 
+    'subject.txt' files. Please se online documentation for details. 
+    Specifically, it will extract the first information following the sequence
+    name.
+
+    The resulting file will be a simple text file, with one sequence name per
+    line. In addition, if `report` is set to 'yes' (the default), the resulting 
+    file  will start with a comment line stating the date of creation, and at 
+    the end additional comment lines will list the full report of missing files 
+    and errors encounterdd while gathering behavioral data from individual 
+    sessions.
+
+
+    Examples
+    --------
+
+    $ mnap pullSequenceNames sessions="AP*"
+
+    The command will compile sequence names present in `subject.txt` files 
+    present in all `<session id>` folders that match the "AP*" glob
+    pattern in the current working directory. 
+
+    The resulting file will be save in the default location:
+
+    <current folder>/inbox/MR/sequences.txt
+
+    If any of the identified sessions do not include data or if errors are 
+    encountered when processing the data, the command will exit with an error.
+
+    $ mnap pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
+           sessions="AP*|OP*" sfile="subject.txt|session.txt" \\
+           check="warn" overwrite="yes" report="no"
+
+    The command will find all the session folders within `/data/myStudy/subjects`
+    It will then look for presence of either subject.xtx or session.txt files.
+    The compiled data from the found files will be saved in the default 
+    location. If a file already exists, it will be overwritten. If any errors 
+    are encountered, the command will not throw an error, however it also won't
+    report a successful completion of the task. The resulting file will not have 
+    information on file generation or processing report.
+
+    $ mnap pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
+           sessions="/data/myStudy/processing/batch.txt" \\           
+           sfilter="group:controls|behavioral:yes" \\
+           sfile="*.txt" \\
+           tfile="/data/myStudy/subjects/specs/hcp_mapping.txt" \\
+           check="no" overwrite="yes"
+
+    The command will read the session information from the provided batch.txt 
+    file. It will then process only those sessions that have the following
+    lines in their description:
+
+    group: control
+    behavioral: yes
+
+    For those sessions it will find any files that end with `.txt` and process
+    them for presence of neuroimaging information. The compiled data will be 
+    saved to the specified target file. If the target file exists, it will be 
+    overwritten. The command will print a full report of the processing, 
+    however, it will exit with reported success even if missing files or errors 
+    were encountered.
+
+    ----------------
+    Written by Grega Repovš 2019-05-12
+    
+    """
+
+    # --- Support function
+
+    def addData(file, sdata):
+
+        missingNames  = []
+        sequenceNames = []
+
+        with(open(file, 'r')) as f:
+            for line in f:
+                if ':' in line:
+                    line = [e.strip() for e in line.split(':')]
+                    if line[0].isnumeric():
+                        if len(line) > 1:
+                            sequenceNames.append(line[1])
+                        else:
+                            misssingNames.append(line[0])
+
+        if not sequenceNames:
+            return "No sequence information found in file [%s]!" % (file)
+
+        sdata += sequenceNames
+
+        if missingNames:
+            return "The following sequences had no names: %s!" % (", ".join(missingNames))
+
+    # --- Start it up
+
+    print "Running pullSequenceNames\n========================="
+
+    # --- check subjects folder
+
+    subjectsfolder = os.path.abspath(subjectsfolder)
+
+    if not os.path.exists(subjectsfolder):
+        raise ge.CommandFailed("pullSequenceNames", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (subjectsfolder), "Please check paths!")
+
+    # --- check target file
+
+    if tfile is None:
+        tfile = os.path.join(subjectsfolder, 'inbox', 'MR', 'sequences.txt')
+
+    overwrite = overwrite.lower() == 'yes'
+
+    if os.path.exists(tfile):
+        if overwrite:
+            try:
+                os.remove(tfile)
+            except:
+                raise ge.CommandFailed("pullSequenceNames", "Could not remove target file", "Existing object at the specified target location could not be deleted [%s]" % (tfile), "Please check your paths and authorizations!")        
+        else:
+            raise ge.CommandFailed("pullSequenceNames", "Target file exists", "The specified target file already exists [%s]" % (tfile), "Please check your paths or set overwrite to 'yes'!")        
+
+    # --- check sessions
+
+    if sessions and sessions.lower() == 'none':
+        sessions = None
+
+    if sfilter and sfilter.lower() == 'none':
+        sfilter = None
+
+    report = report.lower() == 'yes'
+
+    # --- check sfile
+
+    sfiles = [e.strip() for e in re.split(' *, *| *\| *| +', sfile)]
+
+    # --- check sessions
+
+    if sessions is None:
+        print "---> WARNING: No sessions specified. The list will be generated for all sessions in the subjects folder!"
+        sessions = glob.glob(os.path.join(subjectsfolder, '*', 'behavior'))
+        sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
+        sessions = "|".join(sessions)
+
+    sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+
+    if not sessions:
+        raise ge.CommandFailed("pullSequenceNames", "No session found" , "No sessions found to process neuroimaging data from!", "Please check your data!")
+
+    # --- generate list entries
+
+    processReport = {'ok': [], 'missing': [], 'error': []}
+    data = {}
+
+    for session in sessions:
+
+        files = []
+        for sfile in sfiles:
+            files += glob.glob(os.path.join(subjectsfolder, session['id'], sfile))
+
+        if not files:
+            processReport['missing'].append(session['id'])
+            continue
+
+        sdata = []
+        for file in files:
+            error = addData(file, sdata)
+            if error:
+                processReport['error'].append((session['id'], error))
+                break
+
+        if error:
+            continue
+
+        processReport['ok'].append(session['id'])
+        data[session['id']] = list(sdata)
+
+
+    # --- save group data
+
+    try:
+        fout = open(tfile, 'w')
+    except:
+        raise ge.CommandFailed("pullSequenceNames", "Could not create target file", "Target file could not be created at the specified location [%s]" % (tfile), "Please check your paths and authorizations!")        
+
+    header = ['session id'] + keys
+    if report:
+        print >> fout, "# Data compiled using pullSequenceNames on %s" % (datetime.datetime.today())
+    print >> fout, "\t".join(header)
+
+    for sessionid in processReport['ok']:
+        for sname in data[sessionid]:
+            print >> fout, sname
+
+    # --- print report
+
+    reportit = [('ok', 'Successfully processed sessions:'), ('missing', 'Sessions for which no imaging data was found'), ('error', 'Sessions for which an error was encountered')]
+
+    if any([processReport[status] for status, message in reportit]):
+        print "===> Final report"
+        for status, message in reportit:
+            if processReport[status]:
+                print '--->', message
+                if report and status != 'ok':
+                    print >> fout, '#', message
+                for info in processReport[status]:
+                    if status == 'error':
+                        print '     %s [%s]' % info
+                        if report:
+                            print >> fout, '# -> %s: %s' % info
+                    else:
+                        print '     %s' % (info)
+                        if report and status != 'ok':
+                            print >> fout, '# -> %s' % (info)
+
+    fout.close()
+
+    # --- exit
+
+    if processReport['error'] or processReport['missing']:
+        if check.lower() == 'yes':
+            raise ge.CommandFailed("pullSequenceNames", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing imaging data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+        elif check.lower() == 'warn':
+            raise ge.CommandNull("pullSequenceNames", "Errors encountered", "Not all sessions processed successfully!", "Sessions with missing imaging data: %d" % (len(processReport['missing'])), "Sessions with errors in processing: %d" % (len(processReport['error'])), "Please check your data!")        
+
+    if not processReport['ok']:
+        raise ge.CommandNull("pullSequenceNames", "No files processed", "No valid data was found!")                
