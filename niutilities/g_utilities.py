@@ -316,6 +316,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
              - Added subjectsfolder to getSubjectList call
+    2019-05-12 Grega Repovš
+             - Reports an error if no session is found to add to batch
     '''
 
     print "Running createBatch\n==================="
@@ -436,6 +438,9 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
             with open(file) as f:
                 for line in f:
                     print >> jfile, line,
+
+    if not files:
+        raise ge.CommandFailed("createBatch", "No session found", "No sessions found to add to the batch file!", "Please check your data!")
 
     # --- close file
 
@@ -594,6 +599,8 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
              - Added subjectsfolder to getSubjectList call
+    2019-05-12 Grega Repovš
+             - Reports an error if no session is found to add to the list file
 
     """
 
@@ -671,6 +678,9 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
     sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
 
+    if not sessions:
+        raise ge.CommandFailed("createList", "No session found", "No sessions found to add to the list file!", "Please check your data!")
+
     # --- generate list entries
 
     lines = []
@@ -735,6 +745,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
         print >> lfile, line
 
     lfile.close()
+
 
 
 def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
@@ -860,6 +871,8 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
              - Changed subjects to sessions
     2019-05-02 Grega Repovš
              - Added subjectsfolder to getSubjectList call
+    2019-05-12 Grega Repovš
+             - Reports an error if no session is found to be processed
 
     """
 
@@ -919,6 +932,10 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
         sessions = "|".join(sessions)
 
     sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+
+    if not sessions:
+        raise ge.CommandFailed("createConc", "No session found", "No sessions found to add to the list file!", "Please check your data!")
+
 
     # --- generate list entries
 
@@ -1695,7 +1712,11 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
 
     ----------------
     Written by Grega Repovš 2019-05-02
+    
+    Change log
 
+    2019-05-12 Grega Repovš
+             - Reports an error if no session is found to process
     """
 
     # --- Support function
@@ -1779,6 +1800,9 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
         sessions = "|".join(sessions)
 
     sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+
+    if not sessions:
+        raise ge.CommandFailed("gatherBehavior", "No session found" , "No sessions found to process behavioral data from!", "Please check your data!")
 
     # --- generate list entries
 

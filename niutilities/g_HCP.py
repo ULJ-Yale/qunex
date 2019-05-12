@@ -142,6 +142,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                hcp ready and what to do with existing files
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-05-12 Grega Repovš
+             - Reports an error if no file is found to be mapped
     '''
 
     print "Running setupHCP\n================"
@@ -189,6 +191,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     i = [k for k, v in inf.iteritems() if k.isdigit()]
     i.sort(key=int, reverse=True)
     boldn = '99'
+    mapped = False
 
     for k in i:
         v = inf[k]
@@ -295,15 +298,20 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             else:
                 print "  ... %s subfolder already exists" % (tfold)
 
+            mapped = True
+
             if not os.path.exists(os.path.join(basef, tfold, tfile)):
                 print " ---> linking %s to %s" % (sfile, tfile)
-                os.link(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))
+                os.link(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))                
             else:
                 print "  ... %s already exists" % (tfile)
                 # print " ---> %s already exists, replacing it with %s " % (tfile, sfile)
                 # os.remove(os.path.join(basef,tfold,tfile))
                 # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
     
+    if not mapped:
+        raise ge.CommandFailed("setupHCP", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sfolder), "Please check your data!")     
+
     return
 
 

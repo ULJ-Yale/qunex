@@ -402,6 +402,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
              - Added the option to specify subjects
     2019-04-25 Grega Repovs
              - Changed subjects to sessions
+    2019-05-12 Grega Repovš
+             - Reports an error if no file is found
     '''
 
     print "Running BIDSImport\n=================="
@@ -469,6 +471,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     else:
         raise ge.CommandFailed("BIDSImport", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
 
+    if not sourceFiles:
+        raise ge.CommandFailed("BIDSImport", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")        
 
     # ---> mapping data to sessions' folders
 

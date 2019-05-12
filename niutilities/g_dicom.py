@@ -1584,6 +1584,8 @@ def listDicom(folder=None):
     Changelog
     2017-02-08 Grega Repovš
              - Updated documentation
+    2019-05-12 Grega Repovš
+             - Reports an error if no file is found
     '''
 
     if folder is None:
@@ -1594,6 +1596,9 @@ def listDicom(folder=None):
     files = glob.glob(os.path.join(folder, "*"))
     files = files + glob.glob(os.path.join(folder, "*/*"))
     files = [e for e in files if os.path.isfile(e)]
+
+    if not files:
+        raise ge.CommandFailed("listDicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
 
     for dcm in files:
         try:
@@ -1642,6 +1647,8 @@ def splitDicom(folder=None):
              - Updated documentation
     2019-04-25
              - Changed subjects to sessions
+    2019-05-12 Grega Repovš
+             - Reports an error if no file is found
     '''
 
     if folder is None:
@@ -1652,6 +1659,9 @@ def splitDicom(folder=None):
     files = glob.glob(os.path.join(folder, "*"))
     files = files + glob.glob(os.path.join(folder, "*/*"))
     files = [e for e in files if os.path.isfile(e)]
+
+    if not files:
+        raise ge.CommandFailed("splitDicom", "No files found", "Please check the specified folder! [%s]" % (os.path.abspath(folder)), "Aborting")
 
     subjects = []
 

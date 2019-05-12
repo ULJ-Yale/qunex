@@ -463,6 +463,8 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     else:
         raise ge.CommandFailed("HCPLSImport", "Inbox does not exist", "The specified inbox [%s] does not exist!" % (inbox), "Please check your path!")
 
+    if not sourceFiles:
+        raise ge.CommandFailed("HCPLSImport", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
     # ---> mapping data to subjects' folders
 
