@@ -314,7 +314,7 @@ def getBOLDFileNames(sinfo, boldname, options):
     # --- bold preprocessed files
 
     f['bold']                   = os.path.join(d['s_bold'], boldname + options['bold_tail'] + ext)
-    f['bold_final']             = os.path.join(d['s_bold'], boldname + options['bold_prefix'] + options['bold_tail'] + ext)
+    f['bold_final']             = os.path.join(d['s_bold'], boldname + options['bold_tail'] + options['bold_prefix'] + ext)
     f['bold_stats']             = os.path.join(d['s_bold_mov'], boldname + '.bstats')
     f['bold_nuisance']          = os.path.join(d['s_bold_mov'], boldname + '.nuisance')
     f['bold_scrub']             = os.path.join(d['s_bold_mov'], boldname + '.scrub')
