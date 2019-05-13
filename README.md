@@ -469,6 +469,7 @@ Change Log
 * 0.41.04 [niutilities] Changed gmri to mnap in documentation
 * 0.41.05 [niutilities] Now always reports an error when no file was found to process
 * 0.41.06 [niutilities] Added pullSequenceNames command
+* 0.41.07 [niutilities] Fixed bold_prefix bold_tail sequence
 
 Stable Container Tag Log
 ========================
