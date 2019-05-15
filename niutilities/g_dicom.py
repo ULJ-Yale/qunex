@@ -1857,7 +1857,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
 
                       * move:   move the package to the default archive folder
                       * copy:   copy the package to the default archive folder
-                      * leave:  keep the package in the inbox folder
+                      * leave:  keep the package in the session or master inbox folder
                       * delete: delete the package after it has been processed
                       
                       In case of processing data from a sessions folder, the
@@ -2118,7 +2118,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                 return
     else:        
         if check.lower() == 'any':
-            if inbox:
+            if masterinbox:
                 raise ge.CommandFailed("processInbox", "No packets found to process", "No packets were found to be processed in the master inbox [%s]!" % (os.path.abspath(masterinbox)), "Please check your data!")                
             else:
                 raise ge.CommandFailed("processInbox", "No sessions found to process", "No sessions were found to be processed in subject folder [%s]!" % (os.path.abspath(subjectsfolder)), "Please check your data!")                
