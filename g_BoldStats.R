@@ -8,7 +8,7 @@
 #       -mreport, -mr   the file to write movement report to [none]
 #       -preport, -pr   the file to write movement report after scrubbing to [none]
 #       -sreport, -sr   the file to write scrubbing report to [none]
-#       -subject, -s    subject id to use in plots and reports [none]
+#       -session, -s    session id to use in plots and reports [none]
 #       -dvars, -d      threshold to use for computing dvars rejections [3]
 #       -dvarsme, -e    threshold to use for computing dvarsme rejections [1.5]
 #       -movement, -m   threshold to use for computing frame-to-frame movement rejections [0.5]
@@ -27,6 +27,7 @@
 #       2012-09-20 -> Added reporting of stats after scrubbing
 #       2013-12-22 -> Dumbed down to just print the reports
 #       2015-07-05 -> Changed to deal with alternative root bold names
+#       2019-04-25 -> Changed subject to session
 #
 
 # ---> defaults
@@ -35,7 +36,7 @@ folder  <- "."
 mreport <- ""
 preport <- ""
 sreport <- ""
-subject <- ""
+session <- ""
 dvarst  <- 3.0
 dvarsmet<- 1.5
 movt    <- 0.5
@@ -63,8 +64,8 @@ for (arg in args){
     if (grepl("-sreport=", arg))  sreport   <- sub("-sreport=(.*)", "\\1", arg)
     if (grepl("-pr=", arg))       preport   <- sub("-pr=(.*)", "\\1", arg)
     if (grepl("-preport=", arg))  preport   <- sub("-preport=(.*)", "\\1", arg)
-    if (grepl("-s=", arg))        subject   <- sub("-s=(.*)", "\\1", arg)
-    if (grepl("-subject=", arg))  subject   <- sub("-subject=(.*)", "\\1", arg)
+    if (grepl("-s=", arg))        session   <- sub("-s=(.*)", "\\1", arg)
+    if (grepl("-session=", arg))  session   <- sub("-session=(.*)", "\\1", arg)
     if (grepl("-d=", arg))        dvarst    <- as.numeric(sub("-d=(.*)", "\\1", arg))
     if (grepl("-dvars=", arg))    dvarst    <- as.numeric(sub("-dvars=(.*)", "\\1", arg))
     if (grepl("-e=", arg))        dvarsmet  <- as.numeric(sub("-e=(.*)", "\\1", arg))
@@ -123,7 +124,7 @@ if (mreport != ""){
     mrfile <- file(mreport, "a")
 
     if (header){
-        cat("subject", "run", "stat", "dx", "dy", "dz", "X", "Y", "Z", "\n", file=mrfile, sep="\t")
+        cat("session", "run", "stat", "dx", "dy", "dz", "X", "Y", "Z", "\n", file=mrfile, sep="\t")
     }
 } else {
     msummary <- FALSE
@@ -143,7 +144,7 @@ if (preport != ""){
     prfile <- file(preport, "a")
 
     if (header){
-        cat("subject", "run", "stat", "dx", "dy", "dz", "X", "Y", "Z", "\n", file=prfile, sep="\t")
+        cat("session", "run", "stat", "dx", "dy", "dz", "X", "Y", "Z", "\n", file=prfile, sep="\t")
     }
 } else {
     psummary <- FALSE
@@ -163,7 +164,7 @@ if (sreport != ""){
     srfile <- file(sreport, "a")
 
     if (header){
-        cat("subject", "run", "mov", "dvars", "dvarsme", "idvars", "idvarsme", "udvars", "udvarsme", "%mov", "%dvars", "%dvarsme", "%idvars", "%idvarsme", "%udvars", "%udvarsme", "\n", file=srfile, sep="\t")
+        cat("session", "run", "mov", "dvars", "dvarsme", "idvars", "idvarsme", "udvars", "udvarsme", "%mov", "%dvars", "%dvarsme", "%idvars", "%idvarsme", "%udvars", "%udvarsme", "\n", file=srfile, sep="\t")
     }
 } else {
     ssummary <- FALSE
@@ -237,18 +238,18 @@ for (b in bolds){
     if (msummary){
         if (verbose) cat("\n---> printing summary report")
 
-        cat(subject, m, "mean", mean(t$dx), mean(t$dy), mean(t$dz), mean(t$X), mean(t$Y), mean(t$Z), "\n", file=mrfile, sep="\t")
-        cat(subject, m, "sd", sd(t$dx), sd(t$dy), sd(t$dz), sd(t$X), sd(t$Y), sd(t$Z), "\n", file=mrfile, sep="\t")
-        cat(subject, m, "span", max(t$dx)-min(t$dx), max(t$dy)-min(t$dy), max(t$dz)-min(t$dz), max(t$X)-min(t$X), max(t$Y)-min(t$Y), max(t$Z)-min(t$Z), "\n", file=mrfile, sep="\t")
-        cat(subject, m, "max", max(abs(td$dx)), max(abs(td$dy)), max(abs(td$dz)), max(abs(td$X)), max(abs(td$Y)), max(abs(td$Z)), "\n", file=mrfile, sep="\t")
-        cat(subject, m, "md", mean(abs(td$dx)), mean(abs(td$dy)), mean(abs(td$dz)), mean(abs(td$X)), mean(abs(td$Y)), mean(abs(td$Z)), "\n", file=mrfile, sep="\t")
-        cat(subject, m, "med", median(abs(td$dx)), median(abs(td$dy)), median(abs(td$dz)), median(abs(td$X)), median(abs(td$Y)), median(abs(td$Z)), "\n", file=mrfile, sep="\t")
-        cat(subject, m, "md2_max", mean(abs(td$dx))^2/max(td$dx), mean(abs(td$dy))^2/max(td$dy), mean(abs(td$dz))^2/max(td$dz), mean(abs(td$X))^2/max(td$X), mean(abs(td$Y))^2/max(td$Y), mean(abs(td$Z))^2/max(td$Z), "\n", file=mrfile, sep="\t")
+        cat(session, m, "mean", mean(t$dx), mean(t$dy), mean(t$dz), mean(t$X), mean(t$Y), mean(t$Z), "\n", file=mrfile, sep="\t")
+        cat(session, m, "sd", sd(t$dx), sd(t$dy), sd(t$dz), sd(t$X), sd(t$Y), sd(t$Z), "\n", file=mrfile, sep="\t")
+        cat(session, m, "span", max(t$dx)-min(t$dx), max(t$dy)-min(t$dy), max(t$dz)-min(t$dz), max(t$X)-min(t$X), max(t$Y)-min(t$Y), max(t$Z)-min(t$Z), "\n", file=mrfile, sep="\t")
+        cat(session, m, "max", max(abs(td$dx)), max(abs(td$dy)), max(abs(td$dz)), max(abs(td$X)), max(abs(td$Y)), max(abs(td$Z)), "\n", file=mrfile, sep="\t")
+        cat(session, m, "md", mean(abs(td$dx)), mean(abs(td$dy)), mean(abs(td$dz)), mean(abs(td$X)), mean(abs(td$Y)), mean(abs(td$Z)), "\n", file=mrfile, sep="\t")
+        cat(session, m, "med", median(abs(td$dx)), median(abs(td$dy)), median(abs(td$dz)), median(abs(td$X)), median(abs(td$Y)), median(abs(td$Z)), "\n", file=mrfile, sep="\t")
+        cat(session, m, "md2_max", mean(abs(td$dx))^2/max(td$dx), mean(abs(td$dy))^2/max(td$dy), mean(abs(td$dz))^2/max(td$dz), mean(abs(td$X))^2/max(td$X), mean(abs(td$Y))^2/max(td$Y), mean(abs(td$Z))^2/max(td$Z), "\n", file=mrfile, sep="\t")
 
-        cat(subject, m, "frame_dspl", mean(td$fd), median(td$fd), max(td$fd), sd(td$fd), "\n", file=mrfile, sep="\t")
+        cat(session, m, "frame_dspl", mean(td$fd), median(td$fd), max(td$fd), sd(td$fd), "\n", file=mrfile, sep="\t")
 
         if(dodv){
-            cat(subject, m, "mean_dvars", mean(dv$dvars), mean(dv$dvarsm), mean(dv$dvarsme), "\n", file=mrfile, sep="\t")
+            cat(session, m, "mean_dvars", mean(dv$dvars), mean(dv$dvarsm), mean(dv$dvarsme), "\n", file=mrfile, sep="\t")
         }
     }
 
@@ -267,18 +268,18 @@ for (b in bolds){
             pdv <- dv
         }
 
-        cat(subject, m, "mean", mean(pt$dx), mean(pt$dy), mean(pt$dz), mean(pt$X), mean(pt$Y), mean(pt$Z), "\n", file=prfile, sep="\t")
-        cat(subject, m, "sd", sd(pt$dx), sd(pt$dy), sd(pt$dz), sd(pt$X), sd(pt$Y), sd(pt$Z), "\n", file=prfile, sep="\t")
-        cat(subject, m, "span", max(pt$dx)-min(pt$dx), max(pt$dy)-min(pt$dy), max(pt$dz)-min(pt$dz), max(pt$X)-min(pt$X), max(pt$Y)-min(pt$Y), max(pt$Z)-min(pt$Z), "\n", file=prfile, sep="\t")
-        cat(subject, m, "max", max(abs(ptd$dx)), max(abs(ptd$dy)), max(abs(ptd$dz)), max(abs(ptd$X)), max(abs(ptd$Y)), max(abs(ptd$Z)), "\n", file=prfile, sep="\t")
-        cat(subject, m, "md", mean(abs(ptd$dx)), mean(abs(ptd$dy)), mean(abs(ptd$dz)), mean(abs(ptd$X)), mean(abs(ptd$Y)), mean(abs(ptd$Z)), "\n", file=prfile, sep="\t")
-        cat(subject, m, "med", median(abs(ptd$dx)), median(abs(ptd$dy)), median(abs(ptd$dz)), median(abs(ptd$X)), median(abs(ptd$Y)), median(abs(ptd$Z)), "\n", file=prfile, sep="\t")
-        cat(subject, m, "md2_max", mean(abs(ptd$dx))^2/max(ptd$dx), mean(abs(ptd$dy))^2/max(ptd$dy), mean(abs(ptd$dz))^2/max(ptd$dz), mean(abs(ptd$X))^2/max(ptd$X), mean(abs(ptd$Y))^2/max(ptd$Y), mean(abs(ptd$Z))^2/max(ptd$Z), "\n", file=prfile, sep="\t")
+        cat(session, m, "mean", mean(pt$dx), mean(pt$dy), mean(pt$dz), mean(pt$X), mean(pt$Y), mean(pt$Z), "\n", file=prfile, sep="\t")
+        cat(session, m, "sd", sd(pt$dx), sd(pt$dy), sd(pt$dz), sd(pt$X), sd(pt$Y), sd(pt$Z), "\n", file=prfile, sep="\t")
+        cat(session, m, "span", max(pt$dx)-min(pt$dx), max(pt$dy)-min(pt$dy), max(pt$dz)-min(pt$dz), max(pt$X)-min(pt$X), max(pt$Y)-min(pt$Y), max(pt$Z)-min(pt$Z), "\n", file=prfile, sep="\t")
+        cat(session, m, "max", max(abs(ptd$dx)), max(abs(ptd$dy)), max(abs(ptd$dz)), max(abs(ptd$X)), max(abs(ptd$Y)), max(abs(ptd$Z)), "\n", file=prfile, sep="\t")
+        cat(session, m, "md", mean(abs(ptd$dx)), mean(abs(ptd$dy)), mean(abs(ptd$dz)), mean(abs(ptd$X)), mean(abs(ptd$Y)), mean(abs(ptd$Z)), "\n", file=prfile, sep="\t")
+        cat(session, m, "med", median(abs(ptd$dx)), median(abs(ptd$dy)), median(abs(ptd$dz)), median(abs(ptd$X)), median(abs(ptd$Y)), median(abs(ptd$Z)), "\n", file=prfile, sep="\t")
+        cat(session, m, "md2_max", mean(abs(ptd$dx))^2/max(ptd$dx), mean(abs(ptd$dy))^2/max(ptd$dy), mean(abs(ptd$dz))^2/max(ptd$dz), mean(abs(ptd$X))^2/max(ptd$X), mean(abs(ptd$Y))^2/max(ptd$Y), mean(abs(ptd$Z))^2/max(ptd$Z), "\n", file=prfile, sep="\t")
 
-        cat(subject, m, "frame_dspl", mean(ptd$fd), median(ptd$fd), max(ptd$fd), sd(ptd$fd), "\n", file=prfile, sep="\t")
+        cat(session, m, "frame_dspl", mean(ptd$fd), median(ptd$fd), max(ptd$fd), sd(ptd$fd), "\n", file=prfile, sep="\t")
 
         if(dodv){
-            cat(subject, m, "mean_dvars", mean(pdv$dvars), mean(pdv$dvarsm), mean(pdv$dvarsme), "\n", file=prfile, sep="\t")
+            cat(session, m, "mean_dvars", mean(pdv$dvars), mean(pdv$dvarsm), mean(pdv$dvarsme), "\n", file=prfile, sep="\t")
         }
     }
 
@@ -347,7 +348,7 @@ for (b in bolds){
 
     if (ssummary){
         if (verbose) cat("\n---> printing per frame report")
-        cat(subject, m, sum(sc$mov), sum(sc$dvars), sum(sc$dvarsme), sum(sc$idvars), sum(sc$idvarsme), sum(sc$udvars), sum(sc$udvarsme), sprintf("%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f", sum(sc$mov)/nframes*100, sum(sc$dvars)/nframes*100, sum(sc$dvarsme)/nframes*100, sum(sc$idvars)/nframes*100, sum(sc$idvarsme)/nframes*100, sum(sc$udvars)/nframes*100, sum(sc$udvarsme)/nframes*100),"\n", file=srfile, sep="\t")
+        cat(session, m, sum(sc$mov), sum(sc$dvars), sum(sc$dvarsme), sum(sc$idvars), sum(sc$idvarsme), sum(sc$udvars), sum(sc$udvarsme), sprintf("%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f\t%.1f", sum(sc$mov)/nframes*100, sum(sc$dvars)/nframes*100, sum(sc$dvarsme)/nframes*100, sum(sc$idvars)/nframes*100, sum(sc$idvarsme)/nframes*100, sum(sc$udvars)/nframes*100, sum(sc$udvarsme)/nframes*100),"\n", file=srfile, sep="\t")
     }
 
     # --- print fidl report
@@ -404,7 +405,7 @@ if (plot) {
     pdf(file=paste(folder, paste(rname, '_', pref, plotr, "_cor.pdf", sep=""), sep="/"), width=10, height=3.3*nruns)
     d$run <- factor(as.character(d$run), levels=boldnames, labels=boldnames, ordered=TRUE)
     with(d, levels(run))
-    print(qplot(frame, value, data = d, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement correction parameters", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("mm / deg"))
+    print(qplot(frame, value, data = d, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement correction parameters", session, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("mm / deg"))
     dev.off()
     if (verbose) cat(" ... ok")
 
@@ -424,7 +425,7 @@ if (plot) {
     dbadm$run <- factor(as.character(dbadm$run), levels=boldnames, labels=boldnames, ordered=TRUE)
     with(dfd, levels(run))
     with(dbadm, levels(run))
-    p <- qplot(frame, abs(value), data=dfd, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement and signal change (dvars) across frames", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("") + geom_hline(aes(yintercept=movt), color="black", alpha=0.3) + geom_hline(aes(yintercept=dvarst), color="black", alpha=0.3)
+    p <- qplot(frame, abs(value), data=dfd, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement and signal change (dvars) across frames", session, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("") + geom_hline(aes(yintercept=movt), color="black", alpha=0.3) + geom_hline(aes(yintercept=dvarst), color="black", alpha=0.3)
     if (dim(dbadm)[1] > 0){
         print(p + geom_rect(aes(xmin = frame-0.5, xmax = frame + 0.5, ymin = 0, ymax = value/value*dvarst), data=dbadm, colour=alpha("blue", alpha=0), fill=alpha("blue", alpha=0.3)) + scale_y_continuous("", limits=c(0,ylim)))
     } else {
@@ -442,7 +443,7 @@ if (plot) {
     dbadme$run <- factor(as.character(dbadme$run), levels=boldnames, labels=boldnames, ordered=TRUE)
     with(dad, levels(run))
     with(dbadme, levels(run))
-    p <- qplot(frame, value, data=dad, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement and signal change (dvarme) across frames", subject, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("") + geom_hline(aes(yintercept=movt), color="black", alpha=0.3) + geom_hline(aes(yintercept=dvarsmet), color="black", alpha=0.3)
+    p <- qplot(frame, value, data=dad, colour=variable, fill=variable, geom="line") + facet_grid(run ~ .) + labs(title=paste("Movement and signal change (dvarme) across frames", session, sep=" ")) + scale_x_continuous("frame",  breaks=seq(0,500,major), minor_breaks= seq(0,500,1), expand=c(0,0.5)) + ylab("") + geom_hline(aes(yintercept=movt), color="black", alpha=0.3) + geom_hline(aes(yintercept=dvarsmet), color="black", alpha=0.3)
     if (dim(dbadme)[1] > 0){
         print(p + geom_rect(aes(xmin = frame-0.5, xmax = frame + 0.5, ymin = 0, ymax = value/value*dvarsmet), data=dbadme, colour=alpha("blue", alpha=0), fill=alpha("blue", alpha=0.3)) + scale_y_continuous("", limits=c(0, ylim)))
     } else {

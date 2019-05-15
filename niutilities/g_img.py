@@ -726,7 +726,7 @@ class niftihdr:
 
 def sliceImage(sfile, tfile, frames=1):
     '''
-    gmri sliceImage sfile=<source image> tfile=<target image> [frames=1]
+    sliceImage sfile=<source image> tfile=<target image> [frames=1]
 
     Takes the source volume image file, removes all but the first N frames, and
     saves the resulting image to target volume image file.
@@ -736,7 +736,7 @@ def sliceImage(sfile, tfile, frames=1):
     - frames:  Optional number of initial frames to retain [1]
 
     Example use:
-    gmri sliceImage sfile=bold1.nii.gz tfile=bold1_f10.nii.gz frames=10
+    mnap sliceImage sfile=bold1.nii.gz tfile=bold1_f10.nii.gz frames=10
 
     (c) Grega Repovš
 

@@ -16,10 +16,10 @@ consists of functions:
                       folder
 
 All the functions are part of the processing suite. They should be called
-from the command line using `gmri` command. Help is available through:
+from the command line using `mnap` command. Help is available through:
 
-`gmri ?<command>` for command specific help
-`gmri -o` for a list of relevant arguments and options
+`mnap ?<command>` for command specific help
+`mnap -o` for a list of relevant arguments and options
 
 There are additional support functions that are not to be used
 directly.
@@ -179,7 +179,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     ===
 
     Runs the pre-FS step of the HCP Pipeline. It looks for T1w and T2w images in
-    subject's T1w and T2w folder, averages them (if multiple present) and
+    sessions's T1w and T2w folder, averages them (if multiple present) and
     linearly and nonlinearly aligns them to the MNI atlas. It uses the adjusted
     version of the HCP that enables the preprocessing to run with of without T2w
     image(s). A short name 'hcp1' can be used for this command.
@@ -190,7 +190,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     The code expects the input images to be named and present in the specific
     folder structure. Specifically it will look within the folder:
 
-    <subject id>/hcp/<subject id>
+    <session id>/hcp/<session id>
 
     for folders and files:
 
@@ -214,19 +214,19 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     __SiemensFieldMap__
 
-    FieldMap_strc/<subject id>_strc_FieldMap_Magnitude.nii.gz
-    FieldMap_strc/<subject id>_strc_FieldMap_Phase.nii.gz
+    FieldMap_strc/<session id>_strc_FieldMap_Magnitude.nii.gz
+    FieldMap_strc/<session id>_strc_FieldMap_Phase.nii.gz
 
     __GeneralElectricFieldMap__
 
-    FieldMap_strc/<subject id>_strc_FieldMap_GE.nii.gz
+    FieldMap_strc/<session id>_strc_FieldMap_GE.nii.gz
 
     RESULTS
     =======
 
     The results of this step will be present in the above mentioned T1w and T2w
     folders as well as MNINonLinear folder generated and populated in the same
-    subject's root hcp folder.
+    sessions's root hcp folder.
 
     RELEVANT PARAMETERS
     ===================
@@ -237,7 +237,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
+    --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
@@ -255,7 +255,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix           ... Specifies a suffix to the subject id if multiple
+    --hcp_suffix           ... Specifies a suffix to the session id if multiple
                                variants are run, empty otherwise [].
     --hcp_t2               ... NONE if no T2w image is available and the
                                preprocessing should be run without them,
@@ -317,10 +317,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_PreFS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp_PreFS sessions=fcMRI/subjects_hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_brainsize=170
 
-    gmri hcp1 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp1 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
 
     ----------------
@@ -335,10 +335,12 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Cleaned up 
     2019-01-16 Grega Repovš
              - HCP Pipelines compatible
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PreFreeSurfer Pipeline ...\n" % (action("Running", options['run']))
 
     hcp = getHCPPaths(sinfo, options)
@@ -351,7 +353,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         # --- checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -396,7 +398,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     tufolder = glob.glob(os.path.join(hcp['base'], 'SpinEchoFieldMap*'))
                     tufolder = tufolder[0]
                 except:
-                    r += "\n---> ERROR: Could not find folder with files for TOPUP processing of subject %s." % (sinfo['id'])
+                    r += "\n---> ERROR: Could not find folder with files for TOPUP processing of session %s." % (sinfo['id'])
                     run = False
             
             if tufolder:
@@ -415,26 +417,26 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                         else:
                             r += "\n---> TOPUP configuration file present."
                 except:
-                    r += "\n---> ERROR: Could not find files for TOPUP processing of subject %s." % (sinfo['id'])
+                    r += "\n---> ERROR: Could not find files for TOPUP processing of session %s." % (sinfo['id'])
                     run = False    
 
         elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap':
             if os.path.exists(hcp['fmapge']):
                 r += "\n---> Gradient Echo Field Map file present."
             else:
-                r += "\n---> ERROR: Could not find Gradient Echo Field Map file for subject %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapge'])
+                r += "\n---> ERROR: Could not find Gradient Echo Field Map file for session %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapge'])
                 run = False
 
         elif options['hcp_avgrdcmethod'] in ['FIELDMAP', 'SiemensFieldMap']:
             if os.path.exists(hcp['fmapmag']):
                 r += "\n---> Magnitude Field Map file present."
             else:
-                r += "\n---> ERROR: Could not find Magnitude Field Map file for subject %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapmag'])
+                r += "\n---> ERROR: Could not find Magnitude Field Map file for session %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapmag'])
                 run = False
             if os.path.exists(hcp['fmapphase']):
                 r += "\n---> Phase Field Map file present."
             else:
-                r += "\n---> ERROR: Could not find Phase Field Map file for subject %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapphase'])
+                r += "\n---> ERROR: Could not find Phase Field Map file for session %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapphase'])
                 run = False
 
         # --- lookup gdcoeffs file if needed
@@ -605,7 +607,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     report = "Pre FS can be run"
                     failed = 0
         else:
-            r += "\n---> Due to missing files subject can not be processed."
+            r += "\n---> Due to missing files session can not be processed."
             report = "Files missing, PreFS can not be run"
             failed = 1
 
@@ -656,7 +658,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     =======
 
     The results of this step will be present in the above mentioned T1w folder
-    as well as MNINonLinear folder in the subject's root hcp folder.
+    as well as MNINonLinear folder in the sessions's root hcp folder.
 
     RELEVANT PARAMETERS
     ===================
@@ -667,7 +669,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
+    --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
@@ -718,7 +720,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     used. They are currently not yet implemented in HCP Pipelines!
 
 
-    --hcp_suffix            ... Specifies a suffix to the subject id if multiple
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
                                 variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
@@ -753,16 +755,16 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_FS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri hcp_FS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_fs_longitudinal=TemplateA
 
-    gmri hcp2 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
 
-    gmri hcp2 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE \\
          hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
          hcp_freesurfer_module=YES
@@ -789,10 +791,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Cleaned up furher, added updates by Lisa Ji
     2019-01-16 Grega Repovš
              - Added HCP Pipelines options
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n\n%s HCP FreeSurfer Pipeline ...\n" % (action("Running", options['run']))
 
     run    = True
@@ -805,7 +809,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # --- run checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -1127,7 +1131,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
+    --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
@@ -1145,7 +1149,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix            ... Specifies a suffix to the subject id if multiple
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
                                 variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
@@ -1181,13 +1185,13 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri longitudinalFS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap longitudinalFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri lfs subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap lfs sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
 
-    gmri lsf subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap lsf sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE \\
          hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
          hcp_freesurfer_module=YES
@@ -1202,6 +1206,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
              - Adjusted paths creation
     2018-12-14 Grega Repovš
              - Updated documentation
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1421,7 +1427,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     =======
 
     The results of this step will be present in the MNINonLinear folder in the
-    subject's root hcp folder.
+    sessions's root hcp folder.
 
     RELEVANT PARAMETERS
     ===================
@@ -1432,7 +1438,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
+    --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
@@ -1450,7 +1456,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix           ... Specifies a suffix to the subject id if multiple
+    --hcp_suffix           ... Specifies a suffix to the session id if multiple
                                variants are run, empty otherwise [].
     --hcp_t2               ... NONE if no T2w image is available and the
                                preprocessing should be run without them,
@@ -1470,10 +1476,10 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_PostFS subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp_PostFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri hcp3 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp3 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_t2=NONE
 
     ----------------
@@ -1488,10 +1494,12 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Updated test files and documentation
     2019-01-12 Grega Repovš
              - Cleaned up, added updates by Lisa Ji
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP PostFreeSurfer Pipeline ...\n" % (action("Running", options['run']))
 
     run    = True
@@ -1503,7 +1511,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
         # --- run checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -1658,7 +1666,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                     report = "Post FS can be run"
                     failed = 0
         else:
-            r += "\n---> Subject can not be processed."
+            r += "\n---> Session can not be processed."
             report = "Post FS can not be run"
             failed = 1
 
@@ -1705,13 +1713,13 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     The code expects the first HCP preprocessing step (hcp_PreFS) to have been run
     and finished successfully. It expects the DWI data to have been acquired in
     phase encoding reversed pairs, which should be present in the Diffusion folder
-    in the subject's root hcp folder.
+    in the sessions's root hcp folder.
 
     RESULTS
     =======
 
     The results of this step will be present in the Diffusion folder in the
-    subject's root hcp folder.
+    sessions's root hcp folder.
 
     RELEVANT PARAMETERS
     ===================
@@ -1722,7 +1730,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
+    --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
@@ -1758,9 +1766,9 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     --------------------------------------
 
      mnap hcp_Diffusion \
-     --subjects="processing/batch.hcp.txt" \    # the location of the batch file
+     --sessions="processing/batch.hcp.txt" \    # the location of the batch file
      --subjectsfolder="subjects" \              # the location of the subjects folder
-     --cores="10" \                             # how many subjects to run concurrently
+     --cores="10" \                             # how many sessions to run concurrently
      --overwrite="no"                           # whether to overwrite previous results
      --test                                     # execute a test run
 
@@ -1768,9 +1776,9 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     ---------------------------------------
 
     mnap hcpd \
-    --subjects="<path_to_study_folder>/processing/batch.hcp.txt" \       # the location of the batch file
+    --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \       # the location of the batch file
     --subjectsfolder="<path_to_study_folder>/subjects" \                 # the location of the subjects folder
-    --cores="4" \                                                        # how many subjects to run concurrently
+    --cores="4" \                                                        # how many sessions to run concurrently
     --overwrite="yes" \                                                  # whether to overwrite previous results
     --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
 
@@ -1779,11 +1787,13 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     Changelog
     2018-01-14 Alan Anticevic wrote inline documentation
+    2019-04-25 Grega Repovs
+             - Changed subjects to sessions
 
     """
 
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP DiffusionPreprocessing Pipeline ..." % (action("Running", options['run']))
 
     run    = True
@@ -1793,7 +1803,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
-            r += "---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
+            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- set up data
@@ -1868,7 +1878,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                     report = "HCP Diffusion can be run"
                     failed = 0
         else:
-            r += "---> Subject can not be processed."
+            r += "---> Session can not be processed."
             report = "HCP Diffusion can not be run"
             failed = 1
 
@@ -1914,7 +1924,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     =======
 
     The results of this step will be present in the MNINonLinear folder in the
-    subject's root hcp folder. In case a longitudinal FS template is used, the
+    sessions's root hcp folder. In case a longitudinal FS template is used, the
     results will be stored in a `MNINonlinear_<FS longitudinal template name>`
     folder:
 
@@ -1939,13 +1949,17 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
+    --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --threads         ... How many threads to utilize for bold processing
-                          per subject [1].
+                          per session [1].
+    --bolds           ... Which bold images (as they are specified in the
+                          batch.txt file) to process. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to process all [all].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -1973,7 +1987,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     naming options
     --------------
 
-    --hcp_suffix             ... Specifies a suffix to the subject id if
+    --hcp_suffix             ... Specifies a suffix to the session id if
                                  multiple variants of preprocessing are run,
                                  empty otherwise. []
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
@@ -2073,10 +2087,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_fMRIVolume subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp_fMRIVolume sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri hcp4 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp4 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
          hcp_bold_refreg=nonlinear hcp_bold_usemask=DILATED
 
@@ -2098,10 +2112,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Cleaned up, added updates by Lisa Ji
     2019-01-16 Grega Repovš
              - HCP Pipelines compatible.
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Volume registration" % (action("Running", options['run']))
 
     run    = True
@@ -2113,12 +2129,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
-        # btargets = options['bold_preprocess'].split("|")
+        # btargets = options['bolds'].split("|")
 
         # --- run checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -2232,7 +2248,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         boldsData = []
 
-        firstSE = bolds[0][3].get('se', None)
+        if bolds:
+            firstSE = bolds[0][3].get('se', None)
 
         for bold, boldname, boldtask, boldinfo in bolds:
 
@@ -2656,7 +2673,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     =======
 
     The results of this step will be present in the MNINonLinear folder in the
-    subject's root hcp folder. In case a longitudinal FS template is used, the
+    sessions's root hcp folder. In case a longitudinal FS template is used, the
     results will be stored in a `MNINonlinear_<FS longitudinal template name>`
     folder:
 
@@ -2681,13 +2698,17 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --subjects        ... The batch.txt file with all the subject information
+    --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
                           imaging  data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --threads         ... How many threads to utilize for bold processing
-                          per subject [1].
+                          per session [1].
+    --bolds           ... Which bold images (as they are specified in the
+                          batch.txt file) to process. It can be a single
+                          type (e.g. 'task'), a pipe separated list (e.g.
+                          'WM|Control|rest') or 'all' to process all [all].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
     --logfolder       ... The path to the folder where runlogs and comlogs
@@ -2707,7 +2728,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     naming options
     --------------
 
-    --hcp_suffix             ... Specifies a suffix to the subject id if
+    --hcp_suffix             ... Specifies a suffix to the session id if
                                  multiple variants of preprocessing are run,
                                  empty otherwise. []
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
@@ -2732,10 +2753,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri hcp_fMRISurface subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp_fMRISurface sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
-    gmri hcp5 subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap hcp5 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10
 
     ----------------
@@ -2750,11 +2771,13 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
             - FS Longitudinal implementation and documentation
     2019-01-12 Grega Repovš
              - Cleaned furher, added updates by Lisa Ji
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
 
     '''
 
     r = "\n----------------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP fMRI Surface registration" % (action("Running", options['run']))
 
     run    = True
@@ -2767,12 +2790,12 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
-        # btargets = options['bold_preprocess'].split("|")
+        # btargets = options['bolds'].split("|")
 
         # --- run checks
 
         if 'hcp' not in sinfo:
-            r += "\n---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
+            r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         # --- check for T1w and T2w images
@@ -2967,9 +2990,9 @@ def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         else:
             report['not ready'].append(str(bold))
             if options['run'] == "run":
-                r += "\n     ... ERROR: No hcp info for subject, skipping this BOLD!"
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
             else:
-                r += "\n     ... ERROR: No hcp info for subject, this BOLD would be skipped!"
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += "\n ---  Failed during processing of bold %d with error:\n" % (bold)
@@ -2990,7 +3013,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
     """
 
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP DTI Fix ..." % (action("Running", options['run']))
 
     run    = True
@@ -3000,7 +3023,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
-            r += "---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
+            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         for tfile in ['bvals', 'bvecs', 'data.nii.gz', 'nodif_brain_mask.nii.gz']:
@@ -3048,7 +3071,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
                     report = "HCP DTI Fit can be run"
                     failed = 0
         else:
-            r += "---> Subject can not be processed."
+            r += "---> Session can not be processed."
             report = "HCP DTI Fit can not be run"
             failed = 1
 
@@ -3071,7 +3094,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
     """
 
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\n%s HCP Bedpostx GPU ..." % (action("Running", options['run']))
 
     run    = True
@@ -3081,7 +3104,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
-            r += "---> ERROR: There is no hcp info for subject %s in batch.txt" % (sinfo['id'])
+            r += "---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
         for tfile in ['bvals', 'bvecs', 'data.nii.gz', 'nodif_brain_mask.nii.gz']:
@@ -3131,7 +3154,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
                     report = "HCP BedpostX can be run"
                     failed = 0
         else:
-            r += "---> Subject can not be processed."
+            r += "---> Session can not be processed."
             report = "HCP BedpostX can not be run"
             failed = 1
 
@@ -3156,7 +3179,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     ===
 
     mapHCPData maps the results of the HCP preprocessing (in MNINonLinear) to
-    the <subjectsfolder>/<subject id>/images folder structure. Specifically, it
+    the <subjectsfolder>/<session id>/images folder structure. Specifically, it
     copies the files and folders:
 
     * T1w.nii.gz                  -> images/structural/T1w.nii.gz
@@ -3173,7 +3196,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
 
     The relevant processing parameters are:
 
-    --subjects         ... The batch.txt file with all the subject information
+    --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
     --subjectsfolder   ... The path to the study/subjects folder, where the
                            imaging  data is supposed to go [.].
@@ -3182,7 +3205,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                            [no].
     --hcp_cifti_tail   ... The tail (see above) that specifies, which version of
                            the cifti files to copy over [].
-    --bold_preprocess  ... Which bold images (as they are specified in the
+    --bolds            ... Which bold images (as they are specified in the
                            batch.txt file) to copy over. It can be a single
                            type (e.g. 'task'), a pipe separated list (e.g.
                            'WM|Control|rest') or 'all' to copy all [all].
@@ -3200,8 +3223,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri mapHCPData subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no hcp_cifti_tail=_Atlas bold_preprocess=all
+    mnap mapHCPData sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+         overwrite=no hcp_cifti_tail=_Atlas bolds=all
 
     ----------
     Written by Grega Repovš
@@ -3210,13 +3233,14 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     2016-12-24 - Grega Repovš - Added documentation, fixed copy of volume images.
     2017-03-25 - Grega Repovš - Added more detailed reporting of progress.
     2018-07-17 - Grega Repovš - Added hcp_bold_variant option.
+    2019-04-25 - Grega Repovš - Changed subjects to sessions
     """
 
     
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nMapping HCP data ... \n"
-    r += "\n   The command will map the results of the HCP preprocessing from subject's hcp\n   to subject's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bold_preprocess parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bold_preprocess'].split("|")), options['hcp_cifti_tail'])
+    r += "\n   The command will map the results of the HCP preprocessing from sessions's hcp\n   to sessions's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bolds parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_cifti_tail specifies which kind of the cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameter is not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' cifti tail will be used." % (", ".join(options['bolds'].split("|")), options['hcp_cifti_tail'])
     if options['hcp_bold_variant']:
         r += "\n   As --hcp_bold_variant was set to '%s', the files will be copied/linked to 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
@@ -3315,7 +3339,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     # ------------------------------------------------------------------------------------------------------------
     #                                                                                          map functional data
 
-    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' cifti tail\n" % (", ".join(options['bold_preprocess'].split("|")), options['hcp_cifti_tail'])
+    r += "\n\nFunctional data: \n ... mapping %s BOLD files\n ... using '%s' cifti tail\n" % (", ".join(options['bolds'].split("|")), options['hcp_cifti_tail'])
 
     report['boldok'] = 0
     report['boldfail'] = 0
@@ -3353,7 +3377,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                     raise NoSourceFolder(r)
             boldpath = os.path.join(d['hcp'], 'MNINonLinear', 'Results', bname)
 
-            if os.path.exists(f['bold']) and not overwrite:
+            if os.path.exists(f['bold_vol']) and not overwrite:
                 r += "\n     ... volume image ready"
             else:
                 status, r = linkOrCopy(os.path.join(boldpath, bname + '.nii.gz'), f['bold'], r, status, "volume image", "\n     ... ")
@@ -3401,7 +3425,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
             failed += 1
 
     if len(skipped) > 0:
-        r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bold_preprocess=\"%s\"':\n" % (options['bold_preprocess'])
+        r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n" % (options['bolds'])
         for boldnum, boldname, boldtask, boldinfo in skipped:
             r += "\n ... %s [name: '%s']" % (boldname, boldtask)
 

@@ -7,7 +7,7 @@ Functions for preparing information and mapping images to a HCP preprocessing
 compliant folder structure:
 
 * setupHCP        ... maps the data to a hcp folder
-* setupHCPFolder  ... runs setupHCP for all subject folders
+* setupHCPFolder  ... runs setupHCP for all session folders
 * getHCPReady     ... prepares subject.txt files for HCP mapping
 
 The commands are accessible from the terminal wusing gmri utility.
@@ -32,7 +32,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     USE
     ===
 
-    The command maps images from the subject's nii folder into a folder
+    The command maps images from the sessions's nii folder into a folder
     structure that conforms to the naming conventions used in the HCP
     minimal preprocessing workflow. For the mapping to be correct, the
     command expects the source subject.txt file (sfile) to hold the relevant
@@ -47,7 +47,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     --tfolder   The folder (within the base folder) to which the data is to be
                 mapped. [hcp]
     --sfile     The name of the source subject.txt file. [subject_hcp.txt]
-    --check     Whether to check if subject is marked ready for setting up
+    --check     Whether to check if session is marked ready for setting up
                 hcp folder [yes].
     --existing  What to do if the hcp folder already exists? Options are:
                 abort -> abort setting up hcp folder
@@ -122,34 +122,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :fenc(PA)
 
 
-    MULTIPLE SUBJECTS AND SCHEDULING
-    ================================
-
-    The command can be run for multiple subjects by specifying `subjects` and
-    optionally `subjectsfolder` and `cores` parameters. In this case the command
-    will be run for each of the specified subjects in the subjectsfolder
-    (current directory by default). Optional `filter` and `subjid` parameters
-    can be used to filter subjects or limit them to just specified id codes.
-    (for more information see online documentation). `sfolder` will be filled in
-    automatically as each subject's folder. Commands will run in parallel by
-    utilizing the specified number of cores (1 by default).
-
-    If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `mnap ?schedule` for more information). If set in
-    combination with `subjects` parameter, subjects will be processed over
-    multiple nodes, `core` parameter specifying how many subjects to run per
-    node. Optional `scheduler_environment`, `scheduler_workdir`,
-    `scheduler_sleep`, and `nprocess` parameters can be set.
-
-    Set optional `logfolder` parameter to specify where the processing logs
-    should be stored. Otherwise the processor will make best guess, where the
-    logs should go.
-
-
     EXAMPLE USE
     ===========
 
-    gmri setupHCP sfolder=OP316 sfile=subject.txt
+    mnap setupHCP sfolder=OP316 sfile=subject.txt
 
     ----------------
     Written by Grega Repovš
@@ -164,6 +140,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     2018-04-01 Grega Repovš
              - Added options for checking whether the subject is
                hcp ready and what to do with existing files
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
+    2019-05-12 Grega Repovš
+             - Reports an error if no file is found to be mapped
     '''
 
     print "Running setupHCP\n================"
@@ -176,15 +156,15 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     nT1w  = 0
     nT2w  = 0
 
-    # --- Check subject
+    # --- Check session
 
     # -> is it HCP ready
 
     if inf.get('hcpready', 'no') != 'true':
         if check == 'yes':
-            raise ge.CommandFailed("setupHCP", "Subject not ready", "Subject %s is not marked ready for HCP" % (sid), "Please check or run with check=no!")
+            raise ge.CommandFailed("setupHCP", "Session not ready", "Session %s is not marked ready for HCP" % (sid), "Please check or run with check=no!")
         else:
-            print "WARNING: Subject %s is not marked ready for HCP. Processing anyway." % (sid)
+            print "WARNING: Session %s is not marked ready for HCP. Processing anyway." % (sid)
 
     # -> does raw data exist
 
@@ -211,6 +191,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     i = [k for k, v in inf.iteritems() if k.isdigit()]
     i.sort(key=int, reverse=True)
     boldn = '99'
+    mapped = False
 
     for k in i:
         v = inf[k]
@@ -317,15 +298,20 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             else:
                 print "  ... %s subfolder already exists" % (tfold)
 
+            mapped = True
+
             if not os.path.exists(os.path.join(basef, tfold, tfile)):
                 print " ---> linking %s to %s" % (sfile, tfile)
-                os.link(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))
+                os.link(os.path.join(rawf, sfile), os.path.join(basef, tfold, tfile))                
             else:
                 print "  ... %s already exists" % (tfile)
                 # print " ---> %s already exists, replacing it with %s " % (tfile, sfile)
                 # os.remove(os.path.join(basef,tfold,tfile))
                 # os.link(os.path.join(rawf, sfile), os.path.join(basef,tfold,tfile))
     
+    if not mapped:
+        raise ge.CommandFailed("setupHCP", "No files mapped", "No files were found to be mapped to the hcp folder [%s]!" % (sfolder), "Please check your data!")     
+
     return
 
 
@@ -337,7 +323,7 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
     ===
 
     The command is used to map MR images into a HCP prepocessing folder
-    structure for all the subject folders it finds within the specified
+    structure for all the session folders it finds within the specified
     origin folder (subjectsfolder).
 
     Specifically, the command looks for source subject.txt files (sfile) in all
@@ -349,26 +335,26 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
 
     If the source subject.txt file does not seem to be ready or if the target
     folder exists, the action depends on check parameter. If check is "yes",
-    the subject is not processed, if check is set to "no" the subject is
+    the session is not processed, if check is set to "no" the session is
     processed. If check is set to "interactive" the user is asked whether the
-    subject should be processed or not.
+    session should be processed or not.
 
     PARAMETERS
     ==========
 
-    --subjectsfolder  The origin folder that holds the subjects' folders (usually
+    --subjectsfolder  The origin folder that holds the sessions' folders (usually
                       "subjects"). [.]
     --tfolder         The target HCP folder in which to set up data for HCP
                       preprocessing (usually "hcp"). [hcp]
     --sfile           The source subject.txt file to use for mapping to a target
                       HCP folder. [subject_hcp.txt]
-    --check           Whether to check if the subject is safe to run (yes), run
+    --check           Whether to check if the session is safe to run (yes), run
                       in any case (no) or ask the user (interactive) if in doubt.
 
     EXAMPLE USE
     ===========
 
-    gmri setupHCPFolder subjectsfolder=subjects check=no
+    mnap setupHCPFolder subjectsfolder=subjects check=no
 
     ----------------
     Written by Grega Repovš
@@ -378,6 +364,8 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
              - Updated documentation.
     2018-01-01 Grega Repovš
              - Changed input parameters
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     # list all possible sbjfiles and check them
@@ -424,12 +412,12 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
 
         process = True
         if ok or check == "no":
-            print status, " => processing the subject"
+            print status, " => processing session"
         elif check == "yes":
-            print status, " => skipping this subject"
+            print status, " => skipping this session"
         elif check == "interactive":
             print status
-            s = raw_input("     ---> do you want to process this subject [y/n]: ")
+            s = raw_input("     ---> do you want to process this session [y/n]: ")
             if s != 'y':
                 process = False
 
@@ -442,9 +430,9 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
     print "\n\n===> done processing %s\n" % (subjectsfolder)
 
 
-def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, sfilter=None, overwrite="no"):
+def getHCPReady(sessions, subjectsfolder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, sfilter=None, overwrite="no"):
     '''
-    getHCPReady subjects=<subjects specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
+    getHCPReady sessions=<sessions specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
 
     USE
     ===
@@ -453,33 +441,33 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
     information necessary for correct mapping to a fodler structure supporting
     HCP preprocessing.
 
-    For all the subjects specified, the command checks for the presence of
+    For all the sessions specified, the command checks for the presence of
     specified source file (sfile). If the source file is found, each sequence
     name is checked against the source specified in the mapping file (mapping),
     and the specified label is aded. The results are then saved to the specified
-    target file (tfile). The resulting subject infomation files will have
+    target file (tfile). The resulting session infomation files will have
     "hcpready: true" key-value pair added.
 
     PARAMETERS
     ==========
 
-    --subjects       Either an explicit list (space, comma or pipe separated) of
-                     subjects to process or the path to a batch or list file with
-                     subjects to process.
-    --subjectsfolder The directory that holds subjects' folders. [.]
+    --sessions       Either an explicit list (space, comma or pipe separated) of
+                     sessions to process or the path to a batch or list file with
+                     sessions to process.
+    --subjectsfolder The directory that holds sessions' folders. [.]
     --sfile          The "source" subject.txt file. [subject.txt]
     --tfile          The "target" subject.txt file. [subject_hcp.txt]
     --mapping        The path to the text file describing the mapping.
                      [specs/hcp_mapping.txt]
     --sfilter        An optional "key:value|key:value" string used as a filter
-                     if a batch file is used. Only subjects for which all the
+                     if a batch file is used. Only sessions for which all the
                      key:value pairs are true will be processed. All the
-                     subjects will be processed if no filter is provided.
+                     sessions will be processed if no filter is provided.
     --overwrite      Whether to overwrite target files that already exist (yes)
                      or not (no). [no]
 
     If an explicit list is provided, each element is treated as a glob pattern
-    and the command will process all matching subject ids.
+    and the command will process all matching session ids.
 
     Mapping specification
     ---------------------
@@ -549,9 +537,9 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
     EXAMPLE USE
     ===========
 
-    gmri getHCPReady subjects="OP*|AP*" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    mnap getHCPReady sessions="OP*|AP*" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
 
-    gmri getHCPReady subjects="processing/batch_new.txt" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    mnap getHCPReady sessions="processing/batch_new.txt" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
 
     ----------------
     Written by Grega Repovš
@@ -565,6 +553,10 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
              - Added the option to explicitly specify the subjects to process.
              - Adjusted and expanded help string.
              - Added the option to map sequence names.
+    2019-04-07 Grega Repovš
+             - Added more detailed report with explicit failure in case of missing source files.
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
     '''
 
     print "Running getHCPReady\n==================="
@@ -588,30 +580,39 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
     if not mapping:
         raise ge.CommandFailed("getHCPReady", "No mapping defined", "No valid mappings were found in the mapping file!", "Please check the specified file [%s]" % (mapping))
 
-    # -- get list of subject folders
+    # -- get list of session folders
 
-    subjects, gopts = g_core.getSubjectList(subjects, sfilter=sfilter, verbose=False)
+    sessions, gopts = g_core.getSubjectList(sessions, sfilter=sfilter, verbose=False)
 
     sfolders = []
-    for subject in subjects:
-        newSet = glob.glob(os.path.join(subjectsfolder, subject['id']))
+    for session in sessions:
+        newSet = glob.glob(os.path.join(subjectsfolder, session['id']))
         if not newSet:
-            print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(subjectsfolder, subject['id']))
+            print "WARNING: No folders found that match %s. Please check your data!" % (os.path.join(subjectsfolder, session['id']))
         sfolders += newSet
 
-    # -- loop through subject folders
+    # -- check if we have any
 
+    if not sfolders:
+        raise ge.CommandFailed("getHCPReady", "No sessions found to process", "No sessions were found to process!", "Please check the data and sessions parameter!")
+
+    # -- loop through sessions folders
+
+    report = {'missing source': [], 'pre-existing target': [], 'pre-processed source': [], 'processed': []}
+    
     for sfolder in sfolders:
 
         ssfile = os.path.join(sfolder, sfile)
         stfile = os.path.join(sfolder, tfile)
 
         if not os.path.exists(ssfile):
+            report['missing source'].append(sfolder)
             continue
         print " ... Processing folder %s" % (sfolder)
 
         if os.path.exists(stfile) and overwrite != "yes":
             print "     ... Target file already exists, skipping! [%s]" % (stfile)
+            report['pre-existing target'].append(sfolder)
             continue
 
         lines = [line.strip() for line in open(ssfile)]
@@ -660,11 +661,26 @@ def getHCPReady(subjects, subjectsfolder=".", sfile="subject.txt", tfile="subjec
 
         if hcpok:
             print "     ... %s already HCP ready" % (sfile)
+            if sfile != tfile:
+                shutil.copyfile(sfile, tfile)
+            report['pre-processed source'].append(sfolder)
         else:
             print "     ... writing %s" % (tfile)
             fout = open(stfile, 'w')
             for line in nlines:
                 print >> fout, line
+            report['processed'].append(sfolder)
     
+    print "\n===> Final report"
+
+    for status in ['pre-existing target', 'pre-processed source', 'processed', 'missing source']:
+        if report[status]:
+            print "---> sessions with %s file:" % (status)
+            for session in report[status]:
+                print "     -> %s " % (os.path.basename(session))
+
+    if report['missing source']:
+        raise ge.CommandFailed("getHCPReady", "Unprocessed sessions", "Some sessions were missing source files [%s]!" % (sfile), "Please check the data and parameters!")
+
     return
 

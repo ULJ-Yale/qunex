@@ -98,7 +98,7 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
     - fidlroot:  the root to use to find fild files
     - outfolder: the folder in which to save the results
 
-    example: gmri joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
+    example: mnap joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
     '''
 
     # ---> find all fidl files, sort them, read them, get TR info
@@ -185,7 +185,18 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     - fidlfolder:  the folder with fidl files - defaults to concfolder if not provided
     - outfolder:   the folder in which the joint files should be saved, defauts to fidlfolder if not provided
 
-    example gmri joinFidlFolder concfolder=concs fidlfolder=fidls
+    Example
+    ------- 
+
+    mnap joinFidlFolder concfolder=concs fidlfolder=fidls
+
+    ----------------
+    Written by Grega Repovš 
+    
+    Change log
+
+    2019-05-12 Grega Repovš
+             - Reports an error if no conc file is found to process
     '''
 
     if fidlfolder is None:
@@ -195,6 +206,9 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
         outfolder = fidlfolder
 
     concfiles = glob.glob(concfolder + '/*.conc')
+
+    if not concfiles:
+        raise ge.CommandFailed("joinFidlFolder", "No conc files founr", "No conc files found to process!", "Please check your data!")
 
     failed = []
     for concfile in concfiles:
@@ -214,7 +228,7 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
 
 def splitFidl(concfile, fidlfile, outfolder=None):
     """
-    gmri splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
+    splitFidl concfile=<reference_conc_file> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]
 
     Splits a multi-bold fidl file into run specific bold files based on the sequence of bold files in conc file and their lengths.
 
@@ -284,9 +298,26 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     - allcodes:   Whether to plot line for all fidl codes even if no event has a particular code.
     - verbose:    Whether to report progress
 
-    Example use:
-    gmri checkFidl fidlfolder=jfidls
+    Example
+    -------
+
+    mnap checkFidl fidlfolder=jfidls
+
+    ----------------
+    Written by Grega Repovš 
+    
+    Change log
+
+    2019-05-12 Grega Repovš
+             - Reports an error if no fidl file is found to process
     '''
+
+    if fidlfile:
+        if not os.path.exists(fidlfile):
+            raise ge.CommandFailed("checkFidl", "Fidl file does not exist", "The specified fidl file does not exist [%s]" % (fidlfile), "Please check your data!")
+    else:
+        if not glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")):
+            raise ge.CommandFailed("checkFidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")   
 
     command = ['Rscript', os.path.join(os.environ['MNAPPATH'], 'niutilities', 'g_CheckFidl.R')]
     command.append('-fidlfolder=%s' % (fidlfolder))

@@ -137,7 +137,7 @@ def readSubjectData(filename, verbose=False):
             for field in ['dicom', 'raw_data', 'data', 'hpc']:
                 if field in dic:
                     if not os.path.exists(dic[field]) and verbose:
-                        print "WARNING: subject %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
+                        print "WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
 
 
     except:
@@ -263,6 +263,7 @@ def deduceFolders(args):
     Written by Grega Repovš, 2018-03-31
     '''
 
+    reference  = args.get('reference')
     logfolder  = args.get('logfolder')
     basefolder = args.get('basefolder')
     subjectsfolder = args.get('subjectsfolder')
@@ -273,7 +274,7 @@ def deduceFolders(args):
         if subjectsfolder:
             basefolder = os.path.dirname(subjectsfolder)
         else:
-            for f in [os.path.abspath(e) for e in [logfolder, sfolder, folder, "."] if e]:
+            for f in [os.path.abspath(e) for e in [logfolder, sfolder, folder, reference, "."] if e]:
                 if f and not basefolder:
                     while os.path.dirname(f) and os.path.dirname(f) != '/':
                         f = os.path.dirname(f)

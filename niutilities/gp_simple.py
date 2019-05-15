@@ -6,13 +6,13 @@ It consists of functions:
 
 * createBoldList   ... creates a list with paths to each subject's BOLD files
 * createConcList   ... creates a list with paths to each subject's conc files
-* listSubjectInfo  ... lists subjects data stored in batch.txt file
+* listSubjectInfo  ... lists session data stored in batch.txt file
 
 All the functions are part of the processing suite. They should be called
-from the command line using `gmri` command. Help is available through:
+from the command line using `mnap` command. Help is available through:
 
-`gmri ?<command>` for command specific help
-`gmri -o` for a list of relevant arguments and options
+`mnap ?<command>` for command specific help
+`mnap -o` for a list of relevant arguments and options
 
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
@@ -34,20 +34,20 @@ def createBoldList(sinfo, options, overwrite=False, thread=0):
     bfile = open(os.path.join(options['subjectsfolder'], 'boldlist' + options['bold_prefix'] + '.list'), 'w')
     bsearch = re.compile('bold([0-9]+)')
 
-    for subject in sinfo:
+    for session in sinfo:
         bolds = []
-        for (k, v) in subject.iteritems():
+        for (k, v) in session.iteritems():
             if k.isdigit():
                 bnum = bsearch.match(v['name'])
                 if bnum:
-                    if v['task'] in options['bold_preprocess'].split("|"):
+                    if v['task'] in options['bolds'].split("|"):
                         bolds.append(v['name'])
         if len(bolds) > 0:
-            f = getFileNames(subject, options)
-            print >> bfile, "    subject id:%s" % (subject['id'])
+            f = getFileNames(session, options)
+            print >> bfile, "    subject id:%s" % (session['id'])
             print >> bfile, "    roi:%s" % (os.path.abspath(f['fs_aparc_bold']))
             for bold in bolds:
-                f = getBOLDFileNames(subject, boldname=bold, options=options)
+                f = getBOLDFileNames(session, boldname=bold, options=options)
                 print >> bfile, "    file:%s" % (os.path.abspath(f['bold_final']))
 
     bfile.close()
@@ -60,19 +60,19 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
 
     bfile = open(os.path.join(options['subjectsfolder'], 'conclist' + options['bold_prefix'] + '.list'), 'w')
 
-    concs = options['bold_preprocess'].split("|")
+    concs = options['bolds'].split("|")
     fidls = options['event_file'].split("|")
 
     if len(concs) != len(fidls):
         print "\nWARNING: Number of conc files (%d) does not match number of event files (%d), processing aborted!" % (len(concs), len(fidls))
 
     else:
-        for subject in sinfo:
+        for session in sinfo:
             try:
-                f = getFileNames(subject, options)
-                d = getSubjectFolders(subject, options)
+                f = getFileNames(session, options)
+                d = getSubjectFolders(session, options)
 
-                print >> bfile, "subject id:%s" % (subject['id'])
+                print >> bfile, "subject id:%s" % (session['id'])
                 print >> bfile, "    roi:%s" % (f['fs_aparc_bold'])
 
                 tfidl  = fidls[0].strip().replace(".fidl", "")
@@ -84,7 +84,7 @@ def createConcList(sinfo, options, overwrite=False, thread=0):
                 print >> bfile, "    file:%s" % (f_conc)
 
             except:
-                print "ERROR processing subject %s!" % (subject['id'])
+                print "ERROR processing session %s!" % (session['id'])
                 raise
 
     bfile.close()
@@ -97,8 +97,8 @@ def listSubjectInfo(sinfo, options, overwrite=False, thread=0):
     """
     bfile = open(os.path.join(options['subjectsfolder'], 'SubjectInfo.txt'), 'w')
 
-    for subject in sinfo:
-        print >> bfile, "subject: %s, group: %s" % (subject['id'], subject['group'])
+    for session in sinfo:
+        print >> bfile, "subject: %s, group: %s" % (session['id'], session['group'])
 
     bfile.close()
 
@@ -111,11 +111,11 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     USE
     ===
 
-    runShellScript runs the specified script on every selected subject from
-    batch.txt file. It places the specified subject specific information
+    runShellScript runs the specified script on every selected session from
+    batch.txt file. It places the specified session specific information
     before running the script. The information to be added is to be referenced
     in the script using double curly braces: {{<key>}}. Specifically, the
-    function loops through all the subject specific information as well as all
+    function loops through all the session specific information as well as all
     the processing parameters and places them into the script. If the
     information is not provided, the {{<key>}} will remain as is.
 
@@ -157,7 +157,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     The relevant processing parameters are:
 
     --script          ... Tha path to the script to be executed.
-    --subjects        ... The batch.txt file with all the subject information
+    --sessions        ... The batch.txt file with all the session information
                           [batch.txt].
     --cores           ... How many cores to utilize [1].
 
@@ -166,16 +166,20 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    gmri runShellScript subjects=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    mnap runShellScript sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no script=fcMRI/processdata.sh
 
     ----------------
     Written by Grega Repovš 2017-06-24
 
+    Change log
+    2019-04-25 Grega Repovš
+             - Changed subjects to sessions
+
     """
 
     r = "\n---------------------------------------------------------"
-    r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
     r += "\nRunning script %s" % (options['script'])
     r += "\n........................................................\n"
 
@@ -185,7 +189,7 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
 
         script = file(options['script']).read()
 
-        # --- place subject specific data
+        # --- place session specific data
 
         for key, value in sinfo.iteritems():
             if not key.isdigit():

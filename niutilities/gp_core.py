@@ -100,7 +100,7 @@ def useOrSkipBOLD(sinfo, options, r=None):
     Internal function to determine which bolds to use and which to skip.
     """
     bsearch  = re.compile('bold([0-9]+)')
-    btargets = options['bold_preprocess'].split("|")
+    btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
     bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
     bskip    = []
     if "all" not in btargets:
@@ -314,10 +314,14 @@ def getBOLDFileNames(sinfo, boldname, options):
     # --- bold preprocessed files
 
     f['bold']                   = os.path.join(d['s_bold'], boldname + options['bold_tail'] + ext)
-    f['bold_final']             = os.path.join(d['s_bold'], boldname + options['bold_prefix'] + options['bold_tail'] + ext)
+    f['bold_final']             = os.path.join(d['s_bold'], boldname + options['bold_tail'] + options['bold_prefix'] + ext)
     f['bold_stats']             = os.path.join(d['s_bold_mov'], boldname + '.bstats')
     f['bold_nuisance']          = os.path.join(d['s_bold_mov'], boldname + '.nuisance')
     f['bold_scrub']             = os.path.join(d['s_bold_mov'], boldname + '.scrub')
+
+    f['bold_vol']               = os.path.join(d['s_bold'], boldname + '.nii.gz')
+    f['bold_dts']               = os.path.join(d['s_bold'], boldname + options['hcp_cifti_tail'] + '.dtseries.nii')
+    f['bold_pts']               = os.path.join(d['s_bold'], boldname + options['hcp_cifti_tail'] + '.ptseries.nii')
 
     for ch in options['bold_actions']:
         if ch == 's':
@@ -526,7 +530,7 @@ def readSubjectData(filename):
                 if "id" not in dic:
                     print "WARNING: There is a record missing an id field and is being omitted from processing.", dic
                 elif "data" not in dic and "hcp" not in dic:
-                    print "WARNING: Subject %s is missing a data field and is being omitted from processing." % (dic['id'])
+                    print "WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
 

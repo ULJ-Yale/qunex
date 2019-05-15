@@ -216,7 +216,7 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
     Example use
     -----------
 
-    gmri runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
+    $ mnap runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
          root=sustained_aov
 
     ----------------
@@ -647,7 +647,7 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
     EXAMPLE USE
     ===========
 
-    gmri maskMap image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
+    $ mnap maskMap image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
          masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
          maxv=0.017
 
@@ -746,7 +746,7 @@ def joinMaps(images=None, output=None, names=None, originals=None):
     EXAMPLE USE
     ===========
 
-    gmri joinMaps images="sustained_AvsB_p.017.dscalar.nii, \\
+    $ mnap joinMaps images="sustained_AvsB_p.017.dscalar.nii, \\
                           sustained_BvsC_p.017.dscalar.nii, \\
                           sustained_AvsC_p.017.dscalar.nii, \\
                           sustained_aov_p.017.dscalar.nii" \\
@@ -871,7 +871,7 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
     EXAMPLE USE
     ===========
 
-    gmri createWSPALMDesign factors="2,3" nsubjects=33 root=WM.type_by_load
+    $ mnap createWSPALMDesign factors="2,3" nsubjects=33 root=WM.type_by_load
 
     ----------------
     Written by Grega Repovš, 2017-07-14'''

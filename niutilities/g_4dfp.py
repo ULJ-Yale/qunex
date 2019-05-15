@@ -61,7 +61,7 @@ def runNILFolder(folder=".", pattern=None, overwrite=None, sfile=None):
     - overwrite: whether to overwrite existing (params and BOLD) files.
     — sfile: the name of the subject.txt file
 
-    example: gmri runNILFolder folder=. pattern=OP* overwrite=no sfile=subject_hcp.txt
+    example: mnap runNILFolder folder=. pattern=OP* overwrite=no sfile=subject_hcp.txt
     '''
 
     if pattern is None:

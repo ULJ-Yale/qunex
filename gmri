@@ -6,6 +6,7 @@ import niutilities.g_process as gp
 import niutilities.g_matlab as gm
 import niutilities.g_core as gc
 import niutilities.g_exceptions as ge
+import niutilities.g_commands as gcom
 import os.path
 import sys
 import copy
@@ -22,13 +23,13 @@ print
 help = '''
 ================================================================================
 
-General magnetic resonance Imaging (gmri) utilities for processing and analysis.
+Neuro Imaging utilities (niutilities) for processing and analysis.
 
-usage: gmri <command> [option=value] [option=value] ...
-       gmri -h         (prints this help)
-       gmri -l         (list available commands)
-       gmri -o         (list available processing options)
-       gmri ?<command> (print help for a given command)
+usage: mnap <command> [option=value] [option=value] ...
+       mnap -h         (prints this help)
+       mnap -l         (list available commands)
+       mnap -o         (list available processing options)
+       mnap ?<command> (print help for a given command)
 
        -------------------------------------------------------------------------
        Note the following conventions used in help and documentation:
@@ -55,9 +56,9 @@ usage: gmri <command> [option=value] [option=value] ...
 comlist = '''
 ================================================================================
 
-General magnetic resonance Imaging (gmri) utilities for processing and analysis.
+General magnetic resonance Imaging (mnap) utilities for processing and analysis.
 
-use: gmri <command> [option=value] [option=value] ...
+use: mnap <command> [option=value] [option=value] ...
 
 --------------------------------------------------------------------------------
 Note the following conventions used in help and documentation:
@@ -113,7 +114,7 @@ nifti24dfp    inf=<input_filename> [outf=<output_filename>]
 
 HCP setup commands
 ------------------
-getHCPReady    subjects=<subjects specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
+getHCPReady    sessions=<sessions specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
 setupHCP       [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt]
 setupHCPFolder [subjectsfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=interactive]
 
@@ -121,9 +122,10 @@ setupHCPFolder [subjectsfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=i
 Miscellaneous file utilities
 ----------------------------
 createStudy  studyfolder=<path to study base folder>
-createBatch  [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [subjects=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
-createList   [subjectsfolder=.] [subjects=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
-createConc   [subjectsfolder=.] [subjects=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+createBatch  [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=ask] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+createList  [subjectsfolder=.] [sessions=None] [sfilter=None] [listfile=None] [bolds=None] [conc=None] [fidl=None] [glm=None] [roi=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+createConc  [subjectsfolder=.] [sessions=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+runlist  listfile=<path to runlist file> runlists=<name(s) of the list(s) to run> [logfolder=None]
 
 
 Fidl file utilities
@@ -161,19 +163,19 @@ Processing commands
 ===================
 In contrast to utilities listed above, processing commands can be submitted to
 run on a computer cluster using either a PBS or LSF scheduling. The commands
-operate on a list of subjects specified in a `batch.txt` file that provides
-information about each subject and his or her images and other information.
+operate on a list of sessions specified in a `batch.txt` file that provides
+information about each session and his or her images and other information.
 Options for the processing command can be specified either in the `batch.txt`
 file or on the command line, the latter having priority if a parameter is
 specified at both levels. No options need to be set for any of the commands
 listed below. The key parameters with their default values are:
 
-    subjects=batch.txt   ... the path to the batch.txt file
+    sessions=batch.txt   ... the path to the batch.txt file
     subjectsfolder=.     ... the path to the study subjects folder
     overwrite=no         ... whether to overwrite existing results
     cores=1              ... how many cores to utilize for those
                              commands that can be parallelized
-    nprocess=0           ... how many subjects to process (0=all)
+    nprocess=0           ... how many sessions to process (0=all)
     log=remove           ... whether to remove logs of commands that have
                              ran and finished successfully
     run=run              ... whether to run (run) the listed command or
@@ -195,7 +197,7 @@ hcpd  hcp_Diffusion    Run HCP DWI pipeline.
 
 Functional connectivity preprocessing commands
 ----------------------------------------------
-mhd  mapHCPData              Map HCP preprocessed data to subjects' image folder.
+mhd  mapHCPData              Map HCP preprocessed data to sessions' image folder.
 bbm  createBOLDBrainMasks    Create brain masks for BOLD runs.
 cbs  computeBOLDStats        Compute BOLD movement and signal statistics.
 csr  createStatsReport       Create BOLD movement statistic reports and plots.
@@ -214,16 +216,16 @@ Legacy commands
 ---------------
 
 seg    runBasicSegmentation     Run basic structural image segmentation using BET and FAST.
-gfs    getFSData                Copy existing FreeSurfer data to subjects' images folder.
+gfs    getFSData                Copy existing FreeSurfer data to sessions' images folder.
 fss    runSubcorticalFS         Run subcortical freesurfer segmentation.
 fsf    runFullFS                Run full freesurfer segmentation
 
 
 Matlab functions
 ================
-A number of Matlab functions provided as part of MNAP/matlab package can be run.
+A number of Matlab functions provided as part of MNAP/nitools package can be run.
 A list of functions available is provided below. For more information on each
-function run `gmri ?<function name>`. Arguments can be specified in any order.
+function run `mnap ?<function name>`. Arguments can be specified in any order.
 Arguments that are not provided will be passed as empty strings / vectors to be
 processed with default values. Take care to embed vectors in square brackets
 (e.g. "[1 8 6 12]") and cell arrays in curly braces (e.g. "{'DLPFC', 'ACC',
@@ -232,7 +234,7 @@ output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 
 An example call of a Matlab function:
 
-gmri g_FindPeaks fin='map_zstat.dscalar.nii' fout='map_peaks.dscalar.nii' \\
+$ mnap g_FindPeaks fin='map_zstat.dscalar.nii' fout='map_peaks.dscalar.nii' \\
      mins="[50 50]" maxs="[300 350]" val=n t=3.5 projection=midthickness
 
 List of available functions:
@@ -240,50 +242,6 @@ List of available functions:
 
 for mcom in gm.functionList:
     comlist += "\n" + mcom
-
-commands = {'listDicom'            : {'com': niu.g_dicom.listDicom,              'args': ('folder', )},
-            'splitDicom'           : {'com': niu.g_dicom.splitDicom,             'args': ('folder', )},
-            'sortDicom'            : {'com': niu.g_dicom.sortDicom,              'args': ('folder', 'out_dir', 'files', 'copy')},
-            'dicom2nii'            : {'com': niu.g_dicom.dicom2nii,              'args': ('folder', 'clean', 'unzip', 'gzip', 'verbose', 'cores', 'debug')},
-            'dicom2niix'           : {'com': niu.g_dicom.dicom2niix,             'args': ('folder', 'clean', 'unzip', 'gzip', 'subjectid', 'verbose', 'cores', 'debug', 'tool', 'options')},
-            'processInbox'         : {'com': niu.g_dicom.processInbox,           'args': ('subjectsfolder', 'inbox', 'check', 'pattern', 'tool', 'cores', 'logfile', 'archive', 'options', 'verbose')},
-            'getDICOMInfo'         : {'com': niu.g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
-            'BIDSImport'           : {'com': niu.g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'action', 'overwrite', 'archive', 'bidsName')},
-            'mapBIDS2nii'          : {'com': niu.g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite')},
-            'HCPLSImport'          : {'com': niu.g_hcpls.HCPLSImport,            'args': ('subjectsfolder', 'inbox', 'action', 'overwrite', 'archive', 'hcplsName')},
-            'mapHCPLS2nii'         : {'com': niu.g_hcpls.mapHCPLS2nii,           'args': ('sfolder', 'overwrite')},
-            'runNILFolder'         : {'com': niu.g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'sfile')},
-            'runNIL'               : {'com': niu.g_4dfp.runNIL,                  'args': ('folder', 'overwite', 'sfile')},
-            'fz2zf'                : {'com': niu.g_NIfTI.fz2zf,                  'args': ('inf', 'outf')},
-            'reorder'              : {'com': niu.g_NIfTI.reorder,                'args': ('inf', 'outf')},
-            'reslice'              : {'com': niu.g_NIfTI.reslice,                'args': ('inf', 'slices', 'outf')},
-            'sliceImage'           : {'com': niu.g_img.sliceImage,               'args': ('sfile', 'tfile', 'frames')},
-            'nifti24dfp'           : {'com': niu.g_NIfTI.nifti24dfp,             'args': ('inf', 'outf')},
-            'setupHCP'             : {'com': niu.g_HCP.setupHCP,                 'args': ('sfolder', 'tfolder', 'sfile', 'check', 'existing')},
-            'setupHCPFolder'       : {'com': niu.g_HCP.setupHCPFolder,           'args': ('subjectsfolder', 'tfolder', 'sfile', 'check')},
-            'getHCPReady'          : {'com': niu.g_HCP.getHCPReady,              'args': ('subjects', 'subjectsfolder', 'sfile', 'tfile', 'mapping', 'sfilter', 'overwrite')},
-            'printniftihdr'        : {'com': niu.g_img.printniftihdr,            'args': ('filename', )},
-            'modniftihdr'          : {'com': niu.g_gimg.modniftihdr,             'args': ('filename', 's')},
-            'createBatch'          : {'com': niu.g_utilities.createBatch,        'args': ('subjectsfolder', 'sfile', 'tfile', 'subjects', 'sfilter', 'overwrite', 'paramfile')},
-            'createStudy'          : {'com': niu.g_utilities.createStudy,        'args': ('studyfolder', )},
-            'createList'           : {'com': niu.g_utilities.createList,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'listfile', 'bolds', 'conc', 'fidl', 'glm', 'roi', 'boldname', 'boldtail', 'overwrite', 'check')},
-            'createConc'           : {'com': niu.g_utilities.createConc,         'args': ('subjectsfolder', 'subjects', 'sfilter', 'concfolder', 'concname', 'bolds', 'boldname', 'boldtail', 'overwrite', 'check')},
-            'joinFidl'             : {'com': niu.g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
-            'joinFidlFolder'       : {'com': niu.g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder', 'fidlname')},
-            'splitFidl'            : {'com': niu.g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},
-            'checkFidl'            : {'com': niu.g_fidl.checkFidl,               'args': ('fidlfile', 'fidlfolder', 'plotfile', 'allcodes')},
-            'map2PALS'             : {'com': niu.g_4dfp.map2PALS,                'args': ('volume', 'metric', 'atlas', 'method', 'mapping')},
-            'map2HCP'              : {'com': niu.g_4dfp.map2HCP,                 'args': ('volume', 'method')},
-            'maskMap'              : {'com': niu.g_palm.maskMap,                 'args': ('image', 'masks', 'output', 'minv', 'maxv', 'join')},
-            'joinMaps'             : {'com': niu.g_palm.joinMaps,                'args': ('images', 'output', 'names', 'originals')},
-            'runPALM'              : {'com': niu.g_palm.runPALM,                 'args': ('image', 'design', 'args', 'root', 'options', 'cores', 'overwrite', 'cleanup')},
-            'createWSPALMDesign'   : {'com': niu.g_palm.createWSPALMDesign,      'args': ('factors', 'nsubjects', 'root')},
-            'schedule'             : {'com': niu.g_scheduler.schedule,           'args': ('command', 'script', 'settings', 'replace', 'workdir', 'environment', 'output')},
-            'getDICOMFields'       : {'com': niu.g_dicomdeid.getDICOMFields,     'args': ('folder', 'tfile', 'limit')},
-            'changeDICOMFiles'     : {'com': niu.g_dicomdeid.changeDICOMFiles,   'args': ('folder', 'paramfile', 'archivefile', 'outputfolder', 'extension', 'replacementdate')}
-
-            }
-
 
 def runCommand(command, args):
 
@@ -294,14 +252,14 @@ def runCommand(command, args):
 
     # --- sort commands by type
 
-    if command in commands:
+    if command in gcom.commands:
         pass
     elif command in gp.allactions:
         gp.run(command, args)
         return
     elif command in gm.functions:
         if 'scheduler' in args:
-            niu.g_scheduler.runThroughScheduler(command, subjects=None, args=args, cores=1, logfolder=folders['logfolder'])
+            niu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, cores=1, logfolder=folders['logfolder'])
         else:
             gm.run(command, args)
         return
@@ -316,7 +274,7 @@ def runCommand(command, args):
     bargs = {}
     eargs = {}
     for k, v in args.items():
-        if k in commands[command]['args']:
+        if k in gcom.commands[command]['args']:
             bargs[k] = v
         else:
             eargs[k] = v
@@ -326,7 +284,7 @@ def runCommand(command, args):
     if eargs:
         bad = []
         for k, v in eargs.items():
-            if k not in ['subjects', 'filter', 'subjid', 'scheduler', 'cores', 'scheduler_environment', 'scheduler_workdir', 'scheduler_sleep', 'nprocess', 'logfolder', 'basefolder', 'subjectsfolder']:
+            if k not in gcom.extraParameters:
                 bad.append(k)
                 print "ERROR: Extra argument %s is not valid! Please check your command!" % (k)
         if bad:
@@ -334,50 +292,110 @@ def runCommand(command, args):
 
     # -- process extra arguments
 
-    subjects = None
-    if 'subjects' in eargs:
-        if not any([e in commands[command]['args'] for e in ['sfolder', 'folder']]):
-            raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple subjects!" % (command))
+    sessions = None
+    if 'sessions' in eargs:
+        if command != "runList" and not any([e in gcom.commands[command]['args'] for e in ['sfolder', 'folder']]):
+            raise ge.CommandError("gmri", "Incompatible command", "Command %s can not be run on multiple sessions!" % (command))
         if folders['subjectsfolder'] is None:
             folders['subjectsfolder'] = "."
-        subjects, gopts = gc.getSubjectList(eargs['subjects'], sfilter=eargs.get('filter'), subjid=eargs.get('subjid'), subjectsfolder=folders['subjectsfolder'], verbose=False)
+        sessions, gopts = gc.getSubjectList(eargs['sessions'], sfilter=eargs.get('filter'), subjid=eargs.get('subjid'), subjectsfolder=folders['subjectsfolder'], verbose=False)
 
     logname = eargs.get('logname')
 
-    cores = int(eargs.get('cores', '1'))
+    calls = []
 
-    # -- are we using a scheduler
+    # -- runList specifics
 
-    if 'scheduler' in eargs:
-        niu.g_scheduler.runThroughScheduler(command, subjects=subjects, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+    if command == "runList":
+        if sessions and 'sperlist' in eargs:
 
-    # -- a basic call
+            if 'scheduler' in eargs:
 
-    elif subjects is None:
-        commands[command]['com'](**args)
-        print "\n===> Successful completion of task\n"
+                # -- define number of sessions to run in each runList
+                cores = int(eargs['sperlist'])
+                args['cores'] = eargs['sperlist']
+                if 'ignore' in args:
+                    args['ignore'] += 'scheduler'
+                else:
+                    args['ignore'] = 'scheduler'
+                del args['sperlist']
 
-    # -- subjects loop
+                niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+            
+            else:
 
+                # -- define number of sessions to run in each runList
+                sperlist = args['sperlist']                
+                del args['sperlist']
+
+                # -- define number of runLists to run in parallel
+                cores = eargs.get('runinpar', 1)
+                args['cores'] = cores
+                if 'runinpar' in args:
+                    del args['runinpar']
+
+                c = 0
+                while sessions:
+                    c += 1
+                    largs = args.copy()
+
+                    # -- set up a list of sessions to run in each runList
+
+                    slist = [sessions.pop(0)['id'] for e in range(sperlist) if sessions]
+                    largs['subjid'] = "|".join(slist)
+
+                    calls.append({'name': 'runList_%d' % (c), 'function': gcom.commands[command]['com'], 'args': largs, 'logfile': None})
+
+        else:
+            bargs['eargs'] = eargs
+            gcom.commands[command]['com'](**bargs)
+            print "\n===> Successful completion of task"
+
+    # -- all other commands    
     else:
-        print "\n===> Running %s through a list of subjects using %d cores" % (command, cores)
 
-        calls = []
-        for subject in subjects:
-            targs   = dict(bargs)
-            name    = command + ": " + subject['id']
-            sfolder = os.path.join(folders['subjectsfolder'], subject['id'])
-            if folders['logfolder']:
-                logfile = os.path.join(folders['logfolder'], 'comlogs', "%s_%s.log" % (command, subject['id']))
-            for targ in ['sfolder', 'folder']:
-                if targ in commands[command]['args']:
-                    targs[targ] = sfolder
-            calls.append({'name': name, 'function': commands[command]['com'], 'args': targs, 'logfile': logfile})
+        cores = int(eargs.get('cores', '1'))
+
+        # -- are we using a scheduler
+
+        if 'scheduler' in eargs:
+            niu.g_scheduler.runThroughScheduler(command, sessions=sessions, args=args, cores=cores, logfolder=folders['logfolder'], logname=logname)
+
+        # -- a basic call
+
+        elif sessions is None:
+            gcom.commands[command]['com'](**args)
+            print "\n===> Successful completion of task"
+
+        # -- sessions loop
+
+        else:
+
+            for session in sessions:
+                targs   = dict(bargs)
+                name    = command + ": " + session['id']
+                sfolder = os.path.join(folders['subjectsfolder'], session['id'])
+                if folders['logfolder']:
+                    logfile = os.path.join(folders['logfolder'], 'comlogs', "%s_%s.log" % (command, session['id']))
+                for targ in ['sfolder', 'folder']:
+                    if targ in gcom.commands[command]['args']:
+                        targs[targ] = sfolder
+
+                calls.append({'name': name, 'function': gcom.commands[command]['com'], 'args': targs, 'logfile': logfile})
+
+    # -- Have we set up calls to run in parallel?
+    if calls:
+
+        callInfo = "Running %s" % (command)
+        callInfo += "\n" + "".join(['=' for e in range(len(callInfo))])
+        print callInfo
+        
+        print "\n===> Running %s through a list of sessions using %d cores" % (command, cores)
 
         results = gc.runInParallel(calls, cores=cores, prepend="     ... ")
 
         ok = True
-        print "\n===> Summary Report"       
+        print "\n===> Final report for command", command
         results.sort(key=lambda x: x[0])
         for name, result, targetLog, prepend in results:
             if result:                
@@ -386,7 +404,7 @@ def runCommand(command, args):
                 result = 'completed'
             print "%s %s %s [log: %s]" % (prepend, name, result, targetLog)
         if ok:
-            print "\n===> Successful completion of task\n"
+            print "\n===> Successful completion of task"
 
 
 def printHelp(com):
@@ -398,7 +416,7 @@ def printHelp(com):
     # --- print list of gmri local commands
     elif com == 'available':
         # -> gmri commands
-        for c, v in commands.iteritems():
+        for c, v in gcom.commands.iteritems():
             print c
         # -> complex processing commands
         for l in gp.calist:
@@ -421,10 +439,10 @@ def printHelp(com):
 
     # --- print list of processing options and flags
     elif com in ['o']:
-        print "================================================================================"
+        print "================================================================="
         print ""
-        print "General magnetic resonance Imaging (gmri) utilities for processing and analysis."
-        print "\nuse: gmri <command> [option=value] [option=value] ..."
+        print "Neuro Imaging utilities (niutilities) for processing and analysis"
+        print "\nuse: mnap <command> [option=value] [option=value] ..."
         print "\nList of processing options"
         for line in gp.arglist:
             if len(line) == 4:
@@ -444,12 +462,12 @@ def printHelp(com):
         print
 
     # --- print help for gmri local commands
-    elif com in commands:
-        print "\ngmri", commands[com]['com'].__doc__.strip(), "\n"
+    elif com in gcom.commands:
+        print "\nmnap", gcom.commands[com]['com'].__doc__.strip(), "\n"
 
     # --- print help for processing actions
     elif com in gp.allactions:
-        print "\ngmri", gp.allactions[com].__doc__.strip(), "\n"
+        print "\nmnap", gp.allactions[com].__doc__.strip(), "\n"
 
     # --- print help for matlab functions
     elif com in gm.functions:
@@ -491,40 +509,40 @@ def main(args=None):
                 k, v = args[n].split("=", 1)
                 k = k.strip('-')
                 opts[k] = v
-            elif comm in commands:
-                k = commands[comm]['args'][n - 1]
+            elif comm in gcom.commands:
+                k = gcom.commands[comm]['args'][n - 1]
                 opts[k] = args[n]
             else:
                 k = args[n].strip('-')
                 opts[k] = True
         runCommand(comm, opts)
 
+
+    except ge.CommandNull as e:
+        print ge.reportCommandNull(comm, e)
+        print
+        sys.exit(0)
     except ge.CommandFailed as e:
-        if e.function == comm:
-            print "\n===> ERROR in completing %s:\n     %s\n" % (comm, "\n     ".join(e.report))
-        else:
-            print "\n===> ERROR in completing %s at %s:\n     %s\n" % (comm, e.function, "\n     ".join(e.report))
+        print ge.reportCommandFailed(comm, e)
+        print
         sys.exit(1)
     except ge.CommandError as e:
-        if e.function == comm:
-            print "\nERROR in running %s:\n%s" % (comm, "\n".join(e.report))
-        else:
-            print "\nERROR in running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
-        print "\nPlease run `gmri ?%s` to get help for the failed command.\n" % (comm)
+        print ge.reportCommandError(comm, e)
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
+        print "\nPlease run `mnap ?%s` to get help for the failed command.\n" % (comm)
         sys.exit(1)
     except ValueError as e:
-        print "\n--------------------==== gmri failed! ====--------------------\nERROR: Execution of gmri command %s failed!" % (comm)
+        print "\n--------------------==== mnap failed! ====--------------------\nERROR: Execution of mnap command %s failed!" % (comm)
         print e
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
         print "--------------------------------------------------------------"
         sys.exit(1)
     except SystemExit as e:
         sys.exit(e)
     except:
-        print "\n--------------------==== gmri failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
-        print "       Please check documentation for the command (`gmri ?%s`)!" % (comm)
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\ngmri %s " % (" \\\n    ".join(oargs))
+        print "\n--------------------==== mnap failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
+        print "       Please check documentation for the command (`mnap ?%s`)!" % (comm)
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
         print "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
         raise
         print "\n--------------------------------------------------------------\n"
