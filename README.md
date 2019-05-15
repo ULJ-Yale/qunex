@@ -470,6 +470,7 @@ Change Log
 * 0.41.05 [niutilities] Now always reports an error when no file was found to process
 * 0.41.06 [niutilities] Added pullSequenceNames command
 * 0.41.07 [niutilities] Fixed bold_prefix bold_tail sequence
+* 0.41.08 [niutilities, library] Fixed procesInbox parameter issue, moved unset to container section
 
 Stable Container Tag Log
 ========================
