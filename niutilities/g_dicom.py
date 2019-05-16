@@ -1990,7 +1990,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                      ('nolog', "---> These packets do not match with the log and they won't be processed"),
                      ('bad', "---> For these packets a packet name could not be identified and they won't be processed:"),
                      ('invalid', "---> For these packets the packet name could not parsed and they won't be processed:"),
-                     ('exist', "---> The folder for these packages already exist:"),
+                     ('exist', "---> The session and inbox folder for these packages already exist:"),
                      ('skip', "---> These packages do not match list of sessions and will be skipped:")]
 
         print "---> Checking for packets in %s ... using pattern '%s'" % (os.path.abspath(masterinbox), pattern)
@@ -2033,7 +2033,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                             packets['skip'].append((file, session))
                             continue
 
-                    if os.path.exists(sfolder):
+                    if os.path.exists(os.path.join(sfolder, 'inbox')):
                         packets['exist'].append((file, session))
                         continue
 
@@ -2174,7 +2174,6 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
             print "\n\n---=== PROCESSING %s ===---\n" % (session['sessionid'])
 
             if masterinbox:
-                os.makedirs(sfolder)
                 os.makedirs(ifolder)
                 files = [file]
 
