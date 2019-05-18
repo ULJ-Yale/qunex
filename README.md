@@ -472,6 +472,7 @@ Change Log
 * 0.41.07 [niutilities] Fixed bold_prefix bold_tail sequence
 * 0.41.08 [niutilities, library] Fixed procesInbox parameter issue, moved unset to container section
 * 0.41.09 [niutilities] Updated processInbox to work with existing session folders
+* 0.41.10 [niutilities] Updated processInbox with nameformat parameter
 
 Stable Container Tag Log
 ========================
