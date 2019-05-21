@@ -160,7 +160,7 @@ def readDICOMInfo(filename):
     # --- seriesNumber
 
     try:
-        info['seriesNumber'] = d.SeriesNumber
+        info['seriesNumber'] = int(d.SeriesNumber)
     except:
         info['seriesNumber'] = None
 
@@ -198,7 +198,7 @@ def readDICOMInfo(filename):
 
     info['volumes'] = 0
     try:
-        info['volumes'] = d[0x2001, 0x1081].value
+        info['volumes'] = int(d[0x2001, 0x1081].value)
     except:
         info['volumes'] = 0
 
@@ -209,10 +209,10 @@ def readDICOMInfo(filename):
     # --- slices
 
     try:
-        info['slices'] = d[0x2001, 0x1018].value
+        info['slices'] = int(d[0x2001, 0x1018].value)
     except:
         try:
-            info['slices'] = d[0x0019, 0x100a].value
+            info['slices'] = int(d[0x0019, 0x100a].value)
         except:
             info['slices'] = 0
 
@@ -1683,9 +1683,9 @@ def splitDicom(folder=None):
     return
 
 
-def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, tool='auto', cores=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes'):
+def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', cores=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes'):
     '''
-    processInbox [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(.*?)[.zip]"] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [verbose=yes]  
+    processInbox [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [verbose=yes]  
 
     USE
     ===
@@ -1695,84 +1695,141 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     of NIfTI files. Packet can be either a zip file, a tar archive or a folder 
     that contains DICOM or PAR/REC files.
 
-    The commands can import packets either from a dedicated masterinbox folder 
-    and create the necessary session folders within `subjectsfolder`, or it can
-    process the data already present in the session specific folders. 
+    The command can import packets either from a dedicated masterinbox folder 
+    and create the necessary session folders within `--subjectsfolder`, or it 
+    can process the data already present in the session specific folders. 
+
+    The next sections will describe the two use cases in more detail.
 
 
     Processing data from a dedicated masterinbox folder
     ---------------------------------------------------
 
-    This is the default operation. In this case the `masterinbox` parameter has 
-    to provide a path to the folder with the incoming packets 
-    (`<subjectsfolder>/inbox/MR` by default). The subject/session id is 
-    identified by the use of the `pattern` parameter, and optionally the 
-    `logfile` parameter. The packages processed can be optionally further 
-    filtered by the `sessions` parameter, so that only the packages that match
-    both with the pattern and sessions list are processed.
+    This is the default operation. In this case the `--masterinbox` parameter 
+    has to provide a path to the folder with the incoming packets 
+    (`<subjectsfolder>/inbox/MR` by default). The session id is identified by 
+    the use of the `--pattern` parameter, and optionally the `--logfile` 
+    parameter. The packages processed can be optionally further filtered by the 
+    `--sessions` parameter, so that only the packages that match both with the 
+    `--pattern` and `--sessions` list are processed.
 
-    The command first looks into provided master inbox folder (masterinbox; by 
-    default `<subjectsfolder>/inbox/MR`) and finds any packets that match the 
-    specified regex pattern (pattern). The pattern has to be prepared so that 
-    it returns as the first group found the session id. Once all the packets 
-    have been found, if the sessions parameter is specified, it will select to
-    process only those that match the patterns specified in the sessions 
-    parameter list. It then lists all the sessions to process along with the 
-    extracted subject ids and session names. If the check parameter is set to 
+    The command first looks into the provided master inbox folder 
+    (`--masterinbox`; by default `<subjectsfolder>/inbox/MR`) and finds any 
+    packets that match the specified regex pattern (`--pattern`). The 
+    `--pattern` has to be prepared so that it returns a named group 'packet_name'. 
+    The default pattern is: 
+
+    "(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"
+
+    which will identify the initial part of the packet file- or foldername, (w/o 
+    any extension that identifies a compressed package) as the packet name. 
+    Specifically:
+
+    OP386
+    OP386.zip
+    OP386.tar.gz
+
+    will all be identified as packet names 'OP386'.
+
+    Once all the packets have been found, if the `--sessions` parameter is 
+    specified, only those packets for which the identified packet name matches 
+    any of the sessions specified in the `--sessions` parameter will 
+    be further processed. The entries in the `--sessions` list can be regular
+    expressions, in which case all the packet names that match any of the 
+    expressions will be processed.
+
+    Next, the extracted packet name will be processed to extract subject id and 
+    (optionally) session name. The extraction is specified by the 
+    `--nameformat` parameter. Specifically, the parameter should be a 
+    regular expression that returns a named group `subject_id` and (optionally)
+    a named group `session_name`. This information will be used to identify the
+    subject the data belongs to and (optionally) the specific session within 
+    which the data were acquired. The default expression is:
+
+    "(?P<subject_id>.*)"
+
+    which will return the session id as the subject id, assuming that only a 
+    single session was recorded. The following pattern:
+
+    "(?P<subject_id>.*?)_(?P<session_name>.*)"
+
+    Would take the section of the string before the first underscore as the
+    subject id and the rest of the string as the session name. I.e.:
+
+    OP386_MR_1
+
+    would be parsed to:
+
+    subject_id: OP386
+    session_name: MR_1    
+
+    The command then lists all the sessions to process along with the extracted 
+    subject ids and session names. If the check parameter is set to 
     'yes', the command will ask whether to process the listed packets, if it is 
     set to 'no', it will just start processing them, if it is set to `any`, it 
     will start processing them but return an explicit error if no packets are 
     found. 
 
-    For each packet found, the command will generate a new session folder. 
-    Importantly, if the session is one of multiple sessions per subject, then 
-    the extracted name should have the form `<subject id>_<session name>`. In 
-    this case the `ID` and `session id` parameters in the `subject.txt` file 
-    will be set correctly. If the extracted name has no underscore `_` 
-    character, then the function assumes there is just one session per subject 
-    and the extracted name is the subject id.
+    For each packet found, the command will generate a new session folder. The
+    name of the folder will take the form `<subject_id>_<session_name>`. If no
+    session name is extracted then the name of the folder will be simply 
+    `<subject_id>`. 
 
     Alternatively, a path to a log file can be provided with the information on
     which columns provide the following information:
 
-    * packetname   ... the extracted name of the packet
-    * subjectid    ... subject id of the packet
-    * sessionname  ... session id of the packet
+    * packet_name   ... the extracted name of the packet
+    * subject_id    ... subject id of the packet
+    * session_name  ... session id of the packet
 
-    At least `packetname` and `subjectid` have to be provided. If `sessionname` 
-    is omitted the function assumes there's only one session per subject. 
+    At least `packet_name` and `subject_id` have to be provided. If `session_name` 
+    is omitted, the command assumes there is only one session per subject. 
 
-    The command It will then copy, unzip or untar all the files in the packet 
+    The command will then copy, unzip or untar all the files in the packet 
     into an inbox folder created within the session folder. Once all the files 
     are extracted or copied, depending on the archive parameter, the packet is 
     then either moved or copied to the `study/subjects/archive/MR` folder, left
     as is, or deleted. If the archive folder does not yet exist, it is created.
 
-    If a subject folder already exists, then the related packet will not be 
-    processed so that existing data is not changed. Either remove or rename the 
-    exisiting folder(s) and rerun the command to process those packet(s) as 
-    well. 
-
-    If `sessions` parameter is set, then only those packet names that match the 
-    list in `sessions` will be processed. The entries in the list can be regex 
-    patterns, in which case all the packet names that match any of the patterns 
-    will be processed.
+    If a subject folder with an inbox folder already exists, then the related 
+    packet will not be processed so that existing data is not changed. Either 
+    remove or rename the exisiting folder(s) and rerun the command to process 
+    those packet(s) as well. 
 
     
     Processing data from a session folder
     -------------------------------------
 
-    If the `masterinbox` parameter is set to "none", then the command assumes 
+    If the `--masterinbox` parameter is set to "none", then the command assumes 
     that the incoming data has already been saved to each session folder within 
-    the `subjectsfolder`. In this case, the command will look into all folders 
-    that match the list provided in the `sessions` parameter and process the 
+    the `--subjectsfolder`. In this case, the command will look into all folders 
+    that match the list provided in the `--sessions` parameter and process the 
     data in that folder. Each entry in the list can be a glob pattern matching 
     with multitiple session folders.
 
-    The folders are expected to be named using the formula:
-    `<subject id>_<session name>`. If no underscore is found then the command 
-    assumes only one session exists for this subject and the session id equals
-    subject id.
+    To correctly identify the subject id and session name, `--nameformat` 
+    parameter will be used. Specifically, the parameter should be a regular 
+    expression that returns a named group `subject_id` and (optionally)
+    a named group `session_name`. This information will be used to identify the
+    subject the data belongs to and (optionally) the specific session within 
+    which the data were acquired. The default expression is:
+
+    "(?P<subject_id>.*)"
+
+    which will return the session id as the subject id, assuming that only a 
+    single session was recorded. The following pattern:
+
+    "(?P<subject_id>.*?)_(?P<session_name>.*)"
+
+    Would take the section of the string before the first underscore as the
+    subject id and the rest of the string as the session name. I.e.:
+
+    OP386_MR_1
+
+    would be parsed to:
+
+    subject_id: OP386
+    session_name: MR_1
 
     The folders found are expected to have the data stored in the inbox folder
     either as individual files or as a compressed package. If the latter is the
@@ -1789,7 +1846,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     are sorted and moved to the dicom folder. After that is done, a conversion
     command is run to convert the DICOM images or PAR/REC files to the NIfTI
     format and move them to the nii folder. The specific tool to do the 
-    conversion can be specified explicitly using the `tool` parameter or left 
+    conversion can be specified explicitly using the `--tool` parameter or left 
     for the command to decide if set to 'auto' or let to default. The DICOM or 
     PAR/REC files are preserved and gzipped to save space. To speed up the 
     conversion, the cores parameter is passed to the `dicom2niix` command. 
@@ -1830,8 +1887,13 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                                  report error otherwise
                       [yes]
 
-    --pattern         The regex pattern to use to extract packet name.
-                      ["(.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"]
+    --pattern         The regex pattern to use to find the packages and 
+                      to extract the session id.
+                      ["(?P<session_id>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"]
+
+    --nameformat      The regex pattern to use to extract subject id and 
+                      (optionally) the session name from the session or packet
+                      name. ["(?P<subject_id>.*)"]
 
     --tool            What tool to use for the conversion [auto]. It can be one 
                       of:
@@ -1908,6 +1970,9 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
              - Changed inbox to masterinbox
              - Added no package/session reporting
              - Changed the default pattern
+    2019-05-18 Grega Repovš
+             - Added nameformat parameter
+             - Updated documentation
     '''
 
     print "Running processInbox\n===================="
@@ -1933,7 +1998,10 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
             raise ge.CommandError('processInbox', "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
 
     if pattern is None:
-        pattern = r"(.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"
+        pattern = r"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"
+
+    if nameformat is None:
+        nameformat = r"(?P<subject_id>.*)"
 
     igz = re.compile(r'.*\.gz')
 
@@ -1947,16 +2015,16 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     if logfile is not None and logfile != "":
         log = dict([[f.strip() for f in e.split(':')] for e in logfile.split('|')])
 
-        if not all([e in log for e in ['path', 'subjectid', 'packetname']]):
+        if not all([e in log for e in ['path', 'subject_id', 'packet_name']]):
             raise ge.CommandFailed("processInbox", "Missing information in logfile", "Please provide all information in the logfile specification! [%s]" % (logfile))
 
         try:
-            for key in [e for e in log.keys() if e in ['packetname', 'subjectid', 'sessionname']]:
+            for key in [e for e in log.keys() if e in ['packet_name', 'subject_id', 'session_name']]:
                 log[key] = int(log[key]) - 1
         except:
             raise ge.CommandFailed("processInbox", "Invalid logfile specification", "Please create a valid logfile specification! [%s]" % (logfile))
 
-        sessionname = 'sessionname' in log
+        sessionname = 'session_name' in log
 
         if not os.path.exists(log['path']):
             raise ge.CommandFailed("processInbox", "Logfile does not exist", "The specified logfile does not exist:", log['path'], "Please check your paths!")
@@ -1971,9 +2039,9 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
             for line in reader:
                 try:
                     if sessionname:
-                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subjectid']], 'sessionname': line[log['sessionname']], 'sessionid': "%s_%s" % (line[log['subjectid']], line[log['sessionname']]), 'packetname': line[log['packetname']]}
+                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subject_id']], 'sessionname': line[log['session_name']], 'sessionid': "%s_%s" % (line[log['subject_id']], line[log['session_name']]), 'packetname': line[log['packet_name']]}
                     else:
-                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subjectid']], 'sessionname': None, 'sessionid': line[log['subjectid']], 'packetname': line[log['packetname']]}
+                        sessionsInfo[line[log['packetname']]] = {'subjectid': line[log['subject_id']], 'sessionname': None, 'sessionid': line[log['subject_id']], 'packetname': line[log['packet_name']]}
                 except:
                     pass
 
@@ -1990,19 +2058,20 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                      ('nolog', "---> These packets do not match with the log and they won't be processed"),
                      ('bad', "---> For these packets a packet name could not be identified and they won't be processed:"),
                      ('invalid', "---> For these packets the packet name could not parsed and they won't be processed:"),
-                     ('exist', "---> The folder for these packages already exist:"),
+                     ('exist', "---> The session and inbox folder for these packages already exist:"),
                      ('skip', "---> These packages do not match list of sessions and will be skipped:")]
 
-        print "---> Checking for packets in %s ... using pattern '%s'" % (os.path.abspath(masterinbox), pattern)
+        print "---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'" % (os.path.abspath(masterinbox), pattern, nameformat)
 
         files = glob.glob(os.path.join(masterinbox, '*'))
         getop = re.compile(pattern)
+        getid = re.compile(nameformat)
 
         for file in files:
             m = getop.search(os.path.basename(file))
             if m:
-                if m.groups():
-                    pname = m.group(1)
+                if 'packet_name' in m.groupdict() and m.group('packet_name'):
+                    pname = m.group('packet_name')
                     session = dict(emptysession)
                     session['packetname'] = pname
                     
@@ -2015,16 +2084,19 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                     else:
                         session = dict(emptysession)
                         session['packetname'] = pname
-                        sid = pname.split('_')
 
-                        if len(sid) > 2:                            
+                        ms = getid.search(pname)
+
+                        if ms and 'subject_id' in ms.groupdict() and ms.group('subject_id'):
+                            sid = ms.group('subject_id')
+                            if 'session_name' in ms.groupdict() and ms.group('session_name'):
+                                session.update({'subjectid': ms.group('subject_id'), 'sessionname': ms.group('session_name'), 'sessionid': "%s_%s" % (ms.group('subject_id'), ms.group('session_name'))})
+                            else:
+                                session.update({'subjectid': ms.group('subject_id'), 'sessionname': None, 'sessionid': ms.group('subject_id')})
+
+                        else:
                             packets['invalid'].append((file, session))
                             continue
-
-                        if len(sid) > 1:
-                            session.update({'subjectid': sid[0], 'sessionname': sid[1], 'sessionid': pname})                            
-                        else:
-                            session.update({'subjectid': sid[0], 'sessionname': None, 'sessionid': pname})
 
                     sfolder = os.path.join(subjectsfolder, session['sessionid'])
 
@@ -2033,7 +2105,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                             packets['skip'].append((file, session))
                             continue
 
-                    if os.path.exists(sfolder):
+                    if os.path.exists(os.path.join(sfolder, 'inbox')):
                         packets['exist'].append((file, session))
                         continue
 
@@ -2053,6 +2125,8 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
 
         print "---> Checking for folders to process in '%s'" % (os.path.abspath(subjectsfolder))
 
+        getid = re.compile(nameformat)
+
         sfolders = []
         for sessionid in sessions:
             sfolders += glob.glob(os.path.join(subjectsfolder, sessionid))
@@ -2069,14 +2143,17 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                 archives += glob.glob(os.path.join(sfolder, 'inbox', tarchive))
             session['archives'] = list(archives)
 
-            if len(sid) > 2:
+            ms = getid.search(pname)
+            if ms and 'subject_id' in ms.groupdict() and ms.group('subject_id'):
+                sid = ms.group('subject_id')
+                if 'session_name' in ms.groupdict() and ms.group('session_name'):
+                    session.update({'subjectid': ms.group('subject_id'), 'sessionname': ms.group('session_name'), 'sessionid': pname})
+                else:
+                    session.update({'subjectid': ms.group('subject_id'), 'sessionname': None, 'sessionid': pname})
+
+            else:
                 packets['invalid'].append((sfolder, session))
                 continue
-
-            if len(sid) > 1:
-                session.update({'subjectid': sid[0], 'sessionname': sid[1], 'sessionid': pname})                            
-            else:
-                session.update({'subjectid': sid[0], 'sessionname': None, 'sessionid': pname})
 
             if glob.glob(os.path.join(sfolder, 'dicom')) or glob.glob(os.path.join(sfolder, 'nii')):
                 packets['exist'].append((sfolder, session)) 
@@ -2174,7 +2251,6 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
             print "\n\n---=== PROCESSING %s ===---\n" % (session['sessionid'])
 
             if masterinbox:
-                os.makedirs(sfolder)
                 os.makedirs(ifolder)
                 files = [file]
 
@@ -2284,7 +2360,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
 
                 else:
                     ptype = "folder"
-                    if inbox:
+                    if masterinbox:
                         print "...  copying %s dicom files" % (os.path.basename(p))
                         shutil.copytree(p, ifolder)
 
