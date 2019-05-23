@@ -46,6 +46,16 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
+
+# ---- some definitions
+
+
+unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
+PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
+FEDir  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA'}
+SEDir  = {'AP': 'y', 'PA': 'y', 'LR': 'x', 'RL': 'x'}
+
+
 # -------------------------------------------------------------------
 #
 #                       HCP Pipeline Scripts
@@ -267,7 +277,9 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     --hcp_t1samplespacing  ... T1 image sample spacing, NONE if not used [NONE].
     --hcp_t2samplespacing  ... T2 image sample spacing, NONE if not used [NONE].
     --hcp_gdcoeffs         ... Path to a file containing gradient distortion
-                               coefficients, set to "NONE", if not used [NONE].
+                               coefficients, alternatively a script describing
+                               multiple options (see below), or "NONE", if not 
+                               used [NONE].
     --hcp_bfsigma          ... Bias Field Smoothing Sigma (optional) [].
     --hcp_avgrdcmethod     ... Averaging and readout distortion correction
                                method. Can take the following values:
@@ -312,6 +324,30 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                If a mask is to be used (MASK) then a "
                                custom_acpc_dc_restore_mask.nii.gz" image needs
                                to be placed in the T1w folder.
+    
+    Gradient Coefficient File Specification:
+    ----------------------------------------
+
+    `--hcp_gdcoeffs` parameter can be set to either 'NONE', a path to a specific
+    file to use, or a string that describes, which file to use in which case. 
+    Each option of the string has to be dividied by a pipe '|' character and it
+    has to specify, which information to look up, a possible value, and a file 
+    to use in that case, separated by a colon ':' character. The information 
+    too look up needs to be present in the description of that session. 
+    Standard options are e.g.:
+
+    institution: Yale
+    device: Siemens|Prisma|123456
+
+    Where device is formated as <manufacturer>|<model>|<serial number>.
+
+    If specifying a string it also has to include a `default` option, which 
+    will be used in the information was not found. An example could be:
+
+    "default:/data/gc1.conf|model:Prisma:/data/gc/Prisma.conf|model:Trio:/data/gc/Trio.conf"
+
+    With the information present above, the file `/data/gc/Prisma.conf` would
+    be used.
 
 
     EXAMPLE USE
@@ -337,6 +373,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - HCP Pipelines compatible
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-05-22 Grega Repovš
+             - Added reading individual image parameters and matching SE images
     '''
 
     r = "\n---------------------------------------------------------"
@@ -361,6 +399,13 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         for tfile in hcp['T1w'].split("@"):
             if os.path.exists(tfile):
                 r += "\n---> T1w image file present."
+                T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
+                if 'DwellTime' in T1w:
+                    options['hcp_t1samplespacing'] = T1w['DwellTime']
+                    r += "\n---> T1w image specific DwellTime: %s s" % (options['hcp_t1samplespacing'])
+                if 'UnwarpDir' in T1w:
+                    options['hcp_unwarpdir'] = T1w['UnwarpDir']
+                    r += "\n---> T1w image specific unwarp direction: %s" % (options['hcp_unwarpdir'])
             else:
                 r += "\n---> ERROR: Could not find T1w image file. [%s]" % (tfile)
                 run = False
@@ -371,6 +416,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             for tfile in hcp['T2w'].split("@"):
                 if os.path.exists(tfile):
                     r += "\n---> T2w image file present."
+                    T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
+                    if 'DwellTime' in T2w:
+                        options['hcp_t2samplespacing'] = T2w['DwellTime']
+                        r += "\n---> T2w image specific DwellTime: %s s" % (options['hcp_t2samplespacing'])
                 else:
                     r += "\n---> ERROR: Could not find T2w image file. [%s]" % (tfile)
                     run = False
@@ -387,9 +436,20 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
             try:
                 T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
-                senum = T1v.get('se', None)
+                senum = T1w.get('se', None)
                 if senum:
-                    tufolder = os.path.join(hcp['base', 'SpinEchoFieldMap%d_fncb' % (senum)])
+                    try:
+                        senum = int(senum)
+                        if senum > 0:
+                            tufolder = os.path.join(hcp['base'], 'SpinEchoFieldMap%d_fncb' % (senum))
+                            r += "\n---> TOPUP Correction, Spin-Echo pair %d specified" % (senum)
+                        else:
+                            r += "\n---> ERROR: No Spin-Echo image pair specfied for T1w image! [%d]" % (senum)
+                            run = False
+                    except:                        
+                        r += "\n---> ERROR: Could not process the specified Spin-Echo information [%s]! " % (str(senum))
+                        run = False
+
             except:
                 pass
 
@@ -397,14 +457,37 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 try:
                     tufolder = glob.glob(os.path.join(hcp['base'], 'SpinEchoFieldMap*'))
                     tufolder = tufolder[0]
+                    senum = int(os.path.basename(tufolder).replace('SpinEchoFieldMap', '').replace('_fncb', ''))
+                    r += "\n---> TOPUP Correction, no Spin-Echo pair explicitly specified, using pair %d" % (senum)
                 except:
                     r += "\n---> ERROR: Could not find folder with files for TOPUP processing of session %s." % (sinfo['id'])
                     run = False
+                    raise
             
             if tufolder:
                 try:
-                    sepos    = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "_*"))[0]
-                    seneg    = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "_*"))[0]
+                    sepos = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "_*"))[0]
+                    seneg = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "_*"))[0]
+
+                    if all([sepos, seneg]):
+                        r += "\n---> Spin-Echo pair of images present. [%s]" % (os.path.basename(tufolder))
+                    else:
+                        r += "\n---> ERROR: Could not find the relevant Spin-Echo files! [%s]" % (tufolder)
+                        run = False
+
+
+                    # get SE info from sesssion info
+                    try:
+                        seInfo = [v for (k, v) in sinfo.iteritems() if k.isdigit() and 'SE-FM' in v['name'] and 'se' in v and v['se'] == str(senum)][0]
+                    except:
+                        seInfo = None
+
+                    if seInfo and 'EchoSpacing' in seInfo:
+                        options['hcp_dwelltime'] = seInfo['EchoSpacing']
+                        r += "\n---> Spin-Echo images specific EchoSpacing: %s s" % (options['hcp_dwelltime'])
+                    if seInfo and 'fenc' in seInfo:
+                        options['hcp_seunwarpdir'] = SEDir[seInfo['fenc']]
+                        r += "\n---> Spin-Echo unwarp direction: %s" % (options['hcp_seunwarpdir'])
 
                     if options['hcp_topupconfig'] != 'NONE':
                         if not os.path.exists(options['hcp_topupconfig']):
@@ -419,6 +502,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 except:
                     r += "\n---> ERROR: Could not find files for TOPUP processing of session %s." % (sinfo['id'])
                     run = False    
+                    raise
 
         elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap':
             if os.path.exists(hcp['fmapge']):
@@ -439,20 +523,66 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: Could not find Phase Field Map file for session %s.\n            Expected location: %s" % (sinfo['id'], hcp['fmapphase'])
                 run = False
 
+        else:
+            r += "\n---> WARNING: No distortion correction method specified."
+
         # --- lookup gdcoeffs file if needed
 
         if options['hcp_gdcoeffs'] != 'NONE':
-            if not os.path.exists(options['hcp_gdcoeffs']):
-                gdcoeffs = os.path.join(hcp['hcp_Config'], options['hcp_gdcoeffs'])
-                if not os.path.exists(gdcoeffs):
-                    r += "\n---> ERROR: Could not find gradient distorsion coefficients file: %s." % (options['hcp_gdcoeffs'])
+            gdcstring = options['hcp_gdcoeffs']
+
+            if any([e in gdcstring for e in ['|', 'default']]):
+                try:
+                    try:
+                        device = {}
+                        dmanufacturer, dmodel, dserial = [e.strip() for e in sinfo.get('device', 'NA|NA|NA').split('|')]
+                        device['manufacturer'] = dmanufacturer
+                        device['model'] = dmodel
+                        device['serial'] = dserial
+                    except:
+                        r += "\n---> WARNING: device information for this session is malformed: %s" % (sinfo.get('device', '---'))
+                        raise
+
+                    gdcoptions = [[ee.strip() for ee in e.strip().split(':')] for e in gdcstring.split('|')]
+                    gdcfile = [e[1] for e in gdcoptions if e[0] == 'default'][0]
+                    gdcfileused = 'default'
+
+                    for ginfo, gwhat, gfile in [e for e in gdcoptions if e[0] != 'default']:
+                        if ginfo in device:
+                            if device[ginfo] == gwhat:
+                                gdcfile = gfile
+                                gdcfileused = '%s: %s' % (ginfo, gwhat)
+                                break
+                        if ginfo in sinfo:
+                            if sinfo[ginfo] == gwhat:
+                                gdcfile = gfile
+                                gdcfileused = '%s: %s' % (ginfo, gwhat)
+                                break
+                except:
+                    r += "\n---> ERROR: malformed 'hcp_gdcoeffs': %s!" % (options['hcp_gdcoeffs'])
                     run = False
+                    raise
+                
+                if gdcfile == 'NONE':
+                    r += "\n---> WARNING: Specific gradient distorsion coefficients file could not be identified! None will be used."
+                else:
+                    r += "\n---> Specific gradient distorsion coefficients file identified (%s):\n     %s" % (gdcfileused, gdcfile)
+
+            else: 
+                gdcfile = gdcstring
+
+            if gdcfile != 'NONE':
+                if not os.path.exists(gdcfile):
+                    gdcoeffs = os.path.join(hcp['hcp_Config'], gdcfile)
+                    if not os.path.exists(gdcoeffs):
+                        r += "\n---> ERROR: Could not find gradient distorsion coefficients file: %s." % (gdcfile)
+                        run = False
+                    else:
+                        r += "\n---> Gradient distorsion coefficients file present."
                 else:
                     r += "\n---> Gradient distorsion coefficients file present."
-            else:
-                r += "\n---> Gradient distorsion coefficients file present."
         else:
-            gdcoeffs = 'NONE'
+            gdcfile = 'NONE'
 
         # --- see if we have set up to use custom mask
 
@@ -544,7 +674,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 't1samplespacing'   : options['hcp_t1samplespacing'],
                 't2samplespacing'   : options['hcp_t2samplespacing'],
                 'unwarpdir'         : options['hcp_unwarpdir'],
-                'gdcoeffs'          : gdcoeffs,
+                'gdcoeffs'          : gdcfile,
                 'avgrdcmethod'      : options['hcp_avgrdcmethod'],
                 'topupconfig'       : topupconfig,
                 'bfsigma'           : options['hcp_bfsigma'],
@@ -972,23 +1102,28 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 --subject="%(subject)s" \
                 --t1="%(t1)s" \
                 --t1brain="%(t1brain)s" \
-                --t2="%(t2)s"' % {
+                --t2="%(t2)s" \
+                --mppversion="%(mppversion)s"' % {
                     'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
                     'subject'           : sinfo['id'] + options['hcp_suffix'],
                     'subjectDIR'        : hcp['T1w_folder'],
                     't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
                     't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
-                    't2'                : t2w}
+                    't2'                : t2w,
+                    'mppversion'        : options['hcp_mppversion']}
 
             if options['hcp_fs_seed']:
                 comm += ' --seed="%s"' % (options['hcp_fs_seed'])
 
             if options['hcp_fs_existing_subject']:
-                comm += ' -existing_subject'
+                comm += ' --existing_subject'
 
             if options['hcp_fs_extra_reconall']:
                 for f in options['hcp_fs_extra_reconall'].split('|'):
                     comm += ' --extra-reconall-arg="%s"' % (f)
+
+            if options['hcp_fs_no_conf2hires']:
+                comm += ' --no-conf2hires'
 
         if run:
             if options['run'] == "run":
@@ -1588,6 +1723,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             --inflatescale"%(inflatescale)s" \
             --regname"%(regname)s" \
             --lttemplate="%(lttemplate)s" \
+            --mppversion="%(mppversion)s" \
             --longitudinal="%(longitudinal)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh'),
                 'path'              : sinfo['hcp'],
@@ -1994,6 +2130,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. [BOLD_]
 
+    --hcp_bold_boldname      ... Specifies whether BOLD names are to be created
+                                 using sequential numbers ('number') using the 
+                                 formula `<hcp_bold_prefix>_[N]` (e.g. BOLD_3) 
+                                 or actual bold names ('name', e.g. 
+                                 rfMRI_REST1_AP). ['number']
+
     image acquisition details
     -------------------------
 
@@ -2114,6 +2256,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - HCP Pipelines compatible.
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-05-22 Grega Repovš
+             - Added 'name' options
+             - Added reading of individual BOLD parameters
     '''
 
     r = "\n---------------------------------------------------------"
@@ -2565,6 +2710,7 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
             --refreg="%(refreg)s" \
             --movreg="%(movreg)s" \
             --mctype="%(movreg)s" \
+            --mppversion="%(mppversion)s" \
             --tr="%(tr)f"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'fMRIVolume', 'GenericfMRIVolumeProcessingPipeline.sh'),
                 'path'              : sinfo['hcp'],
@@ -2598,7 +2744,8 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
                 'refreg'            : options['hcp_bold_refreg'],
                 'movreg'            : options['hcp_bold_movreg'],
                 'fmriref'           : fmriref,
-                'usemask'           : options['hcp_bold_usemask']}
+                'usemask'           : options['hcp_bold_usemask'],
+                'mppversion'        : options['hcp_mppversion']}
 
         if run and boldok:
             if options['hcp_fs_longitudinal']:
@@ -2944,6 +3091,7 @@ def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             --grayordinatesres="%(grayordinatesres)d" \
             --regname"%(regname)s" \
             --lttemplate="%(lttemplate)s" \
+            --mppversion="%(mppversion)s" \
             --printcom"%(printcom)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
                 'path'              : sinfo['hcp'],
@@ -2956,6 +3104,7 @@ def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
                 'grayordinatesres'  : options['hcp_grayordinatesres'],
                 'regname'           : options['hcp_regname'],
                 'lttemplate'        : options['hcp_fs_longitudinal'],
+                'mppversion'        : options['hcp_mppversion'],
                 'printcom'          : options['hcp_printcom']}
 
         if run and boldok:

@@ -28,6 +28,11 @@ def readSubjectData(filename, verbose=False):
 
     ---
     Written by Grega Repovš.
+
+    Change log
+
+    2019-05-22 Grega Repovš
+             - Now only reads '_' parameters as global variables in the initial section
     '''
 
     if not os.path.exists(filename):
@@ -49,6 +54,7 @@ def readSubjectData(filename, verbose=False):
     gpref = {}
 
     c = 0
+    first = True
     try:
         for sub in s:
             sub = sub.split('\n')
@@ -59,16 +65,23 @@ def readSubjectData(filename, verbose=False):
             dic = {}
             for line in sub:
                 c += 1
+
+                # --- read preferences / settings
+
+                if line.startswith('_'):
+                    pkey, pvalue = [e.strip() for e in line.split(':', 1)]
+                    if first:
+                        gpref[pkey[1:]] = pvalue
+                    else:
+                        dic[pkey] = pvalue
+                    continue
+
+                # --- split line
+
                 line = line.split(':')
                 line = [e.strip() for e in line]
                 if len(line) < 2:
                     continue
-
-                # --- read global preferences / settings
-
-                if len(line[0]) > 0:
-                    if line[0][0] == "_":
-                        gpref[line[0][1:]] = line[1]
 
                 # --- read ima data
 
@@ -120,7 +133,7 @@ def readSubjectData(filename, verbose=False):
                 # --- read rest of the data
 
                 else:
-                    dic[line[0]] = line[1]
+                    dic[line[0]] = ":".join(line[1:])
 
             if len(dic) > 0:
                 if "id" not in dic:

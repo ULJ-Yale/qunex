@@ -25,9 +25,9 @@ import os.path
 import g_core
 
 
-def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add"):
+def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", boldname='number'):
     '''
-    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add]
+    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [boldname='number']
 
     USE
     ===
@@ -53,6 +53,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 abort -> abort setting up hcp folder
                 add   -> leave existing files and add new ones (default)
                 clear -> remove any exisiting files and redo hcp mapping
+    --boldname  How to name the bold files in the hcp structure. The default is
+                to name them by their bold number ('number') (e.g. BOLD_1), the
+                alternative is to use their actual names ('name') (e.g. 
+                rfMRI_REST1_AP). ['number']
 
     IMAGE DEFINITION
     ================
@@ -156,6 +160,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     nT1w  = 0
     nT2w  = 0
 
+    boldname = boldname == 'name'
+
     # --- Check session
 
     # -> is it HCP ready
@@ -232,14 +238,22 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
         elif "boldref" in v['name']:
             boldn = v['name'][7:]
             sfile = k + ".nii.gz"
-            tfile = sid + "_fncb_BOLD_" + boldn + orient + "_SBRef.nii.gz"
-            tfold = "BOLD_" + boldn + orient + "_SBRef_fncb"
+            if boldname and 'boldname' in v:
+                tfile = sid + "_fncb_" + v['boldname'] + ".nii.gz"            
+                tfold = v['boldname'] + "_fncb"
+            else:
+                tfile = sid + "_fncb_BOLD_" + boldn + orient + "_SBRef.nii.gz"            
+                tfold = "BOLD_" + boldn + orient + "_SBRef_fncb"
             bolds[boldn]["ref"] = sfile
         elif "bold" in v['name']:
             boldn = v['name'][4:]
             sfile = k + ".nii.gz"
-            tfile = sid + "_fncb_BOLD_" + boldn + orient + ".nii.gz"
-            tfold = "BOLD_" + boldn + orient + "_fncb"
+            if boldname and 'boldname' in v:
+                tfile = sid + "_fncb_" + v['boldname'] + ".nii.gz"            
+                tfold = v['boldname'] + "_fncb"
+            else:
+                tfile = sid + "_fncb_BOLD_" + boldn + orient + ".nii.gz"            
+                tfold = "BOLD_" + boldn + orient + "_fncb"
             bolds[boldn]["bold"] = sfile
         elif v['name'] == "SE-FM-AP":
             sfile = k + ".nii.gz"
@@ -430,7 +444,7 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
     print "\n\n===> done processing %s\n" % (subjectsfolder)
 
 
-def getHCPReady(sessions, subjectsfolder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, sfilter=None, overwrite="no"):
+def getHCPReady(sessions=None, subjectsfolder=".", sfile="subject.txt", tfile="subject_hcp.txt", mapping=None, sfilter=None, overwrite="no"):
     '''
     getHCPReady sessions=<sessions specification> [subjectsfolder=.] [sfile=subject.txt] [tfile=subject_hcp.txt] [mapping=specs/hcp_mapping.txt] [sfilter=None] [overwrite=no]
 
@@ -453,7 +467,8 @@ def getHCPReady(sessions, subjectsfolder=".", sfile="subject.txt", tfile="subjec
 
     --sessions       Either an explicit list (space, comma or pipe separated) of
                      sessions to process or the path to a batch or list file with
-                     sessions to process.
+                     sessions to process. If left unspecified, "*" will be used 
+                     and all folders within subjectfolder will be processed.
     --subjectsfolder The directory that holds sessions' folders. [.]
     --sfile          The "source" subject.txt file. [subject.txt]
     --tfile          The "target" subject.txt file. [subject_hcp.txt]
@@ -560,6 +575,9 @@ def getHCPReady(sessions, subjectsfolder=".", sfile="subject.txt", tfile="subjec
     '''
 
     print "Running getHCPReady\n==================="
+
+    if sessions is None:
+        sessions = "*"
 
     if mapping is None:
         mapping = os.path.join(subjectsfolder, 'specs', 'hcp_mapping.txt')

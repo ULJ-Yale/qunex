@@ -432,9 +432,21 @@ def getSubjectFolders(sinfo, options):
 
 
 def readSubjectData(filename):
-    """
-    readSubjectData - documentation not yet available.
-    """
+    '''
+    readSubjectData(filename, verbose=False)
+
+    An internal function for reading batch.txt files. It reads the file and
+    returns a list of subjects with the information on images and the additional
+    parameters specified in the header.
+
+    ---
+    Written by Grega Repovš.
+
+    Change log
+
+    2019-05-22 Grega Repovš
+             - Now only reads '_' parameters as global variables in the initial section
+    '''
 
     if not os.path.exists(filename):
         print "\n\n=====================================================\nERROR: Batch file does not exist [%s]" % (filename)
@@ -455,6 +467,7 @@ def readSubjectData(filename):
     gpref = {}
 
     c = 0
+    first = True
     try:
         for sub in s:
             sub = sub.split('\n')
@@ -466,15 +479,21 @@ def readSubjectData(filename):
             image = {}
             for line in sub:
                 c += 1
+
+                 # --- read preferences / settings
+
+                if line.startswith('_'):
+                    pkey, pvalue = [e.strip() for e in line.split(':', 1)]
+                    if first:
+                        gpref[pkey[1:]] = pvalue
+                    else:
+                        dic[pkey] = pvalue
+                    continue
+
+                # --- split line
+                
                 line = line.split(':')
                 line = [e.strip() for e in line]
-
-                # --- read global preferences / settings
-
-                if len(line[0]) > 0:
-                    if line[0][0] == "_":
-                        gpref[line[0][1:]] = line[1]
-                        continue
 
                 # --- read ima data
 
@@ -524,7 +543,7 @@ def readSubjectData(filename):
                 # --- read rest of the data
 
                 else:
-                    dic[line[0]] = line[1]
+                    dic[line[0]] = ":".join(line[1:])
 
             if len(dic) > 0:
                 if "id" not in dic:
@@ -533,6 +552,8 @@ def readSubjectData(filename):
                     print "WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id'])
                 else:
                     slist.append(dic)
+
+            first = False
 
     except:
         print "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
