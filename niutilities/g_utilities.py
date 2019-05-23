@@ -318,14 +318,16 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
              - Added subjectsfolder to getSubjectList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to add to batch
+    2019-05-22 Grega Repovš
+             - Added full path to report
     '''
 
     print "Running createBatch\n==================="
 
-    if sessions.lower() == 'none':
+    if sessions and sessions.lower() == 'none':
         sessions = None
 
-    if sfilter.lower() == 'none':
+    if sfilter and sfilter.lower() == 'none':
         sfilter = None
 
     subjectsfolder = os.path.abspath(subjectsfolder)
@@ -368,7 +370,7 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     preexist = os.path.exists(tfile)
 
     if overwrite == 'yes':
-        print "---> Creating file %s" % (os.path.basename(tfile))
+        print "---> Creating file %s [%s]" % (os.path.basename(tfile), tfile)
         jfile = open(tfile, 'w')
         print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
         print >> jfile, "# Subjects folder: %s" % (subjectsfolder)
@@ -378,7 +380,7 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     elif overwrite == 'append':
         slist, parameters = gc.getSubjectList(tfile)
         slist = [e['id'] for e in slist]
-        print "---> Appending to file %s" % (os.path.basename(tfile))
+        print "---> Appending to file %s [%s]" % (os.path.basename(tfile), tfile)
         if paramfile and preexist:
             print "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!"
         jfile = open(tfile, 'a')

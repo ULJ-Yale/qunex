@@ -101,6 +101,7 @@ hcpls = {
 
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
+FEDir  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA'}
 
 
 def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
@@ -178,10 +179,11 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
 
-def mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix):
+def mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
+
     try:
         if subjectsfolder[-1] == '/':
             subjectsfolder = subjectsfolder[:-1]
@@ -197,18 +199,16 @@ def mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix)
 
     # -- extract file info
 
-    extra = ""
-    parts = file.split(pathsep)
-
-    if 'unprocessed' not in parts:
+    m = re.search(nameformat, file)
+    try:
+        subjid  = m.group('subject_id')
+        session = m.group('session_name')
+        data    = m.group('data').split(pathsep)
+    except:
+        print "ERROR: Could not parse file:", file
         return False
 
-    u = parts.index('unprocessed')
-    subjid  = parts[u - 1]
-    session = parts[u + 1]
-    data    = parts[u + 2:]
-
-    if session[0] == '.':
+    if any([e[0] == '.' for e in [subjid, session] + data]):
         return False
 
     sessionid = subjid + "_" + session
@@ -259,7 +259,7 @@ def mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix)
 
 
 
-def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', archive='move', hcplsname=None):
+def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None):
     '''
     HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
     
@@ -407,6 +407,8 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     Changelog
     2019-01-19 Grega Repovš
              - Initial version adopted from BIDSImport
+    2019-05-22 Grega Repovš
+             - Added nameformat as input
     '''
 
     print "Running HCPLSImport\n=================="
@@ -430,6 +432,9 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
         hcplsname = os.path.basename(inbox)
         hcplsname = re.sub('.zip$|.gz$', '', hcplsname)
         hcplsname = re.sub('.tar$', '', hcplsname)
+
+    if not nameformat:
+        nameformat = r"(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)"
 
     sessions = {'list': [], 'clean': [], 'skip': [], 'map': []}
     allOk    = True
@@ -478,7 +483,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile = mapToMNAPHcpls(sf.filename, subjectsfolder, hcplsname, sessions, overwrite, "        ")
+                        tfile = mapToMNAPHcpls(sf.filename, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
                         if tfile:
                             fdata = z.read(sf)
                             fout = open(tfile, 'wb')
@@ -497,7 +502,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile = mapToMNAPHcpls(member.name, subjectsfolder, hcplsname, sessions, overwrite, "        ")
+                        tfile = mapToMNAPHcpls(member.name, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
                         if tfile:
                             fobj  = tar.extractfile(member)
                             fdata = fobj.read()
@@ -512,7 +517,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 errors += "\n    .. Processing of package %s failed!" % (file)
 
         else:
-            tfile = mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ")
+            tfile = mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ", nameformat)
             if tfile:
                 status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
                 allOk = allOk and status
@@ -614,7 +619,7 @@ def processHCPLS(sfolder):
     for dfolder in dfolders:
         folderInfo   = {}
         folderFiles  = []
-        senum        = 99
+        senum        = -9
         missingFiles = []
 
         # --- get folder information
@@ -629,6 +634,14 @@ def processHCPLS(sfolder):
 
         files = glob.glob(os.path.join(dfolder, '*'))
         files = [e for e in files if e.endswith('.nii.gz')]
+
+        # --- Exclude files
+
+        toExclude = ['InitialFrames']
+        for exclude in toExclude:
+            files = [e for e in files if exclude not in e] 
+
+        # --- Proces spin echo files
 
         sefile = [e for e in files if 'SpinEchoFieldMap' in e]
         if sefile:
@@ -674,7 +687,8 @@ def processHCPLS(sfolder):
         for file in folderFiles:
             jfile = file['path'].replace('.nii.gz', '.json')
             if not os.path.exists(jfile):
-                missingFiles.append([dfolder, os.path.basepath(jfile)])
+                missingFiles.append([dfolder, os.path.basename(jfile)])
+                file['json'] = {}
             else:
                 with open(jfile, 'r') as f:
                     jinf = json.load(f)
@@ -848,6 +862,8 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
              - Initial version based on mapBIDS2nii
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-05-22 Grega Repovš
+             - Added boldname to output
     '''
 
     sfolder = os.path.abspath(sfolder)
@@ -951,7 +967,9 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
     mapped = []
     imgn   = 0 
-    boldn  = 0    
+    boldn  = 0
+    firstImage = True
+
     for folder in hcplsData:
         if folder['label'] in ['rfMRI', 'tfMRI']:
             boldn += 1
@@ -968,9 +986,17 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
             if status:
                 print "--> linked %02d.nii.gz <-- %s" % (imgn, fileInfo['name'])
 
+                # -- Institution and device information
+
+                if firstImage:
+                    deviceInfo  = "%s|%s|%s" % (fileInfo['json'].get('Manufacturer', "NA"), fileInfo['json'].get('ManufacturersModelName', "NA"), fileInfo['json'].get('DeviceSerialNumber', "NA"))
+                    institution = fileInfo['json'].get('InstitutionName', "NA")
+                    print >> sout, "\ninstitution: %s\ndevice: %s\n" % (institution, deviceInfo)
+                    firstImage = False
+
                 # --T1w and T2w
                 if fileInfo['parts'][0] in ['T1w', 'T2w']:
-                    print >> sout, "%02d: %-20s: %-30s: se(%d): DwellTime(%.10f)" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']), folder['senum'], fileInfo['json'].get('DwellTime', -9.))
+                    print >> sout, "%02d: %-20s: %-30s: se(%d): DwellTime(%.10f): UnwarpDir(%s)" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']), folder['senum'], fileInfo['json'].get('DwellTime', -9.), unwarp[fileInfo['json'].get('ReadoutDirection', None)])
 
                     print >> rout, "\n" + fileInfo['parts'][0]
                     print >> rout, "".join(['-' for e in range(len(fileInfo['parts'][0]))])
@@ -979,37 +1005,56 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
                 # -- BOLDS
                 elif fileInfo['parts'][0] in ['tfMRI', 'rfMRI']:
-                    if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['parts'][2], fileInfo['json'].get('EffectiveEchoSpacing', -9.))
+
+                    fenc = fileInfo['json'].get('PhaseEncodingDirection', None)
+                    if fenc == 'Unknown':
+                        fenc = fileInfo['parts'][2]
                     else:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['parts'][2], fileInfo['json'].get('EffectiveEchoSpacing', -9.))
+                        fenc = FEDir[fenc]
+
+                    if 'SBRef' in fileInfo['parts']:
+                        print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f): boldname(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                    else:
+                        print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f): boldname(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
                     print >> rout, "%-25s : %.8f" % ("_hcp_bold_echospacing", fileInfo['json'].get('EffectiveEchoSpacing', -9.))
-                    print >> rout, "%-25s : '%s=%s'" % ("_hcp_bold_unwarpdir", fileInfo['parts'][2], unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
+                    print >> rout, "%-25s : '%s=%s'" % ("_hcp_bold_unwarpdir", fenc, unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
 
                 # -- SE
                 elif fileInfo['parts'][0] == 'SpinEchoFieldMap':
-                    print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fileInfo['parts'][1], fileInfo['json'].get('EffectiveEchoSpacing', -9.))
+                    fenc = fileInfo['json'].get('PhaseEncodingDirection', None)
+                    if fenc == 'Unknown':
+                        fenc = fileInfo['parts'][1]
+                    else:
+                        fenc = FEDir[fenc]
+
+                    print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.))
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
                     print >> rout, "%-25s : %.8f" % ("_hcp_dwelltime", fileInfo['json'].get('EffectiveEchoSpacing', -9.))
-                    print >> rout, "%-25s : '%s=%s'" % ("_hcp_seunwarpdir", fileInfo['parts'][1], unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
+                    print >> rout, "%-25s : '%s=%s'" % ("_hcp_seunwarpdir", fenc, unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
 
 
                 # -- dMRI
                 elif fileInfo['parts'][0] == 'dMRI':
+                    fenc = fileInfo['json'].get('PhaseEncodingDirection', None)
+                    if fenc == 'Unknown':
+                        fenc = fileInfo['parts'][2]
+                    else:
+                        fenc = FEDir[fenc]
+
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: fenc(%s): EchoSpacing(%.10f)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], fileInfo['parts'][2]), "_".join(fileInfo['parts']), fileInfo['parts'][2], fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                        print >> sout, "%02d: %-20s: %-30s: fenc(%s): EchoSpacing(%.10f)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], fenc), "_".join(fileInfo['parts']), fenc, fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
                     else:    
-                        print >> sout, "%02d: %-20s: %-30s: fenc(%s): EchoSpacing(%.10f)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], fileInfo['parts'][2]), "_".join(fileInfo['parts']), fileInfo['parts'][2], fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                        print >> sout, "%02d: %-20s: %-30s: fenc(%s): EchoSpacing(%.10f)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], fenc), "_".join(fileInfo['parts']), fenc, fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
 
                         print >> rout, "\n" + "_".join(fileInfo['parts'])
                         print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
                         print >> rout, "%-25s : %.8f" % ("_hcp_dwi_dwelltime", fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
-                        print >> rout, "%-25s : %d" % ("_hcp_dwi_PEdir", PEDir[fileInfo['parts'][2]])
+                        print >> rout, "%-25s : %d" % ("_hcp_dwi_PEdir", PEDir[fenc])
 
                 print >> bout, "%s => %s" % (fileInfo['path'], tfile)
             else:
