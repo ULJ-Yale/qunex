@@ -31,6 +31,8 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 from gp_core import *
 from g_img import *
+from g_core import checkFiles
+import niutilities.g_exceptions as ge
 import os
 import re
 import os.path
@@ -135,6 +137,21 @@ def getHCPPaths(sinfo, options):
         d['fmapphase'] = "NONE"
         d['fmapge']    = os.path.join(hcpbase, 'FieldMap_strc', sinfo['id'] + '_strc_FieldMap_GE.nii.gz')
 
+    # --- default check files
+
+    for pipe, default in [('hcp_prefs_check',     'check_PreFreeSurfer.txt'),
+                          ('hcp_fs_check',        'check_FreeSurfer.txt'),
+                          ('hcp_fslong_check',    'check_FreeSurferLongitudinal.txt'),
+                          ('hcp_postfs_check',    'check_PostFreeSurfer.txt'),
+                          ('hcp_bold_vol_check',  'check_fMRIVolume.txt'),
+                          ('hcp_bold_surf_check', 'check_fMRISurface.txt')]:
+        if options[pipe] == 'all':
+            d[pipe] = os.path.join(options['subjectsfolder'], 'specs', default)
+        elif options[pipe] == 'last':
+            d[pipe] = False
+        else:
+            d[pipe] = options[pipe]
+
     return d
 
 
@@ -150,6 +167,17 @@ def action(action, run):
     else:
         return action
 
+
+def missingReport(missing, message, prefix):
+    '''
+    Takes a list of missing files and prepares a list report.
+    '''
+
+    r = message + "\n"
+    for file in missing:
+        r += prefix + file + "\n"
+
+    return r 
 
 
 def hcpPreFS(sinfo, options, overwrite=False, thread=0):
@@ -662,8 +690,21 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP PreFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                execr, endlog = runExternalForFileShell(tfile, comm, '... running HCP PreFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                r += execr
                 r, status = checkForFile(r, tfile, 'ERROR: HCP PreFS failed running command: %s' % (comm))
+
+                # -- full file check
+
+                if hcp['hcp_prefs_check']:                    
+                    filestatus, filespresent, filesmissing = checkFiles(hcp['base'], hcp['hcp_prefs_check'], fields=[('subjectid', sinfo['id'])], report=endlog, append=True)
+                    if filesmissing:
+                        r += missingReport(filesmissing, "\nERROR: Full file check revealed that the following files were not created:", "       ")
+                        if status and endlog:
+                            shutil.move(endlog, endlog.replace('done_', 'error_'))
+                        status = False
+
+                # -- after check
 
                 if status:
                     report = "Pre FS Done" 
@@ -671,11 +712,26 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 else:
                     report = "Pre FS Failed"
                     failed = 1
+
+            # -- just checking
+
             else:
                 if os.path.exists(tfile):
                     r += "\n---> HCP PreFS completed"
                     report = "Pre FS done"
                     failed = 0
+
+                    # -- full file check
+
+                    if hcp['hcp_prefs_check']:
+                        filestatus, filespresent, filesmissing = checkFiles(hcp['base'], hcp['hcp_prefs_check'], fields=[('subjectid', sinfo['id'])])
+                        if filesmissing:
+                            r += missingReport(filesmissing, "\n     ERROR: Full file check revealed that the following files were not created:", "            ")
+                            report = "Pre FS incomplete"
+                            failed = 1
+                        else:
+                            r += "\n---> Full file check passed"
+
                 else:
                     r += "\n---> HCP PreFS can be run"
                     report = "Pre FS can be run"
@@ -685,6 +741,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
             report = "Files missing, PreFS can not be run"
             failed = 1
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PreFreeSurfer', e.function, "\n     ".join(e.report))
+        report = "PreFS failed"
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
         report = "PreFS failed"
@@ -694,7 +754,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         report = "PreFS failed"
         failed = 1
 
-    r += "\n\nHCP PreFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\nHCP PreFS %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
 
     print r
     return (r, (sinfo['id'], report, failed))
@@ -1089,8 +1149,20 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
                                 status = False
                 if status:
-                    r += runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                    execr, endlog = runExternalForFileShell(tfile, comm, '... running HCP FS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                    r += execr
                     r, status = checkForFile(r, tfile, 'ERROR: HCP FS failed running command: %s' % (comm))
+
+                    # -- full file check
+
+                    if hcp['hcp_fs_check']:                    
+                        filestatus, filespresent, filesmissing = checkFiles(hcp['base'], hcp['hcp_fs_check'], fields=[('subjectid', sinfo['id'])], report=endlog, append=True)
+                        if filesmissing:
+                            r += missingReport(filesmissing, "\nERROR: Full file check revealed that the following files were not created:", "       ")
+                            if status and endlog:
+                                shutil.move(endlog, endlog.replace('done_', 'error_'))
+                            status = False
+
                 if status:
                     report = "FS Done"
                     failed = 0
@@ -1102,6 +1174,18 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP FS completed"
                     report = "FS done"
                     failed = 0
+
+                    # -- full file check
+
+                    if hcp['hcp_fs_check']:
+                        filestatus, filespresent, filesmissing = checkFiles(hcp['base'], hcp['hcp_fs_check'], fields=[('subjectid', sinfo['id'])])
+                        if filesmissing:
+                            r += missingReport(filesmissing, "\n     ERROR: Full file check revealed that the following files were not created:", "            ")
+
+                            report = "FS incomplete"
+                            failed = 1
+                        else:
+                            r += "\n---> Full file check passed"
                 else:
                     r += "\n---> HCP FS can be run"
                     report = "FS can be run"
@@ -1110,7 +1194,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             r += "\n---> Subject can not be processed."
             report = "FS can not be run"
             failed = 1
-
+    
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurfer', e.function, "\n     ".join(e.report))
+        report = "FS failed"
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
         failed = 1
@@ -1393,8 +1481,19 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                         r += "\n---> WARNING: Could not remove preexisting folder: %s! Please check your data!" % (rmfolder)
                         status = False
 
-                    r += runExternalForFileShell(tfile, comm, '... running HCP FS Longitudinal', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                    execr, endlog = runExternalForFileShell(tfile, comm, '... running HCP FS Longitudinal', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                    r += execr
                     r, status = checkForFile(r, tfile, 'ERROR: HCP FS Longitudinal failed running command: %s' % (comm))
+
+                    # -- full file check
+
+                    if hcp['hcp_fslong_check']:                    
+                        filestatus, filespresent, filesmissing = checkFiles(hcp['base'], hcp['hcp_fslong_check'], fields=[('subjectid', sinfo['id'])], report=endlog, append=True)
+                        if filesmissing:
+                            r += missingReport(filesmissing, "\nERROR: Full file check revealed that the following files were not created:", "       ")
+                            if status and endlog:
+                                shutil.move(endlog, endlog.replace('done_', 'error_'))
+                            status = False
 
                     if status:
                         r += "\n---> Command successfully ran on sessions: %s" % (", ".join(sessionsid))
@@ -1419,6 +1518,10 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             report = "Command can not be run"
             failed = 1
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('FreeSurferLongitudinal', e.function, "\n     ".join(e.report))
+        report = "FSLong failed"
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
         failed = 1
@@ -1654,10 +1757,23 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP PostFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                execr, endlog = runExternalForFileShell(tfile, comm, '... running HCP PostFS', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                r += execr
                 r, status = checkForFile(r, tfile, 'ERROR: HCP PostFS failed running command: %s' % (comm))
-                if not status:
+
+                # -- full file check
+
+                if hcp['hcp_postfs_check']:                    
+                    filestatus, filespresent, filesmissing = checkFiles(hcp['base'], hcp['hcp_postfs_check'], fields=[('subjectid', sinfo['id'])], report=endlog, append=True)
+                    if filesmissing:
+                        r += missingReport(filesmissing, "\nERROR: Full file check revealed that the following files were not created:", "       ")
+                        if status and endlog:
+                            shutil.move(endlog, endlog.replace('done_', 'error_'))
+                        status = False
+
+                elif not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
+
                 if status:
                     report = "Post FS Done" 
                     failed = 0
@@ -1669,6 +1785,18 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP Post FS completed"
                     report = "Post FS done"
                     failed = 0
+
+                    # -- full file check
+
+                    if hcp['hcp_postfs_check']:
+                        filestatus, filespresent, filesmissing = checkFiles(hcp['base'], hcp['hcp_postfs_check'], fields=[('subjectid', sinfo['id'])])
+                        if filesmissing:
+                            r += missingReport(filesmissing, "\n     ERROR: Full file check revealed that the following files were not created:", "            ")
+                            report = "Post FS incomplete"
+                            failed = 1
+                        else:
+                            r += "\n---> Full file check passed"
+
                 else:
                     r += "\n---> HCP Post FS can be run"
                     report = "Post FS can be run"
@@ -1678,6 +1806,10 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             report = "Post FS can not be run"
             failed = 1
 
+    except ge.CommandFailed as e:
+        r +=  "\n\nERROR in completing %s at %s:\n     %s\n" % ('PostFreeSurfer', e.function, "\n     ".join(e.report))
+        report = "PostFS failed"
+        failed = 1
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += str(errormessage)
         failed = 1
@@ -1861,7 +1993,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP Diffusion Preprocessing', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                execr, endlog = runExternalForFileShell(tfile, comm, '... running HCP Diffusion Preprocessing', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                r += execr
                 r, status = checkForFile(r, tfile, 'ERROR: HCP Diffusion Preprocessing failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
@@ -2622,7 +2755,8 @@ def executeHcpfMRIVolume(sinfo, options, overwrite, hcp, b):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRIVolume', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
+                execr, endlog = runExternalForFileShell(tfile, comm, '     ... running HCP fMRIVolume', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
+                r += execr
                 r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRIVolume failed running command: %s' % (comm))
                 if status:
                     report['done'].append(str(bold))
@@ -2982,7 +3116,8 @@ def executeHcpfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '     ... running HCP fMRISurface', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
+                execr, endlog = runExternalForFileShell(tfile, comm, '     ... running HCP fMRISurface', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], 'B%d' % (bold)])
+                r += execr 
                 r, status = checkForFile(r, tfile, '     ... ERROR: HCP fMRISurface failed running command: %s' % (comm))
                 if status:
                     report['done'].append(str(bold))
@@ -3064,7 +3199,8 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP DTI Fit', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                execr, endlog = runExternalForFileShell(tfile, comm, '... running HCP DTI Fit', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'])
+                r += execr
                 r, status = checkForFile(r, tfile, 'ERROR: DTI Fit failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
@@ -3146,7 +3282,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r += runExternalForFileShell(tfile, comm, '... running HCP BedpostX', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlog'], logtags=options['logtag'])
+                execr, endlog = runExternalForFileShell(tfile, comm, '... running HCP BedpostX', overwrite, sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlog'], logtags=options['logtag'])
                 r, status = checkForFile(r, tfile, 'ERROR: HCP BedpostX failed running command: %s' % (comm))
                 if not status:
                     r += "\nEpected file %s not found!\n" % (tfile)
@@ -3302,7 +3438,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         if os.path.exists(f['fs_aparc_bold']):
             os.remove(f['fs_aparc_bold'])
         if os.path.exists(os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')) and os.path.exists(f['fs_aparc_t1']):
-            r += runExternalForFile(f['fs_aparc_bold'], 'flirt -interp nearestneighbour -ref %s -in %s -out %s -applyisoxfm 2' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite, sinfo['id'])
+            execr, endlog = runExternalForFile(f['fs_aparc_bold'], 'flirt -interp nearestneighbour -ref %s -in %s -out %s -applyisoxfm 2' % (os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz'), f['fs_aparc_t1'], f['fs_aparc_bold']), ' ... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite, sinfo['id'])
+            r += execr
             report['lores aseg+aparc'] = 'generated'
         else:
             r += "\n ... ERROR: could not generate downsampled aseg+aparc, files missing!"

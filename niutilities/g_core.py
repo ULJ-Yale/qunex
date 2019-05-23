@@ -152,7 +152,6 @@ def readSubjectData(filename, verbose=False):
                     if not os.path.exists(dic[field]) and verbose:
                         print "WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!" % (dic['id'], field, dic[field], os.path.basename(filename))
 
-            first = False
 
     except:
         print "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
@@ -536,4 +535,68 @@ def runInParallel(calls, cores=None, prepend=""):
     pool.join()
 
     return results
+
+
+
+def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
+    '''
+    Check the testFolder for presence of files as specified in specFile, which 
+    lists files one per line with space delimited paths. Additionally an array
+    of key-value pairs can be provided. If present every instance of {<key>} 
+    will be replaced by <value>. If report is specified, a report will be 
+    written to that file.
+    '''
+
+    # --- initial tests
+
+    if not os.path.exists(testFolder):
+        raise ge.CommandFailed("checkFiles", "Folder to test does not exist", "The folder to be tested does not exist: %s" % (testFolder), "Please check your settings and paths!")
+
+    if not os.path.exists(specFile):
+        raise ge.CommandFailed("checkFiles", "Specification file does not exist", "The specification file to test folder against does not exist: %s" % (specFile), "Please check your settings and paths!")
+
+    # --- open the report if needed:
+
+    if report:
+        try:
+            if append:
+                rout = open(report, 'a')
+                print >> rout, "\n-----------------------------------------\nFull file check report\n"
+            else:
+                rout = open(report, 'w')
+        except:
+            raise ge.CommandFailed("checkFiles", "Report file could not be opened", "Failed to open a report file for writing: %s" % (report), "Please check your settings and paths!")
+
+    # --- read the spec
+
+    files = open(specFile, 'r').read()
+
+    if fields:
+        for key, value in fields:
+            files = files.replace('{%s}' % (key), value)
+
+    files = [e.split() for e in files.split('\n') if len(e)]
+
+    # --- test the files
+
+    present = []
+    missing = []
+    for file in files:
+        test = [testFolder] + file
+        tfile = os.path.join(*test)
+        if os.path.exists(tfile):
+            present.append(tfile)
+            if report:
+                print >> rout, ". " + tfile
+        else:
+            missing.append(tfile)
+            if report:
+                print >> rout, "X " + tfile
+
+    if report:
+        rout.close()
+
+    status = len(missing) == 0
+
+    return status, present, missing
 
