@@ -473,6 +473,7 @@ Change Log
 * 0.41.08 [niutilities, library] Fixed procesInbox parameter issue, moved unset to container section
 * 0.41.09 [niutilities] Updated processInbox to work with existing session folders
 * 0.41.10 [niutilities] Updated processInbox with nameformat parameter
+* 0.42.00 [niutilities librarry] Major update to niutilities functionality and compliance with latest HCP Pipelines
 
 Stable Container Tag Log
 ========================
