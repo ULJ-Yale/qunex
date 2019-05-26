@@ -25,9 +25,9 @@ import os.path
 import g_core
 
 
-def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", boldname='number'):
+def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", boldnamekey='number', folderstructure='hcpls'):
     '''
-    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [boldname='number']
+    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [boldnamekey='number'] ['folderstructure='hcpls']
 
     USE
     ===
@@ -42,21 +42,25 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     PARAMETERS
     ==========
 
-    --sfolder   The base subject folder that contains the nifti images and
-                subject.txt file. [.]
-    --tfolder   The folder (within the base folder) to which the data is to be
-                mapped. [hcp]
-    --sfile     The name of the source subject.txt file. [subject_hcp.txt]
-    --check     Whether to check if session is marked ready for setting up
-                hcp folder [yes].
-    --existing  What to do if the hcp folder already exists? Options are:
-                abort -> abort setting up hcp folder
-                add   -> leave existing files and add new ones (default)
-                clear -> remove any exisiting files and redo hcp mapping
-    --boldname  How to name the bold files in the hcp structure. The default is
-                to name them by their bold number ('number') (e.g. BOLD_1), the
-                alternative is to use their actual names ('name') (e.g. 
-                rfMRI_REST1_AP). ['number']
+    --sfolder           The base subject folder that contains the nifti images 
+                        and subject.txt file. [.]
+    --tfolder           The folder (within the base folder) to which the data is
+                        to be mapped. [hcp]
+    --sfile             The name of the source subject.txt file. 
+                        [subject_hcp.txt]
+    --check             Whether to check if session is marked ready for setting 
+                        up hcp folder [yes].
+    --existing          What to do if the hcp folder already exists? Options 
+                        are:
+                        abort -> abort setting up hcp folder
+                        add   -> leave existing files and add new ones (default)
+                        clear -> remove any exisiting files and redo hcp mapping
+    --boldnamekey       How to name the bold files in the hcp structure. The 
+                        default is to name them by their bold number ('number') 
+                        (e.g. BOLD_1), the alternative is to use their actual 
+                        names ('name') (e.g. rfMRI_REST1_AP). ['number']
+    --folderstructure   Which HCP folder structure to use 'initial' or 'hcpls'. 
+                        See below for details. ['hcpls'] 
 
     IMAGE DEFINITION
     ================
@@ -76,25 +80,25 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     boldref[N]      ... Reference image for the following BOLD image
     bold[N]         ... BOLD image
     SE-FM-AP        ... Spin-echo fieldmap image recorded using the A-to-P
-                        frequency readout direction
+                        phase encoding direction
     SE-FM-PA        ... Spin-echo fieldmap image recorded using the P-to-A
-                        frequency readout direction
+                        phase encoding direction
     SE-FM-LR        ... Spin-echo fieldmap image recorded using the L-to-R
-                        frequency readout direction
+                        phase encoding direction
     SE-FM-RL        ... Spin-echo fieldmap image recorded using the R-to-L
-                        frequency readout direction
+                        phase encoding direction
     DWI             ... Diffusion weighted image
 
     
     In addition to these parameters, it is also possible to optionally specify, 
     which spin-echo image to use for distortion correction, by adding 
-    `:se(<number of se image>)` to the line, as well as frequency encoding
-    direction by adding `:fenc(<direction>)` to the line. In case of 
+    `:se(<number of se image>)` to the line, as well as phase encoding
+    direction by adding `:phenc(<direction>)` to the line. In case of 
     spin-echo images themselves, the number denotes the number of the
     image itself.
     
     If these information are not provided the spin-echo image to use will be
-    deduced based on the order of images, and frequency encoding direction 
+    deduced based on the order of images, and phase encoding direction 
     will be taken as default from the relevant HCP processing parameters
     (e.g `--hcp_bold_unwarpdir='y'`). 
 
@@ -114,16 +118,29 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     04:                 :Survey
     05: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P  : se(1)
     06: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A  : se(1)
-    07: bold1:WM        :BOLD 3mm 48 2.5s         : se(1) :fenc(AP)
-    08: bold2:WM        :BOLD 3mm 48 2.5s         : se(1) :fenc(AP)
-    09: bold3:WM        :BOLD 3mm 48 2.5s         : se(1) :fenc(AP)    
-    10: bold4:WM        :BOLD 3mm 48 2.5s         : se(1) :fenc(AP)
+    07: bold1:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
+    08: bold2:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
+    09: bold3:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)    
+    10: bold4:WM        :BOLD 3mm 48 2.5s         : se(1) :phenc(AP)
     11: SE-FM-AP        :C-BOLD 3mm 48 2.5s FS-P  : se(2)
     12: SE-FM-PA        :C-BOLD 3mm 48 2.5s FS-A  : se(2)
-    13: bold5:WM        :BOLD 3mm 48 2.5s         : se(2) :fenc(AP)
-    14: bold6:WM        :BOLD 3mm 48 2.5s         : se(2) :fenc(AP)
-    15: bold7:rest      :RSBOLD 3mm 48 2.5s       : se(2) :fenc(AP)
-    16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :fenc(PA)
+    13: bold5:WM        :BOLD 3mm 48 2.5s         : se(2) :phenc(AP)
+    14: bold6:WM        :BOLD 3mm 48 2.5s         : se(2) :phenc(AP)
+    15: bold7:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(AP)
+    16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(PA)
+
+
+    HCP folder structure version
+    ----------------------------
+
+    `version` parameter determines the HCP folder structure to use:
+
+    * 'v1'  ... Unprocessed data is parallel to processed data, functional data
+                folders have '_fncb' suffix and field map data folders have
+                '_strc' tail.
+    * 'v2'  ... Unprocessed data is a subfolder in the HCP session folder, 
+                functional data folders and field map data folders do not have 
+                the '_fncb' and '_strc' extensions, respectively.
 
 
     EXAMPLE USE
@@ -148,19 +165,34 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
              - Changed subjects to sessions
     2019-05-12 Grega Repovš
              - Reports an error if no file is found to be mapped
+    2019-05-21 Grega Repovš
+             - Added the 'boldnamekey' option
+    2019-05-24 Grega Repovš
+             - Added HCP folder structure specification
     '''
 
     print "Running setupHCP\n================"
 
     inf   = niutilities.g_core.readSubjectData(os.path.join(sfolder, sfile))[0][0]
-    basef = os.path.join(sfolder, tfolder, inf['id'])
     rawf  = inf.get('raw_data', None)
     sid   = inf['id']
     bolds = collections.defaultdict(dict)
     nT1w  = 0
     nT2w  = 0
 
-    boldname = boldname == 'name'
+    boldnamekey = boldnamekey == 'name'
+
+    if folderstructure not in ['initial', 'hcpls']:
+        raise ge.CommandFailed("setupHCP", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
+
+    if folderstructure == 'initial':
+        fctail = '_fncb'
+        fmtail = '_strc'
+        basef = os.path.join(sfolder, tfolder, inf['id'])
+    else:
+        fctail = ""
+        fmtail = ""
+        basef = os.path.join(sfolder, tfolder, inf['id'], 'unprocessed')
 
     # --- Check session
 
@@ -203,8 +235,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
         v = inf[k]
         if 'o' in v:
             orient = "_" + v['o']
-        elif 'fenc' in v:
-            orient = "_" + v['fenc']
+        elif 'phenc' in v:
+            orient = "_" + v['phenc']
         else:
             orient = ""
         if v['name'] == 'T1w':
@@ -224,36 +256,48 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             tfile = sid + "_strc_T2w_SPC%d.nii.gz" % (nT2w)
             tfold = "T2w"
         elif v['name'] == "FM-GE":
+            if 'fm' in v:
+                fmnum = v['fm']
+            else:
+                fmnum = boldn
             sfile = k + ".nii.gz"
             tfile = sid + "_strc_FieldMap_GE.nii.gz"
-            tfold = "FieldMap_strc"
+            tfold = "FieldMap" + fmnum + fmtail
         elif v['name'] == "FM-Magnitude":
+            if 'fm' in v:
+                fmnum = v['fm']
+            else:
+                fmnum = boldn
             sfile = k + ".nii.gz"
             tfile = sid + "_strc_FieldMap_Magnitude.nii.gz"
-            tfold = "FieldMap_strc"
+            tfold = "FieldMap" + fmnum + fmtail
         elif v['name'] == "FM-Phase":
+            if 'fm' in v:
+                fmnum = v['fm']
+            else:
+                fmnum = boldn
             sfile = k + ".nii.gz"
             tfile = sid + "_strc_FieldMap_Phase.nii.gz"
-            tfold = "FieldMap_strc"
+            tfold = "FieldMap" + fmnum + fmtail
         elif "boldref" in v['name']:
             boldn = v['name'][7:]
             sfile = k + ".nii.gz"
-            if boldname and 'boldname' in v:
+            if boldnamekey and 'boldname' in v:
                 tfile = sid + "_fncb_" + v['boldname'] + ".nii.gz"            
-                tfold = v['boldname'] + "_fncb"
+                tfold = v['boldname'] + fctail
             else:
                 tfile = sid + "_fncb_BOLD_" + boldn + orient + "_SBRef.nii.gz"            
-                tfold = "BOLD_" + boldn + orient + "_SBRef_fncb"
+                tfold = "BOLD_" + boldn + orient + "_SBRef" + fctail
             bolds[boldn]["ref"] = sfile
         elif "bold" in v['name']:
             boldn = v['name'][4:]
             sfile = k + ".nii.gz"
-            if boldname and 'boldname' in v:
+            if boldnamekey and 'boldname' in v:
                 tfile = sid + "_fncb_" + v['boldname'] + ".nii.gz"            
-                tfold = v['boldname'] + "_fncb"
+                tfold = v['boldname'] + fctail
             else:
                 tfile = sid + "_fncb_BOLD_" + boldn + orient + ".nii.gz"            
-                tfold = "BOLD_" + boldn + orient + "_fncb"
+                tfold = "BOLD_" + boldn + orient + fctail
             bolds[boldn]["bold"] = sfile
         elif v['name'] == "SE-FM-AP":
             sfile = k + ".nii.gz"
@@ -262,7 +306,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 senum = v['se']
             else:
                 senum = boldn
-            tfold = "SpinEchoFieldMap" + senum + "_fncb"
+            tfold = "SpinEchoFieldMap" + senum + fctail
         elif v['name'] == "SE-FM-PA":
             sfile = k + ".nii.gz"
             tfile = sid + "_fncb_BOLD_PA_SB_SE.nii.gz"
@@ -270,7 +314,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 senum = v['se']
             else:
                 senum = boldn
-            tfold = "SpinEchoFieldMap" + senum + "_fncb"
+            tfold = "SpinEchoFieldMap" + senum + fctail
         elif v['name'] == "SE-FM-LR":
             sfile = k + ".nii.gz"
             tfile = sid + "_fncb_BOLD_LR_SB_SE.nii.gz"
@@ -278,7 +322,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 senum = v['se']
             else:
                 senum = boldn
-            tfold = "SpinEchoFieldMap" + senum + "_fncb"
+            tfold = "SpinEchoFieldMap" + senum + fctail
         elif v['name'] == "SE-FM-RL":
             sfile = k + ".nii.gz"
             tfile = sid + "_fncb_BOLD_RL_SB_SE.nii.gz"
@@ -286,7 +330,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 senum = v['se']
             else:
                 senum = boldn
-            tfold = "SpinEchoFieldMap" + senum + "_fncb"
+            tfold = "SpinEchoFieldMap" + senum + fctail
         elif v['name'] == "DWI":
             sfile = [k + e for e in ['.nii.gz', '.bval', '.bvec']]
             tbase = "_".join([sid, 'DWI', v['task']])

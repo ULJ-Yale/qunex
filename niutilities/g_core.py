@@ -14,6 +14,7 @@ import multiprocessing
 import datetime
 import glob
 import sys
+import types
 import traceback
 import niutilities.g_exceptions as ge
 
@@ -544,7 +545,9 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     lists files one per line with space delimited paths. Additionally an array
     of key-value pairs can be provided. If present every instance of {<key>} 
     will be replaced by <value>. If report is specified, a report will be 
-    written to that file.
+    written to that file. Where there might be two alternative options of results
+    e.g. difference because of AP/PA direction, then the alternative is to 
+    be provided in the same line separated by a pipe '|'
     '''
 
     # --- initial tests
@@ -558,14 +561,19 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
     # --- open the report if needed:
 
     if report:
-        try:
-            if append:
-                rout = open(report, 'a')
-                print >> rout, "\n-----------------------------------------\nFull file check report\n"
-            else:
-                rout = open(report, 'w')
-        except:
-            raise ge.CommandFailed("checkFiles", "Report file could not be opened", "Failed to open a report file for writing: %s" % (report), "Please check your settings and paths!")
+        if type(report) is types.FileType:
+            rout = report
+            fileClose = False
+        else:
+            fileClose = True
+            try:
+                if append:
+                    rout = open(report, 'a')
+                else:
+                    rout = open(report, 'w')
+            except:
+                raise ge.CommandFailed("checkFiles", "Report file could not be opened", "Failed to open a report file for writing: %s" % (report), "Please check your settings and paths!")
+        print >> rout, "\n#-----------------------------------------\n# Full file check report\n# . denotes file present\n# X denotes file absent\n"
 
     # --- read the spec
 
@@ -575,28 +583,70 @@ def checkFiles(testFolder, specFile, fields=None, report=None, append=False):
         for key, value in fields:
             files = files.replace('{%s}' % (key), value)
 
-    files = [e.split() for e in files.split('\n') if len(e)]
+    files = [[f.strip().split() for f in e.split('|')] for e in files.split('\n') if len(e) and not e.startswith('#')]
 
     # --- test the files
 
     present = []
     missing = []
-    for file in files:
-        test = [testFolder] + file
-        tfile = os.path.join(*test)
-        if os.path.exists(tfile):
-            present.append(tfile)
-            if report:
-                print >> rout, ". " + tfile
-        else:
+    for testfiles in files:
+        fileMissing = True
+        for testfile in testfiles:
+            test = [testFolder] + testfile
+            tfile = os.path.join(*test)
+            if os.path.exists(tfile):
+                present.append(tfile)
+                fileMissing = False
+                if report:
+                    print >> rout, ". " + tfile
+                break
+        if fileMissing:
             missing.append(tfile)
             if report:
                 print >> rout, "X " + tfile
 
     if report:
-        rout.close()
+        print >> rout, "\n#-----------------=== End Full File Report ===----------------------"
+        if fileClose:
+            rout.close()
 
     status = len(missing) == 0
 
     return status, present, missing
+
+
+def printAndLog(*args, **kwargs):
+    '''
+    Prints all that is given as nonpositional argument to the standard output.
+    For keyword arguments:
+
+    * file     ... prints to the file
+    * write    ... creates a file and writes to it
+    * append   ... opens a file and appends to it
+    * silent   ... whether to not print to stdout
+    * end      ... how to end ['\n']
+    '''
+
+    silent = kwargs.get('silent', False)
+    file   = kwargs.get('file', None)
+    write  = kwargs.get('write', None)
+    append = kwargs.get('append', None)
+    end    = kwargs.get('end', '\n')
+
+    if write:
+        write = open(write, 'w')
+    if append:
+        append = open(append, 'a')
+
+    for element in args + (end, ):
+        if not silent:
+            print element, 
+        for out in [append, write, file]:
+            if out:
+                print >> out, element,
+    
+    for toclose in [append, write]:
+        if toclose:
+            toclose.close()
+
 

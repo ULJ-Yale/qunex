@@ -535,6 +535,7 @@ def main(args=None):
         print "\n--------------------==== mnap failed! ====--------------------\nERROR: Execution of mnap command %s failed!" % (comm)
         print e
         print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
+        raise
         print "--------------------------------------------------------------"
         sys.exit(1)
     except SystemExit as e:

@@ -34,16 +34,16 @@ hcpls = {
             'info':  [],
         },
         'rfMRI': {
-            'info':  ['task', 'fenc', 'ref'],
+            'info':  ['task', 'phenc', 'ref'],
         },
         'tfMRI': {
-            'info':  ['task', 'fenc', 'ref']
+            'info':  ['task', 'phenc', 'ref']
         },
         'dMRI': {
-            'info':  ['dir', 'fenc', 'ref']
+            'info':  ['dir', 'phenc', 'ref']
         },
         'SpinEchoFieldMap': {
-            'info':  ['fenc']
+            'info':  ['phenc']
         }
     },
     'folders': {
@@ -66,7 +66,7 @@ hcpls = {
                      ]
         },
         'rfMRI': {
-            'info':  ['task', 'fenc'],
+            'info':  ['task', 'phenc'],
             'check': [
                         ['SpinEchoFieldMap', 'AP'],
                         ['SpinEchoFieldMap', 'PA'],
@@ -75,7 +75,7 @@ hcpls = {
                      ]
         },
         'tfMRI': {
-            'info':  ['task', 'fenc'],
+            'info':  ['task', 'phenc'],
             'check': [
                         ['SpinEchoFieldMap', 'AP'],
                         ['SpinEchoFieldMap', 'PA'],
@@ -101,7 +101,7 @@ hcpls = {
 
 unwarp = {None: "Unknown", 'i': 'x', 'j': 'y', 'k': 'z', 'i-': 'x-', 'j-': 'y-', 'k-': 'z-'}
 PEDir  = {None: "Unknown", "LR": 1, "RL": 1, "AP": 2, "PA": 2}
-FEDir  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA'}
+PEDirMap  = {'AP': 'j-', 'j-': 'AP', 'PA': 'j', 'j': 'PA'}
 
 
 def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, prefix=None):
@@ -955,8 +955,8 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     else:
         mode = 'a'
 
-    bout  = open(os.path.join(hfolder, 'hcpfs2nii.log'), mode)
-    print >> bout, "HCPFS to nii mapping report, executed on %s" % (datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
+    bout  = open(os.path.join(hfolder, 'hcpls2nii.log'), mode)
+    print >> bout, "HCPLS to nii mapping report, executed on %s" % (datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
 
     # --- map files
 
@@ -1006,55 +1006,56 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
                 # -- BOLDS
                 elif fileInfo['parts'][0] in ['tfMRI', 'rfMRI']:
 
-                    fenc = fileInfo['json'].get('PhaseEncodingDirection', None)
-                    if fenc == 'Unknown':
-                        fenc = fileInfo['parts'][2]
+                    phenc = fileInfo['json'].get('PhaseEncodingDirection', None)
+                    if phenc:
+                        phenc = PEDirMap.get(phenc, 'NA')
                     else:
-                        fenc = FEDir[fenc]
+                        phenc = fileInfo['parts'][2]
+
 
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f): boldname(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                        print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): EchoSpacing(%.10f): boldname(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
                     else:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f): boldname(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                        print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): EchoSpacing(%.10f): boldname(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
                     print >> rout, "%-25s : %.8f" % ("_hcp_bold_echospacing", fileInfo['json'].get('EffectiveEchoSpacing', -9.))
-                    print >> rout, "%-25s : '%s=%s'" % ("_hcp_bold_unwarpdir", fenc, unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
+                    print >> rout, "%-25s : '%s=%s'" % ("_hcp_bold_unwarpdir", phenc, unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
 
                 # -- SE
                 elif fileInfo['parts'][0] == 'SpinEchoFieldMap':
-                    fenc = fileInfo['json'].get('PhaseEncodingDirection', None)
-                    if fenc == 'Unknown':
-                        fenc = fileInfo['parts'][1]
+                    phenc = fileInfo['json'].get('PhaseEncodingDirection', None)
+                    if phenc:
+                        phenc = PEDirMap.get(phenc, 'NA')
                     else:
-                        fenc = FEDir[fenc]
+                        phenc = fileInfo['parts'][2]
 
-                    print >> sout, "%02d: %-20s: %-30s: se(%d): fenc(%s): EchoSpacing(%.10f)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], fenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.))
+                    print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): EchoSpacing(%.10f)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.))
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
                     print >> rout, "%-25s : %.8f" % ("_hcp_dwelltime", fileInfo['json'].get('EffectiveEchoSpacing', -9.))
-                    print >> rout, "%-25s : '%s=%s'" % ("_hcp_seunwarpdir", fenc, unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
+                    print >> rout, "%-25s : '%s=%s'" % ("_hcp_seunwarpdir", phenc, unwarp[fileInfo['json'].get('PhaseEncodingDirection', None)])
 
 
                 # -- dMRI
                 elif fileInfo['parts'][0] == 'dMRI':
-                    fenc = fileInfo['json'].get('PhaseEncodingDirection', None)
-                    if fenc == 'Unknown':
-                        fenc = fileInfo['parts'][2]
+                    phenc = fileInfo['json'].get('PhaseEncodingDirection', None)
+                    if phenc:
+                        phenc = PEDirMap.get(phenc, 'NA')
                     else:
-                        fenc = FEDir[fenc]
+                        phenc = fileInfo['parts'][2]
 
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: fenc(%s): EchoSpacing(%.10f)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], fenc), "_".join(fileInfo['parts']), fenc, fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                        print >> sout, "%02d: %-20s: %-30s: phenc(%s): EchoSpacing(%.10f)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc, fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
                     else:    
-                        print >> sout, "%02d: %-20s: %-30s: fenc(%s): EchoSpacing(%.10f)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], fenc), "_".join(fileInfo['parts']), fenc, fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                        print >> sout, "%02d: %-20s: %-30s: phenc(%s): EchoSpacing(%.10f)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc, fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
 
                         print >> rout, "\n" + "_".join(fileInfo['parts'])
                         print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
                         print >> rout, "%-25s : %.8f" % ("_hcp_dwi_dwelltime", fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
-                        print >> rout, "%-25s : %d" % ("_hcp_dwi_PEdir", PEDir[fenc])
+                        print >> rout, "%-25s : %d" % ("_hcp_dwi_PEdir", PEDir[phenc])
 
                 print >> bout, "%s => %s" % (fileInfo['path'], tfile)
             else:

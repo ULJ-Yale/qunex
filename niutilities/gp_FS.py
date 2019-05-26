@@ -60,8 +60,7 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
                 else:
                     tmpfile = f['t1'].replace('.4dfp.img', getImgFormat(f['t1_source']))
                     shutil.copy2(f['t1_source'], tmpfile)
-                    execr, endlog = runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpfile, f['t1'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tmpfile)), overwrite, sinfo['id'])
-                    r += execr
+                    r, endlog, status, failed = runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpfile, f['t1'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tmpfile)), overwrite, sinfo['id'], r=r)
                     os.remove(tmpfile)
             if options['image_target'] == 'nifti':
                 if getImgFormat(f['t1_source']) == '.4dfp.img':
@@ -69,16 +68,14 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
                     tmpifh = f['t1'] + '.4dfp.ifh'
                     shutil.copy2(f['t1_source'], tmpimg)
                     shutil.copy2(f['t1_source'].replace('.img', '.ifh'), tmpifh)
-                    execr, endlog = runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpifh, f['t1'].replace('.img', '.ifh')), '... converting %s to NIfTI' % (os.path.basename(tmpimg)), overwrite, sinfo['id'])
-                    r += execr
+                    r, endlog, status, failed = runExternalForFile(f['t1'], 'g_FlipFormat %s %s' % (tmpifh, f['t1'].replace('.img', '.ifh')), '... converting %s to NIfTI' % (os.path.basename(tmpimg)), overwrite, sinfo['id'], r=r)
                     os.remove(tmpimg)
                     os.remove(tmpifh)
                 else:
                     if getImgFormat(f['t1_source']) == '.nii.gz':
                         tmpfile = f['t1'] + ".gz"
                         shutil.copy2(f['t1_source'], tmpfile)
-                        execr, endlog = runExternalForFile(f['t1'], 'gunzip -f %s' % (tmpfile), '... gunzipping %s' % (os.path.basename(tmpfile)), overwrite, sinfo['id'])
-                        r += execr
+                        r, endlog, status, failed = runExternalForFile(f['t1'], 'gunzip -f %s' % (tmpfile), '... gunzipping %s' % (os.path.basename(tmpfile)), overwrite, sinfo['id'], r=r)
                         if os.path.exists(tmpfile):
                             os.remove(tmpfile)
                     else:
@@ -95,36 +92,29 @@ def runBasicStructuralSegmentation(sinfo, options, overwrite=False, thread=0):
 
         if getImgFormat(f['t1']) == '.4dfp.img':
             sfile = sfile.replace('.4dfp.img', '.nii')
-            execr, endlog = runExternalForFile(sfile, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), sfile), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(sfile, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), sfile), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite, sinfo['id'], r=r)
 
         # --- run BET
 
         if os.path.exists(tfileb):
             r += "\n... bet on %s already done" % (os.path.basename(sfile))
         else:
-            execr, endlog = runExternalForFile(tfileb + '.gz', 'bet %s %s %s' % (sfile, tfileb, options['bet']), '... running BET on %s with options %s' % (os.path.basename(sfile), options['bet']), overwrite, sinfo['id'])
-            r += execr
-            execr, endlog = runExternalForFile(tfileb, 'gunzip -f %s.gz' % (tfileb), 'gunzipping %s.gz' % (os.path.basename(tfileb)), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(tfileb + '.gz', 'bet %s %s %s' % (sfile, tfileb, options['bet']), '... running BET on %s with options %s' % (os.path.basename(sfile), options['bet']), overwrite, sinfo['id'], r=r)
+            r, endlog, status, failed = runExternalForFile(tfileb, 'gunzip -f %s.gz' % (tfileb), 'gunzipping %s.gz' % (os.path.basename(tfileb)), overwrite, sinfo['id'], r=r)
 
         # --- run FAST
 
         if os.path.exists(tfiles):
             r += "\n... fast on %s already done" % (os.path.basename(tfiles))
         else:
-            execr, endlog = runExternalForFile(tfiles + '.gz', 'fast %s -o %s %s' % (options['fast'], tfiles.replace('_seg.nii', ''), tfileb), '... running FAST on %s with options %s' % (os.path.basename(tfileb), options['fast']), overwrite, sinfo['id'])
-            r += execr
-            execr, endlog = runExternalForFile(tfiles, 'gunzip -f %s.gz' % (tfiles), '... gunzipping %s.gz' % (os.path.basename(tfiles)), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(tfiles + '.gz', 'fast %s -o %s %s' % (options['fast'], tfiles.replace('_seg.nii', ''), tfileb), '... running FAST on %s with options %s' % (os.path.basename(tfileb), options['fast']), overwrite, sinfo['id'], r=r)
+            r, endlog, status, failed = runExternalForFile(tfiles, 'gunzip -f %s.gz' % (tfiles), '... gunzipping %s.gz' % (os.path.basename(tfiles)), overwrite, sinfo['id'], r=r)
 
         # --- convert to 4dfp if needed
 
         if getImgFormat(f['t1']) == '.4dfp.img':
-            execr, endlog = runExternalForFile(f['t1_brain'], 'g_FlipFormat %s %s' % (tfileb, f['t1_brain'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tfileb)), overwrite, sinfo['id'])
-            r += execr
-            execr, endlog = runExternalForFile(f['t1_seg'], 'g_FlipFormat %s %s' % (tfiles, f['t1_seg'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tfiles)), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['t1_brain'], 'g_FlipFormat %s %s' % (tfileb, f['t1_brain'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tfileb)), overwrite, sinfo['id'], r=r)
+            r, endlog, status, failed = runExternalForFile(f['t1_seg'], 'g_FlipFormat %s %s' % (tfiles, f['t1_seg'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tfiles)), overwrite, sinfo['id'], r=r)
 
 
     except (ExternalFailed, NoSourceFolder), errormessage:
@@ -215,15 +205,11 @@ def checkForFreeSurferData(sinfo, options, overwrite=False, thread=0, r=False):
                         r += "\n... copied %s to target folder" % (os.path.basename(sf))
                         if tf != f[t]:
                             if options['image_target'] == '4dfp':
-                                execr, endlog = runExternalForFile(f[t], 'g_FlipFormat %s %s' % (tf, f[t].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tf)), overwrite, sinfo['id'])
-                                r += execr
+                                r, endlog, status, failed = runExternalForFile(f[t], 'g_FlipFormat %s %s' % (tf, f[t].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(tf)), overwrite, sinfo['id'], r=r)
                             elif getImgFormat(tf) == '.nii.gz':
-                                execr, endlog = runExternalForFile(f[t], 'gunzip -f %s' % (tf), '... gunzipping %s ' % (os.path.basename(tf)), overwrite, sinfo['id'])
-                                r += execr
+                                r, endlog, status, failed = runExternalForFile(f[t], 'gunzip -f %s' % (tf), '... gunzipping %s ' % (os.path.basename(tf)), overwrite, sinfo['id'], r=r)
                             else:
-                                execr, endlog = runExternalForFile(f[t], 'g_FlipFormat %s %s' % (tf.replace('.img', '.ifh'), f[t]), '... converting %s to nifti' % (os.path.basename(tf)), overwrite, sinfo['id'])
-                                r += execr
-
+                                r, endlog, status, failed = runExternalForFile(f[t], 'g_FlipFormat %s %s' % (tf.replace('.img', '.ifh'), f[t]), '... converting %s to nifti' % (os.path.basename(tf)), overwrite, sinfo['id'], r=r)
 
     except:
         r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
@@ -282,30 +268,24 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
             onifti = f['t1']
             if getImgFormat(onifti) == '.4dfp.img':
                 onifti = f['t1'].replace('.4dfp.img', '.nii')
-                execr, endlog = runExternalForFile(onifti, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), onifti), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite, sinfo['id'])
-                r += execr
+                r, endlog, status, failed = runExternalForFile(onifti, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), onifti), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite, sinfo['id'], r=r)
 
             # --- convert to MGZ
 
-            execr, endlog = runExternalForFile(f['fs_morig_mgz'], 'mri_convert --in_type nii %s %s' % (onifti, f['fs_morig_mgz']), '... converting %s to MGZ' % (os.path.basename(onifti)), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_morig_mgz'], 'mri_convert --in_type nii %s %s' % (onifti, f['fs_morig_mgz']), '... converting %s to MGZ' % (os.path.basename(onifti)), overwrite, sinfo['id'], r=r)
 
             # --- run FreeSurfer Subcortical
 
-            execr, endlog = runExternalForFile(f['fs_aseg_mgz'], 'recon-all -sd %s -subjid freesurfer -motioncor -nuintensitycor -talairach -normalization -skullstrip -subcortseg -segstats -no-isrunning' % (d['s_seg']), '... running subcortical FreeSurfer segmentation', overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aseg_mgz'], 'recon-all -sd %s -subjid freesurfer -motioncor -nuintensitycor -talairach -normalization -skullstrip -subcortseg -segstats -no-isrunning' % (d['s_seg']), '... running subcortical FreeSurfer segmentation', overwrite, sinfo['id'], r=r)
 
             # --- run FreeSurfer surface registration
 
-            execr, endlog = runExternalForFile(f['fs_aparc+aseg_mgz'], 'recon-all -sd %s -subjid freesurfer -maskbfs -normalization2 -segmentation -fill -tessellate -smooth1 -inflate1 -qsphere -fix -finalsurfs -smooth2 -inflate2 -cortribbon -sphere -surfreg -contrasurfreg -avgcurv -cortparc -parcstats -cortparc2 -parcstats2 -aparc2aseg -no-isrunning' % (d['s_seg']), '... running FreeSurfer surface processing', overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aparc+aseg_mgz'], 'recon-all -sd %s -subjid freesurfer -maskbfs -normalization2 -segmentation -fill -tessellate -smooth1 -inflate1 -qsphere -fix -finalsurfs -smooth2 -inflate2 -cortribbon -sphere -surfreg -contrasurfreg -avgcurv -cortparc -parcstats -cortparc2 -parcstats2 -aparc2aseg -no-isrunning' % (d['s_seg']), '... running FreeSurfer surface processing', overwrite, sinfo['id'], r=r)
 
             # --- convert segmentations to nifti
 
-            execr, endlog = runExternalForFile(f['fs_aseg_nii'], 'mri_convert -i %s -ot nii %s' % (f['fs_aseg_mgz'], f['fs_aseg_nii']), '... converting %s to NIfTI' % (f['fs_aseg_mgz']), overwrite, sinfo['id'])
-            r += execr
-            execr, endlog = runExternalForFile(f['fs_aparc+aseg_nii'], 'mri_convert -i %s -ot nii %s' % (f['fs_aparc+aseg_mgz'], f['fs_aparc+aseg_nii']), '... converting %s to NIfTI' % (f['fs_aparc+aseg_mgz']), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aseg_nii'], 'mri_convert -i %s -ot nii %s' % (f['fs_aseg_mgz'], f['fs_aseg_nii']), '... converting %s to NIfTI' % (f['fs_aseg_mgz']), overwrite, sinfo['id'], r=r)
+            r, endlog, status, failed = runExternalForFile(f['fs_aparc+aseg_nii'], 'mri_convert -i %s -ot nii %s' % (f['fs_aparc+aseg_mgz'], f['fs_aparc+aseg_nii']), '... converting %s to NIfTI' % (f['fs_aparc+aseg_mgz']), overwrite, sinfo['id'], r=r)
 
 
         if options['image_target'] == 'nifti':
@@ -322,50 +302,38 @@ def runFreeSurferFullSegmentation(sinfo, options, overwrite=False, thread=0):
 
             if not os.path.exists(f['fs_aseg_t1']):
                 if not os.path.exists(f['fs_aseg_4dfp']):
-                    execr, endlog = runExternalForFileShell(f['fs_aseg_4dfp'], 'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s' % (f['fs_aseg_nii'], f['fs_aseg_4dfp'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(f['fs_aseg_nii'])), overwrite, sinfo['id'])
-                    r += execr
-                execr, endlog = runExternalForFile(f['fs_aseg_t1'], 't4img_4dfp none %s %s -O111 -@b' % (root4dfp(f['fs_aseg_4dfp']), root4dfp(f['fs_aseg_t1'])), '... converting %s to 111 space' % (f['fs_aseg_4dfp']), overwrite, sinfo['id'])
-                r += execr
+                    r, endlog, status, failed = runExternalForFile(f['fs_aseg_4dfp'], 'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s' % (f['fs_aseg_nii'], f['fs_aseg_4dfp'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(f['fs_aseg_nii'])), overwrite, sinfo['id'], r=r, shell=True)
+                r, endlog, status, failed = runExternalForFile(f['fs_aseg_t1'], 't4img_4dfp none %s %s -O111 -@b' % (root4dfp(f['fs_aseg_4dfp']), root4dfp(f['fs_aseg_t1'])), '... converting %s to 111 space' % (f['fs_aseg_4dfp']), overwrite, sinfo['id'], r=r)
 
-            execr, endlog = runExternalForFile(f['fs_aseg_bold'], 't4img_4dfp none %s %s -O333 -n -@b' % (root4dfp(f['fs_aseg_t1']), root4dfp(f['fs_aseg_bold'])), '... converting %s to 333 space' % (f['fs_aseg_4dfp']), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aseg_bold'], 't4img_4dfp none %s %s -O333 -n -@b' % (root4dfp(f['fs_aseg_t1']), root4dfp(f['fs_aseg_bold'])), '... converting %s to 333 space' % (f['fs_aseg_4dfp']), overwrite, sinfo['id'], r=r)
 
             # --- check for aparc
 
             if not os.path.exists(f['fs_aparc_t1']):
                 if not os.path.exists(f['fs_aparc+aseg_4dfp']):
-                    execr, endlog = runExternalForFileShell(f['fs_aparc+aseg_4dfp'], 'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s' % (f['fs_aparc+aseg_nii'], f['fs_aparc+aseg_4dfp'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(f['fs_aparc+aseg_nii'])), overwrite, sinfo['id'])
-                    r += execr
-                execr, endlog = runExternalForFile(f['fs_aparc_t1'], 't4img_4dfp none %s %s -O111 -@b' % (root4dfp(f['fs_aparc+aseg_4dfp']), root4dfp(f['fs_aparc_t1'])), '... converting %s to 111 space' % (f['fs_aparc+aseg_4dfp']), overwrite, sinfo['id'])
-                r += execr
+                    r, endlog, status, failed = runExternalForFile(f['fs_aparc+aseg_4dfp'], 'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s' % (f['fs_aparc+aseg_nii'], f['fs_aparc+aseg_4dfp'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(f['fs_aparc+aseg_nii'])), overwrite, sinfo['id'], r=r, shell=True)
+                r, endlog, status, failed = runExternalForFile(f['fs_aparc_t1'], 't4img_4dfp none %s %s -O111 -@b' % (root4dfp(f['fs_aparc+aseg_4dfp']), root4dfp(f['fs_aparc_t1'])), '... converting %s to 111 space' % (f['fs_aparc+aseg_4dfp']), overwrite, sinfo['id'], r=r)
 
-            execr, endlog = runExternalForFile(f['fs_aparc_bold'], 't4img_4dfp none %s %s -O333 -n -@b' % (root4dfp(f['fs_aparc_t1']), root4dfp(f['fs_aparc_bold'])), '... converting %s to 333 space' % (f['fs_aparc_t1']), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aparc_bold'], 't4img_4dfp none %s %s -O333 -n -@b' % (root4dfp(f['fs_aparc_t1']), root4dfp(f['fs_aparc_bold'])), '... converting %s to 333 space' % (f['fs_aparc_t1']), overwrite, sinfo['id'], r=r)
 
             # --- check if we need to convert to nifti
 
             if options['image_atlas'] == '711' and options['image_target'] == 'nifti':
 
                 # --- convert 111 4dfp to nifti
-                execr, endlog = runExternalForFile(f['fs_aseg_t1'], 'g_FlipFormat %s %s' % (f['fs_aseg_111'].replace('.img', '.ifh'), f['fs_aseg_t1']), '... converting %s to nifti' % (os.path.basename(f['fs_aseg_111'])), overwrite, sinfo['id'])
-                r += execr
-                execr, endlog = runExternalForFile(f['fs_aparc_t1'], 'g_FlipFormat %s %s' % (f['fs_aparc+aseg_111'].replace('.img', '.ifh'), f['fs_aparc_t1']), '... converting %s to nifti' % (os.path.basename(f['fs_aparc+aseg_111'])), overwrite, sinfo['id'])
-                r += execr
+                r, endlog, status, failed = runExternalForFile(f['fs_aseg_t1'], 'g_FlipFormat %s %s' % (f['fs_aseg_111'].replace('.img', '.ifh'), f['fs_aseg_t1']), '... converting %s to nifti' % (os.path.basename(f['fs_aseg_111'])), overwrite, sinfo['id'], r=r)
+                r, endlog, status, failed = runExternalForFile(f['fs_aparc_t1'], 'g_FlipFormat %s %s' % (f['fs_aparc+aseg_111'].replace('.img', '.ifh'), f['fs_aparc_t1']), '... converting %s to nifti' % (os.path.basename(f['fs_aparc+aseg_111'])), overwrite, sinfo['id'], r=r)
 
                 # --- convert 333 4dfp to nifti
-                execr, endlog = runExternalForFile(f['fs_aseg_bold'], 'g_FlipFormat %s %s' % (f['fs_aseg_333'].replace('.img', '.ifh'), f['fs_aseg_bold']), '... converting %s to nifti' % (os.path.basename(f['fs_aseg_333'])), overwrite, sinfo['id'])
-                r += execr
-                execr, endlog = runExternalForFile(f['fs_aparc_bold'], 'g_FlipFormat %s %s' % (f['fs_aparc+aseg_333'].replace('.img', '.ifh'), f['fs_aparc_bold']), '... converting %s to nifti' % (os.path.basename(f['fs_aparc+aseg_333'])), overwrite, sinfo['id'])
-                r += execr
+                r, endlog, status, failed = runExternalForFile(f['fs_aseg_bold'], 'g_FlipFormat %s %s' % (f['fs_aseg_333'].replace('.img', '.ifh'), f['fs_aseg_bold']), '... converting %s to nifti' % (os.path.basename(f['fs_aseg_333'])), overwrite, sinfo['id'], r=r)
+                r, endlog, status, failed = runExternalForFile(f['fs_aparc_bold'], 'g_FlipFormat %s %s' % (f['fs_aparc+aseg_333'].replace('.img', '.ifh'), f['fs_aparc_bold']), '... converting %s to nifti' % (os.path.basename(f['fs_aparc+aseg_333'])), overwrite, sinfo['id'], r=r)
 
         if options['image_atlas'] != '711' and options['image_target'] == 'nifti':
 
             if os.path.exists(f['bold_template']):
                 # --- convert t1 segmentation to bold space
-                execr, endlog = runExternalForFile(f['fs_aseg_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (f['bold_template'], f['fs_aseg_t1'], f['fs_aseg_bold']), '... resampling t1 subcortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aseg_t1']), os.path.basename(f['fs_aseg_bold'])), overwrite, sinfo['id'])
-                r += execr
-                execr, endlog = runExternalForFile(f['fs_aparc_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (f['bold_template'], f['fs_aparc_t1'], f['fs_aparc_bold']), '... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite, sinfo['id'])
-                r += execr
+                r, endlog, status, failed = runExternalForFile(f['fs_aseg_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (f['bold_template'], f['fs_aseg_t1'], f['fs_aseg_bold']), '... resampling t1 subcortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aseg_t1']), os.path.basename(f['fs_aseg_bold'])), overwrite, sinfo['id'], r=r)
+                r, endlog, status, failed = runExternalForFile(f['fs_aparc_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (f['bold_template'], f['fs_aparc_t1'], f['fs_aparc_bold']), '... resampling t1 cortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aparc_t1']), os.path.basename(f['fs_aparc_bold'])), overwrite, sinfo['id'], r=r)
             else:
                 r += "ERROR: bold template image is missing! Please run bbm (create brain masks for BOLD runs) and then rerun fsf to complete the last step!"
 
@@ -426,23 +394,19 @@ def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread
             onifti = f['t1']
             if getImgFormat(onifti) == '.4dfp.img':
                 onifti = f['t1'].replace('.4dfp.img', '.nii')
-                execr, endlog = runExternalForFile(onifti, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), onifti), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite, sinfo['id'])
-                r += execr
+                r, endlog, status, failed = runExternalForFile(onifti, 'g_FlipFormat %s %s' % (f['t1'].replace('.img', '.ifh'), onifti), '... converting %s to NIfTI' % (os.path.basename(f['t1'])), overwrite, sinfo['id'], r=r)
 
             # --- convert to MGZ
 
-            execr, endlog = runExternalForFile(f['fs_morig_mgz'], 'mri_convert --in_type nii %s %s' % (onifti, f['fs_morig_mgz']), '... converting %s to MGZ' % (os.path.basename(onifti)), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_morig_mgz'], 'mri_convert --in_type nii %s %s' % (onifti, f['fs_morig_mgz']), '... converting %s to MGZ' % (os.path.basename(onifti)), overwrite, sinfo['id'], r=r)
 
             # --- run FreeSurfer Subcortical
 
-            execr, endlog = runExternalForFile(f['fs_aseg_mgz'], 'recon-all -sd %s -subjid freesurfer -motioncor -nuintensitycor -talairach -normalization -skullstrip -subcortseg -segstats -no-isrunning' % (d['s_seg']), '... running subcortical FreeSurfer segmentation', overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aseg_mgz'], 'recon-all -sd %s -subjid freesurfer -motioncor -nuintensitycor -talairach -normalization -skullstrip -subcortseg -segstats -no-isrunning' % (d['s_seg']), '... running subcortical FreeSurfer segmentation', overwrite, sinfo['id'], r=r)
 
             # --- convert segmentations to nifti
 
-            execr, endlog = runExternalForFile(f['fs_aseg_nii'], 'mri_convert -i %s -ot nii %s' % (f['fs_aseg_mgz'], f['fs_aseg_nii']), '... converting %s to NIfTI' % (f['fs_aseg_mgz']), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aseg_nii'], 'mri_convert -i %s -ot nii %s' % (f['fs_aseg_mgz'], f['fs_aseg_nii']), '... converting %s to NIfTI' % (f['fs_aseg_mgz']), overwrite, sinfo['id'], r=r)
 
         if options['image_target'] == 'nifti':
             if not os.path.exists(f['fs_aseg_t1']):
@@ -453,33 +417,27 @@ def runFreeSurferSubcorticalSegmentation(sinfo, options, overwrite=False, thread
         if options['image_target'] == '4dfp' or options['image_atlas'] == '711':
 
             # --- convert to 4dfp
-            execr, endlog = runExternalForFileShell(f['fs_aseg_4dfp'], 'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s' % (f['fs_aseg_nii'], f['fs_aseg_4dfp'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(f['fs_aseg_nii'])), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aseg_4dfp'], 'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s' % (f['fs_aseg_nii'], f['fs_aseg_4dfp'].replace('.img', '.ifh')), '... converting %s to 4dfp' % (os.path.basename(f['fs_aseg_nii'])), overwrite, sinfo['id'], r=r, shell=True)
 
             # --- convert to 111
-            execr, endlog = runExternalForFile(f['fs_aseg_111'], 't4img_4dfp none %s %s -O111 -@b' % (root4dfp(f['fs_aseg_4dfp']), root4dfp(f['fs_aseg_111'])), '... converting %s to 111 space' % (f['fs_aseg_4dfp']), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aseg_111'], 't4img_4dfp none %s %s -O111 -@b' % (root4dfp(f['fs_aseg_4dfp']), root4dfp(f['fs_aseg_111'])), '... converting %s to 111 space' % (f['fs_aseg_4dfp']), overwrite, sinfo['id'], r=r)
 
             # --- convert to 333
-            execr, endlog = runExternalForFile(f['fs_aseg_333'], 't4img_4dfp none %s %s -O333 -n -@b' % (root4dfp(f['fs_aseg_4dfp']), root4dfp(f['fs_aseg_333'])), '... converting %s to 333 space' % (f['fs_aseg_4dfp']), overwrite, sinfo['id'])
-            r += execr
+            r, endlog, status, failed = runExternalForFile(f['fs_aseg_333'], 't4img_4dfp none %s %s -O333 -n -@b' % (root4dfp(f['fs_aseg_4dfp']), root4dfp(f['fs_aseg_333'])), '... converting %s to 333 space' % (f['fs_aseg_4dfp']), overwrite, sinfo['id'], r=r)
 
             if options['image_atlas'] == '711' and options['image_target'] == 'nifti':
 
                 # --- convert 111 4dfp to nifti
-                execr, endlog = runExternalForFile(f['fs_aseg_t1'], 'g_FlipFormat %s %s' % (f['fs_aseg_111'].replace('.img', '.ifh'), f['fs_aseg_t1']), '... converting %s to nifti' % (os.path.basename(f['fs_aseg_111'])), overwrite, sinfo['id'])
-                r += execr
+                r, endlog, status, failed = runExternalForFile(f['fs_aseg_t1'], 'g_FlipFormat %s %s' % (f['fs_aseg_111'].replace('.img', '.ifh'), f['fs_aseg_t1']), '... converting %s to nifti' % (os.path.basename(f['fs_aseg_111'])), overwrite, sinfo['id'], r=r)
 
                 # --- convert 333 4dfp to nifti
-                execr, endlog = runExternalForFile(f['fs_aseg_bold'], 'g_FlipFormat %s %s' % (f['fs_aseg_333'].replace('.img', '.ifh'), f['fs_aseg_bold']), '... converting %s to nifti' % (os.path.basename(f['fs_aseg_333'])), overwrite, sinfo['id'])
-                r += execr
+                r, endlog, status, failed = runExternalForFile(f['fs_aseg_bold'], 'g_FlipFormat %s %s' % (f['fs_aseg_333'].replace('.img', '.ifh'), f['fs_aseg_bold']), '... converting %s to nifti' % (os.path.basename(f['fs_aseg_333'])), overwrite, sinfo['id'], r=r)
 
         if options['image_atlas'] != '711' and options['image_target'] == 'nifti':
 
             if os.path.exists(f['bold_template']):
                 # --- convert t1 segmentation to bold space
-                execr, endlog = runExternalForFile(f['fs_aseg_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (f['bold_template'], f['fs_aseg_t1'], f['fs_aseg_bold']), '... resampling t1 subcortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aseg_t1']), os.path.basename(f['fs_aseg_bold'])), overwrite, sinfo['id'])
-                r += execr
+                r, endlog, status, failed = runExternalForFile(f['fs_aseg_bold'], '3dresample -rmode NN -master %s -inset %s -prefix %s ' % (f['bold_template'], f['fs_aseg_t1'], f['fs_aseg_bold']), '... resampling t1 subcortical segmentation (%s) to bold space (%s)' % (os.path.basename(f['fs_aseg_t1']), os.path.basename(f['fs_aseg_bold'])), overwrite, sinfo['id'], r=r)
             else:
                 r += "ERROR: bold template image is missing! Please run bbm (create brain masks for BOLD runs) and then rerun fsf to complete the last step!"
 

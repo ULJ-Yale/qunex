@@ -10,11 +10,14 @@ Copyright (c) Grega Repovs. All rights reserved.
 """
 
 import niutilities.g_exceptions as ge
+import niutilities.g_core as gc
 import subprocess
 import os
 import os.path
 import datetime
 import time
+import re
+
 
 
 def schedule(command=None, script=None, settings=None, replace=None, workdir=None, environment=None, output=None):
@@ -372,21 +375,32 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     run.stdin.write(sCommand + command)
     run.stdin.close()
 
-    # ---- returning results
+    # --- getting results
 
     if outputs['return'] in ['both', 'stdout']:
         result = run.stdout.read()
-        return result
     elif outputs['return'] in ['stderr']:
         result = run.stderr.read()
-        return result
 
+    # --- extracting job id
+
+    jobid = 'NA'
+    for search in [r'Submitted batch job ([0-9]+)']:
+        m = re.search(search, result)
+        if m: 
+            jobid = m.group(1)
+
+    # --- returning results
+
+    return result, jobid
 
 
 # -----------------------------------------------------------------------
 #                                                  general scheduler code
 
 def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None, logname=None):
+
+    jobs = []
 
     # ---- setup options to pass to each job
 
@@ -402,9 +416,7 @@ def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None
     else:
         flog = None
 
-    print "===> Running scheduler for command %s" % (command)
-    if flog:
-        print >> flog, "===> Running scheduler for command %s" % (command)
+    gc.printAndLog("===> Running scheduler for command %s" % (command), file=flog)
 
     # ---- set up scheduler options
 
@@ -432,15 +444,14 @@ def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None
     # ---- if sessions is None
 
     if sessions is None:
-        print "\n---> submitting %s" % (command)
-        print cBase
-        if flog:
-            print >> flog, "\n---> submitting %s" % (command)
-            print >> flog, cBase
+        gc.printAndLog("\n---> submitting %s" % (command), file=flog)
+        gc.printAndLog(cBase, file=flog)
+
         scheduler = settings.split(',')[0].strip()
         exectime  = datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
         logfile   = os.path.join(logfolder, "%s_%s.%s.log" % (scheduler, command, exectime))
-        result    = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
+        result, jobid  = schedule(command=cBase, settings=settings, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
+        jobs.append((jobid, command))
 
     # ---- if session list is present
 
@@ -470,24 +481,24 @@ def runThroughScheduler(command, sessions=None, args=[], cores=1, logfolder=None
             exectime = datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S.%f")
             logfile  = os.path.join(logfolder, "%s_%s_job%02d.%s.log" % (scheduler, command, c, exectime))
 
-            print "\n---> submitting %s_#%02d" % (command, c)
-            print cStr
-            if flog:
-                print >> flog, "\n---> submitting %s_#%02d" % (command, c)
-                print >> flog, cStr
+            jobname = "%s_#%02d" % (command, c)
 
-            result = schedule(command=cStr, settings=sString, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
+            gc.printAndLog("\n---> submitting %s" % (jobname), file=flog)
+            gc.printAndLog(cStr, file=flog)
 
-            print "...\n", result
-            if flog:
-                print >> flog, "...\n", result
+            result, jobid = schedule(command=cStr, settings=sString, workdir=workdir, environment=environment, output="both:%s|return:both" % (logfile))
+            jobs.append((jobid, jobname))
+
+            gc.printAndLog("...\n", result, file=flog)
 
             time.sleep(sleeptime)
 
-        print "\n===> DONE\n"
-        if flog:
-            print >> flog, "\n===> DONE\n"
+    # --- print report
 
+    if jobs:
+        gc.printAndLog("\n===> Submitted jobs", file=flog)        
+        for jobid, jobname in jobs:
+            gc.printAndLog("     %s -> %s" % (jobid, jobname), file=flog)        
 
     # --- close log if specified
 

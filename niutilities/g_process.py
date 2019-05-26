@@ -269,6 +269,7 @@ arglist = [['# ---- Basic settings'],
 
            ['# --- HCP options'],
            ['hcp_mppversion',         'hcp',                                      str,    "Whether to use the HCP (hcp) or Legacy (legacy) version of the MPP [hcp]"],
+           ['hcp_folderstructure',    'hcpls',                                    str,    "Which version of HCP folder structure to use, initial or hcpls ['hcpls']"],
            ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder"],
            ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE"],
            ['hcp_Pipeline',           '',                                         str,    "path to pipeline base folder"],
@@ -303,9 +304,9 @@ arglist = [['# ---- Basic settings'],
            ['hcp_fs_existing_subject','FALSE',                                    torf,   "Indicates that the command is to be run on top of an already existing analysis/subject. This excludes the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run using the --hcp_fs_extra_reconall parameter. Accepted values are TRUE or FALSE [FALSE]. HCP Pipelines specific!"],
            ['hcp_fs_extra_reconall',  '',                                         str,    "A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
            ['hcp_fs_no_conf2hires',   'FALSE',                                    torf,    "Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE]"],
-           ['hcp_fs_check',           'last',                                     str,    "Whether to check the results of FreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
-           ['hcp_fslong_check',       'last',                                     str,    "Whether to check the results of FreeSurferLongitudinal pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
-           ['hcp_postfs_check',       'last',                                     str,    "Whether to check the results of PostFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
+           ['hcp_fs_check',           'last',                                     str,    "Whether to check the results of FreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
+           ['hcp_fslong_check',       'last',                                     str,    "Whether to check the results of FreeSurferLongitudinal pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
+           ['hcp_postfs_check',       'last',                                     str,    "Whether to check the results of PostFreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_grayordinatesres',   '2',                                        int,    "Usually 2mm"],
            ['hcp_hiresmesh',          '164',                                      int,    "Usually 164 vertices"],
            ['hcp_lowresmesh',         '32',                                       int,    "Usually 32 vertices"],
@@ -314,7 +315,7 @@ arglist = [['# ---- Basic settings'],
            ['hcp_inflatescale',       '1',                                        str,    "Inflate extra scale parameter [1]."],
            ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file to use when mapping data from the HCP MNINonLinear/Results folder."],
            ['hcp_bold_sequencetype',  'single',                                   str,    "The type of the sequence used: multi(band) vs single(band)"],
-           ['hcp_bold_boldname',      'number',                                   str,    "How to name the BOLD files in the hcp structure. The default is to name them by their bold number ('number') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('name') (e.g. rfMRI_REST1_AP). ['number']"],
+           ['hcp_bold_boldnamekey',   'number',                                   str,    "How to name the BOLD files in the hcp structure. The default is to name them by their bold number ('number') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('name') (e.g. rfMRI_REST1_AP). ['number']"],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_bold_name') for bold working folders and results"],
            ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default"],
            ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE or Legacy. HCP Pipelines only!"],
@@ -336,11 +337,16 @@ arglist = [['# ---- Basic settings'],
            ['hcp_bold_preregister',   'epi_reg',                                  str,    "What code to use to preregister BOLDs before FSL BBR epi_reg (default) or flirt"],
            ['hcp_bold_refreg',        'linear',                                   str,    "Whether to use only linaer (default) or also nonlinear registration of motion corrected bold to reference"],
            ['hcp_bold_movreg',        'MCFLIRT',                                  str,    "Whether to use FLIRT or McFLIRT for motion correction"],
-           ['hcp_bold_vol_check',     'last',                                     str,    "Whether to check the results of fMRIVolume pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
-           ['hcp_bold_surf_check',    'last',                                     str,    "Whether to check the results of fMRISurface pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
+           ['hcp_bold_vol_check',     'last',                                     str,    "Whether to check the results of fMRIVolume pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
+           ['hcp_bold_surf_check',    'last',                                     str,    "Whether to check the results of fMRISurface pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_dwi_PEdir',          '1',                                        str,    "Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"],
            ['hcp_dwi_gdcoeffs',       'NONE',                                     str,    "DWI specific gradient distorsion coefficients file or NONE"],
            ['hcp_dwi_dwelltime',      '',                                         str,    "Echo spacing in msec."],
+           ['hcp_dwi_dof',            '6',                                        str,    "Degrees of Freedom for post eddy registration to structural images. Defaults to 6."],
+           ['hcp_dwi_b0maxbval',      '50',                                       str,    "Volumes with a bvalue smaller than this value will be considered as b0s. Defaults to 50"],
+           ['hcp_dwi_extraeddyarg',   '',                                         str,    "A string specifying additional arguments to pass to eddy processing. Defaults to ''"],
+           ['hcp_dwi_combinedata',    '1',                                        str,    "Specified value is passed as the CombineDataFlag value for the eddy_postproc.sh script. If JAC resampling has been used in eddy, this value determines what to do with the output file: 2 - include in the output all volumes uncombined (i.e. output file of eddy); 1 - include in the output and combine only volumes where both LR/RL (or AP/PA) pairs have been acquired; 0 - As 1, but also include uncombined single volumes. Defaults to 1"],
+           ['hcp_dwi_check',          'last',                                     str,    "Whether to check the results of Diffusion pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
 
            ['# --- Processing options'],
            ['run',                    'run',                                      str,    "run type: run - do the task, test - perform checks"],
@@ -569,14 +575,17 @@ def run(command, args):
     nprocess     = options['nprocess']
     printinfo    = options['datainfo']
     printoptions = options['printoptions']
+   
+    studyfolders = g_core.deduceFolders(options)
+    logfolder    = studyfolders['logfolder']
+    runlogfolder = os.path.join(logfolder, 'runlogs')
+    comlogfolder = os.path.join(logfolder, 'comlogs')
+    specfolder   = os.path.join(studyfolders['subjectsfolder'], 'specs')
 
-    options.update(g_core.deduceFolders(options))
-    
-    runlogfolder = os.path.join(options['logfolder'], 'runlogs')
-    comlogfolder = os.path.join(options['logfolder'], 'comlogs')
-
-    options['runlogs']   = runlogfolder
-    options['comlogs']   = comlogfolder
+    options['runlogs']    = runlogfolder
+    options['comlogs']    = comlogfolder
+    options['logfolder']  = logfolder
+    options['specfolder'] = specfolder
 
     # --------------------------------------------------------------------------
     #                                                       start writing runlog
@@ -664,9 +673,11 @@ def run(command, args):
                             action = 'processing'
                         soptions = updateOptions(session, options)
                         consoleLog += "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        print "\nStarting %s of sessions %s at %s" % (action, session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
                         r, status = procResponse(todo(session, soptions, overwrite, c + 1))
                         writelog(r)
                         consoleLog += r
+                        print r
                         stati.append(status)
                         c += 1
                         if nprocess and c >= nprocess:
@@ -688,6 +699,7 @@ def run(command, args):
                     if len(session['id']) > 1:
                         soptions = updateOptions(session, options)
                         consoleLog += "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+                        print "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
                         future = threadPoolExecutor.submit(todo, session, soptions, overwrite, c + 1)
                         futures.append(future)
                         c += 1
@@ -698,6 +710,7 @@ def run(command, args):
                     result = future.result()
                     writelog(result)
                     consoleLog += result[0]
+                    print result[0]
 
             if command in sactions:
                 todo = sactions[command]
@@ -706,7 +719,7 @@ def run(command, args):
                 writelog(r)
 
         # print console log
-        print consoleLog
+        # print consoleLog
 
         # --- Create log
 

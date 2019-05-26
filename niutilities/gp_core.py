@@ -23,6 +23,7 @@ from datetime import datetime
 import time
 from g_img import *
 from g_MeltMovFidl import *
+import g_core as gc
 
 
 def is_number(s):
@@ -94,10 +95,23 @@ def root4dfp(filename):
     return filename
 
 
-def useOrSkipBOLD(sinfo, options, r=None):
+def useOrSkipBOLD(sinfo, options, r=""):
     """
     useOrSkipBOLD
     Internal function to determine which bolds to use and which to skip.
+
+    returns:
+    * bolds ... list of bolds to process
+    * bskip ... list of bolds to skip
+    * nskip ... number of bolds to skup
+    * r     ... report
+
+    lists contain tuples with the following elements:
+    * the bold number as integer
+    * the numbered bold name (bold[N])
+    * the task tag (e.g. 'rest')
+    * the dictionary with all the info
+
     """
     bsearch  = re.compile('bold([0-9]+)')
     btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
@@ -107,12 +121,14 @@ def useOrSkipBOLD(sinfo, options, r=None):
         bskip = [(n, b, t, v) for n, b, t, v in bolds if t not in btargets and str(n) not in btargets]
         bolds = [(n, b, t, v) for n, b, t, v in bolds if t in btargets or str(n) in btargets]
         bskip.sort()
-        if r is not None:
-            if len(bskip) > 0:
-                r += "\n\nSkipping the following BOLD images:"
-                for n, b, t, v in bskip:
+        if len(bskip) > 0:
+            r += "\n\nSkipping the following BOLD images:"
+            for n, b, t, v in bskip:
+                if 'boldname' in v and options['hcp_bold_boldnamekey'] == 'name':
+                    r += "\n...  %-20s [%-6s %s]" % (v['boldname'], b, t)
+                else:
                     r += "\n...  %-6s [%s]" % (b, t)
-                r += "\n"
+            r += "\n"
     bolds.sort()
 
     return bolds, bskip, len(bskip), r
@@ -431,136 +447,6 @@ def getSubjectFolders(sinfo, options):
     return d
 
 
-def readSubjectData(filename):
-    '''
-    readSubjectData(filename, verbose=False)
-
-    An internal function for reading batch.txt files. It reads the file and
-    returns a list of subjects with the information on images and the additional
-    parameters specified in the header.
-
-    ---
-    Written by Grega Repovš.
-
-    Change log
-
-    2019-05-22 Grega Repovš
-             - Now only reads '_' parameters as global variables in the initial section
-    '''
-
-    if not os.path.exists(filename):
-        print "\n\n=====================================================\nERROR: Batch file does not exist [%s]" % (filename)
-        raise ValueError("ERROR: Batch file not found: %s" % (filename))
-
-    s = file(filename).read()
-    s = s.replace("\r", "\n")
-    s = s.replace("\n\n", "\n")
-    s = re.sub("^#.*?\n", "", s)
-
-    s = s.split("\n---")
-    s = [e for e in s if len(e) > 10]
-
-    nsearch = re.compile('(.*?)\((.*)\)')
-    csearch = re.compile('c([0-9]+)$')
-
-    slist = []
-    gpref = {}
-
-    c = 0
-    first = True
-    try:
-        for sub in s:
-            sub = sub.split('\n')
-            sub = [e.strip() for e in sub]
-            sub = [e for e in sub if len(e) > 0]
-            sub = [e for e in sub if e[0] != "#"]
-
-            dic = {}
-            image = {}
-            for line in sub:
-                c += 1
-
-                 # --- read preferences / settings
-
-                if line.startswith('_'):
-                    pkey, pvalue = [e.strip() for e in line.split(':', 1)]
-                    if first:
-                        gpref[pkey[1:]] = pvalue
-                    else:
-                        dic[pkey] = pvalue
-                    continue
-
-                # --- split line
-                
-                line = line.split(':')
-                line = [e.strip() for e in line]
-
-                # --- read ima data
-
-                if line[0].isdigit():
-                    image = {}
-                    image['ima'] = line[0]
-                    for e in line:
-                        m = nsearch.match(e)
-                        if m:
-                            image[m.group(1)] = m.group(2)
-                            line.remove(e)
-
-                    ni = len(line)
-                    if ni > 1:
-                        image['name'] = line[1]
-                    if ni > 2:
-                        image['task'] = line[2]
-                    if ni > 3:
-                        for n in range(3, ni):
-                            if '>' in line[n]:
-                                kv = line[n].split('>')
-                                image[kv[0].strip()] = kv[1].strip()
-                    dic[line[0]] = image
-
-
-                # --- read conc data
-
-                elif csearch.match(line[0]):
-                    conc = {}
-                    conc['cnum'] = line[0]
-                    for e in line:
-                        m = nsearch.match(e)
-                        if m:
-                            conc[m.group(1)] = m.group(2)
-                            line.remove(e)
-
-                    ni = len(line)
-                    if ni < 3:
-                        print "Missing data for conc entry!"
-                        raise AssertionError('Not enough values in conc definition line!')
-
-                    conc['label'] = line[1]
-                    conc['conc']  = line[2]
-                    conc['fidl']  = line[3]
-                    dic[line[0]]  = conc
-
-                # --- read rest of the data
-
-                else:
-                    dic[line[0]] = ":".join(line[1:])
-
-            if len(dic) > 0:
-                if "id" not in dic:
-                    print "WARNING: There is a record missing an id field and is being omitted from processing.", dic
-                elif "data" not in dic and "hcp" not in dic:
-                    print "WARNING: Session %s is missing a data field and is being omitted from processing." % (dic['id'])
-                else:
-                    slist.append(dic)
-
-            first = False
-
-    except:
-        print "\n\n=====================================================\nERROR: There was an error with the batch.txt file in line %d:\n---> %s\n\n--------\nError raised:\n" % (c, line)
-        raise
-
-    return slist, gpref
-
 
 def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
     """
@@ -607,74 +493,97 @@ def linkOrCopy(source, target, r=None, status=None, name=None, prefix=None):
             return (False, "%s%sERROR: %s could not be copied, source file does not exist [%s]! " % (r, prefix, name, source))
 
 
-def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove="true", task=None, logfolder="", logtags=""):
-    """
-    runExternalForFile - documentation not yet available.
-    """
-    if overwrite or not os.path.exists(checkfile):
+def missingReport(missing, message, prefix):
+    '''
+    Takes a list of missing files and prepares a list report.
+    '''
 
-        r = '\n%s' % (description)
+    r = message + "\n"
+    for file in missing:
+        r += prefix + file + "\n"
 
-        if isinstance(logtags, basestring):
-            logtags = [logtags]
+    return r 
+   
 
-        logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
-        logname  = [task] + logtags + [thread, logstamp]
-        logname  = [e for e in logname if e]
-        logname  = "_".join(logname)
+def checkRun(tfile, fullTest=None, command=None, r="", logFile=None):
+    '''
+    The function checks the presence of a test file.
+    If specified it runs also full test.
+    it returns:
 
-        tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
-        donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
-        errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))
-        endlog      = None
+    * None - test file is missing
+    * incomplete - test file is present, but full test was incomplete
+    * done - test file is present, and if full test was specified, all files were present as well
+    '''
+    
+    if fullTest and 'specfolder' in fullTest:
+        if os.path.exists(os.path.join(fullTest['specfolder'], fullTest['tfile'])):
+            fullTest['tfile'] = os.path.join(fullTest['specfolder'], fullTest['tfile'])
 
-        nf = open(tmplogfile, 'w')
-        print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
+    if os.path.exists(tfile):
+        r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
+        report = "%s finished" % (command)
+        passed = 'done'
+        failed = 0
 
-        if not os.path.exists(tmplogfile):
-            r = "\n\nERROR: could not create a temporary log file %s!" % (tmplogfile)
-            raise ExternalFailed(r)
-
-        try:
-            ret = subprocess.call(run.split(), stdout=nf, stderr=nf)
-        except:
-            nf.close()
-            shutil.move(tmplogfile, errlogfile)
-            endlog = errlogfile
-            r = "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information: \n%s\n" % (run)
-            raise ExternalFailed(r)
-
-        if ret or not os.path.exists(checkfile):
-            r = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
-            nf.close()
-            shutil.move(tmplogfile, errlogfile)
-            endlog = errlogfile
-            raise ExternalFailed(r)
-
-        print >> nf, "\n\n===> Successful completion of task\n"
-        nf.close()
-        if remove:
-            os.remove(tmplogfile)
-        else:
-            shutil.move(tmplogfile, donelogfile)
-            endlog = donelogfile
-        r += ' --- done'
-
+        if fullTest:
+            filestatus, filespresent, filesmissing = gc.checkFiles(fullTest['tfolder'], fullTest['tfile'], fields=fullTest['fields'], report=logFile)
+            if filesmissing:
+                r += missingReport(filesmissing, "\n---> Full file check revealed that the following files were not created:", "            ")
+                report += ", full file check incomplete"
+                passed = 'incomplete'
+                failed = 1
+            else:
+                r += "\n---> Full file check passed"
+                report += ", full file check complete"
     else:
-        # if os.path.getsize(checkfile) < 50000:
-        #     r = runExternalForFile(checkfile, run, description, overwrite=True, thread=thread)
-        # else:
-        r = '\n%s --- already completed' % (description)
+        r += "\n---> %s test file missing:\n     %s" % (command, tfile)
+        report = "%s not finished" % (command)
+        passed = None
+        failed = 1
 
-    return r, endlog
+    return passed, report, r, failed
 
 
-def runExternalForFileShell(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags=""):
+
+def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r=""):
     """
-    runExternalForFileShell - documentation not yet available.
+    runExternalForFile
+
+    Runs the specified command and checks whether it was executed against a checkfile, 
+    and if provided a full list of files as specified in fullTest.
+
+    Parameters
+
+    - checkfile    ... the file to run a check agains (file path)
+    - run          ... the specific command to run (string)
+    - description  ... a description of the command that will be run (string)
+    - overwrite    ... whether to overwrite existing data (checkfile present; boolean)
+    - thread       ... thread count if multiple are run
+    - remove       ... whether to remove a log file once done (boolean)
+    - task         ... a short name of the task to run
+    - logfolder    ... a folder in which to place the log
+    - logtags      ... an array of tags used to create a log name
+    - fullTest     ... a dictionary describing how to check against a full list of files:
+      -> tfolder       ... a target folder with the results
+      -> tfile         ... a path to the file describing the files to check for 
+      -> fields        ... list of tuple key, value pairs, describing which {} keys to replace with specific values
+      -> specfolder    ... a folder to check for tfile if tfile might be relative to it
+    - shell        ... whether to run the command in a shell (boolean)
+    - r            ... a string to which to append the report
+
+    Output
+    
+    - r         ... the report string
+    - endlog    ... the path to the final log file
+    - status    ... description of whether the command failed, is fully done or incomplete based on the test files
+    - failed    ... 0 for ok, 1 or more for failed or incomplete runs
+
     """
     if overwrite or not os.path.exists(checkfile):
-        r = '\n\n%s' % (description)
+        r += '\n\n%s' % (description)
+
+        # --- set up parameters
 
         if isinstance(logtags, basestring) or logtags is None:
             logtags = [logtags]
@@ -687,24 +596,49 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
         donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
         errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))  
+        misslogfile = os.path.join(logfolder, "incomplete_%s.log" % (logname))  
         endlog      = None      
+
+        # --- open log file
 
         nf = open(tmplogfile, 'w')
         print >> nf, "\n#-------------------------------\n# Running: %s\n# Command: %s\n# Test file: %s\n#-------------------------------" % (run, description, checkfile)
 
-        ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf, executable='/bin/csh')
-        if ret:
-            r = "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
-            nf.close()
-            shutil.move(tmplogfile, errlogfile)
-            endlog = errlogfile
+        if not os.path.exists(tmplogfile):
+            r += "\n\nERROR: could not create a temporary log file %s!" % (tmplogfile)
             raise ExternalFailed(r)
-        elif not os.path.exists(checkfile):
-            r += "\n\nWARNING: Expected file [%s] not present after running the external command!\nTry running the command directly for more detailed error information:\n--> %s\n" % (checkfile, run)
+
+        # --- run command
+
+        try:
+            if shell:
+                ret = subprocess.call(run, shell=True, stdout=nf, stderr=nf)
+            else:
+                ret = subprocess.call(run.split(), stdout=nf, stderr=nf)
+        except:
             nf.close()
             shutil.move(tmplogfile, errlogfile)
             endlog = errlogfile
-        else:
+            r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information: \n%s\n" % (run)
+            raise ExternalFailed(r)
+        
+        # --- check results
+
+        if ret:
+            r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
+            nf.close()
+            shutil.move(tmplogfile, errlogfile)
+            endlog = errlogfile
+            raise ExternalFailed(r)            
+
+        status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=nf)
+
+        if status is None:
+            r += "\n\nTry running the command directly for more detailed error information:\n--> %s\n" % (run)
+
+        # --- End
+
+        if status and status == 'done':
             print >> nf, "\n\n===> Successful completion of task\n"
             nf.close()
             if remove:
@@ -713,13 +647,36 @@ def runExternalForFileShell(checkfile, run, description, overwrite=False, thread
                 shutil.move(tmplogfile, donelogfile)
                 endlog = donelogfile
             r += ' --- done'
+        else:
+            nf.close()
+            if status and status == 'incomplete':
+                shutil.move(tmplogfile, misslogfile)
+                endlog = misslogfile
+            else:
+                shutil.move(tmplogfile, errlogfile)
+                endlog = errlogfile
+
     else:
         if os.path.getsize(checkfile) < 100:
-            r, endlog = runExternalForFileShell(checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags)
+            r, endlog, status, failed = runExternalForFile(checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags, fullTest=fullTest, shell=shell, r=r)
         else:
-            r = '\n%s --- already completed' % (description)
+            status, _, _, failed = checkRun(checkfile, fullTest)
+            if status == 'full':
+                r += '\n%s --- already completed' % (description)
+            else:
+                r += '\n%s --- already ran, incomplete file check' % (description)
+    
+    if task:
+        task += " "
+    else:
+        task = ""
 
-    return r, endlog
+    if status is None:
+        status = task + 'failed'
+    else:
+        status = task + status
+
+    return r, endlog, status, failed
 
 
 def runScriptThroughShell(run, description, thread="0", remove=True, task=None, logfolder="", logtags=""):

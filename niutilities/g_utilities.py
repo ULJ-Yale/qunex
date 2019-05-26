@@ -1522,12 +1522,13 @@ def stripQuotes(string):
     string = string.strip("'")
     return string
 
-def batchTag2Num(filename=None, subjid=None, bolds=None):
+
+def batchTag2NameKey(filename=None, subjid=None, bolds=None, output='number', prefix="BOLD_"):
     """
-    batchTag2Num filename=<path to batch file> subjid=<session id> bolds=<bold specification string>
+    batchTag2NameKey filename=<path to batch file> subjid=<session id> bolds=<bold specification string> output=<keytype> prefix=<prefix to use>
 
     The function reads the batch file, extracts the data for the specified 
-    session and returns the list of bold numbers that correspond to bolds
+    session and returns the list of bold numbers or names that correspond to bolds
     specified using the `bolds` parameter.
 
     --filename      ... Path to batch.txt file.
@@ -1536,6 +1537,12 @@ def batchTag2Num(filename=None, subjid=None, bolds=None):
                         batch.txt file) to process. It can be a single
                         type (e.g. 'task'), a pipe separated list (e.g.
                         'WM|Control|rest') or 'all' to process all.
+    --output        ... Whether to output numbers ('number') or bold names 
+                        In the latter case the name will be 'boldname', if 
+                        provided in the batch file, or '<prefix>[N]' if one does
+                        not exist.
+    --prefix        ... The default prefix to use if a boldname is not specified
+                        in the batch file.
     """
 
     if filename is None:
@@ -1558,10 +1565,18 @@ def batchTag2Num(filename=None, subjid=None, bolds=None):
     session = sessions[0]
 
     bolds, _, _, _ = gpc.useOrSkipBOLD(session, {'bolds': bolds})
-    
-    bolds = [str(e[0]) for e in bolds]
 
-    print "BOLDS:%s" % (",".join(bolds))
+    boldlist = []
+    for boldnumber, boldname, boldtask, boldinfo in bolds:
+        if output == 'name':
+            if 'boldname' in boldinfo:
+                boldlist.append(boldinfo['boldname'])
+            else:
+                boldlist.append("%s%d" % (prefix, boldnumber))
+        else:
+            boldlist.append(str(boldnumber))
+
+    print "BOLDS:%s" % (",".join(boldlist))
 
 
 def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behavior.txt", tfile=None, overwrite="no", check="yes", report="yes"):
