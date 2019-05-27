@@ -1064,8 +1064,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             if verbose:
                 print "\nUnzipping files (this might take a while)"
             calls = []
-            for g in gzipped:
-                calls.append({'name': 'gunzip: ' + g, 'args': ['gunzip', g], 'sout': None})
+            gpath = os.path.join(os.path.abspath(dmcf), "*", "*.dcm.gz")
+            gpath = gpath.replace(" ", "\\ ")
+            calls.append({'name': 'gunzip: ' + dmcf, 'args': 'gunzip %s' % (gpath), 'sout': None, 'shell': True})
             niutilities.g_core.runExternalParallel(calls, cores=cores, prepend="---> ")
         else:
             raise ge.CommandFailed("dicom2niix", "Gzipped DICOM files", "Can not work with gzipped DICOM files, please unzip them or run with 'unzip' set to 'yes'.", "Aborting processing of DICOM files!")
@@ -1225,8 +1226,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     if not calls:
         r.close()
         stxt.close()
-        os.remove(os.path.join(dmcf, "DICOM-Report.txt"))
-        os.remove(os.path.join(folder, "subject.txt"))
+        for cleanFile in [os.path.join(dmcf, "DICOM-Report.txt"), os.path.join(folder, "subject.txt")]:
+            if os.path.exists(cleanFile):
+                os.remove(cleanFile)
         raise ge.CommandFailed("dicom2niix", "No source DICOM files", "No source DICOM files were found to process!", "Please check your data and paths!")
 
     niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
@@ -2064,8 +2066,14 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
         print "---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'" % (os.path.abspath(masterinbox), pattern, nameformat)
 
         files = glob.glob(os.path.join(masterinbox, '*'))
-        getop = re.compile(pattern)
-        getid = re.compile(nameformat)
+        try:
+            getop = re.compile(pattern)
+        except:
+            raise ge.CommandFailed("processInbox", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
+        try:
+            getid = re.compile(nameformat)
+        except:
+            raise ge.CommandFailed("processInbox", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
 
         for file in files:
             m = getop.search(os.path.basename(file))
@@ -2169,7 +2177,11 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
         if packets[tag]:
             print "\n", message
             for file, session in packets[tag]:
-                if session['sessionid']:
+                if session['sessionname']:
+                    print "     subject: %s, session: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionname'], session['sessionid'], session['packetname'], os.path.basename(file))
+                elif session['subjectid']:
+                    print "     subject: %s ... %s <= %s <- %s" % (session['subjectid'], session['sessionid'], session['packetname'], os.path.basename(file))
+                elif session['sessionid']:
                     print "     %s <= %s <- %s" % (session['sessionid'], session['packetname'], os.path.basename(file))
                 elif session['packetname']:
                     print "     %s <= %s <- %s" % ("????", session['packetname'], os.path.basename(file))
@@ -2361,6 +2373,8 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                 else:
                     ptype = "folder"
                     if masterinbox:
+                        if os.path.exists(ifolder):
+                            shutil.rmtree(ifolder)
                         print "...  copying %s dicom files" % (os.path.basename(p))
                         shutil.copytree(p, ifolder)
 
