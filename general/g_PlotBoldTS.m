@@ -150,9 +150,9 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %
 %   g_PlotBoldTS('bold1.nii.gz;bold1_g7_hpss_res.nii.gz', 'type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|maskindex=1|use=1', 'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
 %
-%   EXAMPLE USE VIA MNAP FROM TERMINAL
+%   EXAMPLE USE VIA Qn|Nex FROM TERMINAL
 % 
-%   mnap g_PlotBoldTS --images="<Path_to_Study>/subjects/AP1937/images/functional/bold1.nii.gz" \
+%   qunex g_PlotBoldTS --images="<Path_to_Study>/subjects/AP1937/images/functional/bold1.nii.gz" \
 %   --elements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1" \
 %   --masks="<Path_to_Study>/subjects/AP1937/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz" \
 %   --filename='AP1937-BoldTSPlot.pdf' \
