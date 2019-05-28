@@ -3,7 +3,7 @@
 
 import niutilities as niu
 import niutilities.g_process as gp
-import niutilities.g_matlab as gm
+import niutilities.g_nitools as gn
 import niutilities.g_core as gc
 import niutilities.g_exceptions as ge
 import niutilities.g_commands as gcom
@@ -11,13 +11,13 @@ import os.path
 import sys
 import copy
 
-# --- Get current MNAP Suite version and prepend to help calls
+# --- Get current Qu|Nex Suite version and prepend to help calls
 
-tools    = os.environ['TOOLS']
-mnaprepo = os.environ['MNAPREPO']
-with open(os.path.join(tools, mnaprepo, 'VERSION.md'), "r") as f:
+tools     = os.environ['TOOLS']
+qunexrepo = os.environ['QuNexREPO']
+with open(os.path.join(tools, qunexrepo, 'VERSION.md'), "r") as f:
     version  = f.read().strip()
-print "Multimodal Neuroimaging Analysis Platform (MNAP) Suite Version", version
+print "Multimodal Neuroimaging Analysis Platform (Qu|Nex) Suite Version", version
 print 
 
 help = '''
@@ -25,11 +25,11 @@ help = '''
 
 Neuro Imaging utilities (niutilities) for processing and analysis.
 
-usage: mnap <command> [option=value] [option=value] ...
-       mnap -h         (prints this help)
-       mnap -l         (list available commands)
-       mnap -o         (list available processing options)
-       mnap ?<command> (print help for a given command)
+usage: qunex <command> [option=value] [option=value] ...
+       qunex -h         (prints this help)
+       qunex -l         (list available commands)
+       qunex -o         (list available processing options)
+       qunex ?<command> (print help for a given command)
 
        -------------------------------------------------------------------------
        Note the following conventions used in help and documentation:
@@ -56,9 +56,9 @@ usage: mnap <command> [option=value] [option=value] ...
 comlist = '''
 ================================================================================
 
-General magnetic resonance Imaging (mnap) utilities for processing and analysis.
+General magnetic resonance Imaging (Qu|Nex) utilities for processing and analysis.
 
-use: mnap <command> [option=value] [option=value] ...
+use: qunex <command> [option=value] [option=value] ...
 
 --------------------------------------------------------------------------------
 Note the following conventions used in help and documentation:
@@ -221,11 +221,11 @@ fss    runSubcorticalFS         Run subcortical freesurfer segmentation.
 fsf    runFullFS                Run full freesurfer segmentation
 
 
-Matlab functions
+NiTools functions
 ================
-A number of Matlab functions provided as part of MNAP/nitools package can be run.
+A number of Matlab functions provided as part of Qu|Nex/nitools package can be run.
 A list of functions available is provided below. For more information on each
-function run `mnap ?<function name>`. Arguments can be specified in any order.
+function run `qunex ?<function name>`. Arguments can be specified in any order.
 Arguments that are not provided will be passed as empty strings / vectors to be
 processed with default values. Take care to embed vectors in square brackets
 (e.g. "[1 8 6 12]") and cell arrays in curly braces (e.g. "{'DLPFC', 'ACC',
@@ -234,13 +234,13 @@ output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 
 An example call of a Matlab function:
 
-$ mnap g_FindPeaks fin='map_zstat.dscalar.nii' fout='map_peaks.dscalar.nii' \\
+$ qunex g_FindPeaks fin='map_zstat.dscalar.nii' fout='map_peaks.dscalar.nii' \\
      mins="[50 50]" maxs="[300 350]" val=n t=3.5 projection=midthickness
 
 List of available functions:
 '''
 
-for mcom in gm.functionList:
+for mcom in gn.functionList:
     comlist += "\n" + mcom
 
 def runCommand(command, args):
@@ -257,11 +257,11 @@ def runCommand(command, args):
     elif command in gp.allactions:
         gp.run(command, args)
         return
-    elif command in gm.functions:
+    elif command in gn.functions:
         if 'scheduler' in args:
             niu.g_scheduler.runThroughScheduler(command, sessions=None, args=args, cores=1, logfolder=folders['logfolder'])
         else:
-            gm.run(command, args)
+            gn.run(command, args)
         return
     else:
         print "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands." % (command)
@@ -434,7 +434,7 @@ def printHelp(com):
                 print l[0]
                 print l[1]
         # -> matlab wrapped commands
-        for l in gm.functions.keys():
+        for l in gn.functions.keys():
             print l
 
     # --- print list of processing options and flags
@@ -442,7 +442,7 @@ def printHelp(com):
         print "================================================================="
         print ""
         print "Neuro Imaging utilities (niutilities) for processing and analysis"
-        print "\nuse: mnap <command> [option=value] [option=value] ..."
+        print "\nuse: qunex <command> [option=value] [option=value] ..."
         print "\nList of processing options"
         for line in gp.arglist:
             if len(line) == 4:
@@ -463,15 +463,15 @@ def printHelp(com):
 
     # --- print help for gmri local commands
     elif com in gcom.commands:
-        print "\nmnap", gcom.commands[com]['com'].__doc__.strip(), "\n"
+        print "\nqunex", gcom.commands[com]['com'].__doc__.strip(), "\n"
 
     # --- print help for processing actions
     elif com in gp.allactions:
-        print "\nmnap", gp.allactions[com].__doc__.strip(), "\n"
+        print "\nqunex", gp.allactions[com].__doc__.strip(), "\n"
 
     # --- print help for matlab functions
-    elif com in gm.functions:
-        gm.help(com)
+    elif com in gn.functions:
+        gn.help(com)
 
     # --- print general command list
     else:
@@ -528,22 +528,22 @@ def main(args=None):
         sys.exit(1)
     except ge.CommandError as e:
         print ge.reportCommandError(comm, e)
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
-        print "\nPlease run `mnap ?%s` to get help for the failed command.\n" % (comm)
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
+        print "\nPlease run `qunex ?%s` to get help for the failed command.\n" % (comm)
         sys.exit(1)
     except ValueError as e:
-        print "\n--------------------==== mnap failed! ====--------------------\nERROR: Execution of mnap command %s failed!" % (comm)
+        print "\n--------------------==== Qu|Nex failed! ====--------------------\nERROR: Execution of qunex command %s failed!" % (comm)
         print e
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
         raise
         print "--------------------------------------------------------------"
         sys.exit(1)
     except SystemExit as e:
         sys.exit(e)
     except:
-        print "\n--------------------==== mnap failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
-        print "       Please check documentation for the command (`mnap ?%s`)!" % (comm)
-        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nmnap %s " % (" \\\n    ".join(oargs))
+        print "\n--------------------==== Qu|Nex failed! ====--------------------\n\nERROR: Execution of command `%s` failed!" % (comm)
+        print "       Please check documentation for the command (`qunex ?%s`)!" % (comm)
+        print "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s " % (" \\\n    ".join(oargs))
         print "\n--------------------------------------------------------------\nHere's the error as caught by python:\n"
         raise
         print "\n--------------------------------------------------------------\n"

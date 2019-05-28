@@ -424,12 +424,12 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
     EXAMPLE USE
     ===========
 
-    mnap getDICOMFields
+    qunex getDICOMFields
 
-    mnap getDICOMFields \
+    qunex getDICOMFields \
          --folder=/data/studies/WM/subjects/inbox/MR 
 
-    mnap getDICOMFields \
+    qunex getDICOMFields \
          --folder=/data/studies/WM/subjects/inbox/MR/original \
          --tfile=/data/studies/WM/subjects/specs/dicomFields.csv \
          --limit=10
@@ -587,14 +587,14 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
     EXAMPLE USE
     ===========
 
-    mnap changeDICOMFiles \
+    qunex changeDICOMFiles \
          --folder=. 
 
-    mnap changeDICOMFiles \
+    qunex changeDICOMFiles \
          --folder=/data/studies/WM/subjects/inbox/MR \
          --paramfile=/data/studies/WM/subjects/specs/deid.txt
 
-    mnap changeDICOMFiles \
+    qunex changeDICOMFiles \
          --folder=/data/studies/WM/subjects/inbox/MR/original \
          --paramfile=/data/studies/WM/subjects/specs/deidv1.txt \
          --outputfolder=/data/studies/WM/subjects/MR/deid \

@@ -2,7 +2,7 @@
 # encoding: utf-8
 """
 This file holds the functions and settings for providing a wrapper to run
-MNAP/matlab code.
+Qu|Nex/nitools code.
 
 None of the code is run directly from the terminal interface.
 
@@ -18,11 +18,11 @@ import os
 import subprocess
 
 
-if "MNAPMCOMMAND" not in os.environ:
-    print "WARNING: MNAPMCOMMAND environment variable not set. Matlab will be run by default!"
+if "QuNexMCOMMAND" not in os.environ:
+    print "WARNING: QuNexMCOMMAND environment variable not set. Matlab will be run by default!"
     mcommand = "matlab -nodisplay -nosplash -r"
 else:
-    mcommand = os.environ['MNAPMCOMMAND']
+    mcommand = os.environ['QuNexMCOMMAND']
 
 # ==============================================================================
 #                                                                      FUNCTIONS

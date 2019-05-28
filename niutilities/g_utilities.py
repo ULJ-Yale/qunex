@@ -25,17 +25,17 @@ import sys
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================
 #
-#  This file is used to specify the default parameters used by various MNAP commands for
+#  This file is used to specify the default parameters used by various Qu|Nex commands for
 #  HCP minimal preprocessing pipeline, additional bold preprocessing commands,
 #  and other analytic functions. The content of this file should be prepended to the list
 #  that contains all the sessions that is passed to the commands. It can added manually or
-#  automatically when making use of the compileLists MNAP command.
+#  automatically when making use of the compileLists Qu|Nex command.
 #
 #  This template file should be edited to include the parameters relevant for
 #  a given study/analysis and provide the appropriate values. For detailed description of
-#  parameters and their valid values, please consult the MNAP documentation
+#  parameters and their valid values, please consult the Qu|Nex documentation
 *  (e.g. Running HCP minimal preprocessing pipelines, Additional BOLD
-#  preprocessing) and online help for the relevant MNAP commands.
+#  preprocessing) and online help for the relevant Qu|Nex commands.
 #
 #
 #  File format
@@ -126,9 +126,9 @@ def manageStudy(studyfolder=None, action="create"):
             print " ... hcp_mapping_example.txt"
             shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), mapFile)
 
-        markFile = os.path.join(studyfolder, '.mnapstudy')
-        if os.path.exists(markFile):
-            print " ... .mnapstudy file already exists"
+        markFile = os.path.join(studyfolder, '.qunexstudy')
+        if os.path.exists(markFile) or os.path.exists(os.path.join(studyfolder, '.mnapstudy')):
+            print " ... .qunexstudy file already exists"
         else:
             mark = open(markFile, 'w')
             try:
@@ -190,12 +190,12 @@ def createStudy(studyfolder=None):
     Do note that the command will create all the missing subfolders in which the
     specified study is to reside. The command also prepares template
     batch_parameters_example.txt and hcp_mapping_example.txt files in
-    <studyfolder>/subjects/specs folder. Finally, it creates a .mnapstudy file in
+    <studyfolder>/subjects/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
     Example:
 
-    $ mnap createStudy studyfolder=/Volumes/data/studies/WM.v4
+    $ qunex createStudy studyfolder=/Volumes/data/studies/WM.v4
 
     ----------------
     Written by Grega Repovš
@@ -215,6 +215,8 @@ def createStudy(studyfolder=None):
              - Moved the processing to manageStudy function
     2018-11-14 Grega Repovs
              - Added HCPLS folders
+    2019-05-28 Grega Repovs
+             - Changes to qunex.
     '''
 
     print "Running createStudy\n==================="
@@ -243,7 +245,7 @@ def checkStudy(startfolder="."):
     testfolder  = os.path.abspath(startfolder)
 
     while os.path.dirname(testfolder) and os.path.dirname(testfolder) != '/':
-        if os.path.exists(os.path.join(testfolder, '.mnapstudy')):
+        if os.path.exists(os.path.join(testfolder, '.qunexstudy')) or os.path.exists(os.path.join(testfolder, '.mnapstudy')):
             studyfolder = testfolder
             break
         testfolder = os.path.dirname(testfolder)
@@ -297,7 +299,7 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
 
     Example:
 
-    mnap createBatch sfile="subject.txt" tfile="fcMRI/subjects_fcMRI.txt"
+    qunex createBatch sfile="subject.txt" tfile="fcMRI/subjects_fcMRI.txt"
 
     ----------------
     Written by Grega Repovš
@@ -543,7 +545,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     roi:<subjectsfolder>/<session id>/images/<roi>
 
     Note that for all the files the function expects the files to be present in
-    the correct places within the MNAP subjects folder structure. For ROI files
+    the correct places within the Qu|Nex subjects folder structure. For ROI files
     provide the relative path from the `images` folder.
 
     Checking for presence of files
@@ -561,7 +563,7 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     Examples
     --------
 
-    > mnap createList bolds="1,2,3"
+    > qunex createList bolds="1,2,3"
 
     The command will create a list file in `../processing/list/subjects.txt` that
     will list for all the sessions found in the current folder BOLD files 1, 2, 3
@@ -569,8 +571,8 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
       file:<current path>/<session id>/images/functional/bold[n].nii.gz
 
-    > mnap createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
-           bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_g7_hpss_res-mVWMWB1d.dtseries"
+    > qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+            bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_g7_hpss_res-mVWMWB1d.dtseries"
 
     The command will create a `lists/rest.list` list file in which for all the
     sessions specified in the `batch.txt` it will list all the BOLD files tagged
@@ -578,11 +580,11 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
       file:<subjectsfolder>/<session id>/images/functional/bold[n]_Atlas_g7_hpss_res-mVWMWB1d.dtseries
 
-    > mnap createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
-           sfilter="EC:use" listfile="lists/EC.list" \\
-           conc="bold_Atlas_dtseries_EC_g7_hpss_res-mVWMWB1de.conc" \\
-           fidl="EC.fidl" glm="bold_conc_EC_g7_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
-           roi="segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii"
+    > qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+            sfilter="EC:use" listfile="lists/EC.list" \\
+            conc="bold_Atlas_dtseries_EC_g7_hpss_res-mVWMWB1de.conc" \\
+            fidl="EC.fidl" glm="bold_conc_EC_g7_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
+            roi="segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii"
 
     The command will create a list file in `lists/EC.list" that will list for
     all the sessions in the conc file, that have the key:value pair "EC:use" the
@@ -818,7 +820,7 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
     file:<subjectsfolder>/<session id>/images/functional/<boldname><boldnumber><boldtail>
 
     Note that the function expects the files to be present in the correct place
-    within the MNAP subjects folder structure.
+    within the Qu|Nex subjects folder structure.
 
     Checking for presence of files
     ------------------------------
@@ -835,7 +837,7 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
     Examples
     --------
 
-    > mnap createConc bolds="1,2,3"
+    > qunex createConc bolds="1,2,3"
 
     The command will create set of conc files in `/inbox/concs`,
     each of them named <session id>.conc, one for each of the sessions found in
@@ -844,8 +846,8 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
 
       file:<current path>/<session id>/images/functional/bold[n].nii.gz
 
-    > mnap createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
-           bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
+    > qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+            bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
 
     The command will create for each session listed in the `batch.txt` a
     `<session id>_WM.conc` file in `subjects/inbox/concs` in which it will list
@@ -853,10 +855,10 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
 
       file:<subjectsfolder>/<session id>/images/functional/bold[n]_Atlas.dtseries
 
-    > mnap createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
-           sfilter="EC:use" concfolder="analysis/EC/concs" \\
-           concname="_EC_g7_hpss_res-mVWMWB1de" bolds="EC" \\
-           boldtail="_g7_hpss_res-mVWMWB1deEC.dtseries.nii"
+    > qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+            sfilter="EC:use" concfolder="analysis/EC/concs" \\
+            concname="_EC_g7_hpss_res-mVWMWB1de" bolds="EC" \\
+            boldtail="_g7_hpss_res-mVWMWB1deEC.dtseries.nii"
 
     For all the sessions in the `batch.txt` file that have the key:value pair
     "EC:use" set the command will create a conc file in `analysis/EC/concs`
@@ -1158,7 +1160,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
     Each list then consists of commands. Commands are defined by the:
     `command: <command name>` lines. Each `command: <command name>` specifies
-    a command to be run, where <command name> is a valid mnap command. The 
+    a command to be run, where <command name> is a valid qunex command. The 
     command within a list will be executed in the order they are listed. 
 
     Each command can then list additional parameters to be provided to the
@@ -1268,25 +1270,25 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     ===========
 
     ```
-    mnap runList \
+    qunex runList \
       --listfile="/data/settings/runlist.txt" \
       --runlists="dataImport,prepareHCP"
 
-    mnap runList \
+    qunex runList \
       --listfile="/data/settings/runlist.txt" \
       --runlists="doHCP" \
       --sessions="/data/testStudy/processing/batch_baseline.txt" \
       --sperlist=4 \
       --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
-    mnap runList \
+    qunex runList \
       --listfile="/data/settings/runlist.txt" \
       --runlists="prepareFCPreprocessing" \
       --sessions="/data/testStudy/processing/batch_baseline.txt" \
       --sperlist=4 \
       --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
 
-    mnap runList
+    qunex runList
       --listfile="/data/settings/runlist.txt" \
       --runlists="runFCPreprocessing"
     ```  
@@ -1459,9 +1461,9 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
             # -- setup command 
 
-            command = ["mnap"]
+            command = ["qunex"]
             command.append(commandName)
-            commandr = "\n--------------------------------------------\n===> Running new command:\n---> mnap " + commandName
+            commandr = "\n--------------------------------------------\n===> Running new command:\n---> qunex " + commandName
             for param, value in commandParameters.iteritems():
                 if param in flags:
                     command.append('--%s' % (param))
@@ -1680,7 +1682,7 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     Examples
     --------
 
-    $ mnap gatherBehavior sessions="AP*"
+    $ qunex gatherBehavior sessions="AP*"
 
     The command will compile behavioral data present in `behavior.txt` files 
     present in all `<session id>/behavior` folder that match the "AP*" glob
@@ -1693,9 +1695,9 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     If any of the identified sessions do not include data or if errors are 
     encountered when processing the data, the command will exit with an error.
 
-    $ mnap gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
-           sessions="AP*|OP*" sfile="*test*|*results*" \\
-           check="warn" overwrite="yes" report="no"
+    $ qunex gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
+            sessions="AP*|OP*" sfile="*test*|*results*" \\
+            check="warn" overwrite="yes" report="no"
 
     The command will find all the session folders within `/data/myStudy/subjects`
     that have a `behavior` subfolder. It will then look for presence of any 
@@ -1706,12 +1708,12 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     The resulting file will not have information on file generation or 
     processing report.
 
-    $ mnap gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
-           sessions="/data/myStudy/processing/batch.txt" \\           
-           sfilter="group:controls|behavioral:yes" \\
-           sfile="*test*|*results*" \\
-           tfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
-           check="no" overwrite="yes"
+    $ qunex gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
+            sessions="/data/myStudy/processing/batch.txt" \\           
+            sfilter="group:controls|behavioral:yes" \\
+            sfile="*test*|*results*" \\
+            tfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
+            check="no" overwrite="yes"
 
     The command will read the session information from the provided batch.txt 
     file. It will then process only those sessions that have the following
@@ -2006,7 +2008,7 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     Examples
     --------
 
-    $ mnap pullSequenceNames sessions="AP*"
+    $ qunex pullSequenceNames sessions="AP*"
 
     The command will compile sequence names present in `subject.txt` files 
     present in all `<session id>` folders that match the "AP*" glob
@@ -2019,9 +2021,9 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     If any of the identified sessions do not include data or if errors are 
     encountered when processing the data, the command will exit with an error.
 
-    $ mnap pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
-           sessions="AP*|OP*" sfile="subject.txt|session.txt" \\
-           check="warn" overwrite="yes" report="no"
+    $ qunex pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
+            sessions="AP*|OP*" sfile="subject.txt|session.txt" \\
+            check="warn" overwrite="yes" report="no"
 
     The command will find all the session folders within `/data/myStudy/subjects`
     It will then look for presence of either subject.xtx or session.txt files.
@@ -2031,12 +2033,12 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     report a successful completion of the task. The resulting file will not have 
     information on file generation or processing report.
 
-    $ mnap pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
-           sessions="/data/myStudy/processing/batch.txt" \\           
-           sfilter="group:controls|behavioral:yes" \\
-           sfile="*.txt" \\
-           tfile="/data/myStudy/subjects/specs/hcp_mapping.txt" \\
-           check="no" overwrite="yes"
+    $ qunex pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
+            sessions="/data/myStudy/processing/batch.txt" \\           
+            sfilter="group:controls|behavioral:yes" \\
+            sfile="*.txt" \\
+            tfile="/data/myStudy/subjects/specs/hcp_mapping.txt" \\
+            check="no" overwrite="yes"
 
     The command will read the session information from the provided batch.txt 
     file. It will then process only those sessions that have the following

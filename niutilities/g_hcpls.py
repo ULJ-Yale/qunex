@@ -3,9 +3,9 @@
 """
 g_hcplifespan.py
 
-Functions for importing HCP Lifespan data to MNAP file structure.
+Functions for importing HCP Lifespan data to Qu|Nex file structure.
 
-* HCPLSImport      ... maps HCP Lifespan data to MNAP structure
+* HCPLSImport      ... maps HCP Lifespan data to Qu|Nex structure
 
 The commands are accessible from the terminal using gmri utility.
 
@@ -179,7 +179,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
 
-def mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
+def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix, nameformat):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
@@ -266,7 +266,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     USE
     ===
 
-    The command is used to map a HCPLS dataset to the MNAP Suite file structure. 
+    The command is used to map a HCPLS dataset to the Qu|Nex Suite file structure. 
 
     PARAMETERS
     ==========
@@ -286,7 +286,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                         location where the command will look for a HCPLS dataset
                         is [<subjectsfolder>/inbox/HCPLS]
 
-    --action            How to map the files to MNAP structure. One of:
+    --action            How to map the files to Qu|Nex structure. One of:
                         
                         - link: The files will be mapped by creating hard links
                                 if possible, otherwise they will be copied.
@@ -331,7 +331,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     
     The HCPLSImport command consists of two steps:
     
-    ==> Step 1 -- Mapping HCPLS dataset to MNAP Suite folder structure
+    ==> Step 1 -- Mapping HCPLS dataset to Qu|Nex Suite folder structure
     
     The `inbox` parameter specifies the location of the HCPLS dataset. This path 
     is inspected for a HCPLS compliant dataset. The path can point to a folder 
@@ -354,15 +354,15 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     
     When the files are mapped, their filenames will be perserved.
 
-    ==> Step 2 -- Mapping image files to MNAP Suite `nii` folder
+    ==> Step 2 -- Mapping image files to Qu|Nex Suite `nii` folder
     
     For each session separately, images from the `hcpls` folder are 
     mapped to the `nii` folder and appropriate `subject.txt` file is created per
-    standard MNAP specification.
+    standard Qu|Nex specification.
 
     The second step is achieved by running `mapHCPLS2nii` on each session folder.
     This step is run automatically, but can be invoked indepdendently if mapping 
-    of HCPLS dataset to MNAP Suite folder structure was already completed. For 
+    of HCPLS dataset to Qu|Nex Suite folder structure was already completed. For 
     detailed information about this step, please review `mapHCPLS2nii` inline 
     help.
     
@@ -371,14 +371,14 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     =======
 
     After running the `HCPLSImport` command the HCPLS dataset will be mapped 
-    to the MNAP folder structure and image files will be prepared for further
+    to the Qu|Nex folder structure and image files will be prepared for further
     processing along with required metadata.
 
     * The original HCPL session-level data is stored in:
 
         <subjectsfolder>/<subject_session>/hcpls
 
-    * Image files mapped to new names for MNAP are stored in:
+    * Image files mapped to new names for Qu|Nex are stored in:
 
         <subjects_folder>/<subject_session>/nii
 
@@ -399,7 +399,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     EXAMPLE USE
     ===========
 
-    $ mnap HCPLSImport subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
+    $ qunex HCPLSImport subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
 
     ----------------
     Written by Grega Repovš
@@ -473,7 +473,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
 
     # ---> mapping data to subjects' folders
 
-    print "--> mapping files to MNAP hcpls folders"
+    print "--> mapping files to Qu|Nex hcpls folders"
 
     for file in sourceFiles:
         if file.endswith('.zip'):
@@ -483,7 +483,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile = mapToMNAPHcpls(sf.filename, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
+                        tfile = mapToQUNEXcpls(sf.filename, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
                         if tfile:
                             fdata = z.read(sf)
                             fout = open(tfile, 'wb')
@@ -502,7 +502,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile = mapToMNAPHcpls(member.name, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
+                        tfile = mapToQUNEXcpls(member.name, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
                         if tfile:
                             fobj  = tar.extractfile(member)
                             fdata = fobj.read()
@@ -517,7 +517,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 errors += "\n    .. Processing of package %s failed!" % (file)
 
         else:
-            tfile = mapToMNAPHcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ", nameformat)
+            tfile = mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ", nameformat)
             if tfile:
                 status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
                 allOk = allOk and status
@@ -565,7 +565,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 except:
                     print "==> %s of %s failed!" % (archive, file)
 
-    # ---> mapping data to MNAP nii folder
+    # ---> mapping data to Qu|Nex nii folder
 
     report = []
     for execute in ['map', 'clean']:
@@ -715,7 +715,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     ===
 
     The command is used to map data organized according to HCPLS specification,
-    residing in `hcpls` session subfolder to `nii` folder as expected by MNAP
+    residing in `hcpls` session subfolder to `nii` folder as expected by Qu|Nex
     functions. The command checks the imaging data and compiles a list in the
     following order:
 
@@ -812,7 +812,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `mnap ?schedule` for more information). If set in
+    scheduler settings (see `qunex ?schedule` for more information). If set in
     combination with `sessions` parameter, sessions will be processed over
     multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
@@ -852,7 +852,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     EXAMPLE USE
     ===========
 
-    mnap mapHCPLS2nii folder=. overwrite=yes
+    qunex mapHCPLS2nii folder=. overwrite=yes
 
     ----------------
     Written by Grega Repovš

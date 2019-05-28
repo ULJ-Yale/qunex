@@ -98,7 +98,7 @@ def joinFidl(concfile, fidlroot, outfolder=None, fidlname=None):
     - fidlroot:  the root to use to find fild files
     - outfolder: the folder in which to save the results
 
-    example: mnap joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
+    example: qunex joinFidl concfile=OP33-WM.conc fidlroot=OP33-WM
     '''
 
     # ---> find all fidl files, sort them, read them, get TR info
@@ -188,7 +188,7 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
     Example
     ------- 
 
-    mnap joinFidlFolder concfolder=concs fidlfolder=fidls
+    qunex joinFidlFolder concfolder=concs fidlfolder=fidls
 
     ----------------
     Written by Grega Repovš 
@@ -301,7 +301,7 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
     Example
     -------
 
-    mnap checkFidl fidlfolder=jfidls
+    qunex checkFidl fidlfolder=jfidls
 
     ----------------
     Written by Grega Repovš 
@@ -319,7 +319,7 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
         if not glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")):
             raise ge.CommandFailed("checkFidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")   
 
-    command = ['Rscript', os.path.join(os.environ['MNAPPATH'], 'niutilities', 'g_CheckFidl.R')]
+    command = ['Rscript', os.path.join(os.environ['QUNEXPATH'], 'niutilities', 'g_CheckFidl.R')]
     command.append('-fidlfolder=%s' % (fidlfolder))
 
     if fidlfile is not None:

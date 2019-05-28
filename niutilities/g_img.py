@@ -736,7 +736,7 @@ def sliceImage(sfile, tfile, frames=1):
     - frames:  Optional number of initial frames to retain [1]
 
     Example use:
-    mnap sliceImage sfile=bold1.nii.gz tfile=bold1_f10.nii.gz frames=10
+    qunex sliceImage sfile=bold1.nii.gz tfile=bold1_f10.nii.gz frames=10
 
     (c) Grega Repovš
 

@@ -16,10 +16,10 @@ consists of functions:
                       folder
 
 All the functions are part of the processing suite. They should be called
-from the command line using `mnap` command. Help is available through:
+from the command line using `qunex` command. Help is available through:
 
-`mnap ?<command>` for command specific help
-`mnap -o` for a list of relevant arguments and options
+`qunex ?<command>` for command specific help
+`qunex -o` for a list of relevant arguments and options
 
 There are additional support functions that are not to be used
 directly.
@@ -476,11 +476,11 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap hcp_PreFS sessions=fcMRI/subjects_hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_brainsize=170
+    qunex hcp_PreFS sessions=fcMRI/subjects_hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_brainsize=170
 
-    mnap hcp1 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_t2=NONE
+    qunex hcp1 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_t2=NONE
 
     ----------------
     Written by Grega Repovš
@@ -979,19 +979,19 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10
+    qunex hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10
 
-    mnap hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_fs_longitudinal=TemplateA
+    qunex hcp_FS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_fs_longitudinal=TemplateA
 
-    mnap hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_t2=NONE
+    qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_t2=NONE
 
-    mnap hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_t2=NONE \\
-         hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
-         hcp_freesurfer_module=YES
+    qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_t2=NONE \\
+          hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
+          hcp_freesurfer_module=YES
 
     ----------------
     Written by Grega Repovš
@@ -1441,16 +1441,16 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap longitudinalFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10
+    qunex longitudinalFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10
 
-    mnap lfs sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_t2=NONE
+    qunex lfs sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_t2=NONE
 
-    mnap lsf sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_t2=NONE \\
-         hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
-         hcp_freesurfer_module=YES
+    qunex lsf sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_t2=NONE \\
+          hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
+          hcp_freesurfer_module=YES
 
     ----------------
     Written by Grega Repovš
@@ -1772,11 +1772,11 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap hcp_PostFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10
+    qunex hcp_PostFS sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10
 
-    mnap hcp3 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_t2=NONE
+    qunex hcp3 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_t2=NONE
 
     ----------------
     Written by Grega Repovš
@@ -2147,22 +2147,22 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     Example run from the base study folder with test flag
     --------------------------------------
 
-     mnap hcp_Diffusion \
-     --sessions="processing/batch.hcp.txt" \\    # the location of the batch file
-     --subjectsfolder="subjects" \\              # the location of the subjects folder
-     --cores="10" \\                             # how many sessions to run concurrently
-     --overwrite="no" \\                         # whether to overwrite previous results
-     --test                                      # execute a test run
+    qunex hcp_Diffusion \
+      --sessions="processing/batch.hcp.txt" \\    # the location of the batch file
+      --subjectsfolder="subjects" \\              # the location of the subjects folder
+      --cores="10" \\                             # how many sessions to run concurrently
+      --overwrite="no" \\                         # whether to overwrite previous results
+      --test                                      # execute a test run
 
     run using absolute paths with scheduler
     ---------------------------------------
 
-    mnap hcpd \
-    --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\       # the location of the batch file
-    --subjectsfolder="<path_to_study_folder>/subjects" \\                 # the location of the subjects folder
-    --cores="4" \\                                                        # how many sessions to run concurrently
-    --overwrite="yes" \\                                                  # whether to overwrite previous results
-    --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
+    qunex hcpd \
+      --sessions="<path_to_study_folder>/processing/batch.hcp.txt" \\       # the location of the batch file
+      --subjectsfolder="<path_to_study_folder>/subjects" \\                 # the location of the subjects folder
+      --cores="4" \\                                                        # how many sessions to run concurrently
+      --overwrite="yes" \\                                                  # whether to overwrite previous results
+      --scheduler="SLURM,time=24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=YourPartition"
 
     ----------------
     Written by Grega Repovš
@@ -2577,12 +2577,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap hcp_fMRIVolume sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10
+    qunex hcp_fMRIVolume sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10
 
-    mnap hcp4 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
-         hcp_bold_refreg=nonlinear hcp_bold_usemask=DILATED
+    qunex hcp4 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
+          hcp_bold_refreg=nonlinear hcp_bold_usemask=DILATED
 
     ----------------
     Written by Grega Repovš
@@ -3352,11 +3352,11 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap hcp_fMRISurface sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10
+    qunex hcp_fMRISurface sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10
 
-    mnap hcp5 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no cores=10
+    qunex hcp5 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no cores=10
 
     ----------------
     Written by Grega Repovš
@@ -3846,8 +3846,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap mapHCPData sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no hcp_cifti_tail=_Atlas bolds=all
+    qunex mapHCPData sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no hcp_cifti_tail=_Atlas bolds=all
 
     ----------
     Written by Grega Repovš

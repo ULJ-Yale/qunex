@@ -13,10 +13,10 @@ GLM computation workflow. It consists of functions:
 * preprocessConc        ... processes concatenated BOLD files
 
 All the functions are part of the processing suite. They should be called
-from the command line using `mnap` command. Help is available through:
+from the command line using `qunex` command. Help is available through:
 
-`mnap ?<command>` for command specific help
-`mnap -o` for a list of relevant arguments and options
+`qunex ?<command>` for command specific help
+`qunex -o` for a list of relevant arguments and options
 
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
@@ -37,11 +37,11 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 
-if "MNAPMCOMMAND" not in os.environ:
-    print "WARNING: MNAPMCOMMAND environment variable not set. Matlab will be run by default!"
+if "QuNexMCOMMAND" not in os.environ:
+    print "WARNING: QuNexMCOMMAND environment variable not set. Matlab will be run by default!"
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
-    mcommand = os.environ['MNAPMCOMMAND']
+    mcommand = os.environ['QuNexMCOMMAND']
 
 
 def getBOLDData(sinfo, options, overwrite=False, thread=0):
@@ -186,8 +186,8 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap createBOLDBrainMasks sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no hcp_cifti_tail=_Atlas bolds=all threads=8
+    qunex createBOLDBrainMasks sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no hcp_cifti_tail=_Atlas bolds=all threads=8
 
     ----------------
     Written by Grega Repovš
@@ -506,12 +506,12 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
 
     Using the defaults:
 
-    $ mnap computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    $ qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bolds=all
 
     Specifying additional parameters for identification of bad frames:
 
-    $ mnap computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    $ qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
          mov_before=1 mov_after= 2
 
@@ -831,14 +831,14 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bolds=all cores=1
+    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no bolds=all cores=1
 
-    mnap createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bolds=all cores=10
+    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no bolds=all cores=10
 
-    mnap createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no bolds=all cores=1 mov_plot=""
+    qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no bolds=all cores=1 mov_plot=""
 
     ----------------
     Written by Grega Repovš
@@ -1169,7 +1169,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    $ mnap extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    $ qunex extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bolds=all cores=10
 
     ----------------
@@ -1714,7 +1714,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    $ mnap preprocessBold sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    $ qunex preprocessBold sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bolds=rest bold_actions="s,h,r,c,l" \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
@@ -2325,7 +2325,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     Activation analysis
 
-    $ mnap preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    $ qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-M1 \\
          bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
@@ -2334,7 +2334,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
 
     Functional connectivity preprocessing
 
-    $ mnap preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    $ qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-FC \\
          bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\

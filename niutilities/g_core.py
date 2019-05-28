@@ -292,7 +292,10 @@ def deduceFolders(args):
                 if f and not basefolder:
                     while os.path.dirname(f) and os.path.dirname(f) != '/':
                         f = os.path.dirname(f)
-                        if os.path.exists(os.path.join(f, '.mnapstudy')):
+                        if os.path.exists(os.path.join(f, '.qunexstudy')):
+                            basefolder = f
+                            break
+                        elif os.path.exists(os.path.join(f, '.mnapstudy')):
                             basefolder = f
                             break
 

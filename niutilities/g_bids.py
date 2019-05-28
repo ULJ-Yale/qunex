@@ -3,12 +3,12 @@
 """
 g_bids.py
 
-Functions for importing and exporting BIDS data to MNAP file structure.
+Functions for importing and exporting BIDS data to Qu|Nex file structure.
 
-* BIDSImport      ... maps BIDS data to MNAP structure
-* BIDSExport      ... exports MNAP data to BIDS structured folder
+* BIDSImport      ... maps BIDS data to Qu|Nex structure
+* BIDSExport      ... exports Qu|Nex data to BIDS structured folder
 
-The commands are accessible from the terminal using mnap command.
+The commands are accessible from the terminal using qunex command.
 
 Copyright (c) Grega Repovs. All rights reserved.
 """
@@ -145,7 +145,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
             return (False, "%s%sERROR: %s could not be %sed, source file does not exist [%s]! " % (r, prefix, name, action, source))
 
 
-def mapToMNAPBids(file, subjectsfolder, bidsname, sessionsList, overwrite, prefix):
+def mapToQUNEXBids(file, subjectsfolder, bidsname, sessionsList, overwrite, prefix):
     '''
     Identifies and returns the intended location of the file based on its name.
     '''
@@ -233,7 +233,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     USE
     ===
 
-    The command is used to map a BIDS dataset to the MNAP Suite file structure. 
+    The command is used to map a BIDS dataset to the Qu|Nex Suite file structure. 
 
     PARAMETERS
     ==========
@@ -260,7 +260,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                         of sessions will be processed. If `inbox` is a file 
                         `sessions` will not be applied.
 
-    --action            How to map the files to MNAP structure. One of:
+    --action            How to map the files to Qu|Nex structure. One of:
                         
                         - link: The files will be mapped by creating hard links
                                 if possible, otherwise they will be copied.
@@ -305,7 +305,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     
     The BIDSImport command consists of two steps:
     
-    ==> Step 1 -- Mapping BIDS dataset to MNAP Suite folder structure
+    ==> Step 1 -- Mapping BIDS dataset to Qu|Nex Suite folder structure
     
     The `inbox` parameter specifies the location of the BIDS dataset. This path 
     is inspected for a BIDS compliant dataset. The path can point to a folder 
@@ -336,15 +336,15 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     When the files are mapped, their filenames will be perserved and the correct
     folder structure will be reconstructed if it was previously flattened.
 
-    ==> Step 2 -- Mapping image files to MNAP Suite `nii` folder
+    ==> Step 2 -- Mapping image files to Qu|Nex Suite `nii` folder
     
     For each session separately, images from the `bids` folder are 
     mapped to the `nii` folder and appropriate `subject.txt` file is created per
-    standard MNAP specification.
+    standard Qu|Nex specification.
 
     The second step is achieved by running `mapBIDS2nii` on each session folder.
     This step is run automatically, but can be invoked indepdendently if mapping 
-    of bids dataset to MNAP Suite folder structure was already completed. For 
+    of bids dataset to Qu|Nex Suite folder structure was already completed. For 
     detailed information about this step, please review `mapBIDS2nii` inline 
     help.
     
@@ -353,7 +353,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     =======
 
     After running the `BIDSImport` command the BIDS dataset will be mapped 
-    to the MNAP folder structure and image files will be prepared for further
+    to the Qu|Nex folder structure and image files will be prepared for further
     processing along with required metadata.
 
     * Files pertaining to the study and not specific subject / session are
@@ -364,7 +364,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
         <subjectsfolder>/<subject_session>/bids
 
-    * Image files mapped to new names for MNAP are stored in:
+    * Image files mapped to new names for Qu|Nex are stored in:
 
         <subjects_folder>/<subject_session>/nii
 
@@ -388,7 +388,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     EXAMPLE USE
     ===========
 
-    mnap BIDSImport subjectsfolder=myStudy overwrite=yes bidsname=swga
+    qunex BIDSImport subjectsfolder=myStudy overwrite=yes bidsname=swga
 
     ----------------
     Written by Grega Repovš
@@ -476,7 +476,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
     # ---> mapping data to sessions' folders
 
-    print "--> mapping files to MNAP bids folders"
+    print "--> mapping files to Qu|Nex bids folders"
 
     for file in sourceFiles:
         if file.endswith('.zip'):
@@ -486,7 +486,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile = mapToMNAPBids(sf.filename, subjectsfolder, bidsname, sessionsList, overwrite, "        ")
+                        tfile = mapToQUNEXBids(sf.filename, subjectsfolder, bidsname, sessionsList, overwrite, "        ")
                         if tfile:
                             fdata = z.read(sf)
                             if tfile.endswith('.nii'):
@@ -510,7 +510,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile = mapToMNAPBids(member.name, subjectsfolder, bidsname, sessionsList, overwrite, "        ")
+                        tfile = mapToQUNEXBids(member.name, subjectsfolder, bidsname, sessionsList, overwrite, "        ")
                         if tfile:
                             fobj  = tar.extractfile(member)
                             fdata = fobj.read()
@@ -530,7 +530,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
 
         else:
-            tfile = mapToMNAPBids(file, subjectsfolder, bidsname, sessionsList, overwrite, "    ")
+            tfile = mapToQUNEXBids(file, subjectsfolder, bidsname, sessionsList, overwrite, "    ")
             if tfile:
                 if tfile.endswith('.nii'):
                     tfile += ".gz"
@@ -583,7 +583,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 except:
                     print "==> %s of %s failed!" % (archive, file)
 
-    # ---> mapping data to MNAP nii folder
+    # ---> mapping data to Qu|Nex nii folder
 
     report = []
     for execute in ['map', 'clean']:
@@ -703,7 +703,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     ===
 
     The command is used to map data organized according to BIDS specification,
-    residing in `bids` session subfolder to `nii` folder as expected by MNAP
+    residing in `bids` session subfolder to `nii` folder as expected by Qu|Nex
     functions. The command checks the imaging data and compiles a list in the
     following order:
 
@@ -794,7 +794,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `mnap ?schedule` for more information). If set in
+    scheduler settings (see `qunex ?schedule` for more information). If set in
     combination with `sessions` parameter, sessions will be processed over
     multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
@@ -836,7 +836,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     EXAMPLE USE
     ===========
 
-    mnap mapBIDS2nii folder=. overwrite=yes
+    qunex mapBIDS2nii folder=. overwrite=yes
 
     ----------------
     Written by Grega Repovš

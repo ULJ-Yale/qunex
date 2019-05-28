@@ -146,7 +146,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     EXAMPLE USE
     ===========
 
-    mnap setupHCP sfolder=OP316 sfile=subject.txt
+    qunex setupHCP sfolder=OP316 sfile=subject.txt
 
     ----------------
     Written by Grega Repovš
@@ -412,7 +412,7 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
     EXAMPLE USE
     ===========
 
-    mnap setupHCPFolder subjectsfolder=subjects check=no
+    qunex setupHCPFolder subjectsfolder=subjects check=no
 
     ----------------
     Written by Grega Repovš
@@ -596,9 +596,9 @@ def getHCPReady(sessions=None, subjectsfolder=".", sfile="subject.txt", tfile="s
     EXAMPLE USE
     ===========
 
-    mnap getHCPReady sessions="OP*|AP*" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    qunex getHCPReady sessions="OP*|AP*" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
 
-    mnap getHCPReady sessions="processing/batch_new.txt" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    qunex getHCPReady sessions="processing/batch_new.txt" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
 
     ----------------
     Written by Grega Repovš

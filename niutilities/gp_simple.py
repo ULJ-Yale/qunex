@@ -9,10 +9,10 @@ It consists of functions:
 * listSubjectInfo  ... lists session data stored in batch.txt file
 
 All the functions are part of the processing suite. They should be called
-from the command line using `mnap` command. Help is available through:
+from the command line using `qunex` command. Help is available through:
 
-`mnap ?<command>` for command specific help
-`mnap -o` for a list of relevant arguments and options
+`qunex ?<command>` for command specific help
+`qunex -o` for a list of relevant arguments and options
 
 Created by Grega Repovs on 2016-12-17.
 Code split from dofcMRIp_core gCodeP/preprocess codebase.
@@ -166,8 +166,8 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
-    mnap runShellScript sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
-         overwrite=no script=fcMRI/processdata.sh
+    qunex runShellScript sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+          overwrite=no script=fcMRI/processdata.sh
 
     ----------------
     Written by Grega Repovš 2017-06-24

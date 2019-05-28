@@ -42,10 +42,10 @@ except:
     import dicom.filereader as dfr
 
 
-if "MNAPMCOMMAND" not in os.environ:
+if "QuNexMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
-    mcommand = os.environ['MNAPMCOMMAND']
+    mcommand = os.environ['QuNexMCOMMAND']
 
 
 def matchAll(pattern, string):
@@ -446,7 +446,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `mnap ?schedule` for more information). If set in
+    scheduler settings (see `qunex ?schedule` for more information). If set in
     combination with `sessions` parameter, sessions will be processed over
     multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
@@ -459,7 +459,7 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
     EXAMPLE USE
     ===========
 
-    $ mnap dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    $ qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
 
     ----------------
     Written by Grega Repovš
@@ -761,9 +761,9 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
                             if verbose:
                                 print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                     else:
-                        print >> r, "     WARNING: no slice number information, use mnap reslice manually to correct %s" % (tfname)
+                        print >> r, "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
                         if verbose:
-                            print "     WARNING: no slice number information, use mnap reslice manually to correct %s" % (tfname)
+                            print "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
 
     if verbose:
         print "... done!"
@@ -803,7 +803,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     for the conversion can be specified explicitly or determined automatically.
     It can be one of 'dcm2niix', 'dcm2nii', 'dicm2nii' or 'auto'. If set to 
     'auto', for dicom files the conversion is done using dcm2niix, and for 
-    PAR/REC files, dicm2nii is used if MNAP is set to use Matlab, otherwise 
+    PAR/REC files, dicm2nii is used if Qu|Nex is set to use Matlab, otherwise 
     also PAR/REC files are converted using dcm2niix. If set explicitly, the 
     command will try to use the tool specified. To speed the process up, the 
     command can run it can run multiple conversion processes in parallel. The 
@@ -941,7 +941,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `mnap ?schedule` for more information). If set in
+    scheduler settings (see `qunex ?schedule` for more information). If set in
     combination with `sessions` parameter, sessions will be processed over
     multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
@@ -954,7 +954,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     EXAMPLE USE
     ===========
 
-    $ mnap dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    $ qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
 
     ----------------
     Written by Grega Repovš
@@ -1340,9 +1340,9 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                                 if verbose:
                                     print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
                         else:
-                            print >> r, "     WARNING: no slice number information, use mnap reslice manually to correct %s" % (tfname)
+                            print >> r, "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
                             if verbose:
-                                print "     WARNING: no slice number information, use mnap reslice manually to correct %s" % (tfname)
+                                print "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
 
     r.close()
     stxt.close()
@@ -1398,7 +1398,7 @@ def sortDicom(folder=".", **kwargs):
     utilizing the specified number of cores (1 by default).
 
     If `scheduler` parameter is set, the command will be run using the specified
-    scheduler settings (see `mnap ?schedule` for more information). If set in
+    scheduler settings (see `qunex ?schedule` for more information). If set in
     combination with `sessions` parameter, sessions will be processed over
     multiple nodes, `core` parameter specifying how many sessions to run per
     node. Optional `scheduler_environment`, `scheduler_workdir`,
@@ -1411,7 +1411,7 @@ def sortDicom(folder=".", **kwargs):
     EXAMPLE USE
     ===========
 
-    $ mnap sortDicom folder=OP667
+    $ qunex sortDicom folder=OP667
 
     ----------------
     Written by Grega Repovš
@@ -1578,7 +1578,7 @@ def listDicom(folder=None):
     EXAMPLE USE
     ===========
 
-    $ mnap listDicom folder=OP269/dicom
+    $ qunex listDicom folder=OP269/dicom
 
     ----------------
     Written by Grega Repovš
@@ -1639,7 +1639,7 @@ def splitDicom(folder=None):
     EXAMPLE USE
     ===========
 
-    $ mnap splitDicom folder=dicommess
+    $ qunex splitDicom folder=dicommess
 
     ----------------
     Written by Grega Repovš
@@ -2492,7 +2492,7 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
     EXAMPLE USE
     ===========
 
-    $ mnap getDICOMInfo dicomfile=ap308e727bxehd2.372.2342.42566.dcm
+    $ qunex getDICOMInfo dicomfile=ap308e727bxehd2.372.2342.42566.dcm
 
     ----------------
     Written by Grega Repovš
