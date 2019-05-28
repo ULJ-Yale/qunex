@@ -1,8 +1,8 @@
-# Multimodal Neuroimaging Analyses Platform (MNAP) Suite
+# Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
 
 ## License
 
-MNAP Suite = THIS SOFTWARE
+Qu|Nex Suite = THIS SOFTWARE
 
 Copyright (c)
 Alan Anticevic, [AnticevicLab], Yale University

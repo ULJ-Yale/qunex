@@ -1,18 +1,15 @@
 [submodule "niutilities"]
 	path = niutilities
-	url = git@bitbucket.org:hidradev/niutilities.git
+	url = git@bitbucket.org:oriadev/niutilities.git
 [submodule "library"]
 	path = library
-	url = git@bitbucket.org:hidradev/library.git
-[submodule "hcpmodified"]
-	path = hcpmodified
-	url = git@bitbucket.org:hidradev/hcpmodified.git
+	url = git@bitbucket.org:oriadev/library.git
 [submodule "connector"]
 	path = connector
-	url = git@bitbucket.org:hidradev/connector.git
-# [submodule "hcpextendedpull"]
-#	path = hcpextendedpull
-#	url = git@bitbucket.org:hidradev/hcpextendedpull.git
+	url = git@bitbucket.org:oriadev/connector.git
 [submodule "nitools"]
 	path = nitools
-	url = git@bitbucket.org:hidradev/nitools.git
+	url = git@bitbucket.org:oriadev/nitools.git
+[submodule "HCP"]
+	path = HCP
+	url = git@bitbucket.org:oriadev/hcp.git
