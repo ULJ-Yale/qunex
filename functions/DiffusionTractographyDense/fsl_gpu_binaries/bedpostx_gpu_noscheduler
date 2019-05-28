@@ -1,0 +1,349 @@
+#!/bin/bash
+#
+#~ND~FORMAT~MARKDOWN~
+#~ND~START~
+#
+# ## Copyright Notice
+#
+# * Copyright (C) 2004 University of Oxford
+# * Copyright (C) 2017 Yale University
+#
+# ## Author(s)
+#
+# Originally developed by Moises Hernandez & Stam Sotiropoulos (Oxford)
+# Modified by Alan Anticevic for LSF, PBS and SLURM compatibility via MNAP code (07/01/2017)
+#
+# ## Product
+#
+#  Wrapper for bedpostX GPU
+#
+# ## License
+#
+# * The bedpostx_gpu_scheduler_clean.sh = the "Software"
+# * This Software is distributed "AS IS" without warranty of any kind, either 
+# * expressed or implied, including, but not limited to, the implied warranties
+# * of merchantability and fitness for a particular purpose.
+#
+# ### TODO
+#
+# ## Description 
+#   
+# This script, bedpostx_gpu_scheduler_clean.sh, implements gpu-based bedpostX
+# 
+# ## Prerequisite Installed Software
+#
+# * FSL with GPU binaries
+#
+# ## Prerequisite Environment Variables
+#
+#
+# ### Expected Previous Processing
+# 
+# * The necessary input files are DWI data from previous processing
+# * These data are stored in: "$StudyFolder/subjects/$CASE/hcp/$CASE/T1w/Diffusion/ 
+#
+#~ND~END~
+
+## -- set the default binary location
+bindir=${FSLGPUBinary}/${BedpostXGPUDir}/bedpostx_gpu
+
+Usage() {
+    echo ""
+    echo "This is a simplified version of the bedpostX gpu call to run interactively."
+    echo ""
+    echo "Usage: bedpostx <subject_directory> [options]"
+    echo ""
+    echo "expects to find bvals and bvecs in subject directory"
+    echo "expects to find data and nodif_brain_mask in subject directory"
+    echo "expects to find grad_dev in subject directory, if -g is set"
+    echo ""
+    echo "<options>:"
+    echo "-n (number of fibres per voxel, default 3)"
+    echo "-w (ARD weight, more weight means less secondary fibres per voxel, default 1)"
+    echo "-b (burnin period, default 1000)"
+    echo "-j (number of jumps, default 1250)"
+    echo "-s (sample every, default 25)"
+    echo "-model (Deconvolution model. 1: with sticks, 2: with sticks with a range of diffusivities (default), 3: with zeppelins)"
+    echo "-g (consider gradient nonlinearities, default off)"
+    echo ""
+    echo ""
+    echo "ALTERNATIVELY: you can pass on xfibres options onto directly bedpostx"
+    echo " For example:  bedpostx <subject directory> --noard --cnonlinear"
+    echo " Type 'xfibres --help' for a list of available options "
+    echo " Default options will be bedpostx default (see above), and not xfibres default."
+    echo ""
+    echo "Note: Use EITHER old OR new syntax."
+    exit 1
+}
+
+monitor(){
+    cat <<EOM > ${subjdir}.bedpostX/monitor
+#!/bin/sh
+nparts=0
+if [ $njobs -eq 1 ]; then
+#1 part (GPU) and several subparts
+#voxels processed in each subpart are 12800 or more if the last one is less than 6400 (1 part less)
+    nparts=\$(($nvox/12800))
+    if [ \$nparts%12800 != 0 ];then 
+        nparts=\$((\$nparts + 1)) 
+    fi
+    last_part=\$(($nvox-(((\$nparts-1))*12800)))
+    if [ \$last_part -lt 6400 ];then 
+        nparts=\$((\$nparts - 1)) 
+    fi
+else
+    nparts=$njobs
+fi
+
+echo
+echo "----- Bedpostx Monitor -----"
+finished=0
+lastprinted=0
+havedad=2
+while [ \$finished -eq 0 ] ; do
+    nfin=0
+    part=0
+    errorFiles=\`ls ${subjdir}.bedpostX/logs/*.e* 2> /dev/null \`
+    for errorFile in \$errorFiles
+    do
+        if [ -s \$errorFile ]; then
+            echo An error ocurred. Please check file \$errorFile
+            kill -9 $$
+            exit 1
+        fi
+    done
+    while [ \$part -le \$nparts ];do
+        if [ -e ${subjdir}.bedpostX/logs/monitor/\$part ]; then
+            nfin=\$((\$nfin + 1))
+        fi
+        part=\$((\$part + 1))
+    done
+    newmessages=\$((\$nfin - \$lastprinted))
+    while [ "\$newmessages" -gt 0 ];do
+        lastprinted=\$((\$lastprinted + 1))
+        echo \$lastprinted parts processed out of \$nparts
+        newmessages=\$((\$newmessages - 1))
+    done
+    if [ -f ${subjdir}.bedpostX/xfms/eye.mat ] ; then
+        finished=1
+        echo "All parts processed"
+    exit 
+    fi
+    if [ ! \$havedad -gt 0 ]; then
+       exit 0
+    fi
+    if [ "x$SGE_ROOT" = "x" ]; then
+        havedad=\`ps -e -o pid 2>&1| grep "$$\\b" | wc -l\`
+    fi
+    sleep 50;
+done
+EOM
+    chmod +x ${subjdir}.bedpostX/monitor
+}
+
+make_absolute(){
+    dir=$1;
+    if [ -d ${dir} ]; then
+    OLDWD=`pwd`
+    cd ${dir}
+    dir_all=`pwd`
+    cd $OLDWD
+    else
+    dir_all=${dir}
+    fi
+    echo ${dir_all}
+}
+
+[ "$1" = "" ] && Usage
+
+subjdir=`make_absolute $1`
+subjdir=`echo $subjdir | sed 's/\/$/$/g'`
+
+echo "---------------------------------------------"
+echo "------------ BedpostX GPU Version -----------"
+echo "---------------------------------------------"
+echo ""
+echo subjectdir is $subjdir
+echo ""
+
+#parse option arguments
+qsys=0
+njobs=1
+nfibres=3
+fudge=1
+burnin=1000
+njumps=1250
+sampleevery=25
+model=2
+gflag=0
+other=""
+
+shift
+while [ ! -z "$1" ]
+do
+  case "$1" in
+      -n) nfibres=$2;shift;;
+      -w) fudge=$2;shift;;
+      -b) burnin=$2;shift;;
+      -j) njumps=$2;shift;;
+      -s) sampleevery=$2;shift;;
+      -model) model=$2;shift;;
+      -g) gflag=1;; 
+      *) other=$other" "$1;;
+  esac
+  shift
+done
+opts="--nf=$nfibres --fudge=$fudge --bi=$burnin --nj=$njumps --se=$sampleevery --model=$model"
+defopts="--cnonlinear"
+opts="$opts $defopts $other"
+
+# -------------------------------------------------------------------------------------------------
+# -- Initial setup stage
+# -------------------------------------------------------------------------------------------------
+
+# - check that all required files exist
+
+if [ ! -d $subjdir ]; then
+    echo "subject directory $1 not found"
+    exit 1
+fi
+
+if [ ! -e ${subjdir}/bvecs ]; then
+    if [ -e ${subjdir}/bvecs.txt ]; then
+    mv ${subjdir}/bvecs.txt ${subjdir}/bvecs
+    else
+    echo "${subjdir}/bvecs not found"
+    exit 1
+    fi
+fi
+
+if [ ! -e ${subjdir}/bvals ]; then
+    if [ -e ${subjdir}/bvals.txt ]; then
+    mv ${subjdir}/bvals.txt ${subjdir}/bvals
+    else
+    echo "${subjdir}/bvals not found"
+    exit 1
+    fi
+fi
+
+if [ `${FSLDIR}/bin/imtest ${subjdir}/data` -eq 0 ]; then
+    echo "${subjdir}/data not found"
+    exit 1
+fi
+
+if [ ${gflag} -eq 1 ]; then
+    if [ `${FSLDIR}/bin/imtest ${subjdir}/grad_dev` -eq 0 ]; then
+    echo "${subjdir}/grad_dev not found"
+    exit 1
+    fi
+fi
+
+if [ `${FSLDIR}/bin/imtest ${subjdir}/nodif_brain_mask` -eq 0 ]; then
+    echo "${subjdir}/nodif_brain_mask not found"
+    exit 1
+fi
+
+if [ -e ${subjdir}.bedpostX/xfms/eye.mat ]; then
+    echo "${subjdir} has already been processed: ${subjdir}.bedpostX." 
+    echo "Delete or rename ${subjdir}.bedpostX before repeating the process."
+    exit 1
+fi
+
+echo ""
+echo "-- Making bedpostx directory structure"
+echo ""
+
+mkdir -p ${subjdir}.bedpostX/
+mkdir -p ${subjdir}.bedpostX/diff_parts
+mkdir -p ${subjdir}.bedpostX/logs
+mkdir -p ${subjdir}.bedpostX/logs/logs_gpu
+mkdir -p ${subjdir}.bedpostX/logs/monitor
+rm -f ${subjdir}.bedpostX/logs/monitor/*
+mkdir -p ${subjdir}.bedpostX/xfms
+
+echo ""
+echo "-- Copying files to bedpostx directory"
+echo ""
+
+cp ${subjdir}/bvecs ${subjdir}/bvals ${subjdir}.bedpostX
+${FSLDIR}/bin/imcp ${subjdir}/nodif_brain_mask ${subjdir}.bedpostX
+if [ `${FSLDIR}/bin/imtest ${subjdir}/nodif` = 1 ] ; then
+    ${FSLDIR}/bin/fslmaths ${subjdir}/nodif -mas ${subjdir}/nodif_brain_mask ${subjdir}.bedpostX/nodif_brain
+fi
+
+# -------------------------------------------------------------------------------------------------
+# -- Preprocessing stage
+# -------------------------------------------------------------------------------------------------
+
+# Split the dataset in parts 
+echo ""
+echo "-- Pre-processing stage"
+echo ""
+
+if [ ${gflag} -eq 1 ]; then
+    pre_command="$bindir/bin/split_parts_gpu ${subjdir}/data ${subjdir}/nodif_brain_mask ${subjdir}.bedpostX/bvals ${subjdir}.bedpostX/bvecs ${subjdir}/grad_dev 1 $njobs ${subjdir}.bedpostX"
+else
+    pre_command="$bindir/bin/split_parts_gpu ${subjdir}/data ${subjdir}/nodif_brain_mask ${subjdir}.bedpostX/bvals ${subjdir}.bedpostX/bvecs NULL 0 $njobs ${subjdir}.bedpostX"
+fi
+
+splitID=`$pre_command`                             ########## <<< PRECOMMAND <<< #########
+
+nvox=`${FSLDIR}/bin/fslstats $subjdir.bedpostX/nodif_brain_mask -V  | cut -d ' ' -f1 `
+
+# -------------------------------------------------------------------------------------------------
+# -- bedpostx_gpu setup stage
+# -------------------------------------------------------------------------------------------------
+
+echo ""
+echo "-- Queuing parallel processing stage"
+echo ""
+
+[ -f ${subjdir}.bedpostX/commands.txt ] && rm ${subjdir}.bedpostX/commands.txt
+
+monitor
+if [ "x$SGE_ROOT" = "x" ]; then
+    ${subjdir}.bedpostX/monitor&
+fi
+
+part=0
+while [ $part -lt $njobs ]
+do
+        partzp=`$FSLDIR/bin/zeropad $part 4`
+    
+    if [ ${gflag} -eq 1 ]; then
+        gopts="$opts --gradnonlin=${subjdir}.bedpostX/grad_dev_$part"
+    else
+        gopts=$opts
+    fi    
+
+    echo "${bindir}/bin/xfibres_gpu --data=${subjdir}.bedpostX/data_$part --mask=$subjdir.bedpostX/nodif_brain_mask -b ${subjdir}.bedpostX/bvals -r ${subjdir}.bedpostX/bvecs --forcedir --logdir=$subjdir.bedpostX/diff_parts/data_part_$partzp $gopts ${subjdir} $part $njobs $nvox" >> ${subjdir}.bedpostX/commands.txt
+    
+        part=$(($part + 1))
+done
+
+# -------------------------------------------------------------------------------------------------
+# -- bedpostx_gpu run stage
+# -------------------------------------------------------------------------------------------------
+
+# -- Run Locally
+chmod +x ${subjdir}.bedpostX/commands.txt
+. ${subjdir}.bedpostX/commands.txt                 ########## <<< XFIBERS <<< ############ 
+
+# -------------------------------------------------------------------------------------------------
+# -- post processing stage
+# -------------------------------------------------------------------------------------------------
+
+echo ""
+echo "-- Queuing post processing stage"
+echo ""
+
+post_command="${FSLGPUBinary}/bedpostx_postproc_gpu.sh --data=${subjdir}/data --mask=$subjdir.bedpostX/nodif_brain_mask -b ${subjdir}.bedpostX/bvals -r ${subjdir}.bedpostX/bvecs --forcedir --logdir=$subjdir.bedpostX/diff_parts $gopts $nvox $njobs ${subjdir} ${FSLDIR}"
+
+# -- Run Locally
+mergeid=`$post_command`                            ########## <<< POSTCOMMAND <<< ########
+
+# -------------------------------------------------------------------------------------------------
+# -- Finish things up
+# -------------------------------------------------------------------------------------------------
+
+echo $mergeid > ${subjdir}.bedpostX/logs/postproc_ID

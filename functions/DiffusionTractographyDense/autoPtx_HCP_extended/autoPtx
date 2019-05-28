@@ -1,0 +1,71 @@
+#!/bin/bash
+
+Usage() {
+    echo ""
+    echo "autoPtx <StudyFolder> <SubjectId> <BpXFolder> [<std2diff> <diff2std>]"
+    echo ""
+    exit 1
+}
+
+[ "$3" = "" ] && Usage
+
+
+GPU_flag=1 #Set to 1 to run using GPUs
+
+StudyFolder=$1
+SubjectId=$2
+BpxFolder=$3
+
+InputDir=$StudyFolder/$SubjectId/T1w/$BpxFolder
+OutDir=${StudyFolder}/${SubjectId}/MNINonLinear/Results/autoPtx
+mkdir -p ${OutDir}
+
+if [ "$4" == "" ]; then
+    MNI_to_FA_warp=${StudyFolder}/${SubjectId}/MNINonLinear/xfms/standard2acpc_dc.nii.gz
+else
+    MNI_to_FA_warp=$4
+fi
+
+if [ "$5" == "" ]; then
+    FA_to_MNI_warp=${StudyFolder}/${SubjectId}/MNINonLinear/xfms/acpc_dc2standard.nii.gz
+else
+    FA_to_MNI_warp=$5
+fi
+
+logDir=${OutDir}/logs
+rm -rf $logDir
+mkdir -p $logDir
+
+
+execPath=`dirname $0`
+
+
+cd ${InputDir}
+
+structures=$execPath/autoPtxDir/structureList
+
+listJobs=""
+
+rm -f ${OutDir}/commands.txt
+
+while read line ; do
+    #echo $line
+    struct=`echo $line | awk '{print $1}'`
+    nseed=`echo $line | awk '{print $2}'`
+    wallt=`echo $line | awk '{print $3}' | tr ':' ' '`
+    hours=`echo $wallt | awk '{print $1}'`
+    minutes=`echo $wallt | awk '{print $2}'`
+    time=$(( 60 * hours + minutes ))
+    if [ $GPU_flag == "0" ]; then
+	jobid=`$FSLDIR/bin/fsl_sub -N "autoPtx" -T $time -l $logDir $execPath/trackSubjectStruct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag`
+    else
+	echo "$execPath/trackSubjectStruct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag" >> ${OutDir}/commands.txt
+    fi	
+done < $structures
+
+if [ $GPU_flag == "1" ]; then
+    #qsub -l nodes=1:ppn=1:gpus=1:K20x,walltime=04:00:00,mem=8gb -N autoPtx_GPU -e $logDir/GPUerrofile -o $logDir/GPUoutfile ${OutDir}/commands.txt
+    chmod +x ${OutDir}/commands.txt
+    bash ${OutDir}/commands.txt	
+fi
+
