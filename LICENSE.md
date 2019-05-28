@@ -1,9 +1,9 @@
-# Quantitative Neuroimaging Environment & ToolboX (QuNex) NiUtilities Repository
+# Quantitative Neuroimaging Environment & ToolboX (Qu|Nex) NiUtilities Repository
 
 ## License
 
-QuNex NiUtilities Repository = THIS SOFTWARE
-Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
+Qu|Nex NiUtilities Repository = THIS SOFTWARE
+Copyright (c) 2013-2019 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
 & Alan Anticevic, [AnticevicLab], Yale University
 
 The Software remains the joint property of Alan Anticevic (Yale University)

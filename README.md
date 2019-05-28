@@ -1,10 +1,10 @@
-# README File for QuNex NiUtilities Code
+# README File for Qu|Nex NiUtilities Code
 
 Background
 ==========
 ---
 
-QuNex General Neuroimaging Utilities (gMRI) are neuroimaging
+Qu|Nex General Neuroimaging Utilities (gMRI) are neuroimaging
 preprocessing and analysis utilities that support multiple tasks through a
 common user interface, designed to simplify multiple steps of neuroimaging
 data preprocessing and analysis from sorting of dicom files to second level
@@ -19,12 +19,12 @@ A number of utilities depend on external dependencies and make use of data and
 data templates provided in a separate library.
 
 The utilities can be used as a stand-alone toolset. However, the `gmri` utilities
-were developed to efficiently integrate with the QuNex suite, as well as with a 
+were developed to efficiently integrate with the Qu|Nex suite, as well as with a 
 set of native Matlab functions, methods and utilities, and a modified version 
 of HCP (Human Connectome Project) preprocessing tools. They are best utilized as 
-a part of QuNex (Multimodal Neuroimaging Analysis Platform).
+a part of Qu|Nex (Multimodal Neuroimaging Analysis Platform).
 
-The QuNex code is is co-developed and co-maintained by the 
+The Qu|Nex code is is co-developed and co-maintained by the 
 [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
