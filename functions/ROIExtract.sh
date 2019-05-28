@@ -20,7 +20,7 @@
 # ## LICENCE
 #
 # * The ROIExtract.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -32,7 +32,7 @@
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
-# * QuNex Suite
+# * Qu|Nex Suite
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
@@ -182,7 +182,7 @@ main() {
 get_options $@
 
 # -- Run mri_ExtractROI.m --> mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
-${QuNexMCOMMAND} "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
+${QUNEXMCOMMAND} "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
 
 # -- Completion check
 if [[ -f ${outpath}/${outname}.csv ]]; then

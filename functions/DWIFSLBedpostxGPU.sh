@@ -19,14 +19,14 @@
 # ## LICENSE
 #
 # * The FSLBedpostxGPU.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
 # ## DESCRIPTION 
 #   
-# This script, FSLBedpostxGPU.sh, implements FSL's bedpostX functionality within the QuNex Suite with GPU support
+# This script, FSLBedpostxGPU.sh, implements FSL's bedpostX functionality within the Qu|Nex Suite with GPU support
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -72,7 +72,7 @@ echo "                                                           * Note: You nee
 echo ""
 echo "-- EXAMPLES:"
 echo ""
-echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/FSLBedpostxGPU.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+echo "   --> Run directly via ${TOOLS}/${QUNEXREPO}/connector/functions/FSLBedpostxGPU.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
 echo ""
 reho "           * NOTE: --scheduler is not available via direct script call."
 echo ""

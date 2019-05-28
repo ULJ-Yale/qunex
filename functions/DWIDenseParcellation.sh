@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The DWIDenseParcellation.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -75,7 +75,7 @@ usage() {
      echo ""
      echo "-- EXAMPLES:"
      echo ""
-     echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/DWIDenseParcellation.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo "   --> Run directly via ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
      echo ""
      reho "           * NOTE: --scheduler is not available via direct script call."
      echo ""

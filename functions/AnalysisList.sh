@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The AnalysisList.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -47,7 +47,7 @@ usage() {
      echo ""
      echo "-- DESCRIPTION for AnalysisList Function"
      echo ""
-     echo "This function generates various analyses lists supported by the QuNex Suite."
+     echo "This function generates various analyses lists supported by the Qu|Nex Suite."
      echo ""
      echo ""
      exit 0

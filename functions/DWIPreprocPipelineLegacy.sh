@@ -90,7 +90,7 @@ usage() {
                 echo ""
                 echo "-- EXAMPLES using Siemens FieldMap (needs GPU-enabled node):"
                 echo ""
-                echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+                echo "   --> Run directly via ${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
                 echo ""
                 reho "           * NOTE: --scheduler is not available via direct script call."
                 echo ""

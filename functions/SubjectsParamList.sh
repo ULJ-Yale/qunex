@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The SubjectsBatch.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -30,7 +30,7 @@
 #
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
-# QuNex Suite
+# Qu|Nex Suite
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
@@ -51,7 +51,7 @@ usage() {
      echo "-- DESCRIPTION for SubjectsBatch"
      echo ""
      echo "This function generates a batch file for processing for a given subject."
-     echo "It is designed to be invoked directly via QuNex call:"
+     echo "It is designed to be invoked directly via Qu|Nex call:"
      echo ""
      echo "   > qunex createLists"
      echo ""

@@ -20,7 +20,7 @@
 # ## LICENSE
 #
 # * The RunQC.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -79,7 +79,7 @@ usage() {
      echo "                                                                            Subject-specific output: <subjects_folder>/<case>/nii/slicesdir "
      echo "                                                                            Uses FSL's `slicesdir` script to generate PNGs and an HTML file in the above directory. "
      echo ""
-     echo "                                                                      Note: If using 'general' modality, then visualization is $TOOLS/$QuNexREPO/library/data/scenes/qc/TEMPLATE.general.QC.wb.scene"
+     echo "                                                                      Note: If using 'general' modality, then visualization is $TOOLS/$QUNEXREPO/library/data/scenes/qc/TEMPLATE.general.QC.wb.scene"
      echo "                                                                            * This will work on any input file within the subject-specific data hierarchy."
      echo "     --datapath=<path_for_general_scene>                                    * Required ==> Specify path for input path relative to the <subjects_folder> if scene is 'general'."
      echo "     --datafile=<data_input_for_general_scene>                              * Required ==> Specify input data file name"
@@ -127,7 +127,7 @@ usage() {
      echo "--overwrite=<clean_prior_run>                                    Delete prior QC run: yes/no [Default: no]"
      echo "--hcp_suffix=<specify_hcp_suffix_folder_name>                    Allows user to specify subject id suffix if running HCP preprocessing variants []"
      echo "                                                                  e.g. ~/hcp/sub001 & ~/hcp/sub001-run2 ==> Here 'run2' would be specified as --hcp_suffix='run2' "
-     echo "--scenetemplatefolder=<path_for_the_template_folder>             Specify the absolute path name of the template folder (default: $TOOLS/${QuNexREPO}/library/data/scenes/qc)"
+     echo "--scenetemplatefolder=<path_for_the_template_folder>             Specify the absolute path name of the template folder (default: $TOOLS/${QUNEXREPO}/library/data/scenes/qc)"
      echo "                                                                 Note: relevant scene template data has to be in the same folder as the template scenes"
      echo "--outpath=<path_for_output_file>                                 Specify the absolute path name of the QC folder you wish the individual images and scenes saved to."
      echo "                                                                 If --outpath is unspecified then files are saved to: /<path_to_study_subjects_folder>/QC/<input_modality_for_qc>"
@@ -147,15 +147,15 @@ usage() {
      echo ""
      echo "--processcustom=<yes/no>                                         Default is [no]. If set to 'yes' then the script looks into: "
      echo "                                                                   ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes."
-     echo "                                                                      Note: The provided scene has to conform to QuNex QC template standards.xw"
-     echo "                                                                            See $TOOLS/$QuNexREPO/library/data/scenes/qc/ for example templates."
+     echo "                                                                      Note: The provided scene has to conform to Qu|Nex QC template standards.xw"
+     echo "                                                                            See $TOOLS/$QUNEXREPO/library/data/scenes/qc/ for example templates."
      echo "                                                                            The qc path has to contain relevant files for the provided scene."
      echo ""
      echo "--omitdefaults=<yes/no>     Default is [no]. If set to 'yes' then the script omits defaults."
      echo ""
      echo "-- EXAMPLES:"
      echo ""
-     echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo "   --> Run directly via ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
      echo ""
      reho "           * NOTE: --scheduler is not available via direct script call."
      echo ""
@@ -418,13 +418,13 @@ if [ -z "$UserSceneFile" ]; then
     if [ ! -z "$UserScenePath" ]; then 
         reho "---> Provided --userscenepath but --userscenefile not specified."
         reho "     Check your inputs and re-run.";
-        scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
-        reho "---> Reverting to QuNex defaults: ${scenetemplatefolder}"; echo ""
+        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+        reho "---> Reverting to Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
     fi
     if [ -z "$scenetemplatefolder" ]; then
-        scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
+        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
         reho "---> Template folder path value not explicitly specified."; echo ""
-        reho "---> Using QuNex defaults: ${scenetemplatefolder}"; echo ""
+        reho "---> Using Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
     fi
     if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
         echo ""
@@ -432,7 +432,7 @@ if [ -z "$UserSceneFile" ]; then
         geho "`ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
     else 
         reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
-        scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
+        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
         reho "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
     fi
 else
@@ -1148,7 +1148,7 @@ else
                 if [[ ${BOLDfc} == "pconn" ]]; then
                     TemplateSceneFile="TEMPLATE.PCONN.${Modality}.QC.wb.scene"
                 fi
-                scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
+                scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
                 WorkingSceneFile="${CASE}.${BOLDfc}.${Modality}.${BOLD}.QC.wb.scene"
                 # -- Rsync over template files for a given BOLD
                 Com1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/"
@@ -1214,7 +1214,7 @@ else
                            # Inputs
                            Modality="BOLD"
                            TemplateSceneFile="TEMPLATE.${Modality}.QC.wb.scene"
-                           scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
+                           scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
                            WorkingSceneFile="${CASE}.${Modality}.${BOLD}.QC.wb.scene"
                            # -- Rsync over template files for a given BOLD
                            runsnr_BOLD

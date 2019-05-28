@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The ComputeFunctionalConnectivity.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ### TODO
@@ -27,11 +27,11 @@
 # ## Description 
 #   
 # This script, ComputeFunctionalConnectivity.sh, implements functional connectivity
-# using QuNex Suite Matlab tools (e.g. fc_ComputeSeedMapsMultiple)
+# using Qu|Nex Suite Matlab tools (e.g. fc_ComputeSeedMapsMultiple)
 # 
 # ## Prerequisite Installed Software
 #
-# * QuNex Suite
+# * Qu|Nex Suite
 #
 # ## Prerequisite Environment Variables
 #
@@ -182,7 +182,7 @@ echo ""
 echo ""
 echo "-- EXAMPLES:"
 echo ""
-echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+echo "   --> Run directly via ${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
 echo ""
 reho "           * NOTE: --scheduler is not available via direct script call."
 echo ""
@@ -775,26 +775,26 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
     if [ ${Calculation} == "seed" ]; then
         # -- run FC seed command: 
-        # Call to get matlab help --> ${QuNexMCOMMAND} "help fc_ComputeGBC3,quit()"
+        # Call to get matlab help --> ${QUNEXMCOMMAND} "help fc_ComputeGBC3,quit()"
         # Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-        # Example with string input --> ${QuNexMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        # Example with string input --> ${QUNEXMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
         if [ -z "$Method" ]; then Method="mean"; fi
         if [ -z "$FCCommand" ]; then FCCommand="all"; fi
-        ${QuNexMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        ${QUNEXMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
     fi
     # -- Check if GBC seed run is specified
     if [ ${Calculation} == "gbc" ]; then
         # -- run GBC seed command: 
-        # Call to get matlab help --> ${QuNexMCOMMAND} "help fc_ComputeGBC3,quit()"
+        # Call to get matlab help --> ${QUNEXMCOMMAND} "help fc_ComputeGBC3,quit()"
         # Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-        # Example with string input --> ${QuNexMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        # Example with string input --> ${QUNEXMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
         if [ -z "$TargetROI" ]; then TargetROI=""; fi
         if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
         if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
         if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
         if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
         if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
-        ${QuNexMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        ${QUNEXMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
     fi
     # -- Remove temp lists
     echo ""

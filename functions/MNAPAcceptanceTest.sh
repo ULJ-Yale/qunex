@@ -19,7 +19,7 @@
 # ## LICENSE
 #
 # * The QuNexAcceptanceTest.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
@@ -27,7 +27,7 @@
 #
 # ## DESCRIPTION 
 #   
-# This script, QuNexAcceptanceTest.sh, implements QuNex acceptance testing per pipeline unit.
+# This script, QuNexAcceptanceTest.sh, implements Qu|Nex acceptance testing per pipeline unit.
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -54,12 +54,12 @@ usage() {
     echo ""
     echo "-- DESCRIPTION:"
     echo ""
-    echo "This function implements QuNex acceptance testing per pipeline unit."
+    echo "This function implements Qu|Nex acceptance testing per pipeline unit."
     echo ""
     echo ""
     echo "-- REQUIRED PARMETERS:"
     echo ""
-    echo "-- Local system variables if using QuNex hierarchy:"
+    echo "-- Local system variables if using Qu|Nex hierarchy:"
     echo ""
     echo ""
     echo "   --acceptancetest=<request_acceptance_test>    Specify if you wish to run a final acceptance test after each unit of processing."
@@ -263,18 +263,18 @@ BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 
 # -- Start of parsing XNAT arguments
 #
-#     INFO ON XNAT VARIABLE MAPPING FROM QuNex --> JSON --> XML specification
+#     INFO ON XNAT VARIABLE MAPPING FROM Qu|Nex --> JSON --> XML specification
 #
-# project               --xnatprojectid        #  --> mapping in QuNex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
+# project               --xnatprojectid        #  --> mapping in Qu|Nex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
 #   │ 
-#   └──subject          --xnatsubjectid        #  --> mapping in QuNex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+#   └──subject          --xnatsubjectid        #  --> mapping in Qu|Nex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-#        │              --xnatsubjectlabel     #  --> mapping in QuNex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+#        │              --xnatsubjectlabel     #  --> mapping in Qu|Nex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
 #        │ 
-#        └──experiment  --xnataccsessionid     #  --> mapping in QuNex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#        └──experiment  --xnataccsessionid     #  --> mapping in Qu|Nex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
-#                       --xnatsessionlabel     #  --> mapping in QuNex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#                       --xnatsessionlabel     #  --> mapping in Qu|Nex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    MR Session:   A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
 #
     XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
@@ -510,10 +510,10 @@ fi
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     echo ""
-    echo "   QuNex Subjects labels: ${CASES}" 
+    echo "   Qu|Nex Subjects labels: ${CASES}" 
     if [ "$RUN_TYPE" != "xnat" ]; then
-        echo "   QuNex study folder: ${StudyFolder}"
-        echo "   QuNex study sessions: ${SESSION_LABELS}"
+        echo "   Qu|Nex study folder: ${StudyFolder}"
+        echo "   Qu|Nex study sessions: ${SESSION_LABELS}"
     fi
     if [ "$RUN_TYPE" == "xnat" ]; then
         echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
@@ -531,14 +531,14 @@ fi
         echo "   XNAT get QC images or scenes: ${XNATgetQC}"
 
     fi
-    echo "   QuNex Acceptance test steps: ${AcceptanceTestSteps}"
+    echo "   Qu|Nex Acceptance test steps: ${AcceptanceTestSteps}"
     if [[ -z ${BOLDS} ]]; then 
         echo "   BOLD runs: ${BOLDS}"
         if [[ -z ${BOLDImages} ]]; then 
             echo "   BOLD Images: ${BOLDImages}"
         fi
     fi
-    echo "   QuNex Acceptance test output log: ${RunAcceptanceTestOut}"
+    echo "   Qu|Nex Acceptance test output log: ${RunAcceptanceTestOut}"
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
@@ -550,9 +550,9 @@ fi
 main() {
 
 echo ""
-ceho "       *****************************************************"
-ceho "       ****** Performing QuNex Unit Acceptance Tests ********"
-ceho "       *****************************************************"
+ceho "       *******************************************************"
+ceho "       ****** Performing Qu|Nex Unit Acceptance Tests ********"
+ceho "       *******************************************************"
 echo ""
 
 # ------------------------------------------------------------------------------
@@ -617,7 +617,7 @@ echo ""
                     CASE="${XNAT_SESSION_LABEL_HOST}"
                     CASE=`echo ${CASE} | sed 's|MR||g'`
                     echo " -- Note: --bidsformat='yes' " 
-                    echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for QuNex run: ${CASE}"
+                    echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for Qu|Nex run: ${CASE}"
                     echo ""
                 else
                     CASE="${XNAT_SUBJECT_LABEL}"
@@ -626,7 +626,7 @@ echo ""
         
             UnitTests=${AcceptanceTestSteps}
             echo ""
-            geho "-- Running QuNex unit tests: ${UnitTests}"
+            geho "-- Running Qu|Nex unit tests: ${UnitTests}"
 
             
             ## -- Setup function to check presence of files on either local file system or on XNAT on 
@@ -796,11 +796,11 @@ echo ""
                             XNATUploadFile="${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt"
                             echo ""
                             geho "---> Uploading ${XNATUploadFile} to ${XNAT_HOST_NAME} "
-                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QuNex_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} "
+                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} "
                             echo ""
-                            curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QuNex_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} &> /dev/null
+                            curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} &> /dev/null
                             echo ""
-                            if ( curl -k -b "JSESSIONID=$JSESSION" -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/QuNex_ACCEPT/files/${XNATUploadFile} ); then 
+                            if ( curl -k -b "JSESSIONID=$JSESSION" -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/QUNEX_ACCEPT/files/${XNATUploadFile} ); then 
                                 geho " -- ${XNATUploadFile} uploaded to ${XNAT_HOST_NAME}"
                             else 
                                 reho " -- ${XNATUploadFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."
@@ -834,10 +834,10 @@ echo ""
             echo ""
             geho "-- JSESSION created: ${JSESSION}"; echo ""
             echo "" >> ${RunAcceptanceTestOut}
-            echo "  QuNex Acceptance Test Report for XNAT Run" >> ${RunAcceptanceTestOut}
+            echo "  Qu|Nex Acceptance Test Report for XNAT Run" >> ${RunAcceptanceTestOut}
             echo "  -----------------------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
-            echo "   QuNex Acceptance test steps:    ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
+            echo "   Qu|Nex Acceptance test steps:    ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Hostname:                  ${XNAT_HOST_NAME}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Project ID:                ${XNAT_PROJECT_ID}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Session Label:             ${XNAT_SESSION_LABEL}" >> ${RunAcceptanceTestOut}
@@ -850,11 +850,11 @@ echo ""
             AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
             RunAcceptanceTestOut="${RunAcceptanceTestDir}/QuNexAcceptanceTest_${AcceptDirTimeStamp}.txt"
             echo "" >> ${RunAcceptanceTestOut}
-            echo "  QuNex Acceptance Test Report for Local Run" >> ${RunAcceptanceTestOut}
+            echo "  Qu|Nex Acceptance Test Report for Local Run" >> ${RunAcceptanceTestOut}
             echo "  ------------------------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
-            echo "   QuNex Study folder:              ${StudyFolder}" >> ${RunAcceptanceTestOut}
-            echo "   QuNex Acceptance test steps:     ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
+            echo "   Qu|Nex Study folder:              ${StudyFolder}" >> ${RunAcceptanceTestOut}
+            echo "   Qu|Nex Acceptance test steps:     ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
             echo "  ---------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
@@ -870,13 +870,13 @@ echo ""
                  RunAcceptanceTestOutFile=$(basename $RunAcceptanceTestOut)
                  echo ""
                  geho "---> Uploading ${RunAcceptanceTestOut} to ${XNAT_HOST_NAME} "
-                 geho "     curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QuNex_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} "
+                 geho "     curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} "
                  echo ""
-                 curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QuNex_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} &> /dev/null
+                 curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} &> /dev/null
                  echo ""
-                 if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QuNex_ACCEPT/files/${RunAcceptanceTestOutFile} ); then 
+                 if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile} ); then 
                      geho "-- Successfully uploaded ${RunAcceptanceTestOutFile} to ${XNAT_HOST_NAME} under project ${XNAT_PROJECT_ID} as a resource:"
-                     geho "                ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QuNex_ACCEPT/files/${RunAcceptanceTestOutFile}"
+                     geho "                ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QUNEX_ACCEPT/files/${RunAcceptanceTestOutFile}"
                  else 
                      reho "-- ${RunAcceptanceTestOutFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."
                  fi

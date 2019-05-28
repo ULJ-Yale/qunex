@@ -18,12 +18,12 @@
 # ## PRODUCT
 #
 # * qunex.sh is a connector wrapper
-#   developed as for front-end bash integration for the QuNex Suite
+#   developed as for front-end bash integration for the Qu|Nex Suite
 #
 # ## LICENSE
 #
 # * The qunex.sh = the "Software"
-# * This Software conforms to the license outlined in the QuNex Suite:
+# * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 #
@@ -83,14 +83,14 @@ weho() {
 show_usage_nitoolsHelp() {
         echo ""
         echo ""
-        echo " Listing of all QuNex supported NITools MATLAB functions:"
+        echo " Listing of all Qu|Nex supported NITools MATLAB functions:"
         echo "--------------------------------------------------------"
         echo ""
-        MatlabFunctions=`ls $TOOLS/$QuNexREPO/nitools/*/*.m | grep -v "archive/"`
-        MatlabFunctionsfcMRI=`ls $TOOLS/$QuNexREPO/nitools/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
-        MatlabFunctionsGeneral=`ls $TOOLS/$QuNexREPO/nitools/*/*.m | grep -v "archive/" | grep "/general/"`
-        MatlabFunctionsGMRI=`ls $TOOLS/$QuNexREPO/nitools/gmri/\@gmrimage/*.m`
-        MatlabFunctionsStats=`ls $TOOLS/$QuNexREPO/nitools/*/*.m | grep -v "archive/" | grep "stats"`
+        MatlabFunctions=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/"`
+        MatlabFunctionsfcMRI=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
+        MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/general/"`
+        MatlabFunctionsGMRI=`ls $TOOLS/$QUNEXREPO/nitools/gmri/\@gmrimage/*.m`
+        MatlabFunctionsStats=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "stats"`
         echo "  * Functional connectivity tools"; echo ""
         for MatlabFunction in $MatlabFunctionsfcMRI; do
             echo "      ==> $MatlabFunction";
@@ -169,24 +169,24 @@ echo "    * All descriptions use regular case and all options use CAPS"
 echo ""
 echo "............................................................................"
 echo ""
-echo "                        Overview of QuNex Functions   "
+echo "                        Overview of Qu|Nex Functions   "
 echo "                     ==============================="
 echo ""
 echo "-----------------------------------------------------------------------------"
 echo "   'Connector' Functions for Turnkey Processing and Misc. Analyses           "
 echo "-----------------------------------------------------------------------------"
 echo ""
-echo " ==> Connector functions are located in: $TOOLS/$QuNexREPO/connector"
+echo " ==> Connector functions are located in: $TOOLS/$QUNEXREPO/connector"
 echo ""
-echo " QuNex Suite workflows is integrated via BASH 'connector' functions."
+echo " Qu|Nex Suite workflows is integrated via BASH 'connector' functions."
 echo " The connector function also contain 'stand alone' processing or analyses tools."
-echo " These can be called either directly or via the QuNex wrapper"
+echo " These can be called either directly or via the qunex wrapper"
 echo ""
-echo "  QuNex Turnkey function"
+echo "  Qu|Nex Turnkey function"
 echo "----------------------------"
 echo " organizeDicom ...... sort DICOMs and setup nifti files from DICOMs"
 #echo " mapHCPFiles ...... setup data structure for hcp processing"
-echo " runTurnkey ...... turnkey execution of QuNex workflow compatible with XNAT Docker engine"
+echo " runTurnkey ...... turnkey execution of Qu|Nex workflow compatible with XNAT Docker engine"
 echo ""
 echo "  QC functions"
 echo "------------"
@@ -218,9 +218,9 @@ echo "--------------------------------------------------------------------------
 echo "   General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses  "
 echo "------------------------------------------------------------------------------- "
 echo ""
-echo " ==> NIUtilities are located in: $TOOLS/$QuNexREPO/niutilities"
+echo " ==> NIUtilities are located in: $TOOLS/$QUNEXREPO/niutilities"
 echo ""
-echo " QuNex Suite workflows contain additional python-based 'general mri (gmri) utilities."
+echo " Qu|Nex Suite workflows contain additional python-based 'general mri (gmri) utilities."
 echo " These are accessed either directly via 'gmri' command from the terminal."
 echo " Alternatively the 'qunex' connector wrapper parses all functions via "
 echo " 'gmri' package as standard input."
@@ -232,35 +232,38 @@ echo "`gmri`"
 echo "`gmri -l`"
 echo ""
 echo ""
-echo " ==> NITools tools are located in: $TOOLS/$QuNexREPO/nitools"
+echo " ==> NITools tools are located in: $TOOLS/$QUNEXREPO/nitools"
 echo ""
-echo " The QuNex package contain a number of matlab-based stand-alone tools."
-echo " These tools are used across various QuNex packages, but can be accessed"
+echo " The Qu|Nex package contain a number of matlab-based stand-alone tools."
+echo " These tools are used across various Qu|Nex packages, but can be accessed"
 echo " as stand-alone functions within Matlab. Help and documentation is"
 echo " embedded within each stand-alone tool via standard Matlab help call."
 echo ""
-echo "To obtain a full listing of all QuNex-supported NITools tools run: "
+echo "To obtain a full listing of all Qu|Nex-supported NITools tools run: "
 echo "   'qunexnitoolsHelp' "
 echo ""
 }
 
 qunexFailed() {
 reho ''
-reho ' ▄▄▄▄█▄▄▄▄ █▄▄▄▄  ▄████ ▄█████  ▄████ ▄████  █ ▄█    ▄████ ███▄  '
-reho ' ██▀▀█▀▀██ ██▀▀██ █  ██ ██  ██  ██    █  ██ ██ ██    █   █ █  ██ '
-reho ' ██  █  ██ ██  ██ █████ ████▀▀  ██▀▀  █████ █▌ ██    █▀▀   █  ██ '
-reho ' ██  █  ██ ▀█  █▀ █  █▀ ██      ██    █  █▀ █  ████▀ █████ ███▀  '
-reho ' '
+reho ' __     |     ___       ___        ___ __  '
+reho '/  \|  |||\ ||__ \_/   |__/\ ||   |__ |  \ '
+reho '\__X\__/|| \||___/ \   | /~~\||___|___|__/ '
+reho '        |                                  '
+reho ''
 }
 
+
 qunexPassed() {
-geho '     __  ____   _____    ____     ____                           __ '
-geho '    / | /  / | / /   |  / __ \   / __ \____ ______________  ____/ / '
-geho '   / /|/  /  |/ / /| | / /_/ /  / /_/ / __ `/ ___/ ___/ _ \/ __  /  '
-geho '  / /  / / /|  / ___ |/ ____/  / ____/ /_/ (__  |__  )  __/ /_/ /   '
-geho ' /_/  /_/_/ |_/_/  |_/_/      /_/    \____/____/____/\___/\____/    '
-geho ' '
+geho '   ____        ___   __             ____                           __'
+geho '  / __ \__  __/ / | / /__  _  __   / __ \____ ______________  ____/ /'
+geho ' / / / / / / / /  |/ / _ \| |/_/  / /_/ / __ `/ ___/ ___/ _ \/ __  / '
+geho '/ /_/ / /_/ / / /|  /  __/>  <   / ____/ /_/ (__  |__  )  __/ /_/ /  '
+geho '\___\_\__,_/ /_/ |_/\___/_/|_|  /_/    \__,_/____/____/\___/\__,_/   '
+geho '          /_/                                                        '
+geho ''
 }
+
 
 # ========================================================================================
 # ===================== SPECIFIC FUNCTIONS START HERE ====================================
@@ -324,16 +327,16 @@ Platform="Platform Information: `uname -a`"
 
 # -- Check if study folder is created
 if [[ ! -f ${StudyFolder}/.qunexstudy ]]; then 
-    echo "QuNex study folder specification in ${StudyFolder} not found. Generating now..."
+    echo "Qu|Nex study folder specification in ${StudyFolder} not found. Generating now..."
     gmri createStudy "${StudyFolder}"
 fi
 
 
-# -- Check if part of the QuNex file hierarchy is missing
+# -- Check if part of the Qu|Nex file hierarchy is missing
 QuNexFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/tasks info/stimuli info/BIDS subjects/inbox/MR subjects/inbox/EEG subjects/inbox/BIDS subjects/inbox/behavior subjects/inbox/concs subjects/inbox/events subjects/archive/MR subjects/archive/EEG subjects/archive/BIDS subjects/archive/behavior subjects/specs subjects/QC"
 for QuNexFolder in ${QuNexFolders}; do
     if [[ ! -d ${StudyFolder}/${QuNexFolder} ]]; then
-          echo "QuNex folder ${StudyFolder}/${QuNexFolder} not found. Generating now..."; echo ""
+          echo "Qu|Nex folder ${StudyFolder}/${QuNexFolder} not found. Generating now..."; echo ""
           mkdir -p ${StudyFolder}/${QuNexFolder} &> /dev/null
     fi
 done
@@ -341,7 +344,7 @@ done
 QuNexSubjectsFolders="${SubjectsFolder}/inbox/MR ${SubjectsFolder}/inbox/EEG ${SubjectsFolder}/inbox/BIDS ${SubjectsFolder}/inbox/behavior ${SubjectsFolder}/inbox/concs ${SubjectsFolder}/inbox/events ${SubjectsFolder}/archive/MR ${SubjectsFolder}/archive/EEG ${SubjectsFolder}/archive/BIDS ${SubjectsFolder}/archive/behavior ${SubjectsFolder}/specs ${SubjectsFolder}/QC"
 for QuNexSubjectsFolder in ${QuNexSubjectsFolders}; do
     if [[ ! -d ${QuNexSubjectsFolder} ]]; then
-          echo "QuNex folder ${QuNexSubjectsFolder} not found. Generating now..."; echo ""
+          echo "Qu|Nex folder ${QuNexSubjectsFolder} not found. Generating now..."; echo ""
           mkdir -p ${QuNexSubjectsFolder} &> /dev/null
     fi
 done
@@ -414,7 +417,7 @@ echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho " ERROR: ${C
 ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep '${SuccessCheck}' &> ${CompletionCheck}"
 ComError="cat ${ComlogTmp} | grep '${ErrorCheck}' &> ${ErrorCheck}"
-ComRunCheck="if [[ -s ${CompletionCheck} ]] && [[ -z ${ErrorCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${FunctionToRun}. Check final QuNex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${FunctionToRun}. Check final QuNex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; rm ${CompletionCheck}; fi"
+ComRunCheck="if [[ -s ${CompletionCheck} ]] && [[ -z ${ErrorCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${FunctionToRun}. Check final Qu|Nex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${FunctionToRun}. Check final Qu|Nex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; rm ${CompletionCheck}; fi"
 # -- Combine commands
 ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
 
@@ -447,18 +450,18 @@ fi
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-#  runTurnkey - Turnkey execution of QuNex workflow via the XNAT docker engine
+#  runTurnkey - Turnkey execution of Qu|Nex workflow via the XNAT docker engine
 # ---------------------------------------------------------------------------------------------------------------
 
 runTurnkey() {
 # -- Specify command variable
 unset CommandToRun
-CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --subjid=\"${SUBJID}\""
+CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --subjid=\"${SUBJID}\""
 connectorExec
 }
 
 show_usage_runTurnkey() {
-${TOOLS}/${QuNexREPO}/connector/functions/RunTurnkey.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -608,7 +611,7 @@ echo ""
 
 dataSync() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DataSync.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DataSync.sh \
 --syncfolders="${SyncFolders}" \
 --subjects="${CASE}" \
 --syncserver="${SyncServer}" \
@@ -653,7 +656,7 @@ hcpdLegacy() {
 #    Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
 
 # -- Specify command variable
-CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
+CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --scanner=${Scanner} \
@@ -669,11 +672,11 @@ connectorExec
 }
 show_usage_hcpdLegacy() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  eddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the QuNex connector wrapper
+#  eddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 eddyQC() {
@@ -690,7 +693,7 @@ fi
 # -- OUTPUTS: located in <eddyBase>.qc per EDDY QC specification
 
 # -- Specify command variable
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DWIeddyQC.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --eddybase=${EddyBase} \
@@ -707,16 +710,16 @@ connectorExec
 }
 show_usage_eddyQC() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/DWIeddyQC.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  DWIDenseParcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the QuNex connector wrapper
+#  DWIDenseParcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DWIDenseParcellation() {
 #DWIOutput="${SubjectsFolder}/${CASE}/hcp/$CASE/MNINonLinear/Results/Tractography"
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DWIDenseParcellation.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --matrixversion=${MatrixVersion} \
@@ -730,11 +733,11 @@ connectorExec
 show_usage_DWIDenseParcellation() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/DWIDenseParcellation.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  DWIDenseSeedTractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the QuNex connector wrapper
+#  DWIDenseSeedTractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DWIDenseSeedTractography() {
@@ -752,11 +755,11 @@ connectorExec
 }
 show_usage_DWIDenseSeedTractography() {
 echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/DWIDenseSeedTractography.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseSeedTractography.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the QuNex connector wrapper
+#  computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 computeBOLDfc() {
@@ -779,7 +782,7 @@ fi
 if [ ${Calculation} == "seed" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -804,7 +807,7 @@ fi
 if [ ${Calculation} == "gbc" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -833,7 +836,7 @@ fi
 if [ ${Calculation} == "dense" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -851,11 +854,11 @@ fi
 }
 show_usage_computeBOLDfc() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  structuralParcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the QuNex connector wrapper
+#  structuralParcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 structuralParcellation() {
@@ -869,7 +872,7 @@ ParcellationFile="$ParcellationFile"
 ExtractData="$ExtractData"
 Overwrite="$Overwrite"
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/StructuralParcellation.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --inputdatatype=${InputDataType} \
@@ -882,11 +885,11 @@ connectorExec
 }
 show_usage_structuralParcellation() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/StructuralParcellation.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  BOLDParcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the QuNex connector wrapper
+#  BOLDParcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 BOLDParcellation() {
@@ -897,7 +900,7 @@ else
     BOLDOutput="${OutPath}"
 fi
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/BOLDParcellation.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subjects='${CASE}' \
 --inputfile='${InputFile}' \
@@ -917,11 +920,11 @@ connectorExec
 }
 show_usage_BOLDParcellation() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/BOLDParcellation.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  ROIExtract - Executes the ROI Extraction Script (ROIExtract.sh) via the QuNex connector wrapper
+#  ROIExtract - Executes the ROI Extraction Script (ROIExtract.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ROIExtract() {
@@ -940,7 +943,7 @@ else
     ROIFile="${SubjectsFolder}/${CASE}/${ROIFile}"
 fi
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/ROIExtract.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh \
 --roifile='${ROIInputFile}' \
 --inputfile='${InputFile}' \
 --outdir='${OutPath}' \
@@ -951,7 +954,7 @@ connectorExec
 show_usage_ROIExtract() {
 echo ""
 echo "DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/ROIExtract.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -960,7 +963,7 @@ ${TOOLS}/${QuNexREPO}/connector/functions/ROIExtract.sh
 
 FSLDtifit() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLDtifit.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subject='${CASE}' \
 --overwrite='${Overwrite}' "
@@ -969,7 +972,7 @@ connectorExec
 }
 show_usage_FSLDtifit() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLDtifit.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -978,7 +981,7 @@ ${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLDtifit.sh
 
 FSLBedpostxGPU() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subject='${CASE}' \
 --fibers='${Fibers}' \
@@ -993,7 +996,7 @@ connectorExec
 
 show_usage_FSLBedpostxGPU() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLBedpostxGPU.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1054,7 +1057,7 @@ ${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh
 
 ProbtrackxGPUDense() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/ProbtrackxGPUDense.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --scriptsfolder='${ScriptsFolder}' \
 --infolder='${InFolder}' \
@@ -1069,7 +1072,7 @@ connectorExec
 }
 show_usage_ProbtrackxGPUDense() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/ProbtrackxGPUDense.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1144,7 +1147,7 @@ if [ ! -d ${OutPath} ]; then
     mkdir -p ${OutPath} &> /dev/null
 fi
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh \
+CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subjects='${CASE}' \
 --outpath='${OutPath}' \
@@ -1183,19 +1186,19 @@ echo ""
 reho "==> NOTE: QCPreproc is deprecated. New function name --> ${UsageInput}"
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh
 }
 show_usage_runQC() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh
 }
 show_usage_runQC() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh
+${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
-# =-=-=-=-=-==-=-=-= Establish general QuNex functions and variables =-=-=-=-=-=-=-=-=-=-=
+# =-=-=-=-=-==-=-=-= Establish general Qu|Nex functions and variables =-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
 
 # -- Setup this script such that if any command exits with a non-zero value, the
@@ -1239,13 +1242,13 @@ done
 }
 
 # -- Set version variable
-QuNexVer=`cat ${TOOLS}/${QuNexREPO}/VERSION.md`
+QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 
 # -- Checks for version
 showVersion() {
-    QuNexVer=`cat ${TOOLS}/${QuNexREPO}/VERSION.md`
+    QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo ""
-    geho "    Multimodal Neuroimaging Analysis Platform (QuNex) Version: v${QuNexVer}"
+    geho "    Quantitative Neuroimaging Environment & Tollbox (Qu|Nex) Version: v${QuNexVer}"
 }
 
 # ------------------------------------------------------------------------------
@@ -1277,9 +1280,9 @@ fi
 if [ "$1" == "--envsetup" ] || [ "$1" == "-envsetup" ] || [ "$1" == "envsetup" ]; then
     showVersion
     echo ""
-    echo "Printing help call for $TOOLS/$QuNexREPO/library/environment/qunex_environment.sh"
+    echo "Printing help call for $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh"
     echo ""
-    bash ${TOOLS}/$QuNexREPO/library/environment/qunex_environment.sh --help
+    bash ${TOOLS}/$QUNEXREPO/library/environment/qunex_environment.sh --help
     exit 0
 fi
 
@@ -1331,15 +1334,15 @@ fi
 # ------------------------------------------------------------------------------
 
 isQuNexFunction() {
-MatlabFunctionsCheck=`find $TOOLS/$QuNexREPO/nitools/ -name "*.m" | grep -v "archive/"`
+MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/nitools/ -name "*.m" | grep -v "archive/"`
 if [ -z "${QuNexFunctions##*$1*}" ]; then
     return 0
 elif [[ ! -z `echo $MatlabFunctionsCheck | grep "$1"` ]]; then
     QuNexMatlabFunction="$1"
     echo ""
-    echo "Requested $MatlabFunction function is part of the QuNex Matlab tools. Checking usage:"
+    echo "Requested $MatlabFunction function is part of the Qu|Nex nitools. Checking usage:"
     echo ""
-    ${QuNexMCOMMAND} "help ${QuNexMatlabFunction},quit()"
+    ${QUNEXMCOMMAND} "help ${QuNexMatlabFunction},quit()"
     exit 0
 else
     echo ""
@@ -1508,7 +1511,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     else
         StudyFolder="$StudyFolder"
     fi
-    # -- If subjects folder is missing but study folder is defined assume standard QuNex folder structure
+    # -- If subjects folder is missing but study folder is defined assume standard Qu|Nex folder structure
     if [ -z "$SubjectsFolder" ]; then
         if [ -z "$StudyFolder" ]; then
         echo "" &> /dev/null
@@ -1516,7 +1519,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
             SubjectsFolder="$StudyFolder/subjects"
         fi
     fi
-    # -- If study folder is missing but subjects folder is defined assume standard QuNex folder structure
+    # -- If study folder is missing but subjects folder is defined assume standard Qu|Nex folder structure
     if [ -z "$StudyFolder" ]; then
         if [ -z "$SubjectsFolder" ]; then
         echo "" &> /dev/null
@@ -1612,7 +1615,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     Gzip=`opts_GetOpt "${setflag}gzip" $@`
     VerboseRun=`opts_GetOpt "${setflag}verbose" $@`
     Cores=`opts_GetOpt "${setflag}cores" $@`
-    # -- Path options for FreeSurfer or QuNex
+    # -- Path options for FreeSurfer or Qu|Nex
     FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@`
     QuNexVersion=`opts_GetOpt "${setflag}version" $@`
     # -- createLists input flags
@@ -1774,7 +1777,7 @@ fi
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 
 echo ""
-geho "--- Running QuNex v${QuNexVer}: ${FunctionToRun} function"
+geho "--- Running Qu|Nex v${QuNexVer}: ${FunctionToRun} function"
 echo ""
 
 # ------------------------------------------------------------------------------
@@ -1917,19 +1920,19 @@ if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "
         if [ ! -z "$UserScenePath" ]; then 
             reho "---> Provided --userscenepath but --userscenefile not specified."
             reho "     Check your inputs and re-run.";
-            scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
-            reho "---> Reverting to QuNex defaults: ${scenetemplatefolder}"; echo ""
+            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
+            reho "---> Reverting to Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
         fi
         if [ -z "$scenetemplatefolder" ]; then
-            scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
+            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
             reho "---> Template folder path value not explicitly specified."
-            reho "---> Using QuNex defaults: ${scenetemplatefolder}"
+            reho "---> Using Qu|Nex defaults: ${scenetemplatefolder}"
         fi
         if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
             geho "---> Scene files found in `ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
         else 
             reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
-            scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
+            scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
             reho "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
         fi
     else
