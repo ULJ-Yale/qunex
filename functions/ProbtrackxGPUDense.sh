@@ -19,8 +19,8 @@
 # ## LICENSE
 #
 # * The ProbtrackxGPUDense.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -106,7 +106,7 @@ usage() {
      echo ""
      echo "  -- REQUIRED PARMETERS:"
      echo ""
-     echo "    --function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
+     echo "    --function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. qunex <function_name> followed by flags)"
      echo "    --subjectsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
      echo "    --subjects=<comma_separated_list_of_cases>            List of subjects to run"
      echo "    --overwrite=<clean_prior_run>                         Delete a prior run for a given subject [Note: this will delete only the Matrix run specified by the -omatrix flag]"
@@ -141,21 +141,21 @@ usage() {
      echo "                                                      1=FIXICA, 2=PostFIX; all=Run all Sequentially. Default [3]"
      echo ""
      echo ""
-     echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/ICAFIXhcp.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/ICAFIXhcp.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
      echo ""
      reho "           * NOTE: --scheduler is not available via direct script call."
      echo ""
-     echo "   --> Run via mnap ICAFIXhcp --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo "   --> Run via qunex ICAFIXhcp --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
      echo ""
-     geho "           * NOTE: scheduler is available via mnap call:"
+     geho "           * NOTE: scheduler is available via qunex call:"
      echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
      echo ""
-     echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+     echo "           * For SLURM scheduler the string would look like this via the qunex call: "
      echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
      echo ""     
      echo "-- EXAMPLE with flagged parameters:"
      echo ""
-     echo "mnap ProbtrackxGPUDense --subjectsfolder='<path_to_study_subjects_folder>' \ "
+     echo "qunex ProbtrackxGPUDense --subjectsfolder='<path_to_study_subjects_folder>' \ "
      echo "--subjects='<comma_separarated_list_of_cases>' \ "
      echo "--scheduler='<name_of_scheduler_and_options>' \ "
      echo "--omatrix1='yes' \ "

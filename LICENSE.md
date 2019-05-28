@@ -1,8 +1,8 @@
-# Multimodal Neuroimaging Analyses Pipelines (MNAP) General Pipeline
+# Quantitative Neuroimaging Environment & ToolboX (QuNex)
 
 ## License
 
-MNAP General Pipeline = THIS SOFTWARE
+QuNex General Pipeline = THIS SOFTWARE
 
 Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
 & Alan Anticevic, [AnticevicLab], Yale University

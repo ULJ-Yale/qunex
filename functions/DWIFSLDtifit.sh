@@ -19,14 +19,14 @@
 # ## LICENSE
 #
 # * The DWIFSLDtifit.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
 # ## DESCRIPTION 
 #   
-# This script, DWIFSLDtifit.sh, implements FSL's DTIFIT functionality within the MNAP Suite
+# This script, DWIFSLDtifit.sh, implements FSL's DTIFIT functionality within the QuNex Suite
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -58,7 +58,7 @@ echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here
 echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
-echo "--function=<function_name>                           Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
+echo "--function=<function_name>                           Explicitly specify name of function in flag or use function name as first argument (e.g. qunex <function_name> followed by flags)"
 echo "--subjectsfolder=<folder_with_subjects>              Path to study folder that contains subjects"
 echo "--subjects=<comma_separated_list_of_cases>           List of subjects to run"
 echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
@@ -68,22 +68,22 @@ echo "                                                     --scheduler='SLURM,jo
 echo ""
 echo "-- EXAMPLES:"
 echo ""
-echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/FSLDtifit.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/FSLDtifit.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
 echo ""
 reho "           * NOTE: --scheduler is not available via direct script call."
 echo ""
-echo "   --> Run via mnap FSLDtifit --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+echo "   --> Run via qunex FSLDtifit --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
 echo ""
-geho "           * NOTE: scheduler is available via mnap call:"
+geho "           * NOTE: scheduler is available via qunex call:"
 echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo ""
-echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+echo "           * For SLURM scheduler the string would look like this via the qunex call: "
 echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
 echo ""     
 echo ""     
 echo ""
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
+echo "qunex --subjectsfolder='<path_to_study_subjects_folder>' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
 echo "--function='FSLDtifit' \ "
 echo "--scheduler='<name_of_scheduler_and_options>' \ "

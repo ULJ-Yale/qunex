@@ -19,8 +19,8 @@
 # ## LICENSE
 #
 # * The AnalysisList.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -47,7 +47,7 @@ usage() {
      echo ""
      echo "-- DESCRIPTION for AnalysisList Function"
      echo ""
-     echo "This function generates various analyses lists supported by the MNAP Suite."
+     echo "This function generates various analyses lists supported by the QuNex Suite."
      echo ""
      echo ""
      exit 0

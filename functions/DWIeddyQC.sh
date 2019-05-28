@@ -19,8 +19,8 @@
 # ## LICENSE
 #
 # * The DWIEddyQC.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -65,14 +65,14 @@ usage() {
      echo ""
      echo "-- REQUIRED PARMETERS:"
      echo ""
-     echo "   --subjectsfolder=<folder_with_subjects>   Path to study subjects folder"
-     echo "   --subject=<subj_id>   Subjects ID to run EDDY QC on"
-     echo "   --eddybase=<eddy_input_base_name>   This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
-     echo "   --eddyidx=<eddy_index_file>   EDDY index file"
-     echo "   --eddyparams=<eddy_param_file>   EDDY parameters file"
-     echo "   --mask=<mask_file>   Binary mask file (most qc measures will be averaged across voxels labeled in the mask)"
-     echo "   --bvalsfile=<bvals_file>   bvals input file"
-     echo "   --report=<run_group_or_individual_report>   If you want to generate a group report [individual or group  Default: individual]"
+     echo "--subjectsfolder=<folder_with_subjects>    Path to study folder that contains subjects"
+     echo "--subject=<subj_id>                        Subjects ID to run EDDY QC on"
+     echo "--eddybase=<eddy_input_base_name>          This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
+     echo "--eddyidx=<eddy_index_file>                EDDY index file"
+     echo "--eddyparams=<eddy_param_file>             EDDY parameters file"
+     echo "--mask=<mask_file>                         Binary mask file (most qc measures will be averaged across voxels labeled in the mask)"
+     echo "--bvalsfile=<bvals_file>                   bvals input file"
+     echo "--report=<run_group_or_individual_report>  If you want to generate a group report [individual or group  Default: individual]"
      echo ""
      echo "    *IF* --report='group' *THEN* this argument needs to be specificed: "
      echo ""
@@ -83,9 +83,10 @@ usage() {
      echo "" 
      echo "   --overwrite=<clean_prior_run>   Delete prior run for a given subject"
      echo "   --eddypath=<eddy_folder_relative_to_subject_folder>   Specify the relative path of the eddy folder you want to use for inputs"
-     echo "                                                         --> Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
-     echo "   --bvecsfile=<bvecs_file>   If specified, the tool will create a bvals_no_outliers.txt "
-     echo "                              & a bvecs_no_outliers.txt file that contain the bvals and bvecs of the non outlier volumes, based on the MSR estimates)"
+     echo "                                                           --> Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
+     echo "   --bvecsfile=<bvecs_file>                              If specified, the tool will create a bvals_no_outliers.txt "
+     echo "                                                         & a bvecs_no_outliers.txt file that contain the bvals and bvecs of"
+     echo "                                                         the non-outlier volumes, based on the MSR estimates)"
      echo ""
      echo "-- EXTRA OPTIONAL PARMETERS IF --report='group' "
      echo ""

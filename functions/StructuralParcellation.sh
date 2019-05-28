@@ -19,8 +19,8 @@
 # ## LICENSE
 #
 # * The StructuralParcellation.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -68,9 +68,23 @@ usage() {
  echo "    --overwrite=<clean_prior_run>                         Delete prior run for a given subject"
  echo "    --extractdata=<save_out_the_data_as_as_csv>           Specify if you want to save out the matrix as a CSV file"
  echo ""
- echo "-- Example:"
+ echo "-- EXAMPLES:"
  echo ""
- echo "MyelinThicknessParcellation.sh --subjectsfolder='<folder_with_subjects>' \ "
+ echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/StructuralParcellation.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+ echo ""
+ reho "           * NOTE: --scheduler is not available via direct script call."
+ echo ""
+ echo "   --> Run via qunex structuralParcellation --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+ echo ""
+ geho "           * NOTE: scheduler is available via qunex call:"
+ echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+ echo ""
+ echo "           * For SLURM scheduler the string would look like this via the qunex call: "
+ echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+ echo ""
+ echo ""
+ echo ""
+ echo "qunex structuralParcellation --subjectsfolder='<folder_with_subjects>' \ "
  echo "--subject='<case_id>' \ "
  echo "--inputdatatype='MyelinMap_BC' \ "
  echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "

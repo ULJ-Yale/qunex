@@ -20,8 +20,8 @@
 # ## LICENCE
 #
 # * The ROIExtract.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -32,7 +32,7 @@
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
-# * MNAP Suite
+# * QuNex Suite
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
@@ -66,11 +66,11 @@ usage() {
    echo ""
    echo "-- OUTPUT FORMAT:"
    echo ""
-   echo "<output_name>.csv      --> matrix with one ROI per row and one column per frame in singleinputfile "
+   echo "   <output_name>.csv      --> matrix with one ROI per row and one column per frame in singleinputfile "
    echo ""
    echo " -- Example:"
    echo ""
-   echo " ROIExtract.sh "
+   echo " qunex ROIExtract \ "
    echo "--roifile='<path_to_roifile>' "
    echo "--inputfile='<path_to_inputfile>' "
    echo "--outdir='<path_to_outdir>' "
@@ -91,7 +91,7 @@ geho() { echo -e "\033[32m $1 \033[0m"; }
 # ------------------------------------------------------------------------------
 
 if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
-	usage
+    usage
 fi
 # ------------------------------------------------------------------------------
 # -- Parse arguments
@@ -115,46 +115,46 @@ local index=0
 local numArgs=${#arguments[@]}
 local argument
 while [ ${index} -lt ${numArgs} ]; do
-	argument=${arguments[index]}
-	case ${argument} in
-		--help)
-			usage
-			;;
-		--roifile=*)
-			roifile=${argument/*=/""};   index=$(( index + 1 ))
-			;;
-		--inputfile=*)
-			inputfile=${argument/*=/""}; index=$(( index + 1 ))
-			;;
-		--outpath=*)
-			outpath=${argument/*=/""};    index=$(( index + 1 ))
-			;;
-		--outname=*)
-			outname=${argument/*=/""};   index=$(( index + 1 ))
-			;;
-		*)
-			usage; echo ""; reho "ERROR: Unrecognized Option: ${argument}"; echo ""
-			exit 1
-			;;
-	esac
+    argument=${arguments[index]}
+    case ${argument} in
+        --help)
+            usage
+            ;;
+        --roifile=*)
+            roifile=${argument/*=/""};   index=$(( index + 1 ))
+            ;;
+        --inputfile=*)
+            inputfile=${argument/*=/""}; index=$(( index + 1 ))
+            ;;
+        --outpath=*)
+            outpath=${argument/*=/""};    index=$(( index + 1 ))
+            ;;
+        --outname=*)
+            outname=${argument/*=/""};   index=$(( index + 1 ))
+            ;;
+        *)
+            usage; echo ""; reho "ERROR: Unrecognized Option: ${argument}"; echo ""
+            exit 1
+            ;;
+    esac
 done
 
 # -- Check required parameters and set defaults
 if [ -z ${roifile} ]; then
-	usage; echo ""; reho "ERROR: --roifile=<path to roi file> not specified>"; echo ""
-	exit 1
+    usage; echo ""; reho "ERROR: --roifile=<path to roi file> not specified>"; echo ""
+    exit 1
 fi
 if [ -z ${inputfile} ]; then
-	usage; echo ""; reho "ERROR: --inputfile=<path to file to be extracted> not specified>"; echo ""
-	exit 1
+    usage; echo ""; reho "ERROR: --inputfile=<path to file to be extracted> not specified>"; echo ""
+    exit 1
 fi
 if [ -z ${outpath} ]; then
-	usage; echo ""; reho "ERROR: --outdir=<path to output directory> not specified>"; echo ""
-	exit 1
+    usage; echo ""; reho "ERROR: --outdir=<path to output directory> not specified>"; echo ""
+    exit 1
 fi
 if [ -z ${outname} ]; then
-	usage; echo ""; reho "ERROR: --outname=<output file basename> not specified>"; echo ""
-	exit 1
+    usage; echo ""; reho "ERROR: --outname=<output file basename> not specified>"; echo ""
+    exit 1
 fi
 
 # -- Report options
@@ -162,10 +162,10 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo ""
-echo "   roifile: ${roifile}"
-echo "   inputfile: ${inputfile}"
-echo "   outpath: ${outpath}"
-echo "   outname: ${outname}"
+echo "   ROI file: ${roifile}"
+echo "   Input file: ${inputfile}"
+echo "   Output path: ${outpath}"
+echo "   Output name: ${outname}"
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
@@ -182,12 +182,20 @@ main() {
 get_options $@
 
 # -- Run mri_ExtractROI.m --> mri_ExtractROI(obj, roi, rcodes, method, weights, criterium)
-${MNAPMCOMMAND} "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
+${QuNexMCOMMAND} "imgf=gmrimage('$inputfile'); roif=gmrimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.mri_ExtractROI(roif)); quit"
 
-geho "-- ROIExtract successfully completed "
-echo ""
-geho "------------------------- Successful completion of work --------------------------------"
-echo ""
+# -- Completion check
+if [[ -f ${outpath}/${outname}.csv ]]; then
+   echo ""
+   geho "------------------------- Successful completion of work --------------------------------"
+   echo ""
+else
+    reho "------------------------- ERROR --------------------------------"
+    echo ""
+    reho "   ROIExtract generation did not complete correctly."
+    echo ""
+    reho "----------------------------------------------------------------"
+fi
 
 }
 

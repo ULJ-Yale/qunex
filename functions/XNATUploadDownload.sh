@@ -19,8 +19,8 @@
 # ## LICENSE
 #
 # * The XNATUpload.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -74,7 +74,7 @@ usage() {
     echo ""
     echo "    --runtype=<specify_upload_or_download>        Select --runtype='upload' or --runtype='download' "
     echo ""
-    echo "-- Local system variables if using MNAP hierarchy:"
+    echo "-- Local system variables if using QuNex hierarchy:"
     echo ""
     echo "   --studyfolder=<study_folder>                  Path to study on local file system"
     echo "   --subjectsfolder=<folder_with_subjects_data>  Path to study data folder where the subjects folders reside"
@@ -227,42 +227,42 @@ BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 DownloadPath=`opts_GetOpt "--downloadpath" $@`
 
 ## -- Check run type
-if [ -z ${RUN_TYPE} ]; then
+if [[ -z ${RUN_TYPE} ]]; then
     usage
     reho "ERROR: --runtype flag not specified. Specify --runtype='upload' or --runtype='download'."
     echo ""
     exit 1
 fi
 ## -- Check XNAT Host variable
-if [ -z ${XNAT_HOST_NAME} ]; then
+if [[ -z ${XNAT_HOST_NAME} ]]; then
     usage
     reho "ERROR: --xnathost flag not specified"
     echo ""
     exit 1
 fi
 ## -- Check for subject variables
-if [ -z ${CASES} ] && [ -z ${XNAT_SUBJECT_LABELS} ]; then
+if [[ -z ${CASES} ]] && [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
     usage
     reho "ERROR: --subjects flag and --xnatsubjectlabels flag not specified. No cases to work with. Please specify either."
     echo ""
     exit 1
 fi
 ## -- Check XNAT_SESSION_LABEL
-if [ -z ${XNAT_SESSION_LABEL} ]; then
+if [[ -z ${XNAT_SESSION_LABEL} ]]; then
     XNAT_SESSION_LABEL=""
     usage
     reho "Note: --xnatsessionlabel flag not specified. Assuming that the experiment / session label matches XNAT subject label."
     echo ""
 fi
 ## -- Check CASES variable is not set
-if [ -z ${CASES} ]; then
+if [[ -z ${CASES} ]]; then
     CASES="$XNAT_SUBJECT_LABELS"
     echo ""
     reho "Note: --subjects flag omitted. Assuming specified --xnatsubjectlabels names match the subjects folders on the file system."
     echo ""
 fi
 ## -- Check XNAT_SUBJECT_LABELS
-if [ -z ${XNAT_SUBJECT_LABELS} ]; then
+if [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
     XNAT_SUBJECT_LABELS="$CASES"
     echo ""
     reho "Note: --xnatsubjectlabels flag omitted. Assuming specified --subjects names match the subject labels in XNAT."
@@ -278,8 +278,8 @@ if [[ ${RUN_TYPE} == "download" ]]; then
         echo ""
         exit 1
     fi
-    if [ -z ${DownloadPath} ]; then
-        if [ -z ${StudyFolder} ]; then
+    if [[ -z ${DownloadPath} ]]; then
+        if [] -z ${StudyFolder} []; then
             usage
             reho "ERROR: --studyfolder not specified."
             echo ""
@@ -291,7 +291,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
         DownloadPath="${SubjectsFolder}/inbox"
     fi
     ## -- Check BIDS format
-    if [ -z ${BIDSFormat} ]; then
+    if [[ -z ${BIDSFormat} ]]; then
         BIDSFormat="no"
         reho "Note: --bidsformat flag not specified. Setting to --bidsformat=$BIDSFormat."
         echo ""
@@ -317,10 +317,10 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
             exit 1
         fi
     else 
-        ## -- Generic DICOM path is set outside of MNAP hierarchy
+        ## -- Generic DICOM path is set outside of QuNex hierarchy
         reho "Note: --dicompath=${DICOMPath} specified, which assumes DICOM location for a single XNAT upload."; echo ""
         ## -- Check XNAT session label if DICOMPath is set
-        if [ -z ${XNAT_SUBJECT_LABELS} ]; then
+        if [[ -z ${XNAT_SUBJECT_LABELS} ]]; then
             XNAT_SUBJECT_LABELS=""
             echo ""
             reho "Note: --xnatsubjectlabels flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
@@ -328,7 +328,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
             echo ""
         fi
         ## -- Check XNAT experiment label if DICOMPath is set
-        if [ -z ${XNAT_SESSION_LABEL} ]; then
+        if [[ -z ${XNAT_SESSION_LABEL} ]]; then
             XNAT_SESSION_LABEL=""
             echo ""
             reho "Note: --xnatexperiment flag omitted. Data will be pushed in the XNAT Site prearchive and left unassigned. Please check upon completion and specify assignment manually."
@@ -339,13 +339,13 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
 fi
 
 ## -- Check if NIFTI upload is requested
-if [ -z ${NIFTIUPLOAD} ]; then NIFTIUPLOAD="no"; fi
+if [[ -z ${NIFTIUPLOAD} ]]; then NIFTIUPLOAD="no"; fi
 ## -- Check if overwrite is requested
-if [ -z ${OVERWRITE} ]; then OVERWRITE="yes"; fi
+if [[ -z ${OVERWRITE} ]]; then OVERWRITE="yes"; fi
 ## -- Set reseting credentials to no if not provided 
-if [ -z ${ResetCredentials} ]; then ResetCredentials="no"; fi
+if [[ -z ${ResetCredentials} ]]; then ResetCredentials="no"; fi
 ## -- Set  credentials file name to default if not provided
-if [ -z ${XNAT_CREDENTIAL_FILE} ]; then XNAT_CREDENTIAL_FILE=".xnat"; fi
+if [[ -z ${XNAT_CREDENTIAL_FILE} ]]; then XNAT_CREDENTIAL_FILE=".xnat"; fi
 
 ## -- Reset credentials
 if [[ "${ResetCredential}" == "yes" ]]; then
@@ -403,7 +403,7 @@ fi
 echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
-    if [ -z ${DICOMPath} ]; then
+    if [[ -z ${DICOMPath} ]]; then
         echo "   Folder with all subjects: ${SubjectsFolder}"
         echo "   Subjects to process: ${CASES}"
     else
@@ -425,7 +425,7 @@ echo "-- ${scriptName}: Specified Command-Line Options - Start --"
         echo "   BIDS format input specified: ${BIDSFormat}"
         echo "   Combined BIDS-formatted subject name: ${CASE}"
     else 
-        echo "   MNAP Subject variable name: ${CASE}" 
+        echo "   QuNex Subject variable name: ${CASE}" 
     fi
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
@@ -483,7 +483,7 @@ if [[ ${RUN_TYPE} == "download" ]]; then
                 CASE="${XNAT_SUBJECT_LABEL}_${XNAT_SESSION_LABEL}"
                 CASE=`echo ${CASE} | sed 's|MR||g'`
                 echo " -- Note: --bidsformat='yes' " 
-                echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for MNAP run: ${CASE}"
+                echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for QuNex run: ${CASE}"
                 echo ""
             else
                 CASE="${XNAT_SUBJECT_LABEL}"
@@ -699,18 +699,18 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
                 ##    -b "JSESSIONID=$JSESSION" --> XNAT Site Open Session Variable
                 ##    -X --> Here $XNAT_HOST_NAME corresponds to the XNAT URL; 
                 ##  
-                ##     INFO ON XNAT VARIABLE MAPPING FROM MNAP --> JSON --> XML specification
+                ##     INFO ON XNAT VARIABLE MAPPING FROM QuNex --> JSON --> XML specification
                 ##
-                ## project               --xnatprojectid        #  --> mapping in MNAP: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
+                ## project               --xnatprojectid        #  --> mapping in QuNex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
                 ##   │ 
-                ##   └──subject          --xnatsubjectid        #  --> mapping in MNAP: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+                ##   └──subject          --xnatsubjectid        #  --> mapping in QuNex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
                 ##        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-                ##        │              --xnatsubjectlabel     #  --> mapping in MNAP: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+                ##        │              --xnatsubjectlabel     #  --> mapping in QuNex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
                 ##        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
                 ##        │ 
-                ##        └──experiment  --xnataccsessionid     #  --> mapping in MNAP: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+                ##        └──experiment  --xnataccsessionid     #  --> mapping in QuNex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
                 ##                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
-                ##                       --xnatsessionlabel     #  --> mapping in MNAP: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+                ##                       --xnatsessionlabel     #  --> mapping in QuNex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
                 ##                                                                                                                                                                                                                           EXAMPLE in Web UI    MR Session:   A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
                 ##      
                 ##    -F "${DCM}=@${DCM}"       --> What you are sending to the XNAT Site
@@ -774,7 +774,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     rm -r ${SubjectsFolder}/xnatupload/temp_${TimeStamp}/working &> /dev/null
     
     # -------------------------------------------------------------------------
-    # -- XNAT DICOM upload over multiple cases assuming the MNAP data hierarchy
+    # -- XNAT DICOM upload over multiple cases assuming the QuNex data hierarchy
     # -------------------------------------------------------------------------
     
     if [ -z ${DICOMPath} ]; then

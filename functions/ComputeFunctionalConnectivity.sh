@@ -19,19 +19,19 @@
 # ## LICENSE
 #
 # * The ComputeFunctionalConnectivity.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ### TODO
 #
 # ## Description 
 #   
 # This script, ComputeFunctionalConnectivity.sh, implements functional connectivity
-# using MNAP Suite Matlab tools (e.g. fc_ComputeSeedMapsMultiple)
+# using QuNex Suite Matlab tools (e.g. fc_ComputeSeedMapsMultiple)
 # 
 # ## Prerequisite Installed Software
 #
-# * MNAP Suite
+# * QuNex Suite
 #
 # ## Prerequisite Environment Variables
 #
@@ -182,21 +182,21 @@ echo ""
 echo ""
 echo "-- EXAMPLES:"
 echo ""
-echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
 echo ""
 reho "           * NOTE: --scheduler is not available via direct script call."
 echo ""
-echo "   --> Run via mnap computeBOLDfc --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+echo "   --> Run via qunex computeBOLDfc --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
 echo ""
-geho "           * NOTE: scheduler is available via mnap call:"
+geho "           * NOTE: scheduler is available via qunex call:"
 echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo ""
-echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+echo "           * For SLURM scheduler the string would look like this via the qunex call: "
 echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
 echo ""
 echo ""
-echo "mnap computeBOLDfc \ "
+echo "qunex computeBOLDfc \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--calculation='seed' \ "
 echo "--runtype='individual' \ "
@@ -213,7 +213,7 @@ echo "--targetf='<path_for_output_file>' \ "
 echo "--mask='5' \ "
 echo "--covariance='false' "
 echo ""
-echo "mnap computeBOLDfc \ "
+echo "qunex computeBOLDfc \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--runtype='list' \ "
 echo "--flist='subjects.list' \ "
@@ -227,7 +227,7 @@ echo "--targetf='<path_for_output_file>' \ "
 echo "--mask='5' "
 echo "--covariance='false' "
 echo ""
-echo "mnap computeBOLDfc \ "
+echo "qunex computeBOLDfc \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='individual' \ "
@@ -248,7 +248,7 @@ echo "--time='true' \ "
 echo "--vstep='10000'"
 echo "--covariance='false' "
 echo ""
-echo "mnap computeBOLDfc \ "
+echo "qunex computeBOLDfc \ "
 echo "--subjectsfolder='<folder_with_subjects>' \ "
 echo "--calculation='gbc' \ "
 echo "--runtype='list' \ "
@@ -775,26 +775,26 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
     if [ ${Calculation} == "seed" ]; then
         # -- run FC seed command: 
-        # Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
+        # Call to get matlab help --> ${QuNexMCOMMAND} "help fc_ComputeGBC3,quit()"
         # Full function input     --> fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, targetf, method, ignore, cv)
-        # Example with string input --> ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        # Example with string input --> ${QuNexMCOMMAND} "fc_ComputeSeedMapsMultiple('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
         if [ -z "$Method" ]; then Method="mean"; fi
         if [ -z "$FCCommand" ]; then FCCommand="all"; fi
-        ${MNAPMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        ${QuNexMCOMMAND} "fc_ComputeSeedMapsMultiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
     fi
     # -- Check if GBC seed run is specified
     if [ ${Calculation} == "gbc" ]; then
         # -- run GBC seed command: 
-        # Call to get matlab help --> ${MNAPMCOMMAND} "help fc_ComputeGBC3,quit()"
+        # Call to get matlab help --> ${QuNexMCOMMAND} "help fc_ComputeGBC3,quit()"
         # Full function input     --> fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsmooth, rdilate, ignore, time, cv, vstep)
-        # Example with string input --> ${MNAPMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        # Example with string input --> ${QuNexMCOMMAND}"fc_ComputeGBC3('listname:$CASE-$OutName|subject id:$CASE|file:$InputFile','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '$OutPath', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
         if [ -z "$TargetROI" ]; then TargetROI=""; fi
         if [ -z "$GBCCommand" ]; then GBCCommand="mFz:"; fi
         if [ -z "$RadiusSmooth" ]; then RadiusSmooth="0"; fi
         if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
         if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
         if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
-        ${MNAPMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        ${QuNexMCOMMAND} "fc_ComputeGBC3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
     fi
     # -- Remove temp lists
     echo ""

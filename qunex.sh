@@ -17,14 +17,14 @@
 #
 # ## PRODUCT
 #
-# * mnap.sh is a connector wrapper
-#   developed as for front-end bash integration for the MNAP Suite
+# * qunex.sh is a connector wrapper
+#   developed as for front-end bash integration for the QuNex Suite
 #
 # ## LICENSE
 #
-# * The mnap.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * The qunex.sh = the "Software"
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 #
 #~ND~END~
@@ -33,7 +33,7 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-MNAPFunctions="matlabHelp gmriFunction organizeDicom mapHCPFiles createLists dataSync linkmovement hcpdLegacy eddyQC DWIDenseParcellation DWISeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense ProbtrackxGPUDense AWSHCPSync QCnifti QCPreproc runTurnkey commandExecute showVersion environment"
+QNXFunctions="nitoolsHelp gmriFunction organizeDicom mapHCPFiles dataSync hcpdLegacy eddyQC DWIDenseParcellation DWIDenseSeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense ProbtrackxGPUDense AWSHCPSync runQC RunQC QCPreproc runTurnkey commandExecute showVersion environment"
 
 # ------------------------------------------------------------------------------
 #  Setup color outputs
@@ -80,17 +80,17 @@ weho() {
 #  General help usage function
 # ------------------------------------------------------------------------------
 
-show_usage_matlabHelp() {
+show_usage_nitoolsHelp() {
         echo ""
         echo ""
-        echo "Complete listing of all MNAP-supported Matlab functions:"
+        echo " Listing of all QuNex supported NITools MATLAB functions:"
         echo "--------------------------------------------------------"
         echo ""
-        MatlabFunctions=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/"`
-        MatlabFunctionsfcMRI=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
-        MatlabFunctionsGeneral=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "/general/"`
-        MatlabFunctionsGMRI=`ls $TOOLS/$MNAPREPO/matlab/gmri/\@gmrimage/*.m`
-        MatlabFunctionsStats=`ls $TOOLS/$MNAPREPO/matlab/*/*.m | grep -v "archive/" | grep "stats"`
+        MatlabFunctions=`ls $TOOLS/$QuNexREPO/nitools/*/*.m | grep -v "archive/"`
+        MatlabFunctionsfcMRI=`ls $TOOLS/$QuNexREPO/nitools/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
+        MatlabFunctionsGeneral=`ls $TOOLS/$QuNexREPO/nitools/*/*.m | grep -v "archive/" | grep "/general/"`
+        MatlabFunctionsGMRI=`ls $TOOLS/$QuNexREPO/nitools/gmri/\@gmrimage/*.m`
+        MatlabFunctionsStats=`ls $TOOLS/$QuNexREPO/nitools/*/*.m | grep -v "archive/" | grep "stats"`
         echo "  * Functional connectivity tools"; echo ""
         for MatlabFunction in $MatlabFunctionsfcMRI; do
             echo "      ==> $MatlabFunction";
@@ -115,13 +115,15 @@ show_usage_matlabHelp() {
 
 show_usage() {
 geho ""
-geho "                  ███╗   ███╗███╗   ██╗ █████╗ ██████╗                       "
-geho "                  ████╗ ████║████╗  ██║██╔══██╗██╔══██╗                      "
-geho "                  ██╔████╔██║██╔██╗ ██║███████║██████╔╝                      "
-geho "                  ██║╚██╔╝██║██║╚██╗██║██╔══██║██╔═══╝                       "
-geho "                  ██║ ╚═╝ ██║██║ ╚████║██║  ██║██║                           "
-geho "                  ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝                           "
-echo ""
+geho "                                     ║                                                   "
+geho "                  ▄▄▄▄▄███╗          ║  ███╗   ██╗                                       "
+geho "                  ████████║          ║  ███║   ██║ ██████╗ ██╗   ██╗                     "
+geho "                  ██╔═══██║ ██╗  ██╗ ║  ████╗  ██║ ██▄▄▄█║  ╚██╗██╔╝                     "
+geho "                  ██║ █ ██║ ██║  ██║ ║  ██╔██╗ ██║ ██════╝   ╚███═╝                      "
+geho "                  ╚██████╔╝ ╚█████╔╝ ║  ██║ █████║ ██▄▄▄█╗ ▄██╔██▄▄╗                     "
+geho "                   ╚═╗██╔╝   ╚════╝  ║  ╚═╝  ╚═══╝ ╚═════╝ ╚══╝ ╚══╝                     "
+geho "                     ╚██╝            ║                                                   "
+echo ""                     
 geho "                                LICENSE:                                     "
 geho " Use of this software is subject to the terms and conditions defined by the  "
 geho " Yale University Copyright Policies:                                         "
@@ -135,22 +137,22 @@ echo " -------------------------------------------------------------------------
 echo ""
 echo "  Usage:"
 echo ""
-echo "    mnap --function=<function_name> \ "
+echo "    qunex--function=<function_name> \ "
 echo "         --subjectsfolder=<folder_with_subjects> \ "
 echo "         --subjects='<comma_separarated_list_of_cases>' \ "
 echo "         --extraflags=<extra_inputs> "
 echo ""
 echo "  Example:"
 echo ""
-echo "    mnap --function='organizeDicom' \ "
+echo "    qunex--function='organizeDicom' \ "
 echo "         --subjectsfolder='<folder_with_subjects>' \ "
 echo "         --subjects='<case_id1>,<case_id2>'"
 echo ""
 echo "  Specific function help:"
 echo ""
-echo "         mnap -<function_name>   "
-echo "    OR   mnap ?<function_name>   "
-echo "    OR   mnap <function_name>    "
+echo "         qunex-<function_name>   "
+echo "    OR   qunex?<function_name>   "
+echo "    OR   qunex<function_name>    "
 echo ""
 echo "............................................................................"
 echo ""
@@ -167,75 +169,97 @@ echo "    * All descriptions use regular case and all options use CAPS"
 echo ""
 echo "............................................................................"
 echo ""
-echo "                         Specific Functions                                  "
-echo " ----------------------------------------------------------------------------"
+echo "                        Overview of QuNex Functions   "
+echo "                     ==============================="
 echo ""
-echo "Initial data organization functions"
+echo "-----------------------------------------------------------------------------"
+echo "   'Connector' Functions for Turnkey Processing and Misc. Analyses           "
+echo "-----------------------------------------------------------------------------"
+echo ""
+echo " ==> Connector functions are located in: $TOOLS/$QuNexREPO/connector"
+echo ""
+echo " QuNex Suite workflows is integrated via BASH 'connector' functions."
+echo " The connector function also contain 'stand alone' processing or analyses tools."
+echo " These can be called either directly or via the QuNex wrapper"
+echo ""
+echo "  QuNex Turnkey function"
 echo "----------------------------"
-echo " createStudy ...... generate study folder hierarchy per MNAP specification"
 echo " organizeDicom ...... sort DICOMs and setup nifti files from DICOMs"
-echo " mapHCPFiles ...... setup data structure for hcp processing"
-echo " createList ...... setup subject lists for analyses" 
-echo " createConc ...... setup conc files for analyses" 
-echo " compileBatch ...... setup batch files for processing or analyses" 
-echo " dataSync ...... sync/backup data across hpc cluster(s)"
-echo " runTurnkey ...... turnkey execution of MNAP workflow compatible with XNAT Docker engine"
+#echo " mapHCPFiles ...... setup data structure for hcp processing"
+echo " runTurnkey ...... turnkey execution of QuNex workflow compatible with XNAT Docker engine"
 echo ""
-echo "QC functions"
+echo "  QC functions"
 echo "------------"
-echo " eddyQC ...... run quality control on diffusion datasets following eddy outputs"
-echo " QCnifti ...... run visual qc for raw nifti data in <subjects_folder>/<case>/nii"
-echo " QCPreproc ...... run visual qc for a given modality (t1w,tw2,myelin,bold,dwi)"
+echo " runQC ...... run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi"
 echo ""
-echo "DWI processing, analyses & probabilistic tractography functions"
-echo "----------------------------------------------------------------"
+echo "  DWI processing, QC, analyses & probabilistic tractography functions"
+echo "---------------------------"
 echo " hcpdLegacy ...... diffusion image processing for data with or without standard fieldmaps"
+echo " eddyQC ...... run quality control on diffusion datasets following eddy outputs"
 echo " FSLDtifit ...... run FSL's dtifit tool (cluster usable)"
 echo " FSLBedpostxGPU ...... run fsl bedpostx w/gpu"
 echo " pretractographyDense ...... generates space for whole-brain dense connectomes"
 echo " ProbtrackxGPUDense ...... run FSL's probtrackx for whole brain & generates dense "
-echo "                          whole brain connectomes"
+echo "                           whole brain connectomes"
+echo " DWIDenseSeedTractography ...... reduce dense DWI tractography data using a seed structure"
 echo ""
-echo "Misc. functions and analyses"
+echo "  Misc. analyses"
 echo "---------------------------"
-echo " ICAFIXhcp ...... ICA FIX for HCP minimally processed data"
 echo " computeBOLDfc ...... computes seed or GBC BOLD functional connectivity"
 echo " structuralParcellation ...... parcellate myelin or thickness"
 echo " BOLDParcellation ...... parcellate BOLD data and generate pconn files"
 echo " DWIDenseParcellation ...... parcellate dense dwi tractography data"
-echo " DWISeedTractography ...... reduce dense DWI tractography data using a seed structure"
 echo " ROIExtract ...... extract data from pre-specified ROIs in CIFTI or NIFTI"
 echo " AWSHCPSync ...... sync hcp data from aws s3 cloud"
+echo " dataSync ...... sync/backup data across hpc cluster(s)"
 echo ""
 echo ""
-echo "             General MRI Utilities for Preprocessing and Analyses          "
-echo "---------------------------------------------------------------------------"
+echo "-------------------------------------------------------------------------------"
+echo "   General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses  "
+echo "------------------------------------------------------------------------------- "
 echo ""
-echo " MNAP Suite workflows contain additional python-based 'general mri (gmri) utilities."
+echo " ==> NIUtilities are located in: $TOOLS/$QuNexREPO/niutilities"
+echo ""
+echo " QuNex Suite workflows contain additional python-based 'general mri (gmri) utilities."
 echo " These are accessed either directly via 'gmri' command from the terminal."
-echo " Alternatively the 'mnap' connector wrapper parses all functions via "
+echo " Alternatively the 'qunex' connector wrapper parses all functions via "
 echo " 'gmri' package as standard input."
 echo ""
-echo "    Example to pass function:                mnap <function_name> [options]"
-echo "    Example to request help for function:    mnap ?<function_name>"
+echo "    Example to pass function:                qunex<function_name> [options]"
+echo "    Example to request help for function:    qunex?<function_name>"
 echo ""
 echo "`gmri`"
 echo "`gmri -l`"
 echo ""
 echo ""
-echo " All supported MNAP stand-alone Matlab Tools "
-echo "============================================"
+echo " ==> NITools tools are located in: $TOOLS/$QuNexREPO/nitools"
 echo ""
-echo " ==> Matlab tools are located in: $TOOLS/$MNAPREPO/matlab"
-echo ""
-echo " The MNAP package contain a number of matlab-based stand-alone tools."
-echo " These tools are used across various MNAP packages, but can be accessed"
+echo " The QuNex package contain a number of matlab-based stand-alone tools."
+echo " These tools are used across various QuNex packages, but can be accessed"
 echo " as stand-alone functions within Matlab. Help and documentation is"
 echo " embedded within each stand-alone tool via standard Matlab help call."
 echo ""
-echo "To obtain a full listing of all MNAP-supported Matlab tools run: "
-echo "   'mnap matlabHelp' "
+echo "To obtain a full listing of all QuNex-supported NITools tools run: "
+echo "   'qunexnitoolsHelp' "
 echo ""
+}
+
+qunexFailed() {
+reho ''
+reho ' ▄▄▄▄█▄▄▄▄ █▄▄▄▄  ▄████ ▄█████  ▄████ ▄████  █ ▄█    ▄████ ███▄  '
+reho ' ██▀▀█▀▀██ ██▀▀██ █  ██ ██  ██  ██    █  ██ ██ ██    █   █ █  ██ '
+reho ' ██  █  ██ ██  ██ █████ ████▀▀  ██▀▀  █████ █▌ ██    █▀▀   █  ██ '
+reho ' ██  █  ██ ▀█  █▀ █  █▀ ██      ██    █  █▀ █  ████▀ █████ ███▀  '
+reho ' '
+}
+
+qunexPassed() {
+geho '     __  ____   _____    ____     ____                           __ '
+geho '    / | /  / | / /   |  / __ \   / __ \____ ______________  ____/ / '
+geho '   / /|/  /  |/ / /| | / /_/ /  / /_/ / __ `/ ___/ ___/ _ \/ __  /  '
+geho '  / /  / / /|  / ___ |/ ____/  / ____/ /_/ (__  |__  )  __/ /_/ /   '
+geho ' /_/  /_/_/ |_/_/  |_/_/      /_/    \____/____/____/\___/\____/    '
+geho ' '
 }
 
 # ========================================================================================
@@ -280,7 +304,7 @@ show_processing_gmri() {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-#  -- Master Execution and Logging function -- https://bitbucket.org/hidradev/mnaptools/wiki/Overview/Logging.md
+#  -- Master Execution and Logging function -- https://bitbucket.org/oriadev/qunex/wiki/Overview/Logging.md
 # ---------------------------------------------------------------------------------------------------------------
 
 connectorExec() {
@@ -299,59 +323,26 @@ fi
 Platform="Platform Information: `uname -a`"
 
 # -- Check if study folder is created
-if [[ ! -f ${StudyFolder}/.mnapstudy ]]; then 
-    echo "MNAP study folder specification in ${StudyFolder} not found. Generating now..."
+if [[ ! -f ${StudyFolder}/.qunexstudy ]]; then 
+    echo "QuNex study folder specification in ${StudyFolder} not found. Generating now..."
     gmri createStudy "${StudyFolder}"
 fi
 
 
-# -- Check if part of the MNAP file hierarchy is missing
-#
-# --- analysis subfolder
-# /analysis/scripts
-# --- processing subfolders
-# /processing/logs/comlogs
-# /processing/logs/runlogs
-# /processing/lists
-# /processing/scripts
-# /processing/scenes/QC/T1w
-# /processing/scenes/QC/T2w
-# /processing/scenes/QC/myelin
-# /processing/scenes/QC/BOLD
-# /processing/scenes/QC/DWI
-# --- demographics subfolders
-# /info/demographics
-# /info/tasks
-# /info/stimuli
-# /info/BIDS
-# --- subjects subfolders
-# /subjects/inbox/MR
-# /subjects/inbox/EEG
-# /subjects/inbox/BIDS
-# /subjects/inbox/behavior
-# /subjects/inbox/concs
-# /subjects/inbox/events
-# /subjects/archive/MR
-# /subjects/archive/EEG
-# /subjects/archive/BIDS
-# /subjects/archive/behavior
-# /subjects/specs
-# /subjects/QC
-# 
-
-MNAPFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/tasks info/stimuli info/BIDS subjects/inbox/MR subjects/inbox/EEG subjects/inbox/BIDS subjects/inbox/behavior subjects/inbox/concs subjects/inbox/events subjects/archive/MR subjects/archive/EEG subjects/archive/BIDS subjects/archive/behavior subjects/specs subjects/QC"
-for MNAPFolder in ${MNAPFolders}; do
-    if [[ ! -d ${StudyFolder}/${MNAPFolder} ]]; then
-          echo "MNAP folder ${StudyFolder}/${MNAPFolder} not found. Generating now..."; echo ""
-          mkdir -p ${StudyFolder}/${MNAPFolder} &> /dev/null
+# -- Check if part of the QuNex file hierarchy is missing
+QuNexFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/tasks info/stimuli info/BIDS subjects/inbox/MR subjects/inbox/EEG subjects/inbox/BIDS subjects/inbox/behavior subjects/inbox/concs subjects/inbox/events subjects/archive/MR subjects/archive/EEG subjects/archive/BIDS subjects/archive/behavior subjects/specs subjects/QC"
+for QuNexFolder in ${QuNexFolders}; do
+    if [[ ! -d ${StudyFolder}/${QuNexFolder} ]]; then
+          echo "QuNex folder ${StudyFolder}/${QuNexFolder} not found. Generating now..."; echo ""
+          mkdir -p ${StudyFolder}/${QuNexFolder} &> /dev/null
     fi
 done
 # -- Add check in case the subjects folder is distinct from the default name
-MNAPSubjectsFolders="${SubjectsFolder}/inbox/MR ${SubjectsFolder}/inbox/EEG ${SubjectsFolder}/inbox/BIDS ${SubjectsFolder}/inbox/behavior ${SubjectsFolder}/inbox/concs ${SubjectsFolder}/inbox/events ${SubjectsFolder}/archive/MR ${SubjectsFolder}/archive/EEG ${SubjectsFolder}/archive/BIDS ${SubjectsFolder}/archive/behavior ${SubjectsFolder}/specs ${SubjectsFolder}/QC"
-for MNAPSubjectsFolder in ${MNAPSubjectsFolders}; do
-    if [[ ! -d ${MNAPSubjectsFolder} ]]; then
-          echo "MNAP folder ${MNAPSubjectsFolder} not found. Generating now..."; echo ""
-          mkdir -p ${MNAPSubjectsFolder} &> /dev/null
+QuNexSubjectsFolders="${SubjectsFolder}/inbox/MR ${SubjectsFolder}/inbox/EEG ${SubjectsFolder}/inbox/BIDS ${SubjectsFolder}/inbox/behavior ${SubjectsFolder}/inbox/concs ${SubjectsFolder}/inbox/events ${SubjectsFolder}/archive/MR ${SubjectsFolder}/archive/EEG ${SubjectsFolder}/archive/BIDS ${SubjectsFolder}/archive/behavior ${SubjectsFolder}/specs ${SubjectsFolder}/QC"
+for QuNexSubjectsFolder in ${QuNexSubjectsFolders}; do
+    if [[ ! -d ${QuNexSubjectsFolder} ]]; then
+          echo "QuNex folder ${QuNexSubjectsFolder} not found. Generating now..."; echo ""
+          mkdir -p ${QuNexSubjectsFolder} &> /dev/null
     fi
 done
 
@@ -406,6 +397,7 @@ echo ""
 
 # -- Run commands
 SuccessCheck="Successful completion"
+ErrorCheck='ERROR'
 echo "${CommandToRun}" >> ${Runlog}
 echo "#!/bin/bash" >> ${ComRun}
 echo "export PYTHONUNBUFFERED=1" >> ${ComRun}
@@ -421,9 +413,10 @@ echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho " ERROR: ${C
 
 ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep '${SuccessCheck}' &> ${CompletionCheck}"
-ComRunCheck="if [[ -s ${CompletionCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${FunctionToRun}. Check final MNAP log output:'; echo ''; geho '    ${ComlogDone}'; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${FunctionToRun}. Check final MNAP error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; rm ${CompletionCheck}; fi"
+ComError="cat ${ComlogTmp} | grep '${ErrorCheck}' &> ${ErrorCheck}"
+ComRunCheck="if [[ -s ${CompletionCheck} ]] && [[ -z ${ErrorCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${FunctionToRun}. Check final QuNex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${FunctionToRun}. Check final QuNex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; rm ${CompletionCheck}; fi"
 # -- Combine commands
-ComRunAll="${ComRunExec}; ${ComComplete}; ${ComRunCheck}"
+ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
 
 # -- Run the commands locally
 if [[ "$Cluster" == 1 ]]; then
@@ -454,18 +447,18 @@ fi
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-#  runTurnkey - Turnkey execution of MNAP workflow via the XNAT docker engine
+#  runTurnkey - Turnkey execution of QuNex workflow via the XNAT docker engine
 # ---------------------------------------------------------------------------------------------------------------
 
 runTurnkey() {
 # -- Specify command variable
 unset CommandToRun
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --subjid=\"${SUBJID}\""
+CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --subjid=\"${SUBJID}\""
 connectorExec
 }
 
 show_usage_runTurnkey() {
-${TOOLS}/${MNAPREPO}/connector/functions/RunTurnkey.sh
+${TOOLS}/${QuNexREPO}/connector/functions/RunTurnkey.sh
 }
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -517,10 +510,11 @@ fi
 # -- Specify command variable
 unset CommandToRun
 ComA="cd ${SubjectsFolder}/${CASE}"
-ComB="gmri sortDicom folder=. " 
+ComB="gmri sortDicom folder=. "
 ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
 ComD="slicesdir ${SubjectsFolder}/${CASE}/nii/*.nii*"
 CommandToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
+
 # -- Connector execute function
 connectorExec
 }
@@ -536,7 +530,6 @@ echo ""
 echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
-echo "--function=<function_name>                             Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
 echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects. If missing then optional paramater --folder needs to be provided."
 echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run. If missing then --folder needs to be provided for a single-session run."
 echo ""
@@ -558,62 +551,14 @@ echo "                                                       --scheduler='SLURM,
 echo ""
 echo "-- EXAMPLE:"
 echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='organizeDicom' \ "
+echo "qunexorganizeDicom --subjectsfolder='<folder_with_subjects>' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' "
 echo "--scheduler='<name_of_scheduler_and_options>'"
 echo ""
 }
-
-# ---------------------------------------------------------------------------------------------------------------
-#  QCnifti - QC nifti files following organizeDicom
-# ---------------------------------------------------------------------------------------------------------------
-
-QCnifti() {
-
-# -- Specify command variable
-unset CommandToRun
-Com1="slicesdir ${SubjectsFolder}/${CASE}/nii/*.nii*"
-Com2="if [ -f ${SubjectsFolder}/${CASE}/nii/slicesdir/index.html ]; then echo ''; geho '------------------------- Successful completion of work --------------------------------'; else echo ''; reho 'Something went wrong. Check output: ${SubjectsFolder}/${CASE}/nii/slicesdir/'; fi"
-CommandToRun="${Com1}; ${Com2}"
-# -- Connector execute function
-connectorExec
-
-}
-
-show_usage_QCnifti() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function performs QC for raw NIFTI images in <subjects_folder>/<case>/nii "
-echo ""
-echo " * Input: requires NIFTI images in <subjects_folder>/<case>/nii/ after either BIDS import of DICOM organization. "
-echo " * Subject-specific output: <subjects_folder>/<case>/nii/slicesdir "
-echo " * Uses FSL's `slicesdir` script to generate PNGs and an HTML file in the above directory. "
-echo ""
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects. If missing then optional paramater --folder needs to be provided."
-echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run. If missing then --folder needs to be provided for a single-session run."
-echo ""
-echo "-- OPTIONAL PARAMETERS: "
-echo ""
-echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                       e.g. for SLURM the string would look like this: "
-echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "-- EXAMPLE:"
-echo ""
-echo "mnap niftiQC --subjectsfolder='<folder_with_subjects>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' "
-echo "--scheduler='<name_of_scheduler_and_options>'"
-echo ""
-}
-
 
 # ------------------------------------------------------------------------------------------------------
-#  mapHCPFiles - Setup the HCP File Structure to be fed to the Yale HCP
+#  mapHCPFiles - Setup the HCP File Structure
 # ------------------------------------------------------------------------------------------------------
 
 mapHCPFiles() {
@@ -635,146 +580,25 @@ echo "and the subject_hcp.txt file was generated."
 echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
-echo "--function=<function_name>                             Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
 echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects"
 echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                       e.g. for SLURM the string would look like this: "
-echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
+echo""
+geho " * NOTE: scheduler is available via qunexcall:"
+echo "         --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
+echo ""
+echo " * For SLURM scheduler the string would look like this via the qunexcall: "
+echo "         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
 echo "-- Example with flagged parameters for a local run:"
 echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='mapHCPFiles' \ "
+echo "qunexmapHCPFiles --subjectsfolder='<folder_with_subjects>' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
 echo ""
 echo "-- Example with flagged parameters for submission to the scheduler:"
 echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='mapHCPFiles' \ "
+echo "qunexmapHCPFiles --subjectsfolder='<folder_with_subjects>' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' \ "
 echo "--scheduler='<name_of_cluster_scheduler_and_options>' \ "
-echo ""
-echo ""
-}
-
-# ------------------------------------------------------------------------------------------------------
-#  createLists - Generate batch processing & analysis lists
-# ------------------------------------------------------------------------------------------------------
-
-createLists() {
-if [ "$ListGenerate" == "batch" ]; then
-    # -- Check if appending list
-    if [ "$Append" == "yes" ]; then
-        # -- If append was set to yes and file exists then clear header
-        HeaderBatch="no"
-        echo ""
-        geho "---------------------------------------------------------------------"
-        geho "--> You are appending the batch header file with $CASE               "
-        geho "--> --headerbatch is now set to 'no'                                 "
-        geho "--> Check usage to overwrite the file                                "
-        geho "---------------------------------------------------------------------"
-        echo ""
-    else
-        echo ""
-        geho "---------------------------------------------------------------------"
-        geho "--> Generaring new batch file with specified header for $CASE        "
-        geho "---------------------------------------------------------------------"
-        echo ""
-    fi
-    echo "Running locally on `hostname`"
-    echo "Check log file output here: $LogFolder"
-    echo "--------------------------------------------------------------"
-    echo ""
-    ${ListFunction} \
-    --subjectsfolder="${SubjectsFolder}" \
-    --subjects="${CASE}" \
-    --outname="${ListName}" \
-    --outpath="${ListPath}"
-    echo ""
-fi
-if [ "$ListGenerate" == "analysis" ]; then
-    unset HeaderBatch
-    unset Append
-    echo ""
-    geho "---------------------------------------------------------------------"
-    geho "--> Generaring analysis list files for $CASE... "
-    geho "--> Check output here: ${SubjectsFolder}/lists... "
-    geho "---------------------------------------------------------------------"
-    echo ""
-    source "$ListFunction"
-fi
-}
-
-show_usage_createLists() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function generates a lists for processing or analyses for multiple subjects."
-echo "The function supports generation of batch parameter files for HCP processing for either 'legacy' of multiband data."
-echo ""
-echo "Supported lists:"
-echo ""
-echo "    * batch    --> Subject parameter list with cases to preprocess"
-echo "    * analysis --> List of cases to compute seed connectivity or GBC"
-echo "    * snr      --> List of cases to compute signal-to-noise ratio [DEPRECATED for QCPreproc]"
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                  Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>     Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>  List of subjects to run"
-echo "--listtocreate=<type_of_list_to_generate>   Type of list to generate (e.g. batch). "
-echo "--listname=<output_name_of_the_list>        Output name of the list to generate. "
-echo "                                            Supported: batch, analysis, snr "
-echo ""
-echo "-- OPTIONAL PARAMETERS: "
-echo ""
-echo "--overwrite=<yes/no>                        Explicitly delete any prior lists"
-echo "--append=<yes>                              Explicitly append the existing list"
-echo "--listpath=<absolute_path_to_list_folder>   Explicitly set path where you want the lists generated"
-echo "                                            Default: <study_folder>/processing/lists "
-echo ""
-echo "    * Note: If --append set to <yes> then function will append new cases to the end"
-echo ""
-echo "--headerbatch=<header_file_for_the_batch_file>  Set header for the batch file."
-echo ""
-echo "    * Default:"
-echo ""
-echo "`ls ${TOOLS}/${MNAPREPO}/connector/functions/subjectparamlist_header_multiband.txt`"
-echo ""
-echo "    * Supported: "
-echo ""
-echo "`ls ${TOOLS}/${MNAPREPO}/connector/functions/subjectparamlist_header*` "
-echo ""
-echo "    * Note: If --headerbatch set to <no> then function will not add a header"
-echo ""
-echo "--listfunction=<function_used_to_create_list>   Point to external function to use"
-echo "--bolddata=<comma_separated_list_of_bolds>      List of BOLD files to append to analysis or snr lists"
-echo "--parcellationfile=<file_for_parcellation>      Specify the absolute file path for parcellation in $TOOLS/$MNAPREPO/connector/templates/Parcellations/ "
-echo "--filetype=<file_extension>                     Extension for BOLDs in the analysis (e.g. _Atlas). Default empty []"
-echo "--boldsuffix=<comma_separated_bold_suffix>      List of BOLDs to iterate over in the analysis list"
-echo ""
-echo "-- Example with flagged parameters:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='createLists' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--listtocreate='batch' \ "
-echo "--overwrite='yes' \ "
-echo "--listname='<list_to_generate>' \ "
-echo "--headerbatch='no' \ "
-echo "--append='yes' "
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='createLists' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--listtocreate='analysis' \ "
-echo "--overwrite='yes' \ "
-echo "--bolddata='1' \ "
-echo "--filetype='dtseries.nii' \ "
-echo "--listname='<list_to_generate>' \ "
-echo "--append='yes' "
 echo ""
 }
 
@@ -784,7 +608,7 @@ echo ""
 
 dataSync() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DataSync.sh \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DataSync.sh \
 --syncfolders="${SyncFolders}" \
 --subjects="${CASE}" \
 --syncserver="${SyncServer}" \
@@ -793,7 +617,6 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DataSync.sh \
 # -- Connector execute function
 connectorExec
 }
-
 show_usage_dataSync() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
@@ -813,7 +636,7 @@ echo "                                             If set, then --backupfolders 
 echo ""
 echo "* EXAMPLE:"
 echo ""
-echo "mnap --function=dataSync \ "
+echo "qunex--function=dataSync \ "
 echo "--syncfolders=<path_to_folders> \ "
 echo "--syncserver=<sync_server> \ "
 echo "--syncdestination=<destination_path> \ "
@@ -826,12 +649,11 @@ echo ""
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 hcpdLegacy() {
-
 # -- Unique requirements for this function:
-#      Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
+#    Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
 
 # -- Specify command variable
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
+CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --scanner=${Scanner} \
@@ -847,15 +669,14 @@ connectorExec
 }
 show_usage_hcpdLegacy() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${MNAPREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
+${TOOLS}/${QuNexREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  eddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the MNAP connector wrapper
+#  eddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the QuNex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 eddyQC() {
-################# CHECK eddy_squad and eddy_squad INSTALL ################################
 # -- Check if eddy_squad and eddy_quad exist in user path
 EddySquadCheck=`which eddy_squad`
 EddyQuadCheck=`which eddy_quad`
@@ -869,7 +690,7 @@ fi
 # -- OUTPUTS: located in <eddyBase>.qc per EDDY QC specification
 
 # -- Specify command variable
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIeddyQC.sh \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DWIeddyQC.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --eddybase=${EddyBase} \
@@ -885,95 +706,17 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIeddyQC.sh \
 connectorExec
 }
 show_usage_eddyQC() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function is based on FSL's eddy to perform quality control on diffusion mri (dMRI) datasets."
-echo "It explicitly assumes the that eddy has been run and that EDDY QC by Matteo Bastiani, FMRIB has been installed. "
-echo "For full documentation of the EDDY QC please examine the README file."
-echo ""
-echo "   <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ ---> DWI eddy outputs would be here"
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                 Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>    Path to study folder that contains subjects"
-echo "--subject=<subj_id>                        Subjects ID to run EDDY QC on"
-echo "--eddybase=<eddy_input_base_name>          This is the basename specified when running EDDY (e.g. eddy_unwarped_images)"
-echo "--eddyidx=<eddy_index_file>                EDDY index file"
-echo "--eddyparams=<eddy_param_file>             EDDY parameters file"
-echo "--mask=<mask_file>                         Binary mask file (most qc measures will be averaged across voxels labeled in the mask)"
-echo "--bvalsfile=<bvals_file>                   bvals input file"
-echo "--report=<run_group_or_individual_report>  If you want to generate a group report [individual or group  Default: individual]"
-echo ""
-echo "    *IF* --report='group' *THEN* this argument needs to be specificed: "
-echo ""
-echo "--list=<group_list_input>                  Text file containing a list of qc.json files obtained from SQUAD"
-echo ""
-echo ""
-echo "-- OPTIONAL PARMETERS:"
-echo ""
-echo "--overwrite=<clean_prior_run>                          Delete prior run for a given subject"
-echo "--eddypath=<eddy_folder_relative_to_subject_folder>    Specify the relative path of the eddy folder you want to use for inputs"
-echo "                                                       Default: <study_folder>/<case>/hcp/<case>/Diffusion/eddy/ "
-echo "--bvecsfile=<bvecs_file>                               If specified, the tool will create a bvals_no_outliers.txt "
-echo "                                                        & a bvecs_no_outliers.txt file that contain the bvals and bvecs of the non outlier volumes, based on the MSR estimates)"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                       e.g. for SLURM the string would look like this: "
-echo "                                                       --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "-- EXTRA OPTIONAL PARMETERS IF --report='group' "
-echo ""
-echo "--groupvar=<extra_grouping_variable>           Text file containing extra grouping variable"
-echo "--outputdir=<name_of_cleaned_eddy_output>      Output directory - default = '<eddyBase>.qc' "
-echo "--update=<setting_to_update_subj_reports>      Applies only if --report='group' - set to <true> to update existing single subject qc reports "
-echo ""
-echo ""
-echo "-- EXAMPLE:"
-echo ""
-echo "mnap --subjectsfolder='<path_to_study_folder_with_subject_directories>' \ "
-echo "--function='eddyQC' \ "
-echo "--subject='<subj_id>' \ "
-echo "--eddybase='<eddy_base_name>' \ "
-echo "--report='individual'"
-echo "--bvalsfile='<bvals_file>' \ "
-echo "--mask='<mask_file>' \ "
-echo "--eddyidx='<eddy_index_file>' \ "
-echo "--eddyparams='<eddy_param_file>' \ "
-echo "--bvecsfile='<bvecs_file>' \ "
-echo "--overwrite='yes' "
-echo "--scheduler='<name_of_scheduler_and_options>' "
-echo ""
-echo "-- OUTPUTS FOR INDIVIDUAL RUN: "
-echo ""
-echo " - qc.pdf: single subject QC report "
-echo " - qc.json: single subject QC and data info"
-echo " - vols_no_outliers.txt: text file that contains the list of the non-outlier volumes (based on eddy residuals)"
-echo ""
-echo "-- OUTPUTS FOR GROUP RUN: "
-echo ""
-echo " - group_qc.pdf: single subject QC report "
-echo " - group_qc.db: database"
-echo ""
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${QuNexREPO}/connector/functions/DWIeddyQC.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  DWIDenseParcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the MNAP connector wrapper
+#  DWIDenseParcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the QuNex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DWIDenseParcellation() {
-# -- Parse general parameters
-QUEUE="$QUEUE"
-SubjectsFolder="$SubjectsFolder"
-CASE="$CASE"
-MatrixVersion="$MatrixVersion"
-ParcellationFile="$ParcellationFile"
-OutName="$OutName"
-DWIOutput="${SubjectsFolder}/${CASE}/hcp/$CASE/MNINonLinear/Results/Tractography"
-Overwrite="$Overwrite"
-
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIDenseParcellation.sh \
+#DWIOutput="${SubjectsFolder}/${CASE}/hcp/$CASE/MNINonLinear/Results/Tractography"
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DWIDenseParcellation.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --matrixversion=${MatrixVersion} \
@@ -987,64 +730,18 @@ connectorExec
 show_usage_DWIDenseParcellation() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function implements parcellation on the DWI dense connectomes using a whole-brain parcellation (e.g.Glasser parcellation with subcortical labels included)."
-echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
-echo ""
-echo " <study_folder>/<case>/hcp/<case>/MNINonLinear/Tractography/ ---> Dense Connectome DWI data needs to be here"
-echo ""
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                            Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>               Path to study folder that contains subjects"
-echo "--subject=<comma_separated_list_of_cases>             List of subjects to run"
-echo "--matrixversion=<matrix_version_value>                Matrix solution verion to run parcellation on; e.g. 1 or 3"
-echo "--parcellationfile=<file_for_parcellation>            Specify the absolute path of the file you want to use for parcellation"
-echo "--outname=<name_of_output_pconn_file>                 Specify the suffix output name of the pconn file"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>   A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                      e.g. for SLURM the string would look like this: "
-echo "                                                      --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo "-- OPTIONAL PARMETERS:"
-echo ""
-echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
-echo "--waytotal=<use_waytotal_normalized_data>            Use the waytotal normalized version of the DWI dense connectome. Default: [none]"
-echo "                                                     none: without waytotal normalization [Default]" 
-echo "                                                     standard: standard waytotal normalized"
-echo "                                                     log: log-transformed waytotal normalized"
-echo ""
-echo "-- Example with flagged parameters for a local run:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='DWIDenseParcellation' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--matrixversion='3' \ "
-echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
-echo "--overwrite='no' \ "
-echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
-echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='DWIDenseParcellation' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--matrixversion='3' \ "
-echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
-echo "--overwrite='no' \ "
-echo "--outname='LR_Colelab_partitions_v1d_islands_withsubcortex' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
+${TOOLS}/${QuNexREPO}/connector/functions/DWIDenseParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  DWISeedTractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the MNAP connector wrapper
+#  DWIDenseSeedTractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the QuNex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-DWISeedTractography() {
+DWIDenseSeedTractography() {
 # -- Command to run
 CommandToRun="DWIDenseSeedTractography.sh \
 --subjectsfolder="${SubjectsFolder}" \
---subject="${CASE}" \
+--subjects="${CASE}" \
 --matrixversion="${MatrixVersion}" \
 --seedfile="${SeedFile}" \
 --waytotal="${WayTotal}" \
@@ -1053,125 +750,19 @@ CommandToRun="DWIDenseSeedTractography.sh \
 # -- Connector execute function
 connectorExec
 }
-show_usage_DWISeedTractography() {
-echo ""
+show_usage_DWIDenseSeedTractography() {
 echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function implements reduction on the DWI dense connectomes using a given 'seed' structure (e.g. thalamus)."
-echo "It explicitly assumes the the Human Connectome Project folder structure for preprocessing: "
-echo ""
-echo " <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/ ---> Dense Connectome DWI data needs to be here"
-echo ""
-echo ""
-echo "OUTPUTS: "
-echo "     <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>.dconn.nii"
-echo "        --> Dense connectivity seed tractography file"
-echo "" 
-echo "      <folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<subject>_Conn<matrixversion>_<outname>_Avg.dscalar.nii"
-echo "         --> Dense scalar seed tractography file"
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                           Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>              Path to study folder that contains subjects"
-echo "--subject=<comma_separated_list_of_cases>            List of subjects to run"
-echo "--matrixversion=<matrix_version_value>               Matrix solution verion to run parcellation on; e.g. 1 or 3"
-echo "--seedfile=<file_for_seed_reduction>                 Specify the absolute path of the seed file you want to use as a seed for dconn reduction"
-echo "                                                     Note: If you specify --seedfile='gbc' then the function computes an average across all streamlines from every greyordinate to all other greyordinates."
-echo "--outname=<name_of_output_dscalar_file>              Specify the suffix output name of the dscalar file"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                     e.g. for SLURM the string would look like this: "
-echo "                                                     --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "-- OPTIONAL PARMETERS:"
-echo ""
-echo "--overwrite=<clean_prior_run>                        Delete prior run for a given subject"
-echo "--waytotal=<use_waytotal_normalized_data>            Version of dense connectome to use as input" 
-echo "                                                       none: without waytotal normalization [Default]" 
-echo "                                                       standard: standard waytotal normalized"
-echo "                                                       log: log-transformed waytotal normalized"
-echo ""
-echo "-- Example with flagged parameters for a local run:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='DWISeedTractography' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--matrixversion='3' \ "
-echo "--seedfile='<folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
-echo "--overwrite='no' \ "
-echo "--outname='Thalamus_Seed' \ "
-echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='DWISeedTractography' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--matrixversion='3' \ "
-echo "--seedfile='<folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
-echo "--overwrite='no' \ "
-echo "--outname='Thalamus_Seed' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
+${TOOLS}/${QuNexREPO}/connector/functions/DWIDenseSeedTractography.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  ICAFIXhcp - Function for computing ICA FIX + PostFIX on HCP minimally processed BOLD data
-# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-ICAFIXhcp() {
-
-# -- Specify command variable
-CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ICAFIXhcp.sh \
---subjectsfolder=${SubjectsFolder} \
---subjects=${CASES} \
---bolds=${BOLDS} \
---movcorr=${MovCorr} \
---icafixfunction=${ICAFIXFunction} \
---hpfilter=${HPFilter} \
---overwrite=${Overwrite}"
-
-# -- Connector execute function
-connectorExec
-}
-show_usage_hcpdLegacy() {
-echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${MNAPREPO}/connector/functions/ICAFIXhcp.sh
-}
-
-# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the MNAP connector wrapper
+#  computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the QuNex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 computeBOLDfc() {
-# -- Parse general parameters
-SubjectsFolder="$SubjectsFolder"
-CASE="$CASE"
-InputFiles="$InputFiles"
-OutPath="$OutPathFC"
-OutName="$OutName"
-ExtractData="$ExtractData"
-# -- Parse additional parameters
-Calculation="$Calculation"        # --calculation=
-RunType="$RunType"                # --runtype=
-FileList="$FileList"            # --flist=
-IgnoreFrames="$IgnoreFrames"    # --ignore=
-MaskFrames="$MaskFrames"        # --mask=
-Covariance="$Covariance"        # --covariance=
-TargetROI="$TargetROI"            # --target=
-RadiusSmooth="$RadiusSmooth"    # --rsmooth=
-RadiusDilate="$RadiusDilate"    # --rdilate=
-GBCCommand="$GBCCommand"        # --command=
-Verbose="$Verbose"                # --verbose=
-ComputeTime="$ComputeTime"        # --time=
-VoxelStep="$VoxelStep"            # --vstep=
-ROIInfo="$ROIInfo"                # --roinfo=
-FCCommand="$FCCommand"            # --options=
-Method="$Method"                # --method=
-InputPath="$InputPath"            # --inputpath
-Overwrite="$Overwrite"            # --overwrite
-MemLimit="$MemLimit"            # --mem-limit=
 
 # -- Check type of run
+OutPath="$OutPathFC"
 if [ "${RunType}" == "individual" ]; then
     OutPath="${SubjectsFolder}/${CASE}/${InputPath}"
     # -- Make sure individual runs default to the original input path location (/images/functional)
@@ -1188,7 +779,7 @@ fi
 if [ ${Calculation} == "seed" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -1213,7 +804,7 @@ fi
 if [ ${Calculation} == "gbc" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -1242,7 +833,7 @@ fi
 if [ ${Calculation} == "dense" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    CommandToRun="${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -1260,11 +851,11 @@ fi
 }
 show_usage_computeBOLDfc() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${MNAPREPO}/connector/functions/ComputeFunctionalConnectivity.sh
+${TOOLS}/${QuNexREPO}/connector/functions/ComputeFunctionalConnectivity.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  structuralParcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the MNAP connector wrapper
+#  structuralParcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the QuNex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 structuralParcellation() {
@@ -1278,7 +869,7 @@ ParcellationFile="$ParcellationFile"
 ExtractData="$ExtractData"
 Overwrite="$Overwrite"
 # -- Command to run
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/StructuralParcellation.sh \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/StructuralParcellation.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --inputdatatype=${InputDataType} \
@@ -1290,56 +881,12 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/StructuralParcellation.
 connectorExec
 }
 show_usage_structuralParcellation() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function implements parcellation on the dense cortical thickness OR myelin files using a whole-brain parcellation [ e.g. Glasser parcellation with subcortical labels included ]"
-echo ""
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                             Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects"
-echo "--subject=<comma_separated_list_of_cases>              List of subjects to run"
-echo "--inputdatatype=<type_of_dense_data_for_input_file>    Specify the type of data for the input file [ e.g. MyelinMap_BC or corrThickness ] "
-echo "--parcellationfile=<dlabel_file_for_parcellation>      Specify path of the file you want to use for parcellation relative to the master study folder [ e.g. /images/functional/bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii ]"
-echo "--outname=<name_of_output_pconn_file>                  Specify the suffix output name of the pconn file"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>    A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                         e.g. for SLURM the string would look like this: "
-echo "                                                         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "-- OPTIONAL PARMETERS:"
-echo ""
-echo "--overwrite=<clean_prior_run>                          Delete prior run for a given subject"
-echo "--extractdata=<save_out_the_data_as_as_csv>            Specify if you want to save out the matrix as a CSV file"
-echo ""
-echo "-- Example with flagged parameters for a local run:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='structuralParcellation' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--inputdatatype='MyelinMap_BC' \ "
-echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
-echo "--overwrite='no' \ "
-echo "--extractdata='yes' \ "
-echo "--outname='<name_of_output_pconn_file>' "
-echo ""
-echo "-- Example with flagged parameters for submission to the scheduler:"
-echo ""
-echo "mnap --subjectsfolder='<folder_with_subjects>' \ "
-echo "--function='structuralParcellation' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--inputdatatype='MyelinMap_BC' \ "
-echo "--parcellationfile='<dlabel_file_for_parcellation>' \ "
-echo "--overwrite='no' \ "
-echo "--extractdata='yes' \ "
-echo "--outname='<name_of_output_pconn_file>' "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${QuNexREPO}/connector/functions/StructuralParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  BOLDParcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the MNAP connector wrapper
+#  BOLDParcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the QuNex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 BOLDParcellation() {
@@ -1350,7 +897,7 @@ else
     BOLDOutput="${OutPath}"
 fi
 # -- Command to run
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/BOLDParcellation.sh \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/BOLDParcellation.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subjects='${CASE}' \
 --inputfile='${InputFile}' \
@@ -1370,25 +917,17 @@ connectorExec
 }
 show_usage_BOLDParcellation() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${MNAPREPO}/connector/functions/BOLDParcellation.sh
+${TOOLS}/${QuNexREPO}/connector/functions/BOLDParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  ROIExtract - Executes the ROI Extraction Script (ROIExtract.sh) via the MNAP connector wrapper
+#  ROIExtract - Executes the ROI Extraction Script (ROIExtract.sh) via the QuNex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ROIExtract() {
 # -- Parse general parameters
-InputFile="$InputFile"
-OutPath="$OutPath"
-OutName="$OutName"
-ROIFile="$ROIInputFile"
-SubjectsFolder="$SubjectsFolder"
-CASE=${CASE}
 ROIFileSubjectSpecific="$ROIFileSubjectSpecific"
 SingleInputFile="$SingleInputFile"
-Cluster="$RunMethod"
-ExtractData="${ExtractData}"
 if [ -z "$SingleInputFile" ]; then
     OutPath="${SubjectsFolder}/${CASE}/${OutPath}"
 else
@@ -1401,8 +940,8 @@ else
     ROIFile="${SubjectsFolder}/${CASE}/${ROIFile}"
 fi
 # -- Command to run
-CommandToRun=". /$TOOLS/${MNAPREPO}/connector/functions/ROIExtract.sh \
---roifile='${ROIFile}' \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/ROIExtract.sh \
+--roifile='${ROIInputFile}' \
 --inputfile='${InputFile}' \
 --outdir='${OutPath}' \
 --outname='${OutName}'"
@@ -1412,42 +951,7 @@ connectorExec
 show_usage_ROIExtract() {
 echo ""
 echo "DESCRIPTION for $UsageInput"
-echo ""
-echo " This function calls ROIExtract.sh and extracts data from an input file for every ROI in a given template file."
-echo " The function needs a matching file type for the ROI input and the data input (i.e. both NIFTI or CIFTI)."
-echo " It assumes that the template ROI file indicates each ROI in a single volume via unique scalar values."
-echo ""
-echo ""
-echo "REQUIRED PARMETERS (for single input file):"
-echo ""
-echo "--function=<function_name>                 Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--singleinputfile=<file_to_be_extracted>   Extract data from a single file in any location using an absolute path point to this file"
-echo "--roifile=<roi_template_file>              Specify path to the ROI template file (either a NIFTI or a CIFTI with distinct scalar values per ROI)"
-echo "--outpath=<path_for_output_file>           Specify the absolute path to the directory in which to save output file"
-echo "--outname=<name_of_output_file>            Specify base name of the output .csv saved in outpath"
-echo " "
-echo "-- OUTPUT FORMAT:"
-echo ""
-echo "<output_name>.csv      <-- matrix with one ROI per row and one column per frame/volume in singleinputfile"
-echo ""
-echo ""
-echo "OPTIONAL PARMETERS:"
-echo ""
-echo "--scheduler=<name_of_cluster_scheduler_and_options> A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                    ==> e.g. for SLURM the string would look like this: "
-echo "                                                    --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo "--overwrite=<clean_prior_run>                       Delete prior run"
-echo ""
-echo "Example with flagged parameters for submission to the scheduler:"
-echo ""
-echo "mnap --subjectsfolder='<path_to_study_folder>' \ "
-echo "--function='ROIExtract' \ "
-echo "--singleinputfile='<path_to_inputfile>' \ "
-echo "--roifile='<path_to_roifile>' \ "
-echo "--outpath='<output_path>' \ "
-echo "--outname='<output_name>' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
+${TOOLS}/${QuNexREPO}/connector/functions/ROIExtract.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1456,17 +960,16 @@ echo ""
 
 FSLDtifit() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLDtifit.sh \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLDtifit.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subject='${CASE}' \
 --overwrite='${Overwrite}' "
 # -- Connector execute function
 connectorExec
 }
-
 show_usage_FSLDtifit() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLDtifit.sh
+${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLDtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
@@ -1475,7 +978,7 @@ ${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLDtifit.sh
 
 FSLBedpostxGPU() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subject='${CASE}' \
 --fibers='${Fibers}' \
@@ -1490,7 +993,7 @@ connectorExec
 
 show_usage_FSLBedpostxGPU() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${MNAPREPO}/connector/functions/DWIFSLBedpostxGPU.sh
+${TOOLS}/${QuNexREPO}/connector/functions/DWIFSLBedpostxGPU.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1533,42 +1036,16 @@ echo ""
 
 pretractographyDense() {
 # -- Parse general parameters
-ScriptsFolder="${HCPPIPEDIR_dMRITracFull}/PreTractography"
 LogFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_pretractographydense"
 RunFolder="${SubjectsFolder}/${CASE}/hcp/"
 # -- Command to run
-CommandToRun="${ScriptsFolder}/PreTractography.sh ${RunFolder} ${CASE} 0 "
+CommandToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${RunFolder} ${CASE} 0 "
 # -- Connector execute function
 connectorExec
 }
-
 show_usage_pretractographyDense() {
-echo ""
-echo "-- DESCRIPTION for $UsageInput"
-echo ""
-echo "This function runs the Pretractography Dense trajectory space generation."
-echo "Note that this is a very quick function to run [< 5min] so no overwrite options exist."
-echo "It explicitly assumes the Human Connectome Project folder structure for preprocessing and completed diffusion and bedpostX processing: "
-echo ""
-echo " <study_folder>/<case>/hcp/<case>/Diffusion ---> DWI data needs to be here"
-echo " <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX ---> BedpostX output data needs to be here"
-echo ""
-echo "-- REQUIRED PARMETERS:"
-echo ""
-echo "--function=<function_name>                              Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
-echo "--subjectsfolder=<folder_with_subjects>                 Path to study folder that contains subjects"
-echo "--subjects=<comma_separated_list_of_cases>              List of subjects to run"
-echo "--scheduler=<name_of_cluster_scheduler_and_options>     A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
-echo "                                                        e.g. for SLURM the string would look like this: "
-echo "                                                        --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
-echo ""
-echo "-- EXAMPLE:"
-echo ""
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--function='pretractographyDense' \ "
-echo "--scheduler='<name_of_scheduler_and_options>' \ "
-echo ""
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1577,7 +1054,7 @@ echo ""
 
 ProbtrackxGPUDense() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/ProbtrackxGPUDense.sh \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/ProbtrackxGPUDense.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --scriptsfolder='${ScriptsFolder}' \
 --infolder='${InFolder}' \
@@ -1590,10 +1067,9 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/ProbtrackxGPUDense.sh \
 # -- Connector execute function
 connectorExec
 }
-
 show_usage_ProbtrackxGPUDense() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${MNAPREPO}/connector/functions/ProbtrackxGPUDense.sh
+${TOOLS}/${QuNexREPO}/connector/functions/ProbtrackxGPUDense.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
@@ -1638,7 +1114,7 @@ echo "These credentials are expected in your home folder under ./aws/credentials
 echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
-echo "--function=<function_name>                    Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags)"
+echo "--function=<function_name>                    Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags)"
 echo "--subjectsfolder=<folder_with_subjects>       Path to study folder that contains subjects"
 echo "--subjects=<comma_separated_list_of_cases>    List of subjects to run"
 echo "--modality=<modality_to_sync>                 Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
@@ -1646,7 +1122,7 @@ echo "--awsuri=<aws_uri_location>                   Enter the AWS URI [e.g. /hcp
 echo ""
 echo "-- Example with flagged parameters for submission to the scheduler:"
 echo ""
-echo "mnap --subjectsfolder='<path_to_study_subjects_folder>' \ "
+echo "qunex--subjectsfolder='<path_to_study_subjects_folder>' \ "
 echo "--subjects='<comma_separated_list_of_cases>' \ "
 echo "--function='AWSHCPSync' \ "
 echo "--modality='T1w' \ "
@@ -1655,10 +1131,10 @@ echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
-# QC - customized for HCP - QCPreproc
+# runQC - Performs various QC operations across modalities
 # -------------------------------------------------------------------------------------------------------------------------------
 
-QCPreproc() {
+runQC() {
 # -- Check general output folders for QC
 if [ ! -d ${SubjectsFolder}/QC ]; then
     mkdir -p ${SubjectsFolder}/QC &> /dev/null
@@ -1668,7 +1144,7 @@ if [ ! -d ${OutPath} ]; then
     mkdir -p ${OutPath} &> /dev/null
 fi
 # -- Command to run
-CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
+CommandToRun=". ${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subjects='${CASE}' \
 --outpath='${OutPath}' \
@@ -1677,7 +1153,7 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --modality='${Modality}' \
 --datapath='${GeneralSceneDataPath}' \
 --datafile='${GeneralSceneDataFile}' \
---customqc=${QCPreprocCustom} \
+--customqc=${runQC_Custom} \
 --omitdefaults=${OmitDefaults} \
 --dwipath='${DWIPath}' \
 --dwidata='${DWIData}' \
@@ -1697,17 +1173,29 @@ CommandToRun=". ${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh \
 --boldfcpath='${BOLDfcPath}' \
 --suffix='${Suffix}' \
 --hcp_suffix='${HCPSuffix}'"
-
 # -- Connector execute function
 connectorExec
 }
-show_usage_QCPreproc() {
+# -- Check for deprecated name and redundant camel case
+show_usage_runQC() {
+UsageInput="runQC"
+echo ""
+reho "==> NOTE: QCPreproc is deprecated. New function name --> ${UsageInput}"
+echo ""
+echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh
+}
+show_usage_runQC() {
 echo ""; echo "-- DESCRIPTION for $UsageInput"
-${TOOLS}/${MNAPREPO}/connector/functions/QCPreprocessing.sh
+${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh
+}
+show_usage_runQC() {
+echo ""; echo "-- DESCRIPTION for $UsageInput"
+${TOOLS}/${QuNexREPO}/connector/functions/RunQC.sh
 }
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
-# =-=-=-=-=-==-=-=-= Establish general MNAP functions and variables =-=-=-=-=-=-=-=-=-=-=
+# =-=-=-=-=-==-=-=-= Establish general QuNex functions and variables =-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=
 
 # -- Setup this script such that if any command exits with a non-zero value, the
@@ -1723,13 +1211,9 @@ if [[ ! -z $HCPPIPEDIR ]]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  Establish tool name for logging
-# ------------------------------------------------------------------------------
-# log_SetToolName "mnap.sh"
-
-# ------------------------------------------------------------------------------
 #  Load Core Functions
 # ------------------------------------------------------------------------------
+
 # -- Parses the input command line for a specified command line option
 # -- The first parameter is the command line option to look for.
 # -- The remaining parameters are the full list of flagged command line arguments
@@ -1755,13 +1239,13 @@ done
 }
 
 # -- Set version variable
-MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
+QuNexVer=`cat ${TOOLS}/${QuNexREPO}/VERSION.md`
 
 # -- Checks for version
 showVersion() {
-    MNAPVer=`cat ${TOOLS}/${MNAPREPO}/VERSION.md`
+    QuNexVer=`cat ${TOOLS}/${QuNexREPO}/VERSION.md`
     echo ""
-    geho "    Multimodal Neuroimaging Analysis Platform (MNAP) Version: v${MNAPVer}"
+    geho "    Multimodal Neuroimaging Analysis Platform (QuNex) Version: v${QuNexVer}"
 }
 
 # ------------------------------------------------------------------------------
@@ -1793,9 +1277,9 @@ fi
 if [ "$1" == "--envsetup" ] || [ "$1" == "-envsetup" ] || [ "$1" == "envsetup" ]; then
     showVersion
     echo ""
-    echo "Printing help call for $TOOLS/$MNAPREPO/library/environment/mnap_environment.sh"
+    echo "Printing help call for $TOOLS/$QuNexREPO/library/environment/qunex_environment.sh"
     echo ""
-    bash ${TOOLS}/$MNAPREPO/library/environment/mnap_environment.sh --help
+    bash ${TOOLS}/$QuNexREPO/library/environment/qunex_environment.sh --help
     exit 0
 fi
 
@@ -1846,16 +1330,16 @@ fi
 #  Check if specific function help requested
 # ------------------------------------------------------------------------------
 
-isMNAPFunction() {
-MatlabFunctionsCheck=`find $TOOLS/$MNAPREPO/matlab/ -name "*.m" | grep -v "archive/"`
-if [ -z "${MNAPFunctions##*$1*}" ]; then
+isQuNexFunction() {
+MatlabFunctionsCheck=`find $TOOLS/$QuNexREPO/nitools/ -name "*.m" | grep -v "archive/"`
+if [ -z "${QuNexFunctions##*$1*}" ]; then
     return 0
 elif [[ ! -z `echo $MatlabFunctionsCheck | grep "$1"` ]]; then
-    MNAPMatlabFunction="$1"
+    QuNexMatlabFunction="$1"
     echo ""
-    echo "Requested $MatlabFunction function is part of the MNAP Matlab tools. Checking usage:"
+    echo "Requested $MatlabFunction function is part of the QuNex Matlab tools. Checking usage:"
     echo ""
-    ${MNAPMCOMMAND} "help ${MNAPMatlabFunction},quit()"
+    ${QuNexMCOMMAND} "help ${QuNexMatlabFunction},quit()"
     exit 0
 else
     echo ""
@@ -1885,7 +1369,7 @@ if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then
     fi
     UsageInput=`echo ${Usage:2}`
     # -- Check if input part of function list
-    isMNAPFunction $UsageInput
+    isQuNexFunction $UsageInput
     showVersion
     show_usage_"$UsageInput"
     exit 0
@@ -1908,7 +1392,7 @@ if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then
     fi
     UsageInput=`echo ${Usage:1}`
     # -- Check if input part of function list
-    isMNAPFunction $UsageInput
+    isQuNexFunction $UsageInput
     showVersion
     show_usage_"$UsageInput"
     exit 0
@@ -1919,7 +1403,7 @@ if [[ ${HelpInputUsage:0:1} == "?" ]] && [ -z "$2" ]; then
     Usage="$1"
     UsageInput=`echo ${Usage} | cut -c 2-`
     # -- Check if input part of function list
-    isMNAPFunction $UsageInput
+    isQuNexFunction $UsageInput
     showVersion
     show_usage_"$UsageInput"
     exit 0
@@ -1928,7 +1412,7 @@ fi
 if [ -z "$2" ]; then
     UsageInput="$1"
     # -- Check if input part of function list
-    isMNAPFunction $UsageInput
+    isQuNexFunction $UsageInput
     showVersion
     show_usage_"$UsageInput"
     exit 0
@@ -1941,18 +1425,17 @@ fi
 # -- Clear variables for new run
 unset FunctionToRun
 unset subjects
-unset FunctionToRunInt
 unset StudyFolder
 unset CASES
 unset Overwrite
 unset Scheduler
-unset QUEUE
-unset NetID
 unset ClusterName
 unset setflag
 unset doubleflag
 unset singleflag
 unset SUBJID
+unset SESSIONS
+unset SESSION_LABELS
 
 # -- Check if first parameter is missing flags and parse it as FunctionToRun
 if [ -z `echo "$1" | grep '-'` ]; then
@@ -2025,7 +1508,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     else
         StudyFolder="$StudyFolder"
     fi
-    # -- If subjects folder is missing but study folder is defined assume standard MNAP folder structure
+    # -- If subjects folder is missing but study folder is defined assume standard QuNex folder structure
     if [ -z "$SubjectsFolder" ]; then
         if [ -z "$StudyFolder" ]; then
         echo "" &> /dev/null
@@ -2033,7 +1516,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
             SubjectsFolder="$StudyFolder/subjects"
         fi
     fi
-    # -- If study folder is missing but subjects folder is defined assume standard MNAP folder structure
+    # -- If study folder is missing but subjects folder is defined assume standard QuNex folder structure
     if [ -z "$StudyFolder" ]; then
         if [ -z "$SubjectsFolder" ]; then
         echo "" &> /dev/null
@@ -2059,7 +1542,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     CleanupSubject=`opts_GetOpt "${setflag}cleanupsubject" $@`
     CleanupProject=`opts_GetOpt "${setflag}cleanupproject" $@`
     RawDataInputPath=`opts_GetOpt "${setflag}rawdatainput" $@`
-    mnap_subjectsfolder=`opts_GetOpt "${setflag}subjectsfolder" $@`
+    qunex_subjectsfolder=`opts_GetOpt "${setflag}subjectsfolder" $@`
     OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
     OVERWRITE_STEP=`opts_GetOpt "${setflag}overwritestep" $@`
     OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
@@ -2078,9 +1561,27 @@ if [[ "$setflag" =~ .*-.* ]]; then
     XNAT_PASSWORD=`opts_GetOpt "${setflag}xnatpass" $@`
     XNAT_STUDY_INPUT_PATH=`opts_GetOpt "${setflag}xnatstudyinputpath" $@`
 
-    # -- General flags
+    # -- General subject and session flags
     CASES=`opts_GetOpt "${setflag}subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
     SUBJID=`opts_GetOpt "${setflag}subjid" "$@" | sed 's/,/ /g;s/|/ /g'`; SUBJID=`echo "$SUBJID" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
+    SESSION_LABELS=`opts_GetOpt "--sessionlabel" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+    if [[ -z ${SESSION_LABELS} ]]; then
+        SESSION_LABELS=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+    fi
+    if [[ -z ${SESSION_LABELS} ]]; then
+        SESSION_LABELS=`opts_GetOpt "--sessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+    fi
+    if [[ -z ${SESSION_LABELS} ]]; then
+       SESSION_LABELS=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+    fi
+    SESSIONS="${SESSION_LABELS}"
+    if [[ -z ${CASES} ]]; then
+        if [[ ! -z ${SESSIONS} ]]; then
+            CASES="$SESSIONS"
+        fi
+    fi
+
+    # -- General operational flags
     Overwrite=`opts_GetOpt "${setflag}overwrite" $@`  # Clean prior run and starr fresh [yes/no]
     PRINTCOM=`opts_GetOpt "${setflag}printcom" $@`    # Option for printing the entire command
     Scheduler=`opts_GetOpt "${setflag}scheduler" $@`  # Specify the type of scheduler to use
@@ -2099,6 +1600,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     else
         RunMethod="1"
     fi
+    
     # -- g_PlotsBoldTS input flags
     QCPlotElements=`opts_GetOpt "${setflag}qcplotelements" $@`
     QCPlotImages=`opts_GetOpt "${setflag}qcplotimages" $@`
@@ -2110,9 +1612,9 @@ if [[ "$setflag" =~ .*-.* ]]; then
     Gzip=`opts_GetOpt "${setflag}gzip" $@`
     VerboseRun=`opts_GetOpt "${setflag}verbose" $@`
     Cores=`opts_GetOpt "${setflag}cores" $@`
-    # -- Path options for FreeSurfer or MNAP
+    # -- Path options for FreeSurfer or QuNex
     FreeSurferHome=`opts_GetOpt "${setflag}hcp_freesurfer_home" $@`
-    MNAPVersion=`opts_GetOpt "${setflag}version" $@`
+    QuNexVersion=`opts_GetOpt "${setflag}version" $@`
     # -- createLists input flags
     ListGenerate=`opts_GetOpt "${setflag}listtocreate" $@`
     Append=`opts_GetOpt "${setflag}append" $@`
@@ -2130,7 +1632,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     Direction=`opts_GetOpt "${setflag}dir" $@`
     ClusterName=`opts_GetOpt "${setflag}cluster" $@`
     # -- ROIExtract input flags
-    ROIInputFile=`opts_GetOpt "${setflag}roifile" $@`
+    ROIFile=`opts_GetOpt "${setflag}roifile" $@`
     ROIFileSubjectSpecific=`opts_GetOpt "${setflag}subjectroifile" $@`
     # -- computeBOLDfc input flags
     InputFiles=`opts_GetOpt "${setflag}inputfiles" $@`
@@ -2177,7 +1679,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     ParcellationFile=`opts_GetOpt "${setflag}parcellationfile" $@`
     OutName=`opts_GetOpt "${setflag}outname" $@`
     WayTotal=`opts_GetOpt "${setflag}waytotal" $@`
-    # -- DWISeedTractography input flags
+    # -- DWIDenseSeedTractography input flags
     SeedFile=`opts_GetOpt "${setflag}seedfile" $@`
     # -- eddyQC input flags
     EddyBase=`opts_GetOpt "${setflag}eddybase" $@`
@@ -2208,13 +1710,13 @@ if [[ "$setflag" =~ .*-.* ]]; then
     OutFolder=`opts_GetOpt "${setflag}outfolder" $@`
     # -- AWSHCPSync input flags
     Awsuri=`opts_GetOpt "${setflag}awsuri" $@`
-    # -- QCPreproc input flags
+    # -- runQC input flags
     OutPath=`opts_GetOpt "${setflag}outpath" $@`
     scenetemplatefolder=`opts_GetOpt "${setflag}scenetemplatefolder" $@`
     UserSceneFile=`opts_GetOpt "${setflag}userscenefile" $@`
     UserScenePath=`opts_GetOpt "${setflag}userscenepath" $@`
     Modality=`opts_GetOpt "${setflag}modality" $@`
-    QCPreprocCustom=`opts_GetOpt "${setflag}customqc" $@`
+    runQC_Custom=`opts_GetOpt "${setflag}customqc" $@`
     OmitDefaults=`opts_GetOpt "${setflag}omitdefaults" $@`
     HCPSuffix=`opts_GetOpt "${setflag}hcp_suffix" $@`
     DWIPath=`opts_GetOpt "${setflag}dwipath" $@`
@@ -2272,14 +1774,14 @@ fi
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 
 echo ""
-geho "--- Running MNAP v${MNAPVer}: ${FunctionToRun} function"
+geho "--- Running QuNex v${QuNexVer}: ${FunctionToRun} function"
 echo ""
 
 # ------------------------------------------------------------------------------
 #  matlabHelp function
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "matlabHelp" ]; then
+if [ "$FunctionToRun" == "nitoolsHelp" ]; then
     ${FunctionToRun}
 fi
 
@@ -2293,6 +1795,7 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    if [ "$Cluster" == "2" ]; then
            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
    fi
+   # -- Clean up argument flags
    runTurnkeyArgumentsInput="${runTurnkeyArguments}"
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--subjects=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=.[^-]*||g'`
@@ -2300,7 +1803,6 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolds=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolddata=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--boldruns=.[^-]*||g'`
-   
    echo ""
    echo "Running $FunctionToRun processing with the following parameters:"
    echo ""
@@ -2320,7 +1822,7 @@ fi
 
 if [ "$FunctionToRun" == "organizeDicom" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then
         if [ -z "$Folder" ]; then
             reho "Error: Study folder missing and optional parameter --folder not specified."
@@ -2372,7 +1874,7 @@ if [ "$FunctionToRun" == "organizeDicom" ]; then
     echo "   Subjects: ${CASES}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo ""
-    # Report optional parameters
+    # -- Report optional parameters
     echo "   Clean NIFTI files: ${Clean}"
     echo "   Unzip DICOM files: ${Unzip}"
     echo "   Gzip DICOM files: ${Gzip}"
@@ -2386,47 +1888,25 @@ if [ "$FunctionToRun" == "organizeDicom" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  niftiQC function loop
+#  runQC function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "QCnifti" ]; then
-   if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-   if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-   if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-   # -- Check if cluster options are set
-   Cluster="$RunMethod"
-   if [ "$Cluster" == "2" ]; then
-           if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-   fi
-   
-   echo ""
-   echo "Running $FunctionToRun processing with the following parameters:"
-   echo ""
-   echo "--------------------------------------------------------------"
-   echo ""
-   echo "   StudyFolder: ${StudyFolder}"
-   echo "   Subjects Folder: ${SubjectsFolder}"
-   echo "   Subject: ${CASE}"
-   echo ""
-   echo "--------------------------------------------------------------"
-    # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
-fi
-
-# ------------------------------------------------------------------------------
-#  Visual QC Images function loop - QCPreproc - wb_command based
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRun" == "QCPreproc" ]; then
+if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "$FunctionToRun" == "RunQC" ]; then
+    if [ "$FunctionToRun" == "QCPreproc" ]; then
+       FunctionToRun="runQC"
+       echo ""
+       reho "==> NOTE: QCPreproc is deprecated. New function name --> ${FunctionToRun}"
+       echo ""
+    fi
     # -- Check all the user-defined parameters:
-    TimeStampQCPreproc=`date +%Y-%m-%d-%H-%M-%S`
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    TimeStampRunQC=`date +%Y-%m-%d-%H-%M-%S`
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing."; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing."; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing."; exit 1; fi
     if [ -z "$Modality" ]; then reho "Error:  Modality to perform QC on missing."; exit 1; fi
-    if [ -z "$QCPreprocCustom" ]; then QCPreprocCustom="no"; fi
-    if [ "$QCPreprocCustom" == "yes" ]; then scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"; fi
+    if [ -z "$runQC_Custom" ]; then runQC_Custom="no"; fi
+    if [ "$runQC_Custom" == "yes" ]; then scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"; fi
     if [ -z "$OmitDefaults" ]; then OmitDefaults="no"; fi
     Cluster="$RunMethod"
     if [ "$Cluster" == "2" ]; then
@@ -2437,19 +1917,19 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
         if [ ! -z "$UserScenePath" ]; then 
             reho "---> Provided --userscenepath but --userscenefile not specified."
             reho "     Check your inputs and re-run.";
-            scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
-            reho "---> Reverting to MNAP defaults: ${scenetemplatefolder}"; echo ""
+            scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
+            reho "---> Reverting to QuNex defaults: ${scenetemplatefolder}"; echo ""
         fi
         if [ -z "$scenetemplatefolder" ]; then
-            scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+            scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
             reho "---> Template folder path value not explicitly specified."
-            reho "---> Using MNAP defaults: ${scenetemplatefolder}"
+            reho "---> Using QuNex defaults: ${scenetemplatefolder}"
         fi
         if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
             geho "---> Scene files found in `ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
         else 
             reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
-            scenetemplatefolder="${TOOLS}/${MNAPREPO}/library/data/scenes/qc"
+            scenetemplatefolder="${TOOLS}/${QuNexREPO}/library/data/scenes/qc"
             reho "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
         fi
     else
@@ -2514,9 +1994,9 @@ if [ "$FunctionToRun" == "QCPreproc" ]; then
     echo "   QC Modality: ${Modality}"
     echo "   QC Output Path: ${OutPath}"
     echo "   Study Log Folder: ${LogFolder}"
-    echo "   Custom QC requested: ${QCPreprocCustom}"
+    echo "   Custom QC requested: ${runQC_Custom}"
     echo "   HCP folder suffix: ${HCPSuffix}"
-    if [ "$QCPreprocCustom" == "yes" ]; then
+    if [ "$runQC_Custom" == "yes" ]; then
         echo "   Custom QC modalities: ${Modality}"
     fi
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
@@ -2568,7 +2048,7 @@ fi
 if [ "$FunctionToRun" == "eddyQC" ]; then
     #unset EddyPath
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
@@ -2661,7 +2141,7 @@ fi
 
 if [ "$FunctionToRun" == "mapHCPFiles" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2698,7 +2178,7 @@ fi
 
 if [ "$FunctionToRun" == "dataSync" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Specific subjects not provided"; fi
@@ -2718,189 +2198,12 @@ if [ "$FunctionToRun" == "dataSync" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  createLists function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRun" == "createLists" ]; then
-    # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-    if [ -z "$ListGenerate" ]; then reho "Error: Type of list to generate missing [batch, analysis, snr]"; exit 1; fi
-    # -- Check optional parameters:
-    if [ -z "$Append" ]; then Append="no"; reho "    Setting --append='no' by default"; echo ""; fi
-    # -- Set list path if not set by user
-    if [ -z "$ListPath" ]; then
-        unset ListPath
-        mkdir ${StudyFolder}/processing/lists &> /dev/null
-        cd ${StudyFolder}/processing/lists
-        ListPath=`pwd`
-        reho "    Setting default path for list folder --> $ListPath"; echo ""
-        export ListPath
-    else
-        export ListPath
-    fi
-    # --------------------------
-    # --- preprocessing loop ---
-    # --------------------------
-    if [ "$ListGenerate" == "batch" ]; then
-        # -- Check of overwrite flag was set
-        if [ "$Overwrite" == "yes" ]; then
-            echo ""
-            reho "===> Deleting prior batch processing files"
-            echo ""
-            rm "$ListPath"/batch."$ListName".txt &> /dev/null
-        fi
-        if [ -z "$ListFunction" ]; then
-            reho "    List function not set. Using default function."
-            ListFunction="        ${TOOLS}/${MNAPREPO}/connector/functions/SubjectsParamList.sh"
-            reho "$ListFunction"
-            echo ""
-        fi
-        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        if [ -z "$ListName" ]; then
-            ListName="$TimeStamp"
-            reho "    Name of batch preprocessing file not specified. Using defaults with timestamp to avoid overwriting: $ListName"
-        fi
-        if [ -z "$HeaderBatch" ]; then
-            echo ""
-            reho "    Batch parameter header file not specified. Using defaults for multi-band data: "
-            HeaderBatch="${TOOLS}/${MNAPREPO}/library/data/templates/batch_multiband_parameters.txt"
-            if [ -f $HeaderBatch ]; then
-                reho "        ${HeaderBatch}"; echo ""
-            else
-                reho "---> ERROR: ${HeaderBatch} not found! Check MNAP environment variables."
-                echo ""
-                exit 1
-            fi
-        fi
-        # -- Check if skipping parameter file header
-        if [ "$HeaderBatch" != "no" ]; then
-            # -- Check if lists exists
-            if [ -s ${ListPath}/batch."$ListName".txt ]; then
-                # -- If HeaderBatch was set and file exists then exit and report error
-                echo ""
-                reho "---------------------------------------------------------------------"
-                reho "--> The file exists and you are trying to set the header again"
-                reho "--> Check usage to append the file or overwrite it."
-                reho "---------------------------------------------------------------------"
-                echo ""
-                exit 1
-            else
-                cat ${HeaderBatch} >> ${ListPath}/batch."$ListName".txt
-            fi
-        fi
-        # -- Report parameters
-        echo ""
-        echo "Running $FunctionToRun processing with the following parameters:"
-        echo ""
-        echo "--------------------------------------------------------------"
-        echo "   Study Folder: ${StudyFolder}"
-        echo "   Subjects Folder: ${SubjectsFolder}"
-        echo "   Subjects: ${CASES}"
-        echo "   Study Log Folder: ${LogFolder}"
-        echo "   List to generate: ${ListGenerate}"
-        echo "   List path: ${ListPath}"
-        echo "   List name: ${ListName}"
-        echo "   Scheduler Name and Options: $Scheduler"
-        echo "   Overwrite prior run: ${Overwrite}"
-        echo "--------------------------------------------------------------"
-        echo ""
-        # -- Loop through all the cases
-        for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
-        echo ""
-        geho "-------------------------------------------------------------------------------------------"
-        geho "--> Check output:"
-        geho "  `ls ${ListPath}/batch.${ListName}.txt `"
-        geho "-------------------------------------------------------------------------------------------"
-        echo ""
-    fi
-    # --------------------------
-    # --- analysis loop --------
-    # --------------------------
-    if [ "$ListGenerate" == "analysis" ]; then
-        if [ -z "$ListFunction" ]; then
-        reho "List function not set. Using default function."
-            ListFunction="${TOOLS}/${MNAPREPO}/connector/functions/AnalysisList.sh"
-            echo ""
-            reho "$ListFunction"
-            echo ""
-        fi
-        if [ -z "$ListName" ]; then reho "Name of analysis list for is missing."; exit 1; fi
-        if [ -z "$BOLDS" ]; then reho "List of BOLDs missing."; exit 1; fi
-        # -- Check of overwrite flag was set
-        if [ "$Overwrite" == "yes" ]; then
-            echo ""
-            reho "===> Deleting prior analysis lists"
-            echo ""
-            rm ${ListPath}/analysis."$ListName".*.list &> /dev/null
-        fi
-            # -- Report parameters
-            echo ""
-            echo "Running $FunctionToRun processing with the following parameters:"
-            echo ""
-            echo "--------------------------------------------------------------"
-            echo "   Study Folder: ${StudyFolder}"
-            echo "   Subjects Folder: ${SubjectsFolder}"
-            echo "   Subjects: ${CASES}"
-            echo "   Study Log Folder: ${LogFolder}"
-            echo "   List to generate: ${ListGenerate}"
-            echo "   Scheduler Name and Options: $Scheduler"
-            echo "   Overwrite prior run: ${Overwrite}"
-            echo "--------------------------------------------------------------"
-            echo ""
-            # -- Loop through all the cases
-            for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
-    fi
-fi
-
-# ------------------------------------------------------------------------------
-#  ICAFIXhcp function loop
-# ------------------------------------------------------------------------------
-
-if [ "$FunctionToRun" == "ICAFIXhcp" ]; then
-    # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
-    if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
-    if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
-    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
-    if [ -z "$BOLDS" ]; then reho "ERROR: <bolds_to_compute_fixica_and_postfix> not specified"; exit 1; fi
-    Cluster="$RunMethod"
-    if [ "$Cluster" == "2" ]; then
-            if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
-    fi
-    # -- Check optional parameters if not specified
-    if [ -z ${ICAFIXFunction} ]; then ICAFIXFunction="all"; fi
-    if [ -z ${Overwrite} ]; then Overwrite="no"; fi
-    if [ -z ${HPFilter} ]; then Overwrite="2000"; fi
-    if [ -z ${MovCorr} ]; then Overwrite="TRUE"; fi
-    # -- Report parameters
-    echo ""
-    echo "Running $FunctionToRun with the following parameters:"
-    echo ""
-    echo "--------------------------------------------------------------"
-    echo "   Study Folder: ${StudyFolder}"
-    echo "   SubjectsFolder: ${SubjectsFolder}"
-    echo "   Subjects: ${CASES}"
-    echo "   BOLDs to work on: ${BOLDS}"
-    echo "   Function to run: ${ICAFIXFunction}"
-    echo "   Filter: ${HPFilter}"
-    echo "   Movement correction requested: ${MovCorr}"
-    echo "   Overwrite prior run: ${Overwrite}"
-    echo "--------------------------------------------------------------"
-    echo ""
-    # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
-fi
-
-# ------------------------------------------------------------------------------
 #  structuralParcellation function loop
 # ------------------------------------------------------------------------------
 
 if [ "$FunctionToRun" == "structuralParcellation" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2940,7 +2243,7 @@ fi
 
 if [ "$FunctionToRun" == "FSLDtifit" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2971,7 +2274,7 @@ fi
 
 if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
@@ -3006,7 +2309,7 @@ fi
 
 if [ "$FunctionToRun" == "hcpdLegacy" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
     if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -3051,7 +2354,7 @@ fi
 
 if [ "$FunctionToRun" == "structuralParcellation" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -3091,7 +2394,7 @@ fi
 
 if [ "$FunctionToRun" == "computeBOLDfc" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
     if [ -z "$RunType" ] && [[ "$Calculation" != "dense" ]]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
     if [[ ${RunType} == "list" ]]; then
@@ -3205,7 +2508,7 @@ fi
 
 if [ "$FunctionToRun" == "BOLDParcellation" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
     if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
     if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
@@ -3226,7 +2529,6 @@ if [ "$FunctionToRun" == "BOLDParcellation" ]; then
         WeightsFile="no"
         reho "Note: Weights file not used."
     fi
-
     if [ -z "$ComputePConn" ]; then ComputePConn="no"; fi
     if [ -z "$WeightsFile" ]; then WeightsFile="no"; fi
     if [ -z "$ExtractData" ]; then ExtractData="no"; fi
@@ -3274,7 +2576,7 @@ fi
 
 if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -3312,10 +2614,10 @@ fi
 
 if [ "$FunctionToRun" == "ROIExtract" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
     if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
-    if [ -z "$ROIInputFile" ]; then reho "Error: File to use for ROI extraction missing"; exit 1; fi
+    if [ -z "$ROIFile" ]; then reho "Error: File to use for ROI extraction missing"; exit 1; fi
     Cluster="$RunMethod"
     if [ "$Cluster" == "2" ]; then
             if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
@@ -3341,7 +2643,7 @@ if [ "$FunctionToRun" == "ROIExtract" ]; then
     echo "   Input File: ${InputFile}"
     echo "   Output File Name: ${OutName}"
     echo "   Single Input File: ${SingleInputFile}"
-    echo "   ROI File: ${ROIInputFile}"
+    echo "   ROI File: ${ROIFile}"
     echo "   Subject specific ROI file set: ${ROIFileSubjectSpecific}"
     echo "   Overwrite prior run: ${Overwrite}"
     echo "--------------------------------------------------------------"
@@ -3356,12 +2658,12 @@ if [ "$FunctionToRun" == "ROIExtract" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  DWISeedTractography function loop
+#  DWIDenseSeedTractography function loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "DWISeedTractography" ]; then
+if [ "$FunctionToRun" == "DWIDenseSeedTractography" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -3399,7 +2701,7 @@ fi
 
 if [ "$FunctionToRun" == "autoPtx" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -3430,7 +2732,7 @@ fi
 
 if [ "$FunctionToRun" == "pretractographyDense" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -3458,7 +2760,7 @@ fi
 
 if [ "$FunctionToRun" == "ProbtrackxGPUDense" ]; then
     # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -3509,7 +2811,7 @@ fi
 
 if [ "$FunctionToRun" == "AWSHCPSync" ]; then
     # Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. mnap <function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -3531,6 +2833,4 @@ if [ "$FunctionToRun" == "AWSHCPSync" ]; then
     # -- Loop through all the cases
     for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
 fi
-
-
 

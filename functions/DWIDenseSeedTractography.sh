@@ -19,8 +19,8 @@
 # ## LICENSE
 #
 # * The DWIDenseSeedTractography.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -68,8 +68,8 @@ usage() {
     echo ""
     echo "-- REQUIRED PARMETERS:"
     echo ""
-    echo "     --subjectsfolder=<folder_with_subjects>                       Path to study data folder"
-    echo "     --subject=<list_of_cases>                   List of subjects to run"
+    echo "     --subjectsfolder=<folder_with_subjects>     Path to study folder that contains subjects"
+    echo "     --subjects=<list_of_cases>                  List of subjects to run"
     echo "     --matrixversion=<matrix_version_value>      Matrix solution verion to run parcellation on; e.g. 1 or 3"
     echo "     --seedfile=<file_for_seed_reduction>        Specify the absolute path of the seed file you want to use as a seed for dconn reduction (e.g. <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz )"
     echo "                                                 Note: If you specify --seedfile='gbc' then the function computes an average across all streamlines from every greyordinate to all other greyordinates."
@@ -82,21 +82,21 @@ usage() {
     echo ""
     echo "-- EXAMPLES:"
     echo ""
-    echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/DWIDenseSeedTractography.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+    echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/DWIDenseSeedTractography.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
     echo ""
     reho "           * NOTE: --scheduler is not available via direct script call."
     echo ""
-    echo "   --> Run via mnap DWIDenseSeedTractography --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+    echo "   --> Run via qunex DWIDenseSeedTractography --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
     echo ""
-    geho "           * NOTE: scheduler is available via mnap call:"
+    geho "           * NOTE: scheduler is available via qunex call:"
     echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
     echo ""
-    echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+    echo "           * For SLURM scheduler the string would look like this via the qunex call: "
     echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
     echo ""
     echo ""
     echo ""
-    echo "DWIDenseSeedTractography.sh --subjectsfolder='<folder_with_subjects>' \ "
+    echo "qunex DWIDenseSeedTractography --subjectsfolder='<folder_with_subjects>' \ "
     echo "--subject='<case_id>' \ "
     echo "--matrixversion='3' \ "
     echo "--seedfile='<folder_with_subjects>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \ "
@@ -155,7 +155,7 @@ local arguments=($@)
 
 # -- Initialize global output variables
 unset SubjectsFolder
-unset Subject
+unset Subjects
 unset MatrixVersion
 unset ParcellationFile
 unset OutName
@@ -187,7 +187,7 @@ while [ ${index} -lt ${numArgs} ]; do
             SubjectsFolder=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
-        --subject=*)
+        --subjects=*)
             CASE=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
@@ -264,7 +264,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
 echo "   SubjectsFolder: ${SubjectsFolder}"
-echo "   Subject: ${CASE}"
+echo "   Subjects: ${CASE}"
 echo "   MatrixVersion: ${MatrixVersion}"
 echo "   SeedFile: ${SeedFile}"
 echo "   Waytotal normalization: ${WayTotal}"

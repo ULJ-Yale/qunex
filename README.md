@@ -1,25 +1,24 @@
-# README File for MNAP connector tools
+# README File for Quantitative Neuroimaging Environment & ToolboX (QuNex)
 
 
 Background
 ==========
 ---
 
-The `connector` pipeline as part of the MNAP package serves as the overall wrapper for the suite. 
+The `connector` repository as part of the QuNex package serves as the overall wrapper for the suite. 
 It handles flexible directory inputs and subject lists. The `connector` supports all functionality 
-across the MNAP suite, including data organization, QC, preprocessing, various analyses etc. 
+across the QuNex suite, including data organization, QC, preprocessing, various analyses etc. 
 The wrapper code is flexible and can be updated by adding functions developed around 
-other MNAP suite tools (e.g. `gmri` or `matlab` MNAP packages). 
+other QuNex suite tools (e.g. `gmri` or `matlab` QuNex packages). 
 
-The MNAP code is developed and maintained by Alan Anticevic, [Anticevic Lab], Yale 
-University of Ljubljana in collaboration with Grega Repovs [Mind and Brain Lab], 
-University of Ljubljana.
+The QuNex code is is co-developed and co-maintained by the [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
+and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
 Installation
 ===============================
 ---
 
-### See https://bitbucket.org/hidradev/mnaptools/src/master/README.md
+### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
 Usage and command documentation
@@ -28,16 +27,16 @@ Usage and command documentation
 
 List of functions can be obtained by running the following command from the terminal: 
 
-* `mnap -help` prints the general help call
+* `qunex -help` prints the general help call
 
-The utilities are used through the `mnap` command. The general use form is:
+The utilities are used through the `qunex` command. The general use form is:
 
-`mnap --function="<command>" --option="<value>" --option="<value>" ...`
+`qunex --function="<command>" --option="<value>" --option="<value>" ...`
 
 The list of commands and their specific documentation is provided through `ap`
 command itself using the folowing options:
 
-* `mnap ?<command>` prints specific help for the specified command.
+* `qunex ?<command>` prints specific help for the specified command.
 
 Perusing documentation, please note the following conventions used:
 
@@ -55,17 +54,17 @@ Specific Example Usage
 ===============================
 ---
 
-* Here is a specific example usage based on an MNAP call for sorting incoming DICOMs:
+* Here is a specific example usage based on an QuNex call for sorting incoming DICOMs:
 
 
-	`mnap --path='<study_folder>' --function='dicomorganize' --subjects='<comma_separarated_list_of_cases>' --scheduler='<name_of_scheduler_and_options>'`
+	`qunex --path='<study_folder>' --function='dicomorganize' --subjects='<comma_separarated_list_of_cases>' --scheduler='<name_of_scheduler_and_options>'`
 	
 
 External dependencies
 =====================
 ---
 
-### See https://bitbucket.org/hidradev/mnaptools/src/master/README.md
+### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
 References

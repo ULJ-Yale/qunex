@@ -19,8 +19,8 @@
 # ## LICENCE
 #
 # * The DataSync.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -126,7 +126,7 @@ main() {
 
 echo ""
 echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
-echo "=-=-=-=  Starting MNAP Data Rsync Script  =-=-=-="
+echo "=-=-=-=  Starting QuNex Data Rsync Script  =-=-=-="
 echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 echo ""
 

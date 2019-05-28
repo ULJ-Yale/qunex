@@ -19,8 +19,8 @@
 # ## LICENSE
 #
 # * The FIXICA.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -82,8 +82,8 @@ usage() {
      echo ""
      echo "This function implements FIX ICA and Post FIX on the BOLD dense CIFTI files."
      echo ""
-     geho " PREREQUISITE INSTALLED SOFTWARE (Configured automatically via MNAP environment):"
-     geho "    ~ Note: If the dependencies below have changed please notify MNAP developers to ensure updates are reflected."
+     geho " PREREQUISITE INSTALLED SOFTWARE (Configured automatically via QuNex environment):"
+     geho "    ~ Note: If the dependencies below have changed please notify QuNex developers to ensure updates are reflected."
      geho ""
      geho "    --> Connectome Workbench (v1.0 or above)"
      geho "    --> HCP Pipelines"
@@ -122,20 +122,20 @@ usage() {
      echo ""
      echo "-- EXAMPLES:"
      echo ""
-     echo "   --> Run directly via ${TOOLS}/${MNAPREPO}/connector/functions/ICAFIXhcp.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo "   --> Run directly via ${TOOLS}/${QuNexREPO}/connector/functions/ICAFIXhcp.sh --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
      echo ""
      reho "           * NOTE: --scheduler is not available via direct script call."
      echo ""
-     echo "   --> Run via mnap ICAFIXhcp --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
+     echo "   --> Run via qunex ICAFIXhcp --<parameter1> --<parameter2> --<parameter3> ... --<parameterN> "
      echo ""
-     geho "           * NOTE: scheduler is available via mnap call:"
+     geho "           * NOTE: scheduler is available via qunex call:"
      echo "                   --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
      echo ""
-     echo "           * For SLURM scheduler the string would look like this via the mnap call: "
+     echo "           * For SLURM scheduler the string would look like this via the qunex call: "
      echo "                   --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
      echo ""     
      echo ""
-     echo "  ${TOOLS}/${MNAPREPO}/connector/functions/ICAFIXhcp.sh \ "
+     echo "  ${TOOLS}/${QuNexREPO}/connector/functions/ICAFIXhcp.sh \ "
      echo "    --subjectsfolder='<folder_with_subjects>' \ "
      echo "    --subjects='<subject_ids>' \ "
      echo "    --bolds='<bolds_to_compute_fixica_and_postfix>' \ "
@@ -447,7 +447,7 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 #             else
 #             # -- Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
 #             echo "Re-inserting mean image on the mapped $BOLD data for $CASE... "
-#             ${MNAPMCOMMAND} "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldFIXICA' num2str($BOLD) '.nii.gz']),quit()"
+#             ${QuNexMCOMMAND} "g_InsertMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii']),g_InsertMean(['bold' num2str($BOLD) '.nii.gz'], ['boldFIXICA' num2str($BOLD) '.nii.gz']),quit()"
 #         fi
 #     fi
 #     rm boldFIXICA"$BOLD"_mean.txt &> /dev/null
@@ -473,7 +473,7 @@ echo "" 2>&1 | tee -a ${OutputLogPostFIX}
 #     #        else
 #             # Command that inserts mean image back to the boldFIXICA file using g_InsertMean matlab function
 #             echo "Removing mean image on the mapped CIFTI FIX ICA $BOLD data for $CASE... "
-#             ${MNAPMCOMMAND} "g_RemoveMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA_demean' num2str($BOLD) '.dtseries.nii']),quit()"
+#             ${QuNexMCOMMAND} "g_RemoveMean(['bold' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA' num2str($BOLD) '.dtseries.nii'], ['boldFIXICA_demean' num2str($BOLD) '.dtseries.nii']),quit()"
 #         #fi
 #     #fi
 #     #rm boldFIXICA"$BOLD"_mean.txt &> /dev/null

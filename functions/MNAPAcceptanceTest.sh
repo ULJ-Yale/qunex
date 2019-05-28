@@ -14,20 +14,20 @@
 #
 # ## PRODUCT
 #
-#  MNAPAcceptanceTest.sh
+#  QuNexAcceptanceTest.sh
 #
 # ## LICENSE
 #
-# * The MNAPAcceptanceTest.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * The QuNexAcceptanceTest.sh = the "Software"
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
 #
 # ## DESCRIPTION 
 #   
-# This script, MNAPAcceptanceTest.sh, implements MNAP acceptance testing per pipeline unit.
+# This script, QuNexAcceptanceTest.sh, implements QuNex acceptance testing per pipeline unit.
 # 
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -35,7 +35,7 @@
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
-# See output of usage function: e.g. $./MNAPAcceptanceTest.sh --help
+# See output of usage function: e.g. $./QuNexAcceptanceTest.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
 # 
@@ -54,18 +54,18 @@ usage() {
     echo ""
     echo "-- DESCRIPTION:"
     echo ""
-    echo "This function implements MNAP acceptance testing per pipeline unit."
+    echo "This function implements QuNex acceptance testing per pipeline unit."
     echo ""
     echo ""
     echo "-- REQUIRED PARMETERS:"
     echo ""
-    echo "-- Local system variables if using MNAP hierarchy:"
+    echo "-- Local system variables if using QuNex hierarchy:"
     echo ""
     echo ""
     echo "   --acceptancetest=<request_acceptance_test>    Specify if you wish to run a final acceptance test after each unit of processing."
     echo "                                                      Supported: ${SupportedAcceptanceTestSteps}"
     echo ""
-    echo "   --studyfolder=<path_to_mnap_study>            Path to study data folder"
+    echo "   --studyfolder=<path_to_qunex_study>            Path to study data folder"
     echo "   --subjectsfolder=<folder_with_subjects_data>  Path to study data folder where the subjects folders reside"
     echo "   --subjects=<list_of_cases>                    List of subjects to run that are study-specific and correspond to XNAT database subject IDs"
     echo "   --sessionlabels=<imaging_session_labels>      Label for session within project. Note: may be general across multiple subjects (e.g. rest) or for longitudinal runs."
@@ -130,7 +130,7 @@ usage() {
     echo ""
     echo "-- Example:"
     echo ""
-    echo "MNAPAcceptanceTest.sh --studyfolder='<absolute_path_to_study_folder>' \ "
+    echo "QuNexAcceptanceTest.sh --studyfolder='<absolute_path_to_study_folder>' \ "
     echo "--subjects='<subject_IDs_on_local_server>' \ "
     echo "--xnatprojectid='<name_of_xnat_project_id>' \ "
     echo "--xnathost='<XNAT_site_URL>' "
@@ -195,6 +195,7 @@ fi
 unset CASES
 unset StudyFolder
 unset SubjectsFolder
+unset SESSIONS
 unset SESSION_LABELS
 unset BOLDS # --bolddata
 unset BOLDRUNS # --bolddata
@@ -228,8 +229,15 @@ StudyFolder=`opts_GetOpt "--studyfolder" $@`
 CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
 SESSION_LABELS=`opts_GetOpt "--sessionlabel" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
 if [[ -z ${SESSION_LABELS} ]]; then
+SESSION_LABELS=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+fi
+if [[ -z ${SESSION_LABELS} ]]; then
 SESSION_LABELS=`opts_GetOpt "--sessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
 fi
+if [[ -z ${SESSION_LABELS} ]]; then
+SESSION_LABELS=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; SESSION_LABELS=`echo "$SESSION_LABELS" | sed 's/,/ /g;s/|/ /g'`
+fi
+SESSIONS="${SESSION_LABELS}"
 RUN_TYPE=`opts_GetOpt "--runtype" $@`
 AcceptanceTestSteps=`opts_GetOpt "--acceptancetests" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTestSteps=`echo "$AcceptanceTestSteps" | sed 's/,/ /g;s/|/ /g'`
 if [[ -z ${AcceptanceTestSteps} ]]; then
@@ -255,18 +263,18 @@ BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 
 # -- Start of parsing XNAT arguments
 #
-#     INFO ON XNAT VARIABLE MAPPING FROM MNAP --> JSON --> XML specification
+#     INFO ON XNAT VARIABLE MAPPING FROM QuNex --> JSON --> XML specification
 #
-# project               --xnatprojectid        #  --> mapping in MNAP: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
+# project               --xnatprojectid        #  --> mapping in QuNex: XNAT_PROJECT_ID     --> mapping in JSON spec: #XNAT_PROJECT#   --> Corresponding to project id in XML. 
 #   │ 
-#   └──subject          --xnatsubjectid        #  --> mapping in MNAP: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
+#   └──subject          --xnatsubjectid        #  --> mapping in QuNex: XNAT_SUBJECT_ID     --> mapping in JSON spec: #SUBJECTID#      --> Corresponding to subject ID in subject-level XML (Subject Accession ID). EXAMPLE in XML        <xnat:subject_ID>BID11_S00192</xnat:subject_ID>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Accession number:  A unique XNAT-wide ID for a given human irrespective of project within the XNAT Site
-#        │              --xnatsubjectlabel     #  --> mapping in MNAP: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
+#        │              --xnatsubjectlabel     #  --> mapping in QuNex: XNAT_SUBJECT_LABEL  --> mapping in JSON spec: #SUBJECTLABEL#   --> Corresponding to subject label in subject-level XML (Subject Label).     EXAMPLE in XML        <xnat:field name="SRC_SUBJECT_ID">CU0018</xnat:field>
 #        │                                                                                                                                                                                                         EXAMPLE in Web UI     Subject Details:   A unique XNAT project-specific ID that matches the experimenter expectations
 #        │ 
-#        └──experiment  --xnataccsessionid     #  --> mapping in MNAP: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#        └──experiment  --xnataccsessionid     #  --> mapping in QuNex: XNAT_ACCSESSION_ID  --> mapping in JSON spec: #ID#             --> Corresponding to subject session ID in session-level XML (Subject Accession ID)   EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    Accession number:  A unique project specific ID for that subject
-#                       --xnatsessionlabel     #  --> mapping in MNAP: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
+#                       --xnatsessionlabel     #  --> mapping in QuNex: XNAT_SESSION_LABEL  --> mapping in JSON spec: #LABEL#          --> Corresponding to session label in session-level XML (Session/Experiment Label)    EXAMPLE in XML       <xnat:experiment ID="BID11_E00048" project="embarc_r1_0_0" visit_id="ses-wk2" label="CU0018_MRwk2" xsi:type="xnat:mrSessionData">
 #                                                                                                                                                                                                                           EXAMPLE in Web UI    MR Session:   A project-specific, session-specific and subject-specific XNAT variable that defines the precise acquisition / experiment
 #
     XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
@@ -502,10 +510,10 @@ fi
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     echo ""
-    echo "   MNAP Subjects labels: ${CASES}" 
+    echo "   QuNex Subjects labels: ${CASES}" 
     if [ "$RUN_TYPE" != "xnat" ]; then
-        echo "   MNAP study folder: ${StudyFolder}"
-        echo "   MNAP study sessions: ${SESSION_LABELS}"
+        echo "   QuNex study folder: ${StudyFolder}"
+        echo "   QuNex study sessions: ${SESSION_LABELS}"
     fi
     if [ "$RUN_TYPE" == "xnat" ]; then
         echo "   XNAT Hostname: ${XNAT_HOST_NAME}"
@@ -523,14 +531,14 @@ fi
         echo "   XNAT get QC images or scenes: ${XNATgetQC}"
 
     fi
-    echo "   MNAP Acceptance test steps: ${AcceptanceTestSteps}"
+    echo "   QuNex Acceptance test steps: ${AcceptanceTestSteps}"
     if [[ -z ${BOLDS} ]]; then 
         echo "   BOLD runs: ${BOLDS}"
         if [[ -z ${BOLDImages} ]]; then 
             echo "   BOLD Images: ${BOLDImages}"
         fi
     fi
-    echo "   MNAP Acceptance test output log: ${RunAcceptanceTestOut}"
+    echo "   QuNex Acceptance test output log: ${RunAcceptanceTestOut}"
     echo ""
     echo "-- ${scriptName}: Specified Command-Line Options - End --"
     echo ""
@@ -543,7 +551,7 @@ main() {
 
 echo ""
 ceho "       *****************************************************"
-ceho "       ****** Performing MNAP Unit Acceptance Tests ********"
+ceho "       ****** Performing QuNex Unit Acceptance Tests ********"
 ceho "       *****************************************************"
 echo ""
 
@@ -609,7 +617,7 @@ echo ""
                     CASE="${XNAT_SESSION_LABEL_HOST}"
                     CASE=`echo ${CASE} | sed 's|MR||g'`
                     echo " -- Note: --bidsformat='yes' " 
-                    echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for MNAP run: ${CASE}"
+                    echo "    Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for QuNex run: ${CASE}"
                     echo ""
                 else
                     CASE="${XNAT_SUBJECT_LABEL}"
@@ -618,23 +626,23 @@ echo ""
         
             UnitTests=${AcceptanceTestSteps}
             echo ""
-            geho "-- Running MNAP unit tests: ${UnitTests}"
+            geho "-- Running QuNex unit tests: ${UnitTests}"
 
             
             ## -- Setup function to check presence of files on either local file system or on XNAT on 
             UnitTestDataCheck() {
                 SubjectSessionTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
                 if [[ ${RUN_TYPE} == "xnat" ]]; then
-                       if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/mnap_study/files/subjects/${CASE}/${UnitTestData} ); then 
+                       if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData} ); then 
                            Status="PASS"
-                           geho "     ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/mnap_study/files/subjects/${CASE}/${UnitTestData}"
-                           echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/mnap_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
-                           echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/mnap_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
+                           geho "     ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}"
+                           echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
+                           echo "  ${UnitTest} PASS: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
                        else 
                            Status="FAIL"
-                           reho "     ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/mnap_study/files/subjects/${CASE}/${UnitTestData}"
-                           echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/mnap_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
-                           echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/mnap_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
+                           reho "     ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}"
+                           echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestOut}
+                           echo "  ${UnitTest} FAIL: ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/qunex_study/files/subjects/${CASE}/${UnitTestData}" >> ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt
                        fi
                        if [ -f ${RunAcceptanceTestDir}/${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt ]; then 
                            echo ""
@@ -788,11 +796,11 @@ echo ""
                             XNATUploadFile="${XNAT_SESSION_LABEL_HOST}_${UnitTest}_${SubjectSessionTimeStamp}_${Status}.txt"
                             echo ""
                             geho "---> Uploading ${XNATUploadFile} to ${XNAT_HOST_NAME} "
-                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} "
+                            geho "     curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QuNex_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} "
                             echo ""
-                            curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/MNAP_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} &> /dev/null
+                            curl -k -b "JSESSIONID=$JSESSION" -m 40 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QuNex_ACCEPT/files/${XNATUploadFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestDir}/${XNATUploadFile} &> /dev/null
                             echo ""
-                            if ( curl -k -b "JSESSIONID=$JSESSION" -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/MNAP_ACCEPT/files/${XNATUploadFile} ); then 
+                            if ( curl -k -b "JSESSIONID=$JSESSION" -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_SESSION_LABEL_HOST}/resources/QuNex_ACCEPT/files/${XNATUploadFile} ); then 
                                 geho " -- ${XNATUploadFile} uploaded to ${XNAT_HOST_NAME}"
                             else 
                                 reho " -- ${XNATUploadFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."
@@ -820,16 +828,16 @@ echo ""
             ## -- Setup relevant acceptance paths for XNAT run
             unset AcceptDirTimeStamp
             AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-            RunAcceptanceTestOut="${RunAcceptanceTestDir}/MNAPAcceptanceTest_XNAT_${XNAT_SESSION_LABEL}_${AcceptDirTimeStamp}.txt"
+            RunAcceptanceTestOut="${RunAcceptanceTestDir}/QuNexAcceptanceTest_XNAT_${XNAT_SESSION_LABEL}_${AcceptDirTimeStamp}.txt"
             ## -- Open JSESSION to the XNAT Site
             JSESSION=$(curl -k -X POST -u "${XNAT_CREDENTIALS}" "${XNAT_HOST_NAME}/data/JSESSION" )
             echo ""
             geho "-- JSESSION created: ${JSESSION}"; echo ""
             echo "" >> ${RunAcceptanceTestOut}
-            echo "  MNAP Acceptance Test Report for XNAT Run" >> ${RunAcceptanceTestOut}
+            echo "  QuNex Acceptance Test Report for XNAT Run" >> ${RunAcceptanceTestOut}
             echo "  -----------------------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
-            echo "   MNAP Acceptance test steps:    ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
+            echo "   QuNex Acceptance test steps:    ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Hostname:                  ${XNAT_HOST_NAME}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Project ID:                ${XNAT_PROJECT_ID}" >> ${RunAcceptanceTestOut}
             echo "   XNAT Session Label:             ${XNAT_SESSION_LABEL}" >> ${RunAcceptanceTestOut}
@@ -840,13 +848,13 @@ echo ""
             ## -- Setup relevant acceptance paths for non-XNAT run
             unset AcceptDirTimeStamp
             AcceptDirTimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-            RunAcceptanceTestOut="${RunAcceptanceTestDir}/MNAPAcceptanceTest_${AcceptDirTimeStamp}.txt"
+            RunAcceptanceTestOut="${RunAcceptanceTestDir}/QuNexAcceptanceTest_${AcceptDirTimeStamp}.txt"
             echo "" >> ${RunAcceptanceTestOut}
-            echo "  MNAP Acceptance Test Report for Local Run" >> ${RunAcceptanceTestOut}
+            echo "  QuNex Acceptance Test Report for Local Run" >> ${RunAcceptanceTestOut}
             echo "  ------------------------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
-            echo "   MNAP Study folder:              ${StudyFolder}" >> ${RunAcceptanceTestOut}
-            echo "   MNAP Acceptance test steps:     ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
+            echo "   QuNex Study folder:              ${StudyFolder}" >> ${RunAcceptanceTestOut}
+            echo "   QuNex Acceptance test steps:     ${AcceptanceTestSteps}" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
             echo "  ---------------------------" >> ${RunAcceptanceTestOut}
             echo "" >> ${RunAcceptanceTestOut}
@@ -862,13 +870,13 @@ echo ""
                  RunAcceptanceTestOutFile=$(basename $RunAcceptanceTestOut)
                  echo ""
                  geho "---> Uploading ${RunAcceptanceTestOut} to ${XNAT_HOST_NAME} "
-                 geho "     curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} "
+                 geho "     curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QuNex_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} "
                  echo ""
-                 curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} &> /dev/null
+                 curl -k -b "JSESSIONID=$JSESSION" -m 60 -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QuNex_ACCEPT/files/${RunAcceptanceTestOutFile}?extract=true&overwrite=true" -F file=@${RunAcceptanceTestOut} &> /dev/null
                  echo ""
-                 if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files/${RunAcceptanceTestOutFile} ); then 
+                 if ( curl -k -b "JSESSIONID=$JSESSION" -m 20 -o/dev/null -sfI ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QuNex_ACCEPT/files/${RunAcceptanceTestOutFile} ); then 
                      geho "-- Successfully uploaded ${RunAcceptanceTestOutFile} to ${XNAT_HOST_NAME} under project ${XNAT_PROJECT_ID} as a resource:"
-                     geho "                ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/MNAP_ACCEPT/files/${RunAcceptanceTestOutFile}"
+                     geho "                ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/QuNex_ACCEPT/files/${RunAcceptanceTestOutFile}"
                  else 
                      reho "-- ${RunAcceptanceTestOutFile} not found on ${XNAT_HOST_NAME} Something went wrong with curl."
                  fi

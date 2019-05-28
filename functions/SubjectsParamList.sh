@@ -19,8 +19,8 @@
 # ## LICENSE
 #
 # * The SubjectsBatch.sh = the "Software"
-# * This Software conforms to the license outlined in the MNAP Suite:
-# * https://bitbucket.org/hidradev/mnaptools/src/master/LICENSE.md
+# * This Software conforms to the license outlined in the QuNex Suite:
+# * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
 # ## TODO
 #
@@ -30,7 +30,7 @@
 #
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
-# MNAP Suite
+# QuNex Suite
 #
 # ## PREREQUISITE ENVIRONMENT VARIABLES
 #
@@ -51,9 +51,9 @@ usage() {
      echo "-- DESCRIPTION for SubjectsBatch"
      echo ""
      echo "This function generates a batch file for processing for a given subject."
-     echo "It is designed to be invoked directly via MNAP call:"
+     echo "It is designed to be invoked directly via QuNex call:"
      echo ""
-     echo "   > mnap createLists"
+     echo "   > qunex createLists"
      echo ""
      echo "This script accepts the following mandatory paramaters:"
      echo ""
