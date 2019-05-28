@@ -1,10 +1,10 @@
-# Quantitative Neuroimaging Environment & ToolboX (QuNex)
+# Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
 
 ## License
 
-QuNex General Pipeline = THIS SOFTWARE
+Qu|Nex General Pipeline = THIS SOFTWARE
 
-Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
+Copyright (c) 2013-2019 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
 & Alan Anticevic, [AnticevicLab], Yale University
 
 The Software remains the joint property of Alan Anticevic (Yale University)

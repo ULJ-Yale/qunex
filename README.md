@@ -1,17 +1,17 @@
-# README File for Quantitative Neuroimaging Environment & ToolboX (QuNex)
+# README File for Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
 
 
 Background
 ==========
 ---
 
-The `connector` repository as part of the QuNex package serves as the overall wrapper for the suite. 
+The `connector` repository as part of the Qu|Nex package serves as the overall wrapper for the suite. 
 It handles flexible directory inputs and subject lists. The `connector` supports all functionality 
-across the QuNex suite, including data organization, QC, preprocessing, various analyses etc. 
+across the Qu|Nex suite, including data organization, QC, preprocessing, various analyses etc. 
 The wrapper code is flexible and can be updated by adding functions developed around 
-other QuNex suite tools (e.g. `gmri` or `matlab` QuNex packages). 
+other Qu|Nex suite tools (e.g. `gmri` or `matlab` Qu|Nex packages). 
 
-The QuNex code is is co-developed and co-maintained by the [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
+The Qu|Nex code is is co-developed and co-maintained by the [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
 Installation
@@ -51,10 +51,10 @@ Perusing documentation, please note the following conventions used:
 
 
 Specific Example Usage
-===============================
+======================
 ---
 
-* Here is a specific example usage based on an QuNex call for sorting incoming DICOMs:
+* Here is a specific example usage based on an Qu|Nex call for sorting incoming DICOMs:
 
 
 	`qunex --path='<study_folder>' --function='dicomorganize' --subjects='<comma_separarated_list_of_cases>' --scheduler='<name_of_scheduler_and_options>'`
