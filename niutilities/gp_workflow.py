@@ -37,11 +37,11 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
 
-if "QuNexMCOMMAND" not in os.environ:
-    print "WARNING: QuNexMCOMMAND environment variable not set. Matlab will be run by default!"
+if "QUNEXMCOMMAND" not in os.environ:
+    print "WARNING: QUNEXMCOMMAND environment variable not set. Matlab will be run by default!"
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
-    mcommand = os.environ['QuNexMCOMMAND']
+    mcommand = os.environ['QUNEXMCOMMAND']
 
 
 def getBOLDData(sinfo, options, overwrite=False, thread=0):

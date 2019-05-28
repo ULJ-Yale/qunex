@@ -42,10 +42,10 @@ except:
     import dicom.filereader as dfr
 
 
-if "QuNexMCOMMAND" not in os.environ:
+if "QUNEXMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
-    mcommand = os.environ['QuNexMCOMMAND']
+    mcommand = os.environ['QUNEXMCOMMAND']
 
 
 def matchAll(pattern, string):

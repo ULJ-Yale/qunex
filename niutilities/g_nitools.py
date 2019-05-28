@@ -18,11 +18,11 @@ import os
 import subprocess
 
 
-if "QuNexMCOMMAND" not in os.environ:
-    print "WARNING: QuNexMCOMMAND environment variable not set. Matlab will be run by default!"
+if "QUNEXMCOMMAND" not in os.environ:
+    print "WARNING: QUNEXMCOMMAND environment variable not set. Matlab will be run by default!"
     mcommand = "matlab -nodisplay -nosplash -r"
 else:
-    mcommand = os.environ['QuNexMCOMMAND']
+    mcommand = os.environ['QUNEXMCOMMAND']
 
 # ==============================================================================
 #                                                                      FUNCTIONS

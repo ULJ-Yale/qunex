@@ -14,7 +14,7 @@ import copy
 # --- Get current Qu|Nex Suite version and prepend to help calls
 
 tools     = os.environ['TOOLS']
-qunexrepo = os.environ['QuNexREPO']
+qunexrepo = os.environ['QUNEXREPO']
 with open(os.path.join(tools, qunexrepo, 'VERSION.md'), "r") as f:
     version  = f.read().strip()
 print "Multimodal Neuroimaging Analysis Platform (Qu|Nex) Suite Version", version
