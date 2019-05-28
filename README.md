@@ -1,32 +1,32 @@
-# README File for QuNex Suite Matlab Analysis Utilities
+# README File for Qu|Nex Suite Matlab Analysis Utilities, nitools
 
 Background
 ==========
 ---
 
-QuNex Matlab Analysis Utilities, (i.e. `matlab`) are neuroimaging
+Qu|Nex Matlab Analysis Utilities, (i.e. `nitools`) are neuroimaging
 preprocessing and analysis tools developed in matlab that support multiple 
 tasks through a common code base, designed to simplify multiple steps of 
 neuroimaging data preprocessing and analysis.
 
-The `matlab` tools make use of and assume that relevant information and data
-is provided in a number of file formats, further described below. The `matlab` tools
+The `nitools` make use of and assume that relevant information and data
+is provided in a number of file formats, further described below. The `nitools` 
 assume and help maintain a specific folder structure, further described below.
-A number of `matlab` tools depend on external dependencies and make use of data and
+A number of `nitools` depend on external dependencies and make use of data and
 data templates provided in a separate library.
 
-The `matlab` tools can be used as a self standing toolset, they were, however,
+The `nitools` can be used as a self standing toolset, they were, however,
 developed to efficiently integrate with a set of native Matlab functions, methods and
 utilities, and a modified version of HCP (Human Connectome Project)
-preprocessing tools. They are best utilized as a part of QuNex (Multimodal
+preprocessing tools. They are best utilized as a part of Qu|Nex (Multimodal
 Neuroimaging Analysis Platform).
 
-The `matlab` tools are developed and maintained by Grega Repovš, [Mind and Brain
+The `nitools`  are developed and maintained by Grega Repovš, [Mind and Brain
 Lab], University of Ljubljana in collaboration with the [Anticevic Lab], Yale
 University.
 
 Installation
-===============================
+============
 ---
 
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
@@ -34,11 +34,11 @@ Installation
 Usage and command documentation
 ===============================
 ---
-The QuNex `matlab` tools are generally used as core functions across 
-various QuNex tools but can be run independently in two ways:
+The Qu|Nex `nitools` are generally used as core functions across 
+various Qu|Nex tools but can be run independently in two ways:
 
 1. 
-A number of Matlab functions provided as part of QuNex/matlab package can be 
+A number of Matlab functions provided as part of QuNex/nitools package can be 
 run directly through the `qunex` connector wrapper. 
 For more information on each function run `qunex ?<function name>`. 
 Arguments can be specified in any order. Arguments that are not provided will 
@@ -50,9 +50,9 @@ output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 2. 
 Directly from inside Matlab by calling each function directly.  
 
-To obtain a list of all supported `qunex matlab` functions run:
+To obtain a list of all supported `qunex nitools` functions run:
 
-`qunex matlabhelp`
+`qunex nitoolshelp`
 
 The function-specific help and usage is imbedded in the help call for each function.
 You can acces this by running `help <command>` via the matlab terminal. 
