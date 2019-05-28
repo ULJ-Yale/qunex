@@ -1,10 +1,10 @@
-# README File for MNAP Suite Matlab Analysis Utilities
+# README File for QuNex Suite Matlab Analysis Utilities
 
 Background
 ==========
 ---
 
-MNAP Matlab Analysis Utilities, (i.e. `matlab`) are neuroimaging
+QuNex Matlab Analysis Utilities, (i.e. `matlab`) are neuroimaging
 preprocessing and analysis tools developed in matlab that support multiple 
 tasks through a common code base, designed to simplify multiple steps of 
 neuroimaging data preprocessing and analysis.
@@ -18,7 +18,7 @@ data templates provided in a separate library.
 The `matlab` tools can be used as a self standing toolset, they were, however,
 developed to efficiently integrate with a set of native Matlab functions, methods and
 utilities, and a modified version of HCP (Human Connectome Project)
-preprocessing tools. They are best utilized as a part of MNAP (Multimodal
+preprocessing tools. They are best utilized as a part of QuNex (Multimodal
 Neuroimaging Analysis Platform).
 
 The `matlab` tools are developed and maintained by Grega Repovš, [Mind and Brain
@@ -29,18 +29,18 @@ Installation
 ===============================
 ---
 
-### See https://bitbucket.org/hidradev/mnaptools/src/master/README.md
+### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 Usage and command documentation
 ===============================
 ---
-The MNAP `matlab` tools are generally used as core functions across 
-various MNAP tools but can be run independently in two ways:
+The QuNex `matlab` tools are generally used as core functions across 
+various QuNex tools but can be run independently in two ways:
 
 1. 
-A number of Matlab functions provided as part of MNAP/matlab package can be 
-run directly through the `mnap` connector wrapper. 
-For more information on each function run `mnap ?<function name>`. 
+A number of Matlab functions provided as part of QuNex/matlab package can be 
+run directly through the `qunex` connector wrapper. 
+For more information on each function run `qunex ?<function name>`. 
 Arguments can be specified in any order. Arguments that are not provided will 
 be passed as empty strings / vectors to be processed with default values. 
 Take care to embed vectors in square brackets (e.g. "[1 8 6 12]") and cell arrays 
@@ -50,9 +50,9 @@ output to a file (e.g. "both:command.log" or "stdout:ok.log|stderr:error.log").
 2. 
 Directly from inside Matlab by calling each function directly.  
 
-To obtain a list of all supported `MNAP matlab` functions run:
+To obtain a list of all supported `qunex matlab` functions run:
 
-`mnap matlabhelp`
+`qunex matlabhelp`
 
 The function-specific help and usage is imbedded in the help call for each function.
 You can acces this by running `help <command>` via the matlab terminal. 
@@ -61,7 +61,7 @@ External dependencies
 =====================
 ---
 
-### See https://bitbucket.org/hidradev/mnaptools/src/master/README.md
+### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
 [Mind and Brain Lab]: http://mblab.si

@@ -1,8 +1,8 @@
-# Multimodal Neuroimaging Analyses Platform (MNAP) Matlab Analysis Code
+# Quantitative Neuroimaging Environment & ToolboX (QuNex) NiTools Repository
 
 ## License
 
-MNAP Matlab Analysis Code = THIS SOFTWARE
+QuNex NiTools Repository = THIS SOFTWARE
 
 Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana 
 & Alan Anticevic, [AnticevicLab], Yale University
