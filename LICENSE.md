@@ -1,9 +1,8 @@
-# Multimodal Neuroimaging Analyses Platform (MNAP) Neuroimaging Utilities Pipeline
+# Quantitative Neuroimaging Environment & ToolboX (QuNex) NiUtilities Repository
 
 ## License
 
-MNAP Neuroimaging Utilities Pipeline = THIS SOFTWARE
-
+QuNex NiUtilities Repository = THIS SOFTWARE
 Copyright (c) 2013-2016 Grega Repovš, [Mind & Brain Lab], University of Ljubljana
 & Alan Anticevic, [AnticevicLab], Yale University
 

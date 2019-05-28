@@ -1,10 +1,10 @@
-# README File for MNAP General Neuroimaging Utilities Pipeline
+# README File for QuNex NiUtilities Code
 
 Background
 ==========
 ---
 
-MNAP General Neuroimaging Utilities (gMRI) are neuroimaging
+QuNex General Neuroimaging Utilities (gMRI) are neuroimaging
 preprocessing and analysis utilities that support multiple tasks through a
 common user interface, designed to simplify multiple steps of neuroimaging
 data preprocessing and analysis from sorting of dicom files to second level
@@ -19,33 +19,33 @@ A number of utilities depend on external dependencies and make use of data and
 data templates provided in a separate library.
 
 The utilities can be used as a stand-alone toolset. However, the `gmri` utilities
-were developed to efficiently integrate with the MNAP suite, as well as with a 
+were developed to efficiently integrate with the QuNex suite, as well as with a 
 set of native Matlab functions, methods and utilities, and a modified version 
 of HCP (Human Connectome Project) preprocessing tools. They are best utilized as 
-a part of MNAP (Multimodal Neuroimaging Analysis Platform).
+a part of QuNex (Multimodal Neuroimaging Analysis Platform).
 
-The utilites are developed and maintained by Grega Repovš, [Mind and Brain
-Lab], University of Ljubljana in collaboration with the [Anticevic Lab], Yale
-University.
+The QuNex code is is co-developed and co-maintained by the 
+[Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
+and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
 Installation
 ===============================
 ---
 
-### See https://bitbucket.org/hidradev/mnaptools/src/master/README.md
+### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
 Usage and command documentation
 ===============================
 ---
 
-The utilities are invoked through the `mnap` command:
+The utilities are invoked through the `qunex` command:
 
-`mnap <command> [option=value] [option=value] ...`
+`qunex <command> [option=value] [option=value] ...`
 
 The utilities can also be called specifically through the `gmri` command. 
 
-This bypasses the `mnap` wrapper and directly calles the python engine. 
+This bypasses the `qunex` wrapper and directly calles the python engine. 
 
 The general use form is:
 
@@ -76,7 +76,7 @@ External dependencies
 =====================
 ---
 
-### See https://bitbucket.org/hidradev/mnaptools/src/master/README.md
+### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
 [Mind and Brain Lab]: http://mblab.si
