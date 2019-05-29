@@ -474,6 +474,7 @@ Change Log
 * 0.41.10 [niutilities] Updated processInbox with nameformat parameter
 * 0.42.00 [niutilities librarry] Major update to niutilities functionality and compliance with latest HCP Pipelines
 * 0.43.00 [qunex] Major update to entire suite to reflect new public beta name change from MNAP to Qu|Nex
+* 0.43.01 [niutilities] Added initial version of mapIO
 
 
 Stable Container Tag Log
