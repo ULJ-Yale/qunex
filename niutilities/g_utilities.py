@@ -9,6 +9,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 
 import os.path
 import os
+import shutil
 import glob
 import datetime
 import shutil
@@ -2218,3 +2219,302 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
 
     if not processReport['ok']:
         raise ge.CommandNull("pullSequenceNames", "No files processed", "No valid data was found!")                
+
+
+def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=None, action="link", target=None, source=None, overwrite="no", exclude=None, verbose="yes"):
+    """
+    mapIO [subjectsfolder="."] [sessions=None] [mapping=<desired mapping>] [sfilter=None] [subjid=None] [action=<how to map>] [target=None|<location to map to>] [source=None|<location to map from>] [overwrite="no"] [exclude=None] [verbose="yes"]
+
+    The function maps data in or out of Qu|Nex data structure. What specific 
+    mapping to conduct is specified by the `mapping` parameter. How to do the 
+    mapping (move, copy, link) is specified by the `action` parameter. The
+    `overwrite` parameter specifies whether to replace any existing data at the
+    target location if it already exist.
+
+    If the command is to map out from the Qu|Nex data structure, then the target
+    location has to be provided by the `target` parameter. If the command is to 
+    map into the Qu|Nex data structure, then the source location has to be 
+    provided by the `source` parameter.
+
+    The command first prepares the mapping, checks that it can be completed,
+    and then executes it if no problems were encountered. If any errors would
+    occur, no mapping is conducted to avoid an incomplete mapping. Do note that
+    checking only looks up if source or target files exist. It does not check,
+    whether the user has permission on the filesystem to execute the actions.
+
+
+    Implemeted mappings
+    -------------------
+
+    The following mappings are implemented, as they can be specified by the
+    `map` parameter:
+
+    * 'toHCPLS'         The data preprocessed using the HCP Pipelines is mapped
+                        to the provided target location. The mapping assumes 
+                        that hcpls folder structure was used for the image 
+                        processing. It will map all the folders in the session's
+                        hcp directory but the 'unprocessed' folder.
+        
+    Parameters
+    ----------
+
+    --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
+                      the inbox and individual subject folders are. If not 
+                      specified, the current working folder will be taken as 
+                      the location of the subjectsfolder. [.]
+    
+    --sessions        Either a string with pipe `|` or comma separated list of 
+                      sessions (sessions ids) to be MAPPED (use of grep 
+                      patterns is possible), e.g. "AP128,OP139,ER*", or a path
+                      to a batch.txt file with information on the sessions. [*]
+
+    --sfilter         Optional parameter used to filter sessions to include. It
+                      is specifed as a string in format:
+    
+                      "<key>:<value>|<key>:<value>"
+
+                      The keys and values refer to information provided by the
+                      batch.txt file referenced in the `sessions` parameter. 
+                      Only the sessions for which all the specified keys match
+                      the specified values will be mapped.
+    
+    --subjid          An optional parameter explicitly specifying, which of the 
+                      sessions identified by the `sessions` parameter are to be 
+                      mapped. If not specified, all sessions will be mapped.
+
+    --mapping         The specific mapping to be performed (see the section on
+                      implemented mappings).
+
+    --action          How to map the data. The following actions are supported:
+                      * 'copy'  ... the data is copied from source to target
+                      * 'link'  ... if possible, hard links are created for the 
+                                    files, if not, the data is copied
+                      * 'move'  ... the data is moved from source to target 
+                                    location
+                      ['link']
+
+    --source          The source of the mapping. Only relevant and has to be 
+                      specified when mapping into the Qu|Nex folder structure.
+
+    --target          The target of the mapping. Only relevant and has to be 
+                      specified when mapping out of the Qu|Nex folder structure.
+
+    --overwrite       Whether exisiting files at the target location should be
+                      overwritten. Possible options are:
+                      * yes  ... any existing files should be replaced   
+                      * no   ... no existing files should be replaced abort if
+                                 any are found
+                      * skip ... skip files that already exist, process others
+
+    --exclude         A comma separated list of regular expression patterns that
+                      specify, which files should be excluded from mapping.
+
+    --verbose         Should it report details?
+
+    ----------------
+    Written by Grega Repovš 2019-05-29
+
+    """
+
+    verbose   = verbose.lower() == 'yes'
+
+    # -- check input
+
+    if os.path.exists(subjectsfolder):
+        subjectsfolder = os.path.abspath(subjectsfolder)
+    else:
+        raise ge.CommandFailed("mapIO", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (subjectsfolder), "Please check paths!")
+
+    if not mapping :
+        raise ge.CommandFailed("mapIO", "No mapping specified", "A mapping has to be specified to be executed!", "Please check your command call!")
+
+    if mapping not in ['toHCPLS']:
+        raise ge.CommandFailed("mapIO", "Mapping not supported", "The specified mapping is not supported [%s]" % (mapping), "Please check your command call!")
+
+    if mapping in ['toHCPLS']:
+        direction = 'out'
+        if target:
+            target = os.path.abspath(target)
+        else:
+            raise ge.CommandFailed("mapIO", "Target not specified", "To execute the specified mapping (%s), a target has to be specified!" % (mapping), "Please check your command call!")
+    else:
+        direction = 'in'
+        if source:
+            source = os.path.abspath(source)
+        else:
+            raise ge.CommandFailed("mapIO", "Source not specified", "To execute the specified mapping (%s), a source has to be specified!" % (mapping), "Please check your command call!")
+
+    if action not in ['link', 'copy', 'move']:
+        raise ge.CommandFailed("mapIO", "Invalid action", "The action specified for the mapping is not valid [%s]!" % (action), "Please specify a valid mapping!")
+
+    # -- prepare sessions to work with
+
+    if direction == 'out':
+        sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, subjid=subjid, subjectsfolder=subjectsfolder, verbose=False)
+        if not sessions:
+            raise ge.CommandFailed("mapIO", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
+
+    # -- prepare exclusion
+
+    if exclude:
+        patterns = [e.strip() for e in re.split(', *', exclude)]
+        exclude = []
+        for e in patterns:
+            try:
+                exclude.append(re.compile(e))
+            except:
+                raise ge.CommandFailed("mapIO", "Invalid exclusion" , "Could not parse the exclusion regular expression: '%s'!" % (e), "Please check exclude parameter!")
+
+    # -- open logfile
+
+    logfilename, logfile = gc.getLogFile(folders={'subjectsfolder': subjectsfolder}, tags=['mapIO', mapping])
+    
+    gc.printAndLog(gc.underscore("Running mapIO: %s" % (mapping)), file=logfile)
+    
+    # -- prepare mapping
+
+    gc.printAndLog("--> preparing mapping", file=logfile)
+
+    if mapping == 'toHCPLS':
+        toMap = map_toHCPLS(subjectsfolder, sessions, target, gopts)
+
+    if not toMap:
+        gc.printAndLog("ERROR: Found nothing to map!", file=logfile, silent=True)
+        endlog = gc.closeLogFile(logfile, logfilename, status="error")
+        raise ge.CommandFailed("mapIO", "Nothing to map" , "No files were found to map!", "Please check your data!")
+
+    # -- check mapping
+
+    missing   = []
+    existing  = []
+    failed    = []
+    process   = []
+    toexclude = []
+
+    for sfile, tfile in toMap:
+        if not os.path.exists(sfile):
+            missing.append((sfile, tifile))
+        elif os.path.isfile(tfile):
+            existing.append((sfile, tfile))
+        else:
+            if exclude:
+                if any([e.search(sfile) is not None for e in exclude]):
+                    toexclude.append((sfile, tfile))
+                    continue
+            process.append((sfile, tfile))
+
+    if missing:
+        gc.printAndLog("==> ERROR: A number of source files are missing", file=logfile, silent=not verbose)
+        for sfile, tfile in missing:
+            gc.printAndLog("           --> " + sfile, file=logfile)
+        gc.printAndLog("\nMapping Aborted!", file=logfile)
+        endlog = gc.closeLogFile(logfile, logfilename, status="error")
+        raise ge.CommandFailed("mapIO", "Source files missing" , "Mapping could not be run as some source files were missing!", "Please check your data and log [%s!" % (endlog))
+    
+    if existing:
+        s = 'Some files already exist'
+        if overwrite.lower() == 'yes':
+            s = "==> WARNING: " + s + " and will be overwritten"
+            pre = "             "
+            process += existing
+        if overwrite.lower() == 'skip':
+            s = "==> WARNING: " + s + " and will be skipped"
+            pre = "             "
+        else:
+            s = "==> ERROR: " + s 
+            pre = "           "
+        gc.printAndLog(s, file=logfile)
+
+        for sfile, tfile in existing:
+            gc.printAndLog(pre + "--> " + sfile, file=logfile, silent=not verbose)
+
+        if overwrite.lower() == 'no':
+            gc.printAndLog("==> Mapping Aborted!", file=logfile)
+            endlog = gc.closeLogFile(logfile, logfilename, status="error")
+            raise ge.CommandFailed("mapIO", "Target files exist" , "Mapping could not be run as some target file already exist!", "Please check your data and log [%s]!" % (endlog))
+
+    if toexclude:
+        gc.printAndLog("==> WARNING: Some files will be excluded from mapping", file=logfile)
+
+        for sfile, tfile in toexclude:
+            gc.printAndLog("             --> " + sfile, file=logfile, silent=not verbose)
+
+    if not process:
+        gc.printAndLog("==> Nothing left to map!", file=logfile, silent=True)
+        endlog = gc.closeLogFile(logfile, logfilename, status="done")
+        raise ge.CommandNull("mapIO", "Nothing left to map" , "After skipping and exclusion, no files were left to map!", "Please check your data!")
+
+    # -- execute mapping
+
+    # -> clean destination
+
+    if overwrite.lower() == 'yes':
+        for tfile in existing:
+            os.remove(tfile)
+
+    # -> map
+
+    actions      = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.linkOrCopy}
+    descriptions = {'copy': 'copying', 'move': 'moving', 'link': 'linking'}
+    
+    do   = actions[action]
+    desc = descriptions[action]
+
+    gc.printAndLog("--> Mapping files", file=logfile)
+
+    failed = []
+
+    for sfile, tfile in process:
+
+        tfolder, tname = os.path.split(tfile)
+        if not os.path.exists(tfolder):
+            try:
+                os.makedirs(tfolder)
+            except:
+                failed.append((sfile, tfile))
+                continue
+            gc.printAndLog("    --> creating folder: %s" % (tfolder), file=logfile, silent=not verbose)
+
+        try:
+            do(sfile, tfile)
+        except:
+            raise
+            failed.append((sfile, tfile))
+            continue
+        gc.printAndLog("    --> %s: %s --> %s" % (desc, sfile, tfile), file=logfile, silent=not verbose)
+
+    # -- check success
+    
+    if failed:
+        gc.printAndLog("\n" + gc.underscore("ERROR: The following files could not be mapped"), file=logfile)
+        for sfile, tfile in failed:
+            gc.printAndLog("--> %s --> %s" % (sfile, tfile), file=logfile)
+
+        endlog = gc.closeLogFile(logfile, logfilename, status="error")
+        raise ge.CommandFailed("mapIO", "Some files not mapped" , "Some files could not be mapped!", "Please see log and check your data [%s]!" % (endlog))
+
+    gc.printAndLog("--> Mapping completed", file=logfile)
+    endlog = gc.closeLogFile(logfile, logfilename, status="done")
+
+
+
+def map_toHCPLS(subjectsfolder, sessions, target, options):
+    '''
+    Computes mapping from Qu|Nex to HCPLS folders.
+    '''
+    toMap = []
+
+    for session in sessions:
+        hcpfolder = os.path.join(subjectsfolder, session['id'], 'hcp', session['id'])
+        hcpfolders = [e for e in glob.glob(os.path.join(hcpfolder, '*')) if os.path.basename(e) not in ['unprocessed']] 
+        targetfolder = os.path.join(target, session['id'])
+
+        for datafolder in hcpfolders:
+            for dirpath, dirnames, filenames in os.walk(datafolder):
+                for filename in filenames:
+                        toMap.append((os.path.join(datafolder, dirpath, filename), os.path.join(targetfolder, os.path.relpath(dirpath, hcpfolder), filename)))
+
+    return toMap
+
+
+

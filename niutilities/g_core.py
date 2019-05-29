@@ -8,6 +8,8 @@ and can not be called externaly.
 
 import re
 import os.path
+import os
+import shutil
 import subprocess
 import time
 import multiprocessing
@@ -654,5 +656,88 @@ def printAndLog(*args, **kwargs):
     for toclose in [append, write]:
         if toclose:
             toclose.close()
+
+
+
+def getLogFile(folders=None, tags=None):
+    """
+    Creates a log file in the comlogs folder and returns the name and the file handle.
+    It tries to find the correct location for the log based on the provided folders.
+    
+    Arguments:
+    - folders  ... a dictionary with the known paths
+    - tags     ... an array of strings to use to create the filename
+
+    Returns
+    - filename     ... the path to the log file
+    - file handle  ... the file handle of the open file
+
+    ---
+    Written by Grega Repovš, 2019-05-29
+    """
+
+    folders = deduceFolders(folders)
+
+    if 'logfolder' not in folders:
+        raise ge.CommandFailed("getLogFile", "Logfolder not found" , "Could not deduce the location of the log folder based on the provided information!")
+
+    if isinstance(tags, basestring) or tags is None:
+        tags = [logtags]
+
+    logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
+    logname  = tags + [logstamp]
+    logname  = [e for e in logname if e]
+    logname  = "_".join(logname)
+    logname  = os.path.join(folders['logfolder'], 'comlogs', "tmp_%s.log" % (logname))
+    logfile  = open(logname, 'w')
+
+    return logname, logfile
+
+
+def closeLogFile(logfile=None, logname=None, status="done"):
+    """
+    Closes the logfile and swaps the 'tmp_', 'done_', 'error_', 'incomplete_' at the start of the logname to the
+    provided status.
+
+    ---
+    Written by Grega Repovš, 2019-05-29
+    """
+
+    if logfile:
+        logfile.close()
+
+    if logname:
+        logfolder, newname = os.path.split(logname)
+        newname = re.sub('^(tmp_|done_|error_|incomplete_|)', status + '_', newname)
+        newfile = os.path.join(logfolder, newname)
+        os.rename(logname, newfile)
+
+    return newfile
+
+
+def underscore(s):
+    s = s + "\n" + "".join(['=' for e in range(len(s))])
+    return s
+
+
+def linkOrCopy(source, target):
+    """
+    linkOrCopy - documentation not yet available.
+    """
+    if os.path.exists(source):
+        try:
+            if os.path.exists(target):
+                if os.path.samefile(source, target):
+                    return
+                else:
+                    os.remove(target)
+            elif os.path.islink(source):
+                linkto = os.readlink(source)
+                os.symlink(linkto, target)
+            else:
+                os.link(source, target)
+        except:
+            shutil.copy2(source, target)
+
 
 
