@@ -2221,9 +2221,9 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
         raise ge.CommandNull("pullSequenceNames", "No files processed", "No valid data was found!")                
 
 
-def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=None, action="link", target=None, source=None, overwrite="no", exclude=None, verbose="yes"):
+def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=None, action="link", target=None, source=None, overwrite="no", exclude=None, verbose="no"):
     """
-    mapIO [subjectsfolder="."] [sessions=None] [mapping=<desired mapping>] [sfilter=None] [subjid=None] [action=<how to map>] [target=None|<location to map to>] [source=None|<location to map from>] [overwrite="no"] [exclude=None] [verbose="yes"]
+    mapIO [subjectsfolder="."] [sessions=None] [mapping=<desired mapping>] [sfilter=None] [subjid=None] [action=<how to map>] [target=None|<location to map to>] [source=None|<location to map from>] [overwrite="no"] [exclude=None] [verbose="no"]
 
     The function maps data in or out of Qu|Nex data structure. What specific 
     mapping to conduct is specified by the `mapping` parameter. How to do the 
@@ -2258,18 +2258,21 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     Parameters
     ----------
 
-    --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
-                      the inbox and individual subject folders are. If not 
-                      specified, the current working folder will be taken as 
-                      the location of the subjectsfolder. [.]
+    --subjectsfolder  Specifies the base study subjects folder within the Qu|Nex
+                      folder structure to or from which the data are to be 
+                      mapped. If not specified explicitly, the current working 
+                      folder will be taken as the location of the subjectsfolder. 
+                      [.]
     
     --sessions        Either a string with pipe `|` or comma separated list of 
-                      sessions (sessions ids) to be MAPPED (use of grep 
-                      patterns is possible), e.g. "AP128,OP139,ER*", or a path
-                      to a batch.txt file with information on the sessions. [*]
+                      sessions (sessions ids) to be mapped (use of grep patterns
+                      is possible), e.g. "AP128,OP139,ER*". When mapping out of 
+                      Qu|Nex it is best (or even required) to provide a path to 
+                      a batch.txt file with information on the sessions. [*]
 
-    --sfilter         Optional parameter used to filter sessions to include. It
-                      is specifed as a string in format:
+    --sfilter         And optional parameter used in combination with a 
+                      batch.txt file used to filter sessions to include in the 
+                      mapping. It is specifed as a string in format:
     
                       "<key>:<value>|<key>:<value>"
 
@@ -2302,14 +2305,95 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     --overwrite       Whether exisiting files at the target location should be
                       overwritten. Possible options are:
                       * yes  ... any existing files should be replaced   
-                      * no   ... no existing files should be replaced abort if
-                                 any are found
+                      * no   ... no existing files should be replaced anf the
+                                 mapping should be aborted if any are found
                       * skip ... skip files that already exist, process others
 
     --exclude         A comma separated list of regular expression patterns that
                       specify, which files should be excluded from mapping.
 
     --verbose         Should it report details?
+
+    
+    Examples
+    --------
+    
+    toHCPLS mapping
+    
+    We will assume the following:
+    
+    * data to be mapped is located in the folder `/data/studies/myStudy/subjects`
+    * a batch file exists in the location `/data/studies/myStudy/processing/batch.txt`
+    * we would like to map the data to location `/data/outbox/hcp_formatted/myStudy`
+    
+    given the above assumptions the following example commands can be run:
+    
+    ```
+    qunex mapIO \
+        --subjectsfolder=/data/studies/myStudy/subjects \
+        --sessions=/data/studies/myStudy/processing/batch.txt \
+        --target=/data/outbox/hcp_formatted/myStudy \
+        --mapping="toHCPLS" \
+        --action="link" \
+        --overwrite=skip
+    ```
+    
+    Using the above command the data found in the 
+    `/data/studies/myStudy/subjects/<session id>/hcp/<session id>` folders, 
+    excluding the `unprocessed` folder would be mapped to the 
+    `/data/outbox/hcp_formatted/myStudy/<session id>` folder for all the 
+    sessions listed in the batch.txt file. Specifically, folders would be 
+    recreated as needed and hard-links would be created for all the files to be 
+    mapped. If any target files already exist, they would be skipped, but 
+    the processing of other files would take place anyway.
+        
+    ```
+    qunex mapIO \
+        --subjectsfolder=/data/studies/myStudy/subjects \
+        --sessions=/data/studies/myStudy/processing/batch.txt \
+        --target=/data/outbox/hcp_formatted/myStudy \
+        --sfilter="group:controls|institution:Yale" \
+        --mapping="toHCPLS" \
+        --action="copy" \
+        --overwrite=no
+    ```
+    
+    Using the above command, only data from the sessions that are marked in the
+    batch.txt file to be from the control group and acquired at Yale would be 
+    mapped. In this case, the files would be copied and if any files would 
+    already exist in the target location, the mapping would be aborted 
+    altogether.
+    
+    ```
+    qunex mapIO \
+        --subjectsfolder=/data/studies/myStudy/subjects \
+        --sessions=/data/studies/myStudy/processing/batch.txt \
+        --target=/data/outbox/hcp_formatted/myStudy \
+        --subjid="AP*,HQ*" \
+        --mapping="toHCPLS" \
+        --action="move" \
+        --overwrite=yes
+    ```
+    
+    Using the above command, only the sessions that start with either "AP" or 
+    "HQ" would be mapped, the files would be moved and any existing files at the 
+    target location would be overwritten.
+    
+    ```
+    qunex mapIO \
+        --subjectsfolder=/data/studies/myStudy/subjects \
+        --sessions=/data/studies/myStudy/processing/batch.txt \
+        --target=/data/outbox/hcp_formatted/myStudy \
+        --mapping="toHCPLS" \
+        --action="link" \
+        --exclude="MotionMatrices,MotionCorrection" \
+        --overwrite=skip
+    ```
+    
+    Using the above command, all the sessions specified in the batch.txt would 
+    be processed, files would be linked, files that already exist would be 
+    skipped, and any files for which the path include 'MotionMatrices' or 
+    'MotionCorrection' would be excluded from the mapping.
 
     ----------------
     Written by Grega Repovš 2019-05-29
