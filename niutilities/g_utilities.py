@@ -606,6 +606,8 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
              - Added subjectsfolder to getSubjectList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to add to the list file
+    2019-05-30 Grega Repovš
+             - Fixed a None checkup bug
 
     """
 
@@ -624,10 +626,10 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
     subjectsfolder = os.path.abspath(subjectsfolder)
 
-    if sessions.lower() == 'none':
+    if sessions and sessions.lower() == 'none':
         sessions = None
 
-    if sfilter.lower() == 'none':
+    if sfilter and sfilter.lower() == 'none':
         sfilter = None
 
     # --- prepare parameters
@@ -878,6 +880,8 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
              - Added subjectsfolder to getSubjectList call
     2019-05-12 Grega Repovš
              - Reports an error if no session is found to be processed
+    2019-05-30 Grega Repovš
+             - Fixed a None checkup bug
 
     """
 
@@ -897,10 +901,10 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
 
     # --- check sessions
 
-    if sessions.lower() == 'none':
+    if sessions and sessions.lower() == 'none':
         sessions = None
 
-    if sfilter.lower() == 'none':
+    if sfilter and sfilter.lower() == 'none':
         sfilter = None
 
     subjectsfolder = os.path.abspath(subjectsfolder)
