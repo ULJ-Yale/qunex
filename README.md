@@ -476,6 +476,7 @@ Change Log
 * 0.43.00 [qunex] Major update to entire suite to reflect new public beta name change from MNAP to Qu|Nex
 * 0.43.01 [niutilities] Added initial version of mapIO
 * 0.43.02 [niutilities] Updated mapIO documentation with examples
+* 0.43.03 [niutilities] Fixed a None checkup bug
 
 
 Stable Container Tag Log
