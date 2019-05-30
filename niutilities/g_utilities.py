@@ -2240,25 +2240,14 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     map into the Qu|Nex data structure, then the source location has to be 
     provided by the `source` parameter.
 
-    The command first prepares the mapping, checks that it can be completed,
-    and then executes it if no problems were encountered. If any errors would
-    occur, no mapping is conducted to avoid an incomplete mapping. Do note that
-    checking only looks up if source or target files exist. It does not check,
-    whether the user has permission on the filesystem to execute the actions.
+    The command first prepares the mapping. Next it checks that the mapping can
+    be conducted as specified by the parameters given. If the check identifies 
+    any potential issues, no mapping is conducted to avoid an incomplete mapping. 
+    Do note that the check only investigates the presence of source and target 
+    files, it does not check, whether the user has permission on the filesystem 
+    to execute the actions.
 
 
-    Implemeted mappings
-    -------------------
-
-    The following mappings are implemented, as they can be specified by the
-    `map` parameter:
-
-    * 'toHCPLS'         The data preprocessed using the HCP Pipelines is mapped
-                        to the provided target location. The mapping assumes 
-                        that hcpls folder structure was used for the image 
-                        processing. It will map all the folders in the session's
-                        hcp directory but the 'unprocessed' folder.
-        
     Parameters
     ----------
 
@@ -2314,11 +2303,34 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
                       * skip ... skip files that already exist, process others
 
     --exclude         A comma separated list of regular expression patterns that
-                      specify, which files should be excluded from mapping.
+                      specify, which files should be excluded from mapping. The
+                      regular expression patterns are matched against the full
+                      path of the source files.
 
     --verbose         Should it report details?
 
-    
+
+
+    Implemeted mappings
+    -------------------
+
+    The following mappings are implemented, as they can be specified by the
+    `mapping` parameter:
+
+    * 'toHCPLS'         This mapping supports the the data preprocessed using
+                        the HCP Pipelines following the Life Span (LS) 
+                        convention. The processed derivatives from the HCP 
+                        pipelines are mapped into the specified target location
+                        on the file system to comply with the HCPLS output 
+                        expectations. The mapping expects that HCPLS folder 
+                        structure was used for the processing. The function will
+                        map all the content of the session's hcp directory 
+                        to a corresponding session directory in the indicated 
+                        target location. If any part of the unprocessed data 
+                        or the results are not to be mapped, they can be 
+                        specified using the `exclude` parameter.
+
+
     Examples
     --------
     
@@ -2332,15 +2344,14 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     
     given the above assumptions the following example commands can be run:
     
-    ```
-    qunex mapIO \
-        --subjectsfolder=/data/studies/myStudy/subjects \
-        --sessions=/data/studies/myStudy/processing/batch.txt \
-        --target=/data/outbox/hcp_formatted/myStudy \
-        --mapping="toHCPLS" \
-        --action="link" \
+    qunex mapIO \\
+        --subjectsfolder=/data/studies/myStudy/subjects \\
+        --sessions=/data/studies/myStudy/processing/batch.txt \\
+        --target=/data/outbox/hcp_formatted/myStudy \\
+        --mapping=toHCPLS \\
+        --exclude=unprocessed \\
+        --action=link \\
         --overwrite=skip
-    ```
     
     Using the above command the data found in the 
     `/data/studies/myStudy/subjects/<session id>/hcp/<session id>` folders, 
@@ -2351,16 +2362,14 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     mapped. If any target files already exist, they would be skipped, but 
     the processing of other files would take place anyway.
         
-    ```
-    qunex mapIO \
-        --subjectsfolder=/data/studies/myStudy/subjects \
-        --sessions=/data/studies/myStudy/processing/batch.txt \
-        --target=/data/outbox/hcp_formatted/myStudy \
-        --sfilter="group:controls|institution:Yale" \
-        --mapping="toHCPLS" \
-        --action="copy" \
+    qunex mapIO \\
+        --subjectsfolder=/data/studies/myStudy/subjects \\
+        --sessions=/data/studies/myStudy/processing/batch.txt \\
+        --target=/data/outbox/hcp_formatted/myStudy \\
+        --sfilter="group:controls|institution:Yale" \\
+        --mapping="toHCPLS" \\
+        --action="copy" \\
         --overwrite=no
-    ```
     
     Using the above command, only data from the sessions that are marked in the
     batch.txt file to be from the control group and acquired at Yale would be 
@@ -2368,39 +2377,40 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     already exist in the target location, the mapping would be aborted 
     altogether.
     
-    ```
-    qunex mapIO \
-        --subjectsfolder=/data/studies/myStudy/subjects \
-        --sessions=/data/studies/myStudy/processing/batch.txt \
-        --target=/data/outbox/hcp_formatted/myStudy \
-        --subjid="AP*,HQ*" \
-        --mapping="toHCPLS" \
-        --action="move" \
+    qunex mapIO \\
+        --subjectsfolder=/data/studies/myStudy/subjects \\
+        --sessions=/data/studies/myStudy/processing/batch.txt \\
+        --target=/data/outbox/hcp_formatted/myStudy \\
+        --subjid="AP*,HQ*" \\
+        --mapping="toHCPLS" \\
+        --action="move" \\
         --overwrite=yes
-    ```
     
     Using the above command, only the sessions that start with either "AP" or 
     "HQ" would be mapped, the files would be moved and any existing files at the 
     target location would be overwritten.
     
-    ```
-    qunex mapIO \
-        --subjectsfolder=/data/studies/myStudy/subjects \
-        --sessions=/data/studies/myStudy/processing/batch.txt \
-        --target=/data/outbox/hcp_formatted/myStudy \
-        --mapping="toHCPLS" \
-        --action="link" \
-        --exclude="MotionMatrices,MotionCorrection" \
+    qunex mapIO \\
+        --subjectsfolder=/data/studies/myStudy/subjects \\
+        --sessions=/data/studies/myStudy/processing/batch.txt \\
+        --target=/data/outbox/hcp_formatted/myStudy \\
+        --mapping="toHCPLS" \\
+        --action="link" \\
+        --exclude="unprocessed,MotionMatrices,MotionCorrection" \\
         --overwrite=skip
-    ```
     
     Using the above command, all the sessions specified in the batch.txt would 
     be processed, files would be linked, files that already exist would be 
-    skipped, and any files for which the path include 'MotionMatrices' or 
-    'MotionCorrection' would be excluded from the mapping.
+    skipped, and any files for which the path include 'unprocessed', '
+    MotionMatrices' or 'MotionCorrection' would be excluded from the mapping.
 
     ----------------
     Written by Grega Repovš 2019-05-29
+
+    Change log
+    2019-05-30 Grega Repovš
+             - Modified documentation
+             - Excluding 'unprocessed' is now an explicit option
 
     """
 
@@ -2594,7 +2604,7 @@ def map_toHCPLS(subjectsfolder, sessions, target, options):
 
     for session in sessions:
         hcpfolder = os.path.join(subjectsfolder, session['id'], 'hcp', session['id'])
-        hcpfolders = [e for e in glob.glob(os.path.join(hcpfolder, '*')) if os.path.basename(e) not in ['unprocessed']] 
+        hcpfolders = glob.glob(os.path.join(hcpfolder, '*')) 
         targetfolder = os.path.join(target, session['id'])
 
         for datafolder in hcpfolders:
