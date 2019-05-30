@@ -477,6 +477,7 @@ Change Log
 * 0.43.01 [niutilities] Added initial version of mapIO
 * 0.43.02 [niutilities] Updated mapIO documentation with examples
 * 0.43.03 [niutilities] Fixed a None checkup bug
+* 0.43.04 [niutilities] Updated mapIO documentation, toHCPLS is also more flexible.
 
 
 Stable Container Tag Log
