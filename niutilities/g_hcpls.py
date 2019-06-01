@@ -494,6 +494,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
             except:
                 print "        => Error: Processing of zip package failed. Please check the package!"
                 errors += "\n    .. Processing of package %s failed!" % (file)
+                allOk = False
 
         elif '.tar' in file:
             print "   --> processing tar package [%s]" % (file)
@@ -515,6 +516,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
             except:
                 print "        => Error: Processing of tar package failed. Please check the package!"
                 errors += "\n    .. Processing of package %s failed!" % (file)
+                allOk = False
 
         else:
             tfile = mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ", nameformat)
@@ -565,6 +567,12 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 except:
                     print "==> %s of %s failed!" % (archive, file)
 
+    # ---> check status
+
+    if not allOk:
+        print "\nFinal report\n============"
+        raise ge.CommandFailed("HCPLSImport", "Processing of some packages failed", "Mapping of image files aborted.", "Please check report!")
+
     # ---> mapping data to Qu|Nex nii folder
 
     report = []
@@ -581,8 +589,15 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
 
                 try:
                     print
-                    mapHCPLS2nii(os.path.join(subjectsfolder, session), overwrite)
-                    report.append('%s completed ok' % (info))
+                    nimg, nmapped = mapHCPLS2nii(os.path.join(subjectsfolder, session), overwrite)
+                    if nimg == 0:
+                        report.append('%s had no images found to be mapped' % (info))
+                        allOk = False
+                    elif nimg == nmapped:
+                        report.append('%s completed ok. %d images mapped' % (info, nmapped))
+                    else:
+                        report.append('%s mapped incompletely [%d images, %d mapped]' % (info, nimg, nmapped))
+                        allOk = False
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
                     report.append('%s failed' % (info))
@@ -864,6 +879,8 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
              - Changed subjects to sessions
     2019-05-22 Grega Repovš
              - Added boldname to output
+    2019-06-01 Grega Repovš
+             - Returns statistics
     '''
 
     sfolder = os.path.abspath(sfolder)
@@ -965,10 +982,12 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     # hcplsData   = [{'senum':senum, 'label': folderLabel, 'folderInfo': folderInfo, 'folderFiles': folderFiles, 'extraFiles': extraFiles, 'missingFiles': missingFiles}]
     # folderFiles = [{'rank': 0, 'path': file, 'name': fileName, 'parts': fileParts, 'json': None}]
 
-    mapped = []
-    imgn   = 0 
-    boldn  = 0
+    mapped  = []
+    imgn    = 0 
+    boldn   = 0
+    nmapped = 0
     firstImage = True
+
 
     for folder in hcplsData:
         if folder['label'] in ['rfMRI', 'tfMRI']:
@@ -984,6 +1003,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
             status = moveLinkOrCopy(fileInfo['path'], tfile, action='link')
 
             if status:
+                nmapped += 1
                 print "--> linked %02d.nii.gz <-- %s" % (imgn, fileInfo['name'])
 
                 # -- Institution and device information
@@ -1078,3 +1098,4 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     if not allOk:
         raise ge.CommandFailed("mapHCPLS2nii", "Not all actions completed successfully!", "Some files for session %s were not mapped successfully!" % (session), "Please check logs and data!")
 
+    return imgn, nmapped
