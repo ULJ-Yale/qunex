@@ -399,7 +399,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     used. They are currently not yet implemented in HCP Pipelines.
 
     --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction in PreFS
-                               step (YES or NONE) [NONE].
+                               step if no T2w image is present (YES or NONE) 
+                               [YES].
     --hcp_prefs_brainmask  ... Whether to only run the final registration using
                                either a custom prepared brain mask (MASK) or to
                                run the full set of processing steps (NONE). [NONE]
@@ -503,6 +504,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     2019-05-26 Grega Repovš
              - Updated and simplified
              - Added full file checking
+    2019-05-31 Grega Repovš
+             - Updated target check image
     '''
 
     r = "\n---------------------------------------------------------"
@@ -761,7 +764,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         # -- Test files
 
-        tfile = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')
+        tfile = os.path.join(hcp['hcp_nonlin'], 'T1w_restore_brain.nii.gz')
         if hcp['hcp_prefs_check']:
             fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_prefs_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
         else:
