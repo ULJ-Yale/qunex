@@ -2461,7 +2461,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                    FSL BBR is run, epi_reg (default) or flirt.
                                    [epi_reg]
     --hcp_bold_movreg          ... Whether to use FLIRT (default and best for
-                                   multiband images) or McFLIRT for motion
+                                   multiband images) or MCFLIRT for motion
                                    correction. [FLIRT]
     --hcp_bold_movref (*)      ... What reference to use for movement correction
                                    (independent, first). [independent]
@@ -2484,7 +2484,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     multiband images, single-band can profit from specific adjustments.
       Whereas FLIRT is best used for motion registration of high-resolution BOLD
     images, lower resolution single-band images might be better motion aligned
-    using McFLIRT (--hcp_bold_movreg).
+    using MCFLIRT (--hcp_bold_movreg).
       As a movement correction target, either each BOLD can be independently
     registered to T1 image, or all BOLD images can be motion correction aligned
     to the first BOLD in the series and only that image is registered to the T1
@@ -3133,7 +3133,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 'sequencetype'      : options['hcp_bold_sequencetype'],
                 'preregister'       : options['hcp_bold_preregister'],
                 'refreg'            : options['hcp_bold_refreg'],
-                'movreg'            : options['hcp_bold_movreg'],
+                'movreg'            : options['hcp_bold_movreg'].upper(),
                 'fmriref'           : fmriref,
                 'usemask'           : options['hcp_bold_usemask'],
                 'mppversion'        : options['hcp_mppversion']}
