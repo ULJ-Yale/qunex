@@ -260,7 +260,10 @@ def getSubjectList(listString, sfilter=None, subjid=None, subjectsfolder=None, v
         try:
             filters = [[f.strip() for f in e.split(':')] for e in sfilter.split("|")]
         except:
-            raise ValueError("ERROR: The provided filter parameter is invalid [%s]!" % sfilter)
+            raise ge.CommandFailed("getSubjectList", "Invalid sfilter parameter", "The provided sfilter parameter is invalid: '%s'" % (sfilter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
+            
+        if any([len(e) != 2 for e in filters]):
+            raise ge.CommandFailed("getSubjectList", "Invalid sfilter parameter", "The provided sfilter parameter is invalid: '%s'" % (sfilter), "The parameter should be a '|' separated  string of <key>:<value> pairs!", "Please adjust the parameter!")
 
         for key, value in filters:
             slist = [e for e in slist if key in e and e[key] == value]
