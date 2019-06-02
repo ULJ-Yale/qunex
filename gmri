@@ -17,7 +17,7 @@ tools     = os.environ['TOOLS']
 qunexrepo = os.environ['QUNEXREPO']
 with open(os.path.join(tools, qunexrepo, 'VERSION.md'), "r") as f:
     version  = f.read().strip()
-print "Multimodal Neuroimaging Analysis Platform (Qu|Nex) Suite Version", version
+print "Quantitative Neuroimaging Environment & Toolbox (Qu|Nex) Suite Version", version
 print 
 
 help = '''

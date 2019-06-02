@@ -27,7 +27,7 @@ import g_core
 
 def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", boldnamekey='number', folderstructure='hcpls'):
     '''
-    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [boldnamekey='number'] ['folderstructure='hcpls']
+    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [boldnamekey='number'] [folderstructure='hcpls']
 
     USE
     ===
