@@ -1,4 +1,4 @@
-# README File for Qu|Nex Tools
+# README File for  Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
 
 
 Background
@@ -13,11 +13,11 @@ designed to be flexible and can be developed by adding functions developed aroun
 The Qu|Nex code is is co-developed and co-maintained by the [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
 
-Installation
-============
+Installation from Source
+=========================
 ---
 
-### Step 1. Clone all Qu|Nex repos and initiate submodules.
+### Step 1. Clone all Qu|Nex repositories and initiate submodules.
 
 * Clone a branch: `git clone -b <BRANCH> git@bitbucket.org:oriadev/qunex.git`
 * Initiate submodules from inside cloned repo folder: `git submodule init`
@@ -31,7 +31,7 @@ Installation
 * Install latest version of numpy, pydicom, scipy & nibabel
 * (e.g. `pip install numpy pydicom scipy nibabel`)
 
-### Step 3. Configure the environment script by adding the following lines to your .bash_profile.
+### Step 3. Configure the Qu|Nex environment script by adding the following lines to your .bash_profile.
 
 ```
 TOOLS=<path_to_folder_with_qunex_suite_and_dependencies>
@@ -39,46 +39,47 @@ export TOOLS
 source $TOOLS/library/environment/qunex_environment.sh
 ```
 
-### Step 4. Install all necessary dependencies for full functionality (see below). 
+### Step 4. Install all necessary dependencies for full Qu|Nex functionality (see below). 
 
-* All relevant dependencies should be inside `$TOOLS` folder.
+* All relevant dependencies should be inside the `$TOOLS` folder.
 
-* The `qunex_environment.sh` script automatically sets assumptions for dependency paths. 
-These can be changed by the user. 
+* The `qunex_environment.sh` script automatically sets assumptions for dependency paths. These can be changed by the user. 
+
 * For more info on how to define specific Qu|Nex dependencies paths run:
 
 `qunex --envsetup`
 
-Updating the Qu|Nex Suite
-=========================
+Updating the Qu|Nex Suite from Source
+======================================
 
-* To update the main Qu|Nex Suite repository and all the submodules run:
+* To update the main Qu|Nex repository and all the submodules run:
 
 `gitqunex --command="pull" --branch="<branch_name>" --branchpath="<absolute_path_to_qunex_repo_folder>" --submodules="all"`
 
-* For this to work you need to have an active git account and read access across the Qu|Nex Suite.
+* For this to work you need to have an active git account and read access to the main Qu|Nex repository and all submodules.
 
 
-Usage and command documentation
+Usage and documentation
 ===============================
 ---
 
-List of functions can be obtained by running the following command from the terminal: 
+List of functions can be obtained by running the following call from the terminal: 
 
-* `qunex --help` prints the general help call
+* `qunex -help` prints the general help call
 
-The utilities are used through the `qunex` command. The general use form is:
+The general `qunex` call use form is:
 
-* `qunex --function="<command>" --option="<value>" --option="<value>" ...`
+`qunex --function="<command_name>" --option="<value>" --option="<value>" ...`
 
 Or the simplified form with command name first omitting the flag:
 
-* `qunex <command> --option="<value>" --option="<value>" ...`
+* `qunex <command_name> --option="<value>" --option="<value>" ...`
 
-The list of commands and their specific documentation is provided through `qunex`
-command itself using the folowing options:
+The list of commands and their specific documentation is provided by running `qunex`.
 
-* `qunex ?<command>` prints specific help for the specified command.
+To get help for a specific command use the folowing call:
+
+* `qunex ?<command_name>` prints specific help for the specified command.
 
 Perusing documentation, please note the following conventions used:
 
@@ -87,7 +88,7 @@ Perusing documentation, please note the following conventions used:
   is not explicitly specified
 * Angle brackets `<>` describe the value that should be provided
 * Dashes or "flags", `-` in the documentation define input variables.
-* Commands, arguments, and option names are either in small or "camel" case.
+* Command names, arguments, and option names are either in small or "camel" case.
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).
 
@@ -478,6 +479,8 @@ Change Log
 * 0.43.02 [niutilities] Updated mapIO documentation with examples
 * 0.43.03 [niutilities] Fixed a None checkup bug
 * 0.43.04 [niutilities] Updated mapIO documentation, toHCPLS is also more flexible.
+* 0.44.00 [connector, niutilities] Updated runTurnkey command and revised documentation.
+* 0.44.01 [niutilities, HCP, library] HCP Pipelines updated to work with legacy datasets, bugfixes, documentation updates, README updates 
 
 
 Stable Container Tag Log
