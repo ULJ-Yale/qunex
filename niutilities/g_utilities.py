@@ -2226,6 +2226,7 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
 
 
 def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=None, action="link", target=None, source=None, overwrite="no", exclude=None, verbose="no"):
+
     """
     mapIO [subjectsfolder="."] [sessions=None] [mapping=<desired mapping>] [sfilter=None] [subjid=None] [action=<how to map>] [target=None|<location to map to>] [source=None|<location to map from>] [overwrite="no"] [exclude=None] [verbose="no"]
 
@@ -2235,12 +2236,12 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     `overwrite` parameter specifies whether to replace any existing data at the
     target location if it already exist.
 
-    If the command is to map out from the Qu|Nex data structure, then the target
-    location has to be provided by the `target` parameter. If the command is to 
+    If the function is to map out from the Qu|Nex data structure, then the target
+    location has to be provided by the `target` parameter. If the function is to 
     map into the Qu|Nex data structure, then the source location has to be 
     provided by the `source` parameter.
 
-    The command first prepares the mapping. Next it checks that the mapping can
+    The function first prepares the mapping. Next it checks that the mapping can
     be conducted as specified by the parameters given. If the check identifies 
     any potential issues, no mapping is conducted to avoid an incomplete mapping. 
     Do note that the check only investigates the presence of source and target 
@@ -2265,7 +2266,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
 
     --sfilter         And optional parameter used in combination with a 
                       batch.txt file used to filter sessions to include in the 
-                      mapping. It is specifed as a string in format:
+                      mapping. It is specified as a string in format:
     
                       "<key>:<value>|<key>:<value>"
 
@@ -2295,10 +2296,10 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     --target          The target of the mapping. Only relevant and has to be 
                       specified when mapping out of the Qu|Nex folder structure.
 
-    --overwrite       Whether exisiting files at the target location should be
+    --overwrite       Whether existing files at the target location should be
                       overwritten. Possible options are:
                       * yes  ... any existing files should be replaced   
-                      * no   ... no existing files should be replaced anf the
+                      * no   ... no existing files should be replaced and the
                                  mapping should be aborted if any are found
                       * skip ... skip files that already exist, process others
 
@@ -2307,11 +2308,11 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
                       regular expression patterns are matched against the full
                       path of the source files.
 
-    --verbose         Should it report details?
+    --verbose         Report details while running function
 
 
 
-    Implemeted mappings
+    Implemented mappings
     -------------------
 
     The following mappings are implemented, as they can be specified by the
@@ -2353,7 +2354,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         --action=link \\
         --overwrite=skip
     
-    Using the above command the data found in the 
+    Using the above commands the data found in the 
     `/data/studies/myStudy/subjects/<session id>/hcp/<session id>` folders, 
     excluding the `unprocessed` folder would be mapped to the 
     `/data/outbox/hcp_formatted/myStudy/<session id>` folder for all the 
@@ -2371,7 +2372,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         --action="copy" \\
         --overwrite=no
     
-    Using the above command, only data from the sessions that are marked in the
+    Using the above commands, only data from the sessions that are marked in the
     batch.txt file to be from the control group and acquired at Yale would be 
     mapped. In this case, the files would be copied and if any files would 
     already exist in the target location, the mapping would be aborted 
@@ -2386,7 +2387,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         --action="move" \\
         --overwrite=yes
     
-    Using the above command, only the sessions that start with either "AP" or 
+    Using the above commands, only the sessions that start with either "AP" or 
     "HQ" would be mapped, the files would be moved and any existing files at the 
     target location would be overwritten.
     
@@ -2399,7 +2400,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         --exclude="unprocessed,MotionMatrices,MotionCorrection" \\
         --overwrite=skip
     
-    Using the above command, all the sessions specified in the batch.txt would 
+    Using the above commands, all the sessions specified in the batch.txt would 
     be processed, files would be linked, files that already exist would be 
     skipped, and any files for which the path include 'unprocessed', '
     MotionMatrices' or 'MotionCorrection' would be excluded from the mapping.

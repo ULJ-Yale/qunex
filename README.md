@@ -1,18 +1,20 @@
-# README File for Qu|Nex NiUtilities Code
+# README File for Quantitative Neuroimaging Environment & ToolboX (Qu|Nex) 
+# NeuroImaging Utilities (NIutilities) Code
 
 Background
 ==========
 ---
 
-Qu|Nex General Neuroimaging Utilities (gMRI) are neuroimaging
-preprocessing and analysis utilities that support multiple tasks through a
-common user interface, designed to simplify multiple steps of neuroimaging
-data preprocessing and analysis from sorting of dicom files to second level
-statistical analysis. They often provide a wrapper for efficiently running
-other tools and software either on a single computer or computer cluster
-by using PBS, SLURM or LSF scheduling.
+Qu|Nex Neuroimaging Utilities (NIutilities) are neuroimaging
+preprocessing and analysis framework that supports a variety of functions through a
+common user interface, designed to automate multiple steps of neuroimaging
+data preprocessing and analysis. Beyond stand-alone functions, NIutilities 
+also support the broader Qu|Nex processing and analytic pipeline functionality, 
+from from sorting of dicom files to second level statistical analysis. 
+NIutilities provide an 'engine' for efficiently running other functions either 
+on a single computer or computer cluster by using PBS, SLURM or LSF scheduling.
 
-The `gmri` utilities make use of and assume that relevant information and data
+NIutilities make use of and assume that relevant information and data
 is provided in a number of file formats, further described below. The utilities
 assume and help maintain a specific folder structure, further described below.
 A number of utilities depend on external dependencies and make use of data and
@@ -35,30 +37,41 @@ Installation
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
-Usage and command documentation
+Usage and documentation
 ===============================
 ---
 
-The utilities are invoked through the `qunex` command:
+List of functions can be obtained by running the following call from the terminal: 
 
-`qunex <command> [option=value] [option=value] ...`
+* `qunex -help` prints the general help call
 
-The utilities can also be called specifically through the `gmri` command. 
+The general `qunex` call use form is:
+
+`qunex --function="<command_name>" --option="<value>" --option="<value>" ...`
+
+Or the simplified form with function name first omitting the flag:
+
+* `qunex <command_name> --option="<value>" --option="<value>" ...`
+
+To get help for a specific function use the folowing call:
+
+* `qunex ?<command_name>` prints specific help for the specified function.
+
+The utilities can also be called specifically through the `gmri` call. 
 
 This bypasses the `qunex` wrapper and directly calles the python engine. 
 
 The general use form is:
 
-`gmri <command> [option=value] [option=value] ...`
+`gmri <command_name> [option=value] [option=value] ...`
 
-
-The list of commands and their specific documentation is provided through `gmri`
-command itself using the folowing options:
+The list of functions and their specific documentation is provided through `gmri`
+functions itself using the folowing options:
 
 * `gmri -h` prints general help information,
-* `gmri -l` lists all the available commands,
+* `gmri -l` lists all the available functions,
 * `gmri -o` lists all the available options,
-* `gmri -<command>` prints specific help for the specified command.
+* `gmri -<command_name>` prints specific help for the specified function.
 
 Perusing documentation, please note the following conventions used:
 
@@ -67,7 +80,7 @@ Perusing documentation, please note the following conventions used:
   is not explicitly specified
 * Angle brackets `<>` describe the value that should be provided
 * Dashes or "flags", `-` in the documentation define input variables.
-* Commands, arguments, and option names are either in small or "camel" case.
+* Function names, arguments, and option names are either in small or "camel" case.
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).
 
