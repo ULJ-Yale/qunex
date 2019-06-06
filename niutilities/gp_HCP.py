@@ -163,7 +163,8 @@ def getHCPPaths(sinfo, options):
 
     return d
 
-def doOptionsCheck(options, command):
+
+def doHCPOptionsCheck(options, sinfo, command):
     if options['hcp_folderstructure'] not in ['initial', 'hcpls']:
         raise ge.CommandFailed(command, "Unknown HCP folder structure version", "The specified HCP folder structure version is unknown: %s" % (options['hcp_folderstructure']), "Please check the 'hcp_folderstructure' parameter!")
 
@@ -173,7 +174,6 @@ def doOptionsCheck(options, command):
     else:
         options['fctail'] = ""
         options['fmtail'] = ""
-
 
 
 def action(action, run):
@@ -332,7 +332,17 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     specific parameters
     -------------------
@@ -506,6 +516,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Added full file checking
     2019-05-31 Grega Repovš
              - Updated target check image
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     '''
 
     r = "\n---------------------------------------------------------"
@@ -517,7 +529,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     try:
 
-        doOptionsCheck(options, 'hcp_PreFS')
+        doOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
         hcp = getHCPPaths(sinfo, options)
 
         # --- checks
@@ -859,7 +872,17 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     
     specific parameters
@@ -1024,6 +1047,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Updated and simplified
              - Made compatible with latest HCP code
              - Added full file checking
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1035,7 +1060,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, 'hcp_FS')
+        doOptionsCheck(options, sinfo, 'hcp_FS')
+        doHCPOptionsCheck(options, sinfo, 'hcp_FS')
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
@@ -1355,7 +1381,17 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     specific parameters
     -------------------
@@ -1470,6 +1506,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     2019-05-26 Grega Repovš
              - Updated and simplified
              - Added full file checking
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1494,7 +1532,8 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
             sessionStatus = True
 
             try:
-                doOptionsCheck(options, 'longitudinalFS')
+                doOptionsCheck(options, sinfo, 'longitudinalFS')
+                doHCPOptionsCheck(options, sinfo, 'longitudinalFS')
                 hcp = getHCPPaths(session, options)
                 sessionspaths.append(hcp['FS_folder'])
                 resultspaths.append(hcp['FS_long_results'])
@@ -1701,7 +1740,17 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     specific parameters
     -------------------
@@ -1799,6 +1848,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Updated and simplified
              - Added full file checking
              - Made congruent with latest HCP pipeline
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     '''
 
     r = "\n---------------------------------------------------------"
@@ -1809,7 +1860,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, 'hcp_PostFS')
+        doOptionsCheck(options, sinfo, 'hcp_PostFS')
+        doHCPOptionsCheck(options, sinfo, 'hcp_PostFS')
         hcp = getHCPPaths(sinfo, options)
 
         # --- run checks
@@ -2020,7 +2072,17 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -2179,6 +2241,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
              - Simplified calling and testing
              - Added gdcoeffs processing
              - Added full file checking
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     """
 
     r = "\n---------------------------------------------------------"
@@ -2189,7 +2253,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, 'hcp_Diffusion')
+        doOptionsCheck(options, sinfo, 'hcp_Diffusion')
+        doHCPOptionsCheck(options, sinfo, 'hcp_Diffusion')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
@@ -2377,7 +2442,17 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -2613,6 +2688,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     2019-05-26 Grega Repovš
              - Updated, simplified calling and testing
              - Added full file checking
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     '''
 
     r = "\n---------------------------------------------------------"
@@ -2624,7 +2701,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     try:
         # --- Base settings
-        doOptionsCheck(options, 'hcp_fMRIVolume')
+        doOptionsCheck(options, sinfo, 'hcp_fMRIVolume')
+        doHCPOptionsCheck(options, sinfo, 'hcp_fMRIVolume')
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
@@ -3268,7 +3346,17 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * 'hcp'     for `<hcp_folder>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -3382,6 +3470,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
              - Added support for boldnamekey
              - Updated, simplified calling and testing
              - Added full file checking
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     '''
 
     r = "\n----------------------------------------------------------------"
@@ -3395,7 +3485,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         # --- Base settings
 
-        doOptionsCheck(options, 'hcp_PreFS')
+        doOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
         hcp = getHCPPaths(sinfo, options)
 
         # --- bold filtering not yet supported!
@@ -3657,7 +3748,8 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, 'hcp_PreFS')
+        doOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:
@@ -3737,7 +3829,8 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
     report = "Error"
 
     try:
-        doOptionsCheck(options, 'hcp_PreFS')
+        doOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
         hcp = getHCPPaths(sinfo, options)
 
         if 'hcp' not in sinfo:

@@ -44,6 +44,7 @@ else:
     mcommand = os.environ['QUNEXMCOMMAND']
 
 
+
 def getBOLDData(sinfo, options, overwrite=False, thread=0):
     """
     getBOLDData - documentation not yet available.
@@ -55,6 +56,7 @@ def getBOLDData(sinfo, options, overwrite=False, thread=0):
     r += "\nCopying imaging data ..."
 
     r += '\nStructural data ...'
+    doOptionsCheck(options, sinfo, 'getBOLDData')
     f = getFileNames(sinfo, options)
 
     copy = True
@@ -179,7 +181,16 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep']
+                           temporary logs once jobs are completed ['keep'].
+                           When a comma separated list is given, the log will
+                           be created at the first provided location and then 
+                           linked or copied to other locations. The valid 
+                           locations are: 
+                           * 'study'   for the default: 
+                                       `<study>/processing/logs/comlogs`
+                                       location,
+                           * 'session' for `<sessionid>/logs/comlogs
+                           * '<path>'  for an arbitrary directory
 
     The parameters can be specified in command call or subject.txt file.
 
@@ -206,6 +217,8 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
              - More robust identification of cifti files
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, "boldskipped": 0}
@@ -218,6 +231,7 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
         r += "\n   As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n   Bold masks will be saved in images/segmentation/boldmasks.%s" % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
+    doOptionsCheck(options, sinfo, 'createBOLDBrainMasks')    
     d = getSubjectFolders(sinfo, options)
 
     if overwrite:
@@ -319,8 +333,8 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
         bmtarget = f['bold1_brain_mask'].replace(getImgFormat(f['bold1_brain_mask']), '.nii.gz')
         if getImgFormat(f['bold1']) == '.4dfp.img':
             bsource = f['bold1'].replace('.4dfp.img', '.nii.gz')
-            r, endlog, status, failed = runExternalForFile(bsource, 'g_FlipFormat %s %s' % (f['bold1'], bsource), '    ... converting %s to nifti' % (f['bold1']), overwrite, thread=sinfo['id'], task='FlipFormat' % (boldnum), logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r)
-            r, endlog, status, failed = runExternalForFile(bsource, 'caret_command -file-convert -vc %s %s' % (f['bold1'].replace('img', 'ifh'), bsource), 'converting %s to nifti' % (f['bold1']), overwrite, sinfo['id'], logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r)
+            r, endlog, status, failed = runExternalForFile(bsource, 'g_FlipFormat %s %s' % (f['bold1'], bsource), '    ... converting %s to nifti' % (f['bold1']), overwrite, thread=sinfo['id'], task='FlipFormat' % (boldnum), logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(bsource, 'caret_command -file-convert -vc %s %s' % (f['bold1'].replace('img', 'ifh'), bsource), 'converting %s to nifti' % (f['bold1']), overwrite, sinfo['id'], logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
 
         # --- run BET
 
@@ -328,15 +342,15 @@ def executeCreateBOLDBrainMasks(sinfo, options, overwrite, boldData):
             r += '\n    ... bet on %s already run' % (os.path.basename(bsource))
             report['bolddone'] += 1
         else:
-            r, endlog, status, failed = runExternalForFile(bbtarget, "bet %s %s %s" % (bsource, bbtarget, options['betboldmask']), "    ... running BET on %s with options %s" % (os.path.basename(bsource), options['betboldmask']), overwrite, sinfo['id'], task='bet', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r)
+            r, endlog, status, failed = runExternalForFile(bbtarget, "bet %s %s %s" % (bsource, bbtarget, options['betboldmask']), "    ... running BET on %s with options %s" % (os.path.basename(bsource), options['betboldmask']), overwrite, sinfo['id'], task='bet', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
             report['boldok'] += 1
 
         if options['image_target'] == '4dfp':
             # --- convert nifti to 4dfp
-            r, endlog, status, failed = runExternalForFile(bbtarget, 'gunzip -f %s.gz' % (bbtarget), '    ... gunzipping %s.gz' % (os.path.basename(bbtarget)), overwrite, sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r)
-            r, endlog, status, failed = runExternalForFile(bmtarget, 'gunzip -f %s.gz' % (bmtarget), '    ... gunzipping %s.gz' % (os.path.basename(bmtarget)), overwrite, sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r)
-            r, endlog, status, failed = runExternalForFile(f['bold1_brain'], 'g_FlipFormat %s %s' % (bbtarget, f['bold1_brain'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_nifti']), overwrite, sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r)
-            r, endlog, status, failed = runExternalForFile(f['bold1_brain_mask'], 'g_FlipFormat %s %s' % (bmtarget, f['bold1_brain_mask'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_mask_nifti']), overwrite, sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r)
+            r, endlog, status, failed = runExternalForFile(bbtarget, 'gunzip -f %s.gz' % (bbtarget), '    ... gunzipping %s.gz' % (os.path.basename(bbtarget)), overwrite, sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(bmtarget, 'gunzip -f %s.gz' % (bmtarget), '    ... gunzipping %s.gz' % (os.path.basename(bmtarget)), overwrite, sinfo['id'], task='gunzip', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(f['bold1_brain'], 'g_FlipFormat %s %s' % (bbtarget, f['bold1_brain'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_nifti']), overwrite, sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
+            r, endlog, status, failed = runExternalForFile(f['bold1_brain_mask'], 'g_FlipFormat %s %s' % (bmtarget, f['bold1_brain_mask'].replace('.img', '.ifh')), '    ... converting %s to 4dfp' % (f['bold1_brain_mask_nifti']), overwrite, sinfo['id'], task='FlipFormat', logfolder=options['comlogs'], logtags=[options['hcp_bold_variant'], options['logtag'], 'B%d' % boldnum], r=r, verbose=False)
 
         else:
             # --- link a template
@@ -449,7 +463,16 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep']
+                           temporary logs once jobs are completed ['keep'].
+                           When a comma separated list is given, the log will
+                           be created at the first provided location and then 
+                           linked or copied to other locations. The valid 
+                           locations are: 
+                           * 'study'   for the default: 
+                                       `<study>/processing/logs/comlogs`
+                                       location,
+                           * 'session' for `<sessionid>/logs/comlogs
+                           * '<path>'  for an arbitrary directory
 
     specific parameters
     -------------------
@@ -531,6 +554,8 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
              - More robust identification of cifti files
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -545,6 +570,7 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
         r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
+    doOptionsCheck(options, sinfo, 'computeBOLDStats')  
     d = getSubjectFolders(sinfo, options)
 
     if overwrite:
@@ -744,7 +770,16 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep']
+                           temporary logs once jobs are completed ['keep'].
+                           When a comma separated list is given, the log will
+                           be created at the first provided location and then 
+                           linked or copied to other locations. The valid 
+                           locations are: 
+                           * 'study'   for the default: 
+                                       `<study>/processing/logs/comlogs`
+                                       location,
+                           * 'session' for `<sessionid>/logs/comlogs
+                           * '<path>'  for an arbitrary directory
 
     specific parameters
     -------------------
@@ -851,6 +886,8 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
                to run on.
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     """
 
     preport = {'plotdone': 'done', 'boldok': 0, 'procok': 'ok', 'boldmissing': 0, 'boldskipped': 0}
@@ -865,6 +902,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
             r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!\n    Group results will be stored in <subjectsfolder>/QC/movement.%s." % (options['hcp_bold_variant'], options['hcp_bold_variant'], options['hcp_bold_variant'])    
         r += "\n\n........................................................"
 
+        doOptionsCheck(options, sinfo, 'createStatsReport')  
         d = getSubjectFolders(sinfo, options)
 
         if overwrite:
@@ -1130,7 +1168,16 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
     --logfolder        ... The path to the folder where runlogs and comlogs
                            are to be stored, if other than default []
     --log              ... Whether to keep ('keep') or remove ('remove') the
-                           temporary logs once jobs are completed ['keep']
+                           temporary logs once jobs are completed ['keep'].
+                           When a comma separated list is given, the log will
+                           be created at the first provided location and then 
+                           linked or copied to other locations. The valid 
+                           locations are: 
+                           * 'study'   for the default: 
+                                       `<study>/processing/logs/comlogs`
+                                       location,
+                           * 'session' for `<sessionid>/logs/comlogs
+                           * '<path>'  for an arbitrary directory
 
     specific parameters
     -------------------
@@ -1188,6 +1235,8 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
              - More robust identification of cifti files
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     """
 
     report = {'bolddone': 0, 'boldok': 0, 'boldfail': 0, 'boldmissing': 0, 'boldskipped': 0}
@@ -1202,6 +1251,7 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
         r += "\n\n    As --hcp_bold_variant was set to '%s', the files will be processed in 'images/functional.%s!" % (options['hcp_bold_variant'], options['hcp_bold_variant'])
     r += "\n\n........................................................"
 
+    doOptionsCheck(options, sinfo, 'extractNuisanceSignal')  
     d = getSubjectFolders(sinfo, options)
 
     if overwrite:
@@ -1390,7 +1440,16 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     specific parameters
     -------------------
@@ -1737,7 +1796,11 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
              - Changed how bold_tail is identified
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     """
+
+    doOptionsCheck(options, sinfo, 'preprocessBold')  
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
@@ -1972,7 +2035,16 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     --logfolder       ... The path to the folder where runlogs and comlogs
                           are to be stored, if other than default []
     --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep']
+                          temporary logs once jobs are completed ['keep'].
+                          When a comma separated list is given, the log will
+                          be created at the first provided location and then 
+                          linked or copied to other locations. The valid 
+                          locations are: 
+                          * 'study'   for the default: 
+                                      `<study>/processing/logs/comlogs`
+                                      location,
+                          * 'session' for `<sessionid>/logs/comlogs
+                          * '<path>'  for an arbitrary directory
 
     specific parameters
     -------------------
@@ -2359,7 +2431,11 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
              - Updated documentation
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2019-06-06 Grega Repovš
+             - Enabled multiple log file locations
     """
+
+    doOptionsCheck(options, sinfo, 'preprocessConc')  
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))

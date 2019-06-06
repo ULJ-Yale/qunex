@@ -165,6 +165,26 @@ def useOrSkipBOLD(sinfo, options, r=""):
     return bolds, bskip, len(bskip), r
 
 
+def doOptionsCheck(options, sinfo, command):
+
+    # logs
+    logs = [e.strip() for e in re.split(" +|\||, *", options['log'])]
+    studyComlogs = options['comlogs']
+    comlogs = []
+
+    for log in logs:
+        if log in ['keep', 'study']:
+            comlogs.append(studyComlogs)
+        elif log == 'session':
+            comlogs.append(os.path.join(options['subjectsfolder'], sinfo['id'], 'logs', 'comlogs'))
+        elif log == 'hcp':
+            if 'hcp' in sinfo:
+                comlogs.append(os.path.join(sinfo['hcp'], sinfo['id'] + options['hcp_suffix'], 'logs', 'comlogs'))
+        else:
+            comlogs.append(log)
+
+    options['comlogs'] = comlogs
+
 
 def getExactFile(candidate):
     g = glob.glob(candidate)
@@ -536,7 +556,7 @@ def missingReport(missing, message, prefix):
     return r 
    
 
-def checkRun(tfile, fullTest=None, command=None, r="", logFile=None):
+def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=True):
     '''
     The function checks the presence of a test file.
     If specified it runs also full test.
@@ -552,7 +572,8 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None):
             fullTest['tfile'] = os.path.join(fullTest['specfolder'], fullTest['tfile'])
 
     if os.path.exists(tfile):
-        r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
+        if verbose:
+            r += "\n---> %s test file [%s] present" % (command, os.path.basename(tfile))
         report = "%s finished" % (command)
         passed = 'done'
         failed = 0
@@ -560,7 +581,8 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None):
         if fullTest:
             filestatus, filespresent, filesmissing = gc.checkFiles(fullTest['tfolder'], fullTest['tfile'], fields=fullTest['fields'], report=logFile)
             if filesmissing:
-                r += missingReport(filesmissing, "\n---> Full file check revealed that the following files were not created:", "            ")
+                if verbose:
+                    r += missingReport(filesmissing, "\n---> Full file check revealed that the following files were not created:", "            ")
                 report += ", full file check incomplete"
                 passed = 'incomplete'
                 failed = 1
@@ -568,7 +590,8 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None):
                 r += "\n---> Full file check passed"
                 report += ", full file check complete"
     else:
-        r += "\n---> %s test file missing:\n     %s" % (command, tfile)
+        if verbose:
+            r += "\n---> %s test file missing:\n     %s" % (command, tfile)
         report = "%s not finished" % (command)
         passed = None
         failed = 1
@@ -577,7 +600,7 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None):
 
 
 
-def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r=""):
+def runExternalForFile(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", fullTest=None, shell=False, r="", verbose=True):
     """
     runExternalForFile
 
@@ -593,7 +616,7 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     - thread       ... thread count if multiple are run
     - remove       ... whether to remove a log file once done (boolean)
     - task         ... a short name of the task to run
-    - logfolder    ... a folder in which to place the log
+    - logfolder    ... a folder or a list of folders in which to place the log
     - logtags      ... an array of tags used to create a log name
     - fullTest     ... a dictionary describing how to check against a full list of files:
       -> tfolder       ... a target folder with the results
@@ -611,6 +634,41 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
     - failed    ... 0 for ok, 1 or more for failed or incomplete runs
 
     """
+
+    def closeLog(logfile, logname, logfolders, status, remove, r):
+        
+        # -- close the log
+        if logfile:
+            logfile.close()
+
+        # -- do we delete it
+        if status == 'done' and remove:
+            os.remove(logname)
+            return None, r
+
+        # -- rename it
+        sfolder, sname = os.path.split(logname)
+        tname = re.sub("^tmp", status, sname)
+        tfile = os.path.join(sfolder, tname)
+        shutil.move(logname, tfile)
+        r += '\n---> logfile: %s' % (tfile)
+
+        # -- do we have multiple logfolders?
+
+        for logfolder in logfolders:
+            nfile = os.path.join(logfolder, tname)
+            if not os.path.exists(logfolder):
+                os.makedirs(logfolder)
+            try:
+                gc.linkOrCopy(tfile, nfile)
+                r += '\n---> logfile: %s' % (nfile)
+            except:
+                r += '\n---> WARNING: could not map logfile to: %s' % (nfile)
+
+        return tfile, r
+
+    endlog = None
+
     if overwrite or not os.path.exists(checkfile):
         r += '\n\n%s' % (description)
 
@@ -624,11 +682,19 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
         logname  = [e for e in logname if e]
         logname  = "_".join(logname)
 
+        logfolders = []
+        if type(logfolder)in [list, set, tuple]:
+            logfolders = list(logfolder)
+            logfolder  = logfolders.pop(0)
+
+        if not os.path.exists(logfolder):
+            try:
+                os.makedirs(logfolder)
+            except:
+                r += "\n\nERROR: Could not create folder for logfile [%s]!" % (logfolder)
+                raise ExternalFailed(r)
+
         tmplogfile  = os.path.join(logfolder, "tmp_%s.log" % (logname))
-        donelogfile = os.path.join(logfolder, "done_%s.log" % (logname))
-        errlogfile  = os.path.join(logfolder, "error_%s.log" % (logname))  
-        misslogfile = os.path.join(logfolder, "incomplete_%s.log" % (logname))  
-        endlog      = None      
 
         # --- open log file
 
@@ -647,22 +713,18 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
             else:
                 ret = subprocess.call(run.split(), stdout=nf, stderr=nf)
         except:
-            nf.close()
-            shutil.move(tmplogfile, errlogfile)
-            endlog = errlogfile
             r += "\n\nERROR: Running external command failed! \nTry running the command directly for more detailed error information: \n%s\n" % (run)
+            endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)
         
         # --- check results
 
         if ret:
             r += "\n\nERROR: %s failed with error %s\n... \ncommand executed:\n %s\n" % (r, ret, run)
-            nf.close()
-            shutil.move(tmplogfile, errlogfile)
-            endlog = errlogfile
+            endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
             raise ExternalFailed(r)            
 
-        status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=nf)
+        status, report, r, failed = checkRun(checkfile, fullTest=fullTest, command=task, r=r, logFile=nf, verbose=verbose)
 
         if status is None:
             r += "\n\nTry running the command directly for more detailed error information:\n--> %s\n" % (run)
@@ -671,28 +733,19 @@ def runExternalForFile(checkfile, run, description, overwrite=False, thread="0",
 
         if status and status == 'done':
             print >> nf, "\n\n===> Successful completion of task\n"
-            nf.close()
-            if remove:
-                os.remove(tmplogfile)
-            else:
-                shutil.move(tmplogfile, donelogfile)
-                endlog = donelogfile
-            r += ' --- done'
-        else:
-            nf.close()
+            endlog, r = closeLog(nf, tmplogfile, logfolders, "done", remove, r)
+        else:            
             if status and status == 'incomplete':
-                shutil.move(tmplogfile, misslogfile)
-                endlog = misslogfile
+                endlog, r = closeLog(nf, tmplogfile, logfolders, "incomplete", remove, r)
             else:
-                shutil.move(tmplogfile, errlogfile)
-                endlog = errlogfile
+                endlog, r = closeLog(nf, tmplogfile, logfolders, "error", remove, r)
 
     else:
         if os.path.getsize(checkfile) < 100:
             r, endlog, status, failed = runExternalForFile(checkfile, run, description, overwrite=True, thread=thread, task=task, logfolder=logfolder, logtags=logtags, fullTest=fullTest, shell=shell, r=r)
         else:
             status, _, _, failed = checkRun(checkfile, fullTest)
-            if status == 'full':
+            if status in ['full', 'done']:
                 r += '\n%s --- already completed' % (description)
             else:
                 r += '\n%s --- already ran, incomplete file check' % (description)
