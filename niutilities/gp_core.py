@@ -112,14 +112,45 @@ def useOrSkipBOLD(sinfo, options, r=""):
     * the task tag (e.g. 'rest')
     * the dictionary with all the info
 
+    Change log
+    2019-06-06 Grega Repovs
+             - Changed processing to be more explicit and allow also 
+               selection by bold name and bold sequence name
     """
     bsearch  = re.compile('bold([0-9]+)')
     btargets = [e.strip() for e in re.split(" +|\||, *", options['bolds'])]
     bolds    = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task'], v) for (k, v) in sinfo.iteritems() if k.isdigit() and bsearch.match(v['name'])]
     bskip    = []
+    nbolds   = len(bolds)
     if "all" not in btargets:
-        bskip = [(n, b, t, v) for n, b, t, v in bolds if t not in btargets and str(n) not in btargets]
-        bolds = [(n, b, t, v) for n, b, t, v in bolds if t in btargets or str(n) in btargets]
+        keep = []
+
+        # check bold number
+        keep += [n for n in range(nbolds) if str(bolds[n][0]) in btargets]
+
+        # check bold 'bold[n]'
+        keep += [n for n in range(nbolds) if bolds[n][1] in btargets]
+
+        # check bold tags
+        keep += [n for n in range(nbolds) if bolds[n][2] in btargets]
+
+        # check bold names if present
+        keep += [n for n in range(nbolds) if bolds[n][3].get('boldname') in btargets]
+
+        # check sequence names
+        keep += [n for n in range(nbolds) if bolds[n][3].get('ext') in btargets]
+
+        # determine keep and skip
+        allb = set(range(nbolds))
+        keep = set(keep)
+        skip = allb.difference(keep)
+
+        # set bolds and skips
+
+        bskip = [bolds[i] for i in skip]
+        bolds = [bolds[i] for i in keep]        
+
+        # sort and report
         bskip.sort()
         if len(bskip) > 0:
             r += "\n\nSkipping the following BOLD images:"

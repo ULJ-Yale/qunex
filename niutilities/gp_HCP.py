@@ -2737,7 +2737,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
+            if options['hcp_bold_boldnamekey'] == 'name':
+                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+            else:
+                report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         # --- Preprocess
 
@@ -3468,7 +3471,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
+            if options['hcp_bold_boldnamekey'] == 'name':
+                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+            else:
+                report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
         threads = options['threads']
         r += "\n\n%s BOLD images on %d threads" % (action("Processing", options['run']), threads)
