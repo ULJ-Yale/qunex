@@ -481,6 +481,7 @@ Change Log
 * 0.43.04 [niutilities] Updated mapIO documentation, toHCPLS is also more flexible.
 * 0.44.00 [connector, niutilities] Updated runTurnkey command and revised documentation.
 * 0.44.01 [niutilities, HCP, library] HCP Pipelines updated to work with legacy datasets, bugfixes, documentation updates, README updates 
+* 0.44.02 [niutilities] Extended bold selection options, extended logging functionality, more robust processing of deprecated parameters, bugfixes
 
 
 Stable Container Tag Log
