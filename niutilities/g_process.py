@@ -146,6 +146,22 @@ def updateOptions(session, options):
     return soptions
 
 
+def mapDeprecated(options, tomap):
+
+    deprecated = []
+    mapwarn  = False
+    for k, v in options.iteritems():
+        if k in tomap:
+            options[tomap[k]] = v
+            deprecated.append(k)
+
+    if deprecated:
+        print "\nWARNING: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
+        for k in deprecated:
+            print"         ... %s is now %s!" % (k, tomap[k])            
+            del options[k]
+        print "         Please correct the listed parameter names in command line or batch file!"     
+
 
 
 # =======================================================================
@@ -529,6 +545,8 @@ def run(command, args):
     for (k, v) in gpref.iteritems():
         options[k] = v
 
+    mapDeprecated(options, tomap)
+
     # --- parse command line options
 
     for (k, v) in args.iteritems():
@@ -536,6 +554,8 @@ def run(command, args):
             options[flist[k][0]] = flist[k][1]
         else:
             options[k] = v
+
+    mapDeprecated(options, tomap)
 
     # ---- Recode
 
@@ -546,20 +566,6 @@ def run(command, args):
             except:
                 raise ge.CommandError(command, "Invalid parameter value!", "Parameter `%s` is specified but is set to an invalid value:" % (line[0]), '--> %s=%s' % (line[0], str(options[line[0]])), "Please check acceptable inputs for %s!" % (line[0]))
 
-
-    # ---- Take care of mapping
-
-    mapwarn = False
-    for k, v in options.iteritems():
-        if k in tomap:
-            if not mapwarn:
-                print "\nWARNING: Use of deprecated parameter name(s)!\n       The following parameters have new names:"
-                mapwarn = True
-            print"       ... %s is now %s!" % (k, tomap[k])
-            options[tomap[k]] = v
-    if mapwarn:
-        print "       Please correct the listed parameter names in command line or batch file!"        
-        
 
     # ---- Take care of variable expansion
 
