@@ -1078,7 +1078,7 @@ fi
             reho " -- Note: ${qunex_subjectsfolder} folder not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
             ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
         fi
-        if [ ! -f ${qunex_workdir} ]; then
+        if [ ! -d ${qunex_workdir} ]; then
             reho " -- Note: ${qunex_workdir} not found. Creating one now..."; echo ""
             mkdir -p ${qunex_workdir} &> /dev/null
             mkdir -p ${qunex_workdir}/inbox &> /dev/null
@@ -1087,7 +1087,7 @@ fi
         
         # -- Perform overwrite checks
         if [[ ${OVERWRITE_STEP} == "yes" ]] && [[ ${TURNKEY_STEP} == "mapRawData" ]]; then
-               rm -f ${qunex_workdir}/inbox/* &> /dev/null
+               rm -rf ${qunex_workdir}/inbox/* &> /dev/null
         fi
         CheckInbox=`ls -1A ${rawdir} | wc -l`
         if [[ ${CheckInbox} != "0" ]] && [[ ${OVERWRITE_STEP} == "no" ]]; then
@@ -1194,9 +1194,12 @@ fi
                 echo "  find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';'"
                 find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
                 DicomInputCount=`find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
+                DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
+                if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
             fi
             # -- Find and link DICOMs for non-XNAT run
             if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
+                # -- Check if input is an archive file
                 if [[ "$(ls ${RawDataInputPath}/*zip*)" ]] || [[ "$(ls ${RawDataInputPath}/*gz*)" ]]; then
                     InputArchive="yes"
                     # -- Hard link into masterinbox
@@ -1205,7 +1208,6 @@ fi
                     CheckCASECount=`ls ${qunex_subjectsfolder}/${CASE}/inbox/* | wc -l`
                     CASEinbox=`basename ${qunex_subjectsfolder}/${CASE}/inbox/${CASE}*`
                     CASEext="${CASEinbox#*.}"
-
                     # -- Check for duplicates
                     if [[ "$CheckCASECount" -gt "1" ]]; then
                          reho " ===> Note: More than one zip file found for ${CASE}"
@@ -1215,39 +1217,35 @@ fi
                         echo ""
                         return 1
                     else
-                        geho " -- Processing ${qunex_subjectsfolder}/${CASE}/inbox/${CASEinbox} with the following command:"; echo ""
+                        geho " -- Unzipping ${qunex_subjectsfolder}/${CASE}/inbox/${CASEinbox}"; echo ""
+                        # --> Decompress mapped input
+                        # -- ToDo --> Add support for Other types of arhive files
+                        if [[ ${CASEext} == "zip" ]]; then
+                            cd ${qunex_subjectsfolder}/${CASE}/inbox/
+                            if [[ `unzip -t ${CASEinbox}` ]]; then
+                                geho "   ZIP archive found and passed check."; echo ""
+                                unzip ${CASEinbox} -d ${qunex_subjectsfolder}/${CASE}/inbox/ >/dev/null 2>&1; echo ""
+                                # -- Map dicoms into ${qunex_subjectsfolder}/${CASE}/inbox
+                                DicomInputCount=`find ${qunex_subjectsfolder}/${CASE}/inbox/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
+                                find ${qunex_subjectsfolder}/${CASE}/inbox/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec mv '{}' ${rawdir}/ ';' &> /dev/null
+                                rm -rf ${qunex_subjectsfolder}/${CASE}/inbox/${CASE}* >/dev/null 2>&1
+                                DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
+                                if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
+                                # -- ToDo --> Add support for NIFTI zip files
+                            else
+                                reho " ===> ERROR: ZIP archive found but did not pass check!"; echo ""
+                                FILECHECK="fail"
+                            fi
+                        fi
                     fi
-                    # -- Process inbox
-                    echo " ${QUNEXCOMMAND} processInbox --subjectsfolder="${qunex_subjectsfolder}" --sessions="${CASE}" --masterinbox="none" --check="any" --archive="delete" "
-                    echo ""
-                    echo " Check log output: ${mapRawData_ComlogTmp}"
-                    ${QUNEXCOMMAND} processInbox  \
-                    --subjectsfolder="${qunex_subjectsfolder}" \
-                    --sessions="${CASE}" \
-                    --masterinbox="none" \
-                    --archive="delete" \
-                    --check="any" >> ${mapRawData_ComlogTmp}
                 else
-                    echo "  find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -exec ln '{}' ${rawdir}/ ';'"
-                    find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
-                    DicomInputCount=`find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" | wc | awk '{print $1}'`
+                   # -- Find and link DICOMs for non-XNAT run from raw DICOM input
+                   echo "  find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -exec ln '{}' ${rawdir}/ ';'"
+                   find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
+                   DicomInputCount=`find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" | wc | awk '{print $1}'`
+                   DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
+                   if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
                 fi
-            fi
-            # -- Perform checks
-            if [[ ${InputArchive} != "yes" ]]; then
-                if [[ -z "$(ls -A ${rawdir})" ]]; then
-                    echo ""
-                    reho " ==> ERROR: Mapping into ${rawdir} failed! Check your inputs!"
-                    FILECHECK="fail"
-                    echo ""
-                fi
-                if [[ ${InputArchive} != "yes" ]]; then
-                    DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
-                    if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
-                fi
-            fi
-            if [[ ${InputArchive} == "yes" ]]; then
-                if [[ `cat ${mapRawData_ComlogTmp} | grep '===> Successful completion of task'` ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
             fi
         fi
 
@@ -1283,11 +1281,10 @@ fi
             # -- Perform mapping of BIDS file structure into Qu|Nex
             echo ""
             geho " -- Running:  "
-            geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action=copy --overwrite=yes --archive=delete "; echo ""
-            ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action=copy --overwrite=yes --archive=delete >> ${mapRawData_ComlogTmp}
+            geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" "; echo ""
+            ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" >> ${mapRawData_ComlogTmp}
             popd 2> /dev/null
             rm -rf ${qunex_subjectsfolder}/inbox/BIDS/${CASE}* &> /dev/null
-            
             # -- Run BIDS completion checks on mapped data
             if [ -f ${qunex_subjectsfolder}/${CASE}/bids/bids2nii.log ]; then
                  FILESEXPECTED=`more ${qunex_subjectsfolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
@@ -1300,21 +1297,19 @@ fi
             fi
             if [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then
                 echo ""
-                geho " -- BIDSImport successful. Expected $FILESEXPECTED files and found $FILEFOUND files."
+                geho " -- BIDSImport successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files."
                 echo ""
                 FILECHECK="pass"
             else
                 FILECHECK="fail"
             fi
         fi
-        
         # -- Check if mapping and batch files exist
         if [[ -f ${SpecsBatchFileHeader} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
         if [[ -f ${SpecsMappingFile} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
         # -- Check if content of files OK
         if [[ -z `more ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
         if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then MAPPINGFILECHECK="fail"; fi
-      
         # -- Declare checks
         echo "" >> ${mapRawData_ComlogTmp}
         echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
@@ -1322,12 +1317,13 @@ fi
         echo "  --> Mapping file transfer check: ${MAPPINGFILECHECK}" >> ${mapRawData_ComlogTmp}
         if [[ ${BIDSFormat} == "yes" ]]; then
             echo "  --> BIDS mapping check: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
-        if
+        fi
         if [[ ${InputArchive} != "yes" ]]; then
             echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" >> ${mapRawData_ComlogTmp}
             echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" >> ${mapRawData_ComlogTmp}
             echo "  --> DICOM mapping check: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
-        else
+        fi
+        if [[ ${InputArchive} == "yes" ]]; then
             echo "  --> Archive inbox processed: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
         fi
         # -- Report and log final checks
@@ -1351,16 +1347,30 @@ fi
         if [[ ${BIDSFormat} != "yes" ]]; then
             echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: organizeDicom ..."; echo ""
             ${QUNEXCOMMAND} organizeDicom --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}"
+            
+            # --> ToDO ----------------------
+            # # -- Process inbox
+            # echo " ${QUNEXCOMMAND} processInbox --subjectsfolder="${qunex_subjectsfolder}" --sessions="${CASE}" --masterinbox="none" --check="any" --archive="delete" "
+            # echo ""
+            # echo " Check log output: ${mapRawData_ComlogTmp}"
+            # ${QUNEXCOMMAND} processInbox  \
+            # --subjectsfolder="${qunex_subjectsfolder}" \
+            # --sessions="${CASE}" \
+            # --masterinbox="none" \
+            # --archive="delete" \
+            # --check="any"
+            # ------------------------------
+            
             cd ${qunex_subjectsfolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done
             if [ ${TURNKEY_TYPE} == "xnat" ]; then
                 reho "---> Cleaning up: removing inbox folder"
                 rm -rf ${qunex_workdir}/inbox &> /dev/null
             fi
         else
-            echo ""; cyaneho " ===> RunTurnkey ~~~ SKIPPING: organizeDicom because data is in BIDS format ... "; echo ""
+            echo ""; cyaneho " ===> RunTurnkey ~~~ SKIPPING: organizeDicom because data is in BIDS NII format."; echo ""
         fi
     }
-    
+     
     # -- Map processing folder structure
     turnkey_getHCPReady() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..."; echo ""
@@ -2147,7 +2157,7 @@ fi
            eval ${RunCommand}
         fi
         
-       # -- XNAT Call -- not supported currently. 
+       # -- XNAT Call -- not supported currently -->
        #
        #    RunCommand="QuNexAcceptanceTest.sh \
        #    --xnatuser='${XNAT_USER_NAME}' \
@@ -2360,4 +2370,4 @@ fi
 # -- Execute overall function and read arguments
 # ------------------------------------------------------------------------------
 
-main $@
+main ${@}
