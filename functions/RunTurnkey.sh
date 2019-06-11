@@ -1385,7 +1385,7 @@ fi
         if [ -f ${qunex_subjectsfolder}/subject_hcp.txt ]; then
             echo ""; geho " ===> ${qunex_subjectsfolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run."; echo ""; return 0
         fi
-        Command="${QUNEXCOMMAND} getHCPReady --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --mapping="${SpecsMappingFile}""
+        Command="${QUNEXCOMMAND} getHCPReady --subjectsfolder="${qunex_subjectsfolder}" --sessions="${CASE}" --mapping="${SpecsMappingFile}""
         echo ""; echo " -- Executed command:"; echo "   $Command"; echo ""
         eval ${Command}  2>&1 | tee -a ${getHCPReady_ComlogTmp}
         if [[ ! -z `cat ${getHCPReady_ComlogTmp} | grep 'Successful completion'` ]]; then ORGANIZEDICOMCHECK="pass"; else ORGANIZEDICOMCHECK="fail"; fi
@@ -1405,7 +1405,7 @@ fi
            rm -rf ${ProcessingBatchFile} &> /dev/null
            HLinks=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
         fi
-        Command="${QUNEXCOMMAND} mapHCPFiles --subjectsfolder='${qunex_subjectsfolder}' --subjects='${CASE}' --overwrite='${OVERWRITE_STEP}'"
+        Command="${QUNEXCOMMAND} mapHCPFiles --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --overwrite='${OVERWRITE_STEP}'"
         echo ""; echo " -- Executed command:"; echo "   $Command"; echo ""
         eval ${Command}
         geho " -- Generating ${ProcessingBatchFile}"; echo ""
@@ -1443,12 +1443,12 @@ fi
     # -- PreFreeSurfer
     turnkey_hcp1() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp1 (hcp_PreFS) ... "; echo ""
-        ${QUNEXCOMMAND} hcp1 --subjectsfolder="${qunex_subjectsfolder}" --subjects="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
+        ${QUNEXCOMMAND} hcp1 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
     }
     # -- FreeSurfer
     turnkey_hcp2() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp2 (hcp_FS) ... "; echo ""
-        ${QUNEXCOMMAND} hcp2 --subjectsfolder="${qunex_subjectsfolder}" --subjects="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
+        ${QUNEXCOMMAND} hcp2 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
         CleanupFiles=" talairach_with_skull.log lh.white.deformed.out lh.pial.deformed.out rh.white.deformed.out rh.pial.deformed.out"
         for CleanupFile in ${CleanupFiles}; do 
             cp ${logdir}/${CleanupFile} ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/${CASE}/scripts/ 2>/dev/null
@@ -1464,7 +1464,7 @@ fi
     # -- PostFreeSurfer
     turnkey_hcp3() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp3 (hcp_PostFS) ... "; echo ""
-        ${QUNEXCOMMAND} hcp3 --subjectsfolder="${qunex_subjectsfolder}" --subjects="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
+        ${QUNEXCOMMAND} hcp3 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
     }
     # -- runQC_T1w (after hcp3)
     turnkey_runQC_T1w() {
@@ -1494,13 +1494,13 @@ fi
     turnkey_hcp4() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRIVolume) ... "; echo ""
         HCPLogName="hcpfMRIVolume"
-        ${QUNEXCOMMAND} hcp4 --subjectsfolder="${qunex_subjectsfolder}" --subjects="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
+        ${QUNEXCOMMAND} hcp4 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
     }
     # -- fMRISurface
     turnkey_hcp5() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp5 (hcp_fMRISurface) ... "; echo ""
         HCPLogName="hcpfMRISurface"
-        ${QUNEXCOMMAND} hcp5 --subjectsfolder="${qunex_subjectsfolder}" --subjects="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
+        ${QUNEXCOMMAND} hcp5 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
     }
     # -- runQC_BOLD (after hcp5)
     turnkey_runQC_BOLD() {
@@ -1748,7 +1748,7 @@ fi
     turnkey_mapHCPData() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: mapHCPData ... "; echo ""
         ${QUNEXCOMMAND} mapHCPData \
-        --subjects="${ProcessingBatchFile}" \
+        --sessions="${ProcessingBatchFile}" \
         --subjectsfolder="${qunex_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${logdir}" \
@@ -1758,7 +1758,7 @@ fi
     turnkey_createBOLDBrainMasks() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createBOLDBrainMasks ... "; echo ""
         ${QUNEXCOMMAND} createBOLDBrainMasks \
-        --subjects="${ProcessingBatchFile}" \
+        --sessions="${ProcessingBatchFile}" \
         --subjectsfolder="${qunex_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${logdir}" \
@@ -1768,7 +1768,7 @@ fi
     turnkey_computeBOLDStats() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDStats ... "; echo ""
         ${QUNEXCOMMAND} computeBOLDStats \
-        --subjects="${ProcessingBatchFile}" \
+        --sessions="${ProcessingBatchFile}" \
         --subjectsfolder="${qunex_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${logdir}" \
@@ -1778,7 +1778,7 @@ fi
     turnkey_createStatsReport() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStatsReport ... "; echo ""
         ${QUNEXCOMMAND} createStatsReport \
-        --subjects="${ProcessingBatchFile}" \
+        --sessions="${ProcessingBatchFile}" \
         --subjectsfolder="${qunex_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${logdir}" \
@@ -1788,7 +1788,7 @@ fi
     turnkey_extractNuisanceSignal() {
         cyaneho " ===> RunTurnkey ~~~ RUNNING: extractNuisanceSignal ... "; echo ""
         ${QUNEXCOMMAND} extractNuisanceSignal \
-        --subjects="${ProcessingBatchFile}" \
+        --sessions="${ProcessingBatchFile}" \
         --subjectsfolder="${qunex_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${logdir}" \
@@ -1798,7 +1798,7 @@ fi
     turnkey_preprocessBold() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: preprocessBold ... "; echo ""
         ${QUNEXCOMMAND} preprocessBold \
-        --subjects="${ProcessingBatchFile}" \
+        --sessions="${ProcessingBatchFile}" \
         --subjectsfolder="${qunex_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${logdir}" \
@@ -1808,7 +1808,7 @@ fi
     turnkey_preprocessConc() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: preprocessConc ... "; echo ""
         ${QUNEXCOMMAND} preprocessConc \
-        --subjects="${ProcessingBatchFile}" \
+        --sessions="${ProcessingBatchFile}" \
         --subjectsfolder="${qunex_subjectsfolder}" \
         --overwrite="${OVERWRITE_STEP}" \
         --logfolder="${logdir}" \
