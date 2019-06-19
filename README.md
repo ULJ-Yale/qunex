@@ -5,9 +5,9 @@ Background
 ==========
 ---
 
-Qu|Nex Neuroimaging Utilities (NIutilities) are neuroimaging
-preprocessing and analysis framework that supports a variety of functions through a
-common user interface, designed to automate multiple steps of neuroimaging
+Qu|Nex Neuroimaging Utilities (NIutilities) are neuroimaging preprocessing and 
+analysis framework that supports a variety of functions through a common 
+user interface, designed to automate multiple steps of neuroimaging
 data preprocessing and analysis. Beyond stand-alone functions, NIutilities 
 also support the broader Qu|Nex processing and analytic pipeline functionality, 
 from from sorting of dicom files to second level statistical analysis. 
@@ -47,13 +47,13 @@ List of functions can be obtained by running the following call from the termina
 
 The general `qunex` call use form is:
 
-`qunex --function="<command_name>" --option="<value>" --option="<value>" ...`
+`qunex --command="<command_name>" --option="<value>" --option="<value>" ...`
 
-Or the simplified form with function name first omitting the flag:
+Or the simplified form with command name first omitting the flag:
 
 * `qunex <command_name> --option="<value>" --option="<value>" ...`
 
-To get help for a specific function use the folowing call:
+To get help for a specific command use the folowing call:
 
 * `qunex ?<command_name>` prints specific help for the specified function.
 
@@ -80,7 +80,7 @@ Perusing documentation, please note the following conventions used:
   is not explicitly specified
 * Angle brackets `<>` describe the value that should be provided
 * Dashes or "flags", `-` in the documentation define input variables.
-* Function names, arguments, and option names are either in small or "camel" case.
+* command names, arguments, and option names are either in small or "camel" case.
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).
 

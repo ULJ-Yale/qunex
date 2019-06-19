@@ -143,6 +143,30 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 the '_fncb' and '_strc' extensions, respectively.
 
 
+    MULTIPLE SUBJECTS AND SCHEDULING
+    ================================
+
+    The command can be run for multiple sessions by specifying `sessions` and
+    optionally `subjectsfolder` and `cores` parameters. In this case the command
+    will be run for each of the specified sessions in the subjectsfolder
+    (current directory by default). Optional `filter` and `subjid` parameters
+    can be used to filter sessions or limit them to just specified id codes.
+    (for more information see online documentation). `sfolder` will be filled in
+    automatically as each sessions's folder. Commands will run in parallel by
+    utilizing the specified number of cores (1 by default).
+
+    If `scheduler` parameter is set, the command will be run using the specified
+    scheduler settings (see `qunex ?schedule` for more information). If set in
+    combination with `sessions` parameter, sessions will be processed over
+    multiple nodes, `core` parameter specifying how many sessions to run per
+    node. Optional `scheduler_environment`, `scheduler_workdir`,
+    `scheduler_sleep`, and `nprocess` parameters can be set.
+
+    Set optional `logfolder` parameter to specify where the processing logs
+    should be stored. Otherwise the processor will make best guess, where the
+    logs should go.
+
+
     EXAMPLE USE
     ===========
 
@@ -169,6 +193,8 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
              - Added the 'boldnamekey' option
     2019-05-24 Grega Repovš
              - Added HCP folder structure specification
+    2019-06-18 Grega Repovš
+             - Updated documentation with multiple subject runs
     '''
 
     print "Running setupHCP\n================"
