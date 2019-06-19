@@ -1,24 +1,34 @@
 # README File for  Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
 
-
 Background
 ==========
 ---
 
-The Quantitative Neuroimaging Environment & ToolboX (Qu|Nex) integrates several 
-packages that support a flexible and extensible framework for data organization, preprocessing, 
+The Quantitative Neuroimaging Environment & ToolboX (Qu|Nex) integrates a number of 
+modules that support a flexible and extensible framework for data organization, preprocessing, 
 quality assurance, and various analytics across neuroimaging modalities. The Qu|Nex suite is 
 designed to be flexible and can be developed by adding functions developed around its component tools.
 
-The Qu|Nex code is is co-developed and co-maintained by the [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
+The Qu|Nex code is is co-developed and co-maintained by the 
+[Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
+
+
+[Website](http://qunex.yale.edu/)
+=========
+
+[Wiki](https://bitbucket.org/oriadev/qunex/wiki/Home)
+============
+
+[Quick Start](https://bitbucket.org/oriadev/qunex/wiki/Overview/QuickStart.md)
+============
 
 Installation from Source
 =========================
 ---
 
 ### Step 1. Clone all Qu|Nex repositories and initiate submodules.
-
+s
 * Clone a branch: `git clone -b <BRANCH> git@bitbucket.org:oriadev/qunex.git`
 * Initiate submodules from inside cloned repo folder: `git submodule init`
 * Pull and update all submodules: `git pull --recurse-submodules && git submodule update --recursive`
@@ -49,8 +59,10 @@ source $TOOLS/library/environment/qunex_environment.sh
 
 `qunex --envsetup`
 
+
 Updating the Qu|Nex Suite from Source
 ======================================
+---
 
 * To update the main Qu|Nex repository and all the submodules run:
 
@@ -59,7 +71,7 @@ Updating the Qu|Nex Suite from Source
 * For this to work you need to have an active git account and read access to the main Qu|Nex repository and all submodules.
 
 
-Usage and documentation
+In-line Usage and documentation
 ===============================
 ---
 
@@ -69,7 +81,7 @@ List of functions can be obtained by running the following call from the termina
 
 The general `qunex` call use form is:
 
-`qunex --function="<command_name>" --option="<value>" --option="<value>" ...`
+`qunex --command="<command_name>" --option="<value>" --option="<value>" ...`
 
 Or the simplified form with command name first omitting the flag:
 
@@ -148,7 +160,7 @@ Change Log
 * 0.5.4 [connector] Added XNATCloudUpload.sh script to enable automated XNAT ingestion and integration with multi data format support
 * 0.5.5 [niutilities,connector] Upgraded high-performance cluster scheduler functionality
 * 0.5.6 [connector] Edited naming grammar of connector pipeline to 'qunex' 
-* 0.6.0 [connector] Added `eddyqc` function to the qunex wrapper for diffusion MRI quality control
+* 0.6.0 [connector] Added `eddyqc` command to the qunex wrapper for diffusion MRI quality control
 * 0.6.1 [niutilities] Added paramFile option to `compileSubjectsTxt` command
 * 0.6.2 [niutilities] Added timeSeries smoothing functionality to `g_FindPeaks` and corrected a few report generation mistakes
 * 0.6.3 [niutilities] Added support for arbitrary inbox folder for processInbox
@@ -170,20 +182,20 @@ Change Log
 * 0.7.9 [library] Added template Workbench scene and associated files for CIFTI visualization
 * 0.7.10 [niutilities] Deprecated old ambiguous parameter names and added a warning when still used
 * 0.7.11 [connector, niutilities] Updated inline documentation for `computeBOLDfc` and `hcpd`
-* 0.7.12 [connector] Updated hcpdLegacy function loop to check if FieldMap is being used, and check subsequent params accordingly
-* 0.8.0 [connector] Added `RsyncBackup` generic function to connector function for server-to-server backups of studies
-* 0.8.1 [connector] Improved function parsing to report if function not supported
+* 0.7.12 [connector] Updated hcpdLegacy command loop to check if FieldMap is being used, and check subsequent params accordingly
+* 0.8.0 [connector] Added `RsyncBackup` generic command to connector command for server-to-server backups of studies
+* 0.8.1 [connector] Improved command parsing to report if command not supported
 * 0.8.2 [connector] Aligned general input flags to conform across the QuNex suite
 * 0.8.3 [connector] Updated hcpdLegacy to use correct options when running without fieldmap (needs PEdir, unwarpdir, and echospacing)
 * 0.8.4 [connector] Fixed hcpdLegacy usage function
 * 0.9.0 [niutilities] Added option to run Matlab code through arbitrary Matlab or Octave command through system QuNexMCOMMAND setting
 * 0.9.1 [niutilities] Added warning when no subject is identified to be processed and added Matlab as default when QuNexMCOMMAND is not set
-* 0.9.2 [connector] Unified how functions are read such that 1st argument passed is read as a function if no flags are provided
+* 0.9.2 [connector] Unified how functions are read such that 1st argument passed is read as a command if no flags are provided
 * 0.9.3 [nitools] Added documentation to PlotBold functions.
 * 0.9.4 [connector, hcpmodified] Fixed `hcpdLegacy` arguments (changed path to subjectsfolder)
 * 0.9.5 [hcpmodified] Updated `hcpdLegacy` DWI to T1w registration to work w/out fieldmaps
 * 0.9.6 [connector] Fixed hcpdLegacy issue with legacy naming conventions
-* 0.9.7 [niutilities] Minor correction to runPALM function documentation
+* 0.9.7 [niutilities] Minor correction to runPALM command documentation
 * 0.9.8 [nitools] Added verbose argument to fc_ComputeSeedMaps to fix a bug
 * 0.9.9 [nitools] gmrimage now supports creation of dtseries and dscalar standard CIFTI images from numeric data
 * 0.9.10 [nitools] Added median as a roi extraction method. 
@@ -219,7 +231,7 @@ Change Log
 * 0.11.0 [connector] Upgraded QC functionality to include scene zipping and to allow time stamping and subject info integration into PNGs
 * 0.11.1 [connector] Resolved QC functionality bug
 * 0.11.2 [library] Resolved GZIP issue with library atlas files
-* 0.11.3 [connector] QC function exit call fix if BOLD missing
+* 0.11.3 [connector] QC command exit call fix if BOLD missing
 * 0.11.4 [connector] Edited names of example batch and mapping files to avoid conflicts
 * 0.11.5 [niutilities] Updated createStudy to use the new example batch and mapping file names
 * 0.11.6 [connector] Made QC functionality more robust to BOLD naming variation
@@ -284,7 +296,7 @@ Change Log
                                            Improved documentation for g_PlotBoldTS.m and variable handling
                                            Improved RunTurnkey code and tested on Docker
 * 0.19.02 [connector] Further improvements to RunTurnkey code and testing on Docker
-* 0.19.03 [library] Tweak to gitqunex function to allow more robust adding of files during commit/push
+* 0.19.03 [library] Tweak to gitqunex command to allow more robust adding of files during commit/push
 * 0.19.04 [connector] Improved log handling for hcp functions in RunTurnkey code
 * 0.19.05 [nitools] Updated g_PlotBoldTS to allow specification of a colormap
 * 0.19.06 [nitools] Futher updates to g_PlotBoldTS
@@ -358,7 +370,7 @@ Change Log
 * 0.21.14 [niutilities] BIDS inbox and archive folders are created if they do not yet exist
 * 0.21.15 [niutilities] Made BIDSImport more robust to BIDS folder structure violations
 * 0.21.16 [niutilities] Added raw_data info to subject.txt at BIDSImport
-* 0.22.00 [connector] Added QCnifti function to allow visual inspection of raw NIFTI files in <subjects_folder>/<case>/nii
+* 0.22.00 [connector] Added QCnifti command to allow visual inspection of raw NIFTI files in <subjects_folder>/<case>/nii
 * 0.23.00 [connector, dependencies] Improved QCPreproc to handle scalar and pconn BOLD FC processed data. Dependency: Workbench 1.3 or later.
 * 0.23.01 [connector] Improved QCnifti documentation
 * 0.23.02 [niutilities] Additional scaffolding for FSLongitudinal
@@ -370,7 +382,7 @@ Change Log
 * 0.23.08 [connector] Added granularity to rsync commands for pulling data from XNAT within RunTurnkey
 * 0.23.09 [connector] Added QuNex folder check in the connectorExec function
 * 0.23.10 [nitools niutilities] Added additional error checking, made nifti reading more robust, and resolved options string processing bug
-* 0.23.11 [niutilities] Added error reporting to readConc and generic function for forming error strings
+* 0.23.11 [niutilities] Added error reporting to readConc and generic command for forming error strings
 * 0.23.12 [niutilities] Fixed a typo in dicom2niix
 * 0.23.13 [nitools] Fixed double quotes in preprocessConc
 * 0.24.00 [connector, library] Fixed error in QCPreprocessing, renamed and updated XNATUpload.sh, updated environment code.
@@ -422,10 +434,10 @@ Change Log
 * 0.36.08 [connector] Fixed incomplete rsync command for hcp4 & hcp5
 * 0.36.09 [connector] Corrected reporting of which step is being run in RunTurnkey
 * 0.36.10 [connector niutilities] Added volume and dtseries specification for mapHCPData and changed BOLDPrefix default to "" in RunTurnkey
-* 0.37.00 [connector] Updated QuNexAcceptanceTest connector function to allow running a loop on sessions
+* 0.37.00 [connector] Updated QuNexAcceptanceTest connector command to allow running a loop on sessions
 * 0.37.01 [connector library] Updated RunTurnkey to allow smoke test for requested steps and added missing library files
 * 0.37.02 [niutilities] Fixed and error in hcp4 where no bolds are present
-* 0.37.03 [connector] Updated QuNexAcceptanceTest connector function to allow downloading QC results and fixed curl calls in RunTurnkey.sh
+* 0.37.03 [connector] Updated QuNexAcceptanceTest connector command to allow downloading QC results and fixed curl calls in RunTurnkey.sh
 * 0.37.04 [library] Added R packages environment test
 * 0.38.00 [connector] Added ability to clean intermediate steps to RunTurnkey.sh with support for hcp4
 * 0.38.01 [connector] Tweaked flag name to --turnkeycleanstep in RunTurnkey.sh
@@ -482,14 +494,14 @@ Change Log
 * 0.44.00 [connector, niutilities] Updated runTurnkey command and revised documentation.
 * 0.44.01 [niutilities, HCP, library] HCP Pipelines updated to work with legacy datasets, bugfixes, documentation updates, README updates 
 * 0.44.02 [niutilities] Extended bold selection options, extended logging functionality, more robust processing of deprecated parameters, bugfixes
+* 0.44.03 [niutilities] Updated documentation, added logfolder information to all runExternalForFile calls
 
 
 Stable Container Tag Log
 ========================
 ---
 
-* ztamayo/qunex_suite:0_38_15_btrx [BlackThorn stable tag]
-* ztamayo/qunex_suite:fsl_test [WashU stable tag]
+* docker.io/qunex/qunex_suite:qunex_dev [stable tag]
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
