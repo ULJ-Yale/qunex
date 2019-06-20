@@ -884,6 +884,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
              - Fixed a None checkup bug
     2019-06-20 Grega Repovš
              - Fixed a sessions parameter name bug 
+             - Fixed sorting by bold number
     """
 
     def checkFile(fileName):
@@ -964,7 +965,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
 
         if boldtags:
             try:
-                bolds = [(bsearch.match(v['name']).group(1), v['name'], v['task']) for (k, v) in session.iteritems() if k.isdigit() and bsearch.match(v['name'])]
+                bolds = [(int(bsearch.match(v['name']).group(1)), v['name'], v['task']) for (k, v) in session.iteritems() if k.isdigit() and bsearch.match(v['name'])]
                 if "all" not in boldtags:
                     bolds = [n for n, b, t in bolds if t in boldtags]
                 else:
@@ -973,7 +974,7 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
             except:
                 pass
             for boldnum in bolds:
-                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + boldnum + boldtail)
+                tfile = os.path.join(subjectsfolder, session['id'], 'images', 'functional', boldname + str(boldnum) + boldtail)
                 complete = complete & checkFile(tfile)
                 files.append("    file:" + tfile)
 
