@@ -755,9 +755,9 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
 
 
-def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
+def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None, concname="", bolds=None, boldname="bold", boldtail=".nii.gz", overwrite='no', check='yes'):
     """
-    createConc [subjectsfolder="."] [session=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
+    createConc [subjectsfolder="."] [sessions=None] [sfilter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [boldtail=".nii.gz"] [overwrite="no"] [check="yes"]
 
     The function creates a set of .conc formated files that can be used as input
     to a number of processing and analysis functions. The function is fairly
@@ -882,7 +882,8 @@ def createConc(subjectsfolder=".", session=None, sfilter=None, concfolder=None, 
              - Reports an error if no session is found to be processed
     2019-05-30 Grega Repovš
              - Fixed a None checkup bug
-
+    2019-06-20 Grega Repovš
+             - Fixed a sessions parameter name bug 
     """
 
     def checkFile(fileName):
