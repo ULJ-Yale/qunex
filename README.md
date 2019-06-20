@@ -496,6 +496,7 @@ Change Log
 * 0.44.02 [niutilities] Extended bold selection options, extended logging functionality, more robust processing of deprecated parameters, bugfixes
 * 0.44.03 [niutilities] Updated documentation, added logfolder information to all runExternalForFile calls
 * 0.44.04 [niutilities] Fixed a sessions parameter name bug
+* 0.44.05 [niutilities] Fixed sorting by bold number in createConc
 
 
 Stable Container Tag Log
