@@ -495,6 +495,7 @@ Change Log
 * 0.44.01 [niutilities, HCP, library] HCP Pipelines updated to work with legacy datasets, bugfixes, documentation updates, README updates 
 * 0.44.02 [niutilities] Extended bold selection options, extended logging functionality, more robust processing of deprecated parameters, bugfixes
 * 0.44.03 [niutilities] Updated documentation, added logfolder information to all runExternalForFile calls
+* 0.44.04 [niutilities] Fixed a sessions parameter name bug
 
 
 Stable Container Tag Log
