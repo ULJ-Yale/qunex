@@ -28,7 +28,7 @@ Installation from Source
 ---
 
 ### Step 1. Clone all Qu|Nex repositories and initiate submodules.
-s
+
 * Clone a branch: `git clone -b <BRANCH> git@bitbucket.org:oriadev/qunex.git`
 * Initiate submodules from inside cloned repo folder: `git submodule init`
 * Pull and update all submodules: `git pull --recurse-submodules && git submodule update --recursive`
@@ -497,6 +497,7 @@ Change Log
 * 0.44.03 [niutilities] Updated documentation, added logfolder information to all runExternalForFile calls
 * 0.44.04 [niutilities] Fixed a sessions parameter name bug
 * 0.44.05 [niutilities] Fixed sorting by bold number in createConc
+* 0.44.06 [nitools] Changed use of princom to pca
 
 
 Stable Container Tag Log
