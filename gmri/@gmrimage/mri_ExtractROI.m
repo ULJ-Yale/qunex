@@ -146,7 +146,7 @@ for r = 1:nrois
             ts(r, :) = mean(tmp(tmpm, :), 1);
 
         case 'pca'
-            [coeff, score] = princomp(tmp');
+            [coeff, score] = pca(tmp');
             ts(r, :) = score(:,1)';
 
         case 'all'
