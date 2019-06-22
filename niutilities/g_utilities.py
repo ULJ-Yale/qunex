@@ -298,9 +298,12 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     legacy data template: $TemplateFolder/templates/batch_legacy_parameters.txt
     multiband data template: $TemplateFolder/templates/batch_multiband_parameters.txt
 
-    Example:
-
+    Example
+    =======
+    
+    ```
     qunex createBatch sfile="subject.txt" tfile="fcMRI/subjects_fcMRI.txt"
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -563,8 +566,10 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
     Examples
     --------
-
-    > qunex createList bolds="1,2,3"
+    
+    ```
+    qunex createList bolds="1,2,3"
+    ```
 
     The command will create a list file in `../processing/list/subjects.txt` that
     will list for all the sessions found in the current folder BOLD files 1, 2, 3
@@ -572,8 +577,10 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
       file:<current path>/<session id>/images/functional/bold[n].nii.gz
 
-    > qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    ```
+    qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
             bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_g7_hpss_res-mVWMWB1d.dtseries"
+    ```
 
     The command will create a `lists/rest.list` list file in which for all the
     sessions specified in the `batch.txt` it will list all the BOLD files tagged
@@ -581,11 +588,13 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
       file:<subjectsfolder>/<session id>/images/functional/bold[n]_Atlas_g7_hpss_res-mVWMWB1d.dtseries
 
-    > qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    ```
+    qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
             sfilter="EC:use" listfile="lists/EC.list" \\
             conc="bold_Atlas_dtseries_EC_g7_hpss_res-mVWMWB1de.conc" \\
             fidl="EC.fidl" glm="bold_conc_EC_g7_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
             roi="segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii"
+    ```
 
     The command will create a list file in `lists/EC.list" that will list for
     all the sessions in the conc file, that have the key:value pair "EC:use" the
@@ -839,8 +848,10 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
 
     Examples
     --------
-
-    > qunex createConc bolds="1,2,3"
+    
+    ```
+    qunex createConc bolds="1,2,3"
+    ```
 
     The command will create set of conc files in `/inbox/concs`,
     each of them named <session id>.conc, one for each of the sessions found in
@@ -848,9 +859,11 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     listed as:
 
       file:<current path>/<session id>/images/functional/bold[n].nii.gz
-
-    > qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    
+    ```
+    qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
             bolds="WM" concname="_WM" boldtail="_Atlas.dtseries.nii"
+    ```
 
     The command will create for each session listed in the `batch.txt` a
     `<session id>_WM.conc` file in `subjects/inbox/concs` in which it will list
@@ -858,10 +871,12 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
 
       file:<subjectsfolder>/<session id>/images/functional/bold[n]_Atlas.dtseries
 
-    > qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
+    ```
+    qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
             sfilter="EC:use" concfolder="analysis/EC/concs" \\
             concname="_EC_g7_hpss_res-mVWMWB1de" bolds="EC" \\
             boldtail="_g7_hpss_res-mVWMWB1deEC.dtseries.nii"
+    ```
 
     For all the sessions in the `batch.txt` file that have the key:value pair
     "EC:use" set the command will create a conc file in `analysis/EC/concs`
@@ -1280,21 +1295,27 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     qunex runList \
       --listfile="/data/settings/runlist.txt" \
       --runlists="dataImport,prepareHCP"
-
+    ```
+    
+    ```
     qunex runList \
       --listfile="/data/settings/runlist.txt" \
       --runlists="doHCP" \
       --sessions="/data/testStudy/processing/batch_baseline.txt" \
       --sperlist=4 \
       --scheduler="SLURM,jobname=doHCP,time=04-00:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+    ```
 
+    ```
     qunex runList \
       --listfile="/data/settings/runlist.txt" \
       --runlists="prepareFCPreprocessing" \
       --sessions="/data/testStudy/processing/batch_baseline.txt" \
       --sperlist=4 \
       --scheduler="SLURM,jobname=doHCP,time=00-08:00:00,ntasks=4,cpus-per-task=2,mem-per-cpu=40000,partition=pi_anticevic"
+    ```
 
+    ```
     qunex runList
       --listfile="/data/settings/runlist.txt" \
       --runlists="runFCPreprocessing"
@@ -1701,10 +1722,12 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
 
     If any of the identified sessions do not include data or if errors are 
     encountered when processing the data, the command will exit with an error.
-
-    $ qunex gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
+    
+    ```
+    qunex gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
             sessions="AP*|OP*" sfile="*test*|*results*" \\
             check="warn" overwrite="yes" report="no"
+    ```
 
     The command will find all the session folders within `/data/myStudy/subjects`
     that have a `behavior` subfolder. It will then look for presence of any 
@@ -1715,12 +1738,14 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     The resulting file will not have information on file generation or 
     processing report.
 
-    $ qunex gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
+    ```
+    qunex gatherBehavior subjectsfolder="/data/myStudy/subjects" \\
             sessions="/data/myStudy/processing/batch.txt" \\           
             sfilter="group:controls|behavioral:yes" \\
             sfile="*test*|*results*" \\
             tfile="/data/myStudy/analysis/n-bridge/controls.txt" \\
             check="no" overwrite="yes"
+    ```
 
     The command will read the session information from the provided batch.txt 
     file. It will then process only those sessions that have the following
@@ -2014,8 +2039,10 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
 
     Examples
     --------
-
-    $ qunex pullSequenceNames sessions="AP*"
+    
+    ```
+    qunex pullSequenceNames sessions="AP*"
+    ```
 
     The command will compile sequence names present in `subject.txt` files 
     present in all `<session id>` folders that match the "AP*" glob
@@ -2028,9 +2055,11 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     If any of the identified sessions do not include data or if errors are 
     encountered when processing the data, the command will exit with an error.
 
-    $ qunex pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
+    ```
+    qunex pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
             sessions="AP*|OP*" sfile="subject.txt|session.txt" \\
             check="warn" overwrite="yes" report="no"
+    ```
 
     The command will find all the session folders within `/data/myStudy/subjects`
     It will then look for presence of either subject.xtx or session.txt files.
@@ -2039,13 +2068,15 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     are encountered, the command will not throw an error, however it also won't
     report a successful completion of the task. The resulting file will not have 
     information on file generation or processing report.
-
-    $ qunex pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
+    
+    ```
+    qunex pullSequenceNames subjectsfolder="/data/myStudy/subjects" \\
             sessions="/data/myStudy/processing/batch.txt" \\           
             sfilter="group:controls|behavioral:yes" \\
             sfile="*.txt" \\
             tfile="/data/myStudy/subjects/specs/hcp_mapping.txt" \\
             check="no" overwrite="yes"
+    ```
 
     The command will read the session information from the provided batch.txt 
     file. It will then process only those sessions that have the following
@@ -2347,6 +2378,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     
     given the above assumptions the following example commands can be run:
     
+    ```
     qunex mapIO \\
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
@@ -2355,7 +2387,8 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         --exclude=unprocessed \\
         --action=link \\
         --overwrite=skip
-    
+    ```
+
     Using the above commands the data found in the 
     `/data/studies/myStudy/subjects/<session id>/hcp/<session id>` folders, 
     excluding the `unprocessed` folder would be mapped to the 
@@ -2364,7 +2397,8 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     recreated as needed and hard-links would be created for all the files to be 
     mapped. If any target files already exist, they would be skipped, but 
     the processing of other files would take place anyway.
-        
+    
+    ``` 
     qunex mapIO \\
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
@@ -2373,13 +2407,15 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         --mapping="toHCPLS" \\
         --action="copy" \\
         --overwrite=no
-    
+    ```
+
     Using the above commands, only data from the sessions that are marked in the
     batch.txt file to be from the control group and acquired at Yale would be 
     mapped. In this case, the files would be copied and if any files would 
     already exist in the target location, the mapping would be aborted 
     altogether.
     
+    ```
     qunex mapIO \\
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
@@ -2388,11 +2424,13 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         --mapping="toHCPLS" \\
         --action="move" \\
         --overwrite=yes
-    
+    ```
+
     Using the above commands, only the sessions that start with either "AP" or 
     "HQ" would be mapped, the files would be moved and any existing files at the 
     target location would be overwritten.
     
+    ```
     qunex mapIO \\
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
@@ -2401,6 +2439,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         --action="link" \\
         --exclude="unprocessed,MotionMatrices,MotionCorrection" \\
         --overwrite=skip
+    ```
     
     Using the above commands, all the sessions specified in the batch.txt would 
     be processed, files would be linked, files that already exist would be 

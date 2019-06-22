@@ -387,8 +387,10 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex BIDSImport subjectsfolder=myStudy overwrite=yes bidsname=swga
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -835,8 +837,10 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex mapBIDS2nii folder=. overwrite=yes
+    ```
 
     ----------------
     Written by Grega Repovš

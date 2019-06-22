@@ -398,8 +398,10 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
 
     EXAMPLE USE
     ===========
-
-    $ qunex HCPLSImport subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
+    
+    ```
+    qunex HCPLSImport subjectsfolder=myStudy/subjects inbox=HCPLS overwrite=yes hcplsname=hcpls
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -814,6 +816,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
     files were mapped and the exact information about which specific file 
     from the `hcpls` folder was mapped to which file in the `nii` folder.
 
+
     MULTIPLE SESSIONS AND SCHEDULING
     ================================
 
@@ -866,8 +869,17 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex mapHCPLS2nii folder=. overwrite=yes
+    ```
+
+    ```
+    qunex mapHCPLS2nii \\
+      --subjectsfolder="/data/my_study/subjects" \\
+      --sessions="AP*" \\
+      --overwrite=yes
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -881,6 +893,8 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
              - Added boldname to output
     2019-06-01 Grega Repovš
              - Returns statistics
+    2019-06-22 Grega Repovš
+             - Added multiple sessions example
     '''
 
     sfolder = os.path.abspath(sfolder)

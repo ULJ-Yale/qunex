@@ -215,9 +215,11 @@ def runPALM(image, design=None, args=None, root=None, options=None, cores=None, 
 
     Example use
     -----------
-
-    $ qunex runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
+    
+    ```
+    qunex runPALM design="name:sustained|t:taov" args="n:500|accel:tail|T|fonly" \\
          root=sustained_aov
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -646,10 +648,12 @@ def maskMap(image=None, masks=None, output=None, minv=None, maxv=None, join='OR'
 
     EXAMPLE USE
     ===========
-
-    $ qunex maskMap image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
-         masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
-         maxv=0.017
+    
+    ```
+    qunex maskMap image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
+        masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
+        maxv=0.017
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -745,14 +749,16 @@ def joinMaps(images=None, output=None, names=None, originals=None):
 
     EXAMPLE USE
     ===========
-
-    $ qunex joinMaps images="sustained_AvsB_p.017.dscalar.nii, \\
+    
+    ```
+    qunex joinMaps images="sustained_AvsB_p.017.dscalar.nii, \\
                           sustained_BvsC_p.017.dscalar.nii, \\
                           sustained_AvsC_p.017.dscalar.nii, \\
                           sustained_aov_p.017.dscalar.nii" \\
                   names="A > B, B > C, A > C, ANOVA" \\
                   output="sustained_results.dscalar.nii" \\
                   originals=remove
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -870,8 +876,10 @@ def createWSPALMDesign(factors=None, nsubjects=None, root=None):
 
     EXAMPLE USE
     ===========
-
-    $ qunex createWSPALMDesign factors="2,3" nsubjects=33 root=WM.type_by_load
+    
+    ```
+    qunex createWSPALMDesign factors="2,3" nsubjects=33 root=WM.type_by_load
+    ```
 
     ----------------
     Written by Grega Repovš, 2017-07-14'''

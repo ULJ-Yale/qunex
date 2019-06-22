@@ -187,8 +187,10 @@ def joinFidlFolder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
 
     Example
     ------- 
-
+    
+    ```
     qunex joinFidlFolder concfolder=concs fidlfolder=fidls
+    ```
 
     ----------------
     Written by Grega Repovš 
@@ -300,8 +302,10 @@ def checkFidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
 
     Example
     -------
-
+    
+    ```
     qunex checkFidl fidlfolder=jfidls
+    ```
 
     ----------------
     Written by Grega Repovš 

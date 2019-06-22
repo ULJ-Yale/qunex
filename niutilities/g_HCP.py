@@ -169,8 +169,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex setupHCP sfolder=OP316 sfile=subject.txt
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -437,8 +439,10 @@ def setupHCPFolder(subjectsfolder=".", tfolder="hcp", sfile="subject_hcp.txt", c
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex setupHCPFolder subjectsfolder=subjects check=no
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -621,10 +625,14 @@ def getHCPReady(sessions=None, subjectsfolder=".", sfile="subject.txt", tfile="s
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex getHCPReady sessions="OP*|AP*" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
-
+    ```
+    
+    ```
     qunex getHCPReady sessions="processing/batch_new.txt" subjectsfolder=subjects mapping=subjects/hcp_mapping.txt
+    ```
 
     ----------------
     Written by Grega Repovš

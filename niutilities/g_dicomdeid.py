@@ -423,16 +423,22 @@ def getDICOMFields(folder=".", tfile="dicomFields.csv", limit="20"):
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex getDICOMFields
-
+    ```
+    
+    ```
     qunex getDICOMFields \
          --folder=/data/studies/WM/subjects/inbox/MR 
-
+    ```
+    
+    ```
     qunex getDICOMFields \
          --folder=/data/studies/WM/subjects/inbox/MR/original \
          --tfile=/data/studies/WM/subjects/specs/dicomFields.csv \
          --limit=10
+    ```
 
     ----------------
     Written by Antonija Kolobarić
@@ -586,19 +592,25 @@ def changeDICOMFiles(folder=".", paramfile="deidparam.txt", archivefile="archive
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex changeDICOMFiles \
          --folder=. 
+    ```
 
+    ```
     qunex changeDICOMFiles \
          --folder=/data/studies/WM/subjects/inbox/MR \
          --paramfile=/data/studies/WM/subjects/specs/deid.txt
-
+    ```
+    
+    ```
     qunex changeDICOMFiles \
          --folder=/data/studies/WM/subjects/inbox/MR/original \
          --paramfile=/data/studies/WM/subjects/specs/deidv1.txt \
          --outputfolder=/data/studies/WM/subjects/MR/deid \
          --extension="v1"
+    ```
 
     ----------------
     Written by Antonija Kolobarić & Grega Repovš

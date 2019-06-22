@@ -196,9 +196,11 @@ def createBOLDBrainMasks(sinfo, options, overwrite=False, thread=0):
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex createBOLDBrainMasks sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
           overwrite=no hcp_cifti_tail=_Atlas bolds=all threads=8
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -528,15 +530,19 @@ def computeBOLDStats(sinfo, options, overwrite=False, thread=0):
     ===========
 
     Using the defaults:
-
-    $ qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    
+    ```
+    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bolds=all
+    ```
 
     Specifying additional parameters for identification of bad frames:
-
-    $ qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    
+    ```
+    qunex computeBOLDStats sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bolds=all mov_fd=0.9 mov_dvarsme=1.6 \\
          mov_before=1 mov_after= 2
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -866,14 +872,20 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     EXAMPLE USE
     ===========
 
+    ```
     qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
           overwrite=no bolds=all cores=1
+    ```
 
+    ```
     qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
           overwrite=no bolds=all cores=10
+    ```
 
+    ```
     qunex createStatsReport sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
           overwrite=no bolds=all cores=1 mov_plot=""
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -1215,9 +1227,11 @@ def extractNuisanceSignal(sinfo, options, overwrite=False, thread=0):
 
     EXAMPLE USE
     ===========
-
-    $ qunex extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    
+    ```
+    qunex extractNuisanceSignal sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no bolds=all cores=10
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -1772,12 +1786,14 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
 
     EXAMPLE USE
     ===========
-
-    $ qunex preprocessBold sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    
+    ```
+    qunex preprocessBold sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bolds=rest bold_actions="s,h,r,c,l" \\
          bold_nuisance="m,V,WM,WB,1d" mov_bad=udvarsme \\
          pignore="hipass=linear|regress=ignore|lopass=linear" \\
          nprocess=0
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -2396,23 +2412,27 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     ===========
 
     Activation analysis
-
-    $ qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    
+    ```
+    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-M1 \\
          bold_actions="s,r,c" bold_nuisance=e mov_bad=none \\
          event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
          glm_matrix=both glm_residuals=none nprocess=0 \\
          pignore="hipass=keep|regress=keep|lopass=keep"
+    ```
 
     Functional connectivity preprocessing
-
-    $ qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
+    
+    ```
+    qunex preprocessConc sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
          overwrite=no cores=10 bolds=SRT event_file=SRT glm_name=-FC \\
          bold_actions="s,h,r,c,l" bold_nuisance="m,V,WM,WB,1d,e" mov_bad=udvarsme \\
          event_string="block:boynton|target:9" \\
          glm_matrix=none glm_residuals=save nprocess=0 \\
          pignore="hipass=linear|regress=ignore|lopass=linear"
-
+    ```
+    
     ----------------
     Written by Grega Repovš
 

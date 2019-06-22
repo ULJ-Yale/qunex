@@ -165,10 +165,12 @@ def runShellScript(sinfo, options, overwrite=False, thread=0):
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex runShellScript sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
           overwrite=no script=fcMRI/processdata.sh
-
+    ````
+    
     ----------------
     Written by Grega Repovš 2017-06-24
 

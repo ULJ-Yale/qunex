@@ -458,8 +458,22 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
 
     EXAMPLE USE
     ===========
+    
+    ```
+    qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    ```
 
-    $ qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    Multiple sessions example:
+
+    ```
+    qunex dicom2nii \\
+      --subjectsfolder="/data/my_study/subjects" \\
+      --sessions="OP*" \\
+      --clean=yes \\
+      --unzip=yes \\
+      --gzip=no \\
+      --cores=3
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -474,6 +488,8 @@ def dicom2nii(folder='.', clean='ask', unzip='ask', gzip='ask', verbose=True, co
              - Added checking for existence of dicom folder
     2019-04-25 Grega Repovs
              - Changed subjects to sessions
+    2019-06-22 Grega Repovš
+             - Added multiple sessions example
     '''
 
     print "Running dicom2nii\n================="
@@ -953,8 +969,22 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
     EXAMPLE USE
     ===========
+    
+    ```
+    qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    ```
+    
+    Multiple sessions example
 
-    $ qunex dicom2nii folder=. clean=yes unzip=yes gzip=yes cores=3
+    ```
+    qunex dicom2niix \\
+      --subjectsfolder="/data/my_study/subjects" \\
+      --sessions="OP*" \\
+      --clean=yes \\
+      --unzip=yes \\
+      --gzip=no \\
+      --cores=3
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -992,6 +1022,8 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
              - Changed addImageType option to specify the number of last labels to retain
     2019-04-25
              - Changed subjects to sessions
+    2019-06-22 Grega Repovš
+             - Added multiple sessions example
     '''
 
     print "Running dicom2niix\n=================="
@@ -1410,8 +1442,18 @@ def sortDicom(folder=".", **kwargs):
 
     EXAMPLE USE
     ===========
+    
+    ```
+    qunex sortDicom folder=OP667
+    ```
 
-    $ qunex sortDicom folder=OP667
+    Multiple sessions example
+
+    ```
+    qunex sortDicom \\
+      --subjectfolder="/data/my_study/subjects" \\
+      --sessions="OP*"
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -1430,6 +1472,8 @@ def sortDicom(folder=".", **kwargs):
                files in sortDicom
     2019-04-25
              - Changed subjects to sessions
+    2019-06-22 Grega Repovš
+             - Added multiple sessions example
     '''
 
     # --- should we copy or move
@@ -1577,8 +1621,10 @@ def listDicom(folder=None):
 
     EXAMPLE USE
     ===========
-
-    $ qunex listDicom folder=OP269/dicom
+    
+    ```
+    qunex listDicom folder=OP269/dicom
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -1638,8 +1684,10 @@ def splitDicom(folder=None):
 
     EXAMPLE USE
     ===========
-
-    $ qunex splitDicom folder=dicommess
+    
+    ```
+    qunex splitDicom folder=dicommess
+    ```
 
     ----------------
     Written by Grega Repovš
@@ -1944,6 +1992,116 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     --verbose         Whether to provide detailed report also of packets that 
                       could not be identified and/or are not matched with log 
                       file. ['yes']
+    
+
+    EXAMPLES
+    ========
+
+    First the examples for processing packages from `masterinbox` folder.
+
+    In the first example, we are assuming that the packages we want to process 
+    are in the default folder (`<path_to_studyfolder>/subjects/inbox/MR`), 
+    the file or folder names contain only the packet names to be used, and the 
+    subject id is equal to the packet name. All packets found are to be
+    processed, after the user gives a go-ahead to an interactive prompt:
+    
+    ```
+    qunex processInbox \
+        --subjectsfolder="<path_to_studyfolder>/subjects"
+    ```
+    
+    If the processing should continue automatically if packages to process were 
+    found, then the command should be:
+    
+    ```
+    qunex processInbox \
+        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --check="any"
+    ```
+    
+    If only package names starting with 'AP' or 'HQ' are to be processed then 
+    the `sessions` parameter has to be added:
+    
+    ```
+    qunex processInbox \
+        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --sessions="AP.*,HQ.*" \
+        --check="any"
+    ```
+    
+    If the packages are named e.g. 'Yale-AP4983.zip' with the extension optional, 
+    then to extract the packet name and map it directly to subject id, the 
+    following `pattern` parameter needs to be added:
+    
+    ```
+    qunex processInbox \
+        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
+        --sessions="AP.*,HQ.*" \
+        --check="any"
+    ```
+    
+    If the session name can also be extracted and the files are in the format e.g. 
+    'Yale-AP4876_Baseline.zip', then a `nameformat` parameter needs to be added:
+    
+    ```
+    qunex processInbox \
+        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
+        --sessions="AP.*,HQ.*" \
+        --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \
+        --check="any"
+    ```
+    
+    In this case, 'AP4876_Baseline' will be first extracted as a packet name and 
+    then parsed into 'AP4876' subject id and 'Baseline' session name.
+    
+    If the files are named e.g. 'Yale-AP4983.zip' and a log file exists in which 
+    the AP* or HQ* are mapped to a corresponding subject id and session names, 
+    then the command is changed to:
+    
+    ```
+    qunex processInbox \
+        --subjectsfolder="<path_to_studyfolder>/subjects" \
+        --pattern=".*?-(?P<packet_name>.*?)($|\..*$)" \
+        --sessions="AP.*,HQ.*" \
+        --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_name:2|session_name:3" \
+        --check="any"
+    ```
+
+    For the examples of processing data already present in the individual 
+    session id folder, let's assume that we have the following files present, 
+    with no other files in the sessions folders:
+    
+    ```
+    /studies/myStudy/subjects/S001_baseline/inbox/AYXQ.tar.gz
+    /studies/myStudy/subjects/S001_incentive/inbox/TWGS.tar.gz
+    /studies/myStudy/subjects/S002_baseline/inbox/OHTZ.zip
+    /studies/myStudy/subjects/S002_incentive/inbox/QRTD.zip
+    ```
+    
+    Then these are a set of possible commands:
+    
+    ```
+    qunex processInbox \
+        --subjectsfolder="/studies/myStudy/subjects" \
+        --masterinbox="none" \
+        --sessions="S*" 
+    ```
+    
+    In the above case all the folders will be processed, the packages will be extracted
+    and (by default) moved to `/studies/myStudy/subjects/archive/MR`.
+    
+    ```
+    qunex processInbox \
+        --subjectsfolder="/studies/myStudy/subjects" \
+        --masterinbox="none" \
+        --sessions="*baseline" \
+        --archive="delete"
+    ```
+    
+    In the above case only the `S001_baseline` and `S002_baseline` sessions will be processed
+    and the respective compressed packages will be deleted after the successful processing.
 
     ----------------
     Written by Grega Repovš
@@ -1975,6 +2133,8 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     2019-05-18 Grega Repovš
              - Added nameformat parameter
              - Updated documentation
+    2019-06-22 Grega Repovš
+             - Updated documentation with examples
     '''
 
     print "Running processInbox\n===================="
@@ -2491,8 +2651,10 @@ def getDICOMInfo(dicomfile=None, scanner='siemens'):
 
     EXAMPLE USE
     ===========
-
-    $ qunex getDICOMInfo dicomfile=ap308e727bxehd2.372.2342.42566.dcm
+    
+    ```
+    qunex getDICOMInfo dicomfile=ap308e727bxehd2.372.2342.42566.dcm
+    ```
 
     ----------------
     Written by Grega Repovš

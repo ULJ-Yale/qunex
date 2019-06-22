@@ -205,15 +205,19 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     EXAMPLE USE
     ===========
-
+    
+    ```
     qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
                    settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic"
+    ```
 
+    ```
     qunex schedule command="bet {{in}} {{out}}" \\
                    replace="in:t1.nii.gz|out:brain.nii.gz" \\
                    settings="SLURM,jobname=bet1,time=03-24:00:00,ntasks=10,cpus-per-task=2,mem-per-cpu=2500,partition=pi_anticevic" \\
                    workdir="/studies/WM/Subjects/AP23791/images/structural"
-
+    ```
+    
     ----------------
     Written by Grega Repovš, 2017-06-17
 
