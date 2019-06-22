@@ -498,6 +498,7 @@ Change Log
 * 0.44.04 [niutilities] Fixed a sessions parameter name bug
 * 0.44.05 [niutilities] Fixed sorting by bold number in createConc
 * 0.44.06 [nitools] Changed use of princom to pca
+* 0.44.07 [niutilites] Updates to in-line documentation
 
 
 Stable Container Tag Log
