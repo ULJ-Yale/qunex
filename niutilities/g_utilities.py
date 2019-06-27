@@ -2258,21 +2258,21 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
         raise ge.CommandNull("pullSequenceNames", "No files processed", "No valid data was found!")                
 
 
-def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=None, action="link", target=None, source=None, overwrite="no", exclude=None, verbose="no"):
+def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=None, mapaction="link", mapto=None, mapfrom=None, overwrite="no", mapexclude=None, verbose="no"):
 
     """
-    mapIO [subjectsfolder="."] [sessions=None] [mapping=<desired mapping>] [sfilter=None] [subjid=None] [action=<how to map>] [target=None|<location to map to>] [source=None|<location to map from>] [overwrite="no"] [exclude=None] [verbose="no"]
+    mapIO [subjectsfolder="."] [sessions=None] [maptype=<desired mapping>] [sfilter=None] [subjid=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [mapfrom=None|<location to map from>] [overwrite="no"] [mapexclude=None] [verbose="no"]
 
     The function maps data in or out of Qu|Nex data structure. What specific 
-    mapping to conduct is specified by the `mapping` parameter. How to do the 
-    mapping (move, copy, link) is specified by the `action` parameter. The
+    mapping to conduct is specified by the `maptype` parameter. How to do the 
+    mapping (move, copy, link) is specified by the `mapaction` parameter. The
     `overwrite` parameter specifies whether to replace any existing data at the
     target location if it already exist.
 
     If the function is to map out from the Qu|Nex data structure, then the target
-    location has to be provided by the `target` parameter. If the function is to 
+    location has to be provided by the `mapto` parameter. If the function is to 
     map into the Qu|Nex data structure, then the source location has to be 
-    provided by the `source` parameter.
+    provided by the `mapfrom` parameter.
 
     The function first prepares the mapping. Next it checks that the mapping can
     be conducted as specified by the parameters given. If the check identifies 
@@ -2311,11 +2311,11 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     --subjid          An optional parameter explicitly specifying, which of the 
                       sessions identified by the `sessions` parameter are to be 
                       mapped. If not specified, all sessions will be mapped.
-
-    --mapping         The specific mapping to be performed (see the section on
+ 
+    --maptype         The specific mapping type to be performed (see the section on
                       implemented mappings).
 
-    --action          How to map the data. The following actions are supported:
+    --mapaction       How to map the data. The following actions are supported:
                       * 'copy'  ... the data is copied from source to target
                       * 'link'  ... if possible, hard links are created for the 
                                     files, if not, the data is copied
@@ -2323,20 +2323,22 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
                                     location
                       ['link']
 
-    --source          The source of the mapping. Only relevant and has to be 
-                      specified when mapping into the Qu|Nex folder structure.
+    --mapfrom         The source of the mapping when mapping into Qu|Nex. 
+                      This flag is optional and has to be specified when mapping 
+                      into the Qu|Nex folder structure from an external location.
 
-    --target          The target of the mapping. Only relevant and has to be 
-                      specified when mapping out of the Qu|Nex folder structure.
+    --mapto           The external target of the mapping when starting with the 
+                      Qu|Nex. This flag is optional and only has to be specified 
+                      when mapping out of the Qu|Nex folder structure.
 
     --overwrite       Whether existing files at the target location should be
                       overwritten. Possible options are:
-                      * yes  ... any existing files should be replaced   
+                      * yes  ... any existing files should be replaced
                       * no   ... no existing files should be replaced and the
                                  mapping should be aborted if any are found
                       * skip ... skip files that already exist, process others
 
-    --exclude         A comma separated list of regular expression patterns that
+    --mapexclude      A comma separated list of regular expression patterns that
                       specify, which files should be excluded from mapping. The
                       regular expression patterns are matched against the full
                       path of the source files.
@@ -2345,11 +2347,11 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
 
 
 
-    Implemented mappings
-    -------------------
+    Implemented mapping types
+    -------------------------
 
     The following mappings are implemented, as they can be specified by the
-    `mapping` parameter:
+    `maptype` parameter:
 
     * 'toHCPLS'         This mapping supports the the data preprocessed using
                         the HCP Pipelines following the Life Span (LS) 
@@ -2362,7 +2364,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
                         to a corresponding session directory in the indicated 
                         target location. If any part of the unprocessed data 
                         or the results are not to be mapped, they can be 
-                        specified using the `exclude` parameter.
+                        specified using the `mapexclude` parameter.
 
 
     Examples
@@ -2382,10 +2384,10 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     qunex mapIO \\
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
-        --target=/data/outbox/hcp_formatted/myStudy \\
-        --mapping=toHCPLS \\
-        --exclude=unprocessed \\
-        --action=link \\
+        --mapto=/data/outbox/hcp_formatted/myStudy \\
+        --maptype=toHCPLS \\
+        --mapexclude=unprocessed \\
+        --mapaction=link \\
         --overwrite=skip
     ```
 
@@ -2402,10 +2404,10 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     qunex mapIO \\
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
-        --target=/data/outbox/hcp_formatted/myStudy \\
+        --mapto=/data/outbox/hcp_formatted/myStudy \\
         --sfilter="group:controls|institution:Yale" \\
-        --mapping="toHCPLS" \\
-        --action="copy" \\
+        --maptype="toHCPLS" \\
+        --mapaction="copy" \\
         --overwrite=no
     ```
 
@@ -2419,10 +2421,10 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     qunex mapIO \\
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
-        --target=/data/outbox/hcp_formatted/myStudy \\
+        --mapto=/data/outbox/hcp_formatted/myStudy \\
         --subjid="AP*,HQ*" \\
-        --mapping="toHCPLS" \\
-        --action="move" \\
+        --maptype="toHCPLS" \\
+        --mapaction="move" \\
         --overwrite=yes
     ```
 
@@ -2434,10 +2436,10 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     qunex mapIO \\
         --subjectsfolder=/data/studies/myStudy/subjects \\
         --sessions=/data/studies/myStudy/processing/batch.txt \\
-        --target=/data/outbox/hcp_formatted/myStudy \\
-        --mapping="toHCPLS" \\
-        --action="link" \\
-        --exclude="unprocessed,MotionMatrices,MotionCorrection" \\
+        --mapto=/data/outbox/hcp_formatted/myStudy \\
+        --maptype="toHCPLS" \\
+        --mapaction="link" \\
+        --mapexclude="unprocessed,MotionMatrices,MotionCorrection" \\
         --overwrite=skip
     ```
     
@@ -2465,27 +2467,27 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
     else:
         raise ge.CommandFailed("mapIO", "Subjects folder does not exist", "The specified subjects folder does not exist [%s]" % (subjectsfolder), "Please check paths!")
 
-    if not mapping :
+    if not maptype :
         raise ge.CommandFailed("mapIO", "No mapping specified", "A mapping has to be specified to be executed!", "Please check your command call!")
 
-    if mapping not in ['toHCPLS']:
-        raise ge.CommandFailed("mapIO", "Mapping not supported", "The specified mapping is not supported [%s]" % (mapping), "Please check your command call!")
+    if maptype not in ['toHCPLS']:
+        raise ge.CommandFailed("mapIO", "Mapping not supported", "The specified mapping is not supported [%s]" % (maptype), "Please check your command call!")
 
-    if mapping in ['toHCPLS']:
+    if maptype in ['toHCPLS']:
         direction = 'out'
-        if target:
-            target = os.path.abspath(target)
+        if mapto:
+            mapto = os.path.abspath(mapto)
         else:
-            raise ge.CommandFailed("mapIO", "Target not specified", "To execute the specified mapping (%s), a target has to be specified!" % (mapping), "Please check your command call!")
+            raise ge.CommandFailed("mapIO", "Target not specified", "To execute the specified mapping (%s), a target, `mapto` parameter has to be specified!" % (maptype), "Please check your command call!")
     else:
         direction = 'in'
-        if source:
-            source = os.path.abspath(source)
+        if mapfrom:
+            mapfrom = os.path.abspath(mapfrom)
         else:
-            raise ge.CommandFailed("mapIO", "Source not specified", "To execute the specified mapping (%s), a source has to be specified!" % (mapping), "Please check your command call!")
+            raise ge.CommandFailed("mapIO", "Source not specified", "To execute the specified mapping (%s), a source, using `mapfrom` parameter has to be specified!" % (maptype), "Please check your command call!")
 
-    if action not in ['link', 'copy', 'move']:
-        raise ge.CommandFailed("mapIO", "Invalid action", "The action specified for the mapping is not valid [%s]!" % (action), "Please specify a valid mapping!")
+    if mapaction not in ['link', 'copy', 'move']:
+        raise ge.CommandFailed("mapIO", "Invalid action", "The action specified for the mapping is not valid [%s]!" % (maptype), "Please specify a valid mapping!")
 
     # -- prepare sessions to work with
 
@@ -2496,27 +2498,27 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
 
     # -- prepare exclusion
 
-    if exclude:
-        patterns = [e.strip() for e in re.split(', *', exclude)]
-        exclude = []
+    if mapexclude:
+        patterns = [e.strip() for e in re.split(', *', mapexclude)]
+        mapexclude = []
         for e in patterns:
             try:
-                exclude.append(re.compile(e))
+                mapexclude.append(re.compile(e))
             except:
-                raise ge.CommandFailed("mapIO", "Invalid exclusion" , "Could not parse the exclusion regular expression: '%s'!" % (e), "Please check exclude parameter!")
+                raise ge.CommandFailed("mapIO", "Invalid exclusion" , "Could not parse the exclusion regular expression: '%s'!" % (e), "Please check mapexclude parameter!")
 
     # -- open logfile
 
-    logfilename, logfile = gc.getLogFile(folders={'subjectsfolder': subjectsfolder}, tags=['mapIO', mapping])
+    logfilename, logfile = gc.getLogFile(folders={'subjectsfolder': subjectsfolder}, tags=['mapIO', maptype])
     
-    gc.printAndLog(gc.underscore("Running mapIO: %s" % (mapping)), file=logfile)
+    gc.printAndLog(gc.underscore("Running mapIO: %s" % (maptype)), file=logfile)
     
     # -- prepare mapping
 
     gc.printAndLog("--> preparing mapping", file=logfile)
 
-    if mapping == 'toHCPLS':
-        toMap = map_toHCPLS(subjectsfolder, sessions, target, gopts)
+    if maptype == 'toHCPLS':
+        toMap = map_toHCPLS(subjectsfolder, sessions, mapto, gopts)
 
     if not toMap:
         gc.printAndLog("ERROR: Found nothing to map!", file=logfile, silent=True)
@@ -2537,8 +2539,8 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
         elif os.path.isfile(tfile):
             existing.append((sfile, tfile))
         else:
-            if exclude:
-                if any([e.search(sfile) is not None for e in exclude]):
+            if mapexclude:
+                if any([e.search(sfile) is not None for e in mapexclude]):
                     toexclude.append((sfile, tfile))
                     continue
             process.append((sfile, tfile))
@@ -2594,11 +2596,11 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, mapping=
 
     # -> map
 
-    actions      = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.linkOrCopy}
+    mapactions      = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.linkOrCopy}
     descriptions = {'copy': 'copying', 'move': 'moving', 'link': 'linking'}
     
-    do   = actions[action]
-    desc = descriptions[action]
+    do   = mapactions[mapaction]
+    desc = descriptions[mapaction]
 
     gc.printAndLog("--> Mapping files", file=logfile)
 

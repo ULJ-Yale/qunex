@@ -26,9 +26,7 @@ help = '''
 Neuro Imaging utilities (niutilities) for processing and analysis.
 
 usage: qunex <command> [option=value] [option=value] ...
-       qunex -h         (prints this help)
-       qunex -l         (list available commands)
-       qunex -o         (list available processing options)
+       qunex            (prints this help)
        qunex ?<command> (print help for a given command)
 
        -------------------------------------------------------------------------
@@ -61,16 +59,18 @@ General magnetic resonance Imaging (Qu|Nex) utilities for processing and analysi
 use: qunex <command> [option=value] [option=value] ...
 
 --------------------------------------------------------------------------------
+
 Note the following conventions used in help and documentation:
 
 * Square brackets [] denote an option or argument that is optional. The
   value listed in the brackets is the default value used, if the argument
-  is not explicitly specified
-* Angle brackets <> describe the value that should be provided
+  is not explicitly specified.
+* Angle brackets <> describe the value that should be provided.
 * Dashes or "flags" (-) in the documentation define input variables.
 * Commands, arguments, and option names are either in small or "camel" case.
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. YES/NO).
+
 --------------------------------------------------------------------------------
 
 dicom utilities

@@ -50,7 +50,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'gatherBehavior'       : {'com': g_utilities.gatherBehavior,     'args': ('subjectsfolder', 'sessions', 'sfilter', 'sfile', 'tfile', 'overwrite', 'check', 'report')},
             'pullSequenceNames'    : {'com': g_utilities.pullSequenceNames,  'args': ('subjectsfolder', 'sessions', 'sfilter', 'sfile', 'tfile', 'overwrite', 'check', 'report')},
             'batchTag2NameKey'     : {'com': g_utilities.batchTag2NameKey,   'args': ('filename', 'subjid', 'bolds', 'output', 'prefix')},
-            'mapIO'                : {'com': g_utilities.mapIO,              'args': ('subjectsfolder', 'sessions', 'sfilter', 'subjid', 'mapping', 'action', 'target', 'source', 'overwrite', 'verbose', 'exclude')},
+            'mapIO'                : {'com': g_utilities.mapIO,              'args': ('subjectsfolder', 'sessions', 'sfilter', 'subjid', 'maptype', 'mapaction', 'mapfrom', 'mapto', 'overwrite', 'verbose', 'mapexclude')},
             'joinFidl'             : {'com': g_fidl.joinFidl,                'args': ('concfile', 'fidlroot', 'outfolder', 'fidlname')},
             'joinFidlFolder'       : {'com': g_fidl.joinFidlFolder,          'args': ('concfolder', 'fidlfolder', 'outfolder', 'fidlname')},
             'splitFidl'            : {'com': g_fidl.splitFidl,               'args': ('concfile', 'fidlfile', 'outfolder')},

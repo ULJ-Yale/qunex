@@ -282,7 +282,6 @@ arglist = [['# ---- Basic settings'],
            ['scheduler_workdir',     'None',                                      isNone, "the path to working directory from which to run jobs on the cluster"],
            ['scheduler_sleep',       '1',                                         float,  "time in seconds between submission of individual scheduler jobs"],
 
-
            ['# --- HCP options'],
            ['hcp_mppversion',         'hcp',                                      str,    "Whether to use the HCP (hcp) or Legacy (legacy) version of the MPP [hcp]"],
            ['hcp_folderstructure',    'hcpls',                                    str,    "Which version of HCP folder structure to use, initial or hcpls ['hcpls']"],
