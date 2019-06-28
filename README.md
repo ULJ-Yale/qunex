@@ -1,15 +1,16 @@
-# README File for Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
-
+# README File for  Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
+# Connector Code
 
 Background
 ==========
 ---
 
-The `connector` repository as part of the Qu|Nex package serves as the overall wrapper for the suite. 
-It handles flexible directory inputs and subject lists. The `connector` supports all functionality 
-across the Qu|Nex suite, including data organization, QC, preprocessing, various analyses etc. 
+The `connector` repository as part of the Qu|Nex package serves as the overall wrapper 
+for the Qu|Nex suite. It handles flexible directory inputs and subject lists. 
+The `connector` code supports various functionality across the Qu|Nex suite, 
+including data organization, QC, preprocessing, various analyses etc. 
 The wrapper code is flexible and can be updated by adding functions developed around 
-other Qu|Nex suite tools (e.g. `gmri` or `matlab` Qu|Nex packages). 
+other Qu|Nex suite tools (e.g. `niutilities` or `nitools` Qu|Nex submodules).
 
 The Qu|Nex code is is co-developed and co-maintained by the [Mind and Brain Lab led by Grega Repovs](http://psy.ff.uni-lj.si/mblab/en) 
 and the [Anticevic Lab](http://anticeviclab.yale.edu/).
@@ -21,22 +22,27 @@ Installation
 ### See https://bitbucket.org/oriadev/qunex/src/master/README.md
 
 
-Usage and command documentation
+Usage and documentation
 ===============================
 ---
 
-List of functions can be obtained by running the following command from the terminal: 
+List of functions can be obtained by running the following call from the terminal: 
 
 * `qunex -help` prints the general help call
 
-The utilities are used through the `qunex` command. The general use form is:
+The general `qunex` call use form is:
 
-`qunex --function="<command>" --option="<value>" --option="<value>" ...`
+`qunex --command="<command_name>" --option="<value>" --option="<value>" ...`
 
-The list of commands and their specific documentation is provided through `ap`
-command itself using the folowing options:
+Or the simplified form with command name first omitting the flag:
 
-* `qunex ?<command>` prints specific help for the specified command.
+* `qunex <command_name> --option="<value>" --option="<value>" ...`
+
+The list of functions and their specific documentation is provided by running `qunex`.
+
+To get help for a specific command use the following call:
+
+* `qunex ?<command_name>` prints specific help for the specified function.
 
 Perusing documentation, please note the following conventions used:
 
@@ -45,7 +51,7 @@ Perusing documentation, please note the following conventions used:
   is not explicitly specified
 * Angle brackets `<>` describe the value that should be provided
 * Dashes or "flags", `-` in the documentation define input variables.
-* Commands, arguments, and option names are either in small or "camel" case.
+* command names, arguments, and parameter names are either in small or "camel" case.
 * Use descriptions are in regular "sentence" case.
 * Option values are usually specified in capital case (e.g. `YES`, `NONE`).
 

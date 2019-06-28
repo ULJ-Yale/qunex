@@ -33,10 +33,10 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= CODE START =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=
 
-QNXFunctions="nitoolsHelp gmriFunction organizeDicom mapHCPFiles dataSync hcpdLegacy eddyQC DWIDenseParcellation DWIDenseSeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense ProbtrackxGPUDense AWSHCPSync runQC RunQC QCPreproc runTurnkey commandExecute showVersion environment"
+QuNexCommands="nitoolsHelp gmriFunction dataSync organizeDicom mapHCPFiles hcpdLegacy eddyQC DWIDenseParcellation DWIDenseSeedTractography computeBOLDfc structuralParcellation BOLDParcellation ICAFIXhcp ROIExtract FSLDtifit FSLBedpostxGPU autoPtx pretractographyDense ProbtrackxGPUDense AWSHCPSync runQC RunQC QCPreproc runTurnkey commandExecute showVersion environment"
 
 # ------------------------------------------------------------------------------
-#  Setup color outputs
+#  -- Setup color outputs
 # ------------------------------------------------------------------------------
 
 BLACK_F="\033[30m"; BLACK_B="\033[40m"
@@ -77,200 +77,150 @@ weho() {
 }
 
 # ------------------------------------------------------------------------------
-#  General help usage function
+#  -- Splash call
 # ------------------------------------------------------------------------------
 
-show_usage_nitoolsHelp() {
-        echo ""
-        echo ""
-        echo " Listing of all Qu|Nex supported NITools MATLAB functions:"
-        echo "--------------------------------------------------------"
-        echo ""
-        MatlabFunctions=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/"`
-        MatlabFunctionsfcMRI=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
-        MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/general/"`
-        MatlabFunctionsGMRI=`ls $TOOLS/$QUNEXREPO/nitools/gmri/\@gmrimage/*.m`
-        MatlabFunctionsStats=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "stats"`
-        echo "  * Functional connectivity tools"; echo ""
-        for MatlabFunction in $MatlabFunctionsfcMRI; do
-            echo "      ==> $MatlabFunction";
-        done
-        echo ""
-        echo "  * General image manipulation tools"; echo ""
-        for MatlabFunction in $MatlabFunctionsGeneral; do
-            echo "      ==> $MatlabFunction";
-        done
-        echo ""
-        echo "  * Specific image analyses tools"; echo ""
-        for MatlabFunction in $MatlabFunctionsGMRI; do
-            echo "      ==> $MatlabFunction";
-        done
-        echo ""
-        echo "  * Statistical tools"; echo ""
-        for MatlabFunction in $MatlabFunctionsStats; do
-            echo "      ==> $MatlabFunction";
-        done
-        echo ""
-}
-
-show_usage() {
+show_splash() {
 geho ""
-geho "                                     ║                                                   "
-geho "                  ▄▄▄▄▄███╗          ║  ███╗   ██╗                                       "
-geho "                  ████████║          ║  ███║   ██║ ██████╗ ██╗   ██╗                     "
-geho "                  ██╔═══██║ ██╗  ██╗ ║  ████╗  ██║ ██▄▄▄█║  ╚██╗██╔╝                     "
-geho "                  ██║ █ ██║ ██║  ██║ ║  ██╔██╗ ██║ ██════╝   ╚███═╝                      "
-geho "                  ╚██████╔╝ ╚█████╔╝ ║  ██║ █████║ ██▄▄▄█╗ ▄██╔██▄▄╗                     "
-geho "                   ╚═╗██╔╝   ╚════╝  ║  ╚═╝  ╚═══╝ ╚═════╝ ╚══╝ ╚══╝                     "
-geho "                     ╚██╝            ║                                                   "
-echo ""                     
-geho "                                LICENSE:                                     "
-geho " Use of this software is subject to the terms and conditions defined by the  "
-geho " Yale University Copyright Policies:                                         "
+geho " Logged in as User: `whoami`                                                 "
+geho " Node info: `hostname`                                                       "
+geho " OS: $OSInfo $OperatingSystem                                                "
+geho ""
+geho ""
+geho "        ██████\                  ║      ██\   ██\                    "
+geho "       ██  __██\                 ║      ███\  ██ |                   "
+geho "       ██ /  ██ |██\   ██\       ║      ████\ ██ | ██████\ ██\   ██\ "
+geho "       ██ |  ██ |██ |  ██ |      ║      ██ ██\██ |██  __██\\\\\██\ ██  |"
+geho "       ██ |  ██ |██ |  ██ |      ║      ██ \████ |████████ |\████  / "
+geho "       ██ ██\██ |██ |  ██ |      ║      ██ |\███ |██   ____|██  ██<  "
+geho "       \██████ / \██████  |      ║      ██ | \██ |\███████\██  /\██\ "
+geho "        \___███\  \______/       ║      \__|  \__| \_______\__/  \__|"
+geho "            \___|                ║                                   "
+geho ""
+geho "                       DEVELOPED & MAINTAINED BY: "
+geho ""                                
+geho "                            Anticevic Lab                                    " 
+geho "                       MBLab led by Grega Repovs                             "
+geho ""
+geho "                      COPYRIGHT & LICENSE NOTICE:                            "
+geho ""
+geho "Use of this software is subject to the terms and conditions defined by the   "
+geho " Yale University Copyright Policies:"
 geho "    http://ocr.yale.edu/faculty/policies/yale-university-copyright-policy    "
 geho " and the terms and conditions defined in the file 'LICENSE.md' which is      "
-geho " a part of this source code package."
+geho " a part of the Qu|Nex Suite source code package:"
+geho "    https://bitbucket.org/hidradev/qunextools/src/master/LICENSE.md"
+geho ""
+}
+
+# ------------------------------------------------------------------------------
+#  -- General help usage
+# ------------------------------------------------------------------------------
+
+show_usage() {
+show_splash
+echo ""
+echo "                     ===============================  "
+echo "                           General Qu|Nex Usage                             "
+echo "                     ===============================  "
+echo ""
+echo "    ==> General Command Call Syntax "
+echo ""
+echo "    qunex --command=<command_name> \ "
+echo "          --parameterA=<parameter_A_specification> \ "
+echo "          --parameterB='<parameter_B_specification>' \ "
+echo "          --parameterC='<parameter_C_specification>' "
+echo "          --parameterN='<parameter_N_specification>' "
+echo ""
+echo "    ==> Obtaining Command Help and Usage"
+echo ""
+echo "      OR   qunex ?<command_name>   "
+echo "      OR   qunex <command_name>    "
 echo ""
 echo ""
-echo "                             General Usage                                    "
-echo " ---------------------------------------------------------------------------- "
+echo "     ==> Conventions used in help and documentation:"
 echo ""
-echo "  Usage:"
-echo ""
-echo "    qunex--function=<function_name> \ "
-echo "         --subjectsfolder=<folder_with_subjects> \ "
-echo "         --subjects='<comma_separarated_list_of_cases>' \ "
-echo "         --extraflags=<extra_inputs> "
-echo ""
-echo "  Example:"
-echo ""
-echo "    qunex--function='organizeDicom' \ "
-echo "         --subjectsfolder='<folder_with_subjects>' \ "
-echo "         --subjects='<case_id1>,<case_id2>'"
-echo ""
-echo "  Specific function help:"
-echo ""
-echo "         qunex-<function_name>   "
-echo "    OR   qunex?<function_name>   "
-echo "    OR   qunex<function_name>    "
-echo ""
-echo "............................................................................"
-echo ""
-echo "Note the following conventions used in help and documentation:"
-echo ""
-echo "    * Square brackets []: Specify a value that is optional."
-echo "       Note: Value within brackets is the default value."
-echo ""
-echo "    * Angle brackets <>: Contents describe what should go there."
-echo ""
-echo "    * Dashes or flags -- : Define input variables."
-echo ""
-echo "    * All descriptions use regular case and all options use CAPS"
-echo ""
-echo "............................................................................"
-echo ""
-echo "                        Overview of Qu|Nex Functions   "
-echo "                     ==============================="
-echo ""
-echo "-----------------------------------------------------------------------------"
-echo "   'Connector' Functions for Turnkey Processing and Misc. Analyses           "
-echo "-----------------------------------------------------------------------------"
-echo ""
-echo " ==> Connector functions are located in: $TOOLS/$QUNEXREPO/connector"
-echo ""
-echo " Qu|Nex Suite workflows is integrated via BASH 'connector' functions."
-echo " The connector function also contain 'stand alone' processing or analyses tools."
-echo " These can be called either directly or via the qunex wrapper"
-echo ""
-echo "  Qu|Nex Turnkey function"
-echo "----------------------------"
-echo " organizeDicom ...... sort DICOMs and setup nifti files from DICOMs"
-#echo " mapHCPFiles ...... setup data structure for hcp processing"
-echo " runTurnkey ...... turnkey execution of Qu|Nex workflow compatible with XNAT Docker engine"
-echo ""
-echo "  QC functions"
-echo "------------"
-echo " runQC ...... run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi"
-echo ""
-echo "  DWI processing, QC, analyses & probabilistic tractography functions"
-echo "---------------------------"
-echo " hcpdLegacy ...... diffusion image processing for data with or without standard fieldmaps"
-echo " eddyQC ...... run quality control on diffusion datasets following eddy outputs"
-echo " FSLDtifit ...... run FSL's dtifit tool (cluster usable)"
-echo " FSLBedpostxGPU ...... run fsl bedpostx w/gpu"
-echo " pretractographyDense ...... generates space for whole-brain dense connectomes"
-echo " ProbtrackxGPUDense ...... run FSL's probtrackx for whole brain & generates dense "
-echo "                           whole brain connectomes"
-echo " DWIDenseSeedTractography ...... reduce dense DWI tractography data using a seed structure"
-echo ""
-echo "  Misc. analyses"
-echo "---------------------------"
-echo " computeBOLDfc ...... computes seed or GBC BOLD functional connectivity"
-echo " structuralParcellation ...... parcellate myelin or thickness"
-echo " BOLDParcellation ...... parcellate BOLD data and generate pconn files"
-echo " DWIDenseParcellation ...... parcellate dense dwi tractography data"
-echo " ROIExtract ...... extract data from pre-specified ROIs in CIFTI or NIFTI"
-echo " AWSHCPSync ...... sync hcp data from aws s3 cloud"
-echo " dataSync ...... sync/backup data across hpc cluster(s)"
+echo "     *  Square brackets []: Specify a value that is optional."
+echo "            Note: Value within brackets is the default value."
+echo "     *  Angle brackets <>: Contents describe what should go there."
+echo "     *  Dashes or flags -- : Define input variables."
+echo "     *  Commands, arguments, and option names are either in small or "camel" "
+echo "     *  All descriptions use regular case and all options use CAPS"
+echo "     * Use descriptions are in regular "sentence" case. "
 echo ""
 echo ""
-echo "-------------------------------------------------------------------------------"
-echo "   General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses  "
-echo "------------------------------------------------------------------------------- "
+echo "                     ===============================  "
+echo "                       Overview of Qu|Nex Commands    "
+echo "                     ===============================  "
 echo ""
-echo " ==> NIUtilities are located in: $TOOLS/$QUNEXREPO/niutilities"
+echo "     To obtain a full listing of all Qu|Nex-supported NITools commands run: "
+echo "      'qunex --allcommands' "
 echo ""
-echo " Qu|Nex Suite workflows contain additional python-based 'general mri (gmri) utilities."
-echo " These are accessed either directly via 'gmri' command from the terminal."
-echo " Alternatively the 'qunex' connector wrapper parses all functions via "
-echo " 'gmri' package as standard input."
+geho "  -----------------------------------------------------------------------------"
+geho "   'Connector' Commands for Turnkey Processing and Misc. Analyses            "
+geho "  -----------------------------------------------------------------------------"
 echo ""
-echo "    Example to pass function:                qunex<function_name> [options]"
-echo "    Example to request help for function:    qunex?<function_name>"
+echo "     ==> Connector commands are located in: $TOOLS/$QUNEXREPO/connector"
 echo ""
-echo "`gmri`"
-echo "`gmri -l`"
+echo "     Qu|Nex Suite workflows is integrated via BASH 'connector' commands."
+echo "     The connector commands also contain 'stand alone' processing or analyses tools."
+echo "     These can be called either directly or via the qunex wrapper"
 echo ""
 echo ""
-echo " ==> NITools tools are located in: $TOOLS/$QUNEXREPO/nitools"
+geho "  -------------------------------------------------------------------------------"
+geho "   General NeuroImaging Utilities (NIUtilities) for Preprocessing and Analyses  "
+geho "  ------------------------------------------------------------------------------- "
 echo ""
-echo " The Qu|Nex package contain a number of matlab-based stand-alone tools."
-echo " These tools are used across various Qu|Nex packages, but can be accessed"
-echo " as stand-alone functions within Matlab. Help and documentation is"
-echo " embedded within each stand-alone tool via standard Matlab help call."
+echo "     ==> NIUtilities are located in: $TOOLS/$QUNEXREPO/niutilities"
 echo ""
-echo "To obtain a full listing of all Qu|Nex-supported NITools tools run: "
-echo "   'qunexnitoolsHelp' "
+echo "     Qu|Nex Suite workflows contain additional python-based 'general mri (gmri) utilities."
+echo "     These are accessed either directly via 'gmri' command from the terminal."
+echo "     Alternatively the 'qunex' connector wrapper parses all commands via "
+echo "     'gmri' package as standard input."
+echo ""    
+echo ""
+geho "  -------------------------------------------------------------------------------"
+geho "   Neuroimaging Tools (NITools) for Singla Processing and Statistics   "
+geho "  ------------------------------------------------------------------------------- "
+echo ""
+echo "     ==> NITools tools are located in: $TOOLS/$QUNEXREPO/nitools"
+echo ""    
+echo "     The Qu|Nex package contain a number of matlab-based stand-alone commands."
+echo "     These tools are used across various Qu|Nex packages, but can be accessed"
+echo "     as stand-alone command within Matlab. Help and documentation is"
+echo "     embedded within each stand-alone command via standard Matlab help call."
+echo ""    
 echo ""
 }
 
 qunexFailed() {
 reho ''
-reho ' __     |     ___       ___        ___ __  '
-reho '/  \|  |||\ ||__ \_/   |__/\ ||   |__ |  \ '
-reho '\__X\__/|| \||___/ \   | /~~\||___|___|__/ '
-reho '        |                                  '
+reho ' ▄▄▄▄▄▄▄         ||  ▄▄   ▄▄                                                 '
+reho ' ▓▓    ▓         ||  ▓▓▓▄ ▓▓                ▓▓▓▓▓ ▄▓▓▓▓  ▓ ▄▓    ▄▓▓▓ ▓▓▓▄   '
+reho ' ▓▓  ▓ ▓  ▓   ▓  ||  ▓▓ ▐▓▓▓ ▄▄▄▄ ▀▓▓ ▓▓▀   ▓▓    ▓  ▓▓ ▓▓ ▓▓   ▄▓▓▄  ▓  ▓▓  '
+reho ' ▓▓▄▄▓▄▓  ▓▓  ▓  ||  ▓▓   ▓▓ ▓▄▄▓    ▓▄     ▓▓▀▀  ▓▓▓▓▓ ▓▌ ▓▓   ▀▓▓   ▓  ▓▓  '
+reho '     ▓▄▄  ▓▓▄▄▓  ||  ▓▓    ▓ ▓▄▄  ▄▓▓ ▓▓▄   ▓     ▓▀ ▓  ▓  ▓▓▓▀▀ ▓▓▓▓ ▓▓▓▀   ' 
+reho '                 ||                                                          '
 reho ''
 }
-
-
-qunexPassed() {
-geho '   ____        ___   __             ____                           __'
-geho '  / __ \__  __/ / | / /__  _  __   / __ \____ ______________  ____/ /'
-geho ' / / / / / / / /  |/ / _ \| |/_/  / /_/ / __ `/ ___/ ___/ _ \/ __  / '
-geho '/ /_/ / /_/ / / /|  /  __/>  <   / ____/ /_/ (__  |__  )  __/ /_/ /  '
-geho '\___\_\__,_/ /_/ |_/\___/_/|_|  /_/    \__,_/____/____/\___/\__,_/   '
-geho '          /_/                                                        '
+ 
+qunexPassed() {       
 geho ''
+geho '    ______         ║   _   _               ____                        _  '
+geho '   / ___  \_   _   ║  | \ | | _____  __   |  _ \ __ _ ___ ___  ___  __| | '
+geho '  | |   | | | | |  ║  |  \| |/ _ \ \/ /   | |_) / _` / __/ __|/ _ \/ _` | '
+geho '  | |_/\| | |_| |  ║  | |\  |  __/>  <    |  __| (_| \__ \__ |  __| (_| | '
+geho '   \__\ \ /\__,_|  ║  |_| \_|\___/_/\_\   |_|   \__,_|___|___/\___|\__,_| '
+geho '       \_\         ║                                                      '
+geho ''     
 }
 
-
-# ========================================================================================
-# ===================== SPECIFIC FUNCTIONS START HERE ====================================
-# ========================================================================================
+# =======================================================================================================
+# =========================================== CODE STARTS HERE ==========================================
+# =======================================================================================================
 
 # ------------------------------------------------------------------------------------------------------
-#  gmri general wrapper - parse inputs into specific gmri functions via AP
+#  -- Help calls for NIUtilities, NITools and Connector Functions
 # ------------------------------------------------------------------------------------------------------
 
 gmriFunction() {
@@ -290,24 +240,107 @@ show_help_gmri() {
         gmri
         echo ""
 }
-show_options_gmri() {
-        echo ""
-        gmri -o
-        echo ""
-}
-show_commands_gmri() {
+show_processingcommandlist_gmri() {
         echo ""
         gmri -l
         echo ""
 }
-show_processing_gmri() {
+show_processingoptions_gmri() {
         echo ""
-        gmri -c
+        gmri -o
+        echo ""
+}
+
+show_allcommands_gmri() {
+        echo ""
+        echo ""
+        geho " Listing of all Qu|Nex supported NIUtilitties commands:"
+        geho "--------------------------------------------------------"
+        echo ""
+        gmri -available | sed 1,1d
+        echo ""
+}
+
+show_usage_nitoolsHelp() {
+        echo ""
+        echo ""
+        geho " Listing of all Qu|Nex supported NITools MATLAB commands:"
+        geho "--------------------------------------------------------"
+        echo ""
+        MatlabFunctions=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/"`
+        MatlabFunctionsfcMRI=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
+        MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/general/"`
+        MatlabFunctionsGMRI=`ls $TOOLS/$QUNEXREPO/nitools/gmri/\@gmrimage/*.m`
+        MatlabFunctionsStats=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "stats"`
+        echo "  * Qu|Nex NITools functional connectivity tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsfcMRI; do
+            echo "      ==> $MatlabFunction";
+        done
+        echo ""
+        echo "  * Qu|Nex NITools general image manipulation tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsGeneral; do
+            echo "      ==> $MatlabFunction";
+        done
+        echo ""
+        echo "  * Qu|Nex NITools specific image analyses tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsGMRI; do
+            echo "      ==> $MatlabFunction";
+        done
+        echo ""
+        echo "  * Qu|Nex NITools statistical tools"; echo ""
+        for MatlabFunction in $MatlabFunctionsStats; do
+            echo "      ==> $MatlabFunction";
+        done
+        echo ""
+}
+
+show_allcommands_connector() {
+        echo ""
+        echo ""
+        geho " Listing of all Qu|Nex supported Connector commands:"
+        geho "--------------------------------------------------------"
+        echo ""
+        echo " ==> Connector functions are located in: $TOOLS/$QUNEXREPO/connector"
+        echo ""
+        echo " Qu|Nex Suite workflows is integrated via BASH 'connector' functions."
+        echo " The connector function also contain 'stand alone' processing or analyses tools."
+        echo " These can be called either directly or via the qunex wrapper"
+        echo ""
+        echo "  Qu|Nex Turnkey function"
+        echo "----------------------------"
+        echo " organizeDicom ...... sort DICOMs and setup nifti files from DICOMs"
+        echo " mapHCPFiles ...... setup data structure for hcp processing"
+        echo " runTurnkey ...... turnkey execution of Qu|Nex workflow compatible with XNAT Docker engine"
+        echo ""
+        echo "  QC functions"
+        echo "------------"
+        echo " runQC ...... run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi"
+        echo ""
+        echo "  DWI processing, QC, analyses & probabilistic tractography functions"
+        echo "---------------------------"
+        echo " hcpdLegacy ...... diffusion image processing for data with or without standard fieldmaps"
+        echo " eddyQC ...... run quality control on diffusion datasets following eddy outputs"
+        echo " FSLDtifit ...... run FSL's dtifit tool (cluster usable)"
+        echo " FSLBedpostxGPU ...... run fsl bedpostx w/gpu"
+        echo " pretractographyDense ...... generates space for whole-brain dense connectomes"
+        echo " ProbtrackxGPUDense ...... run FSL's probtrackx for whole brain & generates dense "
+        echo "                           whole brain connectomes"
+        echo " DWIDenseSeedTractography ...... reduce dense DWI tractography data using a seed structure"
+        echo ""
+        echo "  Misc. analyses"
+        echo "---------------------------"
+        echo " computeBOLDfc ...... computes seed or GBC BOLD functional connectivity"
+        echo " structuralParcellation ...... parcellate myelin or thickness"
+        echo " BOLDParcellation ...... parcellate BOLD data and generate pconn files"
+        echo " DWIDenseParcellation ...... parcellate dense dwi tractography data"
+        echo " ROIExtract ...... extract data from pre-specified ROIs in CIFTI or NIFTI"
+        echo " AWSHCPSync ...... sync hcp data from aws s3 cloud"
+        echo " dataSync ...... sync/backup data across hpc cluster(s)"
         echo ""
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-#  -- Master Execution and Logging function -- https://bitbucket.org/oriadev/qunex/wiki/Overview/Logging.md
+#  -- Master Execution and Logging -- https://bitbucket.org/oriadev/qunex/wiki/Overview/Logging.md
 # ---------------------------------------------------------------------------------------------------------------
 
 connectorExec() {
@@ -315,7 +348,7 @@ connectorExec() {
 # -- Set the time stamp for given job
 TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 
-if [[ ${FunctionToRun} == "runTurnkey" ]]; then
+if [[ ${CommandToRun} == "runTurnkey" ]]; then
    if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
        if [[ ! -d ${workdir} ]]; then 
           mkdir -p ${workdir} &> /dev/null
@@ -331,17 +364,17 @@ if [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
     gmri createStudy "${StudyFolder}"
 fi
 
-
 # -- Check if part of the Qu|Nex file hierarchy is missing
-QuNexFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/tasks info/stimuli info/BIDS subjects/inbox/MR subjects/inbox/EEG subjects/inbox/BIDS subjects/inbox/behavior subjects/inbox/concs subjects/inbox/events subjects/archive/MR subjects/archive/EEG subjects/archive/BIDS subjects/archive/behavior subjects/specs subjects/QC"
+QuNexFolders="analysis/scripts processing/logs/comlogs processing/logs/runlogs processing/lists processing/scripts processing/scenes/QC/T1w processing/scenes/QC/T2w processing/scenes/QC/myelin processing/scenes/QC/BOLD processing/scenes/QC/DWI info/demographics info/hcpls info/tasks info/stimuli info/bids subjects/inbox/MR subjects/inbox/EEG subjects/inbox/BIDS subjects/inbox/behavior subjects/inbox/concs subjects/inbox/events subjects/archive/MR subjects/archive/EEG subjects/archive/BIDS subjects/archive/behavior subjects/specs subjects/QC"
 for QuNexFolder in ${QuNexFolders}; do
     if [[ ! -d ${StudyFolder}/${QuNexFolder} ]]; then
           echo "Qu|Nex folder ${StudyFolder}/${QuNexFolder} not found. Generating now..."; echo ""
           mkdir -p ${StudyFolder}/${QuNexFolder} &> /dev/null
     fi
 done
+
 # -- Add check in case the subjects folder is distinct from the default name
-QuNexSubjectsFolders="${SubjectsFolder}/inbox/MR ${SubjectsFolder}/inbox/EEG ${SubjectsFolder}/inbox/BIDS ${SubjectsFolder}/inbox/behavior ${SubjectsFolder}/inbox/concs ${SubjectsFolder}/inbox/events ${SubjectsFolder}/archive/MR ${SubjectsFolder}/archive/EEG ${SubjectsFolder}/archive/BIDS ${SubjectsFolder}/archive/behavior ${SubjectsFolder}/specs ${SubjectsFolder}/QC"
+QuNexSubjectsFolders="${SubjectsFolder}/inbox/MR ${SubjectsFolder}/inbox/EEG ${SubjectsFolder}/inbox/BIDS ${SubjectsFolder}/inbox/behavior ${SubjectsFolder}/inbox/concs ${SubjectsFolder}/inbox/events ${SubjectsFolder}/archive/MR ${SubjectsFolder}/archive/EEG ${SubjectsFolder}/archive/BIDS ${SubjectsFolder}/archive/HCPLS ${SubjectsFolder}/archive/behavior ${SubjectsFolder}/specs ${SubjectsFolder}/QC"
 for QuNexSubjectsFolder in ${QuNexSubjectsFolders}; do
     if [[ ! -d ${QuNexSubjectsFolder} ]]; then
           echo "Qu|Nex folder ${QuNexSubjectsFolder} not found. Generating now..."; echo ""
@@ -371,7 +404,7 @@ cd ${MasterRunLogFolder}
 #    Specification: Log-<command name>-<date>_<hour>.<minute>.<microsecond>.log
 #    Example:       Log-mapHCPData-2017-11-11_15.58.1510433930.log
 #
-Runlog="${MasterRunLogFolder}/Log-${FunctionToRun}_${TimeStamp}.log"
+Runlog="${MasterRunLogFolder}/Log-${CommandToRun}_${TimeStamp}.log"
 
 # -- Comlog
 #    Specification:  tmp_<command_name>[_B<N>]_<subject code>_<date>_<hour>.<minute>.<microsecond>.log
@@ -379,35 +412,43 @@ Runlog="${MasterRunLogFolder}/Log-${FunctionToRun}_${TimeStamp}.log"
 #    Specification:  done_<command_name>[_B<N>]_<subject code>_<date>_<hour>.<minute>.<microsecond>.log
 #    Example:        done_ComputeBOLDStats_pb0986_2017-05-06_16.16.1494101784.log
 #
-ComlogTmp="${MasterComlogFolder}/tmp_${FunctionToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
-ComRun="${MasterComlogFolder}/Run_${FunctionToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
-ComlogError="${MasterComlogFolder}/error_${FunctionToRun}_${CASE}_${TimeStamp}.log"
-ComlogDone="${MasterComlogFolder}/done_${FunctionToRun}_${CASE}_${TimeStamp}.log"
-CompletionCheck="${MasterComlogFolder}/Completion_${FunctionToRun}_${TimeStamp}.Check"
+
+ComlogTmp="${MasterComlogFolder}/tmp_${CommandToRun}_${CASE}_${TimeStamp}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
+ComRun="${MasterComlogFolder}/Run_${CommandToRun}_${CASE}_${TimeStamp}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
+ComlogError="${MasterComlogFolder}/error_${CommandToRun}_${CASE}_${TimeStamp}.log"
+ComlogDone="${MasterComlogFolder}/done_${CommandToRun}_${CASE}_${TimeStamp}.log"
+CompletionCheckPass="${MasterComlogFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Pass"
+CompletionCheckFail="${MasterComlogFolder}/CompletionCheck_${CommandToRun}_${TimeStamp}.Fail"
+
+# echo "--------- DEBUG INFO ------------"
+# echo "MasterComlogFolder: ${MasterComlogFolder}"
+# echo "QuNexCallToRun: ${QuNexCallToRun}"
+# echo "CASE: ${CASE}"
+# echo "TimeStamp: ${TimeStamp}"
+# echo "ComlogTmp: ${ComlogTmp}"
+# echo "RunLog: ${Runlog}"
 
 # -- Batchlog
 #    <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
 
 # -- Code for debugging
 echo ""
-cyaneho "--------------------- Command to run: -----------------------"
+cyaneho "--------------------- Full call to run: -----------------------"
 echo ""
-cyaneho "${CommandToRun}"
+cyaneho "${QuNexCallToRun}"
 echo ""
 cyaneho "--------------------------------------------------------------"
 echo ""
 echo ""
 
 # -- Run commands
-SuccessCheck="Successful completion"
-ErrorCheck='ERROR'
-echo "${CommandToRun}" >> ${Runlog}
+echo "${QuNexCallToRun}" >> ${Runlog}
 echo "#!/bin/bash" >> ${ComRun}
 echo "export PYTHONUNBUFFERED=1" >> ${ComRun}
-echo "${CommandToRun}" >> ${ComRun}
+echo "${QuNexCallToRun}" >> ${ComRun}
 chmod 777 ${ComRun}
  
-# ComRunSet="cd ${MasterRunLogFolder}; echo ${CommandToRun} >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${CommandToRun}' >> ${ComRun}; chmod 777 ${ComRun}"
+# ComRunSet="cd ${MasterRunLogFolder}; echo ${QuNexCallToRun} >> ${Runlog}; echo 'export PYTHONUNBUFFERED=1; ${QuNexCallToRun}' >> ${ComRun}; chmod 777 ${ComRun}"
 
 # -- Check that $ComRun is set properly
 echo ""; if [ ! -f "${ComRun}" ]; then reho " ERROR: ${ComRun} file not found. Check your inputs"; echo ""; return 1; fi
@@ -415,9 +456,9 @@ ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
 echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho " ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
 
 ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
-ComComplete="cat ${ComlogTmp} | grep '${SuccessCheck}' &> ${CompletionCheck}"
-ComError="cat ${ComlogTmp} | grep '${ErrorCheck}' &> ${ErrorCheck}"
-ComRunCheck="if [[ -s ${CompletionCheck} ]] && [[ -z ${ErrorCheck} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${FunctionToRun}. Check final Qu|Nex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; rm ${CompletionCheck}; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${FunctionToRun}. Check final Qu|Nex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; rm ${CompletionCheck}; fi"
+ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
+ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
+ComRunCheck="if [[ -e ${CompletionCheckPass} && -s ${CompletionCheckPass} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final Qu|Nex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final Qu|Nex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
 # -- Combine commands
 ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
 
@@ -425,9 +466,9 @@ ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
 if [[ "$Cluster" == 1 ]]; then
     geho "--------------------------------------------------------------"
     echo ""
-    geho "   Running ${FunctionToRun} locally on `hostname`"
+    geho "   Running ${CommandToRun} locally on `hostname`"
     geho "   Command log:     ${Runlog}  "
-    geho "   Function output: ${ComlogTmp} "
+    geho "   Command output: ${ComlogTmp} "
     echo ""
     geho "--------------------------------------------------------------"
     echo ""
@@ -442,7 +483,7 @@ if [[ "$Cluster" == 2 ]]; then
     geho "   Data successfully submitted to scheduler"
     geho "   Scheduler details: ${Scheduler}"
     geho "   Command log:     ${Runlog}  "
-    geho "   Function output: ${ComlogTmp} "
+    geho "   Command output: ${ComlogTmp} "
     echo ""
     geho "--------------------------------------------------------------"
     echo ""
@@ -450,13 +491,13 @@ fi
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-#  runTurnkey - Turnkey execution of Qu|Nex workflow via the XNAT docker engine
+#  -- runTurnkey - Turnkey execution of Qu|Nex workflow via the XNAT docker engine
 # ---------------------------------------------------------------------------------------------------------------
 
 runTurnkey() {
 # -- Specify command variable
-unset CommandToRun
-CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --subjid=\"${SUBJID}\""
+unset QuNexCallToRun
+QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --subjects=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --subjid=\"${SUBJID}\""
 connectorExec
 }
 
@@ -465,12 +506,11 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/RunTurnkey.sh
 }
 
 # ---------------------------------------------------------------------------------------------------------------
-#  organizeDicom - Sort original DICOMs into folders and generates NIFTI files using sortDicom and dicom2niix
+#  -- organizeDicom - Sort original DICOMs into folders and generates NIFTI files using sortDicom and dicom2niix
 # ---------------------------------------------------------------------------------------------------------------
 
 organizeDicom() {
-# -- Note:
-#    This function passes parameters into two NIUtilities commands: sortDicom and dicom2niix
+# -- Note: This command passes parameters into two NIUtilities commands: sortDicom and dicom2niix
 mkdir ${SubjectsFolder}/${CASE}/dicom &> /dev/null
 if [ "$Overwrite" == "yes" ]; then
     echo ""
@@ -490,7 +530,6 @@ if (test -f ${SubjectsFolder}/${CASE}/dicom/DICOM-Report.txt); then
     echo ""
     return 0
 fi
-
 # -- Check if inbox missing or is empty
 if [ ! -d ${SubjectsFolder}/${CASE}/dicom ]; then
     reho "===> ${SubjectsFolder}/${CASE}/dicom folder not found. Checking for ${SubjectsFolder}/${CASE}/inbox/"; echo ""
@@ -509,15 +548,13 @@ if [ -d ${SubjectsFolder}/${CASE}/dicom ]; then
          fi
     fi
 fi
-
 # -- Specify command variable
 unset CommandToRun
 ComA="cd ${SubjectsFolder}/${CASE}"
 ComB="gmri sortDicom folder=. "
-ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} subjectid=${CASE}"
+ComC="gmri dicom2niix unzip=${Unzip} gzip=${Gzip} clean=${Clean} verbose=${VerboseRun} cores=${Cores} sessionid=${CASE}"
 ComD="slicesdir ${SubjectsFolder}/${CASE}/nii/*.nii*"
-CommandToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
-
+QuNexCallToRun="${ComA}; ${ComB}; ${ComC}; ${ComD}"
 # -- Connector execute function
 connectorExec
 }
@@ -526,7 +563,7 @@ show_usage_organizeDicom() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
 echo ""
-echo "This function expects a set of raw DICOMs in <subjects_folder>/<case>/inbox "
+echo "This command expects a set of raw DICOMs in <subjects_folder>/<case>/inbox "
 echo "DICOMs are organized, gzipped and converted to NIFTI format for additional processing."
 echo "subject.txt files will be generated with id and subject matching the <case>."
 echo ""
@@ -554,14 +591,14 @@ echo "                                                       --scheduler='SLURM,
 echo ""
 echo "-- EXAMPLE:"
 echo ""
-echo "qunexorganizeDicom --subjectsfolder='<folder_with_subjects>' \ "
+echo "qunex organizeDicom --subjectsfolder='<folder_with_subjects>' \ "
 echo "--subjects='<comma_separarated_list_of_cases>' "
 echo "--scheduler='<name_of_scheduler_and_options>'"
 echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  mapHCPFiles - Setup the HCP File Structure
+#  -- mapHCPFiles - Setup the HCP File Structure
 # ------------------------------------------------------------------------------------------------------
 
 mapHCPFiles() {
@@ -569,7 +606,7 @@ mapHCPFiles() {
 if [[ ${Overwrite} == "yes" ]]; then
     HLinks=`ls ${SubjectsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
 fi
-CommandToRun="cd ${SubjectsFolder}/${CASE}; echo '--> running mapHCPFiles for ${CASE}'; echo ''; gmri setupHCP"
+QuNexCallToRun="cd ${SubjectsFolder}/${CASE}; echo '--> running mapHCPFiles for ${CASE}'; echo ''; gmri setupHCP"
 # -- Connector execute function
 connectorExec
 }
@@ -577,7 +614,7 @@ show_usage_mapHCPFiles() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
 echo ""
-echo "This function maps the Human Connectome Project folder structure for preprocessing."
+echo "This command maps the Human Connectome Project folder structure for preprocessing."
 echo "It should be executed after proper organizeDicom and subject.txt file has been vetted"
 echo "and the subject_hcp.txt file was generated."
 echo ""
@@ -586,32 +623,32 @@ echo ""
 echo "--subjectsfolder=<folder_with_subjects>                Path to study folder that contains subjects"
 echo "--subjects=<comma_separated_list_of_cases>             List of subjects to run"
 echo""
-geho " * NOTE: scheduler is available via qunexcall:"
+geho " * NOTE: scheduler is available via qunex call:"
 echo "         --scheduler=<name_of_cluster_scheduler_and_options>  A string for the cluster scheduler (e.g. LSF, PBS or SLURM) followed by relevant options"
 echo ""
-echo " * For SLURM scheduler the string would look like this via the qunexcall: "
+echo " * For SLURM scheduler the string would look like this via the qunex call: "
 echo "         --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,ntasks=<numer_of_tasks>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>' "
 echo ""
 echo "-- Example with flagged parameters for a local run:"
 echo ""
-echo "qunexmapHCPFiles --subjectsfolder='<folder_with_subjects>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
+echo "  qunex mapHCPFiles --subjectsfolder='<folder_with_subjects>' \ "
+echo "      --subjects='<comma_separarated_list_of_cases>' \ "
 echo ""
 echo "-- Example with flagged parameters for submission to the scheduler:"
 echo ""
-echo "qunexmapHCPFiles --subjectsfolder='<folder_with_subjects>' \ "
-echo "--subjects='<comma_separarated_list_of_cases>' \ "
-echo "--scheduler='<name_of_cluster_scheduler_and_options>' \ "
+echo "  qunex mapHCPFiles --subjectsfolder='<folder_with_subjects>' \ "
+echo "      --subjects='<comma_separarated_list_of_cases>' \ "
+echo "      --scheduler='<name_of_cluster_scheduler_and_options>' \ "
 echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  dataSync - Sync files to Yale HPC and back to the Yale server after HCP preprocessing
+#  -- dataSync - Sync files to Yale HPC and back to the Yale server after HCP preprocessing
 # ------------------------------------------------------------------------------------------------------
 
 dataSync() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DataSync.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DataSync.sh \
 --syncfolders="${SyncFolders}" \
 --subjects="${CASE}" \
 --syncserver="${SyncServer}" \
@@ -623,7 +660,7 @@ connectorExec
 show_usage_dataSync() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
-echo "  This function runs rsync across the entire folder structure based on user specifications"
+echo "  This command runs rsync across the entire folder structure based on user specifications"
 echo ""
 echo "  * Mandatory Inputs:"
 echo ""
@@ -639,24 +676,24 @@ echo "                                             If set, then --backupfolders 
 echo ""
 echo "* EXAMPLE:"
 echo ""
-echo "qunex--function=dataSync \ "
-echo "--syncfolders=<path_to_folders> \ "
-echo "--syncserver=<sync_server> \ "
-echo "--syncdestination=<destination_path> \ "
-echo "--synclogfolder=<path_to_log_folder>  \ "
+echo "qunex --command=dataSync \ "
+echo "  --syncfolders=<path_to_folders> \ "
+echo "  --syncserver=<sync_server> \ "
+echo "  --syncdestination=<destination_path> \ "
+echo "  --synclogfolder=<path_to_log_folder>  \ "
 echo ""
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  hcpdLegacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
+#  -- hcpdLegacy - Executes the Diffusion Processing Script via FUGUE implementation for legacy data - (needed for legacy DWI data that is non-HCP compliant without counterbalanced phase encoding directions needed for topup)
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 hcpdLegacy() {
-# -- Unique requirements for this function:
+# -- Unique requirements for This command:
 #    Needs CUDA libraries to run eddy_cuda (10x faster than on a CPU)
 
 # -- Specify command variable
-CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
+QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --scanner=${Scanner} \
@@ -676,7 +713,7 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIPreprocPipelineLegacy.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  eddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the Qu|Nex connector wrapper
+#  -- eddyQC - Executes the DWI EddyQ C (DWIEddyQC.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 eddyQC() {
@@ -693,7 +730,7 @@ fi
 # -- OUTPUTS: located in <eddyBase>.qc per EDDY QC specification
 
 # -- Specify command variable
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --eddybase=${EddyBase} \
@@ -714,12 +751,12 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIeddyQC.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  DWIDenseParcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the Qu|Nex connector wrapper
+#  -- DWIDenseParcellation - Executes the Diffusion Parcellation Script (DWIDenseParcellation.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DWIDenseParcellation() {
 #DWIOutput="${SubjectsFolder}/${CASE}/hcp/$CASE/MNINonLinear/Results/Tractography"
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --matrixversion=${MatrixVersion} \
@@ -737,12 +774,12 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  DWIDenseSeedTractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the Qu|Nex connector wrapper
+#  -- DWIDenseSeedTractography - Executes the Diffusion Seed Tractography Script (DWIDenseSeedTractography.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DWIDenseSeedTractography() {
 # -- Command to run
-CommandToRun="DWIDenseSeedTractography.sh \
+QuNexCallToRun="DWIDenseSeedTractography.sh \
 --subjectsfolder="${SubjectsFolder}" \
 --subjects="${CASE}" \
 --matrixversion="${MatrixVersion}" \
@@ -759,7 +796,7 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIDenseSeedTractography.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the Qu|Nex connector wrapper
+#  -- computeBOLDfc - Executes Global Brain Connectivity (GBC) or seed-based functional connectivity (ComputeFunctionalConnectivity.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 computeBOLDfc() {
@@ -782,7 +819,7 @@ fi
 if [ ${Calculation} == "seed" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -807,7 +844,7 @@ fi
 if [ ${Calculation} == "gbc" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -836,7 +873,7 @@ fi
 if [ ${Calculation} == "dense" ]; then
     echo ""
     # -- Specify command variable
-    CommandToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh \
     --subjectsfolder=${SubjectsFolder} \
     --calculation=${Calculation} \
     --runtype=${RunType} \
@@ -858,7 +895,7 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/ComputeFunctionalConnectivity.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  structuralParcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the Qu|Nex connector wrapper
+#  -- structuralParcellation - Executes the Structural Parcellation Script (StructuralParcellation.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 structuralParcellation() {
@@ -872,7 +909,7 @@ ParcellationFile="$ParcellationFile"
 ExtractData="$ExtractData"
 Overwrite="$Overwrite"
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh \
 --subjectsfolder=${SubjectsFolder} \
 --subject=${CASE} \
 --inputdatatype=${InputDataType} \
@@ -889,7 +926,7 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/StructuralParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  BOLDParcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the Qu|Nex connector wrapper
+#  -- BOLDParcellation - Executes the BOLD Parcellation Script (BOLDParcellation.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 BOLDParcellation() {
@@ -900,7 +937,7 @@ else
     BOLDOutput="${OutPath}"
 fi
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subjects='${CASE}' \
 --inputfile='${InputFile}' \
@@ -924,7 +961,7 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/BOLDParcellation.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  ROIExtract - Executes the ROI Extraction Script (ROIExtract.sh) via the Qu|Nex connector wrapper
+#  -- ROIExtract - Executes the ROI Extraction Script (ROIExtract.sh) via the Qu|Nex connector wrapper
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ROIExtract() {
@@ -943,7 +980,7 @@ else
     ROIFile="${SubjectsFolder}/${CASE}/${ROIFile}"
 fi
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh \
 --roifile='${ROIInputFile}' \
 --inputfile='${InputFile}' \
 --outdir='${OutPath}' \
@@ -958,12 +995,12 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/ROIExtract.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  FSLDtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
+#  -- FSLDtifit - Executes the dtifit script from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
 FSLDtifit() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subject='${CASE}' \
 --overwrite='${Overwrite}' "
@@ -976,12 +1013,12 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLDtifit.sh
 }
 
 # ------------------------------------------------------------------------------------------------------
-#  FSLBedpostxGPU - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
+#  -- FSLBedpostxGPU - Executes the bedpostx_gpu code from FSL (needed for probabilistic tractography)
 # ------------------------------------------------------------------------------------------------------
 
 FSLBedpostxGPU() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subject='${CASE}' \
 --fibers='${Fibers}' \
@@ -1000,7 +1037,7 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/DWIFSLBedpostxGPU.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
-#  autoPtx - Executes the autoptx script from FSL (needed for probabilistic estimation of large-scale fiber bundles / tracts)
+#  -- autoPtx - Executes the autoptx script from FSL (needed for probabilistic estimation of large-scale fiber bundles / tracts)
 # -------------------------------------------------------------------------------------------------------------------------------
 
 autoPtx() {
@@ -1018,7 +1055,7 @@ Com1="${AutoPtxFolder}/autoptx ${SubjectsFolder} ${CASE} ${BedPostXFolder}"
 Com2="${AutoPtxFolder}/Prepare_for_Display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 1"
 Com3="${AutoPtxFolder}/Prepare_for_Display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 0"
 # -- Command to run
-CommandToRun="${Com1}; ${Com2}; ${Com3}"
+QuNexCallToRun="${Com1}; ${Com2}; ${Com3}"
 # -- Connector execute function
 connectorExec
 }
@@ -1027,14 +1064,14 @@ show_usage_autoPtx() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput "
 echo ""
-echo "This function runs the autoptx script in ${AutoPtxFolder}."
+echo "This command runs the autoptx script in ${AutoPtxFolder}."
 echo ""
 echo "For full details on AutoPtx functionality see: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/AutoPtx"
 echo ""
 }
 
 # -------------------------------------------------------------------------------------------------------------------
-#  pretractographyDense - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
+#  -- pretractographyDense - Executes the HCP Pretractography code [ Stam's implementation for all grayordinates ]
 # ------------------------------------------------------------------------------------------------------------------
 
 pretractographyDense() {
@@ -1042,7 +1079,7 @@ pretractographyDense() {
 LogFolder="${SubjectsFolder}/${CASE}/hcp/${CASE}/T1w/Results/log_pretractographydense"
 RunFolder="${SubjectsFolder}/${CASE}/hcp/"
 # -- Command to run
-CommandToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${RunFolder} ${CASE} 0 "
+QuNexCallToRun="${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh ${RunFolder} ${CASE} 0 "
 # -- Connector execute function
 connectorExec
 }
@@ -1052,12 +1089,12 @@ ${HCPPIPEDIR_dMRITracFull}/PreTractography/PreTractography.sh
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------
-#  ProbtrackxGPUDense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
+#  -- ProbtrackxGPUDense - Executes the HCP Matrix1 and / or 3 code and generates WB dense connectomes (Stam's implementation for all grayordinates)
 # --------------------------------------------------------------------------------------------------------------------------------------------------
 
 ProbtrackxGPUDense() {
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --scriptsfolder='${ScriptsFolder}' \
 --infolder='${InFolder}' \
@@ -1076,9 +1113,8 @@ ${TOOLS}/${QUNEXREPO}/connector/functions/ProbtrackxGPUDense.sh
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
-#  Sync data from AWS buckets - customized for HCP
+#  -- Sync data from AWS buckets - customized for HCP
 # -------------------------------------------------------------------------------------------------------------------------------
-
 AWSHCPSync() {
 mkdir ${SubjectsFolder}/aws.logs &> /dev/null
 cd $SubjectsFolder}/aws.logs
@@ -1111,13 +1147,13 @@ show_usage_AWSHCPSync() {
 echo ""
 echo "-- DESCRIPTION for $UsageInput"
 echo ""
-echo "This function enables syncing of HCP data from the Amazon AWS S3 repository."
+echo "This command enables syncing of HCP data from the Amazon AWS S3 repository."
 echo "It assumes you have enabled your AWS credentials via the HCP website."
 echo "These credentials are expected in your home folder under ./aws/credentials."
 echo ""
 echo "-- REQUIRED PARMETERS:"
 echo ""
-echo "--function=<function_name>                    Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags)"
+echo "--command=<command_name>                      Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags)"
 echo "--subjectsfolder=<folder_with_subjects>       Path to study folder that contains subjects"
 echo "--subjects=<comma_separated_list_of_cases>    List of subjects to run"
 echo "--modality=<modality_to_sync>                 Which modality or folder do you want to sync [e.g. MEG, MNINonLinear, T1w]"
@@ -1125,16 +1161,16 @@ echo "--awsuri=<aws_uri_location>                   Enter the AWS URI [e.g. /hcp
 echo ""
 echo "-- Example with flagged parameters for submission to the scheduler:"
 echo ""
-echo "qunex--subjectsfolder='<path_to_study_subjects_folder>' \ "
-echo "--subjects='<comma_separated_list_of_cases>' \ "
-echo "--function='AWSHCPSync' \ "
-echo "--modality='T1w' \ "
-echo "--awsuri='/hcp-openaccess/HCP_900'"
+echo "qunex --subjectsfolder='<path_to_study_subjects_folder>' \ "
+echo "      --subjects='<comma_separated_list_of_cases>' \ "
+echo "      --command='AWSHCPSync' \ "
+echo "      --modality='T1w' \ "
+echo "      --awsuri='/hcp-openaccess/HCP_900'"
 echo ""
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
-# runQC - Performs various QC operations across modalities
+# -- runQC - Performs various QC operations across modalities
 # -------------------------------------------------------------------------------------------------------------------------------
 
 runQC() {
@@ -1146,8 +1182,9 @@ fi
 if [ ! -d ${OutPath} ]; then
     mkdir -p ${OutPath} &> /dev/null
 fi
+
 # -- Command to run
-CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh \
+QuNexCallToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh \
 --subjectsfolder='${SubjectsFolder}' \
 --subjects='${CASE}' \
 --outpath='${OutPath}' \
@@ -1175,7 +1212,8 @@ CommandToRun=". ${TOOLS}/${QUNEXREPO}/connector/functions/RunQC.sh \
 --boldfcinput='${BOLDfcInput}' \
 --boldfcpath='${BOLDfcPath}' \
 --suffix='${Suffix}' \
---hcp_suffix='${HCPSuffix}'"
+--hcp_suffix='${HCPSuffix}' \
+--batchfile='${SubjectBatchFile}' "
 # -- Connector execute function
 connectorExec
 }
@@ -1248,7 +1286,8 @@ QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
 showVersion() {
     QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
     echo ""
-    geho "    Quantitative Neuroimaging Environment & Tollbox (Qu|Nex) Version: v${QuNexVer}"
+    geho "    Quantitative Neuroimaging Environment & Toolbox (Qu|Nex) Version: v${QuNexVer}"
+    echo ""
 }
 
 # ------------------------------------------------------------------------------
@@ -1287,7 +1326,7 @@ if [ "$1" == "--envsetup" ] || [ "$1" == "-envsetup" ] || [ "$1" == "envsetup" ]
 fi
 
 # ------------------------------------------------------------------------------
-#  gmri function loop outside local functions to bypass checking
+#  gmri loop outside local functions to bypass checking
 # ------------------------------------------------------------------------------
 
 # -- Get list of all supported gmri functions
@@ -1295,47 +1334,71 @@ gmrifunctions=`gmri -available`
 # -- Check if command-line input matches any of the gmri functions
 if [ -z "${gmrifunctions##*$1*}" ]; then
     # -- If yes then set the gmri function variable
-    GmriFunctionToRun="$1"
+    GmriCommandToRun="$1"
     # -- Check for input with question mark
-    if [[ "$GmriFunctionToRun" =~ .*"?".* ]] && [ -z "$2" ]; then
+    if [[ "$GmriCommandToRun" =~ .*"?".* ]] && [ -z "$2" ]; then
         # -- Set UsageInput variable to pass and remove question mark
-        UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
+        UsageInput=`echo ${GmriCommandToRun} | cut -c 2-`
         # -- If no other input is provided print help
         echo ""
         show_usage_gmri
         exit 0
     fi
     # -- Check for input with flag mark
-    if [[ "$GmriFunctionToRun" =~ .*"-".* ]] && [ -z "$2" ]; then
+    if [[ "$GmriCommandToRun" =~ .*"-".* ]] && [ -z "$2" ]; then
         # -- Set UsageInput variable to pass and remove question mark
-        UsageInput=`echo ${GmriFunctionToRun} | cut -c 2-`
+        UsageInput=`echo ${GmriCommandToRun} | cut -c 2-`
         # -- If no other input is provided print help
         echo ""
         show_usage_gmri
         exit 0
     fi
-    # -- Check for input is function name with no other arguments
-    if [[ "$GmriFunctionToRun" != *"-"* ]] && [ -z "$2" ]; then
-        UsageInput="$GmriFunctionToRun"
+    # -- Check for input is command name with no other arguments
+    if [[ "$GmriCommandToRun" != *"-"* ]] && [ -z "$2" ]; then
+        UsageInput="$GmriCommandToRun"
         # -- If no other input is provided print help
         echo ""
         show_usage_gmri
         exit 0
     else
-        # -- Otherwise pass the function with all inputs from the command line
-        gmriinput="$@"
+        # -- Otherwise pass the command with all inputs from the command line
+        
+        # -- Clear white spaces for input into NIUtilities
+        unset gmriinput
+        whitespace="[[:space:]]"
+        for inputarg in "$@"; do
+            if [[ $inputarg =~ ${whitespace} ]]; then
+                inputarg=`echo "${inputarg}" | sed "s/${whitespace}/,/g"`
+            fi
+            if [[ ${inputarg} =~ '=' ]] && [[ -z `echo ${inputarg} | grep '-'` ]]; then
+                inputarg="--${inputarg}"
+            fi
+            gmriinput="${gmriinput} ${inputarg}"
+            gmriinputecho="${gmriinputecho} ${inputarg}"
+        done
+        
+        # -- Report NIUtilities for debugging
+         echo ""
+         cyaneho "-------- Running NIUtilities command: ----------"
+         echo ""
+         cyaneho "  qunex ${gmriinputecho}"
+         echo ""
+         cyaneho "-------------------------------------------------"
+         echo ""
+        
+        # -- Execute NIUtilities
         gmriFunction
         exit 0
     fi
 fi
 
 # ------------------------------------------------------------------------------
-#  Check if specific function help requested
+#  Check if specific command help requested
 # ------------------------------------------------------------------------------
 
 isQuNexFunction() {
 MatlabFunctionsCheck=`find $TOOLS/$QUNEXREPO/nitools/ -name "*.m" | grep -v "archive/"`
-if [ -z "${QuNexFunctions##*$1*}" ]; then
+if [ -z "${QuNexCommands##*$1*}" ]; then
     return 0
 elif [[ ! -z `echo $MatlabFunctionsCheck | grep "$1"` ]]; then
     QuNexMatlabFunction="$1"
@@ -1346,7 +1409,7 @@ elif [[ ! -z `echo $MatlabFunctionsCheck | grep "$1"` ]]; then
     exit 0
 else
     echo ""
-    reho "ERROR: $1 -- Requested function does not exist or not supported! Refer to general usage."
+    reho "ERROR: $1 --> Requested function is not supported. Refer to general Qu|Nex usage."
     echo ""
     exit 0
 fi
@@ -1359,15 +1422,22 @@ if [[ "$1" =~ .*--.* ]] && [ -z "$2" ]; then
     Usage="$1"
     # -- Check for gmri help inputs (--o --l --c)
     if [[ "$Usage" == "--o" ]]; then
-        show_options_gmri
+        show_processingoptions_gmri
+        exit 0
+    fi
+    if [[ "$Usage" == "--a" ]] || [[ "$Usage" == "--all" ]] || [[ "$Usage" == "--allcommands" ]]; then
+        show_splash
+        show_allcommands_connector
+        show_allcommands_gmri
+        show_usage_nitoolsHelp
+        exit 0
+    fi
+    if [[ "$Usage" == "-c" ]]; then
+        show_processingc-ommandlist_gmri
         exit 0
     fi
     if [[ "$Usage" == "--l" ]]; then
-        show_commands_gmri
-        exit 0
-    fi
-    if [[ "$Usage" == "--c" ]]; then
-        show_processing_gmri
+        show_processingcommandlist_gmri
         exit 0
     fi
     UsageInput=`echo ${Usage:2}`
@@ -1380,19 +1450,26 @@ fi
 # -- Check for input with single flags
 if [[ "$1" =~ .*-.* ]] && [ -z "$2" ]; then
     Usage="$1"
-    # -- Check for gmri help inputs (--o --l --c)
+    # -- Check for gmri help inputs (-o -l -c)
     if [[ "$Usage" == "-o" ]]; then
-        show_options_gmri
+        show_processingoptions_gmri
         exit 0
     fi
-    if [[ "$Usage" == "-l" ]]; then
-        show_commands_gmri
+    if [[ "$Usage" == "-a" ]] || [[ "$Usage" == "-all" ]] || [[ "$Usage" == "-allcommands" ]]; then
+        show_splash
+        show_allcommands_connector
+        show_allcommands_gmri
+        show_usage_nitoolsHelp
         exit 0
     fi
     if [[ "$Usage" == "-c" ]]; then
-        show_processing_gmri
+        show_processingcommandlist_gmri
         exit 0
     fi
+    if [[ "$Usage" == "-l" ]]; then
+        show_processingcommandlist_gmri
+        exit 0
+    fi    
     UsageInput=`echo ${Usage:1}`
     # -- Check if input part of function list
     isQuNexFunction $UsageInput
@@ -1426,7 +1503,7 @@ fi
 # ------------------------------------------------------------------------------
 
 # -- Clear variables for new run
-unset FunctionToRun
+unset CommandToRun
 unset subjects
 unset StudyFolder
 unset CASES
@@ -1440,9 +1517,9 @@ unset SUBJID
 unset SESSIONS
 unset SESSION_LABELS
 
-# -- Check if first parameter is missing flags and parse it as FunctionToRun
+# -- Check if first parameter is missing flags and parse it as CommandToRun
 if [ -z `echo "$1" | grep '-'` ]; then
-    FunctionToRun="$1"
+    CommandToRun="$1"
     # -- Check if single or double flags are set
     doubleflagparameter=`echo $2 | cut -c1-2`
     singleflagparameter=`echo $2 | cut -c1`
@@ -1466,7 +1543,7 @@ else
     fi
 fi
 
-if [ "$FunctionToRun" == "runTurnkey" ]; then
+if [ "$CommandToRun" == "runTurnkey" ]; then
     runTurnkeyArguments="$@"
     runTurnkeyArguments=`printf '%s\n' "${runTurnkeyArguments//runTurnkey/}"`
     #echo ""
@@ -1482,20 +1559,20 @@ if [[ "$setflag" =~ .*-.* ]]; then
     # ------------------------------------------------------------------------------
 
     # -- First get function / command input (to harmonize input with gmri)
-    if [ -z "$FunctionToRun" ]; then
+    if [ -z "$CommandToRun" ]; then
         FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
         CommandInput=`opts_GetOpt "${setflag}command" "$@"`  # function to execute
-        # -- If input name uses 'command' instead of function set that to $FunctionToRun
+        # -- If input name uses 'command' instead of function set that to $CommandToRun
         if [ -z "$FunctionInput" ]; then
-            FunctionToRun="$CommandInput"
+            CommandToRun="$CommandInput"
         else
-            FunctionToRun="$FunctionInput"
+            CommandToRun="$FunctionInput"
         fi
     fi
     # -- SubjectsFolder and StudyFolder input flags
     StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`       # study folder to work on
     StudyFolderPath=`opts_GetOpt "${setflag}path" $@`          # local folder to work on
-    STUDY_PATH=${StudyFolderPath}
+    STUDY_PATH=${StudyFolderPath}                              # local path for study folder
     SubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@` # subjects folder to work on
     SubjectFolder=`opts_GetOpt "${setflag}subjectfolder"  $@`  # subjects folder to work on
     if [[ ! -z ${STUDY_PATH} ]]; then StudyFolder=${STUDY_PATH}; fi 
@@ -1505,7 +1582,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     else
         SubjectsFolder="$SubjectFolder"
     fi
-    # -- If input name uses 'command' instead of function set that to $FunctionToRun
+    # -- If input name uses 'command' instead of function set that to $CommandToRun
     if [ -z "$StudyFolder" ]; then
         StudyFolder="$StudyFolderPath"
     else
@@ -1553,7 +1630,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
     OVERWRITE_PROJECT_XNAT=`opts_GetOpt "${setflag}overwriteprojectxnat" $@`
     BATCH_PARAMETERS_FILENAME=`opts_GetOpt "${setflag}batchfile" $@`
     LOCAL_BATCH_FILE=`opts_GetOpt "${setflag}local_batchfile" $@`
-    SubjectBatchFile=`opts_GetOpt "--batchfile" $@`
+    SubjectBatchFile=`opts_GetOpt "${setflag}batchfile" $@`
     SCAN_MAPPING_FILENAME=`opts_GetOpt "${setflag}mappingfile" $@`
     XNAT_ACCSESSION_ID=`opts_GetOpt "${setflag}xnataccsessionid" $@`
     XNAT_SESSION_LABELS=`opts_GetOpt "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
@@ -1770,6 +1847,7 @@ if [[ "$setflag" =~ .*-.* ]]; then
         echo ""
         CASES=`more ${SubjectBatchFile} | grep "id:"| cut -d " " -f 2`
     fi
+    
 fi
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
@@ -1777,22 +1855,23 @@ fi
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 
 echo ""
-geho "--- Running Qu|Nex v${QuNexVer}: ${FunctionToRun} function"
+geho "--- Running Qu|Nex v${QuNexVer}: ${CommandToRun} function"
 echo ""
 
 # ------------------------------------------------------------------------------
-#  matlabHelp function
+#  nitoolsHelp
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "nitoolsHelp" ]; then
-    ${FunctionToRun}
+if [ "$CommandToRun" == "nitoolsHelp" ] || [ "$CommandToRun" == "qunexnitoolsHelp" ]; then
+    ${CommandToRun}
 fi
 
 # ------------------------------------------------------------------------------
-#  runTurnkey function loop
+#  runTurnkey loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "runTurnkey" ]; then
+if [ "$CommandToRun" == "runTurnkey" ]; then
+
    # -- Check if cluster options are set
    Cluster="$RunMethod"
    if [ "$Cluster" == "2" ]; then
@@ -1807,7 +1886,7 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolddata=.[^-]*||g'`
    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--boldruns=.[^-]*||g'`
    echo ""
-   echo "Running $FunctionToRun processing with the following parameters:"
+   echo "Running $CommandToRun processing with the following parameters:"
    echo ""
    echo "--------------------------------------------------------------"
    echo ""
@@ -1816,16 +1895,17 @@ if [ "$FunctionToRun" == "runTurnkey" ]; then
    echo ""
    echo "--------------------------------------------------------------"
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ; done
+    for CASE in ${CASES}; do ${CommandToRun}; done
+
 fi
 
 # ------------------------------------------------------------------------------
-#  organizeDicom function loop
+#  organizeDicom loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "organizeDicom" ]; then
+if [ "$CommandToRun" == "organizeDicom" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then
         if [ -z "$Folder" ]; then
             reho "Error: Study folder missing and optional parameter --folder not specified."
@@ -1861,7 +1941,7 @@ if [ "$FunctionToRun" == "organizeDicom" ]; then
 
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun processing with the following parameters:"
+    echo "Running $CommandToRun processing with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     if [ -z "$Folder" ]; then
@@ -1887,23 +1967,23 @@ if [ "$FunctionToRun" == "organizeDicom" ]; then
     echo ""
     echo "--------------------------------------------------------------"
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  runQC function loop
+#  runQC loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "$FunctionToRun" == "RunQC" ]; then
-    if [ "$FunctionToRun" == "QCPreproc" ]; then
-       FunctionToRun="runQC"
+if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$CommandToRun" == "RunQC" ]; then
+    if [ "$CommandToRun" == "QCPreproc" ]; then
        echo ""
-       reho "==> NOTE: QCPreproc is deprecated. New function name --> ${FunctionToRun}"
+       reho "==> NOTE: QCPreproc is deprecated. New function name --> ${CommandToRun}"
        echo ""
     fi
+    CommandToRun="runQC"
     # -- Check all the user-defined parameters:
     TimeStampRunQC=`date +%Y-%m-%d-%H-%M-%S`
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing."; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing."; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing."; exit 1; fi
@@ -1915,23 +1995,24 @@ if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "
     if [ "$Cluster" == "2" ]; then
         if [ -z "$Scheduler" ]; then reho "Error: Scheduler specification and options missing."; exit 1; fi
     fi
+    
     # -- Perform some careful scene checks
     if [ -z "$UserSceneFile" ]; then
         if [ ! -z "$UserScenePath" ]; then 
-            reho "---> Provided --userscenepath but --userscenefile not specified."
-            reho "     Check your inputs and re-run.";
+            reho "---> Provided --userscenepath but --userscenefile not specified."; echo "";
+            reho "     Check your inputs and re-run."; echo "";
             scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
             reho "---> Reverting to Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
         fi
         if [ -z "$scenetemplatefolder" ]; then
             scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
-            reho "---> Template folder path value not explicitly specified."
-            reho "---> Using Qu|Nex defaults: ${scenetemplatefolder}"
+            reho "---> Template folder path value not explicitly specified."; echo ""
+            reho "---> Using Qu|Nex defaults: ${scenetemplatefolder}"; echo ""
         fi
         if ls ${scenetemplatefolder}/*${Modality}*.scene 1> /dev/null 2>&1; then 
-            geho "---> Scene files found in `ls ${scenetemplatefolder}/*${Modality}*.scene` "; echo ""
+            geho "---> Scene files found in:"; geho "`ls ${scenetemplatefolder}/*${Modality}*.scene`"; echo ""
         else 
-            reho "---> Specified folder contains no scenes: ${scenetemplatefolder}" 
+            reho "---> Specified folder contains no scenes: ${scenetemplatefolder}"; echo ""
             scenetemplatefolder="${TOOLS}/${QUNEXREPO}/library/data/scenes/qc"
             reho "---> Reverting to defaults: ${scenetemplatefolder} "; echo ""
         fi
@@ -1959,6 +2040,7 @@ if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "
     fi
     if [ -z "$OutPath" ]; then OutPath="${SubjectsFolder}/QC/${Modality}"; echo "Output folder path value not explicitly specified. Using default: ${OutPath}"; fi
     if [ -z "$SceneZip" ]; then SceneZip="yes"; echo "Generation of scene zip file not explicitly provided. Using default: ${SceneZip}"; fi
+    
     # -- DWI modality-specific settings:
     if [ "$Modality" = "DWI" ]; then
         if [ -z "$DWIPath" ]; then DWIPath="Diffusion"; echo "DWI input path not explicitly specified. Using default: ${DWIPath}"; fi
@@ -1968,6 +2050,7 @@ if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "
         if [ -z "$BedpostXQC" ]; then BedpostXQC="no"; echo "DWI BedpostX not specified. Using default: ${BedpostXQC}"; fi
         if [ -z "$EddyQCStats" ]; then EddyQCStats="no"; echo "DWI EDDY QC Stats not specified. Using default: ${EddyQCStats}"; fi
     fi
+    
     # -- BOLD modality-specific settings:
     if [ "$Modality" = "BOLD" ]; then
         # - Check if BOLDS parameter is empty:
@@ -1980,6 +2063,7 @@ if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "
         if [ -z "$BOLDPrefix" ]; then BOLDPrefix=""; echo "Input BOLD Prefix not specified. Assuming no BOLD name prefix."; fi
         if [ -z "$BOLDSuffix" ]; then BOLDSuffix=""; echo "Processed BOLD Suffix not specified. Assuming no BOLD output suffix."; fi
     fi
+    
     # -- General modality settings:
     if [ "$Modality" = "general" ] || [ "$Modality" = "General" ] || [ "$Modality" = "GENERAL" ] ; then
         if [ -z "$GeneralSceneDataFile" ]; then reho "Data input not specified"; echo ""; exit 1; fi
@@ -1988,7 +2072,7 @@ if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "
     
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun processing with the following parameters:"
+    echo "Running $CommandToRun processing with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2003,6 +2087,15 @@ if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "
         echo "   Custom QC modalities: ${Modality}"
     fi
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
+        if [[ ! -z ${SubjectBatchFile} ]]; then
+            if [[ ! -f ${SubjectBatchFile} ]]; then
+                reho " ERROR: Requested BOLD modality with a batch file. Batch file not found."
+                exit 1
+            else
+                echo "   Subject batch file requested: ${SubjectBatchFile}"
+                BOLDSBATCH="${BOLDRUNS}"
+            fi
+        fi
         if [[ ! -z ${BOLDRUNS} ]]; then
             echo "   BOLD runs requested: ${BOLDRUNS}"
         else
@@ -2041,17 +2134,17 @@ if [ "$FunctionToRun" == "QCPreproc" ] || [ "$FunctionToRun" == "runQC" ] || [ "
     fi
     echo "--------------------------------------------------------------"
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  eddyQC function loop - eddyqc - uses EDDY QC by Matteo Bastiani, FMRIB
+#  eddyQC loop - eddyqc - uses EDDY QC by Matteo Bastiani, FMRIB
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "eddyQC" ]; then
+if [ "$CommandToRun" == "eddyQC" ]; then
     #unset EddyPath
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
@@ -2093,7 +2186,7 @@ if [ "$FunctionToRun" == "eddyQC" ]; then
             fi
             # -- Report individual parameters
             echo ""
-            echo "Running $FunctionToRun processing with the following parameters:"
+            echo "Running $CommandToRun processing with the following parameters:"
             echo ""
             echo "--------------------------------------------------------------"
             echo "   StudyFolder: ${StudyFolder}"
@@ -2113,14 +2206,14 @@ if [ "$FunctionToRun" == "eddyQC" ]; then
             echo "   Overwrite: ${EddyPath}/${Overwrite}"
             echo "--------------------------------------------------------------"
             # -- Execute function
-            ${FunctionToRun} ${CASE}
+            ${CommandToRun} ${CASE}
         done
     fi
     # -- Check if group call specified
     if [ ${Report} == "group" ]; then
         # -- Report group parameters
         echo ""
-        echo "Running $FunctionToRun processing with the following parameters:"
+        echo "Running $CommandToRun processing with the following parameters:"
         echo ""
         echo "--------------------------------------------------------------"
         echo "   Study Folder: ${StudyFolder}"
@@ -2139,12 +2232,12 @@ if [ "$FunctionToRun" == "eddyQC" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  mapHCPFiles function loop
+#  mapHCPFiles loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "mapHCPFiles" ]; then
+if [ "$CommandToRun" == "mapHCPFiles" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2154,7 +2247,7 @@ if [ "$FunctionToRun" == "mapHCPFiles" ]; then
     fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun processing with the following parameters:"
+    echo "Running $CommandToRun processing with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "Study Folder: ${StudyFolder}"
@@ -2168,7 +2261,7 @@ if [ "$FunctionToRun" == "mapHCPFiles" ]; then
         if [ -f ${SubjectsFolder}/${CASE}/subject_hcp.txt ]; then
             echo "--> ${SubjectsFolder}/${CASE}/subject_hcp.txt found"
             echo ""
-            ${FunctionToRun} ${CASE}
+            ${CommandToRun} ${CASE}
         else
             echo "--> ${SubjectsFolder}/${CASE}/subject_hcp.txt is missing - please setup the subject.txt files and re-run function."
         fi
@@ -2176,18 +2269,18 @@ if [ "$FunctionToRun" == "mapHCPFiles" ]; then
 fi
 
 # ------------------------------------------------------------------------------
-#  dataSync function loop
+#  dataSync loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "dataSync" ]; then
+if [ "$CommandToRun" == "dataSync" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Specific subjects not provided"; fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun processing with the following parameters:"
+    echo "Running $CommandToRun processing with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2197,16 +2290,16 @@ if [ "$FunctionToRun" == "dataSync" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  structuralParcellation function loop
+#  structuralParcellation loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "structuralParcellation" ]; then
+if [ "$CommandToRun" == "structuralParcellation" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2222,7 +2315,7 @@ if [ "$FunctionToRun" == "structuralParcellation" ]; then
     if [ -z "$Overwrite" ]; then Overwrite="no"; fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2237,16 +2330,16 @@ if [ "$FunctionToRun" == "structuralParcellation" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  FSLDtifit function loop
+#  FSLDtifit loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "FSLDtifit" ]; then
+if [ "$CommandToRun" == "FSLDtifit" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2256,7 +2349,7 @@ if [ "$FunctionToRun" == "FSLDtifit" ]; then
     fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun processing with the following parameters:"
+    echo "Running $CommandToRun processing with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2268,16 +2361,16 @@ if [ "$FunctionToRun" == "FSLDtifit" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  FSLBedpostxGPU function loop
+#  FSLBedpostxGPU loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
+if [ "$CommandToRun" == "FSLBedpostxGPU" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study Folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$Fibers" ]; then reho "Error: Fibers value missing"; exit 1; fi
@@ -2287,7 +2380,7 @@ if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
     Cluster=${RunMethod}
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun processing with the following parameters:"
+    echo "Running $CommandToRun processing with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2303,16 +2396,16 @@ if [ "$FunctionToRun" == "FSLBedpostxGPU" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  Diffusion legacy processing function loop (hcpdLegacy)
+#  Diffusion legacy processing loop (hcpdLegacy)
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "hcpdLegacy" ]; then
+if [ "$CommandToRun" == "hcpdLegacy" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
     if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
@@ -2330,7 +2423,7 @@ if [ "$FunctionToRun" == "hcpdLegacy" ]; then
     fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2348,16 +2441,16 @@ if [ "$FunctionToRun" == "hcpdLegacy" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  structuralParcellation function loop
+#  structuralParcellation loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "structuralParcellation" ]; then
+if [ "$CommandToRun" == "structuralParcellation" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2373,7 +2466,7 @@ if [ "$FunctionToRun" == "structuralParcellation" ]; then
     if [ -z "$Overwrite" ]; then Overwrite="no"; fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2388,16 +2481,16 @@ if [ "$FunctionToRun" == "structuralParcellation" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  computeBOLDfc function loop
+#  computeBOLDfc loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "computeBOLDfc" ]; then
+if [ "$CommandToRun" == "computeBOLDfc" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$Calculation" ]; then reho "Error: Type of calculation to run (gbc or seed) missing"; exit 1; fi
     if [ -z "$RunType" ] && [[ "$Calculation" != "dense" ]]; then reho "Error: Type of run (group or individual) missing"; exit 1; fi
     if [[ ${RunType} == "list" ]]; then
@@ -2448,7 +2541,7 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
 
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Log Folder: ${LogFolder}"
@@ -2492,26 +2585,26 @@ if [ "$FunctionToRun" == "computeBOLDfc" ]; then
     echo ""
     if [[ ${RunType} == "individual" ]]; then
         for CASE in ${CASES}; do
-            ${FunctionToRun} ${CASE}
+            ${CommandToRun} ${CASE}
         done
     fi
     if [[ ${RunType} == "group" ]]; then
         CASE=`echo "$CASES" | sed 's/ /,/g'`
         echo $CASE
-        ${FunctionToRun} ${CASE}
+        ${CommandToRun} ${CASE}
     fi
     if [[ ${RunType} == "list" ]]; then
-        ${FunctionToRun}
+        ${CommandToRun}
     fi
 fi
 
 # ------------------------------------------------------------------------------
-#  BOLDParcellation function loop
+#  BOLDParcellation loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "BOLDParcellation" ]; then
+if [ "$CommandToRun" == "BOLDParcellation" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$InputPath" ]; then reho "Error: Input path value missing"; exit 1; fi
     if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
     if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
@@ -2543,7 +2636,7 @@ if [ "$FunctionToRun" == "BOLDParcellation" ]; then
     fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2566,20 +2659,20 @@ if [ "$FunctionToRun" == "BOLDParcellation" ]; then
     echo ""
     if [ -z "$SingleInputFile" ]; then SingleInputFile="";
         # -- Loop through all the cases
-        for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+        for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
     else
         # -- Execute on single case
-        ${FunctionToRun} ${CASE}
+        ${CommandToRun} ${CASE}
     fi
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIDenseParcellation function loop
+#  DWIDenseParcellation loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
+if [ "$CommandToRun" == "DWIDenseParcellation" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2593,7 +2686,7 @@ if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
     if [ -z "$WayTotal" ]; then WayTotal="no"; reho "--waytotal normalized data not specified. Assuming default [no]"; fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2608,16 +2701,16 @@ if [ "$FunctionToRun" == "DWIDenseParcellation" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  ROIExtract function loop
+#  ROIExtract loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "ROIExtract" ]; then
+if [ "$CommandToRun" == "ROIExtract" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$OutPath" ]; then reho "Error: Output path value missing"; exit 1; fi
     if [ -z "$OutName" ]; then reho "Error: Output file name value missing"; exit 1; fi
     if [ -z "$ROIFile" ]; then reho "Error: File to use for ROI extraction missing"; exit 1; fi
@@ -2636,7 +2729,7 @@ if [ "$FunctionToRun" == "ROIExtract" ]; then
     fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "   --------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2653,20 +2746,20 @@ if [ "$FunctionToRun" == "ROIExtract" ]; then
     echo ""
     if [ -z "$SingleInputFile" ]; then SingleInputFile="";
         # -- Loop through all the cases
-        for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+        for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
     else
         # -- Execute on single input file
-        ${FunctionToRun}
+        ${CommandToRun}
     fi
 fi
 
 # ------------------------------------------------------------------------------
-#  DWIDenseSeedTractography function loop
+#  DWIDenseSeedTractography loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "DWIDenseSeedTractography" ]; then
+if [ "$CommandToRun" == "DWIDenseSeedTractography" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2680,7 +2773,7 @@ if [ "$FunctionToRun" == "DWIDenseSeedTractography" ]; then
     if [ -z "$WayTotal" ]; then WayTotal="no"; reho "--waytotal normalized data not specified. Assuming default [no]"; fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2695,16 +2788,16 @@ if [ "$FunctionToRun" == "DWIDenseSeedTractography" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  autoPtx function loop
+#  autoPtx loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "autoPtx" ]; then
+if [ "$CommandToRun" == "autoPtx" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2716,7 +2809,7 @@ if [ "$FunctionToRun" == "autoPtx" ]; then
     
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2726,16 +2819,16 @@ if [ "$FunctionToRun" == "autoPtx" ]; then
     echo "   BedpostX Folder: ${BedPostXFolder} "
     echo "--------------------------------------------------------------"
     echo ""
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  pretractographyDense function loop
+#  pretractographyDense loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "pretractographyDense" ]; then
+if [ "$CommandToRun" == "pretractographyDense" ]; then
     # -- Check all the user-defined parameters:
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2745,7 +2838,7 @@ if [ "$FunctionToRun" == "pretractographyDense" ]; then
     fi
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2754,16 +2847,16 @@ if [ "$FunctionToRun" == "pretractographyDense" ]; then
     echo "   Study Log Folder: ${LogFolder}"
     echo "--------------------------------------------------------------"
     echo ""
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
-#  ProbtrackxGPUDense function loop
+#  ProbtrackxGPUDense loop
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "ProbtrackxGPUDense" ]; then
+if [ "$CommandToRun" == "ProbtrackxGPUDense" ]; then
     # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
@@ -2786,7 +2879,7 @@ if [ "$FunctionToRun" == "ProbtrackxGPUDense" ]; then
 
     # -- Report parameters
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2805,23 +2898,23 @@ if [ "$FunctionToRun" == "ProbtrackxGPUDense" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 
 # ------------------------------------------------------------------------------
 #  AWSHCPSync - AWS S3 Sync command wrapper
 # ------------------------------------------------------------------------------
 
-if [ "$FunctionToRun" == "AWSHCPSync" ]; then
+if [ "$CommandToRun" == "AWSHCPSync" ]; then
     # Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
-    if [ -z "$FunctionToRun" ]; then reho "Error: Explicitly specify name of function in flag or use function name as first argument (e.g. qunex<function_name> followed by flags) to run missing"; exit 1; fi
+    if [ -z "$CommandToRun" ]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [ -z "$StudyFolder" ]; then reho "Error: Study folder missing"; exit 1; fi
     if [ -z "$SubjectsFolder" ]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$Modality" ]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
     if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi
     echo ""
-    echo "Running $FunctionToRun with the following parameters:"
+    echo "Running $CommandToRun with the following parameters:"
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
@@ -2834,6 +2927,6 @@ if [ "$FunctionToRun" == "AWSHCPSync" ]; then
     echo "--------------------------------------------------------------"
     echo ""
     # -- Loop through all the cases
-    for CASE in ${CASES}; do ${FunctionToRun} ${CASE}; done
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
 fi
 

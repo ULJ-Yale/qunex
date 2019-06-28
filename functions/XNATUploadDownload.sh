@@ -18,7 +18,7 @@
 #
 # ## LICENSE
 #
-# * The XNATUpload.sh = the "Software"
+# * The XNATUploadDownload.sh = the "Software"
 # * This Software conforms to the license outlined in the Qu|Nex Suite:
 # * https://bitbucket.org/oriadev/qunex/src/master/LICENSE.md
 #
@@ -122,7 +122,7 @@ usage() {
     echo "    --xnatprojectid='<xnat_project>' \ "
     echo "    --xnathost='<host_url>' "
     echo ""
-    echo " -- Example for XNAT Upload:"
+    echo " -- Example for XNAT Download:"
     echo ""
     echo "    XNATUploadDownload.sh \ "
     echo "    --runtype='download' \ "

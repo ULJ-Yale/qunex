@@ -106,9 +106,6 @@ usage() {
      echo "                                                                   This flag is interchangeable with --bolds or --boldruns to allow more redundancy in specification"
      echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
      echo ""
-     # echo "--filterbolds=<select_only_specific_bolds>                       Specify a string that matches the BOLD name in the subjects batch file. E.g. --filterbolds='rest'."
-     # echo "                                                                     Note: If --filterbolds is selected, then --subjects input has to be a batch file. 
-     # echo "                                                                           Alternatively. it has to be provided in the --subjectsbatchfile parmeter if you wish to work only on select subjects by explicitly setting --subjects flag."
      echo ""
      echo "-- BOLD FC PARMETERS (Requires --boldfc='<pconn or pscalar>',--boldfcinput=<image_input>, --bolddata or --boldruns or --bolds"
      echo ""
@@ -141,6 +138,9 @@ usage() {
      echo ""
      echo "--timestamp=<specify_time_stamp>                                 Allows user to specify unique time stamp or to parse a time stamp from connector wrapper"
      echo "--suffix=<specify_suffix_id_for_logging>                         Allows user to specify unique suffix or to parse a time stamp from connector wrapper Default is [ <subject_id>_<timestamp> ]"
+     echo ""
+     echo "--batchfile=<batch_file>                                         Batch file with pre-configured BOLD tags for quick filtering of BOLD runs." 
+     echo "                                                                 Note: This file needs to be created *manually* prior to starting function and absolute path provided in the function."
      echo ""
      echo ""
      echo "  -- OPTIONAL QC PARAMETERS FOR CUSTOM SCENE:"
@@ -371,6 +371,9 @@ SceneZip=`opts_GetOpt "--scenezip" $@`
 
 # -- Parse batch file input
 SubjectBatchFile=`opts_GetOpt "--subjectsbatchfile" $@`
+if [ -z "${SubjectBatchFile}" ]; then
+    SubjectBatchFile=`opts_GetOpt "--batchfile" $@`
+fi
 
 # -- Check general required parameters
 if [ -z ${CASES} ]; then
@@ -515,6 +518,14 @@ if [ "$Modality" = "BOLD" ]; then
             reho "--> ERROR: Flag --boldfcinput is missing. Check your inputs and re-run."; echo ""; exit 1
         fi
     fi
+    if [[ ! -z ${SubjectBatchFile} ]]; then
+        if [[ ! -f ${SubjectBatchFile} ]]; then
+            reho " --> ERROR: Requested BOLD modality with a batch file. Batch file not found."
+            exit 1
+        else
+            BOLDSBATCH="${BOLDS}"
+        fi
+    fi
 fi
 
 # -- General modality settings:
@@ -542,10 +553,19 @@ if [ "$RunQCCustom" == "yes" ]; then
     echo "   Custom QC modalities: ${Modality}"
 fi
 if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
-    if [[ ! -z ${BOLDS} ]]; then
-        echo "  BOLD runs requested: ${BOLDS}"
+    if [[ ! -z ${SubjectBatchFile} ]]; then
+        if [[ ! -f ${SubjectBatchFile} ]]; then
+            reho " ERROR: Requested BOLD modality with a batch file. Batch file not found."
+            exit 1
+        else
+            echo "   Subject batch file requested: ${SubjectBatchFile}"
+            BOLDSBATCH="${BOLDS}"
+        fi
+    fi
+    if [[ ! -z ${BOLDRUNS} ]]; then
+        echo "   BOLD runs requested: ${BOLDS}"
     else
-        echo "  BOLD runs requested: all"
+        echo "   BOLD runs requested: all"
     fi
 fi
 echo "  Omit default QC: ${OmitDefaults} "
@@ -615,7 +635,7 @@ finalReport(){
 }
 
 for CASE in ${CASES}; do
-    
+
 # -- Check if raw NIFTI QC is requested and run it first
 if [ "$Modality" == "rawNII" ] || [ "$Modality" == "rawnii" ] || [ "$Modality" == "rawNIFTI" ] || [ "$Modality" == "rawnifti" ]; then 
        Modality="rawNII"
@@ -941,28 +961,56 @@ else
     # -- Check if modality is BOLD
     if [ "$Modality" == "BOLD" ] || [ "$Modality" == "bold" ]; then
         
-        # -- Block of code to set BOLD numbers correctly
+        # ----------------------------------------------------------------------
+        # --       Block of code to set BOLD numbers correctly
         # ----------------------------------------------------------------------
         #
-        if [ "$BOLDS" == "subject_hcp.txt" ]; then
-            geho "--- subject_hcp.txt parameter file specified. Verifying presence of subject_hcp.txt before running QC on all BOLDs..."; echo ""
-            if [ -f ${SubjectsFolder}/${CASE}/subject_hcp.txt ]; then
-                # -- Stalling on some systems --> BOLDCount=`more ${SubjectsFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
-                BOLDCount=`grep "bold" ${SubjectsFolder}/${CASE}/subject_hcp.txt  | grep -v "ref" | wc -l`
-                rm ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
-                COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
-                # -- Stalling on some systems --> BOLDS=`more ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
-                BOLDS=`cat ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
-                rm ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
-                geho "--- Information file ${SubjectsFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
-            else
-                reho "--- ERROR: ${SubjectsFolder}/${CASE}/subject_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
-                exit 1
-            fi
-        else
-            # -- Remove commas or pipes from BOLD input list if still present if using manual input
-            BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
-        fi
+        #
+         # -- Check if both batch and bolds are specified for QC and if yes read batch explicitly
+         if [[ ! -z ${SubjectBatchFile} ]]; then
+             geho "  --> For ${CASE} searching for BOLD tags in batch file ${SubjectBatchFile} ... "; echo ""
+             unset BOLDS BOLDLIST
+             if [[ -f ${SubjectBatchFile} ]]; then
+                 # For debugging
+                 # echo "   gmri batchTag2NameKey filename="${SubjectBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'"
+                 BOLDS=`gmri batchTag2NameKey filename="${SubjectBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'`
+                 BOLDLIST="${BOLDS}"
+             else
+                 reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
+                 exit 1
+             fi
+             if [[ ! -z ${BOLDLIST} ]]; then
+                 geho "  --> For ${CASE} referencing ${SubjectBatchFile} to select BOLD runs using tag: ${BOLDSBATCH} "
+                 geho "      ------------------------------------------ "
+                 geho "      Selected BOLDs --> ${BOLDS} "
+                 geho "      ------------------------------------------ "
+                 echo ""
+             else
+                 reho " ERROR: BOLDS variable not set. Something went wrong for ${CASE}. Check your batch file inputs!"; echo ""
+                 return 1
+             fi
+         fi
+         # -- Check if subject_hcp is used
+         if [ "$BOLDS" == "subject_hcp.txt" ]; then
+             geho "--- subject_hcp.txt parameter file specified. Verifying presence of subject_hcp.txt before running QC on all BOLDs..."; echo ""
+             if [ -f ${SubjectsFolder}/${CASE}/subject_hcp.txt ]; then
+                 # -- Stalling on some systems --> BOLDCount=`more ${SubjectsFolder}/${CASE}/subject_hcp.txt | grep "bold" | grep -v "ref" | wc -l`
+                 BOLDCount=`grep "bold" ${SubjectsFolder}/${CASE}/subject_hcp.txt  | grep -v "ref" | wc -l`
+                 rm ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
+                 COUNTER=1; until [ $COUNTER -gt $BOLDCount ]; do echo "$COUNTER" >> ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt; let COUNTER=COUNTER+1; done
+                 # -- Stalling on some systems --> BOLDS=`more ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
+                 BOLDS=`cat ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt`
+                 rm ${SubjectsFolder}/${CASE}/BOLDNumberTmp.txt &> /dev/null
+                 geho "--- Information file ${SubjectsFolder}/${CASE}/subject_hcp.txt found. Proceeding to run QC on the following BOLDs:"; echo ""; echo "${BOLDS}"; echo ""
+             else
+                 reho "--- ERROR: ${SubjectsFolder}/${CASE}/subject_hcp.txt not found. Check presence of file or specify specific BOLDs via input parameter."; echo ""
+                 exit 1
+             fi
+         else
+             # -- Remove commas or pipes from BOLD input list if still present if using manual input
+             BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+         fi
+        #
         #
         # ----------------------------------------------------------------------
         
