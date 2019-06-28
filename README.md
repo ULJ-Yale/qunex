@@ -499,13 +499,13 @@ Change Log
 * 0.44.05 [niutilities] Fixed sorting by bold number in createConc
 * 0.44.06 [nitools] Changed use of princom to pca
 * 0.44.07 [niutilites] Updates to in-line documentation
-
+* 0.45.00 [connector,library,niutilities] Updates to connector qunex.sh, RunTurnkey, addition of BIDS_DICOM_Validate_XNATUpload.sh code and tweaks to environment
 
 Stable Container Tag Log
 ========================
 ---
 
-* docker.io/qunex/qunex_suite:qunex_dev [stable tag]
+* docker.io/qunex/qunex_suite:qunex_dev 0.45.00
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
