@@ -69,8 +69,11 @@ switch img.imageformat
         file = [root img.filetype '.nii'];
 
     case 'CIFTI-2'
+        if isempty(img.TR)
+            img.TR = 1;
+        end
         cmeta = find([img.meta.code] == 32);
-        if img.voxels == 91282
+        if img.voxels == 91282            
             if strcmp(img.filetype, '.dtseries')
                 img.meta(cmeta) = dtseriesXML(img);
             elseif strcmp(img.filetype, '.dscalar')
@@ -85,6 +88,7 @@ switch img.imageformat
             img.hdrnifti.dim(6:7) = img.dim;
         else
             img.hdrnifti.dim(6) = img.frames;
+            img.hdrnifti.dim(7) = img.voxels;
         end
         file = [root img.filetype '.nii'];
 

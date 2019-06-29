@@ -310,8 +310,8 @@ classdef gmrimage
             mpath = fileparts(mfilename('fullpath'));
             xml = fileread(fullfile(mpath, 'dtseries-32k.xml'));
             xml = strrep(xml,'{{ParentProvenance}}', img.filename);
-            xml = strrep(xml,'{{ProgramProvenance}}', 'MNAP matlab');
-            xml = strrep(xml,'{{Provenance}}', 'MNAP matlab');
+            xml = strrep(xml,'{{ProgramProvenance}}', 'Qu|Nex nitools');
+            xml = strrep(xml,'{{Provenance}}', 'Qu|Nex nitools');
             xml = strrep(xml,'{{WorkingDirectory}}', pwd);
             xml = strrep(xml,'{{Frames}}', num2str(img.frames));
             xml = strrep(xml,'{{TR}}', num2str(img.TR));
@@ -326,8 +326,8 @@ classdef gmrimage
             mpath = fileparts(mfilename('fullpath'));
             xml = fileread(fullfile(mpath, 'dscalar-32k.xml'));
             xml = strrep(xml, '{{ParentProvenance}}', img.filename);
-            xml = strrep(xml, '{{ProgramProvenance}}', 'MNAP matlab');
-            xml = strrep(xml, '{{Provenance}}', 'MNAP matlab');
+            xml = strrep(xml, '{{ProgramProvenance}}', 'Qu|Nex nitools');
+            xml = strrep(xml, '{{Provenance}}', 'Qu|Nex nitools');
             xml = strrep(xml, '{{WorkingDirectory}}', pwd);
 
             if ~isfield(img.cifti, 'maps') || isempty(img.cifti.maps)
