@@ -499,7 +499,8 @@ Change Log
 * 0.44.05 [niutilities] Fixed sorting by bold number in createConc
 * 0.44.06 [nitools] Changed use of princom to pca
 * 0.44.07 [niutilites] Updates to in-line documentation
-* 0.45.00 [connector,library,niutilities] Updates to connector qunex.sh, RunTurnkey, addition of BIDS_DICOM_Validate_XNATUpload.sh code and tweaks to environment
+* 0.45.00 [connector library niutilities] Updates to connector qunex.sh, RunTurnkey, addition of BIDS_DICOM_Validate_XNATUpload.sh code and tweaks to environment
+* 0.45.01 [connector nitools niutilities] Added createBatch to RunTurnkey, fixed fail check, added g_Parcellated2Dense 
 
 Stable Container Tag Log
 ========================
