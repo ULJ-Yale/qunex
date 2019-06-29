@@ -502,12 +502,13 @@ Change Log
 * 0.45.00 [connector library niutilities] Updates to connector qunex.sh, RunTurnkey, addition of BIDS_DICOM_Validate_XNATUpload.sh code and tweaks to environment
 * 0.45.01 [connector nitools niutilities] Added createBatch to RunTurnkey, fixed fail check, added g_Parcellated2Dense 
 * 0.45.02 [library connector] Minor updates to code and XNAT JSONs
+* 0.45.03 [library] Updated batch templates and XNAT JSONs
 
 Stable Container Tag Log
 ========================
 ---
 
-* docker.io/qunex/qunex_suite:qunex_dev 0.45.00
+* docker.io/qunex/qunex_suite:qunex_dev 0.45.03
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
