@@ -32,6 +32,7 @@ else:
 # passed to it.
 
 functions = {
+    'g_Parcellated2Dense':             [('inimg', 'string'), ('outimg', 'string'), ('verbose', 'bool')],
     'g_ExtractGLMVolumes':             [('flist', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('saveoption', 'string'), ('values', 'string'), ('verbose', 'bool')],
     'g_ComputeBOLDListStats':          [('flist', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'g_ComputeBOLDStats':              [('img', 'string'), ('mask', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
@@ -60,7 +61,7 @@ functions = {
     's_p2Z':                           [('img', 'string'), ('out', 'string'), ('tail', 'string')],
     's_TTestDependent':                [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
     's_TTestIndependent':              [('filea', 'string'), ('fileb', 'string'), ('target', 'string'), ('output', 'string'), ('vartype', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
-    's_TTestZero':                     [('dfile', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')]
+    's_TTestZero':                     [('dfile', 'string'), ('output', 'string'), ('exclude', 'string'), ('verbose', 'bool')],
 }
 
 functionList = functions.keys()
