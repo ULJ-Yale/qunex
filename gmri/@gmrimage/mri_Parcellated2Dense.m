@@ -1,6 +1,6 @@
-function [img] = mri_parcellated2dense(img, verbose)
+function [img] = mri_Parcellated2Dense(img, verbose)
 
-%function [img] = mri_parcellated2dense(img, verbose)
+%function [img] = mri_Parcellated2Dense(img, verbose)
 %
 %	Expands a parcelated image to a dense image
 %
@@ -37,7 +37,7 @@ elseif strcmp(img.filetype, '.pscalar')
     if verbose fprintf('\n===> Expanding .pscalar to .dscalar'); end
     img.filetype = '.dscalar';
 else
-    error('ERROR: The image provided to mri_parcellated2dense is neither ptseries nor pscalar! Aborting');
+    error('ERROR: The image provided to mri_Parcellated2Dense is neither ptseries nor pscalar! Aborting');
 end
 
 img.voxels = 91282;

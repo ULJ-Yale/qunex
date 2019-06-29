@@ -1,6 +1,6 @@
-function [img] = g_parcellated2dense(inimg, outimg, verbose)
+function [img] = g_Parcellated2Dense(inimg, outimg, verbose)
 
-%function [img] = g_parcellated2dense(inimg, outimg, verbose)
+%function [img] = g_Parcellated2Dense(inimg, outimg, verbose)
 %
 %	Expands the parcelated file to a dense file
 %
@@ -39,11 +39,11 @@ end
 
 if verbose, fprintf('\n===> Loading %s', inimg), end
 img = gmrimage(inimg);
-img = img.mri_parcellated2dense(verbose);
+img = img.mri_Parcellated2Dense(verbose);
 
 % --> save
 if isempty(outimg)
-    outimg = fullfile(filepath, [img.rootfilename img.filetype '.nii']);
+    outimg = [img.rootfilename img.filetype '.nii'];
 end
 
 if verbose, fprintf('\n===> saving %s', outimg), end
