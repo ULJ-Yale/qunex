@@ -102,7 +102,7 @@ weho() {
 # source $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
 # $TOOLS/$QUNEXREPO/library/environment/qunex_environment.sh &> /dev/null
 
-QuNexTurnkeyWorkflow="createStudy mapRawData organizeDicom processInbox getHCPReady setupHCP mapIO hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy eddyQC runQC_DWIeddyQC RunQC_DWIeddyQC FSLDtifit runQC_DWIDTIFIT RunQC_DWIDTIFIT FSLBedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIBedpostX RunQC_DWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
+QuNexTurnkeyWorkflow="createStudy mapRawData organizeDicom processInbox getHCPReady setupHCP createBatch mapIO hcp1 hcp2 hcp3 runQC_T1w RunQC_T1w runQC_T2w RunQC_T2w runQC_Myelin RunQC_Myelin hcp4 hcp5 runQC_BOLD RunQC_BOLD hcpd runQC_DWI RunQC_DWI hcpdLegacy runQC_DWILegacy RunQC_DWILegacy eddyQC runQC_DWIeddyQC RunQC_DWIeddyQC FSLDtifit runQC_DWIDTIFIT RunQC_DWIDTIFIT FSLBedpostxGPU runQC_DWIProcess RunQC_DWIProcess runQC_DWIBedpostX RunQC_DWIBedpostX pretractographyDense DWIDenseParcellation DWISeedTractography runQC_Custom RunQC_Custom mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc g_PlotBoldTS BOLDParcellation computeBOLDfcSeed computeBOLDfcGBC runQC_BOLDfc RunQC_BOLDfc QuNexClean"
 QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
 SupportedAcceptanceTestSteps="hcp1 hcp2 hcp3 hcp4 hcp5"
 QuNexTurnkeyClean="hcp4"
@@ -747,7 +747,8 @@ if [[ `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]] || [[ `echo ${TURNKEY_STEP
     fi
 fi
 
-if [[ `echo ${TURNKEY_STEPS} | grep 'setupHCP'` ]]; then
+
+if [[ `echo ${TURNKEY_STEPS} | grep 'createBatch'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
     fi
@@ -755,6 +756,8 @@ if [[ `echo ${TURNKEY_STEPS} | grep 'setupHCP'` ]]; then
         checkBatchFileHeader
     fi
 fi
+
+
 if [[ `echo ${TURNKEY_STEPS} | grep 'getHCPReady'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Mapping parameter file not specified."; echo ''; exit 1;  fi
@@ -909,7 +912,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        getHCPReady|setupHCP)
+        getHCPReady|setupHCP|createBatch)
             # --- rsync relevant dependencies if getHCPReady or setupHCP is starting point 
             RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
@@ -1376,7 +1379,7 @@ fi
         fi
     }
      
-    # -- Map processing folder structure
+    # -- Generate subject_hcp.txt file
     turnkey_getHCPReady() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..."; echo ""
         if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
@@ -1404,7 +1407,7 @@ fi
         fi
         # ------------------------------
     }
-    # -- Generate subject specific hcp processing file
+    # -- Map files to hcp processing folder structure 
     turnkey_setupHCP() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: setupHCP ..."; echo ""
         # ------------------------------
@@ -1415,14 +1418,11 @@ fi
         setupHCP_ComlogDone="${logdir}/comlogs/done_setupHCP_${CASE}_${TimeStamp}.log"
         if [[ ${OVERWRITE_STEP} == "yes" ]]; then
            echo "  -- Removing prior hard link mapping..."; echo ""
-           rm -rf ${ProcessingBatchFile} &> /dev/null
            HLinks=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
         fi
         ExecuteCall="${QUNEXCOMMAND} setupHCP --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --existing='clear'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${setupHCP_ComlogTmp}
-        geho " -- Generating ${ProcessingBatchFile}"; echo ""
-        cp ${SpecsBatchFileHeader} ${ProcessingBatchFile}; cat ${qunex_workdir}/subject_hcp.txt >> ${ProcessingBatchFile}
         if [[ ! -z `cat ${setupHCP_ComlogTmp} | grep 'Successful completion'` ]]; then setupHCPCheck="pass"; else setupHCPCheck="fail"; fi
         if [[ ${setupHCPCheck} == "pass" ]]; then
             mv ${setupHCP_ComlogTmp} ${setupHCP_ComlogDone}
@@ -1434,6 +1434,31 @@ fi
         # ------------------------------
 
     }
+
+    # -- Map files to hcp processing folder structure 
+    turnkey_createBatch() {
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createBatch ..."; echo ""
+        # ------------------------------
+        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        createBatch_Runlog="${logdir}/runlogs/Log-createBatch${TimeStamp}.log"
+        createBatch_ComlogTmp="${logdir}/comlogs/tmp_createBatch_${CASE}_${TimeStamp}.log"; touch ${createBatch_ComlogTmp}; chmod 777 ${createBatch_ComlogTmp}
+        createBatch_ComlogError="${logdir}/comlogs/error_createBatch_${CASE}_${TimeStamp}.log"
+        createBatch_ComlogDone="${logdir}/comlogs/done_createBatch_${CASE}_${TimeStamp}.log"
+        ExecuteCall="${QUNEXCOMMAND} createBatch --subjectsfolder='${qunex_subjectsfolder}' --tfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='yes'"
+        echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
+        eval ${ExecuteCall} 2>&1 | tee -a ${createBatch_ComlogTmp}
+        if [[ ! -z `cat ${createBatch_ComlogTmp} | grep 'Successful completion'` ]]; then createBatchCheck="pass"; else createBatchCheck="fail"; fi
+        if [[ ${createBatchCheck} == "pass" ]]; then
+            mv ${createBatch_ComlogTmp} ${createBatch_ComlogDone}
+            createBatch_Comlog=${createBatch_ComlogDone}
+        else
+           mv ${createBatch_ComlogTmp} ${createBatch_ComlogError}
+           createBatch_Comlog=${createBatch_ComlogError}
+        fi
+        # ------------------------------
+
+    }
+
     #
     # --------------- Intial study and file organization end -------------------
     

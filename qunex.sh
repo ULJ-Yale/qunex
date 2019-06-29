@@ -458,7 +458,8 @@ echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho " ERROR: ${C
 ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
 ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
-ComRunCheck="if [[ -e ${CompletionCheckPass} && -s ${CompletionCheckPass} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final Qu|Nex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final Qu|Nex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
+ComRunCheck="if [[ -e ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final Qu|Nex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final Qu|Nex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
+
 # -- Combine commands
 ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
 
