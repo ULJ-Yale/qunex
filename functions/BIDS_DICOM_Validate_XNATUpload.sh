@@ -298,7 +298,6 @@ for InputPackage in ${InputPackages}; do
     geho "${FileLockerCommand}"
     geho "    ------------------------------- "
     echo ""
-    rm -f 
     echo ${FileLockerCommand} >> filelocker_cli.log
     eval ${FileLockerCommand}
     mv filelocker_cli.log filelocker_cli_${InputPackage}.log

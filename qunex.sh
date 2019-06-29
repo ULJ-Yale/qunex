@@ -120,9 +120,9 @@ geho ""
 show_usage() {
 show_splash
 echo ""
-echo "                     ===============================  "
+echo "                     ===============================                        "
 echo "                           General Qu|Nex Usage                             "
-echo "                     ===============================  "
+echo "                     ===============================                        "
 echo ""
 echo "    ==> General Command Call Syntax "
 echo ""
@@ -177,10 +177,10 @@ echo "     Qu|Nex Suite workflows contain additional python-based 'general mri (
 echo "     These are accessed either directly via 'gmri' command from the terminal."
 echo "     Alternatively the 'qunex' connector wrapper parses all commands via "
 echo "     'gmri' package as standard input."
-echo ""    
+echo ""
 echo ""
 geho "  -------------------------------------------------------------------------------"
-geho "   Neuroimaging Tools (NITools) for Singla Processing and Statistics   "
+geho "   Neuroimaging Tools (NITools) for Signal Processing and Statistics   "
 geho "  ------------------------------------------------------------------------------- "
 echo ""
 echo "     ==> NITools tools are located in: $TOOLS/$QUNEXREPO/nitools"
@@ -189,30 +189,30 @@ echo "     The Qu|Nex package contain a number of matlab-based stand-alone comma
 echo "     These tools are used across various Qu|Nex packages, but can be accessed"
 echo "     as stand-alone command within Matlab. Help and documentation is"
 echo "     embedded within each stand-alone command via standard Matlab help call."
-echo ""    
+echo ""
 echo ""
 }
 
 qunexFailed() {
-reho ''
-reho ' ▄▄▄▄▄▄▄         ||  ▄▄   ▄▄                                                 '
-reho ' ▓▓    ▓         ||  ▓▓▓▄ ▓▓                ▓▓▓▓▓ ▄▓▓▓▓  ▓ ▄▓    ▄▓▓▓ ▓▓▓▄   '
-reho ' ▓▓  ▓ ▓  ▓   ▓  ||  ▓▓ ▐▓▓▓ ▄▄▄▄ ▀▓▓ ▓▓▀   ▓▓    ▓  ▓▓ ▓▓ ▓▓   ▄▓▓▄  ▓  ▓▓  '
-reho ' ▓▓▄▄▓▄▓  ▓▓  ▓  ||  ▓▓   ▓▓ ▓▄▄▓    ▓▄     ▓▓▀▀  ▓▓▓▓▓ ▓▌ ▓▓   ▀▓▓   ▓  ▓▓  '
-reho '     ▓▄▄  ▓▓▄▄▓  ||  ▓▓    ▓ ▓▄▄  ▄▓▓ ▓▓▄   ▓     ▓▀ ▓  ▓  ▓▓▓▀▀ ▓▓▓▓ ▓▓▓▀   ' 
-reho '                 ||                                                          '
-reho ''
+    reho ''
+    reho ' ▄▄▄▄▄▄▄         ||  ▄▄   ▄▄                                                 '
+    reho ' ▓▓    ▓         ||  ▓▓▓▄ ▓▓                ▓▓▓▓▓ ▄▓▓▓▓  ▓ ▄▓    ▄▓▓▓ ▓▓▓▄   '
+    reho ' ▓▓  ▓ ▓  ▓   ▓  ||  ▓▓ ▐▓▓▓ ▄▄▄▄ ▀▓▓ ▓▓▀   ▓▓    ▓  ▓▓ ▓▓ ▓▓   ▄▓▓▄  ▓  ▓▓  '
+    reho ' ▓▓▄▄▓▄▓  ▓▓  ▓  ||  ▓▓   ▓▓ ▓▄▄▓    ▓▄     ▓▓▀▀  ▓▓▓▓▓ ▓▌ ▓▓   ▀▓▓   ▓  ▓▓  '
+    reho '     ▓▄▄  ▓▓▄▄▓  ||  ▓▓    ▓ ▓▄▄  ▄▓▓ ▓▓▄   ▓     ▓▀ ▓  ▓  ▓▓▓▀▀ ▓▓▓▓ ▓▓▓▀   ' 
+    reho '                 ||                                                          '
+    reho ''
 }
  
-qunexPassed() {       
-geho ''
-geho '    ______         ║   _   _               ____                        _  '
-geho '   / ___  \_   _   ║  | \ | | _____  __   |  _ \ __ _ ___ ___  ___  __| | '
-geho '  | |   | | | | |  ║  |  \| |/ _ \ \/ /   | |_) / _` / __/ __|/ _ \/ _` | '
-geho '  | |_/\| | |_| |  ║  | |\  |  __/>  <    |  __| (_| \__ \__ |  __| (_| | '
-geho '   \__\ \ /\__,_|  ║  |_| \_|\___/_/\_\   |_|   \__,_|___|___/\___|\__,_| '
-geho '       \_\         ║                                                      '
-geho ''     
+qunexPassed() {
+    geho ''
+    geho '    ______         ║   _   _               ____                        _  '
+    geho '   / ___  \_   _   ║  | \ | | _____  __   |  _ \ __ _ ___ ___  ___  __| | '
+    geho '  | |   | | | | |  ║  |  \| |/ _ \ \/ /   | |_) / _` / __/ __|/ _ \/ _` | '
+    geho '  | |_/\| | |_| |  ║  | |\  |  __/>  <    |  __| (_| \__ \__ |  __| (_| | '
+    geho '   \__\ \ /\__,_|  ║  |_| \_|\___/_/\_\   |_|   \__,_|___|___/\___|\__,_| '
+    geho '       \_\         ║                                                      '
+    geho ''
 }
 
 # =======================================================================================================
@@ -250,7 +250,6 @@ show_processingoptions_gmri() {
         gmri -o
         echo ""
 }
-
 show_allcommands_gmri() {
         echo ""
         echo ""
@@ -260,7 +259,6 @@ show_allcommands_gmri() {
         gmri -available | sed 1,1d
         echo ""
 }
-
 show_usage_nitoolsHelp() {
         echo ""
         echo ""
@@ -293,7 +291,6 @@ show_usage_nitoolsHelp() {
         done
         echo ""
 }
-
 show_allcommands_connector() {
         echo ""
         echo ""
@@ -306,18 +303,18 @@ show_allcommands_connector() {
         echo " The connector function also contain 'stand alone' processing or analyses tools."
         echo " These can be called either directly or via the qunex wrapper"
         echo ""
-        echo "  Qu|Nex Turnkey function"
-        echo "----------------------------"
+        echo "  Qu|Nex Turnkey function "
+        echo "--------------------------"
         echo " organizeDicom ...... sort DICOMs and setup nifti files from DICOMs"
         echo " mapHCPFiles ...... setup data structure for hcp processing"
         echo " runTurnkey ...... turnkey execution of Qu|Nex workflow compatible with XNAT Docker engine"
         echo ""
-        echo "  QC functions"
-        echo "------------"
+        echo "  QC functions "
+        echo "---------------"
         echo " runQC ...... run visual qc for a given modality: raw nifti,t1w,tw2,myelin,bold,dwi"
         echo ""
         echo "  DWI processing, QC, analyses & probabilistic tractography functions"
-        echo "---------------------------"
+        echo "----------------------------------------------------------------------"
         echo " hcpdLegacy ...... diffusion image processing for data with or without standard fieldmaps"
         echo " eddyQC ...... run quality control on diffusion datasets following eddy outputs"
         echo " FSLDtifit ...... run FSL's dtifit tool (cluster usable)"
@@ -327,8 +324,8 @@ show_allcommands_connector() {
         echo "                           whole brain connectomes"
         echo " DWIDenseSeedTractography ...... reduce dense DWI tractography data using a seed structure"
         echo ""
-        echo "  Misc. analyses"
-        echo "---------------------------"
+        echo "  Misc. analyses  "
+        echo "------------------"
         echo " computeBOLDfc ...... computes seed or GBC BOLD functional connectivity"
         echo " structuralParcellation ...... parcellate myelin or thickness"
         echo " BOLDParcellation ...... parcellate BOLD data and generate pconn files"

@@ -748,6 +748,7 @@ if [[ `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]] || [[ `echo ${TURNKEY_STEP
 fi
 
 
+# -- Perform checks that batchfile is provided if createBatch has been requested
 if [[ `echo ${TURNKEY_STEPS} | grep 'createBatch'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
@@ -757,7 +758,7 @@ if [[ `echo ${TURNKEY_STEPS} | grep 'createBatch'` ]]; then
     fi
 fi
 
-
+# -- Perform checks that mapping file is provided if getHCPReady has been requested
 if [[ `echo ${TURNKEY_STEPS} | grep 'getHCPReady'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
         if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Mapping parameter file not specified."; echo ''; exit 1;  fi
@@ -1407,6 +1408,7 @@ fi
         fi
         # ------------------------------
     }
+
     # -- Map files to hcp processing folder structure 
     turnkey_setupHCP() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: setupHCP ..."; echo ""
@@ -1418,11 +1420,14 @@ fi
         setupHCP_ComlogDone="${logdir}/comlogs/done_setupHCP_${CASE}_${TimeStamp}.log"
         if [[ ${OVERWRITE_STEP} == "yes" ]]; then
            echo "  -- Removing prior hard link mapping..."; echo ""
+           # rm -rf ${ProcessingBatchFile} &> /dev/null
            HLinks=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
-        fi
+        fi        
         ExecuteCall="${QUNEXCOMMAND} setupHCP --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --existing='clear'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${setupHCP_ComlogTmp}
+        # geho " -- Generating ${ProcessingBatchFile}"; echo ""
+        # cp ${SpecsBatchFileHeader} ${ProcessingBatchFile}; cat ${qunex_workdir}/subject_hcp.txt >> ${ProcessingBatchFile}
         if [[ ! -z `cat ${setupHCP_ComlogTmp} | grep 'Successful completion'` ]]; then setupHCPCheck="pass"; else setupHCPCheck="fail"; fi
         if [[ ${setupHCPCheck} == "pass" ]]; then
             mv ${setupHCP_ComlogTmp} ${setupHCP_ComlogDone}
@@ -1432,7 +1437,6 @@ fi
            setupHCP_Comlog=${setupHCP_ComlogError}
         fi
         # ------------------------------
-
     }
 
     # -- Map files to hcp processing folder structure 
@@ -1456,7 +1460,6 @@ fi
            createBatch_Comlog=${createBatch_ComlogError}
         fi
         # ------------------------------
-
     }
 
     #
