@@ -503,6 +503,7 @@ Change Log
 * 0.45.01 [connector nitools niutilities] Added createBatch to RunTurnkey, fixed fail check, added g_Parcellated2Dense 
 * 0.45.02 [library connector] Minor updates to code and XNAT JSONs
 * 0.45.03 [library] Updated batch templates and XNAT JSONs
+* 0.45.04 [library] Updated library HCP course batch and mapping files
 
 Stable Container Tag Log
 ========================
