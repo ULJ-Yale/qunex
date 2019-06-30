@@ -504,12 +504,13 @@ Change Log
 * 0.45.02 [library connector] Minor updates to code and XNAT JSONs
 * 0.45.03 [library] Updated batch templates and XNAT JSONs
 * 0.45.04 [library] Updated library HCP course batch and mapping files
+* 0.45.05 [library connector] Changed the default HCP pipelines to qunex/hcp, improved error catching in RunTurnkey
 
 Stable Container Tag Log
 ========================
 ---
 
-* docker.io/qunex/qunex_suite:qunex_dev 0.45.03
+* docker.io/qunex/qunex_suite:qunex_dev 0.45.05
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu

@@ -10,6 +10,6 @@
 [submodule "nitools"]
 	path = nitools
 	url = git@bitbucket.org:oriadev/nitools.git
-[submodule "HCP"]
-	path = HCP
+[submodule "hcp"]
+	path = hcp
 	url = git@bitbucket.org:oriadev/hcp.git
