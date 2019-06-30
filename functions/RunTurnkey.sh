@@ -532,7 +532,7 @@ fi
 
 # -- Check that BATCH_PARAMETERS_FILENAME flag and parameter is set
 if [[ -z ${BATCH_PARAMETERS_FILENAME} ]]; 
-    then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo '';
+    then reho "ERROR: --batchfile flag missing. Batch parameter file not specified."; echo '';
     exit 1;
 fi
 
@@ -540,20 +540,20 @@ fi
 #
 # -- Check and set non-XNAT or XNAT specific parameters
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then 
-   if [[ -z ${PROJECT_NAME} ]]; then reho "Error: Project name is missing."; exit 1; echo ''; fi
+   if [[ -z ${PROJECT_NAME} ]]; then reho "ERROR: Project name is missing."; exit 1; echo ''; fi
    if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${PROJECT_NAME}; fi
-   if [[ -z ${CASE} ]]; then reho "Error: Requesting local run but --subject flag is missing."; exit 1; echo ''; fi
+   if [[ -z ${CASE} ]]; then reho "ERROR: Requesting local run but --subject flag is missing."; exit 1; echo ''; fi
 fi
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-    if [[ -z ${XNAT_PROJECT_ID} ]]; then reho "Error: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    if [[ -z ${XNAT_HOST_NAME} ]]; then reho "Error: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-    if [[ -z ${XNAT_USER_NAME} ]]; then reho "Error: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
-    if [[ -z ${XNAT_PASSWORD} ]]; then reho "Error: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_PROJECT_ID} ]]; then reho "ERROR: --xnatprojectid flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_HOST_NAME} ]]; then reho "ERROR: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_USER_NAME} ]]; then reho "ERROR: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_PASSWORD} ]]; then reho "ERROR: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${XNAT_PROJECT_ID}; fi
-    if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "Error: --xnatsubjectid or --xnatsubjectlabel flags are missing. Please specify either subject id or subject label and re-run."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "ERROR: --xnatsubjectid or --xnatsubjectlabel flags are missing. Please specify either subject id or subject label and re-run."; echo ''; exit 1; fi
     if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ ! -z ${XNAT_SUBJECT_LABEL} ]]; then reho " -- Note: --xnatsubjectid is not set. Using --xnatsubjectlabel to query XNAT."; echo ''; fi
     if [[ ! -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho " -- Note: --xnatsubjectlabel is not set. Using --xnatsubjectid to query XNAT."; echo ''; fi
-    if [[ -z ${XNAT_SESSION_LABEL} ]]; then reho "Error: --xnatsessionlabel flag missing. Please specify session label and re-run."; echo ''; exit 1; fi
+    if [[ -z ${XNAT_SESSION_LABEL} ]]; then reho "ERROR: --xnatsessionlabel flag missing. Please specify session label and re-run."; echo ''; exit 1; fi
     if [[ -z ${XNAT_STUDY_INPUT_PATH} ]]; then XNAT_STUDY_INPUT_PATH=/input/RESOURCES/qunex_study; reho " -- Note: XNAT session input path is not defined. Setting default path to: $XNAT_STUDY_INPUT_PATH"; echo ""; fi
     
     # -- Curl calls to set correct subject and session variables at start of RunTurnkey
@@ -696,7 +696,7 @@ fi
 
 # -- Function to check for BATCH_PARAMETERS_FILENAME
 checkBatchFileHeader() {
-    if [[ -z ${BATCH_PARAMETERS_FILENAME} ]]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+    if [[ -z ${BATCH_PARAMETERS_FILENAME} ]]; then reho "ERROR: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
     if [[ -f ${BATCH_PARAMETERS_FILENAME} ]]; then
         BATCH_PARAMETERS_FILE_PATH="${BATCH_PARAMETERS_FILENAME}"
     else
@@ -710,12 +710,12 @@ checkBatchFileHeader() {
            fi
         fi
     fi
-    if [[ ! -f ${BATCH_PARAMETERS_FILE_PATH} ]]; then reho "Error: --batchfile flag set but file not found in default locations: ${BATCH_PARAMETERS_FILENAME}"; echo ''; exit 1; fi
+    if [[ ! -f ${BATCH_PARAMETERS_FILE_PATH} ]]; then reho "ERROR: --batchfile flag set but file not found in default locations: ${BATCH_PARAMETERS_FILENAME}"; echo ''; exit 1; fi
 }
 
 # -- Function to check for SCAN_MAPPING_FILENAME
 checkMappingFile() {
-    if [[ -z ${SCAN_MAPPING_FILENAME} ]]; then reho "Error: --mappingfile flag missing. Scanning file parameter file not specified."; echo ''; exit 1;  fi
+    if [[ -z ${SCAN_MAPPING_FILENAME} ]]; then reho "ERROR: --mappingfile flag missing. Scanning file parameter file not specified."; echo ''; exit 1;  fi
     if [[ -f ${SCAN_MAPPING_FILENAME} ]]; then
         SCAN_MAPPING_FILENAME_PATH="${SCAN_MAPPING_FILENAME}"
     else
@@ -729,18 +729,18 @@ checkMappingFile() {
            fi
         fi
     fi
-    if [[ ! -f ${SCAN_MAPPING_FILENAME_PATH} ]]; then reho "Error: --mappingfile flag set but file not found in default locations: ${SCAN_MAPPING_FILENAME}"; echo ''; exit 1; fi
+    if [[ ! -f ${SCAN_MAPPING_FILENAME_PATH} ]]; then reho "ERROR: --mappingfile flag set but file not found in default locations: ${SCAN_MAPPING_FILENAME}"; echo ''; exit 1; fi
 }
 
 # -- Perform explicit checks for steps which rely on BATCH_PARAMETERS_FILENAME and SCAN_MAPPING_FILENAME
 if [[ `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]] || [[ `echo ${TURNKEY_STEPS} | grep 'mapRawData'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
-        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "ERROR: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "ERROR: --mappingfile flag missing. Batch parameter file not specified."; echo ''; exit 1;  fi
     fi
     if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
         if [[ `echo ${TURNKEY_STEPS} | grep 'mapRawData'` ]]; then 
-            if [[ -z ${RawDataInputPath} ]]; then reho "Error: --rawdatainput flag missing. Input data not specified."; echo ''; exit 1; fi
+            if [[ -z ${RawDataInputPath} ]]; then reho "ERROR: --rawdatainput flag missing. Input data not specified."; echo ''; exit 1; fi
         fi
         checkBatchFileHeader
         checkMappingFile
@@ -751,7 +751,7 @@ fi
 # -- Perform checks that batchfile is provided if createBatch has been requested
 if [[ `echo ${TURNKEY_STEPS} | grep 'createBatch'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "Error: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
+        if [ -z "$BATCH_PARAMETERS_FILENAME" ]; then reho "ERROR: --batchfile flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
     fi
     if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
         checkBatchFileHeader
@@ -761,7 +761,7 @@ fi
 # -- Perform checks that mapping file is provided if getHCPReady has been requested
 if [[ `echo ${TURNKEY_STEPS} | grep 'getHCPReady'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "Error: --mappingfile flag missing. Mapping parameter file not specified."; echo ''; exit 1;  fi
+        if [ -z "$SCAN_MAPPING_FILENAME" ]; then reho "ERROR: --mappingfile flag missing. Mapping parameter file not specified."; echo ''; exit 1;  fi
     fi
     if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
         checkMappingFile
@@ -1097,7 +1097,7 @@ fi
         fi
         CheckInbox=`ls -1A ${rawdir} | wc -l`
         if [[ ${CheckInbox} != "0" ]] && [[ ${OVERWRITE_STEP} == "no" ]]; then
-               reho "Error: ${qunex_workdir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
+               reho "ERROR: ${qunex_workdir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
                reho "Set overwrite to 'yes' and re-run..."
                echo ""
                exit 1
