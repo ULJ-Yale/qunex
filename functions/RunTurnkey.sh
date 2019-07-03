@@ -1168,6 +1168,30 @@ fi
                 geho " No custom scene files found as an XNAT resources. If this is an error check your project resources in the XNAT web interface." >> ${mapRawData_ComlogTmp}
                 echo "" >> ${mapRawData_ComlogTmp}
            fi
+            
+            # -- Perform checks for batch and mapping files being mapped correctly
+            if [[ ! -f ${specsdir}/${BATCH_PARAMETERS_FILENAME} ]]; then
+                echo " ==> ERROR: Scan batch file ${BATCH_PARAMETERS_FILENAME} not found in ${RawDataInputPath}!"
+                BATCHFILECHECK="fail"
+                exit 1
+            else
+                if [[ ! `more ${specsdir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_Pipeline'` ]]; then
+                    BATCHFILECHECK="fail"
+                    echo " ==> ERROR: Scan batch file ${BATCH_PARAMETERS_FILENAME} content not correct in ${RawDataInputPath}!"
+                    exit 1
+                fi
+            fi
+            if [[ ! -f ${specsdir}/${SCAN_MAPPING_FILENAME} ]]; then
+                echo " ==> ERROR: Scan mapping file ${SCAN_MAPPING_FILENAME_PATH} not found in ${RawDataInputPath}!"
+                MAPPINGFILECHECK="fail"
+                exit 1
+            else
+                if [[ ! `more ${specsdir}/${SCAN_MAPPING_FILENAME} | grep '=>'` ]]; then
+                    echo " ==> ERROR: Scan mapping file ${SCAN_MAPPING_FILENAME_PATH} not found in ${RawDataInputPath}!"
+                    MAPPINGFILECHECK="fail"
+                    exit 1
+                fi
+            fi
         fi
         
         # -- Map data for local non-XNAT run
@@ -1310,12 +1334,13 @@ fi
                 FILECHECK="fail"
             fi
         fi
-        # -- Check if mapping and batch files exist
+        
+        # -- Check if mapping and batch files exist and if content OK
         if [[ -f ${SpecsBatchFileHeader} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
+        if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then BATCHFILECHECK="fail"; fi
         if [[ -f ${SpecsMappingFile} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
-        # -- Check if content of files OK
         if [[ -z `more ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
-        if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then MAPPINGFILECHECK="fail"; fi
+        
         # -- Declare checks
         echo "" >> ${mapRawData_ComlogTmp}
         echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
@@ -1469,8 +1494,8 @@ fi
     runQC_Finalize() {
         runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
         runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-        rename runQC runQC${QCLogName} ${logdir}/comlogs/${runQCComLog} 2> /dev/null
-        rename runQC runQC${QCLogName} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
+        rename runQC runQC_${QCLogName} ${logdir}/comlogs/${runQCComLog} 2> /dev/null
+        rename runQC runQC_${QCLogName} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/QC/${Modality} 2> /dev/null
