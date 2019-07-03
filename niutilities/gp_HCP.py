@@ -1257,7 +1257,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 comm += ' --seed="%s"' % (options['hcp_fs_seed'])
 
             if options['hcp_fs_existing_subject']:
-                comm += ' --existing_subject'
+                comm += ' --existing-subject'
 
             if options['hcp_fs_extra_reconall']:
                 for f in options['hcp_fs_extra_reconall'].split('|'):
