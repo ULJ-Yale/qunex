@@ -506,6 +506,7 @@ Change Log
 * 0.45.04 [library] Updated library HCP course batch and mapping files
 * 0.45.05 [library connector] Changed the default HCP pipelines to qunex/hcp, improved error catching in RunTurnkey
 * 0.45.06 [connector] Changed the rsync commands in RunTurnkey to conform with updated HCP pipeline mapping
+* 0.45.07 [connector] Fixed the naming error for runQC checks in RunTurnkey and improved mapping and batch file checks
 
 Stable Container Tag Log
 ========================
