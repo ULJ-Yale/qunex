@@ -1,4 +1,4 @@
-# README File for  Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
+# README File for Quantitative Neuroimaging Environment & ToolboX (Qu|Nex)
 
 Background
 ==========
@@ -507,6 +507,7 @@ Change Log
 * 0.45.05 [library connector] Changed the default HCP pipelines to qunex/hcp, improved error catching in RunTurnkey
 * 0.45.06 [connector] Changed the rsync commands in RunTurnkey to conform with updated HCP pipeline mapping
 * 0.45.07 [connector] Fixed the naming error for runQC checks in RunTurnkey and improved mapping and batch file checks
+* 0.46.00 [connector library qunexaccept] Added qunexaccept and improved acceptance testing framework, cleaned up library
 
 Stable Container Tag Log
 ========================
