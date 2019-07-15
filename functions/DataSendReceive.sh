@@ -87,6 +87,7 @@ usage() {
     echo "-- XNAT Host Optional Parameters"
     echo ""
     echo "    --xnatchecklogin=<check_xnat_dax_login>       Specify 'yes' to run XnatCheckLogin script and setup extra hosts. If omitted, defaults are used."
+    echo "    --xnathost=<XNAT_site_URL>                    Specify the XNAT site hostname URL to push data to."
     echo ""
     echo " -- Example Command:"
     echo ""
@@ -204,11 +205,22 @@ if [[ -z ${InputPackages} ]]; then
     exit 1
 fi
 
-## -- Check for UploadPackages variables
+## -- Check for XnatCheckLoginStep variables
 if [[ -z ${XnatCheckLoginStep} ]]; then
     usage
     reho "Note: --xnatchecklogin flag not specified. Setting to 'no' and using DAX specified defaults."
     XnatCheckLoginStep="no"
+fi
+
+## -- Check for RUN_TYPE variables
+if [[ ${RUN_TYPE} == "daxdownload" ]] || [[ ${RUN_TYPE} == "daxupload" ]]; then
+    ## -- Check XNAT_HOST_NAME
+    if [[ -z ${XNAT_HOST_NAME} ]]; then
+        usage
+        reho "ERROR: --xnathost not specified."
+        echo ""
+        exit 1
+    fi
 fi
 
 ## -- Set  credentials file name to default if not provided
@@ -286,6 +298,8 @@ for RUN_TYPE in ${RUN_TYPES}; do
     if [[ ${RUN_TYPE} == "daxdownload" ]] || [[ ${RUN_TYPE} == "daxupload" ]]; then
         echo "   XNAT Check Login: ${XnatCheckLoginStep}"
         echo "   XNAT DAX Project CSV File: ${XNAT_DAX_PROJECT_CSV}"    
+        echo "   XNAT Host name: ${XNAT_HOST_NAME}"    
+
     fi
 done
 
@@ -420,13 +434,19 @@ for RUN_TYPE in ${RUN_TYPES}; do
         if [[ ${XnatCheckLoginStep} == 'yes' ]]; then
             XnatCheckLogin
         fi
-        ## -- Check DAX upload       
+        ## -- Check DAX upload
         if [[ ${RUN_TYPE} == 'daxupload' ]]; then
+            
+            # -- Check that data is unzipped
+            echo ""
+            echo " -- Checking if data is zipped and unzipping ..."
+            echo ""
+            cd ${DataDropFolder}; find . -name *dcm.gz -exec gunzip {} \;
+            
             # -- Upload of files to XNAT
             echo ""
             echo " -- Running DAX upload to XNAT: ${XNAT_HOST_NAME} .."
             echo ""
-            
             if [[ {XNAT_UPLOAD_DAX_REPORT} == 'yes' ]]; then
                 echo ""; echo " -- Setting --report flag"; echo ""
                 DAXUploadCommand="Xnatupload --host ${XNAT_HOST_NAME} -c ${XNAT_DAX_PROJECT_CSV} --report"
@@ -437,9 +457,11 @@ for RUN_TYPE in ${RUN_TYPES}; do
             echo ""
             geho " -- Running DAX upload:"
             geho "    ------------------------------- "
-            geho "${DAXUploadCommand}"
+            geho " ${DAXUploadCommand}"
             geho "    ------------------------------- "
             echo ""
+            eval ${DAXUploadCommand}
+        
         fi
         if [[ ${RUN_TYPE} == 'daxdownload' ]]; then
             # -- Download files out of  XNAT

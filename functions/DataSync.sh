@@ -14,7 +14,7 @@
 #
 # ## PRODUCT
 #
-# * dataSync.sh
+# * DataSync.sh
 #
 # ## LICENCE
 #
@@ -191,7 +191,7 @@ echo "Backing up folders: $SyncFolders" >> "$SyncLogFolder"/sync_log_"$now".txt
 echo "Backing up folders: $SyncFolders"; echo ""
 
 # -- Sync studies loop
-for SyncFolder in $SyncFolders
+for SyncFolder in ${SyncFolders}
 do
 	if [[ ${SyncServer} == "local" ]]; then
 		SyncServerName=`hostname`
