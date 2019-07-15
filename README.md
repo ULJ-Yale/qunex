@@ -508,6 +508,7 @@ Change Log
 * 0.45.06 [connector] Changed the rsync commands in RunTurnkey to conform with updated HCP pipeline mapping
 * 0.45.07 [connector] Fixed the naming error for runQC checks in RunTurnkey and improved mapping and batch file checks
 * 0.46.00 [connector library qunexaccept] Added qunexaccept and improved acceptance testing framework, cleaned up library
+* 0.46.01 [library qunexaccept] Edits to qunexaccept
 
 Stable Container Tag Log
 ========================
