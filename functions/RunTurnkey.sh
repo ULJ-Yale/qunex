@@ -1383,7 +1383,7 @@ fi
             processInbox_ComlogTmp="${logdir}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
             processInbox_ComlogError="${logdir}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
             processInbox_ComlogDone="${logdir}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
-            ExecuteCall="${QUNEXCOMMAND} processInbox --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any'"
+            ExecuteCall="${QUNEXCOMMAND} processInbox --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --overwrite='${OVERWRITE_STEP}'"
             echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
             eval ${ExecuteCall} 2>&1 | tee -a ${processInbox_ComlogTmp}
             cd ${qunex_subjectsfolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done
