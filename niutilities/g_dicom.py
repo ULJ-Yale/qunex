@@ -1733,9 +1733,9 @@ def splitDicom(folder=None):
     return
 
 
-def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', cores=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes'):
+def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="yes", pattern=None, nameformat=None, tool='auto', cores=1, logfile=None, archive='move', options="", unzip='yes', gzip='yes', verbose='yes', overwrite='no'):
     '''
-    processInbox [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [verbose=yes]  
+    processInbox [subjectsfolder=.] [sessions=""] [masterinbox=<subjectsfolder>/inbox/MR] [check=yes] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [cores=1] [logfile=""] [archive=move] [options=""] [unzip="yes"] [gzip="yes"] [overwrite="no"] [verbose=yes]  
 
     USE
     ===
@@ -1841,9 +1841,12 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     then either moved or copied to the `study/subjects/archive/MR` folder, left
     as is, or deleted. If the archive folder does not yet exist, it is created.
 
-    If a subject folder with an inbox folder already exists, then the related 
-    packet will not be processed so that existing data is not changed. Either 
-    remove or rename the exisiting folder(s) and rerun the command to process 
+    If a subject folder with an inbox folder already exists, if the overwrite 
+    parameter is set to yes, it will delete the contents of the dicom and nii
+    folders and redo the import process. If the overwrite parameter is set to
+    no, then the packet will not be processed so that existing data is not 
+    changed. In this case either set the overwrite parameter to yes, or remove 
+    or rename the exisiting folder(s) and rerun the command to process 
     those packet(s) as well. 
 
     
@@ -1884,8 +1887,10 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     The folders found are expected to have the data stored in the inbox folder
     either as individual files or as a compressed package. If the latter is the
     case, the files will be extracted to the inbox folder. If any results—e.g.
-    files in `dicom` or `nii` folders—already exists, the processing of the 
-    folder will be skipped.
+    files in `dicom` or `nii` folders—already exists, if the overwrite parameter
+    is set to no (the default) then the processing of the folder will be skipped.
+    If the overwrite parmeter is set to yes, the existing data in dicom and nii
+    folders will be removed and the processing will be redone.
     
 
     Futher processing
@@ -1988,6 +1993,9 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
 
     --gzip            Whether to gzip individual DICOM files after they were
                       processed. Valid options are 'yes', 'no', 'ask'. ['yes']
+
+    --overwrite       Whether to remove existing data in the dicom and nii 
+                      folders. ['no']
 
     --verbose         Whether to provide detailed report also of packets that 
                       could not be identified and/or are not matched with log 
@@ -2135,6 +2143,8 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
              - Updated documentation
     2019-06-22 Grega Repovš
              - Updated documentation with examples
+    2019-07-15 Grega Repovš
+             - Added ovewrite parameter
     '''
 
     print "Running processInbox\n===================="
@@ -2146,7 +2156,7 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
 
     verbose = verbose.lower() == 'yes'
 
-    # overwrite = overwrite.lower() == 'yes'
+    overwrite = overwrite.lower() == 'yes'
 
     if subjectsfolder is None:
         subjectsfolder = "."
@@ -2356,8 +2366,8 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                 print "     ... To process them, remove or rename the exisiting session folders"
 
     nToProcess = len(packets['ok'])
-    # if overwrite:
-    #     nToProcess += len(packets['exist'])
+    if overwrite:
+        nToProcess += len(packets['exist'])
 
     if nToProcess:
         if check.lower() == 'yes':
@@ -2389,22 +2399,23 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
 
     # ---> clean existing data if needed
 
-    #if overwrite:
-    #    if packets['exist']:
-    #        print "---> Cleaning exisiting data in folders:"
-    #        for file, session in packets['exist']:                
-    #            sfolder = os.path.join(subjectsfolder, session['sessionid'])
-    #            print "     ... %s" % (sfolder)
-    #            if inbox:
-    #                shutil.rmtree(sfolder)
-    #            else:
-    #                nfolder = os.path.join(sfolder, 'nii')
-    #                dfolder = os.path.join(sfolder, 'dicom')
-    #                for rmfolder in [nfolder, dfolder]:
-    #                    if os.path.exists(rmfolder):
-    #                        shutil.rmtree(rmfolder)
-    #
-    #    packets['ok'] += packets['exist']
+    if overwrite:
+        if packets['exist']:
+            print "---> Cleaning exisiting data in folders:"
+            for file, session in packets['exist']:                
+                sfolder = os.path.join(subjectsfolder, session['sessionid'])
+                print "     ... %s" % (sfolder)
+                if masterinbox:
+                    ifolder = os.path.join(sfolder, 'inbox')
+                    if os.path.exists(ifolder):
+                        shutil.rmtree(ifolder)
+                nfolder = os.path.join(sfolder, 'nii')
+                dfolder = os.path.join(sfolder, 'dicom')
+                for rmfolder in [nfolder, dfolder]:
+                    if os.path.exists(rmfolder):
+                        shutil.rmtree(rmfolder)
+    
+        packets['ok'] += packets['exist']
 
     # ---> process packets
 
@@ -2425,7 +2436,6 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
             if masterinbox:
                 os.makedirs(ifolder)
                 files = [file]
-
             else:
                 if session['archives']:
                     files = session['archives']
