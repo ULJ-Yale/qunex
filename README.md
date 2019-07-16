@@ -510,6 +510,7 @@ Change Log
 * 0.46.00 [connector library qunexaccept] Added qunexaccept and improved acceptance testing framework, cleaned up library
 * 0.46.01 [library qunexaccept] Edits to qunexaccept
 * 0.46.02 [qunexaccept] Edits to qunexaccept
+* 0.46.03 [connector niutilities] Edits to allow overwrite of processInbox
 
 Stable Container Tag Log
 ========================
