@@ -738,7 +738,7 @@ checkMappingFile() {
 getBoldList() {
     if [[ ! -z ${ProcessingBatchFile} ]]; then
         LBOLDRUNS="${BOLDRUNS}"
-        geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}'' in batch file ${ProcessingBatchFile} ... "; 
+        geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}' in batch file ${ProcessingBatchFile} ... "; 
         if [[ -f ${ProcessingBatchFile} ]]; then
             # For debugging
             # echo "   gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g'"
