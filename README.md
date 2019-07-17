@@ -513,6 +513,7 @@ Change Log
 * 0.46.03 [connector niutilities] Edits to allow overwrite of processInbox
 * 0.47.00 [library] Added functions and aliases for Docker and source code build, push, pull and commits
 * 0.48.00 [library] Removed ICAFIXDependencies from library for future integration with HCP code
+* 0.48.01 [connector library] Robust habdling of BOLDs in RunTurnkey, removed ICAFIX variables from environment
 
 ICAFIXDependencies
 
