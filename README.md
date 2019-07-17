@@ -515,6 +515,7 @@ Change Log
 * 0.48.00 [library] Removed ICAFIXDependencies from library for future integration with HCP code
 * 0.48.01 [connector library] Robust handling of BOLDs in RunTurnkey, removed ICAFIX variables from environment
 * 0.48.02 [library] Adjusted function name for container build alias
+* 0.48.03 [library connector] Update to qunexContainer.sh and minor report correction
 
 ICAFIXDependencies
 
@@ -522,7 +523,7 @@ Stable Container Tag Log
 ========================
 ---
 
-* docker.io/qunex/qunex_suite:qunex_dev 0.45.05
+* docker.io/qunex/qunex_suite:qunex_dev 0.48.02
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
