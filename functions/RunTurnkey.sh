@@ -732,6 +732,33 @@ checkMappingFile() {
     if [[ ! -f ${SCAN_MAPPING_FILENAME_PATH} ]]; then reho "ERROR: --mappingfile flag set but file not found in default locations: ${SCAN_MAPPING_FILENAME}"; echo ''; exit 1; fi
 }
 
+
+
+# -- Code for selecting BOLDS via Tags --> Check if both batch and bolds are specified for QC and if yes read batch explicitly
+getBoldList() {
+    if [[ ! -z ${ProcessingBatchFile} ]]; then
+        LBOLDRUNS="${BOLDRUNS}"
+        geho "  --> For ${CASE} searching for BOLD(s): '${LBOLDRUNS}'' in batch file ${ProcessingBatchFile} ... "; 
+        if [[ -f ${ProcessingBatchFile} ]]; then
+            # For debugging
+            # echo "   gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g'"
+            LBOLDRUNS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
+            LBOLDRUNS="${LBOLDRUNS}"
+        else
+            reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
+            exit 1
+        fi
+        if [[ ! -z ${LBOLDRUNS} ]]; then
+            geho "  --> Selected BOLDs: ${LBOLDRUNS} "
+            echo ""
+        else
+            reho " ERROR: No BOLDs found! Something went wrong for ${CASE}. Check your batch file inputs!"; echo ""
+            exit 1
+        fi
+    fi
+}
+
+
 # -- Perform explicit checks for steps which rely on BATCH_PARAMETERS_FILENAME and SCAN_MAPPING_FILENAME
 if [[ `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]] || [[ `echo ${TURNKEY_STEPS} | grep 'mapRawData'` ]]; then
     if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -997,6 +1024,7 @@ if [[ ${OVERWRITE_SUBJECT} == "yes" ]]; then
     reho " -- Removing specific subject: ${qunex_workdir}."; echo ""
     rm -rf ${qunex_workdir} &> /dev/null
 fi
+
 
 # =-=-=-=-=-=-= TURNKEY COMMANDS START =-=-=-=-=-=-= 
 #
@@ -1586,38 +1614,15 @@ fi
             # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi   --- default for bold prefix is now ""
             if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
         fi
-        if [ -z "${BOLDRUNS}" ]; then
-             BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
-        fi
+        # if [ -z "${BOLDRUNS}" ]; then
+        #      BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+        # fi
         
         # -- Code for selecting BOLDS via Tags --> Check if both batch and bolds are specified for QC and if yes read batch explicitly
-        if [[ ! -z ${ProcessingBatchFile} ]]; then
-            BOLDSBATCH="${BOLDRUNS}"
-            geho "  --> For ${CASE} searching for BOLD tags in batch file ${ProcessingBatchFile} ... "; echo ""
-            unset BOLDS BOLDRUNS BOLDRUN
-            if [[ -f ${ProcessingBatchFile} ]]; then
-                # For debugging
-                # echo "   gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'"
-                BOLDS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" | grep "BOLDS:" | sed 's/BOLDS://g'`
-                BOLDRUNS="${BOLDS}"
-            else
-                reho " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""
-                exit 1
-            fi
-            if [[ ! -z ${BOLDRUNS} ]]; then
-                geho "  --> For ${CASE} referencing ${ProcessingBatchFile} to select BOLD runs using tag: ${BOLDSBATCH} "
-                geho "      ------------------------------------------ "
-                geho "      Selected BOLDs --> ${BOLDRUNS} "
-                geho "      ------------------------------------------ "
-                echo ""
-            else
-                reho " ERROR: BOLDS variable not set. Something went wrong for ${CASE}. Check your batch file inputs!"; echo ""
-                exit 1
-            fi
-        fi
+        getBoldList
         
         # -- Loop through BOLD runs
-        for BOLDRUN in ${BOLDRUNS}; do
+        for BOLDRUN in ${LBOLDRUNS}; do
             ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
             runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
@@ -1779,12 +1784,15 @@ fi
             if [[ ${Modality} == "BOLD" ]]; then
                 # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi    --- default for bold prefix is now ""
                 if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
-                if [ -z "${BOLDRUNS}" ]; then
-                     BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
-                     geho " --> BOLDs not explicitly requested. Will run all available data: ${BOLDRUNS} "
-                fi
-                echo "====> Looping through these BOLDRUNS: ${BOLDRUNS}"
-                for BOLDRUN in ${BOLDRUNS}; do
+                # if [ -z "${BOLDRUNS}" ]; then
+                #      BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+                #      geho " --> BOLDs not explicitly requested. Will run all available data: ${BOLDRUNS} "
+                # fi
+
+                getBoldList
+
+                echo "====> Looping through these BOLDRUNS: ${LBOLDRUNS}"
+                for BOLDRUN in ${LBOLDRUNS}; do
                     echo "----> Now working on BOLDRUN: ${BOLDRUN}"
                     ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
                     runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
@@ -1942,9 +1950,12 @@ fi
         if [ -z ${output_name} ]; then
             output_name="${CASE}_BOLD_GreyPlot_CIFTI.pdf"
         fi
-        if [ -z ${BOLDRUNS} ]; then
-            BOLDRUNS="1"
-        fi
+        #if [ -z ${BOLDRUNS} ]; then
+        #    BOLDRUNS="1"
+        #fi
+
+        getBoldList
+
         echo " -- Log folder: ${logdir}/comlogs/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
         echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
         echo " -- Parameters for g_PlotBoldTS: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
@@ -1957,7 +1968,7 @@ fi
         echo "   QC Plot BOLDS runs: ${BOLDRUNS}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
 
         unset BOLDRUN
-        for BOLDRUN in ${BOLDRUNS}; do 
+        for BOLDRUN in ${LBOLDRUNS}; do 
            cd ${images_folder} 
            if [ -z ${QCPlotImages} ]; then
                QCPlotImages="bold${BOLDRUN}.nii.gz;bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"
@@ -2003,16 +2014,26 @@ fi
     # -- BOLD Parcellation 
     turnkey_BOLDParcellation() {
         FunctionName="BOLDParcellation"
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation ... "; echo ""
-        # -- Defaults if not specified:
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation on BOLDS: ${BOLDRUNS} ... "; echo ""
+        
+        getBoldList
 
-        if [ -z ${BOLDRUNS} ]; then
-            BOLDRUNS="1"
-        fi
+#        # -- Defaults if not specified:
+#
+#        local LBOLDRUNS="${BOLDRUNS}"
+#
+#        if [ -z "${LBOLDRUNS}" ]; then
+#            LBOLDRUNS="1"
+#        fi
+#
+#        BOLDS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
+#        LBOLDRUNS="${BOLDS}"
+#
+#        echo " ---> BOLDRUNS: ${LBOLDRUNS}"
 
         if [ -z ${RunParcellations} ]; then
 
-            for BOLDRUN in ${BOLDRUNS}; do
+            for BOLDRUN in ${LBOLDRUNS}; do
                if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
                if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
                if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
@@ -2073,7 +2094,7 @@ fi
 
                 echo ""; reho " ===> Now running parcellation ${Parcellation}"; echo ""
 
-                for BOLDRUN in ${BOLDRUNS}; do
+                for BOLDRUN in ${LBOLDRUNS}; do
                    if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
                    if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
                    if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
@@ -2113,13 +2134,11 @@ fi
         else
            ROINames=${ROIInfo}
         fi
+
+        getBoldList
+
         for ROIInfo in ${ROINames}; do
-              # unset BOLDRUNS
-              if [ -z ${BOLDRUNS} ]; then
-                  BOLDRUNS="1"
-              fi
-              # unset BOLDRUN
-              for BOLDRUN in ${BOLDRUNS}; do
+            for BOLDRUN in ${LBOLDRUNS}; do
                 if [ -z "$InputFile" ]; then InputFileSeed="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileSeed="${InputFile}"; fi
                 if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
                 if [ -z "$ExtractData" ]; then ExtractData=""; fi
@@ -2153,19 +2172,17 @@ fi
                 echo " -- Command: ${RunCommand}"
                 eval ${RunCommand}
                 BOLDfcLogCheck 
-           done
+            done
         done
     }
    # -- Compute GBC
    turnkey_computeBOLDfcGBC() {
    FunctionName="computeBOLDfc"
        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDfc processing steps for GBC ... "; echo ""
-       # unset BOLDRUNS
-       if [ -z ${BOLDRUNS} ]; then
-           BOLDRUNS="1"
-       fi
-       #unset BOLDRUN
-       for BOLDRUN in ${BOLDRUNS}; do
+
+       getBoldList
+
+       for BOLDRUN in ${LBOLDRUNS}; do
             if [ -z "$InputFile" ]; then InputFileGBC="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileGBC="${InputFile}"; fi
             if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
             if [ -z "$ExtractData" ]; then ExtractData=""; fi
@@ -2214,11 +2231,14 @@ fi
    #turnkey_QCrun_BOLDfc
    turnkey_runQC_BOLDfc() {
         Modality="BOLD"
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC step for ${Modality} FC ... "; echo ""
-        if [ -z "${BOLDRUNS}" ]; then
-             BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
-        fi
-        for BOLDRUN in ${BOLDRUNS}; do
+        # echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC step for ${Modality} FC ... "; echo ""
+        # if [ -z "${BOLDRUNS}" ]; then
+        #      BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
+        # fi
+
+        getBoldList
+
+        for BOLDRUN in ${LBOLDRUNS}; do
             ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
             runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
