@@ -18,6 +18,7 @@ import os.path
 import re
 import shutil
 import niutilities.g_exceptions as ge
+import niutilities.g_core as gc
 import zipfile
 import tarfile
 import glob
@@ -27,7 +28,7 @@ import sys
 
 bids = {
     'modalities': ['anat', 'func', 'dwi', 'fmap'],
-    'optional': ['code', 'derivatives', 'stimuli', 'sourcedata'],
+    'optional': ['code', 'derivatives', 'stimuli', 'sourcedata', 'phenotype'],
     'anat': {
         'label': ['T1w', 'T2w', 'T1rho', 'T1map', 'T2map', 'T2star', 'FLAIR', 'FLASH', 'PD', 'PDMap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio', 'defacemask'],
         'info':  ['acq', 'run', 'ce', 'rec', 'echo', 'mod', 'ses'],
@@ -258,7 +259,10 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                         processed. Glob patterns can be used. If provided, only
                         packets or folders within the inbox that match the list
                         of sessions will be processed. If `inbox` is a file 
-                        `sessions` will not be applied.
+                        `sessions` will not be applied. If `inbox` is a valid 
+                        bids datastructure folder, then the sessions can be 
+                        specified either in `<subject id>[_<session name>]`
+                        format or as explicit `sub-<subject id>` names.
 
     --action            How to map the files to Qu|Nex structure. One of:
                         
@@ -422,6 +426,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     if subjectsfolder is None:
         subjectsfolder = os.path.abspath(".")
 
+    qxfolders = gc.deduceFolders({'subjectsfolder': subjectsfolder})
+
     if inbox is None:
         inbox = os.path.join(subjectsfolder, 'inbox', 'BIDS')
         bidsname = ""
@@ -433,6 +439,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     sessionsList = {'list': [], 'clean': [], 'skip': [], 'map': [], 'append': []}
     allOk        = True
     errors       = ""
+
+    inbox = os.path.abspath(inbox)
 
     # ---> Check for folders
 
@@ -454,10 +462,65 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
         if os.path.isfile(inbox):
             sourceFiles = [inbox]
         elif os.path.isdir(inbox):
+
+            # -- figure out, where we are
+            basename = os.path.basename(inbox)            
+            if 'sub-' in basename:
+                folderType = 'subject'
+            elif 'ses-' in basename:
+                folderType = 'session'
+            elif glob.glob(os.path.join(inbox, 'sub-*')):
+                folderType = 'bids_study'
+            else:
+                folderType = 'inbox'
+
+            print "--> Inbox type:", folderType
+
+            # -- process sessions
+
+            globfor = {'subject': '*', 'session': '*', 'bids-study': 'sub-*', 'inbox': '*'}
+
             if sessions:
                 sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
+                if folderType == 'bids_study':
+                    nsessions = []
+                    for session in sessions:
+                        if 'sub-' in session:
+                            nsessions.append(session)
+                        elif '_' in session:
+                            nsessions.append("sub-%s/ses-%s" % tuple(session.split("_")))
+                        else:
+                            nsessions.append('sub-' + session)
+                    sessions = nsessions
+                elif folderType == 'subject':
+                    nsessions = []
+                    for session in sessions:
+                        if 'ses-' in session:
+                            nsessions.append(session)
+                        elif '_' in session:
+                            nsessions.append("ses-%s" % (session.split("_")[1]))
+                        else:
+                            nsessions.append('ses-' + session)
+                    sessions = nsessions                    
             else:
-                sessions = ["*"]
+                sessions = [globfor[folderType]]
+
+            # --- check for metadata
+
+            studyat = {'subject': -1, 'session': -2}
+            metadata = ['dataset_description.json', 'README', 'CHANGES', 'participants.*']
+            metadata += ["%s/*" % (e) for e in bids['optional']]
+
+            if folderType in studyat:
+                metadataPath = os.path.join(os.path.split(inbox)[:studyat[folderType]])
+            else:
+                metadataPath = inbox
+            
+            for m in metadata:
+                sourceFiles += glob.glob(os.path.join(metadataPath, m))
+
+            # --- compile candidates
+
             candidates = []
             for e in sessions:
                 candidates += glob.glob(os.path.join(inbox, e))
@@ -465,7 +528,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 if os.path.isfile(candidate):
                     sourceFiles.append(candidate)
                 elif os.path.isdir(candidate):
-                    for path, dirs, files in os.walk(canidate):
+                    for path, dirs, files in os.walk(candidate):
                         for file in files:
                             sourceFiles.append(os.path.join(path, file))
         else:
@@ -585,7 +648,16 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 except:
                     print "==> %s of %s failed!" % (archive, file)
 
-    # ---> mapping data to Qu|Nex nii folder
+    # ---> mapping data to Qu|Nex nii and behavioral folder
+
+    # --> get a list of behavioral data:
+
+    bids_folder = os.path.join(qxfolders['basefolder'], 'info', 'bids', bidsname)
+    behavior = []
+    behavior += glob.glob(os.path.join(bids_folder, 'participants.tsv'))
+    behavior += glob.glob(os.path.join(bids_folder, 'phenotype/*.tsv'))
+
+    # --> run the mapping
 
     report = []
     for execute in ['map', 'clean']:
@@ -598,14 +670,49 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                 if sessionid:
                     info += ", session " + sessionid
 
+                print 
+
+                # -- do image mapping
                 try:
-                    print
                     mapBIDS2nii(os.path.join(subjectsfolder, session), overwrite)
-                    report.append('%s completed ok' % (info))
+                    nmapping = True
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
-                    report.append('%s failed' % (info))
+                    nmapping = False                    
+
+                # -- do behavioral mapping
+
+                try:
+                    bmapping = mapBIDS2behavior(os.path.join(subjectsfolder, session), behavior, overwrite)
+                except ge.CommandFailed as e:
+                    print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
+                    bmapping = False                
+
+                # -- compile report
+
+                if nmapping:
+                    minfo = info + " image mapping completed"
+                else:
+                    minfo = info + " image mapping failed"
                     allOk = False
+
+                if bmapping:
+                    minfo += ", behavioral files: "
+                    binfo = []
+                    if bmapping['mapped']:
+                        binfo.append("%d files mapped" % (len(bmapping['mapped'])))
+                    else:
+                        binfo.append("no files mapped")
+                        
+                    if bmapping['invalid']:
+                        binfo.append("%d files invalid" % (len(bmapping['invalid'])))
+                        allOk = False
+                    minfo += ", ".join(binfo)
+                else:
+                    minfo += ", behavior file mapping failed"
+                    allOk = False
+
+                report.append(minfo)
 
     print "\nFinal report\n============"
     for line in report:
@@ -867,8 +974,7 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     if sessionid:
         info += ", session " + sessionid
 
-    print 'info:', info
-
+    print
     splash = "Running mapBIDS2nii for %s" % (info)
     print splash
     print "".join(['=' for e in range(len(splash))])
@@ -972,4 +1078,78 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
 
     if not allOk:
         raise ge.CommandFailed("mapBIDS2nii", "Not all actions completed successfully!", "Some files for session %s were not mapped successfully!" % (session), "Please check logs and data!")
+
+
+
+def mapBIDS2behavior(sfolder='.', behavior=[], overwrite='no'):
+    '''
+    '''
+
+    # -- set up variables
+
+    sfolder = os.path.abspath(sfolder)
+    bfolder = os.path.join(sfolder, 'behavior')
+
+    session = os.path.basename(sfolder)
+    subject = session.split('_')[0]
+    sessionid = (session.split('_') + [''])[1]
+
+    # -- print splash
+
+    info = 'subject ' + subject
+    if sessionid:
+        info += ", session " + sessionid
+
+    print
+    splash = "Running mapBIDS2behavior for %s" % (info)
+    print splash
+    print "".join(['=' for e in range(len(splash))])
+
+    # -- map data
+
+    report = {'mapped': [], 'invalid': []}
+
+    subjectid = "sub-" + subject
+    if not os.path.exists(bfolder):
+        print "--> created behavior subfolder"
+        os.makedirs(bfolder)    
+
+    for bfile in behavior:
+        outlines = []
+        error = "Data for %s not found in file." % (subjectid)
+        with open(bfile, 'r') as f:
+            first = True
+            for line in f:
+                line = line.strip()
+                if first:
+                    first = False       
+                    fields = line.split('\t')
+                    if 'participant_id' in fields:
+                        sidcol = fields.index('participant_id')
+                        outlines.append(line)
+                    else:
+                        error = "No 'participant_id' field in file."
+                        break
+                else:
+                    values = line.split('\t')
+                    if values[sidcol] == subjectid:
+                        outlines.append(line)
+
+        bfilename = os.path.basename(bfile)
+        if len(outlines) == 2:                     
+            with open(os.path.join(bfolder, bfilename), 'w') as ofile:
+                for oline in outlines:
+                    print >> ofile, oline
+            print "--> mapped:", bfilename
+            report['mapped'].append(bfilename)
+        elif len(outlines) < 2:
+            print "==> WARNING: Could not map %s! %s Please inspect file for validity!" % (bfilename, error)
+            report['invalid'].append(bfilename)
+        else:
+            print "==> WARNING: Could not map %s! More than one line matching %s! Please inspect file for validity!" % (bfilename, subjectid)
+            report['invalid'].append(bfilename)
+
+    return report
+
+                    
 
