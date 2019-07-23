@@ -1136,7 +1136,7 @@ def mapBIDS2behavior(sfolder='.', behavior=[], overwrite='no'):
                         outlines.append(line)
 
         bfilename = os.path.basename(bfile)
-        if len(outlines) == 2:                     
+        if len(outlines) >= 2:                     
             with open(os.path.join(bfolder, bfilename), 'w') as ofile:
                 for oline in outlines:
                     print >> ofile, oline
