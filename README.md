@@ -517,6 +517,7 @@ Change Log
 * 0.48.02 [library] Adjusted function name for container build alias
 * 0.48.03 [library connector] Update to qunexContainer.sh and minor report correction
 * 0.48.04 [niutilities] Added parsing of behavioral data to BIDSImport
+* 0.48.05 [niutilities qunexaccept] Changed BIDSImport to import behavior with multiple sessions per subject, added dowload links to qunexaccept
 
 ICAFIXDependencies
 
