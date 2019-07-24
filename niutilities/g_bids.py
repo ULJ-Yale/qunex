@@ -163,9 +163,9 @@ def mapToQUNEXBids(file, subjectsfolder, bidsname, sessionsList, overwrite, pref
     modality = ""
 
     for part in re.split("_|/|\.", file):
-        if 'sub-' in part:
+        if part.startswith('sub-'):
             subject = part.split('-')[1]            
-        elif 'ses' in part:
+        elif part.startswith('ses-'):
             session = part.split('-')[1]
         elif part in bids['optional']:
             optional = part
@@ -706,11 +706,11 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                         
                     if bmapping['invalid']:
                         binfo.append("%d files invalid" % (len(bmapping['invalid'])))
-                        allOk = False
+                        # allOk = False
                     minfo += ", ".join(binfo)
                 else:
                     minfo += ", behavior file mapping failed"
-                    allOk = False
+                    # allOk = False
 
                 report.append(minfo)
 
@@ -750,8 +750,8 @@ def processBIDS(bfolder):
     
         # --> get session ID
     
-        subject = [e.split('-')[1] for e in parts if 'sub-' in e] + ['']
-        session = [e.split('-')[1] for e in parts if 'ses-' in e] + ['']
+        subject = [e.split('-')[1] for e in parts if e.startswith('sub-')] + ['']
+        session = [e.split('-')[1] for e in parts if e.startswith('ses-')] + ['']
         session = "_".join([e for e in [subject[0], session[0]] if e])
         if not session:
             session = 'study'
