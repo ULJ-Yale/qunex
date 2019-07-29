@@ -521,6 +521,7 @@ Change Log
 * 0.48.06 [niutilities] Made BIDSImport more robust
 * 0.48.07 [library] Adjusted qunexContainer to take sessions instead of subjects parameter
 * 0.48.08 [nitools] fc_ExtractROITimeseriesMasked now saves use information about frames
+* 0.48.09 [connector] Enabled RunTurnkey to work with bids datasets directly, changed createBatch overwrite settiing to append
 
 ICAFIXDependencies
 
