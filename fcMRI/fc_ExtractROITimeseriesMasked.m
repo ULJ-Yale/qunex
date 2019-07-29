@@ -269,7 +269,8 @@ for n = 1:nsub
         % ---> extracting timeseries
 
         fprintf('%d ', t.frames);
-        data.(ana(a).name).timeseries{n}   = t.mri_ExtractROI(roi, rcodes, method);
+        data.(ana(a).name).timeseries{n} = t.mri_ExtractROI(roi, rcodes, method);
+        data.(ana(a).name).usevec{n}     = t.use;
 
     end
 
@@ -301,7 +302,7 @@ if ismember('t', options)
     % ---> open file and print header
 
     [fout message] = fopen([targetf '.txt'],'w');
-    fprintf(fout, 'subject\tevent\tframe');
+    fprintf(fout, 'subject\tevent\tframe\tuse');
     for ir = 1:length(data.roinames)
         fprintf(fout, '\t%s', data.roinames{ir});
     end
@@ -314,9 +315,10 @@ if ismember('t', options)
         for a = 1:nana
             for is = 1:nsub
                 ts = data.(ana(a).name).timeseries{is};
+                usevec = data.(ana(a).name).usevec{is};
                 tslen = size(ts, 2);
                 for it = 1:tslen
-                    fprintf(fout, '\n%s\t%s\t%d', data.subjects{is}, ana(a).name, it);
+                    fprintf(fout, '\n%s\t%s\t%d\t%d', data.subjects{is}, ana(a).name, it, usevec(it));
                     fprintf(fout, '\t%.5f', ts(:,it));
                 end
             end
