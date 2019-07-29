@@ -1309,6 +1309,7 @@ fi
 
         # -- Check if BIDS format IS requested
         if [[ ${BIDSFormat} == "yes" ]]; then
+            unset INTYPE
             unset FILECHECK
             # -- NOTE: IF XNAT run is not requested then it assumed that zipped BIDS data is prepared in $qunex_subjectsfolder/inbox/BIDS/*zip
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -1333,16 +1334,33 @@ fi
                     geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip "; echo ""
                     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip
                 fi
+                INTYPE=zip
             else
-                cp -r ${RawDataInputPath}/${CASE}.zip ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip
+                # --- we have a zip file            
+                if [ -e ${RawDataInputPath}/${CASE}.zip ]; then
+                    cp -r ${RawDataInputPath}/${CASE}.zip ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip
+                    INTYPE=zip
+                else
+                    INTYPE=dataset
+                fi
             fi
             # -- Perform mapping of BIDS file structure into Qu|Nex
             echo ""
             geho " -- Running:  "
-            geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" "; echo ""
-            ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" >> ${mapRawData_ComlogTmp}
+
+            if [[ ${INTYPE} == "zip" ]]; then 
+                geho "  --> processing a single BIDS formated package [${CASE}.zip]"
+                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" "; echo ""
+                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" >> ${mapRawData_ComlogTmp}
+            elif [[  ${INTYPE} == "dataset" ]]; then
+                geho "  --> processing a single BIDS session [${CASE}] from the BIDS dataset"
+                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" "; echo ""
+                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" >> ${mapRawData_ComlogTmp}
+            fi
+
             popd 2> /dev/null
             rm -rf ${qunex_subjectsfolder}/inbox/BIDS/${CASE}* &> /dev/null
+            
             # -- Run BIDS completion checks on mapped data
             if [ -f ${qunex_subjectsfolder}/${CASE}/bids/bids2nii.log ]; then
                  FILESEXPECTED=`more ${qunex_subjectsfolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
@@ -1501,7 +1519,7 @@ fi
         createBatch_ComlogTmp="${logdir}/comlogs/tmp_createBatch_${CASE}_${TimeStamp}.log"; touch ${createBatch_ComlogTmp}; chmod 777 ${createBatch_ComlogTmp}
         createBatch_ComlogError="${logdir}/comlogs/error_createBatch_${CASE}_${TimeStamp}.log"
         createBatch_ComlogDone="${logdir}/comlogs/done_createBatch_${CASE}_${TimeStamp}.log"
-        ExecuteCall="${QUNEXCOMMAND} createBatch --subjectsfolder='${qunex_subjectsfolder}' --tfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='yes'"
+        ExecuteCall="${QUNEXCOMMAND} createBatch --subjectsfolder='${qunex_subjectsfolder}' --tfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='append'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${createBatch_ComlogTmp}
         if [[ ! -z `cat ${createBatch_ComlogTmp} | grep 'Successful completion'` ]]; then createBatchCheck="pass"; else createBatchCheck="fail"; fi
