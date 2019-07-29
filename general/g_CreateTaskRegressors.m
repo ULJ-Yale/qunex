@@ -111,14 +111,14 @@ for m = 1:nregressors
     if isempty(model.regressor(m).code)
         model.regressor(m).code = find(ismember(events.events, model.regressor(m).event)) - 1;
     end
-    if ~any(strcmp(events.events,model.regressor(m).name))
-        switch lower(check)
-            case 'warning'
-                warning('\ng_CreateTaskRegressors: Event [%s] from the model not found in the fidl file!\n', model.regressor(m).name);
-            case 'error'
-                error('\nERROR: Event [%s] from the model not found in the fidl file!\n', model.regressor(m).name);
-        end
-    end
+    % if ~any(strcmp(events.events,model.regressor(m).name))
+    %     switch lower(check)
+    %         case 'warning'
+    %             warning('\ng_CreateTaskRegressors: Event [%s] from the model not found in the fidl file!\n', model.regressor(m).name);
+    %         case 'error'
+    %             error('\nERROR: Event [%s] from the model not found in the fidl file!\n', model.regressor(m).name);
+    %     end
+    % end
 end
 
 
@@ -273,9 +273,10 @@ for r = 1:nruns
                     fprintf('\n');
                     fprintf('%.2f ', events.event_s(relevant));
                 end
+                % fprintf('\n -> e_start: %d, e_end: %d', e_start, e_end);
                 ts(e_start:e_end, 1) = rel_weights(ievent);
             end
-            
+
             run(r).matrix = [run(r).matrix ts];
             run(r).regressors = [run(r).regressors, basename];
             if r == 1
