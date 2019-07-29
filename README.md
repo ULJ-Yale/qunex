@@ -519,7 +519,8 @@ Change Log
 * 0.48.04 [niutilities] Added parsing of behavioral data to BIDSImport
 * 0.48.05 [niutilities qunexaccept] Changed BIDSImport to import behavior with multiple sessions per subject, added dowload links to qunexaccept
 * 0.48.06 [niutilities] Made BIDSImport more robust
-* 0.48.06 [library] Adjusted qunexContainer to take sessions instead of subjects parameter
+* 0.48.07 [library] Adjusted qunexContainer to take sessions instead of subjects parameter
+* 0.48.08 [nitools] fc_ExtractROITimeseriesMasked now saves use information about frames
 
 ICAFIXDependencies
 
