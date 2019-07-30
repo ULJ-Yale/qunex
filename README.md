@@ -522,14 +522,14 @@ Change Log
 * 0.48.07 [library] Adjusted qunexContainer to take sessions instead of subjects parameter
 * 0.48.08 [nitools] fc_ExtractROITimeseriesMasked now saves use information about frames
 * 0.48.09 [connector] Enabled RunTurnkey to work with bids datasets directly, changed createBatch overwrite settiing to append
+* 0.48.10 [library] Fixed variable errors in environment for gitqunexstatus function and added scene template for flat maps
 
-ICAFIXDependencies
 
 Stable Container Tag Log
 ========================
 ---
 
-* docker.io/qunex/qunex_suite:qunex_dev 0.48.02
+* docker.io/qunex/qunex_suite:qunex_dev 0_48_02
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
