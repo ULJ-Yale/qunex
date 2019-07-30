@@ -523,6 +523,7 @@ Change Log
 * 0.48.08 [nitools] fc_ExtractROITimeseriesMasked now saves use information about frames
 * 0.48.09 [connector] Enabled RunTurnkey to work with bids datasets directly, changed createBatch overwrite settiing to append
 * 0.48.10 [library] Fixed variable errors in environment for gitqunexstatus function and added scene template for flat maps
+* 0.48.11 [qunexaccept] Target folders for example data specified more robustly
 
 
 Stable Container Tag Log
