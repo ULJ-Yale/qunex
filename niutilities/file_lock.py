@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import time
 
+# create a lock file for a certain file
 def lock(filename, delay=1, identifier="Python process"):
     lock_file = filename + ".lock"
 
@@ -17,8 +18,15 @@ def lock(filename, delay=1, identifier="Python process"):
 
         time.sleep(delay)
 
+# remove a lock file for a certain file
+def unlock(filename):
+    lock_file = filename + ".lock"
 
-def lock_and_write(string, filename, delay=1):
+    if os.path.isfile(lock_file):
+        os.unlink(lock_file)
+
+# lock a file, write into it, then unlock it
+def safe_write(string, filename, delay=1):
     # lock
     lock(filename, delay=delay)
 
@@ -33,10 +41,3 @@ def lock_and_write(string, filename, delay=1):
 
     # unlock
     unlock(filename)
-
-
-def unlock(filename):
-    lock_file = filename + ".lock"
-
-    if os.path.isfile(lock_file):
-        os.unlink(lock_file)

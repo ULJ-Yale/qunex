@@ -1,4 +1,5 @@
-lock <- function(filename, identifier="R process", delay=1) {
+# create a lock file for a certain file
+lock <- function(filename, delay=1, identifier="R process") {
   lock_file <- paste0(filename, ".lock")
   
   # wait while file exists
@@ -14,7 +15,8 @@ lock <- function(filename, identifier="R process", delay=1) {
   }
 }
 
-clear_lock <- function(filename) {
+# remove a lock file for a certain file
+unlock <- function(filename) {
   lock_file <- paste0(filename, ".lock")
   
   if (file.exists(lock_file)) {
@@ -22,21 +24,22 @@ clear_lock <- function(filename) {
   }
 }
 
-lock_and_write <- function(string, filename, delay=1) {
+# lock a file, write into it, then unlock it
+safe_write <- function(string, filename, delay=1) {
   # lock
   lock(filename, delay=delay)
   
   # open file
-  opened_file <- file(filename, "a")
+  f <- file(filename, "a")
   
   # write
-  cat(string, file=opened_file)
+  cat(string, file=f)
   
   # close file
-  close(opened_file)
+  close(f)
   
   # unlock
-  clear_lock(filename)
+  unlock(filename)
   
   return(1)
 }
