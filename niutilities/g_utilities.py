@@ -4,7 +4,7 @@
 Miscellaneous utilities for file processing.
 
 Created by Grega Repovs on 2017-09-17.
-Copyright (c) Grega Repovs. All rights reserved.
+Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 """
 
 import os.path
@@ -22,6 +22,7 @@ import getpass
 import re
 import subprocess
 import sys
+import file_lock as fl
 
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================
@@ -326,6 +327,8 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
              - Reports an error if no session is found to add to batch
     2019-05-22 Grega Repovš
              - Added full path to report
+    2019-07-31 Jure Demsar
+             - Added file locking mechanism      
     '''
 
     print "Running createBatch\n==================="
@@ -375,14 +378,16 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
 
     preexist = os.path.exists(tfile)
 
+    # lock file
+    fl.lock(tfile)
+    
     if overwrite == 'yes':
         print "---> Creating file %s [%s]" % (os.path.basename(tfile), tfile)
         jfile = open(tfile, 'w')
         print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
         print >> jfile, "# Subjects folder: %s" % (subjectsfolder)
         print >> jfile, "# Source files: %s" % (sfile)
-        slist   = []
-
+        
     elif overwrite == 'append':
         slist, parameters = gc.getSubjectList(tfile)
         slist = [e['id'] for e in slist]
@@ -453,6 +458,9 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     # --- close file
 
     jfile.close()
+
+    # unlock file
+    fl.unlock(tfile)
 
     if missing:
         raise ge.CommandFailed("createBatch", "Not all sessions specified added to the batch file!", "%s was missing for %d session(s)!" % (sfile, missing), "Please check your data!")

@@ -22,13 +22,21 @@
 #       -verbose, -v    be talkative when running the script
 #
 #
-#       (c) Grega Repovš
+#       (c) Grega Repovs
 #       2011-07-26 -> First complete version of the script
 #       2012-09-20 -> Added reporting of stats after scrubbing
 #       2013-12-22 -> Dumbed down to just print the reports
 #       2015-07-05 -> Changed to deal with alternative root bold names
 #       2019-04-25 -> Changed subject to session
 #
+#       (c) Jure Demsar
+#       2019-07-31 -> Added file locking mechanism
+#
+
+
+# ---> file locking script
+source("file_lock.R")
+
 
 # ---> defaults
 
@@ -121,6 +129,10 @@ if (mreport != ""){
     } else {
         header = FALSE
     }
+    
+    # lock movement report file
+    lock(mreport)
+    
     mrfile <- file(mreport, "a")
 
     if (header){
@@ -141,6 +153,10 @@ if (preport != ""){
     } else {
         header = FALSE
     }
+    
+    # lock post scrubbing report file
+    lock(preport)
+    
     prfile <- file(preport, "a")
 
     if (header){
@@ -161,6 +177,10 @@ if (sreport != ""){
     } else {
         header = FALSE
     }
+    
+    # lock scrubbing report file
+    lock(sreport)
+    
     srfile <- file(sreport, "a")
 
     if (header){
@@ -452,6 +472,11 @@ if (plot) {
     dev.off()
     if (verbose) cat(" ... ok")
 }
+
+# --- unlock all files
+unlock(mreport)
+unlock(preport)
+unlock(sreport)
 
 # --- report all ok!
 
