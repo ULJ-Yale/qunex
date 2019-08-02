@@ -1375,14 +1375,14 @@ if [ -z "${gmrifunctions##*$1*}" ]; then
             gmriinputecho="${gmriinputecho} ${inputarg}"
         done
         
-        # -- Report NIUtilities for debugging
-         echo ""
-         cyaneho "-------- Running NIUtilities command: ----------"
-         echo ""
-         cyaneho "  qunex ${gmriinputecho}"
-         echo ""
-         cyaneho "-------------------------------------------------"
-         echo ""
+        # # -- Report NIUtilities for debugging
+        #  echo ""
+        #  cyaneho "-------- Running NIUtilities command: ----------"
+        #  echo ""
+        #  cyaneho "  qunex ${gmriinputecho}"
+        #  echo ""
+        #  cyaneho "-------------------------------------------------"
+        #  echo ""
         
         # -- Execute NIUtilities
         gmriFunction
