@@ -413,9 +413,20 @@ for (b in bolds){
 
 }
 
-if (msummary) close(mrfile)
-if (psummary) close(prfile)
-if (ssummary) close(srfile)
+# --- close and unlock files
+
+if (msummary) { 
+    close(mrfile)
+    unlock(mreport)
+}
+if (psummary) {
+    close(prfile)
+    unlock(preport)
+}
+if (ssummary) {
+    close(srfile)
+    unlock(sreport)
+}
 
 if (plot) {
     if (verbose) cat("\n\n---> plotting figures")
@@ -472,11 +483,6 @@ if (plot) {
     dev.off()
     if (verbose) cat(" ... ok")
 }
-
-# --- unlock all files
-unlock(mreport)
-unlock(preport)
-unlock(sreport)
 
 # --- report all ok!
 
