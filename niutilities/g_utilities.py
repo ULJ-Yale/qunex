@@ -374,93 +374,100 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
         print "---> Creating target folder %s" % (targetFolder)
         os.makedirs(targetFolder)
 
-    # --- open target file
 
-    preexist = os.path.exists(tfile)
+    try:
 
-    # lock file
-    fl.lock(tfile)
-    
-    if overwrite == 'yes':
-        print "---> Creating file %s [%s]" % (os.path.basename(tfile), tfile)
-        jfile = open(tfile, 'w')
-        print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
-        print >> jfile, "# Subjects folder: %s" % (subjectsfolder)
-        print >> jfile, "# Source files: %s" % (sfile)
+        # --- open target file
+        preexist = os.path.exists(tfile)
+
+        # lock file
+        fl.lock(tfile)
         
-    elif overwrite == 'append':
-        slist, parameters = gc.getSubjectList(tfile)
-        slist = [e['id'] for e in slist]
-        print "---> Appending to file %s [%s]" % (os.path.basename(tfile), tfile)
-        if paramfile and preexist:
-            print "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!"
-        jfile = open(tfile, 'a')
+        if overwrite == 'yes':
+            print "---> Creating file %s [%s]" % (os.path.basename(tfile), tfile)
+            jfile = open(tfile, 'w')
+            print >> jfile, "# File generated automatically on %s" % (datetime.datetime.today())
+            print >> jfile, "# Subjects folder: %s" % (subjectsfolder)
+            print >> jfile, "# Source files: %s" % (sfile)
+            
+        elif overwrite == 'append':
+            slist, parameters = gc.getSubjectList(tfile)
+            slist = [e['id'] for e in slist]
+            print "---> Appending to file %s [%s]" % (os.path.basename(tfile), tfile)
+            if paramfile and preexist:
+                print "---> WARNING: paramfile was specified, however it will not be added as we are appending to an existing file!"
+            jfile = open(tfile, 'a')
 
-    # --- check for param file
+        # --- check for param file
 
-    if overwrite == 'yes' or not preexist:
-        if paramfile is None:
-            paramfile = os.path.join(subjectsfolder, 'specs', 'batch_parameters.txt')
-            if not os.path.exists(paramfile):
-                print "---> WARNING: Creating empty parameter file!"
-                pfile = open(paramfile, 'w')
-                print >> pfile, parameterTemplateHeader
-                for line in gp.arglist:
-                    if len(line) == 4:
-                        print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
-                    elif len(line) > 0:
-                        print >> pfile, "#\n# " + line[0] + '\n#'
-                pfile.close()
+        if overwrite == 'yes' or not preexist:
+            if paramfile is None:
+                paramfile = os.path.join(subjectsfolder, 'specs', 'batch_parameters.txt')
+                if not os.path.exists(paramfile):
+                    print "---> WARNING: Creating empty parameter file!"
+                    pfile = open(paramfile, 'w')
+                    print >> pfile, parameterTemplateHeader
+                    for line in gp.arglist:
+                        if len(line) == 4:
+                            print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
+                        elif len(line) > 0:
+                            print >> pfile, "#\n# " + line[0] + '\n#'
+                    pfile.close()
 
-        if os.path.exists(paramfile):
-            print "---> appending parameter file [%s]." % (paramfile)
-            print >> jfile, "# Parameter file: %s\n#" % (paramfile)
-            with open(paramfile) as f:
-                for line in f:
-                    print >> jfile, line,
-        else:
-            print "---> parameter files does not exist, skipping [%s]." % (paramfile)
-
-    # -- get list of subject folders
-
-    missing = 0
-
-    if sessions is not None:
-        sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
-        files = []
-        for session in sessions:
-            nfiles = glob.glob(os.path.join(subjectsfolder, session['id'], sfile))
-            if nfiles:
-                files += nfiles
+            if os.path.exists(paramfile):
+                print "---> appending parameter file [%s]." % (paramfile)
+                print >> jfile, "# Parameter file: %s\n#" % (paramfile)
+                with open(paramfile) as f:
+                    for line in f:
+                        print >> jfile, line,
             else:
-                print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(subjectsfolder, session['id'], sfile))
-                missing += 1
-    else:
-        files = glob.glob(os.path.join(subjectsfolder, '*', sfile))
+                print "---> parameter files does not exist, skipping [%s]." % (paramfile)
 
-    # --- loop trough session files
+        # -- get list of subject folders
 
-    files.sort()
-    for file in files:
-        sessionid = os.path.basename(os.path.dirname(file))
-        if sessionid in slist:
-            print "---> Skipping: %s" % (sessionid)
+        missing = 0
+
+        if sessions is not None:
+            sessions, gopts = gc.getSubjectList(sessions, sfilter=sfilter, verbose=False, subjectsfolder=subjectsfolder)
+            files = []
+            for session in sessions:
+                nfiles = glob.glob(os.path.join(subjectsfolder, session['id'], sfile))
+                if nfiles:
+                    files += nfiles
+                else:
+                    print "---> ERROR: no %s found for %s! Please check your data! [%s]" % (sfile, session['id'], os.path.join(subjectsfolder, session['id'], sfile))
+                    missing += 1
         else:
-            print "---> Adding: %s" % (sessionid)
-            print >> jfile, "\n---"
-            with open(file) as f:
-                for line in f:
-                    print >> jfile, line,
+            files = glob.glob(os.path.join(subjectsfolder, '*', sfile))
+
+        # --- loop trough session files
+
+        files.sort()
+        for file in files:
+            sessionid = os.path.basename(os.path.dirname(file))
+            if sessionid in slist:
+                print "---> Skipping: %s" % (sessionid)
+            else:
+                print "---> Adding: %s" % (sessionid)
+                print >> jfile, "\n---"
+                with open(file) as f:
+                    for line in f:
+                        print >> jfile, line,
+
+        # --- close file
+        jfile.close()
+        fl.unlock(tfile)
+        
+
+    except:
+        if jfile:
+            jfile.close()
+            fl.unlock(tfile)
+        raise
+    
 
     if not files:
         raise ge.CommandFailed("createBatch", "No session found", "No sessions found to add to the batch file!", "Please check your data!")
-
-    # --- close file
-
-    jfile.close()
-
-    # unlock file
-    fl.unlock(tfile)
 
     if missing:
         raise ge.CommandFailed("createBatch", "Not all sessions specified added to the batch file!", "%s was missing for %d session(s)!" % (sfile, missing), "Please check your data!")
