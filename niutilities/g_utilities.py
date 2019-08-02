@@ -382,6 +382,9 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
 
         # lock file
         fl.lock(tfile)
+
+        # --- initalize slist
+        slist = []
         
         if overwrite == 'yes':
             print "---> Creating file %s [%s]" % (os.path.basename(tfile), tfile)
