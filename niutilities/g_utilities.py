@@ -22,7 +22,7 @@ import getpass
 import re
 import subprocess
 import sys
-import file_lock as fl
+import niutilities.g_filelock as fl
 
 parameterTemplateHeader = '''#  Batch parameters file
 #  =====================
