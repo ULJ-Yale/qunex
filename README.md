@@ -525,6 +525,7 @@ Change Log
 * 0.48.10 [library] Fixed variable errors in environment for gitqunexstatus function and added scene template for flat maps
 * 0.48.11 [qunexaccept] Target folders for example data specified more robustly
 * 0.48.12 [niutilities connector] Added file locking, turned off gmri debugging splash
+* 0.48.13 [niutilities] Updated HCPLSImport to work with HCPYA, switched to os.walk for dicomSort
 
 
 Stable Container Tag Log
