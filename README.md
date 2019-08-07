@@ -526,6 +526,7 @@ Change Log
 * 0.48.11 [qunexaccept] Target folders for example data specified more robustly
 * 0.48.12 [niutilities connector] Added file locking, turned off gmri debugging splash
 * 0.48.13 [niutilities] Updated HCPLSImport to work with HCPYA, switched to os.walk for dicomSort
+* 0.48.14 [niutilities connector] Added a sessions parameter and functionality to HCPLSImport, added datatype parameter and functionality to RunTurnkey
 
 
 Stable Container Tag Log
