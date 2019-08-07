@@ -268,9 +268,9 @@ def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix,
 
 
 
-def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None):
+def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None):
     '''
-    HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
+    HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)']
     
     USE
     ===
@@ -294,6 +294,20 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                         a folder that contains multiple packages. The default 
                         location where the command will look for a HCPLS dataset
                         is [<subjectsfolder>/inbox/HCPLS]
+
+    --sessions          An optional parameter that specifies a comma or pipe
+                        separated list of sessions from the inbox folder to be 
+                        processed. Regular expression patterns can be used. 
+                        If provided, only packets or folders within the inbox 
+                        that match the list of sessions will be processed. If 
+                        `inbox` is a file `sessions` will not be applied. 
+                        If `inbox` is a valid HCPLS datastructure folder, then 
+                        the sessions will be matched against the 
+                        `<subject id>[_<session name>]`.
+                        Note: the session will match if the string is found
+                        within the package name or the session id. So 
+                        'HCPA' with match any zip file that contains string
+                        'HCPA' or any session id that contains 'HCPA'!
 
     --action            How to map the files to Qu|Nex structure. One of:
                         
@@ -334,6 +348,19 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     --hcplsname         The optional name of the HCPLS dataset. If not provided
                         it will be set to the name of the inbox folder or the 
                         name of the compressed package.
+
+    --nameformat        An optional parameter that contains a regular expression 
+                        pattern with named fields used to extract the subject
+                        and session information based on the file paths and 
+                        names. The pattern has to return the groups named:
+                        - subject_id    ... the id of the subject
+                        - session_name  ... the name of the session 
+                        - data          ... the rest of the path with the 
+                                            sequence related files.
+
+                        The default is:
+                        '(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'
+
 
     PROCESS OF HCPLS MAPPING
     ========================
@@ -420,6 +447,9 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
              - Initial version adopted from BIDSImport
     2019-05-22 Grega Repovš
              - Added nameformat as input
+    2019-08-06 Grega Repovš
+             - Added sessions option
+             - Expanded documentation
     '''
 
     print "Running HCPLSImport\n=================="
@@ -447,9 +477,9 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     if not nameformat:
         nameformat = r"(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)"
 
-    sessions = {'list': [], 'clean': [], 'skip': [], 'map': []}
-    allOk    = True
-    errors   = ""
+    sessionsList = {'list': [], 'clean': [], 'skip': [], 'map': []}
+    allOk        = True
+    errors       = ""
 
     # ---> Check for folders
 
@@ -463,6 +493,9 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
 
     # ---> identification of files
 
+    if sessions:
+        sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
+
     print "--> identifying files in %s" % (inbox)
 
     sourceFiles = []
@@ -473,7 +506,27 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
         elif os.path.isdir(inbox):
             for path, dirs, files in os.walk(inbox):
                 for file in files:
-                    sourceFiles.append(os.path.join(path, file))
+                    filepath = os.path.join(path, file)
+                    if sessions:
+                        if any([file.endswith(e) for e in ['.zip', '.tar', '.tar.gz', '.tar.bz', '.tarz', '.tar.bzip2']]):
+                            for session in sessions:
+                                if re.search(session, file):
+                                    sourceFiles.append(filepath)
+                                    break
+                        else:
+                            m = re.search(nameformat, filepath)
+                            try:
+                                file_subjid  = m.group('subject_id')
+                                file_session = m.group('session_name')
+                                file_sessionid = "%s_%s" % (file_subjid, file_session)
+                                for session in sessions:
+                                    if re.search(session, file_sessionid):
+                                        sourceFiles.append(filepath)
+                                        break
+                            except:
+                                pass
+                    else:
+                        sourceFiles.append(filepath)
         else:
             raise ge.CommandFailed("HCPLSImport", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
@@ -482,7 +535,8 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     if not sourceFiles:
         raise ge.CommandFailed("HCPLSImport", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
-    # ---> mapping data to subjects' folders
+
+    # ---> mapping data to subjects' folders    
 
     print "--> mapping files to Qu|Nex hcpls folders"
 
@@ -494,7 +548,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile = mapToQUNEXcpls(sf.filename, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
+                        tfile = mapToQUNEXcpls(sf.filename, subjectsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
                         if tfile:
                             fdata = z.read(sf)
                             fout = open(tfile, 'wb')
@@ -506,6 +560,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 print "        => Error: Processing of zip package failed. Please check the package!"
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 allOk = False
+                raise
 
         elif '.tar' in file:
             print "   --> processing tar package [%s]" % (file)
@@ -514,7 +569,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile = mapToQUNEXcpls(member.name, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
+                        tfile = mapToQUNEXcpls(member.name, subjectsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
                         if tfile:
                             fobj  = tar.extractfile(member)
                             fdata = fobj.read()
@@ -530,7 +585,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 allOk = False
 
         else:
-            tfile = mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ", nameformat)
+            tfile = mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessionsList, overwrite, "    ", nameformat)
             if tfile:
                 status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
                 allOk = allOk and status
@@ -588,7 +643,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
 
     report = []
     for execute in ['map', 'clean']:
-        for session in sessions[execute]:
+        for session in sessionsList[execute]:
             if session != 'hcpls':
                 
                 sparts    = session.split('_')
@@ -1132,10 +1187,16 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
                 print >> bout, "FAILED: %s => %s" % (fileInfo['path'], tfile)
 
             status = True
-            if 'dMRI' in fileInfo['parts'] and not 'SBRef' in fileInfo['parts']:
-                status = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
-                status = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link', status=status)
-                if not status:
+            if ('dMRI' in fileInfo['parts'] or 'DWI' in fileInfo['parts']) and not 'SBRef' in fileInfo['parts']:
+                statusA = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
+                if statusA:
+                    print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'))                    
+
+                statusB = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link')
+                if statusB:
+                    print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'))                    
+
+                if not all([statusA, statusB]):
                     print "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn)
                     print "==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, fileInfo['name'].replace('.nii.gz', '.bval/.bvec'))
                     allOk = False

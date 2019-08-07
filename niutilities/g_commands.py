@@ -29,7 +29,7 @@ commands = {'listDicom'            : {'com': g_dicom.listDicom,              'ar
             'getDICOMInfo'         : {'com': g_dicom.getDICOMInfo,           'args': ('dicomfile', 'scanner')},
             'BIDSImport'           : {'com': g_bids.BIDSImport,              'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'bidsname')},
             'mapBIDS2nii'          : {'com': g_bids.mapBIDS2nii,             'args': ('sfolder', 'overwrite')},
-            'HCPLSImport'          : {'com': g_hcpls.HCPLSImport,            'args': ('subjectsfolder', 'inbox', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat')},
+            'HCPLSImport'          : {'com': g_hcpls.HCPLSImport,            'args': ('subjectsfolder', 'inbox', 'sessions', 'action', 'overwrite', 'archive', 'hcplsname', 'nameformat')},
             'mapHCPLS2nii'         : {'com': g_hcpls.mapHCPLS2nii,           'args': ('sfolder', 'overwrite')},
             'runNILFolder'         : {'com': g_4dfp.runNILFolder,            'args': ('folder', 'pattern', 'overwite', 'sfile')},
             'runNIL'               : {'com': g_4dfp.runNIL,                  'args': ('folder', 'overwite', 'sfile')},
