@@ -12,6 +12,7 @@
 #
 # * Alan Anticevic, N3 Division, Yale University
 # * Zailyn Tamayo, N3 Division, Yale University 
+# * Grega Repovs, MBLAB, University of Ljubljana
 #
 # ## PRODUCT
 #
@@ -133,14 +134,14 @@ usage() {
     echo "    --batchfile=<batch_file>                                  Batch file with pre-configured header specifying processing parameters" 
     echo "                                                              Note: This file needs to be created *manually* prior to starting runTurnkey"
     echo "                                                              * IF executing a 'local' run then provide the absolute path to the file on the local file system:"
-    echo "                                                                 If no absolute path is given then by default Qu|Nex looks for the file here: ~/<project_name>/processing/<project_name>_batch_params.txt"
+    echo "                                                                 If no file name is given then by default Qu|Nex RunTurnkey will exit with an error."
     echo "                                                              * IF executing a run via the XNAT WebUI then provide the name of the file" 
     echo "                                                                This file should be created and uploaded manually as the project-level resource on XNAT"
     echo ""
     echo "    --mappingfile=<mapping_file>                             File for mapping NIFTI files into the desired Qu|Nex file structure (e.g. hcp , fMRIPrep, etc.)"
     echo "                                                             Note: This file needs to be created *manually* prior to starting runTurnkey"
     echo "                                                              * IF executing a 'local' run then provide the absolute path to the file on the local file system:"
-    echo "                                                                 If no absolute path is given then by default Qu|Nex looks for the file here: ~/<project_name>/subjects/specs/final_mapping.txt"
+    echo "                                                                 If no file name is given then by default Qu|Nex RunTurnkey will exit with an error."
     echo "                                                              * IF executing a run via the XNAT WebUI then provide the name of the file" 
     echo "                                                                This file should be created and uploaded manually as the project-level resource on XNAT"
     echo ""
@@ -169,7 +170,17 @@ usage() {
     echo ""
     echo "  -- MISC. PARMETERS:"
     echo ""
-    echo "    --bidsformat=<specify_bids_input>                          Specify if input data is in BIDS format (yes/no). Default is [no]"
+    echo "    --dataformat=<specify_data_format>                         Specify the format in which the data is. Acceptable values are :"
+    echo "                                                               DICOM - datasets with images in DICOM format"
+    echo "                                                               BIDS  - BIDS compliant datasets"
+    echo "                                                               HCPLS - HCP Life Span datasets"
+    echo "                                                               HCPYA - HCP Young Adults (1200) dataaset"
+    echo "                                                               Default is [DICOM]"
+    echo ""
+    echo "    --bidsformat=<specify_bids_input>                          Note: this parameter is deprecated and is kept for backward compatibility. "
+    echo "                                                               If set to yes, it will set --dataformat to BIDS. If left undefined or set to no, the "
+    echo "                                                               --dataformat value will be used. The specification of the parameter follows ..."
+    echo "                                                               Specify if input data is in BIDS format (yes/no). Default is [no]. If set to yes, it overwrites the --dataformat parameter."
     echo "                                                               Note: If --bidsformat='yes' and XNAT run is requested then --xnatsessionlabel is required."
     echo "                                                                     If --bidsformat='yes' and XNAT run is NOT requested then "
     echo "                                                                          BIDS data expected in --> <subjects_folder/inbox/BIDS"
@@ -296,6 +307,7 @@ unset CleanupProject
 unset STUDY_PATH
 #unset LOCAL_BATCH_FILE -- Deprecated
 unset BIDSFormat
+unset DATAFormat
 unset AcceptanceTest
 unset CleanupOldFiles
 
@@ -381,7 +393,12 @@ TURNKEY_STEPS=`echo "${TURNKEY_STEPS}" | sed 's/RunQC/runQC/g'`
 TURNKEY_TYPE=`opts_GetOpt "--turnkeytype" $@`
 TURNKEY_CLEAN=`opts_GetOpt "--turnkeycleanstep" $@`
 
+DATAFormat="DICOM"
+DATAFormat=`opts_GetOpt "--dataformat" $@`
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
+if [ "${BIDSFormat}" == 'yes' ]; then DATAFormat="BIDS"; fi
+if [ "${DATAFormat}" == 'BIDS' ]; then BIDSFormat="yes"; else BIDSFormat="no"; fi
+
 AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTest=`echo "${AcceptanceTest}" | sed 's/,/ /g;s/|/ /g'`
 
 # =-=-=-=-=-= BOLD FC OPTIONS =-=-=-=-=-=
@@ -608,11 +625,11 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     fi
 
     # -- Define final variable set
-    if [[ ${BIDSFormat} == "yes" ]]; then
+    if [[ ${DATAFormat} == "BIDS" ]]; then
         # -- Setup CASE without the 'MR' prefix in the XNAT_SESSION_LABEL
         #    Eventually deprecate once fixed in XNAT
         CASE=`echo ${XNAT_SESSION_LABEL} | sed 's|_MR1$||' | sed 's|_MR|_|'`
-        reho " -- Note: --bidsformat='yes' " 
+        reho " -- Note: --dataformat='BIDS' " 
         reho "       Combining XNAT_SUBJECT_LABEL and XNAT_SESSION_LABEL into unified BIDS-compliant subject variable for Qu|Nex run: ${CASE}"
         echo ""
     else
@@ -852,8 +869,8 @@ if [ "$TURNKEY_TYPE" == "xnat" ]; then
     echo "   XNAT Session ID: ${XNAT_ACCSESSION_ID}"
     echo "   XNAT Resource Mapping file: ${SCAN_MAPPING_FILENAME}"
     echo "   XNAT Resource Project-specific Batch file: ${BATCH_PARAMETERS_FILENAME}"
-    if [ "$BIDSFormat" == "yes" ]; then
-        echo "   BIDS format input specified: ${BIDSFormat}"
+    if [ "$DATAFormat" == "BIDS" ]; then
+        echo "   BIDS format input specified!"
         echo "   Combined BIDS-formatted subject name: ${CASE}"
     else 
         echo "   Qu|Nex Subject variable name: ${CASE}" 
@@ -1243,7 +1260,7 @@ fi
         fi
         
         # -- Check if BIDS format NOT requested
-        if [[ ${BIDSFormat} != "yes" ]]; then
+        if [[ ${DATAFormat} == "DICOM" ]]; then
             unset FILECHECK
             echo ""
             geho " -- Linking DICOMs into ${rawdir}"; echo ""
@@ -1307,11 +1324,11 @@ fi
             fi
         fi
 
-        # -- Check if BIDS format IS requested
-        if [[ ${BIDSFormat} == "yes" ]]; then
+        # -- Check if BIDS format is requested
+        if [[ ${DATAFormat} == "BIDS" ]]; then
             unset INTYPE
             unset FILECHECK
-            # -- NOTE: IF XNAT run is not requested then it assumed that zipped BIDS data is prepared in $qunex_subjectsfolder/inbox/BIDS/*zip
+            
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
                 # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
                 if [[ -d ${RawDataInputPath} ]]; then
@@ -1381,6 +1398,85 @@ fi
             fi
         fi
         
+        # -- Check if HCP format is requested
+        if [[ ${DATAFormat} == "HCPLS" ]] || [[ ${DATAFormat} == "HCPYA" ]] ; then
+            unset INTYPE
+            unset FILECHECK
+            
+            if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
+                # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
+                if [[ -d ${RawDataInputPath} ]]; then
+                   if [[ `find ${RawDataInputPath} -type f -name "*T1w_MP*.nii.gz" | wc -l` -gt 0 ]]; then 
+                       echo ""; echo " -- HCP DATA FOUND "; echo ""
+                       mkdir ${qunex_subjectsfolder}/inbox/BIDS/${CASE} &> /dev/null
+                       cp -r ${RawDataInputPath}/* ${qunex_subjectsfolder}/inbox/${DATAFormat}/${CASE}/
+                       INTYPE=dataset
+                   else
+                       echo ""
+                       geho " -- Running:  "
+                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip "; echo ""
+                       curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip
+                   fi
+                else
+                    # -- Get the BIDS data in ZIP format via curl
+                    echo ""
+                    geho " -- Running:  "
+                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip "; echo ""
+                    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip
+                    INTYPE=zip
+                fi
+            else
+                # --- we have a zip file            
+                if [ -e ${RawDataInputPath}/${CASE}.zip ]; then
+                    cp -r ${RawDataInputPath}/${CASE}.zip ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip
+                    INTYPE=zip
+                else
+                    INTYPE=dataset
+                fi
+            fi
+            # -- Perform mapping of HCP file structure into Qu|Nex
+            echo ""
+            geho " -- Running:  "
+
+            if [[ ${DATAFormat} == "HCPYA" ]]; then
+                HCPLSNameFormat="--nameformat=(?P<subject_id>[^/]+?)/unprocessed/(?P<session_name>.*?)/(?P<data>.*) --hcplsname=hcpya"
+            else
+                HCPLSNameFormat="--hcplsname=hcpls"
+            fi
+
+            if [[ ${INTYPE} == "zip" ]]; then 
+                geho "  --> processing a single ${DATAFormat} formated package [${CASE}.zip]"
+                geho "  ${QUNEXCOMMAND} HCPLSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" $HCPLSNameFormat "; echo ""
+                ${QUNEXCOMMAND} HCPLSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
+            elif [[  ${INTYPE} == "dataset" ]]; then
+                geho "  --> processing a single ${DATAFormat} session [${CASE}] from the ${DATAFormat} dataset"
+                geho "  ${QUNEXCOMMAND} HCPLSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" $HCPLSNameFormat "; echo ""
+                ${QUNEXCOMMAND} HCPLSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
+            fi
+
+            popd 2> /dev/null
+            rm -rf ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}* &> /dev/null
+            
+            # -- Run HCPLS completion checks on mapped data
+            if [ -f ${qunex_subjectsfolder}/${CASE}/hcpls/hcpls2nii.log ]; then
+                FILESEXPECTED=`more ${qunex_subjectsfolder}/${CASE}/hcpls/hcpls2nii.log | grep "=>" | wc -l 2> /dev/null`
+            else
+                FILECHECK="fail"
+            fi
+            FILEFOUND=`ls ${qunex_subjectsfolder}/${CASE}/nii/* | wc -l 2> /dev/null`
+            if [ -z ${FILEFOUND} ]; then
+                FILECHECK="fail"
+            fi
+            if [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then
+                echo ""
+                geho " -- HCPLSImport successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files."
+                echo ""
+                FILECHECK="pass"
+            else
+                FILECHECK="fail"
+            fi
+        fi
+
         # -- Check if mapping and batch files exist and if content OK
         if [[ -f ${SpecsBatchFileHeader} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
         if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then BATCHFILECHECK="fail"; fi
@@ -1392,17 +1488,19 @@ fi
         echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
         echo "  --> Batch file transfer check: ${BATCHFILECHECK}" >> ${mapRawData_ComlogTmp}
         echo "  --> Mapping file transfer check: ${MAPPINGFILECHECK}" >> ${mapRawData_ComlogTmp}
-        if [[ ${BIDSFormat} == "yes" ]]; then
-            echo "  --> BIDS mapping check: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
+        if [[ ${DATAFormat} != "DICOM" ]]; then
+            echo "  --> ${DATAFormat} mapping check: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
+        else
+            if [[ ${InputArchive} != "yes" ]]; then
+                echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" >> ${mapRawData_ComlogTmp}
+                echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" >> ${mapRawData_ComlogTmp}
+                echo "  --> DICOM mapping check: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
+            fi
+            if [[ ${InputArchive} == "yes" ]]; then
+                echo "  --> Archive inbox processed: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
+            fi
         fi
-        if [[ ${InputArchive} != "yes" ]]; then
-            echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" >> ${mapRawData_ComlogTmp}
-            echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" >> ${mapRawData_ComlogTmp}
-            echo "  --> DICOM mapping check: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
-        fi
-        if [[ ${InputArchive} == "yes" ]]; then
-            echo "  --> Archive inbox processed: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
-        fi
+
         # -- Report and log final checks
         if [[ ${FILECHECK} == "pass" ]] && [[ ${BATCHFILECHECK} == "pass" ]] && [[ ${MAPPINGFILECHECK} == "pass" ]]; then
             echo "" >> ${mapRawData_ComlogTmp}
@@ -1421,7 +1519,7 @@ fi
     
     # -- processInbox for DICOMs
     turnkey_processInbox() {
-        if [[ ${BIDSFormat} != "yes" ]]; then
+        if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: processInbox ..."; echo ""
             # ------------------------------
             TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
@@ -1447,7 +1545,7 @@ fi
                 rm -rf ${qunex_workdir}/inbox &> /dev/null
             fi
         else
-            echo ""; cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is in BIDS NII format."; echo ""
+            echo ""; cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is not in DICOM format."; echo ""
         fi
     }
      
@@ -2471,7 +2569,7 @@ else
         rm -rf ${processingdir}/logs.zip &> /dev/null
         popd 2> /dev/null
         geho "---> Cleaning up:"
-        if [[ ${BIDSFormat} != "yes" ]]; then
+        if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""
             geho "     - removing dicom folder"
             rm -rf ${qunex_workdir}/dicom &> /dev/null
