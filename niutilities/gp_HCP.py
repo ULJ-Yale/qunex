@@ -195,7 +195,7 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
     Function that extract the information on the correct gdc file to be used and tests for its presence;
     '''
 
-    if gdcstring != 'NONE':
+    if gdcstring not in ['', 'NONE']:
 
         if any([e in gdcstring for e in ['|', 'default']]):
             try:
@@ -229,7 +229,7 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
                 run = False
                 raise
             
-            if gdcfile == 'NONE':
+            if gdcfile in ['', 'NONE']:
                 r += "\n---> WARNING: Specific gradient distorsion coefficients file could not be identified! None will be used."
             else:
                 r += "\n---> Specific gradient distorsion coefficients file identified (%s):\n     %s" % (gdcfileused, gdcfile)
@@ -237,7 +237,7 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
         else: 
             gdcfile = gdcstring
 
-        if gdcfile != 'NONE':
+        if gdcfile not in ['', 'NONE']:
             if not os.path.exists(gdcfile):
                 gdcoeffs = os.path.join(hcp['hcp_Config'], gdcfile)
                 if not os.path.exists(gdcoeffs):
@@ -248,7 +248,7 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
             else:
                 r += "\n---> Gradient distorsion coefficients file present."
     else:
-        gdcfile = 'NONE'
+        gdcfile = ''
 
     return gdcfile, r, run
 
@@ -526,7 +526,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PreFreeSurfer Pipeline ...\n" % (action("Running", options['run']))
+    r += "\n%s HCP PreFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_mppversion'])
 
     run    = True
     report = "Error"
@@ -559,7 +559,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: Could not find T1w image file. [%s]" % (tfile)
                 run = False
 
-        if hcp['T2w'] == 'NONE':
+        if hcp['T2w'] in ['', 'NONE']:
             r += "\n---> Not using T2w image."
         else:
             for tfile in hcp['T2w'].split("@"):
@@ -575,9 +575,9 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         # --- do we need spinecho images
 
-        sepos       = 'NONE'
-        seneg       = 'NONE'
-        topupconfig = 'NONE'
+        sepos       = ''
+        seneg       = ''
+        topupconfig = ''
         senum       = None
         tufolder    = None
 
@@ -707,7 +707,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         # hcpmodified maps hcp_dwelltime to echospacing, hcp to seechospacing ... currently both are passed
 
         if options['hcp_mppversion'] == "strict":
-            comm = os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh')
+            comm = os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh') + " "
 
             elements = [("path", sinfo['hcp']), 
                         ('subject', sinfo['id'] + options['hcp_suffix']),
@@ -839,6 +839,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP PreFS can be run"
                     report = "HCP Pre FS can be run"
                     failed = 0
+                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Due to missing files session can not be processed."
             report = "Files missing, PreFS can not be run"
@@ -1102,7 +1103,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n\n%s HCP FreeSurfer Pipeline ...\n" % (action("Running", options['run']))
+    r += "\n\n%s HCP FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_mppversion'])
 
     run    = True
     status = True
@@ -1128,7 +1129,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: Could not find T1w image file."
                 run = False
 
-        if hcp['T2w'] == 'NONE':
+        if hcp['T2w'] in ['', 'NONE']:
             r += "\n---> Not using T2w image."
         else:
             for tfile in hcp['T2w'].split("@"):
@@ -1207,7 +1208,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
         # --- set up T2 NONE if needed
 
-        if hcp['T2w'] == 'NONE':
+        if hcp['T2w'] in ['', 'NONE']:
             t2w = 'NONE'
         else:
             t2w = os.path.join(hcp['T1w_folder'], 'T2w_acpc_dc_restore.nii.gz')
@@ -1275,7 +1276,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # --> when running HCP Strict code
 
         elif options['hcp_mppversion'] == "strict":
-            comm = os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh')
+            comm = os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh') + " "
 
             elements = [("subjectDIR", hcp['T1w_folder']), 
                         ('subject', sinfo['id'] + options['hcp_suffix']),
@@ -1363,9 +1364,10 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             else:
                 passed, report, r, failed = checkRun(tfile, fullTest, 'HCP FS', r)
                 if passed is None:
-                    r += "\n---> HCP FS can be run"
+                    r += "\n---> HCP FS can be run"                    
                     report = "HCP FS can be run"
                     failed = 0
+                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Subject can not be processed."
             report = "FS can not be run"
@@ -1589,7 +1591,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n\n%s Longitudinal FreeSurfer Pipeline ...\n" % (action("Running", options['run']))
+    r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_mppversion'])
 
     run           = True
     report        = "Error"
@@ -1935,7 +1937,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PostFreeSurfer Pipeline ...\n" % (action("Running", options['run']))
+    r += "\n%s HCP PostFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_mppversion'])
 
     run    = True
     report = "Error"
@@ -1960,7 +1962,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                 r += "\n---> ERROR: Could not find T1w image file."
                 run = False
 
-        if hcp['T2w'] == 'NONE':
+        if hcp['T2w'] in ['', 'NONE']:
             r += "\n---> Not using T2w image."
         else:
             for tfile in hcp['T2w'].split("@"):
@@ -2011,7 +2013,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
 
 
         if options['hcp_mppversion'] == "strict":            
-            comm = os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh')
+            comm = os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh') + " "
             elements = [("path", sinfo['hcp']), 
                         ('subject', sinfo['id'] + options['hcp_suffix']),
                         ('surfatlasdir', os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases')),
@@ -2073,7 +2075,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             tfolder = hcp['hcp_nonlin']
             tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')
 
-        if hcp['T2w'] == 'NONE':
+        if hcp['T2w'] in ['', 'NONE']:
             tfile = os.path.join(tfolder, 'ribbon.nii.gz')
 
         if hcp['hcp_postfs_check']:
@@ -2097,6 +2099,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP PostFS can be run"
                     report = "HCP PostFS can be run"
                     failed = 0
+                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
         else:
             r += "\n---> Session can not be processed."
             report = "HCP PostFS can not be run"
@@ -2351,7 +2354,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP DiffusionPreprocessing Pipeline ..." % (action("Running", options['run']))
+    r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
 
     run    = True
     report = "Error"
@@ -2458,6 +2461,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                     r += "\n---> HCP Diffusion can be run"
                     report = "HCP Diffusion can be run"
                     failed = 0
+                r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
         else:
             r += "---> Session can not be processed."
             report = "HCP Diffusion can not be run"
@@ -2802,7 +2806,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP fMRI Volume registration" % (action("Running", options['run']))
+    r += "\n%s HCP fMRI Volume registration [%s] ... " % (action("Running", options['run']), options['hcp_mppversion'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -3358,6 +3362,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRIVolume ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP fMRIVolume can be run"
+                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report[passed].append(printbold)
@@ -3588,7 +3593,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     r = "\n----------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP fMRI Surface registration" % (action("Running", options['run']))
+    r += "\n%s HCP fMRI Surface registration [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -3817,6 +3822,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
                 passed, _, r, failed = checkRun(tfile, fullTest, 'HCP fMRISurface ' + boldtarget, r)
                 if passed is None:
                     r += "\n     ... HCP fMRISurface can be run"
+                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
                     report['ready'].append(printbold)
                 else:
                     report[passed].append(printbold)
