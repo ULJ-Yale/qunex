@@ -579,16 +579,27 @@ def checkRun(tfile, fullTest=None, command=None, r="", logFile=None, verbose=Tru
         failed = 0
 
         if fullTest:
-            filestatus, filespresent, filesmissing = gc.checkFiles(fullTest['tfolder'], fullTest['tfile'], fields=fullTest['fields'], report=logFile)
-            if filesmissing:
-                if verbose:
-                    r += missingReport(filesmissing, "\n---> Full file check revealed that the following files were not created:", "            ")
-                report += ", full file check incomplete"
+            try:
+                filestatus, filespresent, filesmissing = gc.checkFiles(fullTest['tfolder'], fullTest['tfile'], fields=fullTest['fields'], report=logFile)
+                if filesmissing:
+                    if verbose:
+                        r += missingReport(filesmissing, "\n---> Full file check revealed that the following files were not created:", "            ")
+                    report += ", full file check incomplete"
+                    passed = 'incomplete'
+                    failed = 1
+                else:
+                    r += "\n---> Full file check passed"
+                    report += ", full file check complete"
+
+            except ge.CommandFailed as e:
+                report += ", full file check could not be completed (%s)" % e.report[0]
                 passed = 'incomplete'
                 failed = 1
-            else:
-                r += "\n---> Full file check passed"
-                report += ", full file check complete"
+            
+            except:
+                report += ", full file check could not be completed"
+                passed = 'incomplete'
+                failed = 1
     else:
         if verbose:
             r += "\n---> %s test file missing:\n     %s" % (command, tfile)
