@@ -1271,6 +1271,28 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     'lttemplate'        : hcp['FS_long_subject_template'],
                     'longitudinal'      : fslongitudinal}
         
+
+        # --> when running HCP Strict code
+
+        elif options['hcp_mppversion'] == "strict":
+            comm = os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh')
+
+            elements = [("subjectDIR", hcp['T1w_folder']), 
+                        ('subject', sinfo['id'] + options['hcp_suffix']),
+                        ('t1', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
+                        ('t1brain', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
+                        ('t2', t2w),
+                        ('seed', options['hcp_fs_seed']),
+                        ('existing-subject', options['hcp_fs_existing_subject']),
+                        ('no-conf2hires', options['hcp_fs_no_conf2hires'])]
+
+            if options['hcp_fs_extra_reconall']:
+                for f in options['hcp_fs_extra_reconall'].split('|'):
+                    elements.append(('extra-reconall-arg', f))
+
+            comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+
+
         # --> when running HCP Pipelines code
 
         else:
@@ -1987,41 +2009,60 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                     r += "\n     ... longitudinal template present"
                     fslongitudinal = "run"
 
-        comm = '%(script)s \
-            --path="%(path)s" \
-            --subject="%(subject)s" \
-            --surfatlasdir="%(surfatlasdir)s" \
-            --grayordinatesdir="%(grayordinatesdir)s" \
-            --grayordinatesres="%(grayordinatesres)d" \
-            --hiresmesh="%(hiresmesh)d" \
-            --lowresmesh="%(lowresmesh)d" \
-            --subcortgraylabels="%(subcortgraylabels)s" \
-            --freesurferlabels="%(freesurferlabels)s" \
-            --refmyelinmaps="%(refmyelinmaps)s" \
-            --mcsigma="%(mcsigma)s" \
-            --regname"%(regname)s" \
-            --inflatescale"%(inflatescale)s" \
-            --regname"%(regname)s" \
-            --lttemplate="%(lttemplate)s" \
-            --mppversion="%(mppversion)s" \
-            --longitudinal="%(longitudinal)s"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh'),
-                'path'              : sinfo['hcp'],
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'surfatlasdir'      : os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases'),
-                'grayordinatesdir'  : os.path.join(hcp['hcp_Templates'], '91282_Greyordinates'),
-                'grayordinatesres'  : options['hcp_grayordinatesres'],
-                'hiresmesh'         : options['hcp_hiresmesh'],
-                'lowresmesh'        : options['hcp_lowresmesh'],
-                'subcortgraylabels' : os.path.join(hcp['hcp_Config'], 'FreeSurferSubcorticalLabelTableLut.txt'),
-                'freesurferlabels'  : os.path.join(hcp['hcp_Config'], 'FreeSurferAllLut.txt'),
-                'refmyelinmaps'     : os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases', 'Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii'),
-                'mcsigma'           : options['hcp_mcsigma'],
-                'regname'           : options['hcp_regname'],
-                'inflatescale'      : options['hcp_inflatescale'],
-                'mppversion'        : options['hcp_mppversion'],
-                'lttemplate'        : lttemplate,
-                'longitudinal'      : fslongitudinal}
+
+        if options['hcp_mppversion'] == "strict":            
+            comm = os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh')
+            elements = [("path", sinfo['hcp']), 
+                        ('subject', sinfo['id'] + options['hcp_suffix']),
+                        ('surfatlasdir', os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases')),
+                        ('grayordinatesdir', os.path.join(hcp['hcp_Templates'], '91282_Greyordinates')),
+                        ('grayordinatesres', options['hcp_grayordinatesres']),
+                        ('hiresmesh', options['hcp_hiresmesh']),
+                        ('lowresmesh', options['hcp_lowresmesh']),
+                        ('subcortgraylabels', os.path.join(hcp['hcp_Config'], 'FreeSurferSubcorticalLabelTableLut.txt')),
+                        ('freesurferlabels', os.path.join(hcp['hcp_Config'], 'FreeSurferAllLut.txt')),
+                        ('refmyelinmaps', os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases', 'Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii')),
+                        ('mcsigma', options['hcp_mcsigma']),
+                        ('regname', options['hcp_regname']),
+                        ('inflatescale', options['hcp_inflatescale'])]
+
+            comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+
+        else:
+            comm = '%(script)s \
+                --path="%(path)s" \
+                --subject="%(subject)s" \
+                --surfatlasdir="%(surfatlasdir)s" \
+                --grayordinatesdir="%(grayordinatesdir)s" \
+                --grayordinatesres="%(grayordinatesres)d" \
+                --hiresmesh="%(hiresmesh)d" \
+                --lowresmesh="%(lowresmesh)d" \
+                --subcortgraylabels="%(subcortgraylabels)s" \
+                --freesurferlabels="%(freesurferlabels)s" \
+                --refmyelinmaps="%(refmyelinmaps)s" \
+                --mcsigma="%(mcsigma)s" \
+                --regname"%(regname)s" \
+                --inflatescale"%(inflatescale)s" \
+                --lttemplate="%(lttemplate)s" \
+                --mppversion="%(mppversion)s" \
+                --longitudinal="%(longitudinal)s"' % {
+                    'script'            : os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh'),
+                    'path'              : sinfo['hcp'],
+                    'subject'           : sinfo['id'] + options['hcp_suffix'],
+                    'surfatlasdir'      : os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases'),
+                    'grayordinatesdir'  : os.path.join(hcp['hcp_Templates'], '91282_Greyordinates'),
+                    'grayordinatesres'  : options['hcp_grayordinatesres'],
+                    'hiresmesh'         : options['hcp_hiresmesh'],
+                    'lowresmesh'        : options['hcp_lowresmesh'],
+                    'subcortgraylabels' : os.path.join(hcp['hcp_Config'], 'FreeSurferSubcorticalLabelTableLut.txt'),
+                    'freesurferlabels'  : os.path.join(hcp['hcp_Config'], 'FreeSurferAllLut.txt'),
+                    'refmyelinmaps'     : os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases', 'Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii'),
+                    'mcsigma'           : options['hcp_mcsigma'],
+                    'regname'           : options['hcp_regname'],
+                    'inflatescale'      : options['hcp_inflatescale'],
+                    'mppversion'        : options['hcp_mppversion'],
+                    'lttemplate'        : lttemplate,
+                    'longitudinal'      : fslongitudinal}
 
         # -- Test files
 
