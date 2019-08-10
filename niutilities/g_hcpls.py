@@ -26,7 +26,7 @@ import json
 
 hcpls = {
     'files': {
-        'label': ['T1w', 'T2w', 'rfMRI', 'tfMRI', 'dMRI', 'SpinEchoFieldMap'],        
+        'label': ['T1w', 'T2w', 'rfMRI', 'tfMRI', 'dMRI', 'DWI', 'SpinEchoFieldMap'],        
         'T1w': {
             'info':  [],
         },
@@ -40,6 +40,9 @@ hcpls = {
             'info':  ['task', 'phenc', 'ref']
         },
         'dMRI': {
+            'info':  ['dir', 'phenc', 'ref']
+        },
+        'DWI': {
             'info':  ['dir', 'phenc', 'ref']
         },
         'SpinEchoFieldMap': {
@@ -93,7 +96,13 @@ hcpls = {
                         ['dMRI', 'dir99', 'AP', 'SBRef'],
                         ['dMRI', 'dir99', 'AP', '-SBRef'],
                         ['dMRI', 'dir99', 'PA', 'SBRef'],
-                        ['dMRI', 'dir99', 'PA', '-SBRef']
+                        ['dMRI', 'dir99', 'PA', '-SBRef'],
+                        ['DWI',  'dir95', 'LR', 'SBRef'],
+                        ['DWI',  'dir95', 'RL', '-SBRef'],
+                        ['DWI',  'dir96', 'LR', 'SBRef'],
+                        ['DWI',  'dir96', 'RL', '-SBRef'],
+                        ['DWI',  'dir97', 'LR', 'SBRef'],
+                        ['DWI',  'dir97', 'RL', '-SBRef']
                     ]
         }
     }    
@@ -259,9 +268,9 @@ def mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, prefix,
 
 
 
-def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None):
+def HCPLSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', hcplsname=None, nameformat=None):
     '''
-    HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>]
+    HCPLSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=move] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)']
     
     USE
     ===
@@ -285,6 +294,20 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                         a folder that contains multiple packages. The default 
                         location where the command will look for a HCPLS dataset
                         is [<subjectsfolder>/inbox/HCPLS]
+
+    --sessions          An optional parameter that specifies a comma or pipe
+                        separated list of sessions from the inbox folder to be 
+                        processed. Regular expression patterns can be used. 
+                        If provided, only packets or folders within the inbox 
+                        that match the list of sessions will be processed. If 
+                        `inbox` is a file `sessions` will not be applied. 
+                        If `inbox` is a valid HCPLS datastructure folder, then 
+                        the sessions will be matched against the 
+                        `<subject id>[_<session name>]`.
+                        Note: the session will match if the string is found
+                        within the package name or the session id. So 
+                        'HCPA' with match any zip file that contains string
+                        'HCPA' or any session id that contains 'HCPA'!
 
     --action            How to map the files to Qu|Nex structure. One of:
                         
@@ -325,6 +348,19 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     --hcplsname         The optional name of the HCPLS dataset. If not provided
                         it will be set to the name of the inbox folder or the 
                         name of the compressed package.
+
+    --nameformat        An optional parameter that contains a regular expression 
+                        pattern with named fields used to extract the subject
+                        and session information based on the file paths and 
+                        names. The pattern has to return the groups named:
+                        - subject_id    ... the id of the subject
+                        - session_name  ... the name of the session 
+                        - data          ... the rest of the path with the 
+                                            sequence related files.
+
+                        The default is:
+                        '(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'
+
 
     PROCESS OF HCPLS MAPPING
     ========================
@@ -411,6 +447,9 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
              - Initial version adopted from BIDSImport
     2019-05-22 Grega Repovš
              - Added nameformat as input
+    2019-08-06 Grega Repovš
+             - Added sessions option
+             - Expanded documentation
     '''
 
     print "Running HCPLSImport\n=================="
@@ -438,9 +477,9 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     if not nameformat:
         nameformat = r"(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)"
 
-    sessions = {'list': [], 'clean': [], 'skip': [], 'map': []}
-    allOk    = True
-    errors   = ""
+    sessionsList = {'list': [], 'clean': [], 'skip': [], 'map': []}
+    allOk        = True
+    errors       = ""
 
     # ---> Check for folders
 
@@ -454,6 +493,9 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
 
     # ---> identification of files
 
+    if sessions:
+        sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
+
     print "--> identifying files in %s" % (inbox)
 
     sourceFiles = []
@@ -464,7 +506,27 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
         elif os.path.isdir(inbox):
             for path, dirs, files in os.walk(inbox):
                 for file in files:
-                    sourceFiles.append(os.path.join(path, file))
+                    filepath = os.path.join(path, file)
+                    if sessions:
+                        if any([file.endswith(e) for e in ['.zip', '.tar', '.tar.gz', '.tar.bz', '.tarz', '.tar.bzip2']]):
+                            for session in sessions:
+                                if re.search(session, file):
+                                    sourceFiles.append(filepath)
+                                    break
+                        else:
+                            m = re.search(nameformat, filepath)
+                            try:
+                                file_subjid  = m.group('subject_id')
+                                file_session = m.group('session_name')
+                                file_sessionid = "%s_%s" % (file_subjid, file_session)
+                                for session in sessions:
+                                    if re.search(session, file_sessionid):
+                                        sourceFiles.append(filepath)
+                                        break
+                            except:
+                                pass
+                    else:
+                        sourceFiles.append(filepath)
         else:
             raise ge.CommandFailed("HCPLSImport", "Invalid inbox", "%s is neither a file or a folder!" % (inbox), "Please check your path!")
     else:
@@ -473,7 +535,8 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
     if not sourceFiles:
         raise ge.CommandFailed("HCPLSImport", "No files found", "No files were found to be processed at the specified inbox [%s]!" % (inbox), "Please check your path!")
 
-    # ---> mapping data to subjects' folders
+
+    # ---> mapping data to subjects' folders    
 
     print "--> mapping files to Qu|Nex hcpls folders"
 
@@ -485,7 +548,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 z = zipfile.ZipFile(file, 'r')
                 for sf in z.infolist():
                     if sf.filename[-1] != '/':
-                        tfile = mapToQUNEXcpls(sf.filename, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
+                        tfile = mapToQUNEXcpls(sf.filename, subjectsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
                         if tfile:
                             fdata = z.read(sf)
                             fout = open(tfile, 'wb')
@@ -497,6 +560,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 print "        => Error: Processing of zip package failed. Please check the package!"
                 errors += "\n    .. Processing of package %s failed!" % (file)
                 allOk = False
+                raise
 
         elif '.tar' in file:
             print "   --> processing tar package [%s]" % (file)
@@ -505,7 +569,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 tar = tarfile.open(file)
                 for member in tar.getmembers():
                     if member.isfile():
-                        tfile = mapToQUNEXcpls(member.name, subjectsfolder, hcplsname, sessions, overwrite, "        ", nameformat)
+                        tfile = mapToQUNEXcpls(member.name, subjectsfolder, hcplsname, sessionsList, overwrite, "        ", nameformat)
                         if tfile:
                             fobj  = tar.extractfile(member)
                             fdata = fobj.read()
@@ -521,7 +585,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
                 allOk = False
 
         else:
-            tfile = mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessions, overwrite, "    ", nameformat)
+            tfile = mapToQUNEXcpls(file, subjectsfolder, hcplsname, sessionsList, overwrite, "    ", nameformat)
             if tfile:
                 status, msg = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ')
                 allOk = allOk and status
@@ -579,7 +643,7 @@ def HCPLSImport(subjectsfolder=None, inbox=None, action='link', overwrite='no', 
 
     report = []
     for execute in ['map', 'clean']:
-        for session in sessions[execute]:
+        for session in sessionsList[execute]:
             if session != 'hcpls':
                 
                 sparts    = session.split('_')
@@ -636,13 +700,16 @@ def processHCPLS(sfolder):
     for dfolder in dfolders:
         folderInfo   = {}
         folderFiles  = []
-        senum        = -9
+        senum        = 0
         missingFiles = []
 
         # --- get folder information
 
         folderTags  = os.path.basename(dfolder).split('_')
         folderLabel = folderTags.pop(0)
+        if folderLabel not in hcpls['folders']:
+            continue
+
         for info in hcpls['folders'][folderLabel]['info']:
             if folderTags:
                 folderInfo[info] = folderTags.pop(0)
@@ -662,7 +729,11 @@ def processHCPLS(sfolder):
 
         sefile = [e for e in files if 'SpinEchoFieldMap' in e]
         if sefile:
-            senum = int([e for e in sefile[0].split('_') if 'SpinEchoFieldMap' in e][0].replace('SpinEchoFieldMap', ""))
+            senum = [e for e in sefile[0].split('_') if 'SpinEchoFieldMap' in e][0].replace('SpinEchoFieldMap', "")
+            if senum:
+                senum = int(senum)
+            else:
+                senum = 1
 
         for file in files:
             fileName = os.path.basename(file)
@@ -1030,7 +1101,15 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
                 # --T1w and T2w
                 if fileInfo['parts'][0] in ['T1w', 'T2w']:
-                    print >> sout, "%02d: %-20s: %-30s: se(%d): DwellTime(%.10f): UnwarpDir(%s)" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts']), folder['senum'], fileInfo['json'].get('DwellTime', -9.), unwarp[fileInfo['json'].get('ReadoutDirection', None)])
+                    print >> sout, "%02d: %-20s: %-30s" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts'])),
+                    if folder['senum']:
+                        print >> sout, ": se(%d)" % (folder['senum']),
+                    if fileInfo['json'].get('DwellTime', None):
+                        print >> sout, ": DwellTime(%.10f)" % (fileInfo['json'].get('DwellTime')),
+                    if fileInfo['json'].get('ReadoutDirection', None):
+                        print >> sout, ": UnwarpDir(%s)" % (unwarp[fileInfo['json'].get('ReadoutDirection')]),
+                    print >> sout, ""
+
 
                     print >> rout, "\n" + fileInfo['parts'][0]
                     print >> rout, "".join(['-' for e in range(len(fileInfo['parts'][0]))])
@@ -1048,9 +1127,13 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
 
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): EchoSpacing(%.10f): boldname(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                        print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): boldname(%s)" % (imgn, "boldref%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, "_".join(fileInfo['parts'])),
                     else:
-                        print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): EchoSpacing(%.10f): boldname(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
+                        print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): boldname(%s)" % (imgn, "bold%d:%s" % (boldn, fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, "_".join(fileInfo['parts'])),
+
+                    if fileInfo['json'].get('EffectiveEchoSpacing', None):
+                        print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing')),
+                    print >> sout, ""
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1074,7 +1157,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
 
                 # -- dMRI
-                elif fileInfo['parts'][0] == 'dMRI':
+                elif fileInfo['parts'][0] in ['dMRI', 'DWI']:
                     phenc = fileInfo['json'].get('PhaseEncodingDirection', None)
                     if phenc:
                         phenc = PEDirMap.get(phenc, 'NA')
@@ -1082,9 +1165,15 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
                         phenc = fileInfo['parts'][2]
 
                     if 'SBRef' in fileInfo['parts']:
-                        print >> sout, "%02d: %-20s: %-30s: phenc(%s): EchoSpacing(%.10f)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc, fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                        print >> sout, "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWIref:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc),
+                        if fileInfo['json'].get('EffectiveEchoSpacing', None):
+                            print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.),
+                        print >> sout, ""
                     else:    
-                        print >> sout, "%02d: %-20s: %-30s: phenc(%s): EchoSpacing(%.10f)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc, fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.)
+                        print >> sout, "%02d: %-20s: %-30s: phenc(%s)" % (imgn, "DWI:%s_%s" % (fileInfo['parts'][1], phenc), "_".join(fileInfo['parts']), phenc),
+                        if fileInfo['json'].get('EffectiveEchoSpacing', None):
+                            print >> sout, ": EchoSpacing(%.10f)" % (fileInfo['json'].get('EffectiveEchoSpacing', -0.009) * 1000.),
+                        print >> sout, ""
 
                         print >> rout, "\n" + "_".join(fileInfo['parts'])
                         print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1098,10 +1187,16 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
                 print >> bout, "FAILED: %s => %s" % (fileInfo['path'], tfile)
 
             status = True
-            if 'dMRI' in fileInfo['parts'] and not 'SBRef' in fileInfo['parts']:
-                status = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
-                status = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link', status=status)
-                if not status:
+            if ('dMRI' in fileInfo['parts'] or 'DWI' in fileInfo['parts']) and not 'SBRef' in fileInfo['parts']:
+                statusA = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'), action='link')
+                if statusA:
+                    print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bvec'), tfile.replace('.nii.gz', '.bvec'))                    
+
+                statusB = moveLinkOrCopy(fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'), action='link')
+                if statusB:
+                    print >> bout, "%s => %s" % (fileInfo['path'].replace('.nii.gz', '.bval'), tfile.replace('.nii.gz', '.bval'))                    
+
+                if not all([statusA, statusB]):
                     print "==> WARNING: bval/bvec files were not found and were not mapped for %02d.nii.gz!" % (imgn)
                     print "==> ERROR: bval/bvec files were not found and were not mapped: %02d.bval/.bvec <-- %s" % (imgn, fileInfo['name'].replace('.nii.gz', '.bval/.bvec'))
                     allOk = False

@@ -1500,9 +1500,10 @@ def sortDicom(folder=".", **kwargs):
             raise ge.CommandFailed("sortDicom", "Inbox folder not found", "Please check your paths! [%s]" % (os.path.abspath(inbox)), "Aborting")
         files = glob.glob(os.path.join(inbox, "*"))
         if len(files):
-            files = files + glob.glob(os.path.join(inbox, "*/*"))
-            files = files + glob.glob(os.path.join(inbox, "*/*/*"))
-            files = [e for e in files if os.path.isfile(e)]
+            files = []
+            for droot, _, dfiles in os.walk(inbox):
+                for dfile in dfiles:
+                    files.append(os.path.join(droot, dfile))
             print "---> Processing %d files from %s" % (len(files), inbox)
         else:
             raise ge.CommandFailed("sortDicom", "No files found", "Please check the specified inbox folder! [%s]" % (os.path.abspath(inbox)), "Aborting")
