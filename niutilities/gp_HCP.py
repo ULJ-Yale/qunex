@@ -133,16 +133,16 @@ def getHCPPaths(sinfo, options):
 
     # --- Fieldmap related paths
 
-    d['fmapmag']   = 'NONE'
-    d['fmapphase'] = 'NONE'
-    d['fmapge']    = 'NONE'
+    d['fmapmag']   = ''
+    d['fmapphase'] = ''
+    d['fmapge']    = ''
     if options['hcp_avgrdcmethod'] == 'SiemensFieldMap' or options['hcp_bold_correct'] == 'SiemensFieldMap':
         d['fmapmag']   = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_Magnitude.nii.gz')
         d['fmapphase'] = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_Phase.nii.gz')
-        d['fmapge']    = "NONE"
+        d['fmapge']    = ""
     elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap' or options['hcp_bold_correct'] == 'GeneralElectricFieldMap':
-        d['fmapmag']   = "NONE"
-        d['fmapphase'] = "NONE"
+        d['fmapmag']   = ""
+        d['fmapphase'] = ""
         d['fmapge']    = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_GE.nii.gz')
 
     # --- default check files
@@ -706,78 +706,114 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
         # Notes:
         # hcpmodified maps hcp_dwelltime to echospacing, hcp to seechospacing ... currently both are passed
 
+        if options['hcp_mppversion'] == "strict":
+            comm = os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh')
 
-        comm = '%(script)s \
-            --path="%(path)s" \
-            --subject="%(subject)s" \
-            --t1="%(t1)s" \
-            --t2="%(t2)s" \
-            --t1template="%(t1template)s" \
-            --t1templatebrain="%(t1templatebrain)s" \
-            --t1template2mm="%(t1template2mm)s" \
-            --t2template="%(t2template)s" \
-            --t2templatebrain="%(t2templatebrain)s" \
-            --t2template2mm="%(t2template2mm)s" \
-            --templatemask="%(templatemask)s" \
-            --template2mmmask="%(template2mmmask)s" \
-            --brainsize="%(brainsize)d" \
-            --fnirtconfig="%(fnirtconfig)s" \
-            --fmapmag="%(fmapmag)s" \
-            --fmapphase="%(fmapphase)s" \
-            --fmapgeneralelectric="%(fmapge)s" \
-            --echodiff="%(echodiff)s" \
-            --SEPhaseNeg="%(SEPhaseNeg)s" \
-            --SEPhasePos="%(SEPhasePos)s" \
-            --echospacing="%(seechospacing)s" \
-            --seechospacing="%(seechospacing)s" \
-            --seunwarpdir="%(seunwarpdir)s" \
-            --t1samplespacing="%(t1samplespacing)s" \
-            --t2samplespacing="%(t2samplespacing)s" \
-            --unwarpdir="%(unwarpdir)s" \
-            --gdcoeffs="%(gdcoeffs)s" \
-            --avgrdcmethod="%(avgrdcmethod)s" \
-            --topupconfig="%(topupconfig)s" \
-            --bfsigma="%(bfsigma)s" \
-            --t1biascorrect="%(biascorrect)s" \
-            --usejacobian="%(usejacobian)s" \
-            --custombrain="%(custombrain)s" \
-            --printcom="%(printcom)s" \
-            --mppversion="%(mppversion)s"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh'),
-                'path'              : sinfo['hcp'],
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                't1'                : hcp['T1w'],
-                't2'                : hcp['T2w'],
-                't1template'        : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm.nii.gz'),
-                't1templatebrain'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm_brain.nii.gz'),
-                't1template2mm'     : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm.nii.gz'),
-                't2template'        : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_0.7mm.nii.gz'),
-                't2templatebrain'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_0.7mm_brain.nii.gz'),
-                't2template2mm'     : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_2mm.nii.gz'),
-                'templatemask'      : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm_brain_mask.nii.gz'),
-                'template2mmmask'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz'),
-                'brainsize'         : options['hcp_brainsize'],
-                'fnirtconfig'       : os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf'),
-                'fmapmag'           : hcp['fmapmag'],
-                'fmapphase'         : hcp['fmapphase'],
-                'fmapge'            : hcp['fmapge'],
-                'echodiff'          : options['hcp_echodiff'],
-                'SEPhaseNeg'        : seneg,
-                'SEPhasePos'        : sepos,
-                'seechospacing'     : options['hcp_dwelltime'],
-                'seunwarpdir'       : options['hcp_seunwarpdir'],
-                't1samplespacing'   : options['hcp_t1samplespacing'],
-                't2samplespacing'   : options['hcp_t2samplespacing'],
-                'unwarpdir'         : options['hcp_unwarpdir'],
-                'gdcoeffs'          : gdcfile,
-                'avgrdcmethod'      : options['hcp_avgrdcmethod'],
-                'topupconfig'       : topupconfig,
-                'bfsigma'           : options['hcp_bfsigma'],
-                'biascorrect'       : options['hcp_biascorrect_t1w'],
-                'usejacobian'       : options['hcp_usejacobian'],
-                'custombrain'       : options['hcp_prefs_brainmask'],
-                'printcom'          : options['hcp_printcom'],
-                'mppversion'        : options['hcp_mppversion']}
+            elements = [("path", sinfo['hcp']), 
+                        ('subject', sinfo['id'] + options['hcp_suffix']),
+                        ('t1', hcp['T1w']),
+                        ('t2', hcp['T2w']),
+                        ('t1template', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm.nii.gz' % (options['hcp_prefs_template_res']))),
+                        ('t1templatebrain', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))),
+                        ('t1template2mm', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm.nii.gz')),
+                        ('t2template', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm.nii.gz' % (options['hcp_prefs_template_res']))),
+                        ('t2templatebrain', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))),
+                        ('t2template2mm', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_2mm.nii.gz')),
+                        ('templatemask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain_mask.nii.gz' % (options['hcp_prefs_template_res']))),
+                        ('template2mmmask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz')),
+                        ('brainsize', options['hcp_brainsize']),
+                        ('fnirtconfig', os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf')),
+                        ('fmapmag', hcp['fmapmag']),
+                        ('fmapphase', hcp['fmapphase']),
+                        ('fmapgeneralelectric', hcp['fmapge']),
+                        ('echodiff', options['hcp_echodiff']),
+                        ('SEPhaseNeg', seneg),
+                        ('SEPhasePos', sepos),
+                        ('seechospacing', options['hcp_dwelltime']),
+                        ('seunwarpdir', options['hcp_seunwarpdir']),
+                        ('t1samplespacing', options['hcp_t1samplespacing']),
+                        ('t2samplespacing', options['hcp_t2samplespacing']),
+                        ('unwarpdir', options['hcp_unwarpdir']),
+                        ('gdcoeffs', gdcfile),
+                        ('avgrdcmethod', options['hcp_avgrdcmethod']),
+                        ('topupconfig', topupconfig),
+                        ('bfsigma', options['hcp_bfsigma']),
+                        ('printcom', options['hcp_printcom'])]
+
+            comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+
+        else:
+            comm = '%(script)s \
+                --path="%(path)s" \
+                --subject="%(subject)s" \
+                --t1="%(t1)s" \
+                --t2="%(t2)s" \
+                --t1template="%(t1template)s" \
+                --t1templatebrain="%(t1templatebrain)s" \
+                --t1template2mm="%(t1template2mm)s" \
+                --t2template="%(t2template)s" \
+                --t2templatebrain="%(t2templatebrain)s" \
+                --t2template2mm="%(t2template2mm)s" \
+                --templatemask="%(templatemask)s" \
+                --template2mmmask="%(template2mmmask)s" \
+                --brainsize="%(brainsize)d" \
+                --fnirtconfig="%(fnirtconfig)s" \
+                --fmapmag="%(fmapmag)s" \
+                --fmapphase="%(fmapphase)s" \
+                --fmapgeneralelectric="%(fmapge)s" \
+                --echodiff="%(echodiff)s" \
+                --SEPhaseNeg="%(SEPhaseNeg)s" \
+                --SEPhasePos="%(SEPhasePos)s" \
+                --echospacing="%(seechospacing)s" \
+                --seechospacing="%(seechospacing)s" \
+                --seunwarpdir="%(seunwarpdir)s" \
+                --t1samplespacing="%(t1samplespacing)s" \
+                --t2samplespacing="%(t2samplespacing)s" \
+                --unwarpdir="%(unwarpdir)s" \
+                --gdcoeffs="%(gdcoeffs)s" \
+                --avgrdcmethod="%(avgrdcmethod)s" \
+                --topupconfig="%(topupconfig)s" \
+                --bfsigma="%(bfsigma)s" \
+                --t1biascorrect="%(biascorrect)s" \
+                --usejacobian="%(usejacobian)s" \
+                --custombrain="%(custombrain)s" \
+                --printcom="%(printcom)s" \
+                --mppversion="%(mppversion)s"' % {
+                    'script'            : os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh'),
+                    'path'              : sinfo['hcp'],
+                    'subject'           : sinfo['id'] + options['hcp_suffix'],
+                    't1'                : hcp['T1w'],
+                    't2'                : hcp['T2w'],
+                    't1template'        : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm.nii.gz'),
+                    't1templatebrain'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm_brain.nii.gz'),
+                    't1template2mm'     : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm.nii.gz'),
+                    't2template'        : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_0.7mm.nii.gz'),
+                    't2templatebrain'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_0.7mm_brain.nii.gz'),
+                    't2template2mm'     : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_2mm.nii.gz'),
+                    'templatemask'      : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm_brain_mask.nii.gz'),
+                    'template2mmmask'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz'),
+                    'brainsize'         : options['hcp_brainsize'],
+                    'fnirtconfig'       : os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf'),
+                    'fmapmag'           : hcp['fmapmag'],
+                    'fmapphase'         : hcp['fmapphase'],
+                    'fmapge'            : hcp['fmapge'],
+                    'echodiff'          : options['hcp_echodiff'],
+                    'SEPhaseNeg'        : seneg,
+                    'SEPhasePos'        : sepos,
+                    'seechospacing'     : options['hcp_dwelltime'],
+                    'seunwarpdir'       : options['hcp_seunwarpdir'],
+                    't1samplespacing'   : options['hcp_t1samplespacing'],
+                    't2samplespacing'   : options['hcp_t2samplespacing'],
+                    'unwarpdir'         : options['hcp_unwarpdir'],
+                    'gdcoeffs'          : gdcfile,
+                    'avgrdcmethod'      : options['hcp_avgrdcmethod'],
+                    'topupconfig'       : topupconfig,
+                    'bfsigma'           : options['hcp_bfsigma'],
+                    'biascorrect'       : options['hcp_biascorrect_t1w'],
+                    'usejacobian'       : options['hcp_usejacobian'],
+                    'custombrain'       : options['hcp_prefs_brainmask'],
+                    'printcom'          : options['hcp_printcom'],
+                    'mppversion'        : options['hcp_mppversion']}
 
         # -- Test files
 
