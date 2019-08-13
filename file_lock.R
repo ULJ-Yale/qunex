@@ -1,3 +1,17 @@
+# lock storage
+locks = vector()
+
+# cleanup on error
+clean_up <- function(){
+  for (lock_file in locks) {
+    if (file.exists(lock_file)) {
+      unlink(lock_file)
+    }
+  }
+}
+
+options(error = clean_up())
+
 # create a lock file for a certain file
 lock <- function(filename, delay=1, identifier="R process") {
   lock_file <- paste0(filename, ".lock")
@@ -9,6 +23,9 @@ lock <- function(filename, delay=1, identifier="R process") {
       # create lock file
       file.create(lock_file)
       cat(paste0("LOCKED BY ", identifier), file=lock_file)
+      
+      # store lock file
+      locks <- append(locks, lock_file)
       break
     }
     Sys.sleep(delay)
@@ -21,6 +38,10 @@ unlock <- function(filename) {
   
   if (file.exists(lock_file)) {
     unlink(lock_file)
+  }
+  
+  if (lock_file %in% locks) {
+    locks <- locks[locks != lock_file]
   }
 }
 

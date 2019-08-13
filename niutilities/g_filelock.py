@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 import time
+import atexit
 
 # create a lock file for a certain file
 def lock(filename, delay=1, identifier="Python process"):
@@ -14,6 +15,9 @@ def lock(filename, delay=1, identifier="Python process"):
             f = open(lock_file, "w")
             f.write(identifier)
             f.close()
+
+            # store lock file
+            locks.append(lock_file)
             break
 
         time.sleep(delay)
@@ -24,6 +28,10 @@ def unlock(filename):
 
     if os.path.isfile(lock_file):
         os.unlink(lock_file)
+
+    # remove from storage
+    if lock_file in locks:
+        locks.remove(lock_file)
 
 # lock a file, write into it, then unlock it
 def safe_write(string, filename, delay=1):
@@ -41,3 +49,15 @@ def safe_write(string, filename, delay=1):
 
     # unlock
     unlock(filename)
+
+# delete all lock files on exit
+def cleanup():
+    for lock_file in locks:
+        if os.path.isfile(lock_file):
+            os.unlink(lock_file)
+
+# lock storage
+locks = []
+
+# clenup on exit
+atexit.register(cleanup)

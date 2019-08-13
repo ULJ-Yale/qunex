@@ -34,8 +34,9 @@
 #
 
 
-# ---> file locking script
-source("file_lock.R")
+# ---> file locking script\
+current_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
+source(paste0(current_dir, "/file_lock.R"))
 
 
 # ---> defaults
