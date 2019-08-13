@@ -35,13 +35,13 @@
 
 
 # ---> file locking script
-# hack to get script direcory
-sourceDir <- script.dir <- dirname(sys.frame(1)$ofile)
-cat("!!!!!\n")
-cat(paste0("SOURCE DIR: ", sourceDir, "\n"))
-cat("!!!!!\n")
+# get script direcory
+command_args <- commandArgs(trailingOnly = FALSE)
+filename <- "--file="
+script_dir <- sub(filename, "", command_args[grep(filename, command_args)])
+source_dir <- dirname(script.name)
 # source
-source(paste0(sourceDir, "/file_lock.R"))
+source(paste0(source_dir, "/file_lock.R"))
 
 
 # ---> defaults
