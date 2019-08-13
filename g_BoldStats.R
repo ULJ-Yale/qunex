@@ -39,7 +39,7 @@
 command_args <- commandArgs(trailingOnly = FALSE)
 filename <- "--file="
 script_dir <- sub(filename, "", command_args[grep(filename, command_args)])
-source_dir <- dirname(script.name)
+source_dir <- dirname(script_dir)
 # source
 source(paste0(source_dir, "/file_lock.R"))
 
