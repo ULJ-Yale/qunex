@@ -1,16 +1,16 @@
-options(error = clean_up(...))
-
 # lock storage
 locks = vector()
 
 # cleanup on error
-options(error = clean_up(
-    for (lock_file in locks) {
-      if (file.exists(lock_file)) {
-        unlink(lock_file)
-      }
+clean_up <- function(){
+  for (lock_file in locks) {
+    if (file.exists(lock_file)) {
+      unlink(lock_file)
     }
-  ))
+  }
+}
+
+options(error = clean_up())
 
 # create a lock file for a certain file
 lock <- function(filename, delay=1, identifier="R process") {
