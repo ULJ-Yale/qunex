@@ -1315,12 +1315,18 @@ fi
                         fi
                     fi
                 else
-                   # -- Find and link DICOMs for non-XNAT run from raw DICOM input
-                   echo "  find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -exec ln '{}' ${rawdir}/ ';'"
-                   find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
-                   DicomInputCount=`find ${RawDataInputPath} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" | wc | awk '{print $1}'`
-                   DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
-                   if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
+                    # -- Find and link DICOMs for non-XNAT run from raw DICOM input
+                    if [ -d "${RawDataInputPath}/${CASE}" ]; then
+                        CaseInputFile="${RawDataInputPath}/${CASE}"
+                    else
+                        CaseInputFile="${RawDataInputPath}"
+                    fi
+                    echo "  find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -exec ln '{}' ${rawdir}/ ';'"
+                    find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" -exec cp '{}' ${rawdir}/ ';' &> /dev/null
+                    DicomInputCount=`find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" | wc | awk '{print $1}'`
+                    DicomMappedCount=`find ${rawdir} -type f -not -name ".*" | wc | awk '{print $1}'`
+                    # DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
+                    if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
                 fi
             fi
         fi
@@ -1528,7 +1534,7 @@ fi
             processInbox_ComlogTmp="${logdir}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
             processInbox_ComlogError="${logdir}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
             processInbox_ComlogDone="${logdir}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
-            ExecuteCall="${QUNEXCOMMAND} processInbox --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --overwrite='${OVERWRITE_STEP}'"
+            ExecuteCall="${QUNEXCOMMAND} processInbox --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
             echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
             eval ${ExecuteCall} 2>&1 | tee -a ${processInbox_ComlogTmp}
             cd ${qunex_subjectsfolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done
