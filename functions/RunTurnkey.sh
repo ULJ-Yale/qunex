@@ -126,7 +126,7 @@ usage() {
     echo "                                                              If empty default is set to: [xnat]."
     echo "    --path=<study_path>                                       Path where study folder is located. If empty default is [/output/xnatprojectid] for XNAT run."
     echo "    --subjects=<subjects_to_run_turnkey_on>                   Subjects to run locally on the file system if not an XNAT run."
-    echo "    --subjids=<comma_separated_list_of_subject_ids>           Ids to select for a run via gMRI engine from the batch file"
+    echo "    --subjid=<comma_separated_list_of_subject_ids>            Ids to select for a run via gMRI engine from the batch file"
     echo "    --turnkeysteps=<turnkey_worlflow_steps>                   Specify specific turnkey steps you wish to run:"
     echo "                                                              Supported:   ${QuNexTurnkeyWorkflow} "
     echo "    --turnkeycleanstep=<clean_intermediate worlflow_steps>    Specify specific turnkey steps you wish to clean up intermediate files for:"
@@ -342,9 +342,9 @@ fi
 if [ ! -z "$SESSION" ] && [ -z "$CASE" ] ; then
     CASE="${SESSION}"
 fi
-SUBJID=`opts_GetOpt "--subjids"`
+SUBJID=`opts_GetOpt "--subjids" "$@"`
 if [ -z "$SUBJID" ]; then
-    SUBJID=`opts_GetOpt "--subjid"`
+    SUBJID=`opts_GetOpt "--subjid" "$@"`
 fi
 
 OVERWRITE_SUBJECT=`opts_GetOpt "--overwritesubject" $@`
