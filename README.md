@@ -529,6 +529,7 @@ Change Log
 * 0.48.14 [niutilities connector] Added a sessions parameter and functionality to HCPLSImport, added datatype parameter and functionality to RunTurnkey
 * 0.48.15 [library niutilities] Added support for MSMSulc and running HCP Pipelines in a 'strict' mode requested by HCP
 * 0.48.16 [niutilities] Added more informative handling of errors during full file check
+* 0.48.17 [niutilities, library, connector] Fixed handling of file lock, dataformat, and qunexContainer PBS scheduling
 
 
 Stable Container Tag Log
