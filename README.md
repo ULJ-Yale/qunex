@@ -531,6 +531,7 @@ Change Log
 * 0.48.16 [niutilities] Added more informative handling of errors during full file check
 * 0.48.17 [niutilities, library, connector] Fixed handling of file lock, dataformat, and qunexContainer PBS scheduling
 * 0.48.18 [connector] Fixed reading of --subjid parameter
+* 0.48.19 [connector] Enabled working with individual cases from joint inbox in RunTurnkey for DICOM data
 
 
 Stable Container Tag Log
