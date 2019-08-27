@@ -512,7 +512,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
             metadata += ["%s/*" % (e) for e in bids['optional']]
 
             if folderType in studyat:
-                metadataPath = os.path.join(os.path.split(inbox)[:studyat[folderType]])
+                metadataPath = os.path.join('/', *inbox.split('/')[:studyat[folderType]])
             else:
                 metadataPath = inbox
             
