@@ -48,10 +48,19 @@ else:
     mcommand = os.environ['QUNEXMCOMMAND']
 
 
+def cleanName(string):
+    '''cleanName
+
+    Function that makes sure that the string does not contain characters that should not be in a file name
+    '''
+    return re.sub(r'[^A-Za-z0-9]', r'', string)
+
+
+
 def matchAll(pattern, string):
     '''matchAll
 
-    Function that checks if the pattern matches the whoe string.
+    Function that checks if the pattern matches the whole string.
     '''
 
     m = re.match(pattern, string)
@@ -1590,7 +1599,7 @@ def sortDicom(folder=".", **kwargs):
 
             # --- do the deed
 
-            tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (info['subjectid'], sqid, sop, dext))
+            tgf = os.path.join(sqfl, "%s-%s-%s.dcm%s" % (cleanName(info['subjectid']), sqid, sop, dext))
             doFile(dcm, tgf)
 
     print "---> Done"
