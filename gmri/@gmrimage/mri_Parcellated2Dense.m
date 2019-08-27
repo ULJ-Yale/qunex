@@ -1,4 +1,4 @@
-function [img] = mri_Parcellated2Dense(img, verbose)
+function [img] = mri_Parcellated2Dense(img, verbose, defineMissing)
 
 %function [img] = mri_Parcellated2Dense(img, verbose)
 %
@@ -7,6 +7,8 @@ function [img] = mri_Parcellated2Dense(img, verbose)
 %   INPUT
 %       - img     : a parcelated cifti gmrimage image object to convert
 %       - verbose : should it report the details
+%       - defineMissing : what value should be used in case of missing
+%                   values (number or 'NaN') [0]
 %
 %   OUTPUT
 %       - img     : a resulting dense cifti gmrimage image object
@@ -21,7 +23,8 @@ function [img] = mri_Parcellated2Dense(img, verbose)
 
 % --> process variables
 
-if nargin < 2 || isempty(verbose),  verbose  = false; end
+if nargin < 3 || isempty(defineMissing),  defineMissing = 0; end
+if nargin < 2 || isempty(verbose),        verbose = false;   end
 
 % --> extract data and metadata from the input image
 
@@ -42,6 +45,7 @@ end
 
 img.voxels = 91282;
 ndata = zeros(img.voxels, img.frames);
+ndata(:) = defineMissing;
 
 % --> load cifti brain model
 
