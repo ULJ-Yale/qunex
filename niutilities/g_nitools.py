@@ -32,7 +32,7 @@ else:
 # passed to it.
 
 functions = {
-    'g_Parcellated2Dense':             [('inimg', 'string'), ('outimg', 'string'), ('verbose', 'bool')],
+    'g_Parcellated2Dense':             [('inimg', 'string'), ('outimg', 'string'), ('verbose', 'bool'), ('defineMissing', 'string')],
     'g_ExtractGLMVolumes':             [('flist', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('saveoption', 'string'), ('values', 'string'), ('verbose', 'bool')],
     'g_ComputeBOLDListStats':          [('flist', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'g_ComputeBOLDStats':              [('img', 'string'), ('mask', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
