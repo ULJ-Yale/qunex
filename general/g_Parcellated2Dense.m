@@ -1,4 +1,4 @@
-function [img] = g_Parcellated2Dense(inimg, outimg, verbose)
+function [img] = g_Parcellated2Dense(inimg, outimg, verbose, defineMissing)
 
 %function [img] = g_Parcellated2Dense(inimg, outimg, verbose, defineMissing)
 %
