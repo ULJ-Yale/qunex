@@ -532,6 +532,7 @@ Change Log
 * 0.48.17 [niutilities, library, connector] Fixed handling of file lock, dataformat, and qunexContainer PBS scheduling
 * 0.48.18 [connector] Fixed reading of --subjid parameter
 * 0.48.19 [connector] Enabled working with individual cases from joint inbox in RunTurnkey for DICOM data
+* 0.48.20 [library, niutilities] Added csessions parameter to qunexContainer, resolved bugs in BIDSImport and sortDicom
 
 
 Stable Container Tag Log
