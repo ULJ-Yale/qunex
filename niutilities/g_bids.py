@@ -340,6 +340,15 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     When the files are mapped, their filenames will be perserved and the correct
     folder structure will be reconstructed if it was previously flattened.
 
+    **Behavioral data**  
+    In this step the subject specific and behavioral data that is present in 
+    '<bids_study>/participants.tsv' and 'phenotype/*.tsv' files, will be parsed
+    and split so that data belonging to a specific participant will be mapped to 
+    that participant's sessions 'behavior' folder (e.g. 
+    <Qu|Nex study folder>/subjects/s14_01/behavior/masq01.tsv'). In this way the
+    session folder contains all the behavioral data relevant fror that 
+    participant.
+
     ==> Step 2 -- Mapping image files to Qu|Nex Suite `nii` folder
     
     For each session separately, images from the `bids` folder are 
@@ -410,6 +419,13 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
              - Changed subjects to sessions
     2019-05-12 Grega Repovš
              - Reports an error if no file is found
+    2019-07-18 Grega Repovs
+             - Added parsing of behavioral data
+    2019-07-23 Grega Repovs
+             - Changed behavioral data parsing to allow mulitple measurments
+               per participant
+    2019-08-29 Grega Repovs
+             - Updated documentation
     '''
 
     print "Running BIDSImport\n=================="
