@@ -494,7 +494,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
             # -- process sessions
 
-            globfor = {'subject': '*', 'session': '*', 'bids-study': 'sub-*', 'inbox': '*'}
+            globfor = {'subject': '*', 'session': '*', 'bids_study': 'sub-*', 'inbox': '*'}
 
             if sessions:
                 sessions = [e.strip() for e in re.split(' +|\| *|, *', sessions)]
