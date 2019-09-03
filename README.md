@@ -536,6 +536,7 @@ Change Log
 * 0.48.21 [niutilities nitools, library] Updated BIDSImport documentation, added ability to specify missing values for parcellated2dense, fixed csession parameter
 * 0.48.22 [library] Fixed a bug in processing 'csessions' parameter in qunexContiner
 * 0.48.23 [niutilities] Fixed bids_study bug in BIDSImport
+* 0.48.24 [nitools] Fixed Issue #38 Error running g_FindPeaks: unable to find file CIFTI_BrainModel.mat, by changing the path to CIFI_BrainModel.mat
 
 
 Stable Container Tag Log
