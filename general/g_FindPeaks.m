@@ -120,7 +120,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 img = gmrimage(fin);
 
 % --- load CIFTI brain model data
-load('CIFTI_BrainModel.mat')
+load('../gmri/@gmrimage/CIFTI_BrainModel.mat');
 
 % --- initializing
 if nargin < 10 || isempty(verbose),   verbose   = false    ;                end
