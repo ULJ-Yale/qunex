@@ -197,6 +197,16 @@ usage() {
     echo "    --cleanupproject=<specify_project_clean>                   Specify <yes> or <no> for cleanup of entire project after steps are done. Default is [no]."
     echo "    --cleanupoldfiles=<specify_old_clean>                      Specify <yes> or <no> for cleanup of files that are older than start of run (XNAT run only). Default is [no]."
     echo ""
+    echo "    --bolds=<list_of_bolds_to_process>                         For commands that work with BOLD images this flag specifies which specific BOLD images to process."
+    echo "                                                               The list of BOLDS has to be specified as a comma or pipe '|' separated string of bold numbers or bold tags"
+    echo "                                                               as they are specified in the subject_hcp.txt or batch.txt file. "
+    echo "                                                               EXAMPLE: '--bolds=1,2,rest' would process BOLD run 1, BOLD run 2 and any other BOLD image that is tagged with the string 'rest'."
+    echo "                                                               If the parameter is not specified, the default value 'all' will be used. In this scenario every BOLD image that is specified"
+    echo "                                                               in the group batch.txt file for that session will be processed."
+    echo "                                                               NOTE: This parameter takes precedence over the 'bolds' parameter in the batch.txt file. Therefore when RunTurnkey is executed and"
+    echo "                                                                     this parameter is ommitted the '_bolds' specification in the batch.txt file never takes effect, because the default value 'all'"
+    echo "                                                                     will take precedence."
+    echo ""
     echo "  -- OPTIONAL CUSTOM QC PARAMETERS:"
     echo ""
     echo "    --customqc=<yes/no>     Default is [no]. If set to 'yes' then the script looks into: "
@@ -500,15 +510,17 @@ GeneralSceneDataFile=`opts_GetOpt "--datafile" $@`
 GeneralSceneDataPath=`opts_GetOpt "--datapath" $@`
 
 
-BOLDS=`opts_GetOpt "--bolds" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+BOLDS=`opts_GetOpt "--bolds" "$@"`
 if [ -z "${BOLDS}" ]; then
-    BOLDS=`opts_GetOpt "--boldruns" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+    BOLDS=`opts_GetOpt "--boldruns" "$@"`
 fi
 if [ -z "${BOLDS}" ]; then
-    BOLDS=`opts_GetOpt "--bolddata" "$@" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
+    BOLDS=`opts_GetOpt "--bolddata" "$@"`
 fi
-BOLDRUNS="${BOLDS}"
-BOLDDATA="${BOLDS}"
+if [ -z "${BOLDS}" ]; then
+    BOLDS='all'
+fi
+BOLDRUNS=`echo ${BOLDS} | sed 's/,/ /g;s/|/ /g'`; BOLDRUNS=`echo "$BOLDRUNS" | sed 's/,/ /g;s/|/ /g'`
 
 BOLDSuffix=`opts_GetOpt "--boldsuffix" $@`
 BOLDPrefix=`opts_GetOpt "--boldprefix" $@`
@@ -1719,15 +1731,15 @@ fi
     }
     # -- fMRIVolume
     turnkey_hcp4() {
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRIVolume) ... "; echo ""
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRIVolume) ... ${BOLDS:+BOLDS:} ${BOLDS}"; echo ""
         HCPLogName="hcpfMRIVolume"
-        ${QUNEXCOMMAND} hcp4 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
+        ${QUNEXCOMMAND} hcp4 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}" ${BOLDS:+--bolds=}"$BOLDS"
     }
     # -- fMRISurface
     turnkey_hcp5() {
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp5 (hcp_fMRISurface) ... "; echo ""
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp5 (hcp_fMRISurface) ... ${BOLDS:+BOLDS:} ${BOLDS}"; echo ""
         HCPLogName="hcpfMRISurface"
-        ${QUNEXCOMMAND} hcp5 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
+        ${QUNEXCOMMAND} hcp5 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}" ${BOLDS:+--bolds=}"$BOLDS"
     }
     # -- runQC_BOLD (after hcp5)
     turnkey_runQC_BOLD() {
@@ -1737,9 +1749,6 @@ fi
             # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi   --- default for bold prefix is now ""
             if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
         fi
-        # if [ -z "${BOLDRUNS}" ]; then
-        #      BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
-        # fi
         
         # -- Code for selecting BOLDS via Tags --> Check if both batch and bolds are specified for QC and if yes read batch explicitly
         getBoldList
@@ -1907,10 +1916,6 @@ fi
             if [[ ${Modality} == "BOLD" ]]; then
                 # if [ -z "${BOLDPrefix}" ]; then BOLDPrefix="bold"; fi    --- default for bold prefix is now ""
                 if [ -z "${BOLDSuffix}" ]; then BOLDSuffix="Atlas"; fi
-                # if [ -z "${BOLDRUNS}" ]; then
-                #      BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
-                #      geho " --> BOLDs not explicitly requested. Will run all available data: ${BOLDRUNS} "
-                # fi
 
                 getBoldList
 
@@ -2073,9 +2078,6 @@ fi
         if [ -z ${output_name} ]; then
             output_name="${CASE}_BOLD_GreyPlot_CIFTI.pdf"
         fi
-        #if [ -z ${BOLDRUNS} ]; then
-        #    BOLDRUNS="1"
-        #fi
 
         getBoldList
 
@@ -2137,22 +2139,9 @@ fi
     # -- BOLD Parcellation 
     turnkey_BOLDParcellation() {
         FunctionName="BOLDParcellation"
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation on BOLDS: ${BOLDRUNS} ... "; echo ""
-        
-        getBoldList
 
-#        # -- Defaults if not specified:
-#
-#        local LBOLDRUNS="${BOLDRUNS}"
-#
-#        if [ -z "${LBOLDRUNS}" ]; then
-#            LBOLDRUNS="1"
-#        fi
-#
-#        BOLDS=`gmri batchTag2NameKey filename="${ProcessingBatchFile}" subjid="${CASE}" bolds="${LBOLDRUNS}" | grep "BOLDS:" | sed 's/BOLDS://g' | sed 's/,/ /g'`
-#        LBOLDRUNS="${BOLDS}"
-#
-#        echo " ---> BOLDRUNS: ${LBOLDRUNS}"
+        getBoldList
+        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: BOLDParcellation on BOLDS: ${LBOLDRUNS} ... "; echo ""
 
         if [ -z ${RunParcellations} ]; then
 
@@ -2354,10 +2343,6 @@ fi
    #turnkey_QCrun_BOLDfc
    turnkey_runQC_BOLDfc() {
         Modality="BOLD"
-        # echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC step for ${Modality} FC ... "; echo ""
-        # if [ -z "${BOLDRUNS}" ]; then
-        #      BOLDRUNS=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/ | awk {'print $1'} 2> /dev/null`
-        # fi
 
         getBoldList
 
