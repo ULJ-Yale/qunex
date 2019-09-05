@@ -537,6 +537,7 @@ Change Log
 * 0.48.22 [library] Fixed a bug in processing 'csessions' parameter in qunexContiner
 * 0.48.23 [niutilities] Fixed bids_study bug in BIDSImport
 * 0.48.24 [nitools] Fixed Issue #38 Error running g_FindPeaks: unable to find file CIFTI_BrainModel.mat, by changing the path to CIFI_BrainModel.mat
+* 0.48.25 [nitools] Moved CIFTI_BrainModel.mat from gmri/@gmrimage to general, which fixed the Issue #38
 
 
 Stable Container Tag Log
