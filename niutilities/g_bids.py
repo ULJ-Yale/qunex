@@ -227,9 +227,9 @@ def mapToQUNEXBids(file, subjectsfolder, bidsname, sessionsList, overwrite, pref
 
 
 
-def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None):
+def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', overwrite='no', archive='move', bidsname=None, fileinfo=None):
     '''
-    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>]
+    BIDSImport [subjectsfolder=.] [inbox=<subjectsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=move] [bidsname=<inbox folder name>] [fileinfo=short]
     
     USE
     ===
@@ -303,6 +303,15 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
     --bidsname          The optional name of the BIDS dataset. If not provided
                         it will be set to the name of the inbox folder or the 
                         name of the compressed package.
+
+    --fileinfo          What file information to include in the subject.txt file.
+                        Options are:
+                        
+                        short   - only provide the short description based on the
+                                  identified BIDS tags
+                        full    - list the full file name excluding the 
+                                  participant id, session name and extension
+
 
     PROCESS OF BIDS MAPPING
     =======================
@@ -426,6 +435,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                per participant
     2019-08-29 Grega Repovs
              - Updated documentation
+    2019-09-12 Grega Repovs
+             - Added fileinfo parameter
     '''
 
     print "Running BIDSImport\n=================="
@@ -438,6 +449,9 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
     if archive not in ['leave', 'move', 'copy', 'delete']:
         raise ge.CommandError("BIDSImport", "Invalid dataset archive option", "%s is not a valid option for dataset archive option!" % (archive), "Please specify one of: move, copy, delete!")
+
+    if fileinfo not in ['short', 'full', None]:
+        raise ge.CommandError("BIDSImport", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
 
     if subjectsfolder is None:
         subjectsfolder = os.path.abspath(".")
@@ -690,7 +704,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
                 # -- do image mapping
                 try:
-                    mapBIDS2nii(os.path.join(subjectsfolder, session), overwrite)
+                    mapBIDS2nii(os.path.join(subjectsfolder, session), overwrite=overwrite, fileinfo=fileinfo)
                     nmapping = True
                 except ge.CommandFailed as e:
                     print "===> WARNING:\n     %s\n" % ("\n     ".join(e.report))
@@ -820,9 +834,9 @@ def processBIDS(bfolder):
         
 
 
-def mapBIDS2nii(sfolder='.', overwrite='no'):
+def mapBIDS2nii(sfolder='.', overwrite='no', fileinfo=None):
     '''
-    mapBIDS2nii [sfolder='.'] [overwrite='no']
+    mapBIDS2nii [sfolder='.'] [overwrite='no'] [fileinfo='short']
 
     USE
     ===
@@ -861,6 +875,14 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
                            mapping
 
                  The default option is 'no'. 
+
+    --fileinfo   What file information to include in the subject.txt file.
+                 Options are:
+                 
+                 short   - only provide the short description based on the
+                           identified BIDS tags
+                 full    - list the full file name excluding the 
+                           participant id, session name and extension
 
     RESULTS
     =======
@@ -975,8 +997,17 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
              - Simplified dealing with preexisting data
     2019-04-25
              - Changed subjects to sessions
+    2019-09-12 Grega Repovs
+             - Added fileinfo parameter
 
     '''
+
+    if fileinfo is None:
+        fileinfo = 'short'
+
+    if fileinfo not in ['short', 'full']:
+        raise ge.CommandError("mapBIDS2nii", "Invalid fileinfo option", "%s is not a valid option for fileinfo parameer!" % (fileinfo), "Please specify one of: short, full!")        
+
 
     sfolder = os.path.abspath(sfolder)
     bfolder = os.path.join(sfolder, 'bids')
@@ -1001,6 +1032,10 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
     # --- process bids folder
 
     bidsData = processBIDS(bfolder)
+
+    if session not in bidsData:
+        raise ge.CommandFailed("mapBIDS2nii", "Unrecognized session!", "This folder [%s] does not have a valid matching BIDS session!" % (sfolder), "Please check your data!")
+
     bidsData = bidsData[session]
 
     if not bidsData['images']['list']:
@@ -1060,8 +1095,13 @@ def mapBIDS2nii(sfolder='.', overwrite='no'):
         
         status = moveLinkOrCopy(bidsData['images']['info'][image]['filepath'], tfile, action='link')
         if status:
-            print "--> linked %02d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename'])
-            print >> sout, "%02d: %s" % (imgn, bidsData['images']['info'][image]['tag'])
+            print "--> linked %02d.nii.gz <-- %s" % (imgn, bidsData['images']['info'][image]['filename'])            
+            if fileinfo == 'short':
+                print >> sout, "%02d: %s" % (imgn, bidsData['images']['info'][image]['tag'])
+            elif fileinfo == 'full':
+                fullinfo = bidsData['images']['info'][image]['filename'].replace('.nii.gz', '').replace('sub-%s_' % (subject), '').replace('ses-%s_' % (sessionid), '')
+                print >> sout, "%02d: %s" % (imgn, fullinfo)
+
             print >> bout, "%s => %s" % (bidsData['images']['info'][image]['filepath'], tfile)
         else:
             allOk = False
