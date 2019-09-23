@@ -541,6 +541,7 @@ Change Log
 * 0.48.26 [nitools] Moved CIFTI_BrainModel.mat from gmri/@gmrimage to general, which fixed the Issue #38
 * 0.48.27 [nitools] Corrected corrupt general/CIFTI_BrainModel.mat
 * 0.48.28 [niutilities] Added fileinfo option to BIDSImport
+* 0.48.29 [library] Change to qunexContainer to utf8 encode input to stdin
 
 
 Stable Container Tag Log
