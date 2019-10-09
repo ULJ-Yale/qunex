@@ -39,7 +39,7 @@ import os.path
 from datetime import datetime
 import niutilities.g_exceptions as ge
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 # =======================================================================
@@ -697,7 +697,7 @@ def run(command, args):
 
         else:
             c = 0
-            threadPoolExecutor = ThreadPoolExecutor(cores)
+            processPoolExecutor = ProcessPoolExecutor(cores)
             futures = []
             if command in plactions:
                 todo = plactions[command]
@@ -706,7 +706,7 @@ def run(command, args):
                         soptions = updateOptions(session, options)
                         consoleLog += "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
                         print "\nAdding processing of session %s to the pool at %s" % (session['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-                        future = threadPoolExecutor.submit(todo, session, soptions, overwrite, c + 1)
+                        future = processPoolExecutor.submit(todo, session, soptions, overwrite, c + 1)
                         futures.append(future)
                         c += 1
                         if nprocess and c >= nprocess:
