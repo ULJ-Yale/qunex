@@ -10,6 +10,7 @@ consists of functions:
 * hcpDiffusion    ... runs HCP Diffusion weighted image preprocessing
 * hcpfMRIVolume   ... runs HCP BOLD Volume preprocessing
 * hcpfMRISurface  ... runs HCP BOLD Surface preprocessing
+* hcpICAFix       ... runs HCP BOLD ICAFix preprocessing
 * hcpDTIFit       ... runs DTI Fit
 * hcpBedpostx     ... runs Bedpost X
 * mapHCPData      ... maps results of HCP preprocessing into `images`
@@ -325,7 +326,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
+                          imaging data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
@@ -906,7 +907,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
+                          imaging data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
@@ -1447,7 +1448,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
+                          imaging data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
@@ -1812,7 +1813,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
+                          imaging data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
@@ -2168,7 +2169,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
+                          imaging data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --overwrite       ... Whether to overwrite existing data (yes) or not (no)
                           [no].
@@ -2537,7 +2538,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
+                          imaging data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --threads         ... How many threads to utilize for bold processing
                           per session [1].
@@ -3446,7 +3447,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     --sessions        ... The batch.txt file with all the sessions information
                           [batch.txt].
     --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
+                          imaging data is supposed to go [.].
     --cores           ... How many cores to utilize [1].
     --threads         ... How many threads to utilize for bold processing
                           per session [1].
@@ -3853,6 +3854,464 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     return {'r': r, 'report': report}
 
 
+def hcpICAFix(sinfo, options, overwrite=False, thread=0):
+    '''
+    hcpICAFix - full documentation not yet available.
+
+    hcp_ICAFix [... processing options]
+    hcp6 [... processing options]
+
+    USE
+    ===
+
+    Runs the ICAFix step of HCP Pipeline. TODO DESCRIPTION!
+    A short name 'hcp6' can be used for this command.
+
+    TODO DOCUMENTATION!
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2019-10-09 Jure Demsar
+             - Core functionality.
+    '''
+
+    r = "\n----------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP ICAFix registration [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
+
+    run    = True
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        # --- Base settings
+        doOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
+        hcp = getHCPPaths(sinfo, options)
+
+        # --- Get sorted bold numbers and bold data
+        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        if report['boldskipped']:
+            if options['hcp_bold_boldnamekey'] == 'name':
+                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+            else:
+                report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
+
+        # --- Multi threading
+        threads = options['threads']
+        r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
+
+        # --- Use hcp_icafix_bolds parameter to determine if a single fix or a multi fix should be used
+        singleFix = True
+        if options['hcp_icafix_bolds']:
+            icafixBolds = options['hcp_icafix_bolds']
+
+            # if hcp_icafix_bolds includes : then we have groups and we need multi fix
+            if ":" in icafixBolds:
+                # run multi fix
+                singleFix = False
+
+                # variable for storing groups and their bolds
+                icafixGroups = {}
+
+                # get all groups
+                groups = str.split(icafixBolds, "|")
+
+                for g in groups:
+                    # get group name
+                    split = str.split(g, ":")
+
+                    # create group and add to dictionary
+                    icafixGroups[split[0]] = str.split(split[1], ",")
+
+            # else we extract bolds and use single fix
+            else:
+                icafixBolds = str.split(icafixBolds, ",")
+        # if hcp_icafix_bolds is empty then use all bolds
+        else:
+            icafixBolds = bolds
+
+        # --- Report single fix or multi fix
+        if singleFix:
+            r += "\n\n%s single fix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+        else:
+            r += "\n\n%s multi fix on %d groups" % (action("Processing", options['run']), len(icafixGroups))
+
+        # --- Get hcp_icafix_bolds data from bolds
+        if icafixBolds is not bolds:
+            r += "\n\n%s bolds with hcp_icafix_bolds" % (action("Comparing", options['run']))
+            # compare
+            # single fix
+            if singleFix:
+                boldData = []
+                for b in bolds:
+                    # extract data
+                    _, boldname, _, _ = boldData
+
+                    # find the bold in icafixBolds
+                    found = False
+                    for icaB in icafixBolds:
+                        if icaB is boldname:
+                            # at to temporary variable boldData
+                            boldData.append(b)
+                            found = True
+                            break
+                    
+                    # bold not found in bolds
+                    if not found:
+                        r += "\n%s found in bolds but not in hcp_icafix_bolds" % b
+
+                # store data into the icafixBolds variable
+                icafixBolds = boldData
+            # multi fix
+            else:
+                # variable for storing group data
+                groupData = []
+                # create empty dict entry for all groups
+                for g in icafixGroups:
+                    groupData[g] = []
+
+                for b in bolds:
+                    # extract data
+                    _, boldname, _, _ = boldData
+
+                    # go over all groups
+                    for g in icafixGroups:
+                        # find the bold in group bolds
+                        found = False
+                        groupBolds = g["bolds"]
+                        for groupB in groupBolds:
+                            if groupB is boldname:
+                                # add bold to the group
+                                groupData[g].append(b)
+                                found = True
+                                break
+
+                    # bold not found in bolds
+                    if not found:
+                        r += "\n%s found in bolds but not in hcp_icafix_bolds" % b
+
+                # cast group data to array of dictionaries (needed for parallel)
+                icafixGroups = []
+                for g in groupData:
+                    icafixGroups.append({"name":g, "bolds":groupData[g]})
+
+        # --- Execute
+        # single fix
+        if singleFix:
+            if threads == 1: # serial execution
+                for b in icafixBolds:
+                    # process
+                    result = executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, b)
+
+                    # merge r
+                    r += result['r']
+
+                    # merge report
+                    tempReport            = result['report']
+                    report['done']       += tempReport['done']
+                    report['incomplete'] += tempReport['incomplete']
+                    report['failed']     += tempReport['failed']
+                    report['ready']      += tempReport['ready']
+                    report['not ready']  += tempReport['not ready']      
+
+            else: # parallel execution
+                # create a multiprocessing Pool
+                processPoolExecutor = ProcessPoolExecutor(threads)
+                # process 
+                f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
+                results = processPoolExecutor.map(f, icafixBolds)
+
+                # merge r and report
+                for result in results:
+                    r                    += result['r']
+                    tempReport            = result['report']
+                    report['done']       += tempReport['done']
+                    report['failed']     += tempReport['failed']
+                    report['incomplete'] += tempReport['incomplete']
+                    report['ready']      += tempReport['ready']
+                    report['not ready']  += tempReport['not ready']
+        # multi fix
+        else: 
+            if threads == 1: # serial execution
+                for g in icafixGroups:
+                    # process
+                    result = executeHCPSingleICAFix(sinfo, options, overwrite, hcp, g)
+
+                    # merge r
+                    r += result['r']
+
+                    # merge report
+                    tempReport            = result['report']
+                    report['done']       += tempReport['done']
+                    report['incomplete'] += tempReport['incomplete']
+                    report['failed']     += tempReport['failed']
+                    report['ready']      += tempReport['ready']
+                    report['not ready']  += tempReport['not ready']      
+
+            else: # parallel execution
+                # create a multiprocessing Pool
+                processPoolExecutor = ProcessPoolExecutor(threads)
+                # process 
+                f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
+                results = processPoolExecutor.map(f, icafixGroups)
+
+                # merge r and report
+                for result in results:
+                    r                    += result['r']
+                    tempReport            = result['report']
+                    report['done']       += tempReport['done']
+                    report['failed']     += tempReport['failed']
+                    report['incomplete'] += tempReport['incomplete']
+                    report['ready']      += tempReport['ready']
+                    report['not ready']  += tempReport['not ready']
+
+        # report
+        rep = []
+        for k in ['done', 'incomplete', 'failed', 'ready', 'not ready', 'skipped']:
+            if len(report[k]) > 0:
+                rep.append("%s %s" % (", ".join(report[k]), k))
+
+        report = (sinfo['id'], "HCP ICAFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += str(errormessage)
+        report = (sinfo['id'], 'HCP ICAFix failed')
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        report = (sinfo['id'], 'HCP ICAFix failed')
+
+    r += "\n\nHCP ICAFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, report)
+
+
+def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
+    # extract data
+    bold, _, _, boldinfo = boldData
+
+    if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+        printbold  = boldinfo['boldname']
+        boldtarget = boldinfo['boldname']
+    else:
+        printbold  = str(bold)
+        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    try:
+        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        boldok = True
+
+        # --- check for bold image
+        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
+        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+
+        # load parameters or use default values
+        bandpass = 2000
+        if options['hcp_icafix_highpass']:
+            bandpass = options['hcp_icafix_highpass']
+
+        domot = "FALSE"
+        if options['hcp_icafix_domotionreg']:
+            domot = options['hcp_icafix_domotionreg']
+
+        comm = '%(script)s \
+                "%(inputfile)s" \
+                %(bandpass)s \
+                %(domot)s \
+                "%(trainingdata)s" \
+                "%(fixthreshold)s" \
+                "%(deleteintermediates)s"' % {
+                'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
+                'inputfile'             : boldimg,
+                'bandpass'              : bandpass
+                'domot'                 : domot,
+                'trainingdata'          : options['hcp_icafix_traindata'],
+                'fixthreshold'          : options['hcp_icafix_threshold'],
+                'deleteintermediates'   : options['hcp_icafix_deleteintermediates']}
+
+        # -- Test files
+        # TODO TEST FILES
+        tfile = None
+        fullTest = None
+
+        # -- Run
+        if run and boldok:
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, '     ... running single HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(printbold)                    
+                else:
+                    report['done'].append(printbold)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'single HCP ICAFix ' + boldtarget, r)
+                if passed is None:
+                    r += "\n     ... single HCP ICAFix can be run"
+                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(printbold)
+                else:
+                    report[passed].append(printbold)
+
+        elif run:
+            report['not ready'].append(printbold)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+        else:
+            report['not ready'].append(printbold)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += "\n ---  Failed during processing of bold %s with error:\n" % (printbold)
+        r += str(errormessage)
+        report['failed'].append(printbold)
+    except:
+        r += "\n ---  Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
+        report['failed'].append(printbold)
+
+    # r += "\n     ... DONE!"
+
+    return {'r': r, 'report': report}
+
+
+def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
+    # get group data
+    groupname = group["name"]
+    bolds = group["bolds"]
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    try:
+        r += "\n---> %s group %s" % (action("Processing", options['run']), groupname)
+        groupok = True
+
+        # --- check for bold images and prepare images parameter
+        boldimgs = ""
+
+         # check if files for all bolds exist
+        for b in bolds:
+            # set ok to true for now
+            boldok = True
+
+            # extract data
+            bold, _, _, boldinfo = b
+
+            if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+                printbold  = boldinfo['boldname']
+                boldtarget = boldinfo['boldname']
+            else:
+                printbold  = str(bold)
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+            boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
+            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image [%s] present' % boldimg, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
+
+            if not boldok:
+                groupok = False
+                break
+            else:
+                # add @ separator
+                if boldimgs is not "":
+                    boldimgs = boldimgs + @
+
+                # add latest image
+                boldimgs = boldimgs + boldimg
+
+        # load parameters or use default values
+        bandpass = 0
+        if options['hcp_icafix_highpass']:
+            bandpass = options['hcp_icafix_highpass']
+
+        domot = "FALSE"
+        if options['hcp_icafix_domotionreg']:
+            domot = options['hcp_icafix_domotionreg']
+
+        comm = '%(script)s \
+                "%(inputfile)s" \
+                %(bandpass)s \
+                "%(concatfilename)s" \
+                %(domot)s \
+                "%(trainingdata)s" \
+                "%(fixthreshold)s" \
+                "%(deleteintermediates)s"' % {
+                'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
+                'inputfile'             : boldimgs,
+                'bandpass'              : bandpass,
+                'concatfilename'        : groupname,
+                'domot'                 : domot,
+                'trainingdata'          : options['hcp_icafix_traindata'],
+                'fixthreshold'          : options['hcp_icafix_threshold'],
+                'deleteintermediates'   : options['hcp_icafix_deleteintermediates']}
+
+        # -- Test files
+        # TODO TEST FILES
+        tfile = None
+        fullTest = None
+
+        # -- Run
+        if run and groupok:
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, '     ... running multi HCP ICAFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], groupname], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(groupname)                    
+                else:
+                    report['done'].append(groupname)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'multi HCP ICAFix ' + groupname, r)
+                if passed is None:
+                    r += "\n     ... multi HCP ICAFix can be run"
+                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(groupname)
+                else:
+                    report[passed].append(groupname)
+
+        elif run:
+            report['not ready'].append(groupname)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this group!"
+            else:
+                r += "\n     ... ERROR: images missing, this group would be skipped!"
+        else:
+            report['not ready'].append(groupname)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this group!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this group would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += "\n ---  Failed during processing of group %s with error:\n" % (groupname)
+        r += str(errormessage)
+        report['failed'].append(groupname)
+    except:
+        r += "\n ---  Failed during processing of group %s with error:\n %s\n" % (groupname, traceback.format_exc())
+        report['failed'].append(groupname)
+
+    # r += "\n     ... DONE!"
+
+    return {'r': r, 'report': report}
+
+
 def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
     """
     hcpDTIFit - documentation not yet available.
@@ -4042,7 +4501,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     --sessions         ... The batch.txt file with all the session information
                            [batch.txt].
     --subjectsfolder   ... The path to the study/subjects folder, where the
-                           imaging  data is supposed to go [.].
+                           imaging data is supposed to go [.].
     --cores            ... How many cores to utilize [1].
     --overwrite        ... Whether to overwrite existing data (yes) or not (no)
                            [no].
