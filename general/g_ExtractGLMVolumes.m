@@ -1,4 +1,4 @@
-function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, values, verbose);
+function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, values, verbose, txtf);
 
 %function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, values, verbose);
 %
@@ -19,6 +19,11 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %                     files for each effect ('effect files'). ['by subject']
 %       values      - What kind of values to save: 'raw' or 'psc'. ['raw']
 %	    verbose		- Whether to report on the progress or not [false]
+%       txtf        - An optional designator in what text file to also 
+%                     output the data. Only saved if an option is provided
+%                     and the input is ptseries. Valid options are 'long' to
+%                     save the data in long format or empty to skip saving 
+%                     data in a text file. []
 %
 %   USE
 %   The function is used to extract GLM estimates for the effects of interest
@@ -53,9 +58,11 @@ function [] = g_ExtractGLMVolumes(flist, outf, effects, frames, saveoption, valu
 %   Changelog
 %   2017-03-04 Grgega Repovs - updated documentation
 %   2017-07-01 Grega Repovs - Added psc option.
+%   2018-10-13 Grega Repovs - Added txtf option.
 %
 %
 
+if nargin < 8 || isempty(txtf),       txtf       = ''; end
 if nargin < 7, verbose   = false; end
 if nargin < 6 || isempty(values),     values     = 'raw'; end
 if nargin < 5 || isempty(saveoption), saveoption = 'by subject'; end
@@ -149,6 +156,12 @@ if strcmp(saveoption, 'by estimate')
 end
 
 
+% --- will we use parcel names?
+
+if strcmp(glm.filetype, '.ptseries') & ~isempty(txtf)
+    parcelnames = getParcelNames(glm);
+end
+
 % --- save
 
 if ismember(saveoption, {'by effect', 'by subject'})
@@ -158,6 +171,18 @@ if ismember(saveoption, {'by effect', 'by subject'})
     out.data = data;
     out = setMeta(out, subject, effect, frame, event, verbose);
     out.mri_saveimage(outf);
+    if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
+        if verbose, fprintf('\n---> saving data in a text file, sorted %s', saveoption); end
+        tout = fopen([outf '_long.txt'], 'w');
+        fprintf(tout, 'subject\troi code\troi name\teffect\tframe\tvalue');
+        [nroi, ndata] = size(out.data);
+        for roi_index = 1:nroi
+            for data_index = 1:ndata
+                fprintf(tout, '\n%s\t%d\t%s\t%s\t%d\t%f', subject{data_index}, roi_index, parcelnames{roi_index}, effect{data_index}, frame(data_index), out.data(roi_index, data_index));
+            end
+        end
+        fclose(tout);
+    end
 else
     if verbose, fprintf('\n---> saving data in separate files for each effect'); end
     for e = effects(:)'
@@ -167,6 +192,21 @@ else
         out.data = data(:, mask);
         out = setMeta(out, subject(mask), effect(mask), frame(mask), event(mask), verbose);
         out.mri_saveimage([outf '_' e{1}]);
+        if strcmp(out.filetype, '.ptseries') & ~isempty(txtf)
+            if verbose, fprintf('\n---> saving data in separate text files for each effect'); end
+            tout = fopen([outf '_' e{1} '_long.txt'], 'w');
+            fprintf(tout, 'subject\troi code\troi name\teffect\tframe\tvalue');
+            [nroi, ndata] = size(out.data);
+            t_subject = subject(mask);
+            t_effect  = effect(mask);
+            t_frame   = frame(mask);
+            for roi_index = 1:nroi
+                for data_index = 1:ndata
+                    fprintf(tout, '\n%s\t%d\t%s\t%s\t%d\t%f', t_subject{data_index}, roi_index, parcelnames{roi_index}, t_effect{data_index}, t_frame(data_index), out.data(roi_index, data_index));
+                end
+            end
+            fclose(tout);
+        end
     end
 end
 
@@ -183,3 +223,19 @@ function [img] = setMeta(img, subject, effect, frame, event, verbose)
     s = [s sprintf('# frame:%s\n', sprintf(' %d', frame))];
     s = [s sprintf('# event: %s\n', strjoin(effect))];
     img = img.mri_EmbedMeta(s, [], 'list', verbose);
+
+
+function [parcelnames] = getParcelNames(img)
+
+    % --> extract metadata from the input image
+
+    xml  = cast(img.meta(find([img.meta.code] == 32)).data, 'char')';
+
+    % --> load cifti brain model
+
+    model = load('CIFTI_BrainModel.mat');
+
+    % --> process parcells
+
+    parcels = regexp(xml, '<Parcel Name="(?<name>.*?)">.*?(?<parcelparts><.*?)\s*</Parcel>', 'names');
+    parcelnames = {parcels.name};
