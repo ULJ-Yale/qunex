@@ -37,7 +37,7 @@ functions = {
     'g_ComputeBOLDListStats':          [('flist', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'g_ComputeBOLDStats':              [('img', 'string'), ('mask', 'string'), ('target', 'string'), ('store', 'string'), ('scrub', 'string'), ('verbose', 'bool')],
     'g_ComputeGroupBOLDStats':         [('flist', 'string'), ('tfile', 'string'), ('stats', 'string'), ('inmask', 'string'), ('ignore', 'string')],
-    'g_ExtractGLMVolumes':             [('flist', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('saveoption', 'string'), ('values', 'string'), ('verbose', 'bool')],
+    'g_ExtractGLMVolumes':             [('flist', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('saveoption', 'string'), ('values', 'string'), ('verbose', 'bool'), ('txtf', 'string')],
     'g_ExtractROIGLMValues':           [('flist', 'string'), ('roif', 'string'), ('outf', 'string'), ('effects', 'string'), ('frames', 'numeric'), ('values', 'string'), ('tformat', 'string'), ('verbose', 'bool')],
     'g_ExtractROIValues':              [('roif', 'string'), ('mfs', 'string'), ('sefs', 'string'), ('vnames', 'string'), ('output', 'string'), ('stats', 'string'), ('verbose', 'bool')],
     'g_FindPeaks':                     [('fin', 'string'), ('fout', 'string'), ('mins', 'numeric'), ('maxs', 'numeric'), ('val', 'string'), ('t', 'numeric'), ('presmooth', 'string'), ('projection', 'string'), ('options', 'string'), ('verbose', 'bool')],
