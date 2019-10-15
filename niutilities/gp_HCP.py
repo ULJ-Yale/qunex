@@ -11,6 +11,7 @@ consists of functions:
 * hcpfMRIVolume   ... runs HCP BOLD Volume preprocessing
 * hcpfMRISurface  ... runs HCP BOLD Surface preprocessing
 * hcpICAFix       ... runs HCP BOLD ICAFix preprocessing
+* hcpPostFix      ... runs HCP BOLD PostFix preprocessing
 * hcpDTIFit       ... runs DTI Fit
 * hcpBedpostx     ... runs Bedpost X
 * mapHCPData      ... maps results of HCP preprocessing into `images`
@@ -3854,6 +3855,105 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     return {'r': r, 'report': report}
 
 
+def parseICAFixBolds(options, bolds, r):
+    # --- Use hcp_icafix_bolds parameter to determine if a single fix or a multi fix should be used
+    singleFix = True
+    if options['hcp_icafix_bolds']:
+        icafixBolds = options['hcp_icafix_bolds']
+
+        # if hcp_icafix_bolds includes : then we have groups and we need multi fix
+        if ":" in icafixBolds:
+            # run multi fix
+            singleFix = False
+
+            # variable for storing groups and their bolds
+            icafixGroups = {}
+
+            # get all groups
+            groups = str.split(icafixBolds, "|")
+
+            for g in groups:
+                # get group name
+                split = str.split(g, ":")
+
+                # create group and add to dictionary
+                icafixGroups[split[0]] = str.split(split[1], ",")
+
+        # else we extract bolds and use single fix
+        else:
+            icafixBolds = str.split(icafixBolds, ",")
+    # if hcp_icafix_bolds is empty then use all bolds
+    else:
+        icafixBolds = bolds
+
+    # --- Report single fix or multi fix
+    if singleFix:
+        r += "\n\n%s single fix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
+    else:
+        r += "\n\n%s multi fix on %d groups" % (action("Processing", options['run']), len(icafixGroups))
+
+    # --- Get hcp_icafix_bolds data from bolds
+    if icafixBolds is not bolds:
+        r += "\n\n%s bolds with hcp_icafix_bolds" % (action("Comparing", options['run']))
+        # compare
+        # single fix
+        if singleFix:
+            boldData = []
+            for b in bolds:
+                # extract data
+                _, boldname, _, _ = boldData
+
+                # find the bold in icafixBolds
+                found = False
+                for icaB in icafixBolds:
+                    if icaB is boldname:
+                        # at to temporary variable boldData
+                        boldData.append(b)
+                        found = True
+                        break
+                
+                # bold not found in bolds
+                if not found:
+                    r += "\n%s found in bolds but not in hcp_icafix_bolds" % b
+
+            # store data into the icafixBolds variable
+            icafixBolds = boldData
+        # multi fix
+        else:
+            # variable for storing group data
+            groupData = []
+            # create empty dict entry for all groups
+            for g in icafixGroups:
+                groupData[g] = []
+
+            for b in bolds:
+                # extract data
+                _, boldname, _, _ = boldData
+
+                # go over all groups
+                for g in icafixGroups:
+                    # find the bold in group bolds
+                    found = False
+                    groupBolds = g["bolds"]
+                    for groupB in groupBolds:
+                        if groupB is boldname:
+                            # add bold to the group
+                            groupData[g].append(b)
+                            found = True
+                            break
+
+                # bold not found in bolds
+                if not found:
+                    r += "\n%s found in bolds but not in hcp_icafix_bolds" % b
+
+            # cast group data to array of dictionaries (needed for parallel)
+            icafixGroups = []
+            for g in groupData:
+                icafixGroups.append({"name":g, "bolds":groupData[g]})
+
+    return (singleFix, icafixBolds, icafixGroups, r)
+
+
 def hcpICAFix(sinfo, options, overwrite=False, thread=0):
     '''
     hcpICAFix - full documentation not yet available.
@@ -3890,6 +3990,10 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
         hcp = getHCPPaths(sinfo, options)
 
+        # --- Multi threading
+        threads = options['threads']
+        r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
+
         # --- Get sorted bold numbers and bold data
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
@@ -3898,104 +4002,8 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
-        # --- Multi threading
-        threads = options['threads']
-        r += "\n\n%s ICAFix on %d threads" % (action("Processing", options['run']), threads)
-
-        # --- Use hcp_icafix_bolds parameter to determine if a single fix or a multi fix should be used
-        singleFix = True
-        if options['hcp_icafix_bolds']:
-            icafixBolds = options['hcp_icafix_bolds']
-
-            # if hcp_icafix_bolds includes : then we have groups and we need multi fix
-            if ":" in icafixBolds:
-                # run multi fix
-                singleFix = False
-
-                # variable for storing groups and their bolds
-                icafixGroups = {}
-
-                # get all groups
-                groups = str.split(icafixBolds, "|")
-
-                for g in groups:
-                    # get group name
-                    split = str.split(g, ":")
-
-                    # create group and add to dictionary
-                    icafixGroups[split[0]] = str.split(split[1], ",")
-
-            # else we extract bolds and use single fix
-            else:
-                icafixBolds = str.split(icafixBolds, ",")
-        # if hcp_icafix_bolds is empty then use all bolds
-        else:
-            icafixBolds = bolds
-
-        # --- Report single fix or multi fix
-        if singleFix:
-            r += "\n\n%s single fix on %d bolds" % (action("Processing", options['run']), len(icafixBolds))
-        else:
-            r += "\n\n%s multi fix on %d groups" % (action("Processing", options['run']), len(icafixGroups))
-
-        # --- Get hcp_icafix_bolds data from bolds
-        if icafixBolds is not bolds:
-            r += "\n\n%s bolds with hcp_icafix_bolds" % (action("Comparing", options['run']))
-            # compare
-            # single fix
-            if singleFix:
-                boldData = []
-                for b in bolds:
-                    # extract data
-                    _, boldname, _, _ = boldData
-
-                    # find the bold in icafixBolds
-                    found = False
-                    for icaB in icafixBolds:
-                        if icaB is boldname:
-                            # at to temporary variable boldData
-                            boldData.append(b)
-                            found = True
-                            break
-                    
-                    # bold not found in bolds
-                    if not found:
-                        r += "\n%s found in bolds but not in hcp_icafix_bolds" % b
-
-                # store data into the icafixBolds variable
-                icafixBolds = boldData
-            # multi fix
-            else:
-                # variable for storing group data
-                groupData = []
-                # create empty dict entry for all groups
-                for g in icafixGroups:
-                    groupData[g] = []
-
-                for b in bolds:
-                    # extract data
-                    _, boldname, _, _ = boldData
-
-                    # go over all groups
-                    for g in icafixGroups:
-                        # find the bold in group bolds
-                        found = False
-                        groupBolds = g["bolds"]
-                        for groupB in groupBolds:
-                            if groupB is boldname:
-                                # add bold to the group
-                                groupData[g].append(b)
-                                found = True
-                                break
-
-                    # bold not found in bolds
-                    if not found:
-                        r += "\n%s found in bolds but not in hcp_icafix_bolds" % b
-
-                # cast group data to array of dictionaries (needed for parallel)
-                icafixGroups = []
-                for g in groupData:
-                    icafixGroups.append({"name":g, "bolds":groupData[g]})
+        # --- Parse icafix_bolds
+        singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
 
         # --- Execute
         # single fix
@@ -4037,7 +4045,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
             if threads == 1: # serial execution
                 for g in icafixGroups:
                     # process
-                    result = executeHCPSingleICAFix(sinfo, options, overwrite, hcp, g)
+                    result = executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, g)
 
                     # merge r
                     r += result['r']
@@ -4054,7 +4062,7 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
                 # create a multiprocessing Pool
                 processPoolExecutor = ProcessPoolExecutor(threads)
                 # process 
-                f = partial(executeHCPSingleICAFix, sinfo, options, overwrite, hcp, run)
+                f = partial(executeHCPMultiICAFix, sinfo, options, overwrite, hcp, run)
                 results = processPoolExecutor.map(f, icafixGroups)
 
                 # merge r and report
@@ -4183,8 +4191,6 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
         r += "\n ---  Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
         report['failed'].append(printbold)
 
-    # r += "\n     ... DONE!"
-
     return {'r': r, 'report': report}
 
 
@@ -4307,7 +4313,227 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         r += "\n ---  Failed during processing of group %s with error:\n %s\n" % (groupname, traceback.format_exc())
         report['failed'].append(groupname)
 
-    # r += "\n     ... DONE!"
+    return {'r': r, 'report': report}
+
+
+def hcpPostFix(sinfo, options, overwrite=False, thread=0):
+    '''
+    hcpPostFix - full documentation not yet available.
+
+    hcp_PostFix [... processing options]
+    hcp7 [... processing options]
+
+    USE
+    ===
+
+    Runs the PostFix step of HCP Pipeline. TODO DESCRIPTION!
+    A short name 'hcp7' can be used for this command.
+
+    TODO DOCUMENTATION!
+
+    ----------------
+    Written by Grega Repovš
+
+    Changelog
+    2019-10-11 Jure Demsar
+             - Core functionality.
+    '''
+
+    r = "\n----------------------------------------------------------------"
+    r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+    r += "\n%s HCP PostFix registration [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
+
+    run    = True
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
+
+    try:
+        # --- Base settings
+        doOptionsCheck(options, sinfo, 'hcp_PreFS')
+        doHCPOptionsCheck(options, sinfo, 'hcp_PreFS')
+        hcp = getHCPPaths(sinfo, options)
+
+        # --- Get sorted bold numbers and bold data
+        bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
+        if report['boldskipped']:
+            if options['hcp_bold_boldnamekey'] == 'name':
+                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+            else:
+                report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
+
+        # --- Parse icafix_bolds
+        singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
+
+        # --- Execute
+        # single fix
+        if not singleFix:
+            # put all group bolds together
+            icafixBolds = []
+            for g in icafixGroups:
+                groupBolds = g["bolds"]
+                icafixBolds.append(groupBolds)
+
+
+        if threads == 1: # serial execution
+            for b in icafixBolds:
+                # process
+                result = executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, b)
+
+                # merge r
+                r += result['r']
+
+                # merge report
+                tempReport            = result['report']
+                report['done']       += tempReport['done']
+                report['incomplete'] += tempReport['incomplete']
+                report['failed']     += tempReport['failed']
+                report['ready']      += tempReport['ready']
+                report['not ready']  += tempReport['not ready']      
+
+        else: # parallel execution
+            # create a multiprocessing Pool
+            processPoolExecutor = ProcessPoolExecutor(threads)
+            # process 
+            f = partial(executeHCPPostFix, sinfo, options, overwrite, hcp, run, singleFix)
+            results = processPoolExecutor.map(f, icafixBolds)
+
+            # merge r and report
+            for result in results:
+                r                    += result['r']
+                tempReport            = result['report']
+                report['done']       += tempReport['done']
+                report['failed']     += tempReport['failed']
+                report['incomplete'] += tempReport['incomplete']
+                report['ready']      += tempReport['ready']
+                report['not ready']  += tempReport['not ready']
+        
+        # report
+        rep = []
+        for k in ['done', 'incomplete', 'failed', 'ready', 'not ready', 'skipped']:
+            if len(report[k]) > 0:
+                rep.append("%s %s" % (", ".join(report[k]), k))
+
+        report = (sinfo['id'], "HCP PostFix: bolds " + "; ".join(rep), len(report['failed'] + report['incomplete'] + report['not ready']))
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += str(errormessage)
+        report = (sinfo['id'], 'HCP PostFix failed')
+    except:
+        r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
+        report = (sinfo['id'], 'HCP PostFix failed')
+
+    r += "\n\nHCP PostFix %s on %s\n---------------------------------------------------------" % (action("completed", options['run']), datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
+
+    # print r
+    return (r, report)
+
+
+def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
+# extract data
+    bold, _, _, boldinfo = boldData
+
+    if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+        printbold  = boldinfo['boldname']
+        boldtarget = boldinfo['boldname']
+    else:
+        printbold  = str(bold)
+        boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
+    # prepare return variables
+    r = ""
+    report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': []}
+
+    try:
+        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        boldok = True
+
+        # --- check for bold image
+        boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
+        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+
+        # load parameters or use default values
+        highpass = 2000
+        if not singleFix:
+            highpass = 0
+        if options['hcp_icafix_highpass']:
+            highpass = options['hcp_icafix_highpass']
+
+        reusehighpass = "NO"
+        if not singleFix:
+            reusehighpass = "YES"
+        if options['hcp_icafix_highpass']:
+            reusehighpass = options['hcp_postfix_reusehighpass']
+
+        # matlab run mode, default for now is interpreted matlab
+        matlabrunmode = 1
+        if options['hcp_matlab_mode']:
+            matlabrunmode = options['hcp_matlab_mode']
+
+        comm = '%(script)s \
+            --study-folder="%(studyfolder)s" \
+            --subject="%(subject)s" \
+            --fmri-name="%(boldtarget)s" \
+            --high-pass="%(highpass)s" \
+            --template-scene-dual-screen="%(dualscene)s" \
+            --template-scene-single-screen="%(singlescene)s" \
+            --reuse-high-pass="%(reusehighpass)d" \
+            --matlab-run-mode"%(matlabrunmode)s"' % {
+                'script'            : os.path.join(hcp['hcp_base'], 'ICAFix', 'PostFix.sh'),
+                'studyfolder'       : sinfo['hcp'],
+                'subject'           : sinfo['id'] + options['hcp_suffix'],
+                'boldtarget'        : boldtarget,
+                'highpass'          : highpass,
+                'dualscene'         : options['hcp_postfix_dualscene'],
+                'singlescene'       : options['hcp_postfix_singlescene'],
+                'reusehighpass'     : reusehighpass,
+                'matlabrunmode'     : matlabrunmode}
+
+        # -- Test files
+        # TODO TEST FILES
+        tfile = None
+        fullTest = None
+
+        # -- Run
+        if run and boldok:
+            if options['run'] == "run":
+                if overwrite and os.path.exists(tfile):
+                    os.remove(tfile)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, '     ... running HCP PostFix', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+
+                if failed:
+                    report['failed'].append(printbold)                    
+                else:
+                    report['done'].append(printbold)
+
+            # -- just checking
+            else:
+                passed, _, r, failed = checkRun(tfile, fullTest, 'HCP PostFix ' + boldtarget, r)
+                if passed is None:
+                    r += "\n     ... HCP PostFix can be run"
+                    r += "\n-----------------------------------------------------\nCommand to run:\n %s\n-----------------------------------------------------" % (comm.replace("--", "\n    --"))
+                    report['ready'].append(printbold)
+                else:
+                    report[passed].append(printbold)
+
+        elif run:
+            report['not ready'].append(printbold)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: images missing, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: images missing, this BOLD would be skipped!"
+        else:
+            report['not ready'].append(printbold)
+            if options['run'] == "run":
+                r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
+            else:
+                r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+
+    except (ExternalFailed, NoSourceFolder), errormessage:
+        r += "\n ---  Failed during processing of bold %s with error:\n" % (printbold)
+        r += str(errormessage)
+        report['failed'].append(printbold)
+    except:
+        r += "\n ---  Failed during processing of bold %s with error:\n %s\n" % (printbold, traceback.format_exc())
+        report['failed'].append(printbold)
 
     return {'r': r, 'report': report}
 

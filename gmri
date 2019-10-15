@@ -194,6 +194,7 @@ hcp3  hcp_PostFS       Run HCP Post FreeSurfer pipeline.
 hcp4  hcp_fMRIVolume   Run HCP fMRI Volume pipeline.
 hcp5  hcp_fMRISurface  Run HCP fMRI Surface pipeline.
 hcp6  hcp_ICAFix       Run HCP ICAFix pipeline.
+hcp7  hcp_PostFix      Run HCP PostFix pipeline.
 hcpd  hcp_Diffusion    Run HCP DWI pipeline.
 
 Functional connectivity preprocessing commands
