@@ -146,10 +146,13 @@ def updateOptions(session, options):
     return soptions
 
 
-def mapDeprecated(options, tomap):
+def mapDeprecated(options, tomap, mapValues):
 
     deprecated = []
-    mapwarn  = False
+    newvalues  = []
+
+    # -> check deprecated parameters
+
     for k, v in options.iteritems():
         if k in tomap:
             options[tomap[k]] = v
@@ -161,6 +164,21 @@ def mapDeprecated(options, tomap):
             print"         ... %s is now %s!" % (k, tomap[k])            
             del options[k]
         print "         Please correct the listed parameter names in command line or batch file!"     
+
+
+    # -> check new parameter values
+
+    for k, v in options.iteritems():
+    if k in mapValues:
+        if v in mapValues[k]:
+            options[k] = mapValues[k][v]
+            newvalues.append([k, v, mapValues[k][v]])
+
+    if newvalues:
+        print "\nWARNING: Use of deprecated parameter value(s)!\n       The following parameter values have new names:"
+        for k, v, n in newvalues:
+            print"         ... %s (%s) is now %s!" % (v, k, n)            
+        print "         Please correct the listed parameter values in command line or batch file!" 
 
 
 
@@ -283,7 +301,7 @@ arglist = [['# ---- Basic settings'],
            ['scheduler_sleep',       '1',                                         float,  "time in seconds between submission of individual scheduler jobs"],
 
            ['# --- HCP options'],
-           ['hcp_mppversion',         'hcp',                                      str,    "Whether to use the HCP (hcp), Legacy (legacy), or Origin (strict) version of the MPP [hcp]"],
+           ['hcp_processing_mode',    'HCPStyleData',                             str,    "Controls whether the HCP acquisition and processing guidelines should be treated as requirements (HCPStyleData) or if additional processing functionality is allowed (LegacyStyleData)"],
            ['hcp_folderstructure',    'hcpls',                                    str,    "Which version of HCP folder structure to use, initial or hcpls ['hcpls']"],
            ['hcp_freesurfer_home',    '',                                         str,    "path to FreeSurfer base folder"],
            ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE"],
@@ -302,12 +320,12 @@ arglist = [['# ---- Basic settings'],
            ['hcp_t2samplespacing',    '',                                         str,    "0.0000021 ... DICOM field (0019,1018) in s or '' if not used"],
            ['hcp_unwarpdir',          '',                                         str,    "Readout direction of the T1w and T2w images (Used with either a regular field map or a spin echo field map) z appears to be best or '' if not used"],
            ['hcp_gdcoeffs',           '',                                         str,    "Location of gradient coefficient file, a string describing mulitiple options, or '' to skip"],
-           ['hcp_avgrdcmethod',       'NONE',                                     str,    "'FIELDMAP' ... Averaging and readout distortion correction methods: 'NONE' = average any repeats with no readout correction 'FIELDMAP' or 'SiemensFieldMap' or 'GeneralElectricFieldMap' = average any repeats and use field map for readout correction 'TOPUP' = average and distortion correct at the same time with topup/applytopup only works for 2 images currently"],
+           ['hcp_avgrdcmethod',       'NONE',                                     str,    "Averaging and readout distortion correction methods: 'NONE' = average any repeats with no readout correction 'FIELDMAP' or 'SiemensFieldMap' or 'GeneralElectricFieldMap' = average any repeats and use field map for readout correction 'TOPUP' = average and distortion correct at the same time with topup/applytopup only works for 2 images currently"],
            ['hcp_topupconfig',        '',                                         str,    "Config for topup or '' if not used"],
            ['hcp_bfsigma',            '',                                         str,    "Bias Field Smoothing Sigma (optional)"],
            ['hcp_prefs_check',        'last',                                     str,    "Whether to check the results of PreFreeSurfer pipeline by last file generated (last), the default list of all files (all) or using a specific check file (path to file) [last]"],
-           ['hcp_prefs_brainmask',    'NONE',                                     str,    "Whether to use a custom bain mask (MASK) in PreFS or not (NONE)"],
-           ['hcp_prefs_template_res', '0.7',                                      str,    "The resolution of the structural images templates to use in the prefs step."],
+           ['hcp_prefs_custombrain',  '',                                         str,    "Whether to use a custom bain mask (MASK) or custom brain images (CUSTOM) in PreFS or not (NONE; the default)"],
+           ['hcp_prefs_template_res', '0.7',                                      str,    "The resolution (in mm) of the structural images templates to use in the prefs step."],
            ['hcp_usejacobian',        '',                                         str,    "Not currently in usage (optional)"],
            ['hcp_printcom',           '',                                         str,    "Print command for the HCP scripts: set to echo to have commands printed and not executed."],
            ['hcp_expert_file',        '',                                         str,    "Name of the read-in expert options file for FreeSurfer"],
@@ -374,14 +392,19 @@ arglist = [['# ---- Basic settings'],
 #   parameters need to be mapped to a parameter with another name. The "tomap"
 #   dictionary specifies what is mapped to what.
 
-tomap = {'bppt':            'bolds',
-         'bppa':            'bold_actions',
-         'bppn':            'bold_nuisance',
-         'eventstring':     'event_string',
-         'eventfile':       'event_file',
-         'basefolder':      'subjectsfolder',
-         'subjects':        'sessions',
-         'bold_preprocess': 'bolds'}
+tomap = {'bppt':                'bolds',
+         'bppa':                'bold_actions',
+         'bppn':                'bold_nuisance',
+         'eventstring':         'event_string',
+         'eventfile':           'event_file',
+         'basefolder':          'subjectsfolder',
+         'subjects':            'sessions',
+         'bold_preprocess':     'bolds',
+         'hcp_prefs_brainmask': 'hcp_prefs_custombrain',
+         'hcp_mppversion':      'hcp_processing_mode'}
+
+mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'}}
+  
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
 #   A list of flags, arguments that do not require additional values. They are
@@ -545,7 +568,7 @@ def run(command, args):
     for (k, v) in gpref.iteritems():
         options[k] = v
 
-    mapDeprecated(options, tomap)
+    mapDeprecated(options, tomap, mapValues)
 
     # --- parse command line options
 
@@ -555,7 +578,7 @@ def run(command, args):
         else:
             options[k] = v
 
-    mapDeprecated(options, tomap)
+    mapDeprecated(options, tomap, mapValues)
 
     # ---- Recode
 

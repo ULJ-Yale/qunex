@@ -322,27 +322,32 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions        ... The batch.txt file with all the sessions information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --logfolder       ... The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
-                          * 'study'   for the default: 
-                                      `<study>/processing/logs/comlogs`
-                                      location,
-                          * 'session' for `<sessionid>/logs/comlogs
-                          * 'hcp'     for `<hcp_folder>/logs/comlogs
-                          * '<path>'  for an arbitrary directory
+    --sessions              ... The batch.txt file with all the sessions information
+                                [batch.txt].
+    --subjectsfolder        ... The path to the study/subjects folder, where the
+                                imaging  data is supposed to go [.].
+    --cores                 ... How many cores to utilize [1].
+    --overwrite             ... Whether to overwrite existing data (yes) or not (no)
+                                [no].
+    --logfolder             ... The path to the folder where runlogs and comlogs
+                                are to be stored, if other than default []
+    --log                   ... Whether to keep ('keep') or remove ('remove') the
+                                temporary logs once jobs are completed ['keep'].
+                                When a comma separated list is given, the log will
+                                be created at the first provided location and then 
+                                linked or copied to other locations. The valid 
+                                locations are: 
+                                * 'study'   for the default: 
+                                            `<study>/processing/logs/comlogs`
+                                            location,
+                                * 'session' for `<sessionid>/logs/comlogs
+                                * 'hcp'     for `<hcp_folder>/logs/comlogs
+                                * '<path>'  for an arbitrary directory
+    --hcp_processing_mode   ... Controls whether the HCP acquisition and processing 
+                                guidelines should be treated as requirements 
+                                (HCPStyleData) or if additional processing 
+                                functionality is allowed (LegacyStyleData). In this
+                                case running processin w/o a T2w image.
 
     specific parameters
     -------------------
@@ -350,74 +355,78 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_folderstructure  ... Specifies the version of the folder structure to
-                               use, 'initial' and 'hcpls' are supported ['hcpls']
-    --hcp_suffix           ... Specifies a suffix to the session id if multiple
-                               variants are run, empty otherwise [].
-    --hcp_t2               ... NONE if no T2w image is available and the
-                               preprocessing should be run without them,
-                               anything else otherwise [t2].
-    --hcp_brainsize        ... Specifies the size of the brain in mm. 170 is FSL
-                               default and seems to be a good choice, HCP uses
-                               150, which can lead to problems with larger heads
-                               [150].
-    --hcp_t1samplespacing  ... T1 image sample spacing, NONE if not used [NONE].
-    --hcp_t2samplespacing  ... T2 image sample spacing, NONE if not used [NONE].
-    --hcp_gdcoeffs         ... Path to a file containing gradient distortion
-                               coefficients, alternatively a string describing
-                               multiple options (see below), or "NONE", if not 
-                               used [NONE].
-    --hcp_bfsigma          ... Bias Field Smoothing Sigma (optional) [].
-    --hcp_avgrdcmethod     ... Averaging and readout distortion correction
-                               method. Can take the following values:
-                               NONE
-                               ... average any repeats with no readout correction
-                               FIELDMAP
-                               ... average any repeats and use Siemens field
-                                   map for readout correction
-                               SiemensFieldMap
-                               ... average any repeats and use Siemens field
-                                   map for readout correction.
-                               GeneralElectricFieldMap
-                               ... average any repeats and use GE field map for
-                                   readout correction
-                               TOPUP
-                               ... average any repeats and use spin echo field
-                                   map for readout correction.
-                               [NONE]
-    --hcp_unwarpdir        ... Readout direction of the T1w and T2w images (x,
-                               y, z or NONE); used with either a regular field
-                               map or a spin echo field map [NONE].
-    --hcp_echodiff         ... Difference in TE times if a fieldmap image is
-                               used, set to NONE if not used [NONE].
-    --hcp_dwelltime        ... Echo Spacing or Dwelltime of Spin Echo Field Map
-                               or "NONE" if not used [NONE].
-    --hcp_seunwarpdir      ... Phase encoding direction of the Spin Echo Field
-                               Map (x, y or NONE) [NONE].
-    --hcp_topupconfig      ... Path to a configuration file for TOPUP method
-                               or "NONE" if not used [NONE].
-    --hcp_prefs_check      ... Whether to check the results of PreFreeSurfer 
-                               pipeline by presence of last file generated 
-                               ('last'), the default list of all files ('all') 
-                               or using a specific check file ('<path to file>')
-                               ['last']
+    --hcp_folderstructure   ... Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported ['hcpls']
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
+    --hcp_t2                ... NONE if no T2w image is available and the
+                                preprocessing should be run without them,
+                                anything else otherwise [t2]. NONE is only valid
+                                if 'LegacyStyleData' processing mode was specified.
+    --hcp_brainsize         ... Specifies the size of the brain in mm. 170 is FSL
+                                default and seems to be a good choice, HCP uses
+                                150, which can lead to problems with larger heads
+                                [150].
+    --hcp_t1samplespacing   ... T1 image sample spacing, NONE if not used [NONE].
+    --hcp_t2samplespacing   ... T2 image sample spacing, NONE if not used [NONE].
+    --hcp_gdcoeffs          ... Path to a file containing gradient distortion
+                                coefficients, alternatively a string describing
+                                multiple options (see below), or "NONE", if not 
+                                used [NONE].
+    --hcp_bfsigma           ... Bias Field Smoothing Sigma (optional) [].
+    --hcp_avgrdcmethod      ... Averaging and readout distortion correction
+                                method. Can take the following values:
+                                NONE
+                                ... average any repeats with no readout correction
+                                FIELDMAP
+                                ... average any repeats and use Siemens field
+                                    map for readout correction
+                                SiemensFieldMap
+                                ... average any repeats and use Siemens field
+                                    map for readout correction.
+                                GeneralElectricFieldMap
+                                ... average any repeats and use GE field map for
+                                    readout correction
+                                TOPUP
+                                ... average any repeats and use spin echo field
+                                    map for readout correction.
+                                [NONE]
+    --hcp_unwarpdir         ... Readout direction of the T1w and T2w images (x,
+                                y, z or NONE); used with either a regular field
+                                map or a spin echo field map [NONE].
+    --hcp_echodiff          ... Difference in TE times if a fieldmap image is
+                                used, set to NONE if not used [NONE].
+    --hcp_dwelltime         ... Echo Spacing or Dwelltime of Spin Echo Field Map
+                                or "NONE" if not used [NONE].
+    --hcp_seunwarpdir       ... Phase encoding direction of the Spin Echo Field
+                                Map (x, y or NONE) [NONE].
+    --hcp_topupconfig       ... Path to a configuration file for TOPUP method
+                                or "NONE" if not used [NONE].
+    --hcp_prefs_check       ... Whether to check the results of PreFreeSurfer 
+                                pipeline by presence of last file generated 
+                                ('last'), the default list of all files ('all') 
+                                or using a specific check file ('<path to file>')
+                                ['last']
+    --hcp_prefs_custombrain ... Whether to only run the final registration using
+                                either a custom prepared brain mask (MASK) or 
+                                custom prepared brain images (CUSTOM), or to 
+                                run the full set of processing steps (NONE). [NONE]
+                                If a mask is to be used (MASK) then a "
+                                custom_acpc_dc_restore_mask.nii.gz" image needs
+                                to be placed in the <session>/T1w folder.
+                                If a custom brain is to be used (BRAIN), then the
+                                following images in <session>/T1w folder need to 
+                                be adjusted:
+                                - T1w_acpc_dc_restore_brain.nii.gz
+                                - T1w_acpc_dc_restore.nii.gz
+                                - T2w_acpc_dc_restore_brain.nii.gz
+                                - T2w_acpc_dc_restore.nii.gz
+    --hcp_prefs_template_res .. The resolution (in mm) of the structural images 
+                                templates to use in the prefs step. Note: it should
+                                match the resolution of the acquired structural 
+                                images.
 
-    HCP modified specific parameters:
-    ---------------------------------
-
-    Please note, that these settings will only be used when hcpmodified code is
-    used. They are currently not yet implemented in HCP Pipelines.
-
-    --hcp_biascorrect_t1w  ... Whether to run T1w image bias correction in PreFS
-                               step if no T2w image is present (YES or NONE) 
-                               [YES].
-    --hcp_prefs_brainmask  ... Whether to only run the final registration using
-                               either a custom prepared brain mask (MASK) or to
-                               run the full set of processing steps (NONE). [NONE]
-                               If a mask is to be used (MASK) then a "
-                               custom_acpc_dc_restore_mask.nii.gz" image needs
-                               to be placed in the T1w folder.
-    
+   
     Gradient Coefficient File Specification:
     ----------------------------------------
 
@@ -522,11 +531,13 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Updated target check image
     2019-06-06 Grega Repovš
              - Enabled multiple log file locations
+    2019-10-20 Grega Repovš
+             - Adjusted parameters, help and processing to use integrated HCPpipelines
     '''
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PreFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n%s HCP PreFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = "Error"
@@ -560,7 +571,11 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 run = False
 
         if hcp['T2w'] in ['', 'NONE']:
-            r += "\n---> Not using T2w image."
+            if options['hcp_processing_mode'] == 'HCPStyleData':
+                r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!"
+                run = False
+            else:
+                r += "\n---> Not using T2w image."
         else:
             for tfile in hcp['T2w'].split("@"):
                 if os.path.exists(tfile):
@@ -681,7 +696,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         # --- see if we have set up to use custom mask
 
-        if options['hcp_prefs_brainmask'] == 'MASK':
+        if options['hcp_prefs_custombrain'] == 'MASK':
             tfile = os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')
             mfile = os.path.join(hcp['T1w_folder'], 'custom_acpc_dc_restore_mask.nii.gz')
             r += "\n---> Set to run only final atlas registration with a custom mask."
@@ -695,125 +710,77 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     run = False
             else:
                 run = False
-                r += "\n     ... ERROR: No previous results found! Please run PreFS without hcp_prefs_brainmask set to MASK first!"
+                r += "\n     ... ERROR: No previous results found! Please run PreFS without hcp_prefs_custombrain set to MASK first!"
                 if os.path.exists(mfile):
                     r += "\n     ... Custom mask present."
                 else:
                     r += "\n     ... ERROR: Custom mask missing as well! [%s]!." % (mfile)
+
+        # --- check if we are using a custom brain
+
+        if options['hcp_prefs_custombrain'] == 'CUSTOM':
+            t1files = ['T1w_acpc_dc_restore_brain.nii.gz', 'T1w_acpc_dc_restore.nii.gz']
+            t2files = ['T2w_acpc_dc_restore_brain.nii.gz', 'T2w_acpc_dc_restore.nii.gz']
+            if hcp['T2w'] in ['', 'NONE']:
+                tfiles = t1files
+            else:
+                tfiles = t1files + t2files
+
+            r += "\n---> Set to run only final atlas registration with custom brain images."
+
+            missingfiles = [] 
+            for tfile in tfiles:
+                if not os.path.exists(os.path.join(hcp['T1w_folder'], tfile)):
+                    missingfiles.append(tfile)
+
+            if missingfiles:
+                run = False
+                r += "\n     ... ERROR: The following brain files are missing in %s:" % (hcp['T1w_folder'])
+                for tfile in missingfiles:
+                    r += "\n                %s" % tfile
+
 
         # --- Set up the command
 
         # Notes:
         # hcpmodified maps hcp_dwelltime to echospacing, hcp to seechospacing ... currently both are passed
 
-        if options['hcp_mppversion'] == "strict":
-            comm = os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh') + " "
+        comm = os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh') + " "
 
-            elements = [("path", sinfo['hcp']), 
-                        ('subject', sinfo['id'] + options['hcp_suffix']),
-                        ('t1', hcp['T1w']),
-                        ('t2', hcp['T2w']),
-                        ('t1template', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm.nii.gz' % (options['hcp_prefs_template_res']))),
-                        ('t1templatebrain', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))),
-                        ('t1template2mm', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm.nii.gz')),
-                        ('t2template', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm.nii.gz' % (options['hcp_prefs_template_res']))),
-                        ('t2templatebrain', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))),
-                        ('t2template2mm', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_2mm.nii.gz')),
-                        ('templatemask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain_mask.nii.gz' % (options['hcp_prefs_template_res']))),
-                        ('template2mmmask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz')),
-                        ('brainsize', options['hcp_brainsize']),
-                        ('fnirtconfig', os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf')),
-                        ('fmapmag', hcp['fmapmag']),
-                        ('fmapphase', hcp['fmapphase']),
-                        ('fmapgeneralelectric', hcp['fmapge']),
-                        ('echodiff', options['hcp_echodiff']),
-                        ('SEPhaseNeg', seneg),
-                        ('SEPhasePos', sepos),
-                        ('seechospacing', options['hcp_dwelltime']),
-                        ('seunwarpdir', options['hcp_seunwarpdir']),
-                        ('t1samplespacing', options['hcp_t1samplespacing']),
-                        ('t2samplespacing', options['hcp_t2samplespacing']),
-                        ('unwarpdir', options['hcp_unwarpdir']),
-                        ('gdcoeffs', gdcfile),
-                        ('avgrdcmethod', options['hcp_avgrdcmethod']),
-                        ('topupconfig', topupconfig),
-                        ('bfsigma', options['hcp_bfsigma']),
-                        ('printcom', options['hcp_printcom'])]
+        elements = [("path", sinfo['hcp']), 
+                    ('subject', sinfo['id'] + options['hcp_suffix']),
+                    ('t1', hcp['T1w']),
+                    ('t2', hcp['T2w']),
+                    ('t1template', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm.nii.gz' % (options['hcp_prefs_template_res']))),
+                    ('t1templatebrain', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))),
+                    ('t1template2mm', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm.nii.gz')),
+                    ('t2template', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm.nii.gz' % (options['hcp_prefs_template_res']))),
+                    ('t2templatebrain', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_%smm_brain.nii.gz' % (options['hcp_prefs_template_res']))),
+                    ('t2template2mm', os.path.join(hcp['hcp_Templates'], 'MNI152_T2_2mm.nii.gz')),
+                    ('templatemask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_%smm_brain_mask.nii.gz' % (options['hcp_prefs_template_res']))),
+                    ('template2mmmask', os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz')),
+                    ('brainsize', options['hcp_brainsize']),
+                    ('fnirtconfig', os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf')),
+                    ('fmapmag', hcp['fmapmag']),
+                    ('fmapphase', hcp['fmapphase']),
+                    ('fmapgeneralelectric', hcp['fmapge']),
+                    ('echodiff', options['hcp_echodiff']),
+                    ('SEPhaseNeg', seneg),
+                    ('SEPhasePos', sepos),
+                    ('seechospacing', options['hcp_dwelltime']),
+                    ('seunwarpdir', options['hcp_seunwarpdir']),
+                    ('t1samplespacing', options['hcp_t1samplespacing']),
+                    ('t2samplespacing', options['hcp_t2samplespacing']),
+                    ('unwarpdir', options['hcp_unwarpdir']),
+                    ('gdcoeffs', gdcfile),
+                    ('avgrdcmethod', options['hcp_avgrdcmethod']),
+                    ('topupconfig', topupconfig),
+                    ('bfsigma', options['hcp_bfsigma']),
+                    ('printcom', options['hcp_printcom']),
+                    ('custombrain', options['hcp_prefs_custombrain']),
+                    ('processing-mode', options['hcp_processing_mode'])]
 
             comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
-
-        else:
-            comm = '%(script)s \
-                --path="%(path)s" \
-                --subject="%(subject)s" \
-                --t1="%(t1)s" \
-                --t2="%(t2)s" \
-                --t1template="%(t1template)s" \
-                --t1templatebrain="%(t1templatebrain)s" \
-                --t1template2mm="%(t1template2mm)s" \
-                --t2template="%(t2template)s" \
-                --t2templatebrain="%(t2templatebrain)s" \
-                --t2template2mm="%(t2template2mm)s" \
-                --templatemask="%(templatemask)s" \
-                --template2mmmask="%(template2mmmask)s" \
-                --brainsize="%(brainsize)d" \
-                --fnirtconfig="%(fnirtconfig)s" \
-                --fmapmag="%(fmapmag)s" \
-                --fmapphase="%(fmapphase)s" \
-                --fmapgeneralelectric="%(fmapge)s" \
-                --echodiff="%(echodiff)s" \
-                --SEPhaseNeg="%(SEPhaseNeg)s" \
-                --SEPhasePos="%(SEPhasePos)s" \
-                --echospacing="%(seechospacing)s" \
-                --seechospacing="%(seechospacing)s" \
-                --seunwarpdir="%(seunwarpdir)s" \
-                --t1samplespacing="%(t1samplespacing)s" \
-                --t2samplespacing="%(t2samplespacing)s" \
-                --unwarpdir="%(unwarpdir)s" \
-                --gdcoeffs="%(gdcoeffs)s" \
-                --avgrdcmethod="%(avgrdcmethod)s" \
-                --topupconfig="%(topupconfig)s" \
-                --bfsigma="%(bfsigma)s" \
-                --t1biascorrect="%(biascorrect)s" \
-                --usejacobian="%(usejacobian)s" \
-                --custombrain="%(custombrain)s" \
-                --printcom="%(printcom)s" \
-                --mppversion="%(mppversion)s"' % {
-                    'script'            : os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh'),
-                    'path'              : sinfo['hcp'],
-                    'subject'           : sinfo['id'] + options['hcp_suffix'],
-                    't1'                : hcp['T1w'],
-                    't2'                : hcp['T2w'],
-                    't1template'        : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm.nii.gz'),
-                    't1templatebrain'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm_brain.nii.gz'),
-                    't1template2mm'     : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm.nii.gz'),
-                    't2template'        : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_0.7mm.nii.gz'),
-                    't2templatebrain'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_0.7mm_brain.nii.gz'),
-                    't2template2mm'     : os.path.join(hcp['hcp_Templates'], 'MNI152_T2_2mm.nii.gz'),
-                    'templatemask'      : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_0.7mm_brain_mask.nii.gz'),
-                    'template2mmmask'   : os.path.join(hcp['hcp_Templates'], 'MNI152_T1_2mm_brain_mask_dil.nii.gz'),
-                    'brainsize'         : options['hcp_brainsize'],
-                    'fnirtconfig'       : os.path.join(hcp['hcp_Config'], 'T1_2_MNI152_2mm.cnf'),
-                    'fmapmag'           : hcp['fmapmag'],
-                    'fmapphase'         : hcp['fmapphase'],
-                    'fmapge'            : hcp['fmapge'],
-                    'echodiff'          : options['hcp_echodiff'],
-                    'SEPhaseNeg'        : seneg,
-                    'SEPhasePos'        : sepos,
-                    'seechospacing'     : options['hcp_dwelltime'],
-                    'seunwarpdir'       : options['hcp_seunwarpdir'],
-                    't1samplespacing'   : options['hcp_t1samplespacing'],
-                    't2samplespacing'   : options['hcp_t2samplespacing'],
-                    'unwarpdir'         : options['hcp_unwarpdir'],
-                    'gdcoeffs'          : gdcfile,
-                    'avgrdcmethod'      : options['hcp_avgrdcmethod'],
-                    'topupconfig'       : topupconfig,
-                    'bfsigma'           : options['hcp_bfsigma'],
-                    'biascorrect'       : options['hcp_biascorrect_t1w'],
-                    'usejacobian'       : options['hcp_usejacobian'],
-                    'custombrain'       : options['hcp_prefs_brainmask'],
-                    'printcom'          : options['hcp_printcom'],
-                    'mppversion'        : options['hcp_mppversion']}
 
         # -- Test files
 
@@ -903,27 +870,32 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions        ... The batch.txt file with all the sessions information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --logfolder       ... The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
-                          * 'study'   for the default: 
-                                      `<study>/processing/logs/comlogs`
-                                      location,
-                          * 'session' for `<sessionid>/logs/comlogs
-                          * 'hcp'     for `<hcp_folder>/logs/comlogs
-                          * '<path>'  for an arbitrary directory
+    --sessions              ... The batch.txt file with all the sessions information
+                                [batch.txt].
+    --subjectsfolder        ... The path to the study/subjects folder, where the
+                                imaging  data is supposed to go [.].
+    --cores                 ... How many cores to utilize [1].
+    --overwrite             ... Whether to overwrite existing data (yes) or not (no)
+                                [no].
+    --logfolder             ... The path to the folder where runlogs and comlogs
+                                are to be stored, if other than default []
+    --log                   ... Whether to keep ('keep') or remove ('remove') the
+                                temporary logs once jobs are completed ['keep'].
+                                When a comma separated list is given, the log will
+                                be created at the first provided location and then 
+                                linked or copied to other locations. The valid 
+                                locations are: 
+                                * 'study'   for the default: 
+                                            `<study>/processing/logs/comlogs`
+                                            location,
+                                * 'session' for `<sessionid>/logs/comlogs
+                                * 'hcp'     for `<hcp_folder>/logs/comlogs
+                                * '<path>'  for an arbitrary directory
+    --hcp_processing_mode   ... Controls whether the HCP acquisition and processing 
+                                guidelines should be treated as requirements 
+                                (HCPStyleData) or if additional processing 
+                                functionality is allowed (LegacyStyleData). In this
+                                case running processin w/o a T2w image.
 
     
     specific parameters
@@ -935,7 +907,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     --hcp_fs_check    ... Whether to check the results of FreeSurfer  pipeline 
                           by presence of last file generated  ('last'), the 
                           default list of all files ('all') or using a specific
-                           check file ('<path to file>'). ['last']
+                          check file ('<path to file>'). ['last']
 
 
     HCP Pipelines specific parameters
@@ -973,19 +945,20 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
                                 preprocessing should be run without them,
-                                anything else otherwise [t2].
+                                anything else otherwise [t2]. NONE is only valid
+                                if 'LegacyStyleData' processing mode was specified.
     --hcp_expert_file       ... Path to the read-in expert options file for
                                 FreeSurfer if one is prepared and should be used
                                 empty otherwise [].
-    --hcp_control_points    ... Specify YES to use manual control points or
+    *--hcp_control_points   ... Specify YES to use manual control points or
                                 empty otherwise [].
-    --hcp_wm_edits          ... Specify YES to use manually edited WM mask or
+    *--hcp_wm_edits         ... Specify YES to use manually edited WM mask or
                                 empty otherwise [].
-    --hcp_fs_brainmask      ... Specify 'original' to keep the masked original 
+    *--hcp_fs_brainmask     ... Specify 'original' to keep the masked original 
                                 brain image; 'manual' to use the manually edited
                                 brainmask file; default 'fs' uses the brainmask 
                                 generated by mri_watershed [fs].
-    --hcp_autotopofix_off   ... Specify YES to turn off the automatic topologic 
+    *--hcp_autotopofix_off  ... Specify YES to turn off the automatic topologic 
                                 fix step in FS and compute WM surface 
                                 deterministically from manual WM mask, or empty 
                                 otherwise [].                             
@@ -993,13 +966,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 specified to override default environment 
                                 variable to ensure backwards compatiblity and 
                                 hcp2 customization.
-    --hcp_freesurfer_module ... Whether to load FreeSurfer as a module on the 
-                                cluster. You can specify using YES or empty 
-                                otherwise []. To ensure backwards compatiblity 
-                                and hcp2 customization.
-    --hcp_fs_longitudinal   ... The name of the FS longitudinal template if one
-                                was created and is to be used in this step.
-    
+
+    * these options are currently not available
 
     Full file checking
     ------------------
@@ -1066,7 +1034,6 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
     qunex hcp2 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
           overwrite=no cores=10 hcp_t2=NONE \\
           hcp_freesurfer_home=<absolute_path_to_freesurfer_binary> \\
-          hcp_freesurfer_module=YES
     ```
 
     ----------------
@@ -1099,11 +1066,23 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Added full file checking
     2019-06-06 Grega Repovš
              - Enabled multiple log file locations
+    2019-10-20 Grega Repovš
+             - Adjusted parameters, help and processing to use integrated HCPpipelines
+
+    ----------------
+    2019-10-20 ToDo
+             - Adjust code to enable running with FreeSurfer 5.3-HCP
+             - Enable longitudinal mode
+             - Enable using additional parameters
+                -> hcp_control_points
+                -> hcp_wm_edits
+                -> hcp_fs_brainmask
+                -> hcp_autotopofix_off
     '''
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n\n%s HCP FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n\n%s HCP FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     status = True
@@ -1119,32 +1098,24 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         if 'hcp' not in sinfo:
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
-
-        # --- check for T1w and T2w images
-
-        for tfile in hcp['T1w'].split("@"):
-            if os.path.exists(tfile):
-                r += "\n---> T1w image file present."
-            else:
-                r += "\n---> ERROR: Could not find T1w image file."
-                run = False
-
-        if hcp['T2w'] in ['', 'NONE']:
-            r += "\n---> Not using T2w image."
-        else:
-            for tfile in hcp['T2w'].split("@"):
-                if os.path.exists(tfile):
-                    r += "\n---> T2w image file present."
-                else:
-                    r += "\n---> ERROR: Could not find T2w image file."
-                    run = False
-        
+      
         # -> Pre FS results
 
         if os.path.exists(os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')):
             r += "\n---> PreFS results present."
         else:
             r += "\n---> ERROR: Could not find PreFS processing results."
+            run = False
+
+        # -> T2w image
+
+        if hcp['T2w'] in ['', 'NONE']:
+            t2w = 'NONE'
+        else:
+            t2w = os.path.join(hcp['T1w_folder'], 'T2w_acpc_dc_restore.nii.gz')
+
+        if t2w == 'NONE' and options['hcp_processing_mode'] == 'HCPStyleData':
+            r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, not T2w image was specified!"
             run = False
 
 
@@ -1206,124 +1177,67 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                   '5.3-HCP': os.path.join(hcp['FS_folder'], 'label', 'rh.entorhinal_exvivo.label')}
         tfile = tfiles[fsversion]
 
-        # --- set up T2 NONE if needed
-
-        if hcp['T2w'] in ['', 'NONE']:
-            t2w = 'NONE'
-        else:
-            t2w = os.path.join(hcp['T1w_folder'], 'T2w_acpc_dc_restore.nii.gz')
-
-        # identify template if longitudional run
-
-        fslongitudinal = ""
-
-        if options['hcp_fs_longitudinal']:
-            if 'subject' not in sinfo:
-                r += "\n     ... 'subject' field not defined in batch file, can not run longitudinal FS"
-                run = False
-            elif sinfo['subject'] == sinfo['id']:
-                r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
-                run = False
-            else:
-                lresults = os.path.join(hcp['FS_long_template'], 'label', 'rh.entorhinal_exvivo.label')                
-                if not os.path.exists(lresults):
-                    r += "\n     ... ERROR: Longitudinal template not present! [%s]" % (lresults)
-                    r += "\n                Please chesk the results of longitudinalFS command!"
-                    r += "\n                Please check your data and settings!" % (lresults)
-                    run = False   
-                else:
-                    r += "\n     ... longitudinal template present"
-                    fslongitudinal = "run"
-                    tfiles = {'6.0':     os.path.join(hcp['FS_long_results'], 'label', 'BA_exvivo.thresh.ctab'),
-                              '5.3-HCP': os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')}
-                    tfile = tfiles[fsversion]
         
-        # --> when running HCP modified code
-
-        if 'hcpmodified' in hcp['hcp_base']:
-            comm = '%(script)s \
-                --subject="%(subject)s" \
-                --subjectDIR="%(subjectDIR)s" \
-                --expertfile="%(expertfile)s" \
-                --controlpoints="%(controlpoints)s" \
-                --wmedits="%(wmedits)s" \
-                --autotopofixoff="%(autotopofixoff)s" \
-                --fsbrainmask="%(fsbrainmask)s" \
-                --freesurferhome="%(freesurferhome)s" \
-                --fsloadhpcmodule="%(fsloadhpcmodule)s" \
-                --t1="%(t1)s" \
-                --t1brain="%(t1brain)s" \
-                --t2="%(t2)s" \
-                --lttemplate="%(lttemplate)s" \
-                --longitudinal="%(longitudinal)s"' % {
-                    'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
-                    'subject'           : sinfo['id'] + options['hcp_suffix'],
-                    'subjectDIR'        : hcp['T1w_folder'],
-                    'freesurferhome'    : options['hcp_freesurfer_home'],      # -- Alan added option for --hcp_freesurfer_home flag passing
-                    'fsloadhpcmodule'   : options['hcp_freesurfer_module'],    # -- Alan added option for --hcp_freesurfer_module flag passing
-                    'expertfile'        : options['hcp_expert_file'],
-                    'controlpoints'     : options['hcp_control_points'],
-                    'wmedits'           : options['hcp_wm_edits'],
-                    'autotopofixoff'    : options['hcp_autotopofix_off'],
-                    'fsbrainmask'       : options['hcp_fs_brainmask'],
-                    't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
-                    't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
-                    't2'                : t2w,
-                    'lttemplate'        : hcp['FS_long_subject_template'],
-                    'longitudinal'      : fslongitudinal}
+        ## --> longitudinal run currently not supported
+        #
+        # identify template if longitudinal run
+        #
+        # fslongitudinal = ""
+        #
+        # if options['hcp_fs_longitudinal']:
+        #     if 'subject' not in sinfo:
+        #         r += "\n     ... 'subject' field not defined in batch file, can not run longitudinal FS"
+        #         run = False
+        #     elif sinfo['subject'] == sinfo['id']:
+        #         r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
+        #         run = False
+        #     else:
+        #         lresults = os.path.join(hcp['FS_long_template'], 'label', 'rh.entorhinal_exvivo.label')                
+        #         if not os.path.exists(lresults):
+        #             r += "\n     ... ERROR: Longitudinal template not present! [%s]" % (lresults)
+        #             r += "\n                Please chesk the results of longitudinalFS command!"
+        #             r += "\n                Please check your data and settings!" % (lresults)
+        #             run = False   
+        #         else:
+        #             r += "\n     ... longitudinal template present"
+        #             fslongitudinal = "run"
+        #             tfiles = {'6.0':     os.path.join(hcp['FS_long_results'], 'label', 'BA_exvivo.thresh.ctab'),
+        #                       '5.3-HCP': os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')}
+        #             tfile = tfiles[fsversion]
         
+        # --> Building the command string
+ 
+        comm = os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh') + " "
 
-        # --> when running HCP Strict code
+        # -> Key elements
 
-        elif options['hcp_mppversion'] == "strict":
-            comm = os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh') + " "
+        elements = [("subjectDIR", hcp['T1w_folder']), 
+                    ('subject', sinfo['id'] + options['hcp_suffix']),
+                    ('t1', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
+                    ('t1brain', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
+                    ('t2', t2w),
+                    ('seed', options['hcp_fs_seed']),
+                    ('existing-subject', options['hcp_fs_existing_subject']),
+                    ('no-conf2hires', options['hcp_fs_no_conf2hires']),
+                    ('processing-mode', options['hcp_processing_mode'])]
 
-            elements = [("subjectDIR", hcp['T1w_folder']), 
-                        ('subject', sinfo['id'] + options['hcp_suffix']),
-                        ('t1', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
-                        ('t1brain', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
-                        ('t2', t2w),
-                        ('seed', options['hcp_fs_seed']),
-                        ('existing-subject', options['hcp_fs_existing_subject']),
-                        ('no-conf2hires', options['hcp_fs_no_conf2hires'])]
+        # -> Additional, reconall parameters
 
-            if options['hcp_fs_extra_reconall']:
-                for f in options['hcp_fs_extra_reconall'].split('|'):
-                    elements.append(('extra-reconall-arg', f))
+        if options['hcp_fs_extra_reconall']:
+            for f in options['hcp_fs_extra_reconall'].split('|'):
+                elements.append(('extra-reconall-arg', f))
 
-            comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+        # -> additional Qu|Nex passed parameters
 
+        if options['hcp_expert_file']:
+            elements.append(('extra-reconall-arg', '-expert'))
+            elements.append(('extra-reconall-arg', options['hcp_expert_file']))
+            
 
-        # --> when running HCP Pipelines code
+        # --> Pull all together
 
-        else:
-            comm = '%(script)s \
-                --subjectDIR="%(subjectDIR)s" \
-                --subject="%(subject)s" \
-                --t1="%(t1)s" \
-                --t1brain="%(t1brain)s" \
-                --t2="%(t2)s" \
-                --mppversion="%(mppversion)s"' % {
-                    'script'            : os.path.join(hcp['hcp_base'], 'FreeSurfer', 'FreeSurferPipeline.sh'),
-                    'subject'           : sinfo['id'] + options['hcp_suffix'],
-                    'subjectDIR'        : hcp['T1w_folder'],
-                    't1'                : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz'),
-                    't1brain'           : os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz'),
-                    't2'                : t2w,
-                    'mppversion'        : options['hcp_mppversion']}
+        comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
-            if options['hcp_fs_seed']:
-                comm += ' --seed="%s"' % (options['hcp_fs_seed'])
-
-            if options['hcp_fs_existing_subject']:
-                comm += ' --existing-subject'
-
-            if options['hcp_fs_extra_reconall']:
-                for f in options['hcp_fs_extra_reconall'].split('|'):
-                    comm += ' --extra-reconall-arg="%s"' % (f)
-
-            if options['hcp_fs_no_conf2hires']:
-                comm += ' --no-conf2hires'
 
         # -- Test files
 
@@ -1339,11 +1253,12 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.lexists(tfile):
                     os.remove(tfile)
                 if overwrite or not os.path.exists(tfile):
-                    if options['hcp_fs_longitudinal']:
-                        if os.path.lexists(hcp['FS_long_results']):
-                            r += "\n --> removing preexisting folder with longitudinal results [%s]" % (hcp['FS_long_results'])
-                            shutil.rmtree(hcp['FS_long_results'])
-                    else:
+                    ## -> longitudinal mode currently not supported
+                    # if options['hcp_fs_longitudinal']:
+                    #     if os.path.lexists(hcp['FS_long_results']):
+                    #         r += "\n --> removing preexisting folder with longitudinal results [%s]" % (hcp['FS_long_results'])
+                    #         shutil.rmtree(hcp['FS_long_results'])
+                    # else:
                         if os.path.lexists(hcp['FS_folder']):
                             r += "\n --> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
                             shutil.rmtree(hcp['FS_folder'])
@@ -1591,7 +1506,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSubject id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n\n%s Longitudinal FreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run           = True
     report        = "Error"
@@ -1809,27 +1724,32 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions        ... The batch.txt file with all the sessions information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --logfolder       ... The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
-                          * 'study'   for the default: 
-                                      `<study>/processing/logs/comlogs`
-                                      location,
-                          * 'session' for `<sessionid>/logs/comlogs
-                          * 'hcp'     for `<hcp_folder>/logs/comlogs
-                          * '<path>'  for an arbitrary directory
+    --sessions              ... The batch.txt file with all the sessions information
+                                [batch.txt].
+    --subjectsfolder        ... The path to the study/subjects folder, where the
+                                imaging  data is supposed to go [.].
+    --cores                 ... How many cores to utilize [1].
+    --overwrite             ... Whether to overwrite existing data (yes) or not (no)
+                                [no].
+    --logfolder             ... The path to the folder where runlogs and comlogs
+                                are to be stored, if other than default []
+    --log                   ... Whether to keep ('keep') or remove ('remove') the
+                                temporary logs once jobs are completed ['keep'].
+                                When a comma separated list is given, the log will
+                                be created at the first provided location and then 
+                                linked or copied to other locations. The valid 
+                                locations are: 
+                                * 'study'   for the default: 
+                                            `<study>/processing/logs/comlogs`
+                                            location,
+                                * 'session' for `<sessionid>/logs/comlogs
+                                * 'hcp'     for `<hcp_folder>/logs/comlogs
+                                * '<path>'  for an arbitrary directory
+    --hcp_processing_mode   ... Controls whether the HCP acquisition and processing 
+                                guidelines should be treated as requirements 
+                                (HCPStyleData) or if additional processing 
+                                functionality is allowed (LegacyStyleData). In this
+                                case running processin w/o a T2w image.
 
     specific parameters
     -------------------
@@ -1837,27 +1757,30 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
 
-    --hcp_suffix           ... Specifies a suffix to the session id if multiple
-                               variants are run, empty otherwise [].
-    --hcp_t2               ... NONE if no T2w image is available and the
-                               preprocessing should be run without them,
-                               anything else otherwise [t2].
-    --hcp_grayordinatesres ... The resolution of the volume part of the
-                               graordinate representation in mm [2].
-    --hcp_hiresmesh        ... The number of vertices for the high resolution
-                               mesh of each hemisphere (in thousands) [164].
-    --hcp_lowresmesh       ... The number of vertices for the low resolution
-                               mesh of each hemisphere (in thousands) [32].
-    --hcp_regname          ... The registration used, currently only FS [FS].
-    --hcp_mcsigma          ... Correction sigma used for metric smooting [sqrt(200)].
-    --hcp_inflatescale     ... Inflate extra scale parameter [1].
-    --hcp_fs_longitudinal  ... The name of the FS longitudinal template if one
-                               was created and is to be used in this step.
-    --hcp_postfs_check     ... Whether to check the results of PreFreeSurfer 
-                               pipeline by presence of last file generated 
-                               ('last'), the default list of all files ('all') 
-                               or using a specific check file ('<path to file>')
-                               ['last']
+    --hcp_suffix            ... Specifies a suffix to the session id if multiple
+                                variants are run, empty otherwise [].
+    --hcp_t2                ... NONE if no T2w image is available and the
+                                preprocessing should be run without them,
+                                anything else otherwise [t2]. NONE is only valid
+                                if 'LegacyStyleData' processing mode was specified.
+    --hcp_grayordinatesres  ... The resolution of the volume part of the
+                                graordinate representation in mm [2].
+    --hcp_hiresmesh         ... The number of vertices for the high resolution
+                                mesh of each hemisphere (in thousands) [164].
+    --hcp_lowresmesh        ... The number of vertices for the low resolution
+                                mesh of each hemisphere (in thousands) [32].
+    --hcp_regname           ... The registration used, currently only FS [FS].
+    --hcp_mcsigma           ... Correction sigma used for metric smooting [sqrt(200)].
+    --hcp_inflatescale      ... Inflate extra scale parameter [1].
+    * --hcp_fs_longitudinal ... The name of the FS longitudinal template if one
+                                was created and is to be used in this step.
+    --hcp_postfs_check      ... Whether to check the results of PreFreeSurfer 
+                                pipeline by presence of last file generated 
+                                ('last'), the default list of all files ('all') 
+                                or using a specific check file ('<path to file>')
+                                ['last']
+
+    * this option is currently not available
 
     Full file checking
     ------------------
@@ -1933,11 +1856,13 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Made congruent with latest HCP pipeline
     2019-06-06 Grega Repovš
              - Enabled multiple log file locations
+    2019-10-20 Grega Repovš
+             - Adjusted parameters, help and processing to use integrated HCPpipelines
     '''
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP PostFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n%s HCP PostFreeSurfer Pipeline [%s] ...\n" % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = "Error"
@@ -1953,33 +1878,6 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
-        # --- check for T1w and T2w images
-
-        for tfile in hcp['T1w'].split("@"):
-            if os.path.exists(tfile):
-                r += "\n---> T1w image file present."
-            else:
-                r += "\n---> ERROR: Could not find T1w image file."
-                run = False
-
-        if hcp['T2w'] in ['', 'NONE']:
-            r += "\n---> Not using T2w image."
-        else:
-            for tfile in hcp['T2w'].split("@"):
-                if os.path.exists(tfile):
-                    r += "\n---> T2w image file present."
-                else:
-                    r += "\n---> ERROR: Could not find T2w image file."
-                    run = False
-
-        # -> Pre FS results
-
-        if os.path.exists(os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')):
-            r += "\n---> PreFS results present."
-        else:
-            r += "\n---> ERROR: Could not find PreFS processing results."
-            run = False
-
         # -> FS results
 
         if os.path.exists(os.path.join(hcp['FS_folder'], 'mri', 'aparc+aseg.mgz')):
@@ -1988,95 +1886,65 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: Could not find Freesurfer processing results."
             run = False
 
-        # identify template if longitudional run
+        # -> T2w image
 
-        lttemplate     = ""
-        fslongitudinal = ""
+        if hcp['T2w'] in ['', 'NONE'] and options['hcp_processing_mode'] == 'HCPStyleData':
+            r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!"
+            run = False
 
-        if options['hcp_fs_longitudinal']:
-            if 'subject' not in sinfo:
-                r += "\n     ... 'subject' field not defined in batch file, can not run longitudinal FS"
-                run = False
-            elif sinfo['subject'] == sinfo['id']:
-                r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
-                run = False
-            else:
-                lttemplate = hcp['FS_long_subject_template']
-                lresults = os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')
-                if not os.path.exists(lresults):
-                    r += "\n     ... ERROR: Results of the longitudinal run not present [%s]" % (lresults)
-                    r += "\n                Please check your data and settings!" % (lresults)
-                    run = False   
-                else:
-                    r += "\n     ... longitudinal template present"
-                    fslongitudinal = "run"
+        ## -> longitudinal processing is currently not supported
+        #
+        # identify template if longitudinal run
+        #
+        # lttemplate     = ""
+        # fslongitudinal = ""
+        #
+        # if options['hcp_fs_longitudinal']:
+        #     if 'subject' not in sinfo:
+        #         r += "\n     ... 'subject' field not defined in batch file, can not run longitudinal FS"
+        #         run = False
+        #     elif sinfo['subject'] == sinfo['id']:
+        #         r += "\n     ... 'subject' field is equal to session 'id' field, can not run longitudinal FS"
+        #         run = False
+        #     else:
+        #         lttemplate = hcp['FS_long_subject_template']
+        #         lresults = os.path.join(hcp['FS_long_results'], 'label', 'rh.entorhinal_exvivo.label')
+        #         if not os.path.exists(lresults):
+        #             r += "\n     ... ERROR: Results of the longitudinal run not present [%s]" % (lresults)
+        #             r += "\n                Please check your data and settings!" % (lresults)
+        #             run = False   
+        #         else:
+        #             r += "\n     ... longitudinal template present"
+        #             fslongitudinal = "run"
 
 
-        if options['hcp_mppversion'] == "strict":            
-            comm = os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh') + " "
-            elements = [("path", sinfo['hcp']), 
-                        ('subject', sinfo['id'] + options['hcp_suffix']),
-                        ('surfatlasdir', os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases')),
-                        ('grayordinatesdir', os.path.join(hcp['hcp_Templates'], '91282_Greyordinates')),
-                        ('grayordinatesres', options['hcp_grayordinatesres']),
-                        ('hiresmesh', options['hcp_hiresmesh']),
-                        ('lowresmesh', options['hcp_lowresmesh']),
-                        ('subcortgraylabels', os.path.join(hcp['hcp_Config'], 'FreeSurferSubcorticalLabelTableLut.txt')),
-                        ('freesurferlabels', os.path.join(hcp['hcp_Config'], 'FreeSurferAllLut.txt')),
-                        ('refmyelinmaps', os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases', 'Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii')),
-                        ('mcsigma', options['hcp_mcsigma']),
-                        ('regname', options['hcp_regname']),
-                        ('inflatescale', options['hcp_inflatescale'])]
+        comm = os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh') + " "
+        elements = [("path", sinfo['hcp']), 
+                    ('subject', sinfo['id'] + options['hcp_suffix']),
+                    ('surfatlasdir', os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases')),
+                    ('grayordinatesdir', os.path.join(hcp['hcp_Templates'], '91282_Greyordinates')),
+                    ('grayordinatesres', options['hcp_grayordinatesres']),
+                    ('hiresmesh', options['hcp_hiresmesh']),
+                    ('lowresmesh', options['hcp_lowresmesh']),
+                    ('subcortgraylabels', os.path.join(hcp['hcp_Config'], 'FreeSurferSubcorticalLabelTableLut.txt')),
+                    ('freesurferlabels', os.path.join(hcp['hcp_Config'], 'FreeSurferAllLut.txt')),
+                    ('refmyelinmaps', os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases', 'Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii')),
+                    ('mcsigma', options['hcp_mcsigma']),
+                    ('regname', options['hcp_regname']),
+                    ('inflatescale', options['hcp_inflatescale']),
+                    ('processing-mode', options['hcp_processing_mode'])]
 
-            comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+        comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
-        else:
-            comm = '%(script)s \
-                --path="%(path)s" \
-                --subject="%(subject)s" \
-                --surfatlasdir="%(surfatlasdir)s" \
-                --grayordinatesdir="%(grayordinatesdir)s" \
-                --grayordinatesres="%(grayordinatesres)d" \
-                --hiresmesh="%(hiresmesh)d" \
-                --lowresmesh="%(lowresmesh)d" \
-                --subcortgraylabels="%(subcortgraylabels)s" \
-                --freesurferlabels="%(freesurferlabels)s" \
-                --refmyelinmaps="%(refmyelinmaps)s" \
-                --mcsigma="%(mcsigma)s" \
-                --regname"%(regname)s" \
-                --inflatescale"%(inflatescale)s" \
-                --lttemplate="%(lttemplate)s" \
-                --mppversion="%(mppversion)s" \
-                --longitudinal="%(longitudinal)s"' % {
-                    'script'            : os.path.join(hcp['hcp_base'], 'PostFreeSurfer', 'PostFreeSurferPipeline.sh'),
-                    'path'              : sinfo['hcp'],
-                    'subject'           : sinfo['id'] + options['hcp_suffix'],
-                    'surfatlasdir'      : os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases'),
-                    'grayordinatesdir'  : os.path.join(hcp['hcp_Templates'], '91282_Greyordinates'),
-                    'grayordinatesres'  : options['hcp_grayordinatesres'],
-                    'hiresmesh'         : options['hcp_hiresmesh'],
-                    'lowresmesh'        : options['hcp_lowresmesh'],
-                    'subcortgraylabels' : os.path.join(hcp['hcp_Config'], 'FreeSurferSubcorticalLabelTableLut.txt'),
-                    'freesurferlabels'  : os.path.join(hcp['hcp_Config'], 'FreeSurferAllLut.txt'),
-                    'refmyelinmaps'     : os.path.join(hcp['hcp_Templates'], 'standard_mesh_atlases', 'Conte69.MyelinMap_BC.164k_fs_LR.dscalar.nii'),
-                    'mcsigma'           : options['hcp_mcsigma'],
-                    'regname'           : options['hcp_regname'],
-                    'inflatescale'      : options['hcp_inflatescale'],
-                    'mppversion'        : options['hcp_mppversion'],
-                    'lttemplate'        : lttemplate,
-                    'longitudinal'      : fslongitudinal}
 
         # -- Test files
 
-        if fslongitudinal:
+        if False: #  fslongitudinal not supported:
             tfolder = hcp['hcp_long_nonlin']
             tfile = os.path.join(tfolder, sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + '.corrThickness.164k_fs_LR.dscalar.nii')
         else:
             tfolder = hcp['hcp_nonlin']
             tfile = os.path.join(tfolder, sinfo['id'] + '.corrThickness.164k_fs_LR.dscalar.nii')
-
-        if hcp['T2w'] in ['', 'NONE']:
-            tfile = os.path.join(tfolder, 'ribbon.nii.gz')
 
         if hcp['hcp_postfs_check']:
             fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_postfs_check'], 'fields': [('sessionid', sinfo['id'])], 'specfolder': options['specfolder']}
@@ -2354,7 +2222,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n%s HCP DiffusionPreprocessing Pipeline [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = "Error"
@@ -2806,7 +2674,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     r = "\n---------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP fMRI Volume registration [%s] ... " % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n%s HCP fMRI Volume registration [%s] ... " % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -3329,7 +3197,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 'movreg'            : options['hcp_bold_movreg'].upper(),
                 'fmriref'           : fmriref,
                 'usemask'           : options['hcp_bold_usemask'],
-                'mppversion'        : options['hcp_mppversion']}
+                'mppversion'        : options['hcp_processing_mode']}
 
 
         # -- Test files
@@ -3593,7 +3461,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
     r = "\n----------------------------------------------------------------"
     r += "\nSession id: %s \n[started on %s]" % (sinfo['id'], datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"))
-    r += "\n%s HCP fMRI Surface registration [%s] ..." % (action("Running", options['run']), options['hcp_mppversion'])
+    r += "\n%s HCP fMRI Surface registration [%s] ..." % (action("Running", options['run']), options['hcp_processing_mode'])
 
     run    = True
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': [], 'skipped': []}
@@ -3788,7 +3656,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
                 'grayordinatesres'  : options['hcp_grayordinatesres'],
                 'regname'           : options['hcp_regname'],
                 'lttemplate'        : options['hcp_fs_longitudinal'],
-                'mppversion'        : options['hcp_mppversion'],
+                'mppversion'        : options['hcp_processing_mode'],
                 'printcom'          : options['hcp_printcom']}
 
         # -- Test files
