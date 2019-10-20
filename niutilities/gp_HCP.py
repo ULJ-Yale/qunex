@@ -742,9 +742,6 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         # --- Set up the command
 
-        # Notes:
-        # hcpmodified maps hcp_dwelltime to echospacing, hcp to seechospacing ... currently both are passed
-
         comm = os.path.join(hcp['hcp_base'], 'PreFreeSurfer', 'PreFreeSurferPipeline.sh') + " "
 
         elements = [("path", sinfo['hcp']), 
@@ -780,7 +777,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     ('custombrain', options['hcp_prefs_custombrain']),
                     ('processing-mode', options['hcp_processing_mode'])]
 
-            comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+        comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Test files
 
@@ -3354,8 +3351,10 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     use of FS longitudinal template
     -------------------------------
 
-    --hcp_fs_longitudinal    ... The name of the FS longitudinal template if one
+    * --hcp_fs_longitudinal  ... The name of the FS longitudinal template if one
                                  was created and is to be used in this step.
+    
+    * this parameter is curently no in use
 
     naming options
     --------------
@@ -3379,7 +3378,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                                  cerebellar data in grayordinate space in mm.
                                  [2]
     --hcp_bold_smoothFWHM    ... The size of the smoothing kernel (in mm). [2]
-    --hcp_regname            ... The name of the registration used. [FS]
+    --hcp_regname            ... The name of the registration used. []
 
     
     Full file checking
@@ -3457,6 +3456,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
              - Added full file checking
     2019-06-06 Grega Repovš
              - Enabled multiple log file locations
+    2019-10-20 Grega Repovš
+             - Adjusted parameters, help and processing to use integrated HCPpipelines
     '''
 
     r = "\n----------------------------------------------------------------"
@@ -3481,50 +3482,6 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         if 'hcp' not in sinfo:
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
-            run = False
-
-        # --- check for T1w and T2w images
-
-        for tfile in hcp['T1w'].split("@"):
-            if os.path.exists(tfile):
-                r += "\n---> T1w image file present."
-            else:
-                r += "\n---> ERROR: Could not find T1w image file."
-                run = False
-
-        if hcp['T2w'] == 'NONE':
-            r += "\n---> Not using T2w image."
-        else:
-            for tfile in hcp['T2w'].split("@"):
-                if os.path.exists(tfile):
-                    r += "\n---> T2w image file present."
-                else:
-                    r += "\n---> ERROR: Could not find T2w image file."
-                    run = False
-
-        # -> Pre FS results
-
-        if os.path.exists(os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')):
-            r += "\n---> PreFS results present."
-        else:
-            r += "\n---> ERROR: Could not find PreFS processing results."
-            run = False
-
-        # -> FS results
-
-        if options['hcp_fs_longitudinal']:
-            tfolder = hcp['FS_long_results']
-        else:
-            tfolder = hcp['FS_folder']
-
-        if os.path.exists(os.path.join(tfolder, 'mri', 'aparc+aseg.mgz')):
-            r += "\n---> FS results present."
-        else:
-            r += "\n---> ERROR: Could not find Freesurfer processing results."
-            if options['hcp_fs_longitudinal']:
-                r += "\n--->        Please check that you have run FS longitudinal as specified,"
-                r += "\n--->        and that %s template was successfully generated." % (options['hcp_fs_longitudinal'])
-
             run = False
 
         # -> PostFS results
@@ -3632,36 +3589,28 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
         # --- check for bold image
 
         boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
-        r, boldok = checkForFile2(r, boldimg, '\n     ... preprocessed bold image present', '\n     ... ERROR: preprocessed bold image missing!', status=boldok)
+        r, boldok = checkForFile2(r, boldimg, '\n     ... fMRIVolume preprocessed bold image present', '\n     ... ERROR: fMRIVolume preprocessed bold image missing!', status=boldok)
 
-        comm = '%(script)s \
-            --path="%(path)s" \
-            --subject="%(subject)s" \
-            --fmriname="%(boldtarget)s" \
-            --lowresmesh="%(lowresmesh)s" \
-            --fmrires="%(fmrires)s" \
-            --smoothingFWHM="%(smoothingFWHM)s" \
-            --grayordinatesres="%(grayordinatesres)d" \
-            --regname="%(regname)s" \
-            --lttemplate="%(lttemplate)s" \
-            --mppversion="%(mppversion)s" \
-            --printcom="%(printcom)s"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
-                'path'              : sinfo['hcp'],
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'boldtarget'        : boldtarget,
-                'lowresmesh'        : options['hcp_lowresmesh'],
-                'fmrires'           : options['hcp_bold_res'],
-                'smoothingFWHM'     : options['hcp_bold_smoothFWHM'],
-                'grayordinatesres'  : options['hcp_grayordinatesres'],
-                'regname'           : options['hcp_regname'],
-                'lttemplate'        : options['hcp_fs_longitudinal'],
-                'mppversion'        : options['hcp_processing_mode'],
-                'printcom'          : options['hcp_printcom']}
+        # --- Set up the command
+
+        comm = os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh') + " "
+
+        elements = [('path',              sinfo['hcp']),
+                    ('subject',           sinfo['id'] + options['hcp_suffix']),
+                    ('fmriname',          boldtarget),
+                    ('lowresmesh',        options['hcp_lowresmesh']),
+                    ('fmrires',           options['hcp_bold_res']),
+                    ('smoothingFWHM',     options['hcp_bold_smoothFWHM']),
+                    ('grayordinatesres',  options['hcp_grayordinatesres']),
+                    ('regname',           options['hcp_regname']),
+                    ('printcom',          options['hcp_printcom'])]
+
+        comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+
 
         # -- Test files
 
-        if options['hcp_fs_longitudinal']:
+        if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
             tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s_%s_Atlas.dtseries.nii" % (boldtarget, options['hcp_fs_longitudinal']))
         else:
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s_Atlas.dtseries.nii" % (boldtarget))
@@ -3670,7 +3619,6 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             fullTest = {'tfolder': hcp['base'], 'tfile': hcp['hcp_bold_surf_check'], 'fields': [('sessionid', sinfo['id']), ('scan', boldtarget)], 'specfolder': options['specfolder']}
         else:
             fullTest = None
-
 
         # -- Run
 
