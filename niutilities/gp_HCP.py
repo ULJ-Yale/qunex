@@ -136,11 +136,11 @@ def getHCPPaths(sinfo, options):
     d['fmapmag']   = ''
     d['fmapphase'] = ''
     d['fmapge']    = ''
-    if options['hcp_avgrdcmethod'] == 'SiemensFieldMap' or options['hcp_bold_correct'] == 'SiemensFieldMap':
+    if options['hcp_avgrdcmethod'] == 'SiemensFieldMap' or options['hcp_bold_dcmethod'] == 'SiemensFieldMap':
         d['fmapmag']   = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_Magnitude.nii.gz')
         d['fmapphase'] = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_Phase.nii.gz')
         d['fmapge']    = ""
-    elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap' or options['hcp_bold_correct'] == 'GeneralElectricFieldMap':
+    elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap' or options['hcp_bold_dcmethod'] == 'GeneralElectricFieldMap':
         d['fmapmag']   = ""
         d['fmapphase'] = ""
         d['fmapge']    = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_GE.nii.gz')
@@ -347,7 +347,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 guidelines should be treated as requirements 
                                 (HCPStyleData) or if additional processing 
                                 functionality is allowed (LegacyStyleData). In this
-                                case running processin w/o a T2w image.
+                                case running processing w/o a T2w image.
 
     specific parameters
     -------------------
@@ -572,7 +572,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         if hcp['T2w'] in ['', 'NONE']:
             if options['hcp_processing_mode'] == 'HCPStyleData':
-                r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!"
+                r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no T2w image was specified!\n            Consider using LegacyStyleData processing mode."
                 run = False
             else:
                 r += "\n---> Not using T2w image."
@@ -653,7 +653,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                         options['hcp_seunwarpdir'] = SEDirMap[seInfo['phenc']]
                         r += "\n---> Spin-Echo unwarp direction: %s" % (options['hcp_seunwarpdir'])
 
-                    if options['hcp_topupconfig'] != 'NONE':
+                    if options['hcp_topupconfig'] != 'NONE' and options['hcp_topupconfig']:
+                        toupupconfig = options['hcp_topupconfig']
                         if not os.path.exists(options['hcp_topupconfig']):
                             topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_topupconfig'])
                             if not os.path.exists(topupconfig):
@@ -892,7 +893,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 guidelines should be treated as requirements 
                                 (HCPStyleData) or if additional processing 
                                 functionality is allowed (LegacyStyleData). In this
-                                case running processin w/o a T2w image.
+                                case running processing w/o a T2w image.
 
     
     specific parameters
@@ -1112,7 +1113,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             t2w = os.path.join(hcp['T1w_folder'], 'T2w_acpc_dc_restore.nii.gz')
 
         if t2w == 'NONE' and options['hcp_processing_mode'] == 'HCPStyleData':
-            r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, not T2w image was specified!"
+            r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, not T2w image was specified!\n            Consider using LegacyStyleData processing mode."
             run = False
 
 
@@ -1746,7 +1747,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                                 guidelines should be treated as requirements 
                                 (HCPStyleData) or if additional processing 
                                 functionality is allowed (LegacyStyleData). In this
-                                case running processin w/o a T2w image.
+                                case running processing w/o a T2w image.
 
     specific parameters
     -------------------
@@ -2399,33 +2400,40 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     When running the command, the following *general* processing parameters are
     taken into account:
 
-    --sessions        ... The batch.txt file with all the sessions information
-                          [batch.txt].
-    --subjectsfolder  ... The path to the study/subjects folder, where the
-                          imaging  data is supposed to go [.].
-    --cores           ... How many cores to utilize [1].
-    --threads         ... How many threads to utilize for bold processing
-                          per session [1].
-    --bolds           ... Which bold images (as they are specified in the
-                          batch.txt file) to process. It can be a single
-                          type (e.g. 'task'), a pipe separated list (e.g.
-                          'WM|Control|rest') or 'all' to process all [all].
-    --overwrite       ... Whether to overwrite existing data (yes) or not (no)
-                          [no].
-    --logfolder       ... The path to the folder where runlogs and comlogs
-                          are to be stored, if other than default []
-    --log             ... Whether to keep ('keep') or remove ('remove') the
-                          temporary logs once jobs are completed ['keep'].
-                          When a comma separated list is given, the log will
-                          be created at the first provided location and then 
-                          linked or copied to other locations. The valid 
-                          locations are: 
-                          * 'study'   for the default: 
-                                      `<study>/processing/logs/comlogs`
-                                      location,
-                          * 'session' for `<sessionid>/logs/comlogs
-                          * 'hcp'     for `<hcp_folder>/logs/comlogs
-                          * '<path>'  for an arbitrary directory
+    --sessions              ... The batch.txt file with all the sessions information
+                                [batch.txt].
+    --subjectsfolder        ... The path to the study/subjects folder, where the
+                                imaging  data is supposed to go [.].
+    --cores                 ... How many cores to utilize [1].
+    --threads               ... How many threads to utilize for bold processing
+                                per session [1].
+    --bolds                 ... Which bold images (as they are specified in the
+                                batch.txt file) to process. It can be a single
+                                type (e.g. 'task'), a pipe separated list (e.g.
+                                'WM|Control|rest') or 'all' to process all [all].
+    --overwrite             ... Whether to overwrite existing data (yes) or not (no)
+                                [no].
+    --logfolder             ... The path to the folder where runlogs and comlogs
+                                are to be stored, if other than default []
+    --log                   ... Whether to keep ('keep') or remove ('remove') the
+                                temporary logs once jobs are completed ['keep'].
+                                When a comma separated list is given, the log will
+                                be created at the first provided location and then 
+                                linked or copied to other locations. The valid 
+                                locations are: 
+                                * 'study'   for the default: 
+                                            `<study>/processing/logs/comlogs`
+                                            location,
+                                * 'session' for `<sessionid>/logs/comlogs
+                                * 'hcp'     for `<hcp_folder>/logs/comlogs
+                                * '<path>'  for an arbitrary directory
+    --hcp_processing_mode   ... Controls whether the HCP acquisition and processing 
+                                guidelines should be treated as requirements 
+                                (HCPStyleData) or if additional processing 
+                                functionality is allowed (LegacyStyleData). In this
+                                case running processing with slice timing correction,
+                                external BOLD reference, or without a distortion 
+                                correction method.
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -2441,8 +2449,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     use of FS longitudinal template
     -------------------------------
 
-    --hcp_fs_longitudinal (*) ... The name of the FS longitudinal template if one
+    (-) --hcp_fs_longitudinal... The name of the FS longitudinal template if one
                                   was created and is to be used in this step.
+    
+    (-) This parameter is currently not supported
 
     processing validation
     ---------------------
@@ -2471,8 +2481,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     image acquisition details
     -------------------------
 
-    --hcp_bold_sequencetype (*) ... The type of the sequence used: multi(band) vs
-                                    single(band). [multi]
     --hcp_bold_echospacing      ... Echo Spacing or Dwelltime of BOLD images.
                                     [0.00035]
     --hcp_bold_ref (*)          ... Whether BOLD Reference images should be used
@@ -2481,7 +2489,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     distortion correction details
     -----------------------------
 
-    --hcp_bold_correct       ... BOLD image deformation correction that should
+    --hcp_bold_dcmethod       ... BOLD image deformation correction that should
                                  be used: TOPUP, FIELDMAP / SiemensFieldMap,
                                  GeneralElectricFieldMap or NONE. [TOPUP]
     --hcp_bold_echodiff      ... Delta TE for BOLD fieldmap images or NONE if
@@ -2492,20 +2500,25 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_gdcoeffs      ... Gradient distorsion correction coefficients
                                  or NONE. [NONE]
 
-    slice timing correction
-    -----------------------
+    slice timing correction (*)
+    ---------------------------
 
-    --hcp_bold_stcorr (*)    ... Whether to do slice timing correction TRUE or
-                                 NONE. [TRUE]
-    --hcp_bold_stcorrdir (*) ... The direction of slice acquisition ('up' or
-                                 'down'. [up]
-    --hcp_bold_stcorrint (*) ... Whether slices were acquired in an interleaved
-                                 fashion (odd) or not (empty). [odd]
+    --hcp_bold_doslicetime      ... Whether to do slice timing correction TRUE or
+                                    FALSE. []
+    --hcp_bold_slicetimerparams ... A comma or pipe separated string of parameters 
+                                    for FSL slicetimer.
+    --hcp_bold_stcorrdir (!)    ... The direction of slice acquisition ('up' or
+                                    'down'. [up]
+    --hcp_bold_stcorrint (!)    ... Whether slices were acquired in an interleaved
+                                    fashion (odd) or not (empty). [odd]
+
+    (!) These parameters are deprecated. If specified, they will be added to 
+    --hcp_bold_slicetimerparams.
 
     motion correction and atlas registration
     ----------------------------------------
 
-    --hcp_bold_preregister (*) ... What code to use to preregister BOLDs before
+    --hcp_bold_preregistertool ... What tool to use to preregister BOLDs before
                                    FSL BBR is run, epi_reg (default) or flirt.
                                    [epi_reg]
     --hcp_bold_movreg          ... Whether to use FLIRT (default and best for
@@ -2518,14 +2531,17 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_refreg (*)      ... Whether to use only linaer (default) or also
                                    nonlinear registration of motion corrected bold
                                    to reference. [linear]
-    --hcp_bold_usemask (*)     ... What mask to use for the bold images (T1: mask
-                                   based on the T1 image, BOLD: mask based on bet
-                                   brain identification of the scout image,
-                                   DILATED: dilated MNI brain mask, NONE: do not
-                                   use a mask). [T1]
+    --hcp_bold_mask (*)        ... Specifies what mask to use for the final bold:
+                                   - T1_fMRI_FOV: combined T1w brain mask and fMRI 
+                                     FOV masks (the default and HCPStyleData compliant), 
+                                   - T1_DILATED_fMRI_FOV: a once dilated T1w brain 
+                                     based mask combined with fMRI FOV
+                                   - T1_DILATED2x_fMRI_FOV: a twice dilated T1w 
+                                     brain based mask combined with fMRI FOV, 
+                                   - fMRI_FOV: a fMRI FOV mask
 
-    (*) These parameters are only used when running HCP Pipelines in the
-    legacy mode!
+    (*) These parameters are only valid when running HCPpipelines using the
+    LegacyStyleData processing mode!
 
     These last parameters enable fine-tuning of preprocessing and deserve
     additional information. In general the defaults should be appropriate for
@@ -2636,7 +2652,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     ```
     qunex hcp4 sessions=fcMRI/subjects.hcp.txt subjectsfolder=subjects \\
           overwrite=no cores=10 hcp_bold_movref=first hcp_bold_seimg=first \\
-          hcp_bold_refreg=nonlinear hcp_bold_usemask=DILATED
+          hcp_bold_refreg=nonlinear hcp_bold_mask=DILATED
     ```
 
     ----------------
@@ -2666,7 +2682,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Updated, simplified calling and testing
              - Added full file checking
     2019-06-06 Grega Repovš
-             - Enabled multiple log file locations
+             - Enabled multiple log file locations\
+    2019-10-20 Grega Repovš
+             - Initial adjustment of parameters, help and processing to use integrated HCPpipelines
     '''
 
     r = "\n---------------------------------------------------------"
@@ -2691,25 +2709,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             r += "\n---> ERROR: There is no hcp info for session %s in batch.txt" % (sinfo['id'])
             run = False
 
-        # --- check for T1w and T2w images
-
-        for tfile in hcp['T1w'].split("@"):
-            if os.path.exists(tfile):
-                r += "\n---> T1w image file present."
-            else:
-                r += "\n---> ERROR: Could not find T1w image file."
-                run = False
-
-        if hcp['T2w'] == 'NONE':
-            r += "\n---> Not using T2w image."
-        else:
-            for tfile in hcp['T2w'].split("@"):
-                if os.path.exists(tfile):
-                    r += "\n---> T2w image file present."
-                else:
-                    r += "\n---> ERROR: Could not find T2w image file."
-                    run = False
-
         # -> Pre FS results
 
         if os.path.exists(os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')):
@@ -2720,7 +2719,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         # -> FS results
 
-        if options['hcp_fs_longitudinal']:
+        if False:  # Longitudinal processing is currently unavailanle # options['hcp_fs_longitudinal']:
             tfolder = hcp['FS_long_results']
         else:
             tfolder = hcp['FS_folder']
@@ -2729,15 +2728,15 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             r += "\n---> FS results present."
         else:
             r += "\n---> ERROR: Could not find Freesurfer processing results."
-            if options['hcp_fs_longitudinal']:
-                r += "\n--->        Please check that you have run FS longitudinal as specified,"
-                r += "\n--->        and that %s template was successfully generated." % (options['hcp_fs_longitudinal'])
+            # if options['hcp_fs_longitudinal']:
+            #     r += "\n--->        Please check that you have run FS longitudinal as specified,"
+            #     r += "\n--->        and that %s template was successfully generated." % (options['hcp_fs_longitudinal'])
 
             run = False
 
         # -> PostFS results
 
-        if options['hcp_fs_longitudinal']:
+        if False:  # Longitudinal processing is currently unavailanle # options['hcp_fs_longitudinal']:
             tfile = os.path.join(hcp['hcp_long_nonlin'], 'fsaverage_LR32k', sinfo['id'] + '.long.' + options['hcp_fs_longitudinal'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
         else:
             tfile = os.path.join(hcp['hcp_nonlin'], 'fsaverage_LR32k', sinfo['id'] + options['hcp_suffix'] + '.32k_fs_LR.wb.spec')
@@ -2745,11 +2744,11 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         if os.path.exists(tfile):
             r += "\n---> PostFS results present."
         else:
-            r += "\n---> WARNING: Could not find PostFS processing results."
-            if options['hcp_fs_longitudinal']:
-                r += "\n--->        Please check that you have run PostFS on FS longitudinal as specified,"
-                r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
-
+            r += "\n---> ERROR: Could not find PostFS processing results."
+            # if options['hcp_fs_longitudinal']:
+            #     r += "\n--->        Please check that you have run PostFS on FS longitudinal as specified,"
+            #     r += "\n--->        and that %s template was successfully used." % (options['hcp_fs_longitudinal'])
+            run = False
         
         # --- lookup gdcoeffs file if needed
 
@@ -2799,12 +2798,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         # --- Preprocess
 
-        spinP     = 0
-        spinN     = 0
-        spinOne   = "NONE"  # AP or LR
-        spinTwo   = "NONE"  # PA or RL
-        refimg    = "NONE"
-        futureref = "NONE"
+        spinP       = 0
+        spinN       = 0
+        spinOne     = "NONE"  # AP or LR
+        spinTwo     = "NONE"  # PA or RL
+        refimg      = "NONE"
+        futureref   = "NONE"
+        topupconfig = ""
 
         r += "\n"
 
@@ -2890,7 +2890,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             # --- check for spin-echo-fieldmap image
 
-            if options['hcp_bold_correct'].lower() == 'topup':
+            if options['hcp_bold_dcmethod'].lower() == 'topup':
                 if not sepresent:
                     r += '\n     ... ERROR: No spin echo fieldmap set images present!'
                     boldok = False
@@ -2925,9 +2925,23 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     spinP = spinN
                     futureref = "NONE"
 
+                # --> check for topupconfig
+
+                if options['hcp_bold_topupconfig']:
+                    topupconfig = options['hcp_bold_topupconfig']
+                    if not os.path.exists(options['hcp_topupconfig']):
+                        topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_topupconfig'])
+                        if not os.path.exists(topupconfig):
+                            r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_topupconfig'])
+                            run = False
+                        else:
+                            r += "\n---> TOPUP configuration file present."
+                    else:
+                        r += "\n---> TOPUP configuration file present."
+
             # --- check for Siemens double TE-fieldmap image
 
-            elif options['hcp_bold_correct'].lower() in ['fieldmap', 'siemensfieldmap']:
+            elif options['hcp_bold_dcmethod'].lower() in ['fieldmap', 'siemensfieldmap']:
                 fieldok = True
                 r, fieldok = checkForFile2(r, hcp['fmapmag'], '\n     ... Siemens fieldmap magnitude image present ', '\n     ... ERROR: Siemens fieldmap magnitude image missing!', status=fieldok)
                 r, fieldok = checkForFile2(r, hcp['fmapphase'], '\n     ... Siemens fieldmap phase image present ', '\n     ... ERROR: Siemens fieldmap phase image missing!', status=fieldok)
@@ -2941,22 +2955,34 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             # --- check for GE fieldmap image
 
-            elif options['hcp_bold_correct'].lower() in ['generalelectricfieldmap']:
+            elif options['hcp_bold_dcmethod'].lower() in ['generalelectricfieldmap']:
                 fieldok = True
                 r, fieldok = checkForFile2(r, hcp['fmapge'], '\n     ... GeneralElectric fieldmap image present ', '\n     ... ERROR: GeneralElectric fieldmap image missing!', status=fieldok)
                 boldok = boldok and fieldok
 
             # --- NO DC used
 
-            elif options['hcp_bold_correct'].lower() == 'none':
+            elif options['hcp_bold_dcmethod'].lower() == 'none':
                 r += '\n     ... No distortion correction used '
+                if options['hcp_processing_mode'] == 'HCPStyleData':
+                    r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, no distortion correction method was specified!\n            Consider using LegacyStyleData processing mode."
+                    run = False
 
             # --- ERROR
 
             else:
-                r += '\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!' % (options['hcp_bold_correct'])
+                r += '\n     ... ERROR: Unknown distortion correction method: %s! Please check your settings!' % (options['hcp_bold_dcmethod'])
                 boldok = False
 
+            # ---> Check the mask used
+            if options['hcp_bold_mask']:
+                if options['hcp_bold_mask'] != 'T1_fMRI_FOV' and options['hcp_processing_mode'] == 'HCPStyleData':
+                    r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, %s was specified as bold mask to use!\n            Consider either using 'T1_fMRI_FOV' for the bold mask or LegacyStyleData processing mode."
+                    run = False
+                else:
+                    r += '\n     ... using %s as BOLD mask' % (options['hcp_bold_mask'])
+            else:
+                r += '\n     ... using the HCPpipelines default BOLD mask'
 
             # --- set movement reference image
 
@@ -2969,6 +2995,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             if fmriref is not "NONE":
                 r += '\n     ... using %s as movement correction reference' % (fmriref)
+                if options['hcp_processing_mode'] == 'HCPStyleData':
+                    r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, an external BOLD was specified as movement registration target!\n            Consider using LegacyStyleData processing mode."
+                    run = False
 
             # store required data
             b = {'boldsource':   boldsource,
@@ -2983,6 +3012,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                  'echospacing':  echospacing,
                  'spinOne':      spinOne,
                  'spinTwo':      spinTwo,
+                 'topupconfig':  topupconfig,
                  'fmriref':      fmriref}
             boldsData.append(b)
 
@@ -3109,6 +3139,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     echospacing = b['echospacing']
     spinOne     = b['spinOne']
     spinTwo     = b['spinTwo']
+    topupconfig = b['topupconfig']
     fmriref     = b['fmriref']
 
     # prepare return variables
@@ -3119,87 +3150,64 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         # --- process additional parameters
 
-        hcp_bold_stcorrdir = ''
-        hcp_bold_stcorrint = ''
+        slicetimerparams = ""
 
-        if options['hcp_bold_stcorr'].lower() == 'true':
+        if options['hcp_bold_doslicetime'].lower() == 'true':
+
+            slicetimerparams = re.split(' +|,|\|', options['hcp_bold_slicetimerparams'])
+
+            stappendItems = []
             if options['hcp_bold_stcorrdir'] == 'down':
-                hcp_bold_stcorrdir = '--down'
+                stappendItems.append('--down')
             if options['hcp_bold_stcorrint'] == 'odd':
-                hcp_bold_stcorrint = "--odd"
+                stappendItems.append('--odd')
+            
+            for stappend in stappendItems:
+                if stappend not in slicetimerparams:
+                    slicetimerparams.append(stappend)
 
-        comm = '%(script)s \
-            --path="%(path)s" \
-            --subject="%(subject)s" \
-            --fmriname="%(boldtarget)s" \
-            --fmritcs="%(boldimg)s" \
-            --fmriscout="%(refimg)s" \
-            --SEPhaseNeg="%(spinOne)s" \
-            --SEPhasePos="%(spinTwo)s" \
-            --fmapmag="%(fmapmag)s" \
-            --fmapphase="%(fmapphase)s" \
-            --fmapgeneralelectric="%(fmapge)s" \
-            --echospacing="%(echospacing)s" \
-            --echodiff="%(echodiff)s" \
-            --unwarpdir="%(unwarpdir)s" \
-            --fmrires="%(fmrires)s" \
-            --dcmethod="%(dcmethod)s" \
-            --biascorrection="%(biascorrection)s" \
-            --gdcoeffs="%(gdcoeffs)s" \
-            --topupconfig="%(topupconfig)s" \
-            --printcom="%(printcom)s" \
-            --usejacobian="%(usejacobian)s" \
-            --lttemplate="%(lttemplate)s" \
-            --doslicetime="%(doslicetime)s" \
-            --slicetimedir="%(slicetimedir)s" \
-            --slicetimeodd="%(slicetimeodd)s" \
-            --sequencetype="%(sequencetype)s" \
-            --fmriref="%(fmriref)s" \
-            --usemask="%(usemask)s" \
-            --preregister="%(preregister)s" \
-            --refreg="%(refreg)s" \
-            --movreg="%(movreg)s" \
-            --mctype="%(movreg)s" \
-            --mppversion="%(mppversion)s" \
-            --tr="%(tr)f"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'fMRIVolume', 'GenericfMRIVolumeProcessingPipeline.sh'),
-                'path'              : sinfo['hcp'],
-                'subject'           : sinfo['id'] + options['hcp_suffix'],
-                'boldtarget'        : boldtarget,
-                'boldimg'           : boldimg,
-                'refimg'            : refimg,
-                'spinOne'           : spinOne,
-                'spinTwo'           : spinTwo,
-                'fmapmag'           : hcp['fmapmag'],
-                'fmapphase'         : hcp['fmapphase'],
-                'fmapge'            : hcp['fmapge'],
-                'echospacing'       : echospacing,
-                'echodiff'          : options['hcp_bold_echodiff'],
-                'unwarpdir'         : unwarpdir,
-                'fmrires'           : options['hcp_bold_res'],
-                'dcmethod'          : options['hcp_bold_correct'],
-                'biascorrection'    : options['hcp_bold_biascorrection'],
-                'gdcoeffs'          : gdcfile,
-                'topupconfig'       : os.path.join(hcp['hcp_Config'], 'b02b0.cnf'),
-                'printcom'          : options['hcp_printcom'],
-                'usejacobian'       : options['hcp_bold_usejacobian'],
-                'lttemplate'        : options['hcp_fs_longitudinal'],
-                'doslicetime'       : options['hcp_bold_stcorr'].upper(),
-                'slicetimedir'      : hcp_bold_stcorrdir,
-                'slicetimeodd'      : hcp_bold_stcorrint,
-                'tr'                : options['TR'],
-                'sequencetype'      : options['hcp_bold_sequencetype'],
-                'preregister'       : options['hcp_bold_preregister'],
-                'refreg'            : options['hcp_bold_refreg'],
-                'movreg'            : options['hcp_bold_movreg'].upper(),
-                'fmriref'           : fmriref,
-                'usemask'           : options['hcp_bold_usemask'],
-                'mppversion'        : options['hcp_processing_mode']}
+            slicetimerparams = "@".join(slicetimerparams)
 
+
+        # --- Set up the command
+
+        comm = os.path.join(hcp['hcp_base'], 'fMRIVolume', 'GenericfMRIVolumeProcessingPipeline.sh') + " "
+
+        elements = [("path",                sinfo['hcp']),
+                    ("subject",             sinfo['id'] + options['hcp_suffix']),
+                    ("fmriname",            boldtarget),
+                    ("fmritcs",             boldimg),
+                    ("fmriscout",           refimg),
+                    ("SEPhaseNeg",          spinOne),
+                    ("SEPhasePos",          spinTwo),
+                    ("fmapmag",             hcp['fmapmag']),
+                    ("fmapphase",           hcp['fmapphase']),
+                    ("fmapgeneralelectric", hcp['fmapge']),
+                    ("echospacing",         echospacing),
+                    ("echodiff",            options['hcp_bold_echodiff']),
+                    ("unwarpdir",           unwarpdir),
+                    ("fmrires",             options['hcp_bold_res']),
+                    ("dcmethod",            options['hcp_bold_dcmethod']),
+                    ("biascorrection",      options['hcp_bold_biascorrection']),
+                    ("gdcoeffs",            gdcfile),
+                    ("topupconfig",         topupconfig),
+                    ("dof",                 options['hcp_bold_dof']),
+                    ("printcom",            options['hcp_printcom']),
+                    ("usejacobian",         options['hcp_bold_usejacobian']),
+                    ("mctype",              options['hcp_bold_movreg'].upper()),
+                    ("preregistertool",     options['hcp_bold_preregistertool']),
+                    ("processing-mode",     options['hcp_processing_mode'])
+                    ("doslicetime",         options['hcp_bold_doslicetime'].upper()),
+                    ("slicetimerparams",    slicetimerparams),
+                    ("fmriref",             fmriref),
+                    ("fmrirefreg",          options['hcp_bold_refreg']),
+                    ("boldmask",            options['hcp_bold_mask'])]
+
+        comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
         # -- Test files
 
-        if options['hcp_fs_longitudinal']:
+        if False:   # Longitudinal option currently not supported options['hcp_fs_longitudinal']:
             tfile = os.path.join(hcp['hcp_long_nonlin'], 'Results', "%s_%s" % (boldtarget, options['hcp_fs_longitudinal']), "%s%d_%s.nii.gz" % (options['hcp_bold_prefix'], bold, options['hcp_fs_longitudinal']))
         else:
             tfile = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
