@@ -4128,11 +4128,11 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
                 %(domot)s \
                 "%(trainingdata)s" \
                 "%(fixthreshold)s" \
-                "%(deleteintermediates)s"' % {
+                %(deleteintermediates)s' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix'),
-                'inputfile'             : boldtarget,
+                'inputfile'             : boldimg,
                 'bandpass'              : 2000 if 'hcp_icafix_highpass' not in options else options['hcp_icafix_highpass'],
-                'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                'domot'                 : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
                 'fixthreshold'          : "" if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
                 'deleteintermediates'   : "" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
@@ -4202,7 +4202,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
         groupok = True
 
         # --- check for bold images and prepare images parameter
-        boldtargets = ""
+        boldimgs = ""
 
          # check if files for all bolds exist
         for b in bolds:
@@ -4227,11 +4227,11 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 break
             else:
                 # add @ separator
-                if boldtargets is not "":
-                    boldtargets = boldtargets + "@"
+                if boldimgs is not "":
+                    boldimgs = boldimgs + "@"
 
                 # add latest image
-                boldtargets = boldtargets + boldtarget
+                boldimgs = boldimgs + boldimg
 
         comm = '%(script)s \
                 "%(inputfile)s" \
@@ -4242,10 +4242,10 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 "%(fixthreshold)s" \
                 "%(deleteintermediates)s"' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
-                'inputfile'             : boldtargets,
+                'inputfile'             : boldimgs,
                 'bandpass'              : 0 if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
                 'concatfilename'        : groupname,
-                'domot'                 : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                'domot'                 : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
                 'fixthreshold'          : "" if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
                 'deleteintermediates'   : "" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
@@ -4807,7 +4807,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     'regname'             : "NONE" if 'hcp_regname' not in options else options['hcp_regname'],
                     'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                     'matlabrunmode'       : 1 if 'hcp_matlab_mode' not in options else options['hcp_matlab_mode'],
-                    'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                    'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                     'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
             # -- Test files
@@ -4936,7 +4936,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
                 'regname'             : "NONE" if 'hcp_regname' not in options else options['hcp_regname'],
                 'lowresmesh'          : 32 if 'hcp_lowresmesh' not in options else options['hcp_lowresmesh'],
                 'matlabrunmode'       : 1 if 'hcp_matlab_mode' not in options else options['hcp_matlab_mode'],
-                'motionregression'    : "FALSE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
+                'motionregression'    : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'deleteintermediates' : "FALSE" if 'hcp_icafix_deleteintermediates' not in options else options['hcp_icafix_deleteintermediates']}
 
         # -- Test files
