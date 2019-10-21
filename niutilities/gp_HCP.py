@@ -4008,6 +4008,16 @@ def hcpICAFix(sinfo, options, overwrite=False, thread=0):
         # --- Parse icafix_bolds
         singleFix, icafixBolds, icafixGroups, r = parseICAFixBolds(options, bolds, r)
 
+        # --- if hcp_icafix_traindata parameter is provided check if it exists
+        # TODO WHERE IS ${FSL_FIXDIR}
+        if 'hcp_icafix_traindata' in options:
+            traindata = option['hcp_icafix_traindata']
+            trainpath = os.path.join("${FSL_FIXDIR}", "/training_files/", traindata, ".RData")
+            if not os.file.exists(traindata) and not os.file.exists(trainpath):
+                r += "\n---> ERROR: Could not find specified TrainingData file [%s]." % traindata
+                raise
+
+
         # --- Execute
         # single fix
         if singleFix:
@@ -4139,7 +4149,7 @@ def executeHCPSingleICAFix(sinfo, options, overwrite, hcp, run, bold):
 
         # -- Test files
         # TODO TEST FILES
-        tfile = "TODO.txt"
+        tfile = "testfile.txt"
         fullTest = None
 
         # -- Run
@@ -4240,11 +4250,11 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
                 %(domot)s \
                 "%(trainingdata)s" \
                 "%(fixthreshold)s" \
-                "%(deleteintermediates)s"' % {
+                %(deleteintermediates)s' % {
                 'script'                : os.path.join(hcp['hcp_base'], 'ICAFIX', 'hcp_fix_multi_run'),
                 'inputfile'             : boldimgs,
                 'bandpass'              : 0 if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
-                'concatfilename'        : groupname,
+                'concatfilename'        : os.path.join(hcp['base'], groupname, groupname),
                 'domot'                 : "TRUE" if 'hcp_icafix_domotionreg' not in options else options['hcp_icafix_domotionreg'],
                 'trainingdata'          : "" if 'hcp_icafix_traindata' not in options else options['hcp_icafix_traindata'],
                 'fixthreshold'          : "" if 'hcp_icafix_threshold' not in options else options['hcp_icafix_threshold'],
@@ -4252,7 +4262,7 @@ def executeHCPMultiICAFix(sinfo, options, overwrite, hcp, run, group):
 
         # -- Test files
         # TODO TEST FILES
-        tfile = "TODO.txt"
+        tfile = "testfile.txt"
         fullTest = None
 
         # -- Run
@@ -4361,8 +4371,6 @@ def hcpPostFix(sinfo, options, overwrite=False, thread=0):
                 groupBolds = g["bolds"]
                 icafixBolds.extend(groupBolds)
 
-        print("!!!! icafixBolds: ", icafixBolds)
-
         if threads == 1: # serial execution
             for b in icafixBolds:
                 # process
@@ -4453,6 +4461,14 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
         if 'hcp_icafix_highpass' in options:
             reusehighpass = options['hcp_postfix_reusehighpass']
 
+        singlescene = os.path.join(hcp['hcp_base'], 'ICAFIX/PostFixScenes/', 'ICA_Classification_SingleScreenTemplate.scene')
+        if 'hcp_postfix_singlescene' in options:
+            singlescene = options['hcp_postfix_singlescene']
+
+        dualscene = os.path.join(hcp['hcp_base'], 'ICAFIX/PostFixScenes/', 'ICA_Classification_DualScreenTemplate.scene')
+        if 'hcp_postfix_dualscene' in options:
+            dualscene = options['hcp_postfix_dualscene']
+
         comm = '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
@@ -4462,19 +4478,19 @@ def executeHCPPostFix(sinfo, options, overwrite, hcp, run, singleFix, bold):
             --template-scene-single-screen="%(singlescene)s" \
             --reuse-high-pass="%(reusehighpass)s" \
             --matlab-run-mode="%(matlabrunmode)d"' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'ICAFix', 'PostFix.sh'),
+                'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'PostFix.sh'),
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'boldtarget'        : boldtarget,
                 'highpass'          : highpass,
-                'dualscene'         : "" if 'hcp_postfix_dualscene' not in options else options['hcp_postfix_dualscene'],
-                'singlescene'       : "" if 'hcp_postfix_singlescene' not in options else options['hcp_postfix_singlescene'],
+                'dualscene'         : dualscene,
+                'singlescene'       : singlescene,
                 'reusehighpass'     : reusehighpass,
                 'matlabrunmode'     : 1 if 'hcp_matlab_mode' not in options else options['hcp_matlab_mode']}
 
         # -- Test files
         # TODO TEST FILES
-        tfile = "TODO.txt"
+        tfile = "testfile.txt"
         fullTest = None
 
         # -- Run
@@ -4696,11 +4712,11 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
             highpass = options['hcp_icafix_highpass']
 
         comm = '%(script)s \
-            %(studyfolder)s \
-            %(subject)s \
-            %(boldtarget)s \
-            %(highpass)d' % {
-                'script'            : os.path.join(hcp['hcp_base'], 'ICAFix', 'ApplyHandReClassifications.sh'),
+            --study-folder="%(studyfolder)s" \
+            --subject="%(subject)s" \
+            --fmri-name="%(boldtarget)s" \
+            --high-pass="%(highpass)d"' % {
+                'script'            : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ApplyHandReClassifications.sh'),
                 'studyfolder'       : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
                 'boldtarget'        : boldtarget,
@@ -4708,7 +4724,7 @@ def executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, singleFi
 
         # -- Test files
         # TODO TEST FILES
-        tfile = "TODO.txt"
+        tfile = "testfile.txt"
         fullTest = None
 
         # -- Run
@@ -4774,6 +4790,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
 
     try:
         # run HCP hand reclassification
+        r += "\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold
         result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, True, bold)
 
         # merge r
@@ -4799,7 +4816,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                 --matlab-run-mode="%(matlabrunmode)d" \
                 --motion-regression="%(motionregression)s" \
                 --delete-intermediates"%(deleteintermediates)s"' % {
-                    'script'              : os.path.join(hcp['hcp_base'], 'ICAFix', 'ReApplyFixPipeline.sh'),
+                    'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixPipeline.sh'),
                     'path'                : sinfo['hcp'],
                     'subject'             : sinfo['id'] + options['hcp_suffix'],
                     'boldtarget'          : boldtarget,
@@ -4812,7 +4829,7 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
 
             # -- Test files
             # TODO TEST FILES
-            tfile = "TODO.txt"
+            tfile = "testfile.txt"
             fullTest = None
 
             # -- Run
@@ -4849,6 +4866,10 @@ def executeHCPSingleReFix(sinfo, options, overwrite, hcp, run, bold):
                     r += "\n     ... ERROR: No hcp info for session, skipping this BOLD!"
                 else:
                     r += "\n     ... ERROR: No hcp info for session, this BOLD would be skipped!"
+        else:
+            r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
+            report['failed'].append(printbold) 
+            boldok = False
 
     except (ExternalFailed, NoSourceFolder), errormessage:
         r += "\n ---  Failed during processing of bold %s with error:\n" % (printbold)
@@ -4879,7 +4900,18 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
 
          # check if files for all bolds exist
         for b in bolds:
+            # extract data
+            _, _, _, boldinfo = b
+
+            if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
+                printbold  = boldinfo['boldname']
+                boldtarget = boldinfo['boldname']
+            else:
+                printbold  = str(bold)
+                boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
+
             # run HCP hand reclassification
+            r += "\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold
             result = executeHCPHandReclassification(sinfo, options, overwrite, hcp, run, False, b)
 
             # merge r
@@ -4889,20 +4921,11 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
             rcReport = result['report']
             if rcReport['incomplete'] == [] and rcReport['failed'] == [] and rcReport['not ready'] == []:
                 boldok = True
-                
-                # extract data
-                _, _, _, boldinfo = b
-
-                if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
-                    printbold  = boldinfo['boldname']
-                    boldtarget = boldinfo['boldname']
-                else:
-                    printbold  = str(bold)
-                    boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
                 boldimg = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget, "%s.nii.gz" % (boldtarget))
                 r, boldok = checkForFile2(r, boldimg, '\n     ... bold image [%s] present' % boldimg, '\n     ... ERROR: bold image [%s] missing!' % boldimg, status=boldok)
             else:
+                r += "\n===> ERROR: Hand reclassification failed for bold: %s!" % printbold
                 boldok = False
 
             if not boldok:
@@ -4927,7 +4950,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
             --matlab-run-mode="%(matlabrunmode)d" \
             --motion-regression="%(motionregression)s" \
             --delete-intermediates"%(deleteintermediates)s"' % {
-                'script'              : os.path.join(hcp['hcp_base'], 'ICAFix', 'ReApplyFixMultiRunPipeline.sh'),
+                'script'              : os.path.join(hcp['hcp_base'], 'ICAFIX', 'ReApplyFixMultiRunPipeline.sh'),
                 'path'                : sinfo['hcp'],
                 'subject'             : sinfo['id'] + options['hcp_suffix'],
                 'boldtargets'         : boldtargets,
@@ -4941,7 +4964,7 @@ def executeHCPMultiReFix(sinfo, options, overwrite, hcp, run, group):
 
         # -- Test files
         # TODO TEST FILES
-        tfile = "TODO.txt"
+        tfile = "testfile.txt"
         fullTest = None
 
         # -- Run
