@@ -543,6 +543,7 @@ Change Log
 * 0.48.28 [niutilities] Added fileinfo option to BIDSImport
 * 0.48.29 [library] Change to qunexContainer to utf8 encode input to stdin
 * 0.48.30 [niutilities nitools] Added additional option to g_ExtractGLMVolumes to save effects in text file by parcel for ptseries files
+* 0.48.31 [niutilities hcp] Minor fixes and updates
 
 
 Stable Container Tag Log
