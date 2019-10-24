@@ -450,7 +450,7 @@ fi
 geho "-- Computing parcellation on $BOLDInput..."
 echo ""
 # -- First parcellate by COLUMN and save a parcellated file
-wb_command -cifti-parcellate "$BOLDInput" "$ParcellationFile" COLUMN "$BOLDOutput"
+wb_command -cifti-parcellate ${BOLDInput} ${ParcellationFile} COLUMN ${BOLDOutput} -only-numeric
 # -- Check if specified file was a *dtseries and compute a pconn file as well 
 if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
     # Check if pconn calculation is requested
@@ -478,53 +478,53 @@ if [ "$InputDataType" == "dtseries" ] && [ -z "$SingleInputFile" ]; then
             # -- Compute pconn using correlation
             geho "-- Computing pconn using correlation with weights file..."
             echo ""
-            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR" -weights "$WeightsFile"
+            wb_command -cifti-correlation ${BOLDOutput} ${PConnBOLDOutputR} -weights ${WeightsFile}
             # -- Compute GBC using correlation
             geho "-- Computing GBC using correlation with weights file..."
             echo ""
-            wb_command -cifti-reduce ${PConnBOLDOutputR} MEAN ${GBCBOLDOutputR}
+            wb_command -cifti-reduce ${PConnBOLDOutputR} MEAN ${GBCBOLDOutputR} -only-numeric
             # -- Compute pconn using covariance
             geho "-- Computing pconn using covariance with weights file..."
             echo ""
-            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance -weights "$WeightsFile"
+            wb_command -cifti-correlation ${BOLDOutput} ${PConnBOLDOutputCov} -covariance -weights ${WeightsFile}
             # -- Compute GBC using covariance
             geho "-- Computing GBC using covariance with weights file..."
             echo ""
-            wb_command -cifti-reduce ${PConnBOLDOutputCov} MEAN ${GBCBOLDOutputCov}
+            wb_command -cifti-reduce ${PConnBOLDOutputCov} MEAN ${GBCBOLDOutputCov} -only-numeric
             # -- Compute pconn using fisher-z correlation
             geho "-- Computing pconn using correlation w/ fisher-z transform with weights file..."
             echo ""
-            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z -weights "$WeightsFile"
+            wb_command -cifti-correlation ${BOLDOutput} ${PConnBOLDOutputRfZ} -fisher-z -weights ${WeightsFile}
             # -- Compute GC using fisher-z correlation
             geho "-- Computing GBC using correlation w/ fisher-z transform with weights file..."
             echo ""
-            wb_command -cifti-reduce ${PConnBOLDOutputRfZ} MEAN ${GBCBOLDOutputRfZ}
+            wb_command -cifti-reduce ${PConnBOLDOutputRfZ} MEAN ${GBCBOLDOutputRfZ} -only-numeric
         fi
         if [ "$UseWeights" == "no" ]; then
             # -- Compute pconn using correlation
             geho "-- Computing pconn using correlation..."
             echo ""
-            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputR"
+            wb_command -cifti-correlation ${BOLDOutput} ${PConnBOLDOutputR}
             # -- Compute GBC using correlation
             geho "-- Computing GBC using correlation..."
             echo ""
-            wb_command -cifti-reduce ${PConnBOLDOutputR} MEAN ${GBCBOLDOutputR}
+            wb_command -cifti-reduce ${PConnBOLDOutputR} MEAN ${GBCBOLDOutputR} -only-numeric
             # -- Compute pconn using covariance
             geho "-- Computing pconn using covariance..."
             echo ""
-            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputCov" -covariance
+            wb_command -cifti-correlation ${BOLDOutput} ${PConnBOLDOutputCov} -covariance
             # -- Compute GBC using covariance
             geho "-- Computing GBC using covariance..."
             echo ""
-            wb_command -cifti-reduce ${PConnBOLDOutputCov} MEAN ${GBCBOLDOutputCov}
+            wb_command -cifti-reduce ${PConnBOLDOutputCov} MEAN ${GBCBOLDOutputCov} -only-numeric
             # -- Compute pconn using fisher-z correlation
             geho "-- Computing pconn using correlation w/ fisher-z transform..."
             echo ""
-            wb_command -cifti-correlation "$BOLDOutput" "$PConnBOLDOutputRfZ" -fisher-z
+            wb_command -cifti-correlation ${BOLDOutput} ${PConnBOLDOutputRfZ} -fisher-z
             # -- Compute GBC using fisher-z correlation
             geho "-- Computing GBC using correlation w/ fisher-z transform..."
             echo ""
-            wb_command -cifti-reduce ${PConnBOLDOutputRfZ} MEAN ${GBCBOLDOutputRfZ}
+            wb_command -cifti-reduce ${PConnBOLDOutputRfZ} MEAN ${GBCBOLDOutputRfZ} -only-numeric
         fi
     fi
 fi
@@ -533,17 +533,21 @@ if [ "$ExtractData" == "yes" ]; then
     geho "--- Requested extraction of data in CSV format."
     echo ""
     if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ] && [ "$ComputePConn" == "yes" ]; then
-        geho "--- Saving out the parcellated dtseries data in a CSV file..."
+        geho "--- Saving out the parcellated data in a CSV file..."
         echo ""
         # -- Specify pconn file outputs for correlation (r) value and covariance 
         CSVOutPConnFileExtR="r.csv"
         CSVOutPConnFileExtCov="cov.csv"
+        CSVOutPConnFileExtRfZ="r_Fz.csv"
         CSVPConnBOLDOutputR="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtR}"
         CSVPConnBOLDOutputCov="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtCov}"
+        CSVPConnBOLDOutputRfZ="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVOutPConnFileExtRfZ}"
         rm -f ${CSVPConnBOLDOutputR} 2> /dev/null
         rm -f ${CSVPConnBOLDOutputCov} 2> /dev/null
-        wb_command -nifti-information -print-matrix "$PConnBOLDOutputR" >> "$CSVPConnBOLDOutputR"
-        wb_command -nifti-information -print-matrix "$PConnBOLDOutputCov" >> "$CSVPConnBOLDOutputCov"
+        rm -f ${CSVPConnBOLDOutputRfZ} 2> /dev/null
+        wb_command -nifti-information -print-matrix ${PConnBOLDOutputR} >> ${CSVPConnBOLDOutputR}
+        wb_command -nifti-information -print-matrix ${PConnBOLDOutputCov} >> ${CSVPConnBOLDOutputCov}
+        wb_command -nifti-information -print-matrix ${PConnBOLDOutputRfZ} >> ${CSVPConnBOLDOutputRfZ}
     fi
     if [ "$InputDataType" == "dscalar" ]; then
         geho "--- Saving out the parcellated dscalar data in a CSV file..."
@@ -555,7 +559,7 @@ if [ "$ExtractData" == "yes" ]; then
             CSVDPScalarBoldOut="$OutPath/${SingleInputFile}_${OutName}_${DscalarFileExtCSV}"
         fi
         rm -f "$CSVDPScalarBoldOut" 2> /dev/null
-        wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDPScalarBoldOut"
+        wb_command -nifti-information -print-matrix ${BOLDOutput} >> ${CSVDPScalarBoldOut}
     fi
     if [ -z "$SingleInputFile" ] && [ "$InputDataType" == "dtseries" ]; then
         geho "--- Saving out the parcellated single file dtseries data in a CSV file..."
@@ -563,7 +567,7 @@ if [ "$ExtractData" == "yes" ]; then
         CSVDTseriesFileExtCSV=".csv"
         CSVDTseriesFileExtCSV="$SubjectsFolder/$CASE/$OutPath/${InputFile}_${OutName}_${CSVDTseriesFileExtCSV}"
         rm -f "$CSVDTseriesFileExtCSV" 2> /dev/null
-        wb_command -nifti-information -print-matrix "$BOLDOutput" >> "$CSVDTseriesFileExtCSV"
+        wb_command -nifti-information -print-matrix ${BOLDOutput} >> ${CSVDTseriesFileExtCSV}
     fi
 fi
 

@@ -970,9 +970,15 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        getHCPReady|setupHCP|createBatch)
+        getHCPReady|setupHCP)
             # --- rsync relevant dependencies if getHCPReady or setupHCP is starting point 
             RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        createBatch)
+            # --- rsync relevant dependencies if getHCPReady or setupHCP is starting point 
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
@@ -2549,18 +2555,7 @@ else
     done
     
     if [ ${TURNKEY_TYPE} == "xnat" ]; then
-        geho "---> Setting recursive r+w+x permissions on ${qunex_studyfolder}"
-        chmod -R 777 ${qunex_studyfolder} 2> /dev/null
-        cd ${processingdir}
-        zip -r logs logs 2> /dev/null
-        echo ""
-        geho "---> Uploading all logs: curl -u XNAT_USER_NAME:XNAT_PASSWORD -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_LOGS/files/logs.zip?extract=true&overwrite=true&inbody=true" -d logs.zip "
-        echo ""
-        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X POST "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_LABEL}/experiments/${XNAT_ACCSESSION_ID}/resources/QUNEX_LOGS/files/logs.zip?extract=true&overwrite=true&inbody=true" -d logs.zip
-        echo ""
-        rm -rf ${processingdir}/logs.zip &> /dev/null
-        popd 2> /dev/null
-        geho "---> Cleaning up:"
+        geho "---> Cleaning up DICOMs from build directory to save space:"
         if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""
             geho "     - removing dicom folder"
