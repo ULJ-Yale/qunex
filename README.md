@@ -544,13 +544,14 @@ Change Log
 * 0.48.29 [library] Change to qunexContainer to utf8 encode input to stdin
 * 0.48.30 [niutilities nitools] Added additional option to g_ExtractGLMVolumes to save effects in text file by parcel for ptseries files
 * 0.48.31 [niutilities hcp] Minor fixes and updates
+* 0.48.32 [connector library] Edited RunTurnkey.sh to speed up createBatch sync and deprecated QUNEX_LOGS for XNAT, adjusted cs-wrapper.sh to directly run qunex.sh 
 
 
 Stable Container Tag Log
 ========================
 ---
 
-* docker.io/qunex/qunex_suite:qunex_dev 0_48_02
+* docker.io/qunex/qunex_suite:qunex_dev 0_48_20
 
 [Mind and Brain Lab]: http://mblab.si
 [Anticevic Lab]: http://anticeviclab.yale.edu
