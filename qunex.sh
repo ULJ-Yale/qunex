@@ -1558,8 +1558,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
 
     # -- First get function / command input (to harmonize input with gmri)
     if [ -z "$CommandToRun" ]; then
-        FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
-        CommandInput=`opts_GetOpt "${setflag}command" "$@"`  # function to execute
+        FunctionInput=`opts_GetOpt "${setflag}exec-function" "$@"` # function to execute
+        CommandInput=`opts_GetOpt "${setflag}exec-command" "$@"`   # command to execute
         # -- If input name uses 'command' instead of function set that to $CommandToRun
         if [ -z "$FunctionInput" ]; then
             CommandToRun="$CommandInput"
@@ -1869,6 +1869,13 @@ fi
 # ------------------------------------------------------------------------------
 
 if [ "$CommandToRun" == "runTurnkey" ]; then
+
+    if [[ -z ${CASES} ]]; then
+        if [[ ! -z ${XNAT_SESSION_LABELS} ]]; then
+            CASES="$XNAT_SESSION_LABELS"
+        fi
+    fi
+    if [ -z "$CASES" ]; then reho "Error: List of subjects missing"; exit 1; fi
 
    # -- Check if cluster options are set
    Cluster="$RunMethod"
