@@ -546,6 +546,7 @@ Change Log
 * 0.48.31 [niutilities hcp] Minor fixes and updates
 * 0.48.32 [connector library] Edited RunTurnkey.sh to speed up createBatch sync and deprecated QUNEX_LOGS for XNAT, adjusted cs-wrapper.sh to directly run qunex.sh 
 * 0.48.33 [connector] Edited RunTurnkey.sh to optimize syncing from XNAT
+* 0.48.34 [connector,library] Edited qunex.sh to optimize reading cs-wrapper inputs and upgraded cs-wrapper
 
 Stable Container Tag Log
 ========================
