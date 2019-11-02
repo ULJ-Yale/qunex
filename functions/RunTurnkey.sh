@@ -2343,7 +2343,7 @@ fi
             --overwrite='${OVERWRITE_STEP}' \
             --ignore='${IgnoreFrames}' \
             --target='${TargetROI}' \
-            --command='${GBCCommand}' \
+            --gbc-command='${GBCCommand}' \
             --targetf='${OutPath}' \
             --mask='${MaskFrames}' \
             --rsmooth='${RadiusSmooth}' \

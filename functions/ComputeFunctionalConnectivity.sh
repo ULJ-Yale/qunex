@@ -122,7 +122,7 @@ echo ""
 echo "      --target=<which_roi_to_use>             Array of ROI codes that define target ROI [default: FreeSurfer cortex codes]"
 echo "      --rsmooth=<smoothing_radius>            Radius for smoothing (no smoothing if empty). Default is []"
 echo "      --rdilate=<dilation_radius>             Radius for dilating mask (no dilation if empty). Default is []"
-echo "      --command=<type_of_gbc_to_run>          Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
+echo "      --gbc-command=<type_of_gbc_to_run>      Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2' "
 echo ""
 echo "          > mFz:t  ... computes mean Fz value across all voxels (over threshold t) "
 echo "          > aFz:t  ... computes mean absolute Fz value across all voxels (over threshold t) "
@@ -237,7 +237,7 @@ echo "--inputpath='/images/functional' \ "
 echo "--extractdata='yes' \ "
 echo "--outname='<name_of_output_file>' \ "
 echo "--ignore='udvarsme' \ "
-echo "--command='mFz:' \ "
+echo "--gbc-command='mFz:' \ "
 echo "--targetf='<path_for_output_file>' \ "
 echo "--mask='5' \ "
 echo "--target='' \ "
@@ -256,7 +256,7 @@ echo "--flist='subjects.list' \ "
 echo "--extractdata='yes' \ "
 echo "--outname='<name_of_output_file>' \ "
 echo "--ignore='udvarsme' \ "
-echo "--command='mFz:' \ "
+echo "--gbc-command='mFz:' \ "
 echo "--targetf='<path_for_output_file>' \ "
 echo "--mask='5' \ "
 echo "--target='' \ "
@@ -347,7 +347,7 @@ unset Covariance       # --covariance=
 unset TargetROI        # --target=         
 unset RadiusSmooth     # --rsmooth=      
 unset RadiusDilate     # --rdilate=      
-unset GBCCommand       # --command=      
+unset GBCCommand       # --gbc-command=      
 unset Verbose          # --verbose=      
 unset ComputeTime      # --time=         
 unset VoxelStep        # --vstep=         
@@ -441,7 +441,7 @@ while [ ${index} -lt ${numArgs} ]; do
             RadiusDilate=${argument/*=/""}
             index=$(( index + 1 ))
             ;;  
-        --command=*)
+        --gbc-command=*)
             GBCCommand=${argument/*=/""}
             index=$(( index + 1 ))
             ;;

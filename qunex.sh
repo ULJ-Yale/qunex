@@ -855,7 +855,7 @@ if [ ${Calculation} == "gbc" ]; then
     --overwrite=${Overwrite} \
     --ignore=${IgnoreFrames} \
     --target=${TargetROI} \
-    --command=${GBCCommand} \
+    --gbc-command=${GBCCommand} \
     --targetf=${OutPath} \
     --mask=${MaskFrames} \
     --rsmooth=${RadiusSmooth} \
@@ -1558,8 +1558,8 @@ if [[ "$setflag" =~ .*-.* ]]; then
 
     # -- First get function / command input (to harmonize input with gmri)
     if [ -z "$CommandToRun" ]; then
-        FunctionInput=`opts_GetOpt "${setflag}exec-function" "$@"` # function to execute
-        CommandInput=`opts_GetOpt "${setflag}exec-command" "$@"`   # command to execute
+        FunctionInput=`opts_GetOpt "${setflag}function" "$@"` # function to execute
+        CommandInput=`opts_GetOpt "${setflag}command" "$@"`   # command to execute
         # -- If input name uses 'command' instead of function set that to $CommandToRun
         if [ -z "$FunctionInput" ]; then
             CommandToRun="$CommandInput"
