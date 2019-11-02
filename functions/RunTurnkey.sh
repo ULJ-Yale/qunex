@@ -978,35 +978,47 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
             ;;
         createBatch)
             # --- rsync relevant dependencies if getHCPReady or setupHCP is starting point 
-            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='/processing' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp1|hcp2|hcp3|runQC_T1w|runQC_T2w|runQC_Myelin)
+        hcp1)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/***' --include='T1w/***' --include='T2w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/*nii*' --include='T2w/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcp4|hcp5|runQC_BOLD)
+        hcp2)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/***' --include='T1w/***' --include='T2w/***' --include='BOLD*/***' --include='*fMRI*/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        hcpd|runQC_DWI|hcpdLegacy|runQC_DWILegacy|eddyQC|runQC_DWIeddyQC|FSLDtifit|runQC_DWIDTIFIT|FSLBedpostxGPU|runQC_DWIProcess|runQC_DWIBedpostX|pretractographyDense|DWIDenseParcellation|DWISeedTractography|runQC_Custom)
+        hcp3|runQC_T1w|runQC_T2w|runQC_Myelin)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        runQC_Custom)
+        hcp4)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/*nii*' --include='T1w/*nii*' --include='BOLD*/*nii*' --include='*fMRI*/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
-        mapHCPData)
+        hcpd|runQC_DWI|hcpdLegacy|runQC_DWILegacy|eddyQC|runQC_DWIeddyQC|FSLDtifit|runQC_DWIDTIFIT|FSLBedpostxGPU|runQC_DWIProcess|runQC_DWIBedpostX|)
+            # --- rsync relevant dependencies if and hcp or QC step is starting point
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+         pretractographyDense|DWISeedTractography|DWIDenseParcellation)
+            # --- rsync relevant dependencies if and hcp or QC step is starting point
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='MNINonLinear/Results/Tractography/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
+            eval ${RsyncCommand}
+            ;;
+        hcp5|runQC_BOLD|runQC_Custom|mapHCPData)
             # --- rsync relevant dependencies if and mapHCPData is starting point
             RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
