@@ -545,7 +545,7 @@ Change Log
 * 0.48.30 [niutilities nitools] Added additional option to g_ExtractGLMVolumes to save effects in text file by parcel for ptseries files
 * 0.48.31 [niutilities hcp] Minor fixes and updates
 * 0.48.32 [connector library] Edited RunTurnkey.sh to speed up createBatch sync and deprecated QUNEX_LOGS for XNAT, adjusted cs-wrapper.sh to directly run qunex.sh 
-
+* 0.48.33 [connector] Edited RunTurnkey.sh to optimize syncing from XNAT
 
 Stable Container Tag Log
 ========================
