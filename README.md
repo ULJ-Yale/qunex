@@ -547,6 +547,7 @@ Change Log
 * 0.48.32 [connector library] Edited RunTurnkey.sh to speed up createBatch sync and deprecated QUNEX_LOGS for XNAT, adjusted cs-wrapper.sh to directly run qunex.sh 
 * 0.48.33 [connector] Edited RunTurnkey.sh to optimize syncing from XNAT
 * 0.48.34 [connector,library] Edited qunex.sh to optimize reading cs-wrapper inputs and upgraded cs-wrapper
+* 0.48.35 [connector] Edited GBC command flag to --gbc-command not conflict with main input syntax
 
 Stable Container Tag Log
 ========================
