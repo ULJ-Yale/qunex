@@ -931,6 +931,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                   separately. E.g. to pass `-norm3diters 3` to 
                                   reconall, the string has to be: 
                                   "-norm3diters|3" []
+    --hcp_fs_flair            ... If set to TRUE indicates that recon-all is to be
+                                  run with the -FLAIR/-FLAIRpial options
+                                  (rather than the -T2/-T2pial options).
+                                  The FLAIR input image itself should be provided 
+                                  as a regular T2w image.
 
     HCP modified specific parameters:
     ---------------------------------
@@ -1066,6 +1071,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations
     2019-10-20 Grega Repovš
              - Adjusted parameters, help and processing to use integrated HCPpipelines
+    2019-10-24 Grega Repovš
+             - Added flair option and documentation
 
     ----------------
     2019-10-20 ToDo
@@ -1209,15 +1216,15 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
         # -> Key elements
 
-        elements = [("subjectDIR", hcp['T1w_folder']), 
-                    ('subject', sinfo['id'] + options['hcp_suffix']),
-                    ('t1', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
-                    ('t1brain', os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
-                    ('t2', t2w),
-                    ('seed', options['hcp_fs_seed']),
+        elements = [("subjectDIR",       hcp['T1w_folder']), 
+                    ('subject',          sinfo['id'] + options['hcp_suffix']),
+                    ('t1',               os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
+                    ('t1brain',          os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
+                    ('t2',               t2w),
+                    ('seed',             options['hcp_fs_seed']),
                     ('existing-subject', options['hcp_fs_existing_subject']),
-                    ('no-conf2hires', options['hcp_fs_no_conf2hires']),
-                    ('processing-mode', options['hcp_processing_mode'])]
+                    ('no-conf2hires',    options['hcp_fs_no_conf2hires']),                    
+                    ('processing-mode',  options['hcp_processing_mode'])]
 
         # -> Additional, reconall parameters
 
@@ -1235,6 +1242,9 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
         # --> Pull all together
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
+
+        if options['hcp_fs_flair'] == "TRUE":
+            comm += " --flair"
 
 
         # -- Test files
@@ -2995,8 +3005,9 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             if fmriref is not "NONE":
                 r += '\n     ... using %s as movement correction reference' % (fmriref)
-                if options['hcp_processing_mode'] == 'HCPStyleData':
-                    r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, an external BOLD was specified as movement registration target!\n            Consider using LegacyStyleData processing mode."
+                refimg = 'NONE'
+                if options['hcp_processing_mode'] == 'HCPStyleData' and options['hcp_bold_refreg'] == 'nonlinear':
+                    r += "\n---> ERROR: The requested HCP processing mode is 'HCPStyleData', however, a nonlinear registration to an external BOLD was specified!\n            Consider using LegacyStyleData processing mode."
                     run = False
 
             # store required data
@@ -3166,8 +3177,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                 if stappend not in slicetimerparams:
                     slicetimerparams.append(stappend)
 
+            slicetimerparams = [e for e in slicetimerparams if e]
             slicetimerparams = "@".join(slicetimerparams)
-
 
         # --- Set up the command
 
@@ -3196,7 +3207,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                     ("usejacobian",         options['hcp_bold_usejacobian']),
                     ("mctype",              options['hcp_bold_movreg'].upper()),
                     ("preregistertool",     options['hcp_bold_preregistertool']),
-                    ("processing-mode",     options['hcp_processing_mode'])
+                    ("processing-mode",     options['hcp_processing_mode']),
                     ("doslicetime",         options['hcp_bold_doslicetime'].upper()),
                     ("slicetimerparams",    slicetimerparams),
                     ("fmriref",             fmriref),
@@ -3221,8 +3232,39 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         if run and boldok:            
             if options['run'] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
+                if overwrite or not os.path.exists(tfile):
+
+                    # ---> Clean up existing data
+                    # -> bold working folder
+                    bold_folder = os.path.join(hcp['base'], boldtarget)
+                    if os.path.exists(bold_folder):
+                        r += "\n     ... removing preexisting working bold folder [%s]" % (bold_folder)
+                        shutil.rmtree(bold_folder)
+
+                    # -> bold results folder
+                    bold_folder = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget)
+                    if os.path.exists(bold_folder):
+                        r += "\n     ... removing preexisting results bold folder [%s]" % (bold_folder)
+                        shutil.rmtree(bold_folder)
+
+                    # -> xfms in T1w folder
+                    xfms_file = os.path.join(hcp['T1w_folder'], 'xfms', "%s2str.nii.gz" % (boldtarget))
+                    if os.path.exists(xfms_file):
+                        r += "\n     ... removing preexisting xfms file [%s]" % (xfms_file)
+                        os.remove(xfms_file)
+
+                    # -> xfms in MNINonLinear folder
+                    xfms_file = os.path.join(hcp['hcp_nonlin'], 'xfms', "%s2str.nii.gz" % (boldtarget))
+                    if os.path.exists(xfms_file):
+                        r += "\n     ... removing preexisting xfms file [%s]" % (xfms_file)
+                        os.remove(xfms_file)
+
+                    # -> xfms in MNINonLinear folder
+                    xfms_file = os.path.join(hcp['hcp_nonlin'], 'xfms', "standard2%s.nii.gz" % (boldtarget))
+                    if os.path.exists(xfms_file):
+                        r += "     ... removing preexisting xfms file [%s]" % (xfms_file)
+                        os.remove(xfms_file)
+
                 r, endlog, _, failed = runExternalForFile(tfile, comm, '     ... running HCP fMRIVolume', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:

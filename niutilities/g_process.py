@@ -172,7 +172,7 @@ def mapDeprecated(options, tomap, mapValues, deprecatedList):
     for k, v in options.iteritems():
         if k in deprecatedList:
             if v:
-                deprecated.append((k, v, deprecatedList[k])
+                deprecated.append((k, v, deprecatedList[k]))
 
     if deprecated:
         print "\nWARNING: Use of deprecated parameter(s)!"
@@ -181,7 +181,7 @@ def mapDeprecated(options, tomap, mapValues, deprecatedList):
                 print "         ... %s (current value: %s) is replaced by the parameter %s!" % (k, str(v), n)
             else:
                 print "         ... %s (current value: %s) is being deprecated!" % (k, str(v))
-        print "         Please stop using the listed parameters in command line or batch file, and, when idicated, consider using the replacement parameter!"  
+        print "         Please stop using the listed parameters in command line or batch file, and, when indicated, consider using the replacement parameter!"  
 
     # -> check new parameter values
 
@@ -353,7 +353,8 @@ arglist = [['# ---- Basic settings'],
            ['hcp_fs_seed',            '',                                         str,    "Recon-all seed value. If not specified, none will be used. HCP Pipelines specific!"],
            ['hcp_fs_existing_subject','FALSE',                                    torf,   "Indicates that the command is to be run on top of an already existing analysis/subject. This excludes the `-i` flag from the invocation of recon-all. If set, the user needs to specify which recon-all stages to run using the --hcp_fs_extra_reconall parameter. Accepted values are TRUE or FALSE [FALSE]. HCP Pipelines specific!"],
            ['hcp_fs_extra_reconall',  '',                                         str,    "A string with extra parameters to pass to FreeSurfer recon-all. The extra parameters are to be listed in a pipe ('|') separated string. Parameters and their values need to be listed separately. E.g. to pass `-norm3diters 3` to reconall, the string has to be: \"-norm3diters|3\" []. HCP Pipelines specific!"],
-           ['hcp_fs_no_conf2hires',   'FALSE',                                    torf,    "Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE]"],
+           ['hcp_fs_no_conf2hires',   'FALSE',                                    torf,   "Indicates that (most commonly due to low resolution—1mm or less—of structural image(s), high-resolution steps of recon-all should be excluded. Accepted values are TRUE or FALSE [FALSE]"],
+           ['hcp_fs_flair',           '',                                         str,    "If set to TRUE indicates that recon-all is to be run with the -FLAIR/-FLAIRpial options(rather than the -T2/-T2pial options). The FLAIR input image itself should still be provided via the '--t2' argument."],
            ['hcp_fs_check',           'last',                                     str,    "Whether to check the results of FreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_fslong_check',       'last',                                     str,    "Whether to check the results of FreeSurferLongitudinal pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_postfs_check',       'last',                                     str,    "Whether to check the results of PostFreeSurfer pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
@@ -368,7 +369,7 @@ arglist = [['# ---- Basic settings'],
            ['hcp_bold_boldnamekey',   'number',                                   str,    "How to name the BOLD files in the hcp structure. The default is to name them by their bold number ('number') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('name') (e.g. rfMRI_REST1_AP). ['number']"],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_bold_name') for bold working folders and results"],
            ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default"],
-           ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE or Legacy. HCP Pipelines only!"],
+           ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE, LEGACY or SEBASED (for TOPUP DC only). HCP Pipelines only!"],
            ['hcp_bold_usejacobian',   '',                                         str,    "Whether to apply the jacobian of the distortion correction to fMRI data. HCP Pipelines only!"],
            ['hcp_bold_echospacing',   '0.00035',                                  str,    "Echo Spacing or Dwelltime of fMRI image in seconds"],
            ['hcp_bold_dcmethod',      '',                                         str,    "BOLD image deformation correction: TOPUP, FIELDMAP / SiemensFieldMap, GeneralElectricFieldMap or NONE"],
@@ -423,7 +424,7 @@ tomap = {'bppt':                'bolds',
          'hcp_prefs_brainmask': 'hcp_prefs_custombrain',
          'hcp_mppversion':      'hcp_processing_mode',
          'hcp_bold_preregister':'hcp_bold_preregistertool',
-         'hcp_bold_stcorr':     'hcp_bold_doslicetime'
+         'hcp_bold_stcorr':     'hcp_bold_doslicetime',
          'hcp_bold_correct':    'hcp_bold_dcmethod',
          'hcp_bold_usemask':    'hcp_bold_mask'}
 
