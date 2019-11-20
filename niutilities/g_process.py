@@ -25,6 +25,9 @@ Changelog
 2019-01-13 Jure Demsar
          - Fixed a bug that disabled cores parameter with the
            introduction of the threads parameter.
+2019-09-20 Jure Demsar
+         - Have all the files listed with the original name
+           in subject_hcp.txt.
 """
 
 import g_core
@@ -366,7 +369,7 @@ arglist = [['# ---- Basic settings'],
            ['hcp_inflatescale',       '1',                                        str,    "Inflate extra scale parameter [1]."],
            ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file to use when mapping data from the HCP MNINonLinear/Results folder."],
            ['hcp_bold_sequencetype',  'single',                                   str,    "The type of the sequence used: multi(band) vs single(band)"],
-           ['hcp_bold_boldnamekey',   'number',                                   str,    "How to name the BOLD files in the hcp structure. The default is to name them by their bold number ('number') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('name') (e.g. rfMRI_REST1_AP). ['number']"],
+           ['hcp_filename',           'number',                                   str,    "How to name the image files in the hcp structure. The default is to name them by their number ('standard') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('original') (e.g. rfMRI_REST1_AP). ['standard']"],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_bold_name') for bold working folders and results"],
            ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default"],
            ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE, LEGACY or SEBASED (for TOPUP DC only). HCP Pipelines only!"],
@@ -413,22 +416,24 @@ arglist = [['# ---- Basic settings'],
 #   parameters need to be mapped to a parameter with another name. The "tomap"
 #   dictionary specifies what is mapped to what.
 
-tomap = {'bppt':                'bolds',
-         'bppa':                'bold_actions',
-         'bppn':                'bold_nuisance',
-         'eventstring':         'event_string',
-         'eventfile':           'event_file',
-         'basefolder':          'subjectsfolder',
-         'subjects':            'sessions',
-         'bold_preprocess':     'bolds',
-         'hcp_prefs_brainmask': 'hcp_prefs_custombrain',
-         'hcp_mppversion':      'hcp_processing_mode',
-         'hcp_bold_preregister':'hcp_bold_preregistertool',
-         'hcp_bold_stcorr':     'hcp_bold_doslicetime',
-         'hcp_bold_correct':    'hcp_bold_dcmethod',
-         'hcp_bold_usemask':    'hcp_bold_mask'}
+tomap = {'bppt':                    'bolds',
+         'bppa':                    'bold_actions',
+         'bppn':                    'bold_nuisance',
+         'eventstring':             'event_string',
+         'eventfile':               'event_file',
+         'basefolder':              'subjectsfolder',
+         'subjects':                'sessions',
+         'bold_preprocess':         'bolds',
+         'hcp_prefs_brainmask':     'hcp_prefs_custombrain',
+         'hcp_mppversion':          'hcp_processing_mode',
+         'hcp_bold_preregister':    'hcp_bold_preregistertool',
+         'hcp_bold_stcorr':         'hcp_bold_doslicetime',
+         'hcp_bold_correct':        'hcp_bold_dcmethod',
+         'hcp_bold_usemask':        'hcp_bold_mask',
+         '':    'hcp_filename'}
 
-mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'}}
+mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
+             'hcp_filename': {'names': 'original', 'numbers': 'standard'}}
 
 deprecated = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
               'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams'}

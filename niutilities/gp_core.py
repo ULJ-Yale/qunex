@@ -135,7 +135,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
         keep += [n for n in range(nbolds) if bolds[n][2] in btargets]
 
         # check bold names if present
-        keep += [n for n in range(nbolds) if bolds[n][3].get('boldname') in btargets]
+        keep += [n for n in range(nbolds) if bolds[n][3].get('filename') in btargets]
 
         # check sequence names
         keep += [n for n in range(nbolds) if bolds[n][3].get('ext') in btargets]
@@ -148,15 +148,15 @@ def useOrSkipBOLD(sinfo, options, r=""):
         # set bolds and skips
 
         bskip = [bolds[i] for i in skip]
-        bolds = [bolds[i] for i in keep]        
+        bolds = [bolds[i] for i in keep]
 
         # sort and report
         bskip.sort()
         if len(bskip) > 0:
             r += "\n\nSkipping the following BOLD images:"
             for n, b, t, v in bskip:
-                if 'boldname' in v and options['hcp_bold_boldnamekey'] == 'name':
-                    r += "\n...  %-20s [%-6s %s]" % (v['boldname'], b, t)
+                if 'filename' in v and options['hcp_filename'] == 'original':
+                    r += "\n...  %-20s [%-6s %s]" % (v['filename'], b, t)
                 else:
                     r += "\n...  %-6s [%s]" % (b, t)
             r += "\n"

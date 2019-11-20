@@ -25,9 +25,9 @@ import os.path
 import g_core
 
 
-def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", boldnamekey='number', folderstructure='hcpls'):
+def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='original', folderstructure='hcpls'):
     '''
-    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [boldnamekey='number'] [folderstructure='hcpls']
+    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [filename='original'] [folderstructure='hcpls']
 
     USE
     ===
@@ -55,10 +55,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                         abort -> abort setting up hcp folder
                         add   -> leave existing files and add new ones (default)
                         clear -> remove any exisiting files and redo hcp mapping
-    --boldnamekey       How to name the bold files in the hcp structure. The 
-                        default is to name them by their bold number ('number') 
+    --filename          How to name the bold files in the hcp structure. The 
+                        default is to name them by their bold number ('original') 
                         (e.g. BOLD_1), the alternative is to use their actual 
-                        names ('name') (e.g. rfMRI_REST1_AP). ['number']
+                        names ('standard') (e.g. rfMRI_REST1_AP). ['number']
     --folderstructure   Which HCP folder structure to use 'initial' or 'hcpls'. 
                         See below for details. ['hcpls'] 
 
@@ -208,7 +208,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     nT1w  = 0
     nT2w  = 0
 
-    boldnamekey = boldnamekey == 'name'
+    filenamekey = filenamekey == 'original'
 
     if folderstructure not in ['initial', 'hcpls']:
         raise ge.CommandFailed("setupHCP", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
@@ -273,95 +273,161 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 sfile = k + ".nii.gz"
             else:
                 sfile = k + "-o.nii.gz"
-            tfile = sid + "_strc_T1w_MPR%d.nii.gz" % (nT1w)
-            tfold = "T1w"
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+                tfold = v['filename']
+            else
+                tfile = sid + "_strc_T1w_MPR%d.nii.gz" % (nT1w)
+                tfold = "T1w"
+
         elif v['name'] == "T2w":
             nT2w += 1
             if os.path.exists(os.path.join(rawf, k + ".nii.gz")):
                 sfile = k + ".nii.gz"
             else:
                 sfile = k + "-o.nii.gz"
-            tfile = sid + "_strc_T2w_SPC%d.nii.gz" % (nT2w)
-            tfold = "T2w"
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+                tfold = v['filename']
+            else
+                tfile = sid + "_strc_T2w_SPC%d.nii.gz" % (nT2w)
+                tfold = "T2w"
+
         elif v['name'] == "FM-GE":
             if 'fm' in v:
                 fmnum = v['fm']
             else:
                 fmnum = boldn
             sfile = k + ".nii.gz"
-            tfile = sid + "_strc_FieldMap_GE.nii.gz"
-            tfold = "FieldMap" + fmnum + fmtail
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + fmnum + fmtail
+            else
+                tfile = sid + "_strc_FieldMap_GE.nii.gz"
+                tfold = "FieldMap" + fmnum + fmtail
+
         elif v['name'] == "FM-Magnitude":
             if 'fm' in v:
                 fmnum = v['fm']
             else:
                 fmnum = boldn
             sfile = k + ".nii.gz"
-            tfile = sid + "_strc_FieldMap_Magnitude.nii.gz"
-            tfold = "FieldMap" + fmnum + fmtail
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + fmnum + fmtail
+            else
+                tfile = sid + "_strc_FieldMap_Magnitude.nii.gz"
+                tfold = "FieldMap" + fmnum + fmtail
+
         elif v['name'] == "FM-Phase":
             if 'fm' in v:
                 fmnum = v['fm']
             else:
                 fmnum = boldn
             sfile = k + ".nii.gz"
-            tfile = sid + "_strc_FieldMap_Phase.nii.gz"
-            tfold = "FieldMap" + fmnum + fmtail
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + fmnum + fmtail
+            else
+                tfile = sid + "_strc_FieldMap_Phase.nii.gz"
+                tfold = "FieldMap" + fmnum + fmtail
+
         elif "boldref" in v['name']:
             boldn = v['name'][7:]
             sfile = k + ".nii.gz"
-            if boldnamekey and 'boldname' in v:
-                tfile = sid + "_fncb_" + v['boldname'] + ".nii.gz"            
-                tfold = v['boldname'] + fctail
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + fctail
             else:
-                tfile = sid + "_fncb_BOLD_" + boldn + orient + "_SBRef.nii.gz"            
+                tfile = sid + "_fncb_BOLD_" + boldn + orient + "_SBRef.nii.gz"
                 tfold = "BOLD_" + boldn + orient + "_SBRef" + fctail
             bolds[boldn]["ref"] = sfile
+
         elif "bold" in v['name']:
             boldn = v['name'][4:]
             sfile = k + ".nii.gz"
-            if boldnamekey and 'boldname' in v:
-                tfile = sid + "_fncb_" + v['boldname'] + ".nii.gz"            
-                tfold = v['boldname'] + fctail
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + fctail
             else:
-                tfile = sid + "_fncb_BOLD_" + boldn + orient + ".nii.gz"            
+                tfile = sid + "_fncb_BOLD_" + boldn + orient + ".nii.gz"
                 tfold = "BOLD_" + boldn + orient + fctail
             bolds[boldn]["bold"] = sfile
+
         elif v['name'] == "SE-FM-AP":
             sfile = k + ".nii.gz"
-            tfile = sid + "_fncb_BOLD_AP_SB_SE.nii.gz"
             if 'se' in v:
                 senum = v['se']
             else:
                 senum = boldn
-            tfold = "SpinEchoFieldMap" + senum + fctail
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + senum + fctail
+            else
+                tfile = sid + "_fncb_BOLD_AP_SB_SE.nii.gz"
+                tfold = "SpinEchoFieldMap" + senum + fctail
+
         elif v['name'] == "SE-FM-PA":
             sfile = k + ".nii.gz"
-            tfile = sid + "_fncb_BOLD_PA_SB_SE.nii.gz"
+
             if 'se' in v:
                 senum = v['se']
             else:
                 senum = boldn
-            tfold = "SpinEchoFieldMap" + senum + fctail
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + senum + fctail
+            else
+                tfile = sid + "_fncb_BOLD_PA_SB_SE.nii.gz"
+                tfold = "SpinEchoFieldMap" + senum + fctail
+
         elif v['name'] == "SE-FM-LR":
             sfile = k + ".nii.gz"
-            tfile = sid + "_fncb_BOLD_LR_SB_SE.nii.gz"
+            
             if 'se' in v:
                 senum = v['se']
             else:
                 senum = boldn
-            tfold = "SpinEchoFieldMap" + senum + fctail
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + senum + fctail
+            else
+                tfile = sid + "_fncb_BOLD_LR_SB_SE.nii.gz"
+                tfold = "SpinEchoFieldMap" + senum + fctail
+                
+
         elif v['name'] == "SE-FM-RL":
             sfile = k + ".nii.gz"
-            tfile = sid + "_fncb_BOLD_RL_SB_SE.nii.gz"
+            
             if 'se' in v:
                 senum = v['se']
             else:
                 senum = boldn
-            tfold = "SpinEchoFieldMap" + senum + fctail
+
+            if filenamekey and 'filename' in v:
+                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+                tfold = v['filename'] + senum + fctail
+            else
+                tfile = sid + "_fncb_BOLD_RL_SB_SE.nii.gz"
+                tfold = "SpinEchoFieldMap" + senum + fctail
+
         elif v['name'] == "DWI":
             sfile = [k + e for e in ['.nii.gz', '.bval', '.bvec']]
-            tbase = "_".join([sid, 'DWI', v['task']])
+
+            if filenamekey and 'filename' in v:
+                tbase = "_".join([sid, v['filename'], v['task']])
+            else
+                tbase = "_".join([sid, 'DWI', v['task']])
+
             tfile = [tbase + e for e in ['.nii.gz', '.bval', '.bvec']]
             tfold = "Diffusion"
         else:

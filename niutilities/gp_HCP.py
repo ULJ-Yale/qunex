@@ -2482,11 +2482,11 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     --hcp_bold_prefix        ... To be specified if multiple variants of BOLD
                                  preprocessing are run. The prefix is prepended
                                  to the bold name. [BOLD_]
-    --hcp_bold_boldnamekey   ... Specifies whether BOLD names are to be created
-                                 using sequential numbers ('number') using the 
+    --hcp_filename           ... Specifies whether BOLD names are to be created
+                                 using sequential numbers ('standard') using the 
                                  formula `<hcp_bold_prefix>_[N]` (e.g. BOLD_3) 
-                                 or actual bold names ('name', e.g. 
-                                 rfMRI_REST1_AP). ['number']
+                                 or actual bold names ('original', e.g. 
+                                 rfMRI_REST1_AP). ['standard']
 
     image acquisition details
     -------------------------
@@ -2801,8 +2801,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_bold_boldnamekey'] == 'name':
-                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+            if options['hcp_filename'] == 'original':
+                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
@@ -2825,10 +2825,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         for bold, boldname, boldtask, boldinfo in bolds:
 
-            if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
-                printbold  = boldinfo['boldname']
-                boldsource = boldinfo['boldname']
-                boldtarget = boldinfo['boldname']
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                printbold  = boldinfo['filename']
+                boldsource = boldinfo['filename']
+                boldtarget = boldinfo['filename']
             else:
                 printbold  = str(bold)
                 boldsource = 'BOLD_%d' % (bold)
@@ -2882,8 +2882,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             
             # --- check for bold image
 
-            if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
-                boldroot = boldinfo['boldname']
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                boldroot = boldinfo['filename']
             else:
                 boldroot = boldsource + orient
 
@@ -3554,8 +3554,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
 
         bolds, bskip, report['boldskipped'], r = useOrSkipBOLD(sinfo, options, r)
         if report['boldskipped']:
-            if options['hcp_bold_boldnamekey'] == 'name':
-                report['skipped'] = [bi.get('boldname', str(bn)) for bn, bnm, bt, bi in bskip]
+            if options['hcp_filename'] == 'original':
+                report['skipped'] = [bi.get('filename', str(bn)) for bn, bnm, bt, bi in bskip]
             else:
                 report['skipped'] = [str(bn) for bn, bnm, bt, bi in bskip]
 
@@ -3619,10 +3619,10 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     # extract data
     bold, boldname, task, boldinfo = boldData
 
-    if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
-        printbold  = boldinfo['boldname']
-        boldsource = boldinfo['boldname']
-        boldtarget = boldinfo['boldname']
+    if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+        printbold  = boldinfo['filename']
+        boldsource = boldinfo['filename']
+        boldtarget = boldinfo['filename']
     else:
         printbold  = str(bold)
         boldsource = 'BOLD_%d' % (bold)
@@ -4081,8 +4081,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         try:            
             # -- get source bold name
 
-            if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
-                bname = boldinfo['boldname']
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                bname = boldinfo['filename']
             elif 'bold' in boldinfo:
                 bname = boldinfo['bold']
             else:
@@ -4143,13 +4143,13 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         except:
             r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
             time.sleep(3)
-            failed += 1
+            failed += 1ß
 
     if len(skipped) > 0:
         r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n" % (options['bolds'])
         for boldnum, boldname, boldtask, boldinfo in skipped:
-            if 'boldname' in boldinfo and options['hcp_bold_boldnamekey'] == 'name':
-                r += "\n ... %s [task: '%s']" % (boldinfo['boldname'], boldtask)
+            if 'filename' in boldinfo and options['hcp_filename'] == 'original':
+                r += "\n ... %s [task: '%s']" % (boldinfo['filename'], boldtask)
             else:
                 r += "\n ... %s [task: '%s']" % (boldname, boldtask)
 
