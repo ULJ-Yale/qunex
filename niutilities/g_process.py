@@ -430,7 +430,7 @@ tomap = {'bppt':                    'bolds',
          'hcp_bold_stcorr':         'hcp_bold_doslicetime',
          'hcp_bold_correct':        'hcp_bold_dcmethod',
          'hcp_bold_usemask':        'hcp_bold_mask',
-         '':    'hcp_filename'}
+         'hcp_bold_boldnamekey':    'hcp_filename'}
 
 mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
              'hcp_filename': {'names': 'original', 'numbers': 'standard'}}
