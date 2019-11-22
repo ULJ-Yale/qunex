@@ -2614,7 +2614,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
 
     # -> map
 
-    mapactions      = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.linkOrCopy}
+    mapactions = {'copy': shutil.copy2, 'move': shutil.move, 'link': gc.linkOrCopy}
     descriptions = {'copy': 'copying', 'move': 'moving', 'link': 'linking'}
     
     do   = mapactions[mapaction]
@@ -2626,10 +2626,31 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
 
     for sfile, tfile in process:
 
-        tfolder, tname = os.path.split(tfile)
+        # split to file and folder
+        tfolder, _ = os.path.split(tfile)
+        sfolder, _ = os.path.split(sfile)
+
+        # get all subfolders
+        tparentfolders = tfolder.split("/")
+        sparentfolders = sfolder.split("/")
+
         if not os.path.exists(tfolder):
             try:
+                # makedir
                 os.makedirs(tfolder)
+
+                # copy time stamps on parent folders with the same name
+                for f in tparentfolders:
+                    # is current folder also in source parent folders
+                    if f in sparentfolders:
+                        # create paths
+                        tpath = "/".join(tparentfolders[0:tparentfolders.index(f)+1])
+                        spath = "/".join(sparentfolders[0:sparentfolders.index(f)+1])
+                        # get source timestamp
+                        stime = os.path.getctime(spath)
+                        # set target subfolder timestamp
+                        os.utime(tpath, (stime, stime))
+
             except:
                 failed.append((sfile, tfile))
                 continue

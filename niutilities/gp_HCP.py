@@ -4143,7 +4143,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
         except:
             r += "\nERROR: Unknown error occured: \n...................................\n%s...................................\n" % (traceback.format_exc())
             time.sleep(3)
-            failed += 1ß
+            failed += 1
 
     if len(skipped) > 0:
         r += "\nThe following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n" % (options['bolds'])
