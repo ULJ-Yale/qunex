@@ -2473,7 +2473,8 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
     2019-05-30 Grega Repovš
              - Modified documentation
              - Excluding 'unprocessed' is now an explicit option
-
+    2019-09-22 Grega Repovš
+             - Folder timestamps are now kept when moving files.
     """
 
     verbose   = verbose.lower() == 'yes'
