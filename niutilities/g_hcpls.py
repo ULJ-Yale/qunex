@@ -1155,7 +1155,7 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
                     else:
                         phenc = fileInfo['parts'][2]
 
-                    print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): EchoSpacing(%.10f) : filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts'])
+                    print >> sout, "%02d: %-20s: %-30s: se(%d): phenc(%s): EchoSpacing(%.10f): filename(%s)" % (imgn, "SE-FM-%s" % (fileInfo['parts'][1]), "_".join(fileInfo['parts']), folder['senum'], phenc, fileInfo['json'].get('EffectiveEchoSpacing', -9.), "_".join(fileInfo['parts']))
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])

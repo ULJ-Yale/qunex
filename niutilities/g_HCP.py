@@ -277,7 +277,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
                 tfold = v['filename']
-            else
+            else:
                 tfile = sid + "_strc_T1w_MPR%d.nii.gz" % (nT1w)
                 tfold = "T1w"
 
@@ -291,7 +291,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
                 tfold = v['filename']
-            else
+            else:
                 tfile = sid + "_strc_T2w_SPC%d.nii.gz" % (nT2w)
                 tfold = "T2w"
 
@@ -305,7 +305,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + fmnum + fmtail
-            else
+            else:
                 tfile = sid + "_strc_FieldMap_GE.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
@@ -319,7 +319,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + fmnum + fmtail
-            else
+            else:
                 tfile = sid + "_strc_FieldMap_Magnitude.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
@@ -333,7 +333,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + fmnum + fmtail
-            else
+            else:
                 tfile = sid + "_strc_FieldMap_Phase.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
@@ -370,7 +370,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + senum + fctail
-            else
+            else:
                 tfile = sid + "_fncb_BOLD_AP_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap" + senum + fctail
 
@@ -385,7 +385,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + senum + fctail
-            else
+            else:
                 tfile = sid + "_fncb_BOLD_PA_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap" + senum + fctail
 
@@ -400,7 +400,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + senum + fctail
-            else
+            else:
                 tfile = sid + "_fncb_BOLD_LR_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap" + senum + fctail
                 
@@ -416,7 +416,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             if filenamekey and 'filename' in v:
                 tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + senum + fctail
-            else
+            else:
                 tfile = sid + "_fncb_BOLD_RL_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap" + senum + fctail
 
@@ -425,7 +425,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
             if filenamekey and 'filename' in v:
                 tbase = "_".join([sid, v['filename'], v['task']])
-            else
+            else:
                 tbase = "_".join([sid, 'DWI', v['task']])
 
             tfile = [tbase + e for e in ['.nii.gz', '.bval', '.bvec']]

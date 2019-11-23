@@ -9,6 +9,7 @@ Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os.path
 import os
+import time
 import shutil
 import glob
 import datetime
@@ -2534,7 +2535,7 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
     
     # -- prepare mapping
 
-    gc.printAndLog("--> preparing mapping", file=logfile)
+    gc.printAndLog("--> Preparing mapping", file=logfile)
 
     if maptype == 'toHCPLS':
         toMap = map_toHCPLS(subjectsfolder, sessions, mapto, gopts)
@@ -2625,37 +2626,47 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
 
     failed = []
 
+    # variable for storing folders that need their timestamps amended
+    timemapping = []
+
     for sfile, tfile in process:
 
         # split to file and folder
         tfolder, _ = os.path.split(tfile)
         sfolder, _ = os.path.split(sfile)
 
-        # get all subfolders
+        # create each fodler in the structure independenlty
+        # get all folders in the structure
         tparentfolders = tfolder.split("/")
         sparentfolders = sfolder.split("/")
 
-        if not os.path.exists(tfolder):
-            try:
-                # makedir
-                os.makedirs(tfolder)
+        currentpath = ""
 
-                # copy time stamps on parent folders with the same name
-                for f in tparentfolders:
-                    # is current folder also in source parent folders
+        # go over all folders
+        tpath = ""
+        for f in tparentfolders:
+            tpath = tpath + f + "/"
+
+            # does not exist yet
+            if not os.path.exists(tpath):
+                try:
+                    # makedir
+                    os.makedirs(tpath)
+
+                    # is folder also in source file's folder structure
                     if f in sparentfolders:
                         # create paths
-                        tpath = "/".join(tparentfolders[0:tparentfolders.index(f)+1])
                         spath = "/".join(sparentfolders[0:sparentfolders.index(f)+1])
                         # get source timestamp
                         stime = os.path.getctime(spath)
-                        # set target subfolder timestamp
-                        os.utime(tpath, (stime, stime))
 
-            except:
-                failed.append((sfile, tfile))
-                continue
-            gc.printAndLog("    --> creating folder: %s" % (tfolder), file=logfile, silent=not verbose)
+                        # store folder and timestamp
+                        timemapping.append([tpath, stime])
+
+                except:
+                    failed.append((sfile, tfile))
+                    continue
+                gc.printAndLog("    --> creating folder: %s" % (tfolder), file=logfile, silent=not verbose)
 
         try:
             do(sfile, tfile)
@@ -2663,7 +2674,17 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
             raise
             failed.append((sfile, tfile))
             continue
+
         gc.printAndLog("    --> %s: %s --> %s" % (desc, sfile, tfile), file=logfile, silent=not verbose)
+
+    # -- once files are copied set timestamps
+    for mapping in timemapping:
+        try:
+            # set target subfolder timestamp
+            os.utime(mapping[0], (mapping[1], mapping[1]))
+        except:
+            gc.printAndLog("    --> Setting time stamp of folder %s to %s failed" % (mapping[0], time.ctime(mapping[1])), file=logfile)
+            continue
 
     # -- check success
     
