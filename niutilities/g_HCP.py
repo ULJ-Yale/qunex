@@ -208,7 +208,7 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
     nT1w  = 0
     nT2w  = 0
 
-    filenamekey = filenamekey == 'original'
+    filename = filename == 'original'
 
     if folderstructure not in ['initial', 'hcpls']:
         raise ge.CommandFailed("setupHCP", "Unknown HCP folder structure", "The specified HCP folder structure is unknown: %s" % (folderstructure), "Please check the command!")
@@ -274,11 +274,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             else:
                 sfile = k + "-o.nii.gz"
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename']
             else:
-                tfile = sid + "_strc_T1w_MPR%d.nii.gz" % (nT1w)
+                tfile = sid + "_T1w_MPR%d.nii.gz" % (nT1w)
                 tfold = "T1w"
 
         elif v['name'] == "T2w":
@@ -288,11 +288,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             else:
                 sfile = k + "-o.nii.gz"
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename']
             else:
-                tfile = sid + "_strc_T2w_SPC%d.nii.gz" % (nT2w)
+                tfile = sid + "_T2w_SPC%d.nii.gz" % (nT2w)
                 tfold = "T2w"
 
         elif v['name'] == "FM-GE":
@@ -302,11 +302,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 fmnum = boldn
             sfile = k + ".nii.gz"
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + fmnum + fmtail
             else:
-                tfile = sid + "_strc_FieldMap_GE.nii.gz"
+                tfile = sid + "_FieldMap_GE.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
         elif v['name'] == "FM-Magnitude":
@@ -316,11 +316,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 fmnum = boldn
             sfile = k + ".nii.gz"
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + fmnum + fmtail
             else:
-                tfile = sid + "_strc_FieldMap_Magnitude.nii.gz"
+                tfile = sid + "_FieldMap_Magnitude.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
         elif v['name'] == "FM-Phase":
@@ -330,33 +330,33 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                 fmnum = boldn
             sfile = k + ".nii.gz"
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_strc_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + fmnum + fmtail
             else:
-                tfile = sid + "_strc_FieldMap_Phase.nii.gz"
+                tfile = sid + "_FieldMap_Phase.nii.gz"
                 tfold = "FieldMap" + fmnum + fmtail
 
         elif "boldref" in v['name']:
             boldn = v['name'][7:]
             sfile = k + ".nii.gz"
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + fctail
             else:
-                tfile = sid + "_fncb_BOLD_" + boldn + orient + "_SBRef.nii.gz"
+                tfile = sid + "_BOLD_" + boldn + orient + "_SBRef.nii.gz"
                 tfold = "BOLD_" + boldn + orient + "_SBRef" + fctail
             bolds[boldn]["ref"] = sfile
 
         elif "bold" in v['name']:
             boldn = v['name'][4:]
             sfile = k + ".nii.gz"
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + fctail
             else:
-                tfile = sid + "_fncb_BOLD_" + boldn + orient + ".nii.gz"
+                tfile = sid + "_BOLD_" + boldn + orient + ".nii.gz"
                 tfold = "BOLD_" + boldn + orient + fctail
             bolds[boldn]["bold"] = sfile
 
@@ -367,11 +367,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             else:
                 senum = boldn
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + senum + fctail
             else:
-                tfile = sid + "_fncb_BOLD_AP_SB_SE.nii.gz"
+                tfile = sid + "_BOLD_AP_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap" + senum + fctail
 
         elif v['name'] == "SE-FM-PA":
@@ -382,11 +382,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             else:
                 senum = boldn
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + senum + fctail
             else:
-                tfile = sid + "_fncb_BOLD_PA_SB_SE.nii.gz"
+                tfile = sid + "_BOLD_PA_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap" + senum + fctail
 
         elif v['name'] == "SE-FM-LR":
@@ -397,11 +397,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             else:
                 senum = boldn
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + senum + fctail
             else:
-                tfile = sid + "_fncb_BOLD_LR_SB_SE.nii.gz"
+                tfile = sid + "_BOLD_LR_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap" + senum + fctail
                 
 
@@ -413,17 +413,17 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
             else:
                 senum = boldn
 
-            if filenamekey and 'filename' in v:
-                tfile = sid + "_fncb_" + v['filename'] + ".nii.gz"
+            if filename and 'filename' in v:
+                tfile = sid + "_" + v['filename'] + ".nii.gz"
                 tfold = v['filename'] + senum + fctail
             else:
-                tfile = sid + "_fncb_BOLD_RL_SB_SE.nii.gz"
+                tfile = sid + "_BOLD_RL_SB_SE.nii.gz"
                 tfold = "SpinEchoFieldMap" + senum + fctail
 
         elif v['name'] == "DWI":
             sfile = [k + e for e in ['.nii.gz', '.bval', '.bvec']]
 
-            if filenamekey and 'filename' in v:
+            if filename and 'filename' in v:
                 tbase = "_".join([sid, v['filename'], v['task']])
             else:
                 tbase = "_".join([sid, 'DWI', v['task']])

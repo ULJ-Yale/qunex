@@ -1103,7 +1103,8 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
                 # --T1w and T2w
                 if fileInfo['parts'][0] in ['T1w', 'T2w']:
-                    print >> sout, "%02d: %-20s: %-30s" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts'])),
+                    # -29s fol alignment purposes (output generation is slightly different with T1w and T2w)
+                    print >> sout, "%02d: %-20s: %-29s" % (imgn, fileInfo['parts'][0], "_".join(fileInfo['parts'])),
                     if folder['senum']:
                         print >> sout, ": se(%d)" % (folder['senum']),
                     if fileInfo['json'].get('DwellTime', None):
@@ -1113,7 +1114,6 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
                     # add filename
                     print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
-                    print >> sout, ""
 
                     print >> rout, "\n" + fileInfo['parts'][0]
                     print >> rout, "".join(['-' for e in range(len(fileInfo['parts'][0]))])
@@ -1140,7 +1140,6 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
                     # add filename
                     print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
-                    print >> sout, ""
 
                     print >> rout, "\n" + "_".join(fileInfo['parts'])
                     print >> rout, "".join(['-' for e in range(len("_".join(fileInfo['parts'])))])
@@ -1188,7 +1187,6 @@ def mapHCPLS2nii(sfolder='.', overwrite='no', report=None):
 
                     # add filename
                     print >> sout, ": filename(%s)" % "_".join(fileInfo['parts'])
-                    print >> sout, ""
 
                 print >> bout, "%s => %s" % (fileInfo['path'], tfile)
             else:
