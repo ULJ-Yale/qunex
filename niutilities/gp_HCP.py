@@ -2773,19 +2773,52 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         for bold in range(50):
             spinok = False
 
-            if os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_AP_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))):
-                spinok  = True
-                r += "\n     ... Found an AP SE number %d." % (bold)
-                spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_AP_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
-                spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_PA_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
-                r, spinok = checkForFile2(r, spinTwo, '\n         PA spin echo fildmap pair image present', '\n         ERROR: PA spin echo fildmap pair image missing!', status=spinok)
+            # check if folder exists
+            sepath = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']))
+            if os.path.exists(sepath):
+                # get all *.nii.gz files in that folder
+                images = glob.glob(os.path.join(sepath, "*.nii.gz"))
 
-            elif os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_LR_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))):
-                spinok  = True
-                r += "\n     ... Found a LR SE number %d." % (bold)
-                spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_LR_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
-                spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_RL_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
-                r, spinok = checkForFile2(r, spinTwo, '\n         RL spin echo fildmap pair image present', '\n         ERROR: RL spin echo fildmap pair image missing!', status=spinok)
+                # variable for storing the paired string
+                pairedimage = ""
+                
+                # search in images
+                for i in images:
+                    # look for AP_SB
+                    if "AP_SB" in i:
+                        pairedimage = "PA_SB"
+                        spinOne = i
+                        r, spinok = checkForFile2(r, spinOne, '\n         AP spin echo fieldmap image present', '\n         ERROR: AP spin echo fieldmap image missing!', status=spinok)
+                        break
+                    # look for LR_SB
+                    elif "LR_SB" in i:
+                        pairedimage = "RL_SB"
+                        spinOne = i
+                        r, spinok = checkForFile2(r, spinOne, '\n         LR spin echo fieldmap image present', '\n         ERROR: LR spin echo fieldmap image missing!', status=spinok)
+                        break
+
+                # search for paired image
+                if spinok:
+                    for i in images:
+                    if pairedimage in i:
+                        spinTwo = i
+                        r, spinok = checkForFile2(r, spinTwo, '\n         spin echo fieldmap pair image present', '\n         ERROR: spin echo fieldmap pair image missing!', status=spinok)
+                        break
+
+            # TODO remove code below when the new one (above) is checked
+            #if os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_AP_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))):
+            #    spinok  = True
+            #    r += "\n     ... Found an AP SE number %d." % (bold)
+            #    spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_AP_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
+            #    spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_PA_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
+            #    r, spinok = checkForFile2(r, spinTwo, '\n         PA spin echo fieldmap pair image present', '\n         ERROR: PA spin echo fieldmap pair image missing!', status=spinok)
+
+            #elif os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_LR_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))):
+            #    spinok  = True
+            #    r += "\n     ... Found a LR SE number %d." % (bold)
+            #    spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_LR_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
+            #    spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_RL_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
+            #    r, spinok = checkForFile2(r, spinTwo, '\n         RL spin echo fieldmap pair image present', '\n         ERROR: RL spin echo fieldmap pair image missing!', status=spinok)
 
             if spinok:
                 sepresent.append(bold)
