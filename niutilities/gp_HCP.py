@@ -128,10 +128,6 @@ def getHCPPaths(sinfo, options):
     if options['hcp_t2'] == 'NONE':
         d['T2w'] = 'NONE'
     else:
-        # TODO get sinfo['filename'] for t1w and t2w
-        #if 'filename' in sinfo and sinfo['filename'] == 'original':
-        #   d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_' + sinfo['filename'] + '*.nii.gz')))
-        #else:
         d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_T2w_SPC*.nii.gz')))
 
 
@@ -141,13 +137,13 @@ def getHCPPaths(sinfo, options):
     d['fmapphase'] = ''
     d['fmapge']    = ''
     if options['hcp_avgrdcmethod'] == 'SiemensFieldMap' or options['hcp_bold_dcmethod'] == 'SiemensFieldMap':
-        d['fmapmag']   = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_Magnitude.nii.gz')
-        d['fmapphase'] = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_Phase.nii.gz')
+        d['fmapmag']   = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '_FieldMap_Magnitude.nii.gz')
+        d['fmapphase'] = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '_FieldMap_Phase.nii.gz')
         d['fmapge']    = ""
     elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap' or options['hcp_bold_dcmethod'] == 'GeneralElectricFieldMap':
         d['fmapmag']   = ""
         d['fmapphase'] = ""
-        d['fmapge']    = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + '_strc_FieldMap_GE.nii.gz')
+        d['fmapge']    = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '_FieldMap_GE.nii.gz')
 
     # --- default check files
 
