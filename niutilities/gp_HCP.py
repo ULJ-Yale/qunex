@@ -128,7 +128,11 @@ def getHCPPaths(sinfo, options):
     if options['hcp_t2'] == 'NONE':
         d['T2w'] = 'NONE'
     else:
-        d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_strc_T2w_SPC*.nii.gz')))
+        # TODO get sinfo['filename'] for t1w and t2w
+        #if 'filename' in sinfo and sinfo['filename'] == 'original':
+        #   d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_' + sinfo['filename'] + '*.nii.gz')))
+        #else:
+        d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_T2w_SPC*.nii.gz')))
 
 
     # --- Fieldmap related paths
@@ -299,12 +303,12 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
     __SiemensFieldMap__
 
-    FieldMap_strc/<session id>_strc_FieldMap_Magnitude.nii.gz
-    FieldMap_strc/<session id>_strc_FieldMap_Phase.nii.gz
+    FieldMap/<session id>_FieldMap_Magnitude.nii.gz
+    FieldMap/<session id>_FieldMap_Phase.nii.gz
 
     __GeneralElectricFieldMap__
 
-    FieldMap_strc/<session id>_strc_FieldMap_GE.nii.gz
+    FieldMap/<session id>_FieldMap_GE.nii.gz
 
     RESULTS
     =======
@@ -2773,18 +2777,18 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         for bold in range(50):
             spinok = False
 
-            if os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s_fncb_BOLD_AP_SB_SE.nii.gz" % (sinfo['id']))):
+            if os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_AP_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))):
                 spinok  = True
                 r += "\n     ... Found an AP SE number %d." % (bold)
-                spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s_fncb_BOLD_AP_SB_SE.nii.gz" % (sinfo['id']))
-                spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s_fncb_BOLD_PA_SB_SE.nii.gz" % (sinfo['id']))
+                spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_AP_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
+                spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_PA_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
                 r, spinok = checkForFile2(r, spinTwo, '\n         PA spin echo fildmap pair image present', '\n         ERROR: PA spin echo fildmap pair image missing!', status=spinok)
 
-            elif os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s_fncb_BOLD_LR_SB_SE.nii.gz" % (sinfo['id']))):
+            elif os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_LR_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))):
                 spinok  = True
                 r += "\n     ... Found a LR SE number %d." % (bold)
-                spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s_fncb_BOLD_LR_SB_SE.nii.gz" % (sinfo['id']))
-                spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s_fncb_BOLD_RL_SB_SE.nii.gz" % (sinfo['id']))
+                spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_LR_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
+                spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_RL_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
                 r, spinok = checkForFile2(r, spinTwo, '\n         RL spin echo fildmap pair image present', '\n         ERROR: RL spin echo fildmap pair image missing!', status=spinok)
 
             if spinok:
@@ -2887,13 +2891,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
             else:
                 boldroot = boldsource + orient
 
-            boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_fncb_%s.nii.gz" % (sinfo['id'], boldroot))
+            boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot))
             r, boldok = checkForFile2(r, boldimg, '\n     ... bold image present', '\n     ... ERROR: bold image missing!', status=boldok)
 
             # --- check for ref image
 
             if options['hcp_bold_ref'].lower() == 'use':
-                refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_fncb_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
+                refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
                 r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
             else:
                 r += "\n     ... reference image not used"
