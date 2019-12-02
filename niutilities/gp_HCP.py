@@ -1232,8 +1232,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     ('t1',               os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
                     ('t1brain',          os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
                     ('t2',               t2w),
-                    ('seed',             options['hcp_fs_seed']),
-                    ('existing-subject', options['hcp_fs_existing_subject']),
+                    ('seed',             options['hcp_fs_seed']),                    
                     ('no-conf2hires',    options['hcp_fs_no_conf2hires']),                    
                     ('processing-mode',  options['hcp_processing_mode'])]
 
@@ -1249,14 +1248,15 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             elements.append(('extra-reconall-arg', '-expert'))
             elements.append(('extra-reconall-arg', options['hcp_expert_file']))
             
-
         # --> Pull all together
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
-        if options['hcp_fs_flair'] == "TRUE":
-            comm += " --flair"
+        # --> Add flags
 
+        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_subject', '--existing-subject')]:
+            if options[optionName]:
+                comm += " %s" % (flag)
 
         # -- Test files
 
