@@ -3,31 +3,41 @@ from __future__ import print_function
 import os
 import time
 import atexit
+import random
 
 # create a lock file for a certain file
-def lock(filename, delay=1, identifier="Python process"):
+def lock(filename, delay=0.5, identifier="Python process"):
     lock_file = filename + ".lock"
 
     # wait while file exists
-    while True:
-        if not os.path.isfile(lock_file):
-            # create lock file
-            f = open(lock_file, "w")
-            f.write(identifier)
-            f.close()
-
-            # store lock file
-            locks.append(lock_file)
-            break
-
+    locked = True
+    while locked:
         time.sleep(delay)
+
+        if not os.path.isfile(lock_file):
+            # double check
+            time.sleep(random.random() * delay)
+
+            if not os.path.isfile(lock_file):
+                # create lock file
+                f = open(lock_file, "w")
+                f.write(identifier)
+                f.close()
+
+                # store lock file
+                locks.append(lock_file)
+
+                locked = False
 
 # remove a lock file for a certain file
 def unlock(filename):
     lock_file = filename + ".lock"
 
     if os.path.isfile(lock_file):
-        os.unlink(lock_file)
+        try:
+            os.unlink(lock_file)
+        except:
+            pass
 
     # remove from storage
     if lock_file in locks:
