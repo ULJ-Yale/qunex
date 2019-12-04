@@ -827,7 +827,7 @@ def createStatsReport(sinfo, options, overwrite=False, thread=0):
     Reporting specific options:
 
     --TR          ... TR of the BOLD files [2.5].
-    --mov_pref    ... The prefix to be used for the group reports [].
+    --mov_pref    ... The prefix to be used for the figure plot files [].
     --mov_plot    ... The base name of the plot files. If set to empty no plots
                       are generated [mov_report].
     --mov_mreport ... The name of the group movement report file. If set to
