@@ -101,13 +101,19 @@ def getHCPPaths(sinfo, options):
 
     d['hcp_nonlin']         = os.path.join(hcpbase, 'MNINonLinear')
     d['T1w_source']         = os.path.join(d['source'], 'T1w')
-    d['T1w']                = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*T1w_MPR*.nii.gz')))
     d['DWI_source']         = os.path.join(d['source'], 'Diffusion')
 
     d['T1w_folder']         = os.path.join(hcpbase, 'T1w')
     d['DWI_folder']         = os.path.join(hcpbase, 'Diffusion')
     d['FS_folder']          = os.path.join(hcpbase, 'T1w', sinfo['id'] + options['hcp_suffix'])
     
+    # T1w file
+    T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
+    filename = T1w.get('filename', None)
+    if filename and options['hcp_filename'] == "original":
+        d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*' + filename + '*.nii.gz')))
+    else:
+        d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*T1w_MPR*.nii.gz')))
 
     # --- longitudinal FS related paths
 
@@ -128,7 +134,12 @@ def getHCPPaths(sinfo, options):
     if options['hcp_t2'] == 'NONE':
         d['T2w'] = 'NONE'
     else:
-        d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_T2w_SPC*.nii.gz')))
+        T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
+        filename = T2w.get('filename', None)
+        if filename and options['hcp_filename'] == "original":
+            d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '*' + filename + '*.nii.gz')))
+        else:
+            d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_T2w_SPC*.nii.gz')))
 
 
     # --- Fieldmap related paths
@@ -137,13 +148,13 @@ def getHCPPaths(sinfo, options):
     d['fmapphase'] = ''
     d['fmapge']    = ''
     if options['hcp_avgrdcmethod'] == 'SiemensFieldMap' or options['hcp_bold_dcmethod'] == 'SiemensFieldMap':
-        d['fmapmag']   = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '_FieldMap_Magnitude.nii.gz')
-        d['fmapphase'] = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '_FieldMap_Phase.nii.gz')
+        d['fmapmag']   = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Magnitude.nii.gz'))
+        d['fmapphase'] = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_Phase.nii.gz'))
         d['fmapge']    = ""
     elif options['hcp_avgrdcmethod'] == 'GeneralElectricFieldMap' or options['hcp_bold_dcmethod'] == 'GeneralElectricFieldMap':
         d['fmapmag']   = ""
         d['fmapphase'] = ""
-        d['fmapge']    = os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '_FieldMap_GE.nii.gz')
+        d['fmapge']    = glob.glob(os.path.join(d['source'], 'FieldMap' + options['fmtail'], sinfo['id'] + options['fmtail'] + '*_FieldMap_GE.nii.gz'))
 
     # --- default check files
 
@@ -1221,8 +1232,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     ('t1',               os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore.nii.gz')),
                     ('t1brain',          os.path.join(hcp['T1w_folder'], 'T1w_acpc_dc_restore_brain.nii.gz')),
                     ('t2',               t2w),
-                    ('seed',             options['hcp_fs_seed']),
-                    ('existing-subject', options['hcp_fs_existing_subject']),
+                    ('seed',             options['hcp_fs_seed']),                    
                     ('no-conf2hires',    options['hcp_fs_no_conf2hires']),                    
                     ('processing-mode',  options['hcp_processing_mode'])]
 
@@ -1238,14 +1248,15 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
             elements.append(('extra-reconall-arg', '-expert'))
             elements.append(('extra-reconall-arg', options['hcp_expert_file']))
             
-
         # --> Pull all together
 
         comm += " ".join(['--%s="%s"' % (k, v) for k, v in elements if v])
 
-        if options['hcp_fs_flair'] == "TRUE":
-            comm += " --flair"
+        # --> Add flags
 
+        for optionName, flag in [('hcp_fs_flair', '--flair'), ('hcp_fs_existing_subject', '--existing-subject')]:
+            if options[optionName]:
+                comm += " %s" % (flag)
 
         # -- Test files
 
@@ -2800,25 +2811,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 # search for paired image
                 if spinok:
                     for i in images:
-                    if pairedimage in i:
-                        spinTwo = i
-                        r, spinok = checkForFile2(r, spinTwo, '\n         spin echo fieldmap pair image present', '\n         ERROR: spin echo fieldmap pair image missing!', status=spinok)
-                        break
-
-            # TODO remove code below when the new one (above) is checked
-            #if os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_AP_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))):
-            #    spinok  = True
-            #    r += "\n     ... Found an AP SE number %d." % (bold)
-            #    spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_AP_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
-            #    spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_PA_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
-            #    r, spinok = checkForFile2(r, spinTwo, '\n         PA spin echo fieldmap pair image present', '\n         ERROR: PA spin echo fieldmap pair image missing!', status=spinok)
-
-            #elif os.path.exists(os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_LR_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))):
-            #    spinok  = True
-            #    r += "\n     ... Found a LR SE number %d." % (bold)
-            #    spinOne = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_LR_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
-            #    spinTwo = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']), "%s%s_BOLD_RL_SB_SE.nii.gz" % (sinfo['id'], options['fctail']))
-            #    r, spinok = checkForFile2(r, spinTwo, '\n         RL spin echo fieldmap pair image present', '\n         ERROR: RL spin echo fieldmap pair image missing!', status=spinok)
+                        if pairedimage in i:
+                            spinTwo = i
+                            r, spinok = checkForFile2(r, spinTwo, '\n         spin echo fieldmap pair image present', '\n         ERROR: spin echo fieldmap pair image missing!', status=spinok)
+                            break
 
             if spinok:
                 sepresent.append(bold)

@@ -276,10 +276,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
             if filename and 'filename' in v:
                 tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename']
             else:
                 tfile = sid + "_T1w_MPR%d.nii.gz" % (nT1w)
-                tfold = "T1w"
+            
+            tfold = "T1w"
 
         elif v['name'] == "T2w":
             nT2w += 1
@@ -290,10 +290,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
             if filename and 'filename' in v:
                 tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename']
             else:
                 tfile = sid + "_T2w_SPC%d.nii.gz" % (nT2w)
-                tfold = "T2w"
+            
+            tfold = "T2w"
 
         elif v['name'] == "FM-GE":
             if 'fm' in v:
@@ -369,10 +369,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
             if filename and 'filename' in v:
                 tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + senum + fctail
             else:
                 tfile = sid + "_BOLD_AP_SB_SE.nii.gz"
-                tfold = "SpinEchoFieldMap" + senum + fctail
+            
+            tfold = "SpinEchoFieldMap" + senum + fctail
 
         elif v['name'] == "SE-FM-PA":
             sfile = k + ".nii.gz"
@@ -384,10 +384,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
             if filename and 'filename' in v:
                 tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + senum + fctail
             else:
                 tfile = sid + "_BOLD_PA_SB_SE.nii.gz"
-                tfold = "SpinEchoFieldMap" + senum + fctail
+
+            tfold = "SpinEchoFieldMap" + senum + fctail
 
         elif v['name'] == "SE-FM-LR":
             sfile = k + ".nii.gz"
@@ -399,11 +399,11 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
             if filename and 'filename' in v:
                 tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + senum + fctail
             else:
                 tfile = sid + "_BOLD_LR_SB_SE.nii.gz"
-                tfold = "SpinEchoFieldMap" + senum + fctail
-                
+
+            tfold = "SpinEchoFieldMap" + senum + fctail
+
 
         elif v['name'] == "SE-FM-RL":
             sfile = k + ".nii.gz"
@@ -415,10 +415,10 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
 
             if filename and 'filename' in v:
                 tfile = sid + "_" + v['filename'] + ".nii.gz"
-                tfold = v['filename'] + senum + fctail
             else:
                 tfile = sid + "_BOLD_RL_SB_SE.nii.gz"
-                tfold = "SpinEchoFieldMap" + senum + fctail
+            
+            tfold = "SpinEchoFieldMap" + senum + fctail
 
         elif v['name'] == "DWI":
             sfile = [k + e for e in ['.nii.gz', '.bval', '.bvec']]
