@@ -423,17 +423,14 @@ for (b in bolds){
 if (msummary) { 
     close(mrfile)
     unlock(mreportlock)
-    unlink(mreportlockfile)
 }
 if (psummary) {
     close(prfile)
     unlock(preportlock)
-    unlink(preportlockfile)
 }
 if (ssummary) {
     close(srfile)
     unlock(sreportlock)
-    unlink(sreportlockfile)
 }
 
 if (plot) {
