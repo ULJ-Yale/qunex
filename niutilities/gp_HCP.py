@@ -2795,15 +2795,17 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 
                 # search in images
                 for i in images:
-                    # look for AP_SB
-                    if "AP_SB" in i:
-                        pairedimage = "PA_SB"
+                    # look for AP
+                    if "_AP" in i:
+                        spinok  = True
+                        pairedimage = "_PA"
                         spinOne = i
                         r, spinok = checkForFile2(r, spinOne, '\n         AP spin echo fieldmap image present', '\n         ERROR: AP spin echo fieldmap image missing!', status=spinok)
                         break
-                    # look for LR_SB
-                    elif "LR_SB" in i:
-                        pairedimage = "RL_SB"
+                    # look for LR
+                    elif "_LR" in i:
+                        spinok  = True
+                        pairedimage = "_RL"
                         spinOne = i
                         r, spinok = checkForFile2(r, spinOne, '\n         LR spin echo fieldmap image present', '\n         ERROR: LR spin echo fieldmap image missing!', status=spinok)
                         break
