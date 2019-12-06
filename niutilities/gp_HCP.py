@@ -2970,10 +2970,10 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
                 if options['hcp_bold_topupconfig']:
                     topupconfig = options['hcp_bold_topupconfig']
-                    if not os.path.exists(options['hcp_topupconfig']):
-                        topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_topupconfig'])
+                    if not os.path.exists(options['hcp_bold_topupconfig']):
+                        topupconfig = os.path.join(hcp['hcp_Config'], options['hcp_bold_topupconfig'])
                         if not os.path.exists(topupconfig):
-                            r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_topupconfig'])
+                            r += "\n---> ERROR: Could not find TOPUP configuration file: %s." % (options['hcp_bold_topupconfig'])
                             run = False
                         else:
                             r += "\n---> TOPUP configuration file present."
