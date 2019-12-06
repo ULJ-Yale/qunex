@@ -433,7 +433,7 @@ tomap = {'bppt':                    'bolds',
          'hcp_bold_boldnamekey':    'hcp_filename'}
 
 mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
-             'hcp_filename': {'names': 'original', 'numbers': 'standard'}}
+             'hcp_filename': {'name': 'original', 'number': 'standard'}}
 
 deprecated = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
               'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams'}

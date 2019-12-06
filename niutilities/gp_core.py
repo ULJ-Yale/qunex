@@ -103,7 +103,7 @@ def useOrSkipBOLD(sinfo, options, r=""):
     returns:
     * bolds ... list of bolds to process
     * bskip ... list of bolds to skip
-    * nskip ... number of bolds to skup
+    * nskip ... number of bolds to skip
     * r     ... report
 
     lists contain tuples with the following elements:
@@ -137,6 +137,9 @@ def useOrSkipBOLD(sinfo, options, r=""):
         # check bold names if present
         keep += [n for n in range(nbolds) if bolds[n][3].get('filename') in btargets]
 
+        # check bold names if present
+        keep += [n for n in range(nbolds) if bolds[n][3].get('boldname') in btargets]
+
         # check sequence names
         keep += [n for n in range(nbolds) if bolds[n][3].get('ext') in btargets]
 
@@ -157,10 +160,17 @@ def useOrSkipBOLD(sinfo, options, r=""):
             for n, b, t, v in bskip:
                 if 'filename' in v and options['hcp_filename'] == 'original':
                     r += "\n...  %-20s [%-6s %s]" % (v['filename'], b, t)
+                elif 'boldname' in v and options['hcp_filename'] == 'original':
+                    r += "\n...  %-20s [%-6s %s]" % (v['boldname'], b, t)
                 else:
                     r += "\n...  %-6s [%s]" % (b, t)
             r += "\n"
     bolds.sort()
+
+    # if bolds have boldname (legacy) and not filename, copy boldname to filename
+    for b in bolds:
+        if "filename" not in b[3] and "boldname" in b[3]:
+            b[3]["filename"] = b[3]["boldname"]
 
     return bolds, bskip, len(bskip), r
 
