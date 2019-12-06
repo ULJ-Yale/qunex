@@ -806,7 +806,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed = runExternalForFile(tfile, comm, '... running HCP PreFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP PreFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
@@ -1279,7 +1279,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                     #         shutil.rmtree(hcp['FS_long_results'])
                     # else:
                         if os.path.lexists(hcp['FS_folder']):
-                            r += "\n --> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
+                            r += "\n ---> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
                             shutil.rmtree(hcp['FS_folder'])
                         for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
                             rmtarget = os.path.join(hcp['T1w_folder'], toremove)
@@ -1292,7 +1292,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 r += "\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!" % (rmtarget)
                                 status = False
                 if status:
-                    r, endlog, report, failed = runExternalForFile(tfile, comm, '... running HCP FS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP FS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
@@ -1667,7 +1667,7 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                         r += "\n---> WARNING: Could not remove preexisting folder: %s! Please check your data!" % (rmfolder)
                         status = False
 
-                    r, endlog, report, failed = runExternalForFile(tfile, comm, '... running HCP FS Longitudinal', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                    r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP FS Longitudinal', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
@@ -1977,7 +1977,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed = runExternalForFile(tfile, comm, '... running HCP PostFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP PostFS', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
@@ -2339,7 +2339,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed  = runExternalForFile(tfile, comm, '... running HCP Diffusion Preprocessing', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
+                r, endlog, report, failed  = runExternalForFile(tfile, comm, 'Running HCP Diffusion Preprocessing', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], fullTest=fullTest, shell=True, r=r)
 
             # -- just checking
             else:
@@ -2800,14 +2800,14 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                         spinok  = True
                         pairedimage = "_PA"
                         spinOne = i
-                        r, spinok = checkForFile2(r, spinOne, '\n         AP spin echo fieldmap image present', '\n         ERROR: AP spin echo fieldmap image missing!', status=spinok)
+                        r, spinok = checkForFile2(r, spinOne, '\n     ... AP spin echo fieldmap image present', '\n         ERROR: AP spin echo fieldmap image missing!', status=spinok)
                         break
                     # look for LR
                     elif "_LR" in i:
                         spinok  = True
                         pairedimage = "_RL"
                         spinOne = i
-                        r, spinok = checkForFile2(r, spinOne, '\n         LR spin echo fieldmap image present', '\n         ERROR: LR spin echo fieldmap image missing!', status=spinok)
+                        r, spinok = checkForFile2(r, spinOne, '\n     ... LR spin echo fieldmap image present', '\n         ERROR: LR spin echo fieldmap image missing!', status=spinok)
                         break
 
                 # search for paired image
@@ -2815,7 +2815,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                     for i in images:
                         if pairedimage in i:
                             spinTwo = i
-                            r, spinok = checkForFile2(r, spinTwo, '\n         spin echo fieldmap pair image present', '\n         ERROR: spin echo fieldmap pair image missing!', status=spinok)
+                            r, spinok = checkForFile2(r, spinTwo, '\n     ... spin echo fieldmap pair image present', '\n         ERROR: spin echo fieldmap pair image missing!', status=spinok)
                             break
 
             if spinok:
@@ -2847,8 +2847,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
         futureref   = "NONE"
         topupconfig = ""
 
-        r += "\n"
-
         boldsData = []
 
         if bolds:
@@ -2865,7 +2863,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 boldsource = 'BOLD_%d' % (bold)
                 boldtarget = "%s%s" % (options['hcp_bold_prefix'], printbold)
 
-            r += "\n---> %s BOLD %s" % (action("preprocessing settings (unwarpdir, refimage, moveref, seimage) for", options['run']), printbold)
+            r += "\n\n---> %s BOLD %s" % (action("Preprocessing settings (unwarpdir, refimage, moveref, seimage) for", options['run']), printbold)
             boldok = True
 
             # --- set unwarpdir
@@ -3296,7 +3294,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                         r += "     ... removing preexisting xfms file [%s]" % (xfms_file)
                         os.remove(xfms_file)
 
-                r, endlog, _, failed = runExternalForFile(tfile, comm, '     ... running HCP fMRIVolume', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP fMRIVolume', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)                    
@@ -3664,7 +3662,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
     report = {'done': [], 'incomplete': [], 'failed': [], 'ready': [], 'not ready': []}
 
     try:
-        r += "\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
+        r += "\n\n---> %s BOLD image %s" % (action("Processing", options['run']), printbold)
         boldok = True
 
         # --- check for bold image
@@ -3706,7 +3704,7 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r, endlog, _, failed = runExternalForFile(tfile, comm, '     ... running HCP fMRISurface', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
+                r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP fMRISurface', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
 
                 if failed:
                     report['failed'].append(printbold)                    
@@ -3801,7 +3799,7 @@ def hcpDTIFit(sinfo, options, overwrite=False, thread=0):
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                r, endlog, report, failed = runExternalForFile(tfile, comm, '... running HCP DTI Fit', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
+                r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP DTI Fit', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
 
 
             # -- just checking
@@ -3882,7 +3880,7 @@ def hcpBedpostx(sinfo, options, overwrite=False, thread=0):
             if options['run'] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                r, endlog, report, failed = runExternalForFile(tfile, comm, '... running HCP BedpostX', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
+                r, endlog, report, failed = runExternalForFile(tfile, comm, 'Running HCP BedpostX', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=options['logtag'], shell=True, r=r)
 
             # -- just checking
             else:
