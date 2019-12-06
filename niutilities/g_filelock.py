@@ -11,8 +11,6 @@ def lock(filename, delay=0.5, identifier="Python process"):
 
     # wait while file exists
     while True:
-        time.sleep(delay + random.random() * delay)
-
         # create lock file
         try:
             f = os.open(lock_file, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
@@ -25,6 +23,10 @@ def lock(filename, delay=0.5, identifier="Python process"):
             break
         except:
             pass
+
+        # try again soon
+        time.sleep(delay + random.random() * delay)
+
 
 # remove a lock file for a certain file
 def unlock(filename):
