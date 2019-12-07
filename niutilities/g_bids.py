@@ -25,6 +25,8 @@ import glob
 import datetime
 import gzip
 import sys
+import niutilities.g_filelock as fl
+
 
 bids = {
     'modalities': ['anat', 'func', 'dwi', 'fmap'],

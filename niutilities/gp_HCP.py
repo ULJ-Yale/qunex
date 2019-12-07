@@ -3774,10 +3774,10 @@ def executeHCPfMRISurface(sinfo, options, overwrite, hcp, run, boldData):
             --fmrires="%(fmrires)s" \
             --smoothingFWHM="%(smoothingFWHM)s" \
             --grayordinatesres="%(grayordinatesres)d" \
-            --regname"%(regname)s" \
+            --regname="%(regname)s" \
             --lttemplate="%(lttemplate)s" \
             --mppversion="%(mppversion)s" \
-            --printcom"%(printcom)s"' % {
+            --printcom="%(printcom)s"' % {
                 'script'            : os.path.join(hcp['hcp_base'], 'fMRISurface', 'GenericfMRISurfaceProcessingPipeline.sh'),
                 'path'              : sinfo['hcp'],
                 'subject'           : sinfo['id'] + options['hcp_suffix'],
