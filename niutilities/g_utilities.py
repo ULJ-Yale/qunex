@@ -9,6 +9,7 @@ Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 import os.path
 import os
+import errno
 import shutil
 import glob
 import datetime
@@ -95,50 +96,102 @@ def manageStudy(studyfolder=None, action="create"):
     for folder in folders:
         tfolder = os.path.join(*[studyfolder] + folder)
 
-        if os.path.exists(tfolder):                
-            if create:
-                print " ... folder exists:", tfolder
+        if create:
+            try:
+                os.makedirs(tfolder)
+                print " ... created:", tfolder
+            except OSError as e:
+                if e.errno == errno.EEXISTS:
+                    print " ... folder exists:", tfolder
+                else:
+                    errstr = os.strerror(e.errno)
+                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Folder could not be created due to '%s' error!", "Folder to create: %s" % (tfolder), "Please check paths and permissions!")
+
         else:
-            if create:
-                print " ... creating:", tfolder
-            os.makedirs(tfolder)
+            if os.path.exists(tfolder):
+                print " ... folder exists:", tfolder
 
     if create:
         TemplateFolder = os.environ['TemplateFolder']
         print "\nPreparing template files:"
 
+        # --> parameter template
+
         paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters_example.txt')
-        if not os.path.exists(paramFile):
-            print " ... batch_parameters_example.txt"
-            pfile = open(paramFile, 'w')
-            print >> pfile, parameterTemplateHeader
+        try:
+            f = os.open(paramFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+            os.write(f, parameterTemplateHeader)
             for line in gp.arglist:
                 if len(line) == 4:
-                    print >> pfile, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3])
+                    os.write(f, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3]))
                 elif len(line) > 0:
-                    print >> pfile, "#\n# " + line[0] + '\n#'
-            pfile.close()
-        else:
-            print " ... batch_parameters_example.txt file already exists"
+                    os.write(f, "#\n# " + line[0] + '\n#')
+            os.close(f)
+
+        except OSError as e:
+            if e.errno == errno.EEXISTS:
+                print " ... batch_parameters_example.txt file already exists"` 
+            else:
+                errstr = os.strerror(e.errno)
+                raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
+
+        # --> mapping example
 
         mapFile = os.path.join(studyfolder, 'subjects', 'specs', 'hcp_mapping_example.txt')
-        if os.path.exists(mapFile):
-            print " ... hcp_mapping_example.txt file already exists"
-        else:
-            print " ... hcp_mapping_example.txt"
-            shutil.copyfile(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), mapFile)
+        try:
+            f = os.open(mapFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+            mapcontent = open(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), 'r').read()
+            os.write(f, mapcontent)
+            os.close(f)
 
+        except OSError as e:
+            if e.errno == errno.EEXISTS:
+                print " ... hcp_mapping_example.txt file already exists"` 
+            else:
+                errstr = os.strerror(e.errno)
+                raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
+
+        # --> markFile
         markFile = os.path.join(studyfolder, '.qunexstudy')
-        if os.path.exists(markFile) or os.path.exists(os.path.join(studyfolder, '.mnapstudy')):
-            print " ... .qunexstudy file already exists"
-        else:
-            mark = open(markFile, 'w')
+
+        # ... map .mnapstudy to qunexstudy
+        if os.path.exists(os.path.join(studyfolder, '.mnapstudy')):
             try:
-                username = getpass.getuser()
+                f = os.open(markFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+                markcontent = open(os.path.join(studyfolder, '.mnapstudy'), 'r').read()
+                os.write(f, markcontent)
+                os.close(f)
+                print " ... converted .mnapstudy file to .qunexstudy"
+            except OSError as e:
+                if e.errno == errno.EEXISTS:
+                    print " ... .qunexstudy file already exists"` 
+                else:
+                    errstr = os.strerror(e.errno)
+                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
+
+            try:                
+                shutil.copystat(os.path.join(studyfolder, '.mnapstudy'), markFile)
+                os.unlink(os.path.join(studyfolder, '.mnapstudy'))
             except:
-                username = "unknown user"
-            print >> mark, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username)
-            mark.close()
+                pass
+
+        try:
+            username = getpass.getuser()
+        except:
+            username = "unknown user"
+
+        try:
+            f = os.open(markFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+            os.write(f, "%s study folder created on %s by %s." % (os.path.basename(studyfolder), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), username))
+            os.close(f)
+            print " ... created .qunexstudy file"
+        
+        except OSError as e:
+            if e.errno == errno.EEXISTS:
+                print " ... .qunexstudy file already exists"` 
+            else:
+                errstr = os.strerror(e.errno)
+                raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
 
 
 def createStudy(studyfolder=None):
@@ -219,6 +272,8 @@ def createStudy(studyfolder=None):
              - Added HCPLS folders
     2019-05-28 Grega Repovs
              - Changes to qunex.
+    2019-12-07 Grega Repovs
+             - Changed to a version that is parallel processing safe
     '''
 
     print "Running createStudy\n==================="
@@ -459,15 +514,13 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
 
         # --- close file
         jfile.close()
-        fl.unlock(tfile)
-        
+        fl.unlock(tfile)       
 
     except:
         if jfile:
             jfile.close()
             fl.unlock(tfile)
         raise
-    
 
     if not files:
         raise ge.CommandFailed("createBatch", "No session found", "No sessions found to add to the batch file!", "Please check your data!")

@@ -42,6 +42,7 @@ def unlock(filename):
     if lock_file in locks:
         locks.remove(lock_file)
 
+
 # lock a file, write into it, then unlock it
 def safe_write(string, filename, delay=1):
     # lock
@@ -59,14 +60,56 @@ def safe_write(string, filename, delay=1):
     # unlock
     unlock(filename)
 
+
 # delete all lock files on exit
 def cleanup():
     for lock_file in locks:
         if os.path.isfile(lock_file):
             os.unlink(lock_file)
 
+    for status_file in statuses:
+        status = open(status_file, 'r').read().strip()
+        if 'done' not in status:
+            os.unlink(status_file)
+
+
+# open a locked status file
+def open_status(filename, status=""):
+    try:
+        f = os.open(filename, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
+        os.write(f, bytes(status))
+        os.close(f)
+
+        # store lock file
+        statuses.append(filename)
+
+        return True
+
+    except:
+        return Fale
+
+
+# write to the status file
+def write_status(filename, status="", mode="w"):
+    try:
+        open(filename, mode).write(status)
+        return True
+    except:
+        return False
+
+
+# remove status file
+def remove_status(filename):
+    try:
+        os.unlink(filename)
+        return True
+    except:
+        return False
+
+
 # lock storage
 locks = []
+statuses = []
 
 # clenup on exit
 atexit.register(cleanup)
