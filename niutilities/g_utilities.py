@@ -101,7 +101,7 @@ def manageStudy(studyfolder=None, action="create"):
                 os.makedirs(tfolder)
                 print " ... created:", tfolder
             except OSError as e:
-                if e.errno == errno.EEXISTS:
+                if e.errno == errno.EEXIST:
                     print " ... folder exists:", tfolder
                 else:
                     errstr = os.strerror(e.errno)
@@ -127,10 +127,11 @@ def manageStudy(studyfolder=None, action="create"):
                 elif len(line) > 0:
                     os.write(f, "#\n# " + line[0] + '\n#')
             os.close(f)
+            print " ... created batch_parameters_example.txt file" 
 
         except OSError as e:
-            if e.errno == errno.EEXISTS:
-                print " ... batch_parameters_example.txt file already exists"` 
+            if e.errno == errno.EEXIST:
+                print " ... batch_parameters_example.txt file already exists" 
             else:
                 errstr = os.strerror(e.errno)
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
@@ -143,10 +144,11 @@ def manageStudy(studyfolder=None, action="create"):
             mapcontent = open(os.path.join(TemplateFolder, 'templates', 'hcp_mapping_example.txt'), 'r').read()
             os.write(f, mapcontent)
             os.close(f)
+            print " ... created hcp_mapping_example.txt file" 
 
         except OSError as e:
-            if e.errno == errno.EEXISTS:
-                print " ... hcp_mapping_example.txt file already exists"` 
+            if e.errno == errno.EEXIST:
+                print " ... hcp_mapping_example.txt file already exists" 
             else:
                 errstr = os.strerror(e.errno)
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Batch parameter template file could not be created [%s]!" % (paramFile), "Please check paths and permissions!")
@@ -163,8 +165,8 @@ def manageStudy(studyfolder=None, action="create"):
                 os.close(f)
                 print " ... converted .mnapstudy file to .qunexstudy"
             except OSError as e:
-                if e.errno == errno.EEXISTS:
-                    print " ... .qunexstudy file already exists"` 
+                if e.errno == errno.EEXIST:
+                    print " ... .qunexstudy file already exists" 
                 else:
                     errstr = os.strerror(e.errno)
                     raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
@@ -187,8 +189,8 @@ def manageStudy(studyfolder=None, action="create"):
             print " ... created .qunexstudy file"
         
         except OSError as e:
-            if e.errno == errno.EEXISTS:
-                print " ... .qunexstudy file already exists"` 
+            if e.errno == errno.EEXIST:
+                print " ... .qunexstudy file already exists" 
             else:
                 errstr = os.strerror(e.errno)
                 raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), ".qunexstudy file could not be created [%s]!" % (markFile), "Please check paths and permissions!")
