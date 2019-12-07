@@ -120,12 +120,12 @@ def manageStudy(studyfolder=None, action="create"):
         paramFile = os.path.join(studyfolder, 'subjects', 'specs', 'batch_parameters_example.txt')
         try:
             f = os.open(paramFile, os.O_CREAT|os.O_EXCL|os.O_WRONLY)
-            os.write(f, parameterTemplateHeader)
+            os.write(f, parameterTemplateHeader + "\n")
             for line in gp.arglist:
                 if len(line) == 4:
-                    os.write(f, "# _%-24s : %-15s ... %s" % (line[0], line[1], line[3]))
+                    os.write(f, "# _%-24s : %-15s # ... %s\n" % (line[0], line[1], line[3]))
                 elif len(line) > 0:
-                    os.write(f, "#\n# " + line[0] + '\n#')
+                    os.write(f, "#\n# " + line[0] + '\n#\n')
             os.close(f)
             print " ... created batch_parameters_example.txt file" 
 
