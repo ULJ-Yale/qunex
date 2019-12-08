@@ -190,7 +190,7 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
             if io and io != 'File exists':
                 raise ge.CommandFailed("BIDSImport", "I/O error: %s" % (io), "Could not create BIDS info folder [%s]!" % (bidsfolder), "Please check paths and permissions!")
 
-            io = fl.open_status(os.path.join(bidsfolder, 'bids_info_status'), "Processing started on %s.\n" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            io = fl.open_status(os.path.join(bidsfolder, 'bids_info_status'), "Processing started on %s.\n" % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")))
 
             # --> status created
             if io is None:
@@ -199,6 +199,7 @@ def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, pr
 
             # --> status exists
             elif io == 'File exists' and not overwrite == 'yes':
+                print prefix + "--> skipping processing of BIDS info folder"
                 sessionsList['skip'].append('bids')
                 return False, False
 
@@ -695,8 +696,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
     # ---> close status file
 
-    if 'bids' in sessionsList['list'] and 'bids' not in sessionsList['skip']:
-        fl.write_status(os.path.join(BIDSInfo, 'bids_info_status'), 'Processing done on %s.' % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")), 'a')
+    if sessionsList['bids']:
+        fl.write_status(os.path.join(BIDSInfo, 'bids_info_status'), 'Processing done on %s.' % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")), 'a')
 
     # ---> archiving the dataset
     
@@ -796,7 +797,7 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
 
     # -> check study level data
 
-    if 'bids' not in sessionsList['list'] or 'bids' in sessionsList['skip']:
+    if not sessionsList['bids']:
         BIDSInfoStatus = fl.wait_status(os.path.join(BIDSInfo, 'bids_info_status'), 'done')
         if BIDSInfoStatus != "done":
             print "===> WARNING: Status of behavioral files is unknown! Please check the data!"
