@@ -548,6 +548,7 @@ Change Log
 * 0.48.33 [connector] Edited RunTurnkey.sh to optimize syncing from XNAT
 * 0.48.34 [connector,library] Edited qunex.sh to optimize reading cs-wrapper inputs and upgraded cs-wrapper
 * 0.48.35 [connector] Edited GBC command flag to --gbc-command not conflict with main input syntax
+* 0.48.36 [niutilities] Improved file locking and parallel execution of BIDSImport, createStudy and createBatch
 
 Stable Container Tag Log
 ========================
