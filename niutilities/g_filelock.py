@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+import shutil
 import time
 import atexit
 import random
@@ -83,10 +84,10 @@ def open_status(filename, status=""):
         # store lock file
         statuses.append(filename)
 
-        return True
+        return None
 
-    except:
-        return Fale
+    except OSError as e:
+        return os.strerror(e.errno)
 
 
 # write to the status file
@@ -98,6 +99,23 @@ def write_status(filename, status="", mode="w"):
         return False
 
 
+# wait for status to be done
+def wait_status(filename, status, delay=0.5):
+    
+    while True:
+        try:
+            # check content
+            content = open(filename, 'r').read()
+            if status in content:
+                return status
+
+            # try again soon
+            time.sleep(delay + random.random() * delay)
+
+        except OSError as e:
+            return os.strerror(e.errno)
+
+
 # remove status file
 def remove_status(filename):
     try:
@@ -105,6 +123,42 @@ def remove_status(filename):
         return True
     except:
         return False
+
+
+# ==================  Safe creation functions
+
+# create folders
+def makedirs(folder):
+    try:
+        os.makedirs(folder)
+        return None
+    except OSError as e:
+        return os.strerror(e.errno)
+
+# create hardlink
+def link(source, target):
+    try:
+        os.link(source, target)
+        return None
+    except OSError as e:
+        return os.strerror(e.errno)
+
+# remove folders
+def rmtree(folder):
+    try:
+        shutil.rmtree(folder)
+        return None
+    except OSError as e:
+        return os.strerror(e.errno)
+
+# remove file
+def remove(filename):
+    try:
+        os.remove(filename)
+        return None
+    except OSError as e:
+        return os.strerror(e.errno)
+
 
 
 # lock storage
