@@ -86,8 +86,8 @@ def open_status(filename, status=""):
 
         return None
 
-    except OSError as e:
-        return os.strerror(e.errno)
+    except (OSError, IOError) as e:
+        return e.strerror
 
 
 # write to the status file
@@ -112,8 +112,8 @@ def wait_status(filename, status, delay=0.5):
             # try again soon
             time.sleep(delay + random.random() * delay)
 
-        except OSError as e:
-            return os.strerror(e.errno)
+        except (OSError, IOError) as e:
+            return e.strerror
 
 
 # remove status file
@@ -132,32 +132,32 @@ def makedirs(folder):
     try:
         os.makedirs(folder)
         return None
-    except OSError as e:
-        return os.strerror(e.errno)
+    except (OSError, IOError) as e:
+        return e.strerror
 
 # create hardlink
 def link(source, target):
     try:
         os.link(source, target)
         return None
-    except OSError as e:
-        return os.strerror(e.errno)
+    except (OSError, IOError) as e:
+        return e.strerror
 
 # remove folders
 def rmtree(folder):
     try:
         shutil.rmtree(folder)
         return None
-    except OSError as e:
-        return os.strerror(e.errno)
+    except (OSError, IOError) as e:
+        return e.strerror
 
 # remove file
 def remove(filename):
     try:
         os.remove(filename)
         return None
-    except OSError as e:
-        return os.strerror(e.errno)
+    except (OSError, IOError) as e:
+        return e.strerror
 
 
 
