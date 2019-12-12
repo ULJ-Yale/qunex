@@ -550,6 +550,7 @@ Change Log
 * 0.48.35 [connector] Edited GBC command flag to --gbc-command not conflict with main input syntax
 * 0.48.36 [niutilities] Improved file locking and parallel execution of BIDSImport, createStudy and createBatch
 * 0.48.37 [niutilities] Corrected handling of bids_info_status
+* 0.48.38 [connector,niutilities] Corrected handling of bids_info_status and logging
 
 Stable Container Tag Log
 ========================
