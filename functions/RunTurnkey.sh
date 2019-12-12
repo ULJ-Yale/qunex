@@ -185,6 +185,10 @@ usage() {
     echo "                                                                     If --bidsformat='yes' and XNAT run is NOT requested then "
     echo "                                                                          BIDS data expected in --> <subjects_folder/inbox/BIDS"
     echo ""
+    echo "    --bidsname=<specify_bids_name>                             The name of the BIDS dataset. The dataset level information that does not pertain to a specific session will"
+    echo "                                                               be stored in <projectname>/info/bids/<bidsname>. If bidsname is not provided, it will be deduced from the name of the "
+    echo "                                                               folder in which the BIDS database is stored or from the zip package name."
+    echo ""
     echo "    --rawdatainput=<specify_absolute_path_of_raw_data>         If --turnkeytype is not XNAT then specify location of raw data on the file system for a subject."
     echo "                                                                    Default is [] for the XNAT type run as host is used to pull data."
     echo "    --workingdir=<specify_directory_where_study_is_located>    Specify where the study folder is to be created or resides. Default is [/output]."
@@ -308,9 +312,10 @@ unset XNAT_SESSION_LABEL
 unset TURNKEY_TYPE
 unset TURNKEY_STEPS
 unset TURNKEY_CLEAN
-unset workdir
+unset WORKDIR
 unset RawDataInputPath
 unset PROJECT_NAME
+unset BIDS_NAME
 unset PlotElements
 unset CleanupSubject
 unset CleanupProject
@@ -329,8 +334,9 @@ echo ""
 #
 # -- General input flags
 STUDY_PATH=`opts_GetOpt "--path" $@`
-workdir=`opts_GetOpt "--workingdir" $@`
+WORKDIR=`opts_GetOpt "--workingdir" $@`
 PROJECT_NAME=`opts_GetOpt "--projectname" $@`
+BIDS_NAME=`opts_GetOpt "--bidsname" $@`
 CleanupSubject=`opts_GetOpt "--cleanupsubject" $@`
 CleanupProject=`opts_GetOpt "--cleanupproject" $@`
 CleanupOldFiles=`opts_GetOpt "--cleanupoldfiles" $@`
@@ -540,9 +546,9 @@ QCPlotMasks=`opts_GetOpt "--qcplotmasks" $@`
 # -- Define script name
 scriptName=$(basename ${0})
 
-# -- Check workdir and STUDY_PATH
-if [[ -z ${workdir} ]]; then 
-    workdir="/output"; reho " -- Note: Working directory where study is located is missing. Setting defaults: ${workdir}"; echo ''
+# -- Check WORKDIR and STUDY_PATH
+if [[ -z ${WORKDIR} ]]; then 
+    WORKDIR="/output"; reho " -- Note: Working directory where study is located is missing. Setting defaults: ${WORKDIR}"; echo ''
 fi
 
 # -- Check and set turnkey type
@@ -571,7 +577,7 @@ fi
 # -- Check and set non-XNAT or XNAT specific parameters
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then 
    if [[ -z ${PROJECT_NAME} ]]; then reho "ERROR: Project name is missing."; exit 1; echo ''; fi
-   if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${PROJECT_NAME}; fi
+   if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${WORKDIR}/${PROJECT_NAME}; fi
    if [[ -z ${CASE} ]]; then reho "ERROR: Requesting local run but --subject flag is missing."; exit 1; echo ''; fi
 fi
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -579,7 +585,7 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     if [[ -z ${XNAT_HOST_NAME} ]]; then reho "ERROR: --xnathost flag missing. Batch parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${XNAT_USER_NAME} ]]; then reho "ERROR: --xnatuser flag missing. Username parameter file not specified."; echo ''; exit 1; fi
     if [[ -z ${XNAT_PASSWORD} ]]; then reho "ERROR: --xnatpass flag missing. Password parameter file not specified."; echo ''; exit 1; fi
-    if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${workdir}/${XNAT_PROJECT_ID}; fi
+    if [[ -z ${STUDY_PATH} ]]; then STUDY_PATH=${WORKDIR}/${XNAT_PROJECT_ID}; fi
     if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho "ERROR: --xnatsubjectid or --xnatsubjectlabel flags are missing. Please specify either subject id or subject label and re-run."; echo ''; exit 1; fi
     if [[ -z ${XNAT_SUBJECT_ID} ]] && [[ ! -z ${XNAT_SUBJECT_LABEL} ]]; then reho " -- Note: --xnatsubjectid is not set. Using --xnatsubjectlabel to query XNAT."; echo ''; fi
     if [[ ! -z ${XNAT_SUBJECT_ID} ]] && [[ -z ${XNAT_SUBJECT_LABEL} ]]; then reho " -- Note: --xnatsubjectlabel is not set. Using --xnatsubjectid to query XNAT."; echo ''; fi
@@ -595,10 +601,10 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
     TimeStampCurl=`date +%Y-%m-%d_%H.%M.%10N`
 
     if [[ ${CleanupOldFiles} == "yes" ]]; then 
-        if [ ! -d ${workdir} ]; then
-            mkdir -p ${workdir} &> /dev/null
+        if [ ! -d ${WORKDIR} ]; then
+            mkdir -p ${WORKDIR} &> /dev/null
         fi
-        touch ${workdir}/_startfile
+        touch ${WORKDIR}/_startfile
     fi
     
     # -- Obtain temp info on subjects and experiments in the project
@@ -846,12 +852,12 @@ fi
 
 qunex_studyfolder="${STUDY_PATH}"
 qunex_subjectsfolder="${STUDY_PATH}/subjects"
-qunex_workdir="${STUDY_PATH}/subjects/${CASE}"
+qunex_WORKDIR="${STUDY_PATH}/subjects/${CASE}"
 processingdir="${STUDY_PATH}/processing"
 logdir="${STUDY_PATH}/processing/logs"
 specsdir="${STUDY_PATH}/subjects/specs"
-rawdir="${qunex_workdir}/inbox"
-rawdir_temp="${qunex_workdir}/inbox_temp"
+rawdir="${qunex_WORKDIR}/inbox"
+rawdir_temp="${qunex_WORKDIR}/inbox_temp"
 QUNEXCOMMAND="${TOOLS}/${QUNEXREPO}/connector/qunex.sh"
 
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
@@ -1069,8 +1075,8 @@ if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]
     fi
 fi
 if [[ ${OVERWRITE_SUBJECT} == "yes" ]]; then
-    reho " -- Removing specific subject: ${qunex_workdir}."; echo ""
-    rm -rf ${qunex_workdir} &> /dev/null
+    reho " -- Removing specific subject: ${qunex_WORKDIR}."; echo ""
+    rm -rf ${qunex_WORKDIR} &> /dev/null
 fi
 
 
@@ -1084,13 +1090,13 @@ fi
         
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStudy ..."; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
-        createStudy_ComlogTmp="${workdir}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
+        createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${CASE}_${TimeStamp}.log"
+        createStudy_ComlogTmp="${WORKDIR}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
         createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${CASE}_${TimeStamp}.log"
         createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${CASE}_${TimeStamp}.log"
         geho " -- Checking for and generating study folder ${qunex_studyfolder}"; echo ""
-        if [ ! -d ${workdir} ]; then
-            mkdir -p ${workdir} &> /dev/null
+        if [ ! -d ${WORKDIR} ]; then
+            mkdir -p ${WORKDIR} &> /dev/null
         fi
         if [ ! -d ${qunex_studyfolder} ]; then
             reho " -- Note: ${qunex_studyfolder} not found. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
@@ -1117,9 +1123,9 @@ fi
             ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
         fi
         
-        mkdir -p ${qunex_workdir} &> /dev/null
-        mkdir -p ${qunex_workdir}/inbox &> /dev/null
-        mkdir -p ${qunex_workdir}/inbox_temp &> /dev/null
+        mkdir -p ${qunex_WORKDIR} &> /dev/null
+        mkdir -p ${qunex_WORKDIR}/inbox &> /dev/null
+        mkdir -p ${qunex_WORKDIR}/inbox_temp &> /dev/null
         
         if [ -f ${qunex_studyfolder}/.qunexstudy ]; then CREATESTUDYCHECK="pass"; else CREATESTUDYCHECK="fail"; fi
        
@@ -1145,8 +1151,8 @@ fi
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         
         # Perform checks for output Qu|Nex hierarchy
-        if [ ! -d ${workdir} ]; then
-            mkdir -p ${workdir} &> /dev/null
+        if [ ! -d ${WORKDIR} ]; then
+            mkdir -p ${WORKDIR} &> /dev/null
         fi
         if [ ! -d ${qunex_studyfolder} ]; then
             reho " -- Note: ${qunex_studyfolder} not found. Regenerating now..."; echo "";
@@ -1160,27 +1166,27 @@ fi
             reho " -- Note: ${qunex_subjectsfolder} folder not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
             ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
         fi
-        if [ ! -d ${qunex_workdir} ]; then
-            reho " -- Note: ${qunex_workdir} not found. Creating one now..."; echo ""
-            mkdir -p ${qunex_workdir} &> /dev/null
-            mkdir -p ${qunex_workdir}/inbox &> /dev/null
-            mkdir -p ${qunex_workdir}/inbox_temp &> /dev/null
+        if [ ! -d ${qunex_WORKDIR} ]; then
+            reho " -- Note: ${qunex_WORKDIR} not found. Creating one now..."; echo ""
+            mkdir -p ${qunex_WORKDIR} &> /dev/null
+            mkdir -p ${qunex_WORKDIR}/inbox &> /dev/null
+            mkdir -p ${qunex_WORKDIR}/inbox_temp &> /dev/null
         fi
         
         # -- Perform overwrite checks
         if [[ ${OVERWRITE_STEP} == "yes" ]] && [[ ${TURNKEY_STEP} == "mapRawData" ]]; then
-               rm -rf ${qunex_workdir}/inbox/* &> /dev/null
+               rm -rf ${qunex_WORKDIR}/inbox/* &> /dev/null
         fi
         CheckInbox=`ls -1A ${rawdir} | wc -l`
         if [[ ${CheckInbox} != "0" ]] && [[ ${OVERWRITE_STEP} == "no" ]]; then
-               reho "ERROR: ${qunex_workdir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
+               reho "ERROR: ${qunex_WORKDIR}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
                reho "Set overwrite to 'yes' and re-run..."
                echo ""
                exit 1
         fi
 
         # -- Define specific logs
-        mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${TimeStamp}.log"
+        mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${CASE}_${TimeStamp}.log"
         mapRawData_ComlogTmp="${logdir}/comlogs/tmp_mapRawData_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
         mapRawData_ComlogError="${logdir}/comlogs/error_mapRawData_${CASE}_${TimeStamp}.log"
         mapRawData_ComlogDone="${logdir}/comlogs/done_mapRawData_${CASE}_${TimeStamp}.log"
@@ -1365,6 +1371,11 @@ fi
         if [[ ${DATAFormat} == "BIDS" ]]; then
             unset INTYPE
             unset FILECHECK
+
+            if [[ -z "${BIDS_NAME}" ]]; then
+                bids_name_parameter=""
+            else
+                bids_name_parameter="--bidsname=\"${BIDS_NAME}\""
             
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
                 # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
@@ -1404,12 +1415,12 @@ fi
 
             if [[ ${INTYPE} == "zip" ]]; then 
                 geho "  --> processing a single BIDS formated package [${CASE}.zip]"
-                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" "; echo ""
-                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" >> ${mapRawData_ComlogTmp}
+                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" ${bids_name_parameter} "; echo ""
+                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" ${bids_name_parameter} >> ${mapRawData_ComlogTmp}
             elif [[  ${INTYPE} == "dataset" ]]; then
                 geho "  --> processing a single BIDS session [${CASE}] from the BIDS dataset"
-                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" "; echo ""
-                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" >> ${mapRawData_ComlogTmp}
+                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" ${bids_name_parameter} "; echo ""
+                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} >> ${mapRawData_ComlogTmp}
             fi
 
             popd 2> /dev/null
@@ -1560,7 +1571,7 @@ fi
             echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: processInbox ..."; echo ""
             # ------------------------------
             TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-            processInbox_Runlog="${logdir}/runlogs/Log-processInbox${TimeStamp}.log"
+            processInbox_Runlog="${logdir}/runlogs/Log-processInbox_${CASE}_${TimeStamp}.log"
             processInbox_ComlogTmp="${logdir}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
             processInbox_ComlogError="${logdir}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
             processInbox_ComlogDone="${logdir}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
@@ -1579,7 +1590,7 @@ fi
             # ------------------------------
             if [ ${TURNKEY_TYPE} == "xnat" ]; then
                 reho "---> Cleaning up: removing inbox folder"
-                rm -rf ${qunex_workdir}/inbox &> /dev/null
+                rm -rf ${qunex_WORKDIR}/inbox &> /dev/null
             fi
         else
             echo ""; cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is not in DICOM format."; echo ""
@@ -1597,7 +1608,7 @@ fi
         fi
         # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady${TimeStamp}.log"
+        getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady_${CASE}_${TimeStamp}.log"
         getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${CASE}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
         getHCPReady_ComlogError="${logdir}/comlogs/error_getHCPReady_${CASE}_${TimeStamp}.log"
         getHCPReady_ComlogDone="${logdir}/comlogs/done_getHCPReady_${CASE}_${TimeStamp}.log"
@@ -1620,7 +1631,7 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: setupHCP ..."; echo ""
         # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        setupHCP_Runlog="${logdir}/runlogs/Log-setupHCP${TimeStamp}.log"
+        setupHCP_Runlog="${logdir}/runlogs/Log-setupHCP_${CASE}_${TimeStamp}.log"
         setupHCP_ComlogTmp="${logdir}/comlogs/tmp_setupHCP_${CASE}_${TimeStamp}.log"; touch ${setupHCP_ComlogTmp}; chmod 777 ${setupHCP_ComlogTmp}
         setupHCP_ComlogError="${logdir}/comlogs/error_setupHCP_${CASE}_${TimeStamp}.log"
         setupHCP_ComlogDone="${logdir}/comlogs/done_setupHCP_${CASE}_${TimeStamp}.log"
@@ -1633,7 +1644,7 @@ fi
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${setupHCP_ComlogTmp}
         # geho " -- Generating ${ProcessingBatchFile}"; echo ""
-        # cp ${SpecsBatchFileHeader} ${ProcessingBatchFile}; cat ${qunex_workdir}/subject_hcp.txt >> ${ProcessingBatchFile}
+        # cp ${SpecsBatchFileHeader} ${ProcessingBatchFile}; cat ${qunex_WORKDIR}/subject_hcp.txt >> ${ProcessingBatchFile}
         if [[ ! -z `cat ${setupHCP_ComlogTmp} | grep 'Successful completion'` ]]; then setupHCPCheck="pass"; else setupHCPCheck="fail"; fi
         if [[ ${setupHCPCheck} == "pass" ]]; then
             mv ${setupHCP_ComlogTmp} ${setupHCP_ComlogDone}
@@ -1650,7 +1661,7 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createBatch ..."; echo ""
         # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createBatch_Runlog="${logdir}/runlogs/Log-createBatch${TimeStamp}.log"
+        createBatch_Runlog="${logdir}/runlogs/Log-createBatch_${CASE}_${TimeStamp}.log"
         createBatch_ComlogTmp="${logdir}/comlogs/tmp_createBatch_${CASE}_${TimeStamp}.log"; touch ${createBatch_ComlogTmp}; chmod 777 ${createBatch_ComlogTmp}
         createBatch_ComlogError="${logdir}/comlogs/error_createBatch_${CASE}_${TimeStamp}.log"
         createBatch_ComlogDone="${logdir}/comlogs/done_createBatch_${CASE}_${TimeStamp}.log"
@@ -1674,7 +1685,7 @@ fi
     # --> FINISH adding rawNII checks here and integrate w/runQC function
     runQC_Finalize() {
         runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-        runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+        runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
         rename runQC runQC_${QCLogName} ${logdir}/comlogs/${runQCComLog} 2> /dev/null
         rename runQC runQC_${QCLogName} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
@@ -1775,7 +1786,7 @@ fi
         for BOLDRUN in ${LBOLDRUNS}; do
             ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
             runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             rename runQC runQC_BOLD${BOLD} ${logdir}/comlogs/${runQCComLog}
             rename runQC runQC_BOLD${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
         done
@@ -1942,7 +1953,7 @@ fi
                     echo "----> Now working on BOLDRUN: ${BOLDRUN}"
                     ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
                     runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-                    runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+                    runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
                     rename runQC runQC_CustomBOLD${BOLD} ${logdir}/comlogs/${runQCComLog}
                     rename runQC runQC_CustomBOLD${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
                 done
@@ -1978,8 +1989,8 @@ fi
         
         geho " -- Looking for incomplete/failed process ..."; echo ""
         
-        CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
-        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+        CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
         cp ${CheckComLog} ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
@@ -2076,7 +2087,7 @@ fi
     turnkey_g_PlotBoldTS() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: g_PlotBoldTS QC plotting ... "; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        g_PlotBoldTS_Runlog="${logdir}/runlogs/Log-g_PlotBoldTS_${TimeStamp}.log"
+        g_PlotBoldTS_Runlog="${logdir}/runlogs/Log-g_PlotBoldTS_${CASE}_${TimeStamp}.log"
         g_PlotBoldTS_ComlogTmp="${logdir}/comlogs/tmp_g_PlotBoldTS_${CASE}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
         g_PlotBoldTS_ComlogError="${logdir}/comlogs/error_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
         g_PlotBoldTS_ComlogDone="${logdir}/comlogs/done_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
@@ -2367,7 +2378,7 @@ fi
         for BOLDRUN in ${LBOLDRUNS}; do
             ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
             runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
             rename runQC runQC_BOLDfc${BOLD} ${logdir}/comlogs/${runQCComLog}
             rename runQC runQC_BOLDfc${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
         done
@@ -2492,8 +2503,8 @@ else
         turnkey_${TURNKEY_STEP}
         
         # -- Generate single subject log folders
-        CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
-        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`
+        CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
         cp ${CheckComLog} ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
@@ -2571,7 +2582,7 @@ else
         if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""
             geho "     - removing dicom folder"
-            rm -rf ${qunex_workdir}/dicom &> /dev/null
+            rm -rf ${qunex_WORKDIR}/dicom &> /dev/null
             echo ""
         fi
         geho "     - removing stray xml catalog files"
@@ -2579,8 +2590,8 @@ else
 
         if [[ ${CleanupOldFiles} == "yes" ]]; then 
             geho "     - removing files older than run"
-            find ${qunex_studyfolder} ! -newer ${workdir}/_startfile -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
-            rm ${workdir}/_startfile
+            find ${qunex_studyfolder} ! -newer ${WORKDIR}/_startfile -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
+            rm ${WORKDIR}/_startfile
         fi
     fi
 fi
