@@ -1090,7 +1090,7 @@ fi
         
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStudy ..."; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${CASE}_${TimeStamp}.log"
+        createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
         createStudy_ComlogTmp="${WORKDIR}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
         createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${CASE}_${TimeStamp}.log"
         createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${CASE}_${TimeStamp}.log"
@@ -1186,7 +1186,7 @@ fi
         fi
 
         # -- Define specific logs
-        mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${CASE}_${TimeStamp}.log"
+        mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${TimeStamp}.log"
         mapRawData_ComlogTmp="${logdir}/comlogs/tmp_mapRawData_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
         mapRawData_ComlogError="${logdir}/comlogs/error_mapRawData_${CASE}_${TimeStamp}.log"
         mapRawData_ComlogDone="${logdir}/comlogs/done_mapRawData_${CASE}_${TimeStamp}.log"
@@ -1571,7 +1571,7 @@ fi
             echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: processInbox ..."; echo ""
             # ------------------------------
             TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-            processInbox_Runlog="${logdir}/runlogs/Log-processInbox_${CASE}_${TimeStamp}.log"
+            processInbox_Runlog="${logdir}/runlogs/Log-processInbox_${TimeStamp}.log"
             processInbox_ComlogTmp="${logdir}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
             processInbox_ComlogError="${logdir}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
             processInbox_ComlogDone="${logdir}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
@@ -1608,7 +1608,7 @@ fi
         fi
         # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady_${CASE}_${TimeStamp}.log"
+        getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady_${TimeStamp}.log"
         getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${CASE}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
         getHCPReady_ComlogError="${logdir}/comlogs/error_getHCPReady_${CASE}_${TimeStamp}.log"
         getHCPReady_ComlogDone="${logdir}/comlogs/done_getHCPReady_${CASE}_${TimeStamp}.log"
@@ -1631,7 +1631,7 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: setupHCP ..."; echo ""
         # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        setupHCP_Runlog="${logdir}/runlogs/Log-setupHCP_${CASE}_${TimeStamp}.log"
+        setupHCP_Runlog="${logdir}/runlogs/Log-setupHCP_${TimeStamp}.log"
         setupHCP_ComlogTmp="${logdir}/comlogs/tmp_setupHCP_${CASE}_${TimeStamp}.log"; touch ${setupHCP_ComlogTmp}; chmod 777 ${setupHCP_ComlogTmp}
         setupHCP_ComlogError="${logdir}/comlogs/error_setupHCP_${CASE}_${TimeStamp}.log"
         setupHCP_ComlogDone="${logdir}/comlogs/done_setupHCP_${CASE}_${TimeStamp}.log"
@@ -1661,7 +1661,7 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createBatch ..."; echo ""
         # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createBatch_Runlog="${logdir}/runlogs/Log-createBatch_${CASE}_${TimeStamp}.log"
+        createBatch_Runlog="${logdir}/runlogs/Log-createBatch_${TimeStamp}.log"
         createBatch_ComlogTmp="${logdir}/comlogs/tmp_createBatch_${CASE}_${TimeStamp}.log"; touch ${createBatch_ComlogTmp}; chmod 777 ${createBatch_ComlogTmp}
         createBatch_ComlogError="${logdir}/comlogs/error_createBatch_${CASE}_${TimeStamp}.log"
         createBatch_ComlogDone="${logdir}/comlogs/done_createBatch_${CASE}_${TimeStamp}.log"
@@ -1685,9 +1685,9 @@ fi
     # --> FINISH adding rawNII checks here and integrate w/runQC function
     runQC_Finalize() {
         runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-        runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+        # runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`       # --> Commented for massively parallel processing
         rename runQC runQC_${QCLogName} ${logdir}/comlogs/${runQCComLog} 2> /dev/null
-        rename runQC runQC_${QCLogName} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
+        # rename runQC runQC_${QCLogName} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/QC/${Modality} 2> /dev/null
@@ -1786,9 +1786,9 @@ fi
         for BOLDRUN in ${LBOLDRUNS}; do
             ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
             runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            # runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
             rename runQC runQC_BOLD${BOLD} ${logdir}/comlogs/${runQCComLog}
-            rename runQC runQC_BOLD${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
+            # rename runQC runQC_BOLD${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
     # -- Diffusion HCP (after hcp1)
@@ -1953,9 +1953,9 @@ fi
                     echo "----> Now working on BOLDRUN: ${BOLDRUN}"
                     ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
                     runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-                    runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+                    # runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
                     rename runQC runQC_CustomBOLD${BOLD} ${logdir}/comlogs/${runQCComLog}
-                    rename runQC runQC_CustomBOLD${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
+                    # rename runQC runQC_CustomBOLD${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
                 done
             elif [[ ${Modality} == "DWI" ]]; then
                 ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
@@ -1978,24 +1978,24 @@ fi
     # -- Specific checks for BOLD Fc functions
     BOLDfcLogCheck() {
         cd ${logdir}/comlogs/
-        ComLogName=`ls -t1 ./*${FunctionName}*log | head -1 | xargs -n 1 basename 2> /dev/null`
+        ComLogName=`ls -t1 ./*${FunctionName}*${CASE}*log | head -1 | xargs -n 1 basename 2> /dev/null`
         if [ ! -z ${ComLogName} ]; then echo " ===> Comlog: $ComLogName"; echo ""; fi
         rename ${FunctionName} ${TURNKEY_STEP} ${logdir}/comlogs/${ComLogName} 2> /dev/null
 
         cd ${logdir}/runlogs/
-        RunLogName=`ls -t1 ./Log-${FunctionName}*log | head -1 | xargs -n 1 basename 2> /dev/null`
-        if [ ! -z ${ComLogName} ]; then echo " ===> RunLog: $RunLogName"; echo ""; fi
-        rename ${FunctionName} ${TURNKEY_STEP} ${logdir}/runlogs/${RunLogName} 2> /dev/null
+        # RunLogName=`ls -t1 ./Log-${FunctionName}*log | head -1 | xargs -n 1 basename 2> /dev/null`  # --> Commented for massively parallel processing
+        # if [ ! -z ${ComLogName} ]; then echo " ===> RunLog: $RunLogName"; echo ""; fi               # --> Commented for massively parallel processing
+        # rename ${FunctionName} ${TURNKEY_STEP} ${logdir}/runlogs/${RunLogName} 2> /dev/null         # --> Commented for massively parallel processing
         
         geho " -- Looking for incomplete/failed process ..."; echo ""
         
         CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
-        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        # CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`     # --> Commented for massively parallel processing
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
         cp ${CheckComLog} ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-        cp ${CheckRunLog} ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
-           
+        # cp ${CheckRunLog} ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null                  # --> Commented for massively parallel processing
+        
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
            reho " ===> ERROR: Completed ComLog file not found!"
@@ -2087,7 +2087,7 @@ fi
     turnkey_g_PlotBoldTS() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: g_PlotBoldTS QC plotting ... "; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        g_PlotBoldTS_Runlog="${logdir}/runlogs/Log-g_PlotBoldTS_${CASE}_${TimeStamp}.log"
+        g_PlotBoldTS_Runlog="${logdir}/runlogs/Log-g_PlotBoldTS_${TimeStamp}.log"
         g_PlotBoldTS_ComlogTmp="${logdir}/comlogs/tmp_g_PlotBoldTS_${CASE}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
         g_PlotBoldTS_ComlogError="${logdir}/comlogs/error_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
         g_PlotBoldTS_ComlogDone="${logdir}/comlogs/done_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
@@ -2378,9 +2378,9 @@ fi
         for BOLDRUN in ${LBOLDRUNS}; do
             ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
             runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            # runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
             rename runQC runQC_BOLDfc${BOLD} ${logdir}/comlogs/${runQCComLog}
-            rename runQC runQC_BOLDfc${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null
+            # rename runQC runQC_BOLDfc${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
     
@@ -2499,16 +2499,15 @@ else
     for TURNKEY_STEP in ${TURNKEY_STEPS}; do
         
         # -- Execute turnkey
-        
         turnkey_${TURNKEY_STEP}
         
         # -- Generate single subject log folders
         CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
-        CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        #CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`      # ==> Commented to support massively parallel single study run
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
         mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
         cp ${CheckComLog} ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-        cp ${CheckRunLog} ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
+        #cp ${CheckRunLog} ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null    # ==> Commented to support massively parallel single study run
         
         Modalities="T1w T2w myelin BOLD DWI"
         for Modality in ${Modalities}; do
@@ -2517,30 +2516,31 @@ else
     
         # -- Specific sets of functions for logging
         ConnectorBOLDFunctions="BOLDParcellation computeBOLDfcGBC computeBOLDfcSeed"
-        NiUtilsFunctons="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
+        NiUtilsFunctions="hcp1 hcp2 hcp3 hcp4 hcp5 hcpd mapHCPData createBOLDBrainMasks computeBOLDStats createStatsReport extractNuisanceSignal preprocessBold preprocessConc"
     
-        # -- Check for completion of turnkey function for NIUtilities
-        if [ -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
-        geho " -- Looking for incomplete/failed process ..."; echo ""
-            if [ -z "${CheckRunLog}" ]; then
-               TURNKEY_STEP_ERRORS="yes"
-               reho " ===> ERROR: Runlog file not found!"; echo ""
-            fi
-            if [ ! -z "${CheckRunLog}" ]; then
-               geho " ===> Runlog file: ${CheckRunLog} "; echo ""
-               CheckRunLogOut=`cat ${CheckRunLog} | grep '===> Successful completion'`
-            fi
-            if [ -z "${CheckRunLogOut}" ]; then
-                   TURNKEY_STEP_ERRORS="yes"
-                   reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
-               else
-                   echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
-                   TURNKEY_STEP_ERRORS="no"
-            fi
-        fi
+        ## deprecated to support parallel processing # -- Check for completion of turnkey function for NIUtilities
+        ## deprecated to support parallel processing if [ -z "${NiUtilsFunctions##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
+        ## deprecated to support parallel processing     geho " -- Looking for incomplete/failed process ..."; echo ""
+        ## deprecated to support parallel processing     if [ -z "${CheckRunLog}" ]; then
+        ## deprecated to support parallel processing        TURNKEY_STEP_ERRORS="yes"
+        ## deprecated to support parallel processing        reho " ===> ERROR: Runlog file not found!"; echo ""
+        ## deprecated to support parallel processing     fi
+        ## deprecated to support parallel processing     if [ ! -z "${CheckRunLog}" ]; then
+        ## deprecated to support parallel processing        geho " ===> Runlog file: ${CheckRunLog} "; echo ""
+        ## deprecated to support parallel processing        CheckRunLogOut=`cat ${CheckRunLog} | grep '===> Successful completion'`
+        ## deprecated to support parallel processing     fi
+        ## deprecated to support parallel processing     if [ -z "${CheckRunLogOut}" ]; then
+        ## deprecated to support parallel processing            TURNKEY_STEP_ERRORS="yes"
+        ## deprecated to support parallel processing            reho " ===> ERROR: Run for ${TURNKEY_STEP} failed! Examine outputs: ${CheckRunLog}"; echo ""
+        ## deprecated to support parallel processing        else
+        ## deprecated to support parallel processing            echo ""; cyaneho " ===> RunTurnkey ~~~ SUCCESS: ${TURNKEY_STEP} step passed!"; echo ""
+        ## deprecated to support parallel processing            TURNKEY_STEP_ERRORS="no"
+        ## deprecated to support parallel processing     fi
+        ## deprecated to support parallel processing fi
+        
         # -- Specific checks for all other functions
-        if [ ! -z "${NiUtilsFunctons##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
-        geho " -- Looking for incomplete/failed process ..."; echo ""
+        if [ ! -z "${NiUtilsFunctions##*${TURNKEY_STEP}*}" ] && [ ! -z "${ConnectorBOLDFunctions##*${TURNKEY_STEP}*}" ]; then
+            geho " -- Looking for incomplete/failed process ..."; echo ""
             if [ -z "${CheckComLog}" ]; then
                TURNKEY_STEP_ERRORS="yes"
                reho " ===> ERROR: Completed ComLog file not found!"
@@ -2605,6 +2605,7 @@ fi
 if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
     echo ""
     reho " ===> Appears some RunTurnkey steps have failed."
+    echo ""
     reho "       Check ${logdir}/comlogs/:"
     reho "       Check ${logdir}/runlogs/:"
     echo ""
