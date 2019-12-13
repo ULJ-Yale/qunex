@@ -1563,6 +1563,7 @@ fi
             mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogError}
             mapRawData_Comlog=${mapRawData_ComlogError}
         fi
+    fi
     }
     
     # -- processInbox for DICOMs

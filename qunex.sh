@@ -347,8 +347,8 @@ TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
 
 if [[ ${CommandToRun} == "runTurnkey" ]]; then
    if [[ ! -z `echo ${TURNKEY_STEPS} | grep 'createStudy'` ]]; then
-       if [[ ! -d ${workdir} ]]; then 
-          mkdir -p ${workdir} &> /dev/null
+       if [[ ! -d ${WORKDIR} ]]; then 
+          mkdir -p ${WORKDIR} &> /dev/null
        fi
    fi
 fi
@@ -1870,19 +1870,26 @@ fi
 
 if [[ ${CommandToRun} == "runTurnkey" ]]; then
 
+    # -- Check for cases
     if [[ -z ${CASES} ]]; then
         if [[ ! -z ${XNAT_SESSION_LABELS} ]]; then
             CASES="$XNAT_SESSION_LABELS"
         fi
     fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
-
-    if [[ ! -z ${WORKDIR} ]]; then
+    
+    # -- Check for WORKDIR and StudyFolder for an XNAT run
+    if [[ -z ${WORKDIR} ]]; then 
+        if [[ ! -z ${XNAT_PROJECT_ID} ]]; then
+            WORKDIR="/output"; reho " -- Note: Working directory where study is located is missing. Setting defaults: ${WORKDIR}"; echo ''
+        fi
+    fi
+    if [[ -z ${WORKDIR} ]]; then reho "Error: Working folder for $CommandToRun missing."; exit 1; fi
+    
+    if [[ -z ${StudyFolder} ]]; then 
         if [[ ! -z ${XNAT_PROJECT_ID} ]]; then
             StudyFolder="${WORKDIR}/${XNAT_PROJECT_ID}"
         fi
-    else
-        reho "Error: Working folder for $CommandToRun missing."; exit 1
     fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing."; exit 1; fi
 
