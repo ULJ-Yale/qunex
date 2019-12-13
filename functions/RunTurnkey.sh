@@ -1281,7 +1281,7 @@ fi
             geho " --> Running turnkey via local: `hostname`"; echo ""
             if [[ ! -f ${SpecsBatchFileHeader} ]]; then
                 if [[ -f ${BATCH_PARAMETERS_FILE_PATH} ]]; then
-                    cp ${BATCH_PARAMETERS_FILE_PATH} ${SpecsBatchFileHeader} &> /dev/null
+                    cp ${BATCH_PARAMETERS_FILE_PATH} ${SpecsBatchFileHeader} >> ${mapRawData_ComlogTmp}
                 else
                     echo " ==> ERROR: Batch parameters file ${BATCH_PARAMETERS_FILENAME} not found in ${RawDataInputPath}!"
                 fi
@@ -1289,7 +1289,7 @@ fi
             if [[ ! -f ${SpecsMappingFile} ]]; then
                 if [[ -f ${SCAN_MAPPING_FILENAME_PATH} ]]; then
                     geho "  cp ${SCAN_MAPPING_FILENAME_PATH} ${SpecsMappingFile}"
-                    cp ${SCAN_MAPPING_FILENAME_PATH} ${SpecsMappingFile} &> /dev/null
+                    cp ${SCAN_MAPPING_FILENAME_PATH} ${SpecsMappingFile} >> ${mapRawData_ComlogTmp}
                 else
                     echo " ==> ERROR: Scan mapping file ${SCAN_MAPPING_FILENAME_PATH} not found in ${RawDataInputPath}!"
                 fi
@@ -1300,7 +1300,7 @@ fi
         if [[ ${DATAFormat} == "DICOM" ]]; then
             unset FILECHECK
             echo ""
-            geho " -- Linking DICOMs into ${rawdir}"; echo ""
+            geho " -- Linking DICOMs into ${rawdir}" 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
             # -- Find and link DICOMs for XNAT run
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
                 echo "  find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';'"
@@ -1311,44 +1311,42 @@ fi
             fi
             # -- Find and link DICOMs for non-XNAT run
             if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
-                # -- Check if input is an archive file
-                if [[ "$(ls ${RawDataInputPath}/*zip*)" ]] || [[ "$(ls ${RawDataInputPath}/*gz*)" ]]; then
+                # -- Check if we have an archive in a folder
+                if [[ "$(ls ${RawDataInputPath}/${CASE}*zip* 2> /dev/null)" ]] || [[ "$(ls ${RawDataInputPath}/${CASE}*gz* 2> /dev/null)" ]]; then
                     InputArchive="yes"
-                    # -- Hard link into masterinbox
-                    ln ${RawDataInputPath}/*gz ${qunex_subjectsfolder}/${CASE}/inbox/ &> /dev/null
-                    ln ${RawDataInputPath}/*zip ${qunex_subjectsfolder}/${CASE}/inbox/ &> /dev/null
-                    CheckCASECount=`ls ${qunex_subjectsfolder}/${CASE}/inbox/* | wc -l`
-                    CASEinbox=`basename ${qunex_subjectsfolder}/${CASE}/inbox/${CASE}*`
-                    CASEext="${CASEinbox#*.}"
+                    # -- Hard link into session inbox
+                    ln ${RawDataInputPath}/${CASE}*gz ${qunex_subjectsfolder}/${CASE}/inbox/ &> /dev/null
+                    ln ${RawDataInputPath}/${CASE}*zip ${qunex_subjectsfolder}/${CASE}/inbox/ &> /dev/null
+                    CheckCASECount=`ls ${qunex_subjectsfolder}/${CASE}/inbox/${CASE}* | wc -l`
                     # -- Check for duplicates
                     if [[ "$CheckCASECount" -gt "1" ]]; then
-                         reho " ===> Note: More than one zip file found for ${CASE}"
-                    fi
-                    if [[ -z `ls ${qunex_subjectsfolder}/${CASE}/inbox/${CASEinbox}` ]]; then
-                        reho " ===> ERROR: no files found!"
+                        reho " ===> ERROR: More than one zip file found for ${CASE}" 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                         echo ""
                         return 1
-                    else
-                        geho " -- Unzipping ${qunex_subjectsfolder}/${CASE}/inbox/${CASEinbox}"; echo ""
-                        # --> Decompress mapped input
-                        # -- ToDo --> Add support for Other types of arhive files
-                        if [[ ${CASEext} == "zip" ]]; then
-                            cd ${qunex_subjectsfolder}/${CASE}/inbox/
-                            if [[ `unzip -t ${CASEinbox}` ]]; then
-                                geho "   ZIP archive found and passed check."; echo ""
-                                unzip ${CASEinbox} -d ${qunex_subjectsfolder}/${CASE}/inbox/ >/dev/null 2>&1; echo ""
-                                # -- Map dicoms into ${qunex_subjectsfolder}/${CASE}/inbox
-                                DicomInputCount=`find ${qunex_subjectsfolder}/${CASE}/inbox/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
-                                find ${qunex_subjectsfolder}/${CASE}/inbox/ -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec mv '{}' ${rawdir}/ ';' &> /dev/null
-                                rm -rf ${qunex_subjectsfolder}/${CASE}/inbox/${CASE}* >/dev/null 2>&1
-                                DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
-                                if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
-                                # -- ToDo --> Add support for NIFTI zip files
-                            else
-                                reho " ===> ERROR: ZIP archive found but did not pass check!"; echo ""
-                                FILECHECK="fail"
-                            fi
+                    fi
+                    CASEinbox=`basename ${qunex_subjectsfolder}/${CASE}/inbox/${CASE}*`
+                    CASEext="${CASEinbox#*.}"                    
+                # -- Check if the file itself is an archive
+                elif [[ ${RawDataInputPath##*.} = "zip" ]] || [[ ${RawDataInputPath: -2} = "gz" ]]; then
+                    InputArchive="yes"
+                    ln ${RawDataInputPath} ${qunex_subjectsfolder}/${CASE}/inbox/ &> /dev/null
+                    CASEinbox=`basename ${RawDataInputPath}`
+                    CASEext="${CASEinbox#*.}"
+                fi
+                # -- Validate archive if a zip file
+                if [[ ${InputArchive} = "yes" ]]; then
+                    if [[ ${CASEext} == "zip" ]]; then
+                        cd ${qunex_subjectsfolder}/${CASE}/inbox/
+                        if [[ ! -z `unzip -t ${CASEinbox} 2>&1 | tee ${mapRawData_ComlogTmp} | grep 'No errors'` ]]; then
+                            geho "   ZIP archive found and passed check." 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                            FILECHECK="pass"
+                        else
+                            reho " ===> ERROR: ZIP archive found but did not pass check!" 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                            FILECHECK="fail"
                         fi
+                    else
+                        geho "   ${CASEext} archive found." 2>&1 | tee ${mapRawData_ComlogTmp} echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                        FILECHECK="pass"
                     fi
                 else
                     # -- Find and link DICOMs for non-XNAT run from raw DICOM input
@@ -1388,15 +1386,15 @@ fi
                        zip -r ${CASE} ${CASE} 2> /dev/null
                    else
                        echo ""
-                       geho " -- Running:  "
-                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip "; echo ""
+                       geho " -- Running:  " 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip
                    fi
                 else
                     # -- Get the BIDS data in ZIP format via curl
                     echo ""
-                    geho " -- Running:  "
-                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip "; echo ""
+                    geho " -- Running:  " 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip
                 fi
                 INTYPE=zip
@@ -1411,16 +1409,16 @@ fi
             fi
             # -- Perform mapping of BIDS file structure into Qu|Nex
             echo ""
-            geho " -- Running:  "
+            geho " -- Running:  " 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
 
             if [[ ${INTYPE} == "zip" ]]; then 
-                geho "  --> processing a single BIDS formated package [${CASE}.zip]"
-                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" ${bids_name_parameter} "; echo ""
+                geho "  --> processing a single BIDS formated package [${CASE}.zip]" 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" ${bids_name_parameter} " 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                 ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" ${bids_name_parameter} >> ${mapRawData_ComlogTmp}
             elif [[  ${INTYPE} == "dataset" ]]; then
-                geho "  --> processing a single BIDS session [${CASE}] from the BIDS dataset"
-                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" ${bids_name_parameter} "; echo ""
-                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} >> ${mapRawData_ComlogTmp}
+                geho "  --> processing a single BIDS session [${CASE}] from the BIDS dataset" 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" ${bids_name_parameter} " 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} 2>&1 | tee ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
             fi
 
             popd 2> /dev/null
@@ -1437,9 +1435,9 @@ fi
                 FILECHECK="fail"
             fi
             if [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then
-                echo ""
-                geho " -- BIDSImport successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files."
-                echo ""
+                echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                geho " -- BIDSImport successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files." 2>&1 | tee ${mapRawData_ComlogTmp}
+                echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                 FILECHECK="pass"
             else
                 FILECHECK="fail"
@@ -1456,21 +1454,25 @@ fi
                 # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
                 if [[ -d ${RawDataInputPath} ]]; then
                    if [[ `find ${RawDataInputPath} -type f -name "*T1w_MP*.nii.gz" | wc -l` -gt 0 ]]; then 
-                       echo ""; echo " -- HCP DATA FOUND "; echo ""
+                       echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                       echo " -- HCP DATA FOUND " 2>&1 | tee ${mapRawData_ComlogTmp}
+                       echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                        mkdir ${qunex_subjectsfolder}/inbox/BIDS/${CASE} &> /dev/null
                        cp -r ${RawDataInputPath}/* ${qunex_subjectsfolder}/inbox/${DATAFormat}/${CASE}/
                        INTYPE=dataset
                    else
-                       echo ""
-                       geho " -- Running:  "
-                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip "; echo ""
+                       echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                       geho " -- Running:  " 2>&1 | tee ${mapRawData_ComlogTmp}
+                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee ${mapRawData_ComlogTmp}
+                       echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                        curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip
                    fi
                 else
                     # -- Get the BIDS data in ZIP format via curl
-                    echo ""
-                    geho " -- Running:  "
-                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip "; echo ""
+                    echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                    geho " -- Running:  " 2>&1 | tee ${mapRawData_ComlogTmp}
+                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee ${mapRawData_ComlogTmp}
+                    echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                     curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip
                     INTYPE=zip
                 fi
@@ -1484,9 +1486,9 @@ fi
                 fi
             fi
             # -- Perform mapping of HCP file structure into Qu|Nex
-            echo ""
-            geho " -- Running:  "
-
+            echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+            geho " -- Running:  " 2>&1 | tee ${mapRawData_ComlogTmp}
+            echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
             if [[ ${DATAFormat} == "HCPYA" ]]; then
                 HCPLSNameFormat="--nameformat=(?P<subject_id>[^/]+?)/unprocessed/(?P<session_name>.*?)/(?P<data>.*) --hcplsname=hcpya"
             else
@@ -1494,12 +1496,16 @@ fi
             fi
 
             if [[ ${INTYPE} == "zip" ]]; then 
-                geho "  --> processing a single ${DATAFormat} formated package [${CASE}.zip]"
-                geho "  ${QUNEXCOMMAND} HCPLSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" $HCPLSNameFormat "; echo ""
+                echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                geho "  --> processing a single ${DATAFormat} formated package [${CASE}.zip]" 2>&1 | tee ${mapRawData_ComlogTmp}
+                geho "  ${QUNEXCOMMAND} HCPLSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" $HCPLSNameFormat " 2>&1 | tee ${mapRawData_ComlogTmp} 
+                echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                 ${QUNEXCOMMAND} HCPLSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
             elif [[  ${INTYPE} == "dataset" ]]; then
-                geho "  --> processing a single ${DATAFormat} session [${CASE}] from the ${DATAFormat} dataset"
-                geho "  ${QUNEXCOMMAND} HCPLSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" $HCPLSNameFormat "; echo ""
+                echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                geho "  --> processing a single ${DATAFormat} session [${CASE}] from the ${DATAFormat} dataset" 2>&1 | tee ${mapRawData_ComlogTmp}
+                geho "  ${QUNEXCOMMAND} HCPLSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" $HCPLSNameFormat " 2>&1 | tee ${mapRawData_ComlogTmp}
+                echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                 ${QUNEXCOMMAND} HCPLSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
             fi
 
@@ -1517,9 +1523,9 @@ fi
                 FILECHECK="fail"
             fi
             if [[ ${FILESEXPECTED} == ${FILEFOUND} ]]; then
-                echo ""
-                geho " -- HCPLSImport successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files."
-                echo ""
+                echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+                geho " -- HCPLSImport successful. Expected ${FILESEXPECTED} files and found ${FILEFOUND} files." 2>&1 | tee ${mapRawData_ComlogTmp}
+                echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
                 FILECHECK="pass"
             else
                 FILECHECK="fail"
@@ -1533,34 +1539,34 @@ fi
         if [[ -z `more ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
         
         # -- Declare checks
-        echo "" >> ${mapRawData_ComlogTmp}
-        echo "----------------------------------------------------------------------------" >> ${mapRawData_ComlogTmp}
-        echo "  --> Batch file transfer check: ${BATCHFILECHECK}" >> ${mapRawData_ComlogTmp}
-        echo "  --> Mapping file transfer check: ${MAPPINGFILECHECK}" >> ${mapRawData_ComlogTmp}
+        echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+        echo "----------------------------------------------------------------------------" 2>&1 | tee ${mapRawData_ComlogTmp}
+        echo "  --> Batch file transfer check: ${BATCHFILECHECK}" 2>&1 | tee ${mapRawData_ComlogTmp}
+        echo "  --> Mapping file transfer check: ${MAPPINGFILECHECK}" 2>&1 | tee ${mapRawData_ComlogTmp}
         if [[ ${DATAFormat} != "DICOM" ]]; then
-            echo "  --> ${DATAFormat} mapping check: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
+            echo "  --> ${DATAFormat} mapping check: ${FILECHECK}" 2>&1 | tee ${mapRawData_ComlogTmp}
         else
             if [[ ${InputArchive} != "yes" ]]; then
-                echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" >> ${mapRawData_ComlogTmp}
-                echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" >> ${mapRawData_ComlogTmp}
-                echo "  --> DICOM mapping check: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
+                echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" 2>&1 | tee ${mapRawData_ComlogTmp}
+                echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" 2>&1 | tee ${mapRawData_ComlogTmp}
+                echo "  --> DICOM mapping check: ${FILECHECK}" 2>&1 | tee ${mapRawData_ComlogTmp}
             fi
             if [[ ${InputArchive} == "yes" ]]; then
-                echo "  --> Archive inbox processed: ${FILECHECK}" >> ${mapRawData_ComlogTmp}
+                echo "  --> Archive inbox processed: ${FILECHECK}" 2>&1 | tee ${mapRawData_ComlogTmp}
             fi
         fi
 
         # -- Report and log final checks
         if [[ ${FILECHECK} == "pass" ]] && [[ ${BATCHFILECHECK} == "pass" ]] && [[ ${MAPPINGFILECHECK} == "pass" ]]; then
-            echo "" >> ${mapRawData_ComlogTmp}
-            geho "------------------------- Successful completion of work --------------------------------" >> ${mapRawData_ComlogTmp}
-            echo "" >> ${mapRawData_ComlogTmp}
+            echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+            geho "------------------------- Successful completion of work --------------------------------" 2>&1 | tee ${mapRawData_ComlogTmp}
+            echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
             mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogDone}
             mapRawData_Comlog=${mapRawData_ComlogDone}
         else
-            echo "" >> ${mapRawData_ComlogTmp}
-            echo "Error. Something went wrong." >> ${mapRawData_ComlogTmp}
-            echo "" >> ${mapRawData_ComlogTmp}
+            echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
+            echo "Error. Something went wrong." 2>&1 | tee ${mapRawData_ComlogTmp}
+            echo "" 2>&1 | tee ${mapRawData_ComlogTmp}
             mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogError}
             mapRawData_Comlog=${mapRawData_ComlogError}
         fi
@@ -1568,16 +1574,22 @@ fi
     
     # -- processInbox for DICOMs
     turnkey_processInbox() {
+        TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
+        processInbox_Runlog="${logdir}/runlogs/Log-processInbox_${TimeStamp}.log"
+        processInbox_ComlogTmp="${logdir}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
+        processInbox_ComlogError="${logdir}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
+        processInbox_ComlogDone="${logdir}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
         if [[ ${DATAFormat} == "DICOM" ]]; then
-            echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: processInbox ..."; echo ""
-            # ------------------------------
-            TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-            processInbox_Runlog="${logdir}/runlogs/Log-processInbox_${TimeStamp}.log"
-            processInbox_ComlogTmp="${logdir}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
-            processInbox_ComlogError="${logdir}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
-            processInbox_ComlogDone="${logdir}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
+            # ------------------------------ non-XNAT code
+            echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
+            cyaneho " ===> RunTurnkey ~~~ RUNNING: processInbox ..." 2>&1 | tee -a ${processInbox_ComlogTmp}
+            echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
+
             ExecuteCall="${QUNEXCOMMAND} processInbox --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
-            echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
+            echo ""
+            echo " -- Executed call:"
+            echo "    $ExecuteCall"
+            echo ""
             eval ${ExecuteCall} 2>&1 | tee -a ${processInbox_ComlogTmp}
             cd ${qunex_subjectsfolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done
             if [[ ! -z `cat ${processInbox_ComlogTmp} | grep 'Successful completion'` ]]; then processInboxCheck="pass"; else processInboxCheck="fail"; fi
@@ -1588,34 +1600,49 @@ fi
                mv ${processInbox_ComlogTmp} ${processInbox_ComlogError}
                processInbox_Comlog=${processInbox_ComlogError}
             fi
-            # ------------------------------
+            # ------------------------------ XNAT code
             if [ ${TURNKEY_TYPE} == "xnat" ]; then
-                reho "---> Cleaning up: removing inbox folder"
+                echo "" 2>&1 | tee ${processInbox_ComlogTmp}
+                geho "---> Cleaning up XNAT run working directory and removing inbox folder" 2>&1 | tee ${processInbox_ComlogTmp}
+                echo "" 2>&1 | tee ${processInbox_ComlogTmp}
                 rm -rf ${qunex_WORKDIR}/inbox &> /dev/null
             fi
         else
-            echo ""; cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is not in DICOM format."; echo ""
+            echo "" 2>&1 | tee ${processInbox_ComlogTmp}
+            cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is not in DICOM format." 2>&1 | tee ${processInbox_ComlogTmp}
+            echo "" 2>&1 | tee ${processInbox_ComlogTmp}
         fi
     }
      
     # -- Generate subject_hcp.txt file
     turnkey_getHCPReady() {
-        echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..."; echo ""
-        if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
-            rm -rf ${qunex_subjectsfolder}/${CASE}/subject_hcp.txt &> /dev/null
-        fi
-        if [ -f ${qunex_subjectsfolder}/subject_hcp.txt ]; then
-            echo ""; geho " ===> ${qunex_subjectsfolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run."; echo ""; return 0
-        fi
-        # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady_${TimeStamp}.log"
         getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${CASE}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
         getHCPReady_ComlogError="${logdir}/comlogs/error_getHCPReady_${CASE}_${TimeStamp}.log"
         getHCPReady_ComlogDone="${logdir}/comlogs/done_getHCPReady_${CASE}_${TimeStamp}.log"
+        
+        echo ""  2>&1 | tee -a ${getHCPReady_ComlogTmp}
+        cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..." 2>&1 | tee ${getHCPReady_ComlogTmp}
+        echo "" 2>&1 | tee -a ${getHCPReady_ComlogTmp}
+        
+        if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
+            rm -rf ${qunex_subjectsfolder}/${CASE}/subject_hcp.txt &> /dev/null
+        fi
+        if [ -f ${qunex_subjectsfolder}/subject_hcp.txt ]; then
+            echo "" 2>&1 | -a tee ${getHCPReady_ComlogTmp}
+            geho " ===> ${qunex_subjectsfolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run." 2>&1 | tee -a ${getHCPReady_ComlogTmp}
+            echo "" 2>&1 | -a tee ${getHCPReady_ComlogTmp}
+            return 0
+        fi
+        # ------------------------------
         ExecuteCall="${QUNEXCOMMAND} getHCPReady --subjectsfolder="${qunex_subjectsfolder}" --sessions="${CASE}" --mapping="${SpecsMappingFile}""
-        echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
+        echo ""
+        echo " -- Executed call:"
+        echo "    $ExecuteCall"
+        echo ""
         eval ${ExecuteCall}  2>&1 | tee -a ${getHCPReady_ComlogTmp}
+        
         if [[ ! -z `cat ${getHCPReady_ComlogTmp} | grep 'Successful completion'` ]]; then getHCPReadyCheck="pass"; else getHCPReadyCheck="fail"; fi
         if [[ ${getHCPReadyCheck} == "pass" ]]; then
             mv ${getHCPReady_ComlogTmp} ${getHCPReady_ComlogDone}
