@@ -452,13 +452,19 @@ echo ""; if [ ! -f "${ComRun}" ]; then reho " ERROR: ${ComRun} file not found. C
 ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
 echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; reho " ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
 
+
+# -- Define command to execute
 ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
+# -- Acceptance tests
+#ComComplete="if [[ $(cat ${ComlogTmp}| grep -c 'Successful completion') != 0 ]]; then echo 'Log: ${ComlogDone}' >> ${CompletionCheckPass}; echo '===> Successful completion of ${CommandToRun}' >> ${CompletionCheckPass}; fi"
+#ComError="if [[ $(cat ${ComlogTmp}| grep -c 'ERROR') != 0 ]]; then echo 'Log: ${ComlogError}' >> ${CompletionCheckFail}; echo '===> ERROR in ${CommandToRun}' >> ${CompletionCheckFail}; fi"
 ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
 ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
-ComRunCheck="if [[ -e ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final Qu|Nex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; rm ${ComRun}; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final Qu|Nex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
-
-# -- Combine commands
+# -- Command to perform acceptance test
+ComRunCheck="if [[ -e ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; geho ' ===> Successful completion of ${CommandToRun}. Check final Qu|Nex log output:'; echo ''; geho '    ${ComlogDone}'; qunexPassed; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; reho ' ===> ERROR during ${CommandToRun}. Check final Qu|Nex error log output:'; echo ''; reho '    ${ComlogError}'; echo ''; qunexFailed; fi"
+# -- Combine final string of commands
 ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}"
+
 
 # -- Run the commands locally
 if [[ ${Cluster} == 1 ]]; then
