@@ -554,6 +554,7 @@ Change Log
 * 0.48.39 [connector] Corrected handling of logging in RunTurnkey.sh
 * 0.48.40 [connector] Fixed RunTurnkey.sh syntax error
 * 0.48.41 [connector, niutilities] More robust acceptance testing and error reporting
+* 0.48.42 [connector] Improvements to acceptance testing and mapRawData
 
 Stable Container Tag Log
 ========================
