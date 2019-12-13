@@ -22,6 +22,7 @@ Copyright (c) Grega Repovs. All rights reserved.
 # import dicom
 import os
 import os.path
+import sys
 import re
 import glob
 import shutil
@@ -2464,7 +2465,12 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
                     dnum = 0
                     fnum = 0
 
-                    z = zipfile.ZipFile(p, 'r')
+                    try:
+                        z = zipfile.ZipFile(p, 'r')
+                    except:
+                        e = sys.exc_info()[0]
+                        raise ge.CommandFailed("processInbox", "Zip file could not be processed", "Opening zip [%s] returned an error [%s]!" % (p, e), "Please check your data!")                
+
                     ilist = z.infolist()
                     for sf in ilist:
                         if sf.file_size > 0:

@@ -108,7 +108,7 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
                         print " ... folder exists:", tfolder
                 else:
                     errstr = os.strerror(e.errno)
-                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Folder could not be created due to '%s' error!", "Folder to create: %s" % (tfolder), "Please check paths and permissions!")
+                    raise ge.CommandFailed("manageStudy", "I/O error: %s" % (errstr), "Folder could not be created due to '%s' error!" % (errstr), "Folder to create: %s" % (tfolder), "Please check paths and permissions!")
 
         else:
             if os.path.exists(tfolder):
