@@ -1091,7 +1091,7 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStudy ..."; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
         createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
-        createStudy_ComlogTmp="${WORKDIR}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
+        createStudy_ComlogTmp="${logdir}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
         createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${CASE}_${TimeStamp}.log"
         createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${CASE}_${TimeStamp}.log"
         geho " -- Checking for and generating study folder ${qunex_studyfolder}"; echo ""
@@ -1105,7 +1105,7 @@ fi
             mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
             createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
         else
-            geho " -- Study folder ${qunex_studyfolder} already exits!" 2>&1 | tee -a ${createStudy_ComlogTmp}
+            geho " -- Study folder ${qunex_studyfolder} already exists!" 2>&1 | tee -a ${createStudy_ComlogTmp}
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
                 if [[ ${OVERWRITE_PROJECT_XNAT} == "yes" ]]; then
                     reho "    Overwrite set to 'yes' for XNAT run. Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
@@ -1119,7 +1119,7 @@ fi
             fi
         fi
         if [ ! -f ${qunex_studyfolder}/.qunexstudy ]; then
-            reho " -- Note: ${qunex_studyfolder}qunexstudy file not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
+            reho " -- Note: ${qunex_studyfolder}/.qunexstudy file not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
             ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
         fi
         
@@ -1444,6 +1444,7 @@ fi
             else
                 FILECHECK="fail"
             fi
+          fi
         fi
         
         # -- Check if HCP format is requested
@@ -1563,7 +1564,6 @@ fi
             mv ${mapRawData_ComlogTmp} ${mapRawData_ComlogError}
             mapRawData_Comlog=${mapRawData_ComlogError}
         fi
-    fi
     }
     
     # -- processInbox for DICOMs
