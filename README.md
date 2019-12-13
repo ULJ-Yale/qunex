@@ -553,6 +553,7 @@ Change Log
 * 0.48.38 [connector,niutilities] Corrected handling of bids_info_status and logging
 * 0.48.39 [connector] Corrected handling of logging in RunTurnkey.sh
 * 0.48.40 [connector] Fixed RunTurnkey.sh syntax error
+* 0.48.41 [connector, niutilities] More robust acceptance testing and error reporting
 
 Stable Container Tag Log
 ========================
