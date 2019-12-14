@@ -1369,6 +1369,7 @@ fi
                 bids_name_parameter=""
             else
                 bids_name_parameter="--bidsname=\"${BIDS_NAME}\""
+            fi
             
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
                 # -- Set IF statement to check if /input mapped from XNAT for container run or curl call needed
@@ -1437,7 +1438,6 @@ fi
             else
                 FILECHECK="fail"
             fi
-          fi
         fi
         
         # -- Check if HCP format is requested
@@ -1604,8 +1604,9 @@ fi
             fi
         else
             echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
-            cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is not in DICOM format." 2>&1 | tee -a ${processInbox_ComlogTmp}
+            cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is not in DICOM format." 2>&1 | tee -a ${processInbox_ComlogTmp}            
             echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
+            mv "${processInbox_ComlogTmp}" "${processInbox_ComlogDone}"
         fi
     }
      
