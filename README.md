@@ -556,6 +556,7 @@ Change Log
 * 0.48.41 [connector, niutilities] More robust acceptance testing and error reporting
 * 0.48.42 [connector] Improvements to acceptance testing and mapRawData
 * 0.48.43 [connector] Fixed mapRawData and processInbox for ingestion of BIDS data
+* 0.48.44 [connector] Fixed XNAT acceptance test bug for processInbox
 
 Stable Container Tag Log
 ========================
