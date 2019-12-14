@@ -1586,15 +1586,8 @@ fi
             echo "    $ExecuteCall"
             echo ""
             eval ${ExecuteCall} 2>&1 | tee -a ${processInbox_ComlogTmp}
-            cd ${qunex_subjectsfolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done
-            if [[ ! -z `cat ${processInbox_ComlogTmp} | grep 'Successful completion'` ]]; then processInboxCheck="pass"; else processInboxCheck="fail"; fi
-            if [[ ${processInboxCheck} == "pass" ]]; then
-                mv ${processInbox_ComlogTmp} ${processInbox_ComlogDone}
-                processInbox_Comlog=${processInbox_ComlogDone}
-            else
-               mv ${processInbox_ComlogTmp} ${processInbox_ComlogError}
-               processInbox_Comlog=${processInbox_ComlogError}
-            fi
+            cd ${qunex_subjectsfolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done            
+
             # ------------------------------ XNAT code
             if [ ${TURNKEY_TYPE} == "xnat" ]; then
                 echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
@@ -1602,6 +1595,16 @@ fi
                 echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
                 rm -rf ${qunex_WORKDIR}/inbox &> /dev/null
             fi
+            # ------------------------------ END XNAT code
+
+            if [[ ! -z `cat ${processInbox_ComlogTmp} | grep 'Successful completion'` ]]; then processInboxCheck="pass"; else processInboxCheck="fail"; fi
+            if [[ ${processInboxCheck} == "pass" ]]; then
+                mv ${processInbox_ComlogTmp} ${processInbox_ComlogDone}
+                processInbox_Comlog=${processInbox_ComlogDone}
+            else
+               mv ${processInbox_ComlogTmp} ${processInbox_ComlogError}
+               processInbox_Comlog=${processInbox_ComlogError}
+            fi            
         else
             echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
             cyaneho " ===> RunTurnkey ~~~ SKIPPING: processInbox because data is not in DICOM format." 2>&1 | tee -a ${processInbox_ComlogTmp}            
