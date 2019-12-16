@@ -31,17 +31,13 @@
 #
 #       (c) Jure Demsar
 #       2019-07-31 -> Added file locking mechanism
+#       2019-21-04 -> Improved file locking mechanism
 #
 
 
-# ---> file locking script
-# get script direcory
-command_args <- commandArgs(trailingOnly = FALSE)
-filename <- "--file="
-script_dir <- sub(filename, "", command_args[grep(filename, command_args)])
-source_dir <- dirname(script_dir)
-# source
-source(paste0(source_dir, "/file_lock.R"))
+# ---> file locking library
+
+library(filelock)
 
 
 # ---> defaults
@@ -137,7 +133,8 @@ if (mreport != ""){
     }
     
     # lock movement report file
-    lock(mreport)
+    mreportlockfile <- mreport + ".lck"
+    mreportlock <- lock(mreportlockfile)
     
     mrfile <- file(mreport, "a")
 
@@ -161,7 +158,8 @@ if (preport != ""){
     }
     
     # lock post scrubbing report file
-    lock(preport)
+    preportlockfile <- preport + ".lck"
+    preportlock <- lock(preportlockfile)
     
     prfile <- file(preport, "a")
 
@@ -185,7 +183,8 @@ if (sreport != ""){
     }
     
     # lock scrubbing report file
-    lock(sreport)
+    sreportlockfile <- sreport + ".lck"
+    sreportlock <- lock(sreportlockfile)
     
     srfile <- file(sreport, "a")
 
@@ -423,15 +422,15 @@ for (b in bolds){
 
 if (msummary) { 
     close(mrfile)
-    unlock(mreport)
+    unlock(mreportlock)
 }
 if (psummary) {
     close(prfile)
-    unlock(preport)
+    unlock(preportlock)
 }
 if (ssummary) {
     close(srfile)
-    unlock(sreport)
+    unlock(sreportlock)
 }
 
 if (plot) {
