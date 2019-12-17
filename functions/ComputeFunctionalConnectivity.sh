@@ -100,7 +100,7 @@ echo "For more detailed documentation run <help fc_ComputeGBC3>, <help gmrimage.
 echo ""
 echo "-- GENERAL PARMETERS:"
 echo ""
-echo "      --calculation=<type_of_calculation>      Run <seed> , <gbc> or <dense> calculation for functional connectivity."
+echo "      --calculation=<type_of_calculation>      Run <seed>, <gbc> or <dense> calculation for functional connectivity."
 echo "      --runtype=<type_of_run>                  Run calculation on a <list> (requires a list input), on <individual> subjects (requires manual specification) or a <group> of individual subjects (equivalent to a list, but with manual specification)"
 echo "      --targetf=<path_for_output_file>         Specify the absolute path for output folder. If using --runtype='individual' and left empty the output will default to --inputpath location for each subject"
 echo "      --overwrite=<clean_prior_run>            Delete prior run for a given subject. Default [no]."
@@ -868,7 +868,7 @@ fi
 if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]]; then 
     geho "--- Saving out the data in a CSV file..."
     # -- Specify pconn file inputs and outputs
-    PConnBOLDInputs=`ls ${OutPath}/${CASE}-${OutName}*ptseries.nii`
+    PConnBOLDInputs=`ls ${OutPath}/${OutName}*ptseries.nii`
     if [ -z ${PConnBOLDInputs} ]; then
         echo ""
         reho "WARNING: No parcellated files found for this run."
