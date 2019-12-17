@@ -133,7 +133,7 @@ def moveLinkOrCopy(source, target, action=None, r=None, status=None, name=None, 
                 return report(False, "ERROR: %s could not be copied and gzipped, check permissions! " % (name))
 
     else:
-        report(False, "ERROR: %s could not be %sed, source file does not exist [%s]! " % (name, action, source))
+        return report(False, "WARNING: %s could not be %sed, source file either does not exist or can not be accessed [%s]! " % (name, action, source))
 
 
 def mapToQUNEXBids(file, subjectsfolder, bidsfolder, sessionsList, overwrite, prefix, select=False):
@@ -700,12 +700,8 @@ def BIDSImport(subjectsfolder=None, inbox=None, sessions=None, action='link', ov
                     tfile += ".gz"
                     status, msg = moveLinkOrCopy(file, tfile, 'gzip', r="", prefix='    .. ', lock=lock)
                 else:
-                    try:
-                        feedback = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ', lock=lock)
-                        status, msg = feedback
-                    except:
-                        # print "feedback:", feedback
-                        raise
+                    feedback = moveLinkOrCopy(file, tfile, action, r="", prefix='    .. ', lock=lock)
+                    status, msg = feedback
 
                 allOk = allOk and status
                 if not status:
