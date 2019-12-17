@@ -557,6 +557,7 @@ Change Log
 * 0.48.42 [connector] Improvements to acceptance testing and mapRawData
 * 0.48.43 [connector] Fixed mapRawData and processInbox for ingestion of BIDS data
 * 0.48.44 [connector] Fixed XNAT acceptance test bug for processInbox
+* 0.48.45 [niutilities] Fixed handling of files that go missing during BIDSImport
 
 Stable Container Tag Log
 ========================
