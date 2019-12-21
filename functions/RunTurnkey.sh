@@ -177,6 +177,12 @@ usage() {
     echo "                                                               HCPYA - HCP Young Adults (1200) dataaset"
     echo "                                                               Default is [DICOM]"
     echo ""
+    echo "    --hcpfilename=[standard|original]                          Specify how files and folders should be named using HCP processing:"
+    echo "                                                               standard - files should be named using Qu|Nex standard naming (e.g. BOLD_1_PA)"
+    echo "                                                               original - files should be named using their original names (e.g. rfMRI_REST1_AP)"
+    echo "                                                               Note that the filename to be used has to be provided in the subject_hcp.txt file or"    
+    echo "                                                               the standard naming will be used. If not provided the default 'standard' will be used."    
+    echo ""
     echo "    --bidsformat=<specify_bids_input>                          Note: this parameter is deprecated and is kept for backward compatibility. "
     echo "                                                               If set to yes, it will set --dataformat to BIDS. If left undefined or set to no, the "
     echo "                                                               --dataformat value will be used. The specification of the parameter follows ..."
@@ -322,6 +328,7 @@ unset CleanupProject
 unset STUDY_PATH
 #unset LOCAL_BATCH_FILE -- Deprecated
 unset BIDSFormat
+unset HCPFilename
 unset DATAFormat
 unset AcceptanceTest
 unset CleanupOldFiles
@@ -415,10 +422,12 @@ TURNKEY_CLEAN=`opts_GetOpt "--turnkeycleanstep" $@`
 
 DATAFormat=`opts_GetOpt "--dataformat" $@`
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
+HCPFilename=`opts_GetOpt "--hcpfilename" $@`
 
 if [ -z "$DATAFormat" ]; then DATAFormat=DICOM; fi
 if [ "${BIDSFormat}" == 'yes' ]; then DATAFormat="BIDS"; fi
 if [ "${DATAFormat}" == 'BIDS' ]; then BIDSFormat="yes"; else BIDSFormat="no"; fi
+if [ -z "$HCPFilename" ]; then HCPFilename="standard"; fi
 
 AcceptanceTest=`opts_GetOpt "--acceptancetest" "$@" | sed 's/,/ /g;s/|/ /g'`; AcceptanceTest=`echo "${AcceptanceTest}" | sed 's/,/ /g;s/|/ /g'`
 
@@ -1530,13 +1539,17 @@ fi
         # -- Check if mapping and batch files exist and if content OK
         if [[ -f ${SpecsBatchFileHeader} ]]; then BATCHFILECHECK="pass"; else BATCHFILECHECK="fail"; fi
         if [[ -z `more ${SpecsBatchFileHeader} | grep '_hcp_Pipeline'` ]]; then BATCHFILECHECK="fail"; fi
-        if [[ -f ${SpecsMappingFile} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
-        if [[ -z `more ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
+        if [[ ${DATAFormat} == "HCPLS" ]]; then
+            MAPPINGFILECHECK=pass
+        else
+            if [[ -f ${SpecsMappingFile} ]]; then MAPPINGFILECHECK="pass"; else MAPPINGFILECHECK="fail"; fi
+            if [[ -z `more ${SpecsMappingFile} | grep '=>'` ]]; then MAPPINGFILECHECK="fail"; fi
+        fi
         
         # -- Declare checks
         echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
         echo "----------------------------------------------------------------------------" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-        echo "  --> Batch file transfer check: ${BATCHFILECHECK}" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+        echo "  --> Batch file transfer check: ${BATCHFILECHECK}" 2>&1 | tee -a ${mapRawData_ComlogTmp}        
         echo "  --> Mapping file transfer check: ${MAPPINGFILECHECK}" 2>&1 | tee -a ${mapRawData_ComlogTmp}
         if [[ ${DATAFormat} != "DICOM" ]]; then
             echo "  --> ${DATAFormat} mapping check: ${FILECHECK}" 2>&1 | tee -a ${mapRawData_ComlogTmp}
@@ -1667,7 +1680,7 @@ fi
            # rm -rf ${ProcessingBatchFile} &> /dev/null
            HLinks=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
         fi        
-        ExecuteCall="${QUNEXCOMMAND} setupHCP --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --existing='clear'"
+        ExecuteCall="${QUNEXCOMMAND} setupHCP --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --existing='clear' --filename='${HCPFilename}'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${setupHCP_ComlogTmp}
         # geho " -- Generating ${ProcessingBatchFile}"; echo ""
