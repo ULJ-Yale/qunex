@@ -25,9 +25,9 @@ import os.path
 import g_core
 
 
-def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='original', folderstructure='hcpls'):
+def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", existing="add", filename='standard', folderstructure='hcpls'):
     '''
-    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [filename='original'] [folderstructure='hcpls']
+    setupHCP [sfolder=.] [tfolder=hcp] [sfile=subject_hcp.txt] [check=yes] [existing=add] [filename='standard'] [folderstructure='hcpls']
 
     USE
     ===
@@ -56,9 +56,9 @@ def setupHCP(sfolder=".", tfolder="hcp", sfile="subject_hcp.txt", check="yes", e
                         add   -> leave existing files and add new ones (default)
                         clear -> remove any exisiting files and redo hcp mapping
     --filename          How to name the bold files in the hcp structure. The 
-                        default is to name them by their bold number ('original') 
+                        default is to name them by their bold number ('standard') 
                         (e.g. BOLD_1), the alternative is to use their actual 
-                        names ('standard') (e.g. rfMRI_REST1_AP). ['number']
+                        names ('original') (e.g. rfMRI_REST1_AP). ['standard']
     --folderstructure   Which HCP folder structure to use 'initial' or 'hcpls'. 
                         See below for details. ['hcpls'] 
 

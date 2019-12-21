@@ -381,6 +381,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     # --- getting results
 
+    result = ""
     if outputs['return'] in ['both', 'stdout']:
         result = run.stdout.read()
     elif outputs['return'] in ['stderr']:
