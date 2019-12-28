@@ -242,6 +242,7 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
             
             if gdcfile in ['', 'NONE']:
                 r += "\n---> WARNING: Specific gradient distorsion coefficients file could not be identified! None will be used."
+                gdcfile = "NONE"
             else:
                 r += "\n---> Specific gradient distorsion coefficients file identified (%s):\n     %s" % (gdcfileused, gdcfile)
 
@@ -259,7 +260,7 @@ def checkGDCoeffFile(gdcstring, hcp, sinfo, r="", run=True):
             else:
                 r += "\n---> Gradient distorsion coefficients file present."
     else:
-        gdcfile = ''
+        gdcfile = "NONE"
 
     return gdcfile, r, run
 
@@ -2917,7 +2918,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 boldroot = boldsource + orient
 
             boldimg = os.path.join(hcp['source'], "%s%s" % (boldroot, options['fctail']), "%s_%s.nii.gz" % (sinfo['id'], boldroot))
-            r, boldok = checkForFile2(r, boldimg, '\n     ... bold image present', '\n     ... ERROR: bold image missing!', status=boldok)
+            r, boldok = checkForFile2(r, boldimg, "\n     ... bold image present", "\n     ... ERROR: bold image missing [%s]!" % (boldimg), status=boldok)
 
             # --- check for ref image
 
@@ -3291,7 +3292,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                     # -> xfms in MNINonLinear folder
                     xfms_file = os.path.join(hcp['hcp_nonlin'], 'xfms', "standard2%s.nii.gz" % (boldtarget))
                     if os.path.exists(xfms_file):
-                        r += "     ... removing preexisting xfms file [%s]" % (xfms_file)
+                        r += "\n     ... removing preexisting xfms file [%s]" % (xfms_file)
                         os.remove(xfms_file)
 
                 r, endlog, _, failed = runExternalForFile(tfile, comm, 'Running HCP fMRIVolume', overwrite=overwrite, thread=sinfo['id'], remove=options['log'] == 'remove', task=options['command_ran'], logfolder=options['comlogs'], logtags=[options['logtag'], boldtarget], fullTest=fullTest, shell=True, r=r)
