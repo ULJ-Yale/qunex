@@ -108,12 +108,15 @@ def getHCPPaths(sinfo, options):
     d['FS_folder']          = os.path.join(hcpbase, 'T1w', sinfo['id'] + options['hcp_suffix'])
     
     # T1w file
-    T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
-    filename = T1w.get('filename', None)
-    if filename and options['hcp_filename'] == "original":
-        d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*' + filename + '*.nii.gz')))
-    else:
-        d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*T1w_MPR*.nii.gz')))
+    try:
+        T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]      
+        filename = T1w.get('filename', None)
+        if filename and options['hcp_filename'] == "original":
+            d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*' + filename + '*.nii.gz')))
+        else:
+            d['T1w'] = "@".join(glob.glob(os.path.join(d['source'], 'T1w', sinfo['id'] + '*T1w_MPR*.nii.gz')))
+    except:
+        d['T1w'] = 'NONE'
 
     # --- longitudinal FS related paths
 
@@ -134,13 +137,15 @@ def getHCPPaths(sinfo, options):
     if options['hcp_t2'] == 'NONE':
         d['T2w'] = 'NONE'
     else:
-        T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
-        filename = T2w.get('filename', None)
-        if filename and options['hcp_filename'] == "original":
-            d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '*' + filename + '*.nii.gz')))
-        else:
-            d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_T2w_SPC*.nii.gz')))
-
+        try:
+            T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
+            filename = T2w.get('filename', None)
+            if filename and options['hcp_filename'] == "original":
+                d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '*' + filename + '*.nii.gz')))
+            else:
+                d['T2w'] = "@".join(glob.glob(os.path.join(d['source'], 'T2w', sinfo['id'] + '_T2w_SPC*.nii.gz')))
+        except:
+            d['T2w'] = 'NONE'
 
     # --- Fieldmap related paths
 
