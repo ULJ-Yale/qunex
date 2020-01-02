@@ -3276,10 +3276,16 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                         r += "\n     ... removing preexisting working bold folder [%s]" % (bold_folder)
                         shutil.rmtree(bold_folder)
 
-                    # -> bold results folder
+                    # -> bold MNINonLinear results folder
                     bold_folder = os.path.join(hcp['hcp_nonlin'], 'Results', boldtarget)
                     if os.path.exists(bold_folder):
-                        r += "\n     ... removing preexisting results bold folder [%s]" % (bold_folder)
+                        r += "\n     ... removing preexisting MNINonLinar results bold folder [%s]" % (bold_folder)
+                        shutil.rmtree(bold_folder)
+
+                    # -> bold T1w results folder
+                    bold_folder = os.path.join(hcp['T1w_folder'], 'Results', boldtarget)
+                    if os.path.exists(bold_folder):
+                        r += "\n     ... removing preexisting T1w results bold folder [%s]" % (bold_folder)
                         shutil.rmtree(bold_folder)
 
                     # -> xfms in T1w folder
