@@ -1275,9 +1275,13 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
 
         if run:
             if options['run'] == "run":
-                if overwrite and os.path.lexists(tfile):
+
+                # --> clean up test file if overwrite or if hcp_fs_existing_subject is set to True
+                if (overwrite and os.path.lexists(tfile)) or (options['hcp_fs_existing_subject'] and os.path.lexists(tfile)):
                     os.remove(tfile)
-                if overwrite or not os.path.exists(tfile):
+
+                # --> clean up only if hcp_fs_existing_subject is not set to True
+                if (overwrite or not os.path.exists(tfile)) and not options['hcp_fs_existing_subject']:
                     ## -> longitudinal mode currently not supported
                     # if options['hcp_fs_longitudinal']:
                     #     if os.path.lexists(hcp['FS_long_results']):
@@ -1287,7 +1291,7 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                         if os.path.lexists(hcp['FS_folder']):
                             r += "\n ---> removing preexisting FS folder [%s]" % (hcp['FS_folder'])
                             shutil.rmtree(hcp['FS_folder'])
-                        for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average']:
+                        for toremove in ['fsaverage', 'lh.EC_average', 'rh.EC_average', os.path.join('xfms','OrigT1w2T1w.nii.gz')]:
                             rmtarget = os.path.join(hcp['T1w_folder'], toremove)
                             try:
                                 if os.path.islink(rmtarget) or os.path.isfile(rmtarget):
