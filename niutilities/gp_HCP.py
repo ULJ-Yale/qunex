@@ -365,15 +365,18 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 (HCPStyleData) or if additional processing 
                                 functionality is allowed (LegacyStyleData). In this
                                 case running processing w/o a T2w image.
+    --hcp_folderstructure   ... Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported ['hcpls']
+    --hcp_filename          ... Specifies whether the standard ('standard') filenames
+                                or the specified original names ('original') are to
+                                be used ['standard']
 
     specific parameters
     -------------------
 
     In addition the following *specific* parameters will be used to guide the
     processing in this step:
-
-    --hcp_folderstructure   ... Specifies the version of the folder structure to
-                                use, 'initial' and 'hcpls' are supported ['hcpls']
+    
     --hcp_suffix            ... Specifies a suffix to the session id if multiple
                                 variants are run, empty otherwise [].
     --hcp_t2                ... NONE if no T2w image is available and the
@@ -550,6 +553,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations
     2019-10-20 Grega Repovš
              - Adjusted parameters, help and processing to use integrated HCPpipelines
+    2020-01-05 Grega Repovš
+             - Updated documentation
     '''
 
     r = "\n---------------------------------------------------------"
@@ -911,7 +916,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                 (HCPStyleData) or if additional processing 
                                 functionality is allowed (LegacyStyleData). In this
                                 case running processing w/o a T2w image.
-
+    --hcp_folderstructure   ... Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported ['hcpls']
+    --hcp_filename          ... Specifies whether the standard ('standard') filenames
+                                or the specified original names ('original') are to
+                                be used ['standard']
     
     specific parameters
     -------------------
@@ -954,11 +963,11 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
                                   The FLAIR input image itself should be provided 
                                   as a regular T2w image.
 
-    HCP modified specific parameters:
-    ---------------------------------
+    HCP LegacyStyleData processing mode parameters:
+    -----------------------------------------------
 
-    Please note, that these settings will only be used when hcpmodified code is 
-    used. They are currently not yet implemented in HCP Pipelines!
+    Please note, that these settings will only be used when LegacyStyleData 
+    processing mode is specified!
 
 
     --hcp_suffix            ... Specifies a suffix to the session id if multiple
@@ -1090,6 +1099,8 @@ def hcpFS(sinfo, options, overwrite=False, thread=0):
              - Adjusted parameters, help and processing to use integrated HCPpipelines
     2019-10-24 Grega Repovš
              - Added flair option and documentation
+    2020-01-05 Grega Repovš
+             - Updated documentation
 
     ----------------
     2019-10-20 ToDo
@@ -1409,6 +1420,12 @@ def longitudinalFS(sinfo, options, overwrite=False, thread=0):
                           * 'session' for `<sessionid>/logs/comlogs
                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                           * '<path>'  for an arbitrary directory
+
+    --hcp_folderstructure   ... Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported ['hcpls']
+    --hcp_filename          ... Specifies whether the standard ('standard') filenames
+                                or the specified original names ('original') are to
+                                be used ['standard']
 
     specific parameters
     -------------------
@@ -1779,6 +1796,11 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                                 (HCPStyleData) or if additional processing 
                                 functionality is allowed (LegacyStyleData). In this
                                 case running processing w/o a T2w image.
+    --hcp_folderstructure   ... Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported ['hcpls']
+    --hcp_filename          ... Specifies whether the standard ('standard') filenames
+                                or the specified original names ('original') are to
+                                be used ['standard']
 
     specific parameters
     -------------------
@@ -1798,7 +1820,7 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
                                 mesh of each hemisphere (in thousands) [164].
     --hcp_lowresmesh        ... The number of vertices for the low resolution
                                 mesh of each hemisphere (in thousands) [32].
-    --hcp_regname           ... The registration used, currently only FS [FS].
+    --hcp_regname           ... The registration used, FS or MSMSulc [MSMSulc].
     --hcp_mcsigma           ... Correction sigma used for metric smooting [sqrt(200)].
     --hcp_inflatescale      ... Inflate extra scale parameter [1].
     * --hcp_fs_longitudinal ... The name of the FS longitudinal template if one
@@ -1887,6 +1909,8 @@ def hcpPostFS(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations
     2019-10-20 Grega Repovš
              - Adjusted parameters, help and processing to use integrated HCPpipelines
+    2020-01-05 Grega Repovš
+             - Updated documentation
     '''
 
     r = "\n---------------------------------------------------------"
@@ -2247,6 +2271,8 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
              - Added full file checking
     2019-06-06 Grega Repovš
              - Enabled multiple log file locations
+    2020-01-05 Grega Repovš
+             - Updated documentation
     """
 
     r = "\n---------------------------------------------------------"
@@ -2465,6 +2491,12 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                                 case running processing with slice timing correction,
                                 external BOLD reference, or without a distortion 
                                 correction method.
+    --hcp_folderstructure   ... Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported ['hcpls']
+    --hcp_filename          ... Specifies whether the standard ('standard') filenames
+                                or the specified original names ('original') are to
+                                be used ['standard']
+
 
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
@@ -2716,6 +2748,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations\
     2019-10-20 Grega Repovš
              - Initial adjustment of parameters, help and processing to use integrated HCPpipelines
+    2020-01-05 Grega Repovš
+             - Updated documentation
     '''
 
     r = "\n---------------------------------------------------------"
@@ -3431,6 +3465,12 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
                           * 'hcp'     for `<hcp_folder>/logs/comlogs
                           * '<path>'  for an arbitrary directory
 
+    --hcp_folderstructure   ... Specifies the version of the folder structure to
+                                use, 'initial' and 'hcpls' are supported ['hcpls']
+    --hcp_filename          ... Specifies whether the standard ('standard') filenames
+                                or the specified original names ('original') are to
+                                be used ['standard']
+
     In addition a number of *specific* parameters can be used to guide the
     processing in this step:
 
@@ -3449,7 +3489,7 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
     * --hcp_fs_longitudinal  ... The name of the FS longitudinal template if one
                                  was created and is to be used in this step.
     
-    * this parameter is curently no in use
+    * this parameter is curently not in use
 
     naming options
     --------------
@@ -3553,6 +3593,8 @@ def hcpfMRISurface(sinfo, options, overwrite=False, thread=0):
              - Enabled multiple log file locations
     2019-10-20 Grega Repovš
              - Adjusted parameters, help and processing to use integrated HCPpipelines
+    2020-01-05 Grega Repovš
+             - Updated documentation
     '''
 
     r = "\n----------------------------------------------------------------"
