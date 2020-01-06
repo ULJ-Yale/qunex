@@ -1573,39 +1573,38 @@ if [[ ${setflag} =~ .*-.* ]]; then
             CommandToRun="$FunctionInput"
         fi
     fi
-    # -- SubjectsFolder and StudyFolder input flags
-    StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`       # study folder to work on
-    StudyFolderPath=`opts_GetOpt "${setflag}path" $@`          # local folder to work on
-    STUDY_PATH=${StudyFolderPath}                              # local path for study folder
-    SubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@` # subjects folder to work on
-    SubjectFolder=`opts_GetOpt "${setflag}subjectfolder"  $@`  # subjects folder to work on
-    if [[ ! -z ${STUDY_PATH} ]]; then StudyFolder=${STUDY_PATH}; fi 
-    # -- Check if SubjectFolder was set (i.e. missing 's') and correct variable
-    if [[ -z ${SubjectFolder} ]]; then
-        echo "" &> /dev/null
-    else
-        SubjectsFolder="$SubjectFolder"
-    fi
-    # -- If input name uses 'command' instead of function set that to $CommandToRun
-    if [[ -z ${StudyFolder} ]]; then
+    # -- StudyFolder & SubjectsFolder input flags
+    StudyFolder=`opts_GetOpt "${setflag}studyfolder" $@`        # study folder to work on
+    StudyFolderPath=`opts_GetOpt "${setflag}path" $@`           # local folder to work on
+    SubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@`  # subjects folder to work on
+    SubjectFolder=`opts_GetOpt "${setflag}subjectfolder"  $@`   # subjects folder to work on
+    STUDY_PATH=${StudyFolderPath}                               # local path for study folder
+    
+    if [[ ! -z ${STUDY_PATH} ]]; then StudyFolder=${STUDY_PATH}; fi
+    
+    # -- Check StudyFolder and set
+    if [[ -z ${StudyFolder} ]] && [[ ! -z ${StudyFolderPath} ]]; then
         StudyFolder="$StudyFolderPath"
-    else
-        StudyFolder="$StudyFolder"
     fi
+
     # -- If subjects folder is missing but study folder is defined assume standard Qu|Nex folder structure
-    if [[ -z ${SubjectFolder} ]]; then
+    if [[ -z ${SubjectsFolder} ]]; then
+        if [[ ! -z ${SubjectFolder} ]]; then
+            SubjectsFolder="${SubjectFolder}"
+        fi
         if [[ -z ${StudyFolder} ]]; then
-        echo "" &> /dev/null
+            echo "" &> /dev/null
         else
             SubjectsFolder="$StudyFolder/subjects"
         fi
     fi
+
     # -- If study folder is missing but subjects folder is defined assume standard Qu|Nex folder structure
     if [[ -z ${StudyFolder} ]]; then
-        if [[ -z ${SubjectFolder} ]]; then
+        if [[ -z ${SubjectsFolder} ]]; then
         echo "" &> /dev/null
         else
-            cd $SubjectsFolder/../ &> /dev/null
+            cd ${SubjectsFolder}/../ &> /dev/null
             StudyFolder=`pwd` &> /dev/null
         fi
     fi
@@ -1616,17 +1615,17 @@ if [[ ${setflag} =~ .*-.* ]]; then
     if [[ -z ${LogFolder} ]]; then
         LogFolder="${StudyFolder}/processing/logs"
     fi
-    
-    # -- Set turnkey flags
+            
+    # -- Set additional RunTurnkey flags
+    STUDY_PATH=`opts_GetOpt "${setflag}path" $@`
     TURNKEY_TYPE=`opts_GetOpt "${setflag}turnkeytype" $@`
     TURNKEY_STEPS=`opts_GetOpt "${setflag}turnkeysteps" $@`
-    STUDY_PATH=`opts_GetOpt "${setflag}path" $@`
     WORKDIR=`opts_GetOpt "${setflag}workingdir" $@`
     PROJECT_NAME=`opts_GetOpt "${setflag}projectname" $@`
     CleanupSubject=`opts_GetOpt "${setflag}cleanupsubject" $@`
     CleanupProject=`opts_GetOpt "${setflag}cleanupproject" $@`
     RawDataInputPath=`opts_GetOpt "${setflag}rawdatainput" $@`
-    qunex_subjectsfolder=`opts_GetOpt "${setflag}subjectsfolder" $@`
+    QuNexSubjectsFolder=`opts_GetOpt "${setflag}subjectsfolder" $@`
     OVERWRITE_SUBJECT=`opts_GetOpt "${setflag}overwritesubject" $@`
     OVERWRITE_STEP=`opts_GetOpt "${setflag}overwritestep" $@`
     OVERWRITE_PROJECT=`opts_GetOpt "${setflag}overwriteproject" $@`
@@ -1939,7 +1938,7 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
             exit 1
         fi
     fi
-    if [[ -z ${SubjectFolder} ]]; then
+    if [[ -z ${SubjectsFolder} ]]; then
         if [[ -z ${Folder} ]]; then
             reho "Error: Subjects folder missing and options parameter --folder not specified"
             exit 1
@@ -1955,7 +1954,7 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
     if [[ -z ${Folder} ]]; then
         Folder="$SubjectsFolder"
     else
-        if [[ -z ${StudyFolder} ]] && [[ -z ${SubjectFolder} ]]; then
+        if [[ -z ${StudyFolder} ]] && [[ -z ${SubjectsFolder} ]]; then
             SubjectsFolder="$Folder"
             StudyFolder="../$SubjectsFolder"
         fi
@@ -1974,12 +1973,12 @@ if [[ ${CommandToRun} == "organizeDicom" ]]; then
     if [[ -z ${Folder} ]]; then
         echo "   Optional --folder parameter not set. Using standard inputs."
         echo "   Study Folder: ${StudyFolder}"
-        echo "   Subject Folder: ${SubjectsFolder}"
+        echo "   Subjects Folder: ${SubjectsFolder}"
     else
         echo "Optional --folder parameter set explicitly. "
         echo "   Setting subjects folder and study accordingly."
         echo "   Study Folder: ${StudyFolder}"
-        echo "   Subject Folder: ${SubjectsFolder}"
+        echo "   Subjects Folder: ${SubjectsFolder}"
     fi
     echo "   Subjects: ${CASES}"
     echo "   Overwrite prior run: ${Overwrite}"
@@ -2008,11 +2007,12 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
        echo ""
     fi
     CommandToRun="runQC"
+    
     # -- Check all the user-defined parameters:
     TimeStampRunQC=`date +%Y-%m-%d-%H-%M-%S`
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing."; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing."; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing."; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing."; exit 1; fi
     if [[ -z ${Modality} ]]; then reho "Error:  Modality to perform QC on missing."; exit 1; fi
     if [[ -z ${runQC_Custom} ]]; then runQC_Custom="no"; fi
@@ -2103,7 +2103,7 @@ if [ "$CommandToRun" == "QCPreproc" ] || [ "$CommandToRun" == "runQC" ] || [ "$C
     echo ""
     echo "--------------------------------------------------------------"
     echo "   Study Folder: ${StudyFolder}"
-    echo "   Subject Folder: ${SubjectsFolder}"
+    echo "   Subjects Folder: ${SubjectsFolder}"
     echo "   Subjects: ${CASES}"
     echo "   QC Modality: ${Modality}"
     echo "   QC Output Path: ${OutPath}"
@@ -2173,7 +2173,7 @@ if [ "$CommandToRun" == "eddyQC" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [ -z "$Report" ]; then reho "Error: Report type missing"; exit 1; fi
     # -- Perform checks for individual run
     if [ "$Report" == "individual" ]; then
@@ -2266,7 +2266,7 @@ if [ "$CommandToRun" == "mapHCPFiles" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -2303,7 +2303,7 @@ if [ "$CommandToRun" == "dataSync" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Specific subjects not provided"; fi
     # -- Report parameters
     echo ""
@@ -2328,7 +2328,7 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
     if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
@@ -2368,7 +2368,7 @@ if [ "$CommandToRun" == "FSLDtifit" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -2436,7 +2436,7 @@ if [ "$CommandToRun" == "hcpdLegacy" ]; then
     if [ -z "$Scanner" ]; then reho "Error: Scanner manufacturer missing"; exit 1; fi
     if [ -z "$UseFieldmap" ]; then reho "Error: UseFieldmap yes/no specification missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$DiffDataSuffix" ]; then reho "Error: Diffusion Data Suffix Name missing"; exit 1; fi
     if [ ${UseFieldmap} == "yes" ]; then
@@ -2479,7 +2479,7 @@ if [ "$CommandToRun" == "structuralParcellation" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$InputDataType" ]; then reho "Error: Input data type value missing"; exit 1; fi
     if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
@@ -2525,7 +2525,7 @@ if [ "$CommandToRun" == "computeBOLDfc" ]; then
     fi
     if [[ ${RunType} == "individual" ]] || [[ ${RunType} == "group" ]]; then
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-        if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
         if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
         if [ -z "$InputFiles" ]; then reho "Error: Input file(s) value missing"; exit 1; fi
         if [[ -z ${OutName} ]]; then reho "Error: Output file name value missing"; exit 1; fi
@@ -2591,7 +2591,7 @@ if [ "$CommandToRun" == "computeBOLDfc" ]; then
         echo "   Subjects Folder: ${SubjectsFolder}"
         echo "   Subjects: ${CASES}"
         echo "   Input Files: ${InputFiles}"
-        echo "   Input Path for Data: ${SubjectFolder}/<subject_id>/${InputPath}"
+        echo "   Input Path for Data: ${SubjectsFolder}/<subject_id>/${InputPath}"
         echo "   Output Name: ${OutName}"
     fi
     if [[ ${Calculation} == "gbc" ]]; then
@@ -2657,7 +2657,7 @@ if [ "$CommandToRun" == "BOLDParcellation" ]; then
     if [ -z "$ExtractData" ]; then ExtractData="no"; fi
     if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-        if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
         if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
         if [ -z "$InputFile" ]; then reho "Error: Input file value missing"; exit 1; fi
     fi
@@ -2701,7 +2701,7 @@ if [ "$CommandToRun" == "DWIDenseParcellation" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
     if [ -z "$ParcellationFile" ]; then reho "Error: File to use for parcellation missing"; exit 1; fi
@@ -2751,7 +2751,7 @@ if [ "$CommandToRun" == "ROIExtract" ]; then
     if [[ -z ${SingleInputFile} ]]; then SingleInputFile="";
         if [ -z "$InputFile" ]; then reho "Error: Input file path value missing"; exit 1; fi
         if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-        if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+        if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
         if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     fi
     # -- Report parameters
@@ -2788,7 +2788,7 @@ if [ "$CommandToRun" == "DWIDenseSeedTractography" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$MatrixVersion" ]; then reho "Error: Matrix version value missing"; exit 1; fi
     if [ -z "$SeedFile" ]; then reho "Error: File to use for seed reduction missing"; exit 1; fi    
@@ -2826,7 +2826,7 @@ if [ "$CommandToRun" == "autoPtx" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -2857,7 +2857,7 @@ if [ "$CommandToRun" == "pretractographyDense" ]; then
     # -- Check all the user-defined parameters:
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     Cluster="$RunMethod"
     if [[ ${Cluster} == "2" ]]; then
@@ -2885,7 +2885,7 @@ if [ "$CommandToRun" == "ProbtrackxGPUDense" ]; then
     # Check all the user-defined parameters: 1.QUEUE, 2. Scheduler, 3. Matrix1, 4. Matrix2
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [ -z "$MatrixOne" ] && [ -z "$MatrixThree" ]; then reho "Error: Matrix option missing. You need to specify at least one. [e.g. --omatrix1='yes' and/or --omatrix2='yes']"; exit 1; fi
     if [ "$MatrixOne" == "yes" ]; then
@@ -2936,7 +2936,7 @@ if [ "$CommandToRun" == "AWSHCPSync" ]; then
     # Check all the user-defined parameters: 1. Modality, 2. Awsuri, 3. RunMethod
     if [[ -z ${CommandToRun} ]]; then reho "Error: Explicitly specify name of command in flag or use function name as first argument (e.g. qunex<command_name> followed by flags) to run missing"; exit 1; fi
     if [[ -z ${StudyFolder} ]]; then reho "Error: Study folder missing"; exit 1; fi
-    if [[ -z ${SubjectFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
+    if [[ -z ${SubjectsFolder} ]]; then reho "Error: Subjects folder missing"; exit 1; fi
     if [[ -z ${CASES} ]]; then reho "Error: List of subjects missing"; exit 1; fi
     if [[ -z ${Modality} ]]; then reho "Error: Modality option [e.g. MEG, MNINonLinear, T1w] missing"; exit 1; fi
     if [ -z "$Awsuri" ]; then reho "Error: AWS URI option [e.g. /hcp-openaccess/HCP_900] missing"; exit 1; fi

@@ -43,7 +43,7 @@
 # ### Expected Previous Processing
 # 
 # * The necessary input files are BOLD from previous processing
-# * These may be stored in: "$qunex_subjectsfolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
+# * These may be stored in: "$QuNexSubjectsFolder/$CASE/hcp/$CASE/MNINonLinear/Results/ 
 #
 #~ND~END~
 
@@ -352,7 +352,7 @@ CleanupSubject=`opts_GetOpt "--cleanupsubject" $@`
 CleanupProject=`opts_GetOpt "--cleanupproject" $@`
 CleanupOldFiles=`opts_GetOpt "--cleanupoldfiles" $@`
 RawDataInputPath=`opts_GetOpt "--rawdatainput" $@`
-qunex_subjectsfolder=`opts_GetOpt "--subjectsfolder" $@`
+QuNexSubjectsFolder=`opts_GetOpt "--subjectsfolder" $@`
 
 #CASES=`opts_GetOpt "--subjects" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "${CASES}" | sed 's/,/ /g;s/|/ /g'`
 CASE=`opts_GetOpt "--subjects" "$@"`
@@ -863,27 +863,27 @@ if [ -z "$DWILegacy" ] || [ "$DWILegacy" == "no" ]; then
     QuNexTurnkeyWorkflow=`printf '%s\n' "${QuNexTurnkeyWorkflow//runQC_DWILegacy/}"`
 fi
 
-qunex_studyfolder="${STUDY_PATH}"
-qunex_subjectsfolder="${STUDY_PATH}/subjects"
-qunex_WORKDIR="${STUDY_PATH}/subjects/${CASE}"
-processingdir="${STUDY_PATH}/processing"
-logdir="${STUDY_PATH}/processing/logs"
-specsdir="${STUDY_PATH}/subjects/specs"
-rawdir="${qunex_WORKDIR}/inbox"
-rawdir_temp="${qunex_WORKDIR}/inbox_temp"
-QUNEXCOMMAND="${TOOLS}/${QUNEXREPO}/connector/qunex.sh"
+QuNexStudyFolder="${STUDY_PATH}"
+QuNexSubjectsFolder="${STUDY_PATH}/subjects"
+QuNexWorkDir="${STUDY_PATH}/subjects/${CASE}"
+QuNexProcessingDir="${STUDY_PATH}/processing"
+QuNexMasterLogFolder="${STUDY_PATH}/processing/logs"
+QuNexSpecsDir="${STUDY_PATH}/subjects/specs"
+QuNexRawInboxDir="${QuNexWorkDir}/inbox"
+QuNexRawInboxDir_temp="${QuNexWorkDir}/inbox_temp"
+QuNexCommand="${TOOLS}/${QUNEXREPO}/connector/qunex.sh"
 
 if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-    SpecsBatchFileHeader="${specsdir}/${BATCH_PARAMETERS_FILENAME}"
-    ProcessingBatchFile="${processingdir}/${BATCH_PARAMETERS_FILENAME}"
-    SpecsMappingFile="${specsdir}/${SCAN_MAPPING_FILENAME}"
+    SpecsBatchFileHeader="${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME}"
+    ProcessingBatchFile="${QuNexProcessingDir}/${BATCH_PARAMETERS_FILENAME}"
+    SpecsMappingFile="${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME}"
 fi
 if [[ ${TURNKEY_TYPE} != "xnat" ]]; then
     BatchFileName=`basename ${BATCH_PARAMETERS_FILENAME}`
     MappingFileName=`basename ${SCAN_MAPPING_FILENAME}`
-    SpecsMappingFile="${specsdir}/${MappingFileName}"
-    SpecsBatchFileHeader="${specsdir}/${BatchFileName}"
-    ProcessingBatchFile="${processingdir}/${BatchFileName}"
+    SpecsMappingFile="${QuNexSpecsDir}/${MappingFileName}"
+    SpecsBatchFileHeader="${QuNexSpecsDir}/${BatchFileName}"
+    ProcessingBatchFile="${QuNexProcessingDir}/${BatchFileName}"
 fi
 
 # -- Report options
@@ -917,9 +917,9 @@ if [ "$TURNKEY_TYPE" != "xnat" ]; then
 fi
 
 echo "   Qu|Nex Project-specific final Batch file path: ${ProcessingBatchFile}"
-echo "   Qu|Nex Study folder: ${qunex_studyfolder}"
-echo "   Qu|Nex Log folder: ${logdir}"
-echo "   Qu|Nex Subject-specific working folder: ${rawdir}"
+echo "   Qu|Nex Study folder: ${QuNexStudyFolder}"
+echo "   Qu|Nex Log folder: ${QuNexMasterLogFolder}"
+echo "   Qu|Nex Subject-specific working folder: ${QuNexRawInboxDir}"
 echo "   Overwrite for a given turnkey step set to: ${OVERWRITE_STEP}"
 echo "   Overwrite for subject set to: ${OVERWRITE_SUBJECT}"
 echo "   Overwrite for project set to: ${OVERWRITE_PROJECT}"
@@ -979,73 +979,73 @@ if [[ ${TURNKEY_TYPE} == "xnat" ]] && [[ ${OVERWRITE_PROJECT_XNAT} != "yes" ]] ;
     echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: Initial data re-map from XNAT with ${firstStep} as starting point ..."; echo ""
     # --- Create a study folder
     geho " -- Creating study folder structure... "; echo ""
-    ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
+    ${QuNexCommand} createStudy "${QuNexStudyFolder}"
     geho " -- Mapping existing data into place to support the first turnkey step: ${firstStep}"; echo ""
     # --- Work through the mapping steps
     case ${firstStep} in
         processInbox)
             # --- rsync relevant dependencies if processInbox is starting point 
-            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='inbox/***' --include='specs/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         getHCPReady|setupHCP)
             # --- rsync relevant dependencies if getHCPReady or setupHCP is starting point 
-            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='nii/***' --include='/processing' --include='scenes/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         createBatch)
             # --- rsync relevant dependencies if getHCPReady or setupHCP is starting point 
-            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='/processing' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/subjects' --include='${CASE}' --include='*.txt' --include='specs/***' --include='/processing' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp1)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/*nii*' --include='T2w/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/*nii*' --include='T2w/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp2)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp3|runQC_T1w|runQC_T2w|runQC_Myelin)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --exclude='MNINonLinear/*Results*' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp4)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/*nii*' --include='T1w/*nii*' --include='BOLD*/*nii*' --include='*fMRI*/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='MNINonLinear/*nii*' --include='T1w/*nii*' --include='BOLD*/*nii*' --include='*fMRI*/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcpd|runQC_DWI|hcpdLegacy|runQC_DWILegacy|eddyQC|runQC_DWIeddyQC|FSLDtifit|runQC_DWIDTIFIT|FSLBedpostxGPU|runQC_DWIProcess|runQC_DWIBedpostX)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='unprocessed/***' --include='T1w/***' --include='Diffusion/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
          pretractographyDense|DWISeedTractography|DWIDenseParcellation)
             # --- rsync relevant dependencies if and hcp or QC step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='MNINonLinear/Results/Tractography/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='hcp/' --include='T1w/***' --include='MNINonLinear/*nii*' --include='MNINonLinear/*gii*' --include='MNINonLinear/xfms/***' --include='MNINonLinear/ROIs/***' --include='MNINonLinear/Native/***' --include='MNINonLinear/fsaverage/***' --include='MNINonLinear/fsaverage_LR32k/***' --include='MNINonLinear/Results/Tractography/*nii*' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         hcp5|runQC_BOLD|runQC_Custom|mapHCPData)
             # --- rsync relevant dependencies if and mapHCPData is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='scenes/***' --include='specs/***' --include='/subjects' --include='${CASE}/' --include='*.txt' --include='hcp/' --include='MNINonLinear/***' --include='T1w/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
         createBOLDBrainMasks|computeBOLDStats|createStatsReport|extractNuisanceSignal|preprocessBold|preprocessConc|g_PlotBoldTS|BOLDParcellation|computeBOLDfcGBC|computeBOLDfcSeed|runQC_BOLDfc)
             # --- rsync relevant dependencies if any BOLD fc step is starting point
-            RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${qunex_studyfolder}"
+            RsyncCommand="rsync -avzH --include='/processing' --include='specs/***' --include='scenes/***' --include='/subjects' --include='${CASE}' --include='*.txt' --include='images/***' --exclude='*' ${XNAT_STUDY_INPUT_PATH}/ ${QuNexStudyFolder}"
             echo ""; geho " -- Running rsync: ${RsyncCommand}"; echo ""
             eval ${RsyncCommand}
             ;;
@@ -1060,36 +1060,36 @@ if [[ ${OVERWRITE_PROJECT_FORCE} == "yes" ]]; then
         read ManualOverwrite
         echo
         if [[ ${ManualOverwrite} == "yes" ]]; then
-            rm -rf ${qunex_studyfolder}/ &> /dev/null
+            rm -rf ${QuNexStudyFolder}/ &> /dev/null
         fi
 fi
 if [[ ${OVERWRITE_PROJECT_XNAT} == "yes" ]]; then
         reho " -- Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
-        rm -rf ${qunex_studyfolder}/ &> /dev/null
+        rm -rf ${QuNexStudyFolder}/ &> /dev/null
 fi
 if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "all" ]]; then
-    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${qunex_subjectsfolder}` == "$CASE" ]]; then
-        reho " -- ${CASE} is the only folder in ${qunex_subjectsfolder}. OK to proceed!"
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${QuNexSubjectsFolder}` == "$CASE" ]]; then
+        reho " -- ${CASE} is the only folder in ${QuNexSubjectsFolder}. OK to proceed!"
         reho "    Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
-        rm -rf ${qunex_studyfolder}/ &> /dev/null
+        rm -rf ${QuNexStudyFolder}/ &> /dev/null
     else
-        reho " -- ${CASE} is not the only folder in ${qunex_studyfolder}."
+        reho " -- ${CASE} is not the only folder in ${QuNexStudyFolder}."
         reho "    Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
     fi
 fi
 if [[ ${OVERWRITE_PROJECT} == "yes" ]] && [[ ${TURNKEY_STEPS} == "createStudy" ]]; then
-    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${qunex_subjectsfolder}` == "$CASE" ]]; then
-        reho " -- ${CASE} is the only folder in ${qunex_subjectsfolder}. OK to proceed!"
+    if [[ `ls -IQC -Ilists -Ispecs -Iinbox -Iarchive ${QuNexSubjectsFolder}` == "$CASE" ]]; then
+        reho " -- ${CASE} is the only folder in ${QuNexSubjectsFolder}. OK to proceed!"
         reho "    Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
-        rm -rf ${qunex_studyfolder}/ &> /dev/null
+        rm -rf ${QuNexStudyFolder}/ &> /dev/null
     else
-        reho " -- ${CASE} is not the only folder in ${qunex_studyfolder}."
+        reho " -- ${CASE} is not the only folder in ${QuNexStudyFolder}."
         reho "    Skipping recursive overwrite for project: ${XNAT_PROJECT_ID}"; echo ""
     fi
 fi
 if [[ ${OVERWRITE_SUBJECT} == "yes" ]]; then
-    reho " -- Removing specific subject: ${qunex_WORKDIR}."; echo ""
-    rm -rf ${qunex_WORKDIR} &> /dev/null
+    reho " -- Removing specific subject: ${QuNexWorkDir}."; echo ""
+    rm -rf ${QuNexWorkDir} &> /dev/null
 fi
 
 
@@ -1103,44 +1103,44 @@ fi
         
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStudy ..."; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createStudy_Runlog="${logdir}/runlogs/Log-createStudy_${TimeStamp}.log"
-        createStudy_ComlogTmp="${logdir}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
-        createStudy_ComlogError="${logdir}/comlogs/error_createStudy_${CASE}_${TimeStamp}.log"
-        createStudy_ComlogDone="${logdir}/comlogs/done_createStudy_${CASE}_${TimeStamp}.log"
-        geho " -- Checking for and generating study folder ${qunex_studyfolder}"; echo ""
+        createStudy_Runlog="${QuNexMasterLogFolder}/runlogs/Log-createStudy_${TimeStamp}.log"
+        createStudy_ComlogTmp="${QuNexMasterLogFolder}/tmp_createStudy_${CASE}_${TimeStamp}.log"; touch ${createStudy_ComlogTmp}; chmod 777 ${createStudy_ComlogTmp}
+        createStudy_ComlogError="${QuNexMasterLogFolder}/comlogs/error_createStudy_${CASE}_${TimeStamp}.log"
+        createStudy_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_createStudy_${CASE}_${TimeStamp}.log"
+        geho " -- Checking for and generating study folder ${QuNexStudyFolder}"; echo ""
         if [ ! -d ${WORKDIR} ]; then
             mkdir -p ${WORKDIR} &> /dev/null
         fi
-        if [ ! -d ${qunex_studyfolder} ]; then
-            reho " -- Note: ${qunex_studyfolder} not found. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
+        if [ ! -d ${QuNexStudyFolder} ]; then
+            reho " -- Note: ${QuNexStudyFolder} not found. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
             echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
-            ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
-            mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
-            createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
+            ${QuNexCommand} createStudy "${QuNexStudyFolder}"
+            mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
+            createStudy_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
         else
-            geho " -- Study folder ${qunex_studyfolder} already exists!" 2>&1 | tee -a ${createStudy_ComlogTmp}
+            geho " -- Study folder ${QuNexStudyFolder} already exists!" 2>&1 | tee -a ${createStudy_ComlogTmp}
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
                 if [[ ${OVERWRITE_PROJECT_XNAT} == "yes" ]]; then
                     reho "    Overwrite set to 'yes' for XNAT run. Removing entire project: ${XNAT_PROJECT_ID}"; echo ""
-                    rm -rf ${qunex_studyfolder}/ &> /dev/null
-                    reho " -- Note: ${qunex_studyfolder} removed. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
+                    rm -rf ${QuNexStudyFolder}/ &> /dev/null
+                    reho " -- Note: ${QuNexStudyFolder} removed. Regenerating now..." 2>&1 | tee -a ${createStudy_ComlogTmp}  
                     echo "" 2>&1 | tee -a ${createStudy_ComlogTmp}
-                    ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
-                    mv ${createStudy_ComlogTmp} ${logdir}/comlogs/
-                    createStudy_ComlogTmp="${logdir}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
+                    ${QuNexCommand} createStudy "${QuNexStudyFolder}"
+                    mv ${createStudy_ComlogTmp} ${QuNexMasterLogFolder}/comlogs/
+                    createStudy_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createStudy_${CASE}_${TimeStamp}.log"
                 fi
             fi
         fi
-        if [ ! -f ${qunex_studyfolder}/.qunexstudy ]; then
-            reho " -- Note: ${qunex_studyfolder}/.qunexstudy file not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
-            ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
+        if [ ! -f ${QuNexStudyFolder}/.qunexstudy ]; then
+            reho " -- Note: ${QuNexStudyFolder}/.qunexstudy file not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
+            ${QuNexCommand} createStudy "${QuNexStudyFolder}"
         fi
         
-        mkdir -p ${qunex_WORKDIR} &> /dev/null
-        mkdir -p ${qunex_WORKDIR}/inbox &> /dev/null
-        mkdir -p ${qunex_WORKDIR}/inbox_temp &> /dev/null
+        mkdir -p ${QuNexWorkDir} &> /dev/null
+        mkdir -p ${QuNexWorkDir}/inbox &> /dev/null
+        mkdir -p ${QuNexWorkDir}/inbox_temp &> /dev/null
         
-        if [ -f ${qunex_studyfolder}/.qunexstudy ]; then CREATESTUDYCHECK="pass"; else CREATESTUDYCHECK="fail"; fi
+        if [ -f ${QuNexStudyFolder}/.qunexstudy ]; then CREATESTUDYCHECK="pass"; else CREATESTUDYCHECK="fail"; fi
        
         if [[ ${CREATESTUDYCHECK} == "pass" ]]; then
             echo "" >> ${createStudy_ComlogTmp}
@@ -1167,50 +1167,50 @@ fi
         if [ ! -d ${WORKDIR} ]; then
             mkdir -p ${WORKDIR} &> /dev/null
         fi
-        if [ ! -d ${qunex_studyfolder} ]; then
-            reho " -- Note: ${qunex_studyfolder} not found. Regenerating now..."; echo "";
-            ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
+        if [ ! -d ${QuNexStudyFolder} ]; then
+            reho " -- Note: ${QuNexStudyFolder} not found. Regenerating now..."; echo "";
+            ${QuNexCommand} createStudy "${QuNexStudyFolder}"
         fi
-        if [ ! -f ${qunex_studyfolder}/.qunexstudy ]; then
-            reho " -- Note: ${qunex_studyfolder} qunexstudy file not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
-            ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
+        if [ ! -f ${QuNexStudyFolder}/.qunexstudy ]; then
+            reho " -- Note: ${QuNexStudyFolder} qunexstudy file not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
+            ${QuNexCommand} createStudy "${QuNexStudyFolder}"
         fi
-        if [ ! -d ${qunex_subjectsfolder} ]; then
-            reho " -- Note: ${qunex_subjectsfolder} folder not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
-            ${QUNEXCOMMAND} createStudy "${qunex_studyfolder}"
+        if [ ! -d ${QuNexSubjectsFolder} ]; then
+            reho " -- Note: ${QuNexSubjectsFolder} folder not found. Not a proper Qu|Nex file hierarchy. Regenerating now..."; echo "";
+            ${QuNexCommand} createStudy "${QuNexStudyFolder}"
         fi
-        if [ ! -d ${qunex_WORKDIR} ]; then
-            reho " -- Note: ${qunex_WORKDIR} not found. Creating one now..."; echo ""
-            mkdir -p ${qunex_WORKDIR} &> /dev/null
-            mkdir -p ${qunex_WORKDIR}/inbox &> /dev/null
-            mkdir -p ${qunex_WORKDIR}/inbox_temp &> /dev/null
+        if [ ! -d ${QuNexWorkDir} ]; then
+            reho " -- Note: ${QuNexWorkDir} not found. Creating one now..."; echo ""
+            mkdir -p ${QuNexWorkDir} &> /dev/null
+            mkdir -p ${QuNexWorkDir}/inbox &> /dev/null
+            mkdir -p ${QuNexWorkDir}/inbox_temp &> /dev/null
         fi
         
         # -- Perform overwrite checks
         if [[ ${OVERWRITE_STEP} == "yes" ]] && [[ ${TURNKEY_STEP} == "mapRawData" ]]; then
-               rm -rf ${qunex_WORKDIR}/inbox/* &> /dev/null
+               rm -rf ${QuNexWorkDir}/inbox/* &> /dev/null
         fi
-        CheckInbox=`ls -1A ${rawdir} | wc -l`
+        CheckInbox=`ls -1A ${QuNexRawInboxDir} | wc -l`
         if [[ ${CheckInbox} != "0" ]] && [[ ${OVERWRITE_STEP} == "no" ]]; then
-               reho "ERROR: ${qunex_WORKDIR}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
+               reho "ERROR: ${QuNexWorkDir}/inbox/ is not empty and --overwritestep=${OVERWRITE_STEP} "
                reho "Set overwrite to 'yes' and re-run..."
                echo ""
                exit 1
         fi
 
         # -- Define specific logs
-        mapRawData_Runlog="${logdir}/runlogs/Log-mapRawData_${TimeStamp}.log"
-        mapRawData_ComlogTmp="${logdir}/comlogs/tmp_mapRawData_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
-        mapRawData_ComlogError="${logdir}/comlogs/error_mapRawData_${CASE}_${TimeStamp}.log"
-        mapRawData_ComlogDone="${logdir}/comlogs/done_mapRawData_${CASE}_${TimeStamp}.log"
+        mapRawData_Runlog="${QuNexMasterLogFolder}/runlogs/Log-mapRawData_${TimeStamp}.log"
+        mapRawData_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_mapRawData_${CASE}_${TimeStamp}.log"; touch ${mapRawData_ComlogTmp}; chmod 777 ${mapRawData_ComlogTmp}
+        mapRawData_ComlogError="${QuNexMasterLogFolder}/comlogs/error_mapRawData_${CASE}_${TimeStamp}.log"
+        mapRawData_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_mapRawData_${CASE}_${TimeStamp}.log"
         
         # -- Map data from XNAT
         if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
             geho " --> Running turnkey via XNAT: ${XNAT_HOST_NAME}"; echo ""
             RawDataInputPath="/input/SCANS/"
-            rm -rf ${specsdir}/${BATCH_PARAMETERS_FILENAME} &> /dev/null
-            rm -rf ${specsdir}/${SCAN_MAPPING_FILENAME} &> /dev/null
-            rm -rf ${processingdir}/scenes/QC/* &> /dev/null
+            rm -rf ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} &> /dev/null
+            rm -rf ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME} &> /dev/null
+            rm -rf ${QuNexProcessingDir}/scenes/QC/* &> /dev/null
             geho " -- Fetching batch and mapping files from ${XNAT_HOST_NAME}"; echo ""
             echo "" >> ${mapRawData_ComlogTmp}
             geho "  Logging turnkey_mapRawData output at time ${TimeStamp}:" >> ${mapRawData_ComlogTmp}
@@ -1220,43 +1220,43 @@ fi
             # -- Transfer data from XNAT HOST
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}""
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}""
-            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip"
+            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip"
             echo ""
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}"" >> ${mapRawData_ComlogTmp}
             echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}"" >> ${mapRawData_ComlogTmp}
-            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip"  >> ${mapRawData_ComlogTmp}
+            echo "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip"  >> ${mapRawData_ComlogTmp}
 
-            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${specsdir}/${BATCH_PARAMETERS_FILENAME}
-            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}" > ${specsdir}/${SCAN_MAPPING_FILENAME}
-            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${processingdir}/scenes/QC/scene_qc_files.zip
+            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${BATCH_PARAMETERS_FILENAME}" > ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME}
+            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/projects/${XNAT_PROJECT_ID}/resources/QUNEX_PROC/files/${SCAN_MAPPING_FILENAME}" > ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME}
+            curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc/files?format=zip" > ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip
                
             # -- Verify and unzip custom QC scene files
-            if [ -f ${processingdir}/scenes/QC/scene_qc_files.zip ]; then
-                echo ""; geho " -- Custom scene files found ${processingdir}/scenes/QC/scene_qc_files.zip "
-                echo ""; geho " -- Checking ZIP integrity for ${processingdir}/scenes/QC/scene_qc_files.zip "
-                CheckCustomQCScene=`zip -T ${processingdir}/scenes/QC/scene_qc_files.zip | grep "error"`
+            if [ -f ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip ]; then
+                echo ""; geho " -- Custom scene files found ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip "
+                echo ""; geho " -- Checking ZIP integrity for ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip "
+                CheckCustomQCScene=`zip -T ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip | grep "error"`
                 if [[ ! -z ${CheckCustomQCScene} ]]; then
                     echo "" >> ${mapRawData_ComlogTmp}
                     reho " -- Note: QC scene zip file not validated. Custom scene may be missing or is corrupted." >> ${mapRawData_ComlogTmp}
                     echo "" >> ${mapRawData_ComlogTmp}
                     echo ""; reho " -- Note: QC scene zip file not validated. Custom scene may be missing or is corrupted."; echo ""
                 else
-                    geho " Unzipping ${processingdir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
+                    geho " Unzipping ${QuNexProcessingDir}/scenes/QC/scene_qc_files.zip" >> ${mapRawData_ComlogTmp}
                     echo "" >> ${mapRawData_ComlogTmp}
-                    cd ${processingdir}/scenes/QC; echo ""
+                    cd ${QuNexProcessingDir}/scenes/QC; echo ""
                     unzip scene_qc_files.zip; echo ""
                     CustomQCModalities="T1w T2w myelin DWI BOLD"
                     for CustomQCModality in ${CustomQCModalities}; do
-                        mkdir -p ${processingdir}/scenes/QC/${CustomQCModality} &> /dev/null
-                        cp ${processingdir}/scenes/QC/${XNAT_PROJECT_ID}/resources/scenes_qc/files/${CustomQCModality}/*.scene ${processingdir}/scenes/QC/${CustomQCModality}/ &> /dev/null
-                        CopiedSceneFile=`ls ${processingdir}/scenes/QC/${CustomQCModality}/*scene 2> /dev/null`
+                        mkdir -p ${QuNexProcessingDir}/scenes/QC/${CustomQCModality} &> /dev/null
+                        cp ${QuNexProcessingDir}/scenes/QC/${XNAT_PROJECT_ID}/resources/scenes_qc/files/${CustomQCModality}/*.scene ${QuNexProcessingDir}/scenes/QC/${CustomQCModality}/ &> /dev/null
+                        CopiedSceneFile=`ls ${QuNexProcessingDir}/scenes/QC/${CustomQCModality}/*scene 2> /dev/null`
                         if [ ! -z ${CopiedSceneFile} ]; then
                             geho " -- Copied: $CopiedSceneFile"; echo ""
                             echo " Copied the following scenes from ${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/resources/scenes_qc:" >> ${mapRawData_ComlogTmp}
                             echo " ${CopiedSceneFile}" >> ${mapRawData_ComlogTmp}
                         fi
                     done
-                    rm -rf ${processingdir}/scenes/QC/${XNAT_PROJECT_ID} &> /dev/null
+                    rm -rf ${QuNexProcessingDir}/scenes/QC/${XNAT_PROJECT_ID} &> /dev/null
                     echo "" >> ${mapRawData_ComlogTmp}
                 fi
            else
@@ -1265,23 +1265,23 @@ fi
            fi
             
             # -- Perform checks for batch and mapping files being mapped correctly
-            if [[ ! -f ${specsdir}/${BATCH_PARAMETERS_FILENAME} ]]; then
+            if [[ ! -f ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} ]]; then
                 echo " ==> ERROR: Scan batch file ${BATCH_PARAMETERS_FILENAME} not found in ${RawDataInputPath}!"
                 BATCHFILECHECK="fail"
                 exit 1
             else
-                if [[ ! `more ${specsdir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_Pipeline'` ]]; then
+                if [[ ! `more ${QuNexSpecsDir}/${BATCH_PARAMETERS_FILENAME} | grep '_hcp_Pipeline'` ]]; then
                     BATCHFILECHECK="fail"
                     echo " ==> ERROR: Scan batch file ${BATCH_PARAMETERS_FILENAME} content not correct in ${RawDataInputPath}!"
                     exit 1
                 fi
             fi
-            if [[ ! -f ${specsdir}/${SCAN_MAPPING_FILENAME} ]]; then
+            if [[ ! -f ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME} ]]; then
                 echo " ==> ERROR: Scan mapping file ${SCAN_MAPPING_FILENAME_PATH} not found in ${RawDataInputPath}!"
                 MAPPINGFILECHECK="fail"
                 exit 1
             else
-                if [[ ! `more ${specsdir}/${SCAN_MAPPING_FILENAME} | grep '=>'` ]]; then
+                if [[ ! `more ${QuNexSpecsDir}/${SCAN_MAPPING_FILENAME} | grep '=>'` ]]; then
                     echo " ==> ERROR: Scan mapping file ${SCAN_MAPPING_FILENAME_PATH} not found in ${RawDataInputPath}!"
                     MAPPINGFILECHECK="fail"
                     exit 1
@@ -1313,13 +1313,13 @@ fi
         if [[ ${DATAFormat} == "DICOM" ]]; then
             unset FILECHECK
             echo ""
-            geho " -- Linking DICOMs into ${rawdir}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+            geho " -- Linking DICOMs into ${QuNexRawInboxDir}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             # -- Find and link DICOMs for XNAT run
             if [[ ${TURNKEY_TYPE} == "xnat" ]]; then
-                echo "  find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';'"
-                find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${rawdir}/ ';' &> /dev/null
+                echo "  find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${QuNexRawInboxDir}/ ';'"
+                find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" -exec ln -s '{}' ${QuNexRawInboxDir}/ ';' &> /dev/null
                 DicomInputCount=`find ${RawDataInputPath} -mindepth 2 -type f -not -name "*.xml" -not -name "*.gif" | wc | awk '{print $1}'`
-                DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
+                DicomMappedCount=`ls ${QuNexRawInboxDir}/* | wc | awk '{print $1}'`
                 if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
             fi
             # -- Find and link DICOMs for non-XNAT run
@@ -1328,19 +1328,19 @@ fi
                 if [[ "$(ls ${RawDataInputPath}/${CASE}*zip* 2> /dev/null)" ]] || [[ "$(ls ${RawDataInputPath}/${CASE}*gz* 2> /dev/null)" ]]; then
                     InputArchive="yes"
                     # -- Hard link into session inbox
-                    cp ${RawDataInputPath}/${CASE}*gz ${qunex_subjectsfolder}/${CASE}/inbox/ &> /dev/null
-                    cp ${RawDataInputPath}/${CASE}*zip ${qunex_subjectsfolder}/${CASE}/inbox/ &> /dev/null
-                    CheckCASECount=`ls ${qunex_subjectsfolder}/${CASE}/inbox/${CASE}* | wc -l`
+                    cp ${RawDataInputPath}/${CASE}*gz ${QuNexSubjectsFolder}/${CASE}/inbox/ &> /dev/null
+                    cp ${RawDataInputPath}/${CASE}*zip ${QuNexSubjectsFolder}/${CASE}/inbox/ &> /dev/null
+                    CheckCASECount=`ls ${QuNexSubjectsFolder}/${CASE}/inbox/${CASE}* | wc -l`
                     # -- Check for duplicates
                     if [[ "$CheckCASECount" -gt "1" ]]; then
                         reho " ===> ERROR: More than one zip file found for ${CASE}" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                         echo ""
                         return 1
                     fi
-                    CASEinbox=`basename ${qunex_subjectsfolder}/${CASE}/inbox/${CASE}*`
+                    CASEinbox=`basename ${QuNexSubjectsFolder}/${CASE}/inbox/${CASE}*`
                     CASEext="${CASEinbox#*.}"                    
                     if [[ ${CASEext} == "zip" ]]; then
-                        cd ${qunex_subjectsfolder}/${CASE}/inbox/
+                        cd ${QuNexSubjectsFolder}/${CASE}/inbox/
                         if [[ ! -z `unzip -t ${CASEinbox} 2>&1 | tee -a ${mapRawData_ComlogTmp} | grep 'No errors'` ]]; then
                             geho "   ZIP archive found and passed check." 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                             FILECHECK="pass"
@@ -1359,11 +1359,11 @@ fi
                     else
                         CaseInputFile="${RawDataInputPath}"
                     fi
-                    echo "  find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -exec cp '{}' ${rawdir}/ ';'"
-                    find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" -exec cp '{}' ${rawdir}/ ';' &> /dev/null
+                    echo "  find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -exec cp '{}' ${QuNexRawInboxDir}/ ';'"
+                    find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" -exec cp '{}' ${QuNexRawInboxDir}/ ';' &> /dev/null
                     DicomInputCount=`find ${CaseInputFile} -type f -not -name "*.xml" -not -name "*.gif" -not -name "*.sh" -not -name "*.txt" -not -name ".*" | wc | awk '{print $1}'`
-                    DicomMappedCount=`find ${rawdir} -type f -not -name ".*" | wc | awk '{print $1}'`
-                    # DicomMappedCount=`ls ${rawdir}/* | wc | awk '{print $1}'`
+                    DicomMappedCount=`find ${QuNexRawInboxDir} -type f -not -name ".*" | wc | awk '{print $1}'`
+                    # DicomMappedCount=`ls ${QuNexRawInboxDir}/* | wc | awk '{print $1}'`
                     if [[ ${DicomInputCount} == ${DicomMappedCount} ]]; then FILECHECK="pass"; else FILECHECK="fail"; fi
                 fi
             fi
@@ -1385,28 +1385,28 @@ fi
                 if [[ -d ${RawDataInputPath} ]]; then
                    if [[ `find ${RawDataInputPath} -type f -name "*.json" | wc -l` -gt 0 ]] && [[ `find ${RawDataInputPath} -type f -name "*.nii" | wc -l` -gt 0 ]]; then 
                        echo ""; echo " -- BIDS JSON and NII data found"; echo ""
-                       mkdir ${qunex_subjectsfolder}/inbox/BIDS/${CASE} &> /dev/null
-                       cp -r ${RawDataInputPath}/* ${qunex_subjectsfolder}/inbox/BIDS/${CASE}/
-                       cd ${qunex_subjectsfolder}/inbox/BIDS
+                       mkdir ${QuNexSubjectsFolder}/inbox/BIDS/${CASE} &> /dev/null
+                       cp -r ${RawDataInputPath}/* ${QuNexSubjectsFolder}/inbox/BIDS/${CASE}/
+                       cd ${QuNexSubjectsFolder}/inbox/BIDS
                        zip -r ${CASE} ${CASE} 2> /dev/null
                    else
                        echo ""
                        geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip
+                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                       curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip
                    fi
                 else
                     # -- Get the BIDS data in ZIP format via curl
                     echo ""
                     geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip
+                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip
                 fi
                 INTYPE=zip
             else
                 # --- we have a zip file            
                 if [ -e ${RawDataInputPath}/${CASE}.zip ]; then
-                    cp -r ${RawDataInputPath}/${CASE}.zip ${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip
+                    cp -r ${RawDataInputPath}/${CASE}.zip ${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip
                     INTYPE=zip
                 else
                     INTYPE=dataset
@@ -1418,24 +1418,24 @@ fi
 
             if [[ ${INTYPE} == "zip" ]]; then 
                 geho "  --> processing a single BIDS formated package [${CASE}.zip]" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" ${bids_name_parameter} " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" ${bids_name_parameter} >> ${mapRawData_ComlogTmp}
+                geho "  ${QuNexCommand} BIDSImport --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" ${bids_name_parameter} " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                ${QuNexCommand} BIDSImport --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${QuNexSubjectsFolder}/inbox/BIDS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" ${bids_name_parameter} >> ${mapRawData_ComlogTmp}
             elif [[  ${INTYPE} == "dataset" ]]; then
                 geho "  --> processing a single BIDS session [${CASE}] from the BIDS dataset" 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QUNEXCOMMAND} BIDSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" ${bids_name_parameter} " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QUNEXCOMMAND} BIDSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                geho "  ${QuNexCommand} BIDSImport --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" ${bids_name_parameter} " 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                ${QuNexCommand} BIDSImport --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" ${bids_name_parameter} 2>&1 | tee -a ${mapRawData_ComlogTmp}; echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             fi
 
             popd 2> /dev/null
-            rm -rf ${qunex_subjectsfolder}/inbox/BIDS/${CASE}* &> /dev/null
+            rm -rf ${QuNexSubjectsFolder}/inbox/BIDS/${CASE}* &> /dev/null
             
             # -- Run BIDS completion checks on mapped data
-            if [ -f ${qunex_subjectsfolder}/${CASE}/bids/bids2nii.log ]; then
-                 FILESEXPECTED=`more ${qunex_subjectsfolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
+            if [ -f ${QuNexSubjectsFolder}/${CASE}/bids/bids2nii.log ]; then
+                 FILESEXPECTED=`more ${QuNexSubjectsFolder}/${CASE}/bids/bids2nii.log | grep "=>" | wc -l 2> /dev/null`
             else
                  FILECHECK="fail"
             fi
-            FILEFOUND=`ls ${qunex_subjectsfolder}/${CASE}/nii/* | wc -l 2> /dev/null`
+            FILEFOUND=`ls ${QuNexSubjectsFolder}/${CASE}/nii/* | wc -l 2> /dev/null`
             if [ -z ${FILEFOUND} ]; then
                 FILECHECK="fail"
             fi
@@ -1461,29 +1461,29 @@ fi
                        echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                        echo " -- HCP DATA FOUND " 2>&1 | tee -a ${mapRawData_ComlogTmp}
                        echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       mkdir ${qunex_subjectsfolder}/inbox/BIDS/${CASE} &> /dev/null
-                       cp -r ${RawDataInputPath}/* ${qunex_subjectsfolder}/inbox/${DATAFormat}/${CASE}/
+                       mkdir ${QuNexSubjectsFolder}/inbox/BIDS/${CASE} &> /dev/null
+                       cp -r ${RawDataInputPath}/* ${QuNexSubjectsFolder}/inbox/${DATAFormat}/${CASE}/
                        INTYPE=dataset
                    else
                        echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                        geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                       geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}
                        echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                       curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip
+                       curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip
                    fi
                 else
                     # -- Get the BIDS data in ZIP format via curl
                     echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                     geho " -- Running:  " 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                    geho "  curl -u XNAT_USER_NAME:XNAT_PASSWORD -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip " 2>&1 | tee -a ${mapRawData_ComlogTmp}
                     echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip
+                    curl -u ${XNAT_USER_NAME}:${XNAT_PASSWORD} -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/subjects/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip
                     INTYPE=zip
                 fi
             else
                 # --- we have a zip file            
                 if [ -e ${RawDataInputPath}/${CASE}.zip ]; then
-                    cp -r ${RawDataInputPath}/${CASE}.zip ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip
+                    cp -r ${RawDataInputPath}/${CASE}.zip ${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip
                     INTYPE=zip
                 else
                     INTYPE=dataset
@@ -1502,27 +1502,27 @@ fi
             if [[ ${INTYPE} == "zip" ]]; then 
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 geho "  --> processing a single ${DATAFormat} formated package [${CASE}.zip]" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QUNEXCOMMAND} HCPLSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp} 
+                geho "  ${QuNexCommand} HCPLSImport --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip\" --action=\"copy\" --overwrite=\"yes\" --archive=\"delete\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp} 
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QUNEXCOMMAND} HCPLSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${qunex_subjectsfolder}/inbox/HCPLS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
+                ${QuNexCommand} HCPLSImport --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}.zip" --action="copy" --overwrite="yes" --archive="delete" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
             elif [[  ${INTYPE} == "dataset" ]]; then
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 geho "  --> processing a single ${DATAFormat} session [${CASE}] from the ${DATAFormat} dataset" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                geho "  ${QUNEXCOMMAND} HCPLSImport --subjectsfolder=\"${qunex_subjectsfolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                geho "  ${QuNexCommand} HCPLSImport --subjectsfolder=\"${QuNexSubjectsFolder}\" --inbox=\"${RawDataInputPath}\" --sessions=\"${CASE}\" --action=\"copy\" --overwrite=\"yes\" --archive=\"leave\" $HCPLSNameFormat " 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 echo "" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                ${QUNEXCOMMAND} HCPLSImport --subjectsfolder="${qunex_subjectsfolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
+                ${QuNexCommand} HCPLSImport --subjectsfolder="${QuNexSubjectsFolder}" --inbox="${RawDataInputPath}" --sessions="${CASE}" --action="copy" --overwrite="yes" --archive="leave" $HCPLSNameFormat >> ${mapRawData_ComlogTmp}
             fi
 
             popd 2> /dev/null
-            rm -rf ${qunex_subjectsfolder}/inbox/HCPLS/${CASE}* &> /dev/null
+            rm -rf ${QuNexSubjectsFolder}/inbox/HCPLS/${CASE}* &> /dev/null
             
             # -- Run HCPLS completion checks on mapped data
-            if [ -f ${qunex_subjectsfolder}/${CASE}/hcpls/hcpls2nii.log ]; then
-                FILESEXPECTED=`more ${qunex_subjectsfolder}/${CASE}/hcpls/hcpls2nii.log | grep "=>" | wc -l 2> /dev/null`
+            if [ -f ${QuNexSubjectsFolder}/${CASE}/hcpls/hcpls2nii.log ]; then
+                FILESEXPECTED=`more ${QuNexSubjectsFolder}/${CASE}/hcpls/hcpls2nii.log | grep "=>" | wc -l 2> /dev/null`
             else
                 FILECHECK="fail"
             fi
-            FILEFOUND=`ls ${qunex_subjectsfolder}/${CASE}/nii/* | wc -l 2> /dev/null`
+            FILEFOUND=`ls ${QuNexSubjectsFolder}/${CASE}/nii/* | wc -l 2> /dev/null`
             if [ -z ${FILEFOUND} ]; then
                 FILECHECK="fail"
             fi
@@ -1556,7 +1556,7 @@ fi
         else
             if [[ ${InputArchive} != "yes" ]]; then
                 echo "  --> DICOM file count in input folder /input/SCANS: ${DicomInputCount}" 2>&1 | tee -a ${mapRawData_ComlogTmp}
-                echo "  --> DICOM file count in output folder ${rawdir}: ${DicomMappedCount}" 2>&1 | tee -a ${mapRawData_ComlogTmp}
+                echo "  --> DICOM file count in output folder ${QuNexRawInboxDir}: ${DicomMappedCount}" 2>&1 | tee -a ${mapRawData_ComlogTmp}
                 echo "  --> DICOM mapping check: ${FILECHECK}" 2>&1 | tee -a ${mapRawData_ComlogTmp}
             fi
             if [[ ${InputArchive} == "yes" ]]; then
@@ -1583,30 +1583,30 @@ fi
     # -- processInbox for DICOMs
     turnkey_processInbox() {
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        processInbox_Runlog="${logdir}/runlogs/Log-processInbox_${TimeStamp}.log"
-        processInbox_ComlogTmp="${logdir}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
-        processInbox_ComlogError="${logdir}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
-        processInbox_ComlogDone="${logdir}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
+        processInbox_Runlog="${QuNexMasterLogFolder}/runlogs/Log-processInbox_${TimeStamp}.log"
+        processInbox_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_processInbox_${CASE}_${TimeStamp}.log"; touch ${processInbox_ComlogTmp}; chmod 777 ${processInbox_ComlogTmp}
+        processInbox_ComlogError="${QuNexMasterLogFolder}/comlogs/error_processInbox_${CASE}_${TimeStamp}.log"
+        processInbox_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_processInbox_${CASE}_${TimeStamp}.log"
         if [[ ${DATAFormat} == "DICOM" ]]; then
             # ------------------------------ non-XNAT code
             echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
             cyaneho " ===> RunTurnkey ~~~ RUNNING: processInbox ..." 2>&1 | tee -a ${processInbox_ComlogTmp}
             echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
 
-            ExecuteCall="${QUNEXCOMMAND} processInbox --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
+            ExecuteCall="${QuNexCommand} processInbox --subjectsfolder='${QuNexSubjectsFolder}' --sessions='${CASE}' --masterinbox='none' --archive='delete' --check='any' --unzip='yes' --gzip='yes' --overwrite='${OVERWRITE_STEP}'"
             echo ""
             echo " -- Executed call:"
             echo "    $ExecuteCall"
             echo ""
             eval ${ExecuteCall} 2>&1 | tee -a ${processInbox_ComlogTmp}
-            cd ${qunex_subjectsfolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done            
+            cd ${QuNexSubjectsFolder}/${CASE}/nii; NIILeadZeros=`ls ./0*.nii.gz 2>/dev/null`; for NIIwithZero in ${NIILeadZeros}; do NIIwithoutZero=`echo ${NIIwithZero} | sed 's/0//g'`; mv ${NIIwithZero} ${NIIwithoutZero}; done            
 
             # ------------------------------ XNAT code
             if [ ${TURNKEY_TYPE} == "xnat" ]; then
                 echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
                 geho "---> Cleaning up XNAT run working directory and removing inbox folder" 2>&1 | tee -a ${processInbox_ComlogTmp}
                 echo "" 2>&1 | tee -a ${processInbox_ComlogTmp}
-                rm -rf ${qunex_WORKDIR}/inbox &> /dev/null
+                rm -rf ${QuNexWorkDir}/inbox &> /dev/null
             fi
             # ------------------------------ END XNAT code
 
@@ -1629,26 +1629,26 @@ fi
     # -- Generate subject_hcp.txt file
     turnkey_getHCPReady() {
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        getHCPReady_Runlog="${logdir}/runlogs/Log-getHCPReady_${TimeStamp}.log"
-        getHCPReady_ComlogTmp="${logdir}/comlogs/tmp_getHCPReady_${CASE}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
-        getHCPReady_ComlogError="${logdir}/comlogs/error_getHCPReady_${CASE}_${TimeStamp}.log"
-        getHCPReady_ComlogDone="${logdir}/comlogs/done_getHCPReady_${CASE}_${TimeStamp}.log"
+        getHCPReady_Runlog="${QuNexMasterLogFolder}/runlogs/Log-getHCPReady_${TimeStamp}.log"
+        getHCPReady_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_getHCPReady_${CASE}_${TimeStamp}.log"; touch ${getHCPReady_ComlogTmp}; chmod 777 ${getHCPReady_ComlogTmp}
+        getHCPReady_ComlogError="${QuNexMasterLogFolder}/comlogs/error_getHCPReady_${CASE}_${TimeStamp}.log"
+        getHCPReady_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_getHCPReady_${CASE}_${TimeStamp}.log"
         
         echo ""  2>&1 | tee -a ${getHCPReady_ComlogTmp}
         cyaneho " ===> RunTurnkey ~~~ RUNNING: getHCPReady ..." 2>&1 | tee -a ${getHCPReady_ComlogTmp}
         echo "" 2>&1 | tee -a ${getHCPReady_ComlogTmp}
         
         if [[ "${OVERWRITE_STEP}" == "yes" ]]; then
-            rm -rf ${qunex_subjectsfolder}/${CASE}/subject_hcp.txt &> /dev/null
+            rm -rf ${QuNexSubjectsFolder}/${CASE}/subject_hcp.txt &> /dev/null
         fi
-        if [ -f ${qunex_subjectsfolder}/subject_hcp.txt ]; then
+        if [ -f ${QuNexSubjectsFolder}/subject_hcp.txt ]; then
             echo "" 2>&1 | tee -a ${getHCPReady_ComlogTmp}
-            geho " ===> ${qunex_subjectsfolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run." 2>&1 | tee -a ${getHCPReady_ComlogTmp}
+            geho " ===> ${QuNexSubjectsFolder}/subject_hcp.txt exists. Set --overwrite='yes' to re-run." 2>&1 | tee -a ${getHCPReady_ComlogTmp}
             echo "" 2>&1 | tee -a ${getHCPReady_ComlogTmp}
             return 0
         fi
         # ------------------------------
-        ExecuteCall="${QUNEXCOMMAND} getHCPReady --subjectsfolder="${qunex_subjectsfolder}" --sessions="${CASE}" --mapping="${SpecsMappingFile}""
+        ExecuteCall="${QuNexCommand} getHCPReady --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${CASE}" --mapping="${SpecsMappingFile}""
         echo ""
         echo " -- Executed call:"
         echo "    $ExecuteCall"
@@ -1671,20 +1671,20 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: setupHCP ..."; echo ""
         # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        setupHCP_Runlog="${logdir}/runlogs/Log-setupHCP_${TimeStamp}.log"
-        setupHCP_ComlogTmp="${logdir}/comlogs/tmp_setupHCP_${CASE}_${TimeStamp}.log"; touch ${setupHCP_ComlogTmp}; chmod 777 ${setupHCP_ComlogTmp}
-        setupHCP_ComlogError="${logdir}/comlogs/error_setupHCP_${CASE}_${TimeStamp}.log"
-        setupHCP_ComlogDone="${logdir}/comlogs/done_setupHCP_${CASE}_${TimeStamp}.log"
+        setupHCP_Runlog="${QuNexMasterLogFolder}/runlogs/Log-setupHCP_${TimeStamp}.log"
+        setupHCP_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_setupHCP_${CASE}_${TimeStamp}.log"; touch ${setupHCP_ComlogTmp}; chmod 777 ${setupHCP_ComlogTmp}
+        setupHCP_ComlogError="${QuNexMasterLogFolder}/comlogs/error_setupHCP_${CASE}_${TimeStamp}.log"
+        setupHCP_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_setupHCP_${CASE}_${TimeStamp}.log"
         if [[ ${OVERWRITE_STEP} == "yes" ]]; then
            echo "  -- Removing prior hard link mapping..."; echo ""
            # rm -rf ${ProcessingBatchFile} &> /dev/null
-           HLinks=`ls ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
+           HLinks=`ls ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/*/*nii* 2>/dev/null`; for HLink in ${HLinks}; do unlink ${HLink}; done
         fi        
-        ExecuteCall="${QUNEXCOMMAND} setupHCP --subjectsfolder='${qunex_subjectsfolder}' --sessions='${CASE}' --existing='clear' --filename='${HCPFilename}'"
+        ExecuteCall="${QuNexCommand} setupHCP --subjectsfolder='${QuNexSubjectsFolder}' --sessions='${CASE}' --existing='clear' --filename='${HCPFilename}'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${setupHCP_ComlogTmp}
         # geho " -- Generating ${ProcessingBatchFile}"; echo ""
-        # cp ${SpecsBatchFileHeader} ${ProcessingBatchFile}; cat ${qunex_WORKDIR}/subject_hcp.txt >> ${ProcessingBatchFile}
+        # cp ${SpecsBatchFileHeader} ${ProcessingBatchFile}; cat ${QuNexWorkDir}/subject_hcp.txt >> ${ProcessingBatchFile}
         if [[ ! -z `cat ${setupHCP_ComlogTmp} | grep 'Successful completion'` ]]; then setupHCPCheck="pass"; else setupHCPCheck="fail"; fi
         if [[ ${setupHCPCheck} == "pass" ]]; then
             mv ${setupHCP_ComlogTmp} ${setupHCP_ComlogDone}
@@ -1701,11 +1701,11 @@ fi
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createBatch ..."; echo ""
         # ------------------------------
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        createBatch_Runlog="${logdir}/runlogs/Log-createBatch_${TimeStamp}.log"
-        createBatch_ComlogTmp="${logdir}/comlogs/tmp_createBatch_${CASE}_${TimeStamp}.log"; touch ${createBatch_ComlogTmp}; chmod 777 ${createBatch_ComlogTmp}
-        createBatch_ComlogError="${logdir}/comlogs/error_createBatch_${CASE}_${TimeStamp}.log"
-        createBatch_ComlogDone="${logdir}/comlogs/done_createBatch_${CASE}_${TimeStamp}.log"
-        ExecuteCall="${QUNEXCOMMAND} createBatch --subjectsfolder='${qunex_subjectsfolder}' --tfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='append'"
+        createBatch_Runlog="${QuNexMasterLogFolder}/runlogs/Log-createBatch_${TimeStamp}.log"
+        createBatch_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_createBatch_${CASE}_${TimeStamp}.log"; touch ${createBatch_ComlogTmp}; chmod 777 ${createBatch_ComlogTmp}
+        createBatch_ComlogError="${QuNexMasterLogFolder}/comlogs/error_createBatch_${CASE}_${TimeStamp}.log"
+        createBatch_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_createBatch_${CASE}_${TimeStamp}.log"
+        ExecuteCall="${QuNexCommand} createBatch --subjectsfolder='${QuNexSubjectsFolder}' --tfile='${ProcessingBatchFile}' --paramfile='${SpecsBatchFileHeader}' --sessions='${CASE}' --overwrite='append'"
         echo ""; echo " -- Executed call:"; echo "   $ExecuteCall"; echo ""
         eval ${ExecuteCall} 2>&1 | tee -a ${createBatch_ComlogTmp}
         if [[ ! -z `cat ${createBatch_ComlogTmp} | grep 'Successful completion'` ]]; then createBatchCheck="pass"; else createBatchCheck="fail"; fi
@@ -1724,24 +1724,24 @@ fi
     
     # --> FINISH adding rawNII checks here and integrate w/runQC function
     runQC_Finalize() {
-        runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-        # runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`       # --> Commented for massively parallel processing
-        rename runQC runQC_${QCLogName} ${logdir}/comlogs/${runQCComLog} 2> /dev/null
-        # rename runQC runQC_${QCLogName} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
-        mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-        mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
-        mkdir -p ${qunex_subjectsfolder}/${CASE}/QC/${Modality} 2> /dev/null
-        cp ${logdir}/comlogs/${runQCComLog} ${qunex_subjectsfolder}/${CASE}/logs/comlog/ 2> /dev/null
-        cp ${logdir}/comlogs/${runQCRunLog} ${qunex_subjectsfolder}/${CASE}/logs/comlog/ 2> /dev/null
-        cp ${qunex_subjectsfolder}/subjects/QC/${Modality}/*${CASE}*scene ${qunex_subjectsfolder}/${CASE}/QC/${Modality}/ 2> /dev/null
-        cp ${qunex_subjectsfolder}/subjects/QC/${Modality}/*${CASE}*zip ${qunex_subjectsfolder}/${CASE}/QC/${Modality}/ 2> /dev/null
+        runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+        # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`       # --> Commented for massively parallel processing
+        rename runQC runQC_${QCLogName} ${QuNexMasterLogFolder}/comlogs/${runQCComLog} 2> /dev/null
+        # rename runQC runQC_${QCLogName} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+        mkdir -p ${QuNexSubjectsFolder}/${CASE}/logs/comlog 2> /dev/null
+        mkdir -p ${QuNexSubjectsFolder}/${CASE}/logs/runlog 2> /dev/null
+        mkdir -p ${QuNexSubjectsFolder}/${CASE}/QC/${Modality} 2> /dev/null
+        cp ${QuNexMasterLogFolder}/comlogs/${runQCComLog} ${QuNexSubjectsFolder}/${CASE}/logs/comlog/ 2> /dev/null
+        cp ${QuNexMasterLogFolder}/comlogs/${runQCRunLog} ${QuNexSubjectsFolder}/${CASE}/logs/comlog/ 2> /dev/null
+        cp ${QuNexSubjectsFolder}/subjects/QC/${Modality}/*${CASE}*scene ${QuNexSubjectsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null
+        cp ${QuNexSubjectsFolder}/subjects/QC/${Modality}/*${CASE}*zip ${QuNexSubjectsFolder}/${CASE}/QC/${Modality}/ 2> /dev/null
     }
 
     # -- runQC_rawNII (after organizing DICOM files)
     turnkey_runQC_rawNII() {
         Modality="rawNII"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC step for ${Modality} data ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --modality="${Modality}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --modality="${Modality}"
         QCLogName="rawNII"
         runQC_Finalize
     }
@@ -1751,34 +1751,34 @@ fi
     # -- PreFreeSurfer
     turnkey_hcp1() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp1 (hcp_PreFS) ... "; echo ""
-        ${QUNEXCOMMAND} hcp1 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcp1 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --subjid="${SUBJID}"
     }
     # -- FreeSurfer
     turnkey_hcp2() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp2 (hcp_FS) ... "; echo ""
-        ${QUNEXCOMMAND} hcp2 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcp2 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --subjid="${SUBJID}"
         CleanupFiles=" talairach_with_skull.log lh.white.deformed.out lh.pial.deformed.out rh.white.deformed.out rh.pial.deformed.out"
         for CleanupFile in ${CleanupFiles}; do 
-            cp ${logdir}/${CleanupFile} ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/${CASE}/scripts/ 2>/dev/null
-            rm -rf ${logdir}/${CleanupFile}
+            cp ${QuNexMasterLogFolder}/${CleanupFile} ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/T1w/${CASE}/scripts/ 2>/dev/null
+            rm -rf ${QuNexMasterLogFolder}/${CleanupFile}
         done
-        rm -rf ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/fsaverage 2>/dev/null
-        rm -rf ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/rh.EC_average 2>/dev/null
-        rm -rf ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/lh.EC_average 2>/dev/null
-        cp -r $FREESURFER_HOME/subjects/lh.EC_average ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
-        cp -r $FREESURFER_HOME/subjects/fsaverage ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
-        cp -r $FREESURFER_HOME/subjects/rh.EC_average ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
+        rm -rf ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/T1w/fsaverage 2>/dev/null
+        rm -rf ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/T1w/rh.EC_average 2>/dev/null
+        rm -rf ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/T1w/lh.EC_average 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/lh.EC_average ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/fsaverage ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
+        cp -r $FREESURFER_HOME/subjects/rh.EC_average ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/T1w/ 2>/dev/null
     }
     # -- PostFreeSurfer
     turnkey_hcp3() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp3 (hcp_PostFS) ... "; echo ""
-        ${QUNEXCOMMAND} hcp3 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcp3 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --subjid="${SUBJID}"
     }
     # -- runQC_T1w (after hcp3)
     turnkey_runQC_T1w() {
         Modality="T1w"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC step for ${Modality} data ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="T1w"
         runQC_Finalize
     }
@@ -1786,7 +1786,7 @@ fi
     turnkey_runQC_T2w() {
         Modality="T2w"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC step for ${Modality} data ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="T2w"
         runQC_Finalize
     }
@@ -1794,7 +1794,7 @@ fi
     turnkey_runQC_Myelin() {
         Modality="myelin"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC step for ${Modality} data ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="Myelin"
         runQC_Finalize
     }
@@ -1802,13 +1802,13 @@ fi
     turnkey_hcp4() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp4 (hcp_fMRIVolume) ... ${BOLDS:+BOLDS:} ${BOLDS}"; echo ""
         HCPLogName="hcpfMRIVolume"
-        ${QUNEXCOMMAND} hcp4 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}" ${BOLDS:+--bolds=}"$BOLDS"
+        ${QuNexCommand} hcp4 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}" ${BOLDS:+--bolds=}"$BOLDS"
     }
     # -- fMRISurface
     turnkey_hcp5() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcp5 (hcp_fMRISurface) ... ${BOLDS:+BOLDS:} ${BOLDS}"; echo ""
         HCPLogName="hcpfMRISurface"
-        ${QUNEXCOMMAND} hcp5 --subjectsfolder="${qunex_subjectsfolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}" ${BOLDS:+--bolds=}"$BOLDS"
+        ${QuNexCommand} hcp5 --subjectsfolder="${QuNexSubjectsFolder}" --sessions="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}" ${BOLDS:+--bolds=}"$BOLDS"
     }
     # -- runQC_BOLD (after hcp5)
     turnkey_runQC_BOLD() {
@@ -1824,28 +1824,28 @@ fi
         
         # -- Loop through BOLD runs
         for BOLDRUN in ${LBOLDRUNS}; do
-            ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
-            runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            # runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-            rename runQC runQC_BOLD${BOLD} ${logdir}/comlogs/${runQCComLog}
-            # rename runQC runQC_BOLD${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+            ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --hcp_suffix="${HCPSuffix}"
+            runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
+            rename runQC runQC_BOLD${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
+            # rename runQC runQC_BOLD${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
     # -- Diffusion HCP (after hcp1)
     turnkey_hcpd() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step: hcpd (hcp_Diffusion) ..."; echo ""
-        ${QUNEXCOMMAND} hcpd --subjectsfolder="${qunex_subjectsfolder}" --subjects="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
+        ${QuNexCommand} hcpd --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${ProcessingBatchFile}" --overwrite="${OVERWRITE_STEP}" --subjid="${SUBJID}"
     }
     # -- Diffusion Legacy (after hcp1)
     turnkey_hcpdLegacy() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: HCP Pipelines step hcpdLegacy ..."; echo ""
-        ${QUNEXCOMMAND} hcpdLegacy --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
+        ${QuNexCommand} hcpdLegacy --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --scanner="${Scanner}" --usefieldmap="${UseFieldmap}" --echospacing="${EchoSpacing}" --PEdir="{PEdir}" --unwarpdir="${UnwarpDir}" --diffdatasuffix="${DiffDataSuffix}" --TE="${TE}"
     }
     # -- runQC_DWILegacy (after hcpd)
     turnkey_runQC_DWILegacy() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC step for ${Modality} legacy data ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --dwidata="data" --dwipath="Diffusion" --dwilegacy="${DWILegacy}" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWILegacy"
         runQC_Finalize
     }
@@ -1853,7 +1853,7 @@ fi
     turnkey_runQC_DWI() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC steps for ${Modality} HCP processing ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${logdir}" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/DWI" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwidata="data" --dwipath="Diffusion" --logfolder="${QuNexMasterLogFolder}" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWI"
         runQC_Finalize
     }
@@ -1876,13 +1876,13 @@ fi
         # --bvecsfile='DWI_dir74_AP_b1000b2500.bvec' 
         # --mask='DWI_dir74_AP_b1000b2500_nodif_brain_mask.nii.gz' 
         #
-        ${QUNEXCOMMAND} eddyQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
+        ${QuNexCommand} eddyQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --eddybase="${EddyBase}" --eddypath="${EddyPath}" --report="${Report}" --bvalsfile="${BvalsFile}" --mask="${Mask}" --eddyidx="${EddyIdx}" --eddyparams="${EddyParams}" --bvecsfile="${BvecsFile}" --overwrite="${OVERWRITE_STEP}"
     }
     # -- runQC_DWIeddyQC (after eddyQC)
     turnkey_runQC_DWIeddyQC() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC steps for ${Modality} eddyQC ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${qunex_subjectsfolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${QuNexSubjectsFolder}/QC/DWI" -modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --eddyqcstats="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIeddyQC"
         runQC_Finalize
     }
@@ -1894,7 +1894,7 @@ fi
     # -- FSLDtifit (after hcpd or hcpdLegacy)
     turnkey_FSLDtifit() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: : FSLDtifit for DWI... "; echo ""
-        ${QUNEXCOMMAND} FSLDtifit --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}"
+        ${QuNexCommand} FSLDtifit --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}"
     }
     # -- FSLBedpostxGPU (after FSLDtifit)
     turnkey_FSLBedpostxGPU() {
@@ -1903,13 +1903,13 @@ fi
         if [ -z "$Model" ]; then Model="3"; fi
         if [ -z "$Burnin" ]; then Burnin="3000"; fi
         if [ -z "$Rician" ]; then Rician="yes"; fi
-        ${QUNEXCOMMAND} FSLBedpostxGPU --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
+        ${QuNexCommand} FSLBedpostxGPU --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --fibers="${Fibers}" --burnin="${Burnin}" --model="${Model}" --rician="${Rician}"
     }
     # -- runQC_DWIDTIFIT (after FSLDtifit)
     turnkey_runQC_DWIDTIFIT() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC steps for ${Modality} FSL's dtifit analyses ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${qunex_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${QuNexSubjectsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --dtifitqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIDTIFIT" 
         runQC_Finalize
     }
@@ -1917,19 +1917,19 @@ fi
     turnkey_runQC_DWIBedpostX() {
         Modality="DWI"
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: runQC steps for ${Modality} FSL's BedpostX analyses ... "; echo ""
-        ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${qunex_subjectsfolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
+        ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --outpath="${QuNexSubjectsFolder}/QC/DWI" --modality="${Modality}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --bedpostxqc="yes" --hcp_suffix="${HCPSuffix}"
         QCLogName="DWIBedpostX" 
         runQC_Finalize
     }
     # -- probtrackxGPUDense for DWI data (after FSLBedpostxGPU)
     turnkey_probtrackxGPUDense() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: probtrackxGPUDense ... "; echo ""
-        ${QUNEXCOMMAND} probtrackxGPUDense --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+        ${QuNexCommand} probtrackxGPUDense --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
     # -- pretractographyDense for DWI data (after FSLBedpostxGPU)
     turnkey_pretractographyDense() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: pretractographyDense ... "; echo ""
-        ${QUNEXCOMMAND} pretractographyDense --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
+        ${QuNexCommand} pretractographyDense --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --omatrix1="yes" --omatrix3="yes"
     }
     # -- DWIDenseParcellationfor DWI data (after pretractographyDense)
     turnkey_DWIDenseParcellation() {
@@ -1941,7 +1941,7 @@ fi
         if [ -z "$ParcellationFile" ]; then ParcellationFile="${TOOLS}/${QUNEXREPO}/library/data/parcellations/ColeAnticevicNetPartition/CortexSubcortex_ColeAnticevic_NetPartition_wSubcorGSR_parcels_LR.dlabel.nii"; fi
         if [ -z "$DWIOutName" ]; then DWIOutName="DWI-CAB-NP-v1.0"; fi
         for MatrixVersion in $MatrixVersions; do
-            ${QUNEXCOMMAND} DWIDenseParcellation --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
+            ${QuNexCommand} DWIDenseParcellation --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --waytotal="${WayTotal}" --matrixversion="${MatrixVersion}" --parcellationfile="${ParcellationFile}" --outname="${DWIOutName}"
         done
     }
     # -- DWISeedTractography for DWI data (after pretractographyDense)
@@ -1953,14 +1953,14 @@ fi
             # Thalamus SomatomotorSensory
             SeedFile="${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-SomatomotorSensory.symmetrical.intersectionLR.nii" 
             OutName="DWI_THALAMUS_FSL_LR_SomatomotorSensory_Symmetrical_intersectionLR"
-            ${QUNEXCOMMAND} DWISeedTractography --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${QuNexCommand} DWISeedTractography --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
             # Thalamus Prefrontal
             SeedFile="${TOOLS}/${QUNEXREPO}/library/data/atlases/Thalamus_Atlas/Thalamus-maxprob-thr25-2mm.AtlasMasked-Prefrontal.symmetrical.intersectionLR.nii" 
             OutName="DWI_THALAMUS_FSL_LR_Prefrontal"
-            ${QUNEXCOMMAND} DWISeedTractography --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
+            ${QuNexCommand} DWISeedTractography --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutName}" --seedfile="${SeedFile}"
         fi
         OutNameGBC="DWI_GBC"
-        ${QUNEXCOMMAND} DWISeedTractography --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
+        ${QuNexCommand} DWISeedTractography --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --overwrite="${OVERWRITE_STEP}" --matrixversion="${MatrixVersion}" --waytotal="${WayTotal}" --outname="${OutNameGBC}" --seedfile="gbc"
     }
     #
     # --------------- DWI Processing and analyses end --------------------------
@@ -1991,18 +1991,18 @@ fi
                 echo "====> Looping through these BOLDRUNS: ${LBOLDRUNS}"
                 for BOLDRUN in ${LBOLDRUNS}; do
                     echo "----> Now working on BOLDRUN: ${BOLDRUN}"
-                    ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
-                    runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-                    # runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-                    rename runQC runQC_CustomBOLD${BOLD} ${logdir}/comlogs/${runQCComLog}
-                    # rename runQC runQC_CustomBOLD${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+                    ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolddata="${BOLDRUN}" --customqc='yes' --omitdefaults='yes' --hcp_suffix="${HCPSuffix}"
+                    runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+                    # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
+                    rename runQC runQC_CustomBOLD${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
+                    # rename runQC runQC_CustomBOLD${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
                 done
             elif [[ ${Modality} == "DWI" ]]; then
-                ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
+                ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --dwilegacy="${DWILegacy}" --dwidata="data" --dwipath="Diffusion" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
                 QCLogName="Custom${Modality}"
                 runQC_Finalize
             else
-                ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
+                ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}"  --overwrite="${OVERWRITE_STEP}" --customqc="yes" --omitdefaults="yes" --hcp_suffix="${HCPSuffix}"
                 QCLogName="Custom${Modality}"
                 if [[ ${Modality} == "myelin" ]]; then QCLogName="CustomMyelin"; fi
                 runQC_Finalize
@@ -2017,24 +2017,24 @@ fi
     #
     # -- Specific checks for BOLD Fc functions
     BOLDfcLogCheck() {
-        cd ${logdir}/comlogs/
+        cd ${QuNexMasterLogFolder}/comlogs/
         ComLogName=`ls -t1 ./*${FunctionName}*${CASE}*log | head -1 | xargs -n 1 basename 2> /dev/null`
         if [ ! -z ${ComLogName} ]; then echo " ===> Comlog: $ComLogName"; echo ""; fi
-        rename ${FunctionName} ${TURNKEY_STEP} ${logdir}/comlogs/${ComLogName} 2> /dev/null
+        rename ${FunctionName} ${TURNKEY_STEP} ${QuNexMasterLogFolder}/comlogs/${ComLogName} 2> /dev/null
 
-        cd ${logdir}/runlogs/
+        cd ${QuNexMasterLogFolder}/runlogs/
         # RunLogName=`ls -t1 ./Log-${FunctionName}*log | head -1 | xargs -n 1 basename 2> /dev/null`  # --> Commented for massively parallel processing
         # if [ ! -z ${ComLogName} ]; then echo " ===> RunLog: $RunLogName"; echo ""; fi               # --> Commented for massively parallel processing
-        # rename ${FunctionName} ${TURNKEY_STEP} ${logdir}/runlogs/${RunLogName} 2> /dev/null         # --> Commented for massively parallel processing
+        # rename ${FunctionName} ${TURNKEY_STEP} ${QuNexMasterLogFolder}/runlogs/${RunLogName} 2> /dev/null         # --> Commented for massively parallel processing
         
         geho " -- Looking for incomplete/failed process ..."; echo ""
         
-        CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
-        # CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`     # --> Commented for massively parallel processing
-        mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-        mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
-        cp ${CheckComLog} ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-        # cp ${CheckRunLog} ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null                  # --> Commented for massively parallel processing
+        CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        # CheckRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`     # --> Commented for massively parallel processing
+        mkdir -p ${QuNexSubjectsFolder}/${CASE}/logs/comlog 2> /dev/null
+        mkdir -p ${QuNexSubjectsFolder}/${CASE}/logs/runlog 2> /dev/null
+        cp ${CheckComLog} ${QuNexSubjectsFolder}/${CASE}/logs/comlog 2> /dev/null
+        # cp ${CheckRunLog} ${QuNexSubjectsFolder}/${CASE}/logs/runlog 2> /dev/null                  # --> Commented for massively parallel processing
         
         if [ -z "${CheckComLog}" ]; then
            TURNKEY_STEP_ERRORS="yes"
@@ -2056,93 +2056,93 @@ fi
     # -- Map HCP processed outputs for further FC BOLD analyses
     turnkey_mapHCPData() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: mapHCPData ... "; echo ""
-        ${QUNEXCOMMAND} mapHCPData \
+        ${QuNexCommand} mapHCPData \
         --sessions="${ProcessingBatchFile}" \
-        --subjectsfolder="${qunex_subjectsfolder}" \
+        --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}" \
+        --logfolder="${QuNexMasterLogFolder}" \
         --subjid="${SUBJID}"
     }
     # -- Generate brain masks for de-noising
     turnkey_createBOLDBrainMasks() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createBOLDBrainMasks ... "; echo ""
-        ${QUNEXCOMMAND} createBOLDBrainMasks \
+        ${QuNexCommand} createBOLDBrainMasks \
         --sessions="${ProcessingBatchFile}" \
-        --subjectsfolder="${qunex_subjectsfolder}" \
+        --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}" \
+        --logfolder="${QuNexMasterLogFolder}" \
         --subjid="${SUBJID}"
     }
     # -- Compute BOLD statistics
     turnkey_computeBOLDStats() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: computeBOLDStats ... "; echo ""
-        ${QUNEXCOMMAND} computeBOLDStats \
+        ${QuNexCommand} computeBOLDStats \
         --sessions="${ProcessingBatchFile}" \
-        --subjectsfolder="${qunex_subjectsfolder}" \
+        --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}" \
+        --logfolder="${QuNexMasterLogFolder}" \
         --subjid="${SUBJID}"
     }
     # -- Create final BOLD statistics report
     turnkey_createStatsReport() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: createStatsReport ... "; echo ""
-        ${QUNEXCOMMAND} createStatsReport \
+        ${QuNexCommand} createStatsReport \
         --sessions="${ProcessingBatchFile}" \
-        --subjectsfolder="${qunex_subjectsfolder}" \
+        --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}" \
+        --logfolder="${QuNexMasterLogFolder}" \
         --subjid="${SUBJID}"
     }
     # -- Extract nuisance signal for further de-noising
     turnkey_extractNuisanceSignal() {
         cyaneho " ===> RunTurnkey ~~~ RUNNING: extractNuisanceSignal ... "; echo ""
-        ${QUNEXCOMMAND} extractNuisanceSignal \
+        ${QuNexCommand} extractNuisanceSignal \
         --sessions="${ProcessingBatchFile}" \
-        --subjectsfolder="${qunex_subjectsfolder}" \
+        --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}" \
+        --logfolder="${QuNexMasterLogFolder}" \
         --subjid="${SUBJID}"
     }
     # -- Process BOLDs
     turnkey_preprocessBold() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: preprocessBold ... "; echo ""
-        ${QUNEXCOMMAND} preprocessBold \
+        ${QuNexCommand} preprocessBold \
         --sessions="${ProcessingBatchFile}" \
-        --subjectsfolder="${qunex_subjectsfolder}" \
+        --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}" \
+        --logfolder="${QuNexMasterLogFolder}" \
         --subjid="${SUBJID}"
     }
     # -- Process via CONC file
     turnkey_preprocessConc() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: preprocessConc ... "; echo ""
-        ${QUNEXCOMMAND} preprocessConc \
+        ${QuNexCommand} preprocessConc \
         --sessions="${ProcessingBatchFile}" \
-        --subjectsfolder="${qunex_subjectsfolder}" \
+        --subjectsfolder="${QuNexSubjectsFolder}" \
         --overwrite="${OVERWRITE_STEP}" \
-        --logfolder="${logdir}" \
+        --logfolder="${QuNexMasterLogFolder}" \
         --subjid="${SUBJID}"
     }
     # -- Compute g_PlotBoldTS ==> (08/14/17 - 6:50PM): Coded but not final yet due to Octave/Matlab problems
     turnkey_g_PlotBoldTS() {
         echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: g_PlotBoldTS QC plotting ... "; echo ""
         TimeStamp=`date +%Y-%m-%d_%H.%M.%10N`
-        g_PlotBoldTS_Runlog="${logdir}/runlogs/Log-g_PlotBoldTS_${TimeStamp}.log"
-        g_PlotBoldTS_ComlogTmp="${logdir}/comlogs/tmp_g_PlotBoldTS_${CASE}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
-        g_PlotBoldTS_ComlogError="${logdir}/comlogs/error_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
-        g_PlotBoldTS_ComlogDone="${logdir}/comlogs/done_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
+        g_PlotBoldTS_Runlog="${QuNexMasterLogFolder}/runlogs/Log-g_PlotBoldTS_${TimeStamp}.log"
+        g_PlotBoldTS_ComlogTmp="${QuNexMasterLogFolder}/comlogs/tmp_g_PlotBoldTS_${CASE}_${TimeStamp}.log"; touch ${g_PlotBoldTS_ComlogTmp}; chmod 777 ${g_PlotBoldTS_ComlogTmp}
+        g_PlotBoldTS_ComlogError="${QuNexMasterLogFolder}/comlogs/error_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
+        g_PlotBoldTS_ComlogDone="${QuNexMasterLogFolder}/comlogs/done_g_PlotBoldTS_${CASE}_${TimeStamp}.log"
         
         if [ -z ${QCPlotElements} ]; then
               QCPlotElements="type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1|colormap=hsv;type=signal|name=WM|imageindex=1|maskindex=1|colormap=jet;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|use=1|scale=3"
         fi
         if [ -z ${QCPlotMasks} ]; then
-              QCPlotMasks="${qunex_subjectsfolder}/${CASE}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz"
+              QCPlotMasks="${QuNexSubjectsFolder}/${CASE}/images/segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz"
         fi
         if [ -z ${images_folder} ]; then
-            images_folder="${qunex_subjectsfolder}/$CASE/images/functional"
+            images_folder="${QuNexSubjectsFolder}/$CASE/images/functional"
         fi
         if [ -z ${output_folder} ]; then
-            output_folder="${qunex_subjectsfolder}/$CASE/images/functional/movement"
+            output_folder="${QuNexSubjectsFolder}/$CASE/images/functional/movement"
         fi
         if [ -z ${output_name} ]; then
             output_name="${CASE}_BOLD_GreyPlot_CIFTI.pdf"
@@ -2150,7 +2150,7 @@ fi
 
         getBoldList
 
-        echo " -- Log folder: ${logdir}/comlogs/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+        echo " -- Log folder: ${QuNexMasterLogFolder}/comlogs/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
         echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
         echo " -- Parameters for g_PlotBoldTS: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
         echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
@@ -2172,19 +2172,19 @@ fi
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo " -- Command: " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           echo "${QUNEXCOMMAND} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASE}" --verbose="true"" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+           echo "${QuNexCommand} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASE}" --verbose="true"" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            
-           ${QUNEXCOMMAND} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASE}" --verbose="true"
-           echo " -- Copying ${output_folder}/${output_name} to ${qunex_subjectsfolder}/QC/BOLD/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+           ${QuNexCommand} g_PlotBoldTS --images="${QCPlotImages}" --elements="${QCPlotElements}" --masks="${QCPlotMasks}" --filename="${output_folder}/${output_name}" --skip="0" --subjid="${CASE}" --verbose="true"
+           echo " -- Copying ${output_folder}/${output_name} to ${QuNexSubjectsFolder}/QC/BOLD/" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
-           cp ${output_folder}/${output_name} ${qunex_subjectsfolder}/QC/BOLD/
-           if [[ -f ${qunex_subjectsfolder}/QC/BOLD/${output_name} ]]; then
-               echo " -- Found ${qunex_subjectsfolder}/QC/BOLD/${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+           cp ${output_folder}/${output_name} ${QuNexSubjectsFolder}/QC/BOLD/
+           if [[ -f ${QuNexSubjectsFolder}/QC/BOLD/${output_name} ]]; then
+               echo " -- Found ${QuNexSubjectsFolder}/QC/BOLD/${output_name}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                g_PlotBoldTS_Check="pass"
            else
-               echo " -- Result ${qunex_subjectsfolder}/QC/BOLD/${output_name} missing!" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
+               echo " -- Result ${QuNexSubjectsFolder}/QC/BOLD/${output_name} missing!" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
                g_PlotBoldTS_Check="fail"
            fi
@@ -2227,8 +2227,8 @@ fi
                if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
                if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
                # -- Command
-               RunCommand="${QUNEXCOMMAND} BOLDParcellation --subjects='${CASE}' \
-               --subjectsfolder='${qunex_subjectsfolder}' \
+               RunCommand="${QuNexCommand} BOLDParcellation --subjects='${CASE}' \
+               --subjectsfolder='${QuNexSubjectsFolder}' \
                --inputfile='${InputFileParcellation}' \
                --singleinputfile='${SingleInputFile}' \
                --inputpath='${InputPath}' \
@@ -2285,8 +2285,8 @@ fi
                    if [ -z "$ComputePConn" ]; then ComputePConn="yes"; fi
                    if [ -z "$ExtractData" ]; then ExtractData="yes"; fi
                    # -- Command
-                   RunCommand="${QUNEXCOMMAND} BOLDParcellation --subjects='${CASE}' \
-                   --subjectsfolder='${qunex_subjectsfolder}' \
+                   RunCommand="${QuNexCommand} BOLDParcellation --subjects='${CASE}' \
+                   --subjectsfolder='${QuNexSubjectsFolder}' \
                    --inputfile='${InputFileParcellation}' \
                    --singleinputfile='${SingleInputFile}' \
                    --inputpath='${InputPath}' \
@@ -2333,8 +2333,8 @@ fi
                 if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
                 if [ -z "$Verbose" ]; then Verbose="true"; fi
                 if [ -z "$Covariance" ]; then Covariance="true"; fi
-                RunCommand="${QUNEXCOMMAND} computeBOLDfc \
-                --subjectsfolder='${qunex_subjectsfolder}' \
+                RunCommand="${QuNexCommand} computeBOLDfc \
+                --subjectsfolder='${QuNexSubjectsFolder}' \
                 --calculation='seed' \
                 --runtype='individual' \
                 --subjects='${CASE}' \
@@ -2381,8 +2381,8 @@ fi
             if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
             if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
             if [ -z "$Covariance" ]; then Covariance="true"; fi
-            RunCommand="${QUNEXCOMMAND} computeBOLDfc \
-            --subjectsfolder='${qunex_subjectsfolder}' \
+            RunCommand="${QuNexCommand} computeBOLDfc \
+            --subjectsfolder='${QuNexSubjectsFolder}' \
             --calculation='gbc' \
             --runtype='individual' \
             --subjects='${CASE}' \
@@ -2416,11 +2416,11 @@ fi
         getBoldList
 
         for BOLDRUN in ${LBOLDRUNS}; do
-            ${QUNEXCOMMAND} runQC --subjectsfolder="${qunex_subjectsfolder}" --subjects="${CASE}" --outpath="${qunex_subjectsfolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${logdir}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
-            runQCComLog=`ls -t1 ${logdir}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
-            # runQCRunLog=`ls -t1 ${logdir}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
-            rename runQC runQC_BOLDfc${BOLD} ${logdir}/comlogs/${runQCComLog}
-            # rename runQC runQC_BOLDfc${BOLD} ${logdir}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
+            ${QuNexCommand} runQC --subjectsfolder="${QuNexSubjectsFolder}" --subjects="${CASE}" --outpath="${QuNexSubjectsFolder}/QC/${Modality}" --modality="${Modality}" --overwrite="${OVERWRITE_STEP}" --logfolder="${QuNexMasterLogFolder}" --boldprefix="${BOLDPrefix}" --boldsuffix="${BOLDSuffix}" --bolds="${BOLDRUN}" --boldfc="${BOLDfc}" --boldfcinput="${BOLDfcInput}" --boldfcpath="${BOLDfcPath}" --hcp_suffix="${HCPSuffix}"
+            runQCComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*_runQC_${CASE}_*.log | head -1 | xargs -n 1 basename 2> /dev/null`
+            # runQCRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-runQC_*.log | head -1 | xargs -n 1 basename 2> /dev/null`        # --> Commented for massively parallel processing
+            rename runQC runQC_BOLDfc${BOLD} ${QuNexMasterLogFolder}/comlogs/${runQCComLog}
+            # rename runQC runQC_BOLDfc${BOLD} ${QuNexMasterLogFolder}/runlogs/${runQCRunLog} 2> /dev/null        # --> Commented for massively parallel processing
         done
     }
     
@@ -2439,8 +2439,8 @@ fi
         if [[ -z "$TURNKEY_STEPS" ]] && [[ ! -z "$AcceptanceTest" ]] && [[ "$AcceptanceTest" != "yes" ]] && [[ ${TURNKEY_TYPE} == "xnat" ]]; then 
             for UnitTest in ${AcceptanceTest}; do
                 RunCommand="QuNexAcceptanceTest.sh \
-                --studyfolder='${qunex_studyfolder}' \
-                --subjectsfolder='${qunex_subjectsfolder}' \
+                --studyfolder='${QuNexStudyFolder}' \
+                --subjectsfolder='${QuNexSubjectsFolder}' \
                 --subjects='${CASE}' \
                 --runtype='local' \
                 --acceptancetest='${UnitTest}'"
@@ -2449,8 +2449,8 @@ fi
             done
         else
             RunCommand="QuNexAcceptanceTest.sh \
-            --studyfolder='${qunex_studyfolder}' \
-            --subjectsfolder='${qunex_subjectsfolder}' \
+            --studyfolder='${QuNexStudyFolder}' \
+            --subjectsfolder='${QuNexSubjectsFolder}' \
             --subjects='${CASE}' \
             --runtype='local' \
             --acceptancetest='${UnitTest}'"
@@ -2481,7 +2481,7 @@ fi
         # -- Currently supporting hcp4 but this can be exanded
         if [[ "$TURNKEY_STEP" == "hcp4" ]]; then
             echo ""; cyaneho " ===> RunTurnkey ~~~ RUNNING: QuNexClean Function for $TURNKEY_STEP ... "; echo ""
-            rm -rf ${qunex_subjectsfolder}/${CASE}/hcp/${CASE}/[0-9]* &> /dev/null
+            rm -rf ${QuNexSubjectsFolder}/${CASE}/hcp/${CASE}/[0-9]* &> /dev/null
         fi
     }
     #
@@ -2542,16 +2542,16 @@ else
         turnkey_${TURNKEY_STEP}
         
         # -- Generate single subject log folders
-        CheckComLog=`ls -t1 ${logdir}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
-        #CheckRunLog=`ls -t1 ${logdir}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`      # ==> Commented to support massively parallel single study run
-        mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-        mkdir -p ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null
-        cp ${CheckComLog} ${qunex_subjectsfolder}/${CASE}/logs/comlog 2> /dev/null
-        #cp ${CheckRunLog} ${qunex_subjectsfolder}/${CASE}/logs/runlog 2> /dev/null    # ==> Commented to support massively parallel single study run
+        CheckComLog=`ls -t1 ${QuNexMasterLogFolder}/comlogs/*${TURNKEY_STEP}_${CASE}*log 2> /dev/null | head -n 1`
+        #CheckRunLog=`ls -t1 ${QuNexMasterLogFolder}/runlogs/Log-${TURNKEY_STEP}*log 2> /dev/null | head -n 1`      # ==> Commented to support massively parallel single study run
+        mkdir -p ${QuNexSubjectsFolder}/${CASE}/logs/comlog 2> /dev/null
+        mkdir -p ${QuNexSubjectsFolder}/${CASE}/logs/runlog 2> /dev/null
+        cp ${CheckComLog} ${QuNexSubjectsFolder}/${CASE}/logs/comlog 2> /dev/null
+        #cp ${CheckRunLog} ${QuNexSubjectsFolder}/${CASE}/logs/runlog 2> /dev/null    # ==> Commented to support massively parallel single study run
         
         Modalities="T1w T2w myelin BOLD DWI"
         for Modality in ${Modalities}; do
-            mkdir -p ${qunex_subjectsfolder}/${CASE}/QC/${Modality} 2> /dev/null
+            mkdir -p ${QuNexSubjectsFolder}/${CASE}/QC/${Modality} 2> /dev/null
         done
     
         # -- Specific sets of functions for logging
@@ -2622,15 +2622,15 @@ else
         if [[ ${DATAFormat} == "DICOM" ]]; then
             echo ""
             geho "     - removing dicom folder"
-            rm -rf ${qunex_WORKDIR}/dicom &> /dev/null
+            rm -rf ${QuNexWorkDir}/dicom &> /dev/null
             echo ""
         fi
         geho "     - removing stray xml catalog files"
-        find ${qunex_studyfolder} -name *catalog.xml -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
+        find ${QuNexStudyFolder} -name *catalog.xml -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
 
         if [[ ${CleanupOldFiles} == "yes" ]]; then 
             geho "     - removing files older than run"
-            find ${qunex_studyfolder} ! -newer ${WORKDIR}/_startfile -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
+            find ${QuNexStudyFolder} ! -newer ${WORKDIR}/_startfile -exec echo "       -> {}" \; -exec rm {} \; 2> /dev/null
             rm ${WORKDIR}/_startfile
         fi
     fi
@@ -2646,8 +2646,8 @@ if [[ "${TURNKEY_STEP_ERRORS}" == "yes" ]]; then
     echo ""
     reho " ===> Appears some RunTurnkey steps have failed."
     echo ""
-    reho "       Check ${logdir}/comlogs/:"
-    reho "       Check ${logdir}/runlogs/:"
+    reho "       Check ${QuNexMasterLogFolder}/comlogs/:"
+    reho "       Check ${QuNexMasterLogFolder}/runlogs/:"
     echo ""
     exit 1
 else
