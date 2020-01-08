@@ -620,6 +620,13 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
 
         if options['hcp_avgrdcmethod'] == 'TOPUP':
 
+            sesettings = True
+            for p in ['hcp_sephaseneg', 'hcp_sephasepos', 'hcp_seunwarpdir']:
+                if not options[p]:
+                    r += '\n---> ERROR: %s parameter is not set! Please review parameter file!' % (p)
+                    run = False
+                    sesettings = False
+
             try:
                 T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
                 senum = T1w.get('se', None)
@@ -650,7 +657,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     run = False
                     raise
             
-            if tufolder:
+            if tufolder and sesettings:
                 try:
                     sepos = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephasepos'] + "*"))[0]
                     seneg = glob.glob(os.path.join(tufolder, "*_" + options['hcp_sephaseneg'] + "*"))[0]
@@ -2971,7 +2978,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 # -- spin echo settings
 
                 sesettings = True
-                for p in ['hcp_sephaseneg', 'hcp_sephasepos', 'hcp_seunwarpdir']:
+                for p in ['hcp_sephaseneg', 'hcp_sephasepos', 'hcp_bold_unwarpdir']:
                     if not options[p]:
                         r += '\n     ... ERROR: %s parameter is not set! Please review parameter file!' % (p)
                         boldok = False
