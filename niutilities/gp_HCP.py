@@ -2938,15 +2938,6 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                 
             r += "\n     ... unwarp direction: %s" % (unwarpdir)
 
-            # -- set echospacing
-
-            if 'EchoSpacing' in boldinfo:
-                echospacing = boldinfo['EchoSpacing']
-                r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
-            else:
-                echospacing = options['hcp_bold_echospacing']
-                r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
-
             # --- set reference
             #
             # !!!! Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
@@ -2973,34 +2964,47 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             # --- check for spin-echo-fieldmap image
 
+            echospacing = ""
+
             if options['hcp_bold_dcmethod'].lower() == 'topup':
-                if not sepresent:
-                    r += '\n     ... ERROR: No spin echo fieldmap set images present!'
-                    boldok = False
+                
+                # -- spin echo settings
 
-                elif options['hcp_bold_seimg'] == 'first':
-                    if firstSE is None:
-                        spinN = sepresent[0]
-                        r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
-                    else:
-                        spinN = firstSE
-                        r += "\n     ... using the spin echo fieldmap set for the first bold run, %d" % (spinN)
-                    spinOne = sepairs[spinN]['spinOne']
-                    spinTwo = sepairs[spinN]['spinTwo']
+                sesettings = True
+                for p in ['hcp_sephaseneg', 'hcp_sephasepos', 'hcp_seunwarpdir']:
+                    if not options[p]:
+                        r += '\n     ... ERROR: %s parameter is not set! Please review parameter file!' % (p)
+                        boldok = False
+                        sesettings = False
 
-                else:
-                    spinN = False
-                    if 'se' in boldinfo:
-                        spinN = int(boldinfo['se'])
+                if sesettings:
+                    if not sepresent:
+                        r += '\n     ... ERROR: No spin echo fieldmap set images present!'
+                        boldok = False
+
+                    elif options['hcp_bold_seimg'] == 'first':
+                        if firstSE is None:
+                            spinN = sepresent[0]
+                            r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
+                        else:
+                            spinN = firstSE
+                            r += "\n     ... using the spin echo fieldmap set for the first bold run, %d" % (spinN)
+                        spinOne = sepairs[spinN]['spinOne']
+                        spinTwo = sepairs[spinN]['spinTwo']
+
                     else:
-                        for sen in sepresent:
-                            if sen <= bold:
-                                spinN = sen
-                            elif not spinN:
-                                spinN = sen
-                    spinOne = sepairs[spinN]['spinOne']
-                    spinTwo = sepairs[spinN]['spinTwo']
-                    r += "\n     ... using spin echo fieldmap set %d" % (spinN)
+                        spinN = False
+                        if 'se' in boldinfo:
+                            spinN = int(boldinfo['se'])
+                        else:
+                            for sen in sepresent:
+                                if sen <= bold:
+                                    spinN = sen
+                                elif not spinN:
+                                    spinN = sen
+                        spinOne = sepairs[spinN]['spinOne']
+                        spinTwo = sepairs[spinN]['spinTwo']
+                        r += "\n     ... using spin echo fieldmap set %d" % (spinN)
 
                 # -- are we using a new SE image?
 
@@ -3021,6 +3025,19 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                             r += "\n---> TOPUP configuration file present."
                     else:
                         r += "\n---> TOPUP configuration file present."
+
+                # -- set echospacing
+
+                if 'EchoSpacing' in boldinfo:
+                    echospacing = boldinfo['EchoSpacing']
+                    r += "\n     ... using image specific EchoSpacing: %s s" % (echospacing)                
+                elif options['hcp_bold_echospacing']:
+                    echospacing = options['hcp_bold_echospacing']
+                    r += "\n     ... using study general EchoSpacing: %s s" % (echospacing)
+                else:
+                    echospacing = ""
+                    r += "\n---> ERROR: EchoSpacing is not set! Please review parameter file."
+                    boldok = False
 
             # --- check for Siemens double TE-fieldmap image
 
@@ -3255,6 +3272,11 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
 
         # --- Set up the command
 
+        if fmriref == 'NONE':
+            fmrirefparam = ""
+        else:
+            fmrirefparam = fmriref
+
         comm = os.path.join(hcp['hcp_base'], 'fMRIVolume', 'GenericfMRIVolumeProcessingPipeline.sh') + " "
 
         elements = [("path",                sinfo['hcp']),
@@ -3283,7 +3305,7 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                     ("processing-mode",     options['hcp_processing_mode']),
                     ("doslicetime",         options['hcp_bold_doslicetime'].upper()),
                     ("slicetimerparams",    slicetimerparams),
-                    ("fmriref",             fmriref),
+                    ("fmriref",             fmrirefparam),
                     ("fmrirefreg",          options['hcp_bold_refreg']),
                     ("boldmask",            options['hcp_bold_mask'])]
 
