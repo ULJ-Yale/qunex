@@ -2546,7 +2546,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
     --hcp_bold_echospacing      ... Echo Spacing or Dwelltime of BOLD images.
                                     [0.00035]
-    --hcp_bold_ref (*)          ... Whether BOLD Reference images should be used
+    --hcp_bold_sbref            ... Whether BOLD Reference images should be used
                                     - NONE or USE. [NONE]
 
     distortion correction details
@@ -2956,7 +2956,7 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             # --- check for ref image
 
-            if options['hcp_bold_ref'].lower() == 'use':
+            if options['hcp_bold_sbref'].lower() == 'use':
                 refimg = os.path.join(hcp['source'], "%s_SBRef%s" % (boldroot, options['fctail']), "%s_%s_SBRef.nii.gz" % (sinfo['id'], boldroot))
                 r, boldok = checkForFile2(r, refimg, '\n     ... reference image present', '\n     ... ERROR: bold reference image missing!', status=boldok)
             else:
