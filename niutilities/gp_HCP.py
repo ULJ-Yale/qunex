@@ -416,7 +416,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 map or a spin echo field map [NONE].
     --hcp_echodiff          ... Difference in TE times if a fieldmap image is
                                 used, set to NONE if not used [NONE].
-    --hcp_dwelltime         ... Echo Spacing or Dwelltime of Spin Echo Field Map
+    --hcp_seechospacing     ... Echo Spacing or Dwelltime of Spin Echo Field Map
                                 or "NONE" if not used [NONE].
     --hcp_seunwarpdir       ... Phase encoding direction of the Spin Echo Field
                                 Map (x, y or NONE) [NONE].
@@ -669,8 +669,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                         seInfo = None
 
                     if seInfo and 'EchoSpacing' in seInfo:
-                        options['hcp_dwelltime'] = seInfo['EchoSpacing']
-                        r += "\n---> Spin-Echo images specific EchoSpacing: %s s" % (options['hcp_dwelltime'])
+                        options['hcp_seechospacing'] = seInfo['EchoSpacing']
+                        r += "\n---> Spin-Echo images specific EchoSpacing: %s s" % (options['hcp_seechospacing'])
                     if seInfo and 'phenc' in seInfo:
                         options['hcp_seunwarpdir'] = SEDirMap[seInfo['phenc']]
                         r += "\n---> Spin-Echo unwarp direction: %s" % (options['hcp_seunwarpdir'])
@@ -787,7 +787,7 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     ('echodiff', options['hcp_echodiff']),
                     ('SEPhaseNeg', seneg),
                     ('SEPhasePos', sepos),
-                    ('seechospacing', options['hcp_dwelltime']),
+                    ('seechospacing', options['hcp_seechospacing']),
                     ('seunwarpdir', options['hcp_seunwarpdir']),
                     ('t1samplespacing', options['hcp_t1samplespacing']),
                     ('t2samplespacing', options['hcp_t2samplespacing']),
