@@ -36,6 +36,7 @@ import zipfile
 import tarfile
 import gzip
 import csv
+import json
 
 try:
     import pydicom.filereader as dfr
@@ -1204,41 +1205,36 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
             print >> stxt, "hcp:", os.path.abspath(os.path.join(base, 'hcp'))
             print >> stxt, ""
 
-    # recenter, dofz2zf, fz, reorder = False, False, "", False
-    # try:
-    #     if d.Manufacturer == 'Philips Medical Systems' and int(d[0x2001, 0x1081].value) > 1:
-    #         dofz2zf, fz = True, "  (switched fz)"
-    #     if d.Manufacturer == 'Philips Medical Systems' and d.SpacingBetweenSlices in [0.7, 0.8]:
-    #         recenter, fz = d.SpacingBetweenSlices, "  (recentered)"
-    #     # if d.Manufacturer == 'SIEMENS' and d.InstitutionName == 'Univerisity North Carolina' and d.AcquisitionMatrix == [0, 64, 64, 0]:
-    #     #    reorder, fz = True, " (reordered slices)"
-    # except:
-    #     pass
-
-        # --- Special nii naming for Philips
+        # recenter, dofz2zf, fz, reorder = False, False, "", False
+        # try:
+        #     if d.Manufacturer == 'Philips Medical Systems' and int(d[0x2001, 0x1081].value) > 1:
+        #         dofz2zf, fz = True, "  (switched fz)"
+        #     if d.Manufacturer == 'Philips Medical Systems' and d.SpacingBetweenSlices in [0.7, 0.8]:
+        #         recenter, fz = d.SpacingBetweenSlices, "  (recentered)"
+        #     # if d.Manufacturer == 'SIEMENS' and d.InstitutionName == 'Univerisity North Carolina' and d.AcquisitionMatrix == [0, 64, 64, 0]:
+        #     #    reorder, fz = True, " (reordered slices)"
+        # except:
+        #     pass
 
         if info['seriesNumber']:
-            niinum = info['seriesNumber']
+            niinum = info['seriesNumber'] * 10
         else:
-            niinum = c
+            niinum = c * 10
 
         info['niinum'] = niinum
 
         logs.append("%(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
         reps.append("---> %(niinum)4d  %(seriesNumber)4d %(seriesDescription)40s   %(volumes)4d   [TR %(TR)7.2f, TE %(TE)6.2f]   %(subjectid)s   %(datetime)s" % (info))
 
-        if niinum > 0:
-            print >> stxt, "%4d: %s" % (niinum, info['seriesDescription'])
-
         niiid = str(niinum)
 
         if tool == 'auto':
             if par:
                 utool = 'dicm2nii'
-                print '---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available! [%s: %s]' % (niiid, info['seriesDescription'])
+                print '---> Using dicm2nii for conversion of PAR/REC to NIfTI if Matlab is available. [%s: %s]' % (niiid, info['seriesDescription'])
             else:
                 utool = 'dcm2niix'
-                print '---> Using dcm2niix for conversion to NIfTI! [%s: %s]' % (niiid, info['seriesDescription'])
+                print '---> Using dcm2niix for conversion to NIfTI. [%s: %s]' % (niiid, info['seriesDescription'])
         else:
             utool = tool
 
@@ -1263,7 +1259,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                 calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', '-o', folder, par], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
             else:
                 calls.append({'name': 'dcm2niix: ' + niiid, 'args': ['dcm2niix', '-f', niiid, '-z', 'y', '-b', 'y', folder], 'sout': os.path.join(os.path.split(folder)[0], 'dcm2niix_' + niiid + '.log')})
-        files.append([niinum, folder, info['volumes'], info['slices']])
+        files.append([niinum, folder, info])
 
     if not calls:
         r.close()
@@ -1276,7 +1272,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
     niutilities.g_core.runExternalParallel(calls, cores=cores, prepend=' ... ')
 
     print "\nProcessed sequences:"
-    for niinum, folder, nframes, nslices in files:
+    for niinum, folder, info in files:
 
         print >> r, logs.pop(0),
         if verbose:
@@ -1290,21 +1286,29 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
         # --- check if resulting nifti is present
 
-        if len(imgs) == 0:
+        nimg = len(imgs)
+        if nimg == 0:
             print >> r, " WARNING: no NIfTI file created!"
             if verbose:
                 print " WARNING: no NIfTI file created!"
             continue
+        elif nimg > 9:
+            print >> r, " ERROR: More than 9 images created from this sequence! Skipping. Please check conversion log!"
+            if verbose:
+                print " ERROR: More than 9 images created from this sequence! Skipping. Please check conversion log!"
+            continue
         else:
-            print >>r, ""
+            print >> r, ""
             print ""
 
-            nimg = len(imgs)
+            imgnum = 0
+
             if debug:
                 print "     --> found %s nifti file(s): %s" % (nimg, "\n                            ".join(imgs))
+
             for img in imgs:
                 if not os.path.exists(img):
-                    continue
+                    continue                
                 if debug:
                     print "     --> processing: %s [%s]" % (img, os.path.basename(img))
                 if img.endswith(".nii"):
@@ -1313,78 +1317,96 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
                     subprocess.call("gzip " + img, shell=True, stdout=null, stderr=null)
                     img += '.gz'
 
+                # --> compile the basename of the target file(s) for nii folder
+                imgnum += 1
                 imgname = os.path.basename(img)
+                tbasename = "%d" % (niinum + imgnum)
+
+                # --> extract any suffices to add to the subject.txt
                 suffix = ""
-                if 'magnitude' in imgname:
-                    suffix = ""
-                elif 'real' in imgname:
-                    suffix = "_real"
-                elif 'phMag' in imgname:
-                    suffix = "_phaseAndMagnitudeMap"
-                elif 'ph' in imgname:
-                    suffix = "_phaseMap"
-                elif 'imaginary' in imgname:
-                    suffix = "_imaginary"
-                elif 'MoCo' in imgname:
-                    suffix = "_MoCo"
+                if "_" in imgname:
+                    suffix = " " +"_".join(imgname.replace('.nii.gz','').split('_')[1:])
 
-                echo = re.match('.*_e([0-9]).nii.*', imgname)
-                if echo:
-                    echo = int(echo.group(1))
-                    if echo > 0:
-                        suffix = "_Echo%d" % (echo)
-
-                tfname = os.path.join(imgf, "%d%s.nii.gz" % (niinum, suffix))
+                # --> generate the actual target file path and move the image
+                tfname = os.path.join(imgf, "%s.nii.gz" % (tbasename))
                 if debug:
                     print "         ... moving '%s' to '%s'" % (img, tfname)
                 os.rename(img, tfname)
 
-                # --- check also for .bval and .bvec files
-
+                # --> check for .bval and .bvec files
                 for dwiextra in ['.bval', '.bvec']:
                     dwisrc = img.replace('.nii.gz', dwiextra)
                     if os.path.exists(dwisrc):
-                        os.rename(dwisrc, os.path.join(imgf, "%d%s" % (niinum, dwiextra)))
+                        os.rename(dwisrc, os.path.join(imgf, "%s%s" % (tbasename, dwiextra)))
 
-                # --- check also for .json
+                # --> check for .json files and extract info if present
+                jsoninfo = ""
+                jinf = {}
 
                 for jsonextra in ['.json', '.JSON']:
                     jsonsrc = img.replace('.gz', '')
                     jsonsrc = jsonsrc.replace('.nii', '')
                     jsonsrc += jsonextra
+
+                    if not os.path.exists(jsonsrc):
+                        jsonfiles = glob.glob(os.path.join(folder, jsonextra))
+                        if len(jsonfiles) == 1:
+                            jsonsrc = jsonfiles[0]
+
                     if os.path.exists(jsonsrc):
+                        with open(jsonsrc, 'r') as f:
+                            jinf = json.load(f)
                         os.rename(jsonsrc, tfname.replace('.nii.gz', '.json'))
 
-            # --- check final geometry
+                        if 'RepetitionTime' in jinf:
+                            jsoninfo += ": TR(%s)" % (str(jinf['RepetitionTime']))
+                        if 'PhaseEncodingDirection' in jinf:
+                            jsoninfo += ": PEDirection(%-2s)" % (jinf['PhaseEncodingDirection'])    
+                        if 'EffectiveEchoSpacing' in jinf:
+                            jsoninfo += ": EchoSpacing(%s)" % (str(jinf['EffectiveEchoSpacing']))
+                        if 'DwellTime' in jinf:
+                            jsoninfo += ": DwellTime(%s)" % (str(jinf['DwellTime']))
+                        if 'ReadoutDirection' in jinf:
+                            jsoninfo += ": ReadoutDirection(%-2s)" % (jinf['ReadoutDirection'])
 
-            if tfname:
-                hdr = niutilities.g_img.niftihdr(tfname)
+                # --> print the info to subject.txt file
 
-                if hdr.sizez > hdr.sizey:
-                    print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
-                    if verbose:
-                        print "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+                numinfo = ""
+                if nimg > 1:
+                    numinfo = " (%d/%d)" % (imgnum, nimg)
 
-                if nframes > 1:
-                    if hdr.frames != nframes:
-                        print >> r, "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
+                print >> stxt, "%-4s: %-25s %s" % (tbasename, info['seriesDescription'] + numinfo + suffix, jsoninfo)
+
+                # --- check final geometry
+
+                if tfname:
+                    hdr = niutilities.g_img.niftihdr(tfname)
+
+                    if hdr.sizez > hdr.sizey and hdr.sizex < 150 :
+                        print >> r, "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
                         if verbose:
-                            print "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, nframes)
-                        if nslices > 0:
-                            gframes = int(hdr.sizez / nslices)
-                            if gframes > 1:
-                                print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                                if verbose:
-                                    print "     WARNING: reslicing image to %d slices and %d good frames" % (nslices, gframes)
-                                niutilities.g_NIfTI.reslice(tfname, nslices)
-                            else:
-                                print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
-                                if verbose:
-                                    print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
-                        else:
-                            print >> r, "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
+                            print "     WARNING: unusual geometry of the NIfTI file: %d %d %d %d [xyzf]" % (hdr.sizex, hdr.sizey, hdr.sizez, hdr.frames)
+
+                    if info['volumes'] > 1:
+                        if hdr.frames != info['volumes']:
+                            print >> r, "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, info['volumes'])
                             if verbose:
-                                print "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
+                                print "     WARNING: number of frames in nii does not match dicom information: %d vs. %d frames" % (hdr.frames, info['volumes'])
+                            if info['slices'] > 0:
+                                gframes = int(hdr.sizez / info['slices'])
+                                if gframes > 1:
+                                    print >> r, "     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes)
+                                    if verbose:
+                                        print "     WARNING: reslicing image to %d slices and %d good frames" % (info['slices'], gframes)
+                                    niutilities.g_NIfTI.reslice(tfname, info['slices'])
+                                else:
+                                    print >> r, "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
+                                    if verbose:
+                                        print "     WARNING: not enough slices (%d) to make a complete volume." % (hdr.sizez)
+                            else:
+                                print >> r, "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
+                                if verbose:
+                                    print "     WARNING: no slice number information, use qunex reslice manually to correct %s" % (tfname)
 
     r.close()
     stxt.close()
@@ -1562,7 +1584,7 @@ def sortDicom(folder=".", **kwargs):
             except:
                 continue
 
-        sqid = str(info['seriesNumber'])
+        sqid = str(info['seriesNumber'] * 10)
         sqfl = os.path.join(dcmf, sqid)
 
         if not os.path.exists(sqfl):
@@ -2307,6 +2329,9 @@ def processInbox(subjectsfolder=None, sessions=None, masterinbox=None, check="ye
     # ---- get list of session folders to process
 
     else:
+
+        if not sessions:
+            raise ge.CommandFailed("processInbox", "Input data not specified", "Neither masterinbox nor sessions to process were specified.", "Please check your command call!")
 
         reportSet = [('ok', '---> Found the following folders to process:'),
                      ('invalid', "---> For these folders the folder name could not parsed and they won't be processed:"),
