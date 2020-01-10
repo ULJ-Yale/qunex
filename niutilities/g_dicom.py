@@ -1373,7 +1373,7 @@ def dicom2niix(folder='.', clean='ask', unzip='ask', gzip='ask', sessionid=None,
 
                 numinfo = ""
                 if nimg > 1:
-                    numinfo = " (%d/%d)" % (imgnum, nimg)
+                    numinfo = " [%d/%d]" % (imgnum, nimg)
 
                 print >> stxt, "%-4s: %-25s %s" % (tbasename, info['seriesDescription'] + numinfo + suffix, jsoninfo)
 
