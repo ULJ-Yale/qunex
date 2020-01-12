@@ -742,7 +742,7 @@ def linkOrCopy(source, target):
                     return
                 else:
                     os.remove(target)
-            elif os.path.islink(source):
+            if os.path.islink(source):
                 linkto = os.readlink(source)
                 os.symlink(linkto, target)
             else:
