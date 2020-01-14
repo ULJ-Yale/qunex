@@ -4012,7 +4012,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                                      (2mm iso downsampled version)
     * fsaverage_LR32k/*           -> images/segmentation/hcp/fsaverage_LR32k
     * BOLD_[N].nii.gz             -> images/functional/[boldname][N].nii.gz
-    * BOLD_[N][tail].dtseries.nii -> images/functional/[boldname][N][tail].dtseries.nii
+    * BOLD_[N][tail].dtseries.nii -> images/functional/[boldname][N][hcp_cifti_tail].dtseries.nii
     * Movement_Regressors.txt     -> images/functional/movement/[boldname][N]_mov.dat
 
     PARAMETERS
@@ -4033,8 +4033,8 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
                            batch.txt file) to copy over. It can be a single
                            type (e.g. 'task'), a pipe separated list (e.g.
                            'WM|Control|rest') or 'all' to copy all [all].
-    --boldname         ... The default name of the bold files in the images
-                           folder [bold].
+    --boldname         ... The prefix for the fMRI files in the images folder
+                           [bold].
     --hcp_bold_variant ... Optional variant of HCP BOLD preprocessing. If
                            specified, the results will be copied/linked from
                            `Results.<hcp_bold_variant>` into 
@@ -4043,6 +4043,19 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     The parameters can be specified in command call or subject.txt file.
     If possible, the files are not copied but rather hard links are created to
     save space. If hard links can not be created, the files are copied.
+
+    Specific attention needs to be paid to the `hcp_cifti_tail` parameter. Using
+    the regular HCP minimal preprocessing pipelines, CIFTI files have a tail 
+    `_Atlas` e.g. `BOLD_6_Atlas.dtseries.nii`. This tail might be changed if 
+    another method was used for surface registration or if CIFTI images were 
+    additionally processed after the HCP minimal processing pipeline. `boldname` 
+    and `hcp_cifti_tail` define the final name of the fMRI images linked into the 
+    `images/functional` folder. Specifically, with `boldname=bold` and 
+    `hcp_cifti_tail=_Atlas`, volume files will be named using formula: 
+    `<boldname>[N].nii.gz` (e.g. `bold1.nii.gz`), and cifti files will be named 
+    using formula: `<boldname>[N]<hcp_cifti_tail>.dtseries.nii` (e.g. 
+    `bold1_Atlas.dtseries.nii`).
+
 
     EXAMPLE USE
     ===========
@@ -4061,6 +4074,7 @@ def mapHCPData(sinfo, options, overwrite=False, thread=0):
     2018-07-17 - Grega Repovš - Added hcp_bold_variant option.
     2019-04-25 - Grega Repovš - Changed subjects to sessions
     2019-05-26 - Grega Repovš - Added support for boldnamekey
+    2020-01-14 - Grega Repovš - Expanded documentation on use of boldname and hcp_cifti_tail
     """
 
     
