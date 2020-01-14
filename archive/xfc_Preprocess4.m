@@ -77,7 +77,7 @@ if strfind(doIt, 's')
     img = g_Read4DFP(tfile, 'single');
     img = g_Smooth3D(img, 2);
     fprintf(' ... saving');
-    tfile = strrep(tfile, '.4dfp.img', '_g7.4dfp.img');
+    tfile = strrep(tfile, '.4dfp.img', '_s.4dfp.img');
     g_Save4DFP(tfile, img);
     fprintf(' ... done!\n');
     img = reshape(img, 48*48*64,[]);

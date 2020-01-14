@@ -81,10 +81,10 @@ for s = 1:nsub
 
         fprintf('\n     ... reading data');
 
-        forig  = gmrimage(sprintf('%s/images/functional/bold%d_g7_hpss.4dfp.img', subject(s).folder, b));
-        fnogsr = gmrimage(sprintf('%s/images/functional/bold%d_g7_hpss_res-mwmvd.4dfp.img', subject(s).folder, b));
-        fgsr   = gmrimage(sprintf('%s/images/functional/bold%d_g7_hpss_res-mwmvwbd.4dfp.img', subject(s).folder, b));
-        fcoeff = gmrimage(sprintf('%s/images/functional/bold%d_g7_hpss_res-mwmvwbd_coeff.4dfp.img', subject(s).folder, b));
+        forig  = gmrimage(sprintf('%s/images/functional/bold%d_s_hpss.4dfp.img', subject(s).folder, b));
+        fnogsr = gmrimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvd.4dfp.img', subject(s).folder, b));
+        fgsr   = gmrimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvwbd.4dfp.img', subject(s).folder, b));
+        fcoeff = gmrimage(sprintf('%s/images/functional/bold%d_s_hpss_res-mwmvwbd_coeff.4dfp.img', subject(s).folder, b));
         fnuiss = gmrimage(sprintf('%s/images/ROI/nuisance/bold%d_nuisance.4dfp.img', subject(s).folder, b));
 
         fcoeff.data = fcoeff.image2D;

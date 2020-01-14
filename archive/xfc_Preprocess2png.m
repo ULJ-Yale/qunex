@@ -44,7 +44,7 @@ fprintf('\nRunning preproces script v0.8.3\n');
 
 
 ofile = strcat(subjectf, ['/images/functional/bold' int2str(bold) '.4dfp.img']);
-sfile = strrep(ofile, '.4dfp.img', '_g7.4dfp.img');
+sfile = strrep(ofile, '.4dfp.img', '_s.4dfp.img');
 hfile = strrep(sfile, '.4dfp.img', '_hpss.4dfp.img');
 rfile = strrep(hfile, '.4dfp.img', strcat('_res-', regress, '.4dfp.img'));
 cfile = strrep(hfile, '.4dfp.img', strcat('_coeff-', regress, '.4dfp.img'));

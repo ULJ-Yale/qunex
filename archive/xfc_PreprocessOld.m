@@ -57,7 +57,7 @@ for n = 1:length(ofiles)
 	path = strread(char(ofiles{n}), '%s', 'delimiter', '/');
 	oname{n} = char(path(length(path)));
 	fprintf('... %s\n', char(oname{n}));
-	sname{n} = strrep(char(oname{n}), '.4dfp.img', '_g7.4dfp.img');
+	sname{n} = strrep(char(oname{n}), '.4dfp.img', '_s.4dfp.img');
 	hname{n} = strrep(char(sname{n}), '.4dfp.img', '_hpss.4dfp.img');
 	rname{n} = strrep(char(hname{n}), '.4dfp.img', strcat('_res-', regress, '.4dfp.img'));
 	cname{n} = strrep(char(rname{n}), '.4dfp.img', strcat('_coeff-', regress, '.4dfp.img'));
@@ -71,7 +71,7 @@ end
 
 path = strread(conc, '%s', 'delimiter', '/');
 concname = char(path(length(path)));
-sconcname = strrep(concname, '.conc', '_g7.conc');
+sconcname = strrep(concname, '.conc', '_s.conc');
 hconcname = strrep(sconcname, '.conc', '_hpss.conc');
 rconcname = strrep(hconcname, '.conc', strcat('_res-', regress, '.conc'));
 cconcname = strrep(rconcname, '.conc', '_coeff.conc');

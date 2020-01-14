@@ -28,12 +28,12 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %   gmrimage objects. The order in which the files are specified is the order in which they 
 %   should be referenced in the elements specification.
 % 
-%   Example images parameter: 'bold1.nii.gz;bold1_g7_hpss_res.nii.gz'
+%   Example images parameter: 'bold1.nii.gz;bold1_s_hpss_res.nii.gz'
 %
 %   do note that each image in the semicolon separated list can be a conc file or a set of
 %   files separated with the pipe | character. In the following example:
 %
-%   'bold1.nii.gz|bold2.nii.gz;bold1_g7_hpss.nii.gz|bold2_g7_hpss.nii.gz'
+%   'bold1.nii.gz|bold2.nii.gz;bold1_s_hpss.nii.gz|bold2_s_hpss.nii.gz'
 %
 %   the first two files would be concatenated to image 1 and the second pair to image 2.
 %   This allows easy plotting of conatenated bolds.
@@ -148,7 +148,7 @@ function [] = g_PlotBoldTS(images, elements, masks, filename, skip, subjid, verb
 %
 %   EXAMPLE USE INSIDE MATLAB
 %
-%   g_PlotBoldTS('bold1.nii.gz;bold1_g7_hpss_res.nii.gz', 'type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|maskindex=1|use=1', 'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
+%   g_PlotBoldTS('bold1.nii.gz;bold1_s_hpss_res.nii.gz', 'type=stats|stats>plotdata=fd,imageindex=1>plotdata=dvarsme,imageindex=1;type=signal|name=V|imageindex=1|maskindex=1;type=signal|name=WM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=1|maskindex=1;type=signal|name=GM|imageindex=2|maskindex=1|use=1', 'aseg.nii.gz', 'AP1937-BoldTSPlot.pdf', 0, 'AP1937', true);
 %
 %   EXAMPLE USE VIA Qn|Nex FROM TERMINAL
 % 
