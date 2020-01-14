@@ -1481,7 +1481,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
                            processed [].
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
-                           bold3<bold_prefix>_g7_hpss.nii.gz [].
+                           bold3<bold_prefix>_s_hpss.nii.gz [].
 
     List of bold files specify, which types of bold files are to be processed,
     as they are specified in the batch.txt file. An example of a list of
@@ -1652,7 +1652,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     Results
     -------
 
-    The resulting smoothed files are saved with '_g7' added to the BOLD root
+    The resulting smoothed files are saved with '_s' added to the BOLD root
     filename.
 
 
@@ -2079,7 +2079,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
                            processed [].
     --bold_prefix      ... An optional prefix to place in front of processing
                            name extensions in the resulting files, e.g. 
-                           bold3<bold_prefix>_g7_hpss.nii.gz [].
+                           bold3<bold_prefix>_s_hpss.nii.gz [].
     --conc_use         ... Whether to use information in the conc file as 
                            relative or absolute ['relative'].
 
@@ -2263,7 +2263,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Results
     -------
 
-    The resulting smoothed files are saved with '_g7' added to the BOLD root
+    The resulting smoothed files are saved with '_s' added to the BOLD root
     filename.
 
 

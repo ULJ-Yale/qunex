@@ -248,7 +248,7 @@ def getFileNames(sinfo, options):
 
     for ch in options['bold_actions']:
         if ch == 's':
-            f['conc_final'] = f['conc_final'].replace('.conc', '_g7.conc')
+            f['conc_final'] = f['conc_final'].replace('.conc', '_s.conc')
         elif ch == 'h':
             f['conc_final'] = f['conc_final'].replace('.conc', '_hpss.conc')
         elif ch == 'r':
@@ -402,7 +402,7 @@ def getBOLDFileNames(sinfo, boldname, options):
 
     for ch in options['bold_actions']:
         if ch == 's':
-            f['bold_final'] = f['bold_final'].replace(ext, '_g7' + ext)
+            f['bold_final'] = f['bold_final'].replace(ext, '_s' + ext)
         elif ch == 'h':
             f['bold_final'] = f['bold_final'].replace(ext, '_hpss' + ext)
         elif ch == 'c':

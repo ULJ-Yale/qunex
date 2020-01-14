@@ -666,20 +666,20 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
 
     ```
     qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
-            bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_g7_hpss_res-mVWMWB1d.dtseries"
+            bolds="rest" listfile="lists/rest.list" boldtail="_Atlas_s_hpss_res-mVWMWB1d.dtseries"
     ```
 
     The command will create a `lists/rest.list` list file in which for all the
     sessions specified in the `batch.txt` it will list all the BOLD files tagged
     as rest runs and include them as:
 
-      file:<subjectsfolder>/<session id>/images/functional/bold[n]_Atlas_g7_hpss_res-mVWMWB1d.dtseries
+      file:<subjectsfolder>/<session id>/images/functional/bold[n]_Atlas_s_hpss_res-mVWMWB1d.dtseries
 
     ```
     qunex createList subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
             sfilter="EC:use" listfile="lists/EC.list" \\
-            conc="bold_Atlas_dtseries_EC_g7_hpss_res-mVWMWB1de.conc" \\
-            fidl="EC.fidl" glm="bold_conc_EC_g7_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
+            conc="bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc" \\
+            fidl="EC.fidl" glm="bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz" \\
             roi="segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii"
     ```
 
@@ -687,9 +687,9 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     all the sessions in the conc file, that have the key:value pair "EC:use" the
     following files:
 
-      conc:<subjectsfolder>/<session id>/images/functional/concs/bold_Atlas_dtseries_EC_g7_hpss_res-mVWMWB1de.conc
+      conc:<subjectsfolder>/<session id>/images/functional/concs/bold_Atlas_dtseries_EC_s_hpss_res-mVWMWB1de.conc
       fidl:<subjectsfolder>/<session id>/images/functional/events/EC.fidl
-      glm:<subjectsfolder>/<session id>/images/functional/bold_conc_EC_g7_hpss_res-mVWMWB1de_Bcoeff.nii.gz
+      glm:<subjectsfolder>/<session id>/images/functional/bold_conc_EC_s_hpss_res-mVWMWB1de_Bcoeff.nii.gz
       roi:<subjectsfolder>/<session id>/images/segmentation/hcp/fsaverage_LR32k/aparc.32k_fs_LR.dlabel.nii
 
     ----------------
@@ -961,16 +961,16 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     ```
     qunex createConc subjectsfolder="/studies/myStudy/subjects" sessions="batch.txt" \\
             sfilter="EC:use" concfolder="analysis/EC/concs" \\
-            concname="_EC_g7_hpss_res-mVWMWB1de" bolds="EC" \\
-            boldtail="_g7_hpss_res-mVWMWB1deEC.dtseries.nii"
+            concname="_EC_s_hpss_res-mVWMWB1de" bolds="EC" \\
+            boldtail="_s_hpss_res-mVWMWB1deEC.dtseries.nii"
     ```
 
     For all the sessions in the `batch.txt` file that have the key:value pair
     "EC:use" set the command will create a conc file in `analysis/EC/concs`
-    folder. The conc files will be named `<session id>_EC_g7_hpss_res-mVWMWB1de.conc`
+    folder. The conc files will be named `<session id>_EC_s_hpss_res-mVWMWB1de.conc`
     and will list all the bold files that are marked as `EC` runs as:
 
-      file:<subjectsfolder>/<session id>/images/functional/bold[N]_g7_hpss_res-mVWMWB1deEC.dtseries.nii
+      file:<subjectsfolder>/<session id>/images/functional/bold[N]_s_hpss_res-mVWMWB1deEC.dtseries.nii
 
     ----------------
     Written by Grega Repovš 2018-06-30
