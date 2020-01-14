@@ -70,10 +70,13 @@ def manageStudy(studyfolder=None, action="create", verbose=False):
 
     A helper function called by createStudy and checkStudy that does the
     actual checking of the study folder and generating missing content.
+    
+    PARAMETERS
+    ==========
 
-    studyfolder  : the location of the study folder
-    action       : whether to create a new study folder (create) or check
-                   an existing study folder (check)
+    --studyfolder  : the location of the study folder
+    --action       : whether to create a new study folder (create) or check
+                     an existing study folder (check)
     '''
 
     create = action == "create"
@@ -214,6 +217,9 @@ def createStudy(studyfolder=None):
     '''
     createStudy studyfolder=<path to study base folder>
 
+    USE
+    ===
+
     Creates the base folder at the provided path location and the key standard
     study subfolders. Specifically:
 
@@ -264,9 +270,16 @@ def createStudy(studyfolder=None):
     <studyfolder>/subjects/specs folder. Finally, it creates a .qunexstudy file in
     the <studyfolder> to identify it as a study basefolder.
 
-    Example:
+    PARAMETER
+    =========
 
-    $ qunex createStudy studyfolder=/Volumes/data/studies/WM.v4
+    --studyfolder  ... The path to the study folder to be generated
+
+
+    EXAMPLE USE
+    ===========
+
+    qunex createStudy studyfolder=/Volumes/data/studies/WM.v4
 
     ----------------
     Written by Grega Repovš
@@ -332,12 +345,40 @@ def checkStudy(startfolder="."):
 def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, sessions=None, sfilter=None, overwrite="no", paramfile=None):
     '''
     createBatch [subjectsfolder=.] [sfile=subject_hcp.txt] [tfile=processing/batch.txt] [sessions=None] [sfilter=None] [overwrite=no] [paramfile=<subjectsfolder>/specs/batch_parameters.txt]
+    
+    PARAMETERS
+    =========
 
-    Combines all the sfile in all session folders in subjectsfolder to
-    generate a joint batch file and save it as tfile. If only specific sessions
-    are to be added or appended, "sessions" parameter can be used. This can be
-    a pipe, comma or space separated list of session ids, another batch file or
-    a list file. If a string is provided, grob patterns can be used (e.g.
+    --subjectsfolder  ... The location of the <study>/subjects folder
+    --sfile           ... The name of the source file to take from each specified 
+                          session folder and add to batch file [subject_hcp.txt]
+    --tfile           ... The path to the batch file to be generated. By default
+                          it is created as <study>/processing/batch.txt
+    --sessions        ... If provided, only the specified sessions from the 
+                          subjectsfolder will be processed. They are to be 
+                          specified as a pipe or comma separated list, grob 
+                          patterns are valid session specifiers.
+    --sfilter         ... An optional parameter given as "key:value|key:value"
+                          string. Only sessions with the specified key-value
+                          pairs in their source files will be added to the
+                          batch file.
+    --overwrite       ... In case that the specified batch file already exists,
+                          whether to interactively ask ('ask'), overwrite ('yes'),
+                          abort action ('no') or append ('append') the found / 
+                          specified sessions to the batch file.
+    --paramfile       ... The path to the parameter file header to be used. If 
+                          not explicitly provided it defaults to:
+                          <subjectsfolder>/specs/batch_parameters.txt
+
+
+    USE
+    ===
+
+    The command combines all the sfile in all session folders in subjectsfolder 
+    to generate a joint batch file and save it as tfile. If only specific 
+    sessions are to be added or appended, "sessions" parameter can be used. This 
+    can be a pipe, comma or space separated list of session ids, another batch 
+    file or a list file. If a string is provided, grob patterns can be used (e.g.
     sessions="AP*|OR*") and all matching sessions will be processed.
 
     If no tfile is specified, it will save the file as batch.txt in a
@@ -399,7 +440,9 @@ def createBatch(subjectsfolder=".", sfile="subject_hcp.txt", tfile=None, session
     2019-05-22 Grega Repovš
              - Added full path to report
     2019-07-31 Jure Demsar
-             - Added file locking mechanism      
+             - Added file locking mechanism   
+    2020-01-14 Grega Repovš
+             - Expanded documentation with parameter specification   
     '''
 
     print "Running createBatch\n==================="
@@ -554,8 +597,62 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     number of processing and analysis functions. The function is fairly flexible,
     its output defined using a number of parameters.
 
-    The location of the file
-    ------------------------
+    PARAMETERS
+    ==========
+    
+    --subjectsfolder ... The location of the subjects folder where the sessions
+                         to create the list reside.
+    --sessions       ... Either a comma or pipe separated string of session 
+                         names to include (can be glob patterns) or a path
+                         to a batch.txt file.
+    --sfilter        ... If a batch.txt file is provided a string of key-value
+                         pairs ("<key>:<value>|<key>:<value>"). Only sessions
+                         that match all the key-value pairs will be added to 
+                         the list.
+    --listfile       ... The path to the generated list file. If no path is 
+                         provided, the list is created as:
+                         <studyfolder>/processing/lists/subjects.list
+    --bolds          ... If provided the specified bold files will be added to 
+                         the list. The value should be a string that lists bold 
+                         numbers or bold tags in a space, comma or pipe 
+                         separated string.
+    --boldname       ... The prefix to be added to the bold number specified 
+                         in bolds parameter [bold]
+    --boldtail       ... The suffix to be added to the bold number specified
+                         in bolds parameter or bold names that match the
+                         tag specified in the bolds parameeter [.nii.gz].
+    --conc           ... If provided, the specified conc file that resides in
+                         <session id>/images/functional/concs/ folder will
+                         be added to the list.
+    --fidl           ... If provided, the specified fidl file that resides in
+                         <session id>/images/functional/events/ folder will
+                         be added to the list.
+    --glm            ... If provided, the specified glm file that resides in
+                         <session id>/images/functional/ folder will be
+                         added to the list.
+    --roi            ... If provided, the specified ROI file that resides in
+                         <session id>/images/<roi> will be added to the list.
+                         Note that <roi> can include a path, e.g.: 
+                         segmentation/freesurfer/mri/aparc+aseg_bold.nii.gz    
+    --overwrite      ... If the specified list file already exists:
+                         - ask    : ask interactively, what to do,
+                         - yes    : overwrite the existing file
+                         - no     : abort creating a file
+                         - append : append sessions to the existing list file
+                         [no].
+    --check          ... Whether to check for existence of files to be included
+                         in the list and what to do if they don't exist:
+                         - yes  ... check for presence and abort if the file to 
+                                    be listed is not found
+                         - no   ... do not check whether files are present or not
+                         - warn ... check for presence and warn if the file to be 
+                                    listed is not found, but do not abort
+
+    USE DESCRIPTION
+    ===============
+
+    The location of the list file
+    -----------------------------
 
     The file is created at the path specified in `listfile` parameter. If no
     parameter is provided, the resulting list is saved in:
@@ -590,8 +687,8 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
     and include all the sessions for which an `images` folder exists as a
     subfolder in the sessions's folder.
 
-    The files to include
-    --------------------
+    The files to include in the list
+    --------------------------------
 
     The function enables inclusion of bold, conc, fidl, glm and roi files.
 
@@ -704,7 +801,8 @@ def createList(subjectsfolder=".", sessions=None, sfilter=None, listfile=None, b
              - Reports an error if no session is found to add to the list file
     2019-05-30 Grega Repovš
              - Fixed a None checkup bug
-
+    2020-01-14 Grega Repovš
+             - Expanded documentation with explicit parameter specification
     """
 
     print "Running createList\n=================="
@@ -859,8 +957,50 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     to a number of processing and analysis functions. The function is fairly
     flexible, its output defined using a number of parameters.
 
-    The location of the files
-    -------------------------
+    PARAMETERS
+    ==========
+
+    --subjectsfolder ... The location of the subjects folder where the sessions
+                         to create the list reside.
+    --sessions       ... Either a comma or pipe separated string of session 
+                         names to include (can be glob patterns) or a path
+                         to a batch.txt file.
+    --sfilter        ... If a batch.txt file is provided a string of key-value
+                         pairs ("<key>:<value>|<key>:<value>"). Only sessions
+                         that match all the key-value pairs will be added to 
+                         the list.
+    --concfolder     ... The path to the folder where conc files are to be
+                         generated. If not provided, the conc files will be
+                         saved to the folder:
+                         <studyfolder>/<session id>/inbox/concs/
+    --concname       ... The name of the conc files to generate. The formula:
+                         <session id><concname>.conc will be used. [""]
+    --bolds          ... A space, comma or pipe separated string that lists bold 
+                         numbers or bold tags to be included in the conc file.
+    --boldname       ... The prefix to be added to the bold number specified 
+                         in bolds parameter [bold]
+    --boldtail       ... The suffix to be added to the bold number specified
+                         in bolds parameter or bold names that match the
+                         tag specified in the bolds parameter [.nii.gz].
+    --overwrite      ... If the specified list file already exists:
+                         - ask    : ask interactively, what to do,
+                         - yes    : overwrite the existing file
+                         - no     : abort creating a file
+                         - append : append sessions to the existing list file
+                         [no].
+    --check          ... Whether to check for existence of files to be included
+                         in the list and what to do if they don't exist:
+                         - yes  ... check for presence and abort if the file to 
+                                    be listed is not found
+                         - no   ... do not check whether files are present or not
+                         - warn ... check for presence and warn if the file to be 
+                                    listed is not found, but do not abort
+
+    USE DESCRIPTION
+    ===============    
+
+    The location of the generated conc files
+    ----------------------------------------
 
     The files are created at the path specified in `concfolder` parameter. If no
     parameter is provided, the resulting files are saved in:
@@ -878,8 +1018,8 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     - yes:    overwrite the existing file
     - no:     abort creating the file
 
-    The sessions to list
-    --------------------
+    The sessions to process
+    -----------------------
 
     Sessions to include in the generation of conc files are specified using
     `sessions` parameter.  This can be a pipe, comma or space separated list of
@@ -899,8 +1039,8 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     and generate conc files for all the sessions for which an `images` folder
     exists as a subfolder in the sessions's folder.
 
-    The files to include
-    --------------------
+    The files to include in the conc file
+    -------------------------------------
 
     The bold files to incude in the conc file are specified using the `bolds`
     parameter. To specify the bolds to be included in the conc files, provide a
@@ -987,6 +1127,8 @@ def createConc(subjectsfolder=".", sessions=None, sfilter=None, concfolder=None,
     2019-06-20 Grega Repovš
              - Fixed a sessions parameter name bug 
              - Fixed sorting by bold number
+    2020-01-14 Grega Repovš
+             - Extended documentation with explicit definition of parameters
     """
 
     def checkFile(fileName):
@@ -1648,6 +1790,9 @@ def batchTag2NameKey(filename=None, subjid=None, bolds=None, output='number', pr
     session and returns the list of bold numbers or names that correspond to bolds
     specified using the `bolds` parameter.
 
+    PARAMETERS
+    ==========
+
     --filename      ... Path to batch.txt file.
     --subjid        ... Session id to look up.
     --bolds         ... Which bold images (as they are specified in the
@@ -1704,8 +1849,8 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
     session's behavior folder and compiles it into a specified group behavioral
     file.
 
-    Parameters
-    ----------
+    PARAMETERS
+    ==========
 
     --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
                       the inbox and individual subject folders are. If not 
@@ -1753,8 +1898,8 @@ def gatherBehavior(subjectsfolder=".", sessions=None, sfilter=None, sfile="behav
                       final report in the compiled file ('yes') or not ('no'). 
                       ['yes']
 
-    Use
-    ---
+    USE DESCRIPTION
+    ===============
     
     The command will use the `subjectfolder`, `sessions` and `sfilter` 
     parameters to create a list of sessions to process. For each session, the
@@ -2038,8 +2183,8 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
     The function gathers a list of all the sequence names across the sessions 
     and saves it into a specified file.
 
-    Parameters
-    ----------
+    PARAMETERS
+    ==========
 
     --subjectsfolder  The base study subjects folder (e.g. WM44/subjects) where
                       the inbox and individual subject folders are. If not 
@@ -2086,8 +2231,8 @@ def pullSequenceNames(subjectsfolder=".", sessions=None, sfilter=None, sfile="su
                       final report in the compiled file ('yes') or not ('no'). 
                       ['yes']
 
-    Use
-    ---
+    USE DESCRIPTION
+    ===============
     
     The command will use the `subjectfolder`, `sessions` and `sfilter` 
     parameters to create a list of sessions to process. For each session, the
@@ -2369,8 +2514,8 @@ def mapIO(subjectsfolder=".", sessions=None, sfilter=None, subjid=None, maptype=
     to execute the actions.
 
 
-    Parameters
-    ----------
+    PARAMETERS
+    ==========
 
     --subjectsfolder  Specifies the base study subjects folder within the Qu|Nex
                       folder structure to or from which the data are to be 

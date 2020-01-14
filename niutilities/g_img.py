@@ -731,14 +731,20 @@ def sliceImage(sfile, tfile, frames=1):
     Takes the source volume image file, removes all but the first N frames, and
     saves the resulting image to target volume image file.
 
-    - sfile:   Source volume file (.4dfp, .nii, or .nii.gz)
-    - tfile:   Target volume file of the same format
-    - frames:  Optional number of initial frames to retain [1]
+    PARAMETERS
+    ==========
 
-    Example use:
+    --sfile:   Source volume file (.4dfp, .nii, or .nii.gz)
+    --tfile:   Target volume file of the same format
+    --frames:  Optional number of initial frames to retain [1]
+
+    EXAMPLE USE
+    ===========
+
     qunex sliceImage sfile=bold1.nii.gz tfile=bold1_f10.nii.gz frames=10
-
-    (c) Grega Repovš
+    
+    ---
+    Written by Grega Repovš
 
     Changelog
     2016-12-25 - Grega Repovš - Adopted from a selfstanding command in the
@@ -801,11 +807,6 @@ def sliceNIfTI(sfile, tfile, frames=1):
     os.fsync(tf.fileno())
     tf.close
     sf.close
-
-
-
-
-
 
 
 def main():

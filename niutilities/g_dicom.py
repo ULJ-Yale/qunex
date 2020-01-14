@@ -1446,7 +1446,7 @@ def sortDicom(folder=".", **kwargs):
     PARAMETERS
     ==========
 
-    --folder: The base session folder that contains the inbox subfolder with
+    --folder  The base session folder that contains the inbox subfolder with
               the unsorted DICOM files.
 
     MULTIPLE SESSIONS AND SCHEDULING
@@ -1502,7 +1502,7 @@ def sortDicom(folder=".", **kwargs):
     2018-07-20 Grega Repovš
              - Added more robust checking for and reporting of presence of image 
                files in sortDicom
-    2019-04-25
+    2019-04-25 Grega Repovš
              - Changed subjects to sessions
     2019-06-22 Grega Repovš
              - Added multiple sessions example
@@ -1728,7 +1728,7 @@ def splitDicom(folder=None):
     Changelog
     2017-02-08 Grega Repovš
              - Updated documentation
-    2019-04-25
+    2019-04-25 Grega Repovš
              - Changed subjects to sessions
     2019-05-12 Grega Repovš
              - Reports an error if no file is found
