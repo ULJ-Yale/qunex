@@ -2165,7 +2165,7 @@ fi
         for BOLDRUN in ${LBOLDRUNS}; do 
            cd ${images_folder} 
            if [ -z ${QCPlotImages} ]; then
-               QCPlotImages="bold${BOLDRUN}.nii.gz;bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"
+               QCPlotImages="bold${BOLDRUN}.nii.gz;bold${BOLDRUN}_Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii"
            fi
            echo "   QC Plot images: ${QCPlotImages}" 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
            echo "   " 2>&1 | tee -a ${g_PlotBoldTS_ComlogTmp}
@@ -2215,7 +2215,7 @@ fi
         if [ -z ${RunParcellations} ]; then
 
             for BOLDRUN in ${LBOLDRUNS}; do
-               if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
+               if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
                if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
                if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
                # -- Cole-Anticevic Brain-wide Network Partition version 1.0 (CAB-NP v1.0)
@@ -2276,7 +2276,7 @@ fi
                 echo ""; reho " ===> Now running parcellation ${Parcellation}"; echo ""
 
                 for BOLDRUN in ${LBOLDRUNS}; do
-                   if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
+                   if [ -z "$InputFile" ]; then InputFileParcellation="bold${BOLDRUN}_Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii "; else InputFileParcellation="${InputFile}"; fi
                    if [ -z "$UseWeights" ]; then UseWeights="yes"; fi
                    if [ -z "$WeightsFile" ]; then UseWeights="images/functional/movement/bold${BOLDRUN}.use"; fi
                    if [ -z "$InputDataType" ]; then InputDataType="dtseries"; fi
@@ -2320,10 +2320,10 @@ fi
 
         for ROIInfo in ${ROINames}; do
             for BOLDRUN in ${LBOLDRUNS}; do
-                if [ -z "$InputFile" ]; then InputFileSeed="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileSeed="${InputFile}"; fi
+                if [ -z "$InputFile" ]; then InputFileSeed="bold${BOLDRUN}_Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileSeed="${InputFile}"; fi
                 if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
                 if [ -z "$ExtractData" ]; then ExtractData=""; fi
-                if [ -z "$OutName" ]; then OutNameSeed="seed_bold${BOLDRUN}_Atlas_g7_hpss_res-VWMWB_lpss"; else OutNameSeed="${OutName}"; fi
+                if [ -z "$OutName" ]; then OutNameSeed="seed_bold${BOLDRUN}_Atlas_s_hpss_res-VWMWB_lpss"; else OutNameSeed="${OutName}"; fi
                 if [ -z "$FileList" ]; then FileList=""; fi
                 if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="yes"; fi
                 if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
@@ -2364,10 +2364,10 @@ fi
        getBoldList
 
        for BOLDRUN in ${LBOLDRUNS}; do
-            if [ -z "$InputFile" ]; then InputFileGBC="bold${BOLDRUN}_Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileGBC="${InputFile}"; fi
+            if [ -z "$InputFile" ]; then InputFileGBC="bold${BOLDRUN}_Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii"; else InputFileGBC="${InputFile}"; fi
             if [ -z "$InputPath" ]; then InputPath="/images/functional"; fi
             if [ -z "$ExtractData" ]; then ExtractData=""; fi
-            if [ -z "$OutName" ]; then OutNameGBC="GBC_bold${BOLDRUN}_Atlas_g7_hpss_res-VWMWB_lpss"; else OutNameGBC="${OutName}"; fi
+            if [ -z "$OutName" ]; then OutNameGBC="GBC_bold${BOLDRUN}_Atlas_s_hpss_res-VWMWB_lpss"; else OutNameGBC="${OutName}"; fi
             if [ -z "$FileList" ]; then FileList=""; fi
             if [ -z "$OVERWRITE_STEP" ]; then OVERWRITE_STEP="yes"; fi
             if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi

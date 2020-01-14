@@ -111,12 +111,12 @@ main() {
 
 echo subject id:"$CASE" >> "$ListPath"/analysis."$ListName".GSR.udvarsme.surface.list
 for BOLD in "$BOLDS"; do
-echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_g7_hpss_res-mVWMWB1d."$FileType" >> "$ListPath"/analysis."$ListName".GSR.udvarsme.surface.list
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_s_hpss_res-mVWMWB1d."$FileType" >> "$ListPath"/analysis."$ListName".GSR.udvarsme.surface.list
 done
 
 echo subject id:"$CASE" >> "$ListPath"/analysis."$ListName".noGSR.udvarsme.surface.list
 for BOLD in "$BOLDS"; do
-echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_g7_hpss_res-mVWM1d."$FileType" >> "$ListPath"/analysis."$ListName".noGSR.udvarsme.surface.list
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_s_hpss_res-mVWM1d."$FileType" >> "$ListPath"/analysis."$ListName".noGSR.udvarsme.surface.list
 done
 
 # -- Hi-pass filtered versions for regular seed connectivity & GBC w/o SMOOTHING
@@ -135,12 +135,12 @@ done
 
 echo subject id:"$CASE" >> "$ListPath"/analysis."$ListName".gbc.GSR.lpss.udvarsme.surface.list
 for BOLD in "$BOLDS"; do
-echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_g7_hpss_res-mVWMWB1d_lpss."$FileType" >> "$ListPath"/analysis."$ListName".gbc.GSR.lpss.udvarsme.surface.list
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_s_hpss_res-mVWMWB1d_lpss."$FileType" >> "$ListPath"/analysis."$ListName".gbc.GSR.lpss.udvarsme.surface.list
 done
 
 echo subject id:"$CASE" >> "$ListPath"/analysis."$ListName".gbc.noGSR.lpss.udvarsme.surface.list
 for BOLD in "$BOLDS"; do
-echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_g7_hpss_res-mVWM1d_lpss."$FileType" >> "$ListPath"/analysis."$ListName".gbc.noGSR.lpss.udvarsme.surface.list
+echo file:"$StudyFolder"/"$CASE"/images/functional/bold"$BOLD""$BoldSuffix"_s_hpss_res-mVWM1d_lpss."$FileType" >> "$ListPath"/analysis."$ListName".gbc.noGSR.lpss.udvarsme.surface.list
 done
 
 # -- Lo-pass filtered versions for GBC w/o SMOOTHING

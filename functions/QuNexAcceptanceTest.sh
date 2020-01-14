@@ -125,7 +125,7 @@ usage() {
     echo "                                                                   Note: If unspecified empty the QC script will by default look into /<path_to_study_subjects_folder>/<subject_id>/subject_hcp.txt and identify all BOLDs to process"
     echo ""    
     echo "--boldimages=<bold_run_numbers>                                  Specify a list of required BOLD images separated by comma or pipe. Where the number of the bold image would be, indicate by '{N}', e.g:"
-    echo "                                                                   --boldimages='bold{N}_Atlas.dtseries.nii|seed_bold{N}_Atlas_g7_hpss_res-VWMWB_lpss_LR-Thal.dtseriesnii' "
+    echo "                                                                   --boldimages='bold{N}_Atlas.dtseries.nii|seed_bold{N}_Atlas_s_hpss_res-VWMWB_lpss_LR-Thal.dtseriesnii' "
     echo "                                                                   When running the test, '{N}' will be replaced by the bold numbers given in --bolddata "
     echo ""
     echo "-- Example:"
@@ -739,8 +739,8 @@ echo ""
             #
             # -- To be tested for BOLD processing: 
             #
-            #    DenoiseData="Atlas_g7_hpss_res-mVWMWB_lpss.dtseries.nii"
-            #    FCData="Atlas_g7_hpss_res-mVWMWB_lpss_BOLD-CAB-NP-v1.0_r.pconn.nii"
+            #    DenoiseData="Atlas_s_hpss_res-mVWMWB_lpss.dtseries.nii"
+            #    FCData="Atlas_s_hpss_res-mVWMWB_lpss_BOLD-CAB-NP-v1.0_r.pconn.nii"
             #    BOLDS="1"
             #
             ####################################################################
