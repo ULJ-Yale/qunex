@@ -206,7 +206,7 @@ function [] = fc_Preprocess(subjectf, bold, omit, doIt, rgss, task, efile, TR, e
 %  Results
 %  -------
 %
-%  The resulting smoothed files are saved with '_g7' added to the BOLD root
+%  The resulting smoothed files are saved with '_s' added to the BOLD root
 %  filename.
 %
 %
@@ -589,7 +589,7 @@ end
 %   ----> run processing loop
 
 task = ['shrl'];
-exts = {'_g7','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
+exts = {'_s','_hpss',['_res-' rgsse options.glm_name],'_lpss'};
 info = {'Smoothing','High-pass filtering','Removing residual','Low-pass filtering'};
 
 % ---> clear existing data
