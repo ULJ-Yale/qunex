@@ -31,14 +31,14 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 %
 % USE
 %
-% This function is a wrapper for gmrimage.mri_ComputeGBC method. It enables computing GBC for a list of subjects.
+% This function is a wrapper for nimage.img_ComputeGBC method. It enables computing GBC for a list of subjects.
 % flist specifies the subject identities, bold files to compute GBC on and roi to use for specifying the volume mask,
 % voxels over which to compute GBC. mask specifies what frames of an image to work on. target specifies the ROI codes
 % that define ROI from the subject specific ROI files over which to compute GBC for. Usually the subject specific
 % roi file would be that subject's FreeSurfer aseg or aseg+aparc segmentation. And if no target is specified all
 % gray matter voxels are used for computing GBC.
 %
-% What specifically gets computed is defined in the command string. For specifics see help for the gmrimage.mri_ComputeGBC
+% What specifically gets computed is defined in the command string. For specifics see help for the nimage.img_ComputeGBC
 % method.
 %
 % In addition, if rsmoot and rdilate are specified, each subjects bold image will be 3D smoothed with the specifed FWHM
@@ -50,7 +50,7 @@ function [] = fc_ComputeGBC3(flist, command, mask, verbose, target, targetf, rsm
 % the computed GBC values for all the subjects. The files will be named with the root of the flist with _gbc_ and code
 % for the specific gbc computed added.
 %
-% For more information see documentation for gmrimage.mri_ComputeGBC method.
+% For more information see documentation for nimage.img_ComputeGBC method.
 %
 % EXAMPLE USE
 % fc_ComputeGBC3('scz.list', 'mFz:0.1|pFz:0.1|mFz:0.1|pD:0.3|mD:0.3', 0, 'true', 'gray', 'GBC', 2, 2, 'udvarsme', true, true);
@@ -104,7 +104,7 @@ fprintf(' ... done.');
 
 %   --- Get variables ready first
 
-template  = gmrimage(subject(1).files{1}, 'single', 1);
+template  = nimage(subject(1).files{1}, 'single', 1);
 nvoxels   = template.voxels;
 desc      = parseCommand(command);
 nvolumes  = length(desc);
@@ -134,14 +134,14 @@ for s = 1:nsubjects
 
 	nfiles = length(subject(s).files);
 
-	img = gmrimage(subject(s).files{1});
+	img = nimage(subject(s).files{1});
 
 	if ~isempty(mask),   img = img.sliceframes(mask); end
     if ~isempty(ignore), img = scrub(img, ignore); end
 
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = gmrimage(subject(s).files{n});
+    	    new = nimage(subject(s).files{n});
             fprintf(', %d', n);
     	    if ~isempty(mask),   new = new.sliceframes(mask); end
             if ~isempty(ignore), new = scrub(new, ignore); end
@@ -150,21 +150,21 @@ for s = 1:nsubjects
     end
 
     if usemask
-        imask = gmrimage(subject(s).roi);
+        imask = nimage(subject(s).roi);
         imask = imask.ismember(target);
 
         if rsmooth
             limit = isempty(rdilate);
-            img = img.mri_Smooth3DMasked(imask, rsmooth, limit, verbose);
+            img = img.img_Smooth3DMasked(imask, rsmooth, limit, verbose);
         end
 
         if rdilate
-            imask = imask.mri_GrowROI(rdilate);
+            imask = imask.img_GrowROI(rdilate);
         end
 
         img = img.maskimg(imask);
     end
-    [img commands] = img.mri_ComputeGBC(command, [], [], verbose, [], time, cv, vstep);
+    [img commands] = img.img_ComputeGBC(command, [], [], verbose, [], time, cv, vstep);
 
     if usemask
         img = img.unmaskimg();
@@ -180,7 +180,7 @@ end
 
 for c = 1:nvolumes
     fname = [listname '_gbc_' desc{c}];
-    gbc(c).mri_saveimage(fullfile(targetf, fname));
+    gbc(c).img_saveimage(fullfile(targetf, fname));
 end
 
 %

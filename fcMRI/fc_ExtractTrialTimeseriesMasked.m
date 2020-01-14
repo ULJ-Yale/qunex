@@ -61,7 +61,7 @@ function [data] = fc_ExtractTrialTimeseriesMasked(flist, roif, targetf, tevents,
 %   ---
 %   Written by Grega Repovš, 2008-01-22
 %   2011-11-07 Grega Repovs
-%            - adjusted and partly rewriten to use gmrimage object
+%            - adjusted and partly rewriten to use nimage object
 %   2012-04-20 Grega Repovs
 %            - added the option of scrubbing the data
 %   2013-07-24 Grega Repovs
@@ -125,9 +125,9 @@ for s = 1:nsub
     end
 
     if strcmp(sroifile,'none')
-        roi = gmrimage.mri_ReadROI(roif);
+        roi = nimage.img_ReadROI(roif);
     else
-        roi = gmrimage.mri_ReadROI(roif, sroifile);
+        roi = nimage.img_ReadROI(roif, sroifile);
     end
     nregions = length(roi.roi.roinames);
 
@@ -135,9 +135,9 @@ for s = 1:nsub
 
 	fprintf('\n     ... reading image file(s)');
 
-	y = gmrimage(subject(s).files{1});
+	y = nimage(subject(s).files{1});
   	for f = 2:length(subject(s).files)
-	    y = [y gmrimage(subject(s).files{f})];
+	    y = [y nimage(subject(s).files{f})];
     end
 
     if scrubit
@@ -203,7 +203,7 @@ for s = 1:nsub
 
     for ni = 1:nruns
 	    for r = 1:nregions
-    		m = mean(mean(y.data(roi.mri_ROIMask(r), run == ni & ~scrub )));
+    		m = mean(mean(y.data(roi.img_ROIMask(r), run == ni & ~scrub )));
     		for n = 1:nniz
     			niz(n).baseline(ni,r) = m;
     		end
@@ -225,7 +225,7 @@ for s = 1:nsub
                     niz(n).scrub(niz(n).N,:) = scrub(ts(1):ts(2));
                     for r = 1:nregions
                         try
-                        	niz(n).timeseries(niz(n).N, :, r) = mean(y.data(roi.mri_ROIMask(r), ts(1):ts(2)),1);
+                        	niz(n).timeseries(niz(n).N, :, r) = mean(y.data(roi.img_ROIMask(r), ts(1):ts(2)),1);
                         	ni = run(ts(1));
 							niz(n).run(1, niz(n).N) = ni;
 							niz(n).eventbaseline(niz(n).N, :) = niz(n).baseline(ni,:);

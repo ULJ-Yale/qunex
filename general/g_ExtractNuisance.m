@@ -4,9 +4,9 @@ function [nuisance hdr] = g_ExtractNuisance(img, fsimg, bmimg, target, ntarget, 
 %
 %	Extracts the specified nuisances and saves it into .nuisance file.
 %
-%   img         - gmrimage or a path to a bold file to process
-%   fsimg       - gmrimage, a path to a freesurfer segmentation or '1b' for extraction based on first frame
-%	bmimg      	- gmrimage, a path to brain mask for this specific bold or [] for image thresholding
+%   img         - nimage or a path to a bold file to process
+%   fsimg       - nimage, a path to a freesurfer segmentation or '1b' for extraction based on first frame
+%	bmimg      	- nimage, a path to brain mask for this specific bold or [] for image thresholding
 %   target      - folder to save results into, default: where bold image is, 'none': do not save in external file
 %   ntarget     - where to store used masks and their png image, 'none' for nowhere
 %   wbmask      - a mask used to exclude ROI from the whole-brain nuisance regressor [none]
@@ -99,16 +99,16 @@ WM  = fsimg.zeroframes(1);
 bmimg.data = (bmimg.data > 0) & (fsimg.data > 0);
 
 WM.data = (ismember(fsimg.data, fs_wm)) & (bmimg.data > 0);
-if shrink, WM = WM.mri_ShrinkROI(); end
+if shrink, WM = WM.img_ShrinkROI(); end
 WM.data = WM.image2D;
 
 V.data  = ismember(fsimg.data, fs_csf) & (bmimg.data > 0);
 WB.data = (bmimg.data > 0) & (WM.data ~=1) & ~V.data;
 
-%if shrink, V  = V.mri_ShrinkROI('surface', 6); end
-if shrink, WB = WB.mri_ShrinkROI('edge', 10);  end %'edge', 10
-if shrink, WM = WM.mri_ShrinkROI();            end
-%if shrink, WM = WM.mri_ShrinkROI();            end
+%if shrink, V  = V.img_ShrinkROI('surface', 6); end
+if shrink, WB = WB.img_ShrinkROI('edge', 10);  end %'edge', 10
+if shrink, WM = WM.img_ShrinkROI();            end
+%if shrink, WM = WM.img_ShrinkROI();            end
 
 WB.data = WB.image2D;
 WM.data = WM.image2D;
@@ -154,21 +154,21 @@ end
 nuisance = [];
 hdr      = {};
 
-nuisance = [nuisance img.mri_ExtractROI(V)'];
-nuisance = [nuisance img.mri_ExtractROI(WM)'];
-nuisance = [nuisance img.mri_ExtractROI(WB)'];
+nuisance = [nuisance img.img_ExtractROI(V)'];
+nuisance = [nuisance img.img_ExtractROI(WM)'];
+nuisance = [nuisance img.img_ExtractROI(WB)'];
 hdr      = {'V', 'WM', 'WB'};
 
 if ~isempty(wbmask)
     mWB = WB;
-    wbmask = wbmask.mri_GrowROI(2);
+    wbmask = wbmask.img_GrowROI(2);
     mWB.data(wbmask.image2D > 0) = 0;
-    nuisance = [nuisance img.mri_ExtractROI(mWB)'];
+    nuisance = [nuisance img.img_ExtractROI(mWB)'];
     hdr  = [hdr 'mWB'];
 end
 
 if ~isempty(nroi)
-   nuisance = [nuisance img.mri_ExtractROI(nroi)'];
+   nuisance = [nuisance img.img_ExtractROI(nroi)'];
    hdr      = [hdr, nroi.roi.roinames];
 end
 
@@ -229,14 +229,14 @@ if ~strcmp(ntarget, 'none')
     fname = strrep(fname, '.img', '_nuisance.img');
     fname = strrep(fname, '.nii', '_nuisance.nii');
 
-    nimg.mri_saveimage(fullfile(ntarget, fname));
+    nimg.img_saveimage(fullfile(ntarget, fname));
 
     % --- compose PNG
 
-    O  = O.mri_SliceMatrix(3);
-    WB = WB.mri_SliceMatrix(3);
-    V  = V.mri_SliceMatrix(3);
-    WM = WM.mri_SliceMatrix(3);
+    O  = O.img_SliceMatrix(3);
+    WB = WB.img_SliceMatrix(3);
+    V  = V.img_SliceMatrix(3);
+    WM = WM.img_SliceMatrix(3);
 
     pic(:,:,1) = O;
     pic(:,:,2) = O;
@@ -251,7 +251,7 @@ if ~strcmp(ntarget, 'none')
     pic(:,:,1) = pic(:,:,1)+WM*0.3;
 
     if ~isempty(nroi)
-        nroi   = nroi.mri_SliceMatrix(3);
+        nroi   = nroi.img_SliceMatrix(3);
         rcodes = unique(nroi);
         rcodes = rcodes(rcodes > 0);
         cmap   = hsv(length(rcodes));
@@ -298,13 +298,13 @@ function [mimg] = getImage(mimg, fsimg, verbose)
 
     if isempty(mimg), return, end
 
-    if ~isa(mimg, 'gmrimage')
+    if ~isa(mimg, 'nimage')
         if strfind(mimg, '.names')
             if verbose, fprintf(verbose, mimg); end
-            mimg = gmrimage.mri_ReadROI(mimg, fsimg);
+            mimg = nimage.img_ReadROI(mimg, fsimg);
         else
             if verbose, fprintf(verbose, mimg); end
-            mimg = gmrimage(mimg);
+            mimg = nimage(mimg);
         end
     end
     mimg.data = mimg.image2D;

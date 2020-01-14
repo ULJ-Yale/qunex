@@ -70,7 +70,7 @@ for s = 1:nsubjects
         if ~isempty(subject(s).roi)
             if ~strfind(subject(s).roi, 'none')
                 if verbose, fprintf('\n---> Reading mask'); end
-                mask = gmrimage(strfind(subject(s).roi));
+                mask = nimage(strfind(subject(s).roi));
             end
         end
     end

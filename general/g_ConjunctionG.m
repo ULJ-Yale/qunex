@@ -46,7 +46,7 @@ fprintf('\n\nComputing conjunction with file %s, thresholding with FDR q=%.4f\n'
 %  ---- reading image, computing conjunction
 
 fprintf('... reading image ');
-img = gmrimage(imgf);
+img = nimage(imgf);
 nim = img.frames;
 fprintf(' volumes: %d ', nim);
 fprintf('... done\n');
@@ -61,7 +61,7 @@ if ~strcmp(maskf, 'all')
 		img.data = img.image2D;
 		mask = sum(img.data, 2) ~= 0;
 	else
-		mask = gmrimage(maskf);
+		mask = nimage(maskf);
 		mask = mask.image2D > 0;
 	end
 
@@ -81,15 +81,15 @@ fprintf('... saving results ');
 
 out = img.zeroframes(nim);
 out.data(mask,:) = mzp;
-out.mri_saveimage(imgpf);       fprintf('.');
+out.img_saveimage(imgpf);       fprintf('.');
 
 out = img.zeroframes(nim);
 out.data(mask,:) = mzt;
-out.mri_saveimage(imgtf);       fprintf('.');
+out.img_saveimage(imgtf);       fprintf('.');
 
 out = img.zeroframes(1);
 out.data(mask) = mzc;
-out.mri_saveimage(imgcf);       fprintf('.');
+out.img_saveimage(imgcf);       fprintf('.');
 
 fprintf(' done.\n\n');
 

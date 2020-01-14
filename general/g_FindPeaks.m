@@ -2,7 +2,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 
 %function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, options, verbose)
 %
-%	Performs smoothing using mri_Smooth() method and the uses mri_FindPeaks
+%	Performs smoothing using img_Smooth() method and the uses img_FindPeaks
 %   method to define peak ROI using a watershed algorithm to grow regions from peaks.
 %
 %   INPUT
@@ -51,7 +51,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %                           b) on all the sub-levels (2) [false]
 %
 %   USE
-%   The function is a wrapper to the gmrimage.mri_FindPeaks method and is used
+%   The function is a wrapper to the nimage.img_FindPeaks method and is used
 %   to read the image file of interest, save the resulting ROI file and report
 %   the peak statistics (if requested). Please see the method documentation for
 %   algorithm and specifics about the parameters.
@@ -117,7 +117,7 @@ function [] = g_FindPeaks(fin, fout, mins, maxs, val, t, presmooth, projection, 
 %
 
 % --- read image and call FindPeaks
-img = gmrimage(fin);
+img = nimage(fin);
 
 % --- load CIFTI brain model data
 load('CIFTI_BrainModel.mat');
@@ -133,7 +133,7 @@ if nargin < 4 || isempty(maxs),       maxs      = inf  ;                    end
 if nargin < 3 || isempty(mins),       mins      = 0    ;                    end
 if nargin < 2, error('ERROR: Please specify input and output file names.'); end
 
-% --- increment verbose for compatibility with the mri_FindPeaks method
+% --- increment verbose for compatibility with the img_FindPeaks method
 verbose = verbose + 1;
 
 frames = [];
@@ -155,12 +155,12 @@ if ~isempty(presmooth)
     if ~isfield(presmooth,'timeSeries'), presmooth.timeSeries =[];   end
     if ~isfield(presmooth,'frames'),     presmooth.frames = frames;  end
     if verbose >= 2, fprintf('\n---> Presmoothing image'); end
-    img = img.mri_Smooth(presmooth.fwhm, verbose, presmooth.ftype,...
+    img = img.img_Smooth(presmooth.fwhm, verbose, presmooth.ftype,...
         presmooth.ksize, projection, presmooth.mask, presmooth.wb_path,...
         presmooth.hcpatlas, presmooth.timeSeries, presmooth.frames);
 end
 
-[roi, vol_peak, peak] = img.mri_FindPeaks(mins, maxs, val, t, projection, options, verbose);
+[roi, vol_peak, peak] = img.img_FindPeaks(mins, maxs, val, t, projection, options, verbose);
 
 % input parameter data structure
 fp_params.mins = mins;
@@ -179,7 +179,7 @@ if verbose >= 2, fprintf('\n---> Saving image'); end
 
 printReport(img, fin, fout, peak, vol_peak, fp_params, presmooth, cifti)
 
-roi.mri_saveimage(fout);
+roi.img_saveimage(fout);
 if verbose >= 2, fprintf('\n---> Done\n'); end
 
 end

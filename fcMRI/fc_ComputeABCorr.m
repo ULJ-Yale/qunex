@@ -32,7 +32,7 @@ function [] = fc_ComputeABCorr(flist, smask, tmask, mask, root, options, verbose
 %   Use the function to compute individual and/or group correlations of each
 %   smask voxel with each tmask voxel. tmask voxels are spread across the volume
 %   and smask voxels are spread across the volumes. For more details see
-%   mri_ComputeABCorr gmrimage method.
+%   img_ComputeABCorr nimage method.
 %
 %   EXAMPLE USE
 %   fc_ComputeABCorr('scz.list', 'PFC.names', 'ACC.names', 5, 'SCZ_PFC-ACC', 'g', 'full');
@@ -102,8 +102,8 @@ if script, fprintf(' ... done.'), end
 
 %   --- Get variables ready first
 
-sROI = gmrimage.mri_ReadROI(smask, subject(1).roi);
-tROI = gmrimage.mri_ReadROI(tmask, subject(1).roi);
+sROI = nimage.img_ReadROI(smask, subject(1).roi);
+tROI = nimage.img_ReadROI(tmask, subject(1).roi);
 
 if length(sROI.roi.roicodes2) == 1 & length(sROI.roi.roicodes2{1}) == 0
     sROIload = false;
@@ -137,27 +137,27 @@ for s = 1:nsubjects
 
     if ~strcmp(subject(s).roi, 'none')
         if tROIload | sROIload
-            roif = gmrimage(subject(s).roi);
+            roif = nimage(subject(s).roi);
         end
     end
 
     if tROIload
-	    tROI = gmrimage.mri_ReadROI(tmask, roif);
+	    tROI = nimage.img_ReadROI(tmask, roif);
     end
     if sROIload
-	    sROI = gmrimage.mri_ReadROI(smask, roif);
+	    sROI = nimage.img_ReadROI(smask, roif);
     end
 
     % --- load bold data
 
 	nfiles = length(subject(s).files);
 
-	img = gmrimage(subject(s).files{1});
+	img = nimage(subject(s).files{1});
 	if mask, img = img.sliceframes(mask); end
 	if script, fprintf('1'), end
 	if nfiles > 1
     	for n = 2:nfiles
-    	    new = gmrimage(subject(s).files{n});
+    	    new = nimage(subject(s).files{n});
     	    if mask, new = new.sliceframes(mask); end
     	    img = [img new];
     	    if script, fprintf(', %d', n), end
@@ -165,13 +165,13 @@ for s = 1:nsubjects
     end
     if script, fprintf('\n'), end
 
-    ABCor = img.mri_ComputeABCor(sROI, tROI, method);
+    ABCor = img.img_ComputeABCor(sROI, tROI, method);
     ABCor = ABCor.unmaskimg;
 
     if indiv
         ifile = [root '_' subject(s).id '_ABCor'];
         if script, fprintf('\n... saving %s\n', ifile); end
-        ABCor.mri_saveimage(ifile);
+        ABCor.img_saveimage(ifile);
     end
 
     if group
@@ -193,9 +193,9 @@ if group
     end
 
     gres.data = gres.data ./ repmat(gcnt.data,1,nframes);
-    gres.mri_saveimage([root '_group_ABCor_Fz']);
+    gres.img_saveimage([root '_group_ABCor_Fz']);
     gres.data = fc_FisherInv(gres.data);
-    gres.mri_saveimage([root '_group_ABCor_r']);
+    gres.img_saveimage([root '_group_ABCor_r']);
 end
 
 

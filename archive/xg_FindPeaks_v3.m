@@ -7,7 +7,7 @@ function [] = g_FindPeaks_v2(fin, fout, t, mins, maxs)
 
 %  ---- initializing
 
-img = gmrimage(fin);
+img = nimage(fin);
 img.data(img.data < t = 0;
 simg = sort(unique(img.data));
 
@@ -97,6 +97,6 @@ end
 
 fprintf('\nRegions created: %d', c-1);
 fprintf('\n... Saving');
-roi.mri_saveimage(fout, roiinfo);
+roi.img_saveimage(fout, roiinfo);
 fprintf('\n... Done.\n');
 

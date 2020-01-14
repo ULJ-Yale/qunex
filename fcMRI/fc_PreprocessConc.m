@@ -47,7 +47,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %                       - after    : how many frames after the bad one to reject [0]
 %                       - before   : how many frames before the bad one to reject [0]
 %                       - reject   : which criteria to use for rejection (mov, dvars, dvarsme, idvars, udvars ...) [udvarsme]
-%                       if empty, the defaults from mri_ComputeScrub are used.
+%                       if empty, the defaults from img_ComputeScrub are used.
 %       ignores     - How to deal with the frames marked as not used in filering and regression steps
 %                     specified in a single string, separated with pipes
 %                     hipass  : keep / linear / spline
@@ -212,8 +212,8 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   Volume smoothing
 %   ----------------
 %
-%   For volume formats the images will be smoothed using the mri_Smooth3D
-%   gmrimage method. For cifti format the smooting will be done by calling the
+%   For volume formats the images will be smoothed using the img_Smooth3D
+%   nimage method. For cifti format the smooting will be done by calling the
 %   relevant wb_command command. The smoothing specific parameters can be
 %   set in the options string:
 %
@@ -271,7 +271,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   TEMPORAL FILTERING
 %   ==================
 %
-%   Temporal filtering is accomplished using mri_Filter gmrimage method. The
+%   Temporal filtering is accomplished using img_Filter nimage method. The
 %   code is adopted from the FSL C++ code enabling appropriate handling of
 %   bad frames (as described above - see SCRUBBING). The filtering settings
 %   can be set in the options parameter:
@@ -279,7 +279,7 @@ function [] = fc_PreprocessConc(subjectf, bolds, doIt, TR, omit, rgss, task, efi
 %   * hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
 %   * lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
 %
-%   Please note that the values finaly passed to mri_Filter method are the
+%   Please note that the values finaly passed to img_Filter method are the
 %   respective sigma values computed from the specified frequencies and TR.
 %
 %   Results
@@ -613,14 +613,14 @@ for b = 1:nbolds
     if strfind(doIt, 'm')
         [nuisance(b).fstats nuisance(b).fstats_hdr] = g_ReadTable(file(b).bstats);
 
-        timg = gmrimage;
+        timg = nimage;
         timg.frames     = size(nuisance(b).mov, 1);
         timg.fstats     = nuisance(b).fstats;
         timg.fstats_hdr = nuisance(b).fstats_hdr;
         timg.mov        = nuisance(b).mov;
         timg.mov_hdr    = nuisance(b).mov_hdr;
 
-        timg = timg.mri_ComputeScrub(scrub);
+        timg = timg.img_ComputeScrub(scrub);
 
         nuisance(b).scrub     = timg.scrub;
         nuisance(b).scrub_hdr = timg.scrub_hdr;
@@ -769,7 +769,7 @@ end
 ext      = '';
 
 for b = 1:nbolds
-    img(b) = gmrimage();
+    img(b) = nimage();
 end
 
 dor      = true;
@@ -815,14 +815,14 @@ for current = char(doIt)
                     case 's'
                         if strcmp(tail, '.dtseries.nii')
                             wbSmooth(file(b).sfile, file(b).tfile, file(b), options);
-                            img(b) = gmrimage();
+                            img(b) = nimage();
                         elseif strcmp(tail, '.ptseries.nii')
                             fprintf(' WARNING: No spatial smoothing will be performed on ptseries images!')
                         else
                             tmpi = readIfEmpty(img(b), file(b).sfile, omit);
                             tmpi.data = tmpi.image2D;
                             if strcmp(options.smooth_mask, 'false')
-                                tmpi = tmpi.mri_Smooth3D(options.voxel_smooth, true);
+                                tmpi = tmpi.img_Smooth3D(options.voxel_smooth, true);
                             else
 
                                 % --- set up the smoothing mask
@@ -834,7 +834,7 @@ for current = char(doIt)
                                     bmask = tmpi.zeroframes(1);
                                     bmask.data = tmpi.data(:,1) > 300;
                                 elseif strcmp(options.smooth_mask, 'brainmask')
-                                    bmask = gmrimage(file(b).bmask);
+                                    bmask = nimage(file(b).bmask);
                                 else
                                     bmask = options.smooth_mask;
                                 end
@@ -848,12 +848,12 @@ for current = char(doIt)
                                     dmask = tmpi.zeroframes(1);
                                     dmask.data = tmpi.data(:,1) > 300;
                                 elseif strcmp(options.dilate_mask, 'brainmask')
-                                    dmask = gmrimage(file(b).bmask);
+                                    dmask = nimage(file(b).bmask);
                                 else
                                     dmask = options.dilate_mask;
                                 end
 
-                                tmpi = tmpi.mri_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
+                                tmpi = tmpi.img_Smooth3DMasked(bmask, options.voxel_smooth, dmask, true);
                             end
                             img(b) = tmpi;
 
@@ -861,17 +861,17 @@ for current = char(doIt)
                     case 'h'
                         tmpi = readIfEmpty(img(b), file(b).sfile, omit);
                         hpsigma = ((1/TR)/options.hipass_filter)/2;
-                        tmpi = tmpi.mri_Filter(hpsigma, 0, omit, true, ignore.hipass);
+                        tmpi = tmpi.img_Filter(hpsigma, 0, omit, true, ignore.hipass);
                         img(b) = tmpi;
                     case 'l'
                         tmpi = readIfEmpty(tmpi, file(b).sfile, omit);
                         lpsigma = ((1/TR)/options.lopass_filter)/2;
-                        tmpi = tmpi.mri_Filter(0, lpsigma, omit, true, ignore.lopass);
+                        tmpi = tmpi.img_Filter(0, lpsigma, omit, true, ignore.lopass);
                         img(b) = tmpi;
                 end
 
                 if ~img(b).empty
-                    img(b).mri_saveimage(file(b).tfile);
+                    img(b).img_saveimage(file(b).tfile);
                     fprintf(' ... saved!');
                 end
             end
@@ -883,13 +883,13 @@ for current = char(doIt)
                     case 'h'
                         hpsigma = ((1/TR)/options.hipass_filter)/2;
                         tnimg = tmpimg(nuisance(b).signal', nuisance(b).use);
-                        tnimg = tnimg.mri_Filter(hpsigma, 0, omit, false, ignore.hipass);
+                        tnimg = tnimg.img_Filter(hpsigma, 0, omit, false, ignore.hipass);
                         nuisance(b).signal = tnimg.data';
 
                     case 'l'
                         lpsigma = ((1/TR)/options.lopass_filter)/2;
                         tnimg = tmpimg([nuisance(b).signal nuisance(b).task nuisance(b).events nuisance(b).mov]', nuisance(b).use);
-                        tnimg = tnimg.mri_Filter(0, lpsigma, omit, false, ignore.lopass);
+                        tnimg = tnimg.img_Filter(0, lpsigma, omit, false, ignore.lopass);
                         nuisance(b).signal = tnimg.data(1:nuisance(b).nsignal,:)';
                         nuisance(b).task   = tnimg.data((nuisance(b).nsignal+1):(nuisance(b).nsignal+nuisance(b).ntask),:)';
                         nuisance(b).events = tnimg.data((nuisance(b).nsignal+nuisance(b).ntask+1):(nuisance(b).nsignal+nuisance(b).ntask+nuisance(b).nevents),:)';
@@ -922,7 +922,7 @@ for current = char(doIt)
             if strcmp(options.glm_residuals, 'save')
                 for b = 1:nbolds
                     fprintf('\n---> saving %s ', file(b).tfile);
-                    img(b).mri_saveimage(file(b).tfile);
+                    img(b).img_saveimage(file(b).tfile);
                     fprintf('... done!');
                 end
                 saveconc = true;
@@ -934,7 +934,7 @@ for current = char(doIt)
             if docoeff
                 cname = [file(b).croot ext '_Bcoeff' tail];
                 fprintf('\n---> saving %s ', cname);
-                coeff.mri_saveimage(cname);
+                coeff.img_saveimage(cname);
                 fprintf('... done!');
             end
         end
@@ -946,7 +946,7 @@ for current = char(doIt)
             fprintf('\n---> conc file already saved!');
         else
             fprintf('\n---> saving conc file ');
-            gmrimage.mri_SaveConcFile(file(b).tconc, {file.tfile});
+            nimage.img_SaveConcFile(file(b).tconc, {file.tfile});
             fprintf('... done!');
         end
     end
@@ -1341,8 +1341,8 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
     % fprintf('\n -> mask %d', sum(nmask==1));
     % fprintf(xevents);
     X = X(nmask==1, :);
-    [coeff res] = Y.mri_GLMFit(X);
-    coeff = [coeff Y.mri_Stats({'m', 'sd'})];
+    [coeff res] = Y.img_GLMFit(X);
+    coeff = [coeff Y.img_Stats({'m', 'sd'})];
 
     %   ----> put data back into images
     fprintf('.');
@@ -1368,7 +1368,7 @@ function [img coeff] = regressNuisance(img, omit, nuisance, rgss, rtype, ignore,
         img(b) = tmpi;
     end
 
-    coeff = coeff.mri_EmbedMeta(xtable, 64, 'GLM');
+    coeff = coeff.img_EmbedMeta(xtable, 64, 'GLM');
 
 return
 
@@ -1382,7 +1382,7 @@ return
 
 function [img] = tmpimg(data, use);
 
-    img = gmrimage();
+    img = nimage();
     img.data = data;
     img.use  = use;
     [img.voxels img.frames] = size(data);
@@ -1396,7 +1396,7 @@ function [img] = readIfEmpty(img, src, omit)
 
     if isempty(img) || img.empty
         fprintf('\n---> reading %s ', src);
-        img = gmrimage(src);
+        img = nimage(src);
         if ~isempty(omit)
             img.use(1:omit) = 0;
         end

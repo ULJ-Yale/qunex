@@ -48,7 +48,7 @@ function [] = fc_ComputeSeedMapsMultiple(flist, roiinfo, inmask, options, target
 %   2008-01-23 Grega Repovš
 %            - Adjusted for a different file list format and an additional ROI mask []
 %   2011-11-10 Grega Repovš
-%            - Changed to make use of gmrimage and allow ignoring of bad frames
+%            - Changed to make use of nimage and allow ignoring of bad frames
 %   2014-09-03 Grega Repovš
 %            - Added option for computing covariances
 %   2017-03-19 Grega Repovš
@@ -130,16 +130,16 @@ for n = 1:nsub
 	    sroifile = '';
     end
 
-	roi = gmrimage.mri_ReadROI(roiinfo, sroifile);
+	roi = nimage.img_ReadROI(roiinfo, sroifile);
 
 
 	% ---> reading image files
 
 	fprintf('\n     ... reading image file(s)');
 
-	y = gmrimage(subject(n).files{1});
+	y = nimage(subject(n).files{1});
 	for f = 2:length(subject(n).files)
-	    y = [y gmrimage(subject(n).files{f})];
+	    y = [y nimage(subject(n).files{f})];
     end
 
     fprintf(' ... %d frames read, done.', y.frames);
@@ -189,19 +189,19 @@ for n = 1:nsub
 
 	fprintf('\n     ... extracting timeseries ');
 
-    ts = y.mri_ExtractROI(roi, [], method);
+    ts = y.img_ExtractROI(roi, [], method);
 
     fprintf(' ... done!');
 
     fprintf('\n     ... computing seed maps ');
 
 	if ~isempty(strfind(options, 'p')) || ~isempty(strfind(options, 'z'))
-        [pr, p] = y.mri_ComputeCorrelations(ts', false, cv);
+        [pr, p] = y.img_ComputeCorrelations(ts', false, cv);
         if strfind(options, 'z')
-            z = p.mri_p2z(pr);
+            z = p.img_p2z(pr);
         end
     else
-        pr = y.mri_ComputeCorrelations(ts', false, cv);
+        pr = y.img_ComputeCorrelations(ts', false, cv);
     end
 
     fprintf(' ... done!');
@@ -233,19 +233,19 @@ for n = 1:nsub
         % ----> if needed, save individual images
 
         if ~isempty(strfind(options, 'cv')) && cv
-            pr.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_cov']);   fprintf(' cov');
+            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_cov']);   fprintf(' cov');
         end
         if ~isempty(strfind(options, 'r')) && ~cv
-            pr.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_r']);   fprintf(' r');
+            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_r']);   fprintf(' r');
     	end
     	if ~isempty(strfind(options, 'f')) && ~cv
-            group(r).Fz.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Fz']);   fprintf(' Fz');
+            group(r).Fz.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Fz']);   fprintf(' Fz');
     	end
     	if ~isempty(strfind(options, 'p')) && ~cv
-            p.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_p']);   fprintf(' p');
+            p.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_p']);   fprintf(' p');
     	end
     	if ~isempty(strfind(options, 'z')) && ~cv
-    	    z.mri_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Z']);   fprintf(' Z');
+    	    z.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' subject(n).id '_Z']);   fprintf(' Z');
     	end
 
 	end
@@ -267,24 +267,24 @@ for r = 1:nroi
 	fprintf('\n    ... for region %s', group(r).roi);
 
     if cv
-        [p Z M] = group(r).cv.mri_TTestZero();
+        [p Z M] = group(r).cv.img_TTestZero();
     else
-        [p Z M] = group(r).Fz.mri_TTestZero();
-        pr = M.mri_FisherInv();
+        [p Z M] = group(r).Fz.img_TTestZero();
+        pr = M.img_FisherInv();
     end
 
 	fprintf('... saving ...');
 
     if cv
-       M.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_cov'], extra);           fprintf(' cov');
-       group(r).cv.mri_saveimage([targetf '/' lname '_' group(r).roi '_all_cov'], extra);   fprintf(' all cov');
+       M.img_saveimage([targetf '/' lname '_' group(r).roi '_group_cov'], extra);           fprintf(' cov');
+       group(r).cv.img_saveimage([targetf '/' lname '_' group(r).roi '_all_cov'], extra);   fprintf(' all cov');
     else
-       M.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_Fz'], extra);            fprintf(' Fz');
-       pr.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_r'], extra);            fprintf(' r');
-       group(r).Fz.mri_saveimage([targetf '/' lname '_' group(r).roi '_all_Fz'], extra);    fprintf(' all Fz');
+       M.img_saveimage([targetf '/' lname '_' group(r).roi '_group_Fz'], extra);            fprintf(' Fz');
+       pr.img_saveimage([targetf '/' lname '_' group(r).roi '_group_r'], extra);            fprintf(' r');
+       group(r).Fz.img_saveimage([targetf '/' lname '_' group(r).roi '_all_Fz'], extra);    fprintf(' all Fz');
     end
 
-    Z.mri_saveimage([targetf '/' lname '_' group(r).roi '_group_Z'], extra);                fprintf(' Z');
+    Z.img_saveimage([targetf '/' lname '_' group(r).roi '_group_Z'], extra);                fprintf(' Z');
 
 	fprintf(' ... done.');
 
