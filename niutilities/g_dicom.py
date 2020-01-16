@@ -1468,7 +1468,7 @@ def sortDicom(folder=".", **kwargs):
     node. Optional `scheduler_environment`, `scheduler_workdir`,
     `scheduler_sleep`, and `nprocess` parameters can be set.
 
-    Set optional `` parameter to specify where the processing logs
+    Set optional `logfolder` parameter to specify where the processing logs
     should be stored. Otherwise the processor will make best guess, where the
     logs should go.
 
