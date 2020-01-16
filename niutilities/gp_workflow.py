@@ -1601,7 +1601,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     Volume smoothing
     ----------------
 
-    For volume formats the images will be smoothed using the im_Smooth3D
+    For volume formats the images will be smoothed using the img_Smooth3D
     nimage method. For cifti format the smooting will be done by calling the
     relevant wb_command command. The smoothing specific parameters are:
 
@@ -1659,7 +1659,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     TEMPORAL FILTERING
     ==================
 
-    Temporal filtering is accomplished using im_Filter nimage method. The
+    Temporal filtering is accomplished using img_Filter nimage method. The
     code is adopted from the FSL C++ code enabling appropriate handling of
     bad frames (as described above - see SCRUBBING). The specific parameters
     are:
@@ -1667,7 +1667,7 @@ def preprocessBold(sinfo, options, overwrite=False, thread=0):
     --hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
     --lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
 
-    Please note that the values finaly passed to im_Filter method are the
+    Please note that the values finaly passed to img_Filter method are the
     respective sigma values computed from the specified frequencies and TR.
 
     Results
@@ -2212,7 +2212,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     Volume smoothing
     ----------------
 
-    For volume formats the images will be smoothed using the im_Smooth3D
+    For volume formats the images will be smoothed using the img_Smooth3D
     nimage method. For cifti format the smooting will be done by calling the
     relevant wb_command command. The smoothing specific parameters are:
 
@@ -2270,7 +2270,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     TEMPORAL FILTERING
     ==================
 
-    Temporal filtering is accomplished using im_Filter nimage method. The
+    Temporal filtering is accomplished using img_Filter nimage method. The
     code is adopted from the FSL C++ code enabling appropriate handling of
     bad frames (as described above - see SCRUBBING). The specific parameters
     are:
@@ -2278,7 +2278,7 @@ def preprocessConc(sinfo, options, overwrite=False, thread=0):
     --hipass_filter  ... The frequency for high-pass filtering in Hz [0.008].
     --lopass_filter  ... The frequency for low-pass filtering in Hz [0.09].
 
-    Please note that the values finaly passed to im_Filter method are the
+    Please note that the values finaly passed to img_Filter method are the
     respective sigma values computed from the specified frequencies and TR.
 
     Results
