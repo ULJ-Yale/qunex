@@ -418,6 +418,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                                 used, set to NONE if not used [NONE].
     --hcp_seechospacing     ... Echo Spacing or Dwelltime of Spin Echo Field Map
                                 or "NONE" if not used [NONE].
+    --hcp_sephasepos        ... Label for the positive image of the Spin Echo 
+                                Field Map pair [""]
+    --hcp_sephaseneg        ... Label for the negative image of the Spin Echo 
+                                Field Map pair [""]
     --hcp_seunwarpdir       ... Phase encoding direction of the Spin Echo Field
                                 Map (x, y or NONE) [NONE].
     --hcp_topupconfig       ... Path to a configuration file for TOPUP method
@@ -555,6 +559,8 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
              - Adjusted parameters, help and processing to use integrated HCPpipelines
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-01-16 Grega Repovš
+             - Updated documentation on SE label specification
     '''
 
     r = "\n---------------------------------------------------------"
@@ -2559,13 +2565,18 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
     distortion correction details
     -----------------------------
 
-    --hcp_bold_dcmethod       ... BOLD image deformation correction that should
+    --hcp_bold_dcmethod      ... BOLD image deformation correction that should
                                  be used: TOPUP, FIELDMAP / SiemensFieldMap,
                                  GeneralElectricFieldMap or NONE. [TOPUP]
     --hcp_bold_echodiff      ... Delta TE for BOLD fieldmap images or NONE if
                                  not used. [NONE]
+    --hcp_bold_sephasepos    ... Label for the positive image of the Spin Echo 
+                                 Field Map pair [""]
+    --hcp_bold_sephaseneg    ... Label for the negative image of the Spin Echo 
+                                 Field Map pair [""]
     --hcp_bold_unwarpdir     ... The direction of unwarping. Can be specified
-                                 separately for LR/RL : 'LR=x|RL=-x|x'. [y]
+                                 separately for LR/RL : 'LR=x|RL=-x|x' or
+                                 separately for PA/AP : 'PA=y|AP=y-|y-'. [y]
     --hcp_bold_res           ... Target image resolution. 2mm recommended. [2].
     --hcp_bold_gdcoeffs      ... Gradient distorsion correction coefficients
                                  or NONE. [NONE]
@@ -2752,11 +2763,13 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
              - Updated, simplified calling and testing
              - Added full file checking
     2019-06-06 Grega Repovš
-             - Enabled multiple log file locations\
+             - Enabled multiple log file locations
     2019-10-20 Grega Repovš
              - Initial adjustment of parameters, help and processing to use integrated HCPpipelines
     2020-01-05 Grega Repovš
              - Updated documentation
+    2020-01-16 Grega Repovš
+             - Introduced bold specific SE options and updated documentation
     '''
 
     r = "\n---------------------------------------------------------"
@@ -2830,54 +2843,55 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         sepresent = []
         sepairs = {}
-        r += "\n---> Looking for spin echo fieldmap set images."
+        sesettings = False
 
-        for bold in range(50):
-            spinok = False
-
-            # check if folder exists
-            sepath = os.path.join(hcp['source'], "SpinEchoFieldMap%d%s" % (bold, options['fctail']))
-            if os.path.exists(sepath):
-                # get all *.nii.gz files in that folder
-                images = glob.glob(os.path.join(sepath, "*.nii.gz"))
-
-                # variable for storing the paired string
-                pairedimage = ""
+        if options['hcp_bold_dcmethod'].lower() == 'topup':
                 
-                # search in images
-                for i in images:
-                    # look for AP
-                    if "_AP" in i:
-                        spinok  = True
-                        pairedimage = "_PA"
-                        spinOne = i
-                        r, spinok = checkForFile2(r, spinOne, '\n     ... AP spin echo fieldmap image present', '\n         ERROR: AP spin echo fieldmap image missing!', status=spinok)
-                        break
-                    # look for LR
-                    elif "_LR" in i:
-                        spinok  = True
-                        pairedimage = "_RL"
-                        spinOne = i
-                        r, spinok = checkForFile2(r, spinOne, '\n     ... LR spin echo fieldmap image present', '\n         ERROR: LR spin echo fieldmap image missing!', status=spinok)
-                        break
+            # -- spin echo settings
 
-                # search for paired image
-                if spinok:
-                    for i in images:
-                        if pairedimage in i:
-                            spinTwo = i
-                            r, spinok = checkForFile2(r, spinTwo, '\n     ... spin echo fieldmap pair image present', '\n         ERROR: spin echo fieldmap pair image missing!', status=spinok)
-                            break
+            sesettings = True
+            for p in ['hcp_bold_sephaseneg', 'hcp_bold_sephasepos', 'hcp_bold_unwarpdir']:
+                if not options[p]:
+                    r += '\n---> ERROR: TOPUP requested but %s parameter is not set! Please review parameter file!' % (p)
+                    boldok = False
+                    sesettings = False
+                    run = False
 
-            if spinok:
-                sepresent.append(bold)
-                sepairs[bold] = {'spinOne': spinOne, 'spinTwo': spinTwo}
+            if sesettings:
+                r += "\n---> Looking for spin echo fieldmap set images."
 
-        # --- Process unwarp direction
+                for bold in range(50):
+                    spinok = False
 
-        unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
-        unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
-        unwarpdirs = dict(unwarpdirs)
+                    # check if folder exists
+                    sepath = glob.glob(os.path.join(hcp['source'], "SpinEchoFieldMap%d*" % (bold)))
+                    if sepath:
+                        sepath = sepath[0]
+                        # get all *.nii.gz files in that folder
+                        images = glob.glob(os.path.join(sepath, "*.nii.gz"))
+
+                        # variable for storing the paired string
+                        spinok = True
+                        
+                        # search in images
+                        for i in images:
+                            # look for positive 
+                            if "_" + options['hcp_bold_sephasepos'] in i:
+                                spinPos = i
+                                r, spinok = checkForFile2(r, spinPos, "\n     ... %s spin echo fieldmap image present" % (options['hcp_bold_sephasepos']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephasepos']), status=spinok)
+                            elif "_" + options['hcp_bold_sephaseneg'] in i:
+                                spinNeg = i
+                                r, spinok = checkForFile2(r, spinNeg, "\n     ... %s spin echo fieldmap image present" % (options['hcp_bold_sephaseneg']), "\n         ERROR: %s spin echo fieldmap image missing!" % (options['hcp_bold_sephaseneg']), status=spinok)
+
+                    if spinok:
+                        sepresent.append(bold)
+                        sepairs[bold] = {'spinPos': spinPos, 'spinNeg': spinNeg}
+
+                # --- Process unwarp direction
+
+                unwarpdirs = [[f.strip() for f in e.strip().split("=")] for e in options['hcp_bold_unwarpdir'].split("|")]
+                unwarpdirs = [['default', e[0]] if len(e) == 1 else e for e in unwarpdirs]
+                unwarpdirs = dict(unwarpdirs)
 
         # --- Get sorted bold numbers
 
@@ -2892,8 +2906,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
         spinP       = 0
         spinN       = 0
-        spinOne     = "NONE"  # AP or LR
-        spinTwo     = "NONE"  # PA or RL
+        spinNeg     = "NONE"  # AP or LR
+        spinPos     = "NONE"  # PA or RL
         refimg      = "NONE"
         futureref   = "NONE"
         topupconfig = ""
@@ -2973,45 +2987,37 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
 
             echospacing = ""
 
-            if options['hcp_bold_dcmethod'].lower() == 'topup':
+            if options['hcp_bold_dcmethod'].lower() == 'topup' and sesettings:
                 
-                # -- spin echo settings
+                if not sepresent:
+                    r += '\n     ... ERROR: No spin echo fieldmap set images present!'
+                    boldok = False
 
-                sesettings = True
-                for p in ['hcp_sephaseneg', 'hcp_sephasepos', 'hcp_bold_unwarpdir']:
-                    if not options[p]:
-                        r += '\n     ... ERROR: %s parameter is not set! Please review parameter file!' % (p)
-                        boldok = False
-                        sesettings = False
-
-                if sesettings:
-                    if not sepresent:
-                        r += '\n     ... ERROR: No spin echo fieldmap set images present!'
-                        boldok = False
-
-                    elif options['hcp_bold_seimg'] == 'first':
-                        if firstSE is None:
-                            spinN = sepresent[0]
-                            r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
-                        else:
-                            spinN = firstSE
-                            r += "\n     ... using the spin echo fieldmap set for the first bold run, %d" % (spinN)
-                        spinOne = sepairs[spinN]['spinOne']
-                        spinTwo = sepairs[spinN]['spinTwo']
-
+                elif options['hcp_bold_seimg'] == 'first':
+                    if firstSE is None:
+                        spinN = sepresent[0]
+                        r += "\n     ... using the first recorded spin echo fieldmap set %d" % (spinN)
                     else:
-                        spinN = False
-                        if 'se' in boldinfo:
-                            spinN = int(boldinfo['se'])
-                        else:
-                            for sen in sepresent:
-                                if sen <= bold:
-                                    spinN = sen
-                                elif not spinN:
-                                    spinN = sen
-                        spinOne = sepairs[spinN]['spinOne']
-                        spinTwo = sepairs[spinN]['spinTwo']
-                        r += "\n     ... using spin echo fieldmap set %d" % (spinN)
+                        spinN = firstSE
+                        r += "\n     ... using the spin echo fieldmap set for the first bold run, %d" % (spinN)
+                    spinNeg = sepairs[spinN]['spinNeg']
+                    spinPos = sepairs[spinN]['spinPos']
+
+                else:
+                    spinN = False
+                    if 'se' in boldinfo:
+                        spinN = int(boldinfo['se'])
+                    else:
+                        for sen in sepresent:
+                            if sen <= bold:
+                                spinN = sen
+                            elif not spinN:
+                                spinN = sen
+                    spinNeg = sepairs[spinN]['spinNeg']
+                    spinPos = sepairs[spinN]['spinPos']
+                    r += "\n     ... using spin echo fieldmap set %d" % (spinN)
+                    r += "\n         -> SE Positive image : %s" % (os.path.basename(spinPos))
+                    r += "\n         -> SE Negative image : %s" % (os.path.basename(spinNeg))
 
                 # -- are we using a new SE image?
 
@@ -3118,8 +3124,8 @@ def hcpfMRIVolume(sinfo, options, overwrite=False, thread=0):
                  'gdcfile':      gdcfile,
                  'unwarpdir':    unwarpdir,
                  'echospacing':  echospacing,
-                 'spinOne':      spinOne,
-                 'spinTwo':      spinTwo,
+                 'spinNeg':      spinNeg,
+                 'spinPos':      spinPos,
                  'topupconfig':  topupconfig,
                  'fmriref':      fmriref}
             boldsData.append(b)
@@ -3245,8 +3251,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
     refimg      = b['refimg']
     unwarpdir   = b['unwarpdir']
     echospacing = b['echospacing']
-    spinOne     = b['spinOne']
-    spinTwo     = b['spinTwo']
+    spinNeg     = b['spinNeg']
+    spinPos     = b['spinPos']
     topupconfig = b['topupconfig']
     fmriref     = b['fmriref']
 
@@ -3291,8 +3297,8 @@ def executeHCPfMRIVolume(sinfo, options, overwrite, hcp, b):
                     ("fmriname",            boldtarget),
                     ("fmritcs",             boldimg),
                     ("fmriscout",           refimg),
-                    ("SEPhaseNeg",          spinOne),
-                    ("SEPhasePos",          spinTwo),
+                    ("SEPhaseNeg",          spinNeg),
+                    ("SEPhasePos",          spinPos),
                     ("fmapmag",             hcp['fmapmag']),
                     ("fmapphase",           hcp['fmapphase']),
                     ("fmapgeneralelectric", hcp['fmapge']),
