@@ -590,7 +590,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                 T1w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T1w'][0]
                 if 'DwellTime' in T1w:
                     options['hcp_t1samplespacing'] = T1w['DwellTime']
-                    r += "\n---> T1w image specific DwellTime: %s s" % (options['hcp_t1samplespacing'])
+                    r += "\n---> T1w image specific EchoSpacing: %s s" % (options['hcp_t1samplespacing'])
+                elif 'EchoSpacing' in T1w:
+                    options['hcp_t1samplespacing'] = T1w['EchoSpacing']
+                    r += "\n---> T1w image specific EchoSpacing: %s s" % (options['hcp_t1samplespacing'])
                 if 'UnwarpDir' in T1w:
                     options['hcp_unwarpdir'] = T1w['UnwarpDir']
                     r += "\n---> T1w image specific unwarp direction: %s" % (options['hcp_unwarpdir'])
@@ -611,7 +614,10 @@ def hcpPreFS(sinfo, options, overwrite=False, thread=0):
                     T2w = [v for (k, v) in sinfo.iteritems() if k.isdigit() and v['name'] == 'T2w'][0]
                     if 'DwellTime' in T2w:
                         options['hcp_t2samplespacing'] = T2w['DwellTime']
-                        r += "\n---> T2w image specific DwellTime: %s s" % (options['hcp_t2samplespacing'])
+                        r += "\n---> T2w image specific EchoSpacing: %s s" % (options['hcp_t2samplespacing'])
+                    elif 'EchoSpacing' in T2w:
+                        options['hcp_t2samplespacing'] = T2w['EchoSpacing']
+                        r += "\n---> T2w image specific EchoSpacing: %s s" % (options['hcp_t2samplespacing'])
                 else:
                     r += "\n---> ERROR: Could not find T2w image file. [%s]" % (tfile)
                     run = False
@@ -2127,7 +2133,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
     image acquisition details
     -------------------------
 
-    --hcp_dwi_dwelltime      ... Echo Spacing or Dwelltime of DWI images.
+    --hcp_dwi_echospacing    ... Echo Spacing or Dwelltime of DWI images.
                                  [0.00035]
 
     distortion correction details
@@ -2337,7 +2343,7 @@ def hcpDiffusion(sinfo, options, overwrite=False, thread=0):
             echospacing = dwiinfo['EchoSpacing']
             r += "\n---> Using image specific EchoSpacing: %s ms" % (echospacing)                
         else:
-            echospacing = options['hcp_dwi_dwelltime']
+            echospacing = options['hcp_dwi_echospacing']
             r += "\n---> Using study general EchoSpacing: %s ms" % (echospacing)
 
 

@@ -400,7 +400,7 @@ arglist = [['# ---- Basic settings'],
            ['hcp_bold_surf_check',    'last',                                     str,    "Whether to check the results of fMRISurface pipeline by last file generated (last), the default, list of all files (all), or using a specific check file (path to file) [last]"],
            ['hcp_dwi_PEdir',          '1',                                        str,    "Use 1 for Left-Right Phase Encoding, 2 for Anterior-Posterior"],
            ['hcp_dwi_gdcoeffs',       'NONE',                                     str,    "DWI specific gradient distorsion coefficients file or NONE"],
-           ['hcp_dwi_dwelltime',      '',                                         str,    "Echo spacing in msec."],
+           ['hcp_dwi_echospacing',    '',                                         str,    "Echo spacing in msec."],
            ['hcp_dwi_dof',            '6',                                        str,    "Degrees of Freedom for post eddy registration to structural images. Defaults to 6."],
            ['hcp_dwi_b0maxbval',      '50',                                       str,    "Volumes with a bvalue smaller than this value will be considered as b0s. Defaults to 50"],
            ['hcp_dwi_extraeddyarg',   '',                                         str,    "A string specifying additional arguments to pass to eddy processing. Defaults to ''"],
@@ -434,7 +434,8 @@ tomap = {'bppt':                    'bolds',
          'hcp_bold_stcorr':         'hcp_bold_doslicetime',
          'hcp_bold_correct':        'hcp_bold_dcmethod',
          'hcp_bold_usemask':        'hcp_bold_mask',
-         'hcp_bold_boldnamekey':    'hcp_filename'}
+         'hcp_bold_boldnamekey':    'hcp_filename',
+         'hcp_dwi_dwelltime':       'hcp_dwi_echospacing'}
 
 mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacyStyleData'},
              'hcp_filename': {'name': 'original', 'number': 'standard'}}
