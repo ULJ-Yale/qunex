@@ -559,6 +559,11 @@ Change Log
 * 0.48.44 [connector] Fixed XNAT acceptance test bug for processInbox
 * 0.48.45 [niutilities] Fixed handling of files that go missing during BIDSImport
 * 0.48.46 [connector] Fixed ls search for parcellated timeseries in ComputeFunctionalConnecivity
+* 0.49.00 [connector library niutilities] Initial changes to switch from Qu|Nex HCP clone to use of updated HCPpipelines
+* 0.49.01 [niutilities] Additional changes to niutilities to match parameter names with HCPpipelines
+* 0.49.02 [niutilities] A fix to linkOrCopy function, expanded documentation
+* 0.49.03 [niutilities] Separate parameters for use of TOPUP in fMRIVolume, more robust handling of SE files in fMRIVolume
+* 0.49.04 [Qu|Nex] Removal of hcp and qunexaccept subrepositories
 
 Stable Container Tag Log
 ========================
