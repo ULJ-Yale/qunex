@@ -1750,8 +1750,7 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
 
             for line in iter(process.stdout.readline, b''):
                 print line,
-                if "ERROR in completing" in line or
-                    "ERROR: Execution of qunex command" in line:
+                if "ERROR in completing" in line or "ERROR: Execution of qunex command" in line:
                     error = True
                 if "Final report" in line:
                     if not verbose:
