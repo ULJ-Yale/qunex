@@ -326,10 +326,10 @@ arglist = [['# ---- Basic settings'],
            ['hcp_freesurfer_module',  '',                                         str,    "Whether to load FreeSurfer as a module on the cluster: YES or NONE"],
            ['hcp_Pipeline',           '',                                         str,    "path to pipeline base folder"],
            ['hcp_suffix',             '',                                         str,    "session id suffix if running HCP preprocessing variants"],
+           ['hcp_filename',           'standard',                                 str,    "How to name the image files in the hcp structure. The default is to name them by their number ('standard') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('original') (e.g. rfMRI_REST1_AP). ['standard']"],
            ['hcp_brainsize',          '150',                                      int,    "human brain size in mm"],
            ['hcp_t2',                 't2',                                       str,    "whether T2 image is present - anything or NONE"],
            ['hcp_fmap',               '',                                         str,    "DEPRECATED!!! whether hi-res structural fieldmap is present - SiemensFieldMap for Siemens Phase/Magnitude pair, or GeneralElectricFieldMap for GE single B0 image, ['']"],
-           ['hcp_biascorrect_t1w',    'YES',                                      str,    "Whether to run T1w image bias correction in PreFS step when no T12 image is present: YES (default) or NONE"],
            ['hcp_echodiff',           '',                                         str,    "the delta in TE times for the hi-res fieldmap image ['']"],
            ['hcp_sephaseneg',         '',                                         str,    "spin echo field map volume with a negative phase encoding direction: (AP, PA, LR, RL) ['']"],
            ['hcp_sephasepos',         '',                                         str,    "spin echo field map volume with a positive phase encoding direction: (AP, PA, LR, RL) ['']"],
@@ -368,8 +368,6 @@ arglist = [['# ---- Basic settings'],
            ['hcp_mcsigma',            '',                                         str,    "Correction sigma used for metric smooting (sqrt(200): 14.14213562373095048801) ['']."],
            ['hcp_inflatescale',       '1',                                        str,    "Inflate extra scale parameter [1]."],
            ['hcp_cifti_tail',          '',                                        str,    "The tail of the cifti file to use when mapping data from the HCP MNINonLinear/Results folder."],
-           ['hcp_bold_sequencetype',  'single',                                   str,    "The type of the sequence used: multi(band) vs single(band)"],
-           ['hcp_filename',           'standard',                                 str,    "How to name the image files in the hcp structure. The default is to name them by their number ('standard') using formula '<hcp_bold_prefix>_[N]' (e.g. BOLD_1), the alternative is to use their actual names ('original') (e.g. rfMRI_REST1_AP). ['standard']"],
            ['hcp_bold_prefix',        'BOLD_',                                    str,    "The prefix to use when generating bold names (see 'hcp_bold_name') for bold working folders and results"],
            ['hcp_bold_variant',       '',                                         str,    "The suffix to add to 'MNINonLinear/Results' and 'images/functional' folders. '' by default"],
            ['hcp_bold_biascorrection','NONE',                                     str,    "Whether to perform bias correction for BOLD images. NONE, LEGACY or SEBASED (for TOPUP DC only). HCP Pipelines only!"],
@@ -441,7 +439,9 @@ mapValues = {'hcp_processing_mode': {'hcp': 'HCPStyleData', 'legacy': 'LegacySty
              'hcp_filename': {'name': 'original', 'number': 'standard'}}
 
 deprecated = {'hcp_bold_stcorrdir': 'hcp_bold_slicetimerparams', 
-              'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams'}
+              'hcp_bold_stcorrint': 'hcp_bold_slicetimerparams',
+              'hcp_bold_sequencetype': None,
+              'hcp_biascorrect_t1w': None}
   
 
 #   ---------------------------------------------------------- FLAG DESCRIPTION
