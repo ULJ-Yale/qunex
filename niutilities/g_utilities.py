@@ -1584,6 +1584,8 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
              - Added option to ignore parameters
     2019-04-25 Grega Repovš
              - Changed subjects to sessions
+    2020-01-17 Jure Demšar
+             - Optimized log creation and stopping on command fail.
     """
 
     verbose = verbose.lower() == 'yes'
@@ -1603,6 +1605,13 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
     if logfolder is None:
         logfolder = gc.deduceFolders({'reference': listfile})["logfolder"]
     runlogfolder = os.path.join(logfolder, 'runlogs')
+
+    # create folder if it does not exist
+    if not os.path.isdir(runlogfolder):
+        os.makedirs(runlogfolder)
+
+    print "===> Saving the runList runlog to: %s" % runlogfolder
+
     logstamp = datetime.datetime.now().strftime("%Y-%m-%d_%H.%M.%s")
     logname = os.path.join(runlogfolder, "Log-%s-%s.log") % ("runlist", logstamp)
 
@@ -1736,13 +1745,13 @@ def runList(listfile=None, runlists=None, logfolder=None, verbose="no", eargs=No
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
 
             # Poll process for new output until finished
-            error = True
+            error = False
             logging = verbose
 
             for line in iter(process.stdout.readline, b''):
                 print line,
-                if "Successful completion" in line:
-                    error = False
+                if "ERROR in completing" in line:
+                    error = True
                 if "Final report" in line:
                     if not verbose:
                         print >> log, ""
