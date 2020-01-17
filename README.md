@@ -564,6 +564,7 @@ Change Log
 * 0.49.02 [niutilities] A fix to linkOrCopy function, expanded documentation
 * 0.49.03 [niutilities] Separate parameters for use of TOPUP in fMRIVolume, more robust handling of SE files in fMRIVolume
 * 0.49.04 [Qu|Nex] Removal of hcp and qunexaccept subrepositories
+* 0.49.05 [niutilities library] Updated parameters
 
 Stable Container Tag Log
 ========================
