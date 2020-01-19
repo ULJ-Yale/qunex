@@ -268,7 +268,7 @@ show_usage_nitoolsHelp() {
         MatlabFunctions=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/"`
         MatlabFunctionsfcMRI=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/fcMRI/"`
         MatlabFunctionsGeneral=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "/general/"`
-        MatlabFunctionsGMRI=`ls $TOOLS/$QUNEXREPO/nitools/gmri/\@gmrimage/*.m`
+        MatlabFunctionsNIMG=`ls $TOOLS/$QUNEXREPO/nitools/img/\@nimage/*.m`
         MatlabFunctionsStats=`ls $TOOLS/$QUNEXREPO/nitools/*/*.m | grep -v "archive/" | grep "stats"`
         echo "  * Qu|Nex NITools functional connectivity tools"; echo ""
         for MatlabFunction in $MatlabFunctionsfcMRI; do
@@ -281,7 +281,7 @@ show_usage_nitoolsHelp() {
         done
         echo ""
         echo "  * Qu|Nex NITools specific image analyses tools"; echo ""
-        for MatlabFunction in $MatlabFunctionsGMRI; do
+        for MatlabFunction in $MatlabFunctionsNIMG; do
             echo "      ==> $MatlabFunction";
         done
         echo ""
