@@ -188,15 +188,15 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     Some of the possible parameters to set are:
 
-    partition        ... The partition (queue) to use
-    nodes            ... Total number of nodes to run on
-    ntasks           ... Number of tasks
-    cpus-per-task    ... Number of cores per task
-    time             ... Maximum wall time DD-HH:MM:SS
-    constraint       ... Specific node architecture
-    mem-per-cpu      ... Memory requested per CPU in MB
-    mail-user        ... Email address to send notifications to
-    mail-type        ... On what events to send emails
+    * partition        ... The partition (queue) to use
+    * nodes            ... Total number of nodes to run on
+    * ntasks           ... Number of tasks
+    * cpus-per-task    ... Number of cores per task
+    * time             ... Maximum wall time DD-HH:MM:SS
+    * constraint       ... Specific node architecture
+    * mem-per-cpu      ... Memory requested per CPU in MB
+    * mail-user        ... Email address to send notifications to
+    * mail-type        ... On what events to send emails
 
 
     EXAMPLE USE
