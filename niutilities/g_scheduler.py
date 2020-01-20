@@ -140,36 +140,30 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     Keys: mem, walltime, software, file, procs, pmem, feature, host,
     naccesspolicy, epilogue, prologue will be submitted using:
-    "#PBS -l <key>=<value>".
+    "#PBS -l <key>=<value>"
 
     Keys: j, m, o, S, a, A, M, q, t, e, N will be submitted using:
     "#PBS -<key> <value>"
 
     Key: depend will be submitted using:
-
     "#PBS -W depend=<value>"
 
     Key: umask will be submitted using:
-
     "#PBS -W umask=<value>"
 
     Key: nodes is a special case. It can have up to three values separated by
     colon (":"). If there is only one value e.g. "nodes=4" it will submit:
-
     "#PBS -l nodes=4"
 
     When there are two values e.g. "nodes=4:2" it will submit:
-
     "#PBS -l nodes=4:ppn=2"
 
     When there are three values what is submitted depends on the type of the
     last value. When it is numeric, e.g. "nodes:8:4:2", it will submit:
-
     "#PBS -l nodes=8:ppn=4:cpus=2"
 
     If the last of the three values is a string, e.g. "nodes:8:4:blue", it will
     submit the last value as a self-standing key:
-
     "#PBS -l nodes=8:ppn=4:blue"
 
     LSF settings
@@ -184,14 +178,12 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
 
     Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo, jobName
     will be submitted using:
-
     "#BSUB -<key> <value>"
 
     SLURM settings
     --------------
 
     For SLURM any provided key/value pair will be passed in the form:
-
     "#SBATCH --<key>=<value>"
 
     Some of the possible parameters to set are:
@@ -330,6 +322,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                         res += ":gpus=%s" % (v.pop(0))
                     else:
                         res += ":" + v.pop(0)
+                sCommand += "#PBS -l %s\n" % res
+                
         sCommand += "#PBS -N %s-%s#%s\n" % (jobname, comname, jobnum)
         if outputs['stdout'] is not None:
             sCommand += "#PBS -o %s\n" % (outputs['stdout'])
