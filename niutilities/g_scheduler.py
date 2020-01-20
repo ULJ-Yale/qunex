@@ -142,12 +142,16 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     naccesspolicy, epilogue, prologue will be submitted using:
     "#PBS -l <key>=<value>".
 
-    Keys: j, m, o, S, a, A, M, q, t, e will be submitted using:
+    Keys: j, m, o, S, a, A, M, q, t, e, N will be submitted using:
     "#PBS -<key> <value>"
 
     Key: depend will be submitted using:
 
     "#PBS -W depend=<value>"
+
+    Key: umask will be submitted using:
+
+    "#PBS -W umask=<value>"
 
     Key: nodes is a special case. It can have up to three values separated by
     colon (":"). If there is only one value e.g. "nodes=4" it will submit:
@@ -178,7 +182,7 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
     * walltime -> "#BSUB -W <walltime>"
     * cores    -> "#BSUB -n <cores>"
 
-    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo
+    Keys: g, G, i, L, cwd, outdir, p, s, S, sla, sp, T, U, u, v, e, eo, o, oo, jobName
     will be submitted using:
 
     "#BSUB -<key> <value>"
@@ -312,6 +316,10 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
                 sCommand += "#PBS -%s %s\n" % (k, v)
             elif k == 'depend':
                 sCommand += "#PBS -W depend=%s\n" % (v)
+            elif k == 'umask':
+                sCommand += "#PBS -W umask=%s\n" % (v)
+            elif k == 'N' and jobname == 'schedule':
+                jobname = v
             elif k == 'nodes':
                 v = v.split(':')
                 res = 'nodes=%s' % (v.pop(0))
@@ -339,6 +347,8 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         for k, v in setDict.items():
             if k in ('g', 'G', 'i', 'L', 'cwd', 'outdir', 'p', 's', 'S', 'sla', 'sp', 'T', 'U', 'u', 'v', 'e', 'eo', 'o', 'oo'):
                 sCommand += "#BSUB -%s %s\n" % (k, v)
+            elif k is 'jobName' and jobname == 'schedule':
+                jobname = v
         sCommand += "#BSUB -P %s-%s\n" % (jobname, comname)
         sCommand += "#BSUB -J %s-%s#%d\n" % (jobname, comname, jobnum)
         if outputs['stdout'] is not None:
@@ -351,7 +361,10 @@ def schedule(command=None, script=None, settings=None, replace=None, workdir=Non
         sCommand += "#!/bin/sh\n"
         sCommand += "#SBATCH --job-name=%s-%s#%s\n" % (jobname, comname, jobnum)
         for key, value in setDict.items():
-            sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
+            if key in ('J', 'job-name') and jobname == 'schedule':
+                jobname = v
+            else:
+                sCommand += "#SBATCH --%s=%s\n" % (key.replace('--', ''), value)
         if outputs['stdout'] is not None:
             sCommand += "#SBATCH -o %s\n" % (outputs['stdout'])
         if outputs['stderr'] is not None:
